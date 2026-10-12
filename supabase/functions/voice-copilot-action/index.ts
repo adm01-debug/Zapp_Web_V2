@@ -1,12 +1,32 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
-Deno.serve(async (req) => {
+/**
+ * Seam de teste (mesmo padrão do `ai-suggest-reply`/`ai-auto-tag`): o handler
+ * exportado recebe os poucos pontos que a prova offline precisa trocar. Em
+ * produção nada é injetado e as implementações reais valem — o teste chama o
+ * handler REAL. `createAuthedClient` é o seam que representa a RLS: ele carrega
+ * o token do PRÓPRIO chamador, e é ele (nunca o service_role) que lê `messages`.
+ */
+export interface VoiceCopilotActionDeps {
+  /** Identidade do chamador (default: `requireAuth`). */
+  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Client com o token do chamador — a RLS decide o que ele vê (default: `createAuthedClient`). */
+  createAuthedClient?: (req: Request) => Promise<SupabaseClient>;
+  /** Client service_role (default: `createClient`). Nunca lê `messages` na busca de arquivo. */
+  createServiceClient?: (url: string, key: string) => SupabaseClient;
+}
+
+export async function handleVoiceCopilotAction(
+  req: Request,
+  deps: VoiceCopilotActionDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+  const authorize = deps.authorize ?? requireAuth;
+  const authCheck = await authorize(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
 
@@ -17,12 +37,12 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = requireEnv('SUPABASE_URL');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = (deps.createServiceClient ?? createClient)(supabaseUrl, supabaseKey);
     // Client autenticado como o caller: usado nas leituras abaixo para que a
     // RLS real de `contacts`/`profiles` filtre por auth.uid(), em vez do
     // client service_role (que bypassa RLS e vazaria PII/dashboard para
     // qualquer usuário autenticado do app, não só agentes).
-    const authedClient = await createAuthedClient(req);
+    const authedClient = await (deps.createAuthedClient ?? createAuthedClient)(req);
 
     log.info("Processing voice action", { action });
 
@@ -224,6 +244,61 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case 'search_files_in_conversation': {
+        const { query, contactId } = params ?? {};
+
+        // Sem termo e sem conversa não há o que procurar: devolve vazio em vez de
+        // varrer TODOS os arquivos visíveis ao chamador (busca sem intenção dita).
+        const sanitized = String(query || '').replace(/[%_\\]/g, '').trim();
+        if (!sanitized && !contactId) {
+          result = [];
+          break;
+        }
+
+        // A RLS real de `messages` (FOR SELECT TO authenticated — só mensagens de
+        // contatos atribuídos ao profile do chamador, ou admin/supervisor) decide
+        // o que ele vê. Por isso a leitura é SEMPRE pelo authedClient (token do
+        // PRÓPRIO chamador): o service_role bypassa a RLS e vazaria o arquivo de
+        // qualquer conversa. Mesmo padrão de `search_contacts`.
+        let filesQuery = authedClient
+          .from('messages')
+          .select('id, contact_id, media_type, media_filename, created_at')
+          // Só linhas que são arquivo (mensagem de texto tem media_url nulo).
+          .not('media_url', 'is', null)
+          // Fora as apagadas (is_deleted = true; nulo/false continuam visíveis).
+          .not('is_deleted', 'is', true);
+
+        // Conversa dita restringe a ela; sem ela, a RLS já limita às conversas visíveis.
+        if (contactId) filesQuery = filesQuery.eq('contact_id', contactId);
+
+        if (sanitized) {
+          const like = escapeOrFilterValue(`%${sanitized}%`);
+          filesQuery = filesQuery.or(`media_filename.ilike.${like},media_type.ilike.${like}`);
+        }
+
+        const { data, error } = await filesQuery
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+
+        // O `messageId` é o que o frontend usa para abrir a conversa já rolada até
+        // o arquivo (mesmo mecanismo de "ver na conversa").
+        result = (data ?? []).map((row: {
+          id: string;
+          contact_id: string | null;
+          media_type: string | null;
+          media_filename: string | null;
+          created_at: string;
+        }) => ({
+          messageId: row.id,
+          contactId: row.contact_id,
+          mediaType: row.media_type,
+          filename: row.media_filename,
+          createdAt: row.created_at,
+        }));
+        break;
+      }
+
       default:
         result = { error: `Ação desconhecida: ${action}` };
     }
@@ -235,4 +310,10 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+// `Deno.serve` só quando este módulo é o principal (deploy). O guard mantém o
+// handler importável pelos testes, sem abrir porta.
+if (import.meta.main) {
+  Deno.serve((req) => handleVoiceCopilotAction(req));
+}
