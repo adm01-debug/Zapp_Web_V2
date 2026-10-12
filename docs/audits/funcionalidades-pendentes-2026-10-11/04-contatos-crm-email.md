@@ -2,6 +2,10 @@
 
 Varredura somente leitura sobre `main` @ `99aa53f` (11/10/2026). Toda afirmação de "existe/não existe" foi conferida no código com grep/leitura; quando o artefato depende de banco vivo, outro repositório (Singu_V2) ou deploy, está marcado **não verificável (NV)**. Nenhum arquivo do repositório foi alterado.
 
+> **Adendo de 12/10 (revisão da PR #1914):** depois da primeira versão foram feitas leituras só `SELECT` no banco de
+> produção e lido o JavaScript público do site. Os itens que citam "em produção" e "12/10" usam esse dado. O resto continua
+> sendo inferido do código. Segredos das Edge Functions e painéis não foram conferidos; do N8N, só nomes e descrições.
+
 ---
 
 ## 1. Fontes lidas

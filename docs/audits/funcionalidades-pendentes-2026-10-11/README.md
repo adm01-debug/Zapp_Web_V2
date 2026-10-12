@@ -146,11 +146,12 @@ Os itens 1 a 7 foram conferidos também no banco de produção em 12/10, só com
 agendados do `pg_cron` cuida deles, e nenhuma função do banco lê `scheduled_messages`. As tabelas
 `scheduled_messages`, `campaigns`, `scheduled_report_configs`, `automations` e `chatbot_flows` estavam vazias. Isso
 mostra que não há uso hoje; como o código permite apagar esses registros e nenhum histórico foi consultado, não dá para
-afirmar que nunca foram usados. Workflows do N8N e outros chamadores externos não foram conferidos.
+afirmar que nunca foram usados. Nos 245 workflows do N8N, nenhum nome ou descrição trata desses recursos. O conteúdo dos nós não foi aberto um a um, e
+outros chamadores externos não foram conferidos.
 
 | # | O que o usuário vê | O que acontece de fato | Evidência | Anexo |
 |---|---|---|---|---|
-| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e nada processa: não há Edge Function, cron ou trigger no repositório, nem job no `pg_cron` de produção, que consuma `scheduled_messages`. A tabela estava vazia em produção em 12/10; o próximo agendamento não sairá | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
+| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e nada processa: não há Edge Function, cron ou trigger no repositório, nem job no `pg_cron` de produção, que consuma `scheduled_messages`. Nenhum workflow do N8N tem nome ou descrição ligados ao tema (conteúdo não aberto um a um). A tabela estava vazia em 12/10, então o envio real não foi testado; pelo que existe no código e no banco, o próximo agendamento não sairá | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
 | 2 | Chatbot e Chatbot L1 configurados | Mensagem recebida não aciona fluxo; `chatbot-l1` só é chamado pelo botão "testar conexão" | `src/components/settings/ChatbotL1Config.tsx:234` | 08 (L-04), 02 |
 | 3 | Automações, sequências de follow-up, mensagem de ausência, boas-vindas e encerramento | Regras são salvas e nenhum executor versionado roda; a própria tela admite | `src/components/settings/MessagesSettings.tsx:41` | 08 (L-05 a L-08) |
 | 4 | "Iniciar" em Campanhas Clássicas | Só muda o status para "enviando", que fica assim para sempre | `src/components/campaigns/CampaignsView.tsx:175` | 08 (L-11) |
@@ -332,8 +333,9 @@ errada. Lista completa: seção 4 de cada anexo (146 divergências).
   revisão da PR. Foram lidos os jobs do `pg_cron` (só nome, horário e a quais recursos se referem; o comando não foi
   exibido), as funções e gatilhos ligados a `scheduled_messages`, a contagem de linhas de cinco tabelas, a chave
   `crm.integration` e o estado de gravação das ligações (`calls`). Também foi lido o JavaScript público do site em
-  produção, para ver com que valor o build recebeu `VITE_CRM_INTEGRATION_ENABLED`. Segredos das Edge Functions,
-  workflows do N8N e outros chamadores externos continuam sem conferência.
+  produção, para ver com que valor o build recebeu `VITE_CRM_INTEGRATION_ENABLED`. Do N8N foram lidos só os nomes e
+  descrições dos 245 workflows. Segredos das Edge Functions, o conteúdo dos workflows e outros chamadores externos
+  continuam sem conferência.
 - **Leituras externas:** a frente 07 fez só leituras GET na API do GitHub (runs, checks, issues, alertas) e uma
   leitura do workflow N8N do dispatcher. A frente 08 listou as issues abertas.
 - **Histórico:** o clone tem 50 commits (desde 03/10). O que veio antes foi confrontado com os ledgers de

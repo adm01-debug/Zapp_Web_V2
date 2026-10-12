@@ -4,6 +4,10 @@ Varredura **só leitura** em `adm01-debug/Zapp_Web_V2` @ `99aa53f` (main, 2026-1
 CONCLUÍDO/PARCIAL foi conferido no código (arquivo:linha). Produção (banco, secrets, deploy) **não** foi
 consultada: o que depende dela está como BLOQUEADO ou NÃO VERIFICÁVEL.
 
+> **Adendo de 12/10 (revisão da PR #1914):** depois da primeira versão foram feitas leituras só `SELECT` no banco de
+> produção e lido o JavaScript público do site. Os itens que citam "em produção" e "12/10" usam esse dado. O resto continua
+> sendo inferido do código. Segredos das Edge Functions e painéis não foram conferidos; do N8N, só nomes e descrições.
+
 ---
 
 ## 1. Fontes lidas
