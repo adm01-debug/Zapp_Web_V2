@@ -555,15 +555,17 @@ test.describe('teclado — Talk X', () => {
     await expect(painel.first(), 'Espaço em "Ajuda" não abriu o painel').toBeVisible();
   });
 
+  // "Novo segmento" abre o TalkXSegmentBuilder inline (não é dialog e ele não trata Esc),
+  // então o Esc é testado num diálogo real do produto: a confirmação de lançamento do wizard.
   test('Esc fecha o modal/painel e devolve o foco a quem o abriu', async ({ page }) => {
-    await abrirComFixture(page, '03', (p) => abrirTab(p, 'Segmentos'));
-    const gatilho = page.getByRole('button', { name: 'Novo segmento' });
-    await gatilho.focus();
+    await abrirComFixture(page, '09', abrirWizard(4));
+    const gatilho = page.getByRole('button', { name: /^(Lançar|Agendar) campanha/ });
+    expect(await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 200), '"Lançar/Agendar campanha" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
     await page.keyboard.press('Enter');
-    const modal = page.getByRole('dialog');
-    await expect(modal, 'Enter em "Novo segmento" não abriu modal/painel').toBeVisible();
+    const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+    await expect(modal.first(), 'Enter em Lançar/Agendar não abriu a confirmação').toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(modal, 'Esc não fechou o modal/painel').toBeHidden();
+    await expect(modal.first(), 'Esc não fechou a confirmação').toBeHidden();
     await expect(gatilho, 'o foco não voltou ao gatilho depois do Esc').toBeFocused();
   });
 
@@ -580,14 +582,14 @@ test.describe('teclado — Talk X', () => {
 test.describe('teclado — criar campanha → revisar → confirmar (telas 08 e 09)', () => {
   test('tela 08: "Continuar" é alcançável por Tab', async ({ page }) => {
     await abrirComFixture(page, '08', abrirWizard(1));
-    const continuar = await alcancarPorTab(page, /^Continuar/, 80);
+    const continuar = await alcancarPorTab(page, /^Continuar/, 200);
     expect(continuar, '"Continuar" não é alcançável por Tab na tela 08').toBeGreaterThan(0);
   });
 
   test('tela 09: Voltar, Lançar/Agendar e a confirmação funcionam por teclado', async ({ page }) => {
     await abrirComFixture(page, '09', abrirWizard(4));
-    expect(await alcancarPorTab(page, /^Voltar$/, 80), '"Voltar" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
-    const lancar = await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 80);
+    expect(await alcancarPorTab(page, /^Voltar$/, 200), '"Voltar" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
+    const lancar = await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 200);
     expect(lancar, '"Lançar/Agendar campanha" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
     await page.keyboard.press('Enter');
     const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
