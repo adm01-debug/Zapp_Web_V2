@@ -27,7 +27,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { canTransition, countDoing } from './workItemMachine';
-import { checkRemindCoherence, type RemindCoherence } from './workItemPresets';
 import type {
   Priority,
   TransitionBlockReason,
@@ -38,6 +37,44 @@ import type { MoveOpts, WorkItemInput } from './useMyWorkItems';
 
 /** Texto único do aviso de atualização remota durante a edição (etapa 148). */
 export const REMOTE_CHANGE_MESSAGE = 'Esta tarefa mudou';
+
+type RemindCoherenceState = 'ok' | 'in_past' | 'after_due' | 'no_due';
+
+interface RemindCoherence {
+  state: RemindCoherenceState;
+  message: string;
+}
+
+const REMIND_COHERENCE_MESSAGES: Record<RemindCoherenceState, string> = {
+  ok: 'Lembrete programado para antes do prazo.',
+  in_past: 'O lembrete precisa estar no futuro.',
+  after_due: 'O lembrete precisa ser antes do prazo.',
+  no_due: 'Sem prazo definido — não há como comparar o lembrete com o prazo.',
+};
+
+function toInstant(value: string | Date | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const t = typeof value === 'string' ? new Date(value).getTime() : value.getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+function checkRemindCoherence(
+  remindAt: string | Date | null | undefined,
+  dueDate: string | Date | null | undefined,
+  now: Date = new Date(),
+): RemindCoherence {
+  const lembrete = toInstant(remindAt);
+  if (lembrete === null) return { state: 'ok', message: '' };
+
+  if (lembrete <= now.getTime()) return { state: 'in_past', message: REMIND_COHERENCE_MESSAGES.in_past };
+
+  const prazo = toInstant(dueDate);
+  if (prazo === null) return { state: 'no_due', message: REMIND_COHERENCE_MESSAGES.no_due };
+
+  if (lembrete >= prazo) return { state: 'after_due', message: REMIND_COHERENCE_MESSAGES.after_due };
+
+  return { state: 'ok', message: REMIND_COHERENCE_MESSAGES.ok };
+}
 
 /** Mensagens dos bloqueios de transição, iguais às que o módulo já mostra. */
 export const DRAFT_BLOCK_MESSAGES: Record<TransitionBlockReason, string> = {
