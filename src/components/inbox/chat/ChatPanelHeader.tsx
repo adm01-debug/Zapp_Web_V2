@@ -39,7 +39,6 @@ interface ChatPanelHeaderProps {
   speed: number;
   onToggleAIAssistant: () => void;
   onToggleDetails?: () => void;
-  onStartCall: () => void;
   onOpenSearch: () => void;
   onOpenTransfer: () => void;
   onOpenSchedule: () => void;

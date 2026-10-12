@@ -17,7 +17,6 @@ import { CRMAutoSync } from './CRMAutoSync';
 import { useAmbientColor } from '@/hooks/ui/useAmbientColor';
 import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
-import { dispatchStartCall } from '@/lib/calls/events';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
 import type { PinnedChatItem } from './chat/PinnedConversationsStack';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
@@ -385,7 +384,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <ChatPanelHeader conversation={conversation} isContactTyping={isContactTyping} showAIAssistant={activeTool === 'aiAssistant'} showDetails={showDetails}
             showSummaryPanel={activeTool === 'summary'} activeTool={activeTool} onSetActiveTool={handleSetActiveTool}
             voiceId={voiceId} speed={speed} onToggleAIAssistant={() => handleSetActiveTool('aiAssistant')} onToggleDetails={onToggleDetails}
-            onStartCall={() => dispatchStartCall({ channel: 'voip', phone: conversation.contact.phone, contactId: conversation.contact.id, name: conversation.contact.name, avatar: conversation.contact.avatar ?? undefined, source: 'inbox' })} onOpenSearch={() => handleSetActiveTool('chatSearch')}
+            onOpenSearch={() => handleSetActiveTool('chatSearch')}
             onOpenTransfer={() => openDialog('transferDialog')} onOpenSchedule={() => openDialog('scheduleDialog')}
             onVoiceChange={setVoiceId} onSpeedChange={setSpeed} onBack={onBack}
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}

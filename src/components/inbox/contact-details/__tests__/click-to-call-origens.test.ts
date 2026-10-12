@@ -21,7 +21,6 @@ const ler = (rel: string): string => readFileSync(path.join(raiz, rel), 'utf8');
 
 const EMISSORES = [
   ['ContactActionButtons', 'src/components/inbox/contact-details/ContactActionButtons.tsx'],
-  ['ChatPanel', 'src/components/inbox/ChatPanel.tsx'],
 ] as const;
 
 const HOSPEDEIROS = [
@@ -69,7 +68,6 @@ describe('clique-para-discar — as origens migradas (T29)', () => {
 
   it('C02 — as origens do inbox levam o avatar do contato no payload', () => {
     expect(ler('src/components/inbox/contact-details/ContactActionButtons.tsx')).toContain('avatar: contact.avatar');
-    expect(ler('src/components/inbox/ChatPanel.tsx')).toContain('avatar: conversation.contact.avatar');
   });
 
   it('C02 — o provider registra o pedido do inbox como chamadaSaida (o cartao disca sem navegar)', () => {
