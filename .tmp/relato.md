@@ -1,22 +1,19 @@
-Especialista: iris (area-front-componentes)
+Especialista: complexo (faixa front+hooks de Tarefas; código pelo Claude Code, conferido por mim)
 
 ## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+- `src/components/tasks/shared/TasksKpiStrip.tsx`: faixa 017-022 na base do dia (5 cards clicáveis, subtítulos com prazo explorável, anel no limite do Fazendo, contagem animada com `motion-safe` e `prefers-reduced-motion`, compacta em uma linha com rolagem no Quadro, sem palavra solta no pulso, sem `aria-pressed` no Fazendo que só navega) + rótulo da etapa 020 (`Concluídas · 7 dias`).
+- `src/components/tasks/TasksModule.tsx`: clique em Atrasadas/Para hoje filtra a lista (caso 3, 023-026; clicar de novo remove); KPIs calculados antes do recorte para um card não zerar os outros; densidade acompanha o modo.
+- `src/hooks/tasks/workItemAggregates.ts`: `avgLeadTimeDays` (criação→conclusão) + `formatLeadTime` em pt-BR + `applyDueRecorte` com os mesmos baldes do KPI.
+- `src/hooks/tasks/workItem.types.ts`: tipo `DueRecorte`.
+- `src/hooks/tasks/useTasksFilters.ts`: estado `due`/`setDue` (só tela, fora da URL); `Limpar` zera junto.
+- `src/components/tasks/__tests__/TasksModule.test.tsx`: 2 asserções atualizadas para o rótulo novo da etapa 020 (espelha o commit aprovado f36f5bd6a; nenhum teste novo — são dos cartões 029/030/046/047).
 
 ## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
-
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+- verde depois: `npx vitest run TasksModule.test.tsx useTasksFilters.test.tsx workItemAggregates.test.ts workItemFilters.test.ts` → `Test Files 4 passed (4); Tests 101 passed (101)` (log `.tmp/vitest-final.log`); antes, na primeira execução a frio, 1 falha transiente no teste `pinta os tiles` (rótulo não achado) que passou isolado e em todas as reexecuções seguintes sem mudar código.
+- verde depois: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (174s)` (sem banco porque o cartão não tem migration; log `.tmp/zapp-verify2.log`). A primeira tentativa ficou vermelha em `tipos` só porque o workspace estava sem dependências; `bun install` resolveu.
+- O diff tem SÓ esta faixa (6 arquivos acima, commit 8b41d97b0).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+- Não escrevi teste novo (é dos cartões 029/030/046/047) e não mexi em outra área, produção, push/merge/deploy.
+- Não manipulei `.v2-fila` à mão (é do operador/integrador via fechar).
+- Cobri 017-028 inteira na base do dia, incluindo o caso 3 que faltava: nada ficou de fora para reagendar.
