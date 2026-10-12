@@ -145,7 +145,7 @@ export function CloseConversationDialog({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Motivo do encerramento *</Label>
             <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Motivo do encerramento">
                 <SelectValue placeholder="Selecione o motivo" />
               </SelectTrigger>
               <SelectContent>
@@ -159,7 +159,7 @@ export function CloseConversationDialog({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Resultado</Label>
             <Select value={outcome} onValueChange={setOutcome}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Resultado">
                 <SelectValue placeholder="Resultado do atendimento" />
               </SelectTrigger>
               <SelectContent>
@@ -173,7 +173,7 @@ export function CloseConversationDialog({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Classificação</Label>
             <Select value={classification} onValueChange={setClassification}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Classificação (destino)">
                 <SelectValue placeholder="Tipo de atendimento" />
               </SelectTrigger>
               <SelectContent>
