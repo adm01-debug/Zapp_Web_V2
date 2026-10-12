@@ -83,6 +83,8 @@ const CASOS: CasoEvento[] = [
   { evento: "group.update", rota: "log (index.ts: id + subject)", prova: "sem-acesso-banco", data: { id: GRUPO_JID, subject: "Grupo Sintético" } },
   { evento: "group.participants.update", rota: "log (index.ts: id + action + quantidade)", prova: "sem-acesso-banco", data: { id: GRUPO_JID, action: "add", participants: [] } },
   { evento: "group-participants.update", rota: "log (index.ts: mesmo ramo de group.participants.update)", prova: "sem-acesso-banco", data: { id: GRUPO_JID, action: "add", participants: [] } },
+  { evento: "labels.edit", rota: "evolution-webhook-handlers.ts:handleLabelsEdit (evento ignorado: etiquetas de contato removidas)", prova: "sem-acesso-banco", data: { id: "5", name: "VIP", deleted: false } },
+  { evento: "labels.association", rota: "evolution-webhook-handlers.ts:handleLabelsAssociation (evento ignorado: etiquetas de contato removidas)", prova: "sem-acesso-banco", data: { labelId: "5", chatId: JID, type: "add" } },
   { evento: "call", rota: "evolution-webhook-handlers.ts:handleCallEvent", prova: "toca-banco", data: { from: JID, status: "offer", id: "CALL-SL149-1" } },
   { evento: "typebot.start", rota: "evolution-webhook-handlers.ts:handleTypebotEvent (sessão do bot: sem status vale como opened)", prova: "toca-banco", data: { remoteJid: JID, typebotId: "bot-sl149" } },
   { evento: "typebot.change.status", rota: "evolution-webhook-handlers.ts:handleTypebotEvent (mesmo ramo de typebot.start)", prova: "toca-banco", data: { remoteJid: JID, status: "opened" } },
@@ -149,7 +151,7 @@ Deno.test("SL-149 enumeração: todo ramo do roteador real está enumerado (e na
 });
 
 Deno.test("SL-149 enumeração: todo evento que a Evolution está configurada a enviar está enumerado", () => {
-  assert(WEBHOOK_EVENTS.length >= 16, `WEBHOOK_EVENTS lido com ${WEBHOOK_EVENTS.length} itens — lista vazia não prova nada`);
+  assert(WEBHOOK_EVENTS.length >= 18, `WEBHOOK_EVENTS lido com ${WEBHOOK_EVENTS.length} itens — lista vazia não prova nada`);
   const enumerados = new Set(EVENTOS_ENUMERADOS);
   for (const registrado of WEBHOOK_EVENTS) {
     const canonico = normalizeEventName(registrado);

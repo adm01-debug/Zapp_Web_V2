@@ -34,6 +34,11 @@ const GO_EVENT_MAP: Record<string, string> = {
   // Grupos
   groupinfo: 'group.update',
   joinedgroup: 'groups.upsert',
+  // Labels
+  labeledit: 'labels.edit',
+  labelassociation: 'labels.association',
+  labelassociationchat: 'labels.association',    // B5
+  labelassociationmessage: 'labels.association', // B5
   // Chamadas
   calloffer: 'call',
   calloffernotice: 'call',
@@ -74,6 +79,15 @@ function normalizeWaKey(k: unknown): Record<string, unknown> | undefined {
     ...(str(k.participant) ? { participant: str(k.participant) } : {}),
   };
 }
+
+// Paleta oficial das 20 cores de label do WhatsApp (índice → hex).
+// LabelEdit.Action.color é o índice numérico; tags.color espera hex.
+const WA_LABEL_COLORS = [
+  '#FF9485', '#64C4FF', '#FFD429', '#DFAEF0', '#99B6C1',
+  '#55CCB3', '#D3A91D', '#6D7CCE', '#D98ADC', '#00D0E2',
+  '#FFC5C7', '#93CEAC', '#F74848', '#00A0F2', '#83E422',
+  '#FFAF04', '#B5EBFF', '#9BA6FF', '#9368CF', '#D6A700',
+];
 
 export function translateGoPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const rawEvent = String(payload.event ?? '').toLowerCase();
@@ -261,6 +275,31 @@ export function translateGoPayload(payload: Record<string, unknown>): Record<str
   if (rawEvent === 'contact') {
     const action = isRecord(data.Action) ? data.Action : {};
     out.data = { id: str(data.JID), pushName: str(action.fullName) ?? str(action.firstName) };
+  }
+
+  // LabelEdit {LabelID, Action:{name,color,deleted}} → labels.edit {id, name, color, deleted}
+  if (rawEvent === 'labeledit') {
+    const action = isRecord(data.Action) ? data.Action : {};
+    const colorIdx = typeof action.color === 'number' ? action.color : undefined;
+    out.data = {
+      id: str(data.LabelID),
+      name: str(action.name),
+      // v2 mandava hex; o GO manda o índice da paleta do WhatsApp
+      color: str(action.color) ?? (colorIdx !== undefined ? WA_LABEL_COLORS[colorIdx] : undefined),
+      deleted: action.deleted === true,
+    };
+  }
+
+  // LabelAssociationChat/Message {JID, LabelID, Action:{labeled}} →
+  // labels.association {labelId, chatId, type}
+  if (rawEvent === 'labelassociation' || rawEvent === 'labelassociationchat' || rawEvent === 'labelassociationmessage') {
+    const action = isRecord(data.Action) ? data.Action : {};
+    out.data = {
+      labelId: str(data.LabelID),
+      chatId: str(data.JID),
+      type: action.labeled === false ? 'remove' : 'add',
+      ...(rawEvent === 'labelassociationmessage' ? { messageId: str(data.MessageID) } : {}),
+    };
   }
 
   // CallOffer/CallOfferNotice {From|CallCreator, CallID} → call {from, id, status}.

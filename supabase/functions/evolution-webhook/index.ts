@@ -13,7 +13,7 @@ import { isGoPayload, translateGoPayload } from "../_shared/evolution-go-adapter
 import {
   handleConnectionUpdate, handleSendMessage, handleMessagesUpdate, handleMessagesDelete,
   handleContactsUpsert, handlePresenceUpdate, handleChatsUpdate,
-  handleCallEvent,
+  handleLabelsEdit, handleLabelsAssociation, handleCallEvent,
   handleChatsDelete, handleApplicationStartup, handleMessagesSet,
   handleContactsSet, handleChatsSet, handleMessagesEdited,
   handleTypebotEvent,
@@ -307,6 +307,8 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
       console.warn(`Group ${participantData.id ? String(participantData.id).substring(0, 6) + '...' : ''} participants ${participantData.action}: ${(participantData.participants as string[])?.length ?? 0} members`);
     }
 
+    if (event === 'labels.edit') await handleLabelsEdit(db, instance, data);
+    if (event === 'labels.association') await handleLabelsAssociation(db, instance, data);
     if (event === 'call') await handleCallEvent(db, instance, data);
     // SL-190: a Evolution está configurada a enviar TYPEBOT_START/TYPEBOT_CHANGE_STATUS
     // (evolution-api set-webhook) — sem este ramo os dois eventos eram descartados.
