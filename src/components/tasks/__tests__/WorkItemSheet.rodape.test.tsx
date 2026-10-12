@@ -77,6 +77,22 @@ async function abrirMenu() {
   return screen.findByRole('menu');
 }
 
+/** Mente sobre as media queries do ambiente (§ pointerMedia.ts) e devolve o desfazer. */
+function fingirMidia(matches: (consulta: string) => boolean) {
+  const original = window.matchMedia;
+  window.matchMedia = ((consulta: string) => ({
+    matches: matches(consulta),
+    media: consulta,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+  return () => { window.matchMedia = original; };
+}
+
 describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, proteção e foco)', () => {
   beforeEach(() => cleanup());
   afterEach(() => cleanup());
@@ -191,6 +207,62 @@ describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, prote
     expect(p.onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it('143/144: ao confirmar descarte depois do Esc, fecha e devolve o foco ao card', async () => {
+    const p = props();
+    render(
+      <>
+        <WorkItemSheet {...p} />
+        <article data-item-id="t1" tabIndex={0} aria-label="card da tarefa" />
+      </>,
+    );
+    editarTitulo();
+
+    fireEvent.keyDown(document.body, { key: 'Escape', code: 'Escape' });
+    fireEvent.click(screen.getByTestId('sheet-descartar-confirmar'));
+
+    const card = document.querySelector<HTMLElement>('[data-item-id="t1"]')!;
+    expect(p.onOpenChange).toHaveBeenCalledWith(false);
+    await waitFor(() => expect(document.activeElement).toBe(card));
+  });
+
+  it('143: "Concluir" com alteração pendente pede descarte antes de mover', () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+    editarTitulo();
+
+    fireEvent.click(screen.getByTestId('sheet-concluir'));
+
+    expect(screen.getByTestId('sheet-descartar')).toHaveTextContent('Descartar alterações?');
+    expect(p.onMove).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('143: "Cancelar tarefa" com alteração pendente pede descarte antes de cancelar', async () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+    editarTitulo();
+
+    await abrirMenu();
+    fireEvent.click(screen.getByTestId('sheet-cancelar'));
+
+    expect(screen.getByTestId('sheet-descartar')).toHaveTextContent('Descartar alterações?');
+    expect(p.onCancel).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('143: "Reabrir tarefa" com alteração pendente pede descarte antes de mover', async () => {
+    const p = props({ item: { ...base, status: 'done' } });
+    render(<WorkItemSheet {...p} />);
+    editarTitulo();
+
+    await abrirMenu();
+    fireEvent.click(screen.getByTestId('sheet-reabrir'));
+
+    expect(screen.getByTestId('sheet-descartar')).toHaveTextContent('Descartar alterações?');
+    expect(p.onMove).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   it('143: sem alteração o Esc fecha direto (a proteção não atrapalha)', () => {
     const p = props();
     render(<WorkItemSheet {...p} />);
@@ -232,6 +304,28 @@ describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, prote
 
     fireEvent.keyDown(document, { key: 'F6', code: 'F6' });
     expect(document.activeElement).toBe(painel);
+  });
+
+  it('144: no bottom sheet o F6 não tira o foco do painel modal', () => {
+    const desfazerMidia = fingirMidia((consulta) => consulta.includes('max-width: 767px'));
+    try {
+      render(
+        <>
+          <WorkItemSheet {...props()} />
+          <article data-item-id="t1" tabIndex={0} aria-label="card da tarefa" />
+        </>,
+      );
+      const titulo = screen.getByTestId('sheet-titulo');
+      const painel = screen.getByTestId('work-item-sheet');
+      titulo.focus();
+
+      expect(fireEvent.keyDown(document, { key: 'F6', code: 'F6' })).toBe(true);
+
+      expect(painel).toContainElement(document.activeElement as HTMLElement);
+      expect(document.activeElement).toBe(titulo);
+    } finally {
+      desfazerMidia();
+    }
   });
 
   it('144: o rodapé segue a ordem de tab lógica (Concluir → Salvar → ⋮)', () => {
