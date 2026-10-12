@@ -1,8 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { log } from '@/lib/logger';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -18,79 +16,31 @@ import { EditQueueDialog, type QueueUpdates } from '@/components/queues/EditQueu
 import { QueueService } from '@/services/queue.service';
 import { toast } from 'sonner';
 import { QueueMetricsCards } from './queue-details/QueueMetricsCards';
-import { fetchQueueMetrics, type QueueMetrics } from './queue-details/queueMetrics';
 import { QueueContactsTable } from './queue-details/QueueContactsTable';
-
-interface QueueDetailsData { id: string; name: string; description: string | null; color: string; max_wait_time_minutes: number | null; created_at: string; }
-interface QueueMember { id: string; profile_id: string; profile: { name: string; avatar_url: string | null; is_active: boolean }; }
-interface QueueContact { id: string; name: string; phone: string; avatar_url: string | null; assigned_to: string | null; created_at: string; assigned_agent?: { name: string | null; avatar_url: string | null } | null; messages_count: number; last_message_at: string | null; }
+import { useQueueDetails } from '@/hooks/queues/useQueueDetails';
 
 export default function QueueDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [queue, setQueue] = useState<QueueDetailsData | null>(null);
-  const [members, setMembers] = useState<QueueMember[]>([]);
-  const [contacts, setContacts] = useState<QueueContact[]>([]);
-  const [metrics, setMetrics] = useState<QueueMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { queue, members, contacts, metrics, loading, error, refetch } = useQueueDetails(
+    user ? id : undefined,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
-
-  const fetchQueueData = useCallback(async () => {
-    if (!id) return;
-    try {
-      setLoading(true);
-      const { data: queueData, error: queueError } = await supabase.from('queues').select('*').eq('id', id).single();
-      if (queueError) throw queueError;
-      setQueue(queueData);
-
-      const { data: membersData } = await supabase.from('queue_members').select('id, profile_id, profile:profiles(name, avatar_url, is_active)').eq('queue_id', id);
-      setMembers(membersData as unknown as QueueMember[]);
-
-      // Amostra visual da tabela (50 mais recentes). As MÉTRICAS não saem daqui: vêm de
-      // `fetchQueueMetrics`, que conta a fila inteira no servidor.
-      const { data: contactsData } = await supabase.from('contacts').select('id, name, phone, avatar_url, assigned_to, created_at').eq('queue_id', id).order('created_at', { ascending: false }).limit(50);
-
-      const contactsWithDetails = await Promise.all(
-        (contactsData || []).map(async (contact) => {
-          const { count } = await supabase.from('messages').select('*', { count: 'exact', head: true }).eq('contact_id', contact.id);
-          const { data: lastMessage } = await supabase.from('messages').select('created_at').eq('contact_id', contact.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
-          let assignedAgent: { name: string; avatar_url: string | null } | null = null;
-          if (contact.assigned_to) { const { data } = await supabase.from('profiles').select('name, avatar_url').eq('id', contact.assigned_to).maybeSingle(); assignedAgent = data; }
-          return { ...contact, messages_count: count || 0, last_message_at: lastMessage?.created_at || null, assigned_agent: assignedAgent };
-        })
-      );
-      setContacts(contactsWithDetails);
-
-      // R2-QUE-001/R2-QUE-003: os cartões medem a FILA INTEIRA. As contagens (total, atribuídos e
-      // resolvidos hoje) e o tempo médio de SLA vêm de `fetchQueueMetrics`, com `count: 'exact'` no
-      // servidor e leitura paginada de `conversation_sla` — nada é derivado da página de 50 contatos
-      // acima, que existe só para a tabela visual.
-      setMetrics(await fetchQueueMetrics(supabase, id, new Date()));
-    } catch (error) { log.error('Error fetching queue data:', error); }
-    finally { setLoading(false); }
-  }, [id]);
-
-  useEffect(() => {
-    if (id && user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-fila padrão, sem estado derivado de props para sincronizar.
-      fetchQueueData();
-    }
-  }, [id, user, fetchQueueData]);
 
   // R2-QUE-006: o botão "Configurar" anunciava a edição da fila sem executá-la.
   // A gravação usa o mesmo caminho de escrita (QueueService.updateQueue) do hook
   // useQueues e só anuncia sucesso depois que a escrita é confirmada.
   const handleUpdateQueue = async (queueId: string, updates: QueueUpdates) => {
-    const { error } = await QueueService.updateQueue(queueId, updates);
-    if (error) {
+    const { error: updateError } = await QueueService.updateQueue(queueId, updates);
+    if (updateError) {
       toast.error('Não foi possível atualizar a fila.');
-      throw error;
+      throw updateError;
     }
     toast.success('Fila atualizada com sucesso.');
-    await fetchQueueData();
+    refetch();
   };
 
   if (authLoading || loading) {
@@ -104,9 +54,25 @@ export default function QueueDetails() {
   }
 
   if (!queue) {
+    // R2-QUE-004: falha de leitura (rede/RLS) e id inexistente são estados distintos — antes
+    // os dois caíam em "Fila não encontrada" e o usuário não tinha como tentar de novo.
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center"><AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><h2 className="text-xl font-semibold text-foreground mb-2">Fila não encontrada</h2><Button onClick={() => navigate('/')}>Voltar</Button></div>
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            {error ? 'Erro ao carregar a fila' : 'Fila não encontrada'}
+          </h2>
+          {error && (
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+              Não foi possível carregar os dados desta fila. Verifique sua conexão e tente novamente.
+            </p>
+          )}
+          <div className="flex justify-center gap-2">
+            {error && <Button variant="outline" onClick={refetch}>Tentar novamente</Button>}
+            <Button onClick={() => navigate('/')}>Voltar</Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -125,6 +91,20 @@ export default function QueueDetails() {
         onSubmit={handleUpdateQueue}
       />
       <div className="p-6 space-y-6">
+        {error && (
+          <Card className="border-destructive/40 bg-destructive/10" role="alert">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 text-destructive" />
+                <div>
+                  <p className="font-medium text-foreground">Erro ao carregar dados da fila</p>
+                  <p className="text-sm text-muted-foreground">Algumas informações podem estar incompletas. Tente novamente para atualizar a tela.</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={refetch}>Tentar novamente</Button>
+            </CardContent>
+          </Card>
+        )}
         {metrics && <QueueMetricsCards metrics={metrics} />}
         {queue && <QueueCharts queueId={queue.id} queueColor={queue.color} />}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
