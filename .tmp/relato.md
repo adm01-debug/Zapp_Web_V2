@@ -1,29 +1,26 @@
-Especialista: senior (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+- supabase/migrations/20261012112503_email_templates_rls.sql: cria public.email_templates (id, name varchar(120), subject varchar(300), body text com CHECK <= 50000, category, is_shared, created_by default auth.uid(), created_at, updated_at), 2 indices (created_by e is_shared), RLS ligada com 4 policies (SELECT/INSERT/UPDATE/DELETE), gatilho updated_at e ACL (revoke anon/PUBLIC; grant 4 verbos a authenticated; all a service_role). Migration aditiva, sem backfill — nada existia antes.
+- src/integrations/supabase/types.ts: entrada email_templates (Row/Insert/Update, Relationships: []) logo apos email_messages, no formato do gerador.
+- scripts/db-audit/email-templates-rls.test.sh: prova de contrato RLS em Postgres 17 descartavel, executando como o papel real (authenticated/anon), nunca como postgres.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+## Decisoes de contrato (literais do cartao)
+- Dono = auth.uid(). Staff = public.is_admin_or_supervisor(auth.uid()) (assinatura real conferida em 20260929580000_multiplix_policies_consolidation.sql).
+- is_shared = true: LEGIVEL por todo authenticated; EDITAVEL so pelo dono ou staff. Excluir: so o dono (cartao nao da exclusao ao staff).
+- WITH CHECK = USING nos updates: ninguem troca created_by (sem escalada de autoria por UPDATE).
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- vermelho antes (mutacao na policy de DELETE: USING (true) no lugar de created_by = auth.uid()): `bash scripts/db-audit/email-templates-rls.test.sh` -> `[FAIL] B20 outro nao exclui o compartilhado do dono (0 linhas): esperado '0', obtido '1'` (ESCOPO do teste exercita mesmo a policy: usa o modelo compartilhado, que e VISIVEL ao outro usuario; apos restaurada a migration, B20 volta a PASS).
+- A1 (sem a migration a tabela nao existe, authenticated) confirma o estado ausente.
+- verde depois: `bash scripts/db-audit/email-templates-rls.test.sh` -> `== TODOS OS PASSOS PASSARAM ==` (B1-B32; inclui rollback extraido do proprio arquivo -> B30/B31 e reaplicacao -> B32).
+- `hermes-db-migrar supabase/migrations/20261012112503_email_templates_rls.sql` -> `APLICADA no banco LOCAL 'v2-2610120821447e' (producao nao foi tocada)`.
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (tipos/lint/migrations/db_guard OK).
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## REGISTRO PENDENTE
+- scripts/db-audit/email-templates-rls.test.sh e NOVO: precisa de passo proprio em .github/workflows/db-guard.yml (padrao `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`). O cartao nao lista o workflow e a area do arquivo e do worker (ci); nao editei.
 
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+## O que NAO fiz e por que
+- Nao rodei o banco_local do zapp-verify com o nome do conjunto: a migration MUDA o schema por definicao e o retrato supabase/schema-manifest.json e gerado da producao (sem acesso). O proprio hermes-db-migrar avisou "a estrutura local agora difere do retrato da producao (esperado)".
+- Nao editei migration existente, nao toquei producao, nao mudei GRANT de objeto existente (a tabela e nova).
+- Passada de efeitos colaterais: sem UPDATE/INSERT em massa (nada de gatilho em dado pre-existente); a tabela e criada vazia; operacao DDL atomica (uma transacao); sem funcao nova (sem oraculo de enumeracao); entrada invalida barrada por CHECK (nome em branco, corpo > 50000) e por RLS (autoria forjada, anon).
