@@ -925,3 +925,210 @@ Deno.test("CX0: delete-instance para ADMIN exclui a linha e registra a exclusão
     await fake.stop();
   }
 });
+
+// ─── CA1 (12/10/2026): trilha de auditoria das ações de conexão ─────────────
+// RED: `create-connection`, `connect` (QR), `disconnect` e a recriação
+// destrutiva de sessão órfã na GO não deixavam NENHUM rastro em `audit_logs`
+// (só `delete-instance`, no CX0) — a tela de trilha mostrava a exclusão e mais
+// nada. GREEN: cada ação grava exatamente 1 linha, com ator, `instance_id`, IP
+// e sem número/token/QR; e falha do insert NÃO derruba a ação auditada.
+
+/** Service client que registra inserts em audit_logs e pode forçar o insert a
+ *  falhar (para provar que a auditoria é fail-open). */
+function makeAuditService(opts: { failAudit?: boolean; connRow?: Record<string, unknown> } = {}) {
+  const inserts: Array<{ table: string; values: any }> = [];
+  const connRow = opts.connRow ?? { id: "conn-uuid-1", name: "PRINCIPAL", instance_id: "PRINCIPAL" };
+  const from = (table: string) => {
+    const q: any = {
+      select: () => q,
+      eq: () => q,
+      neq: () => q,
+      not: () => q,
+      gte: () => q,
+      lt: () => q,
+      or: () => q,
+      order: () => q,
+      limit: () => q,
+      in: () => q,
+      update: () => q,
+      delete: () => q,
+      maybeSingle: () => Promise.resolve({
+        data: table === "whatsapp_connections"
+          ? connRow
+          : table === "global_settings"
+            ? { value: "true" }
+            : null,
+        error: null,
+      }),
+      single: () => Promise.resolve({ data: table === "whatsapp_connections" ? connRow : null, error: null }),
+      insert: (values: any) => {
+        inserts.push({ table, values });
+        if (table === "audit_logs") {
+          return Promise.resolve(opts.failAudit ? { data: null, error: { message: "audit insert boom" } } : { data: null, error: null });
+        }
+        return q;
+      },
+    };
+    return q;
+  };
+  const client: any = {
+    from,
+    rpc: (fn: string) => (fn === "get_instance_token" || fn === "set_instance_token")
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+  return { client, inserts };
+}
+
+/** Fake de sessão por rota. `recreated` controla o /instance/qr: antes da
+ *  recriação a GO "não emite" QR (para forçar o caminho de sessão órfã); depois
+ *  emite o pareamento novo. */
+function createSessionFake(instanceName: string) {
+  const requests: Array<{ method: string; path: string }> = [];
+  let recreated = false;
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
+    const path = new URL(req.url).pathname;
+    requests.push({ method: req.method, path });
+    const json = (payload: unknown) =>
+      new Response(JSON.stringify(payload), { status: 200, headers: { "Content-Type": "application/json" } });
+
+    if (path === "/instance/status") return json({ state: "close" });
+    if (path === "/instance/all") {
+      return json({ data: [{ name: instanceName, id: "go-instance-1", jid: "5511999@s.whatsapp.net" }] });
+    }
+    if (path.startsWith("/instance/delete/")) return json({ status: "success" });
+    if (path === "/instance/create") { recreated = true; return json({ status: "success" }); }
+    if (path === "/instance/qr") {
+      return json(recreated
+        ? { data: { qrcode: "data:image/png;base64,QQ==", code: "" } }
+        : { data: {} });
+    }
+    // v2: pareamento no PRÓPRIO corpo do connect.
+    if (path.startsWith("/instance/connect/")) {
+      return json({ base64: "data:image/png;base64,QQ==", code: "2@abc" });
+    }
+    return json({ status: "success" });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("session-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
+
+const auditRows = (inserts: Array<{ table: string; values: any }>) =>
+  inserts.filter((i) => i.table === "audit_logs").map((i) => i.values);
+
+Deno.test("CA1: create-connection grava 1 trilha com ator, instance_id e IP — sem dado sensível", async () => {
+  const fake = createSessionFake("principal");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("create-connection", { instanceName: "principal", name: "principal", phone_number: "5511999990000" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const rows = auditRows(svc.inserts);
+    assertEquals(rows.length, 1, `create-connection deve gravar exatamente 1 trilha (insere tantas: ${rows.length})`);
+    assertEquals(rows[0].action, "connection_created");
+    assertEquals(rows[0].entity_type, "connection");
+    assertEquals(rows[0].entity_id, "conn-uuid-1");
+    assertEquals(rows[0].user_id, "admin-1");
+    assertEquals(rows[0].details.instance_id, "principal");
+    assert(rows[0].ip_address, "deve registrar o IP de quem chamou");
+    const serializado = JSON.stringify(rows[0]).toLowerCase();
+    assert(!serializado.includes("5511999990000"), "a trilha não pode conter o número");
+    assert(!serializado.includes("2@"), "a trilha não pode conter o QR");
+    assert(!serializado.includes("token"), "a trilha não pode conter token");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("CA1: connect v2 grava 1 trilha com status do pareamento", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("connect", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const rows = auditRows(svc.inserts);
+    assertEquals(rows.length, 1, "connect deve gravar exatamente 1 trilha (só UM pareamento)");
+    assertEquals(rows[0].action, "connection_connect");
+    assertEquals(rows[0].details.instance_id, "PRINCIPAL");
+    assertEquals(rows[0].details.flavor, "v2");
+    assertEquals(rows[0].details.status, "qr_pending");
+    assertEquals(rows[0].user_id, "admin-1");
+    assert(rows[0].ip_address, "deve registrar o IP de quem chamou");
+    assert(!JSON.stringify(rows[0]).includes("2@"), "a trilha do connect não pode conter o QR");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("CA1: disconnect grava 1 trilha", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const rows = auditRows(svc.inserts);
+    assertEquals(rows.length, 1, "disconnect deve gravar exatamente 1 trilha");
+    assertEquals(rows[0].action, "connection_disconnect");
+    assertEquals(rows[0].details.instance_id, "PRINCIPAL");
+    assertEquals(rows[0].user_id, "admin-1");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("CA1: recriação de sessão órfã grava trilha própria + o connect que a trouxe", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("connect", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const rows = auditRows(svc.inserts);
+    const recriacao = rows.filter((r) => r.action === "connection_session_recreated");
+    const connects = rows.filter((r) => r.action === "connection_connect");
+    assertEquals(recriacao.length, 1, "a recriação deve ter trilha própria");
+    assertEquals(recriacao[0].details.instance_id, "PRINCIPAL");
+    assertEquals(recriacao[0].user_id, "admin-1");
+    assertEquals(connects.length, 1, "o connect que recuperou a sessão continua com 1 trilha só");
+    assertEquals(connects[0].details.recovered, true);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("CA1: falha do insert de auditoria NÃO derruba a ação (fail-open)", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService({ failAudit: true });
+    const res = await handleEvolutionApi(
+      controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200, "a ação deve concluir 200 mesmo com a auditoria falhando");
+    const json = await res.json();
+    assert(!json?.error, `disconnect não pode virar erro por causa da trilha: ${JSON.stringify(json)}`);
+  } finally {
+    await fake.stop();
+  }
+});

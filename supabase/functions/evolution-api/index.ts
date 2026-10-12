@@ -15,6 +15,9 @@ import {
   resolveSessionRoute,
   sessionStateFromV2,
 } from "../_shared/evolution-session-routes.ts";
+// Trilha de auditoria das ações de conexão (formato único, usado também pelo
+// delete-instance — ver _shared/connection-audit.ts).
+import { writeConnectionAuditLog } from "../_shared/connection-audit.ts";
 
 /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
 export interface EvolutionApiDeps {
@@ -35,6 +38,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
   const corsHeaders = getCorsHeaders(req);
 
   const ip = getClientIP(req);
+  const userAgent = req.headers.get('user-agent');
   const rl = checkRateLimit(`evolution:${ip}`, 120, 60_000);
   if (!rl.allowed) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
@@ -515,6 +519,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         });
       }
 
+      // Trilha: quem criou a conexão, qual instância e em qual flavor — sem
+      // número, token ou QR. Falha de auditoria não bloqueia a criação (já
+      // ocorreu no banco e na GO) — o helper só loga.
+      await writeConnectionAuditLog(supabase, {
+        userId: callerUserId,
+        action: 'connection_created',
+        entityId: row.id,
+        details: { instance_id: instance, name: connName, flavor: isGoFlavor ? 'go' : 'v2' },
+        ipAddress: ip,
+        userAgent,
+      });
+
       return new Response(JSON.stringify({ connection: row, evolution: stripInstanceToken(createData) }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -528,6 +544,21 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // poll de /instance/qr, recriação de sessão órfã) — rotas nativas do GO,
       // sem instância no path. O v2 usa /instance/connect/{instance} e devolve
       // o pareamento no PRÓPRIO corpo.
+      // Trilha: no máximo UM registro de `connect` por invocação (o fluxo tem
+      // vários retornos de sucesso) — sem número, token ou QR. Entidade
+      // identificada por instance_id em details.
+      let connectAudited = false;
+      const auditConnectOnce = async (details: Record<string, unknown>): Promise<void> => {
+        if (connectAudited) return;
+        connectAudited = true;
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
+          action: 'connection_connect',
+          details: { instance_id: instance, flavor: isGoFlavor ? 'go' : 'v2', ...details },
+          ipAddress: ip,
+          userAgent,
+        });
+      };
       if (!isGoFlavor) {
         const route = resolveSessionRoute('v2', 'connect', instance);
         const response = await fetch(`${evolutionApiUrl}${route.path}`, {
@@ -548,10 +579,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         const qr = qrFromV2Connect(data);
         if (qr) {
           await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+          await auditConnectOnce({ status: 'qr_pending' });
           return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: qr }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         if (sessionStateFromV2(data) === 'open') {
           await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+          await auditConnectOnce({ status: 'connected' });
           return new Response(JSON.stringify({ ...data, status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         // Mesma convenção dos outros ramos: 200 com error:true (o front lê
@@ -619,6 +652,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       if (qr.base64) {
         await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        await auditConnectOnce({ status: 'qr_pending' });
         return new Response(JSON.stringify({ ...data, status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       // Sem QR após o poll: a instância ou já está logada (reconectou sozinha a
@@ -654,6 +688,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const loggedIn = (isConnected && isLoggedIn) || (!hasInnerFlags && stData.state === 'open');
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+        await auditConnectOnce({ status: 'connected' });
         return new Response(JSON.stringify({ status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       // Sessão órfã: a GO guarda o JID de um device que o celular já desvinculou
@@ -743,6 +778,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           }
           if (healed.base64) {
             await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
+            // Trilha: a recriação destrutiva da instância órfã (apagou o device
+            // store no GO) é registrada à parte do `connect`, que também grava a
+            // própria linha — sem QR nem token.
+            await writeConnectionAuditLog(supabase, {
+              userId: callerUserId,
+              action: 'connection_session_recreated',
+              details: { instance_id: instance, flavor: 'go', go_instance_id: goOrphan.id, reason: 'orphan_session' },
+              ipAddress: ip,
+              userAgent,
+            });
+            await auditConnectOnce({ status: 'qr_pending', recovered: true });
             return new Response(JSON.stringify({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
         }
@@ -853,6 +899,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // Guard: não sobrescrever qr_pending com disconnected — usuário pode ter iniciado
       // novo pareamento enquanto o logout era processado (race entre telas distintas).
       await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance).neq('status', 'qr_pending');
+      // Trilha: quem desconectou e qual instância/flavor — sem número nem token.
+      // (Só no caminho de sucesso: falha do provedor já retornou acima.)
+      await writeConnectionAuditLog(supabase, {
+        userId: callerUserId,
+        action: 'connection_disconnect',
+        details: { instance_id: instance, flavor: isGoFlavor ? 'go' : 'v2' },
+        ipAddress: ip,
+        userAgent,
+      });
       return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -879,25 +934,22 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const deleteBody: { error?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
       if (!deleteBody?.error) {
         await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
-        // Trilha: quem excluiu, o quê e de onde. entity_id é uuid — o id textual
-        // da instância segue em details. Se a trilha falhar, a resposta avisa
-        // (a conexão já foi apagada; esconder isso deixaria exclusão sem rastro).
-        const { error: auditError } = await supabase.from('audit_logs').insert({
-          user_id: callerUserId,
+        // Trilha: mesmo helper/formato das demais ações de conexão. entity_id é
+        // uuid — o id textual da instância e o nome seguem em details. Falha de
+        // auditoria NÃO bloqueia: a conexão já foi apagada e o erro é só logado
+        // (o operador não pode receber erro que sugira que a exclusão falhou).
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
           action: 'connection_deleted',
-          entity_type: 'connection',
-          entity_id: connRow?.id ?? null,
+          entityId: connRow?.id ?? null,
           details: {
             instance_id: instance,
             name: connRow?.name ?? null,
             flavor: isGoFlavor ? 'go' : 'v2',
           },
-          ip_address: ip,
+          ipAddress: ip,
+          userAgent,
         });
-        if (auditError) {
-          console.error('[audit] Falha ao registrar exclusão de conexão', { error: auditError.message, instance });
-          return new Response(JSON.stringify({ error: true, status: 500, message: 'Conexão excluída, mas falhou ao registrar a auditoria.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
