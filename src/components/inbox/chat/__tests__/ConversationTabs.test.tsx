@@ -92,6 +92,21 @@ describe('ConversationTabs', () => {
     expect(within(screen.getByTestId('conversation-tab-history')).getByText('Journey')).toBeInTheDocument();
   });
 
+  it('cada aba tem nome acessível igual ao rótulo abaixo de 1536px (rótulo visual oculto)', () => {
+    // jsdom não carrega o Tailwind: simula `hidden` sem o `2xl:inline`, como em telas < 1536px.
+    const style = document.createElement('style');
+    style.textContent = '.hidden { display: none; }';
+    document.head.appendChild(style);
+    try {
+      setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5 });
+      ['Chat', 'Arquivos', 'IA', 'CRM 360°', 'SalesView', 'Journey', 'Tarefas', 'Notas'].forEach((nome) => {
+        expect(screen.getByRole('tab', { name: nome })).toBeInTheDocument();
+      });
+    } finally {
+      style.remove();
+    }
+  });
+
   it('mantém a ação do canto direito fora da semântica de abas', () => {
     const action = <button type="button">TALK ME</button>;
     render(<ConversationTabs activeTab="chat" onTabChange={vi.fn()} counts={ZERO} trailingAction={action} />);
