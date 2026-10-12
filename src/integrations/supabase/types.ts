@@ -3746,6 +3746,8 @@ export type Database = {
           assigned_to: string | null
           contact_id: string | null
           created_at: string
+          first_reply_at: string | null
+          frt_minutes: number | null
           gmail_account_id: string
           gmail_thread_id: string
           id: string
@@ -3758,6 +3760,7 @@ export type Database = {
           last_message_at: string
           message_count: number
           priority: string
+          sla_status: string | null
           snippet: string
           status: string
           subject: string
@@ -3768,6 +3771,8 @@ export type Database = {
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
+          first_reply_at?: string | null
+          frt_minutes?: number | null
           gmail_account_id: string
           gmail_thread_id: string
           id?: string
@@ -3780,6 +3785,7 @@ export type Database = {
           last_message_at?: string
           message_count?: number
           priority?: string
+          sla_status?: string | null
           snippet?: string
           status?: string
           subject?: string
@@ -3790,6 +3796,8 @@ export type Database = {
           assigned_to?: string | null
           contact_id?: string | null
           created_at?: string
+          first_reply_at?: string | null
+          frt_minutes?: number | null
           gmail_account_id?: string
           gmail_thread_id?: string
           id?: string
@@ -3802,6 +3810,7 @@ export type Database = {
           last_message_at?: string
           message_count?: number
           priority?: string
+          sla_status?: string | null
           snippet?: string
           status?: string
           subject?: string
@@ -10963,6 +10972,19 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      email_business_minutes: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
+      email_sla_summary: {
+        Args: never
+        Returns: {
+          em_risco: number
+          total_threads: number
+          violados: number
+        }[]
+      }
+      email_sla_threshold_minutes: { Args: never; Returns: number }
       encrypt_gmail_token: { Args: { p_token: string }; Returns: string }
       enqueue_ai_job: {
         Args: {
@@ -11831,6 +11853,10 @@ export type Database = {
           p_external_id: string
           p_recipient_id: string
         }
+        Returns: undefined
+      }
+      register_email_first_reply_internal: {
+        Args: { p_responded_at: string; p_thread_id: string }
         Returns: undefined
       }
       register_first_response_internal: {
