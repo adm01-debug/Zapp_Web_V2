@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { ArrowRight, Navigation, Search, MessageSquare, LayoutDashboard } from 'lucide-react';
 
 interface SkipLinkProps {
@@ -21,6 +21,9 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
     e.preventDefault();
     const target = document.querySelector(href);
     if (target) {
+      // Alvos como <main>/<section> não são focáveis por padrão: sem o tabindex=-1
+      // o `.focus()` não movia o foco e o atalho não cumpria o papel.
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
       target.scrollIntoView({ behavior: 'smooth' });
       (target as HTMLElement).focus?.();
     }
@@ -61,22 +64,28 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
 export function SkipLinks() {
   const [showIndicator, setShowIndicator] = useState(false);
   const [availableTargets, setAvailableTargets] = useState<Set<string>>(new Set());
+  const indicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab' && !e.shiftKey) {
         setShowIndicator(true);
-        setTimeout(() => setShowIndicator(false), 3000);
+        if (indicatorTimerRef.current) clearTimeout(indicatorTimerRef.current);
+        indicatorTimerRef.current = setTimeout(() => setShowIndicator(false), 3000);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (indicatorTimerRef.current) clearTimeout(indicatorTimerRef.current);
+    };
   }, []);
 
   // Only render skip-links whose target actually exists in the DOM.
-  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
-  // and on a small interval to catch async-mounted regions.
+  // Targets vary per route (auth vs. dashboard) and can be mounted assíncronamente:
+  // observamos o DOM em vez de sondar a cada 1,5 s (polling desperdiçava ciclo e
+  // atrasava a reação ao alvo que aparece).
   useEffect(() => {
     const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
     const detect = () => {
@@ -90,8 +99,9 @@ export function SkipLinks() {
       });
     };
     detect();
-    const t = window.setInterval(detect, 1500);
-    return () => window.clearInterval(t);
+    const observer = new MutationObserver(detect);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   const has = (id: string) => availableTargets.has(id);

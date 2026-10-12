@@ -28,7 +28,7 @@ export function Sparkline({ data, color = 'currentColor', width = 80, height = 2
   const areaPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
 
   return (
-    <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`}>
+    <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
       <motion.polygon
         points={areaPoints}
         fill={color}
