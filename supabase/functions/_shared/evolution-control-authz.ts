@@ -46,6 +46,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'create-instance',
   'create-connection',
   'connect',
+  // R2-API-016: o pareamento por CÓDIGO (número) também inicia login na
+  // instância — mesmo risco do 'connect' (agent não pode parear aparelho).
+  'pairing-code',
   'delete-instance',
   'restart-instance',
   'disconnect',

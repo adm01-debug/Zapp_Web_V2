@@ -14,7 +14,104 @@ import {
   resolveSessionApiKey,
   resolveSessionRoute,
   sessionStateFromV2,
+  type EvolutionFlavor,
+  type SessionRoute,
 } from "../_shared/evolution-session-routes.ts";
+
+// ─── R2-API-016: pareamento por CÓDIGO (número) ───────────────────────────
+// Helpers puros da ação 'pairing-code', mantidos nesta função (o cartão só
+// permite tocar `supabase/functions/evolution-api/`). Espelham a divisão por
+// flavor do ciclo de sessão (`_shared/evolution-session-routes.ts`): a GO pede
+// o número no corpo do connect; o v2 na query do connect.
+
+export interface PairingRoute extends SessionRoute {
+  /** Corpo do POST — só a GO usa (o v2 leva o número na query). */
+  body?: Record<string, unknown>;
+}
+
+/**
+ * Rota de pareamento por número. O número é reduzido a dígitos
+ * (DDI + DDD + número) antes de sair. GO: `POST /instance/connect` com `phone`
+ * e o webhook reafirmado (autenticado pelo token DA instância). v2:
+ * `GET /instance/connect/{instance}?number=` (chave global).
+ */
+export function resolvePairingRoute(
+  flavor: EvolutionFlavor,
+  instance: string,
+  number: string,
+  webhookUrl?: string,
+): PairingRoute {
+  const digits = number.replace(/\D/g, '');
+  if (flavor === 'v2') {
+    return { method: 'GET', path: `/instance/connect/${instance}?number=${digits}`, auth: 'global' };
+  }
+  return {
+    method: 'POST',
+    path: '/instance/connect',
+    auth: 'instance',
+    body: {
+      subscribe: ['ALL'],
+      immediate: true,
+      ...(webhookUrl ? { webhookUrl } : {}),
+      phone: digits,
+    },
+  };
+}
+
+/**
+ * Código de pareamento da resposta do provedor, ou `null` quando não há.
+ * O payload cru do QR (`2@…`) NÃO é código de pareamento — por isso é recusado.
+ */
+export function pairingCodeFromResponse(flavor: EvolutionFlavor, payload: unknown): string | null {
+  const p = payload as Record<string, unknown> | null | undefined;
+  if (!p) return null;
+  const clean = (v: unknown): string | null => {
+    if (typeof v !== 'string') return null;
+    const t = v.trim();
+    if (!t || t.startsWith('2@')) return null;
+    return t;
+  };
+  if (flavor === 'v2') {
+    return clean(p.pairingCode) ?? clean(p.code);
+  }
+  const data = p.data as Record<string, unknown> | undefined;
+  return clean(data?.code) ?? clean(data?.pairingCode) ?? clean(p.code) ?? clean(p.pairingCode);
+}
+
+/** Formata o código para a tela no padrão `XXXX-XXXX` (8 caracteres). */
+export function formatPairingCode(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (!cleaned) return null;
+  if (cleaned.length <= 4) return cleaned;
+  return cleaned.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+}
+
+/**
+ * Validade do código: `{ expiresInSeconds, expiresAt }`. Usa o que o provedor
+ * informar (`expiresIn`/`expires_in`/`validity` em segundos ou ms); sem essa
+ * informação usa o padrão do pareamento do WhatsApp (60s), preso a 15s–300s —
+ * o mesmo default/clamp que o QR usa no front (detectQrTtlMs).
+ */
+export function pairingValidity(payload: unknown, nowMs: number = Date.now()): { expiresInSeconds: number; expiresAt: string } {
+  const p = payload as Record<string, unknown> | null | undefined;
+  const data = p?.data as Record<string, unknown> | undefined;
+  const pick = (...keys: string[]): number | null => {
+    for (const src of [data, p]) {
+      for (const k of keys) {
+        const v = src?.[k];
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (typeof v === 'string' && v.trim() && !Number.isNaN(Number(v))) return Number(v);
+      }
+    }
+    return null;
+  };
+  let seconds = pick('expiresInSeconds', 'expiresIn', 'expires_in', 'validity');
+  if (seconds !== null && seconds > 1000) seconds = Math.round(seconds / 1000); // veio em ms
+  if (seconds === null) seconds = 60;
+  seconds = Math.min(300, Math.max(15, Math.round(seconds)));
+  return { expiresInSeconds: seconds, expiresAt: new Date(nowMs + seconds * 1000).toISOString() };
+}
 
 /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
 export interface EvolutionApiDeps {
@@ -192,7 +289,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // bloqueadas — reconectar em loop durante um bloqueio tende a estendê-lo.
     // create-instance entra na mesma trava (nasceria conectando outro número
     // durante a mesma janela de risco).
-    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'pairing-code', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
     if (MAINTENANCE_GATED_ACTIONS.has(action)) {
       const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
       const until = maint?.value ? new Date(maint.value) : null;
@@ -715,6 +812,77 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       new Logger('evolution-api').warn('connect: nenhum QR gerado e instância não logada — sessão pendente na GO', { instance });
       return new Response(JSON.stringify({ error: true, status: 409, message: 'A instância não gerou um QR Code novo e a recriação automática da sessão na Evolution GO não resolveu. Verifique se o serviço da Evolution GO está no ar e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (action === 'pairing-code') {
+      // R2-API-016: pareamento por CÓDIGO de 8 dígitos (número internacional) —
+      // alternativa ao QR. Mesma divisão por flavor do ciclo de sessão: o GO pede
+      // pelo `phone` no corpo do connect (autenticado pelo token DA instância);
+      // o v2 pede em /instance/connect/{instance}?number= com a chave global.
+      const rawNumber = body.number ?? body.phone ?? body.numberPhone;
+      const digits = typeof rawNumber === 'string' || typeof rawNumber === 'number'
+        ? String(rawNumber).replace(/\D/g, '')
+        : '';
+      if (!digits) {
+        return new Response(JSON.stringify({ error: true, status: 422, message: 'Informe o número do WhatsApp (DDI + DDD + número) para gerar o código de emparelhamento.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const pairingFlavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
+      const pairingRoute = resolvePairingRoute(
+        pairingFlavor,
+        instance,
+        digits,
+        `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
+      );
+      let pairingKey = evolutionApiKey;
+      if (pairingRoute.auth === 'instance') {
+        // Mesma regra do connect GO: sem o token da instância não pareia (nunca
+        // cai na chave global, que parearia OUTRA conexão).
+        const token = await resolveInstanceToken(supabase, instance);
+        if (!token) {
+          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        pairingKey = token;
+      }
+      const response = await fetch(`${evolutionApiUrl}${pairingRoute.path}`, {
+        method: pairingRoute.method,
+        headers: {
+          'apikey': pairingKey,
+          ...(pairingRoute.body ? { 'Content-Type': 'application/json' } : {}),
+        },
+        ...(pairingRoute.body ? { body: JSON.stringify(pairingRoute.body) } : {}),
+        signal: AbortSignal.timeout(10000),
+      });
+      let data: Record<string, unknown> = {};
+      try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from provider */ }
+      if (!response.ok) {
+        const providerMessage = (data as { message?: unknown }).message;
+        return new Response(JSON.stringify({ error: true, status: response.status, message: typeof providerMessage === 'string' && providerMessage ? providerMessage : 'Falha ao gerar o código de emparelhamento na Evolution API.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      let code = pairingCodeFromResponse(pairingFlavor, data);
+      // A GO emite o pareamento de forma ASSÍNCRONA depois do connect: quando o
+      // corpo não traz o código, lê /instance/qr (`data.code`) por um curto
+      // período — mesmo comportamento observado no QR.
+      if (!code && pairingFlavor === 'go') {
+        for (let i = 0; i < 3 && !code; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          try {
+            const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': pairingKey }, signal: AbortSignal.timeout(5000) });
+            let qrData: Record<string, unknown> = {};
+            try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
+            code = pairingCodeFromResponse('go', qrData);
+          } catch { /* GO indisponível para o poll: segue para o erro explícito */ }
+        }
+      }
+      if (!code) {
+        // Nada de código silencioso: o front ficaria esperando um código que não
+        // existe. Um payload de QR ("2@...") também cai aqui — a GO não expôs o
+        // pareamento por número nessa instância.
+        new Logger('evolution-api').warn('pairing-code: a Evolution não retornou código de emparelhamento', { instance, flavor: pairingFlavor });
+        return new Response(JSON.stringify({ error: true, status: 409, message: 'A Evolution API não retornou o código de emparelhamento. Confira o número informado (DDI + DDD + número) e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const formatted = formatPairingCode(code);
+      await supabase.from('whatsapp_connections').update({ status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+      return new Response(JSON.stringify({ ...data, status: 'qr_pending', pairingCode: formatted, code: formatted, ...pairingValidity(data) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'status') {
