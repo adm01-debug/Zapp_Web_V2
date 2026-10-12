@@ -177,6 +177,9 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     conversation_status: 'open',
     conversation_status_changed_at: null,
     is_lid_legacy: false,
+    // Contato derivado do WhatsApp nao esta no cadastro, entao nao tem selo VIP
+    // (mesmo valor do default da coluna contacts.is_vip).
+    is_vip: false,
   };
 }
 
