@@ -1,63 +1,67 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: worker (design) (design-system-zapp) — cartão nasceu para worker (telas); reatribuído a designer (visual/contraste), área dos arquivos.
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## Ponto 1 da retomada — conflito com a ponta dia/2026-10-12
+Primeiro passo: a branch do workspace nasceu de `63e3556d7`, mas a ponta `dia/2026-10-12` já
+tinha andado 1 commit (`be097e303`, `test(e2e): ajusta fixture arquivos ao locator canônico`).
+`git merge --ff-only dia/2026-10-12` levou a branch a `be097e303`; nenhum conflito, porque o
+commit novo só mexe em `e2e/fixtures/` (fixture da aba Arquivos), fora dos arquivos do E18.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+Causa do conflito da recusa: o trabalho anterior (commit 488313d9f) adicionava o arquivo
+`src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`; a ponta JÁ tem esse
+mesmo caminho (commit 7a20b10b1, SL-020) → conflito adicionar/adicionar.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+Resolvi comparando as duas versões, não escolhendo no escuro:
+- `git diff --stat HEAD 488313d9f -- src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`
+  → `1 file changed, 1 insertion(+), 5 deletions(-)`: a única diferença é comentário/cabeçalho.
+- A versão da PONTA é mais nova e estritamente maior: ela traz o import da fonte única do
+  rótulo (`MEDIA_VOLUME_SLIDER_LABEL`, que consertou a quebra do lote quando o rótulo mudou, S29)
+  e o re-ajuste de 09/10/2026 no cabeçalho; a do trabalho anterior não tem nada a mais.
+- Logo, `git cherry-pick 488313d9f` REGREDIRIA a ponta. Não cherry-piquei: preservei o que já
+  entrou nela, como a recusa mandou.
+- O conflito era só esse add/add (não havia conteúdo do commit 488313d9f faltando na ponta).
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+## Prova de que a lacuna do E18 está fechada nesta ponta (guarda já presente)
+- verde: `npx vitest run src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`
+  → `Test Files  1 passed (1); Tests  12 passed (12)`
+- vermelho (mutei as DUAS correções no sentido inverso e rodei; depois restaurei):
+  `src/components/ui/slider.tsx` trilha `bg-background`→`bg-secondary` (#1582);
+  `src/styles/tokens.css` e `src/components/settings/theme/presets.ts` claro
+  `--muted-foreground` 40%→45% (#1533). Resultado do vitest:
+  `Tests  5 failed | 7 passed (12)` com
+  `AssertionError: muted-foreground sobre muted/50 sobre muted: expected 4.172046135650524 to be greater than or equal to 4.5`
+  e `AssertionError: primary sobre trilha secondary/100: expected 1.298713182999682 to be greater than or equal to 3`
+  (escuro `2.8762233277168883`). Ou seja: o teste reprova exatamente os dois números do
+  inventário (4,17:1 e 1,30/2,88:1) quando a correção é desfeita — não é tautológico.
+  Restaurei com `git checkout --` nas 3 trilhas; `git status --short` voltou vazio.
+- `zapp-verify . --rapido` (rodado DEPOIS do merge da ponta) → `OK db_guard 0s / OK tipos 11s /
+  OK lint 0s / OK migrations 0s`, `VERIFY: VERDE SEM BANCO (11s)`. (O aviso `banco_local NÃO
+  VERIFICADO` é só falta do nome do conjunto; o cartão pede o --rapido e nenhuma trilha de banco
+  foi tocada. O teste do cartão, re-rodado após o merge, também ficou `Test Files 1 passed (1);
+  Tests 12 passed (12)`.)
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Arquivos tocados
+Nenhum arquivo de CÓDIGO. O cartão manda fechar SEM commit de código quando a lacuna já está
+resolvida — e é o caso: os dois pares do E18 foram fechados por #1582/#1533, ambas ANCESTRAIS
+desta ponta. O único commit desta branch é a própria prova (docs), porque o `hermes-tarefa-fechar`
+recusa branch sem commit em relação a dia/2026-10-12; nenhum .ts/.tsx/.css do produto entra nele.
 
 ## O que NÃO fiz e por quê
+- Não cherry-piquei 488313d9f: regrediria a ponta (item do Ponto 1 acima).
+- Achado fora do escopo (registrado em comentário no cartão, não corrigido): o par
+  `text-primary-foreground/70` sobre `--primary` (linhas de metadados de balão ENVIADO) mede
+  3,34:1 no claro, 3,34:1 no escuro, 4,66:1 no alto contraste e 3,39:1 no alto contraste escuro —
+  abaixo de 4,5:1. Ocorrências: `src/components/email/EmailChatBubble.tsx:179`,
+  `src/components/inbox/InteractiveMessage.tsx:102`, `src/components/inbox/LocationMessage.tsx:212`,
+  `src/components/inbox/MediaPreview.tsx:96`, `src/components/inbox/ReplyQuote.tsx:129`,
+  `src/components/inbox/chat/LinkPreviewCard.tsx:75`. É um par DIFERENTE do E18 (E18 lista trilha×faixa
+  do slider e o tempo do balão RECEBIDO) e vive em componentes de outros cartões; por isso não entrou no diff.
+- Não criei teste nem controle novo; a guarda do E18 já existe na ponta (o trabalho anterior e a
+  ponta chegaram ao mesmo arquivo por caminhos independentes).
 
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## Sobre o alerta do juiz barato (Ponto 1)
+O juiz pede prova de merge/cherry-pick NO DIFF de código; ela não existe e não deve existir:
+(a) o merge foi `--ff-only` (a ponta entrou na branch como histórico, sem commit de merge);
+(b) o cherry-pick do 488313d9f foi RECUSADO de propósito, porque regrediria a ponta.
+Como a lacuna já estava fechada, o cartão manda fechar SEM commit de código — o diff de código
+vazio é o desenho do cartão, não uma falta. A prova (comandos e saídas reais) está nas seções
+acima, e teste + `zapp-verify . --rapido` foram re-rodados depois do merge.
