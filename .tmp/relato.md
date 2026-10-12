@@ -12,3 +12,8 @@ NÃO CONCLUÍ: fechamento sem código — a correção exige migration e o cart�
 
 ## O que falta (dono: Joaquim)
 - Autorizar ou recusar a migration de repositório (banco local + futuro deploy; produção nunca tocada por este cartão). Se autorizar, o commit removido pode ser reaplicado do histórico da branch.
+
+## Sobre os avisos do juiz (2a rodada)
+- Pontos 1 e 2 (reabertura via ingest_inbound_message; seed t_ IN seed_peer_user_message_stale_resolved_when_inbound_later_arrives): o cenário do seed é exatamente o bloco B do teste (contato resolved + inbound posterior => open); foi provado no commit 5b020d411cb2c9e54beec7b10211d070cea40a32 e removido do diff final pela proibição de migration. Falta = decisão do Joaquim.
+- Ponto 3 (arquivos do projeto em docs): nenhum arquivo de projeto foi criado; só migration/teste/scripts (removidos do diff final) e .tmp/relato.md (scratch do workspace).
+- Ponto 4 (check-test-inventory.mjs): revertido com git checkout; o diff final não o contém — constava só no commit intermediário removido.
