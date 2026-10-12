@@ -12,10 +12,31 @@ import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { QuarantineMonitorProvider } from "@/providers/QuarantineMonitorProvider";
 import { CallSessionProvider } from "@/providers/CallSessionProvider";
+import { useConnectionDropAlerts } from "@/hooks/connections/useConnectionDropAlerts";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 const log = getLogger('AppProviders');
 
 const MAX_RETRIES = 3;
+
+/**
+ * Aviso global de queda de conexão (toast + notificação do navegador).
+ *
+ * Vive no nível do app, dentro de QueryClient/AuthProvider, para valer em QUALQUER tela:
+ * antes, só o Monitoramento (useMonitoringNotifications) avisava — e apenas com a view aberta.
+ * Sem sessão (tela de login) o vigia nem monta, para não consultar/assinar o banco à toa.
+ * Renderiza `null`: é um portador de efeito.
+ */
+function ConnectionDropAlertsRunner() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <ActiveConnectionDropAlerts />;
+}
+
+function ActiveConnectionDropAlerts() {
+  useConnectionDropAlerts();
+  return null;
+}
 
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -75,6 +96,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
               <TooltipProvider delayDuration={300}>
                 <ThemeSync />
                 <ThemeInitializer />
+                <ConnectionDropAlertsRunner />
                 <QuarantineMonitorProvider>
                   <CallSessionProvider>
                     {children}
