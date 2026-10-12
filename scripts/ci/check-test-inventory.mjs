@@ -98,6 +98,10 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // N-016 (P2 · CI/DevOps): prova que o passo de replay existe em db-guard.yml e roda
+  // replay-local.sh (offline, sem docker nem banco; reaproveita o harness para exit 0/1/2).
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/replay-local-ci.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
