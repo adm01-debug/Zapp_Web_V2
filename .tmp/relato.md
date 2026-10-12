@@ -1,63 +1,35 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: iris
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- `src/components/ui/chart.tsx`: acrescentei `sanitizeCssIdent` (remove tudo fora de `[\w-]`) e
+  `sanitizeCssValue` (aceita só `[\w#(),.%\s-]`) e passei a aplicar o saneamento ao `id` do gráfico,
+  à chave do `ChartConfig` e ao valor de cor/tema dentro de `ChartStyle`, que monta o CSS por
+  `dangerouslySetInnerHTML`. Antes esses três trechos eram interpolados crus no CSS — é a lacuna que a
+  V3 (`~/projetos/Zapp_Web_V3/src/components/ui/chart.tsx:71-93`) já fecha; porte do comportamento, mesma
+  regra de caracteres. A API pública do `ChartContainer` não mudou.
+- `src/components/ui/__tests__/chart.test.tsx`: teste novo (4 casos) provando que injeção por id, chave e
+  cor não aparece no HTML gerado e que as cores reais do projeto continuam intactas.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+Consumidores conferidos por grep antes de fechar a lista de caracteres: hoje só o `AIStatsWidget` passa
+`ChartConfig` para `ChartContainer` (`hsl(var(--primary))`, `hsl(var(--success))`, `hsl(var(--destructive))`)
+— todos preservados. Cores com `/` (ex. `hsl(var(--muted-foreground) / 0.4)`) existem no projeto apenas em
+`fill`/`stroke` diretos do Recharts, nunca em `ChartConfig`, portanto não passam pelo `ChartStyle` e não são
+afetadas.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
+- vermelho antes: `npx vitest run src/components/ui/__tests__/chart.test.tsx` → `Tests 3 failed | 1 passed (4)`
+  (falhavam os casos de id com aspas, chave com `;}body{display:none}` e cor com `</style><script>`).
+- verde depois: `npx vitest run src/components/ui/__tests__/chart.test.tsx` →
+  `Test Files 1 passed (1); Tests 4 passed (4)`.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+Casos do teste (nome de cada um):
+1. `mantém intactas as cores reais do design system` — hsl(var(--primary)), hsl(var(--success)), #fff,
+   oklch(0.7 0.15 250) saem iguais.
+2. `não deixa o id com aspas quebrar o seletor de atributo` — id `chart"]}body{color:red}` vira `chartbodycolorred`.
+3. `não deixa a chave do config injetar regra CSS` — chave `;}body{display:none}` não injeta regra.
+4. `não deixa o valor da cor escapar com url(javascript:)` — sem `<script>`, `</style>` nem `javascript:`.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não exportei `sanitizeCssIdent`/`sanitizeCssValue`: o teste prova pelo componente real `ChartStyle`
+  (já exportado), sem ampliar a API.
+- Mantive a regra de caracteres idêntica à da V3 (sem `/`), como o cartão pede.
