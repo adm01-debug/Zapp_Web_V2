@@ -118,8 +118,9 @@ describe('TalkXSuppression · listagem no servidor (X178)', () => {
   it('mostra no rodapé o total DO SERVIDOR, não o da página', async () => {
     wrap(<TalkXSuppression />);
     expect(await screen.findByText('Mostrando 1 a 10 de 4.892 contatos suprimidos')).toBeTruthy();
-    // A primeira página pediu exatamente o primeiro lote.
-    expect(h.ranges[0]).toEqual([0, 9]);
+    // A primeira página pediu exatamente o primeiro lote (o card de atividade
+    // também lê por `range`, de 5 em 5, na mesma tela).
+    expect(h.ranges).toContainEqual([0, 9]);
   });
 
   it('a segunda página pede range(10, 19) ao servidor', async () => {
@@ -159,7 +160,8 @@ describe('TalkXSuppression · listagem no servidor (X178)', () => {
     h.error = { code: '42501', message: 'permission denied for table talkx_blacklist' };
     wrap(<TalkXSuppression />);
     expect(await screen.findByText(/não tem permissão para ver a lista de supressão/i)).toBeTruthy();
-    expect(screen.queryByText(/Não foi possível carregar/)).toBeNull();
+    // Só o erro da LISTA: o card de atividade do rail compartilha o mock e tem o seu próprio aviso.
+    expect(screen.queryByText(/Não foi possível carregar as /)).toBeNull();
     expect(screen.queryByText('Nenhum contato na lista de supressão')).toBeNull();
   });
 });

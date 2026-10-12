@@ -46,20 +46,76 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   ];
 
-  const chain = (data: unknown[]) => {
+  type Row = (typeof rows)[number];
+  const like = (value: string | null | undefined, pattern: string) =>
+    (value ?? '').toLowerCase().includes(pattern.replace(/%/g, '').replace(/^"|"$/g, '').toLowerCase());
+
+  // Imita o PostgREST no que a busca usa: `.or()` do pai (phone/contact_id) e
+  // `.or()` do embed com `!inner` (restringe o pai pelo contato).
+  const blacklistChain = () => {
+    const parentOrs: string[] = [];
+    const embedOrs: string[] = [];
     const self: Record<string, unknown> = {};
     self.select = () => self;
     self.is = () => self;
-    self.not = () => self;
     self.eq = () => self;
-    self.order = () => Promise.resolve({ data, error: null });
-    self.limit = () => Promise.resolve({ data, error: null });
+    self.ilike = () => self;
+    self.or = (filter: string, opts?: { referencedTable?: string }) => {
+      (opts?.referencedTable ? embedOrs : parentOrs).push(filter);
+      return self;
+    };
+    self.order = () => self;
+    self.range = () => {
+      let out: Row[] = rows;
+      for (const f of parentOrs) {
+        out = out.filter((r) => f.split(/,(?=phone\.|contact_id\.)/).some((part) => {
+          if (part.startsWith('phone.ilike.')) return like(r.phone, part.slice('phone.ilike.'.length));
+          if (part.startsWith('contact_id.in.(')) return part.slice('contact_id.in.('.length, -1).split(',').includes(r.contact_id ?? '');
+          return false;
+        }));
+      }
+      for (const f of embedOrs) {
+        out = out.filter((r) => f.split(',').some((part) => {
+          const [field, , ...pattern] = part.split('.');
+          const c = r.contacts as { name?: string; email?: string } | null;
+          return like(c?.[field as 'name' | 'email'], pattern.join('.'));
+        }));
+      }
+      return Promise.resolve({ data: out, error: null, count: out.length });
+    };
+    return self;
+  };
+
+  const contactsChain = () => {
+    let pattern = '';
+    const self: Record<string, unknown> = {};
+    self.select = () => self;
+    self.not = () => self;
+    self.ilike = (_col: string, p: string) => { pattern = p; return self; };
+    self.order = () => self;
+    self.limit = () => Promise.resolve({
+      data: like('+5511977776666', pattern) ? [{ id: 'c1' }] : [],
+      error: null,
+    });
+    return self;
+  };
+
+  const emptyChain = () => {
+    const self: Record<string, unknown> = {};
+    for (const m of ['select', 'is', 'not', 'eq', 'in', 'gte', 'lte', 'order', 'ilike', 'or']) self[m] = () => self;
+    self.range = () => Promise.resolve({ data: [], error: null, count: 0 });
+    self.limit = () => Promise.resolve({ data: [], error: null });
+    self.then = (res: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null, count: 0 }).then(res);
     return self;
   };
 
   return {
     supabase: {
-      from: (table: string) => (table === 'talkx_blacklist' ? chain(rows) : chain([])),
+      from: (table: string) => {
+        if (table === 'talkx_blacklist') return blacklistChain();
+        if (table === 'contacts') return contactsChain();
+        return emptyChain();
+      },
     },
   };
 });
@@ -99,10 +155,11 @@ describe('TalkXSuppression — supressão só por telefone (#406)', () => {
     wrap(<TalkXSuppression />);
 
     // A linha do bloqueio por telefone (sem contato vinculado) tem de identificar o número.
-    expect(await screen.findByText('+5511988887777')).toBeTruthy();
+    // (a tela formata o número e o mostra no bloco do contato e na coluna Telefone)
+    expect((await screen.findAllByText('+55 11 98888-7777')).length).toBeGreaterThan(0);
     // E as duas linhas coexistem (a do contato continua com a dela).
     expect(screen.getByText('Ana Souza')).toBeTruthy();
-    expect(screen.getByText('+5511977776666')).toBeTruthy();
+    expect(screen.getAllByText('+55 11 97777-6666').length).toBeGreaterThan(0);
   });
 
   it('encontra pela busca: digitar o telefone filtra até a linha suprimida', async () => {
@@ -113,7 +170,7 @@ describe('TalkXSuppression — supressão só por telefone (#406)', () => {
       // A busca foi aplicada (a linha do outro telefone saiu)…
       expect(screen.queryByText('Ana Souza')).toBeNull();
       // …e a linha bloqueada só por telefone PERMANECE.
-      expect(screen.getByText('+5511988887777')).toBeTruthy();
+      expect(screen.getAllByText('+55 11 98888-7777').length).toBeGreaterThan(0);
     }, { timeout: 3000 });
     expect(screen.queryByText('Nenhum resultado')).toBeNull();
   });
@@ -124,7 +181,7 @@ describe('TalkXSuppression — supressão só por telefone (#406)', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Ana Souza')).toBeTruthy();
-      expect(screen.queryByText('+5511988887777')).toBeNull();
+      expect(screen.queryByText('+55 11 98888-7777')).toBeNull();
     }, { timeout: 3000 });
   });
 
@@ -135,6 +192,6 @@ describe('TalkXSuppression — supressão só por telefone (#406)', () => {
     // 'ana 5' não casa nenhum dos dois registros; em especial NÃO pode revelar o
     // bloqueio por telefone só porque o dígito 5 aparece dentro do número.
     await waitFor(() => expect(screen.getByText('Nenhum resultado')).toBeTruthy(), { timeout: 3000 });
-    expect(screen.queryByText('+5511988887777')).toBeNull();
+    expect(screen.queryByText('+55 11 98888-7777')).toBeNull();
   });
 });

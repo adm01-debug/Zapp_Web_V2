@@ -97,18 +97,69 @@ describe('fetchSuppressionPage', () => {
     expect(mockChain.calls.or).toEqual([]);
   });
 
-  it('com busca: embed contacts!inner e um único .or() restrito ao embed por referencedTable', async () => {
-    await fetchSuppressionPage({ page: 1, pageSize: 10, search: '119' });
+  it('busca por nome/e-mail: embed contacts!inner e um único .or() restrito ao embed por referencedTable', async () => {
+    await fetchSuppressionPage({ page: 1, pageSize: 10, search: ' ana ' });
     expect(mockChain.calls.select[0][0]).toContain('contacts:contact_id!inner(');
     expect(mockChain.calls.or).toHaveLength(1);
     const [filter, opts] = mockChain.calls.or[0];
     expect(opts).toEqual({ referencedTable: 'contacts' });
-    expect(filter).toContain('name.ilike."%119%"');
-    expect(filter).toContain('email.ilike."%119%"');
-    expect(filter).toContain('phone.ilike."%119%"');
+    expect(filter).toBe('name.ilike."%ana%",email.ilike."%ana%"');
     // Nada de coluna do pai nem prefixo de embed misturado no mesmo .or().
+    expect(filter).not.toContain('phone.');
     expect(filter).not.toContain('reason.');
     expect(filter).not.toContain('contacts.');
+  });
+
+  it('busca com cara de telefone: filtra o phone do PAI (linha só-telefone não tem contato) e os contatos de mesmo telefone', async () => {
+    mockChain.state.results = { contacts: { data: [{ id: 'c1' }, { id: 'c2' }], error: null } };
+    await fetchSuppressionPage({ page: 1, pageSize: 10, search: '(11) 98888-7777' });
+    // Sem !inner: a linha só-telefone, sem contato, não pode sumir do resultado.
+    expect(mockChain.calls.select.find(([cols]) => cols.includes('contacts:contact_id('))).toBeTruthy();
+    expect(mockChain.calls.select.some(([cols]) => cols.includes('!inner'))).toBe(false);
+    // Os dígitos do termo casam os contatos pelo telefone...
+    expect(mockChain.calls.ilike).toContainEqual(['phone', '%11988887777%']);
+    // ...e o único .or() fica só em colunas do pai, sem referencedTable.
+    expect(mockChain.calls.or).toEqual([
+      ['phone.ilike."%11988887777%",contact_id.in.(c1,c2)', undefined],
+    ]);
+  });
+
+  it('busca com cara de telefone sem contato casado: só o phone do pai', async () => {
+    await fetchSuppressionPage({ page: 1, pageSize: 10, search: '98888' });
+    expect(mockChain.calls.or).toEqual([['phone.ilike."%98888%"', undefined]]);
+  });
+
+  it('busca com dígito misturado a texto não é busca de telefone', async () => {
+    await fetchSuppressionPage({ page: 1, pageSize: 10, search: 'ana 5' });
+    expect(mockChain.calls.select[0][0]).toContain('contacts:contact_id!inner(');
+    expect(mockChain.calls.or[0][1]).toEqual({ referencedTable: 'contacts' });
+  });
+
+  it('propaga o erro da busca de contatos por telefone', async () => {
+    mockChain.state.results = { contacts: { data: null, error: new Error('falha em contacts') } };
+    await expect(fetchSuppressionPage({ page: 1, pageSize: 10, search: '9888' })).rejects.toThrow('falha em contacts');
+  });
+
+  it('propaga o erro da listagem', async () => {
+    mockChain.state.results = { talkx_blacklist: { data: null, error: new Error('42501'), count: null } };
+    await expect(fetchSuppressionPage({ page: 1, pageSize: 10 })).rejects.toThrow('42501');
+  });
+
+  it('devolve o total do servidor e a linha normalizada com a situação derivada', async () => {
+    mockChain.state.results = {
+      talkx_blacklist: {
+        data: [{
+          id: 'bl-1', contact_id: null, phone: '5511988887777', reason: null, reason_code: null, origin: 'manual',
+          campaign_id: null, blocked_by: null, removed_by: null, removed_at: null, expires_at: '2020-01-01T00:00:00.000Z',
+          created_at: '2026-10-01T10:00:00.000Z', contacts: null, campaign: null,
+        }],
+        error: null,
+        count: 4892,
+      },
+    };
+    const page = await fetchSuppressionPage({ page: 1, pageSize: 10 });
+    expect(page.total).toBe(4892);
+    expect(page.rows[0]).toMatchObject({ id: 'bl-1', phone: '5511988887777', contact_name: null, status: 'expirado' });
   });
 });
 
