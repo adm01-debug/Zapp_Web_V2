@@ -10374,6 +10374,28 @@ export type Database = {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
       }
+      admin_email_accounts_health: {
+        Args: never
+        Returns: {
+          conta: string
+          criado_em: string
+          dono_email: string
+          dono_nome: string
+          dono_user_id: string
+          em_falha: boolean
+          falhas_recentes: string
+          gmail_account_id: string
+          is_active: boolean
+          sync_status: string
+          tem_access_token: boolean
+          tem_refresh_token: boolean
+          token_expires_at: string
+          token_status: string
+          ultima_validacao: string
+          ultimo_sincronismo: string
+          watch_expiration: string
+        }[]
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
