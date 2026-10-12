@@ -132,8 +132,8 @@ assert_eq '4. PUBLIC sem EXECUTE' 'false' \
 assert_eq '4. search_path fixado' '{"search_path=public, pg_temp"}' \
   "$(psql_val "SELECT proconfig::text FROM pg_proc WHERE oid='public.talkx_campaign_segment_progress(uuid)'::regprocedure")"
 
-# Rollback do cabecalho
-rb="$(sed -n '1p' "$migration" | sed 's/^-- Rollback: //')"
+# Rollback do cabecalho (linha '--   <sql>' do bloco 'Rollback (SQL executável')
+rb="$(grep -m1 '^--   ' "$migration" | sed 's/^--   //')"
 psql_exec -c "$rb" >/dev/null || fail 'rollback do cabecalho nao executou'
 assert_eq '5. apos o rollback a funcao some' 'false' \
   "$(psql_val "SELECT (to_regprocedure('public.talkx_campaign_segment_progress(uuid)') IS NOT NULL)::text")"

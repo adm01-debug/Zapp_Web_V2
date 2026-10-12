@@ -1,5 +1,7 @@
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_segment_progress(uuid);
--- (a funcao e nova: nao ha corpo anterior a restaurar; nenhum dado e alterado)
+-- talkx_campaign_segment_progress
+-- Rollback: funcao nova, dropada no rollback; nenhum dado e alterado, nada a restaurar.
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_campaign_segment_progress(uuid);
 --
 -- N-096 / X142 (parte 1): progresso da campanha por segmento, na ordem de envio.
 -- Marcador interno: talkx_campaign_segment_progress
