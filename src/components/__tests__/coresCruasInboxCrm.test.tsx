@@ -344,7 +344,7 @@ describe('TeamConversationList — o avatar pinta por token', () => {
     const html = container.innerHTML;
     expect(html).toContain('bg-primary/15');
     expect(html).toContain('bg-success/15');
-    expect(html).toContain('bg-dash-violet/15');
+    expect(html).toContain('bg-violeta/15');
     expect(html).not.toMatch(/bg-(blue|purple|green)-100/);
   });
 });

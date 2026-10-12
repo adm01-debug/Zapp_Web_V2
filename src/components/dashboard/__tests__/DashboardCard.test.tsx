@@ -179,8 +179,7 @@ const TOKEN_DA_CLASSE: Record<string, string> = {
   'dash-green': 'dash-green',
   'dash-red': 'dash-red',
   'dash-amber': 'dash-amber',
-  'dash-violet': 'dash-violet',
-  'dash-tile-violet': 'dash-tile-violet',
+  'violeta': 'violeta',
 };
 const TAMANHOS_DE_TEXTO = new Set([
   '2xs', '3xs', 'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl',
@@ -224,7 +223,7 @@ const TONS = [
   { tom: 'success', rotulo: 'Concluída', claro: 'success', escuro: 'success' },
   { tom: 'danger', rotulo: 'Cancelada', claro: 'destructive-text', escuro: 'destructive-text' },
   { tom: 'warning', rotulo: 'Pausada', claro: 'warning-text', escuro: 'warning-text' },
-  { tom: 'violet', rotulo: 'Agendada', claro: 'dash-tile-violet', escuro: 'dash-violet' },
+  { tom: 'violet', rotulo: 'Agendada', claro: 'violeta-text', escuro: 'violeta-text' },
   { tom: 'muted', rotulo: 'Rascunho', claro: 'muted-foreground', escuro: 'muted-foreground' },
 ] as const;
 

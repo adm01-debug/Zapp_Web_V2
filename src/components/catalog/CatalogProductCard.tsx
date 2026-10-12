@@ -454,7 +454,7 @@ export function CatalogProductCard({
 
           {/* is_kit top-right (quando sem favorito) */}
           {product.is_kit && !onToggleFavorite && (
-            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[hsl(var(--badge-new))] text-primary-foreground">
+            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-violeta text-violeta-foreground">
               Kit
             </span>
           )}

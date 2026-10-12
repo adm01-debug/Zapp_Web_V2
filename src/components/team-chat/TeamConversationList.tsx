@@ -156,7 +156,7 @@ export function TeamConversationList({
                     <AvatarFallback className={cn(
                       'text-xs font-semibold',
                       conv.type === 'direct' ? 'bg-primary/15 text-[hsl(var(--primary-text))]' :
-                      conv.department_id ? 'bg-dash-violet/15 text-[hsl(var(--dash-tile-violet))] dark:bg-dash-violet/10 dark:text-dash-violet' :
+                      conv.department_id ? 'bg-violeta/15 text-[hsl(var(--violeta-text))] dark:bg-violeta/10 dark:text-[hsl(var(--violeta-text))]' :
                       'bg-success/15 text-success'
                     )}>
                       {conv.type === 'direct'

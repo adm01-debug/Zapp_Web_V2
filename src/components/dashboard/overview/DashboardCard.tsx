@@ -48,7 +48,7 @@ const sectionTileColor = {
   blue: 'bg-dash-tile-blue',
   red: 'bg-dash-tile-red',
   green: 'bg-dash-tile-green',
-  violet: 'bg-dash-tile-violet',
+  violet: 'bg-violeta',
   amber: 'bg-dash-tile-amber',
 } as const;
 
@@ -82,7 +82,7 @@ export function SectionHeader({ icon: Icon, title, subtitle, tileSize, right, si
             tileSize === 44 ? 'w-11 h-11' : 'w-[34px] h-[34px]',
           )}
         >
-          <Icon className={tileSize === 44 ? 'w-5 h-5 text-white/90' : 'w-4 h-4 text-white/90'} />
+          <Icon className={cn(tileSize === 44 ? 'w-5 h-5' : 'w-4 h-4', tileColor === 'violet' ? 'text-violeta-foreground' : 'text-white/90')} />
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -181,14 +181,14 @@ export function CardSelect({ value, onValueChange, options, testid, name }: Card
    preenchimento). No claro `--dash-*`/`--primary-glow` são tons de fundo escuro e como
    texto sobre o card mediam 1,6:1–3,6:1; os pares de texto (`--primary-text`,
    `--warning-text`, `--destructive-text`, `--success`) fecham ≥4,5:1 nos dois temas.
-   O violeta não tem par de texto no sistema: usa o violeta escuro no claro e a tinta
-   do próprio tom a /10 no escuro (a /15 dava 4,35:1 sobre o card escuro). */
+   O violeta usa o par de categoria `--violeta`/`--violeta-text` (t_f3f17002), que fecha AA
+   nos dois temas; a tinta do pill segue /15 no claro e /10 no escuro (t_290f3cdc). */
 const pillTone = {
   success: 'bg-dash-green/15 text-success',
   danger: 'bg-dash-red/15 text-[hsl(var(--destructive-text))]',
   warning: 'bg-dash-amber/15 text-[hsl(var(--warning-text))]',
   info: 'bg-primary/15 text-[hsl(var(--primary-text))]',
-  violet: 'bg-dash-violet/15 text-[hsl(var(--dash-tile-violet))] dark:bg-dash-violet/10 dark:text-dash-violet',
+  violet: 'bg-violeta/15 text-[hsl(var(--violeta-text))] dark:bg-violeta/10 dark:text-[hsl(var(--violeta-text))]',
   muted: 'bg-muted/60 text-muted-foreground',
 } as const;
 
@@ -210,7 +210,7 @@ export function Pill({ label, tone, dot, className }: PillProps) {
   );
 }
 
-const avatarHue = ['bg-dash-tile-blue', 'bg-dash-tile-green', 'bg-dash-tile-violet', 'bg-dash-tile-amber', 'bg-dash-tile-red'] as const;
+const avatarHue = ['bg-dash-tile-blue', 'bg-dash-tile-green', 'bg-violeta', 'bg-dash-tile-amber', 'bg-dash-tile-red'] as const;
 
 interface InitialsAvatarProps {
   name: string;
@@ -232,7 +232,7 @@ export function InitialsAvatar({ name, size = 32, src, className }: InitialsAvat
   return (
     <span
       style={{ width: size, height: size }}
-      className={cn('rounded-full flex items-center justify-center font-bold text-white shrink-0', bg, font, className)}
+      className={cn('rounded-full flex items-center justify-center font-bold shrink-0', bg === 'bg-violeta' ? 'text-violeta-foreground' : 'text-white', bg, font, className)}
       aria-label={name}
     >
       {initials}
@@ -295,7 +295,7 @@ export function GhostButton({ children, onClick, icon: Icon, className, title, s
 
 /** Barra de progresso fina dos mockups (h-1.5/h-2, fundo muted, fill colorido). */
 export function ProgressBar({ value, tone = 'info', className, height = 6 }: { value: number; tone?: keyof typeof pillTone; className?: string; height?: 4 | 6 | 8 }) {
-  const fill = { success: 'bg-dash-green', danger: 'bg-dash-red', warning: 'bg-dash-amber', info: 'bg-primary', violet: 'bg-dash-violet', muted: 'bg-muted-foreground' }[tone];
+  const fill = { success: 'bg-dash-green', danger: 'bg-dash-red', warning: 'bg-dash-amber', info: 'bg-primary', violet: 'bg-violeta', muted: 'bg-muted-foreground' }[tone];
   const pct = Math.max(0, Math.min(100, value));
   return (
     <div className={cn('w-full rounded-full bg-muted/50 overflow-hidden', className)} style={{ height }}>

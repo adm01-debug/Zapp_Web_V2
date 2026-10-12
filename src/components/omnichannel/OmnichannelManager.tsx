@@ -26,7 +26,7 @@ const ChannelRoutingRules = lazy(() => import('./ChannelRoutingRules').then(m =>
 const channelConfig = {
   // Tonalidades distintas por canal: sem três ícones caindo na mesma matiz azulada.
   whatsapp: { label: 'WhatsApp', icon: MessageSquare, color: 'text-success', bg: 'bg-success/10' },
-  instagram: { label: 'Instagram', icon: Instagram, color: 'text-dash-violet', bg: 'bg-dash-violet/10' },
+  instagram: { label: 'Instagram', icon: Instagram, color: 'text-[hsl(var(--violeta-text))]', bg: 'bg-violeta/10' },
   telegram: { label: 'Telegram', icon: Send, color: 'text-info', bg: 'bg-info/10' },
   messenger: { label: 'Messenger', icon: MessagesSquare, color: 'text-streak', bg: 'bg-streak/10' },
   webchat: { label: 'Web Chat', icon: Globe, color: 'text-warning', bg: 'bg-warning/10' },

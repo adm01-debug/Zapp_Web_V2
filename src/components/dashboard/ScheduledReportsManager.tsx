@@ -32,7 +32,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 };
 const TYPE_TILES: Record<string, string> = {
   performance: 'bg-dash-tile-green', satisfaction: 'bg-dash-tile-red',
-  sla: 'bg-dash-tile-violet', conversations: 'bg-dash-tile-amber',
+  sla: 'bg-violeta', conversations: 'bg-dash-tile-amber',
   agents: 'bg-dash-tile-blue', full: 'bg-dash-tile-blue',
 };
 const TEMPLATES = [
@@ -146,7 +146,7 @@ export function ScheduledReportsManager() {
                 return (
                   <div key={cfg.id} className="flex items-center gap-4 py-3.5">
                     <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', TYPE_TILES[cfg.report_type] ?? 'bg-dash-tile-blue')}>
-                      <Ico className="w-5 h-5 text-white" />
+                      <Ico className={cn('w-5 h-5', TYPE_TILES[cfg.report_type] === 'bg-violeta' ? 'text-violeta-foreground' : 'text-white')} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export function ScheduledReportsManager() {
                 return (
                   <button key={t.key} onClick={() => openCreate(t.key)} className="w-full flex items-center gap-3 h-16 rounded-xl border border-border/60 bg-input/20 hover:bg-muted/40 hover:border-primary/40 transition-colors px-3 text-left">
                     <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', TYPE_TILES[t.key] ?? 'bg-dash-tile-blue')}>
-                      <Ico className="w-5 h-5 text-white" />
+                      <Ico className={cn('w-5 h-5', TYPE_TILES[t.key] === 'bg-violeta' ? 'text-violeta-foreground' : 'text-white')} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-foreground truncate">{t.label}</div>
