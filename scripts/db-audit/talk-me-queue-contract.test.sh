@@ -7,8 +7,9 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
 hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
-pending_migration="$repo_root/supabase/migrations/20261005213751_talk_me_list_pending_messages.sql"
-pending_origins_migration="$repo_root/supabase/migrations/20261005231504_talk_me_pending_history_origins.sql"
+provenance_trigger_migration="$repo_root/supabase/migrations/20261006114108_r2_db_022_provenance_trigger.sql"
+pending_migration="$repo_root/supabase/migrations/20261011010000_talk_me_list_pending_messages.sql"
+pending_origins_migration="$repo_root/supabase/migrations/20261011010100_talk_me_pending_history_origins.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
 tmp_dir="$(mktemp -d)"
@@ -47,8 +48,17 @@ command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
 [[ -f "$hardening_migration" ]] || fail "migration nao encontrada: $hardening_migration"
+[[ -f "$provenance_trigger_migration" ]] || fail "migration nao encontrada: $provenance_trigger_migration"
 [[ -f "$pending_migration" ]] || fail "migration nao encontrada: $pending_migration"
 [[ -f "$pending_origins_migration" ]] || fail "migration nao encontrada: $pending_origins_migration"
+
+provenance_version="$(basename "$provenance_trigger_migration" | cut -d_ -f1)"
+pending_version="$(basename "$pending_migration" | cut -d_ -f1)"
+pending_origins_version="$(basename "$pending_origins_migration" | cut -d_ -f1)"
+[[ "$pending_version" > "$provenance_version" ]] || fail "migration de historico pendente deve ser posterior ao trigger de proveniencia"
+[[ "$pending_origins_version" > "$provenance_version" ]] || fail "migration de origens do historico pendente deve ser posterior ao trigger de proveniencia"
+printf '[PASS] A0 migrations do historico pendente ficam depois do trigger de proveniencia
+'
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -173,6 +183,7 @@ SQL
 psql_file "$tmp_dir/pre.sql"
 psql_file "$migration"
 psql_file "$hardening_migration"
+psql_file "$provenance_trigger_migration"
 psql_file "$pending_migration"
 psql_file "$pending_origins_migration"
 

@@ -39,6 +39,20 @@
 -- as notas internas entram apenas a partir da primeira mensagem pendente. Assim,
 -- historico antigo nao vaza para o bloco atual e as tres origens chegam ao cliente.
 
+DO $$
+BEGIN
+  IF to_regclass('public.messages') IS NULL
+     OR NOT EXISTS (
+       SELECT 1
+       FROM pg_trigger t
+       WHERE t.tgrelid = 'public.messages'::regclass
+         AND t.tgname = 'trg_guard_message_provenance_fields'
+         AND NOT t.tgisinternal
+     ) THEN
+    RAISE EXCEPTION 'talk_me_pending_history_requires_provenance_trigger';
+  END IF;
+END $$;
+
 CREATE OR REPLACE FUNCTION public.talk_me_list_pending_messages(
   p_contact_id uuid,
   p_limit integer DEFAULT 50
