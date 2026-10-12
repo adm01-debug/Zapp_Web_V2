@@ -9,11 +9,21 @@ Especialista: Edgar (area-edge-api)
 - Para quem chama: `requireAuth` passa a fazer 1 leitura extra (`profiles.is_active` por `user_id`, igualdade exata)
   por requisição autenticada. Usuário ativo não percebe mudança.
 
+## Diff do cartão (os dois commits — medidos pelo fechar)
+17 arquivos, 14 deles de teste, 14 casos de teste novos. Arquivos:
+- `.tmp/relato.md`
+- `supabase/functions/auth-login/index.ts` e `supabase/functions/auth-login/index.test.ts`
+- `supabase/functions/_shared/validation.ts`
+- `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts` (8 casos novos)
+- 12 testes de outras Edges: `ai-proxy`, `classify-emoji`, `classify-sticker`, `classify-audio-meme`,
+  `elevenlabs-dialogue`, `elevenlabs-sts`, `elevenlabs-voice-design`, `fetch-link-preview`, `crm-integration`,
+  `multiplix-voices`, `multiplix-audience`, `ai-kb-ingest` (`index.test.ts` de cada)
+
 ## O que mudou e por quê
-- `supabase/functions/auth-login/index.ts` (+`index.test.ts`): o login resolve o perfil por `signIn.user.id` (igualdade
-  exata, sem `ilike`) e, se o perfil estiver ausente/inativo/`null`, revoga a sessão recém-criada, registra a falha
-  (`record_failed_login`) e devolve o MESMO 401/corpo da senha errada — sem oráculo. Erro na consulta → revoga e 500
-  (fail-closed). Essa parte já estava deitada no commit `a1fc5fe75`, herdado desta retentativa.
+- `supabase/functions/auth-login/index.ts` (+`index.test.ts`, commit `a1fc5fe75`, herdado desta retentativa): o login
+  resolve o perfil por `signIn.user.id` (igualdade exata, sem `ilike`) e, se o perfil estiver ausente/inativo/`null`,
+  revoga a sessão recém-criada, registra a falha (`record_failed_login`) e devolve o MESMO 401/corpo da senha errada —
+  sem oráculo. Erro na consulta → revoga e 500 (fail-closed).
 - `supabase/functions/_shared/validation.ts`: `requireAuth` ganhou a trava R2-AUTH-004 — DEPOIS da autenticação e da
   política de rede, lê `profiles.is_active` por `user_id` e, se ausente/`false`/`null`, devolve 403 neutro
   ("Access denied", mesmo corpo da negação de rede); falha/rejeição da consulta → 503 fail-closed. A leitura é
@@ -21,11 +31,9 @@ Especialista: Edgar (area-edge-api)
 - `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts`: 8 testes offline que chamam o `requireAuth`
   REAL (getUser/política/perfil injetados), cobrindo inativo, ausente, `is_active` null, ativo (segue), erro na consulta,
   promise rejeitada, ordem (política antes do perfil) e o `eq`/`user_id` do lookup default.
-- 12 testes de outras Edges (`ai-proxy`, `classify-emoji`, `classify-sticker`, `classify-audio-meme`,
-  `elevenlabs-dialogue`, `elevenlabs-sts`, `elevenlabs-voice-design`, `fetch-link-preview`, `crm-integration`,
-  `multiplix-voices`, `multiplix-audience`, `ai-kb-ingest`): só o stub de `fetch`/rota ganhou a resposta da nova
-  leitura `profiles?select=is_active`. O `<handler>` dessas Edges NÃO mudou — é a consequência de a trava morar no
-  middleware compartilhado. Sem esses stubs a leitura cairia no "nao stubado" e viraria 503.
+- Nos 12 testes das outras Edges só o stub de `fetch`/rota ganhou a resposta da nova leitura `profiles?select=is_active`.
+  O `<handler>` dessas Edges NÃO mudou — é a consequência de a trava morar no middleware compartilhado. Sem esses stubs
+  a leitura cairia no "nao stubado" e viraria 503.
 
 ## Prova
 - vermelho antes (trava do `requireAuth` temporariamente removida): `deno test .../require-auth-profile-active.test.ts`
