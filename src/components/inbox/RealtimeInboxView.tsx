@@ -210,6 +210,18 @@ export function RealtimeInboxView() {
     return () => window.removeEventListener('inbox-open-tasks-tab', abrirTarefas);
   }, [setActiveTab]);
 
+  // UI-08 — o comando "Nova conversa" da paleta (⌘K) publica este evento; o dono do modal
+  // é esta tela. Mesmo padrão do `inbox-open-tasks-tab` acima: sem o listener o comando só
+  // fecharia a paleta (defeito do R2-INF-033).
+  // `setShowNewConversation` desestruturado (como `setConversationTab` acima): depender do
+  // objeto `inbox` inteiro, recriado a cada render, faria o exhaustive-deps exigir a facade toda.
+  const { setShowNewConversation } = inbox;
+  useEffect(() => {
+    const abrirNovaConversa = () => setShowNewConversation(true);
+    window.addEventListener('open-new-conversation', abrirNovaConversa);
+    return () => window.removeEventListener('open-new-conversation', abrirNovaConversa);
+  }, [setShowNewConversation]);
+
   const handleGlobalSearchResult = (result: SearchResult) => {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Inbox, LayoutDashboard, Users, Phone, Zap, BarChart3, Shield, Settings,
-  Keyboard,
+  Keyboard, Plus,
 } from 'lucide-react';
 
 export type CommandCategory = 'navigation' | 'action' | 'search' | 'recent' | 'talkx';
@@ -36,15 +36,26 @@ export const defaultNavigationCommands: CommandItem[] = [
   { id: 'nav-settings', title: 'Configurações', description: 'Ajustar preferências', icon: <Settings className="h-4 w-4" />, category: 'navigation', keywords: ['preferências', 'ajustes', 'config'], shortcut: ['g', 's'] },
 ];
 
-// R2-INF-033 (#378): a paleta anunciava "Nova conversa" e "Respostas rápidas" no grupo
-// Ações sem executor nenhum — `executeCommand` (command-palette.tsx) só trata callback,
-// href ou id `nav-`, então escolher qualquer uma delas apenas fechava o diálogo, como se
-// o comando tivesse rodado. Nenhum dos dois fluxos tem gatilho global no app: o modal de
-// nova conversa vive no Inbox (RealtimeInboxView/useInboxUIState) e as respostas rápidas
-// vivem no painel de chat — quem abre cada um é a própria tela, não um evento. Por isso as
-// duas entradas saíram daqui em vez de continuar prometendo um efeito que não existe; se
-// um dia houver gatilho global, elas voltam já apontando para ele.
+// R2-INF-033 (#378) + UI-08 (paridade V3): "Nova conversa" e "Respostas rápidas" voltaram
+// ligadas ao dono REAL de cada fluxo. Nenhuma tela da V2 abria esses fluxos a partir da
+// paleta, então cada comando publica o evento global que o dono já escuta — o MESMO padrão
+// de `show-shortcuts-help` acima e de `inbox-open-tasks-tab` (RealtimeInboxView.tsx):
+//   - `open-new-conversation` → o Inbox abre o NewConversationModal;
+//   - `open-quick-replies`    → o ChatPanel abre o seletor de respostas rápidas do compositor.
+// Sem o listener correspondente a entrada apenas fecharia o diálogo (o defeito do #378).
 export const defaultActionCommands: CommandItem[] = [
+  {
+    id: 'action-new-chat', title: 'Nova conversa', description: 'Iniciar uma nova conversa',
+    icon: <Plus className="h-4 w-4" />, category: 'action',
+    keywords: ['criar', 'iniciar', 'novo', 'conversa', 'chat', 'mensagem'],
+    action: () => document.dispatchEvent(new CustomEvent('open-new-conversation')),
+  },
+  {
+    id: 'action-quick-reply', title: 'Respostas rápidas', description: 'Acessar templates de resposta',
+    icon: <Zap className="h-4 w-4" />, category: 'action',
+    keywords: ['template', 'atalho', 'rápida', 'resposta'],
+    action: () => document.dispatchEvent(new CustomEvent('open-quick-replies')),
+  },
   {
     id: 'action-keyboard', title: 'Atalhos de teclado', description: 'Ver todos os atalhos',
     icon: <Keyboard className="h-4 w-4" />, category: 'action', keywords: ['shortcuts', 'teclas'],

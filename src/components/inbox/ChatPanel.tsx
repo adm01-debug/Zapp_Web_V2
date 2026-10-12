@@ -290,6 +290,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     return () => window.removeEventListener('open-transfer-dialog', h);
   }, [conversation.contact.id, openDialog]);
 
+  // UI-08 — o comando "Respostas rápidas" da paleta (⌘K) publica este evento; o dono do
+  // seletor do compositor é este painel. Mesmo padrão do `open-transfer-dialog` acima.
+  useEffect(() => {
+    const abrirRespostasRapidas = () => openDialog('quickReplies');
+    window.addEventListener('open-quick-replies', abrirRespostasRapidas);
+    return () => window.removeEventListener('open-quick-replies', abrirRespostasRapidas);
+  }, [openDialog]);
+
   // Stable refs for ChatMessagesArea to prevent re-renders on input change
   const contactJid = useMemo(() => conversation.contact.phone ? `${conversation.contact.phone}@s.whatsapp.net` : '', [conversation.contact.phone]);
   const contactAvatar = conversation.contact.avatar || undefined;

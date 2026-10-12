@@ -6,7 +6,7 @@
  *  2. O seletor de conexão do modal tem nome acessível (aria-label).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Conversation } from '@/types/chat';
@@ -163,5 +163,18 @@ describe('N-032 — FAB de Nova conversa não cobre o chat aberto no celular', (
 
     const botao = screen.getByRole('button', { name: 'Nova conversa' });
     expect(botao).toHaveClass('h-[54px]', 'w-[54px]');
+  });
+});
+
+describe('UI-08 — a paleta (⌘K) abre o modal de nova conversa pelo gatilho global', () => {
+  it('o evento "open-new-conversation" abre o NewConversationModal', () => {
+    render(buildUi());
+
+    // Mesmo caminho que o comando "Nova conversa" da paleta percorre: dispara o evento
+    // global; este dono (Inbox) é quem abre o fluxo real, como no `inbox-open-tasks-tab`.
+    act(() => { window.dispatchEvent(new CustomEvent('open-new-conversation')); });
+
+    expect(mocks.setShowNewConversation).toHaveBeenCalledTimes(1);
+    expect(mocks.setShowNewConversation).toHaveBeenCalledWith(true);
   });
 });

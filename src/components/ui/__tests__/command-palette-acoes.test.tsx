@@ -12,14 +12,15 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 /**
- * R2-INF-033 (#378) — três ações padrão da paleta (⌘K) eram exibidas sem executor:
- * "Nova conversa", "Respostas rápidas" e "Atalhos de teclado" não tinham `action` nem
- * `href`, e o `executeCommand` só fecha o diálogo quando nenhum ramo (callback, href ou
- * id `nav-`) se aplica — a operação anunciada não começava e o fechamento passava por
- * sucesso. A prova usa o componente REAL com a lista REAL de comandos padrão.
+ * R2-INF-033 (#378) + UI-08 (paridade V3) — as ações padrão da paleta (⌘K) precisam
+ * produzir efeito observável: `executeCommand` só trata callback, href ou id `nav-`, e
+ * sem um desses escolher a entrada apenas fecha o diálogo como se tivesse rodado.
  *
- * Aceite do item: ligar cada ação ao mecanismo real existente ou não exibi-la quando não
- * houver um; o que ficar exibido precisa produzir efeito observável.
+ * "Nova conversa" e "Respostas rápidas" voltaram (UI-08) ligadas ao gatilho global do
+ * dono de cada fluxo (`open-new-conversation` → RealtimeInboxView; `open-quick-replies`
+ * → ChatPanel), no mesmo padrão de `show-shortcuts-help`. As provas aqui usam o
+ * componente REAL com a lista REAL de comandos padrão; o dono que abre cada fluxo é
+ * provado nos testes do próprio dono.
  */
 function renderPalette(props: Record<string, unknown> = {}) {
   const onNavigate = vi.fn();
@@ -58,20 +59,32 @@ describe('CommandPalette — ações padrão com executor (R2-INF-033)', () => {
     document.removeEventListener('show-shortcuts-help', ouviuAjuda);
   });
 
-  it('"Nova conversa" deixou de ser oferecida: não existe gatilho global para o fluxo', () => {
-    const { input } = renderPalette();
+  it('"Nova conversa" é oferecida e dispara o gatilho global do fluxo', () => {
+    const { onOpenChange, input } = renderPalette();
+    const abrirNovaConversa = vi.fn();
+    document.addEventListener('open-new-conversation', abrirNovaConversa);
 
     digitar(input, 'nova conversa');
+    clicarPelaDescricao('Iniciar uma nova conversa');
 
-    expect(screen.queryByText('Iniciar uma nova conversa')).not.toBeInTheDocument();
+    expect(abrirNovaConversa).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    document.removeEventListener('open-new-conversation', abrirNovaConversa);
   });
 
-  it('"Respostas rápidas" deixou de ser oferecida pelo mesmo motivo', () => {
-    const { input } = renderPalette();
+  it('"Respostas rápidas" é oferecida e dispara o gatilho global do fluxo', () => {
+    const { onOpenChange, input } = renderPalette();
+    const abrirRespostasRapidas = vi.fn();
+    document.addEventListener('open-quick-replies', abrirRespostasRapidas);
 
-    digitar(input, 'Respostas rápidas');
+    digitar(input, 'respostas rápidas');
+    clicarPelaDescricao('Acessar templates de resposta');
 
-    expect(screen.queryByText('Acessar templates de resposta')).not.toBeInTheDocument();
+    expect(abrirRespostasRapidas).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    document.removeEventListener('open-quick-replies', abrirRespostasRapidas);
   });
 
   it('mantém o controle de ação explícita (callback do próprio item)', () => {
