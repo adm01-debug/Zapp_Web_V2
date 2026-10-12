@@ -93,6 +93,12 @@ function useLatest<T>(value: T) {
 const EDIT_WINDOW_MINUTES = 15;
 
 /**
+ * Janela (em ms) em que um clique repetido no MESMO botão é ignorado: o envio canônico já
+ * aconteceu e o segundo clique só duplicaria a mensagem para o cliente.
+ */
+const INTERACTIVE_BUTTON_DEDUP_MS = 5000;
+
+/**
  * Mensagem ainda dentro da janela de edição. Checado ao ABRIR a edição e de novo no
  * ENVIO — com o editor aberto, o prazo pode vencer antes de o usuário salvar, e o
  * WhatsApp já recusaria a edição.
@@ -641,9 +647,44 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     }
   }, [contactId]);
 
-  const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
-    toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
-  }, []);
+  // Impede duas respostas concorrentes do mesmo clique (trava enquanto o envio está em
+  // andamento) e o reenvio repetido do MESMO botão dentro de `INTERACTIVE_BUTTON_DEDUP_MS`.
+  // A chave é o id do botão (o handler só recebe o botão; a mensagem interativa não faz
+  // parte do contrato atual do callback).
+  const interactiveButtonLockRef = useRef(false);
+  const lastInteractiveButtonRef = useRef<{ key: string; at: number } | null>(null);
+
+  // Clique no botão da mensagem interativa responde AO CLIENTE: o título do botão sai como
+  // texto pelo caminho de envio canônico do compositor (`onSendMessage`, que enfileira por
+  // `enqueue_outbound_message` com `client_message_id` estável), nunca por um atalho. O
+  // vínculo de resposta (reply_to) usa o alvo de resposta atual do compositor quando houver.
+  const handleInteractiveButtonClick = useCallback(async (button: InteractiveButton) => {
+    const titulo = (button.title ?? button.text ?? button.id ?? '').trim();
+    if (!titulo) return;
+
+    const agora = Date.now();
+    const chave = button.id ?? titulo;
+    const ultimo = lastInteractiveButtonRef.current;
+    if (ultimo && ultimo.key === chave && agora - ultimo.at < INTERACTIVE_BUTTON_DEDUP_MS) return;
+
+    if (interactiveButtonLockRef.current) return;
+    interactiveButtonLockRef.current = true;
+    try {
+      await onSendMessage(titulo, replyToMessageRef.current?.id ?? null);
+      // Só o aceite do transporte marca a janela de deduplicação: na falha o clique pode
+      // ser repetido imediatamente (a trava é liberada no `finally`).
+      lastInteractiveButtonRef.current = { key: chave, at: Date.now() };
+    } catch (err) {
+      log.error('Failed to answer interactive button:', err);
+      toast({
+        title: 'Erro ao responder',
+        description: 'Não foi possível enviar a resposta do botão. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      interactiveButtonLockRef.current = false;
+    }
+  }, [onSendMessage, replyToMessageRef]);
 
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {
