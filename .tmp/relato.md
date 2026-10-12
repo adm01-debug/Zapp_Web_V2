@@ -1,22 +1,63 @@
-Especialista: iris (area-front-componentes)
+Especialista: worker (testes) (area-testes-do-produto)
 
-## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
 
-## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
+Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
+arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
 
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
+  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
+  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
+  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
+  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
+  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
+  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
+- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
+  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
+  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
+  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
+  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
+  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
+  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+
+Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
+por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
+na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+
+Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
+(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
+
+## Prova (executada agora, nesta ponta)
+
+- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
+  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
+  - rodada 1: `1 skipped` / `8 passed (39.6s)`
+  - rodada 2: `1 skipped` / `8 passed (42.9s)`
+  - rodada 3: `1 skipped` / `8 passed (55.2s)`
+  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
+- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
+  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
+  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
+- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
+  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
+  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
+  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
+  só `.tmp/relato.md`. `git status --short` → limpo.
+
+## test.fixme existentes na spec (1 de verdade, 0 test.skip)
+
+- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
+  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
+  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
+  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
+  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
+- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
+  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+
+- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
+  já contém o pedido inteiro.
+- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
+- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
