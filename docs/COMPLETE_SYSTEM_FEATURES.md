@@ -869,12 +869,11 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=payments` → `PaymentLinksView` |
-| Componente | `src/components/payments/PaymentLinksView.tsx` |
-| Hook | `src/hooks/payments/usePaymentLinks.ts` |
-| Tabela | `payment_links` |
+| Estado | Módulo removido do Zapp Web V2 (2026-10-11) |
+| Rota | `?view=payments` — não existe mais no ViewRouter |
+| Tabela | `payment_links` (sem uso pelo front) |
 
-**Funcionalidades:** CRUD de links de pagamento, métodos PIX e Cartão, valores, status (pending/paid/expired/cancelled), copiar link e enviar ao contato.
+**Funcionalidades:** o módulo de links de pagamento foi **removido** do Zapp Web V2 em 2026-10-11 — a rota `payments` saiu do `ViewRouter`/`lazyViews` e o componente e o hook que a entregavam foram apagados. Links de pagamento são operados no Singu, não no Zapp Web; a tabela `payment_links` permanece no banco sem uso pelo front.
 
 ---
 

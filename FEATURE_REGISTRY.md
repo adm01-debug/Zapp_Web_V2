@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-09`. 54 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -23,10 +23,10 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 
 | Estado | Views |
 |---|---|
-| Full | 43 |
+| Full | 42 |
 | Partial | 12 |
 | Suggested | 0 |
-| **total** | **55** |
+| **total** | **54** |
 
 ## Tabela
 
@@ -55,7 +55,6 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `privacy` | `LGPDComplianceView` | `src/components/compliance/LGPDComplianceView.tsx` | Full | `src/components/compliance/LGPDComplianceView.tsx` |
 | `tasks` | `TasksModule` | `src/components/tasks/TasksModule.tsx` | Full | `src/components/tasks/TasksModule.tsx` |
 | `knowledge` | `KnowledgeBaseView` | `src/components/knowledge/KnowledgeBaseView.tsx` | Full | `src/hooks/integrations/useKnowledgeBase.ts` |
-| `payments` | `PaymentLinksView` | `src/components/payments/PaymentLinksView.tsx` | Full | `src/hooks/payments/usePaymentLinks.ts` |
 | `wa-flows` | `WhatsAppFlowsBuilder` | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` | Full | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
 | `meta-capi` | `MetaCAPIView` | `src/components/meta-capi/MetaCAPIView.tsx` | Full | `src/hooks/integrations/useMetaCAPIData.ts` |
 | `diagnostics` | `DiagnosticsView` | `src/components/diagnostics/DiagnosticsView.tsx` | Full | `src/hooks/system/useDiagnosticsData.ts` |
