@@ -10,10 +10,14 @@ Origem: o passo e o teste já existiam na entrega anterior (branch v2/n-016-ci-r
 
 ## Prova
 - vermelho antes (workflow da base, sem o passo): `bash scripts/db-audit/replay-local-ci.test.sh` → `FALHA: 1: passo de replay existe em db-guard.yml (nao achei 'Replay de todas as migrations' em .github/workflows/db-guard.yml)` + `FALHA: 1: passo roda replay-local.sh (...)` → `REPROVOU`, exit 1.
-- verde depois (com o passo): mesmo comando → 13 linhas `ok`, `PASSOU: passo de replay existe em db-guard.yml, harness cobre exit 0/1/2, e o allowlist protege contra drift novo`, exit 0.
+- verde depois (com o passo): mesmo comando → 9 linhas `ok`, `PASSOU: passo de replay existe em db-guard.yml, harness cobre exit 0/1/2, e o allowlist protege contra drift novo`, exit 0.
 - `python3 -c yaml.safe_load(db-guard.yml)` → `YAML-OK` (resolução do conflito não quebrou o YAML).
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (108s)` (OK dependencias, db_guard, tipos, lint, migrations; banco_local não verificado — sem nome de conjunto; sem DDL no diff, nada a migrar).
-- Diff contra a base: só N-016 nas linhas adicionadas; sem GRANT/REVOKE/policy/RPC.
+- Diff contra a base: 4 arquivos (3 de entrega — db-guard.yml, replay-local-ci.test.sh, check-test-inventory.mjs — mais este relato), 1 de teste; só N-016 nas linhas adicionadas; sem GRANT/REVOKE/policy/RPC.
+
+## Resposta ao juiz barato (primeira tentativa de fechar)
+- Ponto 1 (teste confere literal): procede em parte — removi as 4 checagens tautológicas `checa "x existe" "0" "0"` do teste; restaram só `contem` reais (passo no YAML, cobertura exit 0/1/2 no harness, executável, classificador, allowlist). Teste de passo de CI por presença no YAML é o padrão do repositório para cartões de CI (ex.: recriar-banco-local.test.sh); o vermelho→verde acima mostra que ele falha sem o passo.
+- Ponto 2 (números do relato): corrigido — 9 oks (era 13 antes da limpeza) e 4 arquivos no diff (3 de entrega + relato).
 
 ## O que NÃO fiz e por quê
 - Não executei o replay completo (todas as migrations em Postgres real): exige docker daemon e dezenas de minutos; o cartão aceita o harness com docker falso como cobertura de exit 0/1/2, e o passo do CI roda o script real no runner.

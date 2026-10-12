@@ -33,10 +33,9 @@ contem "1: passo usa SKIP_DOCKER_SHIM" "SKIP_DOCKER_SHIM" "$WORKFLOW"
 
 # ---------------------------------------------------------------------------
 # Caso 2: o harness de docker falso existe e cobre exit 0/1/2.
-# O harness prova o comportamento do script sob falha e sob um
-# container alheio com o nome antigo - sem docker real nem banco.
+# (o harness prova o comportamento do script sob falha e sob um
+# container alheio com o nome antigo - sem docker real nem banco).
 # ---------------------------------------------------------------------------
-checa "2: harness de docker falso existe" "0" "0"
 contem "2: harness cobre exit 0 (run normal)" "exit 0" "$HARNESS"
 contem "2: harness cobre exit 2 (bootstrap falho)" "exit 2" "$HARNESS"
 contem "2: harness cobre SIGTERM (trap)" "SIGTERM" "$HARNESS"
@@ -44,7 +43,6 @@ contem "2: harness cobre SIGTERM (trap)" "SIGTERM" "$HARNESS"
 # ---------------------------------------------------------------------------
 # Caso 3: replay-local.sh existe e e executavel.
 # ---------------------------------------------------------------------------
-checa "3: replay-local.sh existe" "0" "0"
 contem "3: script e executavel" "replay-local.sh" <(ls -la "$SCRIPT" 2>/dev/null)
 
 # ---------------------------------------------------------------------------
@@ -53,15 +51,13 @@ contem "3: script e executavel" "replay-local.sh" <(ls -la "$SCRIPT" 2>/dev/null
 # de CASCATA (consequencia de uma falha anterior, ja medida no canonico).
 # ---------------------------------------------------------------------------
 CLASSIFY="$DIR/replay-classify.py"
-checa "4: replay-classify.py existe" "0" "0"
-contem "4: classificador separa esperada de inesperada" "INESPERADA\|drift" "$CLASSIFY"
+contem "4: classificador separa esperada de inesperada" "INESPERADA" "$CLASSIFY"
 
 # ---------------------------------------------------------------------------
 # Caso 5: replay-known-failures.json existe e tem entradas.
 # O allowlist deve ter pelo menos uma entrada para o replay funcionar.
 # ---------------------------------------------------------------------------
 KNOWN="$DIR/replay-known-failures.json"
-checa "5: replay-known-failures.json existe" "0" "0"
 contem "5: allowlist tem entradas" "esperadas" "$KNOWN"
 
 if [ "$falhou" -eq 0 ]; then
