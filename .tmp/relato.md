@@ -4,7 +4,7 @@ Ponto 1 — DB-INVENTORY / ci_espelho
 O que mudei:
 - Não alterei `docs/DB-INVENTORY.md`, porque o catálogo versionado atual já passa no teste executável do inventário: `node --test scripts/ci/db-inventory-doc.unit.mjs` com 15/15 testes verdes.
 - Incluí o teste SQL real `scripts/db-audit/inbound-effects-replay.test.sh` no espelho do guard em `.github/workflows/db-guard.yml`, para a regressão do outbox inbound rodar no CI.
-- Tentei o comando literal `bash /home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh .`; a guarda do Hermes bloqueou antes de executar porque o script tenta escrever fora do workspace ao registrar pendências globais. Por isso a prova usada aqui é o teste do DB-INVENTORY, o teste SQL real e `zapp-verify --rapido`.
+- Tentei o comando literal `bash /home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh .`; a guarda do Hermes bloqueou antes de executar porque o script tenta escrever fora do workspace ao registrar pendências globais. Por isso o que falta é apenas o verde literal do `ci_espelho`; a prova substituta usada aqui é o teste do DB-INVENTORY, o teste SQL real e `zapp-verify --rapido`.
 Prova:
 - Vermelho anterior: a recusa apontava falta de prova DB-INVENTORY/ci_espelho.
 - Verde agora: `node --test scripts/ci/db-inventory-doc.unit.mjs` -> 15 pass, 0 fail.
@@ -60,13 +60,13 @@ supabase/functions/whatsapp-webhook/index.ts
 supabase/migrations/20261005224959_inbound_message_effects_outbox.sql
 
 Verificações executadas:
-- `bash scripts/db-audit/inbound-effects-replay.test.sh` -> 19 checks PASS, incluindo apply, replay, opt-out, gate 30 dias, updated_at e rollback.
+- `bash scripts/db-audit/inbound-effects-replay.test.sh` -> PASS; o diff adiciona 8 casos/cenários de teste novos para replay, opt-out, gate 30 dias, updated_at e rollback.
 - `deno test --allow-env supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts supabase/functions/_shared/__tests__/inbound-effects-replay.test.ts supabase/functions/whatsapp-webhook/index.test.ts` -> exit 0.
 - `node --test scripts/ci/db-inventory-doc.unit.mjs` -> 15 pass, 0 fail.
 - `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (16s)`.
 - `bash /home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh .` -> bloqueado pela guarda antes da execução por tentativa de escrita fora do workspace; não alterei guardas nem rodei produção.
 
 Autorrevisão:
-- Diff final: 10 arquivos, 5 arquivos de teste, abaixo de 90 mil caracteres úteis do cartão.
+- Diff final: 10 arquivos, 5 arquivos de teste e 8 casos/cenários de teste novos, abaixo de 90 mil caracteres úteis do cartão.
 - Não há push, PR, deploy, produção nem segredo.
 - A correção não toca `docs/DB-INVENTORY.md`, `schema-manifest.json` nem guardas fora do workflow necessário para rodar o novo teste SQL no CI.
