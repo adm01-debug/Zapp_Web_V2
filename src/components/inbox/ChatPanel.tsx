@@ -423,7 +423,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
         {dialogs.whisper && (
           <Suspense fallback={null}>
-            <WhisperMode contactId={conversation.contact.id} className="mx-3 mb-2" />
+            <WhisperMode contactId={conversation.contact.id} targetAgentId={conversation.assignedTo?.id} className="mx-3 mb-2" />
           </Suspense>
         )}
 
