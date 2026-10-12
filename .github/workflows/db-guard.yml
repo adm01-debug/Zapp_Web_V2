@@ -750,6 +750,15 @@ jobs:
           TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
 
+      # M-DB-03/R3-DELTA-002: helper SECURITY DEFINER talkx_engine_cron_runs
+      # continua executavel por authenticated para admin/supervisor, mas nega
+      # authenticated comum no corpo; service_role e chamadores internos seguem
+      # funcionando. Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar gate de papel nas leituras do cron do motor Talk X (M-DB-03)
+        env:
+          TALKX_CRON_GATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh
+
       # M-DB-01: o tick do motor nao aborta no expurgo LGPD (storage.protect_delete
       # FOR EACH STATEMENT levanta 42501 em DELETE direto; a fixture recria o gatilho).
       # Manifesto talkx_storage_purge_queue, alerta purge_failed com espera de 1 h,
