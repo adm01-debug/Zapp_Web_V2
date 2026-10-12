@@ -18,6 +18,7 @@ import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
+import { ConnectionsHealthIndicator } from '@/components/connections/ConnectionsHealthIndicator';
 import { useMyWorkItemsBadgeInfo } from '@/hooks/tasks/useMyWorkItems';
 import { useUnreadEmailCount } from '@/hooks/gmail/useUnreadEmailCount';
 
@@ -113,6 +114,13 @@ export const Sidebar = React.memo(function Sidebar({
             </button>
           </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
         )}
+      </div>
+
+      {/* Indicador FIXO da saúde das conexões do WhatsApp (GL2): fica no topo,
+          fora da área de rolagem (l.137), para o estado das instâncias nunca
+          sair de vista — o banner dispensável que existia antes podia sumir. */}
+      <div className={cn('shrink-0 pt-1', collapsed ? 'px-[11px]' : 'px-2')}>
+        <ConnectionsHealthIndicator collapsed={collapsed} />
       </div>
 
       {collapsed && (

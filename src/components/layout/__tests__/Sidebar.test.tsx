@@ -61,6 +61,17 @@ vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeCon
 // é sobre a estrutura de navegação, então os dois entram mockados.
 vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
 /**
+ * GL2: o indicador de conexões lê o store global do GL1, que fala com o Supabase
+ * (a guarda de rede recusaria o fetch). Aqui o alvo é o ENCAIXE na barra, então o
+ * componente entra como marcador; o comportamento dele tem prova própria em
+ * `src/components/connections/__tests__/ConnectionsHealthIndicator.test.tsx`.
+ */
+vi.mock('@/components/connections/ConnectionsHealthIndicator', () => ({
+  ConnectionsHealthIndicator: ({ collapsed }: { collapsed?: boolean }) => (
+    <div data-testid="conexoes-indicador-montado" data-collapsed={String(!!collapsed)} />
+  ),
+}));
+/**
  * Badge de Tarefas (useMyWorkItemsBadge/Info) e contador de e-mail não lido
  * (useUnreadEmailCount, U01) são as duas fontes de número da barra: aqui o alvo é
  * o encaixe de cada selo no item certo, então as duas entram mockadas e cada
@@ -337,5 +348,31 @@ describe('Sidebar — selo do item Email (U01)', () => {
     expect(seloTarefas.className).not.toContain('bg-destructive');
 
     expect(within(itemDaBarra(container, 'email-chat')).getByText('4')).not.toBeNull();
+  });
+});
+
+/**
+ * GL2 — indicador fixo da saúde das conexões do WhatsApp. O alvo aqui é só o
+ * encaixe: no TOPO da barra e FORA da área única de rolagem (l.137 do Sidebar),
+ * senão o estado das instâncias sai de vista ao rolar a lista de itens.
+ */
+describe('Sidebar — indicador de conexões no topo (GL2)', () => {
+  it('monta o indicador no topo fixo, fora da área de rolagem', () => {
+    const { container } = renderSidebar();
+
+    const indicador = container.querySelector(
+      '[data-testid="conexoes-indicador-montado"]',
+    ) as HTMLElement | null;
+    expect(indicador).not.toBeNull();
+    expect(indicador!.getAttribute('data-collapsed')).toBe('false');
+
+    const rolagem = container.querySelector('.overflow-y-auto') as HTMLElement | null;
+    expect(rolagem).not.toBeNull();
+    // fora da rolagem...
+    expect(rolagem!.contains(indicador)).toBe(false);
+    // ...e acima dela no DOM (topo da barra)
+    expect(
+      rolagem!.compareDocumentPosition(indicador!) & Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
   });
 });
