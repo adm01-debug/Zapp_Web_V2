@@ -18,6 +18,7 @@ Origem: o passo e o teste já existiam na entrega anterior (branch v2/n-016-ci-r
 ## Resposta ao juiz barato (primeira tentativa de fechar)
 - Ponto 1 (teste confere literal): procede em parte — removi as 4 checagens tautológicas `checa "x existe" "0" "0"` do teste; restaram só `contem` reais (passo no YAML, cobertura exit 0/1/2 no harness, executável, classificador, allowlist). Teste de passo de CI por presença no YAML é o padrão do repositório para cartões de CI (ex.: recriar-banco-local.test.sh); o vermelho→verde acima mostra que ele falha sem o passo.
 - Ponto 2 (números do relato): corrigido — 9 oks (era 13 antes da limpeza) e 4 arquivos no diff (3 de entrega + relato).
+- Tentativa 2, ponto 1 restante (teste não chama o código): não procede — o cartão aceita o harness com docker falso como cobertura de exit 0/1/2 e pede ao teste novo só provar a existência do passo; executar o replay real (todas as migrations em Postgres) exige docker daemon e não cabe num teste offline. Reencaminhei o fechar sem mudar código.
 
 ## O que NÃO fiz e por quê
 - Não executei o replay completo (todas as migrations em Postgres real): exige docker daemon e dezenas de minutos; o cartão aceita o harness com docker falso como cobertura de exit 0/1/2, e o passo do CI roda o script real no runner.
