@@ -5,7 +5,7 @@ LEITURA DO PORTÃO (antes de tudo): este cartão É DE BANCO. O rodapé "não tr
 ## Cartão
 Retomar da entrega 26100512038b6a (t_34d2277d), recusada SÓ pelo `banco_local` — as outras etapas do integrador passaram (`como diz o log arquitetura-v2/integrador/verificacoes/26100512038b6a-001259.log`: db_guard, migrations, tipos, lint, travas OK). Nada do defeito de origem mudou; o trabalho é reentregar o mesmo par de arquivos na base de hoje e explicar a linha da recusa.
 
-## O que fiz (o diff toca 3 arquivos: a migration, a suíte de teste e este relato; os dois de código são o MESMO par do workspace anterior — cherry-pick -x de 408360abd, não recriei o SQL)
+## O que fiz (o diff toca 3 arquivos, 1 de teste; o caso novo cobre 4 verificações: formato do bloco de rollback, resolvedor removido, prazo fixo restaurado e reaplica idempotente)
 1. `supabase/migrations/20261005151753_sla_first_response_granular.sql`
    - Correção do cartão (mantida): `register_first_response_internal` deixou de comparar com o intervalo fixo de 5 min e passou a usar `resolve_applicable_first_response_minutes(contact_id)` — mesma precedência da UI (`contact > company > job_title > contact_type > queue > agent`, depois `sla_configurations` default, depois 5 min).
    - Recusa/robustez corrigida: o `-- Rollback:` era PROSA ("recriar com o corpo de 2026...sql") — a causa de recusa nº 1 em banco segundo a skill `rollback-de-verdade`. Agora é bloco executável no formato do modelo (`-- Rollback:` + `-- Rollback (SQL executável, na ordem):` + 3 stmts): reergue `register_first_response_internal` com o corpo ANTERIOR completo, refaz o REVOKE e dropa o resolvedor novo. Não mudou comportamento algum.
