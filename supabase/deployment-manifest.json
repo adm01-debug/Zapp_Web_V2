@@ -7,9 +7,9 @@
     "sha256": "154b26da9cbdd54ed6047da35a612eb5509531ca139c116e13ada75ecde941e0"
   },
   "summary": {
-    "function_count": 80,
-    "source_file_count": 160,
-    "verify_jwt_true": 66,
+    "function_count": 81,
+    "source_file_count": 161,
+    "verify_jwt_true": 67,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -703,6 +703,11 @@
       "path": "supabase/functions/recover-corrupted-audios/index.ts",
       "bytes": 10516,
       "sha256": "ea8215b27b5f87f0ed3291417169d23a34adb542356c5f9f70b1af0c1a717bc0"
+    },
+    {
+      "path": "supabase/functions/recover-message-media/index.ts",
+      "bytes": 14150,
+      "sha256": "7909ab55359ed20bf7f6f9d85bf012c29c3764cae6c6207c66c662b7cc7ca5e0"
     },
     {
       "path": "supabase/functions/revoke-auth-sessions/index.ts",
@@ -1895,6 +1900,25 @@
       ]
     },
     {
+      "name": "recover-message-media",
+      "entrypoint": "supabase/functions/recover-message-media/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "a3258c325b16098db82a6cec017dfdcd57b28ad458bf0e6c8b4c856282bec8e9",
+      "source_files": [
+        "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
+        "supabase/functions/_shared/evolution-media.ts",
+        "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-types.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/ssrf.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/recover-message-media/index.ts"
+      ]
+    },
+    {
       "name": "revoke-auth-sessions",
       "entrypoint": "supabase/functions/revoke-auth-sessions/index.ts",
       "verify_jwt": true,
@@ -2206,5 +2230,5 @@
       ]
     }
   ],
-  "manifest_sha256": "783388cc8c63b9b4c30ee673f29af87cc5503a19f767e123394cbb888bcf68c7"
+  "manifest_sha256": "9f7ef3cd192d2a993a85abcc467a927065fc95e7cae563b7315d0a238e038287"
 }
