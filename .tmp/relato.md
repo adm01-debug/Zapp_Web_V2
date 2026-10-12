@@ -1,29 +1,63 @@
-Especialista: senior (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+O cartão pedia: excluir conexão deve ser admin-only de verdade (hoje o supervisor
+apaga), bloqueando as duas vias — a tabela (RLS) e a Edge (que fala com a
+Evolution) — e registrando a exclusão na auditoria.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- supabase/migrations/20261012113232_connections_delete_admin_only.sql (novo):
+  troca SÓ a policy de DELETE de `whatsapp_connections`, de
+  `is_admin_or_supervisor(auth.uid())` para `is_admin(auth.uid())`. SELECT/INSERT/
+  UPDATE ficam intactas (agentes precisam do `instance_id` para enviar;
+  admin/supervisor seguem gerenciando o cadastro). Sem DDL de dado, sem grant novo.
+- supabase/functions/evolution-api/index.ts: a ação `delete-instance` passa a usar
+  um gate estrito novo (`requireAdminOnly`, RPC `is_admin`) em vez do
+  `requireAdmin` (que aceita supervisor). Antes de apagar, lê a conexão
+  (`id, name, instance_id`) e, depois de apagar a linha, grava a trilha em
+  `audit_logs` (action `connection_deleted`, entity_type `connection`, entity_id
+  uuid da linha, details com instance_id/nome/flavor, ip_address). Se a trilha
+  falhar, a resposta avisa (`error:true`) — a conexão já foi apagada e esconder
+  isso deixaria exclusão sem rastro. Nenhuma outra ação mudou de gate.
+- supabase/functions/evolution-api/index.test.ts: dois testes Deno — supervisor
+  leva 403 sem tocar provedor/banco; admin exclui e deixa a trilha.
+- scripts/db-audit/connections-delete-admin-only.test.sh (novo): prova em PG 17
+  descartável, com roles reais (authenticated/anon/service_role) e `auth.uid()`
+  lendo o claim `sub`, aplicando o PRÓPRIO arquivo de migration e o de HEAD
+  (20260319134839) como estado anterior.
+- scripts/ci/check-test-inventory.mjs: registrei o novo .test.sh na ALLOWLIST com
+  justificativa (o passo de uma linha em db-guard.yml é do dono do workflow, e o
+  script não é meu; sem esse registro a suíte nasceria órfã no inventário do CI).
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- Banco (contrato, roles reais) — verde depois:
+  `bash scripts/db-audit/connections-delete-admin-only.test.sh`
+  → "B1 conexao CONN_A INTACTA (supervisor nao apaga)", "B3 conexao CONN_B apagada
+  pelo admin", "B4/B5 supervisor segue inserindo/alterando", "[OK] contrato de
+  exclusao de conexao (admin-only) verificado" (BLOCO A prova o defeito no mesmo
+  run: "A1 supervisor exclui conexao pela tabela (defeito)").
+- Migration aplicada no banco local do cartão:
+  `hermes-db-migrar supabase/migrations/20261012113232_connections_delete_admin_only.sql`
+  → "APLICADA no banco LOCAL 'v2-26101208285a67' (produção não foi tocada)".
+- Edge (Deno) — vermelho antes: com o `index.ts` de HEAD (git stash só do
+  arquivo), `deno test --config scripts/ci/deno.json --frozen --allow-env
+  --allow-read --allow-net=127.0.0.1 supabase/functions/evolution-api/index.test.ts`
+  → "CX0: delete-instance para SUPERVISOR devolve 403 ... FAILED" e
+  "CX0: delete-instance para ADMIN exclui a linha e registra a exclusão em
+  audit_logs ... FAILED" ("FAILED | 27 passed | 2 failed").
+  Verde depois (código do cartão): "ok | 29 passed | 0 failed".
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Passada de efeitos colaterais
+- A migration só faz DROP/CREATE de policy: não toca dado, gatilho, GRANT nem
+  papel; roda em uma transação (falha = nada aplicado). Rollback executável no
+  topo do arquivo, na ordem inversa.
+- A Edge não mudou resposta/erro de nenhuma outra ação; `requireAdmin` continua
+  valendo para as demais ações de controle.
+- Sem oráculo: supervisor e quem não é admin recebem o mesmo 403; a policy de
+  DELETE filtra a linha em silêncio (sem revelar existência).
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não liguei o .test.sh novo no .github/workflows/db-guard.yml (arquivo do
+  workflow é do worker (ci)); deixei o registro na ALLOWLIST e a justificativa
+  pronta para a promoção de uma linha.
+- Não mexi no gate de `connect`/`disconnect`/`create-instance` — o cartão pede só
+  a exclusão admin-only.
