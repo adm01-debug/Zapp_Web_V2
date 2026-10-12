@@ -1,43 +1,32 @@
-Especialista: senior (refazer de relato)
-(Nota: este refazer 2 altera só `.tmp/relato.md`; o trabalho anterior veio por `git cherry-pick` da entrega recusada.)
+Especialista: worker (testes) (area-testes-do-produto)
 
-## Ponto único do revisor (refazer 2) — relato
-- Ponto 1 (frase residual no fim do relato): `.tmp/relato.md` — removi a frase recusada da seção "Aviso do juiz barato" e também retirei a citação dela no ponto 4, para a frase não aparecer em nenhum lugar do relato.
-- Prova deste refazer: `git diff --name-only c19265932..HEAD` → `.tmp/relato.md`; busca no relato pela frase recusada → `presente=False` e `rodando_entrega_matches=False`.
-- Não mexi em código nem testes neste refazer; por isso não criei teste novo de produto. A prova cabível é o diff restrito ao relato e a busca negativa pela frase.
+## O que mudou e por quê
+- `src/components/tasks/__tests__/TasksFilterBar.teclado.test.tsx` (novo, único arquivo do diff): testes de TECLADO da barra (Etapa 047 do plano, seção 8-bis). A tecla entra pelo `keydown` de janela com o registry global de verdade montado (`Registry` + `TasksModule` + `useTasksFilters` + URL), então cada caso percorre tecla → registry → evento `tasks-shortcut` → módulo, como na app:
+  - `/` leva o foco à busca (e NÃO dispara com o foco dentro de um campo de texto);
+  - `2`/`3`/`1` acionam Quadro, Agenda e Lista, com o estado resultante no `data-mode` e no `localStorage`;
+  - trocar o modo pela tecla não desmonta a barra nem perde o texto digitado e sai da MESMA consulta da carga inicial;
+  - Enter confirma a ação do elemento focado: recorte da busca (texto preservado), item destacado do Select de Prioridade (Radix dirigido por teclado) e item do popover de Contato (cmdk);
+  - ordem de foco da barra é a ordem de documento dos focáveis (esquerda→direita), nenhum `tabindex` positivo e o foco SAI da barra no fim;
+  - Escape fecha o popover de Contato e devolve o foco ao gatilho.
+- Nada de produção foi alterado (o `git diff` do commit tem só o arquivo de teste); nenhum teste existente foi tocado, pulado ou afrouxado, e nenhum `it.todo` foi criado.
 
-## Pontos do revisor (refazer 1) — o que mudou em cada um
-- Ponto 1 (alvo de 18 px): `TaskCheckbox.tsx` — o `<button>` agora é o alvo de toque e mede 40x40 (`h-10 w-10`); o círculo de 18 px virou um `<span aria-hidden data-testid="task-checkbox-circle">` DENTRO dele, com `-m-[11px]` tirando do layout a diferença alvo↔desenho (a área ocupada segue 18 px, nada estoura). Teste novo: "tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela)" — confere `h-10`/`w-10` no elemento interativo, `h-[18px]`/`w-[18px]` no desenho decorativo.
-- Ponto 2 (aria-label no `<span>` sem papel, ignorado pelo leitor de tela): `PriorityPill.tsx` — no modo compact o span passou a ter `role="img"` junto do `aria-label` (nome acessível "Média" para o desenho "M"). Teste: o caso "compacto vira a inicial..." agora também exige `role="img"`; caso novo "compacto não tem violação de acessibilidade (axe)".
-- Ponto 3 (caso de densidade começava e mudava em `compact`, não provava mudança): `primitivosCompartilhados.test.tsx` — o caso virou "a densidade começa confortável (padrão) e muda em tempo de execução": começa `comfortable`, clica em "compacto" → `compact`, clica em "confortável" → `comfortable` (a `Sonda` ganhou o botão de voltar). Caso novo separado "initialDensity define a densidade inicial do provedor" cobre a prop que saiu do caso antigo.
-- Ponto 4 (relato): removida a frase solta no fim da seção "Aviso do juiz barato" e mantida, abaixo, a lista com o NOME de cada caso de teste (critério 4).
+Linha da tabela da seção 8-bis (plano 2026-10-11) por atalho, como o cartão pede:
+- `/` (busca) — seção 8-bis, cabeçalho na linha 510; o atalho é do registro global do módulo (Etapa 77) e o caso só prova o foco/recorte de TELA (Fase F, linha 524).
+- `1`/`2`/`3` (modo) — linha 516 (G-5): "Etapa 041 mantém só os atalhos 1/2 e `!`". Os 1/2/3 cobertos aqui são os do MODO, com escopo `tasks`; NÃO são os do campo de captura (Etapa 41, `ctrl+1/2/3` dentro do QuickAdd) e nenhum parser de linguagem natural foi criado ou testado.
+- troca de modo sem consulta nova — linha 520 (B13): "Uma query só para os três modos"; o caso conta a fronteira do cliente Supabase falso.
+- Enter (busca, item de dropdown e item de popover) e ordem de foco/Escape — linha 510 e linha 524 (Fase F, filtro é recorte de TELA): o texto e o recorte sobrevivem à troca de modo e ao Enter.
 
-## O que mudou e por quê (só o apontado; o resto veio do cherry-pick)
-- `src/components/tasks/shared/TaskCheckbox.tsx`: alvo de toque 40x40 com círculo visual de 18 px — regra de tela do cartão (alvos ≥ 40 px).
-- `src/components/tasks/shared/PriorityPill.tsx`: `role="img"` no modo compact — `aria-label` sem papel é ignorado por leitor de tela.
-- `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx`: 2 casos novos + 1 caso corrigido + botão na sonda.
+## Prova (vermelho antes, verde depois — produção mutada e restaurada, `git diff` de produção vazio no fim)
+- `/` foca a busca: removendo o atalho `tasks-search` de `defaultShortcuts.ts` → `× / leva o foco à busca quando o foco não está num campo de texto` / `AssertionError: expected <input …> to be <body><div>…`.
+- 1/2/3: `alternateKeys: []` (só `1`) → `× as teclas 2, 3 e 1 acionam Quadro, Agenda e Lista` / `AssertionError: expected 'board' to be 'agenda'`; e `setMode('list')` fixo no `TasksModule` → `AssertionError: expected 'list' to be 'board'`.
+- guarda de input: desligada em `useGlobalKeyboardShortcuts.ts` → `× / NÃO dispara com o foco dentro de um campo de texto` / `expected <input> to be <input>` e `× 2 digitado DENTRO da busca não troca o modo` / `expected 'board' to be 'list'`.
+- Enter no Select: `onValueChange` do `Select` virando no-op → `× Enter no Select de Prioridade escolhe a opção destacada` / `AssertionError: expected 'Todas as prioridades' to contain 'Urgente'`.
+- Enter no popover: `onSelect` do `CommandItem` virando no-op → `× Enter no item do popover de Contato marca o contato` / `expected 'Todos os contatos' to match /Ana Souza/`.
+- ordem de foco: `tabIndex={1}` no switch "Com alarme" → `× a ordem de foco da barra vai da esquerda para a direita, sem armadilha` / `AssertionError: expected false to be true`.
+- busca e popover (fiação real): `onChange` do campo de busca e `onOpenChange` do popover de Contato virando no-op → 4 casos vermelhos, incluindo `× Enter na busca aplica o recorte e mantém o texto digitado` e `× Escape fecha o popover de Contato e devolve o foco ao gatilho`.
+- verde: `npx vitest run src/components/tasks/__tests__/TasksFilterBar.teclado.test.tsx` → `Test Files 1 passed (1) / Tests 10 passed (10)`. Rodado junto do vizinho de área (sem alterá-lo): `Test Files 2 passed (2) / Tests 13 passed (13)`. `npx eslint` no arquivo novo: sem aviso.
 
-## Prova (vermelho antes, verde depois)
-- vermelho antes (código antigo do `HEAD` — `git show HEAD:<arquivo>` — com o teste novo):
-  `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Tests 2 failed | 27 passed (29)`
-  Falham exatamente: "tem alvo de toque de 40 px..." (sem `task-checkbox-circle`/`h-10`) e "compacto vira a inicial..." (`role` nulo).
-- verde depois: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 29 passed (29)`
-- regressão da vizinhança: `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 251 passed | 1 todo (252)`
-- estático: `npx eslint` nos 3 arquivos → exit 0 (sem saída); `npx tsc --noEmit -p tsconfig.json` → exit 0 (sem saída)
-
-## Nome de cada caso de teste deste cartão (critério 4)
-TaskCheckbox: é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome "Reabrir tarefa" e a marca aparece · desabilitado não dispara e sai do tab · é <button> NATIVO (Enter/Espaço e foco ficam por conta do navegador) e não vaza o clique para o card · tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela) · sem violação de acessibilidade (axe).
-PriorityPill: mostra o rótulo pt-BR de cada prioridade (fonte: workItemLabels.ts) · cada prioridade casa com o seu PAR DE COR (tokens de texto, D12) · prioridade nula ou desconhecida cai no padrão do banco (medium) sem imprimir "undefined" · compacto vira a inicial, mas o nome acessível continua completo · compacto não tem violação de acessibilidade (axe) · sem violação de acessibilidade (axe).
-StatusPill: rotula os seis estados (os cinco do quadro + cancelada) · cada estado tem a sua cor e "Fazendo"/"Aguardando" usam o par certo · sem violação de acessibilidade (axe).
-DateLabel: reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local · format='day' mostra só o dia (caso das concluídas) · vazio vira "Sem prazo" em vez de string vazia · atrasado usa o par de TEXTO destrutivo; "Hoje" usa o de aviso · o ícone de calendário é decorativo e não infla o nome acessível.
-ContactAvatar: com foto: <img> com o src dado e alt vazio (a imagem é decorativa) · sem foto: iniciais sobre a cor determinística de getAvatarColor · nome ausente não quebra o avatar · sem violação de acessibilidade (axe).
-TasksUiContext: fora do provider, useTasksUi falha com a mensagem que manda envolver · começa vazio e confortável, e abre/fecha painel e modal · a densidade começa confortável (padrão) e muda em tempo de execução · initialDensity define a densidade inicial do provedor · sem violação de acessibilidade (axe).
-
-## Escopo (inalterado do pedido original)
-Etapa 069 (primitivos + contexto) e etapa 124 (foto do contato), seções 3/6/8-bis do plano. Modo compacto = só a inicial; `PriorityPill` lê de `workItemLabels.ts`; `DateLabel` delega a `formatWorkItemDate` (cartão T04). Sem migration/Edge/dependência nova; nada exporta ou sai do sistema.
-
-## Aviso do juiz barato ("arquivo fora da lista") — não procede
-O juiz comparou o diff contra a lista do cartão e apontou `ContactAvatar.tsx`, `DateLabel.tsx`, `StatusPill.tsx`, `tasksUi.ts`, `src/hooks/tasks/**` e `TasksUiProvider` como "fora do escopo". Eles vêm do `git cherry-pick` que o PRÓPRIO CARTÃO manda fazer ("DEPENDÊNCIA: traga a FAIXA inteira"), das faixas dos cartões pais t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) e t_f268a0d8 (`contact_type`); não foram escritos agora e não são escopo novo. `PriorityPill.tsx`, `TaskCheckbox.tsx` e o teste SÃO desta lista do cartão.
-
-## Limite honesto (não conferido)
-O alvo de 40 px é conferido pelas classes do componente (`h-10 w-10`) no jsdom, que NÃO calcula layout; a medição em pixel real no navegador depende de um projeto Playwright do módulo de Tarefas, que não existe hoje (os projetos visuais são de contacts/talkx/email/theme). Não criei projeto novo (fora dos "arquivos que pode tocar").
+## Dependência e o que NÃO fiz
+- Depende da Etapa 046 (`t_19d2fd12`): o arquivo `TasksFilterBar.test.tsx` dela ainda NÃO está no meu tronco (`dia/2026-10-12`). Para não arrastar arquivo de outro cartão para o meu diff (armadilha 1 da skill `armadilhas-workertestes`), escrevi o harness no mesmo padrão e sobre os mesmos mocks compartilhados (`@/test/mocks/tarefas`), em vez de fazer cherry-pick da entrega alheia. A extensão literal daquele arquivo fica para o integrador/`[refazer]`, se o cartão exigir.
+- Não mexi em produção (nem na guarda, nem nos atalhos, nem na barra): as mutações acima foram revertidas e o `git diff` de produção está vazio — o único arquivo do commit é o teste novo.
+- Não testei o campo de captura da Etapa 041 (`ctrl+1/2/3`, `!`): é assunto do parser do QuickAdd (decisão G-5, linha 516), não da barra de ferramentas.
