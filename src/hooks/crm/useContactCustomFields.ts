@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ContactService } from '@/services/contact.service';
 import { log } from '@/lib/logger';
 
@@ -12,55 +13,72 @@ export interface CustomField {
   updated_at: string;
 }
 
+/**
+ * `contact_id` que não é UUID não tem linha em `contact_custom_fields`: o id vem da
+ * rota/da amostra do wizard e, quando é um placeholder ("new", "sample"), a consulta
+ * era disparada à toa e voltava vazia — agora `enabled` já a impede.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidContactId(value: string | undefined | null): value is string {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
+/** Campos personalizados mudam pouco; 30s evita refetch a cada remontagem do wizard. */
+const FIELDS_STALE_TIME = 30_000;
+
 export function useContactCustomFields(contactId: string | undefined) {
-  const [fields, setFields] = useState<CustomField[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(() => ['contact-custom-fields', contactId ?? null] as const, [contactId]);
+  const enabled = isValidContactId(contactId);
 
-  const fetchFields = useCallback(async () => {
-    if (!contactId) return;
-    setIsLoading(true);
-    try {
-      const { data, error } = await ContactService.fetchCustomFields(contactId);
-      if (error) throw error;
-      setFields((data || []) as CustomField[]);
-    } catch (err) {
-      log.error('Error fetching custom fields:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [contactId]);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey,
+    enabled,
+    staleTime: FIELDS_STALE_TIME,
+    queryFn: async (): Promise<CustomField[]> => {
+      const { data, error } = await ContactService.fetchCustomFields(contactId as string);
+      if (error) {
+        log.error('Error fetching custom fields:', error);
+        throw error;
+      }
+      return (data || []) as CustomField[];
+    },
+  });
 
-  useEffect(() => {
-    fetchFields();
-  }, [fetchFields]);
+  const addField = useCallback(
+    async (fieldName: string, fieldValue: string, fieldType = 'text') => {
+      if (!isValidContactId(contactId)) return;
+      try {
+        const { error } = await ContactService.upsertCustomField({
+          contact_id: contactId,
+          field_name: fieldName,
+          field_value: fieldValue,
+          field_type: fieldType,
+        });
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey });
+      } catch (err) {
+        log.error('Error adding custom field:', err);
+        throw err;
+      }
+    },
+    [contactId, queryClient, queryKey],
+  );
 
-  const addField = useCallback(async (fieldName: string, fieldValue: string, fieldType = 'text') => {
-    if (!contactId) return;
-    try {
-      const { error } = await ContactService.upsertCustomField({
-        contact_id: contactId,
-        field_name: fieldName,
-        field_value: fieldValue,
-        field_type: fieldType,
-      });
-      if (error) throw error;
-      await fetchFields();
-    } catch (err) {
-      log.error('Error adding custom field:', err);
-      throw err;
-    }
-  }, [contactId, fetchFields]);
+  const removeField = useCallback(
+    async (fieldId: string) => {
+      try {
+        const { error } = await ContactService.deleteCustomField(fieldId);
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey });
+      } catch (err) {
+        log.error('Error removing custom field:', err);
+        throw err;
+      }
+    },
+    [queryClient, queryKey],
+  );
 
-  const removeField = useCallback(async (fieldId: string) => {
-    try {
-      const { error } = await ContactService.deleteCustomField(fieldId);
-      if (error) throw error;
-      setFields(prev => prev.filter(f => f.id !== fieldId));
-    } catch (err) {
-      log.error('Error removing custom field:', err);
-      throw err;
-    }
-  }, []);
-
-  return { fields, isLoading, addField, removeField, refetch: fetchFields };
+  return { fields: data ?? [], isLoading, addField, removeField, refetch };
 }

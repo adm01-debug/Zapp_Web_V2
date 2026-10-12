@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 /**
@@ -42,8 +43,11 @@ import { useContactsKpi } from '../useContactsKpi';
 import { useContactsSearch } from '../useContactsSearch';
 
 function wrapperFor(qc: QueryClient) {
+  // `useContactsSearch` lê/escreve a URL (`useSearchParams`), então o hook precisa de Router.
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    </MemoryRouter>
   );
 }
 

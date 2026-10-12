@@ -29,6 +29,37 @@ export interface EnrichedContactData {
 }
 
 /**
+ * Coluna ausente na resposta do banco vira `null` explícito.
+ *
+ * O PostgREST pode omitir uma coluna (RLS por coluna, migration em atraso, resposta
+ * malformada) e, na prática, `undefined` e `null` escapam por caminhos diferentes:
+ * `'address' in enrichedData` e o `JSON.stringify` divergem, e o editor do painel
+ * decidia "não veio endereço" por `undefined`. Aqui o contrato vira o que o tipo já
+ * promete: toda chave do enriquecido existe, com `null` quando não há valor.
+ */
+function normalizeEnrichedData(data: EnrichedContactData | null | undefined): EnrichedContactData {
+  const row = (data ?? {}) as Partial<EnrichedContactData>;
+  return {
+    company: row.company ?? null,
+    job_title: row.job_title ?? null,
+    nickname: row.nickname ?? null,
+    surname: row.surname ?? null,
+    contact_type: row.contact_type ?? null,
+    ai_sentiment: row.ai_sentiment ?? null,
+    ai_priority: row.ai_priority ?? null,
+    channel_type: row.channel_type ?? null,
+    address: row.address ?? null,
+    address_number: row.address_number ?? null,
+    city: row.city ?? null,
+    neighborhood: row.neighborhood ?? null,
+    postal_code: row.postal_code ?? null,
+    state: row.state ?? null,
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
+  };
+}
+
+/**
  * Só a query do dado enriquecido (endereço, apelido, cargo...), sem o canal Realtime.
  * O painel de detalhes usa `useContactEnrichedData` (abaixo), que acrescenta o Realtime;
  * quem só precisa do dado evita abrir um segundo canal `contact-enriched:<id>` com o
@@ -49,7 +80,7 @@ export function useContactEnrichedQuery(contactId: string) {
         log.error('Error fetching enriched contact data:', error);
         throw error;
       }
-      return data as EnrichedContactData;
+      return normalizeEnrichedData(data as EnrichedContactData);
     },
     enabled: !!contactId,
   });

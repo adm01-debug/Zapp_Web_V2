@@ -1,18 +1,27 @@
 Especialista: Hugo (area-front-hooks)
 
+Cartão CT-F (P2): 4 correções na ficha do contato — estado da lista de Contatos na URL, "Hoje" = 00:00 do fuso do app, campos personalizados no React Query com guarda de UUID, enriquecidos sem `undefined`, e o hook de atribuição deixando de gravar sem avisar o cache.
+
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/hooks/crm/useContactsSearch.ts — busca/aba/empresa/cargo/período/ordem/página espelhados na URL (`?q,tab,company,job,date,sort,p`) via `useSearchParams` + `replace`: recarregar (ou abrir um link) mantém o estado da lista e filtrar não empilha histórico. A URL é lida só na montagem e reescrita quando algo muda (só quando difere, então não há laço de navegação). Parâmetro vindo da URL passa por validação/corte (período e ordem por whitelist, texto cortado em 120, `p` inteiro ≥ 1). `tag` fica de fora de propósito (etiqueta de contato é função excluída do sistema; `filterTag` segue em memória). O `case 'today'` passou de `now - 24h` para `appDayStart(0)` (00:00 em America/Sao_Paulo, `src/lib/localDay.ts`) — às 09h o balcão espera ver tudo desde 00:00.
+- src/hooks/crm/useContactCustomFields.ts — trocado o `useState`+`fetch` manual por `useQuery` (`queryKey: ['contact-custom-fields', id]`, `staleTime: 30s`), com guarda `isValidContactId` (UUID): id texto/vazio/`undefined` não consulta o banco e não fica "carregando" (o PostgREST devolvia 400 com id inválido). Erro do banco sobe para a query em vez de virar lista vazia em cache; `addField`/`removeField` invalidam a lista e mantêm o `throw` que já existia. Contrato de retorno preservado (`fields`, `isLoading`, `addField`, `removeField`, `refetch`).
+- src/hooks/crm/useContactEnrichedData.ts — `normalizeEnrichedData` preenche com `null` explícito as 16 colunas do enriquecido quando vierem ausentes, em vez de `undefined`: o tipo promete `string | null` e o painel deixa de ter dois "vazios" diferentes.
+- src/hooks/crm/useContactAssignment.ts — o cartão oferece remover o órfão **ou** invalidar os caches; escolhi invalidar (apagar arquivo exige `rm`/`git rm`, proibido no modo sem humano — registrei em comentário). `assignAgent`/`assignQueue` agora invalidam `contacts-kpi`, `contacts-type-counts`, `contacts-search`, `contact-enriched:<id>`, `contact-crm-360:<id>` e `conversation-tab-counts:<id>` depois do UPDATE — antes a lista, os KPIs e o Crm360 mostravam o responsável antigo até recarregar.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Vermelho antes (fonte revertida para a base `dia/2026-10-12` com os testes novos no lugar):
+`npx vitest run src/hooks/crm/__tests__/useContactsSearch.test.tsx src/hooks/crm/__tests__/useContactsSearch.urlReplace.test.tsx src/hooks/crm/__tests__/useContactAssignment.test.tsx src/hooks/crm/__tests__/useContactEnrichedData.test.tsx src/hooks/__tests__/useContactCustomFields.test.tsx src/hooks/crm/__tests__/contactsAggregatesRefetchOnMount.test.tsx`
+→ `Test Files 5 failed | 1 passed (6); Tests 14 failed | 34 passed | 1 expected fail (49)` — falham exatamente a URL (`monta busca, aba...`, `cada mudança reescreve a URL...`, `clearFilters...`, `escreve com { replace: true }...`), o período (`date_from por período...`), o UUID (`contact_id que não é UUID...`, `addField com id inválido...`), a invalidação (`removeField apaga pelo id e reconsulta`, os dois `assignAgent/assignQueue`) e a normalização (`coluna ausente vira null explícito`).
+
+Verde depois (mesmo comando, fonte com a correção):
+→ `Test Files 6 passed (6); Tests 48 passed | 1 expected fail (49)`
+
+Sem regressão nas áreas vizinhas:
+`npx vitest run src/components/contacts/__tests__ src/components/tasks/__tests__` → `Test Files 62 passed (62); Tests 568 passed | 1 todo (569)`
+`npx vitest run src/components/inbox src/components/talkx src/hooks/chat src/hooks/crm` → `Test Files 356 passed | 1 failed (357); Tests 3000 passed` — a única falha é um websocket (`ERR_INVALID_ARG_TYPE`, `RealtimeInboxView.selectedMessagesError.test.tsx`) que passa isolado (`1 passed (1); Tests 3 passed`) e não toca nenhum arquivo deste diff.
+
+O hook passou a exigir `Router` no `useSearchParams`: o único consumidor de teste que o chamava sem Router (`contactsAggregatesRefetchOnMount.test.tsx`) passou a envolver em `MemoryRouter`; `useContactsCRUD.test.tsx` já dubla o hook.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- useContactAssignment continua órfão (nenhum importador) e exportado pelo barril `src/hooks/crm/index.ts`: apagar exigiria `rm`/`git rm`, bloqueado neste modo. Comentado no cartão.
+- `ContactCombobox` (src/components/tasks) compartilha `useContactsSearch`, então a busca dele agora também aparece em `?q=` na URL da tela de Tarefas. É arquivo de componentes (fora da minha área): comentado no cartão para quem cuida da tela decidir se quer passar a sincronização só na tela de Contatos.

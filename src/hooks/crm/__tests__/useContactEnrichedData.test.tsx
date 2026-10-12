@@ -104,6 +104,24 @@ describe('useContactEnrichedData — sincronização ao vivo via Realtime', () =
     await waitFor(() => expect(result.current.enrichedData?.nickname).toBe('Mari'));
   });
 
+  it('coluna ausente na resposta vira null explícito (chave presente, nenhum undefined)', async () => {
+    // Resposta parcial: é o que o PostgREST devolve quando a migration atrasa ou o RLS
+    // libera só parte das colunas.
+    enrichedRow = { company: 'Acme' };
+    const { result } = renderHook(() => useContactEnrichedData('contact-1'), { wrapper });
+
+    await waitFor(() => expect(result.current.enrichedData?.company).toBe('Acme'));
+
+    const dados = result.current.enrichedData!;
+    expect(dados.nickname).toBeNull();
+    expect(dados.job_title).toBeNull();
+    expect(dados.city).toBeNull();
+    expect(dados.latitude).toBeNull();
+    expect('city' in dados).toBe(true);
+    expect('latitude' in dados).toBe(true);
+    expect(Object.values(dados).some((valor) => valor === undefined)).toBe(false);
+  });
+
   it('lança em vez de esconder erro transitório como sucesso (evita cache "success:null" travado sem retry)', async () => {
     const originalImpl = mockFrom.getMockImplementation()!;
     mockFrom.mockImplementation(((table: string) => {

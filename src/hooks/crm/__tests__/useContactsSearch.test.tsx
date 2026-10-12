@@ -8,16 +8,22 @@
  * que ele faz com a resposta — inclusive resposta vazia, resposta negada por RLS
  * e resposta com contagem em texto.
  *
- * Fuso: `date_from` é derivado do relógio local do navegador (`setMonth`), então
- * os casos de período congelam o `Date` (só o `Date`, os timers seguem reais) e
- * usam uma data no meio do mês, em que a aritmética de mês é estável em qualquer
- * fuso. O caso do dia 31 fica em `it.fails`: ali a conta transborda (31/03 - 1
- * mês vira 03/03) e o filtro "Mês" encurta a janela em silêncio.
+ * Fuso: o filtro "Hoje" é 00:00 do dia civil no fuso do app (`appDayStart`,
+ * America/Sao_Paulo), não as últimas 24h — por isso o esperado é 03:00Z. Os demais
+ * períodos são derivados do relógio local do navegador (`setMonth`), então os casos
+ * congelam o `Date` (só o `Date`, os timers seguem reais) e usam uma data no meio do
+ * mês, em que a aritmética de mês é estável em qualquer fuso. O caso do dia 31 fica em
+ * `it.fails`: ali a conta transborda (31/03 - 1 mês vira 03/03) e o filtro "Mês"
+ * encurta a janela em silêncio.
+ *
+ * URL: o hook espelha busca/filtros/ordem/página em `?q,tab,company,job,date,sort,p`
+ * (`useSearchParams` + `replace`), então estes casos rodam dentro de um `MemoryRouter`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 type Args = Record<string, unknown>;
 
@@ -66,17 +72,29 @@ function pagina(n: number, totalCount = 100, fonte = 'c') {
   return Array.from({ length: n }, (_, i) => contato(`${fonte}${i}`, { total_count: totalCount }));
 }
 
-function setup() {
+function setup(initialEntries: string[] = ['/']) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: 0, staleTime: 0 },
       mutations: { retry: false },
     },
   });
+  // A URL é a fonte que o hook lê na montagem e onde ele escreve: a espia guarda o
+  // último `location.search` para os casos que conferem o espelho.
+  const url = { atual: '' };
+  const EspiaUrl = () => {
+    url.atual = useLocation().search;
+    return null;
+  };
   const wrapper = ({ children }: { children: React.ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
+    React.createElement(
+      MemoryRouter,
+      { initialEntries },
+      React.createElement(EspiaUrl),
+      React.createElement(QueryClientProvider, { client: queryClient }, children),
+    );
   const rendered = renderHook(() => useContactsSearch(), { wrapper });
-  return { ...rendered, queryClient };
+  return { ...rendered, queryClient, urlAtual: () => url.atual };
 }
 
 /** Estado real da query no cache: é o que prova que a resposta (mesmo negada) chegou e assentou. */
@@ -340,7 +358,8 @@ describe('useContactsSearch — ordenação e períodos', () => {
     expect(ultimoArgs(SEARCH).date_from).toBeUndefined();
 
     const tabela: Array<[string, string]> = [
-      ['today', '2026-03-14T12:00:00.000Z'],
+      // "Hoje" = 00:00 em America/Sao_Paulo (UTC-3) → 03:00Z.
+      ['today', '2026-03-15T03:00:00.000Z'],
       ['week', '2026-03-08T12:00:00.000Z'],
       ['month', '2026-02-15T12:00:00.000Z'],
       ['quarter', '2025-12-15T12:00:00.000Z'],
@@ -519,5 +538,79 @@ describe('useContactsSearch — valores únicos das listas de filtro', () => {
 
     expect(result.current.uniqueTags).toEqual(['vip']);
     expect(result.current.uniqueCompanies).toEqual(['ACME']);
+  });
+});
+
+describe('useContactsSearch — estado na URL (recarregar mantém)', () => {
+  it('monta busca, aba, filtros, ordem e página a partir da URL', async () => {
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const { result } = setup([
+      '/contatos?q=ana&tab=lead&company=ACME&job=Diretor&date=week&sort=created_desc&p=3',
+    ]);
+
+    expect(result.current.searchInput).toBe('ana');
+    expect(result.current.debouncedSearch).toBe('ana');
+    expect(result.current.activeTab).toBe('lead');
+    expect(result.current.filterCompany).toBe('ACME');
+    expect(result.current.filterJobTitle).toBe('Diretor');
+    expect(result.current.filterDateRange).toBe('week');
+    expect(result.current.sortBy).toBe('created_desc');
+    expect(result.current.page).toBe(2);
+
+    // E o que ele lê da URL é exatamente o que manda ao banco (não há 2ª fonte de verdade).
+    await waitFor(() => expect(ultimoArgs(SEARCH).search_term).toBe('ana'));
+    expect(ultimoArgs(SEARCH).contact_type_filter).toBe('lead');
+    expect(ultimoArgs(SEARCH).company_filter).toBe('ACME');
+    expect(ultimoArgs(SEARCH).job_title_filter).toBe('Diretor');
+    expect(ultimoArgs(SEARCH).sort_field).toBe('created_at');
+    expect(ultimoArgs(SEARCH).sort_direction).toBe('desc');
+  });
+
+  it('parâmetro desconhecido, vazio ou absurdo cai no default em vez de quebrar a lista', async () => {
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const { result } = setup([`/contatos?tab=&date=ontem&sort=drop_table&p=-4&company=${'x'.repeat(200)}`]);
+
+    expect(result.current.activeTab).toBe('all');
+    expect(result.current.filterDateRange).toBe('all');
+    expect(result.current.sortBy).toBe('name_asc');
+    expect(result.current.page).toBe(0);
+    expect(result.current.filterCompany).toHaveLength(120);
+
+    await waitFor(() => expect(ultimoArgs(SEARCH).sort_field).toBe('name'));
+    // `all` não vira filtro: o serviço omite a chave em vez de mandar null.
+    expect(ultimoArgs(SEARCH).contact_type_filter).toBeUndefined();
+  });
+
+  it('cada mudança reescreve a URL, e a tag fica de fora dela', async () => {
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const { result, urlAtual } = setup();
+    await esperaBusca();
+
+    // A tag primeiro: mexer nela (como em qualquer filtro) volta para a página 0.
+    act(() => result.current.setFilterTag('vip'));
+    act(() => result.current.setActiveTab('lead'));
+    act(() => result.current.setSortBy('created_desc'));
+    act(() => result.current.setPage(2));
+
+    await waitFor(() => expect(urlAtual()).toContain('p=3'));
+    expect(urlAtual()).toContain('tab=lead');
+    expect(urlAtual()).toContain('sort=created_desc');
+    expect(urlAtual()).not.toContain('tag=');
+    // O filtro existe em memória; só não é espelhado (função de etiqueta está fora do sistema).
+    expect(result.current.filterTag).toBe('vip');
+  });
+
+  it('clearFilters tira os filtros da URL, mas mantém busca e aba', async () => {
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const { result, urlAtual } = setup(['/contatos?q=ana&tab=lead&company=ACME&sort=created_desc&p=2']);
+    await waitFor(() => expect(urlAtual()).toContain('company=ACME'));
+
+    act(() => result.current.clearFilters());
+
+    await waitFor(() => expect(urlAtual()).not.toContain('company=ACME'));
+    expect(urlAtual()).toContain('q=ana');
+    expect(urlAtual()).toContain('tab=lead');
+    expect(urlAtual()).not.toContain('sort=');
+    expect(urlAtual()).not.toContain('p=');
   });
 });
