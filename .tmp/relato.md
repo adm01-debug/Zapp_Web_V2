@@ -1,63 +1,52 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: worker (sql) (area-sql-banco)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- `supabase/migrations/20261012184049_rate_limit_alerts_cron_limiar.sql` (novo):
+  - `public.rate_limit_alert_settings` — uma linha só (`id boolean PK = true` + CHECK singleton). Colunas que o
+    cartão pede: `blocked_threshold` (limiar de bloqueios por janela, padrão 20), `window_minutes` (5),
+    `min_severity` ('info'|'warning'|'critical'), `is_active`, + `updated_at`/`updated_by`. RLS LIGADA; leitura,
+    inserção e atualização SÓ para admin (`public.is_admin(auth.uid())`); sem policy de DELETE; tabela nasce
+    fechada (`revoke ... from public, anon, authenticated` + `grant select/insert/update` só authenticated).
+  - `public.evaluate_rate_limit_alerts()` — SECURITY DEFINER, `set search_path = public, pg_temp` (regra do repo,
+    `funcao-segura-no-banco`; a forma literal do cartão, `pg_catalog, public`, foi substituída por essa — o
+    `pg_catalog` já vem implícito primeiro). Conta `rate_limit_logs.blocked` na janela, escala a gravidade pelo
+    múltiplo do limiar (>= 3x critical, >= 2x warning, >= 1x info), respeita `min_severity` e `is_active`, e grava
+    UM `warroom_alerts` com `source = 'rate_limit'`. Idempotência por JANELA: `dedupe_key = 'rate-limit:v1:<bucket>'`
+    + `ON CONFLICT ... WHERE dedupe_key IS NOT NULL DO NOTHING` no índice único parcial
+    `ux_warroom_alerts_dedupe_key` (já existente, 20261006155408) — a mesma janela não gera segundo alerta nem
+    segundo push, sem corrida. Chama `public.secd_caller_ok(null, true)`: só contexto interno (cron) ou admin
+    dispara; EXECUTE revogado de PUBLIC/anon/authenticated.
+  - `cron.schedule('rate-limit-alerts', '*/5 * * * *', 'select public.evaluate_rate_limit_alerts();')` — desagenda
+    o homônimo antes, então é reaplicável.
+- `scripts/db-audit/rate-limit-alerts-limiares.test.sh` (novo): prova em Postgres 17 descartável (Docker) com a
+  MIGRATION REAL aplicada por marcador. Roda como o papel real (`set role authenticated` + `request.jwt.claims`).
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Prova
+- vermelho antes: `bash scripts/db-audit/rate-limit-alerts-limiares.test.sh` → `RED: o avaliador nem existe no
+  estado vivo (42883) (does not exist)` e `RED: 60 bloqueios na janela nao geraram nenhum alerta de rate limit (= 0)`
+  (o defeito: pico de requisições bloqueadas não alertava ninguém).
+- verde depois: mesmo comando → `EXIT=0`, 38 `[PASS]`, fechando em
+  `[OK] Rate limit: pico de bloqueios agora gera UM alerta no War Room por janela ...` — inclui o pico gerando 1
+  alerta, 2ª rodada na mesma janela não duplicando, 2x o limiar barrado por `min_severity='critical'` e 3x alertando
+  como `critical`, desligado sem gravar, CHECKs de entrada inválida, RLS (admin lê/edita, agente não, anon
+  `permission denied`), EXECUTE negado a authenticated, job agendado, reaplicação idempotente, e o ROLLBACK
+  extraído do próprio arquivo e executado (tabela/função somem, job desagendado, reaplicar restaura).
+- `hermes-db-migrar <arquivo>` → `APLICADA no banco LOCAL 'v2-...' (produção não foi tocada)`.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Decisão registrada (Edge send-rate-limit-alert)
+Não chamei a Edge: o contrato dela é OUTRO (um IP bloqueado por vez, corpo ip_address/endpoint/request_count e
+secret interno no Vault) — não serve para um limiar agregado, e mandar IP/telefone violaria a regra de não tirar
+dado de cliente. O alerta é agregado (contagem + janela + limiar; teste prova que a mensagem não carrega IP nem
+telefone) e vai direto para `warroom_alerts`, canal que o War Room já assina por realtime.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Para outro especialista (interface do banco pronta)
+- Front (worker telas/hooks): ler/editar via PostgREST `rate_limit_alert_settings` (RLS admin) e listar
+  `warroom_alerts` com `source = 'rate_limit'`; `alert_type` traz a gravidade (critical/warning/info) que o
+  `useWarRoomAlerts` já usa para o push. Nada de migration pendente.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- REGISTRO PENDENTE: `scripts/db-audit/rate-limit-alerts-limiares.test.sh` — harness .test.sh novo precisa de um
+  passo em `.github/workflows/db-guard.yml` (fora dos meus arquivos; é do worker ci). O verificador
+  `scripts/ci/check-test-inventory.mjs` já o lista como órfão junto de outros 4 pré-existentes; o `zapp-verify`
+  (fechar) não roda esse inventário.
+- Nenhum DROP/TRUNCATE/DELETE/GRANT de objeto vivo além do pedido; nada de produção.
