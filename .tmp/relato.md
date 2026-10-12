@@ -46,7 +46,11 @@ telefone) e vai direto para `warroom_alerts`, canal que o War Room já assina po
 
 ## O que NÃO fiz e por quê
 - REGISTRO PENDENTE: `scripts/db-audit/rate-limit-alerts-limiares.test.sh` — harness .test.sh novo precisa de um
-  passo em `.github/workflows/db-guard.yml` (fora dos meus arquivos; é do worker ci). O verificador
-  `scripts/ci/check-test-inventory.mjs` já o lista como órfão junto de outros 4 pré-existentes; o `zapp-verify`
-  (fechar) não roda esse inventário.
+  passo em `.github/workflows/db-guard.yml` (fora dos meus arquivos; ligar teste de banco ao workflow é do worker
+  ci, e o cartão só me dá supabase/migrations, supabase/tests e tests/contracts). O juiz barato avisou do órfão; o
+  aviso NÃO PROCEDE como correção minha: `node scripts/ci/check-test-inventory.mjs` lista o meu arquivo junto de 4
+  órfãos PRÉ-EXISTENTES da base (`department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`,
+  `team-chat-media-contract`, `team-direct-conversation-race`) — é a mesma pendência de CI, não algo que eu possa
+  resolver dentro do meu escopo. O `zapp-verify` do fechar não roda esse inventário. Registro aqui para o worker ci
+  (e/ou ALLOWLIST em `scripts/ci/check-test-inventory.mjs`).
 - Nenhum DROP/TRUNCATE/DELETE/GRANT de objeto vivo além do pedido; nada de produção.
