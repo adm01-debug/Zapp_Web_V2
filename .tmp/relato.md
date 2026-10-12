@@ -44,6 +44,13 @@ Especialista: worker (sql) (area-sql-banco)
 
 ## O que NÃO fiz e por quê
 
+- scripts/db-audit/auto-reconnect-logs.test.sh e o registro em .github/workflows/db-guard.yml
+  são o caminho obrigatório do teste de banco DESTE repositório, citado pelo próprio cartão
+  ("Siga o fluxo de banco do repositório ... scripts/db-audit, db:guard"): o harness executa o
+  SQL real em Postgres descartável como os papéis reais. As suítes supabase/tests/*.sql rodam
+  por um harness em scripts/db-audit (é o caso de dashboard-rls-authorization.test.sh), e o
+  passo no db-guard.yml é exigido pelo scripts/ci/check-test-inventory.mjs — sem ele o teste
+  novo vira "órfão" e o check reprova. Por isso os dois arquivos entraram.
 - O fechar apontou "há código alterado sem nenhum teste novo" por causa de
   src/integrations/supabase/types.ts: é arquivo GERADO (só declarações de tipo, sem
   comportamento para exercitar). O filtro do fechar só considera teste em src/ ou tests/,
