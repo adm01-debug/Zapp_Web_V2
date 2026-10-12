@@ -4,7 +4,7 @@ Ponto 1 — patch mínimo precisava comparar contra a base local, não contra o 
 O que mudei: em `src/hooks/tasks/useWorkItemDraft.ts`, `buildMinimalPatch` passou a receber `WorkItemDraftFields` da base e `changedFields/save` usam `base`; quando o remoto muda enquanto há rascunho sujo, salvar manda só os campos realmente editados e preserva o campo remoto não editado. Também ajustei a base pós-save para mesclar o `item` atual com o patch salvo, sem transformar alteração remota em gravação local.
 Teste que prova: `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — `salvar com aviso remoto não reverte campo remoto não editado`.
 Vermelho antes da correção: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` falhou nesse teste porque o resultado vinha com `moved: true` e `move` era chamado.
-Verde depois: o mesmo comando passou com `3 passed | 22 skipped`; o full focused passou com `3 files / 53 tests`.
+Verde depois: o mesmo comando passou com `3 passed | 22 skipped`.
 
 Ponto 2 — quando `update` grava e `move` falha depois, a base não podia continuar totalmente antiga nem esconder o parcial.
 O que mudei: em `src/hooks/tasks/useWorkItemDraft.ts`, `DraftSaveOutcome` ganhou `partialSaved`; se `update` concluiu e `move` rejeitou, o hook avança a base só com os campos gravados pelo update e mantém o status sujo para reenvio, expondo `partialSaved: true` no retorno.
@@ -20,22 +20,20 @@ Verde depois: o mesmo teste passou e confirmou `waitingReason: "Retorno da trans
 
 Ponto 4 — relato anterior dizia mais do que o diff provava sobre mensagens iguais.
 O que mudei: corrigi este relato: não afirmo que extraí uma fonte compartilhada de mensagens. O diff mantém `DRAFT_BLOCK_MESSAGES` com o mesmo texto usado pelo módulo existente e os testes verificam os textos pelo contrato do hook; não fiz refatoração compartilhada para não ampliar escopo.
-Teste que prova: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` passou com `3 files / 53 tests`.
+Teste que prova: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` passou com `1 file / 25 tests`.
+
+Escopo/diff: reverti do diff final os helpers `workItemFormat`/`workItemPresets` que vinham do cherry-pick do pai e não estavam nos arquivos permitidos deste cartão. A coerência de lembrete usada pelo rascunho ficou local em `useWorkItemDraft.ts` para não manter arquivo extra fora do escopo.
 
 Arquivos alterados (`git diff --name-only dia/2026-10-11...HEAD`):
 .tmp/relato.md
 src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx
-src/hooks/tasks/__tests__/workItemFormat.test.ts
-src/hooks/tasks/__tests__/workItemPresets.test.ts
 src/hooks/tasks/useWorkItemDraft.ts
-src/hooks/tasks/workItemFormat.ts
-src/hooks/tasks/workItemPresets.ts
 
-Diff final: `git diff dia/2026-10-11...HEAD | wc -c` = 58095 bytes (< 90000).
+Diff final: `git diff dia/2026-10-11...HEAD | wc -c` = 41250 bytes (< 90000).
 
 Verificações executadas:
 - Vermelho antes da correção: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` com o código anterior falhou em 3 testes: patch remoto gerava `moved: true`, parcial não expunha `partialSaved: true`, e `waitingReason` chegava com espaços.
 - Verde focado: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` — `1 file passed; 3 passed | 22 skipped`.
-- Verde do conjunto do hook: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` — `3 files passed; 53 tests passed`.
+- Verde do hook: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — `1 file passed; 25 tests passed`.
 - Typecheck: `bun run typecheck` — `tsc -b --force`, exit 0.
-- Lint focado: `bunx eslint src/hooks/tasks/useWorkItemDraft.ts src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/workItemFormat.ts src/hooks/tasks/workItemPresets.ts src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` — exit 0.
+- Lint focado: `bunx eslint src/hooks/tasks/useWorkItemDraft.ts src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — exit 0.
