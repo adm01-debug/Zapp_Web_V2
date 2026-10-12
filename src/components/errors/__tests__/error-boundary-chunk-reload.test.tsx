@@ -7,6 +7,7 @@ import { ErrorBoundaryWithRetry } from '../../ui/error-boundary-retry';
 // Mesmo motivo do ErrorBoundary.test.tsx: o boundary fala com o logger e com o
 // reporter (audit_logs); o alvo aqui e quem recarrega a pagina, nao a telemetria.
 vi.mock('@/lib/logger', () => ({
+  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 vi.mock('@/lib/errorReporter', () => ({ reportClientError: vi.fn() }));
@@ -80,19 +81,20 @@ describe('chunk error no caminho da view', () => {
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
     // Quem responde e o fallback GLOBAL, nao o "Tentar novamente" da view
     // (que remontaria a mesma instancia lazy sem novo fetch).
-    expect(await screen.findByText(/Ops! Algo deu errado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Atualização disponível/i)).toBeInTheDocument();
     expect(screen.queryByText(/Erro ao carregar Email/i)).toBeNull();
     primeira.unmount();
 
-    // 2a e 3a montagens com o MESMO erro: a flag zapp_chunk_reload_v1 no
-    // sessionStorage impede o laco de reload quando o chunk esta realmente ausente.
+    // 2a e 3a montagens com o MESMO erro: o cooldown de 30 s (orcamento de 2 por
+    // sessao, em src/lib/chunkReload.ts) impede o laco de reload quando o chunk
+    // esta realmente ausente.
     for (let tentativa = 2; tentativa <= 3; tentativa += 1) {
       const { unmount } = render(
         <ArvoreRealDaView>
           <ViewLazyComChunkQuebrado />
         </ArvoreRealDaView>,
       );
-      expect(await screen.findByText(/Ops! Algo deu errado/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Atualização disponível/i)).toBeInTheDocument();
       expect(reload).toHaveBeenCalledTimes(1);
       unmount();
     }

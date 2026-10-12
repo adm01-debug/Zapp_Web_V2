@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { log } from '@/lib/logger';
 import { reportClientError } from '@/lib/errorReporter';
+import {
+  hasExhaustedChunkReloads,
+  isChunkLoadError,
+  resetChunkReloadGuard,
+  triggerChunkReload,
+} from '@/lib/chunkReload';
+import { StaleBundleNotice } from './StaleBundleNotice';
 
 interface Props {
   children: ReactNode;
@@ -19,46 +26,66 @@ interface State {
   prevResetKey?: string | number;
 }
 
-// sessionStorage key to throttle auto-reload -- avoids infinite loop
-// when a chunk is genuinely broken (not just stale).
-const CHUNK_RELOAD_KEY = 'zapp_chunk_reload_v1';
+// eslint-disable-next-line react-refresh/only-export-components -- deteccao unica de chunk error compartilhada com error-boundary-retry (cartao t_4f86c0a2); implementacao em src/lib/chunkReload.ts
+export { isChunkLoadError };
 
-// sessionStorage lanca quando o navegador bloqueia storage (private browsing,
-// cookies de terceiros, iframe sandbox). Sem estes wrappers, qualquer acesso
-// derruba o proprio boundary ou os botoes de recuperacao.
-function readReloadFlag(): { ok: boolean; value: string | null } {
-  try {
-    return { ok: true, value: sessionStorage.getItem(CHUNK_RELOAD_KEY) };
-  } catch {
-    return { ok: false, value: null };
-  }
-}
-
-function writeReloadFlag(): boolean {
-  try {
-    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// eslint-disable-next-line react-refresh/only-export-components -- reuso exigido pelo boundary da view (cartao t_4f86c0a2); a chave de sessao nao pode ser duplicada
+// eslint-disable-next-line react-refresh/only-export-components -- reuso exigido pelo boundary da view (cartao t_4f86c0a2); a guarda unica agora vive em src/lib/chunkReload.ts
 export function clearReloadFlag(): void {
-  try {
-    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
-  } catch {
-    // sem storage nao ha flag para limpar
-  }
+  resetChunkReloadGuard();
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- deteccao unica de chunk error compartilhada com error-boundary-retry (cartao t_4f86c0a2)
-export function isChunkLoadError(error: Error): boolean {
+/**
+ * Recursao infinita: o React estoura "Maximum call stack size exceeded" quando um
+ * componente se renderiza sem parar. Cenario proprio — aqui "Tentar novamente"
+ * nao resolve (o erro volta na hora), so recarregar.
+ */
+function isStackOverflowError(error: Error | null): boolean {
+  if (!error) return false;
+  return (error.message ?? '').toLowerCase().includes('maximum call stack');
+}
+
+/**
+ * Fallback enxuto dos cenarios de chunk/recursao. DE PROPOSITO sem
+ * framer-motion: se o erro veio do proprio motion, usar motion aqui criaria um
+ * laco de crash (mesmo motivo do fallback generico logo abaixo).
+ */
+function FallbackDeCenario({
+  icone: Icone,
+  titulo,
+  descricao,
+  acao,
+  onClick,
+}: {
+  icone: typeof AlertTriangle;
+  titulo: string;
+  descricao: string;
+  acao: string;
+  onClick: () => void;
+}) {
   return (
-    error.name === 'ChunkLoadError' ||
-    error.message.includes('Failed to fetch dynamically imported module') ||
-    error.message.includes('Loading chunk') ||
-    error.message.includes('Loading CSS chunk')
+    <div
+      className="min-h-screen flex items-center justify-center bg-background p-4"
+      role="alert"
+      aria-live="assertive"
+    >
+      <Card className="max-w-lg w-full shadow-2xl border-border">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-4">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+              <Icone className="w-10 h-10 text-muted-foreground" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-foreground">{titulo}</CardTitle>
+          <CardDescription className="text-muted-foreground mt-2">{descricao}</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2">
+          <Button onClick={onClick} className="w-full min-h-11">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {acao}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -89,26 +116,19 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
 
-    // Auto-reload on ChunkLoadError -- happens when the browser has a stale
-    // index.html referencing chunk hashes from a previous Vercel deployment.
-    // One reload per session to prevent infinite loops if the chunk is
-    // genuinely missing (not just stale).
+    // ChunkLoadError = o HTML ja carregado aponta para hashes de um deploy que a
+    // producao apagou. Quem decide a recarga e UMA unica fonte
+    // (src/lib/chunkReload.ts): orcamento de 2 por sessao, cooldown de 30 s e
+    // tolerancia de relogio. Quando ela nao acontece, o render mostra a tela
+    // acionavel ao usuario em vez de recarregar em silencio (laco invisivel).
     if (isChunkLoadError(error)) {
-      const flag = readReloadFlag();
-      if (!flag.ok) {
-        // Sem storage nao da para registrar que ja recarregamos; recarregar aqui
-        // viraria loop infinito quando o chunk esta mesmo faltando.
-        log.warn('ChunkLoadError com sessionStorage indisponivel (leitura) -- mostrando UI de erro em vez de recarregar');
-      } else if (flag.value) {
-        log.warn('ChunkLoadError depois de ja ter recarregado -- chunk realmente ausente, mostrando UI de erro');
-      } else if (writeReloadFlag()) {
+      const recarregou = triggerChunkReload();
+      if (recarregou) {
         log.warn('ChunkLoadError detectado -- recarregando para pegar os assets do deploy novo');
-        window.location.reload();
-        return;
       } else {
-        // Leitura passou mas escrita falhou (Safari em navegacao privada, quota
-        // estourada). Diagnostico proprio: nao e chunk ausente, e storage.
-        log.warn('ChunkLoadError com sessionStorage indisponivel (escrita) -- mostrando UI de erro em vez de recarregar');
+        log.warn(
+          'ChunkLoadError sem recarga automatica disponivel (orcamento esgotado ou cooldown) -- mostrando a tela de nova versao'
+        );
       }
     }
   }
@@ -128,6 +148,28 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  /** Cenario 1 — chunk de deploy antigo: recarga manual liberada pelo usuario. */
+  private renderFallbackDeChunk = () => (
+    <FallbackDeCenario
+      icone={RefreshCw}
+      titulo="Atualização disponível"
+      descricao="Uma versão nova do Zapp já está no ar e esta tela não conseguiu carregar. Recarregue para continuar."
+      acao="Recarregar"
+      onClick={this.handleReload}
+    />
+  );
+
+  /** Cenario 2 — recursao infinita: "tentar novamente" repetiria o estouro. */
+  private renderFallbackDeRecursao = () => (
+    <FallbackDeCenario
+      icone={AlertTriangle}
+      titulo="Tela em loop"
+      descricao="Um componente ficou se chamando sem parar. Recarregue para voltar ao normal."
+      acao="Recarregar"
+      onClick={this.handleReload}
+    />
+  );
+
   public render() {
     if (this.state.hasError) {
       // Presenca da prop, nao veracidade: `fallback={null}` (e `fallback={false}`)
@@ -137,6 +179,21 @@ export class ErrorBoundary extends Component<Props, State> {
       // global de erro tomava o lugar do overlay. (#383 / R2-INF-041)
       if (this.props.fallback !== undefined) {
         return this.props.fallback;
+      }
+
+      // Cenario chunk: se o orcamento automatico da sessao acabou (ou o cooldown
+      // barra a recarga), a unica saida e o usuario atualizar — a tela "Nova
+      // versao disponivel" zera a guarda e recarrega.
+      if (isChunkLoadError(this.state.error)) {
+        if (hasExhaustedChunkReloads()) {
+          return <StaleBundleNotice />;
+        }
+        return this.renderFallbackDeChunk();
+      }
+
+      // Cenario recursao infinita (Maximum call stack).
+      if (isStackOverflowError(this.state.error)) {
+        return this.renderFallbackDeRecursao();
       }
 
       // IMPORTANT: No framer-motion here! If framer-motion caused the error,
