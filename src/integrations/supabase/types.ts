@@ -3926,6 +3926,7 @@ export type Database = {
           current_step: number | null
           id: string
           next_step_at: string | null
+          reason: string | null
           sequence_id: string
           started_at: string | null
           status: string
@@ -3937,6 +3938,7 @@ export type Database = {
           current_step?: number | null
           id?: string
           next_step_at?: string | null
+          reason?: string | null
           sequence_id: string
           started_at?: string | null
           status?: string
@@ -3948,6 +3950,7 @@ export type Database = {
           current_step?: number | null
           id?: string
           next_step_at?: string | null
+          reason?: string | null
           sequence_id?: string
           started_at?: string | null
           status?: string
@@ -10481,6 +10484,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: boolean
       }
+      cancel_followup: {
+        Args: { p_execution_id: string; p_reason?: string | null }
+        Returns: Json
+      }
       catalog_rate_limit_hit: {
         Args: {
           p_action: string
@@ -10714,6 +10721,10 @@ export type Database = {
           p_lease_token: string
         }
         Returns: undefined
+      }
+      complete_followup: {
+        Args: { p_execution_id: string }
+        Returns: Json
       }
       complete_multiplix_dispatch_if_drained: {
         Args: { p_dispatch_id: string }
@@ -10959,6 +10970,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      due_followups: {
+        Args: { p_limit?: number }
+        Returns: {
+          contact_id: string
+          current_step: number
+          id: string
+          next_step_at: string
+          sequence_id: string
+          started_at: string
+          status: string
+        }[]
+      }
       effective_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -11090,6 +11113,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      enroll_followup: {
+        Args: { p_contact_id: string; p_sequence_id: string }
+        Returns: Json
       }
       expire_stale_agent_presence: { Args: never; Returns: undefined }
       fail_crm_sync_outbox: {
