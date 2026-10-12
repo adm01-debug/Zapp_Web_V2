@@ -75,6 +75,107 @@ describe('CloseConversationDialog', () => {
     expect(mockRpc.mock.calls[0][1].p_client_request_id)
       .toBe(mockRpc.mock.calls[1][1].p_client_request_id);
   });
+
+  it('arquiva a conversa via set_conversation_status com p_next archived e avisa a lista', async () => {
+    mockRpc.mockReset();
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
+    mockRpc.mockResolvedValueOnce({ data: null, error: null });
+    const onOpenChange = vi.fn();
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={onOpenChange}
+        contactId="50000000-0000-0000-0000-000000000001"
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Escolher motivo' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));
+    await waitFor(() => expect(mockRpc).toHaveBeenCalledTimes(1));
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      'set_conversation_status',
+      expect.objectContaining({
+        p_contact_id: '50000000-0000-0000-0000-000000000001',
+        p_next: 'archived',
+        p_reason: 'resolved',
+      }),
+    );
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalled());
+    expect(mockToast.error).not.toHaveBeenCalled();
+
+    const changed = dispatchSpy.mock.calls
+      .map(([event]) => event)
+      .find((event): event is CustomEvent => event instanceof CustomEvent && event.type === 'zapp:contact-status-changed');
+    expect(changed?.detail).toEqual({
+      contactId: '50000000-0000-0000-0000-000000000001',
+      status: 'archived',
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    dispatchSpy.mockRestore();
+  });
+
+  it('desarquiva/reabre a conversa via set_conversation_status com p_next open', async () => {
+    mockRpc.mockReset();
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
+    mockRpc.mockResolvedValueOnce({ data: null, error: null });
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={vi.fn()}
+        contactId="50000000-0000-0000-0000-000000000002"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Desarquivar / Reabrir' }));
+    await waitFor(() => expect(mockRpc).toHaveBeenCalledTimes(1));
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      'set_conversation_status',
+      expect.objectContaining({
+        p_contact_id: '50000000-0000-0000-0000-000000000002',
+        p_next: 'open',
+      }),
+    );
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalled());
+
+    const changed = dispatchSpy.mock.calls
+      .map(([event]) => event)
+      .find((event): event is CustomEvent => event instanceof CustomEvent && event.type === 'zapp:contact-status-changed');
+    expect(changed?.detail).toEqual({
+      contactId: '50000000-0000-0000-0000-000000000002',
+      status: 'open',
+    });
+    dispatchSpy.mockRestore();
+  });
+
+  it('mostra erro e mantém o diálogo aberto quando a RPC de arquivar falha', async () => {
+    mockRpc.mockReset();
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
+    mockRpc.mockResolvedValueOnce({ data: null, error: new Error('permission denied') });
+    const onOpenChange = vi.fn();
+
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={onOpenChange}
+        contactId="50000000-0000-0000-0000-000000000003"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalled());
+
+    expect(mockToast.success).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
 });
 
 describe('CloseConversationDialog — acessibilidade (N-044)', () => {

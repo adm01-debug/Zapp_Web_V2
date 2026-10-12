@@ -131,6 +131,42 @@ export function CloseConversationDialog({
     }
   };
 
+  // Arquivar/desarquivar usam a RPC set_conversation_status (a mesma da FSM de
+  // contatos). Diferente do encerramento, não há registro de closure: o motivo
+  // escolhido é opcional e só acompanha a chamada.
+  const handleStatusChange = async (next: 'archived' | 'open') => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc('set_conversation_status', {
+        p_contact_id: contactId,
+        p_next: next,
+        p_reason: reason || undefined,
+      });
+      if (error) throw error;
+
+      window.dispatchEvent(
+        new CustomEvent('zapp:contact-status-changed', {
+          detail: { contactId, status: next },
+        })
+      );
+
+      toast.success(next === 'archived' ? 'Conversa arquivada' : 'Conversa reaberta');
+      onOpenChange(false);
+      if (isMountedRef.current) setReason('');
+      onClosed?.();
+    } catch (error) {
+      console.warn('[CloseConversationDialog] Falha ao alterar status da conversa:', error);
+      toast.error(
+        next === 'archived'
+          ? 'Não foi possível arquivar a conversa.'
+          : 'Não foi possível reabrir a conversa.',
+      );
+    } finally {
+      if (isMountedRef.current) setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-md">
@@ -197,6 +233,12 @@ export function CloseConversationDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => handleStatusChange('open')} disabled={saving}>
+            Desarquivar / Reabrir
+          </Button>
+          <Button variant="outline" onClick={() => handleStatusChange('archived')} disabled={saving}>
+            Arquivar
+          </Button>
           <Button onClick={handleClose} disabled={saving || !reason}>
             {saving ? 'Salvando...' : 'Encerrar'}
           </Button>
