@@ -32,6 +32,7 @@ type Construtor = {
   order: (...a: unknown[]) => Construtor;
   limit: (n: number) => Construtor;
   single: () => Promise<unknown>;
+  maybeSingle: () => Promise<unknown>;
   then: (resolve: (v: unknown) => unknown) => unknown;
 };
 
@@ -40,6 +41,9 @@ vi.mock('@/integrations/supabase/client', () => {
     const cfg: TableState = h.tables[table] ?? { rows: [], error: null };
     const filters: Array<{ op: string; col: string; val: unknown }> = [];
     h.queries.push({ table, filters });
+    // O hook lê as metas por contagem (`head: true`); neste modo o stub
+    // responde `{ count }` em vez de linhas, como o PostgREST faria.
+    let countMode = false;
 
     const matching = () =>
       cfg.rows.filter((row) =>
@@ -53,16 +57,25 @@ vi.mock('@/integrations/supabase/client', () => {
       );
 
     const result = () =>
-      cfg.error ? { data: null, error: cfg.error } : { data: matching(), error: null };
+      cfg.error
+        ? { data: null, error: cfg.error }
+        : countMode
+          ? { data: null, error: null, count: matching().length }
+          : { data: matching(), error: null };
 
     const b: Construtor = {
-      select: () => b,
+      select: (...a: unknown[]) => {
+        const opts = a[1] as { count?: string; head?: boolean } | undefined;
+        countMode = !!opts?.head;
+        return b;
+      },
       eq: (col: string, val: unknown) => { filters.push({ op: 'eq', col, val }); return b; },
       gte: (col: string, val: unknown) => { filters.push({ op: 'gte', col, val }); return b; },
       lte: (col: string, val: unknown) => { filters.push({ op: 'lte', col, val }); return b; },
       order: () => b,
       limit: () => b,
       single: () => Promise.resolve(cfg.error ? { data: null, error: cfg.error } : { data: matching()[0] ?? null, error: null }),
+      maybeSingle: () => Promise.resolve(cfg.error ? { data: null, error: cfg.error } : { data: matching()[0] ?? null, error: null }),
       then: (resolve: (v: unknown) => unknown) => {
         const entrega = () => Promise.resolve(result());
         const freio = h.held[table];
