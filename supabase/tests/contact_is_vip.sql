@@ -1,5 +1,5 @@
 -- contact_is_vip.sql
--- Prova de contrato da migration 20261012223017_contact_is_vip (cartao t_84b84230).
+-- Prova de contrato da migration 20261012224718_contacts_is_vip (cartao t_84b84230).
 --
 -- Roda como postgres no banco local da tarefa:
 --   zapp-db-local psql <copia> <conjunto> < supabase/tests/contact_is_vip.sql

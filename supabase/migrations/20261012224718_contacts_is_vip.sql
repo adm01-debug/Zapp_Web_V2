@@ -1,4 +1,4 @@
--- contact_is_vip
+-- contacts_is_vip
 -- Rollback: desfaz a coluna is_vip, a RPC set_contact_vip e a trilha de auditoria do VIP; a etiqueta de origem (o elemento 'vip' em contacts.tags) NUNCA e tocada, entao nenhum dado se perde ao reverter.
 -- Rollback (SQL executável, na ordem):
 --   drop trigger if exists trg_audit_contact_vip_change on public.contacts;
@@ -11,7 +11,7 @@
 -- (src/components/inbox/VirtualizedRealtimeList.tsx:355:
 --  tags.some(t => t.toLowerCase() === 'vip')). A remocao das etiquetas (cartao t_b7b5d9f3)
 -- apaga essa origem; o campo proprio contacts.is_vip preserva o estado.
--- Esta migration roda ANTES da remocao de tags (versao 20261012223017 e anterior a versao
+-- Esta migration roda ANTES da remocao de tags (a versao desta migration e anterior a versao
 -- que a remocao vai reservar), portanto o backfill ainda encontra a etiqueta na base.
 -- Fonte unica do backfill = contacts.tags, exatamente o que o front lia (case-insensitive,
 -- sem trim: lower(t) = 'vip'). Quem le is_vip no front e o mesmo carregamento do contato
@@ -47,7 +47,7 @@ CREATE OR REPLACE FUNCTION public.set_contact_vip(p_contact_id uuid, p_is_vip bo
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public'
+ SET search_path = pg_catalog, public
 AS $function$ DECLARE v_value boolean; BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Sem sessao autenticada.' USING ERRCODE = 'insufficient_privilege';
@@ -85,7 +85,7 @@ CREATE OR REPLACE FUNCTION public.audit_contact_vip_change()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path = pg_catalog, public
 AS $function$
 BEGIN
   IF OLD.is_vip IS DISTINCT FROM NEW.is_vip THEN
