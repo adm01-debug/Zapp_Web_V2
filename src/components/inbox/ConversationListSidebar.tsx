@@ -12,7 +12,7 @@ import type { useConversationActions } from '@/hooks/chat/useConversationActions
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CloseConversationDialog } from './CloseConversationDialog';
@@ -129,19 +129,54 @@ export function ConversationListSidebar({
 
       <div className="border-b border-border shrink-0">
         {!isMobile && (
-          <div className="h-14 px-4 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
-                <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={inbox.refetch}
+                  disabled={inbox.loading}
+                  aria-label="Atualizar conversas"
+                  title="Atualizar conversas"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={cn('h-4 w-4', inbox.loading && 'motion-safe:animate-spin')} />
+                </Button>
               </div>
+              {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
             </div>
-            {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
+              <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+            </div>
           </div>
         )}
 
-        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'pb-1')}>
+        <StatusChips
+          conversations={inbox.conversations}
+          chipTab={inboxFilters.chipTab}
+          onChipTabChange={inboxFilters.setChipTab}
+        />
+      </div>
+
+      <div className="border-b border-border shrink-0">
+        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'py-2')}>
+          {!isMobile && (
+            <div className="shrink-0">
+              <InboxFilters
+                filters={inboxFilters.filters}
+                onFiltersChange={inboxFilters.setFilters}
+                showAll={inboxFilters.showAll}
+                onShowAllChange={inboxFilters.setShowAll}
+                selectedContactType={inboxFilters.selectedContactType}
+                onContactTypeChange={inboxFilters.handleContactTypeChange}
+                selectedQueueId={inboxFilters.selectedQueueId}
+                onQueueChange={inboxFilters.setSelectedQueueId}
+              />
+            </div>
+          )}
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -149,7 +184,7 @@ export function ConversationListSidebar({
               placeholder="Buscar conversas…"
               value={contactSearch}
               onChange={(e) => handleContactSearch(e.target.value)}
-              className="pl-10 pr-8 h-10 rounded-xl bg-input border border-border text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
+              className="pl-10 pr-8 h-12 rounded-full bg-input border border-border text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
               aria-label="Buscar contato pelo nome"
             />
             {contactSearch && (
@@ -172,26 +207,22 @@ export function ConversationListSidebar({
             />
           )}
         </div>
-        <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
-          <InboxFilters
-            filters={inboxFilters.filters}
-            onFiltersChange={inboxFilters.setFilters}
-            showAll={inboxFilters.showAll}
-            onShowAllChange={inboxFilters.setShowAll}
-            selectedContactType={inboxFilters.selectedContactType}
-            onContactTypeChange={inboxFilters.handleContactTypeChange}
-            selectedQueueId={inboxFilters.selectedQueueId}
-            onQueueChange={inboxFilters.setSelectedQueueId}
-            onRefetch={inbox.refetch}
-            isRefetching={inbox.loading}
-          />
-        </div>
-
-        <StatusChips
-          conversations={inbox.conversations}
-          chipTab={inboxFilters.chipTab}
-          onChipTabChange={inboxFilters.setChipTab}
-        />
+        {isMobile && (
+          <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
+            <InboxFilters
+              filters={inboxFilters.filters}
+              onFiltersChange={inboxFilters.setFilters}
+              showAll={inboxFilters.showAll}
+              onShowAllChange={inboxFilters.setShowAll}
+              selectedContactType={inboxFilters.selectedContactType}
+              onContactTypeChange={inboxFilters.handleContactTypeChange}
+              selectedQueueId={inboxFilters.selectedQueueId}
+              onQueueChange={inboxFilters.setSelectedQueueId}
+              onRefetch={inbox.refetch}
+              isRefetching={inbox.loading}
+            />
+          </div>
+        )}
       </div>
 
       {isMobile && (
