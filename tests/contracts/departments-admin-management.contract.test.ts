@@ -36,6 +36,8 @@ describe('contrato de gestao de departamentos pelo admin', () => {
     expect(migration).toContain('CREATE OR REPLACE FUNCTION public.delete_department(');
     expect(migration).toContain('CREATE OR REPLACE FUNCTION public.departments_overview()');
     expect(migration).toContain('IF NOT public.is_admin(v_uid) THEN');
+    expect(migration).toContain('IF NOT public.is_admin(auth.uid()) THEN');
+    expect(migration).not.toContain('IF NOT public.is_admin_or_supervisor(auth.uid()) THEN');
     expect(migration).toContain('SET search_path = pg_catalog, public');
     expect(migration).toContain(
       'REVOKE EXECUTE ON FUNCTION public.delete_department(uuid, uuid) FROM PUBLIC, anon;',

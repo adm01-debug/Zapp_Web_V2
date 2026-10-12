@@ -31,7 +31,7 @@
 --      para o departamento destino, apaga a linha e registra a auditoria — tudo em uma unica
 --      transacao (qualquer RAISE desfaz o conjunto).
 --   4. public.departments_overview() -> (id, nome, ativo, membros, filas, conversas) por
---      departamento, so admin/supervisor.
+--      departamento, so admin.
 --
 -- Filas: no schema V2 nao ha coluna de departamento em queues/queue_members; a unica ligacao
 -- real e o membro da fila (queue_members.profile_id -> profiles.department_id). Por isso "fila
@@ -226,7 +226,7 @@ BEGIN
     RAISE EXCEPTION 'not_authenticated' USING ERRCODE = '42501';
   END IF;
 
-  IF NOT public.is_admin_or_supervisor(auth.uid()) THEN
+  IF NOT public.is_admin(auth.uid()) THEN
     RAISE EXCEPTION 'not_authorized' USING ERRCODE = '42501';
   END IF;
 

@@ -12,7 +12,7 @@
 #   - RPC public.delete_department(uuid, uuid) -> jsonb: so admin, recusa quando ha
 #     membros/conversas/filas e p_move_to e nulo (devolvendo contagens), e com p_move_to
 #     move membros e conversas, apaga a linha e audita — tudo numa transacao;
-#   - RPC public.departments_overview() -> contagens por departamento (admin/supervisor).
+#   - RPC public.departments_overview() -> contagens por departamento (so admin).
 #
 # ESTE CONTRATO roda em PostgreSQL 17 descartavel (docker), no formato dos testes irmaos
 # department-whatsapp-mode-rpc.test.sh e l11-departments-acl-escrita.test.sh. UM banco so,
@@ -24,10 +24,11 @@
 #   DEPOIS — aplica o arquivo REAL da migration e prova: DELETE revogado; escrita so admin;
 #            RPC so para admin (anon/agente recebem 42501); recusa com contagens sem apagar;
 #            move+apaga+auditoria; overview; e o caso de retorno.
-#   ESTATICO — o arquivo do repo tem REVOKE/DELETE, is_admin e as RPCs, e NAO concede DELETE
-#            a authenticated (afirmacao grep -F, nunca contagem).
+#   ESTATICO — o arquivo do repo tem is_admin e as RPCs; a revogacao de DELETE e
+#            provada por SQL real no contrato DEPOIS e na MUTACAO A.
 #   MUTACAO A — copia sem a linha do REVOKE: com o DELETE ainda concedido, o contrato FALHA.
 #   MUTACAO B — copia com o portao de papel desligado: o agente passa, o contrato FALHA.
+#   MUTACAO C — copia com overview liberado para supervisor: o contrato FALHA.
 #   ROLLBACK — o bloco `-- Rollback (...)` do arquivo roda e devolve o estado anterior.
 #
 # Uso: bash scripts/db-audit/departments-admin-management.test.sh
@@ -61,18 +62,6 @@ psql_q() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U p
 psql_file() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres < "$1"; }
 q1() { psql_q -c "$1"; }
 
-# Erro esperado de TOPO: qualquer desvio encerra o teste (exit 1).
-expect_error() {
-  local label="$1" message="$2" sql="$3" out status
-  set +e
-  out="$(docker exec -i "$container_name" psql -X -v VERBOSITY=verbose -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$sql" 2>&1)"
-  status=$?
-  set -e
-  (( status != 0 )) || { printf '%s\n' "$out" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$out" == *"$message"* ]] || { printf '%s\n' "$out" >&2; fail "$label: esperava o erro '$message'"; }
-  ok "$label"
-}
-
 # Variantes usadas DENTRO do contrato: imprimem [FAIL] e retornam 1 — a mutacao precisa
 # que o contrato FALHE, com evidencia no log.
 assert_eq() { # fase label esperado obtido
@@ -84,21 +73,31 @@ assert_eq() { # fase label esperado obtido
   printf '[FAIL] %s: %s deveria ser %s, obtido %s\n' "$fase" "$label" "$expected" "$actual" >&2
   return 1
 }
-check_error() { # label mensagem sql
-  local label="$1" message="$2" sql="$3" out status
+
+extract_sqlstate() {
+  printf '%s\n' "$1" | python3 -c 'import re,sys; text=sys.stdin.read(); m=re.search(r"ERROR:\s+([0-9A-Z]{5}):", text); print(m.group(1) if m else "")'
+}
+
+check_error() { # label sqlstate mensagem_opcional sql
+  local label="$1" expected_sqlstate="$2" expected_message="$3" sql="$4" out status actual_sqlstate
   set +e
   out="$(docker exec -i "$container_name" psql -X -v VERBOSITY=verbose -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$sql" 2>&1)"
   status=$?
   set -e
   if (( status == 0 )); then
-    printf '[FAIL] %s: a chamada passou (esperava erro %s): %s\n' "$label" "$message" "$out"
+    printf '[FAIL] %s: a chamada passou (esperava SQLSTATE %s): %s\n' "$label" "$expected_sqlstate" "$out"
     return 1
   fi
-  if [[ "$out" != *"$message"* ]]; then
-    printf '[FAIL] %s: erro divergente (esperava %s): %s\n' "$label" "$message" "$out"
+  actual_sqlstate="$(extract_sqlstate "$out")"
+  if [[ "$actual_sqlstate" != "$expected_sqlstate" ]]; then
+    printf '[FAIL] %s: SQLSTATE divergente (esperava %s, obteve %s): %s\n' "$label" "$expected_sqlstate" "${actual_sqlstate:-vazio}" "$out"
     return 1
   fi
-  printf '[OK] %s\n' "$label"
+  if [[ -n "$expected_message" && "$out" != *"$expected_message"* ]]; then
+    printf '[FAIL] %s: mensagem divergente (esperava conter %s): %s\n' "$label" "$expected_message" "$out"
+    return 1
+  fi
+  printf '[OK] %s (SQLSTATE %s)\n' "$label" "$expected_sqlstate"
   return 0
 }
 
@@ -168,13 +167,13 @@ checa_contrato() { # fase
   assert_eq "$fase" 'has_table_privilege(authenticated, departments, DELETE)' 'f' \
     "$(q1 "SELECT has_table_privilege('authenticated','public.departments','DELETE')")" || return 1
 
-  check_error "$fase: DELETE direto do admin e barrado (42501, grant revogado)" '42501' \
+  check_error "$fase: DELETE direto do admin e barrado (42501, grant revogado)" '42501' '' \
     "$admin_call DELETE FROM public.departments WHERE id='$DEP_VAZIO'; COMMIT;" || return 1
 
-  check_error "$fase: INSERT do supervisor e barrado pela RLS (42501)" '42501' \
+  check_error "$fase: INSERT do supervisor e barrado pela RLS (42501)" '42501' '' \
     "$sup_call INSERT INTO public.departments (name) VALUES ('Depto Supervisor'); COMMIT;" || return 1
 
-  check_error "$fase: INSERT do agente e barrado pela RLS (42501)" '42501' \
+  check_error "$fase: INSERT do agente e barrado pela RLS (42501)" '42501' '' \
     "$agent_call INSERT INTO public.departments (name) VALUES ('Depto Agente'); COMMIT;" || return 1
 
   q1 "$admin_call INSERT INTO public.departments (name) VALUES ('Departamento Novo'); COMMIT;" >/dev/null \
@@ -191,16 +190,16 @@ checa_contrato() { # fase
   assert_eq "$fase" "has_function_privilege(anon, $SIG_DEL, EXECUTE)" 'f' \
     "$(q1 "SELECT has_function_privilege('anon','$SIG_DEL','EXECUTE')")" || return 1
 
-  check_error "$fase: anon nao executa a RPC (42501)" '42501' \
+  check_error "$fase: anon nao executa a RPC (42501)" '42501' '' \
     "$anon_call SELECT public.delete_department('$DEP_VAZIO', NULL); COMMIT;" || return 1
-  check_error "$fase: agente nao executa a RPC (42501)" '42501' \
+  check_error "$fase: agente nao executa a RPC (42501)" '42501' '' \
     "$agent_call SELECT public.delete_department('$DEP_VAZIO', NULL); COMMIT;" || return 1
-  check_error "$fase: supervisor nao executa a RPC (42501, so admin)" '42501' \
+  check_error "$fase: supervisor nao executa a RPC (42501, so admin)" '42501' '' \
     "$sup_call SELECT public.delete_department('$DEP_VAZIO', NULL); COMMIT;" || return 1
 
-  check_error "$fase: departamento inexistente recusado" 'department_not_found' \
+  check_error "$fase: departamento inexistente recusado" 'P0002' 'department_not_found' \
     "$admin_call SELECT public.delete_department('$DEP_INEXISTENTE', NULL); COMMIT;" || return 1
-  check_error "$fase: mover para si mesmo recusado" 'invalid_move_target' \
+  check_error "$fase: mover para si mesmo recusado" '22023' 'invalid_move_target' \
     "$admin_call SELECT public.delete_department('$DEP_ALFA', '$DEP_ALFA'); COMMIT;" || return 1
 
   # recusa com contagens, SEM apagar
@@ -249,7 +248,7 @@ checa_contrato() { # fase
 
   # conflito do indice unico ao mover conversa-tipo
   reseed
-  check_error "$fase: mover 2 conversas-tipo colidiria (recusa)" 'move_target_already_has_department_conversation' \
+  check_error "$fase: mover 2 conversas-tipo colidiria (recusa)" '22023' 'move_target_already_has_department_conversation' \
     "$admin_call SELECT public.delete_department('$DEP_GAMA', '$DEP_BETA'); COMMIT;" || return 1
   assert_eq "$fase" 'conflito: Gama continua' '1' \
     "$(q1 "SELECT count(*) FROM public.departments WHERE id='$DEP_GAMA'")" || return 1
@@ -257,9 +256,11 @@ checa_contrato() { # fase
   # overview
   assert_eq "$fase" 'overview: admin ve as 4 linhas' '4' \
     "$(q1 "$admin_call SELECT count(*) FROM public.departments_overview(); COMMIT;")" || return 1
-  check_error "$fase: overview do agente e barrado (42501)" '42501' \
+  check_error "$fase: overview do supervisor e barrado (42501, so admin)" '42501' '' \
+    "$sup_call SELECT * FROM public.departments_overview(); COMMIT;" || return 1
+  check_error "$fase: overview do agente e barrado (42501)" '42501' '' \
     "$agent_call SELECT * FROM public.departments_overview(); COMMIT;" || return 1
-  check_error "$fase: overview do anon e barrado (42501)" '42501' \
+  check_error "$fase: overview do anon e barrado (42501)" '42501' '' \
     "$anon_call SELECT * FROM public.departments_overview(); COMMIT;" || return 1
 
   return 0
@@ -281,8 +282,6 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration ausente: $migration"
 
 # ── leitura estatica do arquivo do repo ──────────────────────────────────────
-grep -qF "$REVOKE_LINE" "$migration" ||
-  fail 'o arquivo do repo perdeu o REVOKE DELETE de authenticated'
 grep -qF 'USING (public.is_admin(auth.uid()))' "$migration" ||
   fail 'o arquivo do repo perdeu a policy de escrita para is_admin()'
 grep -qF 'IF NOT public.is_admin(v_uid) THEN' "$migration" ||
@@ -296,7 +295,7 @@ grep -qF 'GRANT EXECUTE ON FUNCTION public.delete_department(uuid, uuid) TO auth
 if grep -qF 'GRANT DELETE ON public.departments' "$migration"; then
   fail 'o arquivo do repo CONCEDE DELETE em public.departments (nao pode)'
 fi
-ok 'o arquivo do repo tem REVOKE/is_admin/RPCs e nao concede DELETE (o teste so le)'
+ok 'o arquivo do repo tem is_admin/RPCs e nao concede DELETE; REVOKE e validado por SQL real'
 
 mkdir -p "$tmp_dir"
 
@@ -494,17 +493,50 @@ else
 fi
 
 echo
+echo '── MUTACAO C: copia com overview liberado ao supervisor ───────────────────'
+mut_c="$tmp_dir/mut_c_overview_supervisor.sql"
+python3 - "$migration" "$mut_c" <<'PY'
+from pathlib import Path
+import sys
+src, dst = map(Path, sys.argv[1:])
+s = src.read_text()
+old = "IF NOT public.is_admin(auth.uid()) THEN"
+pos = s.find(old)
+if pos < 0:
+    raise SystemExit('MUTACAO C: nao encontrou o gate is_admin do overview')
+s = s[:pos] + "IF NOT public.is_admin_or_supervisor(auth.uid()) THEN" + s[pos + len(old):]
+dst.write_text(s)
+PY
+grep -qF 'IF NOT public.is_admin_or_supervisor(auth.uid()) THEN' "$mut_c" || fail 'MUTACAO C: a copia nao abriu o overview para supervisor'
+ok 'MUTACAO C: copia com overview liberado para supervisor (copia em TMPDIR da tarefa)'
+reseed
+q1 "DROP FUNCTION IF EXISTS public.delete_department(uuid, uuid); DROP FUNCTION IF EXISTS public.departments_overview();" >/dev/null
+psql_file "$mut_c" >/dev/null
+if exige_falha_do_contrato 'MUTACAO C'; then
+  ok 'MUTACAO C: se overview aceitar supervisor o contrato FALHA como esperado'
+else
+  fail 'MUTACAO C: overview liberado para supervisor passou -- o gate admin-only nao esta coberto'
+fi
+
+echo
 echo '── ROLLBACK: o bloco do arquivo devolve o estado anterior ─────────────────'
 q1 "DROP FUNCTION IF EXISTS public.delete_department(uuid, uuid); DROP FUNCTION IF EXISTS public.departments_overview();" >/dev/null
 psql_file "$migration" >/dev/null   # estado final real
 reseed
-cat > "$tmp_dir/rollback.sql" <<'SQL'
-drop function if exists public.delete_department(uuid, uuid);
-drop function if exists public.departments_overview();
-drop policy if exists departments_admin_write on public.departments;
-create policy departments_admin_write on public.departments for all to authenticated using (public.is_admin_or_supervisor(auth.uid())) with check (public.is_admin_or_supervisor(auth.uid()));
-grant delete on public.departments to authenticated;
-SQL
+python3 - "$migration" "$tmp_dir/rollback.sql" <<'RB_PY'
+from pathlib import Path
+import sys
+src = Path(sys.argv[1]).read_text().splitlines()
+out = []
+for line in src:
+    if line.startswith('--   '):
+        out.append(line.removeprefix('--   '))
+    elif out:
+        break
+if not out:
+    raise SystemExit('rollback nao encontrado no cabecalho da migration')
+Path(sys.argv[2]).write_text('\n'.join(out) + '\n')
+RB_PY
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 v="$(q1 "SELECT has_table_privilege('authenticated','public.departments','DELETE')")"
 [[ "$v" == t ]] || fail "ROLLBACK: DELETE nao voltou ao authenticated = $v"
