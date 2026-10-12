@@ -1,29 +1,30 @@
-Especialista: senior (area-front-hooks)
+Especialista: workersql
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+- `supabase/migrations/20261011181949_warroom_alerts_resolve.sql`: mantive a entrega anterior e fechei o buraco restante da recusa 2: o gatilho `trg_prevent_direct_warroom_alert_resolution_update` agora roda em `BEFORE INSERT OR UPDATE`; no `INSERT`, bloqueia qualquer `resolved_at`, `resolved_by` ou `resolution_note` não nulo fora da flag interna da RPC; no `UPDATE`, preserva o bloqueio já existente. Também ajustei os comentários das colunas para não prometer que NULL é "escrito" pela RPC.
+- `supabase/tests/warroom_alerts_resolve.sql`: acrescentei prova SQL real do admin autenticado tentando `INSERT` com `resolved_by` preenchido e recebendo `resolution_update_not_allowed`; ajustei o teste estrutural do limite de 500 caracteres para ligar a flag interna e isolar a constraint, sem afrouxar a blindagem.
+- `src/integrations/supabase/types.ts`: preservado da entrega anterior, só com tipos das colunas/RPCs de warroom criadas pela migration.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+## Pontos da recusa anterior, na ordem
+- Ponto 1: resolvido — `warroom_alerts_summary` segue com gate de sessão e staff em `supabase/migrations/20261011181949_warroom_alerts_resolve.sql`; o contrato cobre atendente e anônimo em `supabase/tests/warroom_alerts_resolve.sql`.
+- Ponto 2: resolvido — os testes de permissão continuam exercendo quem pode, quem não pode e anônimo no SQL real, sob os papéis `authenticated` e `anon`.
+- Ponto 3: resolvido — o desvio restante era INSERT direto com `resolved_*`. Corrigi a blindagem em `public.prevent_direct_warroom_alert_resolution_update()` e no trigger `BEFORE INSERT OR UPDATE`, e acrescentei o teste `== insert direto de resolved_* e recusado ==`.
+- Ponto 4: resolvido — o cabeçalho `-- Rollback:` continua listando, em SQL executável, o drop do gatilho, da função de blindagem, das RPCs, dos índices, da constraint e das colunas.
+- Ponto 5: resolvido — executei o rollback em Postgres descartável com `.tmp/test_rollback_warroom_alerts_resolve.sql`; este relato foi reescrito ponto a ponto e não mistura diff alheio/tipos com os pontos da recusa.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Prova vermelho → verde
+- Vermelho antes: depois de acrescentar o teste do INSERT forjado e antes de trocar o gatilho para `BEFORE INSERT OR UPDATE`, rodei `docker exec "$cid" psql -h 127.0.0.1 -v ON_ERROR_STOP=1 -v mig_dir=/repo/supabase/migrations -U postgres -d postgres -f /repo/supabase/tests/warroom_alerts_resolve.sql` → `ERROR: FALHOU: INSERT direto com resolved_* deveria ser recusado, veio: sem-erro`.
+- Verde depois: o mesmo teste SQL retornou `OK: warroom_alerts_resolve (estrutura, permissao, resolucao com auditoria, idempotencia, contagens)` e `ROLLBACK` com exit code 0.
+- Rollback verde: `docker exec "$cid" psql -h 127.0.0.1 -v ON_ERROR_STOP=1 -v mig_dir=/repo/supabase/migrations -U postgres -d postgres -f /repo/.tmp/test_rollback_warroom_alerts_resolve.sql` retornou `OK: rollback warroom_alerts_resolve restaurou schema basal` e `ROLLBACK` com exit code 0.
+- Typecheck verde: `bun run typecheck` retornou `tsc -b --force` com exit code 0.
+- Verificação rápida verde: `zapp-verify . --rapido` retornou `VERIFY: VERDE SEM BANCO (119s)` com `dependencias`, `db_guard`, `tipos`, `lint` e `migrations` OK; a prova de banco deste cartão é o Postgres descartável acima.
 
 ## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+- `.tmp/relato.md`
+- `src/integrations/supabase/types.ts`
+- `supabase/migrations/20261011181949_warroom_alerts_resolve.sql`
+- `supabase/tests/warroom_alerts_resolve.sql`
 
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+## O que NÃO fiz
+- Não usei produção, push, PR, deploy nem banco remoto.
+- Não alterei arquivo fora dos permitidos pelo cartão; `.tmp/test_rollback_warroom_alerts_resolve.sql` e logs ficaram só como prova local não versionada.
