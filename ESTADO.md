@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 80 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -37,12 +37,12 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 55 |
 | B | 1 |
 | C | 3 |
 | D | 6 |
 | E | 16 |
-| **total** | **80** |
+| **total** | **81** |
 
 ## Tabela
 
@@ -58,6 +58,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:99` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
+| `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:61` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
 | `auth-login` | A | `src/lib/serverLogin.ts:72` · `supabase/config.toml:39` |
