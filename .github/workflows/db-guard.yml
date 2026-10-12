@@ -556,6 +556,14 @@ jobs:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-delivery-leases.test.sh
 
+      # R2-DB-007 (#78): as duas rotinas de conclusão de dispatch drenado do Multiplix
+      # precisam atribuir status com cast explícito para public.multiplix_dispatch_status;
+      # sem isso o CASE vira text e o UPDATE falha com 42804 no enum real.
+      - name: Simular conclusão drenada do Multiplix gravando status enum
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-drain-enum-cast.test.sh
+
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
       # estatico roda sempre; o bloco ao vivo PULA e sai 0 sem credenciais
