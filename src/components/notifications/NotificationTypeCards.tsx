@@ -25,6 +25,18 @@ const SOUND_TYPES: { value: SoundTypeOption; label: string; description: string 
   { value: 'soft', label: 'Suave', description: 'Notificação discreta' },
 ];
 
+const TIPO_LABEL: Record<NotificationType, string> = {
+  message: 'mensagem',
+  mention: 'menção',
+  sla_breach: 'violação de SLA',
+  sla_warning: 'aviso de SLA',
+  // A fileira que usa 'achievement' é "Transcrição de Áudio": o nome acessível
+  // precisa conter o texto visível da linha, senão o leitor de tela anuncia
+  // "conquista" num controle que a tela chama de transcrição.
+  achievement: 'transcrição de áudio',
+  goal_achieved: 'meta alcançada',
+};
+
 interface SoundSelectorProps {
   value: SoundTypeOption;
   onChange: (value: SoundTypeOption) => void;
@@ -42,10 +54,12 @@ export function SoundSelector({ value, onChange, notificationType, label, soundV
     setTimeout(() => setIsTesting(false), 1000);
   };
 
+  const tipo = TIPO_LABEL[notificationType] ?? notificationType;
+
   return (
     <div className="flex items-center gap-2">
       <Select value={value} onValueChange={(v: SoundTypeOption) => onChange(v)}>
-        <SelectTrigger className="w-[130px]">
+        <SelectTrigger className="w-[130px]" aria-label={`Som de ${tipo}`}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -56,7 +70,7 @@ export function SoundSelector({ value, onChange, notificationType, label, soundV
           ))}
         </SelectContent>
       </Select>
-      <Button variant="ghost" size="icon" onClick={handleTest} disabled={isTesting} className="h-8 w-8">
+      <Button variant="ghost" size="icon" onClick={handleTest} disabled={isTesting} className="h-8 w-8" aria-label={`Testar som de ${tipo}`}>
         <Play className={cn("w-3 h-3", isTesting && "animate-pulse text-primary")} />
       </Button>
     </div>
