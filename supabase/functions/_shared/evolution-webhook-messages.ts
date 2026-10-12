@@ -497,7 +497,9 @@ export async function handleIncomingMessage(
     }
   }
 
-  // RPC usa `multiplix_recipients` no drain Multiplix.
+  // O drain delega o Multiplix para attribute_multiplix_item_reply: linked usa
+  // multiplix_delivery_items.external_id; inferred cruza multiplix_delivery_items
+  // com multiplix_recipients.destino_e164 (conforme migration F62b/DB inventory).
   const { data: drainData, error: drainErr } = await supabase.rpc('drain_inbound_message_effects', {
     p_connection_id: connection.id,
     p_external_id: key.id,
