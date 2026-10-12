@@ -1,5 +1,8 @@
 Especialista: Hugo (area-front-hooks)
 
+## Números do diff (4 arquivos, 1 de teste, 12 casos Deno.test novos)
+.tmp/relato.md (este relato), supabase/config.toml, supabase/functions/invite-user/index.ts, supabase/functions/invite-user/index.test.ts.
+
 ## O que mudou e por quê
 - src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
 - src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
