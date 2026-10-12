@@ -40,6 +40,11 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v26-template-version.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // CX0 (12/10/2026, t_89e566db): exclusão de conexão é admin-only — em PG 17
+  // descartável, prova que o supervisor não apaga a linha por RLS (nem via Edge,
+  // que é service_role) sem quebrar INSERT/UPDATE. Passo de uma linha em
+  // db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/connections-delete-admin-only.test.sh',
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.

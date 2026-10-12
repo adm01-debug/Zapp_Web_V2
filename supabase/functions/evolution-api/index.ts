@@ -240,7 +240,23 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return null;
     };
 
-    // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
+    // Excluir conexão é destrutivo (apaga a linha e a instância na Evolution):
+    // exigência é is_admin, NÃO is_admin_or_supervisor. `requireAdmin` continua
+    // valendo para o resto das ações de controle; só o delete usa este gate.
+    // Sem ele, um supervisor excluía: a Edge fala com o banco por service_role
+    // (ignora a RLS) e o gate genérico aceitava supervisor.
+    const requireAdminOnly = async (): Promise<Response | null> => {
+      const { data: { user }, error: userError } = await callerClient.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: true, message: 'Não autenticado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { data: isAdmin } = await callerClient.rpc('is_admin', { _user_id: user.id });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem excluir conexões.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return null;
+    };
+
     // possam usar sem depender de criar-connection ter rodado antes.
     const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
     const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
@@ -822,8 +838,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'delete-instance') {
-      const adminError = await requireAdmin();
+      // Admin-only de verdade (a RLS de DELETE também passou a exigir is_admin);
+      // não usa requireAdmin, que aceita supervisor.
+      const adminError = await requireAdminOnly();
       if (adminError) return adminError;
+      // Lê a conexão ANTES de apagar: o id (uuid) e o nome vão para a trilha de
+      // auditoria depois que a linha deixar de existir.
+      const { data: connRow } = await supabase
+        .from('whatsapp_connections')
+        .select('id, name, instance_id')
+        .eq('instance_id', instance)
+        .maybeSingle();
       let deleteRes: Response;
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
@@ -835,6 +860,25 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const deleteBody: { error?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
       if (!deleteBody?.error) {
         await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+        // Trilha: quem excluiu, o quê e de onde. entity_id é uuid — o id textual
+        // da instância segue em details. Se a trilha falhar, a resposta avisa
+        // (a conexão já foi apagada; esconder isso deixaria exclusão sem rastro).
+        const { error: auditError } = await supabase.from('audit_logs').insert({
+          user_id: callerUserId,
+          action: 'connection_deleted',
+          entity_type: 'connection',
+          entity_id: connRow?.id ?? null,
+          details: {
+            instance_id: instance,
+            name: connRow?.name ?? null,
+            flavor: isGoFlavor ? 'go' : 'v2',
+          },
+          ip_address: ip,
+        });
+        if (auditError) {
+          console.error('[audit] Falha ao registrar exclusão de conexão', { error: auditError.message, instance });
+          return new Response(JSON.stringify({ error: true, status: 500, message: 'Conexão excluída, mas falhou ao registrar a auditoria.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

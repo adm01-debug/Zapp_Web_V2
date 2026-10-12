@@ -643,3 +643,124 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     await c.stop();
   }
 });
+
+// ─── CX0 (12/10/2026): excluir conexão é admin-only de verdade ──────────────
+// RED: a ação `delete-instance` passava pelo gate genérico (`requireAdmin` =
+// is_admin_or_supervisor) e, como a Edge fala com o banco por service_role
+// (ignora a RLS), um SUPERVISOR apagava a linha de whatsapp_connections e a
+// instância na Evolution. GREEN: só `is_admin` (gate próprio) chega ao
+// provedor; a exclusão deixa trilha em `audit_logs`. A RLS de DELETE da tabela
+// também passou a exigir is_admin (migration 20261012113232).
+
+function makeCallerWithRole(role: "admin" | "supervisor"): any {
+  return {
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: `${role}-1` } }, error: null }) },
+    rpc: (fn: string) => {
+      if (fn === "is_admin") return Promise.resolve({ data: role === "admin", error: null });
+      if (fn === "is_admin_or_supervisor") return Promise.resolve({ data: true, error: null });
+      return Promise.resolve({ data: null, error: null });
+    },
+  };
+}
+
+/** Service client que registra inserts/deletes, devolvendo a conexão no select. */
+function makeServiceRecorder() {
+  const inserts: Array<{ table: string; values: any }> = [];
+  const deletes: Array<{ table: string }> = [];
+  const from = (table: string) => {
+    const q: any = {
+      select: () => q,
+      eq: () => q,
+      neq: () => q,
+      not: () => q,
+      gte: () => q,
+      lt: () => q,
+      or: () => q,
+      order: () => q,
+      limit: () => q,
+      in: () => q,
+      maybeSingle: () => Promise.resolve({
+        data: table === "whatsapp_connections"
+          ? { id: "conn-uuid-1", name: "CX0ADMIN", instance_id: "CX0ADMIN" }
+          : null,
+        error: null,
+      }),
+      single: () => Promise.resolve({ data: null, error: null }),
+      update: () => q,
+      insert: (values: any) => { inserts.push({ table, values }); return Promise.resolve({ data: null, error: null }); },
+      delete: () => { deletes.push({ table }); return q; },
+    };
+    return q;
+  };
+  return { client: { from, rpc: () => Promise.resolve({ data: null, error: null }) } as any, inserts, deletes };
+}
+
+/** Fake que atende GET /instance/all (id da instância) e a exclusão (DELETE). */
+function createDeleteInstanceFake(instanceName: string) {
+  const requests: Array<{ method: string; path: string }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
+    const path = new URL(req.url).pathname;
+    requests.push({ method: req.method, path });
+    if (path === "/instance/all") {
+      return new Response(JSON.stringify({ data: [{ name: instanceName, id: "go-instance-1" }] }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ status: "success" }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("delete-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
+
+Deno.test("CX0: delete-instance para SUPERVISOR devolve 403 e não toca provedor nem banco", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
+      { callerClient: makeCallerWithRole("supervisor"), supabase: svc.client },
+    );
+    assertEquals(res.status, 403, "supervisor não pode excluir conexão");
+    const json = await res.json();
+    assertEquals(json?.error, true);
+    // A mensagem prova que quem barrou foi o gate admin-only, não o genérico.
+    assertEquals(json?.message, "Apenas administradores podem excluir conexões.");
+    assertEquals(fake.posts.length, 0, "não pode chegar ao provedor");
+    assertEquals(svc.deletes.length, 0, "não pode apagar a linha");
+    assert(!svc.inserts.some((i) => i.table === "audit_logs"), "não registra auditoria de exclusão negada");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("CX0: delete-instance para ADMIN exclui a linha e registra a exclusão em audit_logs", async () => {
+  const fake = createDeleteInstanceFake("CX0ADMIN");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assert(!json?.error, `admin deve concluir sem erro: ${JSON.stringify(json)}`);
+    assert(svc.deletes.some((d) => d.table === "whatsapp_connections"), "deve apagar a linha da conexão");
+    const audit = svc.inserts.find((i) => i.table === "audit_logs");
+    assert(audit, "deve registrar a exclusão em audit_logs");
+    assertEquals(audit!.values.action, "connection_deleted");
+    assertEquals(audit!.values.entity_type, "connection");
+    assertEquals(audit!.values.entity_id, "conn-uuid-1");
+    assertEquals(audit!.values.user_id, "admin-1");
+    assertEquals(audit!.values.details.instance_id, "CX0ADMIN");
+  } finally {
+    await fake.stop();
+  }
+});
+
