@@ -21,7 +21,9 @@
  * de preferência de layout do operador é removida entre testes — a sessão do
  * GoTrue local e as demais preferências seguem intactas, como na vida real.
  */
+import { Buffer } from 'node:buffer';
 import { test, expect, type Page } from '@playwright/test';
+import { PRIVATE_MEDIA_BUCKETS, parseSupabaseStorageObjectUrl } from '../src/lib/storage_object_reference';
 import { E2E_ARQUIVOS } from './fixtures/arquivos-local/dados';
 import {
   aplicarTema,
@@ -115,12 +117,148 @@ const itens = (page: Page) => page.locator('[data-testid^="files-item-"]');
 const CONJUNTO_LOCAL = Boolean(
   process.env.VITE_ZAPP_LOCAL_SUPABASE_URL && process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY,
 );
-test.skip(
-  !CONJUNTO_LOCAL,
-  'prova local-only: exige VITE_ZAPP_LOCAL_SUPABASE_URL/ANON_KEY do conjunto local (zapp-db-local)',
+
+const CANONICAL_API = process.env.E2E_LOCAL_SUPABASE_URL?.trim();
+const CANONICAL_ANON = process.env.E2E_LOCAL_SUPABASE_ANON_KEY?.trim();
+const CANONICAL_SERVICE = process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY?.trim();
+const CANONICAL_CONTACT_ID = '04dff4dc-c6b1-4283-ac22-bd8639804759';
+const CANONICAL_EMAIL = 'e2e.files-tab.local@example.test';
+const CANONICAL_PASSWORD = 'e2e-files-tab-local-2026';
+const LEGACY_OBJECT = '5b6f6f71-916f-4537-9638-647485aba7db/e2e-files-tab-1791054089114.png';
+const CANONICAL_PNG_BODY = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
 );
 
+function stackLocalCanonicoOrSkip(): { api: string; anon: string; service: string } {
+  const api = CANONICAL_API;
+  const anon = CANONICAL_ANON;
+  const service = CANONICAL_SERVICE;
+  test.skip(
+    !api || !anon || !service,
+    'prova local-only: exige E2E_LOCAL_SUPABASE_URL/ANON_KEY/SERVICE_ROLE_KEY e e2e/fixtures/seed-files-tab.mjs',
+  );
+  const host = new URL(api as string).hostname;
+  expect(['127.0.0.1', 'localhost', '::1']).toContain(host);
+  return { api: api as string, anon: anon as string, service: service as string };
+}
+
+async function loginSyntheticFilesTab(api: string, anon: string): Promise<Record<string, string>> {
+  const res = await fetch(`${api}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: anon, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: CANONICAL_EMAIL, password: CANONICAL_PASSWORD }),
+  });
+  const body = (await res.json()) as { access_token?: string };
+  expect(res.ok, `login do usuário sintético local falhou (HTTP ${res.status})`).toBeTruthy();
+  expect(body.access_token, 'login local sem access_token').toBeTruthy();
+  return { apikey: anon, Authorization: `Bearer ${body.access_token}`, 'Content-Type': 'application/json' };
+}
+
+interface FixtureRow {
+  media_filename: string;
+  media_url: string;
+  media_size: number;
+}
+
+async function fixtureRows(api: string, auth: Record<string, string>): Promise<FixtureRow[]> {
+  const res = await fetch(
+    `${api}/rest/v1/messages?contact_id=eq.${CANONICAL_CONTACT_ID}` +
+      '&media_filename=in.(e2e-files-tab.png,e2e-files-tab-2.png)' +
+      '&select=media_filename,media_url,media_size',
+    { headers: auth },
+  );
+  expect(res.ok, `consulta das linhas da fixture falhou (HTTP ${res.status})`).toBeTruthy();
+  return (await res.json()) as FixtureRow[];
+}
+
+function serviceHeaders(service: string, contentType?: string): Record<string, string> {
+  return {
+    apikey: service,
+    Authorization: `Bearer ${service}`,
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+  };
+}
+
+async function ensureLegacyObjectExists(api: string, service: string): Promise<void> {
+  const upload = await fetch(`${api}/storage/v1/object/whatsapp-media/${LEGACY_OBJECT}`, {
+    method: 'POST',
+    headers: { ...serviceHeaders(service, 'image/png'), 'x-upsert': 'true' },
+    body: CANONICAL_PNG_BODY,
+  });
+  expect(upload.ok, `service role local não conseguiu criar o objeto legado (HTTP ${upload.status})`).toBeTruthy();
+
+  const ownerDownload = await fetch(`${api}/storage/v1/object/whatsapp-media/${LEGACY_OBJECT}`, {
+    headers: serviceHeaders(service),
+  });
+  expect(ownerDownload.status, 'service role local precisa baixar o objeto legado antes do teste de ACL').toBe(200);
+  expect(ownerDownload.headers.get('content-type')).toContain('image/png');
+  expect((await ownerDownload.arrayBuffer()).byteLength).toBe(CANONICAL_PNG_BODY.length);
+}
+
+test.describe('aba Arquivos — fixture local no locator canônico', () => {
+  test('as linhas da fixture apontam para o locator canônico do contato', async () => {
+    const { api, anon } = stackLocalCanonicoOrSkip();
+    const auth = await loginSyntheticFilesTab(api, anon);
+
+    const rows = await fixtureRows(api, auth);
+    expect(rows.map((r) => r.media_filename).sort()).toEqual(['e2e-files-tab-2.png', 'e2e-files-tab.png']);
+
+    const origin = new URL(api).origin;
+    for (const row of rows) {
+      const ref = parseSupabaseStorageObjectUrl(row.media_url, PRIVATE_MEDIA_BUCKETS, [origin]);
+      expect(ref, `media_url fora do formato de locator aceito: ${row.media_url}`).not.toBeNull();
+      expect(ref!.bucket).toBe('whatsapp-media');
+      expect(ref!.path.split('/')[0]).toBe(CANONICAL_CONTACT_ID);
+      expect(row.media_size).toBe(CANONICAL_PNG_BODY.length);
+    }
+  });
+
+  test('assina e baixa a mídia da fixture pelo locator canônico', async () => {
+    const { api, anon } = stackLocalCanonicoOrSkip();
+    const auth = await loginSyntheticFilesTab(api, anon);
+
+    const rows = await fixtureRows(api, auth);
+    const row = rows.find((r) => r.media_filename === 'e2e-files-tab.png');
+    expect(row, 'linha e2e-files-tab.png ausente na fixture').toBeTruthy();
+    const ref = parseSupabaseStorageObjectUrl(row!.media_url, PRIVATE_MEDIA_BUCKETS, [new URL(api).origin]);
+    expect(ref, `media_url sem locator utilizável: ${row!.media_url}`).not.toBeNull();
+
+    const sign = await fetch(`${api}/storage/v1/object/sign/${ref!.bucket}/${ref!.path}`, {
+      method: 'POST',
+      headers: auth,
+      body: JSON.stringify({ expiresIn: 60 }),
+    });
+    expect(sign.status, 'o usuário do teste precisa assinar a mídia do próprio contato').toBe(200);
+    const { signedURL } = (await sign.json()) as { signedURL: string };
+    expect(signedURL).toBeTruthy();
+
+    const download = await fetch(`${api}/storage/v1${signedURL}`);
+    expect(download.status, 'a URL assinada tem de devolver o objeto').toBe(200);
+    expect(download.headers.get('content-type')).toContain('image/png');
+    expect((await download.arrayBuffer()).byteLength).toBe(CANONICAL_PNG_BODY.length);
+  });
+
+  test('nega o objeto fora do locator canônico (fail-closed)', async () => {
+    const { api, anon, service } = stackLocalCanonicoOrSkip();
+    await ensureLegacyObjectExists(api, service);
+    const auth = await loginSyntheticFilesTab(api, anon);
+
+    const sign = await fetch(`${api}/storage/v1/object/sign/whatsapp-media/${LEGACY_OBJECT}`, {
+      method: 'POST',
+      headers: auth,
+      body: JSON.stringify({ expiresIn: 60 }),
+    });
+    expect(sign.status, 'path sem contact_id no 1º segmento não pode ser lido por agente').not.toBe(200);
+    expect([400, 403, 404]).toContain(sign.status);
+  });
+});
+
 test.describe('aba Arquivos — prova local autenticada', () => {
+  test.skip(
+    !CONJUNTO_LOCAL,
+    'prova local-only: exige VITE_ZAPP_LOCAL_SUPABASE_URL/ANON_KEY do conjunto local (zapp-db-local)',
+  );
   // Serial + contexto compartilhado: ver o bloco de comentário no topo do arquivo.
   // retries: o renderer do Chromium ainda pode sofrer OOM (SIGKILL/"Target
   // crashed") em host compartilhado — é flake de infraestrutura, não do código.
