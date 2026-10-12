@@ -1,74 +1,69 @@
 Especialista: Edgar (area-edge-api)
 
-## Sensibilidade
-- O diff toca INSERT em `audit_logs` por client service-role e o gate `requireAdminOnly` do
-  `delete-instance` (este herdado do CX0 via cherry-pick, seção abaixo). Nenhuma proteção foi
-  afrouxada: a matriz de autorização continua idêntica (create-connection/connect/disconnect seguem
-  exigindo admin/supervisor).
-- Nada de número, token ou QR vai para a trilha — há asserção negativa no JSON gravado.
-- Nenhuma referência a banco/endpoint de produção.
-- Para quem chama: as respostas de `create-connection`/`connect`/`disconnect` não mudam;
-  `delete-instance` deixa de devolver 500 quando o que falha é só a auditoria (ver "Ramo de erro").
-
-## Linha herdada (por que o diff é maior que o título)
-- O cartão manda reaproveitar o mesmo helper de auditoria do CX0 e traz a linha do pai. Cherry-pick,
-  já commitados antes do meu commit: `2200003d6` (pai t_890bceea: agenda/conversas/mídia + leitura de
-  instância) e `f601930f0` (CX0: exclusão admin-only, com migration + `scripts/db-audit/...test.sh`).
-  Eles não são meus nem foram reescritos; segui com eles intactos.
-
 ## O que mudou e por quê
-- `supabase/functions/_shared/connection-audit.ts` (novo): `writeConnectionAuditLog` grava UMA linha em
-  `audit_logs` (user_id, action, entity_type='connection', entity_id, details, ip_address, user_agent)
-  e NUNCA lança — falha é só logada. É o formato único das ações de conexão.
-- `supabase/functions/evolution-api/index.ts`:
-  - create-connection → `connection_created` (entity_id = id da conexão; details: instance_id/name/flavor);
-  - connect → `connection_connect` (no máximo 1 por invocação, via `auditConnectOnce`, pois o fluxo tem
-    vários retornos de sucesso);
-  - disconnect → `connection_disconnect`;
-  - recriação de sessão órfã (GO) → `connection_session_recreated` e, quando devolve QR novo, também o
-    `connection_connect` daquela invocação;
-  - delete-instance (do CX0) passou a usar o MESMO helper — não há dois formatos de trilha.
-- `supabase/functions/evolution-api/index.test.ts`: bloco CA1 com 5 testes.
+Cartão composto — 5 defeitos no `evolution-api`, todos na mesma tela de conexões.
 
-## Ramo de erro que mudou (antes × depois)
-- delete-instance, insert de auditoria: ANTES (CX0) o insert era inline e, se retornasse erro, a Edge
-  respondia 500 — embora a exclusão já tivesse acontecido. DEPOIS usa `writeConnectionAuditLog`, que
-  engole o erro e só loga estruturado; a resposta é a do caminho de sucesso (200 com o corpo do
-  provedor). Efeito pretendido: a trilha não pode fazer uma exclusão já concluída parecer falha. O gate
-  admin-only e o `delete()` ficaram idênticos — os dois testes do CX0 (supervisor 403 / admin apaga e
-  registra) seguem verdes.
-- create-connection/connect/disconnect: não tinham auditoria antes; os retornos de erro do provedor
-  seguem como estavam.
+- `supabase/functions/evolution-api/index.ts` — (1) connect/status/disconnect falavam
+  DIRETO com a Evolution (fora do proxy), sem timeout e sem catch: provedor pendurado
+  segurava a função até o limite da plataforma e o front recebia 500 cru. Agora cada
+  `fetch` leva `AbortSignal.timeout(sessionTimeoutMs())` (env
+  `EVOLUTION_SESSION_TIMEOUT_MS`, default 10s) e o throw/aborto vira
+  `200 { error:true, status:0, message }` pelo helper `providerUnreachable`; o poll de
+  QR (`fetchQr`) engole o abort e devolve vazio em vez de subir 500. O `status` de
+  dentro do connect GO passou a devolver a mesma resposta amigável.
+- `index.ts` — (2) `delete-instance` com a instância já ausente na Evolution devolvia
+  404 e travava o front, deixando a linha de `whatsapp_connections` fantasma na lista.
+  Agora, sem id na GO (ou 404 na exclusão, reconhecido por `isInstanceGonePayload`),
+  apaga a linha local, trilha `connection_deleted` com `details.reason=instance_gone`
+  e devolve `{ error:true, code:'INSTANCE_GONE' }` (200) para o front recarregar.
+  Erro NÃO-ausência (5xx etc.) mantém o comportamento anterior (devolve o corpo do erro).
+- `index.ts` + `supabase/functions/_shared/schemas.ts` — (3) `create-connection` gravava
+  o telefone cru do formulário. Passei a validar/normalizar por
+  `normalizeBrazilianPhone` (novo, em `schemas.ts`) antes do INSERT e a usar o valor
+  normalizado no corpo enviado à Evolution: DDD na lista válida, tamanho 10/11 após
+  tirar o DDI 55, inserção do nono dígito em celular antigo; saída E.164 só-dígitos com
+  DDI 55 (mesmo formato canônico de `_shared/messaging/phone.ts`). Telefone inválido →
+  `422 VALIDATION_ERROR`, sem tocar o provedor.
+- `schemas.ts` — (4) `EvolutionApiRequestSchema` ganhou um `superRefine` que trava
+  `instanceName`/`instance` em `/^[A-Za-z0-9_-]{1,128}$/` (o nome vira path/query da
+  URL do provedor). `index.ts` também passou `encodeURIComponent` no filtro de
+  `list-instances`.
+- `index.ts` — (5) teto por USUÁRIO além do teto por IP: `create-connection`,
+  `delete-instance` e `disconnect` caem no balde `mut` (10/60s) e o poll de `status`
+  do QR num balde `poll` (120/60s), DEPOIS da matriz de autorização (quem não tem
+  permissão não consome cota). Corte em 429 com mensagem amigável, sem I/O no provedor.
+- `supabase/functions/evolution-api/index.test.ts` — 11 testes novos (B2-01..B2-08),
+  incluindo o connect pendurado de verdade (`fake-evolution` modo `timeout`), o 404 da
+  GO, telefone inválido e o estouro do teto por usuário. `supabase/deployment-manifest.json`
+  regenerado por `node scripts/edge-deploy/generate-manifest.mjs`.
 
 ## Prova
-- vermelho antes (index.ts revertido ao commit do CX0, sem as chamadas de trilha):
-  `deno test --allow-net --allow-env --filter CA1 supabase/functions/evolution-api/index.test.ts`
-  → `FAILED | 1 passed | 4 failed` (nenhuma das 4 ações gravava trilha).
-- verde depois: `deno test --allow-net --allow-env --filter CA1 supabase/functions/evolution-api/index.test.ts`
-  → `ok | 5 passed | 0 failed`.
-- suíte inteira da Edge: `deno test --allow-net --allow-env --allow-read supabase/functions/evolution-api/index.test.ts`
-  → `ok | 42 passed | 0 failed` (inclui CX0, R2EXT e a exaustividade E45).
-- authz: `deno test --allow-net --allow-env --allow-read supabase/functions/_shared/__tests__/evolution-control-authz.test.ts`
-  → `ok | 10 passed | 0 failed`.
-- migration herdada do CX0: `bash scripts/db-audit/connections-delete-admin-only.test.sh`
-  → `[OK] contrato de exclusao de conexao (admin-only) verificado`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations OK).
+- vermelho antes: `git checkout HEAD~1 -- supabase/functions/evolution-api/index.ts supabase/functions/_shared/schemas.ts && deno test --allow-all --no-check --filter "B2-" supabase/functions/evolution-api/index.test.ts`
+  → `./supabase/functions/evolution-api/index.test.ts (uncaught error) ... FAILED | 0 passed | 1 failed (9ms)`
+  (o módulo sob teste não existia com timeout, INSTANCE_GONE nem telefone validado).
+- verde depois: `deno test --allow-all --no-check supabase/functions/evolution-api/index.test.ts`
+  → `ok | 52 passed | 0 failed (5s)`
+  (no B2-01 o log do próprio handler mostra `"error":"The operation was aborted due to timeout"`,
+  provando que o ramo de timeout foi exercitado, não o de resposta rápida.)
 
-## O que os testes provam
-- create-connection: exatamente 1 linha — action `connection_created`, entity_id = id da conexão,
-  entity_type `connection`, user_id do ator, IP preenchido; o JSON da trilha NÃO contém o número
-  (5511999990000), nem "token", nem "2@" (QR).
-- connect (v2): 1 linha `connection_connect` no caminho do QR.
-- disconnect (v2): 1 linha `connection_disconnect`.
-- recriação de sessão órfã (go): 1 linha `connection_session_recreated` + 1 `connection_connect`
-  (recovered) — nenhuma duplicada.
-- fail-open: com o insert de `audit_logs` devolvendo erro, disconnect ainda responde 200.
+## Sensibilidade
+Toca `delete` de `whatsapp_connections` e teto de requisição (rota que usa `is_admin`,
+`checkRateLimit`). Nada foi afrouxado: o gate admin-only da exclusão continua (CX0 passou),
+a exclusão só acontece no caminho de ausência do provedor, e o teto é mais restritivo que
+antes, não mais frouxo. Nenhum acesso a produção; `EVOLUTION_API_URL` sempre aponta para
+servidor local falso. Muda para quem chama `evolution-api`: `delete-instance` pode devolver
+`{ error:true, code:'INSTANCE_GONE' }` em vez de 404, e `create-connection` pode devolver
+422 para telefone inválido (antes gravava o valor cru).
+
+## Ressalva
+O gate do schema recusa (422) nomes de instância fora de `[A-Za-z0-9_-]` em qualquer ação.
+O front gera esses nomes (`generateInstanceName` → `[a-z0-9_]`) e as conexões legadas em
+uso são seguras; se alguma instância legada tiver nome com espaço/acento, ela passaria a
+receber 422 e precisaria ser renomeada. Registrei aqui porque é mudança de contrato.
 
 ## O que NÃO fiz e por quê
-- Não gravei trilha nos caminhos de ERRO do connect/disconnect/create (token ausente, 403 do provedor):
-  auditar a ação bem-sucedida espelha o CX0; o cartão pede a trilha da ação que aconteceu.
-- Não mexi nas outras ações de conexão (status/instance-info/list-instances): fora do que o cartão lista.
-- `entity_id` de connect/disconnect fica nulo (a ação não recebe a linha da conexão); o `instance_id` vai
-  em `details`, como o cartão pede.
-- Ressalva honesta: o teste de fail-open também passa na base (lá não existe insert) — o valor dele é
-  travar a propriedade agora que a trilha existe; os outros 4 são os que nascem vermelhos.
+- Não mexi em `evolution-session-routes.ts`: com o gate do schema, o nome já não entra
+  cru na URL, e o `encodeURIComponent` no filtro cobre a query — mudar a montagem de rota
+  não era necessário e aumentaria o diff.
+- Não adicionei retry ao ciclo de sessão: o proxy (fora do escopo) já tem circuit breaker;
+  aqui o problema era o 500 cru, que o timeout+catch resolve.

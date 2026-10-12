@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi } from "./index.ts";
+import { handleEvolutionApi, isInstanceGonePayload } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
@@ -1128,6 +1128,235 @@ Deno.test("CA1: falha do insert de auditoria NÃO derruba a ação (fail-open)",
     assertEquals(res.status, 200, "a ação deve concluir 200 mesmo com a auditoria falhando");
     const json = await res.json();
     assert(!json?.error, `disconnect não pode virar erro por causa da trilha: ${JSON.stringify(json)}`);
+  } finally {
+    await fake.stop();
+  }
+});
+
+// ═══ B2 (12/10/2026): ciclo de sessão robusto, telefone validado e INSTANCE_GONE ═══
+// RED: (1) connect/status/disconnect faziam fetch DIRETO, sem timeout e sem catch —
+// provedor pendurado segurava a função até o limite da plataforma e o front recebia
+// 500 cru; (2) delete-instance devolvia 404 e travava o front quando a instância já
+// não existia na Evolution, deixando a linha local fantasma presa na lista;
+// (3) create-connection gravava o telefone cru do formulário e aceitava o nome da
+// instância cru no path/query. GREEN: timeout+catch → 200 { error:true, status:0 };
+// INSTANCE_GONE apaga a linha local e reconcilia; telefone validado/normalizado
+// (DDI 55 + nono dígito) e nome de instância travado por conjunto de caracteres.
+
+Deno.test("B2-01: connect pendurado devolve erro amigável (status 0) em vez de 500 cru", async () => {
+  // O fake segura a resposta do POST /instance/connect além do nosso timeout —
+  // é o cenário exato do incidente (provedor pendurado).
+  const fake = createFakeEvolution({ mode: "timeout", timeoutDelayMs: 400 });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.set("EVOLUTION_SESSION_TIMEOUT_MS", "60");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("connect", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200, "falha de rede/timeout não pode virar 500 cru");
+    const json = await res.json();
+    assertEquals(json?.error, true);
+    assertEquals(json?.status, 0, "status 0 marca falha de rede/timeout, não erro do provedor");
+    assert(typeof json?.message === "string" && json.message.length > 0, "precisa de mensagem amigável");
+  } finally {
+    Deno.env.delete("EVOLUTION_SESSION_TIMEOUT_MS");
+    await fake.stop();
+  }
+});
+
+Deno.test("B2-02: status com a Evolution inalcançável devolve erro amigável (status 0), não 500", async () => {
+  // Porta fechada: o fetch lança imediatamente — mesmo ramo de catch do timeout.
+  Deno.env.set("EVOLUTION_API_URL", "http://127.0.0.1:1");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("status", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200, "queda de rede não pode virar 500 cru");
+    const json = await res.json();
+    assertEquals(json?.error, true);
+    assertEquals(json?.status, 0);
+    assert(typeof json?.message === "string" && json.message.length > 0);
+  } finally {
+    Deno.env.set("EVOLUTION_API_URL", "");
+  }
+});
+
+Deno.test("B2-03: delete-instance com instância ausente na GO devolve INSTANCE_GONE e apaga a linha local", async () => {
+  // GET /instance/all responde 405 no fake (só aceita POST) ⇒ sem id na GO.
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json?.error, true);
+    assertEquals(json?.code, "INSTANCE_GONE", "estado a reconciliar, não 404 de erro");
+    assert(svc.deletes.some((d) => d.table === "whatsapp_connections"), "deve apagar a linha local fantasma");
+    const audit = svc.inserts.find((i) => i.table === "audit_logs");
+    assert(audit, "deve trilhar a reconciliação");
+    assertEquals(audit!.values.action, "connection_deleted");
+    assertEquals(audit!.values.details.reason, "instance_gone");
+    assertEquals(fake.posts.length, 0, "sem id na GO, não pode chamar o delete no provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+/** Fake que tem a instância em /instance/all mas responde 404 no delete (sumiu entre a listagem e o delete). */
+function createGoneOnDeleteFake(instanceName: string) {
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
+    const path = new URL(req.url).pathname;
+    const json = (payload: unknown, status = 200) =>
+      new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
+    if (path === "/instance/all") return json({ data: [{ name: instanceName, id: "go-instance-1" }] });
+    if (path.startsWith("/instance/delete/")) return json({ message: "Instance not found" }, 404);
+    return json({ status: "success" });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("gone-on-delete-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, stop: () => server.shutdown() };
+}
+
+Deno.test("B2-04: delete-instance quando o provedor responde 404 também reconcilia (INSTANCE_GONE)", async () => {
+  const fake = createGoneOnDeleteFake("CX0ADMIN");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const svc = makeServiceRecorder();
+    const res = await handleEvolutionApi(
+      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json?.code, "INSTANCE_GONE");
+    assert(svc.deletes.some((d) => d.table === "whatsapp_connections"), "deve apagar a linha local");
+    const audit = svc.inserts.find((i) => i.table === "audit_logs");
+    assertEquals(audit!.values.details.reason, "instance_gone");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("B2-07: isInstanceGonePayload só reconhece ausência (404/mensagem), não erro comum", () => {
+  assert(isInstanceGonePayload({ error: true, status: 404 }));
+  assert(isInstanceGonePayload({ error: true, message: "Instance not found" }));
+  assert(isInstanceGonePayload({ error: true, message: "Instância não encontrada" }));
+  assertEquals(isInstanceGonePayload({ error: true, status: 500, message: "boom" }), false);
+  assertEquals(isInstanceGonePayload({ status: "success" }), false);
+});
+
+Deno.test("B2-05: create-connection recusa telefone inválido com 422 e NÃO toca o provedor", async () => {
+  const fake = createSessionFake("principal");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("create-connection", { instanceName: "principal", name: "principal", phone_number: "1199" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 422);
+    const json = await res.json();
+    assertEquals(json?.error?.code, "VALIDATION_ERROR");
+    assertEquals(fake.requests.length, 0, "telefone inválido não pode chegar ao provedor");
+    assert(!svc.inserts.some((i) => i.table === "whatsapp_connections"), "não pode inserir a linha");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("B2-05b: create-connection normaliza o telefone (DDI 55 + nono dígito) antes do INSERT", async () => {
+  const fake = createSessionFake("principal");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const svc = makeAuditService();
+    const res = await handleEvolutionApi(
+      controlRequest("create-connection", { instanceName: "principal", name: "principal", phone_number: "+55 (11) 8765-4321" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: svc.client },
+    );
+    assertEquals(res.status, 200);
+    const row = svc.inserts.find((i) => i.table === "whatsapp_connections");
+    assert(row, "deve inserir a linha");
+    assertEquals(row!.values.phone_number, "5511987654321", "DDD 11 + nono dígito + DDI 55, só-dígitos");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("B2-06: nome de instância fora do conjunto seguro é recusado pelo schema; o válido passa", () => {
+  assertEquals(
+    EvolutionApiRequestSchema.safeParse({ action: "status", instanceName: "../../instance/all" }).success,
+    false,
+  );
+  assertEquals(
+    EvolutionApiRequestSchema.safeParse({ action: "status", instanceName: "PRINCIPAL-1_x" }).success,
+    true,
+  );
+});
+
+Deno.test("B2-06b: list-instances com instanceName de injeção devolve 422 e não chama o provedor", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", { instanceName: "../../instance/all" }),
+      { callerClient: makeCallerWithRole("admin"), supabase: makeServiceRecorder().client },
+    );
+    assertEquals(res.status, 422);
+    assertEquals(fake.requests.length, 0, "nome de injeção não pode virar path no provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("B2-08: teto por usuário corta o abuso do ciclo de sessão (429) sem tocar o provedor", async () => {
+  const fake = createSessionFake("PRINCIPAL");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  // Usuário próprio: o balde é por usuário, então este teste não herda a cota
+  // dos testes anteriores (que usam admin-1).
+  const caller: any = {
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: "rl-edge-generic-1" } }, error: null }) },
+    rpc: () => Promise.resolve({ data: true, error: null }),
+  };
+  try {
+    let saw429 = false;
+    let requestsAt429 = 0;
+    for (let i = 0; i < 15; i++) {
+      const res = await handleEvolutionApi(
+        controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
+        { callerClient: caller, supabase: makeServiceRecorder().client },
+      );
+      if (res.status === 429) {
+        saw429 = true;
+        requestsAt429 = fake.requests.length;
+        const json = await res.json();
+        assert(typeof json?.message === "string" && json.message.length > 0, "429 precisa de mensagem amigável");
+        break;
+      }
+    }
+    assert(saw429, "o 11º disconnect do mesmo usuário deve ser cortado com 429");
+    // E o corte é ANTES do provedor: depois do 429, nada novo chega à Evolution.
+    const res = await handleEvolutionApi(
+      controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
+      { callerClient: caller, supabase: makeServiceRecorder().client },
+    );
+    assertEquals(res.status, 429);
+    assertEquals(fake.requests.length, requestsAt429, "429 não pode gerar I/O no provedor");
   } finally {
     await fake.stop();
   }

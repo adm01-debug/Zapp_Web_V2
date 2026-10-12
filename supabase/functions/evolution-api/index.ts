@@ -6,7 +6,7 @@ import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
-import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, normalizeBrazilianPhone, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
   qrFromV2Connect,
@@ -29,6 +29,24 @@ export interface EvolutionApiDeps {
   serviceKey?: string;
   /** anon key (testes). */
   anonKey?: string;
+}
+
+/**
+ * B2 (12/10/2026): sinais de "a instância não existe mais" que a Evolution
+ * devolve — status 404 (o proxy normaliza para `{ error: true, status: 404 }`) ou
+ * mensagem textual de "não encontrado" em forks. Usado só para reconciliar o
+ * estado local no delete-instance; não confundir com outros erros de provedor.
+ */
+export function isInstanceGonePayload(payload: { error?: unknown; status?: unknown; message?: unknown }): boolean {
+  if (!payload || payload.error !== true) return false;
+  if (Number(payload.status) === 404) return true;
+  const message = String(payload.message ?? '').toLowerCase();
+  return message.includes('not found')
+    || message.includes('não encontr')
+    || message.includes('nao encontr')
+    || message.includes('does not exist')
+    || message.includes('não existe')
+    || message.includes('nao existe');
 }
 
 export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiDeps): Promise<Response> {
@@ -180,6 +198,26 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
     }
 
+    // ─── B2 (12/10/2026): teto por USUÁRIO, além do teto por IP acima. O IP é
+    // compartilhado (NAT/proxy/corporativo) e o teto global de 120/60s não separa
+    // quem abusa do ciclo de sessão de quem só recarrega a tela. Fica DEPOIS da
+    // matriz de autorização para não consumir cota de quem nem tem permissão.
+    // As ações destrutivas/de pareamento caem no balde 'mut' (10/60s); o poll de
+    // status do QR (a cada 3s enquanto o diálogo está aberto) tem teto alto à
+    // parte para não quebrar o pareamento em si.
+    const MUTATING_SESSION_ACTIONS = new Set(['create-connection', 'delete-instance', 'disconnect']);
+    const userRateBucket = MUTATING_SESSION_ACTIONS.has(action)
+      ? { scope: 'mut', limit: 10 }
+      : action === 'status'
+        ? { scope: 'poll', limit: 120 }
+        : null;
+    if (userRateBucket) {
+      const userRl = checkRateLimit(`evolution:user:${callerUserId}:${userRateBucket.scope}`, userRateBucket.limit, 60_000);
+      if (!userRl.allowed) {
+        return new Response(JSON.stringify({ error: true, message: 'Muitas solicitações desta conta em pouco tempo. Aguarde um minuto e tente novamente.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
     // E16/TRA-002 (#18): toda ação de instância envia o token DELA (Vault via
     // get_instance_token, cacheado por isolate) — nunca a credencial da padrão
@@ -229,6 +267,24 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
     };
     const isGoFlavor = (Deno.env.get('EVOLUTION_API_FLAVOR') ?? 'go') !== 'v2';
+
+    // ─── B2 (12/10/2026): connect/status/disconnect falam DIRETO com o provedor
+    // (fora do proxy — sem circuit breaker e sem retry). Sem timeout, um provedor
+    // pendurado segurava a função até o limite da plataforma e o front recebia
+    // 500 cru; sem catch, um AbortError/queda de rede subia igual. Aqui a chamada
+    // ganha AbortSignal.timeout e o throw vira resposta amigável com status:0
+    // (falha de rede/timeout — não é erro de negócio do provedor). O teto é
+    // configurável para os testes não esperarem 10s.
+    const sessionTimeoutMs = (): number =>
+      Number(Deno.env.get('EVOLUTION_SESSION_TIMEOUT_MS') ?? '') || 10_000;
+    const providerUnreachable = (message: string, error: unknown): Response => {
+      new Logger('evolution-api').error('ciclo de sessão: provedor não respondeu', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return new Response(JSON.stringify({ error: true, status: 0, message }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    };
 
     // ─── E10/E11 (plano multi-conexão): ambas admin-only — mesmo guard usado em
     // evolution-sync/index.ts (JWT válido + is_admin_or_supervisor via RPC).
@@ -352,10 +408,20 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         return new Response(JSON.stringify({ error: true, message: 'Nome de instância inválido — use letras minúsculas, números e "_" (3 a 40 caracteres).' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       const connName = String(body.name || '').trim();
-      const phoneNumber = String(body.phone_number || body.number || '').trim();
-      if (!connName || !phoneNumber) {
+      const rawPhone = String(body.phone_number || body.number || '').trim();
+      if (!connName || !rawPhone) {
         return new Response(JSON.stringify({ error: true, message: 'name e phone_number são obrigatórios.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+      // B2 (12/10/2026): valida e normaliza o telefone ANTES do INSERT. Antes o
+      // valor cru do formulário entrava em phone_number como veio (com DDD
+      // inexistente, tamanho errado, e sem o nono dígito), e a conexão só falhava
+      // lá no pareamento — sem pista de que a causa era o número. A normalização
+      // devolve E.164 só-dígitos (DDI 55) e o valor cru NUNCA chega ao provedor.
+      const phone = normalizeBrazilianPhone(rawPhone);
+      if (phone.ok === false) {
+        return validationErrorResponse([{ path: 'phone_number', message: phone.message, code: 'custom' }], req);
+      }
+      const phoneNumber = phone.value;
       // Reserva atômica do nome ANTES de tocar a GO: whatsapp_connections_instance_id_key
       // (UNIQUE em instance_id) é a trava real contra a corrida de duas
       // create-connection concorrentes com o mesmo nome. Quem perder o INSERT
@@ -453,7 +519,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const instanceToken = crypto.randomUUID();
       const createRes = await proxy('/instance/create', 'POST', {
         instanceName: instance, qrcode: true, integration: body.integration || 'WHATSAPP-BAILEYS',
-        token: instanceToken, number: body.number, businessId: body.businessId, wabaId: body.wabaId,
+        token: instanceToken, number: phoneNumber, businessId: body.businessId, wabaId: body.wabaId,
         phoneNumberId: body.phoneNumberId, webhook: body.webhook, chatwoot: body.chatwoot,
         typebot: body.typebot, proxy: body.proxy,
       });
@@ -536,7 +602,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       });
     }
 
-    if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
+    if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${encodeURIComponent(String(body.instanceName))}` : ''}`, 'GET'));
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
@@ -561,13 +627,19 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       };
       if (!isGoFlavor) {
         const route = resolveSessionRoute('v2', 'connect', instance);
-        const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-          method: route.method,
-          headers: {
-            'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey),
-            'Content-Type': 'application/json',
-          },
-        });
+        let response: Response;
+        try {
+          response = await fetch(`${evolutionApiUrl}${route.path}`, {
+            method: route.method,
+            headers: {
+              'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey),
+              'Content-Type': 'application/json',
+            },
+            signal: AbortSignal.timeout(sessionTimeoutMs()),
+          });
+        } catch (err: unknown) {
+          return providerUnreachable(`A Evolution API v2 não respondeu ao connect da instância '${instance}' (timeout ou rede). Tente novamente.`, err);
+        }
         let data: { message?: unknown; [k: string]: unknown } = {};
         try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from v2 */ }
         if (!response.ok) {
@@ -608,7 +680,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         webhookUrl: `${supabaseUrl.replace(/\/+$/, '')}/functions/v1/evolution-webhook`,
       });
       const goConnectRoute = resolveSessionRoute('go', 'connect', instance);
-      const response = await fetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody });
+      let response: Response;
+      try {
+        response = await fetch(`${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSessionApiKey(goConnectRoute, instToken, evolutionApiKey), 'Content-Type': 'application/json' }, body: connectBody, signal: AbortSignal.timeout(sessionTimeoutMs()) });
+      } catch (err: unknown) {
+        return providerUnreachable(`A Evolution GO não respondeu ao connect da instância '${instance}' (timeout ou rede). Tente novamente.`, err);
+      }
       if (!response.ok) {
         let errData: { message?: unknown } = {};
         try { const _t = await response.text(); errData = JSON.parse(_t); } catch { /* non-JSON */ }
@@ -625,7 +702,14 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // ele recusa o QR e o pareamento pela tela do app nunca fecha. Alem disso o campo vem
       // como "<dataURI>|<url>", o que quebra o <img src>. Re-renderiza a partir do payload cru.
       const fetchQr = async (): Promise<{ base64?: string; code?: string }> => {
-        const qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
+        let qrRes: Response;
+        try {
+          qrRes = await fetch(`${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000) });
+        } catch {
+          // GO pendurada no poll do QR: devolve vazio e deixa o laço/status decidir
+          // — antes o throw subia como 500 cru e o front travava no spinner.
+          return {};
+        }
         let qrData: { data?: { code?: string; qrcode?: unknown } } = {};
         try { const _t = await qrRes.text(); qrData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
         const rawQrCode = String(qrData?.data?.code ?? '').split('#').pop() ?? '';
@@ -660,7 +744,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // (JID persistido + LoggedIn:false; logout/reconnect da GO respondem 400/500).
       // Distingue pelo status para NUNCA devolver qrcode:undefined silencioso — era
       // isso que deixava o front em 'loading' eterno.
-      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken } });
+      const stRes = await fetch(`${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(sessionTimeoutMs()) }).catch((err: unknown) => err as Error);
+      if (stRes instanceof Error) {
+        return providerUnreachable(`A Evolution GO não respondeu ao status da instância '${instance}' (timeout ou rede). Tente novamente.`, stRes);
+      }
       let stData: { data?: Record<string, unknown>; state?: string } = {};
       try { const _t = await stRes.text(); stData = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       // status !ok (token inválido, GO 500) NÃO é "sessão órfã": não mandar o
@@ -816,10 +903,16 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         }
         sessionKey = token;
       }
-      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-        method: route.method,
-        headers: { 'apikey': sessionKey },
-      });
+      let response: Response;
+      try {
+        response = await fetch(`${evolutionApiUrl}${route.path}`, {
+          method: route.method,
+          headers: { 'apikey': sessionKey },
+          signal: AbortSignal.timeout(sessionTimeoutMs()),
+        });
+      } catch (err: unknown) {
+        return providerUnreachable(`A Evolution API não respondeu ao status da instância '${instance}' (timeout ou rede). Tente novamente.`, err);
+      }
       // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
       // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
       let data: {
@@ -889,10 +982,16 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         }
         disconnectKey = token;
       }
-      const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-        method: route.method,
-        headers: { 'apikey': disconnectKey },
-      });
+      let response: Response;
+      try {
+        response = await fetch(`${evolutionApiUrl}${route.path}`, {
+          method: route.method,
+          headers: { 'apikey': disconnectKey },
+          signal: AbortSignal.timeout(sessionTimeoutMs()),
+        });
+      } catch (err: unknown) {
+        return providerUnreachable(`A Evolution API não respondeu ao disconnect da instância '${instance}' (timeout ou rede). Tente novamente.`, err);
+      }
       let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
       if (!response.ok) return new Response(JSON.stringify({ error: true, status: response.status, message: data?.message ?? 'Falha ao desconectar instância.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -924,14 +1023,50 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         .eq('instance_id', instance)
         .maybeSingle();
       let deleteRes: Response;
+      // B2 (12/10/2026): a instância pode não existir mais na GO (apagada na GO
+      // antes, ou a linha local sobrou de uma criação incompleta). Antes isso virava
+      // 404 e o front travava, deixando a conexão fantasma presa na lista; agora é
+      // tratado como estado a reconciliar: apaga a linha local e devolve
+      // INSTANCE_GONE para o front recarregar. A trilha registra o motivo.
+      const deleteLocalAndAuditGone = async (): Promise<void> => {
+        await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
+          action: 'connection_deleted',
+          entityId: connRow?.id ?? null,
+          details: {
+            instance_id: instance,
+            name: connRow?.name ?? null,
+            flavor: isGoFlavor ? 'go' : 'v2',
+            reason: 'instance_gone',
+          },
+          ipAddress: ip,
+          userAgent,
+        });
+      };
+      const instanceGoneResponse = (): Response => new Response(JSON.stringify({
+        error: true,
+        code: 'INSTANCE_GONE',
+        message: 'A instância não existe mais na Evolution API. A conexão local foi removida — crie uma nova conexão.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
-        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!goId) {
+          await deleteLocalAndAuditGone();
+          return instanceGoneResponse();
+        }
         deleteRes = await proxy(`/instance/delete/${goId}`, 'DELETE');
       } else {
         deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE', body);
       }
-      const deleteBody: { error?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
+      const deleteBody: { error?: unknown; status?: unknown; message?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
+      // A GO responde 404 quando o endpoint/instância não existe; o proxy converte
+      // para { error: true, status: 404, message }. Também aceita a mensagem textual
+      // (forks variam) — mesmos sinais que "não existe".
+      if (deleteBody?.error && isInstanceGonePayload(deleteBody)) {
+        await deleteLocalAndAuditGone();
+        return instanceGoneResponse();
+      }
       if (!deleteBody?.error) {
         await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
         // Trilha: mesmo helper/formato das demais ações de conexão. entity_id é
