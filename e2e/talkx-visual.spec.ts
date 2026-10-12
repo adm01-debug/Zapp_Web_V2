@@ -626,11 +626,22 @@ async function marcarConfirmacoes(page: Page) {
   await lancar.waitFor({ state: 'visible' });
   await page.waitForTimeout(1500);
   if (await lancar.isDisabled()) {
-    const estado = await page.evaluate(() => ({
-      aviso: document.body.innerText.match(/(Tudo pronto[^\n]*|Pendências antes de lançar\n[^\n]*)/)?.[0] ?? '(sem card de pendências)',
-      caixas: [...document.querySelectorAll('[role="checkbox"]')].map((c) => c.getAttribute('aria-checked')),
-    }));
-    throw new Error(`PASSO TRAVADO por teclado — Passo 4: com as 3 confirmações marcadas "Lançar campanha" segue desabilitado. Estado: ${JSON.stringify(estado)}`);
+    // Não é falha de teclado: as 3 caixas estão marcadas. Descobre POR QUE o botão segue
+    // desabilitado (card de pendências) e sonda a contagem do público, que alimenta o card.
+    const aviso = await page.evaluate(
+      () => document.body.innerText.match(/Pendências antes de lançar\s+[^\n]+/)?.[0].replace(/\s+/g, ' ') ?? '(sem card de pendências)',
+    );
+    const contagem = await page.evaluate(async () => {
+      try {
+        const m = await import(/* @vite-ignore */ '/src/hooks/integrations/useTalkXSegments.ts');
+        return `countAudience devolveu ${await m.countAudience(null, ['seg-vip'])}`;
+      } catch (e) {
+        return `countAudience lançou: ${(e as Error).message}`;
+      }
+    });
+    throw new Error(
+      `PASSO TRAVADO — Passo 4: as 3 confirmações foram marcadas por Espaço, mas "Lançar campanha" segue desabilitado. ${aviso}. Sonda: ${contagem}`,
+    );
   }
 }
 
