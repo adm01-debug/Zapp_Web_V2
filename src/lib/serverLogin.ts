@@ -10,7 +10,17 @@ export interface ServerLoginLock {
 export type ServerLoginResult =
   | { ok: true; accessToken: string; refreshToken: string }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
+  | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string }
   | { ok: false; unavailable: true; error: string };
+
+/**
+ * Marcadores de negacao da politica de rede (R2-AUTH-022). Vem de
+ * `networkPolicyDenialResponse` (supabase/functions/_shared/request-policy.ts):
+ * 403 -> "Access denied"; 503 -> "Service unavailable". O corpo e generico de
+ * proposito — nao distingue IP de pais nem vaza listas/regras.
+ */
+export const NETWORK_POLICY_DENIED_BODY = 'Access denied';
+export const NETWORK_POLICY_UNAVAILABLE_BODY = 'Service unavailable';
 
 const NO_LOCK: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
 
@@ -59,7 +69,9 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
 /**
  * Login pela edge `auth-login` (ADR-006): o lockout e decidido no servidor.
  * 200 -> tokens para `supabase.auth.setSession`; 401/423 -> recusa com estado do lock.
- * Qualquer outra resposta (edge fora, 5xx, 429, corpo invalido) vira `unavailable`.
+ * 403 'Access denied' -> negacao da politica de rede (`networkBlocked`), distinta
+ * de senha errada e de lockout. Qualquer outra resposta (edge fora, 5xx, 429,
+ * corpo invalido) vira `unavailable`.
  * O chamador deve falhar fechado e nunca recorrer ao GoTrue diretamente, para que
  * o lockout continue sendo aplicado pela Edge.
  */
@@ -114,6 +126,35 @@ export async function serverLogin(email: string, password: string): Promise<Serv
       unavailable: false,
       error: typeof body.error === 'string' ? body.error : 'Invalid login credentials',
       lock: parseLock(body),
+    };
+  }
+
+  // Negacao da politica de rede (R2-AUTH-022): a edge responde ANTES de olhar a
+  // senha, entao 403 aqui NAO e senha errada nem lockout. Reconhecido pelo corpo
+  // generico de networkPolicyDenialResponse — nunca por detalhe de IP/pais/regra.
+  if (response.status === 403 && body?.error === NETWORK_POLICY_DENIED_BODY) {
+    return {
+      ok: false,
+      unavailable: false,
+      networkBlocked: true,
+      retryable: false,
+      error: NETWORK_POLICY_DENIED_BODY,
+    };
+  }
+
+  // Contrato de networkPolicyDenialResponse para a politica INDISPONIVEL: 503 com
+  // corpo 'Service unavailable' (retentavel). ATENCAO: o errorResponse
+  // compartilhado mascara corpos 5xx para 'Internal server error'
+  // (_shared/validation.ts), entao hoje esse 503 chega mascarado e cai no ramo
+  // generico de indisponibilidade. So a Edge pode preservar o corpo — fora do
+  // escopo deste cartao (registrado no proprio cartao).
+  if (response.status === 503 && body?.error === NETWORK_POLICY_UNAVAILABLE_BODY) {
+    return {
+      ok: false,
+      unavailable: false,
+      networkBlocked: true,
+      retryable: true,
+      error: NETWORK_POLICY_UNAVAILABLE_BODY,
     };
   }
 

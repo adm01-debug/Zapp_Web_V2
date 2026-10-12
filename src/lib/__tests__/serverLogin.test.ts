@@ -71,6 +71,50 @@ describe('serverLogin', () => {
     expect(r.lock.remainingTime).toBe(120);
   });
 
+  /**
+   * Negacao da politica de rede (R2-AUTH-022): a edge responde 403 'Access
+   * denied' ANTES de olhar a senha. Sem reconhecer esse caso, o front trata o
+   * 403 como edge indisponivel e o usuario nao sabe que foi a rede (IP/pais).
+   */
+  it('403 da politica de rede vira networkBlocked, distinto de senha errada e de lockout', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(403, { error: 'Access denied' }));
+    const r = await serverLogin('a@b.co', 'x');
+    expect(r).toEqual({
+      ok: false, unavailable: false, networkBlocked: true, retryable: false, error: 'Access denied',
+    });
+  });
+
+  it('503 da politica de rede vira networkBlocked retentavel', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(503, { error: 'Service unavailable' }));
+    const r = await serverLogin('a@b.co', 'x');
+    expect(r).toEqual({
+      ok: false, unavailable: false, networkBlocked: true, retryable: true, error: 'Service unavailable',
+    });
+  });
+
+  it('403 sem o corpo da politica continua fail-closed (unavailable), sem virar rede', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(403, { error: 'Forbidden' }));
+    const r = await serverLogin('a@b.co', 'x');
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error('unreachable');
+    expect(r.unavailable).toBe(true);
+  });
+
+  /**
+   * O `errorResponse` compartilhado mascara corpos 5xx para 'Internal server
+   * error' (validation.ts), entao um 503 real da politica chega com esse corpo.
+   * Sem o marcador documentado ele segue para o caminho generico de
+   * indisponibilidade — nao pode ser apresentado como problema de rede do
+   * usuario.
+   */
+  it('503 com corpo mascarado NAO vira rede: segue como indisponibilidade generica', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(503, { error: 'Internal server error' }));
+    const r = await serverLogin('a@b.co', 'x');
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error('unreachable');
+    expect(r.unavailable).toBe(true);
+  });
+
   it.each([
     ['rede', () => { throw new TypeError('Failed to fetch'); }],
     ['5xx', () => jsonResponse(500, { error: 'Internal error' })],
