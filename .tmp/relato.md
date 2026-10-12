@@ -1,63 +1,22 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: Íris (area-front-componentes)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- src/components/ui/dialog.tsx: `DialogContent` injeta uma descrição oculta em pt-BR (`aria-describedby` + `sr-only`) quando o chamador NÃO informa a prop; a chave é conferida com `hasOwnProperty` no objeto de props, então `aria-describedby={undefined}` passado de propósito continua sem descrição nenhuma (vários diálogos da V2 usam isso para silenciar o aviso do Radix).
+- src/components/ui/skip-link.tsx: o `SkipLink` põe `tabindex=-1` em alvo não focável antes de chamar `focus()` (o atalho não cumpria o papel em `<main>`/`<section>`); o indicador de Tab guarda o id em `useRef` e o limpa no desmonte; a detecção de alvos virou `MutationObserver` no lugar do `setInterval` de 1,5 s.
+- src/components/ui/visually-hidden.tsx: `useAnnounce` guarda o `setTimeout` em `useRef`, limpa o anterior antes de reagendar e limpa no desmonte.
+- src/components/ui/offline-indicator.tsx: `useOfflineStatus` guarda o `setTimeout` do aviso "voltou" em `useRef` e o limpa no desmonte/na troca de estado.
+- src/components/ui/table.tsx: `TableHead` emite `scope="col"` por padrão (override continua aceito).
+- src/components/ui/sparkline.tsx: o SVG decorativo passou a `aria-hidden="true"`.
+- src/components/ui/avatar.tsx: `AvatarGroup` troca `key={index}` por chave derivada do conteúdo (`src-alt-fallback-index`).
+- Mock seguro: sem rede, sem produção; nenhum Supabase.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
-
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
-
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Prova
+- vermelho antes: `npx vitest run src/components/ui/__tests__/robustez-primitivos.test.tsx` (com os 7 primitivos restaurados para a base) → `Test Files 1 failed (1); Tests 8 failed | 2 passed (10)` — as 8 falhas são exatamente (a) descrição injetada, (b) tabindex do alvo, (c) três limpezas de timer, (d) scope, (e) aria-hidden e (f) chave do avatar; as 2 que passam são as de "não injetar", que já eram o comportamento da base.
+- verde depois: `npx vitest run src/components/ui/__tests__/robustez-primitivos.test.tsx` → `Test Files 1 passed (1); Tests 10 passed (10)`.
+- regressão dos testes existentes do atalho: `npx vitest run src/components/ui/__tests__/skip-link.test.tsx src/components/ui/__tests__/skip-link.a11y.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
+- commit: `fix(ui): endurece primitivos de UI com paridade acessivel da V3`.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não portei tokens de design/classes da V3 (bordas, cores, `text-[10px]` do avatar xs, remoção do `aria-label` do atalho): o cartão pede só robustez, e token visual é do worker (design).
+- Não troquei o `window.setInterval` do indicador por uma dependência nova: usei `MutationObserver`, que já existe no ambiente.
+- O `useOfflineStatus` mantém o `useEffect` com dep `[isOnline]` (igual à V3); por isso o aviso "voltou" tem o mesmo ciclo da V3 — fora do escopo deste cartão.
