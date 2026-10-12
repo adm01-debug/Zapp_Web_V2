@@ -1,18 +1,39 @@
-Especialista: worker (docs)
+Especialista: senior (area-sql-banco)
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- `supabase/migrations/20261011193310_queues_distribution_overflow.sql`: limitei o atalho sticky ao mesmo contrato da seleção normal (`queue_members` ativo, `profiles` ativo, `user_roles.role='agent'`, `max_per_agent` e requisitos de habilidade quando a fila é `skill`). Também troquei o desempate de `round_robin` para considerar o último evento real de atribuição para a fila (`conversation_events.to_agent_id` + `to_queue_id` ou `metadata.new_queue`) antes do `created_at` legado, e deixei `is_active=false` fora do helper de fila explícita para preservar o comportamento anterior; fila pausada continua negando atribuição.
+- `scripts/db-audit/queues-distribution-overflow.test.sh`: adicionei casos no Postgres descartável que passam pelos triggers reais (`INSERT/UPDATE contacts`) para sticky com agente sem habilidade, sticky com usuário sem papel `agent`, fila inativa explícita, fila pausada e round-robin por contato transferido via `UPDATE queue_id`; o rollback agora é descrito como reaplicação após rollback, não como idempotência direta.
+- `src/integrations/supabase/types.ts`: atualizei apenas o bloco `queues` para as colunas/FK criadas pela migration; conferi que a RPC `transfer_conversation` permaneceu no arquivo.
+- `.github/workflows/db-guard.yml`: registrei o `.test.sh` novo no workflow de banco, porque o inventário automático recusou teste versionado sem passo no CI.
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Pontos da recusa
+- Ponto 1: Corrigido em `queue_pick_agent` (`supabase/migrations/20261011193310_queues_distribution_overflow.sql`): o ramo sticky agora exige `user_roles.role='agent'` e replica o filtro de requisitos em `queue_skill_requirements`/`agent_skills`. Prova verde: `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[PASS] sticky+skill: ultimo atendente sem habilidade cai no qualificado` e `[PASS] sticky: ultimo membro sem papel agent cai no agente elegivel`.
+- Ponto 2: Corrigido em `queue_pick_agent`: `round_robin` usa `conversation_events` da atribuição real para a fila antes de cair no `contacts.created_at`. Prova vermelho antes: com a migration anterior e o teste novo, `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[FAIL] round_robin: usa data da atribuicao (evento), nao created_at antigo do contato transferido: esperado '00000000-0000-0000-0000-0000000000b2', obtido '00000000-0000-0000-0000-0000000000b1'`. Prova verde depois: o mesmo comando -> `[PASS] round_robin: usa data da atribuicao (evento), nao created_at antigo do contato transferido`.
+- Ponto 3: Corrigido preservando fila inativa explícita e mantendo fila pausada bloqueada: `queue_pick_agent` deixou de negar `is_active=false`, enquanto seleção default/overflow continuam filtrando filas ativas e não pausadas. Prova verde: `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[PASS] fila pausada: nao atribui`, `[PASS] fila pausada: nao transborda nem troca de fila` e `[PASS] fila inativa explicita: preserva comportamento anterior e ainda atribui atendente`.
+- Ponto 4: Corrigido o relato do teste: a verificação final agora diz `reaplicacao apos rollback`, não promete idempotência de aplicar a mesma migration duas vezes. Prova verde: `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[PASS] reaplicacao apos rollback: migration volta a criar distribution`.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+## Prova executada agora
+- Vermelho sem a correção: `bash scripts/db-audit/queues-distribution-overflow.test.sh` com a migration anterior -> `RED_STATUS=1` e a falha do `round_robin` por usar `created_at` antigo do contato transferido.
+- Verde com a correção: `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `GREEN2_STATUS=0` e `[OK] contrato de distribuicao/transbordo de filas provado`.
+- Autorrevisão de escopo: `git log --oneline dia/2026-10-11..HEAD` -> `5eceb3404 fix(banco): corrige distribuicao de filas recusada`.
+- Autorrevisão de tamanho: `git diff dia/2026-10-11...HEAD | wc -c` -> `46554`.
+- Checagem de whitespace: `git diff --cached --check` antes do commit -> sem saída.
+- Inventário de testes: `node scripts/ci/check-test-inventory.mjs` agora não lista `scripts/db-audit/queues-distribution-overflow.test.sh`; o comando ainda retorna 1 por três órfãos pré-existentes (`department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`, `team-chat-media-contract`) que não pertencem a este cartão.
+- Varredura de produção/segredo nos arquivos tocados: buscas pelo identificador do banco real, URL Supabase e `service_role` em migration/teste -> `total_count: 0`.
+- Conferência contra diffs alheios: `git diff --name-only dia/2026-10-11...HEAD` fica só nos 5 arquivos abaixo (incluindo este relato versionado); não trouxe as deleções de docs/testes/front da branch anterior.
+
+## Arquivos no diff
+.github/workflows/db-guard.yml
+.tmp/relato.md
+scripts/db-audit/queues-distribution-overflow.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011193310_queues_distribution_overflow.sql
+
+## Avisos do juiz automático que não procedem
+- Escopo: `.github/workflows/db-guard.yml` entrou só porque o próprio inventário/fechar exigiu registrar o `.test.sh` novo no CI; sem isso o check-test-inventory reprova o cartão. `scripts/db-audit/queues-distribution-overflow.test.sh` é a prova SQL versionada do defeito recusado.
+- `updated_at`: o UPDATE de transbordo filtra `WHERE id = NEW.id AND queue_id = NEW.queue_id`; o contrato verde prova `[PASS] transbordo: toca UMA linha de contacts` e `[PASS] transbordo: contato intocado mantem updated_at antigo`.
+- `LOOP`: `queues_prevent_overflow_cycle` tem teto explícito `v_depth < 100` e só percorre ponteiros de fila; o contrato verde prova o bloqueio de auto-ciclo e ciclo `b -> f0 -> b`.
 
 ## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+- Não alterei docs, Edge Functions, front nem migrations antigas; a branch anterior tinha diffs alheios e eu trouxe apenas migration/teste/tipos, mais o registro obrigatório do teste novo no `db-guard.yml`.
+- Não alterei o contrato de fila default: seleção automática sem `queue_id` continua exigindo fila ativa e não pausada.
