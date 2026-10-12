@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
-import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw } from 'lucide-react';
+import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,28 @@ interface ResetRequest {
   rejection_reason: string | null; ip_address: string | null; created_at: string;
 }
 
+/** Mascara o endereço (a***@dominio) — o painel nunca repete o e-mail inteiro na confirmação. */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return '***';
+  return `${local.charAt(0)}***@${domain}`;
+}
+
+interface FunctionErrorPayload { error?: string; emailSent?: boolean; status?: string; }
+
+/** Em resposta não-2xx o supabase-js devolve o corpo dentro de `error.context` (a Response).
+ *  Lê o JSON sem estourar se o corpo já foi consumido ou não é JSON. */
+async function readFunctionErrorPayload(error: unknown): Promise<FunctionErrorPayload | null> {
+  const context = (error as { context?: unknown } | null)?.context;
+  const json = (context as { json?: unknown } | null)?.json;
+  if (typeof json !== 'function') return null;
+  try {
+    return (await (json as () => Promise<unknown>).call(context)) as FunctionErrorPayload;
+  } catch {
+    return null;
+  }
+}
+
 export function PasswordResetRequestsPanel() {
   const [requests, setRequests] = useState<ResetRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +49,9 @@ export function PasswordResetRequestsPanel() {
   const [selectedRequest, setSelectedRequest] = useState<ResetRequest | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  // Aprovada no banco, porém o e-mail não saiu (falha fechada da Edge): a solicitação
+  // segue pendente e o reenvio é uma nova aprovação.
+  const [emailFailedRequest, setEmailFailedRequest] = useState<ResetRequest | null>(null);
 
   // fetchRequests declarada antes do useEffect para satisfazer react-hooks/immutability
   const fetchRequests = useCallback(async () => {
@@ -51,8 +76,19 @@ export function PasswordResetRequestsPanel() {
     setProcessing(true);
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
-      if (error) throw error;
-      toast.success('Solicitação aprovada! Email de reset enviado.');
+      if (error) {
+        const payload = await readFunctionErrorPayload(error);
+        if (payload?.emailSent === false) {
+          // 502 approved_email_failed: a aprovação NÃO foi gravada (falha fechada), então
+          // a solicitação continua pendente e oferecemos reenviar (nova aprovação idempotente).
+          setEmailFailedRequest(request);
+          toast.error('Aprovado, mas o e-mail não foi enviado — tente novamente');
+          return;
+        }
+        throw new Error(payload?.error || (error instanceof Error ? error.message : 'Erro ao aprovar'));
+      }
+      setEmailFailedRequest(null);
+      toast.success(`E-mail de redefinição enviado para ${maskEmail(request.email)}`);
       fetchRequests();
     } catch (error) { log.error('Error approving:', error); toast.error(error instanceof Error ? error.message : 'Erro ao aprovar'); }
     finally { setProcessing(false); setSelectedRequest(null); }
@@ -139,6 +175,17 @@ export function PasswordResetRequestsPanel() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {emailFailedRequest && (
+          <div role="alert" className="flex items-start justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+            <div className="flex items-start gap-2 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Aprovado, mas o e-mail não foi enviado — tente novamente</span>
+            </div>
+            <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => void handleApprove(emailFailedRequest)} disabled={processing}>
+              <RefreshCw className="h-4 w-4" />Reenviar
+            </Button>
+          </div>
+        )}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'all')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pending" className="gap-2"><Clock className="w-4 h-4" />Pendentes ({pendingCount})</TabsTrigger>
