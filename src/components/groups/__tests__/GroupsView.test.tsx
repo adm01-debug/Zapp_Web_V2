@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
@@ -224,5 +225,30 @@ describe('GroupsView', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('2', { selector: 'strong' })).toBeInTheDocument();
     expect(within(dialog).getByText('Meu Grupo, Grupo B')).toBeInTheDocument();
+  });
+
+  // N-194: menu do grupo e seletores têm aria-label acessível
+  it('menu de ações e 4 seletores têm aria-label nomeado; axe zerado', async () => {
+    mockOrder.mockResolvedValueOnce({ data: [GRUPO_A], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Meu Grupo')).toBeInTheDocument());
+
+    // Seletor de filtro de categoria (visível imediatamente)
+    expect(screen.getByLabelText('Filtrar por categoria')).toBeInTheDocument();
+
+    // Menu de ações do grupo: nome acessível exato do critério, por papel e nome
+    expect(screen.getByRole('button', { name: 'Ações do grupo Meu Grupo' })).toBeInTheDocument();
+
+    // Seletor de categoria por grupo (dentro do card)
+    expect(screen.getByLabelText('Categoria de Meu Grupo')).toBeInTheDocument();
+
+    // Abre o dialog de adicionar grupo e verifica os 2 seletores restantes
+    fireEvent.click(screen.getByText('Adicionar Grupo'));
+    expect(screen.getByLabelText('Conexão WhatsApp')).toBeInTheDocument();
+    expect(screen.getByLabelText('Categoria do grupo')).toBeInTheDocument();
+
+    // axe zerado
+    const resultado = await axe(document.body);
+    expect(resultado).toHaveNoViolations();
   });
 });
