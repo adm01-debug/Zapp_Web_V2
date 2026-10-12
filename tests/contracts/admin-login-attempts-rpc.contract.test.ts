@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 // Contrato da migration que cria as RPCs de leitura do painel admin de auth
 // (paridade V3 -> V2, 11/10/2026). O teste trava o que o painel precisa e o que
-// NAO pode afrouxar: SECURITY DEFINER + search_path fixo, guarda de autorizacao
+// NAO pode afrouxar: SECURITY DEFINER + search_path fixo, guarda admin-only
 // dentro da funcao, ACL sem PUBLIC/anon, e os tipos gerados batendo com o retorno.
 
 const RAIZ = process.cwd();
@@ -40,8 +40,9 @@ describe('contrato admin_login_attempts / admin_blocked_accounts', () => {
     expect(sql).not.toMatch(/set search_path from current_user/i);
   });
 
-  it('checa auth.uid() dentro da funcao e falha com 42501 (nao so confia na RLS)', () => {
-    expect(sql.match(/if not public\.is_admin_or_supervisor\(auth\.uid\(\)\) then/g)?.length ?? 0).toBe(2);
+  it('checa public.is_admin(auth.uid()) dentro da funcao e falha com 42501 (nao so confia na RLS)', () => {
+    expect(sql.match(/if not public\.is_admin\(auth\.uid\(\)\) then/g)?.length ?? 0).toBe(2);
+    expect(sql).not.toMatch(/is_admin_or_supervisor\(auth\.uid\(\)\)/);
     expect(sql.match(/errcode = '42501'/g)?.length ?? 0).toBe(2);
   });
 

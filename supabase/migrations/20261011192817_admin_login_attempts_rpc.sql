@@ -11,12 +11,12 @@
 -- Esta migration cria as duas consultas que o painel precisa, com guarda explicita.
 --
 -- POR QUE RPC EM VEZ DE LEITURA DIRETA:
--- 1) a RLS de login_attempts e admin/supervisor-only hoje, mas a RLS e a UNICA barreira: uma
---    policy permissiva futura (foi o caso de "System can manage login attempts", USING true,
---    removida em 20260315115805) reabre a leitura para qualquer authenticated. A RPC
---    repete a checagem public.is_admin_or_supervisor(auth.uid()) DENTRO da funcao: falha
---    fechado. A guarda ESPELHA a policy de SELECT da tabela ("Admins and supervisors can
---    view login attempts"): a RPC nunca concede plateia maior nem menor que a leitura direta.
+-- 1) a RLS de login_attempts pode ser alterada por outra migration; ela nao e a unica
+--    barreira desta consulta administrativa. Uma policy permissiva futura (foi o caso de
+--    "System can manage login attempts", USING true, removida em 20260315115805) reabriria
+--    a leitura para qualquer authenticated. A RPC repete a checagem public.is_admin(auth.uid())
+--    DENTRO da funcao: falha fechado e fica mais restrita que a policy atual quando ela tambem
+--    contempla supervisor, porque este cartao pediu explicitamente funcoes so admin.
 -- 2) o painel precisa de periodo, filtro por email, recorte de forca bruta, paginacao e
 --    do motivo do bloqueio derivado — devolver isso pela RPC evita expor a tabela e
 --    devolver colunas que o painel nao usa.
@@ -62,9 +62,9 @@ declare
   v_intervalo interval;
   v_filtro text;
 begin
-  -- guarda de autorizacao: admin ou supervisor autenticado (service_role/anon caem aqui)
-  if not public.is_admin_or_supervisor(auth.uid()) then
-    raise exception 'admin_login_attempts: acesso restrito a administradores e supervisores'
+  -- guarda de autorizacao: somente admin autenticado (service_role/anon/supervisor caem aqui)
+  if not public.is_admin(auth.uid()) then
+    raise exception 'admin_login_attempts: acesso restrito a administradores'
       using errcode = '42501';
   end if;
 
@@ -145,8 +145,8 @@ as $$
 declare
   c_limiar constant integer := 5;
 begin
-  if not public.is_admin_or_supervisor(auth.uid()) then
-    raise exception 'admin_blocked_accounts: acesso restrito a administradores e supervisores'
+  if not public.is_admin(auth.uid()) then
+    raise exception 'admin_blocked_accounts: acesso restrito a administradores'
       using errcode = '42501';
   end if;
 
@@ -165,9 +165,9 @@ begin
 end;
 $$;
 
--- ACL: so o admin/supervisor autenticado. Fecha PUBLIC e anon (a checagem interna e
+-- ACL: so authenticated chega na funcao; a checagem interna limita a admin. Fecha PUBLIC e anon (a checagem interna e
 -- SECURITY DEFINER, entao sem isto o anon chegaria na funcao). service_role nao precisa:
--- o painel chama com JWT authenticated.
+-- o painel chama com JWT authenticated de admin.
 revoke all on function public.admin_login_attempts(text, text, boolean, integer) from public, anon;
 revoke all on function public.admin_blocked_accounts() from public, anon;
 grant execute on function public.admin_login_attempts(text, text, boolean, integer) to authenticated;

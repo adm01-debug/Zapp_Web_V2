@@ -13,7 +13,7 @@
 --   T3     postura de RLS de public.login_attempts (ligada, sem policy permissiva,
 --          INSERT/UPDATE barrados para authenticated);
 --   T4     matriz de PERMISSAO com papeis REAIS (SET ROLE authenticated/anon + claims):
---          anon negado, agente negado pela guarda, admin e supervisor autorizados; leitura
+--          UUIDs fixos conferidos, anon negado, agente e supervisor negados pela guarda, admin autorizado; leitura
 --          direta da tabela: agente ve 0 linhas, admin ve as linhas, anon sem permissao;
 --   T5     comportamento da consulta: periodo, filtro por email (curinga NAO vale),
 --          recorte de forca bruta, paginacao/ordenacao/total e entrada invalida;
@@ -115,6 +115,28 @@ on conflict (email) do update
 -- =====================================================================================
 -- T4: matriz de permissao com papeis REAIS
 -- =====================================================================================
+-- Fixtures obrigatorias da matriz: os UUIDs usados nos JWTs abaixo recebem papeis
+-- conhecidos nesta transacao. Se qualquer papel fixo nao bater, a suite FALHA (nao SKIP).
+insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+values
+  ('00000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'admin-login-attempts-admin@local.test', '', now(), now(), now()),
+  ('00000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'admin-login-attempts-supervisor@local.test', '', now(), now(), now()),
+  ('00000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'admin-login-attempts-agent@local.test', '', now(), now(), now())
+on conflict (id) do nothing;
+
+delete from public.user_roles
+ where user_id in (
+   '00000000-0000-4000-8000-000000000001',
+   '00000000-0000-4000-8000-000000000003',
+   '00000000-0000-4000-8000-000000000004'
+ );
+
+insert into public.user_roles (user_id, role)
+values
+  ('00000000-0000-4000-8000-000000000001', 'admin'),
+  ('00000000-0000-4000-8000-000000000003', 'supervisor'),
+  ('00000000-0000-4000-8000-000000000004', 'agent');
+
 do $$
 declare
   c_admin constant text := '00000000-0000-4000-8000-000000000001';
@@ -123,11 +145,18 @@ declare
   v_claims text;
   v_n int; v_res text;
 begin
-  -- sanidade das fixtures de papel do conjunto local
-  if not exists (select 1 from public.user_roles where role = 'admin') then
-    insert into _res values (20, 'T4 matriz de permissao', 'SKIP', 'conjunto local sem usuario admin');
-    return;
-  end if;
+  -- sanidade obrigatoria: os UUIDs fixos precisam ter exatamente o papel usado no JWT
+  insert into _res values (15, 'T4 fixture c_admin e admin',
+    case when exists (select 1 from public.user_roles where user_id = c_admin::uuid and role = 'admin')
+         and public.is_admin(c_admin::uuid) then 'PASS' else 'FAIL' end, 'admin=' || c_admin);
+  insert into _res values (16, 'T4 fixture c_sup e supervisor e NAO admin',
+    case when exists (select 1 from public.user_roles where user_id = c_sup::uuid and role = 'supervisor')
+         and not public.is_admin(c_sup::uuid) then 'PASS' else 'FAIL' end, 'supervisor=' || c_sup);
+  insert into _res values (17, 'T4 fixture c_agent e agent e NAO admin/supervisor',
+    case when exists (select 1 from public.user_roles where user_id = c_agent::uuid and role = 'agent')
+         and not public.is_admin(c_agent::uuid)
+         and not public.is_admin_or_supervisor(c_agent::uuid) then 'PASS' else 'FAIL' end, 'agent=' || c_agent);
+
   v_claims := format('{"sub":"%s","role":"authenticated"}', c_admin);
 
   -- T4a: admin autorizado
@@ -138,40 +167,41 @@ begin
   exception when others then v_res := 'FAIL'; end;
   insert into _res values (20, 'T4a admin autenticado consulta as tentativas', v_res, 'admin=' || c_admin);
 
-  -- T4b: supervisor autorizado (mesma plateia da policy de SELECT da tabela)
-  if exists (select 1 from public.user_roles where role = 'supervisor') then
-    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', c_sup), true);
-    begin
-      perform public.admin_login_attempts('24h', 'zz-teste-login', false, 1);
-      v_res := 'PASS';
-    exception when others then v_res := 'FAIL'; end;
-    insert into _res values (21, 'T4b supervisor autenticado consulta as tentativas', v_res, 'supervisor=' || c_sup);
-  else
-    insert into _res values (21, 'T4b supervisor autenticado consulta as tentativas', 'SKIP', 'sem supervisor no conjunto local');
-  end if;
+  -- T4b: supervisor autenticado tambem e recusado; as RPCs deste cartao sao so admin
+  perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', c_sup), true);
+  begin
+    perform public.admin_login_attempts('24h', 'zz-teste-login', false, 1);
+    v_res := 'FAIL';   -- conseguiu: vazou para supervisor
+  exception when insufficient_privilege then v_res := 'PASS';
+    when others then v_res := 'FAIL';
+  end;
+  insert into _res values (21, 'T4b supervisor autenticado NAO consulta as tentativas', v_res, 'supervisor=' || c_sup);
 
-  -- T4c: agente (authenticated NAO admin) recusado pela guarda -> 42501
-  if exists (select 1 from public.user_roles where role = 'agent') then
-    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', c_agent), true);
-    begin
-      perform public.admin_login_attempts('24h', null, false, 1);
-      v_res := 'FAIL';   -- conseguiu: vazou para nao-admin
-    exception when insufficient_privilege then v_res := 'PASS';
-      when others then v_res := 'FAIL';
-    end;
-    insert into _res values (22, 'T4c agente NAO admin e recusado pela guarda', v_res, 'agent=' || c_agent);
+  begin
+    perform public.admin_blocked_accounts();
+    v_res := 'FAIL';
+  exception when insufficient_privilege then v_res := 'PASS';
+    when others then v_res := 'FAIL';
+  end;
+  insert into _res values (22, 'T4c supervisor autenticado NAO lista bloqueadas', v_res, null);
 
-    begin
-      perform public.admin_blocked_accounts();
-      v_res := 'FAIL';
-    exception when insufficient_privilege then v_res := 'PASS';
-      when others then v_res := 'FAIL';
-    end;
-    insert into _res values (23, 'T4d agente NAO admin nao lista bloqueadas', v_res, null);
-  else
-    insert into _res values (22, 'T4c agente NAO admin e recusado pela guarda', 'SKIP', 'sem agent no conjunto local');
-    insert into _res values (23, 'T4d agente NAO admin nao lista bloqueadas', 'SKIP', null);
-  end if;
+  -- T4d/T4e: agente (authenticated NAO admin) recusado pela guarda -> 42501
+  perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', c_agent), true);
+  begin
+    perform public.admin_login_attempts('24h', null, false, 1);
+    v_res := 'FAIL';   -- conseguiu: vazou para nao-admin
+  exception when insufficient_privilege then v_res := 'PASS';
+    when others then v_res := 'FAIL';
+  end;
+  insert into _res values (23, 'T4d agente NAO admin e recusado pela guarda', v_res, 'agent=' || c_agent);
+
+  begin
+    perform public.admin_blocked_accounts();
+    v_res := 'FAIL';
+  exception when insufficient_privilege then v_res := 'PASS';
+    when others then v_res := 'FAIL';
+  end;
+  insert into _res values (24, 'T4e agente NAO admin nao lista bloqueadas', v_res, null);
 
   -- T4e..T4h: leitura DIRETA da tabela com papeis reais (RLS de verdade)
   perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', c_agent), true);
@@ -179,10 +209,10 @@ begin
   begin
     select count(*) into v_n from public.login_attempts;
     reset role;
-    insert into _res values (24, 'T4e agente le 0 linhas direto na tabela (RLS)', case when v_n = 0 then 'PASS' else 'FAIL' end, 'count=' || v_n);
+    insert into _res values (25, 'T4f agente le 0 linhas direto na tabela (RLS)', case when v_n = 0 then 'PASS' else 'FAIL' end, 'count=' || v_n);
   exception when others then
     reset role;
-    insert into _res values (24, 'T4e agente le 0 linhas direto na tabela (RLS)', 'FAIL', 'erro inesperado: ' || sqlerrm);
+    insert into _res values (25, 'T4f agente le 0 linhas direto na tabela (RLS)', 'FAIL', 'erro inesperado: ' || sqlerrm);
   end;
   reset role;
 
@@ -190,13 +220,13 @@ begin
   begin
     select count(*) into v_n from public.login_attempts;
     reset role;
-    insert into _res values (25, 'T4f anon nao le a tabela direto', 'FAIL', 'leu ' || v_n || ' linha(s)');
+    insert into _res values (26, 'T4g anon nao le a tabela direto', 'FAIL', 'leu ' || v_n || ' linha(s)');
   exception when insufficient_privilege then
     reset role;
-    insert into _res values (25, 'T4f anon nao le a tabela direto', 'PASS', 'permission denied');
+    insert into _res values (26, 'T4g anon nao le a tabela direto', 'PASS', 'permission denied');
   when others then
     reset role;
-    insert into _res values (25, 'T4f anon nao le a tabela direto', 'FAIL', 'erro inesperado: ' || sqlerrm);
+    insert into _res values (26, 'T4g anon nao le a tabela direto', 'FAIL', 'erro inesperado: ' || sqlerrm);
   end;
 
   perform set_config('request.jwt.claims', v_claims, true);
@@ -204,10 +234,10 @@ begin
   begin
     select count(*) into v_n from public.login_attempts;
     reset role;
-    insert into _res values (26, 'T4g admin le as linhas direto na tabela', case when v_n > 0 then 'PASS' else 'FAIL' end, 'count=' || v_n);
+    insert into _res values (27, 'T4h admin le as linhas direto na tabela', case when v_n > 0 then 'PASS' else 'FAIL' end, 'count=' || v_n);
   exception when others then
     reset role;
-    insert into _res values (26, 'T4g admin le as linhas direto na tabela', 'FAIL', 'erro inesperado: ' || sqlerrm);
+    insert into _res values (27, 'T4h admin le as linhas direto na tabela', 'FAIL', 'erro inesperado: ' || sqlerrm);
   end;
 
   -- T4h: anon nem chega na funcao (EXECUTE negado), mesmo sem JWT
@@ -215,13 +245,13 @@ begin
   begin
     perform public.admin_login_attempts();
     reset role;
-    insert into _res values (27, 'T4h anon nao executa a RPC', 'FAIL', 'executou');
+    insert into _res values (28, 'T4i anon nao executa a RPC', 'FAIL', 'executou');
   exception when insufficient_privilege then
     reset role;
-    insert into _res values (27, 'T4h anon nao executa a RPC', 'PASS', 'permission denied');
+    insert into _res values (28, 'T4i anon nao executa a RPC', 'PASS', 'permission denied');
   when others then
     reset role;
-    insert into _res values (27, 'T4h anon nao executa a RPC', 'FAIL', 'erro inesperado: ' || sqlerrm);
+    insert into _res values (28, 'T4i anon nao executa a RPC', 'FAIL', 'erro inesperado: ' || sqlerrm);
   end;
 end $$;
 
@@ -336,7 +366,7 @@ begin
   if v_fail > 0 then
     raise exception 'admin_login_attempts: % assertiva(s) FALHOU', v_fail;
   end if;
-  raise notice 'admin_login_attempts: % assertivas, todas PASS', (select count(*) from _res where result <> 'SKIP');
+  raise notice 'admin_login_attempts: % assertivas, todas PASS', (select count(*) from _res);
 end $$;
 
 rollback;
