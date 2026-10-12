@@ -219,8 +219,11 @@ again="$(conta_total "$roleless_session")"
 assert_eq '7. sem papel segue lendo 0 apos reaplicar' '0' "$again"
 
 # ── 8) o Rollback do cabecalho roda e devolve o estado anterior ──────────────
-rollback_sql="$(sed -n '2p' "$migration_gate" | sed 's/^-- Rollback: //')"
-[[ -n "$rollback_sql" ]] || fail 'Rollback do cabecalho vazio'
+# O cabecalho da migration traz o rollback em duas partes (modelo 20261006141643): a prosa em
+# '-- Rollback:' e, logo abaixo, '-- Rollback (SQL executavel, na ordem):' com uma instrucao por
+# linha prefixada por '--   '. Executamos exatamente essas instrucoes, na ordem.
+rollback_sql="$(awk '/^-- Rollback \(SQL execut/ {f=1; next} f && /^--   / {sub(/^--   /,""); print}' "$migration_gate")"
+[[ -n "$rollback_sql" ]] || fail 'Rollback do cabecalho vazio (sem SQL executavel)'
 echo "$rollback_sql" | psql_exec >/dev/null || fail 'Rollback do cabecalho nao executou'
 pass 'Rollback do cabecalho executou'
 rolled="$(conta_total "$roleless_session")"
