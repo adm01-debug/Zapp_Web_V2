@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import type { MutableRefObject } from 'react';
+import type { KeyboardEvent, MouseEvent, MutableRefObject } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -16,6 +16,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TaskCheckbox } from '../shared/TaskCheckbox';
 import { ContactAvatar } from '../shared/ContactAvatar';
 import { DueCell, PriorityCell, RemindCell, StatusCell } from './taskRowCells';
+import { TaskRowMenu } from './taskRowMenu';
+import { useTasksUiOptional } from '../shared/tasksUi';
 import { daySubtitle, groupUpcomingByDay } from '@/hooks/tasks/workItemAggregates';
 import type { BucketsByDue, DayGroup } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItem, WorkItemContact, WorkItemStatus } from '@/hooks/tasks/workItem.types';
@@ -76,6 +78,11 @@ export interface TasksListTableProps {
   onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
   onClearReminder?: (item: WorkItem) => void;
   onOpenReminder?: (item: WorkItem) => void;
+  /** Etapa 061: "Concluir"/"Reabrir" do menu ⋮ da linha. */
+  onComplete?: (item: WorkItem) => void;
+  onReopen?: (item: WorkItem) => void;
+  /** Etapa 061: "Cancelar" do menu ⋮ (e o Delete do teclado, etapa 064). */
+  onDelete?: (item: WorkItem) => void;
   /** A primeira renderização não anima a entrada das linhas (etapa 072). */
   hasMounted: MutableRefObject<boolean>;
 }
@@ -157,6 +164,22 @@ function GroupRow({
   );
 }
 
+/** Teclado da tabela (etapa 064): ↑/↓ andam entre as LINHAS montadas da tabela. */
+function focarLinhaVizinha(linha: HTMLTableRowElement, passo: 1 | -1) {
+  const linhas = Array.from(
+    linha.closest('table')?.querySelectorAll<HTMLTableRowElement>('[data-testid="task-row"]') ?? []
+  );
+  const i = linhas.indexOf(linha);
+  linhas[i + passo]?.focus();
+}
+
+/**
+ * O que NÃO abre os detalhes pelo clique da linha (etapa 063): qualquer controle
+ * (checkbox, contato, kebab) e o conteúdo dos menus/popovers, que é portaled mas
+ * sobe pela árvore React até a linha.
+ */
+const CONTROLES_DO_CLIQUE = 'button, a, input, select, textarea, [role="menuitem"], [role="menu"]';
+
 /** Linha de item: Tarefa (053), Contato (054) e as quatro células (056–060). */
 function ItemRow({
   item,
@@ -172,6 +195,9 @@ function ItemRow({
   onSnooze,
   onClearReminder,
   onOpenReminder,
+  onComplete,
+  onReopen,
+  onDelete,
 }: {
   item: WorkItem;
   index: number;
@@ -186,26 +212,78 @@ function ItemRow({
   onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
   onClearReminder?: (item: WorkItem) => void;
   onOpenReminder?: (item: WorkItem) => void;
+  onComplete?: (item: WorkItem) => void;
+  onReopen?: (item: WorkItem) => void;
+  onDelete?: (item: WorkItem) => void;
 }) {
   const reduceMotion = useReducedMotion() ?? false;
+  // Etapa 062: a seleção é do MÓDULO, não da tabela — a linha lê o mesmo estado
+  // de UI que o painel de detalhes (`TasksUiContext`). Fora do provider (testes
+  // do modo) a linha só não se marca; nada quebra.
+  const ui = useTasksUiOptional();
+  const selecionado = ui?.selectedId === item.id;
   const nome = item.contact ? nomeDoContato(item.contact) : null;
+
+  /** Seleciona no módulo e abre os detalhes — clique e teclado pelo MESMO caminho. */
+  const abrir = () => {
+    ui?.openPanel(item.id);
+    onOpen(item);
+  };
+
+  const aoClicar = (e: MouseEvent<HTMLTableRowElement>) => {
+    if ((e.target as HTMLElement).closest(CONTROLES_DO_CLIQUE)) return;
+    abrir();
+  };
+
+  const aoTeclar = (e: KeyboardEvent<HTMLTableRowElement>) => {
+    // Só atalhos da PRÓPRIA linha: teclas de dentro do checkbox/kebab/menu não
+    // podem mover o foco nem abrir/concluir a linha.
+    if (e.target !== e.currentTarget) return;
+    switch (e.key) {
+      case 'ArrowDown': e.preventDefault(); focarLinhaVizinha(e.currentTarget, 1); return;
+      case 'ArrowUp': e.preventDefault(); focarLinhaVizinha(e.currentTarget, -1); return;
+      case 'Enter': e.preventDefault(); abrir(); return;
+      case ' ': e.preventDefault(); onToggleDone(item); return;
+      case 'x': case 'X': onToggleDone(item); return;
+      // `E` edita: o detalhe é a superfície de edição (o card usava o mesmo `E`).
+      case 'e': case 'E': abrir(); return;
+      case 'Delete': onDelete?.(item); return;
+      default: return;
+    }
+  };
 
   return (
     <motion.tr
       data-testid="task-row"
       data-item-id={item.id}
+      data-selected={selecionado ? 'true' : 'false'}
+      tabIndex={0}
       initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
       transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
-      onClick={() => onOpen(item)}
-      className="h-11 cursor-pointer border-t border-border/40 align-middle hover:bg-muted/40"
+      onClick={aoClicar}
+      onKeyDown={aoTeclar}
+      className={[
+        'group h-11 cursor-pointer border-t border-border/40 align-middle hover:bg-muted/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        selecionado ? 'bg-primary/10' : '',
+      ].join(' ')}
     >
-      {/* Etapa 053 — célula Tarefa: checkbox circular + título numa linha com tooltip. */}
-      <td className="px-3 align-middle">
+      {/* Etapa 053 — célula Tarefa: checkbox circular + título numa linha com
+          tooltip; etapa 061 — o menu ⋮ fecha a célula; etapa 062 — a barra de
+          3 px da linha selecionada é um elemento próprio (não muda a largura). */}
+      <td className="relative px-3 align-middle">
+        {selecionado && (
+          <span
+            data-testid="row-selection-bar"
+            aria-hidden="true"
+            className="absolute inset-y-0 left-0 w-[3px] bg-primary"
+          />
+        )}
         <div className="flex min-w-0 items-center gap-2">
           <TaskCheckbox done={item.status === 'done'} onToggle={() => onToggleDone(item)} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
@@ -216,6 +294,20 @@ function ItemRow({
               <p className="truncate text-2xs text-[hsl(var(--warning-text))]">{item.waiting_reason}</p>
             )}
           </div>
+          {/* Etapa 061 — o menu ⋮ da linha, com as ações do card (061). */}
+          <TaskRowMenu
+            item={item}
+            onOpen={onOpen}
+            onComplete={onComplete}
+            onReopen={onReopen}
+            onMoveTo={onMoveTo}
+            doingCount={doingCount}
+            onRequestWaitingReason={onRequestWaitingReason}
+            onSnooze={onSnooze}
+            onClearReminder={onClearReminder}
+            onOpenReminder={onOpenReminder}
+            onDelete={onDelete}
+          />
         </div>
       </td>
 
@@ -283,6 +375,9 @@ function SectionRows({
   onSnooze,
   onClearReminder,
   onOpenReminder,
+  onComplete,
+  onReopen,
+  onDelete,
 }: {
   section: ListSection;
   now?: Date;
@@ -296,6 +391,9 @@ function SectionRows({
   onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
   onClearReminder?: (item: WorkItem) => void;
   onOpenReminder?: (item: WorkItem) => void;
+  onComplete?: (item: WorkItem) => void;
+  onReopen?: (item: WorkItem) => void;
+  onDelete?: (item: WorkItem) => void;
 }) {
   const [open, setOpen] = useState(section.defaultOpen ?? true);
   const [showOlder, setShowOlder] = useState(false);
@@ -324,6 +422,9 @@ function SectionRows({
       onSnooze={onSnooze}
       onClearReminder={onClearReminder}
       onOpenReminder={onOpenReminder}
+      onComplete={onComplete}
+      onReopen={onReopen}
+      onDelete={onDelete}
     />
   );
 
@@ -379,6 +480,9 @@ export function TasksListTable({
   onSnooze,
   onClearReminder,
   onOpenReminder,
+  onComplete,
+  onReopen,
+  onDelete,
   hasMounted,
 }: TasksListTableProps) {
   const ancora = useMemo(() => now ?? new Date(), [now]);
@@ -475,6 +579,9 @@ export function TasksListTable({
               onSnooze={onSnooze}
               onClearReminder={onClearReminder}
               onOpenReminder={onOpenReminder}
+              onComplete={onComplete}
+              onReopen={onReopen}
+              onDelete={onDelete}
             />
           ))}
         </tbody>
