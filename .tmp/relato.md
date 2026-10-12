@@ -48,7 +48,16 @@ não houve cherry-pick nem commit novo: a correção já está na branch do dia.
   fechamento), a mesma execução dá `Tests 2 failed | 4 passed`; EXIT=1. Restaurado, verde 6/6.
   (Não é o defeito do cartão; é a checagem do critério de que os testes do arquivo falham sem a
   correção de produção que eles guardam.)
-- `git status --short` e `git diff --stat` — sem saída: árvore limpa, nenhum arquivo alterado.
+- áudio meme (o critério #3 pede "para áudio meme e stickers"; arquivo irmão
+  `src/hooks/communication/__tests__/useAudioMemes.fechamento.test.tsx`, que eu não alterei):
+  mutando a produção `else queueMicrotask(() => { void discardUnconfirmedUpload(true); });` →
+  `else void 0;` (remove o rollback no fechamento) →
+  `npx vitest run src/hooks/communication/__tests__/useAudioMemes.fechamento.test.tsx`
+  → `Test Files 1 failed (1); Tests 2 failed | 3 passed (5)`; EXIT=1.
+  Restaurado, o mesmo comando dá `Test Files 1 passed (1); Tests 5 passed (5)`; EXIT=0.
+  Logo, os testes de áudio meme do defeito continuam provando vermelho sem a correção e verde com ela.
+- `git status --short` e `git diff --stat` — sem saída: árvore limpa, nenhum arquivo alterado
+  (o único commit da tarefa é o próprio `.tmp/relato.md`).
 
 ## O que NÃO fiz e por quê
 
