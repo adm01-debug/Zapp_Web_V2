@@ -58,6 +58,7 @@
 46. [Sequências de Follow-up](#46-sequências-de-follow-up)
 47. [API Pública](#47-api-pública)
 48. [Componentes Cognitivos (UX)](#48-componentes-cognitivos-ux)
+49. [Multiplix (disparos em massa por departamento)](#49-multiplix-disparos-em-massa-por-departamento)
 
 ---
 
@@ -971,6 +972,27 @@
 | Usados em | `src/components/dashboard/ProgressiveDisclosureDashboard.tsx`, `src/components/dashboard/overview/GamificationSection.tsx` |
 
 **Funcionalidades:** padrões de UX cognitiva — revelação progressiva de informação e destaque contextual de funcionalidades. **Atualização (2026-10-08):** os componentes de "prevenção de erros" e "defaults inteligentes" citados no relatório não existem mais no código.
+
+---
+
+## 49. Multiplix (disparos em massa por departamento)
+
+Módulo de disparos em massa por departamento (fila por item, público elegível, voz por IA), com a
+ponte para o Singu. Status **"presente"** = artefato existe nesta cópia; não afirma aprovação de
+gate, piloto nem go-live (F98 segue decisão do dono). Registro de execução do módulo em
+`docs/multiplix/CHANGELOG_MULTIPLIX.md`.
+
+| # | Funcionalidade | Status | Arquivo Principal |
+|---|---------------|--------|-------------------|
+| 49.1 | Tela do módulo (rota e nav por permissão/flag) | presente | `src/components/multiplix/MultiplixView.tsx` |
+| 49.2 | Monitor de disparos (progresso, recentes, destinatários) | presente | `src/components/multiplix/MultiplixMonitor.tsx` |
+| 49.3 | Composer do disparo (rascunho, público, voz), região da tela | presente | `src/components/multiplix/MultiplixView.tsx` |
+| 49.4 | Estado do disparo no app (criação, ciclo, idempotência) | presente | `src/hooks/integrations/useMultiplixDispatches.ts` |
+| 49.5 | Público/elegibilidade no app | presente | `src/hooks/integrations/useMultiplixAudience.ts` |
+| 49.6 | Regra de elegibilidade compartilhada (app ↔ edge) | presente | `src/lib/multiplix-eligibility.ts` |
+| 49.7 | API do disparo (Edge Function) | presente | `supabase/functions/multiplix-dispatch/index.ts` |
+| 49.8 | API do público (Edge Function) | presente | `supabase/functions/multiplix-audience/index.ts` |
+| 49.9 | Registro de execução do módulo | presente | `docs/multiplix/CHANGELOG_MULTIPLIX.md` |
 
 ---
 
