@@ -114,7 +114,6 @@ const SECOES: SecaoNav[] = [
       { id: 'knowledge', label: 'Base de Conhecimento' },
       { id: 'churn', label: 'Previsão Churn' },
       { id: 'ticket-classifier', label: 'Classificador IA' },
-      { id: 'campaigns', label: 'Campanhas Clássicas' },
       { id: 'wa-templates', label: 'Templates WA' },
     ],
   },
