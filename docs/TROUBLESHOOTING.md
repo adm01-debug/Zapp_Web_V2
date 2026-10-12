@@ -132,8 +132,6 @@ Os nomes abaixo já estão na forma canônica (minúsculo, com ponto) que o rote
 | `group.update` | `evolution-webhook/index.ts` — só log (`id` + `subject`) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
 | `group.participants.update` | `evolution-webhook/index.ts` — só log (`id` + `action` + membros) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
 | `group-participants.update` | `evolution-webhook/index.ts` — só log (mesmo ramo de `group.participants.update`) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
-| `labels.edit` | `evolution-webhook-handlers.ts:handleLabelsEdit` (RPC) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
-| `labels.association` | `evolution-webhook-handlers.ts:handleLabelsAssociation` (RPC por contato) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `call` | `evolution-webhook-handlers.ts:handleCallEvent` | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `typebot.start` | `evolution-webhook-handlers.ts:handleTypebotEvent` (sessão do bot; sem `status` vale como `opened`) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `typebot.change.status` | `evolution-webhook-handlers.ts:handleTypebotEvent` (mesmo ramo de `typebot.start`) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |

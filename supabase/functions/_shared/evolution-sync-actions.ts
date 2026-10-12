@@ -308,7 +308,7 @@ export const WEBHOOK_EVENTS = [
   'SEND_MESSAGE', 'CONTACTS_UPSERT', 'CONTACTS_UPDATE',
   'PRESENCE_UPDATE', 'CHATS_UPSERT', 'CHATS_UPDATE',
   'GROUPS_UPSERT', 'GROUP_UPDATE', 'GROUP_PARTICIPANTS_UPDATE',
-  'LABELS_EDIT', 'LABELS_ASSOCIATION', 'CALL',
+  'CALL',
 ];
 
 /** Mensagem recebida como a Evolution manda (v2/GO): só os campos que este parser lê. */

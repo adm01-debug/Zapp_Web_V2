@@ -247,53 +247,6 @@ export async function handleChatsUpdate(supabase: EvolutionDbClient, instance: s
   }
 }
 
-export async function handleLabelsEdit(supabase: EvolutionDbClient, instance: string, data: unknown) {
-  const labelData = isRecord(data) ? data : {};
-  const labelId = labelData.id as string;
-  const labelName = labelData.name as string;
-  const deleted = labelData.deleted as boolean;
-  if (!labelId) return;
-
-  // O id de label é por instância (cada conta renumera de 0..N). Sem escopo, o
-  // prefixo wa:<id>: renomearia/apagaria o label homônimo de OUTRAS conexões.
-  // Resolve a conexão pela instância; sem conexão, não há contatos para tocar.
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
-  const prefix = `wa:${labelId}:`;
-  if (deleted) {
-    await supabase.rpc('remove_wa_label_from_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix });
-  } else {
-    const tagName = `wa:${labelId}:${labelName || `Label ${labelId}`}`;
-    await supabase.rpc('rename_wa_label_on_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix, p_new_tag: tagName });
-  }
-}
-
-// deno-lint-ignore no-explicit-any
-export async function handleLabelsAssociation(supabase: EvolutionDbClient, instance: string, data: unknown) {
-  const assocData = isRecord(data) ? data : {};
-  const labelId = assocData.labelId as string || (assocData.label as Record<string, unknown>)?.id as string;
-  const chatId = assocData.chatId as string;
-  const type = assocData.type as string;
-  if (!labelId || !chatId) return;
-
-  const phone = chatId.replace('@s.whatsapp.net', '').replace('@g.us', '');
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
-  const contact = await getContactByPhone(supabase, phone, connection.id);
-  if (!contact) return;
-
-  const prefix = `wa:${labelId}:`;
-  if (type === 'remove') {
-    await supabase.rpc('remove_wa_tag_by_prefix', { p_contact_id: contact.id, p_prefix: prefix });
-  } else {
-    const labelName = (assocData.label as Record<string, unknown>)?.name as string || `Label ${labelId}`;
-    const tagValue = `wa:${labelId}:${labelName}`;
-    await supabase.rpc('add_wa_tag_if_not_exists', { p_contact_id: contact.id, p_prefix: prefix, p_tag: tagValue });
-  }
-}
-
 // deno-lint-ignore no-explicit-any
 export async function handleCallEvent(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const callData = isRecord(data) ? data : {};

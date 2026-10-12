@@ -36,15 +36,13 @@ import { requireAiIdentityOrService } from "../ai-auth.ts";
 
 const REQ = new Request("https://exemplo.test/functions/v1/ai-suggest-reply", { method: "POST" });
 
-/** Só o que o desenho IA-009 declara: 10 capacidades, nenhuma a mais. */
+/** Só o que o desenho IA-009 declara: 8 capacidades, nenhuma a mais. */
 const CAPACIDADES_DO_DESENHO: AiCapability[] = [
   "suggest_reply",
   "enhance_message",
   "summary",
   "conversation_analysis",
-  "auto_tag",
   "churn",
-  "classify_tickets",
   "transcribe_audio",
   "voice",
   "chatbot_l1",

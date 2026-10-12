@@ -127,7 +127,6 @@ export const CHURN_RISK_TOOL_SCHEMA = {
 export interface ContactPromptFields {
   name?: string | null;
   company?: string | null;
-  tags?: string[] | null;
   ai_priority?: string | null;
   ai_sentiment?: string | null;
   notes?: string | null;

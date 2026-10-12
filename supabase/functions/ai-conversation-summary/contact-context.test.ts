@@ -73,14 +73,14 @@ Deno.test("papel do interlocutor ausente é dito 'não informado' — nunca inve
   }
 });
 
-Deno.test("nome/empresa/tags mantêm os rótulos do resumo de antes (sem regressão)", () => {
+Deno.test("nome/empresa mantêm os rótulos do resumo de antes (sem regressão)", () => {
   const completo = buildSummaryContactContext({
-    contact: { name: "Loja A", company: "A Ltda", tags: ["vip", "atacado"], contact_type: "cliente" },
+    contact: { name: "Loja A", company: "A Ltda", contact_type: "cliente" },
   });
-  assertStringIncludes(completo, "Contexto: Loja A, Empresa: A Ltda, Tipo: cliente, Tags: vip, atacado");
+  assertStringIncludes(completo, "Contexto: Loja A, Empresa: A Ltda, Tipo: cliente");
 
   const vazio = buildSummaryContactContext({ contact: {} });
-  assertStringIncludes(vazio, "Contexto: Cliente, Empresa: N/A, Tipo: não informado, Tags: Nenhuma");
+  assertStringIncludes(vazio, "Contexto: Cliente, Empresa: N/A, Tipo: não informado");
 });
 
 Deno.test("sem contexto nenhum o bloco é vazio — nada é fabricado", () => {

@@ -15,7 +15,7 @@
  *      se fossem do modelo: também é erro explícito, nunca 200 com texto padrão.
  *
  * LIMITE DECLARADO: o provedor de IA entra pelo seam `deps.generate` (mesmo
- * padrão do `ai-auto-tag`) e o `Deno.serve` fica atrás de `import.meta.main` —
+ * padrão das demais funções de IA) e o `Deno.serve` fica atrás de `import.meta.main` —
  * nada de rede, banco ou credencial nesta prova. É o provedor que é sintético,
  * não o caminho: quem responde é o handler de produção.
  *

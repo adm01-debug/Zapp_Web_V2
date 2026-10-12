@@ -221,14 +221,12 @@ function scan() {
  * intencional e precisa passar por revisão.
  */
 const INVENTARIO: Record<string, string[]> = {
-  'supabase/functions/ai-classify-tickets/index.ts': ['priority-fallback'],
   'supabase/functions/ai-suggest-reply/index.ts': ['regex-antigo'],
   'supabase/functions/voice-copilot-action/index.ts': ['in-token'],
 };
 
-/** Os 4 arquivos que o Bloco 03 migrou: NÃO podem produzir token legado. */
+/** Os 3 arquivos que o Bloco 03 migrou: NÃO podem produzir token legado. */
 const MIGRADAS = [
-  'supabase/functions/ai-auto-tag/index.ts',
   'supabase/functions/chatbot-l1/index.ts',
   'supabase/functions/ai-conversation-analysis/index.ts',
   'supabase/functions/ai-conversation-summary/index.ts',
@@ -258,7 +256,7 @@ describe('(c.1) inventário completo de produtores legados / regex antigo', () =
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );
     expect(normalizado).toEqual(INVENTARIO);
-    expect(hits.length).toBe(3);
+    expect(hits.length).toBe(2);
   });
 
   it('as funções MIGRADAS não produzem nenhum token legado', () => {
@@ -297,11 +295,6 @@ describe('(c.2) DEFEITOS reais ainda presentes na árvore', () => {
     expect(src).not.toMatch(/\['negative', 'very_negative'\]/);
     expect(src).toMatch(/\['negativo', 'critico'\]/);
   });
-
-  it('ai-classify-tickets inventa prioridade "low" quando a categoria é desconhecida', () => {
-    const src = readFileSync(resolve(ROOT, 'supabase/functions/ai-classify-tickets/index.ts'), 'utf8');
-    expect(src).toMatch(/PRIORITY_RULES\[category\] \|\| "low"/);
-  });
 });
 
 describe('(c.3) o regex antigo está morto nos pontos migrados', () => {
@@ -313,8 +306,8 @@ describe('(c.3) o regex antigo está morto nos pontos migrados', () => {
     ]);
   });
 
-  it('ai-auto-tag e chatbot-l1 usam parseJsonObject (não regex)', () => {
-    for (const arquivo of ['supabase/functions/ai-auto-tag/index.ts', 'supabase/functions/chatbot-l1/index.ts']) {
+  it('chatbot-l1 usa parseJsonObject (não regex)', () => {
+    for (const arquivo of ['supabase/functions/chatbot-l1/index.ts']) {
       const src = readFileSync(resolve(ROOT, arquivo), 'utf8');
       expect(src).toContain('parseJsonObject');
       expect(src).toContain("from \"../_shared/ai-json.ts\"");
