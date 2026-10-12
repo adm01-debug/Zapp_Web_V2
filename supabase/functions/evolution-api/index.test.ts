@@ -643,3 +643,165 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     await c.stop();
   }
 });
+
+// ─── R2EXT-AGENDA: agenda/conversas/mídia fora da visibilidade + credencial ──
+// find-chats/find-contacts devolvem a instância inteira (sem remoteJid único
+// para gate por visibilidade — ADR R1EXT-F3); get-media-base64 lê a mídia de
+// qualquer mensagem. Todas passam a exigir admin/supervisor. RED: um agente
+// autenticado as disparava na GO. GREEN: 403 e ZERO I/O no provedor.
+
+/** Fake que responde qualquer método com o payload dado por path e registra cada requisição. */
+function createInstanceReadFake(payload: (path: string) => unknown) {
+  const gets: string[] = [];
+  const requests: Array<{ method: string; path: string }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
+    const path = new URL(req.url).pathname;
+    requests.push({ method: req.method, path });
+    if (req.method === "GET") gets.push(path);
+    return new Response(JSON.stringify(payload(path)), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("fake: listener não TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, gets, requests, stop: () => server.shutdown() };
+}
+
+const INSTANCIA_COM_CREDENCIAL = {
+  name: "PRINCIPAL",
+  instanceId: "11111111-1111-1111-1111-111111111111",
+  status: "open",
+  token: "TOKEN-NAO-DEVIA-SAIR",
+  Token: "TOKEN-NAO-DEVIA-SAIR",
+  apikey: "APIKEY-NAO-DEVIA-SAIR",
+  hash: "HASH-NAO-DEVIA-SAIR",
+  data: { token: "TOKEN-ANINHADO-NAO-DEVIA-SAIR" },
+};
+
+function assertSemCredencial(texto: string, contexto: string) {
+  for (const segredo of ["NAO-DEVIA-SAIR", "TOKEN-ANINHADO"]) {
+    assert(!texto.includes(segredo), `${contexto}: corpo vazou '${segredo}': ${texto}`);
+  }
+}
+
+for (const action of ["find-chats", "find-contacts", "get-media-base64"]) {
+  Deno.test(`R2EXT-AGENDA: ${action} sem papel devolve 403 e não produz I/O no provedor`, async () => {
+    const fake = createFakeEvolution();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+    try {
+      const body = action === "get-media-base64"
+        ? { instanceName: "PRINCIPAL", message: { key: { id: "msg-1" } } }
+        : { instanceName: "PRINCIPAL" };
+      const res = await handleEvolutionApi(controlRequest(action, body), {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      });
+      assertEquals(res.status, 403, `${action} deve ser 403 para agente`);
+      const json = await res.json();
+      assert(json?.error === true, "resposta deve ser { error: true }");
+      assertEquals(fake.posts.length, 0, `${action} não pode chegar ao provedor`);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+Deno.test("R2EXT-AGENDA: find-contacts com papel segue para o provedor (restrita, não desabilitada)", async () => {
+  const fake = createInstanceReadFake(() => ({}));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2"); // v2 mantém POST /chat/findContacts/{instância}
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-contacts", { instanceName: "PRINCIPAL", page: 1, offset: 0 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200, "admin/supervisor não pode ser recusado");
+    assert(
+      fake.requests.some((r) => r.method === "POST" && r.path.startsWith("/chat/findContacts")),
+      "admin/supervisor deve alcançar o provedor",
+    );
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: instance-info (v2) não devolve token/apikey/hash", async () => {
+  const fake = createInstanceReadFake(() => INSTANCIA_COM_CREDENCIAL);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("instance-info", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "instance-info v2");
+    assert(texto.includes("open"), "o dado legítimo (status) deve permanecer");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: instance-info (GO) não devolve token/apikey/hash", async () => {
+  // GO resolve o nome→UUID em /instance/all antes de /instance/info/{id}; o
+  // fake serve a lista em /instance/all (com o instanceId) e o objeto em
+  // /instance/info — os dois passam pela higienização.
+  const fake = createInstanceReadFake((path) =>
+    path === "/instance/all" ? { data: [INSTANCIA_COM_CREDENCIAL] } : INSTANCIA_COM_CREDENCIAL
+  );
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("instance-info", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "instance-info go");
+    assert(fake.gets.some((p) => p.startsWith("/instance/info/")), "deve consultar /instance/info");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: list-instances (GO) não devolve token/apikey/hash", async () => {
+  const fake = createInstanceReadFake(() => ({ data: [INSTANCIA_COM_CREDENCIAL] }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", {}),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "list-instances go");
+    assert(fake.gets.includes("/instance/all"), "GO deve listar em /instance/all");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: list-instances (v2) não devolve token/apikey/hash", async () => {
+  // v2 devolve o array direto em /instance/fetchInstances: o strip precisa
+  // percorrer a lista (senão o token do item escaparia).
+  const fake = createInstanceReadFake(() => [INSTANCIA_COM_CREDENCIAL]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", {}),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "list-instances v2");
+    assert(fake.gets.includes("/instance/fetchInstances"), "v2 deve listar em /instance/fetchInstances");
+  } finally {
+    await fake.stop();
+  }
+});
