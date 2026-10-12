@@ -59,7 +59,8 @@ O quadro geral tem quatro mensagens.
    - A pesquisa CSAT não é coletada.
    - Vários botões gravam em tabela ou função que não existe, ou mostram sucesso sem ter feito nada (§3).
    - Por enquanto o defeito é latente: em 12/10 as tabelas de mensagens agendadas, campanhas clássicas, relatórios
-     agendados, automações e chatbot estavam vazias em produção. Ninguém usou ainda; o primeiro uso falha em silêncio.
+     agendados, automações e chatbot estavam vazias em produção. Isso mostra que não há uso hoje, não que nunca houve:
+     o código permite apagar esses registros e nenhum histórico foi consultado. O próximo uso falha em silêncio.
 2. **Os motores de envio em massa não têm prova de funcionamento em produção.**
    - Não há registro de envio real do Talk X: o ensaio interno (X035) está bloqueado. Um teste manual feito fora do
      repositório não estaria visível nesta varredura.
@@ -143,12 +144,13 @@ que mostram. **É a lista que mais afeta a confiança de quem usa o sistema.**
 
 Os itens 1 a 7 foram conferidos também no banco de produção em 12/10, só com leitura (`SELECT`). Nenhum dos 13 jobs
 agendados do `pg_cron` cuida deles, e nenhuma função do banco lê `scheduled_messages`. As tabelas
-`scheduled_messages`, `campaigns`, `scheduled_report_configs`, `automations` e `chatbot_flows` estavam vazias, ou
-seja, ninguém usou esses recursos ainda. Workflows do N8N e outros chamadores externos não foram conferidos.
+`scheduled_messages`, `campaigns`, `scheduled_report_configs`, `automations` e `chatbot_flows` estavam vazias. Isso
+mostra que não há uso hoje; como o código permite apagar esses registros e nenhum histórico foi consultado, não dá para
+afirmar que nunca foram usados. Workflows do N8N e outros chamadores externos não foram conferidos.
 
 | # | O que o usuário vê | O que acontece de fato | Evidência | Anexo |
 |---|---|---|---|---|
-| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e nada processa: não há Edge Function, cron ou trigger no repositório, nem job no `pg_cron` de produção, que consuma `scheduled_messages`. A tabela está vazia em produção: ninguém agendou ainda, e o primeiro agendamento não sairá | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
+| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e nada processa: não há Edge Function, cron ou trigger no repositório, nem job no `pg_cron` de produção, que consuma `scheduled_messages`. A tabela estava vazia em produção em 12/10; o próximo agendamento não sairá | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
 | 2 | Chatbot e Chatbot L1 configurados | Mensagem recebida não aciona fluxo; `chatbot-l1` só é chamado pelo botão "testar conexão" | `src/components/settings/ChatbotL1Config.tsx:234` | 08 (L-04), 02 |
 | 3 | Automações, sequências de follow-up, mensagem de ausência, boas-vindas e encerramento | Regras são salvas e nenhum executor versionado roda; a própria tela admite | `src/components/settings/MessagesSettings.tsx:41` | 08 (L-05 a L-08) |
 | 4 | "Iniciar" em Campanhas Clássicas | Só muda o status para "enviando", que fica assim para sempre | `src/components/campaigns/CampaignsView.tsx:175` | 08 (L-11) |
@@ -170,9 +172,9 @@ seja, ninguém usou esses recursos ainda. Workflows do N8N e outros chamadores e
 | 20 | Team Chat: gestão de departamento, fixar, arquivar, "Performance", sair, renomear, transferir, aceitar convite | Gestão inacessível (permissão nunca passada); ações desabilitadas, "em breve" ou componentes sem fiação | — | 03, 08 |
 | 21 | Team Chat: confirmação "lido" e busca | O tick "lido" nunca aparece; a busca só acha mensagens já carregadas | — | 03 |
 | 22 | Journey (histórico do cliente) | Sem e-mails e ligações; "De" maiúsculo nas datas; localização exibida como JSON. A correção existe em `src/lib/journey` e não está ligada à aba | `JourneyTab.tsx` | 04 |
-| 23 | Painel do contato em 3 seções, contexto de empresa no E-mail, botão CRM 360° | Prontos no código e **invisíveis em produção**: a integração CRM está desligada | `.env.production` (`VITE_CRM_INTEGRATION_ENABLED`) | 04 |
+| 23 | Painel do contato em 3 seções, contexto de empresa no E-mail, botão CRM 360° | Prontos no código e **invisíveis em produção**. A tela só os mostra com duas chaves ligadas: a do build e a do banco. Em 12/10 a do banco (`crm.integration`) estava ligada, mas o código publicado em produção foi gerado com `VITE_CRM_INTEGRATION_ENABLED` = `"false"` (conferido no bundle em 12/10) | `src/hooks/system/useCRMIntegrationEnabled.ts:6-7` | 04 |
 | 24 | Download na aba Arquivos | Sempre bloqueado, ignorando a permissão do perfil (o chat respeita), contra a decisão D06 | `FileDetailPanel.tsx:79-81` | 06 |
-| 25 | "Ouvir gravação" de ligação | Nunca aparece: faltam `BITRIX_WEBHOOK_URL` e o agendamento | — | 03 |
+| 25 | "Ouvir gravação" de ligação | Não aparece: nenhuma das 22 ligações registradas em produção tem gravação (`recording_url` vazio em 12/10) e nenhum job do `pg_cron` sincroniza ligações. A falta do segredo `BITRIX_WEBHOOK_URL` vem de `docs/CAPACIDADES.md` e não foi conferida no painel | — | 03 |
 | 26 | Telas apresentadas como ativas: pagamentos, Meta CAPI, Google Calendar, n8n, Sentry, WhatsApp Flows, Instagram/Telegram, templates "aprovado local", PWA/push e idiomas | Fachadas sem backend real, descritas como prontas na documentação e na página "Documentação" do app | `SERVICE_WORKER_ENABLED = false` (`src/config/service_worker.ts:7`) | 08 |
 | 27 | Ligação WhatsApp com áudio dentro do sistema | Não existe; o plano `meowcaller` está em 0/100, parado no gate G0 | — | 03 |
 
@@ -202,7 +204,7 @@ A ordem cruza impacto no negócio, risco e esforço. "Destravar" indica quando o
 |---|---|---|---|---|
 | 1 | Multiplix não envia pela tela (MX01) | P0 | — | 01 |
 | 2 | Teto diário por número ignora o Multiplix (MX04): risco de bloqueio do WhatsApp | P0 | — | 01 |
-| 3 | Mensagens agendadas sem processador de envio (latente: ninguém agendou ainda; falha no primeiro uso) | P0 antes de divulgar o recurso | — | 08 |
+| 3 | Mensagens agendadas sem processador de envio (latente: tabela vazia hoje; o próximo agendamento falha em silêncio) | P0 antes de divulgar o recurso | — | 08 |
 | 4 | CRM externo com `EXECUTE` para a chave pública (GATE C): conferir as checagens internas das 5 funções e revogar `anon` | P0 até a conferência | Admin do CRM | 04 |
 | 5 | 7 achados P0/P1 de segurança de 07/10 + 3 P1 de RLS de contatos (Y24) | P0/P1 | — | 07, 04 |
 | 6 | E2E com login real cancelado há mais de uma semana, sem alerta | P0 | — | 07 |
@@ -219,7 +221,7 @@ A ordem cruza impacto no negócio, risco e esforço. "Destravar" indica quando o
 | 17 | Botões que quebram com a Evolution GO + "Sincronizar histórico" com falso sucesso | P1 | — | 05 |
 | 18 | Segundo número de WhatsApp não opera (token global no proxy, QR, status e entrega) | P1 | Antes de ligar a flag | 05 |
 | 19 | Team Chat: gestão de departamento, contrato novo do banco, "lido", busca, ações mortas | P1 | Ratificar plano F × TC | 03 |
-| 20 | VoIP sem `SIP_PASSWORD` e gravação sem `BITRIX_WEBHOOK_URL` | P1 | Dono (secrets) | 03 |
+| 20 | VoIP sem `SIP_PASSWORD` e gravação sem fonte (0 de 22 ligações com gravação; segredos não conferidos no painel) | P1 | Dono (secrets) | 03 |
 | 21 | Custo de IA: fila para tabela inexistente, sem alerta de consumo | P1 | — | 02 |
 | 22 | Talk X: relatório da campanha, bucket de mídia, tela de pausada, vários segmentos, checagem de lançamento | P1 | — | 01 |
 | 23 | Talk X: dados comerciais, RFM, receita e ROI (X036–X041) | P1 | Dono (funil do Bitrix24 — N36) | 01 |
@@ -244,7 +246,7 @@ Itens que nenhum agente consegue fechar sozinho. Cada um destrava um bloco de pe
 | Gates G0/G1 das ligações WhatsApp: número reserva, aceite de risco, parecer jurídico. Ou decidir pela API oficial da Meta | 90 etapas do `meowcaller` | 03 |
 | Cadastrar `SIP_PASSWORD`, `BITRIX_WEBHOOK_URL` e o agendamento das gravações | VoIP e gravações | 03 |
 | Pedir ao admin do CRM que confira as checagens internas das 5 funções e revogue `anon` (GATE C) | Confirma ou descarta a exposição de dados do CRM e a fecha | 04 |
-| Ligar `VITE_CRM_INTEGRATION_ENABLED`/`crm.integration` e `CRM_SYNC_WORKER_ENABLED` | Painel do contato, contexto de empresa, CRM 360° e sincronização | 04 |
+| Ligar `VITE_CRM_INTEGRATION_ENABLED` no build da Vercel (a chave `crm.integration` do banco já estava ligada em 12/10) e `CRM_SYNC_WORKER_ENABLED` | Painel do contato, contexto de empresa, CRM 360° e sincronização | 04 |
 | Política de envio de relatório para e-mail externo (conflito com "nenhuma informação sai do sistema") | Relatórios agendados | 02 |
 | Nomear o DPO e aprovar os prazos de retenção | Trilha LGPD | 07 |
 | Confirmar o PITR no painel do Supabase e autorizar um restore de teste | Backup | 07 |
@@ -328,8 +330,10 @@ errada. Lista completa: seção 4 de cada anexo (146 divergências).
   produção", "funciona com login" e aceite humano aparecem como **bloqueado** ou **não verificável**.
 - **Leitura em produção (12/10, depois da primeira versão):** consultas só `SELECT` no banco oficial, para responder à
   revisão da PR. Foram lidos os jobs do `pg_cron` (só nome, horário e a quais recursos se referem; o comando não foi
-  exibido), as funções e gatilhos ligados a `scheduled_messages` e a contagem de linhas de cinco tabelas. Workflows do
-  N8N e outros chamadores externos continuam sem conferência.
+  exibido), as funções e gatilhos ligados a `scheduled_messages`, a contagem de linhas de cinco tabelas, a chave
+  `crm.integration` e o estado de gravação das ligações (`calls`). Também foi lido o JavaScript público do site em
+  produção, para ver com que valor o build recebeu `VITE_CRM_INTEGRATION_ENABLED`. Segredos das Edge Functions,
+  workflows do N8N e outros chamadores externos continuam sem conferência.
 - **Leituras externas:** a frente 07 fez só leituras GET na API do GitHub (runs, checks, issues, alertas) e uma
   leitura do workflow N8N do dispatcher. A frente 08 listou as issues abertas.
 - **Histórico:** o clone tem 50 commits (desde 03/10). O que veio antes foi confrontado com os ledgers de
