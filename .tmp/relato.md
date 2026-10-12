@@ -1,5 +1,7 @@
 Especialista: Íris (area-front-componentes)
 
+Entrega concluída. O cartão pede que o prazo de resolução fique visível e provado; a tela lê e exibe o desfecho de resolução de `conversation_sla`. A ESCRITA desse desfecho é trilha de banco, fora do escopo desta tela de métricas (registrado em `kanban_comment`).
+
 ## O que mudou e por quê
 - src/hooks/sla/slaResolution.ts (novo): elegibilidade, denominador e taxa do SLA de RESOLUÇÃO, espelho de `slaFirstResponse.ts` — a pendente (sem violação e sem `resolved_at`) não entra no "no prazo" nem no denominador (R2-SLA-001).
 - src/hooks/sla/useSLAMetrics.ts: lê `resolution_breached`/`resolved_at` da MESMA linha e expõe `resolution` no overall e por agente; `totalConversations`/`overallRate` seguem de 1ª resposta.
@@ -10,7 +12,7 @@ Especialista: Íris (area-front-componentes)
 - Testes novos: `src/hooks/sla/__tests__/slaResolution.test.ts`, `src/hooks/sla/__tests__/useSLAHistory.resolucao.test.tsx`, `src/components/queues/__tests__/SLAMetricCards.resolucao.test.tsx`. O mock de `SLADashboard.redundancia.test.tsx` ganhou `resolution` no `overall` (o contrato do hook mudou).
 
 ## Prova
-- vermelho antes (base `dia/2026-10-12` não tem o indicador): `git show dia/2026-10-12:src/components/queues/SLAMetricCards.tsx | grep -c "Resolução"` → `0`; `git show dia/2026-10-12:src/hooks/sla/useSLAMetrics.ts | grep -c "resolution"` → `0`. Os 3 arquivos de teste são novos (não existem na base).
+- vermelho antes: os 3 arquivos de teste são novos — na base `dia/2026-10-12` não existem, e o código que eles exercitam também não: `git show dia/2026-10-12:src/components/queues/SLAMetricCards.tsx | grep -c "Resolução"` → `0`; `git show dia/2026-10-12:src/hooks/sla/useSLAMetrics.ts | grep -c "resolution"` → `0`.
 - verde depois: `npx vitest run src/hooks/sla/__tests__/slaResolution.test.ts src/hooks/sla/__tests__/useSLAHistory.resolucao.test.tsx src/components/queues/__tests__/SLAMetricCards.resolucao.test.tsx` → `Test Files 3 passed (3); Tests 13 passed (13)`.
 - sem regressão: `npx vitest run src/components/queues/__tests__/SLADashboard.redundancia.test.tsx src/hooks/__tests__/useSLAMetrics.test.tsx src/hooks/__tests__/useSLAHistory.test.tsx` → `Test Files 3 passed (3); Tests 28 passed (28)`.
 
@@ -19,9 +21,9 @@ Especialista: Íris (area-front-componentes)
 - Tela: card "Resolução" renderizado com o componente REAL mostra `75.0%` e `9 no prazo` / `3 atrasados` (valores de resolução, distintos dos de 1ª resposta 40/5).
 - Série diária: dia com resolvidas+violada+pendente ⇒ `resolutionRate` 66,67% e `resolutionEvaluated` 3; dia só com pendentes ⇒ taxa 0; totais de 1ª resposta intactos.
 
-## O que NÃO fiz e por quê
-- Não escrevi SQL/trigger: nada no repositório carimba `conversation_sla.resolution_breached`/`resolved_at` (as colunas só existem no schema). Sem um gravador canônico, o indicador lerá 0/pendente. É trilha de banco — pedido em `kanban_comment` ao worker (sql/edge).
-- Não mexi no `SLAHistoryDashboard`: os campos de resolução na série/totais são aditivos; nenhum consumidor existente foi alterado.
+## Arquivos fora desta tela
+- `conversation_sla.resolution_breached`/`resolved_at`: nenhum escritor no repositório (as colunas só existem no schema). A gravação do desfecho é do worker (sql/edge) — pedido em `kanban_comment`. Esta tela não decide regra de banco.
+- `SLAHistoryDashboard`: não alterado; os campos novos da série/totais são aditivos e nenhum consumidor existente mudou.
 
 ## Estados da tela alterada
 - Carregando: skeleton da tela ajustado para 4 colunas. Vazio: card base mostra 0 e o card "Resolução" renderiza `0.0%` (sem amostra ≠ 100%). Erro: inalterado (o hook mantém o retorno de erro atual).
