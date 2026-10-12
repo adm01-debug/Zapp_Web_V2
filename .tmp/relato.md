@@ -4,7 +4,9 @@ Especialista: worker (design) (design-system-zapp)
 O workspace nasceu na base `dia/2026-10-12` (aff8bfb1c). Os 3 arquivos deste cartão já
 estão nessa ponta, no commit 4f4c94187 (188 inserções, os mesmos 3 arquivos; cartão V2
 26101109181e25). `git status` = "working tree clean" e `git diff --stat` contra a base =
-vazio. Cherry-pickar o 61339f1f0/0041fac78 duplicaria o 4f4c94187 — por isso não há diff.
+vazio. Cherry-pickar o 61339f1f0/0041fac78 duplicaria o 4f4c94187 — por isso não há diff
+de código (regra "fechar sem commit se já resolvido"; a prova está no bloco Prova, com os
+comandos do teste e do zapp-verify rodados nesta cópia).
 
 Conteúdo conferido na ponta (`git grep ... HEAD`):
 - tokens `--violeta`/`--teal`/`--rosa` (+ `-foreground` e `-text`) em `:root`
@@ -45,13 +47,19 @@ Conteúdo conferido na ponta (`git grep ... HEAD`):
 
 ## Pontos da recusa ("O QUE CORRIGIR")
 - Ponto 1 (trazer dia/2026-10-11 atual para o workspace): o workspace já nasceu na base
-  `dia/2026-10-12` (aff8bfb1c), que é posterior — não há o que trazer por merge.
+  `dia/2026-10-12` (aff8bfb1c), que é posterior, então não há o que trazer por merge — é por
+  isso que o diff veio vazio de propósito, não por falta de prova. Comandos que mostram isso:
+  `git merge-base HEAD v2/paleta-3-cores-violeta-teal-rosa-261011092345dc` → 8e71d2569, e
+  `git log -S"--violeta: 265 80% 50%" HEAD -- src/styles/tokens.css` → 4f4c94187
+  (ponta do dia que já entrou no workspace). A prova de que o conteúdo está correto na ponta
+  é o teste verde + a mutação vermelha + `zapp-verify . --rapido` verde, no bloco Prova acima.
 - Ponto 2 (resolver o conflito preservando o que já entrou): o conflito era o mesmo bloco
   adicionado dos dois lados; resolvido preservando a ponta do dia (4f4c94187). Resultado:
   `git diff` do workspace contra a base = vazio e os 3 arquivos estão lá.
 - Ponto 3 (rodar o teste do cartão): `Tests 30 passed (30)`, com mutação vermelha em 1,93 < 4,5.
-- Ponto 4 (`zapp-verify full .` e fechar de novo): rodado; 4 passos verdes; `testes` vermelho
-  por falha pré-existente de outro módulo, reprovada aqui com diff zero (acima). Fecho.
+- Ponto 4 (`zapp-verify full .` e fechar de novo): rodado; 4 passos verdes (`db_guard`, `tipos`,
+  `lint`, `migrations`); `testes` vermelho por falha pré-existente de outro módulo, reprovada
+  aqui com diff zero (acima). Fecho com a ressalva de que a pendência não é deste cartão.
 
 ## O que NÃO fiz e por quê
 - Sem commit de código: duplicaria o 4f4c94187 já integrado na ponta do dia.
