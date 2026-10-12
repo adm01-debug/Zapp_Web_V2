@@ -4467,6 +4467,115 @@ export type Database = {
         }
         Relationships: []
       }
+      message_favorites: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_favorites_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_pins: {
+        Row: {
+          contact_id: string
+          id: string
+          message_id: string
+          pinned_at: string
+          pinned_by: string
+        }
+        Insert: {
+          contact_id: string
+          id?: string
+          message_id: string
+          pinned_at?: string
+          pinned_by: string
+        }
+        Update: {
+          contact_id?: string
+          id?: string
+          message_id?: string
+          pinned_at?: string
+          pinned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_pins_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_pins_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          note: string | null
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          note?: string | null
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          note?: string | null
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           contact_id: string | null
@@ -11709,6 +11818,7 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
+      pin_message: { Args: { p_message_id: string }; Returns: string }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
@@ -11895,6 +12005,10 @@ export type Database = {
       replace_talkx_draft_recipients: {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
+      }
+      report_message: {
+        Args: { p_message_id: string; p_note?: string; p_reason: string }
+        Returns: string
       }
       require_contact_edit_permission: {
         Args: { p_contact_id: string }
@@ -12342,6 +12456,10 @@ export type Database = {
         }
         Returns: Json
       }
+      toggle_message_favorite: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
       toggle_team_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
@@ -12437,6 +12555,7 @@ export type Database = {
           version_number: number
         }[]
       }
+      unpin_message: { Args: { p_message_id: string }; Returns: boolean }
       upsert_crm_contact_link_guarded: {
         Args: {
           p_external_company_id: string
