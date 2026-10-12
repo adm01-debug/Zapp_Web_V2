@@ -59,14 +59,37 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
   assert(SEND_ACTIONS.has("offer-call"));
 });
 
-Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", () => {
+Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a autenticados", () => {
   for (const action of [
-    "status", "get-settings", "get-webhook", "find-chats", "list-instances",
-    "fetch-profile", "instance-info", "list-groups", "invite-info",
-    "check-numbers", "get-catalog", "find-templates", "typebot-sessions",
+    "status", "list-instances", "instance-info",
+    "check-numbers",
+    "list-groups", "group-info", "group-participants", "group-invite-code", "invite-info",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
+  }
+});
+
+Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exigem control", () => {
+  // find-chats/find-contacts/find-messages devolvem a instância inteira (sem
+  // alvo de conversa para gate por visibilidade) e as demais expõem configuração
+  // ou credencial do provedor: todas restritas a admin/supervisor.
+  const movedToControl = [
+    "find-chats", "find-contacts", "find-messages", "find-status-messages",
+    "get-media-base64",
+    "get-settings", "get-webhook",
+    "fetch-profile", "fetch-profile-picture", "fetch-business-profile",
+    "find-labels", "find-templates",
+    "get-chatwoot", "get-typebot", "typebot-sessions",
+    "get-openai", "get-dify", "get-flowise", "get-evolution-bot",
+    "get-rabbitmq", "get-sqs", "get-proxy", "get-evoai", "get-n8n",
+    "get-kafka", "get-nats", "get-pusher",
+    "get-catalog", "get-collections",
+  ];
+  for (const action of movedToControl) {
+    assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
+    assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
+    assert(!READ_ACTIONS.has(action), `${action} não pode continuar em READ_ACTIONS`);
   }
 });
 
