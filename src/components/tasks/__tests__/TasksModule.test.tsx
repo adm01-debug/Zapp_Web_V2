@@ -747,7 +747,7 @@ describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () =>
 
   it('023: clicar em Atrasadas recorta a Lista, escreve due=overdue e o segundo clique desfaz', async () => {
     renderModule();
-    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId('task-row')).toHaveLength(3));
 
     const acao = () => within(kpi('Atrasadas')).getByTestId('kpi-acao');
     expect(acao().getAttribute('aria-pressed')).toBe('false');
@@ -756,7 +756,7 @@ describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () =>
     fireEvent.click(acao());
 
     // 1) o recorte vale para a TELA: a Lista mostra só a atrasada
-    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(1));
+    await waitFor(() => expect(screen.getAllByTestId('task-row')).toHaveLength(1));
     // 2) o MESMO estado espelha na URL — é o filtro da barra, não um paralelo
     await waitFor(() => expect(window.location.search).toContain('due=overdue'));
     // 3) o card se diz pressionado, ganha o selo e a barra passa a oferecer o Limpar
@@ -767,7 +767,7 @@ describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () =>
     fireEvent.click(acao());
 
     // clicar DE NOVO devolve o recorte: Lista inteira de volta, URL sem `due=`
-    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId('task-row')).toHaveLength(3));
     expect(window.location.search).not.toContain('due=');
     await waitFor(() => expect(acao().getAttribute('aria-pressed')).toBe('false'));
     expect(within(kpi('Atrasadas')).queryByTestId('kpi-chip')).toBeNull();
@@ -775,7 +775,7 @@ describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () =>
 
   it('023: "Para hoje" aplica o outro recorte e troca o card ativo (um recorte por vez)', async () => {
     renderModule();
-    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+    await waitFor(() => expect(screen.getAllByTestId('task-row')).toHaveLength(3));
 
     fireEvent.click(within(kpi('Atrasadas')).getByTestId('kpi-acao'));
     await waitFor(() => expect(window.location.search).toContain('due=overdue'));
