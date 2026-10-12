@@ -37,6 +37,8 @@ migration_single_predicate="$repo_root/supabase/migrations/20260929780000_contac
 migration_guards="$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql"
 migration_hoisted="$repo_root/supabase/migrations/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
 migration_can_delete_hoisted="$repo_root/supabase/migrations/20260929820000_contacts_can_delete_contacts_hoisted_params.sql"
+# t_3d2d385e: bloqueio de contato em campo proprio (blocked_at/blocked_by + RPC + trilha).
+migration_blocked="$repo_root/supabase/migrations/20261012213900_contacts_blocked_at.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -732,6 +734,108 @@ expect_failure 'mover contato para fila alheia continua proibido' \
   "$claims_agente UPDATE public.contacts SET queue_id='50000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000004'" \
   'Sem permissao para mover contato para esta fila'
 
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+# t_3d2d385e — 20261012213900: bloqueio de contato em campo proprio.
+# Antes, "bloqueado" era so a etiqueta de texto 'Bloqueado' em contacts.tags, sem regra de quem
+# pode dizer isso nem trilha. A migration da ao bloqueio um campo proprio, migra os contatos que
+# ja tinham a etiqueta, expoe a RPC set_contact_blocked com a MESMA regra de edicao do contato
+# (can_edit_contact) e registra a troca em public.contact_block_audit.
+# ═══════════════════════════════════════════════════════════════════════════════════════════
+
+# Fixtures ANTES da migration: um contato com a etiqueta canonica (junto de outra, porque a
+# lipo e por item), um so com VIP (nao pode virar bloqueado) e um com a etiqueta em caixa baixa
+# (o dado legado nao tem CHECK de caixa; a migration normaliza com lower()).
+psql_sql "INSERT INTO public.contacts (id,name,phone,contact_type,assigned_to,conversation_status,tags,updated_at) VALUES
+  ('30000000-0000-0000-0000-000000000006','Legado bloqueado','5511900000006','cliente','10000000-0000-0000-0000-000000000001','open',ARRAY['VIP','Bloqueado'],'2020-01-01T00:00:00Z'),
+  ('30000000-0000-0000-0000-000000000007','Legado so VIP','5511900000007','cliente','10000000-0000-0000-0000-000000000001','open',ARRAY['VIP'],'2020-01-01T00:00:00Z'),
+  ('30000000-0000-0000-0000-000000000008','Legado caixa baixa','5511900000008','cliente','10000000-0000-0000-0000-000000000002','open',ARRAY['bloqueado'],'2020-01-01T00:00:00Z')" >/dev/null
+
+# O container nao modela o gatilho BEFORE UPDATE `update_contacts_updated_at` (20260315172343)
+# que existe em producao; recriamos aqui para provar, antes/depois, que o backfill NAO mexe no
+# updated_at de quem toca (a migration desliga o gatilho so durante o UPDATE, dentro da transacao).
+psql_sql "CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS \$function\$ BEGIN NEW.updated_at = now(); RETURN NEW; END \$function\$" >/dev/null
+psql_sql "CREATE TRIGGER update_contacts_updated_at BEFORE UPDATE ON public.contacts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column()" >/dev/null
+updated_at_antes="$(psql_sql "SELECT updated_at FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000006'")"
+
+psql_file "$migration_blocked" >/dev/null
+
+expect_value 'blocked_at/blocked_by existem em contacts' '2' \
+  "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name IN ('blocked_at','blocked_by')"
+expect_value 'gatilho de trilha de bloqueio existe' '1' \
+  "SELECT count(*) FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='trg_audit_contact_block_change' AND NOT tgisinternal"
+expect_value 'migracao de dados eleva o contato com a etiqueta Bloqueado (junto de outra)' 't' \
+  "SELECT (blocked_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000006'"
+expect_value 'migracao de dados eleva a etiqueta em caixa baixa' 't' \
+  "SELECT (blocked_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000008'"
+expect_value 'contato so com VIP continua sem bloqueio' 't' \
+  "SELECT (blocked_at IS NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000007'"
+expect_value 'contato sem etiqueta continua sem bloqueio' 't' \
+  "SELECT (blocked_at IS NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'"
+expect_value 'migracao de dados nao inventa autor (blocked_by nulo)' 't' \
+  "SELECT (blocked_by IS NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000006'"
+expect_value 'migracao de dados gera uma linha de trilha por contato migrado' '1' \
+  "SELECT count(*) FROM public.contact_block_audit WHERE contact_id='30000000-0000-0000-0000-000000000006' AND operation='block'"
+# Escopo do backfill medido: SO as linhas com a etiqueta mudam de estado. Quem nao tem a
+# etiqueta fica com blocked_at nulo e updated_at intacto -- nao e UPDATE em massa.
+expect_value 'backfill nao toca quem nao tem a etiqueta (blocked_at nulo, updated_at intacto)' 't' \
+  "SELECT (blocked_at IS NULL AND updated_at = '2020-01-01T00:00:00Z'::timestamptz) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000007'"
+expect_value 'backfill mudou o contato com a etiqueta (blocked_at marcado)' 't' \
+  "SELECT (blocked_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000006'"
+# ANTES/DEPOIS do gatilho: com update_contacts_updated_at vivo, o UPDATE do backfill o dispararia
+# e regravaria updated_at. A migration o desliga SO na transacao; o valor tem de sair igual.
+expect_value 'backfill preserva o updated_at do contato migrado (gatilho desligado na transacao)' "$updated_at_antes" \
+  "SELECT updated_at FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000006'"
+expect_value 'o gatilho de updated_at voltou a ficar ligado depois do backfill' 't' \
+  "SELECT tgenabled = 'O' FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='update_contacts_updated_at'"
+
+# ACL: a RPC e so do authenticated (service_role escreve direto, sem RLS); a trilha e leitura de
+# quem administra e escrita exclusiva do gatilho (SECURITY DEFINER) -- ninguem insere a mao.
+expect_value 'authenticated executa set_contact_blocked' 't' \
+  "SELECT has_function_privilege('authenticated','public.set_contact_blocked(uuid, boolean)','EXECUTE')"
+expect_value 'anon NAO executa set_contact_blocked' 'f' \
+  "SELECT has_function_privilege('anon','public.set_contact_blocked(uuid, boolean)','EXECUTE')"
+expect_value 'service_role NAO executa set_contact_blocked (nao tem claim sub)' 'f' \
+  "SELECT has_function_privilege('service_role','public.set_contact_blocked(uuid, boolean)','EXECUTE')"
+expect_value 'anon NAO le a trilha de bloqueio' 'f' \
+  "SELECT has_table_privilege('anon','public.contact_block_audit','SELECT')"
+expect_value 'authenticated NAO insere na trilha a mao' 'f' \
+  "SELECT has_table_privilege('authenticated','public.contact_block_audit','INSERT')"
+
+# Permissao = MESMA regra de edicao do contato (can_edit_contact): dono edita; agente sem
+# vinculo, contato de outro dono e anon nao; contato inexistente devolve a MESMA excecao (senao
+# a RPC vira oraculo de "esse contato existe?").
+psql_sql "$claims_agente SELECT public.set_contact_blocked('30000000-0000-0000-0000-000000000001', true)" >/dev/null
+expect_value 'dono da fila bloqueia contato proprio pela RPC' 't' \
+  "SELECT (blocked_at IS NOT NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'"
+expect_value 'quem bloqueou fica registrado em blocked_by' "$AGENTE" \
+  "SELECT blocked_by::text FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'"
+expect_failure 'agente comum NAO bloqueia contato de outro dono' \
+  "$claims_agente SELECT public.set_contact_blocked('30000000-0000-0000-0000-000000000002', true)" \
+  'insufficient_privilege'
+expect_failure 'usuario sem vinculo NAO bloqueia contato alheio' \
+  "$claims_sem_vinculo SELECT public.set_contact_blocked('30000000-0000-0000-0000-000000000002', true)" \
+  'insufficient_privilege'
+expect_failure 'anon NAO alcanca a RPC (EXECUTE revogado)' \
+  "SET ROLE anon; SELECT public.set_contact_blocked('30000000-0000-0000-0000-000000000001', true)" \
+  'permission denied for function'
+expect_failure 'contato inexistente devolve a MESMA excecao (sem oraculo de existencia)' \
+  "$claims_admin SELECT public.set_contact_blocked('30000000-0000-0000-0000-0000000000ff', true)" \
+  'insufficient_privilege'
+
+# Trilha via RPC: um bloqueio; rebloquear e idempotente (nao duplica trilha nem muda o instante);
+# desbloquear gera a linha 'unblock' e zera o campo.
+expect_value 'bloqueio pela RPC grava trilha com o autor' '1' \
+  "SELECT count(*) FROM public.contact_block_audit WHERE contact_id='30000000-0000-0000-0000-000000000001' AND operation='block' AND performed_by='$AGENTE'"
+expect_value 'rebloquear devolve o MESMO instante (idempotente)' 't' \
+  "$claims_agente SELECT (public.set_contact_blocked('30000000-0000-0000-0000-000000000001', true) = (SELECT blocked_at FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'))"
+expect_value 'rebloquear NAO duplica a trilha' '1' \
+  "SELECT count(*) FROM public.contact_block_audit WHERE contact_id='30000000-0000-0000-0000-000000000001' AND operation='block'"
+psql_sql "$claims_agente SELECT public.set_contact_blocked('30000000-0000-0000-0000-000000000001', false)" >/dev/null
+expect_value 'desbloquear zera blocked_at e blocked_by' 't' \
+  "SELECT (blocked_at IS NULL AND blocked_by IS NULL) FROM public.contacts WHERE id='30000000-0000-0000-0000-000000000001'"
+expect_value 'desbloquear grava a trilha unblock' '1' \
+  "SELECT count(*) FROM public.contact_block_audit WHERE contact_id='30000000-0000-0000-0000-000000000001' AND operation='unblock' AND performed_by='$AGENTE'"
+
 # ── Idempotencia (as migrations sao reaplicaveis) ─────────────────────────────────────────
 # `migration_soft_delete` fica FORA deste bloco de proposito: o arquivo de 20260929370000
 # declara search_contacts com 17 colunas enquanto o SQL aplicado em producao tem 23 (o par
@@ -746,8 +850,13 @@ psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
 psql_file "$migration_can_delete_hoisted" >/dev/null
+psql_file "$migration_blocked" >/dev/null
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
+expect_value 'reaplicacao nao duplica a coluna blocked_at' '1' \
+  "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='blocked_at'"
+expect_value 'reaplicacao nao repete a migracao de dados nem a trilha' '1' \
+  "SELECT count(*) FROM public.contact_block_audit WHERE contact_id='30000000-0000-0000-0000-000000000006' AND operation='block'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \
   "SELECT count(*) FROM pg_constraint WHERE conrelid='public.contacts'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%conversation_status%'"
 
