@@ -122,19 +122,16 @@ export function WorkItemSheet(props: SheetProps) {
   // confirmação sozinho, sem setState dentro de efeito.
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const confirmando = item !== null && confirmandoId === item.id;
+  const aoDescartarConfirmadoRef = useRef<(() => void) | null>(null);
 
   const sincronizarMudanca = useCallback((mudou: boolean) => {
     alteradoRef.current = mudou;
   }, []);
 
-  const pedirConfirmacao = useCallback(() => {
+  const pedirConfirmacao = useCallback((aoDescartar?: () => void) => {
+    aoDescartarConfirmadoRef.current = aoDescartar ?? null;
     setConfirmandoId(item?.id ?? null);
   }, [item?.id]);
-
-  const descartar = useCallback(() => {
-    setConfirmandoId(null);
-    onOpenChange(false);
-  }, [onOpenChange]);
 
   /** Etapa 144: fecha e devolve o foco ao card da tarefa na lista/quadro. */
   const fecharDevolvendoFoco = useCallback(() => {
@@ -148,9 +145,21 @@ export function WorkItemSheet(props: SheetProps) {
     }, 0);
   }, [item?.id, onOpenChange]);
 
-  /** Etapa 144: F6 alterna painel ↔ lista/quadro (o não modal chega na etapa 145). */
+  const descartar = useCallback(() => {
+    setConfirmandoId(null);
+    const aoDescartar = aoDescartarConfirmadoRef.current;
+    aoDescartarConfirmadoRef.current = null;
+    if (aoDescartar) {
+      aoDescartar();
+      return;
+    }
+    fecharDevolvendoFoco();
+  }, [fecharDevolvendoFoco]);
+
+  /** Etapa 144: F6 alterna painel ↔ lista/quadro só no painel lateral.
+   *  No bottom sheet modal, a armadilha de foco do Radix permanece dona do F6. */
   useEffect(() => {
-    if (!open) return;
+    if (!open || narrow) return;
     function aoTeclar(event: KeyboardEvent) {
       if (event.key !== 'F6') return;
       event.preventDefault();
@@ -167,7 +176,7 @@ export function WorkItemSheet(props: SheetProps) {
     }
     document.addEventListener('keydown', aoTeclar);
     return () => document.removeEventListener('keydown', aoTeclar);
-  }, [open, item?.id]);
+  }, [open, narrow, item?.id]);
 
   return (
     <Sheet
@@ -175,8 +184,8 @@ export function WorkItemSheet(props: SheetProps) {
       onOpenChange={(proximo) => {
         // Etapa 143: o X do SheetContent (e qualquer fechamento do próprio
         // Radix) passa por aqui — com edição pendente, pede confirmação em vez
-        // de fechar. Os fechamentos programáticos (Salvar/Concluir/Cancelar)
-        // usam o `onOpenChange` cru recebido pelo formulário.
+        // de fechar. Os fechamentos programáticos só usam o `onOpenChange`
+        // cru depois de salvar ou de confirmar explicitamente o descarte.
         if (!proximo && alteradoRef.current) {
           pedirConfirmacao();
           return;
@@ -200,6 +209,7 @@ export function WorkItemSheet(props: SheetProps) {
             pedirConfirmacao();
             return;
           }
+          event.preventDefault();
           fecharDevolvendoFoco();
         }}
         onInteractOutside={(event) => {
@@ -219,6 +229,7 @@ export function WorkItemSheet(props: SheetProps) {
             item={item}
             onOpenChange={onOpenChange}
             onMudouChange={sincronizarMudanca}
+            onPedirConfirmacao={pedirConfirmacao}
             expandido={expandido}
             onAlternarExpansao={() => setExpandido((v) => !v)}
           />
@@ -271,6 +282,8 @@ type FormProps = Omit<SheetProps, 'item' | 'open'> & {
   onAlternarExpansao: () => void;
   /** Etapa 143: avisa o painel se há edição pendente (guarda do fechamento). */
   onMudouChange: (mudou: boolean) => void;
+  /** Etapa 143: ações destrutivas/terminais não descartam rascunho em silêncio. */
+  onPedirConfirmacao: (aoDescartar?: () => void) => void;
 };
 
 function Formulario({
@@ -287,6 +300,7 @@ function Formulario({
   expandido,
   onAlternarExpansao,
   onMudouChange,
+  onPedirConfirmacao,
 }: FormProps) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? '');
@@ -352,6 +366,16 @@ function Formulario({
     setAlarmeDia(diaLocal(quando.toISOString()));
     setAlarmeHora(horaLocal(quando.toISOString()));
     setAvisadoEm(null);
+  }
+
+  /** Etapa 143: ações do rodapé que descartariam um rascunho primeiro
+   * pedem a mesma confirmação usada por Esc/clique fora/X. */
+  function executarSemPerderRascunho(acao: () => void) {
+    if (mudou) {
+      onPedirConfirmacao(acao);
+      return;
+    }
+    acao();
   }
 
   /**
@@ -736,10 +760,10 @@ function Formulario({
           item={item}
           mudou={mudou}
           salvando={salvando}
-          onConcluir={() => { onMove(item, 'done'); onOpenChange(false); }}
+          onConcluir={() => executarSemPerderRascunho(() => { onMove(item, 'done'); onOpenChange(false); })}
           onSalvar={() => { void salvar(); }}
-          onCancelar={() => { onCancel(item); onOpenChange(false); }}
-          onReabrir={() => { onMove(item, 'todo'); onOpenChange(false); }}
+          onCancelar={() => executarSemPerderRascunho(() => { onCancel(item); onOpenChange(false); })}
+          onReabrir={() => executarSemPerderRascunho(() => { onMove(item, 'todo'); onOpenChange(false); })}
         />
       </SheetFooter>
 
