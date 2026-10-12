@@ -60,7 +60,8 @@ describe('PasswordResetRequestsPanel — resultado real do envio', () => {
     fireEvent.click(screen.getByRole('button', { name: /Aprovar/ }));
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
-    const msg = vi.mocked(toast.success).mock.calls.at(-1)?.[0] as string;
+    const chamadas = vi.mocked(toast.success).mock.calls;
+    const msg = chamadas[chamadas.length - 1][0] as string;
     expect(msg).toContain('a***@empresa.com');
     expect(msg).not.toContain('alvo@empresa.com');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
