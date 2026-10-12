@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { Info } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { WorkItemCard }         from '../shared/WorkItemCard';
 import { BoardColumnSkeleton } from '../shared/BoardColumnSkeleton';
 import { QuickAdd }             from '../shared/QuickAdd';
-import { TasksEmptyState }      from '../TasksEmptyState';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
+import { formatWorkItemDate }   from '@/hooks/tasks/workItemFormat';
 import type { WorkItemCardActions } from '../shared/cardActions';
 import { usePressaoLonga } from '../shared/pointerMedia';
 
@@ -75,8 +75,11 @@ export function BoardColumn({
     : `Solte para mover para ${col.label}`;
 
   // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
-  // de 30 dias no rodapé "Ver mais antigas (30 dias)" (filtro local, sem query nova).
+  // de 30 dias no rodapé "Ver até 30 dias →" (filtro local, sem query nova).
   const [showOlderDone, setShowOlderDone] = useState(false);
+  // Etapa 093: o ⁙ do cabeçalho do Concluído recolhe/expande a coluna (o
+  // conteúdo sai do DOM e a coluna deixa de dividir a largura do trilho).
+  const [colapsada, setColapsada] = useState(false);
   const doneSplit = status === 'done' ? splitDoneByRecency(items) : null;
   const visibleItems = doneSplit
     ? (showOlderDone ? [...doneSplit.recent, ...doneSplit.older] : doneSplit.recent)
@@ -99,6 +102,9 @@ export function BoardColumn({
       {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
       className={[
         'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
+        // Etapa 093: recolhida, a coluna para de dividir a largura (`flex-none`)
+        // e mantém o piso de 200px — o cabeçalho é o que sobra.
+        colapsada ? 'flex-none w-[200px]' : '',
         // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
         // depende de animação); o tranco curto só existe sem movimento reduzido.
         shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
@@ -130,6 +136,20 @@ export function BoardColumn({
             {col.policy}
           </TooltipContent>
         </Tooltip>
+        {/* Etapas 092/093: o ícone ⁙ do cabeçalho do Concluído recolhe/expande a
+            coluna (o plano não define outras ações de menu para ele). */}
+        {status === 'done' && (
+          <button
+            type="button"
+            data-testid="board-collapse-done"
+            aria-expanded={!colapsada}
+            aria-label={colapsada ? 'Expandir coluna Concluído' : 'Recolher coluna Concluído'}
+            onClick={() => setColapsada(c => !c)}
+            className="shrink-0 min-h-10 min-w-10 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <span aria-hidden="true">⁙</span>
+          </button>
+        )}
       </div>
 
       {/* Etapa 082: barra de progresso segmentada do limite — azul (primária) até
@@ -154,12 +174,8 @@ export function BoardColumn({
         </div>
       )}
 
-      {/* QuickAdd na coluna Backlog */}
-      {status === 'backlog' && onCreate && (
-        <div className="px-2 pt-2">
-          <QuickAdd onAdd={onCreate} defaultStatus="backlog" compact placeholder="Capturar tarefa…" />
-        </div>
-      )}
+      {/* Etapa 093: recolhida, a coluna mostra só o cabeçalho (o corpo sai do DOM). */}
+      {!colapsada && (<>
 
       {/* cards */}
       <Droppable droppableId={status} isDropDisabled={isDropDisabled}>
@@ -195,9 +211,15 @@ export function BoardColumn({
             {isLoading && <BoardColumnSkeleton />}
             {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
                 coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
-                "Ver mais antigas (30 dias)" ao mesmo tempo. */}
+                "Ver até 30 dias →" ao mesmo tempo. */}
             {!isLoading && visibleItems.length === 0 && (doneSplit?.older.length ?? 0) === 0 && (
-              <TasksEmptyState variant="column" policy={col.policy} />
+              /* Etapa 103: microcopy única do vazio por coluna + a política da
+                 coluna (a mesma da KANBAN_COLUMNS). A peça veio para cá porque
+                 a lista de arquivos do cartão não inclui o TasksEmptyState. */
+              <div data-testid="board-column-empty" className="flex flex-col items-center gap-2 py-8 text-center">
+                <p className="text-xs text-muted-foreground italic">Nada aqui. Arraste uma tarefa ou capture acima</p>
+                <p className="text-xs text-muted-foreground/70">{col.policy}</p>
+              </div>
             )}
             {!isLoading && visibleItems.map((item, index) => (
               <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={arrastoBloqueado}>
@@ -210,6 +232,16 @@ export function BoardColumn({
                     {...(snap.isDragging ? { 'data-testid': 'drag-overlay' } : {})}
                     className={snap.isDragging ? 'rounded-[14px] shadow-[var(--shadow-lg)]' : ''}
                   >
+                    {/* Etapa 092: no Concluído, cada cartão traz o check verde e a
+                        data da conclusão (a mesma regra de dia do módulo). */}
+                    {status === 'done' && (
+                      <div data-testid="done-stamp" className="flex items-center gap-1 px-1 pb-1 text-[11px]">
+                        <Check className="h-3 w-3 shrink-0 text-success" aria-hidden="true" />
+                        <span className="text-muted-foreground">
+                          {formatWorkItemDate(item.completed_at, { format: 'day' }) ?? 'Concluída'}
+                        </span>
+                      </div>
+                    )}
                     <WorkItemCard
                       item={item}
                       mode="board"
@@ -232,15 +264,6 @@ export function BoardColumn({
                 )}
               </Draggable>
             ))}
-            {!isLoading && doneSplit && doneSplit.older.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowOlderDone(s => !s)}
-                className="w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-              >
-                {showOlderDone ? 'Ver menos' : 'Ver mais antigas (30 dias)'}
-              </button>
-            )}
             {/* Etapa 094: o lugar da soltura vira um rasgo tracejado enquanto o
                 arrasto esta por cima. */}
             <div
@@ -253,6 +276,31 @@ export function BoardColumn({
         )}
       </Droppable>
 
+      {/* Etapa 092: rodapé do Concluído — revela o resto da janela de 30 dias. */}
+      {!isLoading && doneSplit && doneSplit.older.length > 0 && (
+        <div className="border-t border-border/50 p-2">
+          <button
+            type="button"
+            data-testid="board-done-older"
+            onClick={() => setShowOlderDone(s => !s)}
+            className="w-full min-h-10 rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+          >
+            {showOlderDone ? 'Ver menos' : 'Ver até 30 dias →'}
+          </button>
+        </div>
+      )}
+
+      {/* Etapa 091: só a Caixa de entrada captura (D19). O cartão tracejado fica
+          no FIM da coluna, com o QuickAdd compacto da faixa. */}
+      {status === 'backlog' && onCreate && (
+        <div data-testid="capture-card" className="border-t border-border/50 p-2">
+          <div className="rounded-xl border border-dashed border-border/70 bg-card/50 p-2">
+            <QuickAdd onAdd={onCreate} defaultStatus="backlog" compact placeholder="Capturar tarefa…" />
+            <p className="px-1 pt-1 text-[11px] text-muted-foreground">Pressione Enter para criar</p>
+          </div>
+        </div>
+      )}
+
       {/* Etapa 082: rodapé do limite — a regra em palavras, não só o número. */}
       {limit.hard != null && (
         <div
@@ -263,6 +311,7 @@ export function BoardColumn({
           <span>Seu limite é de {limit.hard} tarefas em execução.</span>
         </div>
       )}
+      </>)}
     </div>
   );
 }

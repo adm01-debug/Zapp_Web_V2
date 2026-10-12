@@ -67,6 +67,13 @@ export function TasksBoardMode({
   const dragDesligado = usePointerCoarse();
   const telaEstreita  = useNarrowViewport();
   const pressaoArrasto = usePressaoLonga();
+  // Etapa 093: o toggle "Concluídas" mostra/oculta a COLUNA Concluído do Quadro
+  // (o switch "Mostrar concluídas" da barra de filtros corta os ITENS, não a
+  // coluna). Nasce ligado — o Quadro sempre mostrou as cinco colunas.
+  const [mostrarConcluidas, setMostrarConcluidas] = useState(true);
+  const colunasVisiveis = mostrarConcluidas
+    ? BOARD_COLUMNS
+    : BOARD_COLUMNS.filter(s => s !== 'done');
   const trilhoRef     = useRef<HTMLDivElement>(null);
   const [colunaVisivel, setColunaVisivel] = useState(0);
   // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
@@ -220,7 +227,7 @@ export function TasksBoardMode({
     }
   }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
 
-  const ultimaColuna = BOARD_COLUMNS.length - 1;
+  const ultimaColuna = colunasVisiveis.length - 1;
 
   return (
     <DragDropContext
@@ -229,6 +236,28 @@ export function TasksBoardMode({
       dragHandleUsageInstructions="Pressione espaço para pegar a tarefa, use as setas para movê-la e espaço de novo para soltar. Esc cancela o movimento."
     >
       <div className="flex w-full min-w-0 flex-col h-full min-h-0 gap-2">
+        {/* Etapas 092/093: o toggle "Concluídas" do Quadro. Ligado (padrão) a
+            coluna Concluído aparece; desligado ela sai do trilho. É diferente do
+            switch "Mostrar concluídas" da barra de filtros, que corta os ITENS da
+            consulta — aqui o que muda é a COLUNA. Sem "ordenar coluna": a posição
+            manual e a ordem por data de conclusão são as decisões de
+            docs/design/TAREFAS_QUADRO_STATUS.md. */}
+        <div className="flex w-full min-w-0 items-center justify-end gap-2" data-testid="board-toolbar">
+          <button
+            type="button"
+            data-testid="board-done-toggle"
+            aria-pressed={mostrarConcluidas}
+            onClick={() => { setMostrarConcluidas(v => !v); setColunaVisivel(0); }}
+            className={`min-h-10 min-w-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+              mostrarConcluidas
+                ? 'border-primary/40 bg-primary/10 text-foreground'
+                : 'border-border/70 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            Concluídas
+          </button>
+        </div>
+
         {/* Etapa 81: setas ‹ › — só na tela estreita, onde as 5 colunas não cabem */}
         {telaEstreita && (
           <div className="flex w-full min-w-0 items-center gap-2" data-testid="board-nav">
@@ -243,7 +272,7 @@ export function TasksBoardMode({
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
-              {rotuloDaColuna(BOARD_COLUMNS[colunaVisivel])}
+              {rotuloDaColuna(colunasVisiveis[Math.min(colunaVisivel, ultimaColuna)])}
             </span>
             <button
               type="button"
@@ -282,7 +311,7 @@ export function TasksBoardMode({
             onKeyDown={handleTeclado}
             className="flex w-full min-w-0 gap-3 h-full overflow-x-auto snap-x snap-mandatory motion-safe:scroll-smooth pb-4"
           >
-          {BOARD_COLUMNS.map(status => (
+          {colunasVisiveis.map(status => (
             <BoardColumn
               key={status}
               status={status}
@@ -312,7 +341,7 @@ export function TasksBoardMode({
         {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
         {telaEstreita && (
           <div className="flex w-full items-center justify-center gap-1.5" data-testid="board-dots">
-            {BOARD_COLUMNS.map((status, i) => (
+            {colunasVisiveis.map((status, i) => (
               <button
                 key={status}
                 type="button"
