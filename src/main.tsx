@@ -7,7 +7,8 @@ import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
 import { AppErrorBoundary } from "./providers/AppProviders";
 import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
-import { reportClientError } from "./lib/errorReporter";
+import { reportClientError } from './lib/errorReporter';
+import { createClientErrorHandlers } from './lib/clientNoise';
 
 const log = getLogger('App');
 if (window.performance && typeof window.performance.mark === 'function') {
@@ -16,16 +17,16 @@ if (window.performance && typeof window.performance.mark === 'function') {
 log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });
 startDeploymentUpdateMonitor();
 
-// Global unhandled error handlers for resilience
-window.addEventListener('unhandledrejection', (event) => {
-  log.error('Unhandled promise rejection:', event.reason);
-  reportClientError(event.reason, { source: 'unhandledrejection' });
+// Global unhandled error handlers for resilience: UM ÚNICO par, registrado aqui
+// (o App.tsx não registra mais). Ruído benigno do browser (ResizeObserver loop,
+// "Script error.", extensões, AbortError de navegação) é silenciado antes de
+// chegar ao log e ao reportClientError — ver src/lib/clientNoise.ts.
+const { onUnhandledRejection, onWindowError } = createClientErrorHandlers({
+  logError: (message, detail) => log.error(message, detail),
+  report: reportClientError,
 });
-
-window.addEventListener('error', (event) => {
-  log.error('Unhandled error:', event.error || event.message);
-  reportClientError(event.error ?? event.message, { source: 'window.onerror' });
-});
+window.addEventListener('unhandledrejection', onUnhandledRejection);
+window.addEventListener('error', onWindowError);
 
 // Initialize Web Vitals monitoring (alvos de performance-budget.json) + envio ao Speed Insights
 initWebVitals();

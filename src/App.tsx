@@ -114,34 +114,6 @@ function AppContent() {
     }
   }, []);
 
-  // Global unhandled rejection / error handler
-  useEffect(() => {
-    const handleRejection = (event: PromiseRejectionEvent) => {
-      const reason = event.reason;
-      if (reason && typeof reason === 'object' && 'name' in reason) {
-        const name = (reason as { name: string }).name;
-        if (name === 'TimeoutError' || name === 'InvalidStateError') {
-          event.preventDefault();
-          return;
-        }
-      }
-      log.error("Unhandled promise rejection:", event.reason);
-      event.preventDefault();
-    };
-
-    const handleError = (event: ErrorEvent) => {
-      log.error("Uncaught error:", event.error);
-    };
-
-    window.addEventListener("unhandledrejection", handleRejection);
-    window.addEventListener("error", handleError);
-
-    return () => {
-      window.removeEventListener("unhandledrejection", handleRejection);
-      window.removeEventListener("error", handleError);
-    };
-  }, []);
-
   return (
     <BrowserRouter>
       <SkipLinks />
