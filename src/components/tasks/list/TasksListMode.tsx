@@ -35,6 +35,7 @@ interface Props extends WorkItemCardActions {
 export function TasksListMode({
   byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onClearFilter, hasMounted,
   onOpenContact, onMoveTo, doingCount, onRequestWaitingReason, onSnooze, onClearReminder, onOpenReminder,
+  onComplete, onReopen, onDelete,
 }: Props) {
   if (isLoading) {
     return (
@@ -64,6 +65,9 @@ export function TasksListMode({
       onSnooze={onSnooze}
       onClearReminder={onClearReminder}
       onOpenReminder={onOpenReminder}
+      onComplete={onComplete}
+      onReopen={onReopen}
+      onDelete={onDelete}
       hasMounted={hasMounted}
     />
   );
