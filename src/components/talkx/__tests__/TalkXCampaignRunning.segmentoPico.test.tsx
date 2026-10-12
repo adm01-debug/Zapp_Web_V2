@@ -146,8 +146,8 @@ function renderView() {
 
 const SEGMENTOS = { data: [{ id: 's1', name: 'Compradores VIP' }], error: null };
 
-const RECIP_ANA = { status: 'sent', segment_id: 's1', sent_at: '2026-10-10T12:00:00.000Z', delivered_at: null, error_message: null, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
-const RECIP_BRUNO = { status: 'failed', segment_id: null, sent_at: '2026-10-10T12:01:00.000Z', delivered_at: null, error_message: 'falha', contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
+const RECIP_ANA = { id: 'r1', status: 'sent', segment_id: 's1', sent_at: '2026-10-10T12:00:00.000Z', delivered_at: null, error_message: null, segments: { name: 'Compradores VIP' }, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
+const RECIP_BRUNO = { id: 'r2', status: 'failed', segment_id: null, sent_at: '2026-10-10T12:01:00.000Z', delivered_at: null, error_message: 'falha', segments: null, contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
 
 const LOG_ANA = { id: 'l1', segment_id: 's1', status: 'sent', updated_at: '2026-10-10T12:00:00.000Z', error_message: null, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
 const LOG_BRUNO = { id: 'l2', segment_id: null, status: 'failed', updated_at: '2026-10-10T12:01:00.000Z', error_message: 'falha', contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
@@ -186,11 +186,11 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Destinatários' }));
     expect(await screen.findByText('Ana Segmento')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('Buscar por nome ou telefone'), { target: { value: 'bruno' } });
+    fireEvent.change(screen.getByLabelText('Buscar destinatário'), { target: { value: 'bruno' } });
 
     await waitFor(() => expect(screen.queryByText('Ana Segmento')).toBeNull());
     expect(screen.getByText('Bruno SemSeg')).toBeTruthy();
-    expect(screen.getByText('Mostrando 1 de 2')).toBeTruthy();
+    expect(screen.getByText('Mostrando 1 a 1 de 1 destinatários')).toBeTruthy();
   });
 
   it('Destinatários: filtro de status deixa só as falhas', async () => {
@@ -198,7 +198,7 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Destinatários' }));
     expect(await screen.findByText('Ana Segmento')).toBeTruthy();
 
-    escolher('Filtrar por status', 'Falha');
+    escolher('Filtrar por estado', 'Falha');
 
     await waitFor(() => expect(screen.queryByText('Ana Segmento')).toBeNull());
     expect(screen.getByText('Bruno SemSeg')).toBeTruthy();
