@@ -401,6 +401,11 @@ jobs:
           TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
 
+      - name: Simular replay inbound sem atribuir mensagem propria
+        env:
+          INBOUND_EFFECTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbound-effects-replay.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
