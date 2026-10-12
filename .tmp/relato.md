@@ -40,9 +40,9 @@ Especialista: iris
   renderizar a barra), vindos do commit anterior desta mesma entrega e **não alterados nesta rodada**.
   Nesta rodada o diff é só a barra e o teste dela.
 - **Ponto 4 (número da medida):** a medida do diff desta entrega, lida nos FATOS MEDIDOS PELO FECHAR,
-  é **69376 caracteres** (o portão simulado no fechar registra "diff grande (69376 caracteres)").
-  O número 75746 citado antes estava errado; o certo do refazer anterior era 69782, e agora, com o
-  `h-10` nos dois selects, os FATOS medem 69376.
+  é **69483 caracteres** (o portão simulado no fechar registra "diff grande (69483 caracteres)").
+  O número 75746 citado antes estava errado; o certo do refazer anterior era 69782; nesta rodada,
+  o número correto registrado pelos FATOS é 69483.
 
 ## O que NÃO fiz e por quê
 
