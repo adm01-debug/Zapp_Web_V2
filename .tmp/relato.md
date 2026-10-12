@@ -49,6 +49,8 @@ Especialista: worker (sql) (area-sql-banco)
   para o worker de telas ajustar o rótulo ao vocabulário novo (mudança de contrato do banco avisada, tela não é minha área).
 - Não avancei o passo da sequência dentro de `complete_followup`: o cartão pede 4 funções; `complete_followup`
   conclui a execução e o avanço para o próximo passo é do runner (Edge), fora do escopo deste cartão.
+- `src/integrations/supabase/types.ts` é arquivo GERADO (reflexo do schema). Não cabe teste unitário de tipo;
+  a prova do banco é `scripts/db-audit/followup-runtime.test.sh` (vermelho antes / verde depois, no commit).
 - `scripts/db-audit/followup-runtime.test.sh` é `.test.sh` NOVO e o registro no workflow `db-guard.yml`
   (área CI) não está no meu escopo — REGISTRO PENDENTE: scripts/db-audit/followup-runtime.test.sh.
 
