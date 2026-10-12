@@ -13,6 +13,7 @@ import { SecurityNotificationsPanel } from './SecurityNotificationsPanel';
 import { BlockedIPsPanel } from './BlockedIPsPanel';
 import { IPWhitelistPanel } from './IPWhitelistPanel';
 import { GeoBlockingPanel } from './GeoBlockingPanel';
+import { CityWhitelistPanel } from './CityWhitelistPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
 import { RateLimitRealtimeAlerts } from './RateLimitRealtimeAlerts';
 import { RateLimitConfigPanel } from './RateLimitConfigPanel';
@@ -136,7 +137,10 @@ export function SecurityView() {
               </TabsContent>
 
               <TabsContent value="geo">
-                <GeoBlockingPanel />
+                <div className="space-y-6">
+                  <GeoBlockingPanel />
+                  <CityWhitelistPanel />
+                </div>
               </TabsContent>
 
               <TabsContent value="rate-limit">

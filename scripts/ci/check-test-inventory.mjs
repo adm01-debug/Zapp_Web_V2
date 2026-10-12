@@ -98,6 +98,11 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // Bloqueio de login por cidade (cartão t_20077c25): prova em PG 17 descartável (docker local) a
+  // resolve_network_policy com p_city — toggle desligado, lista vazia, fail-closed sem cidade,
+  // normalização e GRANT só p/ service_role. Passo de uma linha em db-guard.yml — promover pelo
+  // dono do workflow.
+  'scripts/db-audit/city-whitelist-network-policy.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

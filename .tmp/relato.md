@@ -1,63 +1,41 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: complexo (area-auth-seguranca; executor: Claude Code + plano Anthropic)
+Cartão t_20077c25 — bloqueio de login por cidade, paridade Promo Gifts V4, com a correção
+de arquitetura do coordenador (cidade só de header confiável cf-ipcity; p_city na RPC).
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- supabase/migrations/20261007022808_city_whitelist_network_policy.sql: tabela city_whitelist
+  (RLS, city_key gerada com normalização sem acento, unique, fail-closed), toggle
+  city_whitelist_enabled em geo_blocking_settings (default false) e resolve_network_policy
+  com p_city — lista vazia ou cidade ausente com toggle ligado nega (city_blocked).
+- supabase/functions/_shared/request-policy.ts: extractCity (só cf-ipcity, recupera UTF-8
+  entregue como latin1, null se ausente/inválida) + normalizeCity; p_city chega à RPC;
+  city_blocked vira o mesmo 403 genérico de país, antes de body/credenciais/efeitos.
+- src/hooks/security/useCityWhitelist.ts + src/components/security/CityWhitelistPanel.tsx
+  (plugado na aba geo do SecurityView.tsx): toggle, busca, adicionar/remover com confirmação.
+- Provas: scripts/db-audit/city-whitelist-network-policy.test.sh (PG 17 descartável,
+  red→green + mutação) e supabase/functions/_shared/__tests__/request-policy-city.test.ts
+  (handler real handleLogin). ALLOWLIST em scripts/ci/check-test-inventory.mjs;
+  supabase/deployment-manifest.json regenerado (81 bundles que importam request-policy).
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
-
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
-
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Prova
+- vermelho antes: `bash scripts/db-audit/city-whitelist-network-policy.test.sh` (sem migration) →
+  `[PASS] RPC de cidade (6 args) AUSENTE (defeito)` + `[PASS] estado anterior permite
+  qualquer cidade (login passa por cidade fora da lista)` (Bloco A)
+- verde depois: mesmo comando → `OK — bloqueio por cidade na RPC canônica verificado
+  (red → green + mutação).` (inclui `[PASS] mutação: sem o check, cidade fora da lista
+  passa (o teste a pega)`)
+- verde depois: `deno test ... request-policy-city.test.ts` → `ok | 6 passed | 0 failed (32ms)`
+- sem regressão: `deno test ... request-policy.test.ts auth-login/index.test.ts` →
+  `ok | 25 passed | 0 failed`; `npx vitest run CityWhitelistPanel.test.tsx` →
+  `Test Files 1 passed (1); Tests 2 passed (2)`; a11y SecurityView idem 2 passed;
+  tsc sem erro nos arquivos do cartão; eslint limpo; `hermes-db-migrar` → APLICADA no
+  banco LOCAL (produção não tocada)
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não regenerei src/integrations/supabase/types.ts (types-sync roda depois do apply; hook
+  e painel usam cast local isolado, sem tocar nele).
+- Removi a forma de 5 args da RPC em vez de manter wrapper: o único chamador no repo é
+  request-policy.ts (atualizado no mesmo diff); sem caminho sem cidade. Demais testes que
+  citam a RPC usam mock pelo nome (inalterado).
+- check-test-inventory ainda lista 4 órfãos de OUTROS cartões (department-invite, talkx,
+  team-chat-media, team-direct-conversation-race); o meu está na ALLOWLIST com justificativa.
