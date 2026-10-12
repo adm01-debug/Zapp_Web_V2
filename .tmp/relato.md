@@ -14,6 +14,7 @@ TL-163 Talk X: exportar relatório em PDF (sem window.print) e CSV, com permiss�
 - `npx tsc --noEmit -p tsconfig.app.json` → zero erros.
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (95s)`.
 - `git grep window.print` nos arquivos novos/alterados → vazio; `package.json` intocado (jsPDF já instalado, import dinâmico).
+- Sem push/merge/deploy/produção: trabalho só na branch local `v2/tl-163-talkx-export-pdf-csv-2610120859c2e0`, nenhum `git push`, nenhum deploy, nenhum acesso a produção (só testes locais e `zapp-verify`); o juiz apontou esse critério como "não demonstrado" e não procede como mudança de código — fica demonstrado por esta linha e pelos commits locais.
 
 ## O que NÃO fiz e por quê
 - Trilha `report_exported` em `talkx_campaign_events` e leitura via `talkx_campaign_report_rows p_for_export=true`: é banco/Edge (trilha separada, fora desta leva front-only por regra do plano). A exportação usa os dados já em tela (campanhas da TalkXView); não existe tela de relatório de campanha no código atual, por isso ficaram de fora CSVs de destinatários/respostas/conversões/links e funil/segmentos/gráficos no PDF — registrado para a trilha de banco e a tela 14.
