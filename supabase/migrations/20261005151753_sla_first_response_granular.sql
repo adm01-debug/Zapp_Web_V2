@@ -1,7 +1,9 @@
 -- sla_first_response_granular
--- Rollback: recriar public.register_first_response_internal com o corpo de
--- 20260903233000_sla_base_only_valid_messages.sql (prazo fixo de 5 min) e
--- DROP FUNCTION public.resolve_applicable_first_response_minutes(uuid);
+-- Rollback: devolve register_first_response_internal ao corpo anterior (prazo fixo de 5 min) e dropa o resolvedor granular novo.
+-- Rollback (SQL executável, na ordem):
+--   create or replace function public.register_first_response_internal(p_contact_id uuid, p_responded_at timestamptz, p_before_created_at timestamptz default null) returns void language plpgsql security definer set search_path = public as $$ declare v_first_message_at timestamptz; begin perform pg_advisory_xact_lock(hashtextextended(p_contact_id::text, 42)); select min(m.created_at) into v_first_message_at from public.messages m where m.contact_id = p_contact_id and m.sender = 'contact' and m.created_at <= p_responded_at and m.created_at > coalesce((select max(r.created_at) from public.messages r where r.contact_id = p_contact_id and r.sender = 'agent' and r.status in ('sent','delivered','read') and r.created_at < coalesce(p_before_created_at, p_responded_at)), timestamptz '-infinity'); if v_first_message_at is null then return; end if; insert into public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached) values (p_contact_id, v_first_message_at, p_responded_at, p_responded_at > v_first_message_at + interval '5 minutes') on conflict (contact_id) where first_response_at is null do update set first_response_at = excluded.first_response_at, first_response_breached = excluded.first_response_breached; end; $$;
+--   revoke all on function public.register_first_response_internal(uuid, timestamptz, timestamptz) from public, anon, authenticated;
+--   drop function if exists public.resolve_applicable_first_response_minutes(uuid);
 --
 -- R2-SLA-003: register_first_response_internal comparava a resposta com um
 -- intervalo fixo de 5 minutos; uma regra ativa de 2 min continuava persistida

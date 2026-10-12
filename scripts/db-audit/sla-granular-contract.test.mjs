@@ -349,3 +349,78 @@ test('migration que define o registro conserva o contrato (estatico)', () => {
   assert.match(sql, new RegExp(`REVOKE\\s+ALL\\s+ON\\s+FUNCTION\\s+public\\.${RESOLVER_FN}\\(uuid\\)\\s+FROM\\s+PUBLIC\\s*,\\s*anon\\s*,\\s*authenticated`, 'i'),
     `${file} perdeu o REVOKE do resolvedor granular`);
 });
+
+/**
+ * R2-SLA-003 (rollback): extrai o bloco executavel do cabecalho
+ * `-- Rollback (SQL executavel, na ordem):` — linhas `--   <stmt>;` — do
+ * proprio arquivo da migration (nada de reescrever o SQL no teste).
+ */
+function rollbackBlock(file) {
+  const lines = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8').split(/\r?\n/);
+  const out = [];
+  let started = false;
+  for (const line of lines) {
+    if (!started) {
+      if (/^--\s*Rollback \(SQL execut/.test(line)) started = true;
+      continue;
+    }
+    const stmt = line.match(/^--\s{3}(\S.*)$/);
+    if (!stmt) break;
+    out.push(stmt[1]);
+  }
+  return out.join('\n');
+}
+
+const GRANULAR_MIGRATION = '20261005151753_sla_first_response_granular.sql';
+const ROLLBACK_CONTACT = '99999999-9999-9999-9999-999999999999';
+
+/** Monta o cenario 2min/3min do contato de prova (sem tocar o banco fora da transacao). */
+function granularProbe() {
+  return runScenario(`
+INSERT INTO public.contacts (id) VALUES ('${ROLLBACK_CONTACT}');
+INSERT INTO public.sla_rules (name, first_response_minutes, contact_id, priority)
+  VALUES ('rollback-vip-2min', 2, '${ROLLBACK_CONTACT}', 10);
+INSERT INTO public.messages (contact_id, sender, status, created_at) VALUES
+  ('${ROLLBACK_CONTACT}', 'contact', 'delivered', '${T}'::timestamptz),
+  ('${ROLLBACK_CONTACT}', 'agent', 'sent', '${T}'::timestamptz + interval '3 minutes');
+${registerCall(ROLLBACK_CONTACT, `'${T}'::timestamptz + interval '3 minutes'`)}
+${breachProbe('rollback_2min_3min', ROLLBACK_CONTACT)}
+  `).get('rollback_2min_3min');
+}
+
+test('rollback da migration devolve o prazo fixo anterior e a migration reaplica (executado)', () => {
+  const rb = rollbackBlock(GRANULAR_MIGRATION);
+  assert.ok(rb.length > 0, `${GRANULAR_MIGRATION} nao tem bloco -- Rollback (SQL executavel, na ordem)`);
+  assert.match(rb, /create or replace function public\.register_first_response_internal/i,
+    'o rollback nao devolve register_first_response_internal');
+  assert.match(rb, /drop function if exists public\.resolve_applicable_first_response_minutes\(uuid\)/i,
+    'o rollback nao dropa o resolvedor granular');
+
+  // estado corrigido: 2 min + resposta aos 3 min = breach
+  assert.equal(granularProbe(), 't', 'com a migration aplicada o caso 2min/3min deveria ser breach');
+
+  // papeis do Supabase exigidos pelo REVOKE do cabecalho (o container cru nao os tem)
+  psql(`
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+END $$;`);
+
+  // executa o rollback de verdade, do proprio arquivo
+  psql(rb);
+
+  assert.equal(
+    psql(`SELECT count(*) FROM pg_proc WHERE proname = '${RESOLVER_FN}';`).trim(), '0',
+    'o rollback deveria remover o resolvedor granular do banco',
+  );
+  assert.equal(granularProbe(), 'f',
+    'depois do rollback o registro deveria voltar ao intervalo fixo de 5 min (2min/3min deixa de ser breach)');
+
+  // reaplica a migration inteira: idempotente, volta ao contrato corrigido
+  psql(fs.readFileSync(path.join(MIGRATIONS_DIR, GRANULAR_MIGRATION), 'utf8'));
+  assert.equal(
+    psql(`SELECT count(*) FROM pg_proc WHERE proname = '${RESOLVER_FN}';`).trim(), '1',
+    'a reaplicacao deveria recriar o resolvedor granular',
+  );
+  assert.equal(granularProbe(), 't', 'a reaplicacao deveria voltar a marcar breach no caso 2min/3min');
+});
