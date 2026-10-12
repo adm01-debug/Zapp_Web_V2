@@ -1,29 +1,22 @@
-Especialista: senior (area-front-hooks)
+Especialista: complexo (backend-zapp-como-provar)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
-
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- O código deste refazer já estava pronto nos commits cherry-pickados sobre a base: `4b6478f90` (token opaco `r=<32 chars>` reversível O(1) com MAC em tempo constante antes de qualquer SELECT; sem segredo o helper devolve undefined e nunca o recipient_id cru) e `7e3c10dc8` (teste estrutural do espelho alinhado ao token opaco). Nenhum código novo foi necessário neste ciclo: o trabalho aqui foi conferir o diff, rodar as provas e reescrever o relato, que estava obsoleto (era de outro cartão, snooze/inbox) — era exatamente isso que a recusa apontava.
+- Arquivos do diff (7, só do cartão, contra a base): `supabase/functions/_shared/talkx-tracking-token.ts` (novo, token opaco), `supabase/functions/talkx-link/index.ts` (resolve `r=` com 2 point lookups; GET inválido/ausente vira clique anônimo 302, nunca atribuição indevida), `supabase/functions/talkx-send/index.ts` (`trackingUrlFor`/`linksByLabelFor` assíncronos via `buildTalkxTrackingUrl`), `supabase/functions/talkx-send/process-recipient.ts` (call site com `await`), `supabase/functions/talkx-link/index.test.ts`, `supabase/functions/talkx-send/index.test.ts` e `scripts/db-audit/talkx-e90-links-contract.test.mjs` (alinhado ao token opaco).
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- Item exato do espelho, verde: `node --test scripts/db-audit/talkx-e90-links-contract.test.mjs` → `Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site ✔` e `tests 16, pass 16, fail 0`, sobre o commit de código `7e3c10dc8` com árvore limpa.
+- Handler real (Deno, sem mock de handler): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/talkx-link/index.test.ts supabase/functions/talkx-send/index.test.ts` → `ok | 95 passed | 0 failed`.
+- Verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard OK, tipos OK, lint OK, migrations OK).
+- Juiz do fechar (12/10, 2ª tentativa): apontou "código alterado sem teste neste commit" porque o relato estava em commit separado; reuni código+testes+relato num commit único (conteúdo de código/testes idêntico ao auditado em `7e3c10dc8`).
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Pontos do revisor (refazer 2)
+- Ponto 1 (saída VERDE do `ci_espelho.sh` + sha): NÃO CONSEGUI executar `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` — bloqueado pela guarda HERMES-GUARD para três agentes neste cartão (senior, Claude Code e eu), mensagem: proibido mexer nas ferramentas do Hermes. Em vez disso rodei DIRETAMENTE o item que quebrava no espelho (`Talk X {{link}} resolves to a real per-recipient tracking URL at the real send call site`) e ele está VERDE (prova acima), sobre o commit de código `7e3c10dc8`. Ressalva honesta: o comando literal do espelho não foi executado; o item que falhava, sim.
+- Ponto 2 (responder ao 'corrigir' anterior, Pontos 1 a 4): o 'corrigir' do refazer 1 está incorporado nos dois commits de código — token opaco reversível com resolução O(1) (`4b6478f90`) e teste estrutural do espelho alinhado a `r=<32 chars>` sem afrouxar asserção (`7e3c10dc8`): o contrato agora exige o token opaco, proíbe `r=` com id cru/codificado e trava a ordem real `trackingUrlFor/linksByLabelFor → personalize()` no `process-recipient.ts`. Nada do 'corrigir' anterior ficou pendente no código; o que faltava era só este relato.
+- Ponto 3 (`trackingUrlFor`/`linksByLabelFor` assíncronos x outros chamadores e testes X022/X062): o único chamador de produção é `process-recipient.ts`, cujo tipo já aceita `string | undefined | Promise<...>` (linhas 221-222) e cujo call site usa `await` (linhas 398-399) — nenhuma quebra. Os testes de talkx-send que usam o `{{link}}` real (X022 conversão, X062 mídia/assinatura) passaram dentro dos `95 passed | 0 failed` do Deno.
+- Ponto 4 (troca dos testes GET 401/503 por 302 anônimo): o diff removeu 5 testes GET (`GET sem token devolve 401`, `GET com token inválido devolve 401`, `GET sem recipient devolve 401`, `GET com token de outro secret devolve 401`, `GET sem secret devolve 503`) e os substituiu por testes que exigem 302 + clique anônimo (`p_recipient === null`, sem atribuição). Os 401/503 do POST (conversão autenticada por HMAC) continuam intactos (`index.test.ts` linhas 200-369). Motivo: o clique chega de app de mensagem sem sessão — 401 quebraria o clique real; token inválido/ausente registra clique anônimo sem atribuir a ninguém, nunca atribuição indevida. Decorre da recusa anterior e o cartão aceita clique anônimo.
+- Ponto 5 (frase 'nenhum teste alterado / sem teste novo'): removida por falsa — TESTES FORAM ALTERADOS E CRIADOS: `talkx-link/index.test.ts` (GET anônimo 302, token opaco válido, legado `t=`), `talkx-send/index.test.ts` (bloco `[refazer 2]` em 1418-1460: URL sem id cru + sem segredo via `loadTrackingLinks` real) e `talkx-e90-links-contract.test.mjs` (alinhado a `r=<token de 32 chars>`).
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não alterei código fora dos 7 arquivos do cartão, não toquei migration, front, CI ou dependência; não removi nem afrouxei nenhuma asserção (as 5 remoções GET 401/503 foram trocadas por asserções 302 + anonimato, não apagadas).
+- Não executei `ci_espelho.sh` (bloqueio da guarda, Ponto 1) nem acessei produção; sem segredo e sem identificador de banco de produção no relato, no código ou nos testes.
