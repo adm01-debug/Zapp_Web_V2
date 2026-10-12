@@ -81,9 +81,9 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `blocked_ips` | IPs bloqueados, com motivo, autor e validade | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/security/BlockedIPDialogs.tsx`, `src/components/security/BlockedIPsPanel.tsx` … |
 | `business_hours` | Horário de funcionamento por conexão (dia, abertura e fechamento) | ativo | `src/components/automations/automationConstants.ts`, `src/components/connections/BusinessHoursIndicator.tsx`, `src/components/settings/MessagesSettings.tsx` … |
 | `calls` | Ligações registradas (contato, agente, conexão, direção e desfecho) | ativo | `src/App.tsx`, `src/__tests__/smoke.test.ts`, `src/components/admin/AIUsageDashboard.tsx` … |
-| `campaign_ab_variants` | Variantes A/B de uma campanha, com contadores de envio | ativo | `src/components/campaigns/CampaignABTesting.tsx` |
-| `campaign_contacts` | Destinatários da campanha e estado do envio de cada um | ativo | `src/hooks/communication/useCampaigns.ts` |
-| `campaigns` | Campanhas de mensagem (conteúdo, mídia e configuração de disparo) | ativo | `src/components/campaigns/CampaignsView.tsx`, `src/components/campaigns/__tests__/CampaignCreateDialog.r2-mod-005.test.tsx`, `src/components/campaigns/__tests__/CampaignsView.audiencia.r2-mod-005.test.tsx` … |
+| `campaign_ab_variants` | Variantes A/B de uma campanha, com contadores de envio | roadmap | — |
+| `campaign_contacts` | Destinatários da campanha e estado do envio de cada um | roadmap | — |
+| `campaigns` | Campanhas de mensagem (conteúdo, mídia e configuração de disparo) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignPaused.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx` … |
 | `catalog_favorites` | Produtos do catálogo externo favoritados pelo usuário | ativo | `src/components/catalog/ExternalProductCatalog.tsx`, `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx`, `src/components/catalog/catalogShared.tsx` … |
 | `catalog_rate_limit_hits` | Contadores de uso do catálogo por usuário e ação, em janela | roadmap | — |
 | `catalog_rate_limits` | Limite de uso do catálogo por usuário e ação | ativo | `supabase/functions/promogifts-catalog/index.ts` |

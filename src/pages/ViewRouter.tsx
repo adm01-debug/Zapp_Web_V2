@@ -58,7 +58,6 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'security': Views.SecurityView,
   'settings': Views.SettingsView,
   'docs': Views.SystemFeaturesView,
-  'campaigns': Views.CampaignsView,
   'chatbot': Views.ChatbotFlowsView,
   'automations': Views.AutomationsManager,
   'integrations': Views.IntegrationsHub,

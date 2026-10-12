@@ -805,12 +805,11 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=campaigns` → `CampaignsView` |
-| Componentes | `src/components/campaigns/CampaignsView.tsx`, `CampaignCreateDialog.tsx`, `CampaignABTesting.tsx` |
-| Hook | `src/hooks/communication/useCampaigns.ts` |
-| Tabelas | `campaigns`, `campaign_contacts` |
+| Estado atual | Removido do produto em 2026-10-11 |
+| Sistema ativo | Talk X (`?view=talkx`) |
+| Tabelas históricas | `campaigns`, `campaign_contacts` |
 
-**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, intervalo entre envios, filtros por status e teste A/B.
+**Atualização (2026-10-11):** o módulo clássico de campanhas deixou de existir no front-end. O documento mantém apenas o registro histórico das tabelas; a rota, os componentes React e o hook do módulo clássico não são mais funcionalidades ativas.
 
 ---
 
