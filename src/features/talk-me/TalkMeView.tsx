@@ -539,7 +539,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                 />
               </div>
               <Button variant="outline" size="icon" onClick={() => void refresh()} disabled={showInitialLoading} className="col-start-2 row-start-1 h-8 w-8 shrink-0 rounded-xl sm:col-auto sm:row-auto" aria-label="Atualizar fila">
-                <RefreshCw className={cn('h-4 w-4', showInitialLoading && 'animate-spin motion-reduce:animate-none')} />
+                <RefreshCw className={cn('h-4 w-4', showInitialLoading && 'motion-safe:animate-spin motion-reduce:animate-none')} />
               </Button>
             </div>
           </header>
@@ -634,7 +634,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => move(1)} disabled={(safeIndex >= items.length - 1 && !hasMore) || !!claimingContactId || reconciling} className="absolute right-1 top-[42%] z-30 h-11 w-11 rounded-full border-white/15 bg-black/90 text-white hover:bg-zinc-900 sm:right-8" aria-label="Próximo atendimento">
-                      {loadingMore ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
+                      {loadingMore ? <Loader2 className="h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
                     </Button>
                   </div>
 
@@ -696,7 +696,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                           className="mt-2 h-8 rounded-full border-white/20 bg-transparent text-white"
                         >
                           {isRecovering
-                            ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                            ? <Loader2 className="mr-1.5 h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none" />
                             : <RefreshCw className="mr-1.5 h-4 w-4" />}
                           Conferir aceite
                         </Button>
@@ -713,7 +713,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending || reconciling || isOffline}
                       className="h-10 w-full rounded-full px-5 text-xs font-bold shadow-lg shadow-primary/20"
                     >
-                      {isClaiming ? <Loader2 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}
+                      {isClaiming ? <Loader2 className="mr-2 h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}
                       {isClaiming ? 'Assumindo…' : 'Aceitar e conversar'}
                     </Button>
                   </div>
@@ -807,12 +807,12 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       ))}
                       {loadingMore && (
                         <div role="status" aria-label="Carregando mais atendimentos" className="talk-me-queue-card flex w-24 shrink-0 items-center justify-center text-zinc-400">
-                          <Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none" />
+                          <Loader2 className="h-6 w-6 motion-safe:animate-spin motion-reduce:animate-none" />
                         </div>
                       )}
                     </div>
                     <Button variant="outline" size="icon" onClick={() => moveQueueViewport(1)} disabled={items.length <= 1 || !!claimingContactId || reconciling} className="h-11 w-11 shrink-0 rounded-full border-white/15 bg-black text-white hover:bg-zinc-900" aria-label="Ver próximos contatos na fila">
-                      {loadingMore ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
+                      {loadingMore ? <Loader2 className="h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
                     </Button>
                   </div>
                   {loadMoreError && (
@@ -842,7 +842,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
 
           {pendingHistory?.status === 'loading' && (
             <div role="status" aria-label="Carregando mensagens" className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground motion-reduce:animate-none" />
+              <Loader2 className="h-6 w-6 motion-safe:animate-spin text-muted-foreground motion-reduce:animate-none" />
             </div>
           )}
 
