@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import type { Priority } from './workItem.types';
+import type { DueRecorte, Priority } from './workItem.types';
 import {
   DEFAULT_FILTERS,
   filtersFromSearch,
@@ -55,6 +55,9 @@ export function useTasksFilters() {
   const searchAtual = typeof window === 'undefined'
     ? location.search
     : (window.location.search || location.search);
+  // Etapa 023: recorte de prazo vindo do clique no KPI. É estado da tela (não
+  // viaja na URL) e o "Limpar" também o zera.
+  const [due, setDue] = useState<DueRecorte>('all');
   const [filters, dispatch] = useReducer(reducer, undefined, () => filtersFromSearch(searchAtual));
 
   // Busca com debounce: o texto digitado vai para um estado local e só depois de
@@ -107,6 +110,8 @@ export function useTasksFilters() {
     setSearch,
     setPrio:        (value: Priority | 'all') => dispatch({ type: 'prio', value }),
     setContact:     (value: string | null) => dispatch({ type: 'contact', value }),
+    due,
+    setDue,
     toggleAlarm:    () => dispatch({ type: 'toggleAlarm' }),
     toggleDone:     () => dispatch({ type: 'toggleDone' }),
     // "Limpar" zera o texto JUNTO com o filtro — e CANCELA o debounce pendente,
@@ -114,8 +119,9 @@ export function useTasksFilters() {
     clear:          () => {
       if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
       setTextoDaBusca('');
+      setDue('all');
       dispatch({ type: 'clear' });
     },
-    isActive:       isFilterActive(filters),
+    isActive:       isFilterActive(filters) || due !== 'all',
   };
 }

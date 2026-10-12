@@ -4,7 +4,7 @@ import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import { openContactChat }  from '@/components/catalog/useSendProduct';
-import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
+import { applyDueRecorte, applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
@@ -16,7 +16,8 @@ import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
 import { QuickAdd }         from './shared/QuickAdd';
 import { TasksFilterBar }   from './shared/TasksFilterBar';
-import { TasksKpiStrip }    from './shared/TasksKpiStrip';
+import { TasksKpiStrip, type KpiDueRecorte } from './shared/TasksKpiStrip';
+import type { TasksDensity } from './shared/tasksUi';
 import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
@@ -58,10 +59,23 @@ export function TasksModule() {
   // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
   // nenhum modo nem filtro dispara request novo (B13 continua valendo).
   const filtros = useTasksFilters();
-  const items = applyFilters(hook.items, filtros.filters);
+  const filtrados = applyFilters(hook.items, filtros.filters);
+  // Etapa 023: o clique em "Atrasadas"/"Para hoje" recorta a LISTA; os números
+  // dos KPIs saem de `filtrados` (antes do recorte), senão o card clicado
+  // zeraria os outros.
+  const items = applyDueRecorte(filtrados, filtros.due);
   const byDue = bucketByDue(items);
   const byStatus = bucketByStatus(items);
-  const kpiData = kpis(items);
+  const kpiData = kpis(filtrados);
+
+  // Clicar de novo no KPI ativo devolve o recorte para 'all'.
+  const recortePrazo: KpiDueRecorte | null = filtros.due === 'all' ? null : filtros.due;
+  const alternarRecortePrazo = (due: KpiDueRecorte) =>
+    filtros.setDue(filtros.due === due ? 'all' : due);
+
+  // Etapa 025 (D2): a densidade da faixa acompanha o modo — no Quadro ela é a
+  // faixa compacta, que ganha altura para as colunas.
+  const densidadeKpis: TasksDensity = mode === 'board' ? 'compact' : 'comfortable';
 
   // Fase F (auditoria): o filtro é recorte de TELA. O que descreve o trabalho
   // real — contagem do cabeçalho, card "Fazendo" e a trava de WIP do Quadro —
@@ -255,8 +269,16 @@ export function TasksModule() {
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
-      {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
-      <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
+      {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard; etapa 023:
+          clicáveis; etapa 025: compacta no Quadro) */}
+      <TasksKpiStrip
+        kpis={{ ...kpiData, doingCount: doingReal }}
+        density={densidadeKpis}
+        activeDue={recortePrazo}
+        onToggleDue={alternarRecortePrazo}
+        onOpenBoard={() => setMode('board')}
+        loading={isLoading}
+      />
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
       {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}

@@ -378,13 +378,13 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     expect(tileDe('Atrasadas')).toContain('bg-destructive/15');
     expect(tileDe('Para hoje')).toContain('bg-kpi-blue');
     expect(tileDe('Fazendo')).toContain('bg-kpi-purple');
-    expect(tileDe('Concluídas (7d)')).toContain('bg-kpi-green');
+    expect(tileDe('Concluídas · 7 dias')).toContain('bg-kpi-green');
     expect(tileDe('Tempo médio')).toContain('bg-muted');
 
     expect(valorDe('Fazendo')).toBe('2/3');
     expect(valorDe('Atrasadas')).toBe('1');
     expect(valorDe('Para hoje')).toBe('1');
-    expect(valorDe('Concluídas (7d)')).toBe('1');
+    expect(valorDe('Concluídas · 7 dias')).toBe('1');
   });
 
   it('o grid tem os 3 breakpoints (2 / 3 / 5 colunas)', async () => {

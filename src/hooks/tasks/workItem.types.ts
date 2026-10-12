@@ -22,6 +22,9 @@ export interface WorkItemContact {
   contact_type?: string | null;
 }
 
+/** Etapa 023: recortes de prazo que o clique de um KPI aplica (`all` = sem recorte). */
+export type DueRecorte = 'all' | 'overdue' | 'today';
+
 export interface WorkItem {
   id: string;
   title: string;

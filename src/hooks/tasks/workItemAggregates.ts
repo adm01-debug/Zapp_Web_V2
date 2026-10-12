@@ -1,6 +1,6 @@
 import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { WorkItem, WorkItemStatus } from './workItem.types';
+import type { DueRecorte, WorkItem, WorkItemStatus } from './workItem.types';
 import type { TasksFilters } from './workItemFilters';
 import { localDayKey } from '@/lib/localDay';
 
@@ -23,7 +23,13 @@ export interface KpiSnapshot {
   dueToday: number;
   doingCount: number;
   done7d: number;
+  /** Tempo de ciclo (`started_at` → `completed_at`) — mantido para quem já lê hoje. */
   avgCycleTimeDays: number | null;
+  /**
+   * Etapa 022 / D13: tempo médio **da criação à conclusão** (`created_at` →
+   * `completed_at`) das concluídas dos últimos 7 dias, em dias.
+   */
+  avgLeadTimeDays: number | null;
 }
 
 /**
@@ -118,6 +124,18 @@ export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
 }
 
 /**
+ * Etapa 023: recorte de prazo do clique no KPI. Usa os MESMOS baldes do KPI
+ * (`bucketByDue`, só tarefas ativas), então a lista mostra exatamente as
+ * tarefas que o número do card conta.
+ */
+export function applyDueRecorte(items: WorkItem[], due: DueRecorte, now: Date = new Date()): WorkItem[] {
+  if (due === 'all') return items;
+  const baldes = bucketByDue(items, now);
+  const ids = new Set((due === 'overdue' ? baldes.overdue : baldes.today).map(i => i.id));
+  return items.filter(i => ids.has(i.id));
+}
+
+/**
  * `due_date` gravado como dia inteiro não tem hora marcada. O app grava **23:59
  * local** nos chips "Hoje/Amanhã/Próx. semana" e no QuickAdd da Agenda — então
  * fim do dia conta como dia inteiro; `00:00` idem, pela convenção oposta.
@@ -196,6 +214,10 @@ export function kpis(items: WorkItem[], now: Date = new Date()): KpiSnapshot {
   const cycleTimes = done7d
     .filter(i => i.started_at && i.completed_at)
     .map(i => (new Date(i.completed_at!).getTime() - new Date(i.started_at!).getTime()) / 86_400_000);
+  // Toda concluída de 7 dias com carimbo entra, inclusive a sem `started_at`.
+  const leadTimes = done7d
+    .filter(i => i.completed_at)
+    .map(i => (new Date(i.completed_at!).getTime() - new Date(i.created_at).getTime()) / 86_400_000);
   return {
     overdue: overdue.length,
     dueToday: today.length,
@@ -204,7 +226,22 @@ export function kpis(items: WorkItem[], now: Date = new Date()): KpiSnapshot {
     avgCycleTimeDays: cycleTimes.length > 0
       ? cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length
       : null,
+    avgLeadTimeDays: leadTimes.length > 0
+      ? leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length
+      : null,
   };
+}
+
+/**
+ * Etapa 022 (D13): tempo médio da criação à conclusão em pt-BR, uma casa
+ * decimal com vírgula: "1,4 dias", "1 dia", "2 dias" e "—" sem dado.
+ */
+export function formatLeadTime(days: number | null | undefined): string {
+  if (days == null || !Number.isFinite(days)) return '—';
+  const arredondado = Math.round(days * 10) / 10;
+  if (arredondado === 1) return '1 dia';
+  const texto = Number.isInteger(arredondado) ? String(arredondado) : arredondado.toFixed(1);
+  return texto.replace('.', ',') + ' dias';
 }
 
 export function dueLabel(
