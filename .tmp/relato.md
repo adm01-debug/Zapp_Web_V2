@@ -1,63 +1,46 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+# [retomar] test(e2e): garante zoom 200 no reflow email navy
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## O que mudou e por quê
+- Nenhum commit de código: o defeito do pedido JA ESTA CORRIGIDO na base `dia/2026-10-12`.
+  `git log -S "document.documentElement.style.fontSize)).toBe('200%')" -- e2e/email-navy-visual.spec.ts`
+  aponta o commit `8147bebe1 test(e2e): zoom garantido no reflow 200% do email-navy`, que traz exatamente
+  o conteudo do trabalho anterior (`2ef976f99`, branch `v2/corrigir-reflow-200-email-navy-2610090910409f`):
+  zoom aplicado DEPOIS do boot (`abrirEmail`) e a guarda `expect(documentElement.style.fontSize).toBe('200%')`
+  antes de medir o overflow. Trazer o antigo por cherry-pick seria duplicar a garantia e entrar em conflito
+  de novo; o cartao manda fechar sem commit quando o pedido ja esta resolvido. Fecho sem commit de codigo.
+- `src/components/email/*` nao foi tocado: nenhuma causa de reflow/visibilidade em aberto no codigo atual
+  (a medicao `scrollWidth - clientWidth <= 2` passa com o zoom em 200%).
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
+- Criterio 1 (reproduzir a falha ou registrar que nao reproduz): NAO REPRODUZIU no ambiente local limpo.
+  - isolada: `bunx playwright test e2e/email-navy-visual.spec.ts --project=chromium-email-navy -g "reflow equivalente"`
+    -> `1 passed (16.3s)` (teste do reflow em 13.8s).
+  - bateria completa (rodada A): `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5199 bunx playwright test e2e/email-navy-visual.spec.ts --project=chromium-email-navy --workers=2 --reporter=list`
+    -> `29 passed`, `2 failed`; o reflow passou; as 2 falhas foram de BOOT (linha 112 e linha 142,
+    `abrirEmail` estourando 60s esperando a primeira conversa), com carga do host ~21.
+  - bateria completa (rodada B, log em `.tmp/e2e-full-run2.log`):
+    `✓ 16 [chromium-email-navy] › e2e/email-navy-visual.spec.ts:416:1 › reflow equivalente a zoom de 200% mantém ações essenciais acessíveis (6.8s)`
+    e `31 passed (2.4m)` -> suite VERDE, sem failed, sem skipped.
+  - Os 2 testes que falharam na rodada A passam isolados:
+    `2 passed (20.2s)` (`não introduz violações axe` 16.7s; `rota real renderiza lista...` 17.9s) -> instabilidade
+    de boot sob carga (armadilha 6), nao o reflow; registrado em comentario no cartao, sem afrouxar timeout.
+- Criterio 2 (causa do reflow, sem afrouxar a assercao de overflow): a assercao principal segue intacta —
+  `expect(overflow).toBeLessThanOrEqual(2)` na linha 432, com a guarda de zoom na 430. Prova de que a guarda
+  que ja esta na base e a que sustenta a medicao: mutei o cenario (zoom para `100%`, como se um reload
+  repusesse o app) -> `1 failed`, `Expected: "200%" / Received: "100%"` (`.tmp/mutacao-vermelho.log`);
+  restaurei a linha do zoom -> verde. Sem a guarda, o overflow mediria uma tela SEM 200% e passaria em falso.
+- Criterio 3 (PNG): a execucao regrava os PNGs de referencia (`page.screenshot` nas linhas 119, 126, 139,
+  235, 283, 548); a bateria verde deixou 16 PNGs em `e2e/email-navy-visual/` com bytes diferentes.
+  Restaurei com `git restore --source=HEAD -- e2e/email-navy-visual` e o `git status --short` final esta VAZIO
+  -> nenhum PNG modificado entra na entrega.
+- Criterio 5 (escopo): `git diff -- e2e/email-navy-visual.spec.ts src/components/email/EmailChatInbox.tsx
+  src/components/email/EmailChatThread.tsx src/components/email/EmailContactPanel.tsx` -> vazio;
+  `git diff --stat dia/2026-10-12` -> vazio (branch identica a ponta do dia).
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
-
-## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## O que NAO fiz e por quê
+- Nao commitei codigo: o pedido ja esta resolvido na base e o cartao manda fechar sem commit nesse caso.
+- Nao implementei "estabilizacao" de boot nem mexi em `browser.newContext`/timeouts de assercao: as 2 falhas
+  da rodada A sao de boot sob carga, passam isoladas e ficam registradas como achado (fora da causa do reflow).
+- Nao trouxe codigo de outro cartao (`git log --oneline dia/2026-10-12..HEAD` sem commits meus).
