@@ -54,7 +54,7 @@ export function SettingsView() {
       subtitle="Configure o comportamento da plataforma"
       icon={<Settings className="w-5 h-5" />}
       actions={
-        <Button onClick={saveSettings} disabled={isSaving || isLoading} className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground">
+        <Button onClick={saveSettings} disabled={isSaving || isLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Salvar Alterações
         </Button>

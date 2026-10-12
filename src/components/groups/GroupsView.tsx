@@ -86,7 +86,7 @@ export function GroupsView() {
             </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Grupo
                 </Button>
@@ -134,7 +134,7 @@ export function GroupsView() {
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                    <Button onClick={onAddGroup} className="bg-whatsapp hover:bg-whatsapp-dark">Adicionar</Button>
+                    <Button onClick={onAddGroup} className="bg-primary hover:bg-primary/90">Adicionar</Button>
                   </div>
                 </div>
               </DialogContent>

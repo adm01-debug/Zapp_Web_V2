@@ -53,7 +53,7 @@ export function ThemeCustomizer() {
           <Button variant="default" size="sm" data-testid="theme-save" className="relative" onClick={handleSave}>
             <Save className="w-4 h-4 mr-1" /> Salvar
             {hasUnsavedChanges && (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />
             )}
           </Button>
           <ThemeResetDialog onConfirm={handleReset} />

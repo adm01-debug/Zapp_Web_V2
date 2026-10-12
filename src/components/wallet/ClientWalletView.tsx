@@ -30,7 +30,7 @@ export function ClientWalletView() {
         actions={
           <Dialog open={w.isAddDialogOpen} onOpenChange={w.setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
             </DialogTrigger>
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Criar Regra de Carteira</DialogTitle></DialogHeader>
@@ -64,7 +64,7 @@ export function ClientWalletView() {
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
                   <Button variant="outline" onClick={() => w.setIsAddDialogOpen(false)}>Cancelar</Button>
-                  <Button onClick={w.handleAddRule} className="bg-whatsapp hover:bg-whatsapp-dark">Criar Regra</Button>
+                  <Button onClick={w.handleAddRule} className="bg-primary hover:bg-primary/90">Criar Regra</Button>
                 </div>
               </div>
             </DialogContent>

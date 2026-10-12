@@ -97,7 +97,7 @@ export function AdminView() {
   );
 
   if (roleLoading) {
-    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-whatsapp border-t-transparent animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
   }
 
   if (!isSupervisor) {
@@ -123,7 +123,7 @@ export function AdminView() {
           <p className="text-muted-foreground">Gerencie usuários, permissões e visualize logs de auditoria</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-whatsapp hover:bg-whatsapp-dark"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
+          {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
           <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Atualizar</Button>
         </div>
       </motion.div>
@@ -131,7 +131,7 @@ export function AdminView() {
       <div className="flex gap-2 flex-wrap">
         {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label]) => (
           <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-whatsapp hover:bg-whatsapp-dark' : ''} size="sm">
+            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}
@@ -201,7 +201,7 @@ export function AdminView() {
               </div>
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={onSaveUser} disabled={savingUser} className="bg-whatsapp hover:bg-whatsapp-dark">
+                <Button onClick={onSaveUser} disabled={savingUser} className="bg-primary hover:bg-primary/90">
                   {savingUser && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Salvar
                 </Button>
               </div>
@@ -273,7 +273,7 @@ export function AdminView() {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={onCreateUser} disabled={creatingUser || !newUser.name || !newUser.email || !newUser.password} className="bg-whatsapp hover:bg-whatsapp-dark">
+              <Button onClick={onCreateUser} disabled={creatingUser || !newUser.name || !newUser.email || !newUser.password} className="bg-primary hover:bg-primary/90">
                 {creatingUser && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Criar Usuário
               </Button>
             </div>
