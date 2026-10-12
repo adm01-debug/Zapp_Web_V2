@@ -70,6 +70,14 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
   const isChartLoading = volumeQuery.isPending;
   const isEmpty = !isChartLoading && chartData.every((d) => !d.actual);
 
+  const ariaLabel = useMemo(() => {
+    if (isEmpty) return 'Gráfico de volume de atendimentos, sem conversas no período';
+    const total = chartData.reduce((s, d) => s + (d.actual ?? 0), 0);
+    const periodo = mode === 'hoje' ? 'Hoje' : 'Últimos 7 dias';
+    const predicao = hasPrediction ? ', incluindo média 7 dias' : '';
+    return `Volume de Atendimentos: ${total} conversas no total, ${periodo}${predicao}`;
+  }, [isEmpty, chartData, mode, hasPrediction]);
+
   return (
     <DashboardCard testid="volume-card" className="min-h-[259px]">
       <SectionHeader
@@ -92,7 +100,7 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
           Sem conversas no período
         </div>
       ) : (
-        <div data-testid="volume-plot" className="h-[160px]">
+        <div data-testid="volume-plot" role="img" aria-label={ariaLabel} className="h-[160px]">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>

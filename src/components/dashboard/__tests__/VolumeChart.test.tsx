@@ -46,4 +46,32 @@ describe('VolumeChart', () => {
     render(<VolumeChart />);
     expect(screen.queryByText(/Capacidade/)).not.toBeInTheDocument();
   });
+
+  it('renderiza o gráfico com aria-label que inclui o total e o período', () => {
+    const todayByHour = [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 15, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    expect(todayByHour).toHaveLength(24);
+    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 10, avg7dCurrentHour: 5 } });
+    mockUseDemandPrediction.mockReturnValue({ data: [] });
+    render(<VolumeChart />);
+
+    const chart = screen.getByTestId('volume-plot');
+    expect(chart).toHaveAttribute('role', 'img');
+    expect(chart).toHaveAttribute('aria-label');
+    expect(chart.getAttribute('aria-label')).toContain('Volume de Atendimentos');
+    expect(chart.getAttribute('aria-label')).toContain('50 conversas no total');
+    expect(chart.getAttribute('aria-label')).toContain('Hoje');
+  });
+
+  it('inclui previsão no aria-label quando há média 7 dias', () => {
+    const todayByHour = [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 15, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    expect(todayByHour).toHaveLength(24);
+    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 10, avg7dCurrentHour: 5 } });
+    mockUseDemandPrediction.mockReturnValue({
+      data: [{ time: '10:00', predicted: 12, isPrediction: true }],
+    });
+    render(<VolumeChart />);
+
+    const chart = screen.getByTestId('volume-plot');
+    expect(chart.getAttribute('aria-label')).toContain('incluindo média 7 dias');
+  });
 });
