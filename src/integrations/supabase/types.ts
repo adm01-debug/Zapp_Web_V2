@@ -10856,6 +10856,14 @@ export type Database = {
         }
         Returns: Json
       }
+      dashboard_heatmap: {
+        Args: { dias?: number }
+        Returns: {
+          dow: number
+          hour: number
+          value: number
+        }[]
+      }
       dashboard_hourly_volume: {
         Args: { p_agent?: string; p_days?: number; p_queue?: string }
         Returns: {
@@ -10887,6 +10895,18 @@ export type Database = {
       delete_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: string
+      }
+      demand_forecast: {
+        Args: {
+          dias_hist?: number
+          dias_prev?: number
+        }
+        Returns: {
+          d: string
+          dow: number
+          kind: string
+          value: number
+        }[]
       }
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
