@@ -199,14 +199,20 @@ describe('etapa 103 — esqueleto e vazio por coluna', () => {
 
 /** Menor alvo garantido em uma dimensão, em px, lido da classe aplicada. */
 function alvoGarantidoPx(el: Element | null, eixo: 'h' | 'w'): number {
-  const cls = el?.className ?? '';
+  const classes = (el?.className ?? '').split(/\s+/);
   // `w-full`/`h-full` ocupam toda a coluna (muito mais que 40 px): vale.
-  if (cls.split(/\s+/).some(c => c === `${eixo}-full` || c === `min-${eixo}-full`)) return Infinity;
+  if (classes.some(c => c === `${eixo}-full` || c === `min-${eixo}-full`)) return Infinity;
   let px = 0;
-  const re = new RegExp(`(?:min-)?${eixo}-(\[[0-9.]+px\]|[0-9.]+)`, 'g');
-  for (const m of cls.matchAll(re)) {
+  for (const c of classes) {
+    const m = c.match(new RegExp(`^(?:min-)?${eixo}-(.+)$`));
+    if (!m) continue;
     const v = m[1];
-    px = Math.max(px, v.startsWith('[') ? parseFloat(v.slice(1, -3)) : parseFloat(v) * 4);
+    const n = v.startsWith('[') && v.endsWith('px]')
+      ? parseFloat(v.slice(1, -3))
+      : /^[0-9.]+$/.test(v)
+        ? parseFloat(v) * 4
+        : NaN;
+    if (!Number.isNaN(n)) px = Math.max(px, n);
   }
   return px;
 }
