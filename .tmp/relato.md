@@ -1,22 +1,26 @@
-Especialista: iris (area-front-componentes)
+Especialista: worker (telas) (area-front-componentes)
 
-## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+## Situação ([retomar]) — como resolvi o motivo do conflito
+O motivo registrado era conflito com a ponta `dia/2026-10-12`. Ao conferir o código ATUAL, a etapa U01 JÁ ESTÁ na ponta: o commit `1d7b7c504` ("fix(sidebar): corrigir selo de e-mails não lidos", Cartão V2 26100815178b52) é ancestral de HEAD (`git merge-base --is-ancestor 1d7b7c504 HEAD` → ancestral), e traz exatamente os 4 arquivos desta etapa. Logo não há cherry-pick a fazer: trazer `2c493b83b`/`32a8284d6` duplicaria o hook (conflito) e ainda puxaria `src/components/onboarding/__tests__/defaultTourSteps.alvos.test.tsx`, que NÃO está na lista de arquivos permitidos ("diff maior que o título" é recusa). Fechei SEM commit de código, como o cartão manda.
 
-## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
+## Critério de pronto conferido no código atual
+- Selo do item Email: `src/components/layout/Sidebar.tsx:146-151` (`item.id === 'email-chat' ? emailUnread.count`).
+- Contagem de conversas não lidas: `src/hooks/gmail/useUnreadEmailCount.ts` → `.from('email_threads').select('id', { count: 'exact', head: true }).eq('is_unread', true)`.
+- Tempo real com debounce e canal limpo ao desmontar: `DEBOUNCE_MS = 500`, `scheduleRecount` no `postgres_changes` de `email_threads` e `removeChannel` no cleanup.
+- Sem selo quando 0 e `99+` acima de 99: `src/components/layout/SidebarNavItem.tsx:119` (`badgeCount != null && badgeCount > 0`) e `:130` (`badgeCount > 99 ? '99+' : badgeCount`).
+- Variante visual como a do Chat (destructive), não a amarela de Tarefas: `Sidebar.tsx:152-154`.
+- Hook só monta com acesso ao item Email: `Sidebar.tsx:64-68` (`canSeeEmailItem` → `enabled`). Erro nunca quebra a barra: `try/catch` → `status: 'erro'`, `count: 0`.
+- Chat e Tarefas inalterados: `Sidebar.tsx:147-154` mantém as regras de `inbox`/`tasks` idênticas.
 
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+## Prova (comandos rodados agora neste workspace)
+- `npx vitest run src/hooks/gmail/__tests__/useUnreadEmailCount.test.tsx src/components/layout/__tests__/Sidebar.test.tsx`
+  → `Test Files 2 passed (2)`; `Tests 21 passed (21)` (zero falhas, zero pulados).
+- `npx vitest run src/components/onboarding/__tests__/defaultTourSteps.alvos.test.tsx`
+  → `Test Files 1 passed (1)`; `Tests 2 passed (2)` (o teste do tour já passa sem mock, porque a ponta tem a guarda de modo test no hook).
+- Cobertura dos itens do cartão nos testes já na ponta: `useUnreadEmailCount.test.tsx` — contagem (linha 63), falha da consulta (78), realtime com debounce (86), desabilitado sem acesso (110), limpar canal (118); `Sidebar.test.tsx` "selo do item Email (U01)" (279) — mostra o número (283), 0 sem selo (297), `99+` (307), falha não quebra a barra (314), Chat/Tarefas iguais (326).
+- `git diff --stat` → vazio; `git status --short` → vazio (nada commitado).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+- Não criei nem alterei código: a etapa já está corrigida na ponta atual e o cartão manda fechar sem commit nesse caso.
+- Não trouxe `2c493b83b`/`32a8284d6`: duplicaria o hook (conflito) e puxaria arquivo fora da lista permitida.
+- Nada fora da barra lateral principal foi tocado (MobileShell tem nav própria, fora do escopo da etapa U01).
