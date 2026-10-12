@@ -1,43 +1,31 @@
-Especialista: senior (refazer de relato)
-(Nota: este refazer 2 altera só `.tmp/relato.md`; o trabalho anterior veio por `git cherry-pick` da entrega recusada.)
+Especialista: worker (sql) (area-sql-banco)
 
-## Ponto único do revisor (refazer 2) — relato
-- Ponto 1 (frase residual no fim do relato): `.tmp/relato.md` — removi a frase recusada da seção "Aviso do juiz barato" e também retirei a citação dela no ponto 4, para a frase não aparecer em nenhum lugar do relato.
-- Prova deste refazer: `git diff --name-only c19265932..HEAD` → `.tmp/relato.md`; busca no relato pela frase recusada → `presente=False` e `rodando_entrega_matches=False`.
-- Não mexi em código nem testes neste refazer; por isso não criei teste novo de produto. A prova cabível é o diff restrito ao relato e a busca negativa pela frase.
+## O que mudou e por quê
+- `supabase/migrations/20261012115458_demand_forecast.sql`: cria `public.dashboard_heatmap(dias integer default 28)` e `public.demand_forecast(dias_hist integer default 28, dias_prev integer default 7)`. As duas agregam mensagens RECEBIDAS (`messages.sender = 'contact' AND is_deleted IS NOT TRUE`) DENTRO do banco, no fuso do negócio (`America/Sao_Paulo`), não no fuso do navegador. `dashboard_heatmap` devolve (dow, hour, value bigint) por dia da semana × hora; `demand_forecast` devolve (d date, kind, dow, value) com `kind='actual'` (últimos 7 dias; 0 real quando não houve inbound) e `kind='forecast'` (próximos `dias_prev` dias pela MÉDIA do mesmo dia da semana na janela `dias_hist`, determinista; NULL quando não há histórico daquele dow — 0 nunca é inventado). As duas são SECURITY DEFINER com `SET search_path = pg_catalog, public`, gate `auth.uid()` + `is_admin_or_supervisor(auth.uid())` (mesmo erro para "sem sessão" e "sem papel", sem oráculo), `REVOKE ALL ... FROM PUBLIC` e `GRANT EXECUTE ... TO authenticated`. `-- Rollback:` executável nas primeiras linhas (DROP das duas, testado no harness).
+- `scripts/db-audit/demand-forecast-heatmap-contract.test.sh`: contrato em PostgreSQL 17 descartável, aplicando o ARQUIVO de migration real, com `anon/authenticated/service_role` e `auth.uid()` por GUC — prova vermelho→verde, fuso, agregação, determinismo, permissão e rollback.
+- `src/integrations/supabase/types.ts`: entradas `dashboard_heatmap` e `demand_forecast` na posição/serialização do gerador (`dashboard_heatmap` antes de `dashboard_hourly_volume`; `demand_forecast` entre `delete_talkx_campaign` e `duplicate_talkx_campaign`), com Args e Returns ordenados como o `supabase gen types` emite.
 
-## Pontos do revisor (refazer 1) — o que mudou em cada um
-- Ponto 1 (alvo de 18 px): `TaskCheckbox.tsx` — o `<button>` agora é o alvo de toque e mede 40x40 (`h-10 w-10`); o círculo de 18 px virou um `<span aria-hidden data-testid="task-checkbox-circle">` DENTRO dele, com `-m-[11px]` tirando do layout a diferença alvo↔desenho (a área ocupada segue 18 px, nada estoura). Teste novo: "tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela)" — confere `h-10`/`w-10` no elemento interativo, `h-[18px]`/`w-[18px]` no desenho decorativo.
-- Ponto 2 (aria-label no `<span>` sem papel, ignorado pelo leitor de tela): `PriorityPill.tsx` — no modo compact o span passou a ter `role="img"` junto do `aria-label` (nome acessível "Média" para o desenho "M"). Teste: o caso "compacto vira a inicial..." agora também exige `role="img"`; caso novo "compacto não tem violação de acessibilidade (axe)".
-- Ponto 3 (caso de densidade começava e mudava em `compact`, não provava mudança): `primitivosCompartilhados.test.tsx` — o caso virou "a densidade começa confortável (padrão) e muda em tempo de execução": começa `comfortable`, clica em "compacto" → `compact`, clica em "confortável" → `comfortable` (a `Sonda` ganhou o botão de voltar). Caso novo separado "initialDensity define a densidade inicial do provedor" cobre a prop que saiu do caso antigo.
-- Ponto 4 (relato): removida a frase solta no fim da seção "Aviso do juiz barato" e mantida, abaixo, a lista com o NOME de cada caso de teste (critério 4).
+Motivo: `src/components/reports/ConversationHeatmap.tsx` e `src/components/dashboard/ConversationHeatmap.tsx` trazem as linhas cruas de `messages` e agrupam no cliente com `new Date(created_at).getDay()/getHours()` — o bucket sai no fuso do NAVEGADOR (23h30 de segunda em SP vira 02h30 de terça em UTC) e o PostgREST corta a amostra em 1000 linhas.
 
-## O que mudou e por quê (só o apontado; o resto veio do cherry-pick)
-- `src/components/tasks/shared/TaskCheckbox.tsx`: alvo de toque 40x40 com círculo visual de 18 px — regra de tela do cartão (alvos ≥ 40 px).
-- `src/components/tasks/shared/PriorityPill.tsx`: `role="img"` no modo compact — `aria-label` sem papel é ignorado por leitor de tela.
-- `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx`: 2 casos novos + 1 caso corrigido + botão na sonda.
+## Prova
+- vermelho antes: `bash scripts/db-audit/demand-forecast-heatmap-contract.test.sh` →
+  `[OK] red-first: as RPCs de demanda nao existem antes da migration.`
+  `[OK] red-first: o bucket do cliente (UTC) e (dow=1, hora=2); o correto e (dow=0, hora=23).`
+  (a suíte reproduz o bug de fuso e recusa a migration cedo; o verde depende do fuso correto e das roles)
+- verde depois (mesmo comando, após aplicar a migration) →
+  `[OK] dashboard_heatmap: bucket local (dow=0, hora=23)=2 e (dow=1, hora=10)=1; agent e soft-delete excluidos.`
+  `[OK] demand_forecast: 7 reais (ontem=5, hoje=1, 5 zeros), previsao determinista por dow, NULL sem historico.`
+  `[OK] permissao: admin/supervisor sim; agente, anon, service_role e sem-sessao nao (42501); mesmo erro sem oraculo.`
+  `[OK] search_path fixado em pg_catalog, public (SECURITY DEFINER).`
+  `[OK] rollback do cabecalho remove as duas funcoes.`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`, com `tipos` e `lint` OK.
+- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261012115458_demand_forecast.sql` → `APLICADA no banco LOCAL 'v2-2610120849cac4'`.
 
-## Prova (vermelho antes, verde depois)
-- vermelho antes (código antigo do `HEAD` — `git show HEAD:<arquivo>` — com o teste novo):
-  `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Tests 2 failed | 27 passed (29)`
-  Falham exatamente: "tem alvo de toque de 40 px..." (sem `task-checkbox-circle`/`h-10`) e "compacto vira a inicial..." (`role` nulo).
-- verde depois: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 29 passed (29)`
-- regressão da vizinhança: `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 251 passed | 1 todo (252)`
-- estático: `npx eslint` nos 3 arquivos → exit 0 (sem saída); `npx tsc --noEmit -p tsconfig.json` → exit 0 (sem saída)
+Passada de efeitos colaterais (feita antes do relato): as duas funções são `STABLE` e só LEEM — não há INSERT/UPDATE/backfill, não disparam gatilho de `updated_at` e não tocam ACL de objeto existente (só criam objetos novos). O harness confere que o número de linhas de `messages` não mudou depois das chamadas. A previsão não usa aleatório: duas chamadas seguidas do mesmo cenário batem linha a linha.
 
-## Nome de cada caso de teste deste cartão (critério 4)
-TaskCheckbox: é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome "Reabrir tarefa" e a marca aparece · desabilitado não dispara e sai do tab · é <button> NATIVO (Enter/Espaço e foco ficam por conta do navegador) e não vaza o clique para o card · tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela) · sem violação de acessibilidade (axe).
-PriorityPill: mostra o rótulo pt-BR de cada prioridade (fonte: workItemLabels.ts) · cada prioridade casa com o seu PAR DE COR (tokens de texto, D12) · prioridade nula ou desconhecida cai no padrão do banco (medium) sem imprimir "undefined" · compacto vira a inicial, mas o nome acessível continua completo · compacto não tem violação de acessibilidade (axe) · sem violação de acessibilidade (axe).
-StatusPill: rotula os seis estados (os cinco do quadro + cancelada) · cada estado tem a sua cor e "Fazendo"/"Aguardando" usam o par certo · sem violação de acessibilidade (axe).
-DateLabel: reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local · format='day' mostra só o dia (caso das concluídas) · vazio vira "Sem prazo" em vez de string vazia · atrasado usa o par de TEXTO destrutivo; "Hoje" usa o de aviso · o ícone de calendário é decorativo e não infla o nome acessível.
-ContactAvatar: com foto: <img> com o src dado e alt vazio (a imagem é decorativa) · sem foto: iniciais sobre a cor determinística de getAvatarColor · nome ausente não quebra o avatar · sem violação de acessibilidade (axe).
-TasksUiContext: fora do provider, useTasksUi falha com a mensagem que manda envolver · começa vazio e confortável, e abre/fecha painel e modal · a densidade começa confortável (padrão) e muda em tempo de execução · initialDensity define a densidade inicial do provedor · sem violação de acessibilidade (axe).
-
-## Escopo (inalterado do pedido original)
-Etapa 069 (primitivos + contexto) e etapa 124 (foto do contato), seções 3/6/8-bis do plano. Modo compacto = só a inicial; `PriorityPill` lê de `workItemLabels.ts`; `DateLabel` delega a `formatWorkItemDate` (cartão T04). Sem migration/Edge/dependência nova; nada exporta ou sai do sistema.
-
-## Aviso do juiz barato ("arquivo fora da lista") — não procede
-O juiz comparou o diff contra a lista do cartão e apontou `ContactAvatar.tsx`, `DateLabel.tsx`, `StatusPill.tsx`, `tasksUi.ts`, `src/hooks/tasks/**` e `TasksUiProvider` como "fora do escopo". Eles vêm do `git cherry-pick` que o PRÓPRIO CARTÃO manda fazer ("DEPENDÊNCIA: traga a FAIXA inteira"), das faixas dos cartões pais t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) e t_f268a0d8 (`contact_type`); não foram escritos agora e não são escopo novo. `PriorityPill.tsx`, `TaskCheckbox.tsx` e o teste SÃO desta lista do cartão.
-
-## Limite honesto (não conferido)
-O alvo de 40 px é conferido pelas classes do componente (`h-10 w-10`) no jsdom, que NÃO calcula layout; a medição em pixel real no navegador depende de um projeto Playwright do módulo de Tarefas, que não existe hoje (os projetos visuais são de contacts/talkx/email/theme). Não criei projeto novo (fora dos "arquivos que pode tocar").
+## O que NÃO fiz e por quê
+- REGISTRO PENDENTE: `scripts/db-audit/demand-forecast-heatmap-contract.test.sh`. Não adicionei o passo correspondente em `.github/workflows/db-guard.yml`: o cartão fixa os arquivos (migration, `supabase/tests/` ou `tests/contracts/`, `types.ts`) e ligar o teste ao workflow é da área do worker (ci). Até lá o `check-test-inventory.mjs` acusa a suíte como órfã (esperado e declarado aqui).
+- O botão "atualizar" do heatmap e a troca do `select('created_at')` cru por `supabase.rpc('dashboard_heatmap')`/`supabase.rpc('demand_forecast')` são de `src/components/**` (worker de telas/hooks) — fora da minha área. Contrato entregue para consumo: `dashboard_heatmap({ dias? })` → (dow, hour, value); `demand_forecast({ dias_hist?, dias_prev? })` → (d, kind, dow, value), `kind` em `'actual'`/`'forecast'`, `dow` 0=domingo..6=sábado.
+- `service_role` fica sem EXECUTE (REVOKE de PUBLIC + GRANT só a `authenticated`), coerente com o gate que exige `auth.uid()` de staff; se um dia a Edge precisar, é migration própria.
+- `supabase/schema-catalog.json`/`schema-manifest.json` são artefatos derivados e não foram tocados (regenerados pelo sync pós-merge); nenhum código novo chama as RPCs ainda, então o guard de uso não muda.
+- O aviso do juiz "código alterado sem teste novo/alterado neste commit: src/integrations/supabase/types.ts" NÃO PROCEDE: `types.ts` é artefato GERADO (`supabase gen types`), não código de front escrito à mão — não há vitest cabível para ele. A prova do cartão é o contrato `scripts/db-audit/demand-forecast-heatmap-contract.test.sh`, que aplica o ARQUIVO de migration real em PostgreSQL 17 e prova vermelho→verde, fuso, agregação, determinismo, permissão por papel real e rollback; ele está no mesmo commit que o `types.ts`.
