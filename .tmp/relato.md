@@ -1,22 +1,22 @@
-Especialista: iris (area-front-componentes)
+Especialista: complexo (area-sql-banco; executor: Claude Code pelo comando fixo do cartao)
+
+N-096 — Talk X banco: progresso da campanha por segmento (X142, parte 1). Conferi o diff do executor linha a linha e rodei eu mesmo todas as provas abaixo.
 
 ## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+- supabase/migrations/20261012115900_talkx_campaign_segment_progress.sql (nova): RPC talkx_campaign_segment_progress(p_campaign_id) que devolve por segmento, na ordem de envio (position): total, enviadas (sent+delivered), entregues, falhas, restante (pending+sending), percentual processado, status done/running/pending, mais total_segments e pending_segments em cada linha. SECURITY DEFINER com SET search_path = public, pg_temp; REVOKE de PUBLIC/anon e GRANT a authenticated/service_role; gate admin/supervisor ou service_role (42501 talkx_admin_required), mesmo padrao do helper irmao talkx_engine_cron_runs. Linha 1 com `-- Rollback:` executavel (DROP FUNCTION; funcao nova, nenhum dado alterado). Versao de hoje, maior que o maximo local e >= generated_at do catalogo.
+- scripts/db-audit/talkx-segment-progress.test.sh (novo) + passo N-096 em .github/workflows/db-guard.yml (arquivo citado pelo cartao): harness RED→GREEN em Postgres 17 descartavel aplicando as migrations reais (X057 + a nova) com papel real (SET ROLE authenticated/service_role/anon + claims).
 
-## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
+## Prova (rodei eu mesmo neste workspace)
+- vermelho antes: `bash scripts/db-audit/talkx-segment-progress.test.sh --red` → `[PASS] RED: a funcao nao existe antes da migration` / `[RED] confirmado: talkx_campaign_segment_progress ausente sem a migration`
+- verde depois: `bash scripts/db-audit/talkx-segment-progress.test.sh` → `[PASS] 1. 3 segmentos: done/running/pending na ordem de envio, pending_segments=2 (= 1|10|8|6|1|0|100.0|done|3|2;2|10|3|2|1|6|40.0|running|3|2;3|10|0|0|0|10|0.0|pending|3|2)` + service_role le o mesmo; agente comum barrado (talkx_admin_required); anon sem EXECUTE (permission denied); campanha sem segmentos 0 linhas; PUBLIC sem EXECUTE; search_path fixado; rollback do cabecalho executa e remove a funcao
+- `hermes-db-migrar supabase/migrations/20261012115900_talkx_campaign_segment_progress.sql` → `APLICADA no banco LOCAL 'v2-2610121152200a' (produção não foi tocada)`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos, lint, migrations OK; banco_local AVISO por falta de nome de conjunto — a prova de banco e o harness acima + a aplicacao local)
 
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+## Criterio de pronto
+1. RPC devolve total/enviadas/entregues/falhas/restante/% e done/running/pending para 3 segmentos de fixture — provado no verde acima.
+2. Falha sem a correcao e passa com ela — vermelho→verde acima, mesmo harness.
+3. So arquivos do titulo; diff pequeno; zapp-verify verde.
 
-## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+## O que NAO fiz e por que
+- talkx_campaign_resume_precheck e frente de leitura (X058/F11): outros cartoes. Caminhos do mesmo defeito (git grep): nenhum outro consumidor da RPC no front/edge; o monitor segue lendo destinatarios com .limit(2000) em src/hooks/integrations/useTalkXMonitor.ts:46 — fica para a etapa de front, so comento.
+- Nao regenerei schema-catalog.json/types: dependem do banco oficial apos aplicacao pelo lote; nao toquei.

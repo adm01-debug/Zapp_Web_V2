@@ -759,6 +759,15 @@ jobs:
           TALKX_CRON_GATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh
 
+      # N-096/X142: progresso da campanha por segmento (done/running/pending, restante,
+      # percentual, pending_segments) com papel real. Harness RED→GREEN em PostgreSQL 17.
+      # SKIP_DOCKER_SHIM=1 porque o harness aguarda readiness com `docker logs`.
+      - name: Provar progresso da campanha por segmento (N-096)
+        env:
+          SKIP_DOCKER_SHIM: "1"
+          TALKX_SEGPROG_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-progress.test.sh
+
       # M-DB-01: o tick do motor nao aborta no expurgo LGPD (storage.protect_delete
       # FOR EACH STATEMENT levanta 42501 em DELETE direto; a fixture recria o gatilho).
       # Manifesto talkx_storage_purge_queue, alerta purge_failed com espera de 1 h,
