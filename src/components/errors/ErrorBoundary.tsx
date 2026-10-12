@@ -16,6 +16,12 @@ interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  /**
+   * Chamado UMA vez a cada transicao erro -> ok (seja porque o `resetKey`
+   * mudou, seja porque o usuario clicou "Tentar novamente"). Quem recuperou
+   * avisa o pai para ele zerar contadores de tentativa por sessao.
+   */
+  onReset?: () => void;
   resetKey?: string | number;
 }
 
@@ -105,6 +111,23 @@ export class ErrorBoundary extends Component<Props, State> {
       return { hasError: false, error: null, errorInfo: null, prevResetKey: props.resetKey };
     }
     return null;
+  }
+
+  /**
+   * Avisa o pai quando o boundary se recupera de um erro.
+   *
+   * O React chama `componentDidUpdate` depois de todo render com o estado
+   * anterior, entao a transicao `prevState.hasError=true -> hasError=false`
+   * dispara exatamente uma vez por recuperacao — tanto quando o
+   * `getDerivedStateFromProps` limpa o erro por causa do `resetKey` quanto
+   * quando `handleRetry` zera o estado na mao. Sem isto o contador de
+   * tentativas do pai (AppProviders) nunca voltava a zero e erros ja
+   * recuperados ao longo da sessao somavam ate derrubar o app.
+   */
+  public componentDidUpdate(_prevProps: Props, prevState: State): void {
+    if (prevState.hasError && !this.state.hasError) {
+      this.props.onReset?.();
+    }
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {

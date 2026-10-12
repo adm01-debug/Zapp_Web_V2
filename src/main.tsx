@@ -5,7 +5,7 @@ import "./index.css";
 import "./i18n"; // Initialize i18n 
 import { getLogger } from "./lib/logger";
 import { initWebVitals } from "./lib/web-vitals";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import { AppErrorBoundary } from "./providers/AppProviders";
 import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
 import { reportClientError } from "./lib/errorReporter";
 
@@ -48,9 +48,15 @@ if (!rootElement) {
 // mas ele nunca foi montado — entao nenhuma dessas defesas era exercitada.
 // Em 19.3 o StrictMode monta/desmonta e re-renderiza duas vezes em dev,
 // expondo efeitos sem cleanup e impurezas de render. E so em desenvolvimento.
+// O ErrorBoundary MAIS EXTERNO envolve o AppProviders (dentro de <App />) para
+// cobrir o caso que o boundary interno do provider nao alcanca: erro no proprio
+// AuthProvider/QueryClient durante o primeiro render. Sem ele, esse erro subia
+// ate o ReactDOM e virava tela branca.
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>
 );
 
