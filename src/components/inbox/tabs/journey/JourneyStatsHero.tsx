@@ -19,7 +19,7 @@
  * Cada efeito é CSS/Tailwind com `motion-safe:` (o global de `accessibility.css` já zera
  * animação/transição em movimento reduzido) ou JS que lê o mesmo `matchMedia`.
  * Nenhuma cor literal nova: só os tokens do projeto (`primary`, `success`, `warning`,
- * `info`, `muted`, `dash-violet`). Nenhum arquivo de tema/config foi tocado.
+ * `info`, `muted`, `violeta`). Nenhum arquivo de tema/config foi tocado.
  */
 import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -645,7 +645,7 @@ export function JourneyStatsHero({
             index={3}
             testId="journey-stat-atendimentos"
             icon={Headphones}
-            iconClass="bg-dash-violet/15 text-dash-violet"
+            iconClass="bg-violeta/15 text-[hsl(var(--violeta-text))]"
             label="Atendimentos"
             value={<CountUp valor={contact.episodes} animar={animar} testId="journey-stat-atendimentos-value" />}
             sublabel="Episódios respondidos"
@@ -798,7 +798,7 @@ export function JourneyStatsHero({
           index={14}
           testId="journey-stat-notas-periodo"
           icon={StickyNote}
-          iconClass="bg-dash-violet/15 text-dash-violet"
+          iconClass="bg-violeta/15 text-[hsl(var(--violeta-text))]"
           label="Notas no período"
           value={<CountUp valor={period.notes} animar={animar} testId="journey-stat-notas-periodo-value" />}
           ariaLabel={`Notas no período: ${numero(period.notes)}`}

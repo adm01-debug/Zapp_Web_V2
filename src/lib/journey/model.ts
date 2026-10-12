@@ -124,12 +124,10 @@ export interface JourneyCategoryMeta {
  * Categoria -> rótulo, ícone e classes. As três classes usam SÓ tokens do sistema
  * (`primary`, `info`, `success`, `warning`, `muted`/`muted-foreground`, `border`).
  *
- * Notas usam `primary`: o violeta do sistema não serve como texto/ícone nos dois temas.
- * `--dash-violet` (282 95% 66%, `src/styles/tokens.css`) dá 3,38:1 como texto sobre o card claro
- * e 2,85:1 como ícone sobre a própria tinta `/15` — abaixo dos 4,5:1 de texto e dos 3:1 de ícone;
- * `--dash-tile-violet` (260 69% 37%) só funciona no claro e cai para 1,65:1 no card escuro.
- * O cartão autoriza cair no `primary` nesse caso (o par `bg-primary/15 text-primary` é o que o
- * `KIND_META` da aba já usa hoje); a medição está no relato do cartão.
+ * Notas usam `primary` (decisão D02). Os tokens soltos `--dash-violet`/`--dash-tile-violet`
+ * mediam 3,38:1 e 1,65:1 como texto/ícone e foram consolidados no par de categoria
+ * `--violeta`/`--violeta-text` pelo t_290f3cdc; a escolha do `primary` para Notas segue
+ * valendo (o par `bg-primary/15 text-primary` é o que o `KIND_META` da aba já usa hoje).
  */
 export const CATEGORY_META: Record<JourneyCategory, JourneyCategoryMeta> = {
   message: {

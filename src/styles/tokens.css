@@ -192,15 +192,6 @@
     --wa-background: 30 24% 87%;
     --wa-bubble: 94 78% 87%;
     --wa-bubble-foreground: 0 0% 0%;
-
-    /* ===== Catálogo — badge de destaque "Novo/Kit" (CT-40) =====
-       Cor de destaque das badges do módulo do catálogo (`src/components/catalog/`).
-       Substitui o `bg-violet-500` que estava solto em `ProductDetailDialog.tsx`
-       e `CatalogProductCard.tsx`. Mesma família de matiz (268 83%) já usada pela
-       `.catalog-badge--new` de `components.css`; o texto da badge usa
-       `text-primary-foreground`. Não duplicar este valor em outro arquivo. */
-    --badge-new: 268 83% 63%;
-
     /* ===== Sidebar ===== */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 221 20% 12%;
@@ -354,7 +345,6 @@
     --dash-tile-blue: 221 88% 29%;
     --dash-tile-red: 349 62% 30%;
     --dash-tile-green: 156 73% 18%;
-    --dash-tile-violet: 260 69% 37%;
     --dash-tile-amber: 43 80% 24%;
     --dash-blue: 210 100% 57%;
     --dash-red: 357 94% 63%;
@@ -385,11 +375,12 @@
          claro  — o --nome-text sobre card/popover: violeta 11,2 / teal 6,2 / rosa 7,6:1;
                   branco sobre o preenchimento: 7,1 / 5,6 / 4,6:1;
                   preenchimento sobre o card: 7,1 / 5,6 / 4,6:1 (≥3 p/ componente).
-       Reconciliação do roxo: --dash-violet (282°) e --kpi-tile-purple (258°) são
-       acentos dos TILES do dashboard "Navy Operational" (valor medido de
-       docs/design/dashboard-reference.png) — continuam como estão para não repintar
-       o dashboard (critério 4 deste cartão). Consumidor novo de "categoria roxa" usa
-       --violeta, não os tokens de tile.
+       Consolidação do roxo (t_290f3cdc): Catálogo, Dashboard, Contatos, Filas e
+       Team-chat migraram para --violeta/--violeta-text; --badge-new e
+       --dash-tile-violet foram removidos. --dash-violet (282 95% 66%) sobrevive
+       porque o Talk X ainda o consome (cartão próprio t_6ea4e0f2); --kpi-tile-purple
+       (258°) é acento medido do tile de KPI do dashboard "Navy Operational".
+       Consumidor novo de "categoria roxa" usa --violeta.
     */
     --violeta: 265 80% 50%;
     --violeta-foreground: 0 0% 100%;

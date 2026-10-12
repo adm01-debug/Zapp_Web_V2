@@ -56,7 +56,7 @@ describe('cor crua -> token — os 6 pontos não guardam cor literal', () => {
 
   it('OmnichannelManager distribui canais em tonalidades distintas', () => {
     const src = fonte(OMNICHANNEL);
-    expect(src).toMatch(/text-dash-violet/); // Instagram
+    expect(src).toMatch(/text-\[hsl\(var\(--violeta-text\)\)\]/); // Instagram
     expect(src).toMatch(/text-info/); // Telegram
     expect(src).toMatch(/text-streak/); // Messenger
     expect(src).not.toMatch(/text-accent',\s*bg: 'bg-accent/); // não cai no azul do accent

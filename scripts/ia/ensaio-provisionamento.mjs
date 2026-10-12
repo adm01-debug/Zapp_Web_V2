@@ -61,7 +61,7 @@ export const PALETA_FILAS = [
   'hsl(var(--success))',
   'hsl(var(--warning))',
   'hsl(var(--destructive))',
-  'hsl(var(--dash-violet))',
+  'hsl(var(--violeta))',
   'hsl(var(--dash-red))',
   'hsl(var(--info))',
   'hsl(var(--dash-green))',

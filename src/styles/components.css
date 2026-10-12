@@ -354,7 +354,7 @@
 }
 .catalog-badge--instock { background: hsl(var(--success) / 0.15); color: hsl(var(--success)); }
 .catalog-badge--bestseller { background: hsl(var(--primary) / 0.15); color: hsl(var(--primary)); }
-.catalog-badge--new { background: hsl(268 83% 63% / 0.15); color: hsl(268 83% 70%); }
+.catalog-badge--new { background: hsl(var(--violeta) / 0.15); color: hsl(var(--violeta-text)); }
 .catalog-badge--featured { background: hsl(var(--warning) / 0.15); color: hsl(var(--warning)); }
 .catalog-badge--out { background: hsl(var(--destructive) / 0.15); color: hsl(var(--destructive)); }
 

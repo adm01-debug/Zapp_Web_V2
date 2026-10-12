@@ -27,8 +27,8 @@ const integrations = [
     name: 'Sentry',
     description: 'Monitoramento de erros, performance e session replays em tempo real.',
     icon: Bug,
-    color: 'bg-dash-tile-violet',
-    foreground: 'text-primary-foreground',
+    color: 'bg-violeta',
+    foreground: 'text-violeta-foreground',
     // R2-API-047: tela de demonstração — não há SDK, validação de DSN nem API de métricas reais.
     status: 'demo' as const,
   },

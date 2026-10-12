@@ -27,7 +27,7 @@ const FEATURE_TILE: Record<string, string> = {
   analysis: 'bg-primary',
   sentiment: 'bg-dash-tile-red',
   summary: 'bg-dash-tile-green',
-  transcription: 'bg-dash-tile-violet',
+  transcription: 'bg-violeta',
   trends: 'bg-dash-tile-amber',
 };
 
@@ -148,7 +148,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
             className="cursor-pointer" onClick={() => handleFeatureClick(feature)}>
             <div className="flex items-start gap-4">
               <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center shrink-0', FEATURE_TILE[feature.id] ?? 'bg-dash-tile-blue')}>
-                <feature.icon className="w-7 h-7 text-white" />
+                <feature.icon className={cn('w-7 h-7', feature.id === 'transcription' ? 'text-violeta-foreground' : 'text-white')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
