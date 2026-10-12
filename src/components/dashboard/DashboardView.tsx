@@ -35,6 +35,7 @@ import { VolumeChart } from './overview/VolumeChart';
 import { NowPanel } from './overview/NowPanel';
 import { DailyGoalsCard } from './overview/DailyGoalsCard';
 import { QueueHealthTable } from './overview/QueueHealthTable';
+import { SystemHealthCard } from './overview/SystemHealthCard';
 import { RecentActivityCard } from './overview/RecentActivityCard';
 import { TeamHighlightCard } from './overview/TeamHighlightCard';
 import { AIToolsCard } from './overview/AIToolsCard';
@@ -235,6 +236,11 @@ export function DashboardView() {
               />
             )}
           </div>
+          {isStaff && (
+            <div data-testid="dash-row-saude" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+              <SystemHealthCard />
+            </div>
+          )}
           </DashboardZone>
           <DashboardZone id="engajamento" title="Engajamento e IA">
           <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
