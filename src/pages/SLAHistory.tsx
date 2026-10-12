@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { SLAHistoryDashboard } from '@/components/sla/SLAHistoryDashboard';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 /**
  * R2-PLAT-012 (#450): a Sidebar destas rotas precisa do contrato de navegação
@@ -26,7 +27,9 @@ const SLAHistory = () => {
         <AuroraBorealis />
         <FloatingParticles />
         <div className="relative z-10">
-          <SLAHistoryDashboard />
+          <SectionErrorBoundary sectionName="Histórico de SLA">
+            <SLAHistoryDashboard />
+          </SectionErrorBoundary>
         </div>
       </main>
     </div>

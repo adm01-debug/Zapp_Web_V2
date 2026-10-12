@@ -9,6 +9,7 @@ import { ConversationHeatmap } from './ConversationHeatmap';
 import { PeriodComparison } from './PeriodComparison';
 import { DemandForecast } from './DemandForecast';
 import { AbandonmentRate } from './AbandonmentRate';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
@@ -175,19 +176,27 @@ export function AdvancedReportsView() {
         </TabsContent>
 
         <TabsContent value="heatmap" className="space-y-4">
-          <ConversationHeatmap />
+          <SectionErrorBoundary sectionName="Mapa de calor">
+            <ConversationHeatmap />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="comparison" className="space-y-4">
-          <PeriodComparison />
+          <SectionErrorBoundary sectionName="Comparação de períodos">
+            <PeriodComparison />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="forecast" className="space-y-4">
-          <DemandForecast />
+          <SectionErrorBoundary sectionName="Previsão de demanda">
+            <DemandForecast />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="abandonment" className="space-y-4">
-          <AbandonmentRate />
+          <SectionErrorBoundary sectionName="Taxa de abandono">
+            <AbandonmentRate />
+          </SectionErrorBoundary>
         </TabsContent>
       </Tabs>
     </div>

@@ -13,6 +13,7 @@ import { useSLAMetrics, PeriodFilter } from '@/hooks/sla/useSLAMetrics';
 import { useSLAHistory } from '@/hooks/sla/useSLAHistory';
 import { SLAMetricCards } from './SLAMetricCards';
 import { SLAAgentTable } from './SLAAgentTable';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 export const SLADashboard = () => {
   const navigate = useNavigate();
@@ -141,15 +142,19 @@ export const SLADashboard = () => {
         </div>
       </div>
 
-      <SLAMetricCards
-        data={data.overall}
-        periodLabel={periodLabels[period]}
-        sparkOverall={sparkOverall}
-        sparkFR={sparkFR}
-        sparkConversations={sparkConversations}
-      />
+      <SectionErrorBoundary sectionName="Métricas de SLA">
+        <SLAMetricCards
+          data={data.overall}
+          periodLabel={periodLabels[period]}
+          sparkOverall={sparkOverall}
+          sparkFR={sparkFR}
+          sparkConversations={sparkConversations}
+        />
+      </SectionErrorBoundary>
 
-      <SLAAgentTable agents={data.byAgent} />
+      <SectionErrorBoundary sectionName="Desempenho por agente">
+        <SLAAgentTable agents={data.byAgent} />
+      </SectionErrorBoundary>
 
       {/* Base do cálculo de 1ª resposta — só o dado que os cards de métrica
           acima ainda NÃO mostram. Antes havia dois cards ("Visão Geral do SLA" e
@@ -183,10 +188,14 @@ export const SLADashboard = () => {
           <TabsTrigger value="granular">Regras Granulares</TabsTrigger>
         </TabsList>
         <TabsContent value="global">
-          <SLAConfigurationManager />
+          <SectionErrorBoundary sectionName="Configuração Global de SLA">
+            <SLAConfigurationManager />
+          </SectionErrorBoundary>
         </TabsContent>
         <TabsContent value="granular">
-          <SLARulesManager />
+          <SectionErrorBoundary sectionName="Regras Granulares de SLA">
+            <SLARulesManager />
+          </SectionErrorBoundary>
         </TabsContent>
       </Tabs>
     </div>
