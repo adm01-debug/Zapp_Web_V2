@@ -1,5 +1,6 @@
 -- talk_me_list_pending_messages: historico pendente do cliente antes do aceite.
--- Rollback: DROP FUNCTION public.talk_me_list_pending_messages(uuid, integer);
+-- Rollback:
+--   DROP FUNCTION IF EXISTS public.talk_me_list_pending_messages(uuid, integer);
 --
 -- A fila TALK ME so expõe a ultima mensagem; esta RPC devolve, sob demanda, o
 -- bloco de mensagens do cliente ainda sem resposta (o mesmo conjunto contado em
@@ -12,6 +13,20 @@
 -- o chamador opera (admin/supervisor ou membro ativo). Campanhas de saida e
 -- notas internas nao entram: o bloco pendente so contem sender='contact' e
 -- qualquer saida do agente encerraria a elegibilidade.
+
+DO $$
+BEGIN
+  IF to_regclass('public.messages') IS NULL
+     OR NOT EXISTS (
+       SELECT 1
+       FROM pg_trigger t
+       WHERE t.tgrelid = 'public.messages'::regclass
+         AND t.tgname = 'trg_guard_message_provenance_fields'
+         AND NOT t.tgisinternal
+     ) THEN
+    RAISE EXCEPTION 'talk_me_pending_history_requires_provenance_trigger';
+  END IF;
+END $$;
 
 CREATE FUNCTION public.talk_me_list_pending_messages(
   p_contact_id uuid,
