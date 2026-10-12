@@ -93,6 +93,11 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
+  // encerrar→reabrir→encerrar no mesmo dia. Depende de docker (como os demais deste bloco);
+  // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
+  // e cabe junto dos outros testes de container — promover pelo dono do workflow.
+  'scripts/db-audit/conversation-closures-reopen-same-day.test.sh',
   // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
   // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
