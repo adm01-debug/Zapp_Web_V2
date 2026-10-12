@@ -206,19 +206,26 @@ export function useRealtimeMessages() {
     void Promise.resolve().then(fetchConversations);
   }, [fetchConversations]);
 
+  // Revalidacao de rede: uma queda nao avisa o hook, entao a lista em memoria pode
+  // ter envelhecido. fetchConversations preserva os eventos ao vivo recebidos
+  // durante o request (liveRevisionRef), entao revalidar nao perde o que chegou
+  // depois. Os dois canais compartilham o callback: o limite por identidade em
+  // useSupabaseRealtime colapsa os dois gatilhos em uma unica busca.
   useSupabaseRealtime<RealtimeMessage>({
     channelName: 'global-messages-realtime',
     table: 'messages',
     onInsert: handleNewMessage,
     onUpdate: handleMessageUpdate,
-    enabled: true
+    enabled: true,
+    onReconnect: fetchConversations,
   });
 
   useSupabaseRealtime<ConversationContact>({
     channelName: 'global-contacts-realtime',
     table: 'contacts',
     onUpdate: handleContactUpdate,
-    enabled: true
+    enabled: true,
+    onReconnect: fetchConversations,
   });
 
   // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
