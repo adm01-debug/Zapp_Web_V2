@@ -1,18 +1,21 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Edgar (area-edge-api)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Sensibilidade
+- Padrões sensíveis tocados: `service_role` (o handler usa o client admin para ler `profiles` e chamar `revoke_auth_sessions`), revogação de sessão (`auth.sessions`) e a decisão de entrada. O `service_role` NÃO foi ampliado: usa o mesmo client admin já existente; nenhuma policy, grant ou `EXECUTE` mudou — `revoke_auth_sessions(text,uuid,uuid,uuid,uuid)` já era `service_role`-only desde a migration `20261004181921` e é a MESMA primitiva do trigger `trg_revoke_sessions_on_profile_deactivate` e da Edge `revoke-auth-sessions`.
+- Nenhuma proteção afrouxada e prova do caso NEGADO: o caminho negado (perfil inativo/ausente/`is_active` nulo) devolve o mesmo 401 e o mesmo corpo da senha errada, sem token, e o teste `perfil inativo: corpo e status IDÊNTICOS à senha errada` compara os dois corpos. Não há regressão de enumeração de contas.
+- Nenhuma referência a banco/endpoint de produção. Sem segredo; nenhum dado de cliente.
+- O que muda para quem chama: para perfil ativo, nada (mesmo 200/sessão). Para perfil inativo/ausente, o login passa a ser recusado com 401 (antes entrava).
+
+## O que mudou e por quê (3 arquivos no diff, 1 deles de teste)
+- `supabase/functions/auth-login/index.ts` (código): depois de `signInWithPassword` dar certo, resolvo o perfil por `profiles.user_id = signIn.user.id` (igualdade EXATA num índice UNIQUE/FK; nunca por `profiles.email`, nullable e sem UNIQUE). Perfil ausente, `is_active = false` ou `is_active` nulo (`!== true`) → revogo as sessões do usuário via `revoke_auth_sessions('global', …)` e devolvo o MESMO 401 da senha errada (mesmo `record_failed_login` e mesmo corpo de lockout). Falha na consulta do perfil → revogo e devolvo 500 (fail-closed). A consulta fica DEPOIS do GoTrue para inativo e senha errada terem custo de tempo comparável (sem oráculo).
+- `supabase/functions/auth-login/index.test.ts` (teste): 6 casos novos — ausente (sem linha), `is_active` false, `is_active` nulo, erro na consulta (500), perfil ativo entra com 200 sem revogação, e comparação de corpo/status idênticos à senha errada; os casos inativos também provam a revogação (`revoke_auth_sessions` global com o id do auth) e o caminho exato `profiles`/`user_id`.
+- `.tmp/relato.md` (este relato).
+- Concentrei o ramo de senha errada e o ramo inativo no mesmo helper `recordFailure`, para os dois serem indistinguíveis; a resposta de erro de senha não mudou.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `deno test --config scripts/ci/deno.json supabase/functions/auth-login/index.test.ts` (com o `index.ts` original, via `git stash`) → `FAILED | 13 passed | 6 failed` — os 6 casos novos caem (o inativo entrava com 200).
+- verde depois: mesmo comando → `ok | 19 passed | 0 failed`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não adicionei migration: a revogação usa primitiva que já existe.
+- Não mexi em `_shared` nem no front; o contrato de resposta (200/401/423/503) é o mesmo do arquivo.
