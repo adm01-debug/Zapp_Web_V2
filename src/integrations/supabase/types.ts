@@ -2191,6 +2191,7 @@ export type Database = {
           group_category: string | null
           id: string
           is_lid_legacy: boolean
+          is_vip: boolean
           job_title: string | null
           latitude: number | null
           lead_origin: string | null
@@ -2234,6 +2235,7 @@ export type Database = {
           group_category?: string | null
           id?: string
           is_lid_legacy?: boolean
+          is_vip?: boolean
           job_title?: string | null
           latitude?: number | null
           lead_origin?: string | null
@@ -2277,6 +2279,7 @@ export type Database = {
           group_category?: string | null
           id?: string
           is_lid_legacy?: boolean
+          is_vip?: boolean
           job_title?: string | null
           latitude?: number | null
           lead_origin?: string | null
@@ -11511,6 +11514,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      list_contacts_vip: {
+        Args: never
+        Returns: {
+          id: string
+          is_vip: boolean
+          name: string
+          surname: string
+          updated_at: string
+        }[]
+      }
       list_multiplix_claimable_items: {
         Args: { p_dispatch_id: string; p_limit?: number }
         Returns: {
@@ -12059,6 +12072,10 @@ export type Database = {
       set_call_agent_notes: {
         Args: { p_call_id: string; p_notes: string }
         Returns: undefined
+      }
+      set_contact_vip: {
+        Args: { p_contact_id: string; p_is_vip: boolean }
+        Returns: boolean
       }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
