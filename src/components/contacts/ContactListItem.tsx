@@ -35,7 +35,15 @@ export function ContactListItem({
     <div
       data-testid="contact-list-item"
       className={cn(
-        "group flex items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
+        // Grid com template definido por breakpoint: cada largura tem o mesmo número de
+        // trilhas para TODAS as linhas, então as colunas ficam alinhadas (fr/auto resolvem
+        // igual em linhas de mesma largura). Antes era flexbox com `min-w-[130px]` etc., o
+        // que desalinhava entre linhas porque a largura vinha do conteúdo de cada uma.
+        "group grid items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
+        "grid-cols-[auto_auto_minmax(0,1fr)_auto]",                                          // < md: checkbox, avatar, nome, ações
+        "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]",                                  // md: + data
+        "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",       // lg: + telefone, tags
+        "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]", // xl: + email
         "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
@@ -65,7 +73,7 @@ export function ContactListItem({
       </div>
 
       {/* Name & type */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <div className="flex items-center gap-2">
           <HighlightText
             text={`${contact.name} ${contact.surname || ''}`.trim()}
@@ -98,49 +106,52 @@ export function ContactListItem({
         )}
       </div>
 
-      {/* Phone */}
-      {contact.phone && (
-        <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-[130px]" onClick={(e) => e.stopPropagation()}>
-          <Phone className="w-3 h-3 shrink-0" />
-          <a
-            href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-2xs hover:text-primary transition-colors truncate"
-          >
-            {contact.phone}
-          </a>
-        </div>
-      )}
+      {/* Phone — a célula existe sempre (mesmo sem telefone) para manter a trilha do grid
+          alinhada com as outras linhas; o conteúdo é que aparece só quando há telefone. */}
+      <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0" onClick={(e) => e.stopPropagation()}>
+        {contact.phone && (
+          <>
+            <Phone className="w-3 h-3 shrink-0" />
+            <a
+              href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-2xs hover:text-primary transition-colors truncate"
+            >
+              {contact.phone}
+            </a>
+          </>
+        )}
+      </div>
 
       {/* Email */}
-      {contact.email && (
-        <div className="hidden xl:flex items-center gap-1.5 text-xs text-muted-foreground min-w-[160px]" onClick={(e) => e.stopPropagation()}>
-          <Mail className="w-3 h-3 shrink-0" />
-          <a
-            href={`mailto:${contact.email}`}
-            className="truncate text-2xs hover:text-primary transition-colors"
-          >
-            {contact.email}
-          </a>
-        </div>
-      )}
+      <div className="hidden xl:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0" onClick={(e) => e.stopPropagation()}>
+        {contact.email && (
+          <>
+            <Mail className="w-3 h-3 shrink-0" />
+            <a
+              href={`mailto:${contact.email}`}
+              className="truncate text-2xs hover:text-primary transition-colors"
+            >
+              {contact.email}
+            </a>
+          </>
+        )}
+      </div>
 
       {/* Tags */}
-      {contact.tags && contact.tags.length > 0 && (
-        <div className="hidden lg:flex items-center gap-1 min-w-[100px]">
-          {contact.tags.slice(0, 2).map(tag => (
-            <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5">
-              {tag}
-            </Badge>
-          ))}
-          {contact.tags.length > 2 && (
-            <Badge variant="secondary" className="text-3xs h-4 px-1.5">
-              +{contact.tags.length - 2}
-            </Badge>
-          )}
-        </div>
-      )}
+      <div className="hidden lg:flex items-center gap-1 min-w-0">
+        {contact.tags?.slice(0, 2).map(tag => (
+          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5">
+            {tag}
+          </Badge>
+        ))}
+        {(contact.tags?.length || 0) > 2 && (
+          <Badge variant="secondary" className="text-3xs h-4 px-1.5">
+            +{(contact.tags?.length || 0) - 2}
+          </Badge>
+        )}
+      </div>
 
       {/* Date */}
       <span className="hidden md:block text-2xs text-muted-foreground shrink-0">
