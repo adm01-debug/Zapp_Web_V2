@@ -3275,6 +3275,45 @@ export type Database = {
         }
         Relationships: []
       }
+      data_deletion_requests: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string
+          prazo: string
+          resposta: string | null
+          status: string
+          tratado_em: string | null
+          tratado_por: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo: string
+          prazo?: string
+          resposta?: string | null
+          status?: string
+          tratado_em?: string | null
+          tratado_por?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          prazo?: string
+          resposta?: string | null
+          status?: string
+          tratado_em?: string | null
+          tratado_por?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deal_activities: {
         Row: {
           activity_type: string
@@ -11650,6 +11689,13 @@ export type Database = {
           total: number
         }[]
       }
+      my_privacy_history: {
+        Args: { p_pagina?: number }
+        Returns: {
+          action: string
+          created_at: string
+        }[]
+      }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
       notify_searchbox_budget: { Args: never; Returns: number }
@@ -11849,6 +11895,7 @@ export type Database = {
         }
         Returns: Json
       }
+      register_privacy_policy_viewed: { Args: never; Returns: undefined }
       release_multiplix_item_claim: {
         Args: { p_claim_token: string; p_item_id: string }
         Returns: boolean
