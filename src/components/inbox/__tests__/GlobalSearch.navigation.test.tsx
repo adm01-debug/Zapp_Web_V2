@@ -64,13 +64,18 @@ function messageRow(id: string, content: string) {
   };
 }
 
-function renderSearch() {
+function renderSearch(options: { withNewConversation?: boolean } = {}) {
   const onOpenChange = vi.fn();
   const onSelectResult = vi.fn();
-  const onNewConversation = vi.fn();
-  // R2-INB-018: ações que dependem do host só aparecem quando a operação real é
-  // fornecida. Este teste de navegação precisa de uma ação hospedada visível.
-  render(<GlobalSearch open onOpenChange={onOpenChange} onSelectResult={onSelectResult} onNewConversation={onNewConversation} />);
+  const onNewConversation = options.withNewConversation ? vi.fn() : undefined;
+  render(
+    <GlobalSearch
+      open
+      onOpenChange={onOpenChange}
+      onSelectResult={onSelectResult}
+      onNewConversation={onNewConversation}
+    />,
+  );
   return { onOpenChange, onSelectResult, onNewConversation };
 }
 
@@ -107,7 +112,7 @@ describe('GlobalSearch — navegação do R2-INB-019', () => {
   });
 
   it('percorre e aciona as ações rápidas com o teclado quando não há resultados', () => {
-    const { onOpenChange } = renderSearch();
+    const { onOpenChange } = renderSearch({ withNewConversation: true });
 
     expect(screen.getByText('Nova conversa')).toBeInTheDocument();
     expect(screen.getByText('Ir para Dashboard')).toBeInTheDocument();
