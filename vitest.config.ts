@@ -5,6 +5,15 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 
+// Teto de workers. Sem ele o vitest abre um worker por nucleo (24 nesta maquina);
+// com varios cartoes rodando `npx vitest run` juntos a carga estoura (medido
+// 11/10/2026: carga 72 com 4 suites). Ordem: (1) VITEST_MAX_WORKERS manda — o
+// integrador roda com 10 pelo systemd; (2) no CI do GitHub nao definimos, para
+// continuar como hoje; (3) no resto (agentes e uso local) teto de 4.
+const fromEnv = Number.parseInt(process.env.VITEST_MAX_WORKERS ?? "", 10);
+const maxWorkers =
+  Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : process.env.CI ? undefined : 4;
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -13,6 +22,9 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     testTimeout: 15000,
+    // maxWorkers so entra quando definido: no CI a chave fica ausente e o
+    // vitest segue no padrao dele.
+    ...(maxWorkers === undefined ? {} : { maxWorkers }),
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "lcov"],

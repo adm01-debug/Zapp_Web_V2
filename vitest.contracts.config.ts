@@ -1,5 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
+// Teto de workers: mesma regra do vitest.config.ts. Esta suite roda no
+// `test:contracts` do CI (NAO passa por `bun run test`), entao o teto de 4 no
+// uso local e dos agentes tambem vale aqui. VITEST_MAX_WORKERS manda (integrador
+// usa 10); no CI sem a variavel nao definimos (comportamento de hoje).
+const fromEnv = Number.parseInt(process.env.VITEST_MAX_WORKERS ?? '', 10);
+const maxWorkers =
+  Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : process.env.CI ? undefined : 4;
+
 // Suíte de contrato das Edge Functions (roda em Node).
 // schemas.ts importa zod@3.23.8 via URL esm.sh (runtime Deno). O vite-node
 // externaliza specifiers http:// antes do resolveId, então a reescrita é
@@ -31,5 +39,8 @@ export default defineConfig({
     // ja tomada no vitest.config.ts (`testTimeout: 15000`) e em src/test/setup.ts
     // (`asyncUtilTimeout`), pelo mesmo motivo.
     testTimeout: 30000,
+    // maxWorkers so entra quando definido: no CI sem VITEST_MAX_WORKERS a chave
+    // fica ausente e o vitest segue no padrao dele.
+    ...(maxWorkers === undefined ? {} : { maxWorkers }),
   },
 });
