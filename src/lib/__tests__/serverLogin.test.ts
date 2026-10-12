@@ -79,15 +79,17 @@ describe('serverLogin', () => {
   it('403 da politica de rede vira networkBlocked, distinto de senha errada e de lockout', async () => {
     fetchMock.mockResolvedValue(jsonResponse(403, { error: 'Access denied' }));
     const r = await serverLogin('a@b.co', 'x');
-    expect(r).toEqual({
+    expect(r).toMatchObject({
       ok: false, unavailable: false, networkBlocked: true, retryable: false, error: 'Access denied',
     });
+    if (r.ok || r.unavailable) throw new Error('unreachable');
+    expect(r.lock.isLocked).toBe(false);
   });
 
   it('503 da politica de rede vira networkBlocked retentavel', async () => {
     fetchMock.mockResolvedValue(jsonResponse(503, { error: 'Service unavailable' }));
     const r = await serverLogin('a@b.co', 'x');
-    expect(r).toEqual({
+    expect(r).toMatchObject({
       ok: false, unavailable: false, networkBlocked: true, retryable: true, error: 'Service unavailable',
     });
   });

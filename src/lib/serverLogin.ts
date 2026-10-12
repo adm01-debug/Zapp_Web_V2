@@ -10,7 +10,7 @@ export interface ServerLoginLock {
 export type ServerLoginResult =
   | { ok: true; accessToken: string; refreshToken: string }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
-  | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string }
+  | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: true; error: string };
 
 /**
@@ -18,6 +18,9 @@ export type ServerLoginResult =
  * `networkPolicyDenialResponse` (supabase/functions/_shared/request-policy.ts):
  * 403 -> "Access denied"; 503 -> "Service unavailable". O corpo e generico de
  * proposito — nao distingue IP de pais nem vaza listas/regras.
+ *
+ * O ramo `networkBlocked` tambem traz `lock` (= NO_LOCK: sem lockout), para o
+ * chamador ler `lock` sem ter de estreitar por `networkBlocked`.
  */
 export const NETWORK_POLICY_DENIED_BODY = 'Access denied';
 export const NETWORK_POLICY_UNAVAILABLE_BODY = 'Service unavailable';
@@ -139,6 +142,7 @@ export async function serverLogin(email: string, password: string): Promise<Serv
       networkBlocked: true,
       retryable: false,
       error: NETWORK_POLICY_DENIED_BODY,
+      lock: NO_LOCK,
     };
   }
 
@@ -155,6 +159,7 @@ export async function serverLogin(email: string, password: string): Promise<Serv
       networkBlocked: true,
       retryable: true,
       error: NETWORK_POLICY_UNAVAILABLE_BODY,
+      lock: NO_LOCK,
     };
   }
 
