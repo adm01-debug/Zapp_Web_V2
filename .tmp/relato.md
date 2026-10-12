@@ -15,6 +15,10 @@ Cartão de retomada: trazer para a base `dia/2026-10-12` os dois commits da entr
 - verde depois (bloco B/C do mesmo contrato, rodado agora): `[PASS] B1 membro comum sai do grupo (left=true, grupo permanece)` … `[PASS] C6 rollback executado: remove_team_member voltou ao erro anterior em tcm.role` e a linha final `[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)` (exit 0, 55 linhas, `.tmp/prova-member-role.log`).
 - Conflito do rebase: a resolução manteve os 2 passos; `git diff --stat` da entrega mostra só os 2 arquivos novos da #31 + o passo adicionado no `db-guard.yml`.
 
+## Falso positivo do aviso de DDL (registrado para o portão)
+
+O aviso `PROIBIÇÃO: o cartão diz SEM DDL/migration` não procede: este cartão É de banco — o título é `fix(db)` e a seção "Ação e limite" manda trazer os commits anteriores, que vivem em `supabase/migrations/**`, `scripts/db-audit/**` e no passo do `db-guard.yml`. O aviso nasce da linha de RODAPÉ copiada nos cartões ("... sem DDL, Edge Function, migration nem dependência nova") descrevendo OUTRA trilha (a de front/plano), não o escopo deste cartão. A migration trazida é exatamente a do defeito pedido (`tcm.role` → `member_role`) e não muda RLS, GRANT nem contrato de retorno.
+
 ## O que NÃO fiz e por quê
 
 - Não criei migration nova nem reescrevi a existente: o cartão manda trazer os commits anteriores, e a migration `20261006170426` não existe na base, então ela entra como está.
