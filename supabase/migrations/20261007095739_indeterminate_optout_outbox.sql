@@ -34,7 +34,7 @@
 -- parametros novos sao TODOS obrigatorios (sem DEFAULT): as aridades ficam
 -- disjuntas (9-11 vs exatamente 12) e nenhuma chamada fica ambigua (42725).
 
-CREATE TABLE public.inbound_message_effects (
+CREATE TABLE IF NOT EXISTS public.inbound_message_effects (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   whatsapp_connection_id uuid NOT NULL REFERENCES public.whatsapp_connections(id) ON DELETE CASCADE,
   external_id text NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE public.inbound_message_effects (
   applied_at timestamptz,
   CONSTRAINT inbound_message_effects_key UNIQUE (whatsapp_connection_id, external_id, effect),
   CONSTRAINT inbound_message_effects_effect_check
-    CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply'))
+    CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply', 'optout_resolve'))
 );
 
 ALTER TABLE public.inbound_message_effects ENABLE ROW LEVEL SECURITY;
@@ -60,11 +60,6 @@ COMMENT ON TABLE public.inbound_message_effects IS
 CREATE INDEX inbound_message_effects_pending_idx
   ON public.inbound_message_effects (whatsapp_connection_id, external_id, created_at, id)
   WHERE applied_at IS NULL;
-
-ALTER TABLE public.inbound_message_effects
-  DROP CONSTRAINT IF EXISTS inbound_message_effects_effect_check,
-  ADD CONSTRAINT inbound_message_effects_effect_check
-    CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply', 'optout_resolve'));
 
 COMMENT ON CONSTRAINT inbound_message_effects_effect_check ON public.inbound_message_effects IS
   '#190: optout_resolve = resolucao de opt-out pendente (decisao indeterminate no ingest); drenada por reavaliacao via talkx_match_optout.';
@@ -166,13 +161,11 @@ BEGIN
   IF v_existing.id IS NOT NULL THEN
     v_status := CASE WHEN v_existing.status IS NOT NULL AND v_existing.status <> 'received' THEN v_existing.status ELSE 'received' END;
     v_content := CASE WHEN v_existing.status = 'deleted' THEN coalesce(v_existing.content, '[Mensagem apagada]') ELSE p_content END;
-    ALTER TABLE public.messages DISABLE TRIGGER update_messages_updated_at;
     UPDATE public.messages
     SET contact_id = v_contact.id, whatsapp_connection_id = p_connection_id, content = v_content,
         message_type = p_message_type, media_url = p_media_url, sender = 'contact',
         status = v_status
     WHERE id = v_existing.id;
-    ALTER TABLE public.messages ENABLE TRIGGER update_messages_updated_at;
     v_message_id := v_existing.id;
     v_outcome := 'updated';
   ELSE
