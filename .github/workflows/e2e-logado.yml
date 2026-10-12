@@ -62,13 +62,24 @@ jobs:
           # job para o login real acontecer uma vez so (sem concorrencia).
           - name: authenticated
             projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            # A05: este grupo carrega 205 dos 248 testes do workflow (172 deles no
+            # `chromium-authenticated`, que e' o projeto-catch-all). Com o pool padrao
+            # do CI (`workers: 1` no playwright.config.ts) a suite roda ~9,8 s por
+            # teste, ou seja ~33 min -- muito acima dos 15 min do job, e e' por isso
+            # que as runs logadas sao canceladas desde 02/10. 4 e' o numero de vCPU do
+            # runner `ubuntu-latest` e deixa a maior parte do tempo do teste em espera
+            # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
+            # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
+            workers: 4
           # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
+            workers: 1
           # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+            workers: 1
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -173,7 +184,7 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- ${{ matrix.projects }}
+        run: bun run test:e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }}
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
