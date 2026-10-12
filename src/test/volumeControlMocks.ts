@@ -13,15 +13,25 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+vi.mock('framer-motion', () => {
+  // Um elemento estático por tag: descarta as props de animação e devolve a tag nativa,
+  // preservando `className`/`data-*` que os testes leem do DOM.
+  const semAnimacao = (tag: 'div' | 'span') =>
+    React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
       const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}));
+      return React.createElement(tag, { ...rest, ref });
+    });
+  return {
+    motion: { div: semAnimacao('div'), span: semAnimacao('span') },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+    // O `VolumeDial` (e a entrada do painel) consultam o movimento reduzido; nos testes de
+    // componente tratamos como "movimento reduzido LIGADO": o dial mostra o valor direto e
+    // nenhuma animação fica pendente entre asserções (o teste dedicado do dial cobre a
+    // contagem animada, que o jsdom não traz).
+    useReducedMotion: () => true,
+    animate: () => ({ stop: () => {} }),
+  };
+});
 
 // jsdom não traz ResizeObserver, que o Popper do Radix usa para medir o conteúdo
 // do popover. Stub mínimo (atribuição direta, para sobreviver ao `unstubAllGlobals`).

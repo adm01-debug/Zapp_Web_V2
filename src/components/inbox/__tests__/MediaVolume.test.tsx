@@ -342,7 +342,7 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
 
   // ─── E13/E15/E16/E42: o controle em si ──────────────────────────────────
 
-  it('E13: o slider abre no chevron, na vertical, com rótulo acessível e o valor atual', async () => {
+  it('E13: o dial abre no chevron, com rótulo acessível e o valor atual', async () => {
     setVolume(45);
     render(<MediaVolumeControl />);
 
@@ -352,8 +352,20 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     expect(slider).toHaveAttribute('aria-valuenow', '45');
     expect(slider).toHaveAttribute('aria-valuemin', '0');
     expect(slider).toHaveAttribute('aria-valuemax', '100');
-    expect(slider).toHaveAttribute('aria-orientation', 'vertical');
+    expect(slider).toHaveAttribute('aria-valuetext', '45 por cento');
     expect(screen.getByTestId('media-volume-value').textContent).toBe('45%');
+  });
+
+  it('E13: o painel do dial fica em w-40 (30% mais estreito que o slider antigo)', async () => {
+    render(<MediaVolumeControl />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
+
+    const painel = await screen.findByRole('dialog', { name: MEDIA_VOLUME_SLIDER_LABEL });
+    const caixa = painel.closest('.w-40, .w-56') as HTMLElement | null;
+    expect(caixa).not.toBeNull();
+    expect(caixa?.className).toContain('w-40');
+    expect(caixa?.className).not.toContain('w-56');
   });
 
   it('E13/D4: o clique ABRE o painel; silenciar e desmutar pela tela devolve o volume anterior', async () => {
@@ -526,7 +538,7 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
 
     fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
     expect(await screen.findByText('Vídeo sem áudio')).toBeInTheDocument();
-    expect(screen.getByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL })).toHaveAttribute('data-disabled');
+    expect(screen.getByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL })).toHaveAttribute('aria-disabled', 'true');
   });
 
   // ─── E10: ciclo de vida do AudioContext da mídia ────────────────────────
