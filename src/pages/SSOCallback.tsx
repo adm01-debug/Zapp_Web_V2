@@ -9,19 +9,31 @@ import { toast } from 'sonner';
 
 type CallbackStatus = 'loading' | 'success' | 'error';
 
+const MAX_ERROR_LENGTH = 200;
+const GENERIC_ERROR = 'Ocorreu um erro durante a autenticação';
+
 // PKCE flow returns error params in the query string, not the hash fragment
 function getUrlError(): string | null {
   const p = new URLSearchParams(window.location.search);
   return p.get('error_description') || p.get('error');
 }
 
+// A mensagem vem da URL (quem monta o link controla o texto): corta no tamanho
+// máximo, remove caracteres de marcação e cai num texto genérico quando sobra vazio.
+function sanitizeAuthError(raw: string | null | undefined): string {
+  if (!raw) return GENERIC_ERROR;
+  const text = raw.slice(0, MAX_ERROR_LENGTH).replace(/[<>"'&`]/g, '').trim();
+  return text || GENERIC_ERROR;
+}
+
 export default function SSOCallback() {
   const navigate = useNavigate();
-  const urlError = getUrlError();
-  const [status, setStatus] = useState<CallbackStatus>(urlError ? 'error' : 'loading');
-  const [errorMessage, setErrorMessage] = useState(urlError ?? '');
+  const rawUrlError = getUrlError();
+  const initialError = rawUrlError ? sanitizeAuthError(rawUrlError) : null;
+  const [status, setStatus] = useState<CallbackStatus>(initialError ? 'error' : 'loading');
+  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   // ref tracks live status to avoid stale closure in the timeout callback
-  const statusRef = useRef<CallbackStatus>(urlError ? 'error' : 'loading');
+  const statusRef = useRef<CallbackStatus>(initialError ? 'error' : 'loading');
 
   useEffect(() => {
     // If Google returned an error in the redirect URL, show it and stop
@@ -50,7 +62,7 @@ export default function SSOCallback() {
       if (error) {
         statusRef.current = 'error';
         setStatus('error');
-        setErrorMessage(error.message);
+        setErrorMessage(sanitizeAuthError(error.message));
         toast.error('Erro no login SSO');
         return;
       }

@@ -27,6 +27,9 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [hasSession, setHasSession] = useState(false);
+  // Contagem visível até o redirecionamento; o usuário pode cancelá-la.
+  const [countdown, setCountdown] = useState(5);
+  const [redirectCancelled, setRedirectCancelled] = useState(false);
 
   useEffect(() => {
     // Check if user came from password reset email
@@ -45,6 +48,18 @@ export default function ResetPassword() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Após o sucesso, redireciona com contagem regressiva visível. O usuário pode
+  // cancelar ("Ficar nesta página") — nesse caso o efeito para e nada navega.
+  useEffect(() => {
+    if (!success || redirectCancelled) return;
+    if (countdown <= 0) {
+      navigate('/auth');
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [success, redirectCancelled, countdown, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,10 +87,6 @@ export default function ResetPassword() {
 
       setSuccess(true);
       toast.success('Senha alterada com sucesso!');
-      
-      setTimeout(() => {
-        navigate('/auth');
-      }, 3000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao alterar senha');
       toast.error('Erro ao alterar senha');
@@ -122,9 +133,29 @@ export default function ResetPassword() {
                 <CheckCircle className="w-8 h-8 text-success dark:text-success" />
               </motion.div>
               <CardTitle>Senha Alterada!</CardTitle>
-              <CardDescription>
-                Sua senha foi alterada com sucesso. Redirecionando para login...
-              </CardDescription>
+              {redirectCancelled ? (
+                <>
+                  <CardDescription>
+                    Sua senha foi alterada com sucesso. Redirecionamento cancelado.
+                  </CardDescription>
+                  <div className="pt-4">
+                    <Button className="w-full" onClick={() => navigate('/auth')}>
+                      Ir para o login
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <CardDescription>
+                    Sua senha foi alterada com sucesso. Redirecionando para login em {countdown}s...
+                  </CardDescription>
+                  <div className="pt-4">
+                    <Button variant="outline" className="w-full" onClick={() => setRedirectCancelled(true)}>
+                      Ficar nesta página
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardHeader>
           </Card>
         </motion.div>
