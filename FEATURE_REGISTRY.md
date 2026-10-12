@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 54 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-09`. 53 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -23,10 +23,10 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 
 | Estado | Views |
 |---|---|
-| Full | 42 |
+| Full | 41 |
 | Partial | 12 |
 | Suggested | 0 |
-| **total** | **54** |
+| **total** | **53** |
 
 ## Tabela
 
@@ -48,7 +48,6 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useSecurityPushNotifications.ts` |
 | `settings` | `SettingsView` | `src/components/settings/SettingsView.tsx` | Full | `src/components/settings/SettingsView.tsx` |
 | `docs` | `SystemFeaturesView` | `src/components/docs/SystemFeaturesView.tsx` | Partial | `src/components/docs/SystemFeaturesView.tsx` |
-| `campaigns` | `CampaignsView` | `src/components/campaigns/CampaignsView.tsx` | Full | `src/hooks/communication/useCampaigns.ts` |
 | `chatbot` | `ChatbotFlowsView` | `src/components/chatbot/ChatbotFlowsView.tsx` | Full | `src/hooks/integrations/useChatbotFlows.ts` |
 | `automations` | `AutomationsManager` | `src/components/automations/AutomationsManager.tsx` | Partial | `src/components/automations/AutomationsManager.tsx` |
 | `integrations` | `IntegrationsHub` | `src/components/integrations/IntegrationsHub.tsx` | Partial | `src/components/integrations/IntegrationsHub.tsx` |
