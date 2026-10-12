@@ -14,6 +14,14 @@ Especialista: worker (sql) (area-sql-banco)
 - scripts/ci/check-test-inventory.mjs: entrada na ALLOWLIST (o cartão pede; o dono do workflow promove o
   passo de uma linha em db-guard.yml — agente não edita workflow).
 
+## Correção pedida pelo juiz (commit docs(db): rollback executavel do gate authenticated sem papel)
+- O cabeçalho passou ao formato do modelo 20261006141643: prosa em `-- Rollback:` + bloco
+  `-- Rollback (SQL executável, na ordem):` com uma instrução por linha (`--   <stmt>;`), incluindo
+  o DROP do helper novo. Só comentários mudaram; o SQL executável da migration é o mesmo já aplicado
+  no banco local (nada a reaplicar).
+- O teste passou a extrair o Rollback desse bloco (antes lia a linha 2, quando o rollback era uma
+  linha só) e continua provando que ele roda e devolve o estado anterior.
+
 ## Prova (comandos e linhas de resultado)
 - vermelho antes (pré-estado real): `bash scripts/db-audit/authenticated-sem-papel-nao-le.test.sh`
   → `[PASS] RED: authenticated sem papel le as 27 tabelas (defeito vivo) (= 27)`
