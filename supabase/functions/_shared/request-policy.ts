@@ -91,7 +91,10 @@ export function extractCountryCode(req: Request): string | null {
 export function normalizeCity(raw: string | null | undefined): string | null {
   if (!raw) return null;
   let value = raw;
+  /* eslint-disable no-control-regex */
+  // deno-lint-ignore no-control-regex
   if (/[\u0080-ÿ]/.test(value) && !/[^\u0000-ÿ]/.test(value)) {
+  /* eslint-enable no-control-regex */
     try {
       const bytes = Uint8Array.from(value, (c) => c.charCodeAt(0));
       value = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -101,8 +104,10 @@ export function normalizeCity(raw: string | null | undefined): string | null {
   }
   value = value.trim().replace(/\s+/g, " ");
   if (value === "" || value.length > MAX_CITY_LENGTH) return null;
+  /* eslint-disable no-control-regex */
   // deno-lint-ignore no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(value)) return null;
+  /* eslint-enable no-control-regex */
   return value;
 }
 
