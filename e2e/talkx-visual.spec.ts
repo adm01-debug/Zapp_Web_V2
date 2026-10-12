@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import {
   mockTalkXVisual,
@@ -371,5 +372,221 @@ test.describe('coerência das fixtures da régua visual', () => {
       expect.stringContaining('sent_count=3 difere do contador 8'),
     ]);
     expect(telefonesDivergentes(incoerente)).toEqual([expect.stringContaining('contato-1')]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Régua de acessibilidade (TL-175D-c): axe WCAG 2.1 AA nas 17 telas, em tema
+// claro e escuro, e teclado sem mouse. A régua REPORTA defeito de produto
+// (vermelho onde há violação real); nunca o esconde. Pula só quando a própria
+// fixture declara `tela.aplicavel === false`. Falha de boot do dev server
+// (watchdog "Falha ao inicializar o app") vira skip registrado, não defeito.
+// ---------------------------------------------------------------------------
+
+const require = createRequire(import.meta.url);
+const AXE = require.resolve('axe-core/axe.min.js');
+const TAGS_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+
+type ViolacaoAxe = { id: string; impact: string | null; nos: { alvo: string; motivo: string }[] };
+
+/** Motivo declarado pela fixture quando a tela é "estado não aplicável". */
+function naoAplicavel(slug: string | undefined): string | undefined {
+  if (!slug) return undefined;
+  const marca = (loadDemoData(slug) as Record<string, unknown>).tela as
+    | { aplicavel?: boolean; motivo?: string }
+    | undefined;
+  return marca?.aplicavel === false ? (marca.motivo ?? 'fixture declara estado não aplicável') : undefined;
+}
+
+/** Boot do dev server que não montou o app: registrado à parte, nunca falha de produto. */
+async function pularSeBootFalhou(page: Page) {
+  const falhou = await page.getByText('Falha ao inicializar o app').isVisible().catch(() => false);
+  test.skip(falhou, 'falha de boot do servidor de desenvolvimento (watchdog) — registrada à parte, não é defeito de produto');
+}
+
+async function abrirSemMascarar(page: Page, abrir: (p: Page) => Promise<void>) {
+  try {
+    await abrir(page);
+  } catch (erro) {
+    await pularSeBootFalhou(page);
+    throw erro;
+  }
+  await pularSeBootFalhou(page);
+}
+
+async function rodarAxe(page: Page): Promise<ViolacaoAxe[]> {
+  await page.addScriptTag({ path: AXE });
+  return page.evaluate(async (tags) => {
+    const axe = (window as unknown as {
+      axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; impact: string | null; nodes: { target: unknown[]; failureSummary?: string }[] }[] }> };
+    }).axe;
+    const r = await axe.run(document, { runOnly: { type: 'tag', values: tags } });
+    return r.violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      nos: v.nodes.map((n) => ({ alvo: n.target.join(' '), motivo: n.failureSummary ?? '' })),
+    }));
+  }, TAGS_WCAG);
+}
+
+for (const tema of ['claro', 'escuro'] as const) {
+  test.describe(`axe WCAG 2.1 AA — tema ${tema}`, () => {
+    for (const tela of TELAS) {
+      test(`tela ${tela.n} — ${tela.nome}`, async ({ page }) => {
+        const slug = fixtureDaTela(tela.n);
+        const motivo = naoAplicavel(slug);
+        test.skip(!!motivo, motivo ?? '');
+        test.skip(!slug, `sem fixture real — a tela ${tela.n} entra na régua quando a fixture dela crescer`);
+        test.skip(!tela.existe, `tela ${tela.n} ainda não existe no produto`);
+
+        await mockTalkXVisual(page, slug!);
+        // Registrado DEPOIS de mockTalkXVisual (que grava `dark`): o último init script vence.
+        await page.addInitScript((t) => window.localStorage.setItem('theme', t), tema === 'claro' ? 'light' : 'dark');
+        await abrirSemMascarar(page, tela.abrir!);
+        expect(
+          await page.evaluate(() => document.documentElement.classList.contains('dark')),
+          `a medição precisa estar no tema ${tema}`,
+        ).toBe(tema === 'escuro');
+        await page.waitForTimeout(600);
+
+        const violacoes = await rodarAxe(page);
+        expect(
+          violacoes,
+          `tela ${tela.n} (${tema}): ${violacoes.length} regra(s) axe reprovada(s)\n${JSON.stringify(violacoes, null, 2)}`,
+        ).toEqual([]);
+      });
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Teclado: nenhum clique/mouse abaixo — só Tab, Enter, Espaço, Esc e setas.
+// ---------------------------------------------------------------------------
+
+async function abrirComFixture(page: Page, n: string, abrir: (p: Page) => Promise<void>) {
+  const slug = fixtureDaTela(n);
+  test.skip(!slug, `sem fixture real para a tela ${n}`);
+  await mockTalkXVisual(page, slug!);
+  await abrirSemMascarar(page, abrir);
+}
+
+/** Descrição curta do elemento com foco (papel + nome + posição). */
+async function focoAtual(page: Page) {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el || el === document.body) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      rotulo: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 80),
+      papel: el.getAttribute('role') ?? el.tagName.toLowerCase(),
+      top: r.top,
+      left: r.left,
+      visivel: r.width > 0 && r.height > 0,
+    };
+  });
+}
+
+/** Avança com Tab até o foco casar `alvo`; devolve o nº de Tabs, ou -1 se não alcançou. */
+async function alcancarPorTab(page: Page, alvo: RegExp, max = 60): Promise<number> {
+  for (let i = 1; i <= max; i++) {
+    await page.keyboard.press('Tab');
+    const f = await focoAtual(page);
+    if (f && alvo.test(f.rotulo)) return i;
+  }
+  return -1;
+}
+
+const abrirWizard = (step: number) => async (p: Page) => {
+  await p.goto(`/?view=talkx&wizard=new&step=${step}`);
+  await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible();
+};
+
+test.describe('teclado — Talk X', () => {
+  test('Tab percorre o módulo na ordem visual', async ({ page }) => {
+    await abrirComFixture(page, '01', abrirTalkX);
+    await page.getByRole('tab', { name: 'Visão geral' }).focus();
+    const passos: NonNullable<Awaited<ReturnType<typeof focoAtual>>>[] = [];
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      const f = await focoAtual(page);
+      expect(f, `Tab ${i + 1} perdeu o foco para o body`).not.toBeNull();
+      expect(f!.visivel, `Tab ${i + 1} focou "${f!.rotulo}" invisível`).toBe(true);
+      passos.push(f!);
+    }
+    // Ordem visual: o foco nunca volta para uma linha acima (tolerância de 8px de
+    // alinhamento) e, na mesma linha, nunca anda para a esquerda.
+    for (let i = 1; i < passos.length; i++) {
+      const a = passos[i - 1];
+      const b = passos[i];
+      const mesmaLinha = Math.abs(b.top - a.top) <= 8;
+      const ok = mesmaLinha ? b.left >= a.left : b.top > a.top;
+      expect(ok, `Tab fora da ordem visual: "${a.rotulo}" (${a.top},${a.left}) → "${b.rotulo}" (${b.top},${b.left})`).toBe(true);
+    }
+  });
+
+  test('setas navegam entre abas', async ({ page }) => {
+    await abrirComFixture(page, '01', abrirTalkX);
+    await page.getByRole('tab').first().focus();
+    const antes = await focoAtual(page);
+    await page.keyboard.press('ArrowRight');
+    const depois = await focoAtual(page);
+    expect(depois?.papel).toBe('tab');
+    expect(depois?.rotulo, 'ArrowRight não moveu o foco para a próxima aba').not.toBe(antes?.rotulo);
+    await page.keyboard.press('ArrowLeft');
+    expect((await focoAtual(page))?.rotulo, 'ArrowLeft não devolveu o foco à aba anterior').toBe(antes?.rotulo);
+  });
+
+  test('Enter e Espaço acionam controles', async ({ page }) => {
+    await abrirComFixture(page, '16', abrirTalkX);
+    const ajuda = page.getByRole('button', { name: 'Ajuda' });
+    const painel = page.getByRole('dialog').or(page.getByRole('heading', { name: /Ajuda/ }));
+    await ajuda.focus();
+    await page.keyboard.press('Enter');
+    await expect(painel.first(), 'Enter em "Ajuda" não abriu o painel').toBeVisible();
+    await page.keyboard.press('Escape');
+    await ajuda.focus();
+    await page.keyboard.press('Space');
+    await expect(painel.first(), 'Espaço em "Ajuda" não abriu o painel').toBeVisible();
+  });
+
+  test('Esc fecha o modal/painel e devolve o foco a quem o abriu', async ({ page }) => {
+    await abrirComFixture(page, '03', (p) => abrirTab(p, 'Segmentos'));
+    const gatilho = page.getByRole('button', { name: 'Novo segmento' });
+    await gatilho.focus();
+    await page.keyboard.press('Enter');
+    const modal = page.getByRole('dialog');
+    await expect(modal, 'Enter em "Novo segmento" não abriu modal/painel').toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(modal, 'Esc não fechou o modal/painel').toBeHidden();
+    await expect(gatilho, 'o foco não voltou ao gatilho depois do Esc').toBeFocused();
+  });
+
+  test('ações de linha são alcançáveis sem mouse', async ({ page }) => {
+    await abrirComFixture(page, '01', abrirTalkX);
+    await page.getByRole('tab', { name: 'Visão geral' }).focus();
+    const tabs = await alcancarPorTab(page, /a[çc][õo]es|mais op|op[çc][õo]es/i, 80);
+    expect(tabs, 'nenhum botão de ações de linha foi alcançado por Tab').toBeGreaterThan(0);
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menu'), 'Enter na ação de linha não abriu o menu').toBeVisible();
+  });
+});
+
+test.describe('teclado — criar campanha → revisar → confirmar (telas 08 e 09)', () => {
+  test('tela 08: "Continuar" é alcançável por Tab', async ({ page }) => {
+    await abrirComFixture(page, '08', abrirWizard(1));
+    const continuar = await alcancarPorTab(page, /^Continuar/, 80);
+    expect(continuar, '"Continuar" não é alcançável por Tab na tela 08').toBeGreaterThan(0);
+  });
+
+  test('tela 09: Voltar, Lançar/Agendar e a confirmação funcionam por teclado', async ({ page }) => {
+    await abrirComFixture(page, '09', abrirWizard(4));
+    expect(await alcancarPorTab(page, /^Voltar$/, 80), '"Voltar" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
+    const lancar = await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 80);
+    expect(lancar, '"Lançar/Agendar campanha" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
+    await page.keyboard.press('Enter');
+    const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+    await expect(modal.first(), 'Enter em Lançar/Agendar não abriu a confirmação').toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(modal.first(), 'Esc não fechou a confirmação').toBeHidden();
   });
 });
