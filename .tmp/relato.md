@@ -2,6 +2,9 @@ Especialista: Íris (area-front-componentes)
 
 Entrega concluída. O cartão pede que o prazo de resolução fique visível e provado; a tela lê e exibe o desfecho de resolução de `conversation_sla`. A ESCRITA desse desfecho é trilha de banco, fora do escopo desta tela de métricas (registrado em `kanban_comment`).
 
+## Arquivo fora da lista (indispensável)
+`src/components/__tests__/y17Selos.contraste.test.tsx` não está em ARQUIVOS QUE PODE TOCAR, mas renderiza o `SLAMetricCards`; o contrato de props mudou (ganhou `resolution`/`sparkRes`) e o typecheck ratchet (baseline=0) reprovou a entrega sem ele. O ajuste é só de fixture e do seletor do contador "atrasados" (que passou a ter dois matches), sem afrouxar a asserção de contraste. Sem ele a verificação fica vermelha.
+
 ## O que mudou e por quê
 - src/hooks/sla/slaResolution.ts (novo): elegibilidade, denominador e taxa do SLA de RESOLUÇÃO, espelho de `slaFirstResponse.ts` — a pendente (sem violação e sem `resolved_at`) não entra no "no prazo" nem no denominador (R2-SLA-001).
 - src/hooks/sla/useSLAMetrics.ts: lê `resolution_breached`/`resolved_at` da MESMA linha e expõe `resolution` no overall e por agente; `totalConversations`/`overallRate` seguem de 1ª resposta.
