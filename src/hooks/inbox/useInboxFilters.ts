@@ -2,10 +2,22 @@ import { useMemo, useCallback, useState } from 'react';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
-import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
-import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
 import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
+import {
+  hasContact,
+  isSnoozed,
+  isUnread,
+  isOpenActive,
+  isAttending,
+  isWaiting,
+  isResolved,
+  isArchived,
+  isInQueue,
+  passesExtraFilters,
+  countByChip,
+} from './chipCounts';
 
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
@@ -71,20 +83,26 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
   }, [setUrlFilters]);
 
+  // Contexto dos filtros extras (busca, tipo, painel) — o MESMO objeto alimenta
+  // a lista e o countByChip, para os dois nunca usarem regras diferentes.
+  const extraFilterContext = useMemo(
+    () => ({ search, selectedContactType, filters }),
+    [search, selectedContactType, filters],
+  );
+
   const filteredConversations = useMemo(() => {
-    let result = conversations.filter(c => c && c.contact && c.contact.id);
+    let result = conversations.filter(hasContact);
 
     // Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer.
     // `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de
     // origem a remove do conjunto e ela volta a aparecer sem recarregar a lista.
-    if (snoozedIds && snoozedIds.size > 0) {
-      result = result.filter(c => !snoozedIds.has(c.contact.id));
-    }
+    result = result.filter(c => !isSnoozed(c, snoozedIds));
 
     // Tab-based filtering — ADR-005 (passo 3): o estado da conversa vem do campo
     // persistido `contacts.conversation_status`, e não mais da derivação por
     // `messages.length` (que mostrava como "aberta" toda conversa com mensagem e
     // como "resolvida" apenas a que nunca teve nenhuma).
+    // As regras de cada chip vivem em ./chipCounts (as mesmas que contam os chips).
     if (chipTab === 'archived') {
       // Chip "Arquivadas" (B2): a lista obedece o estado persistido
       // `conversation_status === 'archived'`, independente de mainTab/subTab
@@ -92,94 +110,40 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       // estado). Busca, fila e tipo de contato seguem aplicados por cima,
       // abaixo — por isso só o filtro de fila, que hoje vive no ramo 'open',
       // é replicado aqui.
-      result = result.filter(c => c.contact.conversation_status === 'archived');
+      result = result.filter(isArchived);
       if (selectedQueueId) {
-        result = result.filter(c => c.contact.queue_id === selectedQueueId);
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'open') {
       // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
       // é o guarda de atividade que mantém fora da inbox o contato histórico que
       // nunca conversou (buildConversation sintetiza 1 mensagem quando há agregado).
-      result = result.filter(c =>
-        (c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
-        && c.messages.length > 0
-      );
+      result = result.filter(isOpenActive);
       if (subTab === 'attending') {
         if (!showAll) {
-          result = result.filter(c => c.contact.assigned_to === profileId);
+          result = result.filter(c => isAttending(c, profileId));
         }
       } else if (subTab === 'waiting') {
-        result = result.filter(c => c.contact.conversation_status === 'waiting');
+        result = result.filter(isWaiting);
       }
       if (selectedQueueId) {
-        result = result.filter(c => c.contact.queue_id === selectedQueueId);
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'resolved') {
-      result = result.filter(c => c.contact.conversation_status === 'resolved');
+      result = result.filter(isResolved);
     }
 
     if (chipTab === 'unread') {
-      result = result.filter(c => {
-        const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
-        return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
-      });
+      result = result.filter(isUnread);
     }
     // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
     // attending e waiting já são tratados pelo subTab derivado
 
-    // Search
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.contact.name.toLowerCase().includes(searchLower) ||
-          c.contact.phone.includes(search) ||
-          c.contact.email?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Status filter — mesmos estados do FSM persistido: "Pendentes" = waiting
-    // (aguardando atendente) e "Resolvidas" = resolved. A derivação antiga
-    // ("sem mensagem = resolvida") não vale mais.
-    if (filters.status.length > 0) {
-      result = result.filter((c) => {
-        const hasUnread = c.unreadCount > 0;
-        const isAssigned = !!c.contact.assigned_to;
-        if (filters.status.includes('unread') && hasUnread) return true;
-        if (filters.status.includes('read') && !hasUnread && isAssigned) return true;
-        if (filters.status.includes('pending') && c.contact.conversation_status === 'waiting') return true;
-        if (filters.status.includes('resolved') && c.contact.conversation_status === 'resolved') return true;
-        return false;
-      });
-    }
-
-    // Tags filter
-    if (filters.tags.length > 0) {
-      result = result.filter((c) => {
-        const ctags = (c.contact as { tags?: string[] }).tags || [];
-        return filters.tags.some(name => ctags.includes(name));
-      });
-    }
-
-    // Agent filter
-    if (filters.agentId) {
-      result = result.filter((c) => c.contact.assigned_to === filters.agentId);
-    }
-
-    // Date range filter
-    if (filters.dateRange.from) {
-      result = result.filter((c) => {
-        const lastMessageDate = c.lastMessage
-          ? new Date(c.lastMessage.created_at)
-          : new Date(c.contact.created_at);
-        if (filters.dateRange.from && isBefore(lastMessageDate, startOfDay(filters.dateRange.from))) return false;
-        if (filters.dateRange.to && isAfter(lastMessageDate, endOfDay(filters.dateRange.to))) return false;
-        return true;
-      });
-    }
-
-    // Contact type filter
-    result = filterByContactType(result, selectedContactType);
+    // Filtros por cima do chip — busca, painel Filtros (status/tags/atendente/
+    // datas) e tipo de contato. A regra vive em passesExtraFilters, em
+    // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
+    // o length da lista não têm mais como divergir.
+    result = result.filter((c) => passesExtraFilters(c, extraFilterContext));
 
     // Smart sorting
     result.sort((a, b) => {
@@ -191,7 +155,21 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, snoozedIds]);
+  }, [conversations, extraFilterContext, mainTab, subTab, chipTab, showAll, selectedQueueId, profileId, snoozedIds]);
+
+  // Contadores dos chips com o contexto atual — a tela só lê o número. Memoizado
+  // pelos mesmos insumos da lista; cada tecla da busca recalcula UMA varredura
+  // (o loop testa os seis chips por conversa), sem uma passada por chip.
+  const chipCounts = useMemo(
+    () =>
+      countByChip(conversations, profileId, {
+        snoozedIds,
+        showAll,
+        selectedQueueId,
+        ...extraFilterContext,
+      }),
+    [conversations, profileId, snoozedIds, showAll, selectedQueueId, extraFilterContext],
+  );
 
   return {
     chipTab, setChipTab,
@@ -203,6 +181,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     filters, setFilters,
     search, setSearch,
     filteredConversations,
+    chipCounts,
     clearUrlFilters,
   };
 }
