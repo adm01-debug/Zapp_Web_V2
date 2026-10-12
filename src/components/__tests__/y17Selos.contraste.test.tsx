@@ -262,10 +262,12 @@ const METRICAS_PROPS = {
     overallRate: 80,
     totalConversations: 240,
     firstResponse: { rate: 50, onTime: 12, breached: 3 },
+    resolution: { rate: 60, onTime: 6, breached: 4, total: 10 },
   },
   periodLabel: 'Últimos 30 dias',
   sparkOverall: [] as number[],
   sparkFR: [] as number[],
+  sparkRes: [] as number[],
   sparkConversations: [] as number[],
 };
 const ALERTA = {
@@ -329,8 +331,9 @@ describe('Y17-5 — Filas/SLA: selos de taxa fecham AA (4,5:1) nos quatro temas'
 
   it('contador "atrasados"', () => {
     render(<SLAMetricCards {...METRICAS_PROPS} />);
+    // O card de Resolução também tem um span "atrasados"; este prova o de 1ª resposta (3).
     exigirAA(
-      screen.getByText((_, el) => el?.tagName === 'SPAN' && /atrasados$/.test(el.textContent ?? '')),
+      screen.getByText((_, el) => el?.tagName === 'SPAN' && /^3 atrasados$/.test(el.textContent ?? '')),
       'contador de atrasados',
     );
   });
