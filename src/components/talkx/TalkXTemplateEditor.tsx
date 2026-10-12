@@ -11,6 +11,7 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
+import { TalkXQueryBoundary } from './kit/states';
 import {
   useTalkXTemplateLibraryStats,
   useTalkXTemplateStats,
@@ -39,7 +40,14 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
+  const {
+    createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
+    saveVariant, deleteVariant, countVariantRecipients,
+    // X047 — a biblioteca desta tela é a MESMA consulta que o pai consome; o erro
+    // tem de chegar à tela. Antes o editor só recebia `isLoading` e, com a consulta
+    // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
+    isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
+  } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
   const { confirmar, dialogo } = useTalkXConfirm();
 
@@ -375,35 +383,39 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
               </button>
             ))}
           </div>
-          {/* Lista compacta */}
+          {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
-            {isLoading
-              ? <TalkXSkeletonRows rows={5} />
-              : libFiltered.length === 0
-                ? <p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>
-                : libFiltered.map((t) => {
-                  const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => { void loadTemplate(t); }}
-                      className={cn(
-                        'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
-                        activeTemplateId === t.id
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
-                      )}
-                    >
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
-                        <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
-                      </div>
-                      <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
-                    </button>
-                  );
-                })
-            }
+            <TalkXQueryBoundary
+              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              entity="os templates"
+              onRetry={() => { void refetchTemplates(); }}
+              skeleton={<TalkXSkeletonRows rows={5} />}
+              isEmpty={libFiltered.length === 0}
+              empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}
+            >
+              {libFiltered.map((t) => {
+                const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => { void loadTemplate(t); }}
+                    className={cn(
+                      'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
+                      activeTemplateId === t.id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
+                    )}
+                  >
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
+                      <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
+                    </div>
+                    <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
+                  </button>
+                );
+              })}
+            </TalkXQueryBoundary>
           </div>
         </div>
       </aside>
