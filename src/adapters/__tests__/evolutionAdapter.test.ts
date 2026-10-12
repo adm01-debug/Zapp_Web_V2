@@ -64,4 +64,12 @@ describe('derivedToConversationContact', () => {
 
     expect(conversation.contact.deleted_at).toBeNull();
   });
+
+  it('mantem prioridade manual ausente no contato derivado do WhatsApp', () => {
+    const [conversation] = buildExternalConversations([externalMessage]);
+
+    expect(conversation.contact.manual_priority).toBeNull();
+    expect(conversation.contact.manual_priority_at).toBeNull();
+    expect(conversation.contact.manual_priority_by).toBeNull();
+  });
 });

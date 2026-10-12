@@ -6,6 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type ContactManualPriority = "low" | "medium" | "high" | "urgent"
+
 export type Database = {
   public: {
     Tables: {
@@ -2196,6 +2198,9 @@ export type Database = {
           lead_origin: string | null
           lead_score: number | null
           longitude: number | null
+          manual_priority: ContactManualPriority | null
+          manual_priority_at: string | null
+          manual_priority_by: string | null
           name: string
           neighborhood: string | null
           nickname: string | null
@@ -2239,6 +2244,9 @@ export type Database = {
           lead_origin?: string | null
           lead_score?: number | null
           longitude?: number | null
+          manual_priority?: ContactManualPriority | null
+          manual_priority_at?: string | null
+          manual_priority_by?: string | null
           name: string
           neighborhood?: string | null
           nickname?: string | null
@@ -2282,6 +2290,9 @@ export type Database = {
           lead_origin?: string | null
           lead_score?: number | null
           longitude?: number | null
+          manual_priority?: ContactManualPriority | null
+          manual_priority_at?: string | null
+          manual_priority_by?: string | null
           name?: string
           neighborhood?: string | null
           nickname?: string | null
@@ -12076,6 +12087,10 @@ export type Database = {
       set_instance_token: {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
+      }
+      set_manual_priority: {
+        Args: { p_contact_id: string; p_priority: ContactManualPriority | null }
+        Returns: undefined
       }
       set_team_member_pref: {
         Args: { p_conversation_id: string; p_is_muted?: boolean }
