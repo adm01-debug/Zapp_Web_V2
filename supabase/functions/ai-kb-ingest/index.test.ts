@@ -232,6 +232,16 @@ function comAuthFalsa(userId: string | null): { restaurar: () => void; urls: str
         }),
       );
     }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ is_active: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }
     throw new Error(`fetch real bloqueado no teste: ${url}`);
   }) as typeof fetch;
   return { restaurar: () => { globalThis.fetch = original; }, urls };

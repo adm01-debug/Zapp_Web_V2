@@ -1,21 +1,41 @@
 Especialista: Edgar (area-edge-api)
 
 ## Sensibilidade
-- Padrões sensíveis tocados: `service_role` (o handler usa o client admin para ler `profiles` e chamar `revoke_auth_sessions`), revogação de sessão (`auth.sessions`) e a decisão de entrada. O `service_role` NÃO foi ampliado: usa o mesmo client admin já existente; nenhuma policy, grant ou `EXECUTE` mudou — `revoke_auth_sessions(text,uuid,uuid,uuid,uuid)` já era `service_role`-only desde a migration `20261004181921` e é a MESMA primitiva do trigger `trg_revoke_sessions_on_profile_deactivate` e da Edge `revoke-auth-sessions`.
-- Nenhuma proteção afrouxada e prova do caso NEGADO: o caminho negado (perfil inativo/ausente/`is_active` nulo) devolve o mesmo 401 e o mesmo corpo da senha errada, sem token, e o teste `perfil inativo: corpo e status IDÊNTICOS à senha errada` compara os dois corpos. Não há regressão de enumeração de contas.
-- Nenhuma referência a banco/endpoint de produção. Sem segredo; nenhum dado de cliente.
-- O que muda para quem chama: para perfil ativo, nada (mesmo 200/sessão). Para perfil inativo/ausente, o login passa a ser recusado com 401 (antes entrava).
+- O diff toca `service_role` (client de serviço) e `requireAuth` — o portão retém para o revisor forte.
+- Nenhuma proteção afrouxada: a trava NOVA só NEGA — 403 neutro para perfil inativo/ausente/null e 503 (fail-closed)
+  quando a consulta falha ou a promise rejeita. Nada que antes era liberado passou a ser liberado. Prova do caso
+  negado: `require-auth-profile-active.test.ts` (inativo → 403, ausente → 403, `is_active` null → 403, erro → 503).
+- Nenhuma referência ao banco/endpoint de produção: os testes usam stub de `fetch` e ids sintéticos.
+- Para quem chama: `requireAuth` passa a fazer 1 leitura extra (`profiles.is_active` por `user_id`, igualdade exata)
+  por requisição autenticada. Usuário ativo não percebe mudança.
 
-## O que mudou e por quê (3 arquivos no diff, 1 deles de teste)
-- `supabase/functions/auth-login/index.ts` (código): depois de `signInWithPassword` dar certo, resolvo o perfil por `profiles.user_id = signIn.user.id` (igualdade EXATA num índice UNIQUE/FK; nunca por `profiles.email`, nullable e sem UNIQUE). Perfil ausente, `is_active = false` ou `is_active` nulo (`!== true`) → revogo as sessões do usuário via `revoke_auth_sessions('global', …)` e devolvo o MESMO 401 da senha errada (mesmo `record_failed_login` e mesmo corpo de lockout). Falha na consulta do perfil → revogo e devolvo 500 (fail-closed). A consulta fica DEPOIS do GoTrue para inativo e senha errada terem custo de tempo comparável (sem oráculo).
-- `supabase/functions/auth-login/index.test.ts` (teste): 6 casos novos — ausente (sem linha), `is_active` false, `is_active` nulo, erro na consulta (500), perfil ativo entra com 200 sem revogação, e comparação de corpo/status idênticos à senha errada; os casos inativos também provam a revogação (`revoke_auth_sessions` global com o id do auth) e o caminho exato `profiles`/`user_id`.
-- `.tmp/relato.md` (este relato).
-- Concentrei o ramo de senha errada e o ramo inativo no mesmo helper `recordFailure`, para os dois serem indistinguíveis; a resposta de erro de senha não mudou.
+## O que mudou e por quê
+- `supabase/functions/auth-login/index.ts` (+`index.test.ts`): o login resolve o perfil por `signIn.user.id` (igualdade
+  exata, sem `ilike`) e, se o perfil estiver ausente/inativo/`null`, revoga a sessão recém-criada, registra a falha
+  (`record_failed_login`) e devolve o MESMO 401/corpo da senha errada — sem oráculo. Erro na consulta → revoga e 500
+  (fail-closed). Essa parte já estava deitada no commit `a1fc5fe75`, herdado desta retentativa.
+- `supabase/functions/_shared/validation.ts`: `requireAuth` ganhou a trava R2-AUTH-004 — DEPOIS da autenticação e da
+  política de rede, lê `profiles.is_active` por `user_id` e, se ausente/`false`/`null`, devolve 403 neutro
+  ("Access denied", mesmo corpo da negação de rede); falha/rejeição da consulta → 503 fail-closed. A leitura é
+  injetável (`getProfileActive`); o default é o client `service_role` real. Consumidores herdam a trava sem edição.
+- `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts`: 8 testes offline que chamam o `requireAuth`
+  REAL (getUser/política/perfil injetados), cobrindo inativo, ausente, `is_active` null, ativo (segue), erro na consulta,
+  promise rejeitada, ordem (política antes do perfil) e o `eq`/`user_id` do lookup default.
+- 12 testes de outras Edges (`ai-proxy`, `classify-emoji`, `classify-sticker`, `classify-audio-meme`,
+  `elevenlabs-dialogue`, `elevenlabs-sts`, `elevenlabs-voice-design`, `fetch-link-preview`, `crm-integration`,
+  `multiplix-voices`, `multiplix-audience`, `ai-kb-ingest`): só o stub de `fetch`/rota ganhou a resposta da nova
+  leitura `profiles?select=is_active`. O `<handler>` dessas Edges NÃO mudou — é a consequência de a trava morar no
+  middleware compartilhado. Sem esses stubs a leitura cairia no "nao stubado" e viraria 503.
 
 ## Prova
-- vermelho antes: `deno test --config scripts/ci/deno.json supabase/functions/auth-login/index.test.ts` (com o `index.ts` original, via `git stash`) → `FAILED | 13 passed | 6 failed` — os 6 casos novos caem (o inativo entrava com 200).
-- verde depois: mesmo comando → `ok | 19 passed | 0 failed`.
+- vermelho antes (trava do `requireAuth` temporariamente removida): `deno test .../require-auth-profile-active.test.ts`
+  → `FAILED | 2 passed | 6 failed` (perfil inativo/ausente/null seguiam como se ativos).
+- verde depois:
+  - `deno test .../require-auth-profile-active.test.ts` → `ok | 8 passed | 0 failed`
+  - `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')` → `ok | 1707 passed | 0 failed | 3 ignored`
+  - `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts` → exit 0
 
 ## O que NÃO fiz e por quê
-- Não adicionei migration: a revogação usa primitiva que já existe.
-- Não mexi em `_shared` nem no front; o contrato de resposta (200/401/423/503) é o mesmo do arquivo.
+- `src/hooks/auth/useAuth.tsx` não foi tocado: o Edge já devolve o MESMO 401 de credencial inválida e o front
+  (`AuthService.signIn`) já trata como erro genérico — não há motivo para mudar o front.
+- Não adicionei migration/RPC: a leitura usa a tabela `profiles` existente (`user_id` UNIQUE NOT NULL).
