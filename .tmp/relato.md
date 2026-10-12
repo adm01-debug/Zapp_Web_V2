@@ -1,69 +1,74 @@
 Especialista: Edgar (area-edge-api)
 
-## O que mudou e por quê
-- `supabase/functions/_shared/evolution-control-authz.ts`: `find-chats`, `find-contacts`, `find-messages`,
-  `find-status-messages`, `get-media-base64`, `get-settings`/`get-webhook`, `fetch-profile`,
-  `fetch-profile-picture`, `fetch-business-profile`, `find-labels`/`find-templates`, os `get-*` das integrações
-  (chatwoot/typebot/openai/dify/flowise/evolution-bot/rabbitmq/sqs/proxy/evoai/n8n/kafka/nats/pusher) e
-  `get-catalog`/`get-collections` saíram de `READ_ACTIONS` e entraram em `CONTROL_ACTIONS`. Eram chamadas por
-  qualquer agente e devolvem dado instance-wide (fora da visibilidade dele) ou configuração/credencial do
-  provedor. `READ_ACTIONS` ficou com `status`, `list-instances`, `instance-info`, `check-numbers` e as leituras
-  de grupo.
-- `supabase/functions/evolution-api/index.ts`: `TOKEN_KEYS` ganhou `hash` e `stripInstanceToken` passou a
-  percorrer arrays; nova `sanitizeInstanceResponse` aplicada a `list-instances` e `instance-info`. Antes o token
-  só era removido na rota GO `/instance/all` (dentro do proxy), então a variante v2 e a rota `/instance/info`
-  devolviam `token`/`apikey`/`hash` ao chamador — com o token e a URL pública da GO, opera-se a instância fora
-  do app.
-
 ## Sensibilidade
-- (a) o diff toca o caminho de autorização (classificação de ação + `decideControlAuthz`, deny-by-default) e a
-  higienização da credencial da conexão. O cliente `service`/`service_role` só é usado onde já era; o gate roda
-  ANTES de qualquer chamada ao provedor.
-- (b) nenhuma proteção afrouxada, com o caso NEGADO provado: agente → 403 e ZERO I/O no provedor (o fake não
-  registra requisição); corpo de leitura de instância NUNCA contém `token`/`apikey`/`hash` (nem aninhado, nem
-  em item de lista).
-- (c) nenhuma referência a banco ou endpoint de produção — os testes usam servidor falso local em `127.0.0.1`.
-- (d) o que muda para quem chama: as ações movidas passam a exigir admin/supervisor; o corpo de
-  `instance-info`/`list-instances` deixa de trazer a credencial (o resto do payload, ex. `status`, permanece).
+- O diff toca INSERT em `audit_logs` por client service-role e o gate `requireAdminOnly` do
+  `delete-instance` (este herdado do CX0 via cherry-pick, seção abaixo). Nenhuma proteção foi
+  afrouxada: a matriz de autorização continua idêntica (create-connection/connect/disconnect seguem
+  exigindo admin/supervisor).
+- Nada de número, token ou QR vai para a trilha — há asserção negativa no JSON gravado.
+- Nenhuma referência a banco/endpoint de produção.
+- Para quem chama: as respostas de `create-connection`/`connect`/`disconnect` não mudam;
+  `delete-instance` deixa de devolver 500 quando o que falha é só a auditoria (ver "Ramo de erro").
+
+## Linha herdada (por que o diff é maior que o título)
+- O cartão manda reaproveitar o mesmo helper de auditoria do CX0 e traz a linha do pai. Cherry-pick,
+  já commitados antes do meu commit: `2200003d6` (pai t_890bceea: agenda/conversas/mídia + leitura de
+  instância) e `f601930f0` (CX0: exclusão admin-only, com migration + `scripts/db-audit/...test.sh`).
+  Eles não são meus nem foram reescritos; segui com eles intactos.
+
+## O que mudou e por quê
+- `supabase/functions/_shared/connection-audit.ts` (novo): `writeConnectionAuditLog` grava UMA linha em
+  `audit_logs` (user_id, action, entity_type='connection', entity_id, details, ip_address, user_agent)
+  e NUNCA lança — falha é só logada. É o formato único das ações de conexão.
+- `supabase/functions/evolution-api/index.ts`:
+  - create-connection → `connection_created` (entity_id = id da conexão; details: instance_id/name/flavor);
+  - connect → `connection_connect` (no máximo 1 por invocação, via `auditConnectOnce`, pois o fluxo tem
+    vários retornos de sucesso);
+  - disconnect → `connection_disconnect`;
+  - recriação de sessão órfã (GO) → `connection_session_recreated` e, quando devolve QR novo, também o
+    `connection_connect` daquela invocação;
+  - delete-instance (do CX0) passou a usar o MESMO helper — não há dois formatos de trilha.
+- `supabase/functions/evolution-api/index.test.ts`: bloco CA1 com 5 testes.
+
+## Ramo de erro que mudou (antes × depois)
+- delete-instance, insert de auditoria: ANTES (CX0) o insert era inline e, se retornasse erro, a Edge
+  respondia 500 — embora a exclusão já tivesse acontecido. DEPOIS usa `writeConnectionAuditLog`, que
+  engole o erro e só loga estruturado; a resposta é a do caminho de sucesso (200 com o corpo do
+  provedor). Efeito pretendido: a trilha não pode fazer uma exclusão já concluída parecer falha. O gate
+  admin-only e o `delete()` ficaram idênticos — os dois testes do CX0 (supervisor 403 / admin apaga e
+  registra) seguem verdes.
+- create-connection/connect/disconnect: não tinham auditoria antes; os retornos de erro do provedor
+  seguem como estavam.
 
 ## Prova
-- Diff deste commit: 4 arquivos de código/teste mais `.tmp/relato.md`; 2 arquivos de teste; 9 casos de teste novos
-  (3 de gate negado + 1 de passagem com papel + 2 de `instance-info` + 2 de `list-instances` no handler, e 1 na
-  matriz de classificação).
-- vermelho antes (matriz antiga via `git stash` só do arquivo de authz): `deno test --allow-read --allow-env
-  --allow-net --filter "R2EXT-AGENDA" supabase/functions/evolution-api/index.test.ts` → os três testes de gate
-  (`find-chats`, `find-contacts`, `get-media-base64`) FALHARAM porque o agente passava.
-- vermelho antes (handler antigo via `git stash` só do `index.ts`): `--filter "não devolve token"` → os quatro
-  testes de credencial FALHARAM (o corpo trazia o token).
-- verde depois: `deno test --allow-read --allow-env --allow-net supabase/functions/evolution-api/index.test.ts
-  supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → `ok | 45 passed | 0 failed`.
-- ausência de consumidor no front das ações que viraram control restrito:
-  `git grep -n "'find-chats'\|'find-contacts'\|'find-messages'\|'find-status-messages'\|'get-media-base64'\|'get-catalog'\|'get-collections'" -- src/`
-  só encontra o próprio hook exportador e testes de payload — nenhuma tela as invoca.
+- vermelho antes (index.ts revertido ao commit do CX0, sem as chamadas de trilha):
+  `deno test --allow-net --allow-env --filter CA1 supabase/functions/evolution-api/index.test.ts`
+  → `FAILED | 1 passed | 4 failed` (nenhuma das 4 ações gravava trilha).
+- verde depois: `deno test --allow-net --allow-env --filter CA1 supabase/functions/evolution-api/index.test.ts`
+  → `ok | 5 passed | 0 failed`.
+- suíte inteira da Edge: `deno test --allow-net --allow-env --allow-read supabase/functions/evolution-api/index.test.ts`
+  → `ok | 42 passed | 0 failed` (inclui CX0, R2EXT e a exaustividade E45).
+- authz: `deno test --allow-net --allow-env --allow-read supabase/functions/_shared/__tests__/evolution-control-authz.test.ts`
+  → `ok | 10 passed | 0 failed`.
+- migration herdada do CX0: `bash scripts/db-audit/connections-delete-admin-only.test.sh`
+  → `[OK] contrato de exclusao de conexao (admin-only) verificado`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations OK).
 
-## Classes finais (critério 4)
-- **control:** find-chats, find-contacts, find-messages, find-status-messages, get-media-base64, get-settings,
-  get-webhook, fetch-profile, fetch-profile-picture, fetch-business-profile, find-labels, find-templates,
-  get-chatwoot, get-typebot, typebot-sessions, get-openai, get-dify, get-flowise, get-evolution-bot,
-  get-rabbitmq, get-sqs, get-proxy, get-evoai, get-n8n, get-kafka, get-nats, get-pusher, get-catalog,
-  get-collections.
-- **read:** list-instances, status, instance-info, check-numbers, list-groups, group-info, group-participants,
-  group-invite-code, invite-info.
-- **send:** inalterado.
+## O que os testes provam
+- create-connection: exatamente 1 linha — action `connection_created`, entity_id = id da conexão,
+  entity_type `connection`, user_id do ator, IP preenchido; o JSON da trilha NÃO contém o número
+  (5511999990000), nem "token", nem "2@" (QR).
+- connect (v2): 1 linha `connection_connect` no caminho do QR.
+- disconnect (v2): 1 linha `connection_disconnect`.
+- recriação de sessão órfã (go): 1 linha `connection_session_recreated` + 1 `connection_connect`
+  (recovered) — nenhuma duplicada.
+- fail-open: com o insert de `audit_logs` devolvendo erro, disconnect ainda responde 200.
 
 ## O que NÃO fiz e por quê
-- `get-media-base64`: nenhuma tela a chama, então segui a primeira opção do cartão e movi para control, em vez
-  de resolver visibilidade dentro do gate de envio (`decideSendAuthz`). A resolução de alvo do `send` é por `remoteJid` de
-  `body.key`, e a mídia aponta `body.message.key.remoteJid` — misturar as duas chaves de alvo seria mudança de
-  contrato além do cartão.
-- leituras de grupo (`list-groups`, `group-info`, `group-participants`, `group-invite-code`, `invite-info`):
-  mantidas em `read` porque TÊM consumidor no front (`src/hooks/groups/actions.ts`,
-  `src/hooks/evolution/useEvolutionGroups.ts`); movê-las quebraria as telas de grupo e o cartão não as pediu.
-- `fetch-profile`/`get-settings`/`get-webhook`/`find-labels`: movidos a control (configuração de conexão); o
-  único consumidor é `InstanceSettingsDialog`, tela de configuração de conexão restrita a admin/supervisor
-  (IA-004 §6.5).
-- Não rodei `zapp-verify` à mão: o `hermes-tarefa-fechar` roda o verificador rápido.
-- Os testes que provam este cartão são Deno e estão NESTE commit (`supabase/functions/evolution-api/index.test.ts`
-  e `supabase/functions/_shared/__tests__/evolution-control-authz.test.ts`). O aviso "sem teste novo" do fechar
-  vem do glob dele, que só conta teste sob `src/`/`tests/` — ele não enxerga teste de Edge em
-  `supabase/functions/`. Rodado de novo como o próprio aviso autoriza.
+- Não gravei trilha nos caminhos de ERRO do connect/disconnect/create (token ausente, 403 do provedor):
+  auditar a ação bem-sucedida espelha o CX0; o cartão pede a trilha da ação que aconteceu.
+- Não mexi nas outras ações de conexão (status/instance-info/list-instances): fora do que o cartão lista.
+- `entity_id` de connect/disconnect fica nulo (a ação não recebe a linha da conexão); o `instance_id` vai
+  em `details`, como o cartão pede.
+- Ressalva honesta: o teste de fail-open também passa na base (lá não existe insert) — o valor dele é
+  travar a propriedade agora que a trilha existe; os outros 4 são os que nascem vermelhos.
