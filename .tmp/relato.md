@@ -1,18 +1,32 @@
-Especialista: worker (docs)
+Especialista: senior (area-sql-banco / workersql)
 
-## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+Ponto 1 — backfill atrás da flag inbox.status-fsm
+O que mudei: em supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql, o UPDATE de backfill agora só roda quando existe feature_flags.key = 'inbox.status-fsm' com enabled IS TRUE. O DISABLE/ENABLE do trigger update_contacts_updated_at continua só em volta desse UPDATE.
+Teste que prova: C5 em supabase/tests/contacts_waiting_por_atribuicao.sql executa a migration real dentro da transação do teste. Vermelho sem a correção: troquei temporariamente a migration copiada para o container por uma versão sem o predicado da flag; comando `zapp-db-local psql . refazert41 -v ON_ERROR_STOP=1 < supabase/tests/contacts_waiting_por_atribuicao.sql` retornou rc=3 com `ERROR: C5 FALHOU: migration real com flag desligada alterou o estado (waiting / ...)`. Verde com a correção: o mesmo comando retornou rc=0 e `NOTICE: contacts_waiting_por_atribuicao: C5 flag desligada OK (migration real nao mexeu no backfill)`.
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+Ponto 2 — C5 cobre flag desligada, flag ligada e idempotência
+O que mudei: em supabase/tests/contacts_waiting_por_atribuicao.sql, substituí o C5 que repetia o UPDATE por blocos que reexecutam a migration real via `/tmp/20261011174630_contacts_waiting_por_atribuicao.sql`: primeiro com a flag desligada, depois com a flag ligada, e depois uma segunda rodada para garantir que o backfill não reescreve o carimbo.
+Teste que prova: `docker cp supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql "$c:/tmp/20261011174630_contacts_waiting_por_atribuicao.sql" && zapp-db-local psql . refazert41 -v ON_ERROR_STOP=1 < supabase/tests/contacts_waiting_por_atribuicao.sql` retornou rc=0 com os notices: `C5 flag desligada OK`, `C5 flag ligada OK` e `C5 idempotencia OK`.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+Ponto 3 — relato ajustado com efeito esperado em promoção
+O que mudei: este relato registra o comportamento corrigido: as cerca de 315 conversas abertas sem responsável só passam a "Aguardando" quando a flag `inbox.status-fsm` estiver ligada na promoção. Com a flag desligada, a migration cria/atualiza função e trigger, mas o backfill não muda nenhuma linha.
+Teste que prova: a execução verde acima mostrou `UPDATE 0` na rodada com flag desligada e `UPDATE 1` na rodada sintética com flag ligada.
 
-## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+Rollback
+Comando executado no banco local dentro de transação: rollback do bloco da migration seguido de ROLLBACK. Resultado: `DROP TRIGGER`, `DROP FUNCTION`, `ALTER TABLE`, `UPDATE 0`, `DELETE 1`, `ROLLBACK` (rc=0). Nada foi aplicado em produção.
+
+Arquivos alterados (`git diff --name-only dia/2026-10-11...HEAD`): 3 arquivos no total, sendo 1 arquivo de teste.
+.tmp/relato.md
+supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql
+supabase/tests/contacts_waiting_por_atribuicao.sql
+
+Verificações executadas:
+- `zapp-db-local up . refazert41` — rc=0.
+- Vermelho sem a correção do backfill: rc=3, `ERROR: C5 FALHOU: migration real com flag desligada alterou o estado (waiting / ...)`.
+- Verde com a correção: rc=0, notices `C1...C4`, `C5 flag desligada OK`, `C5 flag ligada OK`, `C5 idempotencia OK`, `ROLLBACK`.
+- Rollback da migration em transação local — rc=0.
+- `git diff --check` — rc=0.
+- `zapp-verify . --rapido` — rc=0: `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO (74s)`.
+- `zapp-verify . refazert41 --rapido` — rc=1 em `banco_local` por 120 diferenças de estrutura já existentes no retrato local/produção; não alterei manifesto, guarda nem lista de aceites para maquiar esse desvio.
+
+Commit: af158cab7 fix(banco): respeita flag no backfill de aguardando
