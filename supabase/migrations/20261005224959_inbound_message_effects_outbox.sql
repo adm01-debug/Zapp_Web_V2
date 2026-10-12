@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS public.inbound_message_effects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   whatsapp_connection_id uuid NOT NULL,
   external_id text NOT NULL,
-  effect text NOT NULL CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply')),
+  effect text NOT NULL CONSTRAINT inbound_message_effects_effect_check CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply')),
   payload jsonb NOT NULL DEFAULT '{}'::jsonb,
   attempts integer NOT NULL DEFAULT 0,
   applied_at timestamptz,
