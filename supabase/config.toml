@@ -82,3 +82,10 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# Paridade V3 -> V2 (auditoria do frontend da V3, 2ª passada): lista e encerra as
+# sessoes Auth de um usuario. verify_jwt=true (default do CLI) identifica o
+# chamador; o papel admin e reconferido DENTRO da funcao via `user_roles` antes de
+# tocar o esquema auth. Declarado para documentacao explicita.
+[functions.admin-user-sessions]
+verify_jwt = true
