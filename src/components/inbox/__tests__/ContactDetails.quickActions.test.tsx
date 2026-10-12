@@ -46,7 +46,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 vi.mock('sonner', () => ({ toast: h.toast }));
 vi.mock('@/hooks/crm/useContactEnrichedData', () => ({
-  useContactEnrichedData: () => ({ enrichedData: null, aiTags: [], slaInfo: null }),
+  useContactEnrichedData: () => ({ enrichedData: null }),
 }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({

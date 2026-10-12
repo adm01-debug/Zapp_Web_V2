@@ -23,7 +23,7 @@ interface ContactDetailsProps {
 
 export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
   const { contact } = conversation;
-  const { enrichedData, aiTags, slaInfo } = useContactEnrichedData(contact.id);
+  const { enrichedData } = useContactEnrichedData(contact.id);
   const { archiveContact } = useConversationActions();
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
