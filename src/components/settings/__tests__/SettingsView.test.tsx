@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 const roleState = { isAdmin: false, isSupervisor: false };
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
@@ -119,5 +119,78 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
       expect(tab.className).toContain('max-sm:min-h-[44px]');
       expect(tab.className).not.toContain('max-[390px]');
     }
+  });
+});
+
+// Agrupamento em dois niveis (fix UX 10/10): grupo principal + abas do grupo.
+// O sintoma a evitar e uma aba orfa (fora de qualquer grupo) ou removida; por
+// isso o teste trava o catalogo SETTINGS_TABS contra SETTINGS_GROUPS e exercita
+// a troca de grupo pela barra de categorias.
+describe('SettingsView — agrupamento em dois niveis', () => {
+  beforeEach(() => {
+    roleState.isAdmin = false;
+    roleState.isSupervisor = false;
+  });
+
+  const GRUPOS = ['Atendimento', 'Inteligência artificial', 'Qualidade', 'Aparência', 'Sistema'];
+  // As 16 abas que o staff ve (12 restritas + 4 pessoais). Se uma ficar fora de
+  // qualquer grupo, o teste abaixo nao a encontra ao percorrer os grupos.
+  const TODAS_ABAS_STAFF = [
+    'Horário', 'Mensagens', 'Automação', 'Roteamento', 'Follow-up',
+    'Tags IA', 'Chatbot L1', 'Gestão IA',
+    'CSAT', 'NPS',
+    'Global', 'Mídia',
+    'Notificações', 'Aparência', 'Atalhos', 'Sons',
+  ];
+
+  it('staff: barra de categorias mostra os 5 grupos logicos', () => {
+    roleState.isAdmin = true;
+    render(<SettingsView />);
+    for (const label of GRUPOS) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it('staff: percorrer os grupos expoe as 16 abas, sem aba orfa e sem duplicata', () => {
+    roleState.isAdmin = true;
+    render(<SettingsView />);
+    const vistas: string[] = [];
+    for (const label of GRUPOS) {
+      fireEvent.click(screen.getByRole('button', { name: label }));
+      vistas.push(...screen.getAllByRole('tab').map((el) => el.textContent ?? ''));
+    }
+    expect(vistas).toHaveLength(TODAS_ABAS_STAFF.length); // nenhuma aba removida
+    expect(new Set(vistas).size).toBe(vistas.length);     // nenhuma aba duplicada
+    expect([...vistas].sort()).toEqual([...TODAS_ABAS_STAFF].sort());
+  });
+
+  it('agente: so o grupo Aparência aparece e traz as 4 abas pessoais', () => {
+    render(<SettingsView />);
+    expect(screen.getByRole('button', { name: 'Aparência' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Atendimento' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sistema' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
+      'Notificações', 'Aparência', 'Atalhos', 'Sons',
+    ]);
+  });
+
+  it('staff: clicar num grupo troca as abas do segundo nivel', () => {
+    roleState.isAdmin = true;
+    render(<SettingsView />);
+    // grupo padrao = Atendimento
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
+      'Horário', 'Mensagens', 'Automação', 'Roteamento', 'Follow-up',
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inteligência artificial' }));
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
+      'Tags IA', 'Chatbot L1', 'Gestão IA',
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Qualidade' }));
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(['CSAT', 'NPS']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sistema' }));
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(['Global', 'Mídia']);
   });
 });

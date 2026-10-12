@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { NPSDashboard } from '@/components/nps/NPSDashboard';
 import { FollowUpSequences } from '@/components/settings/FollowUpSequences';
 import { QuickRepliesManager } from '@/components/inbox/QuickRepliesManager';
@@ -10,6 +11,7 @@ import {
   Keyboard, Volume2, ArrowRight, Package, Globe, TrendingUp, Settings,
   Tags, MessageSquareHeart, Bot, Brain, Users,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { AIAutoTagsConfig } from '@/components/settings/AIAutoTagsConfig';
 import { AIProvidersManager } from '@/components/settings/AIProvidersManager';
 import { CSATAutoConfig } from '@/components/settings/CSATAutoConfig';
@@ -32,7 +34,44 @@ import { PageTemplate } from '@/components/layout/PageTemplate';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useOnboarding } from '@/hooks/ui/useOnboarding';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// Catalogo das abas de configuracao: a barra de grupos (TAB_GROUPS) e o teste
+// de cobertura leem daqui, entao uma aba nova so precisa existir aqui + num
+// grupo -- e o teste acusa qualquer aba orfa (fora de qualquer grupo).
+const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: boolean }> = {
+  schedule: { label: 'Horário', icon: Clock, staffOnly: true },
+  messages: { label: 'Mensagens', icon: MessageSquare, staffOnly: true },
+  automation: { label: 'Automação', icon: RefreshCw, staffOnly: true },
+  routing: { label: 'Roteamento', icon: Users, staffOnly: true },
+  followup: { label: 'Follow-up', icon: ArrowRight, staffOnly: true },
+  'ai-tags': { label: 'Tags IA', icon: Tags, staffOnly: true },
+  'chatbot-l1': { label: 'Chatbot L1', icon: Bot, staffOnly: true },
+  'ai-providers': { label: 'Gestão IA', icon: Brain, staffOnly: true },
+  csat: { label: 'CSAT', icon: MessageSquareHeart, staffOnly: true },
+  nps: { label: 'NPS', icon: TrendingUp, staffOnly: true },
+  notifications: { label: 'Notificações', icon: Bell, staffOnly: false },
+  appearance: { label: 'Aparência', icon: Palette, staffOnly: false },
+  shortcuts: { label: 'Atalhos', icon: Keyboard, staffOnly: false },
+  sounds: { label: 'Sons', icon: Volume2, staffOnly: false },
+  global: { label: 'Global', icon: Globe, staffOnly: true },
+  media: { label: 'Mídia', icon: Package, staffOnly: true },
+};
+
+// Grupos logicos montados olhando o CONTEUDO de cada painel (nao o nome):
+// Atendimento = operacao do atendimento (horario, mensagens, automacao,
+// roteamento, follow-up); Inteligencia artificial = recursos de IA; Qualidade =
+// pesquisa de satisfacao (CSAT automatico) e painel NPS; Aparência = preferencias
+// pessoais do usuario; Sistema = configuracoes globais/integracoes e biblioteca
+// de midia. A ordem das abas dentro do grupo preserva a ordem original da barra.
+const TAB_GROUPS: { id: string; label: string; icon: LucideIcon; tabs: string[] }[] = [
+  { id: 'atendimento', label: 'Atendimento', icon: MessageSquare, tabs: ['schedule', 'messages', 'automation', 'routing', 'followup'] },
+  { id: 'ia', label: 'Inteligência artificial', icon: Bot, tabs: ['ai-tags', 'chatbot-l1', 'ai-providers'] },
+  { id: 'qualidade', label: 'Qualidade', icon: MessageSquareHeart, tabs: ['csat', 'nps'] },
+  { id: 'aparencia', label: 'Aparência', icon: Palette, tabs: ['notifications', 'appearance', 'shortcuts', 'sounds'] },
+  { id: 'sistema', label: 'Sistema', icon: Settings, tabs: ['global', 'media'] },
+];
 
 export function SettingsView() {
   const { settings, isLoading, isSaving, updateSettings, saveSettings, toggleWorkDay } = useUserSettings();
@@ -41,6 +80,22 @@ export function SettingsView() {
   // Agent/special_agent so vem as 4 abas pessoais — o resto configura a
   // operacao inteira (horario, roteamento, IA, integracoes...), nao o usuario.
   const isStaff = isAdmin || isSupervisor;
+
+  const visibleTabs = useMemo(
+    () => Object.keys(TABS_META).filter((value) => isStaff || !TABS_META[value].staffOnly),
+    [isStaff],
+  );
+  const visibleGroups = useMemo(
+    () => TAB_GROUPS.filter((group) => group.tabs.some((value) => visibleTabs.includes(value))),
+    [visibleTabs],
+  );
+
+  const [selectedTab, setSelectedTab] = useState<string>(isStaff ? 'schedule' : 'notifications');
+
+  // Derivado (nao estado): se a aba selecionada nao existir para o papel atual
+  // (staff carrega depois), cai na primeira visivel -- sem setState em efeito.
+  const activeTab = visibleTabs.includes(selectedTab) ? selectedTab : visibleTabs[0];
+  const activeGroup = visibleGroups.find((group) => group.tabs.includes(activeTab)) ?? visibleGroups[0];
 
   const handleResetOnboarding = () => {
     resetOnboarding();
@@ -64,8 +119,8 @@ export function SettingsView() {
         <div className="space-y-4">
           {/* Skeleton tabs bar */}
           <div className="flex gap-2 overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-24 rounded-md flex-shrink-0" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-28 rounded-md flex-shrink-0" />
             ))}
           </div>
           {/* Skeleton form fields matching settings layout */}
@@ -97,37 +152,58 @@ export function SettingsView() {
           </div>
         </div>
       ) : (
-      <Tabs defaultValue={isStaff ? 'schedule' : 'notifications'} className="space-y-4">
-        {/* Scrollable tabs with fade edges and scroll indicators */}
-        <div className="relative group">
-          <div className="overflow-x-auto scrollbar-none -mx-1 px-1 scroll-smooth" id="settings-tabs-scroll">
-            <TabsList className="bg-muted/50 inline-flex w-max gap-1 p-1 max-sm:h-auto">
-              {isStaff && <TabsTrigger value="schedule" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Clock className="w-4 h-4" />Horário</TabsTrigger>}
-              {isStaff && <TabsTrigger value="messages" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><MessageSquare className="w-4 h-4" />Mensagens</TabsTrigger>}
-              {isStaff && <TabsTrigger value="automation" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><RefreshCw className="w-4 h-4" />Automação</TabsTrigger>}
-              <TabsTrigger value="notifications" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Bell className="w-4 h-4" />Notificações</TabsTrigger>
-              <TabsTrigger value="appearance" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Palette className="w-4 h-4" />Aparência</TabsTrigger>
-              <TabsTrigger value="shortcuts" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Keyboard className="w-4 h-4" />Atalhos</TabsTrigger>
-              <TabsTrigger value="sounds" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Volume2 className="w-4 h-4" />Sons</TabsTrigger>
-              {isStaff && <TabsTrigger value="global" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Globe className="w-4 h-4" />Global</TabsTrigger>}
-              {isStaff && <TabsTrigger value="followup" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><ArrowRight className="w-4 h-4" />Follow-up</TabsTrigger>}
-              {isStaff && <TabsTrigger value="media" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Package className="w-4 h-4" />Mídia</TabsTrigger>}
-              {isStaff && <TabsTrigger value="nps" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><TrendingUp className="w-4 h-4" />NPS</TabsTrigger>}
-              {isStaff && <TabsTrigger value="ai-tags" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Tags className="w-4 h-4" />Tags IA</TabsTrigger>}
-              {isStaff && <TabsTrigger value="csat" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><MessageSquareHeart className="w-4 h-4" />CSAT</TabsTrigger>}
-              {isStaff && <TabsTrigger value="chatbot-l1" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Bot className="w-4 h-4" />Chatbot L1</TabsTrigger>}
-              {isStaff && <TabsTrigger value="routing" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Users className="w-4 h-4" />Roteamento</TabsTrigger>}
-              {isStaff && <TabsTrigger value="ai-providers" className="gap-2 whitespace-nowrap max-sm:min-h-[44px]"><Brain className="w-4 h-4" />Gestão IA</TabsTrigger>}
-            </TabsList>
-          </div>
-          {/* Fade edges — left and right */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent opacity-0 transition-opacity" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />
-          {/* Scroll hint text */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1">
-            <span className="text-[9px] text-muted-foreground/40 animate-pulse">›</span>
-          </div>
-        </div>
+      <Tabs value={activeTab} onValueChange={setSelectedTab} className="space-y-4">
+        {/* Nivel 1 — grupos logicos. Substitui a barra horizontal unica de 16
+            abas (com scroll, fade e seta pulsante) por poucas categorias que
+            quebram linha em telas pequenas, sem scroll horizontal. */}
+        <nav
+          aria-label="Categorias de configurações"
+          className="flex flex-wrap items-center gap-1 rounded-xl border border-border/40 bg-muted/40 p-1"
+        >
+          {visibleGroups.map((group) => {
+            const Icon = group.icon;
+            const isActive = activeGroup?.id === group.id;
+            const firstVisibleTab = group.tabs.find((value) => visibleTabs.includes(value));
+            if (!firstVisibleTab) return null;
+            return (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => setSelectedTab(firstVisibleTab)}
+                aria-current={isActive ? 'true' : undefined}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors max-sm:min-h-[44px]',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-foreground/70 hover:bg-background/60 hover:text-foreground',
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {group.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Nivel 2 — abas do grupo ativo. Poucas por grupo, entao quebram linha
+            em vez de exigir scroll horizontal. */}
+        {activeGroup && (
+          <TabsList className="bg-muted/30 flex flex-wrap h-auto max-sm:h-auto w-full justify-start gap-1 p-1">
+            {activeGroup.tabs
+              .filter((value) => visibleTabs.includes(value))
+              .map((value) => {
+                const tab = TABS_META[value];
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger key={value} value={value} className="gap-2 whitespace-nowrap max-sm:min-h-[44px]">
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+          </TabsList>
+        )}
 
         {isStaff && (
           <TabsContent value="schedule">
