@@ -813,7 +813,7 @@ gate, piloto nem go-live (F98 segue decisão do dono). Registro de execução do
 |---|---------------|--------|-------------------|
 | 35.1 | Tela do módulo (rota e nav por permissão/flag) | presente | `src/components/multiplix/MultiplixView.tsx` |
 | 35.2 | Monitor de disparos (progresso, recentes, destinatários) | presente | `src/components/multiplix/MultiplixMonitor.tsx` |
-| 35.3 | Composer do disparo (rascunho, público, voz) | presente | `src/components/multiplix/MultiplixComposerDialog.tsx` |
+| 35.3 | Composição inline do disparo (rascunho, público, voz) | presente | `src/components/multiplix/MultiplixView.tsx` |
 | 35.4 | Estado do disparo no app (criação, ciclo, idempotência) | presente | `src/hooks/integrations/useMultiplixDispatches.ts` |
 | 35.5 | Público/elegibilidade no app | presente | `src/hooks/integrations/useMultiplixAudience.ts` |
 | 35.6 | Regra de elegibilidade compartilhada (app ↔ edge) | presente | `src/lib/multiplix-eligibility.ts` |
