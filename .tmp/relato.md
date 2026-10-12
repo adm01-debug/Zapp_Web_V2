@@ -1,29 +1,29 @@
-Especialista: senior (area-front-hooks)
+Especialista: senior (area-testes-do-produto)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+- Reempilhei a entrega recusada a partir do sha pedido `3f3d6539f`: o topo `3f3d6539f` era relato, então trouxe os commits efetivos da mesma branch (`38a426c83` e `1841641d7`) em um commit novo sobre a ponta atual de `dia/2026-10-11`.
+- `src/components/talkx/TalkXCampaignScheduled.tsx` e `src/components/talkx/talkxScheduleStatus.ts`: mantêm a extração do status real da tela agendada e o bloqueio memoizado da conexão Talk X.
+- Testes de `src/components/talkx/__tests__/TalkXCampaignScheduled*.tsx`: mantêm os mocks de conexão/query client que cobrem a chamada real nova e preservam as asserções.
 
 ## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- Ponto 1: parti da entrega `3f3d6539f` por cherry-pick da branch anterior; o commit final contém os arquivos de código/teste efetivos dos commits `38a426c83` e `1841641d7`, com os commits de relato da entrega anterior fora do diff.
+- Ponto 2: executei o cenário pedido sobre a ponta atual de `dia/2026-10-11` com a entrega reempilhada: `bun run test src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx` → `Test Files 1 passed (1)` / `Tests 3 passed (3)`. O teste de contatos ficou preservado.
+- Ponto 3: provei o empilhamento verde com o mesmo comando, com os testes Talk X da entrega anterior e com `zapp-verify . --rapido`; commit novo deste refazer: `c350a2896`.
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- contato pedido pelo cartão: `bun run test src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx` → `Test Files 1 passed (1)` / `Tests 3 passed (3)`.
+- regressão da entrega reempilhada: `bun run test src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.lifecycle.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.states.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` → `Test Files 4 passed (4)` / `Tests 38 passed (38)`.
+- verificação: `zapp-verify . --rapido` → `OK db_guard`; `OK tipos`; `OK lint`; `OK migrations`; `VERIFY: VERDE SEM BANCO`.
 
 ## Arquivos do diff
 .tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+src/components/talkx/TalkXCampaignScheduled.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.lifecycle.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.states.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+src/components/talkx/talkxScheduleStatus.ts
 
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+## Escopo preservado
+- `src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx` ficou fora do diff porque o comando pedido passou verde com a entrega reempilhada.
+- O diff ficou restrito aos arquivos Talk X da entrega original e ao relato deste cartão.
