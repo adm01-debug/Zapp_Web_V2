@@ -13,7 +13,7 @@
  * ler a chave de presença pedida ao provedor e injetar o estado de presença de outro
  * cliente, exatamente o que o `sync` do provedor entrega em produção.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
 type PresenceEntry = { oderId?: string; name?: string; isTyping?: boolean; lastTyped?: string };
@@ -72,6 +72,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useTypingPresence } from '@/hooks/chat/useTypingPresence';
+import { TYPING_STOP_DEBOUNCE_MS } from '@/hooks/chat/useContactTyping';
 
 /** chave de presença que o hook pediu ao provedor neste cliente */
 const presenceKeyOf = (index: number) => mocks.channels[index].opts.config.presence.key;
@@ -80,6 +81,11 @@ describe('useTypingPresence — identidade de presença entre agentes (R2-INB-02
   beforeEach(() => {
     mocks.channels.length = 0;
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('dois agentes no mesmo contato nunca compartilham a mesma chave de presença', () => {
@@ -166,11 +172,34 @@ describe('useTypingPresence — identidade de presença entre agentes (R2-INB-02
     expect(ana.result.current.isContactTyping).toBe(true);
     expect(ana.result.current.typingUsers.map(u => u.name)).toEqual(['Bruno']);
 
-    // O contato parou de digitar e o aviso dele sai de cena.
+    // O contato parou de digitar; o stop é debounced (anti-flicker) e o aviso
+    // só sai de cena depois da janela sem reativação.
     act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: false }); });
+    expect(ana.result.current.isContactTyping).toBe(true);
+    act(() => { vi.advanceTimersByTime(TYPING_STOP_DEBOUNCE_MS); });
     expect(ana.result.current.isContactTyping).toBe(false);
 
     ana.unmount();
     bruno.unmount();
+  });
+
+  it('anti-flicker: composing→paused→composing não apaga o aviso do contato', () => {
+    const ana = renderHook(() => useTypingPresence({ conversationId: 'conv-6', currentUserId: 'agente-ana' }));
+    const canalAna = mocks.channels[0];
+
+    act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: true }); });
+    expect(ana.result.current.isContactTyping).toBe(true);
+
+    // paused chega, mas antes da janela de debounce o contato volta a digitar.
+    act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: false }); });
+    act(() => { vi.advanceTimersByTime(TYPING_STOP_DEBOUNCE_MS - 1); });
+    expect(ana.result.current.isContactTyping).toBe(true);
+
+    act(() => { canalAna.emitBroadcast('contact_typing', { isTyping: true }); });
+    act(() => { vi.advanceTimersByTime(TYPING_STOP_DEBOUNCE_MS); });
+    // O stop pendente foi cancelado pela reativação: nada de piscar.
+    expect(ana.result.current.isContactTyping).toBe(true);
+
+    ana.unmount();
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { log } from '@/lib/logger';
+import { TYPING_AUTO_CLEAR_MS, TYPING_STOP_DEBOUNCE_MS } from './useContactTyping';
 
 interface TypingUser {
   oderId: string;
@@ -61,6 +62,8 @@ export function useTypingPresence({
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contactTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Debounce do STOP do contato (anti-flicker composing→paused→composing).
+  const contactStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Escopo desta aba, estável por montagem (inicializador preguiçoso: nada de
   // ler ref durante a renderização).
   const [clientScope] = useState(createClientScope);
@@ -182,17 +185,35 @@ export function useTypingPresence({
     // Listen for contact typing broadcast from Evolution API webhook
     channel.on('broadcast', { event: 'contact_typing' }, ({ payload }) => {
       const isTyping = payload?.isTyping === true;
-      setIsContactTyping(isTyping);
 
-      // Auto-clear after 5 seconds if no new event
+      // Qualquer evento cancela os temporizadores pendentes do contato antes de
+      // decidir o novo estado (evita timer órfão derrubando um "digitando" novo).
       if (contactTypingTimeoutRef.current) {
         clearTimeout(contactTypingTimeoutRef.current);
+        contactTypingTimeoutRef.current = null;
       }
+      if (contactStopTimeoutRef.current) {
+        clearTimeout(contactStopTimeoutRef.current);
+        contactStopTimeoutRef.current = null;
+      }
+
       if (isTyping) {
+        setIsContactTyping(true);
+        // Auto-clear: sem novo evento, o aviso expira sozinho.
         contactTypingTimeoutRef.current = setTimeout(() => {
           setIsContactTyping(false);
-        }, 5000);
+          contactTypingTimeoutRef.current = null;
+        }, TYPING_AUTO_CLEAR_MS);
+        return;
       }
+
+      // STOP com debounce: o WhatsApp alterna composing→paused→composing e o
+      // apagamento imediato pisca o indicador. Confirma o stop só depois de
+      // TYPING_STOP_DEBOUNCE_MS sem reativação.
+      contactStopTimeoutRef.current = setTimeout(() => {
+        setIsContactTyping(false);
+        contactStopTimeoutRef.current = null;
+      }, TYPING_STOP_DEBOUNCE_MS);
     });
 
     // Subscribe to channel
@@ -208,6 +229,9 @@ export function useTypingPresence({
       }
       if (contactTypingTimeoutRef.current) {
         clearTimeout(contactTypingTimeoutRef.current);
+      }
+      if (contactStopTimeoutRef.current) {
+        clearTimeout(contactStopTimeoutRef.current);
       }
       channel.unsubscribe();
       supabase.removeChannel(channel);
