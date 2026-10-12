@@ -11,9 +11,12 @@ Cartão histórico TL-041/F75 já resolvido via quebra em A/B/C + refazer. Nenhu
 - Tela entregue e corrigida: `git cat-file -t b1df2ed26` → `commit`, com mensagem "5 correções MultiplixView — conferir público salvo, enviar exclusões, preservar marcas na comparação, usar submittedFilters, avisar ao salvar regra com exclusões" (`t_fe9afd28`, done). Na base, `git grep "fora do filtro"` em `src/components/multiplix` → vazio, ou seja, a tela está na branch do refazer, não na base.
 - `git status --short` → limpo (sem diff de código).
 
+## Verificação executada neste workspace (evidência limpa)
+- `npx vitest run src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts` → `Test Files 1 passed (1)` / `Tests 14 passed (14)` (parte hooks da lacuna verde na base).
+
 ## O que NÃO fiz e por quê
 - NÃO reimplementei seleção/exclusão/salvar/aplicar/popover: edge + hooks já estão na base e a tela está pronta no refazer; refazer aqui seria diff duplicado.
-- NÃO rodei vitest/zapp-verify: sem diff de código não há o que provar com vermelho→verde neste cartão; as provas estão nos cartões filhos (A: 10 passed; B: 14 passed; C-refazer: 9/9, typecheck limpo, conforme metadados dos donos).
+- NÃO rodei zapp-verify completo nem vermelho→verde: sem diff de código neste cartão não há regressão possível; o verde da parte hooks na base está acima e as provas de cada filho estão nos metadados deles (A: 10 passed; B: 14 passed; C-refazer: 9/9, typecheck limpo).
 
 ## Para o integrador
 - Faltam integrar na branch do dia, nesta ordem: TL-041A (`a8e41aefc`), TL-041B (`3826cf663`, deduplicar cherry-pick `772d59a8e`), TL-041C-refazer (`b1df2ed26`). Este cartão histórico pode ser arquivado após essas integrações.
