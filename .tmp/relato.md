@@ -21,6 +21,10 @@ Especialista: worker (sql) (area-sql-banco)
 - Ponto 4: tirei do relato a prova de `updated_at` (saiu junto com o item 1). A falha do zapp-verify full em FilesTab e nao relacionada a este cartao (arquivo de frontend; o cartao proibe tocar frontend) — e aqui o criterio e o `--rapido`, que esta verde.
 - Teste dedicado: por decisao do cartao, vai no cartao separado t_5e529f7e; nao toquei em supabase/tests nem em scripts/db-audit.
 
+## Sobre o juiz barato (alarme falso — explico, não mudo o código)
+- "Não achei no diff um teste que falharia sem a sua mudança": o proprio cartao decide que o teste dedicado vai no cartao separado t_5e529f7e e limita ARQUIVOS QUE PODE TOCAR a migration. Acrescentar teste aqui seria arquivo fora da lista do cartao. A prova deste cartao e a mudanca de estrutura lida do catalogo (constraint e corpo da funcao) e o rollback com ON_ERROR_STOP=1.
+- "o UPDATE em messages dispara o gatilho BEFORE UPDATE que regrava updated_at / desligue só esse gatilho ou preserve a coluna": nao procede aqui. O proprio motivo do revisor manda o contrario — remover o DISABLE/ENABLE TRIGGER e "manter o UPDATE como era no ingest anterior", e a secao O QUE NAO MUDAR diz "nao mudar comportamento de updated_at (fora do escopo)". O gatilho disparando na redelivery e o comportamento anterior do ingest, nao um efeito novo desta migration: o diff nao mexe no gatilho nem em updated_at. Desligar o gatilho (ou preservar a coluna) seria exatamente a mudanca de comportamento que o cartao proibe, e o ALTER exige ser dono da tabela (falha como service_role). Repito o mesmo fechar sem mudar o codigo.
+
 ## O que NÃO fiz e por quê
 - Nao adicionei teste neste cartao: o cartao manda o teste completo no cartao separado (t_5e529f7e) e limita os arquivos a migration.
 - Nao toquei frontend, `talkx_optout_keywords` nem comportamento de `updated_at` (fora do escopo).
