@@ -132,3 +132,26 @@ describe('ConnectionCard — confirmação das ações destrutivas (t_a369905d)'
     expect(props.onDelete).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * t_9cc4f1c2 — a entrada "Auditoria da conexão" é de leitura e só admin vê
+ * (a policy de audit_logs libera admin/supervisor; a tela é mais estrita).
+ * Sem instance_id não há trilha a ler, então o item não aparece.
+ */
+describe('ConnectionCard — entrada "Auditoria da conexão" (t_9cc4f1c2)', () => {
+  it('admin vê o item quando a conexão tem instância', () => {
+    render(<ConnectionCard {...makeProps()} />);
+    expect(screen.getByText('Auditoria da conexão')).toBeTruthy();
+  });
+
+  it('supervisor NÃO vê o item', () => {
+    roleState.isAdmin = false;
+    render(<ConnectionCard {...makeProps()} />);
+    expect(screen.queryByText('Auditoria da conexão')).toBeNull();
+  });
+
+  it('conexão sem instance_id não oferece o item', () => {
+    render(<ConnectionCard {...makeProps()} connection={{ ...connection, instance_id: null }} />);
+    expect(screen.queryByText('Auditoria da conexão')).toBeNull();
+  });
+});

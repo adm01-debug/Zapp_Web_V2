@@ -9,7 +9,7 @@ import {
 import {
   Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
   Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
-  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull,
+  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { BusinessHoursIndicator } from './BusinessHoursIndicator';
 import { ConnectionDisconnectDialog } from './ConnectionDisconnectDialog';
 import { ConnectionDeleteDialog } from './ConnectionDeleteDialog';
+import { ConnectionAuditDialog } from './ConnectionAuditDialog';
 import type { WhatsAppConnection } from '@/hooks/inbox/useConnectionsManager';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Wifi }> = {
@@ -57,6 +58,7 @@ export function ConnectionCard({
   const { isAdmin } = useUserRole();
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
@@ -164,6 +166,9 @@ export function ConnectionCard({
                   )}
                   {isAdmin && (
                     <>
+                      {connection.instance_id && (
+                        <DropdownMenuItem onClick={() => setAuditOpen(true)}><FileClock className="w-4 h-4 mr-2" />Auditoria da conexão</DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDelete(true)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
                     </>
@@ -188,6 +193,14 @@ export function ConnectionCard({
           onOpenChange={setConfirmDelete}
           connectionName={connection.name}
           onConfirm={() => onDelete(connection)}
+        />
+      )}
+      {isAdmin && (
+        <ConnectionAuditDialog
+          open={auditOpen}
+          onOpenChange={setAuditOpen}
+          connectionName={connection.name}
+          instanceId={connection.instance_id ?? null}
         />
       )}
     </motion.div>
