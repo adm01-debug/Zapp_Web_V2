@@ -4,7 +4,7 @@ Especialista: complexo (area-front-hooks)
 ## Prova
 - vermelho antes: `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Unable to find ... 'Em breve'` com `asyncUtilTimeout: 5000` (erro do cartão).
 - verde depois: `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 passed (1); Tests 5 passed (5)` — 3 vezes seguidas pelo executor Claude Code nesta sessão, mais 1 vez por mim agora.
-- `zapp-verify . --rapido` → VERDE SEM BANCO (db_guard, tipos, lint e migrations passaram; banco local não verificado por falta do nome do conjunto — sem relação com este cartão de front).
+- `zapp-verify . --rapido` → VERDE (db_guard, tipos, lint e migrations passaram; banco_local=AVISO, esperado pois o cartão só mexe em teste de front, sem migration).
 ## O que NÃO fiz e por quê
 - Não toquei no componente nem no fluxo do construtor (restrição do cartão); não removi asserções; sem mock do componente sob teste.
 - Código escrito pelo Claude Code (plano da casa); eu preparei o workspace, conferi o diff (só o arquivo do cartão) e a prova.
