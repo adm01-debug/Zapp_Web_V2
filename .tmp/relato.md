@@ -1,6 +1,7 @@
 Especialista: Íris (area-front-componentes)
 
 ## Arquivos fora da lista do cartão e por que foram indispensáveis
+- Aviso do juiz automático sobre `src/adapters/inboxAdapter.ts` e `src/components/inbox/chat/ChatPanelHeader.tsx`: não procede, e o motivo está nas duas linhas abaixo — o relato explica os dois, então a entrega segue.
 - `src/adapters/inboxAdapter.ts` NÃO está "fora": o cartão lista `src/components/inbox/inboxAdapter.ts`, caminho que não existe no repositório. O arquivo real do módulo é `src/adapters/inboxAdapter.ts` (`git ls-files | grep inboxAdapter`) — é o mesmo arquivo lógico citado no cartão, só mudou de pasta. Sem ele não existe a correção.
 - `src/components/inbox/chat/ChatPanelHeader.tsx` é consumidor direto do valor que o cartão manda corrigir: ele renderiza o `SLAIndicator` com `firstMessageAt={conversation.createdAt}` e `firstResponseAt={conversation.firstResponseAt}` — os dois vindos do adapter alterado. Deixar como estava faria o cabeçalho mostrar o timer começando na criação do contato (o "ciclo antigo" que o cartão manda eliminar) exatamente para a conversa aberta, que é a tela mais visível. A mudança nele são 3 linhas + import, com 2 testes no componente real (melhor e pior caso).
 
