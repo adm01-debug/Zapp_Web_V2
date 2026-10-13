@@ -16,6 +16,11 @@ Cartão [refazer]: a entrega anterior (commit f4e4ece10, `feat(edge): cria Edge 
 - verde depois (mesmo comando): `ℹ tests 11` / `ℹ pass 11` / `ℹ fail 0`.
 - Edge preservada e funcional: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read supabase/functions/request-password-reset/index.test.ts` → `ok | 9 passed | 0 failed (88ms)`.
 
+## Pontos do cartão (o cartão é um [refazer] do limpador; os pontos são o "O QUE FAZER")
+- Ponto 1: parti do commit da entrega por cherry-pick de `f4e4ece10` (não recomecei); o commit original virou `097bc9ecf` nesta branch, preservado sem alteração de conteúdo.
+- Ponto 2: reproduzi o item sobre a ponta atual do dia (`dia/2026-10-13`) e corrigi a causa que a própria entrega deixou desalinhada — ela adicionou a Edge nova e um bloco em `supabase/config.toml`, e o `ESTADO.md` não acompanhou (falta a linha da Edge, totais/cabeçalho com um a menos, âncoras do `config.toml` deslocadas). Nenhuma asserção foi afrouxada: nenhum teste do repositório foi tocado neste diff (só `ESTADO.md` + relato).
+- Ponto 3: prova verde no mesmo comando do item (`node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `ℹ tests 11 / ℹ pass 11 / ℹ fail 0`) e `zapp-verify . --rapido` verde no `hermes-tarefa-fechar`; sha da entrega: `05b5e8797` (sobre `097bc9ecf`).
+
 ## O que NÃO fiz e por quê
 - Não toquei em `src/` nem no front do `/forgot-password`: fora do escopo do cartão (a migração do front para a Edge é outro cartão).
 - Não regenerei o manifesto de deploy de Edge nem rodei deploy/push: não é deste cartão e não faço push/deploy.
