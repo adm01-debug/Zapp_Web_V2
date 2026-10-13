@@ -45,6 +45,14 @@ uma flag de `localStorage` que o hook deixou de ler (MORTA). Resultado: o
 
 ## O que NÃO fiz e por quê
 
+- `playwright.config.ts` aparece no diff do cartão (ESCOPO GLOBAL) por CHERRY-PICK
+  dos 6 commits do cartão pai (`67d7c72a4 8a891ca5e 863b52422 177e2e792 776e021a1
+  4c9a29ce4`), não por edição minha — o critério de pronto exige
+  `e2e/settings-persistencia.spec.ts` verde no projeto `chromium-settings`, que o
+  pai criou ali; sem o projeto a spec cairia no `chromium-authenticated` (sessão
+  REAL, viola a R1). Meu commit de trabalho é o `9a4ed0d81` (só fixtures/specs
+  e2e); o `playwright.config.ts` já chegou pronto no cherry-pick.
+
 - Não toquei na regra de produção do tour (o cartão proíbe; é do cartão pai).
   Nenhum arquivo de `src/` mudou — o diff é só de fixture/spec e2e.
 - `e2e/a11y-contraste.spec.ts:136` (E98 "lista populada", 3 vistas + hover, ~6
