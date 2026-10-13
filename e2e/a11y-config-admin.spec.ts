@@ -178,3 +178,91 @@ test.describe('N-080 · a11y: button-name em Configuracoes, Administracao e Segu
     });
   });
 });
+
+/** N-090 · painel de regressões de permissão (ACL/RLS) na aba Admin.
+ *
+ * Sessão falsa (`installFakeSession`) + `user_roles` = admin (`mockAppShell`): a aba
+ * Admin da Central de Segurança só existe para admin. A leitura de `security_acl_alerts`
+ * é respondida aqui com linhas SINTÉTICAS (nunca banco real, regra R1) e a captura sai
+ * em `e2e/__screenshots__/security-acl-alerts-light-<plataforma>.png`.
+ */
+const ACL_ALERTS_SINTETICOS = [
+  {
+    id: 41,
+    alert_type: 'SECDEF_ANON_EXECUTE',
+    object_name: 'public.sync_contacts()',
+    role_name: 'anon',
+    privilege: 'EXECUTE',
+    severity: 'CRITICAL',
+    detected_at: '2026-10-13T09:12:00.000Z',
+    resolved_at: null,
+  },
+  {
+    id: 40,
+    alert_type: 'TABELA_SEM_RLS',
+    object_name: 'public.legacy_import',
+    role_name: 'anon',
+    privilege: 'SELECT',
+    severity: 'HIGH',
+    detected_at: '2026-10-12T23:23:00.000Z',
+    resolved_at: '2026-10-13T03:23:00.000Z',
+  },
+];
+
+test.describe('N-090 · Seguranca/Admin: regressoes de permissao (ACL/RLS)', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  let registro: Registro;
+
+  // Mesmo aquecimento do N-080: o primeiro carregamento compila o bundle e pode
+  // estourar o guard de 8 s do app (\"React nao montou em 8s\") sem defeito nenhum.
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    const descartado: Registro = { writesApp: [], mapbox: [], redeBarrada: [] };
+    try {
+      await bloquearRedeReal(page, descartado);
+      await mockAppShell(page, descartado);
+      await installFakeSession(page);
+      await page
+        .goto('/?view=security', { waitUntil: 'domcontentloaded', timeout: 60_000 })
+        .catch(() => undefined);
+      await page.waitForTimeout(1_500);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test.beforeEach(async ({ page }) => {
+    registro = { writesApp: [], mapbox: [], redeBarrada: [] };
+    await bloquearRedeReal(page, registro);
+    await mockAppShell(page, registro);
+    await installFakeSession(page);
+  });
+
+  test.afterEach(() => {
+    expect(registro.redeBarrada).toEqual([]);
+  });
+
+  test('painel mostra a regressao aberta e a resolvida, e gera a captura', async ({ page }) => {
+    await mockSecurityVazio(page);
+    await page.route(/\/rest\/v1\/security_acl_alerts/, (route) =>
+      json(route, ACL_ALERTS_SINTETICOS),
+    );
+
+    await abrirView(page, '/?view=security', 'Central de Segurança');
+    await page.getByRole('tab', { name: 'Admin' }).click();
+
+    const painel = page.getByRole('region', { name: 'Regressões de permissão' });
+    await expect(painel).toBeVisible({ timeout: 20_000 });
+    await expect(painel.getByText('Função SECURITY DEFINER executável por anon')).toBeVisible();
+    await expect(painel.getByText('public.sync_contacts()')).toBeVisible();
+    await expect(painel.getByText('Crítico')).toBeVisible();
+    await expect(painel.getByText('Tabela sem RLS')).toBeVisible();
+    await expect(painel.getByText('Resolvida', { exact: true })).toBeVisible();
+    await expect(painel.getByText(/1 aberta\(s\) · 1 resolvida\(s\)/)).toBeVisible();
+
+    await painel.screenshot({
+      path: `e2e/__screenshots__/security-acl-alerts-light-${process.platform}.png`,
+    });
+  });
+});
