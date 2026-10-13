@@ -1,52 +1,63 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: hugo
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013230004_inbox_unread_total.sql` (aditiva): cria a RPC
-  `public.inbox_unread_total()` (bigint, STABLE, SECURITY DEFINER, `search_path=public`)
-  que devolve, em UMA chamada, quantas CONVERSAS o chamador tem com ao menos uma mensagem
-  do contato não lida (`sender='contact' AND is_read IS NOT TRUE`). A visibilidade usa o
-  MESMO predicado canônico `public.is_contact_visible_to_user(contact_id, auth.uid())` de
-  `get_inbox_contact_summaries` — nada de regra de autorização reescrita à mão. ACL:
-  REVOKE de PUBLIC/anon, GRANT EXECUTE só para authenticated e service_role. Mais o índice
-  parcial `idx_messages_unread_conversas (contact_id) WHERE sender='contact' AND is_read IS NOT TRUE`.
-  Rollback executável no topo (drop function + drop index).
-- `src/integrations/supabase/types.ts`: `inbox_unread_total: { Args: never; Returns: number }`.
-- `supabase/tests/inbox_unread_total.sql`: a prova (banco local, papéis reais).
+- `src/hooks/inbox/useInboxUnreadTotal.ts` (novo): hook do selo de não lidas do Chat.
+  `useInboxUnreadTotal(enabled = true)` devolve `{ count, teams, isLoading, isError, refetch }`.
+  `count` sai da RPC `inbox_unread_total()` — UMA chamada sem argumento (`Args: never` em
+  `types.ts`), que conta CONVERSAS com mensagem do contato não lida; somar a lista de conversas
+  exigiria baixar `get_inbox_contact_summaries` por contato só para contar. Erro da RPC não
+  lança: vira `isError: true` com `count: 0`, para a barra lateral não quebrar nem mostrar selo
+  errado. `refetch()` revalida na hora.
+- Realtime no mesmo arquivo: canal com `uniqueRealtimeTopic('inbox-unread-total')` (tópico
+  exclusivo por instância — dois consumidores simultâneos, barra lateral e barra do celular, não
+  podem dividir `supabase.channel`), assinando `messages` e `contacts`, que são as DUAS tabelas da
+  publicação `supabase_realtime` (migrations 20251215163158 e 20260826210200) capazes de mudar a
+  contagem. Cada evento revalida SÓ a chave `['inbox-unread-total']` — nada de invalidação global,
+  que derrubaria o cache do inbox inteiro. Rajada de eventos vira uma recontagem (debounce de
+  500 ms, a mesma janela de `useUnreadEmailCount`). Reconexão: a PRIMEIRA inscrição não consulta
+  de novo (a consulta inicial cobre), mas a VOLTA do canal depois de `CHANNEL_ERROR`/`TIMED_OUT`/
+  `CLOSED` revalida na hora — os eventos da janela offline não se recuperam sozinhos.
+  Desmontagem limpa o timer e o canal (`supabase.removeChannel`).
+- `src/hooks/system/useDocumentBadge.ts` (inalterado, agora LIGADO): o hook chama
+  `useDocumentBadge(count)`, então o título da aba ganha "(n) " com não lidas enquanto a aba está
+  em segundo plano e volta ao normal quando zera — o arquivo não precisou mudar.
+- Total do Teams exposto pelo MESMO hook (`teams`) via `useTeamUnreadTotal()` — cache do inbox,
+  sem consulta nova; `src/hooks/team-chat/useTeamUnreadTotal.ts` ficou inalterado de propósito
+  (o contrato dele — "não abre canal nem dispara consulta" — é verificado pelo teste existente
+  `useTeamUnreadTotal.test.tsx`).
+- `src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx` (novo, 10 testes): RPC sem parâmetro;
+  erro da RPC não lança; revalidação nos DOIS canais (`messages` e `contacts`); rajada → 1
+  recontagem; reconexão (primeira inscrição não consulta, volta do canal revalida); desabilitado
+  não consulta nem assina; tópico exclusivo por instância + canal limpo ao desmontar; `teams` do
+  cache; título da aba "(n)" e sem prefixo quando zera; resposta atrasada depois do desmonte não
+  escreve no título.
 
-Correção principal: hoje o selo de não lidas é uma soma por contato no cliente (fetch
-pesado). Esta RPC responde o total em uma chamada leve, com a mesma visibilidade.
-
-## Prova (comandos rodados agora, banco LOCAL da tarefa)
-- vermelho antes (função dropada, teste sem ela):
-  `zapp-db-local psql . inb13 -v ON_ERROR_STOP=1 < supabase/tests/inbox_unread_total.sql`
-  -> `ERROR: function public.inbox_unread_total() does not exist` / `EXIT_RED=3`.
-- verde depois (migration aplicada, mesmo comando):
-  -> `NOTICE: inbox_unread_total: suite OK (T1 visibilidade do agente, T2 admin ve todas,
-     T3 ler reduz, T2b ACL, T4 is_read nulo, T5 contato sem mensagem, T7 escala 3.650)
-     — 5 grupo(s)` / `EXIT_GREEN=0`.
-- índice adequado (EXPLAIN ANALYZE BUFFERS do passo de candidatos):
-  `Bitmap Index Scan on idx_messages_unread_conversas ... rows=3670 ... Execution Time: 2.528 ms`
-  (varre o índice parcial só das não lidas; `Buffers: shared hit=84`).
-- escala 3.650 contatos (saída do teste): agente A `total=3650 em 2558.1 ms`;
-  admin `total=3660 em 323.3 ms`. O custo é o predicado canônico de visibilidade por
-  contato candidato (o mesmo que `get_inbox_contact_summaries` já paga, e que ainda baixa
-  as mensagens); a varredura de `messages` é 2,5 ms.
-- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (204s)` (dependencias, db_guard,
-  tipos, lint, migrations = OK).
-
-O teste cobre: T1/T4 agente conta só o que enxerga e conta CONVERSAS, não mensagens;
-T2 admin vê todas; T3 marcar como lida reduz o total; T2b anon barrado, authenticated e
-service_role com EXECUTE; T5 contato sem mensagem não entra; T7 exatidão com 3.650 contatos
-(contagens ancoradas em base+delta, porque o seed local já tem não lidas).
+## Prova
+- vermelho antes: `npx vitest run src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx` →
+  `Error: Failed to resolve import "../useInboxUnreadTotal"` / `Test Files 1 failed (1); Tests no tests`
+- verde depois: `npx vitest run src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx` →
+  `Test Files 1 passed (1); Tests 10 passed (10)`
+- sem regressão na área: `npx vitest run src/hooks/inbox src/hooks/team-chat src/hooks/system src/hooks/__tests__` →
+  `Test Files 177 passed (177); Tests 1559 passed | 4 expected fail | 1 todo (1564)`
+- lint: `npx eslint src/hooks/inbox/useInboxUnreadTotal.ts src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx` → rc=0, sem saída
 
 ## O que NÃO fiz e por quê
-- Não toquei `src/pages/Index.tsx` nem os hooks do inbox: o cartão é só o lado banco; o
-  consumo é do cartão irmão `t_f7c9e079` (contrato em `kanban_comment`).
-- Não adicionei passo em `.github/workflows/db-guard.yml`: `supabase/tests/*.sql` não são
-  inventariados (o `check-test-inventory` só cobre `.test.sh`/`.mjs`).
-- Observação de ferramenta (não é do diff): `zapp-db-local` não achou o contêiner quando
-  usei o basename longo do workspace (o Docker trunca o 2º segmento do nome); subi o
-  conjunto com o nome curto `inb13`. `hermes-db-migrar` recusou a reaplicação
-  (APLICADA_LOCAL), então reapliquei pelo `zapp-db-local psql`.
-- O cartão termina com a linha de REGRAS PERMANENTES; se o fechar acusar "SEM DDL/migration"
-  ou "fora do escopo", é alarme falso de template de cartão de banco — repetir o MESMO comando.
+- Não toquei `src/hooks/system/useDocumentBadge.ts` nem `src/hooks/team-chat/useTeamUnreadTotal.ts`:
+  os dois já fazem o que o cartão pede (título da aba / total do Teams do cache) e mudar o segundo
+  quebraria o contrato verificado por teste existente.
+- Não toquei `src/pages/Index.tsx` nem `src/components/**` (fora da minha área): o consumo
+  (`unreadNotifications={0}` → `count`, selo do Teams → `teams`) é do cartão de telas irmão.
+  Os dois valores já saem prontos do hook.
+- Não mexi no barrel `src/hooks/inbox/index.ts` (fora dos arquivos que o cartão cita); o import é
+  `import { useInboxUnreadTotal } from '@/hooks/inbox/useInboxUnreadTotal'`.
+
+## Sobre os três arquivos que o juiz apontou (procede, e é explicado)
+O juiz viu `src/integrations/supabase/types.ts`, `supabase/migrations/20261013230004_inbox_unread_total.sql`
+e `supabase/tests/inbox_unread_total.sql` no diff da branch. Eles NÃO são meus: vêm do cartão PAI
+`t_97516027` (worker (sql)), que criou a RPC `inbox_unread_total` e já está pronto na fila do
+integrador (commit `f4af14a0b`, fila `26101304322a08.json`). Trouxe o commit dele por `cherry-pick`
+(`c8fad95a3`) antes de começar porque este hook não existe sem a RPC e sem o tipo `inbox_unread_total`
+em `types.ts` — era a dependência declarada do cartão. Não editei nenhum dos três: o commit deste
+cartão lista apenas `src/hooks/inbox/useInboxUnreadTotal.ts`,
+`src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx` e `.tmp/relato.md`. Não reverto: sem o
+`cherry-pick` o hook não compila nem consulta nada.
