@@ -418,7 +418,7 @@ const ConversationRow = memo(({
           {conversation.lastMessage.content}
         </p>
       )}
-      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground/60">
+      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground">
         <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
         {conversationStatusLabel && <span>• {conversationStatusLabel}</span>}
       </div>
