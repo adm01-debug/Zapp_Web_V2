@@ -18,6 +18,15 @@ Especialista: iris
 1. **Histórico visível para quem vê o contato** — `ContactDetailPanel.tsx:433` monta a seção. Provas: `ContactChangeHistory.test.tsx:157` (melhor caso: ator, data e rótulos pt-BR; confere também que `phone`/`assigned_to` NÃO aparecem), `:188` (vazio), `:201` (erro + "Tentar novamente" focável e funcional), `:228` (o painel REAL monta a seção, com nome acessível "Histórico" e as linhas da trilha). A captura mostra a seção na tela real a 390 px.
 2. **`zapp-verify . --rapido` verde** — roda no fechar (bloco FATOS MEDIDOS).
 
+## Dependência — arquivos que vieram do cartão pai (não escritos por mim)
+Cherry-pick da faixa inteira do pai `t_a364a46c` (`4563dca75`..`b6b09ab28`), como manda a DEPENDÊNCIA do cartão:
+- `supabase/migrations/20261013051916_contact_change_log.sql` — a trilha `contact_change_log` (tabela append-only, gatilho de auditoria, RLS de leitura).
+- `supabase/tests/contact_change_log.sql` — prova de banco da trilha.
+- `src/hooks/crm/useContactChangeLog.ts` — o hook que a minha seção consome.
+- `src/hooks/crm/index.ts` — export do hook no barril.
+- `src/integrations/supabase/types.ts` — tipos da tabela nova.
+- `src/hooks/crm/__tests__/useContactChangeLog.test.tsx` — teste do hook.
+
 ## O que NÃO fiz e por quê
 - Não reorganizei a ficha em seções nem mexi no layout dela: isso é o CT-031 (`t_305cc73c`), ainda `scheduled` (aguarda o CT-025). A seção "Histórico" entra no fim do painel atual; quando o CT-031 entrar, ela passa a viver dentro do bloco "Histórico recente".
 - Não toquei banco nem hook: a trilha `contact_change_log` e o `useContactChangeLog` vieram do cartão pai `t_a364a46c` (cherry-pick da faixa inteira, `4563dca75`..`b6b09ab28`), como manda a DEPENDÊNCIA do cartão.
