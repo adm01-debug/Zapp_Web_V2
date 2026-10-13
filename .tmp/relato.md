@@ -12,6 +12,7 @@ Especialista: hugo
 - tipos: `npx tsc -b --force` → `rc=0`, sem saída (o `lint` do commit também não introduziu dívida nova).
 
 ## O que NÃO fiz e por quê
+- Ajuste pedido pelo juiz barato antes do fechar: o teste do cliente citava o ref do banco de produção na URL de origem; troquei por `https://sb-testref.supabase.co` (o domínio de teste que o próprio juiz indica). O diff não tem mais nenhum identificador de produção — os comentários de `client.ts` que já citavam o projeto são anteriores a esta entrega e não foram tocados.
 - Não portei o semáforo de 8 slots, o `safeClient` nem o pool da V3: pedido explícito do cartão (são contornos de VPS).
 - Não renderizei o aviso visual "perfil não carregou": o componente de aviso mora em `src/components/**` (area-front-componentes) e não está na lista de ARQUIVOS QUE PODE TOCAR deste cartão. Entreguei o estado (`profileUnavailable`) e o acionador do "Tentar de novo" (`refreshProfile`), que é a parte de hook/estado, e registrei o pedido do aviso em comentário no cartão.
 - Não toquei banco, Edge Function, migration, produção nem credenciais; sem dependência nova; sem log de telefone, token ou texto de mensagem.
