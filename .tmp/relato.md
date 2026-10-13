@@ -1,24 +1,38 @@
-Especialista: hugo
+Especialista: iris
 
 ## O que mudou e por quê
-- src/hooks/gamification/useAgentCelebrations.ts (NOVO): assina `agent_achievements` (INSERT) e `agent_stats` (UPDATE/INSERT) do PRÓPRIO perfil num único canal de `postgres_changes`, com tópico exclusivo por instância (`uniqueRealtimeTopic('agente-celebracoes')`) e filtro `profile_id=eq.<id>` nas DUAS tabelas. Emite dois tipos de evento: conquista nova (`kind: 'achievement'`) e mudança de nível para cima (`kind: 'level_up'`, com `previousLevel`). Ao reconectar (volta de CHANNEL_ERROR/TIMED_OUT para SUBSCRIBED) ressincroniza pelo banco e emite só o que passou durante a queda — reconectar não repete, porque o id da conquista e o nível conhecido vivem em `useRef` e servem de filtro nas duas pontas (evento ao vivo e ressincronização). O baseline da montagem só semeia: conquista que já existia quando a tela abriu não vira festa (senão cada refresh celebraria o histórico).
-- src/hooks/gamification/mutations.ts e src/components/gamification/GamificationProvider.tsx: APAGADOS. O provider nunca era montado (`useGamification` devolvia o contexto NOOP) e existia só para chamar `add_agent_xp`/`grant_agent_achievement`/`update_agent_streak` do navegador. O cliente agora só LÊ gamificação; XP, conquista e sequência vêm dos gatilhos SECURITY DEFINER do servidor (mesmo espírito do PB-19).
-- src/hooks/gamification/useAgentGamification.ts e index.ts: saem as mutações do retorno e do barrel; permanece só a leitura (`stats`, `achievements`, `isLoading`, `isError`). Nenhum consumidor usava as mutações (conferido em `src/`).
-- src/components/gamification/DemoAchievements.tsx: era o único consumidor do provider morto; passa a ser widget só de leitura sobre `useAgentGamification` (XP, nível, sequência, conquistas), sem botões que prometiam crédito de XP e não gravavam nada.
+- `src/components/gamification/AchievementToast.tsx:355`: novo export `AchievementCelebrationToaster`, o host do toast no topo do app, alimentado por `useAgentCelebrations` (o hook do cartão pai PE-36, t_8e0d9185 — nada simulado: a fila vem do cadastro de conquista e da subida de nível que o servidor grava). Mostra UMA celebração por vez: conquista nova (nome, descrição e XP) ou subida de nível (nível anterior, novo e XP).
+- `src/components/gamification/AchievementToast.tsx:369`: a região `<div role="status" aria-live="polite" aria-atomic="true">` já existe no primeiro render, antes de qualquer celebração (leitor de tela anuncia o que chega). Não bloqueia a tela: o overlay não tem camada de tela cheia — só o cartão (`AchievementToast.tsx:171`, `top-6`, `pointer-events-auto` no próprio cartão) e ele sai sozinho pelo `duration` (`AchievementToast.tsx:154`) ou pelo botão "Fechar aviso de conquista" (`AchievementToast.tsx:284`, agora com `aria-label` e alcançável pelo teclado — antes era `opacity-0` até o hover).
+- `src/components/gamification/AchievementToast.tsx:149`: `useReducedMotion()` desliga confete, brilho pulsante, giro do ícone e shimmer; com movimento reduzido a entrada/saída vira só opacidade. O toast ganhou `title`/`description` opcionais (o tipo de conquista do banco vira visual por mapa, com cabeçalho neutro para o que não tem visual próprio).
+- `src/components/gamification/AchievementToast.tsx:150`: a lista de partículas passou a ser derivada — saiu o `setState` dentro do `useEffect`, o que também apaga o erro `react-hooks/set-state-in-effect` que o arquivo trazia.
+- `src/App.tsx:64` e `src/App.tsx:92`: montagem no bloco de overlays `DeferredProviders`, em `lazy()` no mesmo padrão do Sonner (nada dele na primeira pintura).
+- `src/components/gamification/__tests__/AchievementToast.test.tsx`: 8 testes novos.
+- `src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts`: +1 mock do overlay novo (mesmo tratamento que esse arquivo já dá a `Toaster`, `Sonner` e `LiveRegion`); nenhuma asserção existente foi alterada. Sem isso o teste do listener montava o App com o toast real e caía por causa do mock parcial de `lucide-react` dele.
 
 ## Prova
-- vermelho antes, com o hook ainda inexistente: `npx vitest run src/hooks/gamification/__tests__/useAgentCelebrations.test.tsx` → `Test Files 1 failed`, erro de resolução do import de `@/hooks/gamification/useAgentCelebrations`.
-- verde depois: `npx vitest run src/hooks/gamification` → `Test Files 3 passed (3); Tests 26 passed (26)`. Cobre: INSERT de conquista dispara 1 evento; o mesmo INSERT reentregue não repete; conquista que já existia no baseline não dispara; subir de nível dispara 1 evento e o mesmo nível não repete (nível igual/abaixo não dispara); reconectar ressincroniza e emite o que passou longe UMA vez, e a segunda reconexão não repete; `dismiss` fecha a celebração.
-- contrato de leitura: `src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts` varre todo `src/` de produção (fora testes e o `types.ts` gerado) e exige zero citações das RPCs de escrita e a ausência de `mutations.ts`/`GamificationProvider.tsx`.
-- regressão nos módulos tocados: `npx vitest run src/hooks/gamification src/hooks/__tests__/useAgentGamification.test.tsx src/components/gamification src/components/dashboard` → `Test Files 40 passed (40); Tests 181 passed (181)`.
-- tipos: `npx tsc -b --force` → exit 0.
-- verification do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (58s)` (`OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`).
+- verde (teste novo): `npx vitest run src/components/gamification/__tests__/AchievementToast.test.tsx` → `Test Files 1 passed (1); Tests 8 passed (8)`
+- verde (conjunto da área + o teste de App afetado): `npx vitest run src/components/gamification src/hooks/gamification src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts` → `Test Files 8 passed (8); Tests 45 passed (45)`
+- verde (guardas do app): `npx vitest run src/__tests__` → `Test Files 7 passed (7); Tests 68 passed | 3 todo (71)`
+- lint dos arquivos tocados: `npx eslint src/components/gamification/AchievementToast.tsx src/App.tsx` → `1 problem (0 errors, 1 warning)`; o warning é o `react-refresh/only-export-components` que o arquivo já tinha (ele já exportava componente e hook antes deste cartão).
+- vermelho antes: `AchievementCelebrationToaster` não existia antes deste commit — o arquivo era só o toast de apresentação, sem nenhum consumidor no app; o teste novo não compila nem passa na base (o fechar mede abaixo).
 
-## Sobre os avisos do juiz automático
-- "teste existente removido/afrouxado": o único teste removido foi `src/hooks/gamification/__tests__/mutations.test.tsx`, que testava exatamente as RPCs de escrita que o cartão mandou apagar (`add_agent_xp`/`grant_agent_achievement`/`update_agent_streak`) e por isso não compila sem o módulo. Ele é SUBSTITUÍDO por `gamificacaoSemEscritaNoCliente.test.ts`, que é mais forte: exige que nenhum arquivo de produção em `src/` volte a citar essas RPCs e que o módulo e o provider apagados não reapareçam. O outro ajuste foi a remoção, em `src/hooks/__tests__/useAgentGamification.test.tsx`, do caso `exposes addXp function`, que afirmava a existência de uma API removida — os 8 casos restantes seguem verdes (`npx vitest run src/hooks/gamification src/hooks/__tests__/useAgentGamification.test.tsx`).
-- "arquivos fora da lista": `src/components/gamification/GamificationProvider.tsx` é o "provider de cliente morto" que o cartão manda apagar (ele mora em `components/`, não em `hooks/`); `src/components/gamification/DemoAchievements.tsx` é o ÚNICO arquivo que importava esse provider — apagá-lo sem reescrever o widget deixaria `zapp-verify` vermelho no typecheck, então a reescrita só de leitura entrou no mesmo commit. Nada mais de `components/` foi tocado.
+## Como os 8 testes provam (renderizam a tela real, com o hook real; só o canal do Supabase é simulado)
+- `existe antes de qualquer celebração e anuncia em aria-live polite` — região `role=status`, `aria-live=polite`, `aria-atomic=true`, vazia.
+- `conquista nova aparece com nome, descrição e XP` — "Marco de 500 mensagens", "Você chegou a 500 mensagens", "+50 XP".
+- `conquista que já existia antes de assinar não vira toast` — a linha antiga do banco vira semente, não festa (é o que evita repetir conquista velha a cada recarga).
+- `subida de nível mostra nível anterior, novo e XP` — "Nível 4!", "Você subiu do nível 3 para o nível 4", "+240 XP".
+- `mostra uma por vez; fechar traz a próxima e não volta` — a segunda fica na fila e aparece só depois do fechar.
+- `sai sozinho depois do tempo, sem clique` — com `duration` curto o cartão some sem interação.
+- `com movimento reduzido não traz confete` e `sem movimento reduzido o confete aparece` — os dois lados do `prefers-reduced-motion`.
 
-## O que NÃO fiz e por quê
-- Não montei o `AchievementToast` em tela: isso é `src/components/**` (worker/telas). O hook entrega a fila `celebrations` + `dismiss`/`clear` e o callback `onCelebration` exatamente para esse consumo; o componente continua sem consumidor na V2 e a ligação dele é de outro cartão.
-- Não criei migration: o cartão é de front; a revogação de EXECUTE das RPCs no banco é trilha do worker de banco.
-- Não toquei banco, Edge, produção nem credenciais. `bun install` foi rodado uma vez porque o `typescript` local (exigido pelo ratchet do `zapp-verify`) não estava instalado no workspace.
+## CRITÉRIO DE PRONTO
+1. Feedback de conquista sem atrapalhar o trabalho — uma por vez, o que já existia no banco não vira festa, sai sozinho e é dispensável (testes acima); nenhuma camada que cubra a tela (`AchievementToast.tsx:171`); subida de nível é a mesma celebração discreta, com o número do nível no texto.
+2. `zapp-verify . --rapido` verde — medido pelo fechar (bloco FATOS MEDIDOS).
+
+## NÃO FEITO
+- "captura" (print do toast): NÃO FEITO — o projeto não tem rota de harness para overlay e o print exigiria subir o app com conquista real gravada no banco local (violaria a regra de E2E local autenticado, que proíbe sessão/real de produção e não tem como forjar o evento do banco no navegador). A prova de tela é o teste, que renderiza a tela real e conferiu o DOM: nome, descrição, XP, nível anterior/novo, política de anúncio, fechar, auto-saída e confete sob movimento reduzido. Se o print for obrigatório, precisa de cartão com rota de harness (fora dos arquivos deste cartão).
+
+## Nota sobre o tamanho do diff
+O diff contra a `dia` inclui a FAIXA do cartão pai (PE-36, t_8e0d9185), trazida por `git cherry-pick` como o próprio cartão manda — são os arquivos de `src/hooks/gamification/**` e a remoção do provider de cliente morto. A minha parte é 1 commit de 3 arquivos (`git show --stat`): `src/App.tsx`, `src/components/gamification/AchievementToast.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`.
+
+Especialista: iris (area-front-componentes)
