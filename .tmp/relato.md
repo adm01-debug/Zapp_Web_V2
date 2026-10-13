@@ -1,63 +1,38 @@
-Especialista: Íris (area-front-componentes)
+Especialista: workertestes
 
 ## O que mudou e por quê
-- `src/components/email/EmailChatInbox.tsx`: a busca do cabeçalho ganha estado visível, ligado à MESMA
-  consulta da lista (o termo digitado entra em `listQuery` pela espera curta de 300 ms):
-  `busca-global-buscando` («Buscando por "termo"…», `role=status` e `aria-busy` no campo),
-  `busca-global-erro` (título de `emailLoadErrorCopy` + botão "Tentar novamente" que chama
-  `refetchThreads`, a consulta exata da lista) e `busca-global-vazia` («Nenhum resultado para "termo"»).
-  Antes a área do campo ficava muda: nada dizia se a consulta estava em curso, falhou ou não achou
-  nada. Os três estados são exclusivos entre si (o vazio só aparece sem erro e sem carregamento) e só
-  aparecem com termo digitado — campo vazio não inventa estado nem rótulo.
-- Teclado, no próprio campo (sem escuta global): `Escape` limpa o termo e devolve a consulta sem busca;
-  `Enter` antecipa a espera curta (envia o termo digitado agora); o botão "Limpar busca do Email"
-  (ícone X) limpa e devolve o foco ao campo. O placeholder é mantido — «Buscar e-mails, remetentes,
-  assuntos, anexos…» — porque agora é verdade: a RPC do cartão pai (`search_email_threads`) acha termo
-  no corpo e no nome do anexo.
-- `src/components/email/EmailChatInbox.tsx` (1 linha): o "Limpar" que a lista recebe passa a usar o
-  mesmo `clearGlobalSearch`, tirando o termo da consulta de uma vez em vez de só esvaziar o campo
-  digitado (o termo velho ficava até a espera curta vencer). Não removi nenhum comportamento do
-  componente: só somei estado, teclado e o botão de limpar.
+- `src/components/email/__tests__/EmailChatInbox.reconectarBusca.integracao.test.tsx` (novo, único arquivo que eu criei): teste de costura de tela — monta o `EmailChatInbox` REAL com o `useGmail` REAL e dubla só a rede (`supabase` + `callGmailFunction`). Prova as correntes inteiras que o cartão pede e que nenhum teste dos pais cobria.
+  Na prática ele fecha o vão entre duas famílias de testes que existem na faixa: `EmailChatInbox.reconectar.test.tsx` e `EmailChatInbox.buscaEstados.test.tsx` dublam `useGmail` (testam só a casca), enquanto `useGmail.syncStatus.test.tsx` e `useGmail.threadListQuery.test.tsx` exercitam o hook real sem a tela. Nenhum prova a costura `sync_status real -> hook real -> faixa -> botão` nem `busca -> RPC real -> OR -> tela`.
 
-## Prova
-- vermelho antes: `npx vitest run src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx`
-  com `src/components/email/EmailChatInbox.tsx` restaurado da base
-  (`git show HEAD~1:src/components/email/EmailChatInbox.tsx > src/components/email/EmailChatInbox.tsx`)
-  → `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` — as 6 falhas são exatamente as que
-  dependem dos estados novos, do Escape, do Enter e do Limpar imediato.
-- verde depois: `npx vitest run src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx
-  src/components/email/__tests__/EmailChatInbox.test.tsx
-  src/components/email/__tests__/EmailChatInbox.contato.test.tsx
-  src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx` →
-  `Test Files 4 passed (4); Tests 28 passed (28)`. Testes existentes intactos — não afrouxei nenhum.
-- o teste novo monta a tela REAL (`EmailChatInbox`), com `useGmail` mockado devolvendo o mesmo
-  `listQuery` que o hook recebe; cada asserção confere também a consulta que foi ao servidor, e o
-  teste do erro usa um erro de verdade (`new Error('offline')`) pela copy `emailLoadErrorCopy`.
-- leitura do diff: o `--stat` do fechar inclui a FAIXA do cartão pai (trazida por cherry-pick —
-  `useGmail.ts`, `emailThreadQuery.ts`, `types.ts`, a migration, o teste de banco e os 2 testes que ele
-  alterou). DESTE cartão o diff é só `src/components/email/EmailChatInbox.tsx` e
-  `src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx` (+ este `.tmp/relato.md`). Os
-  testes do pai aparecem como alterados pelo cherry-pick, não porque eu os tenha tocado.
+## O que o teste prova (4 casos)
+1. conta ativa com `sync_status='reauth_required'` acende a faixa (`role=alert`, texto "Sua conta Gmail precisa ser reconectada") e o "Reconectar" abre a autorização da MESMA conta ativa (`gmail-oauth get-auth-url`). A faixa é conferida amarrada à conta que o cabeçalho mostra como ativa (`admin@example.com`).
+2. a faixa é da conta ATIVA: com a conta ativa saudável e OUTRA conta em `reauth_required`, o aviso NÃO acende (distingue "a mesma conta" de "qualquer conta da lista").
+3. a busca leva o termo à RPC `search_email_threads` com `p_account` da conta ativa e o que a RPC achou (corpo/anexo, `thread-body`) entra no `or(...)` da consulta da lista, que continua presa à mesma conta (`eq(gmail_account_id,"account-1")`) — escopo.
+4. erro da busca ampliada (RPC devolve erro) chega à tela como `busca-global-erro` ("Você está offline"), e não como "vazia".
 
-## Dependência (handoff)
-Este cartão depende do `t_493e3851`. Os commits do pai não estavam no meu workspace; puxei-os por
-`git cherry-pick -x` (`dia/2026-10-13..v2/busca-email-rpc-termo-261013041884c7`, 8 commits — migration
-`search_email_threads`, types, testes de banco/front e relatos). O integrador precisa considerar essa
-base ao integrar.
+## Prova vermelho -> verde (mutei o comportamento alvo e restaurei; código de produção igual ao dos pais ao final)
+- needsReconnect forçado a `false` em `useGmail.ts`:
+  `npx vitest run src/components/email/__tests__/EmailChatInbox.reconectarBusca.integracao.test.tsx`
+  -> `TestingLibraryElementError: Unable to find an element by: [data-testid="gmail-sync-banner"]` — `Tests 1 failed | 3 passed (4)` (falha o caso 1).
+- needsReconnect trocado por "qualquer conta" (`accounts.some(...)`):
+  -> `expected document not to contain element` — `Tests 1 failed | 3 passed (4)` (falha o caso 2).
+- `p_account` fixado em `'outra-conta'`:
+  -> `AssertionError: expected { p_account: 'outra-conta', …(2) } to match object { p_account: 'account-1', …(1) }` — falha o caso 3.
+- ids do corpo/anexo descartados (`[]` no lugar de `matches.map(...)`):
+  -> `AssertionError: expected 'or(subject.ilike."%fatura%",snippet.i…' to contain 'id.in.(thread-body)'` — falha o caso 3.
+- erro da RPC engolido (`void error` no lugar de `if (error) throw error`):
+  -> `TestingLibraryElementError: Unable to find an element by: [data-testid="busca-global-erro"]` — falha o caso 4.
+- verde depois (3 rodadas seguidas do arquivo, sem mudar nada entre elas):
+  -> `Test Files 1 passed (1); Tests 4 passed (4)` nas 3 rodadas.
+- sem corrida com os vizinhos (suítes de e-mail/hook/lib, com o merge resolvido):
+  -> `Test Files 23 passed (23); Tests 220 passed (220)`.
 
-## Ponto do juiz (arquivos fora dos "ARQUIVOS QUE PODE TOCAR")
-Não procede. As guardas viram no meu diff `.github/workflows/db-guard.yml,
-scripts/db-audit/search-email-threads.test.sh, src/hooks/integrations/useGmail.ts,
-`src/integrations/supabase/types.ts, src/lib/emailThreadQuery.ts` e os testes deles: todos vieram do
-`git cherry-pick -x` da FAIXA do cartão pai `t_493e3851`, que o campo DEPENDÊNCIA do meu cartão exige
-quando o trabalho do pai não está no workspace. Nenhum deles foi tocado por mim — o MEU diff são só
-`EmailChatInbox.tsx`, `__tests__/EmailChatInbox.buscaEstados.test.tsx` e este relato.
+## Merge (transparência)
+As duas faixas dos pais (t_bb4f0887 e t_2b97523f) conflitavam em `src/components/email/EmailChatInbox.tsx`; a prescrição do cartão é trazer as duas. Resolvi a união dos dois lados (ícones `AlertTriangle...X` e `refetchThreads` no `useGmail`), sem descartar mudança de nenhum pai. As suítes acima (220 verdes) cobrem o arquivo reconciliado.
 
 ## O que NÃO fiz e por quê
-- Escopo selecionável (tudo / assunto / remetente / anexo): o cartão o marca como opcional e ele não é
-  implementável só nesta área — nem a RPC `search_email_threads` nem `emailThreadSearchOr` têm
-  parâmetro de escopo (`src/hooks/integrations/useGmail.ts`, `src/lib/emailThreadQuery.ts`, worker
-  (hooks)). Um seletor que não muda a consulta seria exatamente o rótulo desonesto que o cartão
-  combate; deixei fora e registrei em `kanban_comment`.
-- Captura (e2e visual): a fixture visual mora em `e2e/`, fora dos ARQUIVOS QUE PODE TOCAR do cartão.
-  A prova de tela aqui são os testes que montam a tela real e capturam os três estados.
+- Não mexi em código de produção: o único arquivo criado por mim é o teste; `git diff` do meu commit mostra só ele.
+- Não criei prova em `supabase/tests/`: a busca no corpo/anexo e o escopo (RLS/`p_account`, termo vazio, paginação, índice) já estão provados no nível de banco por `scripts/db-audit/search-email-threads.test.sh` (BLOCO B), entregue pela faixa do pai. Duplicar seria teste que finge cobertura nova.
+- Não apaguei, pulei nem afrouxei teste existente.
+
+Premissa: `p_account` da RPC é o id da conta ATIVA (a tela consulta a conta ativa); o caso 3 confere isso contra `account-1`.
