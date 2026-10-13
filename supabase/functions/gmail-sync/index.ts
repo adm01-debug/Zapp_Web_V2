@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 
@@ -158,9 +158,12 @@ export async function handleGmailSync(req: Request): Promise<Response> {
           log.done(200, { synced: result.synced });
           return jsonResponse({ success: true, ...result }, 200, req);
         } catch (err: unknown) {
-          await supabase.from("gmail_accounts").update({
-            sync_status: "error", last_error: err instanceof Error ? err.message : String(err),
-          }).eq("id", account.id);
+          try {
+            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
+            await recordGmailAccountFailure(supabase, account.id, err, 1);
+          } catch (recordErr) {
+            log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
+          }
           throw err;
         }
       }
@@ -216,7 +219,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
   } catch (error) {
     log.error("Gmail Sync error", { error: error instanceof Error ? error.message : String(error) });
     log.done(500);
-    return errorResponse(error instanceof Error ? error.message : "Internal server error", 500, req);
+    return errorResponse(error instanceof Error ? sanitizeGmailErrorMessage(error.message) : "Internal server error", 500, req);
   }
 }
 
