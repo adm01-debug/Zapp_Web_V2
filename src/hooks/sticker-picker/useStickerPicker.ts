@@ -27,6 +27,7 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showRecent, setShowRecent] = useState(false);
+  const [showMostUsed, setShowMostUsed] = useState(false);
   const [pendingUpload, setPendingUploadState] = useState<PendingUpload | null>(null);
   const [gridSize, setGridSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -257,17 +258,18 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
   const filtered = useMemo(() => {
     let result = stickers;
     if (search) { const term = search.toLowerCase(); result = result.filter(s => s.name?.toLowerCase().includes(term) || s.category?.toLowerCase().includes(term) || CATEGORY_LABELS[s.category]?.label.toLowerCase().includes(term)); }
-    if (showRecent) result = [...result].sort((a, b) => (b.use_count || 0) - (a.use_count || 0)).slice(0, RECENT_LIMIT);
+    if (showMostUsed) result = [...result].sort((a, b) => (b.use_count || 0) - (a.use_count || 0)).slice(0, RECENT_LIMIT);
+    else if (showRecent) result = [...result].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).slice(0, RECENT_LIMIT);
     else if (showFavorites) result = result.filter(s => s.is_favorite);
     else if (activeCategory) result = result.filter(s => s.category === activeCategory);
     return result;
-  }, [stickers, search, showFavorites, showRecent, activeCategory]);
+  }, [stickers, search, showFavorites, showRecent, showMostUsed, activeCategory]);
 
   const cycleGridSize = () => setGridSize(prev => prev === 'sm' ? 'md' : prev === 'md' ? 'lg' : 'sm');
 
   return {
     open, setOpen, stickers, filtered, loading, search, setSearch, uploading, activeCategory, setActiveCategory,
-    showFavorites, setShowFavorites, showRecent, setShowRecent, pendingUpload, setPendingUpload,
+    showFavorites, setShowFavorites, showRecent, setShowRecent, showMostUsed, setShowMostUsed, pendingUpload, setPendingUpload,
     gridSize, isDragOver, fileInputRef, searchInputRef,
     handleDragOver, handleDragLeave, handleDrop, handleFileSelect,
     handleConfirmUpload, handleCancelUpload, handleSend, toggleFavorite, handleCategoryChange, handleDelete, cycleGridSize,
