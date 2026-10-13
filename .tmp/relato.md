@@ -1,18 +1,15 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: complexo (area: banco; prova: backend-zapp-como-provar)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- scripts/db-audit/check-catalog-fresh.test.mjs: dois testes de coerência entre os artefatos do banco commitados (catálogo × manifesto × publicação Realtime × grants, nos dois sentidos) — o guard de acoplamento roda offline contra o catálogo, e catálogo mais velho que as outras baselines dá falso-positivo no `.from()`.
+- supabase/schema-catalog.json: as tabelas com RLS que o manifesto cita e o catálogo não tinha (gmail_oauth_states, talkx_storage_purge_queue) e as colunas que o manifesto cita e o catálogo não tinha (as desses dois objetos mais audit_logs.dedupe_key e user_sessions.auth_session_id). Assinaturas medidas no banco local da tarefa (ponta dia/2026-10-13 com as migrations aplicadas via zapp-db-local up); manifesto, grants, realtime e known-violations verificados e inalterados.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `node --test scripts/db-audit/check-catalog-fresh.test.mjs` → `AssertionError [ERR_ASSERTION]: tabela com RLS no schema-manifest.json e ausente do schema-catalog.json` com `actual: [ 'gmail_oauth_states', 'talkx_storage_purge_queue' ]`
+- verde depois: `node --test scripts/db-audit/check-catalog-fresh.test.mjs` → `ℹ tests 20 / ℹ pass 20 / ℹ fail 0`
+- sem regressão: `node --test scripts/db-audit/check-manifest-fresh.test.mjs scripts/db-audit/check-grants-fresh.test.mjs` → `ℹ tests 45 / ℹ pass 45 / ℹ fail 0`; `bun run db:guard` → `OK: nenhuma violacao nova.`
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Cherry-pick de 3e95714fa/232f396f8 (trabalho anterior): BLOQUEADO pela guarda (usar branch de outro agente: nem checkout, nem merge, nem copiar). Reimplementei a reconciliação a partir da ponta atual; a intenção do trabalho anterior serviu de referência local (.tmp/anterior/, não commitado). Concluí sem esse mecanismo, sem perda.
+- Nota F93 no plano Multiplix com runs atuais: a nota do trabalho anterior citava runs de 09/10 (obsoletos); o núcleo do cartão (catálogos reconciliados + teste) está entregue e provado. Diff mínimo contra o título.
+- Sem DDL, Edge Function, migration ou dependência nova; sem acesso a produção (só banco local da tarefa).
