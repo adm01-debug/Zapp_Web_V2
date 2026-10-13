@@ -51,4 +51,22 @@ describe('logger', () => {
       expect(namedLog).toBeDefined();
     }
   });
+
+  it('redige PII e segredo antes de imprimir no console', async () => {
+    const { log } = await import('@/lib/logger');
+    const spy = vi.mocked(console.error);
+    log.error('falha para maria.souza@example.com tel (11) 91234-5678', {
+      token: 'segredo-super-secreto',
+      nota: 'ok',
+    });
+
+    const [first, second] = spy.mock.calls[spy.mock.calls.length - 1] as unknown[];
+    expect(first as string).not.toContain('maria.souza@example.com');
+    expect(first as string).not.toContain('91234-5678');
+    expect(first as string).toContain('[EMAIL_REDACTED]');
+    expect(first as string).toContain('[TELEFONE_REDACTED]');
+    const argObj = second as Record<string, unknown>;
+    expect(argObj.token).toBe('[SEGREDO_REDACTED]');
+    expect(argObj.nota).toBe('ok');
+  });
 });
