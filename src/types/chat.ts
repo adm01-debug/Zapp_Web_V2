@@ -89,6 +89,10 @@ export interface ConversationContact {
   group_category?: string | null;
   ai_sentiment?: string | null;
   conversation_status?: ConversationStatus | null;
+  /** Coluna `contacts.is_vip` — campo próprio do VIP (substitui a etiqueta 'vip'). */
+  is_vip?: boolean | null;
+  /** Coluna `contacts.blocked_at` — NULL quando o contato não está bloqueado. */
+  blocked_at?: string | null;
 }
 
 export interface AssignedAgentInfo {

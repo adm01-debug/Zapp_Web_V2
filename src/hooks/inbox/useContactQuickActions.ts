@@ -6,52 +6,48 @@ import { useChatMediaSending } from '@/components/inbox/useChatMediaSending';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { ConversationContact } from '@/types/chat';
 
-const VIP_TAG = 'VIP';
-const BLOCKED_TAG = 'Bloqueado';
-
-// Caixa não diferencia: 'vip' e 'VIP' são a mesma tag (decisão do cartão #241;
-// a leitura canônica em VirtualizedRealtimeList/ChatPanelHeader usa o mesmo
-// case-insensitive).
-const hasTag = (tags: string[], tag: string) =>
-  tags.some((t) => t.toLowerCase() === tag.toLowerCase());
-const withoutTag = (tags: string[], tag: string) =>
-  tags.filter((t) => t.toLowerCase() !== tag.toLowerCase());
-
 /**
  * Ações rápidas do painel "Detalhes do Contato" (#241, decisão do dono de
  * 06/10): o estado local só muda depois do `error` nulo; erro vira
  * `toast.error` sem Desfazer; o Desfazer executa a reversão real.
  *
- * - VIP → tag 'VIP' em `contacts.tags` (idempotente por caixa);
+ * - VIP → coluna própria `contacts.is_vip` pela RPC `set_contact_vip`
+ *   (idempotente: já VIP não escreve nem oferece Desfazer);
  * - Bloquear → bloqueio REAL na Evolution (`update-block-status`, mesmo fluxo
- *   de MessageContextActions) + tag 'Bloqueado' como marcador visual. Sem
- *   instância resolvível não há escrita nenhuma; se a escrita da tag falhar
- *   depois do bloqueio, o bloqueio é revertido para não ficar invisível;
- * - Tags do painel → add/remove em `contacts.tags` preservando as existentes;
+ *   de MessageContextActions) + coluna `contacts.blocked_at` pela RPC
+ *   `set_contact_blocked`. Sem instância resolvível não há escrita nenhuma; se
+ *   a RPC falhar depois do bloqueio, o bloqueio é revertido na Evolution para
+ *   não ficar invisível na tela;
  * - Arquivar NÃO fica aqui: a semântica única é `archiveContact` de
  *   useConversationActions (zera `assigned_to`; o Desfazer restaura o valor
  *   anterior real), delegada por ContactDetails.
+ *
+ * Tags/etiquetas de contato não existem mais: a função foi removida do
+ * produto (ordem do dono de 12/10) e o estado de VIP/bloqueio saiu da coluna
+ * `contacts.tags` para campos próprios.
  */
 export function useContactQuickActions(contact: ConversationContact) {
-  const [local, setLocal] = useState<{ id: string; tags: string[] }>({
+  const [local, setLocal] = useState<{ id: string; isVip: boolean; blockedAt: string | null }>({
     id: contact.id,
-    tags: contact.tags ?? [],
+    isVip: contact.is_vip ?? false,
+    blockedAt: contact.blocked_at ?? null,
   });
 
   // Contato trocou: descarta o estado do anterior e adota os dados novos
   // (padrão "adjust state when props change" do React — roda no próprio
-  // render, sem efeito e sem depender de identidade de array).
+  // render, sem efeito e sem depender de identidade de objeto).
   const trocou = local.id !== contact.id;
-  const tags = trocou ? (contact.tags ?? []) : local.tags;
+  const isVip = trocou ? (contact.is_vip ?? false) : local.isVip;
+  const blockedAt = trocou ? (contact.blocked_at ?? null) : local.blockedAt;
   if (trocou) {
-    setLocal({ id: contact.id, tags });
+    setLocal({ id: contact.id, isVip, blockedAt });
   }
 
   // A ref espelha o estado para os callbacks assíncronos (o onUndo do toast
   // dispara segundos depois) lerem o valor atual, não o da closure.
-  const tagsRef = useRef(tags);
+  const stateRef = useRef({ isVip, blockedAt });
   useEffect(() => {
-    tagsRef.current = tags;
+    stateRef.current = { isVip, blockedAt };
   });
   const contactId = contact.id;
 
@@ -73,74 +69,59 @@ export function useContactQuickActions(contact: ConversationContact) {
     return { instance, jid: `${digits}@s.whatsapp.net` };
   };
 
-  const writeTags = async (next: string[], errorMsg: string): Promise<boolean> => {
-    const { error } = await supabase.from('contacts').update({ tags: next }).eq('id', contactId);
+  const writeVip = async (next: boolean): Promise<boolean> => {
+    const { error } = await supabase.rpc('set_contact_vip', {
+      p_contact_id: contactId,
+      p_is_vip: next,
+    });
+    if (error) {
+      toast.error(next ? 'Erro ao marcar contato como VIP' : 'Erro ao desfazer a ação');
+      return false;
+    }
+    stateRef.current = { ...stateRef.current, isVip: next };
+    setLocal((prev) => ({ ...prev, isVip: next }));
+    return true;
+  };
+
+  const writeBlocked = async (next: boolean, errorMsg: string): Promise<boolean> => {
+    const { data, error } = await supabase.rpc('set_contact_blocked', {
+      p_contact_id: contactId,
+      p_blocked: next,
+    });
     if (error) {
       toast.error(errorMsg);
       return false;
     }
-    tagsRef.current = next;
-    setLocal((prev) => ({ ...prev, tags: next }));
+    // A RPC devolve o novo `blocked_at` (NULL quando desbloqueado); o
+    // instante local serve de fallback se o banco não devolver nada.
+    const novoBlockedAt = next ? (data ?? new Date().toISOString()) : null;
+    stateRef.current = { ...stateRef.current, blockedAt: novoBlockedAt };
+    setLocal((prev) => ({ ...prev, blockedAt: novoBlockedAt }));
     return true;
   };
 
-  const addTag = async (raw: string) => {
-    const tag = raw.trim();
-    if (!tag) return;
-    if (tag.toLowerCase() === BLOCKED_TAG.toLowerCase()) {
-      await block();
-      return;
-    }
-    if (hasTag(tagsRef.current, tag)) {
-      toast.info(`Tag "${tag}" já está no contato`);
-      return;
-    }
-    await writeTags([...tagsRef.current, tag], `Erro ao adicionar a tag "${tag}"`);
-  };
-
-  const removeTag = async (tag: string) => {
-    if (tag.toLowerCase() === BLOCKED_TAG.toLowerCase()) {
-      if (blockBusyRef.current) return;
-      blockBusyRef.current = true;
-      try {
-        const target = await resolveBlockTarget();
-        if (!target) return;
-        try {
-          await updateBlockStatus(target.instance, target.jid, 'unblock');
-        } catch {
-          return; // o withToast já mostrou o erro; a tag fica marcando o bloqueio ativo
-        }
-        await writeTags(withoutTag(tagsRef.current, BLOCKED_TAG), `Erro ao remover a tag "${tag}"`);
-      } finally {
-        blockBusyRef.current = false;
-      }
-      return;
-    }
-    await writeTags(tagsRef.current.filter((t) => t !== tag), `Erro ao remover a tag "${tag}"`);
-  };
-
   const markVip = async () => {
-    if (hasTag(tagsRef.current, VIP_TAG)) {
+    if (stateRef.current.isVip) {
       toast.info(`${contact.name} já é VIP`);
       return;
     }
-    if (!(await writeTags([...tagsRef.current, VIP_TAG], 'Erro ao marcar contato como VIP'))) return;
+    if (!(await writeVip(true))) return;
     undoToast({
       message: `${contact.name} marcado como VIP`,
       icon: '⭐',
       onUndo: async () => {
-        await writeTags(withoutTag(tagsRef.current, VIP_TAG), 'Erro ao desfazer a ação');
+        await writeVip(false);
       },
     });
   };
 
   const block = async () => {
-    if (hasTag(tagsRef.current, BLOCKED_TAG)) {
+    if (stateRef.current.blockedAt) {
       toast.info(`${contact.name} já está bloqueado`);
       return;
     }
     // Dois cliques durante a resolução da instância não disparam bloqueio em
-    // duplicidade (a tag só aparece depois da escrita final).
+    // duplicidade (o campo só é gravado depois da escrita final).
     if (blockBusyRef.current) return;
     blockBusyRef.current = true;
     try {
@@ -151,8 +132,8 @@ export function useContactQuickActions(contact: ConversationContact) {
       } catch {
         return; // o withToast já mostrou o erro; nada foi escrito em contacts
       }
-      if (!(await writeTags([...tagsRef.current, BLOCKED_TAG], 'Erro ao bloquear contato'))) {
-        // O bloqueio real já foi aplicado na operadora; sem a tag ele ficaria
+      if (!(await writeBlocked(true, 'Erro ao bloquear contato'))) {
+        // O bloqueio real já foi aplicado na operadora; sem a coluna ele ficaria
         // invisível na tela — reverte para não deixar contato bloqueado sem marca.
         try {
           await updateBlockStatus(target.instance, target.jid, 'unblock');
@@ -166,9 +147,9 @@ export function useContactQuickActions(contact: ConversationContact) {
         icon: '🚫',
         onUndo: async () => {
           // Se o desbloqueio falhar, o erro sobe para o undoToast reoferecer o
-          // Desfazer e a tag fica — ela continua marcando um bloqueio ativo.
+          // Desfazer e a coluna fica — ela continua marcando um bloqueio ativo.
           await updateBlockStatus(target.instance, target.jid, 'unblock');
-          await writeTags(withoutTag(tagsRef.current, BLOCKED_TAG), 'Erro ao desfazer a ação');
+          await writeBlocked(false, 'Erro ao desfazer a ação');
         },
       });
     } finally {
@@ -177,10 +158,9 @@ export function useContactQuickActions(contact: ConversationContact) {
   };
 
   return {
-    tags,
+    isVip,
+    blockedAt,
     markVip,
     block,
-    addTag,
-    removeTag,
   };
 }

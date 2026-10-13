@@ -5,21 +5,13 @@ import type { ConversationContact } from '@/types/chat';
 
 const h = vi.hoisted(() => {
   const state = {
-    error: null as { message: string } | null,
-    failNextUpdate: false,
+    rpcError: null as { message: string } | null,
+    failNextRpc: false,
     rows: {} as Record<string, unknown>,
     invokeError: null as { message: string } | null,
   };
-  const eq = vi.fn(() => {
-    if (state.failNextUpdate) {
-      state.failNextUpdate = false;
-      return Promise.resolve({ error: { message: 'check_violation' } });
-    }
-    return Promise.resolve({ error: state.error });
-  });
-  const update = vi.fn(() => ({ eq }));
-  // Cadeia de select usada por useChatMediaSending/archiveContact:
-  // select(...) → eq(...) → { maybeSingle | single | limit → maybeSingle }
+  // Cadeia de select usada por useChatMediaSending (contacts →
+  // whatsapp_connections.instance_id), a mesma do bloqueio real.
   let currentTable = '';
   const terminal = (): Record<string, unknown> => ({
     maybeSingle: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
@@ -29,7 +21,19 @@ const h = vi.hoisted(() => {
   const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
   const from = vi.fn((table: string) => {
     currentTable = table;
-    return { update, select };
+    return { select };
+  });
+  // supabase.rpc — fronteira real das RPCs set_contact_vip / set_contact_blocked
+  const rpc = vi.fn(async (fn: string, args: Record<string, unknown>) => {
+    if (state.failNextRpc) {
+      state.failNextRpc = false;
+      return { data: null, error: { message: 'check_violation' } };
+    }
+    if (state.rpcError) return { data: null, error: state.rpcError };
+    const data = fn === 'set_contact_blocked'
+      ? (args.p_blocked ? '2026-01-01T00:00:00.000Z' : null)
+      : true;
+    return { data, error: null };
   });
   // supabase.functions.invoke — fronteira real do useEvolutionApiCore.callApi
   const invoke = vi.fn(async (_fn: string, _opts?: unknown) =>
@@ -42,11 +46,11 @@ const h = vi.hoisted(() => {
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, select, from, invoke, toast };
+  return { state, select, from, rpc, invoke, toast };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: h.from, functions: { invoke: h.invoke } },
+  supabase: { from: h.from, functions: { invoke: h.invoke }, rpc: h.rpc },
 }));
 vi.mock('sonner', () => ({ toast: h.toast }));
 
@@ -54,8 +58,7 @@ function makeContact(over: Partial<ConversationContact> = {}): ConversationConta
   return {
     id: 'c1',
     name: 'Maria Silva',
-    phone: '+5511999999999',
-    tags: [],
+    phone: '5511999999999',
     conversation_status: 'open',
     ...over,
   };
@@ -76,8 +79,8 @@ const invokeCalls = () =>
 describe('useContactQuickActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    h.state.error = null;
-    h.state.failNextUpdate = false;
+    h.state.rpcError = null;
+    h.state.failNextRpc = false;
     h.state.invokeError = null;
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
@@ -85,38 +88,39 @@ describe('useContactQuickActions', () => {
     };
   });
 
-  it('markVip grava a tag VIP em contacts.tags com UMA escrita', async () => {
-    const c = makeContact({ tags: ['Cliente'] });
+  it('markVip marca o VIP pela RPC set_contact_vip (nunca escreve contacts.tags)', async () => {
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.markVip(); });
-    expect(h.from).toHaveBeenCalledWith('contacts');
-    expect(h.update).toHaveBeenCalledTimes(1);
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'VIP'] });
-    expect(h.eq).toHaveBeenCalledWith('id', 'c1');
-    expect(result.current.tags).toEqual(['Cliente', 'VIP']);
+    expect(h.rpc).toHaveBeenCalledTimes(1);
+    expect(h.rpc).toHaveBeenCalledWith('set_contact_vip', { p_contact_id: 'c1', p_is_vip: true });
+    // Nenhum update direto em contacts (tags não existem mais no produto).
+    expect(h.from).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.isVip).toBe(true));
   });
 
-  it('markVip é idempotente: "vip" já presente em outra caixa não duplica nem escreve', async () => {
-    const c = makeContact({ tags: ['vip'] });
+  it('markVip é idempotente: já VIP não chama a RPC nem oferece Desfazer', async () => {
+    const c = makeContact({ is_vip: true });
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.markVip(); });
-    expect(h.update).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
     expect(h.toast.info).toHaveBeenCalled();
-    expect(result.current.tags).toEqual(['vip']);
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(result.current.isVip).toBe(true);
   });
 
-  it('o Desfazer do VIP executa a escrita reversa real (remove a tag)', async () => {
-    const c = makeContact({ tags: [] });
+  it('o Desfazer do VIP executa a RPC reversa real (p_is_vip=false)', async () => {
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.markVip(); });
-    expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] });
+    expect(h.rpc).toHaveBeenLastCalledWith('set_contact_vip', { p_contact_id: 'c1', p_is_vip: true });
     await clickUndo();
-    expect(h.update).toHaveBeenLastCalledWith({ tags: [] });
-    await waitFor(() => expect(result.current.tags).toEqual([]));
+    expect(h.rpc).toHaveBeenLastCalledWith('set_contact_vip', { p_contact_id: 'c1', p_is_vip: false });
+    await waitFor(() => expect(result.current.isVip).toBe(false));
   });
 
-  it('block bloqueia de verdade na Evolution (update-block-status) e grava a tag Bloqueado', async () => {
-    const c = makeContact({ tags: [] });
+  it('block bloqueia de verdade na Evolution e grava blocked_at pela RPC', async () => {
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     // A instância é resolvida pelo fluxo real (contacts.whatsapp_connection_id
@@ -129,50 +133,50 @@ describe('useContactQuickActions', () => {
         status: 'block',
       }),
     );
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Bloqueado'] });
-    expect(result.current.tags).toEqual(['Bloqueado']);
+    expect(h.rpc).toHaveBeenCalledWith('set_contact_blocked', { p_contact_id: 'c1', p_blocked: true });
+    await waitFor(() => expect(result.current.blockedAt).toBeTruthy());
   });
 
-  it('o Desfazer do bloqueio chama unblock real na Evolution e remove a tag', async () => {
-    const c = makeContact({ tags: [] });
+  it('o Desfazer do bloqueio chama unblock real na Evolution e limpa blocked_at pela RPC', async () => {
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     await clickUndo();
     await waitFor(() =>
       expect(invokeCalls().map((b) => b.status)).toEqual(['block', 'unblock']),
     );
-    expect(h.update).toHaveBeenLastCalledWith({ tags: [] });
-    await waitFor(() => expect(result.current.tags).toEqual([]));
+    expect(h.rpc).toHaveBeenLastCalledWith('set_contact_blocked', { p_contact_id: 'c1', p_blocked: false });
+    await waitFor(() => expect(result.current.blockedAt).toBeNull());
   });
 
-  it('block sem conexão resolvível: toast.error e nenhuma escrita nem chamada de bloqueio', async () => {
+  it('block sem conexão resolvível: toast.error e nenhuma RPC nem chamada de bloqueio', async () => {
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: null },
       whatsapp_connections: null, // nem a conexão do contato nem o fallback "connected"
     };
-    const c = makeContact({ tags: [] });
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     expect(h.invoke).not.toHaveBeenCalled();
-    expect(h.update).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
     expect(h.toast.error).toHaveBeenCalled();
-    expect(result.current.tags).toEqual([]);
+    expect(result.current.blockedAt).toBeNull();
   });
 
-  it('erro na chamada de bloqueio: não grava a tag nem oferece Desfazer', async () => {
+  it('erro na chamada de bloqueio: não grava blocked_at nem oferece Desfazer', async () => {
     h.state.invokeError = { message: 'edge 500' };
-    const c = makeContact({ tags: [] });
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     expect(h.toast.error).toHaveBeenCalled();
-    expect(h.update).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
     expect(h.toast).not.toHaveBeenCalled(); // nenhum undoToast
-    expect(result.current.tags).toEqual([]);
+    expect(result.current.blockedAt).toBeNull();
   });
 
-  it('falha na escrita da tag após o bloqueio reverte o bloqueio real (não fica bloqueado invisível)', async () => {
-    h.state.failNextUpdate = true; // a escrita da tag em contacts falha
-    const c = makeContact({ tags: [] });
+  it('falha na RPC após o bloqueio reverte o bloqueio real (não fica bloqueado invisível)', async () => {
+    h.state.failNextRpc = true; // a RPC set_contact_blocked falha
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     await waitFor(() =>
@@ -180,76 +184,42 @@ describe('useContactQuickActions', () => {
     );
     expect(h.toast.error).toHaveBeenCalled();
     expect(h.toast).not.toHaveBeenCalled(); // nenhum undoToast de sucesso
-    expect(result.current.tags).toEqual([]);
+    expect(result.current.blockedAt).toBeNull();
   });
 
-  it('block é idempotente: tag Bloqueado já presente não chama Evolution nem escreve', async () => {
-    const c = makeContact({ tags: ['Bloqueado'] });
+  it('block é idempotente: blocked_at já preenchido não chama Evolution nem RPC', async () => {
+    const c = makeContact({ blocked_at: '2026-01-01T00:00:00.000Z' });
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.block(); });
     expect(h.invoke).not.toHaveBeenCalled();
-    expect(h.update).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
     expect(h.toast.info).toHaveBeenCalled();
+    expect(result.current.blockedAt).toBe('2026-01-01T00:00:00.000Z');
   });
 
   it('dois cliques de Bloquear concorrentes disparam uma única chamada de bloqueio', async () => {
-    const c = makeContact({ tags: [] });
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => {
       await Promise.all([result.current.block(), result.current.block()]);
     });
     expect(invokeCalls().filter((b) => b.status === 'block')).toHaveLength(1);
-    expect(h.update).toHaveBeenCalledTimes(1);
+    expect(h.rpc).toHaveBeenCalledTimes(1);
   });
 
-  it('erro do banco vira toast.error, estado não muda e nenhum Desfazer é oferecido', async () => {
-    h.state.error = { message: 'row-level security' };
-    const c = makeContact({ tags: [] });
+  it('erro da RPC no VIP vira toast.error, estado não muda e nenhum Desfazer é oferecido', async () => {
+    h.state.rpcError = { message: 'row-level security' };
+    const c = makeContact();
     const { result } = renderHook(() => useContactQuickActions(c));
     await act(async () => { await result.current.markVip(); });
     expect(h.toast.error).toHaveBeenCalled();
-    expect(result.current.tags).toEqual([]);
+    expect(result.current.isVip).toBe(false);
     // undoToast é a função `toast` em si (chamada direta); toast.error é método.
     expect(h.toast).not.toHaveBeenCalled();
   });
 
-  it('removeTag("Bloqueado") chama unblock real antes de remover a tag visual', async () => {
-    const c = makeContact({ tags: ['Cliente', 'Bloqueado', 'VIP'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.removeTag('bloqueado'); });
-    expect(invokeCalls()).toContainEqual(
-      expect.objectContaining({
-        instanceName: 'inst-1',
-        number: '5511999999999@s.whatsapp.net',
-        status: 'unblock',
-      }),
-    );
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'VIP'] });
-    expect(result.current.tags).toEqual(['Cliente', 'VIP']);
-  });
-
-  it('addTag("Bloqueado") redireciona para o bloqueio real; não grava como tag comum', async () => {
-    const c = makeContact({ tags: ['Cliente'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.addTag('  bloqueado  '); });
-    expect(invokeCalls()).toContainEqual(
-      expect.objectContaining({
-        instanceName: 'inst-1',
-        number: '5511999999999@s.whatsapp.net',
-        status: 'block',
-      }),
-    );
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'Bloqueado'] });
-    expect(h.update).not.toHaveBeenCalledWith({ tags: ['Cliente', 'bloqueado'] });
-    expect(result.current.tags).toEqual(['Cliente', 'Bloqueado']);
-  });
-
-  it('addTag preserva as existentes e removeTag tira só a pedida', async () => {
-    const c = makeContact({ tags: ['Cliente', 'Raro'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.addTag('  Novo  '); });
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'Raro', 'Novo'] });
-    await act(async () => { await result.current.removeTag('Raro'); });
-    expect(h.update).toHaveBeenLastCalledWith({ tags: ['Cliente', 'Novo'] });
+  it('o hook não expõe mais tags/addTag/removeTag (função removida do produto)', () => {
+    const { result } = renderHook(() => useContactQuickActions(makeContact()));
+    expect(Object.keys(result.current).sort()).toEqual(['block', 'blockedAt', 'isVip', 'markVip']);
   });
 });
