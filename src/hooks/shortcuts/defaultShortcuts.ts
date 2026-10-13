@@ -31,10 +31,12 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'transfer-chat', name: 'Transferir chat', description: 'Abre o diálogo de transferência', defaultKey: 't', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'actions' },
   { id: 'refresh-data', name: 'Atualizar dados', description: 'Recarrega os dados da página', defaultKey: 'r', defaultModifiers: { ctrlKey: true }, category: 'actions' },
   // Selection shortcuts.
-  // t_8e895114: `select-all`, `mark-read` e `bulk-archive` saíram (não havia
-  // tratador anunciado). `clear-selection` fica: o RealtimeInboxView já
-  // consome Escape no próprio listener quando o modo de seleção está ligado.
+  // t_8e895114: `select-all` (Ctrl+A) e `mark-read` (R) saíram — nenhuma das
+  // duas tinha tratador. `clear-selection` (Escape) e `bulk-archive` (Delete)
+  // ficam porque o RealtimeInboxView já os consome no próprio listener quando o
+  // modo de seleção está ligado (limpa a seleção / arquiva os selecionados).
   { id: 'clear-selection', name: 'Limpar seleção', description: 'Remove a seleção atual', defaultKey: 'Escape', defaultModifiers: {}, category: 'selection' },
+  { id: 'bulk-archive', name: 'Arquivar selecionados', description: 'Arquiva todas as conversas selecionadas', defaultKey: 'Delete', defaultModifiers: {}, category: 'selection' },
   // Task shortcuts (etapa 77) — valem só em `?view=tasks` (E09: a antiga view
   // `pipeline` saiu do escopo; o Quadro é um modo de Tarefas).
   // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não

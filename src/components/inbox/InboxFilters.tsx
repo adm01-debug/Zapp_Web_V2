@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw, BookmarkPlus, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Popover,
@@ -25,6 +26,7 @@ import { useInboxFilterTags } from '@/hooks/inbox/useInboxFilterTags';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
+import { useSavedFilters, type SavedFilter } from '@/hooks/chat/useSavedFilters';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
 
 export interface InboxFiltersState {
@@ -64,6 +66,24 @@ const DATE_PRESETS = [
   { label: 'Mês', getValue: () => ({ from: appMonthStart(), to: appDayEnd(0) }) },
 ];
 
+/**
+ * Converte o JSON gravado em `saved_filters.filters` para o estado que a lista
+ * entende. As datas vão como ISO (o JSON do banco não guarda `Date`) e voltam
+ * como `Date` na leitura — sem isso o filtro salvo nunca reaplicava o período.
+ */
+function savedFilterToState(filters: Record<string, unknown>): InboxFiltersState {
+  const range = (filters.dateRange ?? {}) as { from?: string | null; to?: string | null };
+  return {
+    status: Array.isArray(filters.status) ? (filters.status as string[]) : [],
+    tags: Array.isArray(filters.tags) ? (filters.tags as string[]) : [],
+    agentId: typeof filters.agentId === 'string' ? filters.agentId : null,
+    dateRange: {
+      from: range.from ? new Date(range.from) : null,
+      to: range.to ? new Date(range.to) : null,
+    },
+  };
+}
+
 export function InboxFilters({
   filters, onFiltersChange,
   showAll = false, onShowAllChange,
@@ -72,10 +92,13 @@ export function InboxFilters({
   onRefetch, isRefetching = false,
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isNamingFilter, setIsNamingFilter] = useState(false);
+  const [filterName, setFilterName] = useState('');
   const { agents } = useAgents();
   const { data: tags = [] } = useInboxFilterTags();
   const { isAdmin, isSupervisor } = useUserRole();
   const { queues } = useQueues();
+  const { filters: savedFilters, saveFilter, deleteFilter, isSaving } = useSavedFilters('inbox');
   const canShowAll = isAdmin || isSupervisor;
 
   const activeFiltersCount =
@@ -109,6 +132,44 @@ export function InboxFilters({
     if (onContactTypeChange) onContactTypeChange(null);
     if (onQueueChange) onQueueChange(null);
   }, [onFiltersChange, onShowAllChange, onContactTypeChange, onQueueChange]);
+
+  // Reaplica um filtro salvo: devolve ao formulário e à lista tudo o que foi
+  // gravado (status, etiquetas, agente, período, tipo de contato, fila).
+  const applySavedFilter = useCallback((saved: SavedFilter) => {
+    onFiltersChange(savedFilterToState(saved.filters));
+    if (onContactTypeChange) {
+      onContactTypeChange(typeof saved.filters.contactType === 'string' ? saved.filters.contactType : null);
+    }
+    if (onQueueChange) {
+      onQueueChange(typeof saved.filters.queueId === 'string' ? saved.filters.queueId : null);
+    }
+    if (onShowAllChange) onShowAllChange(saved.filters.showAll === true);
+    setIsOpen(false);
+  }, [onFiltersChange, onContactTypeChange, onQueueChange, onShowAllChange]);
+
+  // Grava o filtro atual com o nome digitado. As datas saem em ISO porque o
+  // JSON do banco não guarda `Date`.
+  const saveCurrentFilters = useCallback(() => {
+    const name = filterName.trim();
+    if (!name) return;
+    saveFilter({
+      name,
+      filters: {
+        status: filters.status,
+        tags: filters.tags,
+        agentId: filters.agentId,
+        contactType: selectedContactType,
+        queueId: selectedQueueId,
+        showAll,
+        dateRange: {
+          from: filters.dateRange.from ? filters.dateRange.from.toISOString() : null,
+          to: filters.dateRange.to ? filters.dateRange.to.toISOString() : null,
+        },
+      },
+    });
+    setFilterName('');
+    setIsNamingFilter(false);
+  }, [filterName, saveFilter, filters, selectedContactType, selectedQueueId, showAll]);
 
   return (
     <div className="flex items-center gap-2">
@@ -144,6 +205,76 @@ export function InboxFilters({
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs">
                   <X className="h-3 w-3 mr-1" /> Limpar
                 </Button>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Filtros salvos */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                  <Bookmark className="h-3 w-3" /> Filtros salvos
+                </Label>
+                {!isNamingFilter && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => setIsNamingFilter(true)}
+                    disabled={activeFiltersCount === 0}
+                    title={activeFiltersCount === 0 ? 'Aplique algum filtro antes de salvar' : 'Salvar os filtros atuais'}
+                  >
+                    <BookmarkPlus className="h-3 w-3 mr-1" /> Salvar
+                  </Button>
+                )}
+              </div>
+
+              {isNamingFilter && (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveCurrentFilters(); if (e.key === 'Escape') setIsNamingFilter(false); }}
+                    placeholder="Nome do filtro"
+                    aria-label="Nome do filtro"
+                    className="h-7 text-xs"
+                  />
+                  <Button size="sm" className="h-7 text-xs" onClick={saveCurrentFilters} disabled={isSaving || !filterName.trim()}>
+                    Salvar
+                  </Button>
+                </div>
+              )}
+
+              {savedFilters.length > 0 ? (
+                <div className="space-y-1" data-testid="inbox-filtros-salvos">
+                  {savedFilters.map((saved) => (
+                    <div key={saved.id} className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 flex-1 justify-start text-xs truncate"
+                        onClick={() => applySavedFilter(saved)}
+                        title={saved.is_shared ? `${saved.name} (compartilhado)` : saved.name}
+                      >
+                        {saved.is_default && <Bookmark className="h-3 w-3 mr-1 shrink-0" />}
+                        <span className="truncate">{saved.name}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        aria-label={`Remover filtro ${saved.name}`}
+                        onClick={() => deleteFilter(saved.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Nenhum filtro salvo.</p>
               )}
             </div>
 

@@ -30,6 +30,19 @@ vi.mock('@/hooks/business/useQueues', () => ({
   useQueues: () => ({ queues: [{ id: 'q1', name: 'Suporte' }], loading: false }),
 }));
 
+// N-045 fala dos seletores; os filtros salvos (t_8e895114) puxam react-query e
+// não têm relação com o nome acessível — ficam de fora do render do teste.
+vi.mock('@/hooks/chat/useSavedFilters', () => ({
+  useSavedFilters: () => ({
+    filters: [],
+    isLoading: false,
+    defaultFilter: undefined,
+    saveFilter: vi.fn(),
+    deleteFilter: vi.fn(),
+    isSaving: false,
+  }),
+}));
+
 describe('InboxFilters — nomes acessíveis nos seletores', () => {
   const baseProps = {
     filters: { status: [], tags: [], agentId: null, dateRange: { from: null, to: null } },

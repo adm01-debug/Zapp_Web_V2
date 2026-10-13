@@ -53,14 +53,16 @@ describe('atalhos anunciados têm tratador (t_8e895114)', () => {
     // como verdade. Cada id abaixo tem tratador:
     //   `global-search`, `open-tasks-tab`, `show-shortcuts-help`, `toggle-sidebar`,
     //   `go-to-inbox`, `go-to-dashboard`, `refresh-data` e `transfer-chat` em
-    //   `defaultActions` de useGlobalKeyboardShortcuts (testado lá);
-    //   `send-message` (Ctrl+Enter) e `clear-selection` (Escape) nos listeners
-    //   do compositor (ChatPanel) e da lista (RealtimeInboxView).
+    //   `defaultActions` de useGlobalKeyboardShortcuts;
+    //   `send-message` (Ctrl+Enter), `clear-selection` (Escape) e `bulk-archive`
+    //   (Delete) nos listeners do compositor (ChatPanel) e da lista
+    //   (RealtimeInboxView).
     // Um atalho novo aqui sem tratador quebra este teste de propósito.
     const anunciados = DEFAULT_SHORTCUTS.filter((s) => !s.scope)
       .map((s) => s.id)
       .sort();
     expect(anunciados).toEqual([
+      'bulk-archive',
       'clear-selection',
       'global-search',
       'go-to-dashboard',
@@ -91,16 +93,18 @@ describe('conflitos de combinação dentro do mesmo escopo', () => {
 
   it('o escopo é o que separa combos iguais entre o global e o módulo de Tarefas', () => {
     // O módulo de Tarefas é o único dono das teclas PURAS (n, 1, 2, 3, /, e, x,
-    // Delete, ?); os globais usam Ctrl/Alt — só `clear-selection` (Escape) fica
-    // sem modificador. Antes de t_8e895114 havia colisão de `none:/` e
-    // `none:delete` com o módulo; com os atalhos anunciados sem ação fora da
-    // lista, a invariante passou a ser "nenhum combo compartilhado" — se um
-    // global voltar a ocupar uma tecla pura do módulo, este teste acusa.
+    // Delete, ?); os globais usam Ctrl/Alt, com duas exceções que a inbox decide
+    // pelo próprio estado (modo de seleção ligado): `clear-selection` (Escape) e
+    // `bulk-archive` (Delete). O Delete repete entre o global e o módulo de
+    // Tarefas de propósito: `scope` é o que separa os dois. Antes de t_8e895114
+    // havia também `none:/` (focus-input) colidindo — esse atalho saiu por não
+    // ter tratador, e este teste passa a acusar quem reintroduzir tecla pura
+    // global sem tratador.
     const semGrupo = (s: ShortcutBinding) => combos(s).map((c) => c.split(':').slice(1).join(':'));
     const globais = new Set(DEFAULT_SHORTCUTS.filter((s) => !s.scope).flatMap(semGrupo));
     const compartilhadas = DEFAULT_SHORTCUTS.filter((s) => s.scope)
       .flatMap(semGrupo)
       .filter((c) => globais.has(c));
-    expect([...new Set(compartilhadas)].sort()).toEqual([]);
+    expect([...new Set(compartilhadas)].sort()).toEqual(['none:delete']);
   });
 });
