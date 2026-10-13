@@ -155,7 +155,10 @@ export function ConversationListSidebar({
         )}
 
         <StatusChips
-          conversations={inbox.conversations}
+          // Os números vêm de useInboxFilters.chipCounts: já recortados pela
+          // busca, pelos filtros, pelo "Mostrar todos" e pela fila — as mesmas
+          // regras de filteredConversations, para o chip e a lista nunca divergirem.
+          counts={inboxFilters.chipCounts}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
         />
