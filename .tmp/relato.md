@@ -1,23 +1,26 @@
-Especialista: Hugo (area-front-hooks)
-
-Concluído: sim. Os três pontos do cartão estão no diff e a verificação passou verde.
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/hooks/system/useUserSettings.ts: `theme` e `language` deixaram de ser campos inertes do estado. Ao trocar na aba Aparência, `updateSettings` chama na hora o dono de cada um (`useTheme().setTheme` para o tema, `changeAppLanguage` — o mesmo caminho do `useLanguage().changeLanguage` — para o idioma), então a interface muda imediatamente e o cache do boot (`localStorage['theme']`/`['language']`) já sai com o código normalizado.
-- src/hooks/system/useUserSettings.ts: hidratação no login — o que veio do banco (`user_settings.theme|language`) passa a valer neste dispositivo (`aplicarPreferencias`). Antes, salvar 'Escuro' em um computador não mudava nada no outro.
-- src/hooks/system/useUserSettings.ts: `browser_notifications_enabled` saiu do upsert global. A coluna é posse do hook canônico `useNotificationSettings`, que grava no clique do interruptor; o upsert lia a cópia do mount e DESFAZIA a escolha do usuário ao clicar em "Salvar Alterações".
-- src/hooks/system/useUserSettings.ts: guarda de corrida — `escolhaLocalRef` + flag `ativo`. Resposta atrasada do banco não sobrescreve o tema/idioma que o usuário acabou de escolher (nem no estado, nem nos donos), e resposta que chega depois do unmount não mexe mais em nada.
-- src/i18n/index.ts: `normalizeLanguage` (`pt-BR`→`pt`, `en-US`→`en`) e `changeAppLanguage`; o boot (`lng:`) e o `useLanguage().changeLanguage` usam o mesmo caminho. Antes, o `pt-BR` que a aba Aparência grava no banco não existe em `resources` e o i18n caía no fallback — a interface ficava sempre em português.
-- src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx (novo): 6 testes com o hook real.
-- src/hooks/__tests__/useUserSettings.test.tsx: 3 asserções do payload mudaram para o contrato novo. Todas ficaram MAIS ESTRITAS (antes exigiam `browser_notifications_enabled` no payload; agora exigem que a coluna NÃO esteja lá) — nada foi afrouxado.
+- `src/components/settings/AppearanceSettings.tsx`: os `<Select>` de Tema e Idioma agora mostram o valor EM VIGOR — tema normalizado para `light|dark|system` (valor legado/desconhecido cai em `system`, nunca num seletor vazio) e idioma normalizado com `normalizeLanguage` (o mesmo helper que o hook usa na leitura), para o código legado `pt-BR` do banco continuar exibindo "Português (Brasil)". O idioma passou a ter os valores `pt|en|es` com rótulos em pt-BR e grava na coluna o código que ela já usa (`pt-BR|en-US|es`), então o valor exibido e o salvo não divergem. O botão "Salvar preferências" veio para dentro da aba (antes era o "Salvar Alterações" global), com estados de salvando (spinner + botão desabilitado) e de erro na tela (`role="alert"`).
+- `src/components/settings/SettingsView.tsx`: removido o "Salvar Alterações" do cabeçalho global — ele prometia gravar as abas de operação, que gravam pelo próprio painel canônico (`useNotificationSettings`, `ScheduleSettings` etc.); as preferências desta aba passam a ser gravadas por um botão dentro dela, alimentado pelo mesmo hook (`isSaving`/`onSave`), um só dono da escrita.
+- `src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` (novo): renderiza o componente real e prova o valor mostrado (tema escuro/claro e cada idioma, inclusive o código legado `pt-BR`), o que o seletor grava, e os estados salvando/erro.
+- `src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx`: só recebeu as duas props novas (`isSaving`/`onSave`) no objeto base; as asserções de acessibilidade seguem as mesmas.
+- `src/components/settings/__tests__/SettingsView.test.tsx`: teste novo que trava a remoção do salvar global (`queryByRole('button', {name:/Salvar Alterações/})` ausente).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx` com os fontes de `dia/2026-10-13` → `Tests 5 failed | 1 passed (6)` (ex.: `expected { user_id: 'u1', …(6) } to not have property "browser_notifications_enabled"`; `expected 'dark' to be 'light'` na corrida).
-- verde depois: `npx vitest run src/hooks/__tests__/useUserSettings.test.tsx src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx` → `Test Files 2 passed (2); Tests 16 passed (16)`.
-- regressão da área de Configurações: `npx vitest run src/components/settings/__tests__ …` → `Test Files 28 passed (28); Tests 437 passed (437)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` com `OK tipos`, `OK lint`, `OK db_guard` e `OK migrations`. O cartão não pede DDL nenhum (tema e idioma já existem em `user_settings`; a coluna de notificações é escrita pelo hook canônico), então o banco local não faz parte da prova deste diff.
+- vermelho antes: `npx vitest run src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` com o `AppearanceSettings.tsx` da base (`git show HEAD^:...`) → `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` (falham: 3 de idioma, os 2 de gravação e o de erro; passam só os 2 de tema, que já exibiam certo).
+- verde depois: `npx vitest run .../AppearanceSettings.tema-idioma.test.tsx .../AppearanceSettings.a11y.test.tsx .../SettingsView.test.tsx` → `Test Files 3 passed (3); Tests 22 passed (22)`.
+- `npx eslint` nos 5 arquivos do diff → saída vazia, exit 0.
+
+## Consumidores do valor mudado (idioma)
+- O código escolhido no `<Select>` (`pt|en|es`) é o que a tela exibe; o que vai para `updateSettings` é o código que a coluna já usa (`pt-BR|en-US|es`).
+- Único leitor de `user_settings.language`: `src/hooks/system/useUserSettings.ts` → `changeAppLanguage` → `normalizeLanguage` (aceita os dois formatos). Confirmado por `git grep -n "user_settings" -- src` e `git grep -n "language" -- src/hooks`.
+- Tema: valores `light|dark|system` são os que `useTheme` entende; nenhum outro consumidor da coluna.
+
+## Estados e tokens
+- Estados da aba conferidos: salvando (`Salvando...` + botão desabilitado), erro na tela (alerta com texto), e o valor sem correspondência (normalizado, sem seletor vazio).
+- Nada de token/classe nova: `text-destructive` e `border-border` já existem no projeto; o spinner usa `motion-safe:animate-spin` (respeita reduzir-movimento).
 
 ## O que NÃO fiz e por quê
-- Não toquei em src/components/settings/SettingsView.tsx nem em AppearanceSettings.tsx (arquivos de tela, área da Íris): o botão "Salvar Alterações" continua existindo e agora grava só campos que são posse deste hook (`theme`, `language`, `compact_mode`, `tts_*`), então o rótulo segue verdadeiro. Os `<Select>` já chamam `updateSettings`; a ligação aconteceu por dentro do hook, sem mudar o contrato da tela.
-- Não mexi em useTheme.ts: o `setTheme` existente já grava `localStorage['theme']` e a classe no `<html>`; a hidratação passou a usá-lo.
-- Nenhum DDL: o cartão cita "SQL" mas a coluna `user_settings.theme|language` já é usada por este hook.
+- Não toquei em `src/hooks/**` nem na migration: a persistência (`saveSettings`) e a normalização no hook são do PD-30 (commit 63f746e72, já na base).
+- Não implementei captura de tela no navegador: não houve mudança de CSS/token (só props e handlers), então a prova é o teste do componente real nos dois temas.
