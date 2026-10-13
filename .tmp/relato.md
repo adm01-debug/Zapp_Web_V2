@@ -1,18 +1,24 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/utils/normalizeMediaUrl.ts: guarda `typeof url !== 'string'` (valor que não é string devolve '' em vez de lançar `url.trim is not a function`); passou a tratar o artefato auto-hospedado `.atomicabr.com.br"/`; o colapso de barras `([^:][/])[/]+` agora consome TODAS as barras repetidas (antes `https://x.supabase.co///storage/a` virava `...//storage/a`). A regex de supabase.co foi preservada.
+- src/lib/abortError.ts (novo): módulo puro, sem logger, com `isIntentionalAbort` (casa por `err.name`) e `isAbortLikeError` (padrão PostgREST que embrulha o abort em `message`, semáforo interno e page unload).
+- src/lib/retry.ts: o padrão de `shouldRetry` passou de `() => true` para `() => false` e ganhou a guarda de aborto com PRECEDÊNCIA sobre a política — `AbortError` de page unload/navegação nunca repete nem é logado como ERROR. `withNetworkRetry` ganhou `status >= 500` e fronteira de palavra em 502/503/504. Jitter da `secureRandomFloat` mantido (formula igual).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `git checkout -- src/lib/retry.ts src/utils/normalizeMediaUrl.ts` + `npx vitest run src/utils/__tests__/normalizeMediaUrl.test.ts src/lib/__tests__/retry.padrao-seguro.test.ts src/lib/__tests__/abortError.test.ts src/lib/__tests__/retry.random.test.ts` -> `Test Files 2 failed | 2 passed (4)` / `Tests 6 failed | 19 passed (25)` (ex.: `expected 'https://x.supabase.co//storage/a.png' to be 'https://x.supabase.co/storage/a.png'`).
+- verde depois (mesmo comando, com o fix): `Test Files 4 passed (4)` / `Tests 25 passed (25)`.
+
+## Testes
+- src/utils/__tests__/normalizeMediaUrl.test.ts (novo): valor não-string, aspas das pontas, artefato `.supabase.co"/` e `.atomicabr.com.br"/`, colapso de `///` e `//`, protocolo preservado, URL limpa intacta.
+- src/lib/__tests__/retry.padrao-seguro.test.ts (novo): sem `shouldRetry` a operação roda 1x; política explícita ainda repete; `AbortError` (DOMException e Error) nunca repete mesmo com `shouldRetry: () => true`; `withNetworkRetry` repete rede e não repete aborto.
+- src/lib/__tests__/abortError.test.ts (novo): `isIntentionalAbort` por nome; `isAbortLikeError` no padrão PostgREST/semáforo/unload.
+- src/lib/__tests__/retry.random.test.ts (alterado): só recebeu `shouldRetry: () => true` explícito nos dois casos, porque o teste mede o jitter e o padrão deixou de repetir; nenhuma expectativa numérica mudou.
+
+## Chamadores do contrato alterado
+- `git grep "from '@/lib/retry'"` -> só `src/components/inbox/AIConversationAssistant.tsx`, que já passa `shouldRetry` explícito (repete apenas fetch/network/timeout): sem mudança de comportamento com o novo padrão.
+- O outro chamador citado no cartão, `useVoiceAgent.ts:129`, importa `withRetry` de `src/hooks/voice/retry.ts` (módulo diferente), por isso não foi tocado.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei `src/hooks/voice/retry.ts`: é módulo separado e fora dos arquivos do cartão.
+- Sem migration, sem dependência nova.
