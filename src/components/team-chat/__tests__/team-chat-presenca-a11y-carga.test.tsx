@@ -276,12 +276,14 @@ describe('TeamChatPanel — digitação/presença pelos canais privados (PD-69)'
     expect(container.querySelector('#team-chat-messages')).not.toBeNull();
   });
 
-  it('longe do fim, o contador avisa quantas mensagens chegaram', () => {
+  it('longe do fim, o contador avisa quantas mensagens chegaram e "Pular para mensagens novas" volta ao fim', () => {
     h.panel.showScrollDown = true;
     h.panel.isNearBottomRef.current = false;
     renderPanel();
     expect(screen.getByText('3 novas mensagens')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Voltar ao final' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Pular para mensagens novas' }));
+    expect(h.panel.scrollToBottom).toHaveBeenCalled();
   });
 });
 

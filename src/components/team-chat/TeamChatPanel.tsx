@@ -227,9 +227,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
       {s.showScrollDown && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1">
           {unseenCount > 0 && (
-            <span className="rounded-full bg-primary px-2 py-0.5 text-3xs font-medium text-primary-foreground shadow">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="rounded-full h-7 px-3 text-3xs font-medium shadow"
+              onClick={s.scrollToBottom}
+              aria-label="Pular para mensagens novas"
+            >
               {unseenCount} {unseenCount === 1 ? 'nova mensagem' : 'novas mensagens'}
-            </span>
+            </Button>
           )}
           <Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom} aria-label="Voltar ao final"><ArrowDown className="w-4 h-4" /></Button>
         </div>
