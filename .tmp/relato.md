@@ -16,6 +16,8 @@ supabase/functions/_shared/evolution-control-authz.ts
 supabase/functions/evolution-api/index.ts
 supabase/functions/evolution-api/session-flavor-routes.test.ts
 
+Números do diff (medidos): 6 arquivos alterados; 1 arquivo de teste (`supabase/functions/evolution-api/session-flavor-routes.test.ts`); 8 casos de teste novos (8 `Deno.test(` adicionados).
+
 ## O que mudou e por quê
 - `docs/audits/edge-functions-authz-coverage.md`: regenerado com `REGENERAR_EDGE_AUTHZ_COV=1`. A régua N217 mede `LF/LH` dos 5 helpers de authz e exige que o documento bata com a medição fresca. As +3 linhas do helper subiram o total de 137 para 140 linhas cobertas (o `Set` é coberto na carga do módulo), então o documento tinha de mudar: `137/137`→`140/140`, total `255/305`→`258/308`, `83.6%`→`83.8%`.
 - `ESTADO.md` (linha 88, registro `evolution-webhook`): as âncoras para `supabase/functions/evolution-api/index.ts` apontavam `474`, `540`, `701`; a entrega deslocou essas três linhas em +97 (mesmo conteúdo, novo local: `571`, `637`, `798`). Atualizei só os números das âncoras; nenhum texto de registro mudou.
