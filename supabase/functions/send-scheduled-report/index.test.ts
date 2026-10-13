@@ -4,7 +4,7 @@
 // rejeitado; admin/supervisor e cron válido admitidos; zero lookup de
 // relatório / Resend / efeito service-role após rejeição; usuário comum não
 // recebe reportData.
-import { handleScheduledReport } from "./index.ts";
+import { handleScheduledReport, isTrustedRecipient, resolveTrustedDomains } from "./index.ts";
 
 function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
@@ -266,7 +266,7 @@ function cronPost() {
 }
 
 Deno.test("envio: provedor recusa TODOS os destinatários → não marca enviado nem responde sucesso", async () => {
-  const mock = serviceMock({ report: reportWith(["a@exemplo.test", "b@exemplo.test"]) });
+  const mock = serviceMock({ report: reportWith(["a@promobrindes.com.br", "b@promobrindes.com.br"]) });
   const resend = withResendStub([422, 422]);
   try {
     await withResendKey("chave-de-teste", async () => {
@@ -286,7 +286,7 @@ Deno.test("envio: provedor recusa TODOS os destinatários → não marca enviado
 });
 
 Deno.test("envio: um destinatário recusado → parcial avança ciclo e registra só o recusado", async () => {
-  const mock = serviceMock({ report: reportWith(["aceito@exemplo.test", "recusado@exemplo.test"]) });
+  const mock = serviceMock({ report: reportWith(["aceito@promobrindes.com.br", "recusado@promobrindes.com.br"]) });
   const resend = withResendStub([200, 422]);
   try {
     await withResendKey("chave-de-teste", async () => {
@@ -297,9 +297,9 @@ Deno.test("envio: um destinatário recusado → parcial avança ciclo e registra
       assert(body.status === "partial", `status esperado "partial": ${JSON.stringify(body)}`);
       assert(body.delivered === 1 && body.failed === 1 && body.total === 2,
         `contagem inesperada: ${JSON.stringify(body)}`);
-      assert(JSON.stringify(resend.recipients) === JSON.stringify(["aceito@exemplo.test", "recusado@exemplo.test"]),
+      assert(JSON.stringify(resend.recipients) === JSON.stringify(["aceito@promobrindes.com.br", "recusado@promobrindes.com.br"]),
         `cada destinatário original deve ser tentado uma vez: ${JSON.stringify(resend.recipients)}`);
-      assert(JSON.stringify(body.failed_recipients) === JSON.stringify(["recusado@exemplo.test"]),
+      assert(JSON.stringify(body.failed_recipients) === JSON.stringify(["recusado@promobrindes.com.br"]),
         `a resposta deve registrar só o destinatário recusado: ${JSON.stringify(body)}`);
       assert(!("delivered_recipients" in body), `não deve registrar quem já recebeu para reenvio: ${JSON.stringify(body)}`);
       assert(body.last_sent_advanced === true, `partial deve avançar last_sent_at: ${JSON.stringify(body)}`);
@@ -318,7 +318,7 @@ Deno.test("envio: um destinatário recusado → parcial avança ciclo e registra
 });
 
 Deno.test("envio: RESEND_API_KEY ausente com destinatários → falha de configuração não marca enviado", async () => {
-  const mock = serviceMock({ report: reportWith(["a@exemplo.test"]) });
+  const mock = serviceMock({ report: reportWith(["a@promobrindes.com.br"]) });
   const resend = withResendStub([200]);
   try {
     await withResendKey(null, async () => {
@@ -338,7 +338,7 @@ Deno.test("envio: RESEND_API_KEY ausente com destinatários → falha de configu
 
 Deno.test("envio: falha do UPDATE do agendamento → não anuncia sucesso", async () => {
   const mock = serviceMock({
-    report: reportWith(["a@exemplo.test"]),
+    report: reportWith(["a@promobrindes.com.br"]),
     updateError: { message: "banco indisponível" },
   });
   const resend = withResendStub([200]);
@@ -357,7 +357,7 @@ Deno.test("envio: falha do UPDATE do agendamento → não anuncia sucesso", asyn
 });
 
 Deno.test("envio: UPDATE sem nenhuma linha afetada → não anuncia sucesso", async () => {
-  const mock = serviceMock({ report: reportWith(["a@exemplo.test"]), updateRows: [] });
+  const mock = serviceMock({ report: reportWith(["a@promobrindes.com.br"]), updateRows: [] });
   const resend = withResendStub([200]);
   try {
     await withResendKey("chave-de-teste", async () => {
@@ -439,7 +439,7 @@ Deno.test("sla: taxa = no prazo / avaliadas (2 no prazo + 1 violada → 67%)", a
 });
 
 Deno.test("envio: todos aceitos → avança last_sent_at/next_send_at e responde sucesso", async () => {
-  const mock = serviceMock({ report: reportWith(["a@exemplo.test", "b@exemplo.test"]) });
+  const mock = serviceMock({ report: reportWith(["a@promobrindes.com.br", "b@promobrindes.com.br"]) });
   const resend = withResendStub([200, 200]);
   try {
     await withResendKey("chave-de-teste", async () => {
@@ -458,4 +458,145 @@ Deno.test("envio: todos aceitos → avança last_sent_at/next_send_at e responde
   } finally {
     resend.restore();
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PD-23 / DD5 (docs 04–16) — o relatório agendado só envia para o domínio da
+// empresa. Antes, qualquer string em `recipients` era aceita e o sistema
+// mandava dado para fora. Aceite: e-mail inválido OU domínio fora da lista
+// confiável é recusado, a recusa é registrada só em CONTAGEM (nunca o en-
+// dereço), nada sai para o recusado e, se houver recusa, o ciclo segue a regra
+// (nada permitido = não avança; parcial permitido = avança só o permitido).
+// O default da lista é `promobrindes.com.br`, a mesma GUC de signup
+// (`app.settings.trusted_domains`), espelhada no env `TRUSTED_EMAIL_DOMAINS`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Define/limpa TRUSTED_EMAIL_DOMAINS durante o teste e restaura o valor anterior. */
+async function withTrustedDomainsEnv<T>(value: string | null, fn: () => Promise<T>): Promise<T> {
+  const previous = Deno.env.get("TRUSTED_EMAIL_DOMAINS");
+  if (value === null) Deno.env.delete("TRUSTED_EMAIL_DOMAINS");
+  else Deno.env.set("TRUSTED_EMAIL_DOMAINS", value);
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete("TRUSTED_EMAIL_DOMAINS");
+    else Deno.env.set("TRUSTED_EMAIL_DOMAINS", previous);
+  }
+}
+
+Deno.test("pd23: domínio externo → nada é enviado, ciclo não avança e a resposta não expõe o endereço", async () => {
+  const EXTERNO = "externo@gmail.com";
+  const mock = serviceMock({ report: reportWith([EXTERNO]) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+      assert(body.success !== true, `não pode ser sucesso: ${JSON.stringify(body)}`);
+      assert(body.rejected === 1, `rejected deve ser 1: ${JSON.stringify(body)}`);
+      assert(resend.calls.length === 0, `não pode chamar o provedor para domínio externo: ${JSON.stringify(resend.calls)}`);
+      assert(mock.updates.length === 0, `ciclo não pode avançar: ${JSON.stringify(mock.updates)}`);
+      assert(!JSON.stringify(body).includes(EXTERNO),
+        `a resposta não pode conter o endereço recusado (dado pessoal): ${JSON.stringify(body)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("pd23: misto → só o destinatário confiável é enviado; o externo vira contagem, sem endereço", async () => {
+  const EXTERNO = "externo@gmail.com";
+  const OK = "ok@promobrindes.com.br";
+  const mock = serviceMock({ report: reportWith([OK, EXTERNO]) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(body.success === true && body.status === "sent", `resposta inesperada: ${JSON.stringify(body)}`);
+      assert(body.delivered === 1 && body.total === 1 && body.rejected === 1,
+        `contagem inesperada: ${JSON.stringify(body)}`);
+      assert(JSON.stringify(resend.recipients) === JSON.stringify([OK]),
+        `só o confiável deve ser tentado: ${JSON.stringify(resend.recipients)}`);
+      assert(mock.updates.length === 1, `ciclo deve avançar uma vez: ${JSON.stringify(mock.updates)}`);
+      assert(!JSON.stringify(body).includes(EXTERNO),
+        `a resposta não pode conter o endereço recusado: ${JSON.stringify(body)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("pd23: e-mail inválido (sem @) é recusado junto ao domínio", async () => {
+  const mock = serviceMock({ report: reportWith(["sem-arroba", "ok@promobrindes.com.br"]) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(body.rejected === 1 && body.delivered === 1 && body.total === 1,
+        `contagem inesperada: ${JSON.stringify(body)}`);
+      assert(JSON.stringify(resend.recipients) === JSON.stringify(["ok@promobrindes.com.br"]),
+        `só o válido deve ser tentado: ${JSON.stringify(resend.recipients)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("pd23: acima do limite de destinatários → nada é enviado e o ciclo não avança", async () => {
+  const vinteUm = Array.from({ length: 21 }, (_, i) => `user${i}@promobrindes.com.br`);
+  const mock = serviceMock({ report: reportWith(vinteUm) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+      assert(body.success !== true, `não pode ser sucesso: ${JSON.stringify(body)}`);
+      assert(resend.calls.length === 0, `não pode enviar acima do limite: ${resend.calls.length}`);
+      assert(mock.updates.length === 0, `ciclo não pode avançar: ${JSON.stringify(mock.updates)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("pd23: env TRUSTED_EMAIL_DOMAINS troca a lista confiável", async () => {
+  await withTrustedDomainsEnv("parceiro.com.br", async () => {
+    const mock = serviceMock({ report: reportWith(["parceiro@parceiro.com.br", "empresa@promobrindes.com.br"]) });
+    const resend = withResendStub([200]);
+    try {
+      await withResendKey("chave-de-teste", async () => {
+        const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+        const body = await res.json();
+        assert(body.delivered === 1 && body.rejected === 1, `contagem inesperada: ${JSON.stringify(body)}`);
+        assert(JSON.stringify(resend.recipients) === JSON.stringify(["parceiro@parceiro.com.br"]),
+          `só o domínio do env deve sair: ${JSON.stringify(resend.recipients)}`);
+      });
+    } finally {
+      resend.restore();
+    }
+  });
+});
+
+Deno.test("pd23: default é o domínio da empresa; vazio cai no default e a normalização trata vírgula/caixa", () => {
+  assert(JSON.stringify(resolveTrustedDomains(undefined)) === JSON.stringify(["promobrindes.com.br"]),
+    `default inesperado: ${JSON.stringify(resolveTrustedDomains(undefined))}`);
+  assert(JSON.stringify(resolveTrustedDomains("")) === JSON.stringify(["promobrindes.com.br"]),
+    "vazio deve cair no default (falha fechada)");
+  assert(JSON.stringify(resolveTrustedDomains(" @A.com , b.com,,C.com ")) === JSON.stringify(["a.com", "b.com", "c.com"]),
+    `normalização inesperada: ${JSON.stringify(resolveTrustedDomains(" @A.com , b.com,,C.com "))}`);
+});
+
+Deno.test("pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local", () => {
+  const dominios = resolveTrustedDomains(undefined);
+  assert(isTrustedRecipient("User@PromoBrindes.com.BR", dominios), "deve aceitar domínio em caixa alta");
+  assert(isTrustedRecipient("@promobrindes.com.br", dominios) === false, "sem parte local deve recusar");
+  assert(isTrustedRecipient("a@b@promobrindes.com.br", dominios) === false, "dois @ deve recusar");
+  assert(isTrustedRecipient("a@sub.promobrindes.com.br", dominios) === false, "subdomínio não é o mesmo domínio");
+  assert(isTrustedRecipient("a@gmail.com", dominios) === false, "domínio externo deve recusar");
+  assert(isTrustedRecipient(42, dominios) === false, "valor não-string deve recusar");
 });
