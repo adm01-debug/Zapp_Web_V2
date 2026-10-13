@@ -10814,6 +10814,24 @@ export type Database = {
           remaining: number
         }[]
       }
+      contact_response_stats: {
+        Args: { p_contact_id: string; p_days?: number }
+        Returns: {
+          total_messages: number
+          total_conversations: number
+          messages_recent: number
+          messages_previous: number
+          messages_change_percent: number
+          conversations_recent: number
+          conversations_previous: number
+          conversations_change_percent: number
+          response_samples: number
+          avg_response_minutes: number
+          median_response_minutes: number
+          csat_average: number
+          csat_count: number
+        }[]
+      }
       contacts_count_by_type: {
         Args: { include_legacy?: boolean }
         Returns: {
