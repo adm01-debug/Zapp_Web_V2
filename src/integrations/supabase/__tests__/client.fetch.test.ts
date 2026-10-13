@@ -16,7 +16,7 @@ import { SUPABASE_FETCH_TIMEOUT_MS, supabaseFetch } from '../client';
  *      continua decidindo o erro — o contrato de quem lê `{ error }` não muda).
  */
 
-const REST = 'https://tnnnlkbymytvtqngbbqh.supabase.co';
+const REST = 'https://sb-testref.supabase.co';
 const fetchMock = vi.fn();
 
 /** fetch que nunca resolve por conta própria: só rejeita quando abortado. */
