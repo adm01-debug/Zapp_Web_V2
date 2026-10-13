@@ -33,20 +33,19 @@ import {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   editing: TalkXTemplate | null;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
-    // X047 — a biblioteca desta tela é a MESMA consulta que o pai consome; o erro
-    // tem de chegar à tela. Antes o editor só recebia `isLoading` e, com a consulta
-    // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
-    isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
   } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
   const { confirmar, dialogo } = useTalkXConfirm();
@@ -386,9 +385,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError, error }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={onRetry}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

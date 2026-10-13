@@ -126,6 +126,9 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         key={startNew ? 'novo-template' : (editing?.id ?? 'novo-template')}
         templates={templates}
         isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => { void refetch(); }}
         editing={startNew ? null : editing}
         onClose={() => { setMode('list'); onStartNewHandled?.(); }}
         onOpenMonitor={onOpenMonitor}
