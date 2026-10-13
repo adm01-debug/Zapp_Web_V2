@@ -12,7 +12,7 @@
  * provada por teclado à parte. Diferença em relação ao gabarito da V3, que tem o olho
  * na ordem de TAB.
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { bloquearRedeReal, SUPABASE_HOST, type Registro } from './fixtures/mapa-mocks';
 
 /** Rótulo estável do elemento com foco: id → aria-label → texto. */
