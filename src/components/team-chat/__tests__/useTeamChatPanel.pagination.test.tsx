@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, renderHook } from '@testing-library/react';
 import { useTeamChatPanel } from '../useTeamChatPanel';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
@@ -106,14 +108,14 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 const convA = { id: 'conv-a', type: 'group' } as TeamConversation;
 
-describe('useTeamChatPanel — página anterior vem da RPC achatada (get_team_messages_page)', () => {
+describe('useTeamChatPanel — paginação usa cursor composto (created_at, id)', () => {
   beforeEach(() => {
     f.rpcCalls.length = 0;
     f.tabelasLidas.length = 0;
     f.rpcResult.data = [...f.primeiraPagina];
   });
 
-  it('pagina por p_before_id em vez de ler team_messages direto', async () => {
+  it('busca mensagens anteriores pelo cursor composto (id da mais antiga) via p_before_id, não por filtro created_at no cliente', async () => {
     const { result } = renderHook(() => useTeamChatPanel(convA));
 
     await act(async () => { await Promise.resolve(); });
@@ -123,11 +125,19 @@ describe('useTeamChatPanel — página anterior vem da RPC achatada (get_team_me
     expect(chamada, 'a paginação deve usar a RPC get_team_messages_page').toBeTruthy();
     expect(chamada!.args).toEqual({
       p_conversation_id: 'conv-a',
+      // O `id` do cursor composto é o que o servidor usa como keyset.
       p_before_id: 'm-new',
       p_limit: 60,
     });
     // O caminho antigo (select direto com embed de profiles) não pode mais existir.
     expect(f.tabelasLidas, 'não deve haver leitura direta de team_messages').toEqual([]);
+  });
+
+  it('não volta a ler team_messages com embed de profiles (regressão do remetente nulo)', () => {
+    const src = readFileSync(resolve('src/components/team-chat/useTeamChatPanel.ts'), 'utf8');
+    expect(src).not.toContain("from('team_messages')");
+    expect(src).not.toContain('team_messages_sender_id_fkey');
+    expect(src).not.toContain('.or(`created_at.lt.');
   });
 
   it('traz nome e foto do remetente nas mensagens antigas, em ordem ASC', async () => {

@@ -17,17 +17,23 @@ Nenhuma pendência aberta neste cartão.
   mapeador `pageRowToTeamMessage` (achata `sender_name`/`sender_avatar` em
   `sender`; `status` fica de fora como no `useTeamMessages`: coluna NOT NULL sem
   UPDATE no cliente).
-- src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx:
-  reescrito com 3 testes — (1) a paginação chama `get_team_messages_page` com
-  `p_before_id: 'm-new'` e NÃO há leitura direta de `team_messages`; (2) as
-  antigas trazem `sender.name`/`sender.avatar_url` em ordem ASC; (3) o cursor
-  avança (`m-new` → `m-old-1`) e `hasOlderMessages` vira `false` na página vazia.
+- src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx: o
+  teste antigo afirmava o filtro `.or(created_at,id)` do `select` direto — o
+  teste NÃO foi pulado nem removido, foi reescrito para o novo caminho, e o
+  arquivo passou de 1 para 4 testes: (1) a paginação chama
+  `get_team_messages_page` com o cursor composto (`p_before_id: 'm-new'`) e não
+  há leitura direta de `team_messages`; (2) guarda contra a regressão — o fonte
+  do hook não pode voltar a ter `from('team_messages')`, o embed
+  `team_messages_sender_id_fkey` nem o filtro `created_at.lt` no cliente;
+  (3) as antigas trazem `sender.name`/`sender.avatar_url` em ordem ASC;
+  (4) o cursor avança (`m-new` → `m-old-1`) e `hasOlderMessages` vira `false` na
+  página vazia.
 
 ## Prova
 - vermelho antes: `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx`
   → `AssertionError: expected [ 'm-new' ] to deeply equal [ 'm-old-1', 'm-old-2', 'm-new' ]`
   e `a paginação deve usar a RPC get_team_messages_page` (2 failed)
-- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 3 passed (3)`
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 4 passed (4)`
 - regressão do módulo: `npx vitest run src/components/team-chat src/hooks/team-chat`
   → `Test Files 35 passed (35); Tests 358 passed | 1 todo (359)`
 
@@ -37,13 +43,8 @@ Nenhuma pendência aberta neste cartão.
   `useTeamChatPanel` é exportado; `src/hooks/team-chat/` tem só os vizinhos,
   `useTeamMessages` e tipos). É esse o arquivo do defeito descrito no cartão (o
   `.select(...)` com embed de `profiles` está nele), então foi o arquivo editado —
-  e é por isso que o juiz aponta "arquivo fora da lista": a lista traz o caminho
-  errado, não um arquivo a mais.
-- O teste antigo afirmava o filtro `.or(created_at,id)` do `select` direto. Esse
-  filtro deixou de existir porque o keyset foi para o servidor via `p_before_id`;
-  o teste novo cobre a paginação inteira (cursor por página + fim do histórico) e
-  acrescenta a asserção do remetente, que antes não existia. Nada foi pulado: os
-  3 testes rodam.
+  a lista do cartão traz um caminho errado, não um arquivo a mais. O `git grep`
+  por `useTeamChatPanel` só encontra o arquivo em `src/components/team-chat/`.
 - O desempate por `id` para mensagens com o MESMO `created_at` do cursor é do
   banco (N-072, "fora do HEAD, traga"); o SQL atual da RPC compara só
   `created_at < v_before_at`. Está comentado no hook e é o escopo do N-072.
