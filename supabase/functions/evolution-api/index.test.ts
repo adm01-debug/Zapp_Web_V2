@@ -536,7 +536,19 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
   const actions = new Set(
     [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
+  // PL-01 removeu 15 leituras de integração do handler (eram ~113). O piso só
+  // existe para pegar truncamento do fonte, por isso acompanhou a nova base
+  // (~98); a ausência das 15 é provada logo abaixo e em
+  // _shared/__tests__/evolution-control-authz.test.ts.
+  assert(actions.size > 90, `sanidade: esperava >90 ações no handler (achou ${actions.size})`);
+  const removidasPL01 = [
+    "get-chatwoot", "get-typebot", "typebot-sessions", "get-openai", "get-dify",
+    "get-flowise", "get-evolution-bot", "get-rabbitmq", "get-sqs", "get-proxy",
+    "get-evoai", "get-n8n", "get-kafka", "get-nats", "get-pusher",
+  ];
+  for (const action of removidasPL01) {
+    assert(!actions.has(action), `${action} não pode voltar ao handler (PL-01)`);
+  }
   for (const action of actions) {
     assert(
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
@@ -641,5 +653,91 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     assertEquals(c.requests[0].apikey, TOKEN_PADRAO);
   } finally {
     await c.stop();
+  }
+});
+
+// ─── PL-01 (P1): as leituras de INTEGRAÇÃO saíram do handler e a leitura de
+// CONFIGURAÇÃO sai mascarada ────────────────────────────────────────────────
+// RED: as 15 ações `get-*`/typebot-sessions repassavam a resposta CRUA do
+// provedor ao chamador autenticado — o corpo traz openAiApiKey/apiKey/token/
+// password/secret da integração EM CLARO. GREEN: elas não existem mais no
+// handler (404 "Unknown action", zero I/O) e as duas leituras que sobraram
+// (get-settings/get-webhook) passam por maskSecretFields antes de sair.
+const PL01_REMOVIDAS = [
+  "get-chatwoot", "get-typebot", "typebot-sessions", "get-openai", "get-dify",
+  "get-flowise", "get-evolution-bot", "get-rabbitmq", "get-sqs", "get-proxy",
+  "get-evoai", "get-n8n", "get-kafka", "get-nats", "get-pusher",
+];
+
+Deno.test("PL-01: as 15 leituras de integração caem no 404 do handler (zero I/O)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    for (const action of PL01_REMOVIDAS) {
+      const res = await handleEvolutionApi(
+        controlRequest(action, { instanceName: "PRINCIPAL" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+          supabase: makeServiceClient(),
+        },
+      );
+      assertEquals(res.status, 404, `${action} deve cair no 'Unknown action' (PL-01)`);
+      assertEquals((await res.json())?.error, "Unknown action", `${action} não pode mais ser servida`);
+    }
+    assertEquals(fake.posts.length, 0, "nenhuma das 15 pode chegar ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("PL-01: get-settings sai com a credencial mascarada e preserva o resto", async () => {
+  // Servidor que devolve um corpo de settings COMO O PROVEDOR DEVOLVE — com
+  // credencial em claro — para provar que o handler mascara antes de responder.
+  const server = Deno.serve(
+    { hostname: "127.0.0.1", port: 0, onListen() {} },
+    () =>
+      Promise.resolve(new Response(
+        JSON.stringify({
+          enabled: true,
+          apiKey: "chave-secreta",
+          openAiApiKey: "sk-secreto",
+          url: "https://x/functions/v1/evolution-webhook",
+          nested: { token: "tok-123", password: "pwd", keep: "ok" },
+          authorization: "Bearer chave-do-webhook",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      )),
+  );
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("esperava listener TCP");
+  Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+  try {
+    // Agente autenticado comum (sem papel) — as leituras são liberadas, mas o
+    // segredo NÃO pode sair. Vale para as quatro leituras que passam pelo
+    // maskedProxy: configuração (get-settings/get-webhook) e instância
+    // (instance-info/list-instances).
+    Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+    for (const action of ["get-settings", "get-webhook", "instance-info", "list-instances"]) {
+      const res = await handleEvolutionApi(
+        controlRequest(action, { instanceName: "PRINCIPAL" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+          supabase: makeServiceClient(),
+        },
+      );
+      assertEquals(res.status, 200, `${action} deve responder 200`);
+      const json: any = await res.json();
+      assertEquals(json.apiKey, "***", `${action}: apiKey não pode sair em claro`);
+      assertEquals(json.openAiApiKey, "***", `${action}: openAiApiKey não pode sair em claro`);
+      assertEquals(json.authorization, "***", `${action}: header authorization não pode sair em claro`);
+      assertEquals(json.nested.token, "***", `${action}: token aninhado não pode sair em claro`);
+      assertEquals(json.nested.password, "***", `${action}: password aninhada não pode sair em claro`);
+      assertEquals(json.nested.keep, "ok", `${action}: campo não-secreto sobrevive`);
+      assertEquals(json.url, "https://x/functions/v1/evolution-webhook");
+      assertEquals(json.enabled, true);
+    }
+  } finally {
+    Deno.env.delete("EVOLUTION_API_FLAVOR");
+    await server.shutdown();
   }
 });

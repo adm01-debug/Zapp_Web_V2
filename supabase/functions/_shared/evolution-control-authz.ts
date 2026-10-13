@@ -160,22 +160,12 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   // labels / templates
   'find-labels',
   'find-templates',
-  // integrações (leitura)
-  'get-chatwoot',
-  'get-typebot',
-  'typebot-sessions',
-  'get-openai',
-  'get-dify',
-  'get-flowise',
-  'get-evolution-bot',
-  'get-rabbitmq',
-  'get-sqs',
-  'get-proxy',
-  'get-evoai',
-  'get-n8n',
-  'get-kafka',
-  'get-nats',
-  'get-pusher',
+  // PL-01: as leituras de integração do provedor (get-chatwoot, get-typebot,
+  // typebot-sessions, get-openai, get-dify, get-flowise, get-evolution-bot,
+  // get-rabbitmq, get-sqs, get-proxy, get-evoai, get-n8n, get-kafka, get-nats,
+  // get-pusher) foram REMOVIDAS do handler: devolviam a credencial da integração
+  // em claro (openAiApiKey, apiKey, token, password, secret) e nenhum consumidor
+  // as chamava. Fora dos três conjuntos elas caem em deny-by-default (control).
   // catálogo de loja (consultas)
   'get-catalog',
   'get-collections',
@@ -192,6 +182,35 @@ export function classifyEvolutionAction(action: string): EvolutionActionKind {
   if (SEND_ACTIONS.has(action)) return 'send';
   if (READ_ACTIONS.has(action)) return 'read';
   return 'control';
+}
+
+/**
+ * Nome de campo que denuncia credencial. Cobre `apikey` (contém "key"),
+ * `apiKey`, `token`, `secret`, `password` e o header `authorization`
+ * (Bearer/apikey do webhook). Substitui o VALOR por `***`, nunca a chave — o
+ * consumidor segue enxergando que o campo veio, só não o segredo.
+ */
+const SECRET_FIELD_PATTERN = /(key|token|secret|password|auth)/i;
+
+/**
+ * Máscara recursiva de segredos: percorre objetos e arrays e troca por `***`
+ * todo valor cujo NOME de campo casa com `SECRET_FIELD_PATTERN`. Não mexe em
+ * primitivos nem em arrays de primitivos e devolve uma cópia (não muta a
+ * entrada).
+ *
+ * Usada pelas leituras de CONFIGURAÇÃO (get-settings/get-webhook), as únicas
+ * cuja resposta pode espelhar credencial (header de auth do webhook, token no
+ * find de settings). NÃO aplicar em ações de mensagem/chat: o objeto `key`
+ * (remoteJid/id/fromMe) contém "key" no nome e seria mascarado por engano.
+ */
+export function maskSecretFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => maskSecretFields(item));
+  if (!value || typeof value !== 'object') return value;
+  const masked: Record<string, unknown> = {};
+  for (const [field, fieldValue] of Object.entries(value as Record<string, unknown>)) {
+    masked[field] = SECRET_FIELD_PATTERN.test(field) ? '***' : maskSecretFields(fieldValue);
+  }
+  return masked;
 }
 
 export type EvolutionAuthzDecision =
