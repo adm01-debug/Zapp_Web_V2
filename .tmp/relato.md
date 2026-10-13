@@ -1,5 +1,15 @@
 Especialista: worker (sql) (area-sql-banco)
 
+## Diff da branch (5 arquivos: 2 do meu cartão + 2 da faixa do pai + o relato)
+- Este cartão (t_106a978a) entrega 2 arquivos:
+  supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql (nova) e
+  supabase/tests/alerta_falha_envio_por_conexao.sql (nova).
+- A faixa do pai (t_bc890f8a, ainda não integrada à base) foi trazida por cherry-pick do commit
+  a03db8ad0 e é parte do diff desta branch: supabase/migrations/20261013210005_outbound_sweeper_e_claim_por_papel.sql
+  e supabase/tests/outbound_sweeper_e_claim_por_papel.sql (2 arquivos, não escritos por mim).
+- `.tmp/relato.md` é o próprio relato (rastreado no repo; o fechar exige árvore limpa).
+  Total do diff: 5 arquivos, sendo 2 de teste (.sql).
+
 ## O que mudou e por quê
 - supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql (nova): cria a função de
   manutenção `public.alert_outbound_failure_rate()` e agenda no pg_cron (`*/5 * * * *`, job
