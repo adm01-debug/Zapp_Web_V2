@@ -305,7 +305,8 @@ SELECT pg_temp.espera('T15 service_role (BYPASSRLS) vê as 3 linhas',
 
 \echo
 \echo '── BLOCO R: o rollback da migration desfaz, e a migration reaplica ──────'
--- As duas sentenças abaixo são a linha 2 (`-- Rollback:`) da migration, verbatim.
+-- As duas sentenças abaixo são o bloco `-- Rollback (SQL executável, na ordem):` do
+-- topo da migration, verbatim.
 ALTER TABLE public.user_settings DROP COLUMN IF EXISTS onboarding_completed;
 ALTER TABLE public.user_settings ENABLE TRIGGER update_user_settings_updated_at;
 SELECT pg_temp.espera('T16 rollback: a coluna sumiu',
