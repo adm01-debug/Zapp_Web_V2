@@ -11,6 +11,7 @@
 --   drop function if exists public.zapp_purge_crm_sync_outbox(integer, integer, integer);
 --   drop function if exists public.claim_due_scheduled_reports(integer);
 --   drop function if exists public.next_report_send_at(text, timestamp with time zone);
+--   drop function if exists public.zapp_project_url();
 --
 -- ============================================================================
 -- Cartao: agendadores Edge + purga do log do cron (py-102)
@@ -88,6 +89,39 @@ comment on function public.next_report_send_at(text, timestamptz) is
   'PE-102: avanca p_from conforme frequency (daily=+1d, weekly=+7d, monthly=+1 mes). '
   'Ancorado no next_send_at atual para a cadencia nao andar com o atraso do tick.';
 
+
+-- ============================================================================
+-- 1b) Base do projeto para as chamadas de Edge (URL absoluta exigida pelo net.http_post).
+--     O ref NAO entra no arquivo: vem de app.settings.supabase_url (o PLANO manda definir
+--     com ALTER DATABASE ... SET app.settings.supabase_url) ou do segredo zapp_project_url
+--     no Vault. Sem nenhum dos dois, falha ALTO e explica o que fazer.
+-- ============================================================================
+create or replace function public.zapp_project_url()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $function$
+declare
+  v_url text;
+begin
+  v_url := nullif(btrim(current_setting('app.settings.supabase_url', true)), '');
+  if v_url is null then
+    select nullif(btrim(decrypted_secret), '') into v_url
+      from vault.decrypted_secrets where name = 'zapp_project_url' limit 1;
+  end if;
+  if v_url is null then
+    raise exception 'zapp_project_url_indefinida' using
+      errcode = 'P0001',
+      hint = 'defina ALTER DATABASE <db> SET app.settings.supabase_url OU crie o segredo zapp_project_url no Vault: o agendador chama as edges por URL absoluta';
+  end if;
+  return rtrim(v_url, '/');
+end;
+$function$;
+
+comment on function public.zapp_project_url() is
+  'Base do projeto (sem barra final) usada pelos jobs de Edge. Le app.settings.supabase_url e cai para o segredo zapp_project_url do Vault; sem fonte, levanta zapp_project_url_indefinida.';
 
 -- ============================================================================
 -- 2) RPC de reivindicacao dos relatorios vencidos (PE-102)
@@ -279,7 +313,7 @@ begin
       'auto-close-conversations',
       '4-59/10 * * * *',
       $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/auto-close-conversations',
+        url := public.zapp_project_url() || '/functions/v1/auto-close-conversations',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
@@ -294,7 +328,7 @@ begin
       v_jobid,
       schedule := '4-59/10 * * * *',
       command := $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/auto-close-conversations',
+        url := public.zapp_project_url() || '/functions/v1/auto-close-conversations',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
@@ -320,7 +354,7 @@ begin
       'send-scheduled-report',
       '9-59/15 * * * *',
       $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/send-scheduled-report',
+        url := public.zapp_project_url() || '/functions/v1/send-scheduled-report',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
@@ -335,7 +369,7 @@ begin
       v_jobid,
       schedule := '9-59/15 * * * *',
       command := $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/send-scheduled-report',
+        url := public.zapp_project_url() || '/functions/v1/send-scheduled-report',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
@@ -361,7 +395,7 @@ begin
       'cleanup-rate-limit-logs',
       '14 4 * * *',
       $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/cleanup-rate-limit-logs',
+        url := public.zapp_project_url() || '/functions/v1/cleanup-rate-limit-logs',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
@@ -376,7 +410,7 @@ begin
       v_jobid,
       schedule := '14 4 * * *',
       command := $cmd$SELECT net.http_post(
-        url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/cleanup-rate-limit-logs',
+        url := public.zapp_project_url() || '/functions/v1/cleanup-rate-limit-logs',
         headers := jsonb_build_object(
           'Content-Type','application/json',
           'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
