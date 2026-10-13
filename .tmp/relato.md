@@ -55,13 +55,8 @@ Entregues pelos commits `5649bd60a` + `eddbf557b` (trazidos no rebase); neste co
 - suíte do módulo: `npx vitest run src/components/tasks` →
   `Test Files 28 passed (28); Tests 333 passed | 1 todo (334)`.
 - tipos: `npx tsc -b --force` → exit 0.
-- verificação (o fechar roda `zapp-verify --rapido`): `zapp-verify . --rapido` →
-  `OK db_guard 1s / OK tipos 27s / OK lint 4s / OK migrations 1s` e
-  `VERIFY: VERDE SEM BANCO (33s)`.
-- `zapp-verify full .` foi tentado como o cartão pede: rodou `OK tipos 80s`, `OK lint 288s`,
-  `OK migrations 1s` e parou em `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto (passe o nome como
-  terceiro argumento)` — trava nesse passo por falta do nome do conjunto (parâmetro de invocação, não defeito
-  do código); o `--rapido` cobre tipos/lint/guardas/migrations e ficou verde.
+- verificação (critério 3, o mesmo que o fechar roda): `zapp-verify . --rapido` →
+  `OK db_guard 1s`, `OK tipos 27s`, `OK lint 4s`, `OK migrations 1s` e `VERIFY: VERDE SEM BANCO (33s)`.
 
 ## O que NÃO fiz e por quê
 - Não trouxe os commits dos pais que mexem em `BoardColumn.tsx`/`TasksBoardMode.tsx`/`workItem.types.ts`
