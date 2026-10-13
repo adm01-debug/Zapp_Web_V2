@@ -18,8 +18,9 @@ Especialista: workersql
   mediana NULL, reaplicação idempotente e o Rollback remove a função (volta ao RED).
 - `.github/workflows/db-guard.yml`: registra o harness como passo (obrigatório — `check-test-inventory.mjs`
   reprova `.test.sh` órfão; por isso este arquivo entrou no diff além da lista do cartão, ver abaixo).
-- `src/integrations/supabase/types.ts`: acrescenta o tipo da RPC na seção `Functions` (Args/Returns), em ordem
-  alfabética, para o consumidor TS compilar (o cartão cita este arquivo e o filho de front depende dele).
+- `src/integrations/supabase/types.ts`: NÃO foi tocado. É artefato gerado do banco vivo (o `types-sync`
+  regenera/abre PR depois que a migration chega ao banco); editar à mão aqui criaria drift contra o banco e
+  um arquivo de `src/` sem teste próprio. O tipo da RPC entra junto com a entrega que a consome (filho de front).
 
 ## Prova
 - banco local (papel real, banco descartável próprio): `bash scripts/db-audit/dashboard-daily-series.test.sh` →
