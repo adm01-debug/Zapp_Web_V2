@@ -10,7 +10,7 @@ Especialista: Hugo (area-front-hooks)
   cima ninguém aparecia para ser marcado (a linha nem chegava ao navegador). Traz
   também `useMentionableProfileNames`, que lê TODOS os nomes ativos de forma paginada
   por `id` (nunca uma amostra), para o selo das notas.
-- `src/lib/mentionText.ts` (novo): `splitMentionText` separa o texto da nota marcando
+- `src/components/inbox/collaboration/mentionText.ts` (novo): `splitMentionText` separa o texto da nota marcando
   como selo a menção a um nome conhecido. Antes o selo saía de `/(@\w+)/g`, que não
   cobre espaço: `@Ana Maria` virava selo só de `@Ana`. O reconhecimento é ancorado na
   lista de nomes ativos (com o nome mais longo vencendo e fronteira de palavra), então
@@ -24,10 +24,17 @@ Especialista: Hugo (area-front-hooks)
 
 ## Prova
 - defeito (selo), antes, com a regex antiga: `node -e "'@Ana Maria veja'.split(/(@\w+)/g)"` → `["","@Ana"," Maria veja"]` (só `@Ana` viraria selo).
-- vermelho antes (módulos ainda inexistentes, testes presentes): `npx vitest run src/lib/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Failed to resolve import "../useMentionableProfiles" ... Test Files 2 failed (2)`.
-- verde depois: `npx vitest run src/lib/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`.
+- vermelho antes (módulos ainda inexistentes, testes presentes): `npx vitest run src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Failed to resolve import "../useMentionableProfiles" ... Test Files 2 failed (2)`.
+- verde depois: `npx vitest run src/components/inbox/collaboration/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`.
 - sem regressão no consumidor: `npx vitest run src/components/inbox/collaboration/__tests__/MentionInput.a11y.test.tsx` → `Test Files 1 passed (1); Tests 2 passed (2)`.
+- os três juntos após mover o parser para junto do compositor: `Test Files 3 passed (3); Tests 17 passed (17)`.
 - tipos: `npx tsc -p tsconfig.app.json --noEmit` → nenhum erro nos arquivos tocados.
+
+## Arquivos: onde cada peça ficou (dentro do que o cartão lista)
+Todos os arquivos tocados estão em `src/hooks/` (mencionáveis) e `src/components/inbox/collaboration/`
+(MentionInput, InternalNotesPanel, o parser puro `mentionText.ts` e os testes). O parser puro
+nasceu em `src/lib/` e foi movido para junto do compositor: ele é detalhe do selo da nota, não
+utilidade geral, e assim o diff fica só no par componente+hook da menção.
 
 ## Item 3 do cartão (aviso ao marcado): canal inexistente — registrado e proposto, como o cartão manda
 - O cartão diz: "se não houver canal, registre e proponha em uma linha no relato, sem

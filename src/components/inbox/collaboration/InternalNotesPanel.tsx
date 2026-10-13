@@ -14,7 +14,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
-import { splitMentionText } from '@/lib/mentionText';
+import { splitMentionText } from './mentionText';
 import { MentionInput } from './MentionInput';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
