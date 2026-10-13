@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
 
+import { responderUserSettingsFake } from './mapa-mocks';
+
 /**
  * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
  *
@@ -196,21 +198,25 @@ const FAKE_SESSION = {
 
 export async function installFakeSession(page: Page) {
   await page.addInitScript(
-    ({ storageKey, session, themeKey, onboardingKey }) => {
+    ({ storageKey, session, themeKey }) => {
       localStorage.setItem(storageKey, JSON.stringify(session));
       localStorage.setItem(themeKey, 'dark');
-      // Marca o onboarding como concluído para o WelcomeModal não abrir e
-      // bloquear os cliques do spec visual (useOnboarding lê este flag antes
-      // de consultar user_settings).
-      localStorage.setItem(`${onboardingKey}_${session.user.id}`, 'true');
     },
     {
       storageKey: AUTH_STORAGE_KEY,
       session: FAKE_SESSION,
       themeKey: 'theme',
-      onboardingKey: 'onboarding_completed',
     },
   );
+
+  // O tour de onboarding segue a COLUNA `user_settings.onboarding_completed`
+  // (useOnboarding, migration 20261013044344). A antiga flag
+  // `onboarding_completed_<id>` no localStorage ficou MORTA — o hook deixou de
+  // lê-la — e o WelcomeModal passou a cobrir TODA tela deslogada (o overlay
+  // engole o clique seguinte). A sessão falsa responde a coluna como concluída;
+  // quem PROVA o tour aberto (onboarding-dispensar.spec.ts) re-registra esta
+  // rota depois, porque no Playwright a última registrada vence.
+  await page.route(/\/rest\/v1\/user_settings/, responderUserSettingsFake);
 }
 
 export async function mockTalkXAuth(page: Page) {
@@ -266,7 +272,7 @@ export async function mockTalkXVisual(page: Page, tela: string) {
   await mockTalkXBackend(page, tela);
 
   // Catch-all para as leituras do app shell não interceptadas acima.
-  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts)[a-z_]+/, (route) =>
+  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|user_settings|contacts)[a-z_]+/, (route) =>
     isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
   );
 }

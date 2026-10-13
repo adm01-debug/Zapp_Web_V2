@@ -25,6 +25,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { installFakeSession } from './fixtures/talkx-demo';
+import { responderUserSettingsFake } from './fixtures/mapa-mocks';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures', 'talkx-launch');
 const STUB_HEADER = 'x-talkx-launch-stub';
@@ -117,6 +118,9 @@ async function prepararTalkXLaunch(page: Page): Promise<TalkXLaunchHarness> {
       return json(route, [{ id: FAKE_USER_ID, user_id: FAKE_USER_ID, name: 'Visual Talk X', email: FAKE_EMAIL, role: 'admin', is_active: true }]);
     }
     if (tabela === 'user_roles') return json(route, [{ role: 'admin' }]);
+    // `user_settings` do app shell: onboarding JÁ concluído, senão o WelcomeModal
+    // cobre a tela antes da campanha (o tour segue esta coluna).
+    if (tabela === 'user_settings') return responderUserSettingsFake(route);
     if (tabela === 'talkx_campaigns') return json(route, campanhas);
     return json(route, fixtures[tabela] ?? []);
   });

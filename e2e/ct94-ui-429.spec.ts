@@ -30,6 +30,7 @@
  */
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { installFakeSession, FAKE_USER_ID } from './fixtures/talkx-demo';
+import { responderUserSettingsFake } from './fixtures/mapa-mocks';
 import { E2E_CATALOG_PATH } from './fixtures/catalog';
 
 /** Edge que devolve 429 quando a cota de 60 req/min estoura. */
@@ -98,6 +99,9 @@ async function prepararCatalogo429(page: Page): Promise<CatalogoHarness> {
       ]);
     }
     if (tabela === 'user_roles') return json(route, [{ role: 'admin' }]);
+    // `user_settings` do app shell: onboarding JÁ concluído, senão o WelcomeModal
+    // cobre a tela antes de o catálogo montar (o tour segue esta coluna).
+    if (tabela === 'user_settings') return responderUserSettingsFake(route);
     return json(route, []);
   });
 

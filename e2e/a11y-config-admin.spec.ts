@@ -13,7 +13,7 @@
  */
 import { test, expect, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
-import { mockAppShell, json, bloquearRedeReal, type Registro } from './fixtures/mapa-mocks';
+import { mockAppShell, json, bloquearRedeReal, responderUserSettingsFake, type Registro } from './fixtures/mapa-mocks';
 import { installFakeSession } from './fixtures/talkx-demo';
 
 const require = createRequire(import.meta.url);
@@ -82,7 +82,11 @@ async function semViolacao(
 }
 
 async function mockConfigVazio(page: Page): Promise<void> {
-  await page.route(/\/rest\/v1\/user_settings/, (route) => json(route, []));
+  // `user_settings` fica com a linha da sessão falsa (onboarding concluído): o
+  // `mockAppShell` já a responde, e uma resposta VAZIA aqui reabria o tour por
+  // cima da tela (o Radix marcava o `<main>` como aria-hidden e o heading nao
+  // aparecia). A tela le essa linha com todos os campos default — mesmo estado
+  // visual de antes, sem o overlay.
   await page.route(/\/rest\/v1\/rpc\/(save_user_settings|get_user_settings)/, (route) => json(route, []));
 }
 

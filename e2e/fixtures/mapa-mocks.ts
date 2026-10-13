@@ -58,6 +58,29 @@ export function querObjetoUnico(route: Route): boolean {
 }
 
 /**
+ * Linha de `user_settings` da sessão FALSA com o tour de onboarding JÁ concluído.
+ *
+ * `user_settings.onboarding_completed` é a fonte da verdade do `useOnboarding`
+ * (migration 20261013044344). Antes o estado deslogado marcava a conclusão com uma
+ * flag em `localStorage` — chave que o hook deixou de ler, ficando MORTA: com isso
+ * o `WelcomeModal` abria por cima de TODA tela deslogada e o Radix marcava o
+ * `<main>` como `aria-hidden`, derrubando as specs de a11y e de tela (o overlay
+ * engole o clique seguinte). Toda spec deslogada passa por aqui.
+ */
+export const USER_SETTINGS_SESSAO_FAKE = { onboarding_completed: true } as const;
+
+/**
+ * Responde `user_settings` com a linha da sessão falsa (tour concluído).
+ *
+ * Use como handler de `page.route(/\/rest\/v1\/user_settings/, ...)`. Quem precisa
+ * PROVAR o tour ABERTO (onboarding-dispensar.spec.ts) re-registra esta rota com a
+ * coluna em false — no Playwright a última rota registrada vence.
+ */
+export function responderUserSettingsFake(route: Route) {
+  return json(route, querObjetoUnico(route) ? USER_SETTINGS_SESSAO_FAKE : [USER_SETTINGS_SESSAO_FAKE]);
+}
+
+/**
  * Identidade + RPCs + edge do app shell. Registre este ANTES das rotas específicas da
  * sua spec (a última registrada vence, então as suas têm prioridade).
  */
@@ -66,8 +89,7 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
     json(route, querObjetoUnico(route) ? PERFIL_FAKE : [PERFIL_FAKE]));
   await page.route(/\/rest\/v1\/user_roles/, (route) =>
     json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
-  await page.route(/\/rest\/v1\/user_settings/, (route) =>
-    json(route, querObjetoUnico(route) ? null : []));
+  await page.route(/\/rest\/v1\/user_settings/, responderUserSettingsFake);
 
   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
