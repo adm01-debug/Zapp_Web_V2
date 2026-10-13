@@ -1,108 +1,53 @@
-Especialista: designer (worker (design), skill `design-system-zapp`) — retomada do cartão aberto por iris (telas) por rebase.
+Especialista: senior (area-front-hooks; área de componente Talk X — skill area-front-componentes não existe neste perfil, usei a skill disponível de front/hooks e as skills de refazer).
 
-# [refazer 1] colunas do Quadro: subtítulo curto + limite de Fazendo (080, 082, 083)
+# [refazer 2] TL-126 — Talk X TemplateEditor: variações A/B recompiladas na ponta do dia
 
-## Ponto 1 (o único item do "corrigir"): conflito com a ponta de dia/2026-10-12
-O workspace já nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12), então não houve rebase de
-branch: trouxe a FAIXA do trabalho anterior por `git cherry-pick 9c01d7ed6 113bf61f0 2f6cf568e`
-(SHA anterior = 2f6cf568e, fila `v2/colunas-quadro-subtitulo-limite-fazendo-2610111753c50b`).
-Conflitos em `BoardColumn.tsx` (5 hunks) e `TasksBoardMode.tsx` (2 hunks) — resolvidos preservando o
-que já entrou na base:
-- `BoardColumn.tsx`: mantive o lado da ponta — `pressaoArrasto` (etapa 094), `realceEspera`/
-  `ring-warning` (etapa 096), `colapsada`/`flex-none` (etapa 093) e o rodapé do Concluído (etapa 092);
-  descartei a versão antiga que reescrevia essas mesmas linhas.
-- `TasksBoardMode.tsx`: mantive o lado da ponta inteiro (`alvoTranco` + `tremerColuna` + deps
-  `[onMove, onRequestWaitingReason, onReorder, tremerColuna]` e `pressaoArrasto={pressaoArrasto}`),
-  porque a ponta já tinha toast de limite cheio (`toast.error('Fazendo está cheio (máx. 3)…')`) e o
-  tranco por coluna de destino. Resultado: `TasksBoardMode.tsx` ficou IDÊNTICO à base (0 linhas no
-  diff) — o arquivo não entra no meu diff.
-- Só a parte que a base ainda NÃO tinha foi mantida do trabalho anterior: o subtítulo vem do dado
-  canônico `KANBAN_COLUMNS.subtitle` (`col.subtitle`), acrescentado em `workItem.types.ts`
-  (etapa 081, dado do pai t_15507eb6). Removi o mapa local `SUBTITULOS_COLUNA` que a ponta havia
-  criado no cabeçalho, porque os 5 textos dele (`Capture primeiro`/`Próximo passo`/`Até 3 agora`/
-  `Com motivo`/`7 dias à vista`) CONTRADIZEM a seção 3 do plano e o destino do guarda-chuva do
-  cartão. Deixei comentário no cartão para o revisor conferir essa escolha.
+## Ponto 1 — "rebase/merge do commit aprovado f5307f0df sobre a ponta atual sem deixar conflito"
+O que mudei:
+- Rodei `git cherry-pick -n f5307f0dfd` sobre `dia/2026-10-13`. Ele ficou vermelho com conflito em `src/components/talkx/TalkXTemplateEditor.tsx` e `src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx`.
+- Resolvi os conflitos preservando o que a ponta atual já tinha: `TalkXMessagePreview`, o painel/gaveta responsivo X193, o card `Desempenho deste template`, o histórico e os testes de corrida já existentes.
+- Mantive a entrega TL-126: `TalkXTemplateVariants.tsx` novo, `talkxVariants.ts` com regras puras de peso/labels/erro em uso, integração com `fetchVariants`, `saveVariant`, `deleteVariant`, `countVariantRecipients`, testar variante e declarar vencedora.
+- Ajuste importante da resolução: a seção Variações A/B ficou dentro do `painelLateral`, não no centro fixo, porque a ponta atual exige que prévia, variações e histórico apareçam pela gaveta abaixo de 1280 px.
 
-## Ponto 2: rodar o teste do cartão e a verificação
-- Teste do cartão: `npx vitest run src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx`
-  → `Test Files 1 passed (1)` / `Tests 8 passed (8)`.
-- Regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files 29 passed (29)` /
-  `Tests 329 passed | 1 todo (330)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (o banco local não foi verificado: não
-  há nome de conjunto neste cartão). Antes disso o typecheck ficou vermelho por dependência ausente
-  (`TypeScript local nao encontrado`) — resolvido com `bun install` (651 packages), não era código.
+Prova vermelha antes:
+- `git cherry-pick -n f5307f0dfd` → `CONFLICT (content): Merge conflict in src/components/talkx/TalkXTemplateEditor.tsx` e `CONFLICT (content): Merge conflict in src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx`.
+- Antes de mover as variações para o painel/gaveta da ponta, `bunx vitest run ...TalkXTemplateEditor.painelMenor.test.tsx ...` ficou vermelho: `Unable to find an accessible element with the role "button" and name /variante/i` no teste `em 1024 px (e 390 px) a prévia, as variações e o histórico vêm pela gaveta do cabeçalho`.
 
-## O que mudou e por quê (contra a seção 3 do plano)
-- `src/components/tasks/board/BoardColumn.tsx`: o cabeçalho imprime `col.subtitle`, o subtítulo curto
-  do dado canônico, no lugar do mapa local. Linha da tabela da seção 3: "Colunas Caixa de entrada
-  (A organizar), A fazer (Próximas ações), Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando
-  (Dependências externas), Concluído (Últimos 7 dias)" → etapas 080–081 (tabela de etapas, linhas
-  339 e 340). A política longa continua só no tooltip do ⓘ (não duplica texto).
-- `src/hooks/tasks/workItem.types.ts`: `KANBAN_COLUMNS` ganha `subtitle` (5 textos da linha 138 da
-  seção 3), mantendo a `policy` longa — etapa 081.
-- `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (novo): trava as
-  etapas 080, 082 e 083 medindo o DOM renderizado (não texto solto): os 5 subtítulos presentes, o
-  primeiro `<span>` da coluna sendo o rótulo, contador "3/3", `role="progressbar"` com
-  `aria-valuenow`/`aria-valuemax` = 3 e 3 segmentos `bg-destructive` quando cheio (1 primário + 2
-  `bg-muted` com 1/3), rodapé `col-limit-footer-doing` com svg, tranco
-  `motion-safe:animate-wiggle` + `border-destructive` na coluna de destino, toast
-  `Fazendo está cheio (máx. 3). Conclua um item antes.`, `onMove` não chamado, volta ao normal aos
-  700 ms e reorder interno da coluna cheia sem tranco.
+Prova verde depois:
+- `bunx vitest run src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx src/components/talkx/__tests__/TalkXMessageEditor.test.tsx` → `Test Files 5 passed (5)` / `Tests 51 passed (51)`.
+- `git diff --cached --check` → sem saída (sem conflito/whitespace inválido).
 
-## Prova (vermelho antes, verde depois)
-- verde (teste do cartão): `npx vitest run …/BoardColumn.subtitulo-limite.test.tsx` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- vermelho por mutação (o teste mede a classe/texto REAL): trocando `{col.subtitle}` por
-  `{'Capture primeiro'}` → `Test Files 1 failed (1)` / `Tests 2 failed | 6 passed (8)`; trocando
-  `shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70'` pelo ramo neutro →
-  `Tests 2 failed | 6 passed (8)`. Em ambos, a árvore foi restaurada e o teste voltou a
-  `Tests 8 passed (8)`; `git status --short` limpo depois das duas.
-- As etapas 082 e 083 já existiam na ponta (barra, rodapé, toast e tranco entraram por outro cartão);
-  o que este cartão acrescenta na ponta é o subtítulo canônico. O teste novo passa a TRAVAR 082/083.
+## Ponto 2 — "rodar os testes afetados e manter os testes do trabalho anterior"
+O que mudei:
+- Mantive `src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx` e acrescentei o wrapper `QueryClientProvider` necessário para renderizar o editor atual, que agora lê estatísticas via React Query.
+- Mockei `useTalkX` nesse teste para não abrir WebSocket real em Vitest; o teste continua provando o componente/editor real e mocka só a fronteira externa.
+- Em `TalkXTemplateEditor.race.test.tsx`, mantive os testes de corrida do editor atual e os casos TL-126 de salvar conjunto, descartar resposta atrasada e confirmar exclusão de variante com envios.
 
-## O que NÃO fiz e por quê
-- Não mexi em `TasksBoardMode.tsx` (ficou igual à base) nem em `src/components/ui/*`.
-- Não reimplementei nada de 082/083 já presente na ponta (o cartão manda provar e não reescrever).
-- Sem migration, Edge Function ou dependência nova; nenhuma informação sai do sistema.
+Prova verde depois:
+- `bunx vitest run src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx` → `Test Files 2 passed (2)` / `Tests 30 passed (30)`.
+- Regressão ampliada do módulo Talk X afetado: `bunx vitest run src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx src/components/talkx/__tests__/TalkXMessageEditor.test.tsx` → `Test Files 5 passed (5)` / `Tests 51 passed (51)`.
+- `bunx eslint src/components/talkx/TalkXTemplateEditor.tsx src/components/talkx/TalkXTemplateVariants.tsx src/components/talkx/talkxVariants.ts src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx` → exit 0, sem saída.
 
+## Ponto 3 — verificação rápida do projeto
+Prova:
+- `zapp-verify "$PWD" --rapido` → `OK db_guard 0s`; `OK tipos 166s`; `OK lint 5s`; `OK migrations 1s`; `VERIFY: VERDE SEM BANCO (172s)`.
+- Observação: o comando literal `zapp-verify --rapido` neste ambiente interpreta `--rapido` como caminho e devolve `cópia não encontrada`; rodei a forma aceita pela ferramenta local, `zapp-verify "$PWD" --rapido`.
+- Tentativas anteriores de `bun run typecheck` e `bunx tsc -p tsconfig.app.json --noEmit --pretty false` foram encerradas pelo kernel com exit 137/SIGKILL (OOM). A prova válida de tipos ficou no `zapp-verify "$PWD" --rapido`, que concluiu `OK tipos 166s`.
 
-## Aviso do juiz sobre o Ponto 1 — NÃO procede (o diff não tem como mostrar rebase)
-O `jev-juiz` pede prova de merge/rebase dentro do diff; aqui não existe merge para mostrar: o workspace
-JÁ nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12) e a resolução foi trazer só a faixa que
-faltava. `git log --oneline dia/2026-10-12..HEAD` devolve exatamente os 3 commits do trabalho anterior
-(`e25134fcd`, `6c0171b68`, `a2aadd1e7`) e nenhum outro. A prova VISÍVEL de que o conflito foi resolvido
-preservando a ponta é o OPOSTO de um arquivo alterado: `TasksBoardMode.tsx` ficou com ZERO linhas no
-diff (o lado da ponta inteiro permaneceu) e `BoardColumn.tsx` conserva `pressaoArrasto` (094),
-`realceEspera` (096) e `colapsada` (093). Um merge commit aqui só acrescentaria ruído ao diff.
+## Arquivos do diff
+src/components/talkx/TalkXTemplateEditor.tsx
+src/components/talkx/TalkXTemplateVariants.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx
+src/components/talkx/__tests__/TalkXTemplateVariants.test.tsx
+src/components/talkx/talkxVariants.ts
 
-## Aviso do juiz sobre escopo — por que `src/hooks/tasks/workItem.types.ts` entrou
-O cartão manda trazer a faixa do trabalho anterior e este arquivo carrega a etapa 081 (dado do pai
-t_15507eb6): sem `KANBAN_COLUMNS.subtitle` não há de onde tirar os 5 subtítulos que a etapa 080 exige no
-cabeçalho. São 1 campo no tipo e 5 strings; o componente apenas lê. Sem ele eu teria de inventar um mapa
-local dentro do componente — exatamente o que removi por contrariar a seção 3 do plano.
+## Autorrevisão de escopo e risco
+- Diff medido: `5 files changed, 1100 insertions(+), 119 deletions(-)`, `diff_chars 67246` — abaixo do teto de 90 mil caracteres.
+- Sem migration, Edge Function, CI, manifesto, arquivo de guarda ou produção.
+- Sem identificador do banco de produção; varredura local dos 5 arquivos não encontrou `<<<<<<<`, `=======`, `>>>>>>>` nem o identificador proibido.
+- O caminho de erro novo não é silencioso: `saveVariantSet` mostra `toast.error(...)` quando pesos não fecham 100% ou quando a gravação falha; exclusão em uso mantém a variante na tela e o teste cobre `talkx_variant_in_use`.
+- Não usei `window.confirm`; a confirmação de exclusão com envios fica no fluxo do componente de variações e os testes cobrem que `deleteVariant` só roda depois de confirmar.
 
-## `zapp-verify full`
-`zapp-verify full .` foi tentado e estourou o teto de 420 s da ferramenta (não devolveu VERDE nem
-VERMELHO). A verificação que vale como prova, e que é a pedida no critério de pronto 3, é
-`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)`.
-
-## Linhas da tabela do plano (critério de pronto 1)
-- Etapa 080 — seção 3, linha 138: "Colunas Caixa de entrada (A organizar), A fazer (Próximas ações),
-  Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando (Dependências externas), Concluído
-  (Últimos 7 dias)"; tabela de etapas, linha 339.
-- Etapa 081 — tabela de etapas, linha 340 ("Acrescentar `subtitle` curto mantendo a `policy` longa em
-  `workItem.types.ts`") — dono declarado no plano: hugo; quem trouxe foi o ramo do cartão pai.
-- Etapa 082 — seção 3, linha 139 ("Fazendo com barra de progresso azul e rodapé 'Seu limite é de 3
-  tarefas em execução.'"); tabela de etapas, linha 341.
-- Etapa 083 — tabela de etapas, linha 342 ("Soltar em Fazendo cheio faz a coluna tremer curto
-  (em movimento reduzido só a borda muda), mostra toast explicativo e devolve o cartão").
-
-## Casos de teste do cartão (critério de pronto 2), 8 no total
-1. Etapa 080 · "cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho"
-2. Etapa 080 · "a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ"
-3. Etapa 082 · "cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite"
-4. Etapa 082 · "parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva"
-5. Etapa 082 · "coluna SEM limite duro não ganha barra nem rodapé"
-6. Etapa 083 · "treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card"
-7. Etapa 083 · "o tranco é curto: depois do tempo a coluna volta ao normal"
-8. Etapa 083 · "reorganizar por dentro da coluna cheia NÃO treme nem avisa (B8 segue valendo)"
+## Aviso do juiz barato sobre "merge dia/2026-10-09" e "zapp-verify full"
+- O aviso sobre merge/rebase não é algo que apareça no diff: a prova operacional é o comando vermelho registrado no Ponto 1 (`git cherry-pick -n f5307f0dfd` conflitou nos 2 arquivos citados) e o diff final sem marcadores. O workspace nasceu em `dia/2026-10-13`; por isso não há merge commit de `dia/2026-10-09` no diff.
+- Rodei também a verificação full depois do aviso: `zapp-verify "$PWD" full` → `OK db_guard 0s`; `OK tipos 13s`; `OK lint 134s`; `OK migrations 1s`; `FALHOU travas 0s`; `ERRO: conjunto full não está de pé`; `VERIFY: VERMELHO em travas (148s)`. Log lido em `/home/joaquim_ataides/.local/state/zapp-verify/d6bc2da1d0eb/travas.log`: contém só `ERRO: conjunto full não está de pé`. `jev-juiz falha` não conseguiu classificar (`other`, certeza 0.16). Isso é ambiente/conjunto full indisponível, não erro dos 5 arquivos do diff; a verificação rápida do cartão está verde com tipos/lint/migrations.
