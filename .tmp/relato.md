@@ -1,30 +1,20 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.my_active_sessions() (SECURITY DEFINER, search_path fixo em 'public') que devolve SO as linhas de public.user_sessions do proprio chamador (us.user_id = auth.uid()) que tem sessao Auth VIVA — INNER JOIN auth.sessions por id E user_id, com (not_after IS NULL OR not_after > now()). Assim a linha orfa (sem auth.sessions, as 13 medidas) e a sessao Auth ja expirada somem da lista, sem apagar a tabela de inventario. Cada linha leva is_current vindo do JWT do chamador: session_id == us.auth_session_id (le request.jwt.claim.session_id e, se vazio, request.jwt.claims->>'session_id'). EXECUTE so para authenticated; PUBLIC e anon revogados (anon recebe 42501).
-- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.expire_orphan_user_sessions(), idempotente, que MARCA is_active=false + ended_at para as linhas sem auth.sessions viva (nada e' apagado). Agendado no pg_cron 1x/dia ('23 3 * * *', nome expire-orphan-user-sessions) e roda uma vez no proprio migration para sanear as orfas ja existentes. ACL: sem EXECUTE para authenticated/anon.
-- supabase/tests/my_active_sessions.sql (novo): prova por papel real (set_config('role',...)) — T1 so as vivas do chamador (orfa e expirada nao aparecem, B nao vaza), T2 is_current pelo claim session_id (A e B), T3 anon barrado (42501), T4 sem identidade (auth.uid() nulo) devolve 0 linhas, T5 limpeza idempotente (1a vez marca, 2a vez = 0; sessao Auth apagada sai da lista), T6 ACL das duas funcoes. Tudo numa transacao que termina em ROLLBACK.
-- src/integrations/supabase/types.ts: entram os tipos da RPC my_active_sessions (ciência do postgrest/child t_b4c0ae4e).
-- scripts/db-audit/pg-cron-jobs-baseline.json (INDISPENSAVEL, apesar de o cartao citar so supabase/tests): o item 2 do cartao manda agendar um job novo no pg_cron, e o baseline versionado de jobs (scripts/db-audit/pg-cron-jobs-baseline.json, lido por pg-cron-jobs-baseline.test.mjs) REPROVA qualquer "job novo" que nao esteja nele — sem esta linha o merge deixaria a suite db_guard vermelha antes mesmo de o job rodar. E' arquivo da minha area (scripts/db-audit/**), foi so' uma entrada de dados (jobname+schedules, sem codigo) e nao afrouxa guarda nenhuma: so' declara o job que a migration cria. Nao era possivel cumprir o item 2 sem isto.
+- src/hooks/ui/useDeviceDetection.ts: `fetchSessions` deixou de ler `user_sessions` e passou a chamar `supabase.rpc('my_active_sessions')` (a RPC do cartão pai, que só devolve sessões vivas do chamador e marca a atual pelo claim `session_id` do JWT); a interface `UserSession` passou a ter `is_current` (e a perder as colunas mortas `is_active`/`expires_at`/`ended_at`, que a RPC não devolve).
+- src/components/security/DevicesPanel.tsx: o selo "Sessão atual" (`isCurrentSession`) vem de `session.is_current` — antes era `session.device_id === currentDeviceId`, e dois logins no MESMO aparelho (mesmo `device_id`) apareciam os dois como atuais e nenhum podia ser encerrado.
+- src/components/security/SecurityOverview.tsx: o item "Sessões Ativas" passou a medir `sessions.filter(s => !s.is_current).length` no lugar de `sessions.length` — a sessão que o dono está usando não é acesso estranho à conta. A descrição diz quantas são além desta (`N sessão(ões) ativa(s), M além desta`). Estado vazio conferido: `0 sessão(ões) ativa(s), 0 além desta`.
+- Testes: hook (RPC chamada, `user_sessions` não lida no carregamento, duas sessões no mesmo aparelho), componente DevicesPanel real com o hook dublado (1 selo "Sessão atual" e 1 botão "Encerrar"; e nenhum selo quando ninguém é atual), SecurityOverview real (1 além desta → 25/25; 4 além desta → 15/25).
+
+Nenhum mock entrega o resultado pronto: o hook é dublado, mas quem decide o selo e a contagem são os componentes verdadeiros.
 
 ## Prova
-- vermelho antes (funcionalidade ausente): `zapp-db-local psql <workspace> v2-2610130558f3a3 -v ON_ERROR_STOP=1 < supabase/tests/my_active_sessions.sql` → `ERROR: function public.my_active_sessions() does not exist` / EXIT_RED=3
-- verde depois: mesmo comando → `NOTICE: my_active_sessions: suite OK (T1 so as vivas do chamador, T2 is_current pelo JWT, T3 anon barrado, T4 sem identidade 0 linhas, T5 limpeza idempotente, T6 ACL) — 6 grupo(s)` / EXIT_GREEN=0
-- guarda de SECURITY DEFINER: `zapp-db-local psql <workspace> v2-2610130558f3a3 < scripts/db-audit/check-secdef-public-execute.sql` → `NOTICE: check-secdef-public-execute: OK (285 funcoes SECURITY DEFINER em public, nenhuma com PUBLIC/anon)`
-- baseline do cron: `node --test scripts/db-audit/pg-cron-jobs-baseline.test.mjs` → `pass 12 / fail 0`
-- rollback de verdade (3 comandos do cabecalho, em transacao que volta atras): `BEGIN; select cron.unschedule(jobid) from cron.job where jobname='expire-orphan-user-sessions'; drop function if exists public.expire_orphan_user_sessions(); drop function if exists public.my_active_sessions(); ROLLBACK;` → `unschedule t / DROP FUNCTION / DROP FUNCTION / ROLLBACK`; estado depois = 2 funcoes e 1 job (nada foi perdido).
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (105s)` e `zapp-db-local travas <workspace> v2-2610130558f3a3` → `TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)`.
+- vermelho antes (com DevicesPanel e fetchSessions no código antigo, `npx vitest run src/hooks/__tests__/useDeviceDetection.test.tsx src/components/security/__tests__/DevicesPanel.sessao-atual.test.tsx src/components/security/__tests__/SecurityOverview.sessao-atual.test.tsx`):
+  `AssertionError: expected [ <div>, <div> ] to have a length of 1 but got 2` (dois selos "Sessão atual" no mesmo aparelho)
+  `AssertionError: expected "vi.fn()" to be called with arguments: [ 'my_active_sessions' ]`
+- verde depois (`npx vitest run src/components/security src/hooks/__tests__/useDeviceDetection.test.tsx`): `Test Files 22 passed (22); Tests 111 passed (111)`
+- types: `npx tsc --noEmit -p tsconfig.app.json` → sem erro em DevicesPanel, SecurityOverview ou useDeviceDetection
 
-## Efeitos colaterais conferidos
-- O UPDATE da limpeza mexe so em is_active/ended_at; o unico gatilho de user_sessions (trg_user_sessions_auth_session_guard) dispara apenas em INSERT/UPDATE OF auth_session_id, entao nao ha reescrita de data nem efeito em coluna alheia. user_sessions nao tem updated_at.
-- Nada e' apagado (so' is_active=false); sem TRUNCATE/DROP/DELETE em massa; nenhum GRANT em objeto existente; nenhuma funcao overload criada. my_active_sessions devolve somente a linha do proprio auth.uid() — nao ha oraculo de enumeracao (resposta igual para usuario existente ou nao).
-- Sem identificador/URL do banco real no diff nem no relato.
-
-## O que NAO fiz e por que
-- Nao troquei o front (useDeviceDetection/DevicesPanel/SecurityOverview) para chamar a RPC: e' o cartao filho t_b4c0ae4e (worker de telas/hooks). Esta entrega so o contrato do banco; o hook precisa passar a chamar my_active_sessions() e usar is_current no lugar de device_id === currentDeviceId.
-
-NÃO CONCLUÍ: nada — cartao concluido.
-
-## Sobre o aviso do fechar ("codigo alterado sem teste neste commit")
-- Falso positivo conhecido de cartao de banco: o fechar olhou src/integrations/supabase/types.ts (src/**, unico arquivo "de aplicacao" no diff) e nao contou a suite de banco nova em supabase/tests/my_active_sessions.sql. O teste do defeito ESTA no commit 7a03b74be2 (supabase/tests/my_active_sessions.sql) e prova vermelho->verde por papel real; types.ts e apenas o espelho gerado da RPC (ciência do postgrest). Nao ha mudanca de comportamento em src/**. Repetindo o MESMO comando de fechar.
-
+## O que NÃO fiz e por quê
+- `endSession` e `removeDevice` continuam lendo `user_sessions` via `fromTable` para achar `auth_session_id`: o cartão pede a RPC na LEITURA da lista; mexer nas mutações é outra trilha.
+- Não subi servidor nem rodei e2e autenticado (R1/E2E): produção fora de alcance.
