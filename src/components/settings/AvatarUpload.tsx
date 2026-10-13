@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -10,8 +11,20 @@ import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AvatarUpload');
 
+/**
+ * Extensão de `avatars/<user_id>/avatar.<ext>` a partir da URL pública.
+ * Descarta o `?t=` que o upload usa para furar o cache.
+ */
+function extensaoDaUrlDoAvatar(avatarUrl: string | null | undefined): string | null {
+  if (!avatarUrl) return null;
+  const nome = (avatarUrl.split('?')[0].split('/').pop() ?? '').toLowerCase();
+  const ponto = nome.lastIndexOf('.');
+  return ponto === -1 ? null : nome.slice(ponto + 1) || null;
+}
+
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
   const feedback = useActionFeedback();
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
@@ -27,11 +40,30 @@ export function AvatarUpload() {
     }
 
     setUploading(true);
-    const ext = file.name.split('.').pop();
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
     const filePath = `${user.id}/avatar.${ext}`;
 
     await feedback.withFeedback(
       async () => {
+        // A foto vive em `avatars/<user_id>/avatar.<ext>`. Trocar a extensão
+        // (jpg -> webp) grava um arquivo NOVO e deixa o anterior na pasta; como o
+        // bucket é público, o órfão continua servível pela URL antiga. Listamos
+        // antes de subir para apagar só o formato que ficou para trás.
+        const { data: arquivosExistentes, error: erroDeListagem } = await supabase.storage
+          .from('avatars')
+          .list(user.id, { limit: 100 });
+        if (erroDeListagem) {
+          // Não dá para "sem resultados": sem a lista, cai na extensão que a URL
+          // do perfil já aponta — é o único candidato a órfão que conhecemos.
+          log.warn('Falha ao listar avatares antigos:', erroDeListagem);
+        }
+        const extAnterior = extensaoDaUrlDoAvatar(profile?.avatar_url);
+        const orfaos = erroDeListagem
+          ? (extAnterior && extAnterior !== ext ? [`${user.id}/avatar.${extAnterior}`] : [])
+          : (arquivosExistentes ?? [])
+              .filter((arquivo) => arquivo.name.startsWith('avatar.') && arquivo.name !== `avatar.${ext}`)
+              .map((arquivo) => `${user.id}/${arquivo.name}`);
+
         // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -52,8 +84,20 @@ export function AvatarUpload() {
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
+        // Limpeza do formato antigo: falha aqui não derruba a troca já gravada.
+        if (orfaos.length > 0) {
+          const { error: removeError } = await supabase.storage.from('avatars').remove(orfaos);
+          if (removeError) log.warn('Falha ao apagar o avatar antigo:', removeError);
+        }
+
         setAvatarUrl(urlWithCache);
         await refreshProfile();
+
+        // O avatar do perfil também é lido pelo cache do react-query (lista de
+        // membros e perfil do usuário). Sem invalidar, o app inteiro continua
+        // mostrando a foto antiga até o staleTime vencer.
+        queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       },
       {
         loadingMessage: 'Enviando foto...',

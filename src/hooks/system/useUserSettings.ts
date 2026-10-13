@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
@@ -7,6 +7,11 @@ import { log } from '@/lib/logger';
 // Default ElevenLabs voice: Custom system voice
 const DEFAULT_TTS_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 const DEFAULT_TTS_SPEED = 1.0;
+
+// Uma leitura que falha não pode virar uma pilha de avisos idênticos: o hook é
+// montado em vários pontos (ChatPanel, SettingsView, Team Chat) e cada instância
+// tentaria avisar por conta própria.
+const INTERVALO_MINIMO_DE_AVISO_MS = 5000;
 
 export interface UserSettings {
   id?: string;
@@ -80,6 +85,21 @@ export function useUserSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // Leitura falhou: os valores na tela são os defaults, não o que está gravado.
+  const [isError, setIsError] = useState(false);
+  const ultimoAvisoDeErroRef = useRef(0);
+
+  // Aviso de leitura falha, com o mesmo respiro do hook canônico de notificações:
+  // uma rajada de falhas é UM problema, não um toast por consulta.
+  const avisarFalhaDeLeitura = useCallback(() => {
+    if (Date.now() - ultimoAvisoDeErroRef.current < INTERVALO_MINIMO_DE_AVISO_MS) return;
+    ultimoAvisoDeErroRef.current = Date.now();
+    toast({
+      title: 'Não foi possível carregar as configurações',
+      description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
+      variant: 'destructive',
+    });
+  }, []);
 
   // Fetch settings from DB
   useEffect(() => {
@@ -100,8 +120,14 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
+          setIsError(true);
+          // Sem aviso, a tela mostra os defaults com cara de dado real e o
+          // usuário pode salvar por cima do que tem gravado.
+          avisarFalhaDeLeitura();
           return;
         }
+
+        setIsError(false);
 
         if (data) {
           setSettings({
@@ -132,13 +158,15 @@ export function useUserSettings() {
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
+        setIsError(true);
+        avisarFalhaDeLeitura();
       } finally {
         setIsLoading(false);
       }
     };
 
     void fetchSettings();
-  }, [user?.id]);
+  }, [user?.id, avisarFalhaDeLeitura]);
 
   // Update settings locally
   const updateSettings = useCallback((updates: Partial<UserSettings>) => {
@@ -228,6 +256,7 @@ export function useUserSettings() {
     settings,
     isLoading,
     isSaving,
+    isError,
     updateSettings,
     saveSettings,
     resetSettings,
