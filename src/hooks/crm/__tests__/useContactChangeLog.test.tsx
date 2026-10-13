@@ -87,7 +87,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: (table: string) => h.builder(table) },
 }));
 
-import { useContactChangeLog, contactChangeLogKey } from '../useContactChangeLog';
+import { useContactChangeLog } from '../useContactChangeLog';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -234,8 +234,13 @@ describe('useContactChangeLog — ator', () => {
     expect(result.current.entries).toEqual([]);
   });
 
-  it('a chave da query é estável e por contato', () => {
-    expect(contactChangeLogKey('c1')).toEqual(contactChangeLogKey('c1'));
-    expect(contactChangeLogKey('c1')).not.toEqual(contactChangeLogKey('c2'));
+  it('campo fora da lista branca cai no próprio nome, sem inventar rótulo', async () => {
+    h.state.total = 1;
+    h.state.rows = [{ ...h.makeRow(0, 1), campos: ['campo_novo'] }];
+
+    const { result } = renderHook(() => useContactChangeLog('c1'), { wrapper });
+    await waitFor(() => expect(result.current.entries.length).toBe(1));
+
+    expect(result.current.entries[0].fieldLabels).toEqual(['campo_novo']);
   });
 });

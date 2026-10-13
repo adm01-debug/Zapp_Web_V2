@@ -14,3 +14,8 @@ Especialista: Hugo (area-front-hooks)
 ## O que NÃO fiz e por quê
 - Não mexi em `supabase/**` nem reapliquei a migration: é do cartão de banco (pai) e já veio pelo cherry-pick.
 - Não criei tela/componente de histórico: é de outro especialista (telas). O hook já entrega `fieldLabels`, `operationLabel` e `performedAt` prontos.
+
+## Conferências do portão (2º fechar)
+- Migration muda RLS/permissões: é do cartão PAI t_ba716533 (banco), trazida por `git cherry-pick -x 6b029fb72` (`git show --stat 6b029fb72`: migration + `types.ts` + teste SQL). O `revoke all`/`grant select`/policies são da trilha append-only — escrita só pelo gatilho SECURITY DEFINER, leitura sob `is_contact_visible_to_user`. Não tirei porque sem a tabela o hook não existe; não é meu diff (não é de hooks) nem afrouxa nada.
+- "SECURITY DEFINER sem SET search_path": NÃO PROCEDE. A função `public.log_contact_change()` tem `set search_path = public, pg_temp` na linha 129 da migration. Nada a corrigir.
+- "teste novo não chama o código mudado": troquei o teste da chave da query (que só comparava literais) por um que passa pelo hook real — campo fora da lista branca cai no próprio nome (`entries[0].fieldLabels === ['campo_novo']`). Os demais já renderizam o hook com React Query. `Test Files 1 passed (1); Tests 10 passed (10)`.
