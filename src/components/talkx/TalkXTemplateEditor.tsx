@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,28 @@ import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
 } from './talkxShared';
+
+/**
+ * X193 — o corte de largura do painel do editor é o mesmo `xl` do Tailwind
+ * (1280 px), lido pelo `matchMedia` (sem `setState` em efeito). Abaixo dele o
+ * rail não cabe ao lado do editor e o painel vem pela gaveta.
+ */
+const CONSULTA_PAINEL_LARGO = '(min-width: 1280px)';
+
+function assinarPainelLargo(aoMudar: () => void) {
+  if (typeof window.matchMedia !== 'function') return () => {};
+  const media = window.matchMedia(CONSULTA_PAINEL_LARGO);
+  media.addEventListener('change', aoMudar);
+  return () => media.removeEventListener('change', aoMudar);
+}
+
+function painelLargo() {
+  return typeof window.matchMedia !== 'function' || window.matchMedia(CONSULTA_PAINEL_LARGO).matches;
+}
+
+function usePainelLargo() {
+  return useSyncExternalStore(assinarPainelLargo, painelLargo, () => true);
+}
 
 interface Props {
   templates: TalkXTemplate[];
@@ -90,6 +113,10 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
   const versionsTemplateIdRef = useRef<string | null>(null);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
+  // X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor e
+  // passa a ser gaveta, aberta pelo botão do cabeçalho (mesmo corte do CSS).
+  const larguraLarga = usePainelLargo();
+  const [painelAberto, setPainelAberto] = useState(false);
 
   // Fonte única de troca: invalida callbacks antigos no mesmo tick, antes do render.
   const activateTemplate = (templateId: string) => {
@@ -352,6 +379,69 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     return matchCat && matchQ;
   });
 
+  // X193 — o painel direito é o MESMO conteúdo nos dois caminhos: rail a partir
+  // de xl (1280) e conteúdo da gaveta abaixo dele. Uma fonte só, sem duplicar.
+  const painelLateral = (
+    <>
+      <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
+        {/* X088: a moldura do editor é o uso "frame" do MESMO renderizador do
+            cartão (`TalkXMessagePreview`) — formatação, mídia e tela cheia
+            iguais nos dois lugares. */}
+        <TalkXMessagePreview
+          variant="frame"
+          text={personalizePreview(eContent)}
+          mediaUrl={eHasMedia ? eMediaUrl : null}
+          mediaType={eHasMedia ? eMediaType : null}
+        />
+      </RailCard>
+      <div className="rounded-2xl bg-card border border-border/70 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <History className="w-3.5 h-3.5 text-foreground-secondary" />
+            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
+          </div>
+          <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+        </div>
+        {showVariants && (
+          <div className="space-y-2 mt-1 mb-3">
+            {variants.map((v) => (
+              <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                  <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                </div>
+                <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+              </div>
+            ))}
+            {variants.length < 3 && (
+              <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+            )}
+            {variants.length > 0 && (
+              <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
+          <p className="text-xs font-semibold text-foreground">Histórico</p>
+          <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
+        </div>
+        {showVersions && (
+          <div className="space-y-1">
+            {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
+              <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
+                <div className="min-w-0">
+                  <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
+                  <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="flex gap-4 min-w-0" style={{ minHeight: 'calc(100vh - 160px)' }}>
       {/* === COLUNA ESQUERDA: biblioteca === */}
@@ -429,7 +519,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
         </div>
         {/* Header */}
-        <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
+        <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => {
@@ -461,6 +551,17 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
             </button>
           )}
           <div className="flex items-center gap-2 shrink-0">
+            {/* X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do
+                editor e vem por aqui; a partir de xl o rail segue valendo. */}
+            {!larguraLarga && (
+              <GhostButton
+                icon={History}
+                onClick={() => setPainelAberto(true)}
+                title="Abrir a pré-visualização, as variações e o histórico do template"
+              >
+                Prévia e histórico
+              </GhostButton>
+            )}
             {editing && (
               <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
             )}
@@ -656,113 +757,21 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
         </section>
       </div>
 
-      {/* Variantes A/B — responsivo (xl:hidden, visível abaixo de xl) */}
-      {activeTemplateId && (
-        <div className="xl:hidden mt-4 rounded-2xl bg-card border border-border/70 p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
-            <button type="button"
-              onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }}
-              className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
-            >{showVariants ? 'Ocultar' : variants.length > 0 ? variants.length + ' variante(s)' : 'Adicionar variante'}</button>
-          </div>
-          {showVariants && (
-            <div className="space-y-2 mt-1">
-              {variants.map((v) => (
-                <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xs font-bold text-primary flex items-center gap-1">
-                      Variante {v.label} {'·'} <input type="number" min={1} max={100} value={v.weight}
-                        onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))}
-                        onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })}
-                        className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%
-                    </span>
-                    <button type="button"
-                      onClick={() => void removeVariant(v)}
-                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">x</button>
-                  </div>
-                  <textarea value={v.content}
-                    onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))}
-                    onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }}
-                    className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground"
-                    placeholder="Conteúdo da variante..." />
-                </div>
-              ))}
-              {variants.length < 3 && (
-                <button type="button" disabled={savingVariant || !activeTemplateId}
-                  onClick={() => void addVariant()}
-                  className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">
-                  + Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}
-                </button>
-              )}
-              {variants.length > 0 && (
-                <p className={"text-3xs " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground')}>
-                  Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+      {/* X193 — abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor:
+          vira gaveta aberta pelo botão do cabeçalho. A partir de xl vale o rail
+          (o `hidden xl:flex` abaixo), com largura menor em 1280 e cheia no 2xl. */}
+      {!larguraLarga && (
+        <Sheet open={painelAberto} onOpenChange={setPainelAberto}>
+          <SheetContent side="right" aria-describedby={undefined} className="w-[min(360px,92vw)] overflow-y-auto p-4">
+            <SheetTitle className="sr-only">Pré-visualização e histórico do template</SheetTitle>
+            <div className="mt-4 flex flex-col gap-3">{painelLateral}</div>
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* === COLUNA DIREITA: preview === */}
-      <aside className="hidden xl:flex flex-col w-[300px] flex-shrink-0 gap-3">
-        <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
-          {/* X088: a moldura do editor é o uso "frame" do MESMO renderizador do
-              cartão (`TalkXMessagePreview`) — formatação, mídia e tela cheia
-              iguais nos dois lugares. */}
-          <TalkXMessagePreview
-            variant="frame"
-            text={personalizePreview(eContent)}
-            mediaUrl={eHasMedia ? eMediaUrl : null}
-            mediaType={eHasMedia ? eMediaType : null}
-          />
-        </RailCard>
-        <div className="rounded-2xl bg-card border border-border/70 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <History className="w-3.5 h-3.5 text-foreground-secondary" />
-              <p className="text-xs font-semibold text-foreground">Variações A/B</p>
-            </div>
-            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
-          </div>
-          {showVariants && (
-            <div className="space-y-2 mt-1 mb-3">
-              {variants.map((v) => (
-                <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
-                    <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
-                  </div>
-                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
-                </div>
-              ))}
-              {variants.length < 3 && (
-                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
-              )}
-              {variants.length > 0 && (
-                <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
-              )}
-            </div>
-          )}
-          <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
-            <p className="text-xs font-semibold text-foreground">Histórico</p>
-            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
-          </div>
-          {showVersions && (
-            <div className="space-y-1">
-              {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
-                <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
-                  <div className="min-w-0">
-                    <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
-                    <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                  </div>
-                  <button type="button" onClick={() => { void restoreVersion(v); }} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <aside className="hidden xl:flex flex-col w-[260px] 2xl:w-[300px] flex-shrink-0 gap-3">
+        {painelLateral}
       </aside>
 
       {/* E47: Test Dialog */}
