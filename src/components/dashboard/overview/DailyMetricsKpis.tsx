@@ -89,7 +89,7 @@ function buildCards(rows: DailyMetricRow[]): MetricCard[] {
       };
     }
 
-    const total = series.reduce((acc, v) => acc + (v ?? 0), 0);
+    const total = series.reduce<number>((acc, v) => acc + (v ?? 0), 0);
     const pct = lastDayVariationPct(rows, def.pick);
     return { def, value: total, bars, delta: pct == null ? null : { pct, label: 'vs. dia anterior' } };
   });
