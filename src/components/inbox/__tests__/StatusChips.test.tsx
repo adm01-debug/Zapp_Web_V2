@@ -98,22 +98,33 @@ describe('StatusChips', () => {
   });
 
   it('aplica o mesmo estilo ativo dos demais chips em Arquivadas', () => {
-    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary/50', 'text-foreground'] as const;
-    render(<StatusChips conversations={conversations} chipTab="archived" onChipTabChange={() => {}} />);
+    // O design do dono (11/10) trocou o ativo para `border-primary` + anel
+    // (`ring-2 ring-primary/40`) e o texto inativo para `text-foreground`.
+    // A prova mede as classes REAIS do componente; além dos tokens, compara
+    // Arquivadas ativa com outro chip ativo para travar a PARIDADE (não um
+    // valor fixo de token que envelhece).
+    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary', 'ring-2', 'ring-primary/40', 'text-foreground'] as const;
+    const { unmount } = render(<StatusChips conversations={conversations} chipTab="archived" onChipTabChange={() => {}} />);
 
     const archivedChip = screen.getByTestId('status-chip-archived');
     for (const classToken of activeClassTokens) {
       expect(archivedChip).toHaveClass(classToken);
     }
+    const archivedActiveClasses = [...archivedChip.classList].sort().join(' ');
+    unmount();
 
-    const inactiveChipIds = ['all', 'unread', 'attending', 'waiting', 'resolved'] as const;
+    render(<StatusChips conversations={conversations} chipTab="attending" onChipTabChange={() => {}} />);
+    // Paridade: um chip ativo em outra aba sai com exatamente as mesmas classes.
+    expect([...screen.getByTestId('status-chip-attending').classList].sort().join(' ')).toBe(archivedActiveClasses);
+
+    const inactiveChipIds = ['all', 'unread', 'waiting', 'resolved'] as const;
     for (const chipId of inactiveChipIds) {
       const inactiveChip = screen.getByTestId(`status-chip-${chipId}`);
       expect(inactiveChip).not.toHaveClass('status-chip-active');
       expect(inactiveChip).not.toHaveClass('bg-accent');
       expect(inactiveChip).toHaveClass('bg-muted/40');
       expect(inactiveChip).toHaveClass('border-border');
-      expect(inactiveChip).toHaveClass('text-muted-foreground');
+      expect(inactiveChip).toHaveClass('text-foreground');
     }
   });
 
