@@ -2,6 +2,11 @@ Especialista: worker (testes) (area-testes-do-produto)
 
 # Fixture do talkx-monitor-panel.test.sh (bloco motor N-117)
 
+## Numeros do diff (conferidos)
+- `git diff --stat 63e3556d76 HEAD` = **2 arquivos, 1 deles de teste**:
+  `A scripts/db-audit/talkx-monitor-panel.test.sh` (403 linhas, o unico arquivo que o cartao
+  permite tocar) e `M .tmp/relato.md` (este relato). Nenhum outro arquivo entrou na branch.
+
 ## O que mudou e por quê
 - `scripts/db-audit/talkx-monitor-panel.test.sh` (unico arquivo do escopo): o schema minimo do
   teste criava `talkx_recipients` sem o trigger `update_talkx_recipients_updated_at`; a migration
