@@ -24,6 +24,37 @@ export const CRON_SECRET_HEADER = "x-cron-secret";
 /** Env que habilita o caminho do cron; vazio/ausente = cron desligado (fail-closed). */
 export const CRON_SECRET_ENV = "CRON_SECRET";
 
+/** Teto de contatos processados por execução (lote do cron a cada 10 min). */
+export const AUTO_CLOSE_BATCH_LIMIT = 200;
+/** Prefixo do seed do `client_message_id` idempotente do encerramento automático. */
+export const AUTO_CLOSE_CLIENT_MESSAGE_PREFIX = "auto-close:";
+/** Status em que a conversa NÃO é mais encerrada por inatividade. */
+export const TERMINAL_CONVERSATION_STATUSES: readonly string[] = ["resolved", "archived"];
+
+/** Código PostgREST/Postgres de violação de unicidade (recurso já existe). */
+function isUniqueViolation(err: unknown): boolean {
+  return (err as { code?: unknown } | null)?.code === "23505";
+}
+
+/** Formata os primeiros 16 bytes de um digest como UUID canônico. */
+function digestToUuid(bytes: Uint8Array): string {
+  const hex = Array.from(bytes.subarray(0, 16), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
+/**
+ * `client_message_id` determinístico do encerramento automático.
+ *
+ * A coluna `messages.client_message_id` é `uuid` (migration 20260909220000), então o
+ * seed legível `auto-close:<contato>:<fechamento>` é resumido em SHA-256: o MESMO seed
+ * produz sempre o MESMO UUID e o índice único (contact_id, client_message_id) garante
+ * que a reexecução do cron não duplique a mensagem de encerramento.
+ */
+export async function deriveAutoCloseClientMessageId(seed: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+  return digestToUuid(new Uint8Array(digest));
+}
+
 /** Seam de teste: tudo que o handler precisa do mundo externo pode ser injetado. */
 export interface AutoCloseInjected {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,40 +169,132 @@ export async function handleAutoCloseConversations(
     const cutoffDate = new Date(now.getTime());
     cutoffDate.setHours(cutoffDate.getHours() - config.inactivity_hours);
 
-    const { data: staleContacts, error: staleError } = await supabase
+    // ── 2. Seleção do lote: conversa ABERTA e não excluída, ordenada e limitada ──
+    // A inatividade é medida pela ÚLTIMA MENSAGEM (abaixo), NÃO por contacts.updated_at;
+    // aqui só se monta o lote de candidatos. O `.limit` corta no banco e o `.slice`
+    // repete o teto como defesa em profundidade.
+    const { data: candidates, error: candidatesError } = await supabase
       .from("contacts")
-      .select("id, name, phone, assigned_to")
-      .lt("updated_at", cutoffDate.toISOString())
-      .not("assigned_to", "is", null);
+      .select("id, name, phone, assigned_to, whatsapp_connection_id, conversation_status, deleted_at")
+      .not("conversation_status", "in", '("resolved","archived")')
+      .is("deleted_at", null)
+      .not("assigned_to", "is", null)
+      .order("updated_at", { ascending: true })
+      .limit(AUTO_CLOSE_BATCH_LIMIT);
 
-    if (staleError) {
-      log.error("Error finding stale contacts", { error: staleError.message });
+    if (candidatesError) {
+      log.error("Error finding stale contacts", { error: errorReason(candidatesError) });
       return errorResponse("Failed to query stale contacts", 500, req);
     }
 
-    if (!staleContacts || staleContacts.length === 0) {
-      return jsonResponse({ message: "No stale conversations found", closed: 0 }, 200, req);
+    interface CandidateContact {
+      id: string;
+      name?: string;
+      phone?: string;
+      assigned_to?: string | null;
+      whatsapp_connection_id?: string | null;
+      conversation_status?: string | null;
+      deleted_at?: string | null;
+    }
+
+    // Guarda de defesa em profundidade: mesmo que o filtro do banco falhe (ou o teto
+    // do PostgREST seja contornado), só entra conversa aberta, viva e atribuída.
+    const staleContacts = ((candidates ?? []) as CandidateContact[])
+      .filter((contact) =>
+        !!contact?.assigned_to &&
+        !contact.deleted_at &&
+        !TERMINAL_CONVERSATION_STATUSES.includes(contact.conversation_status ?? "")
+      )
+      .slice(0, AUTO_CLOSE_BATCH_LIMIT);
+
+    if (staleContacts.length === 0) {
+      return jsonResponse(
+        { message: "No stale conversations found", closed: 0, failed: 0, skipped: 0 },
+        200,
+        req,
+      );
     }
 
     let closedCount = 0;
     let failedCount = 0;
+    let skippedCount = 0;
     const failures: string[] = [];
 
     for (const contact of staleContacts) {
-      // R2-API-028: cada escrita é conferida. `closed` só sobe quando as três
-      // concluem — antes o laço somava encerramento ignorando o `error`.
       const stepErrors: string[] = [];
 
-      if (config.close_message) {
-        const { error: messageError } = await supabase.from("messages").insert({
-          contact_id: contact.id,
-          content: config.close_message,
-          sender: "agent",
-          message_type: "text",
-        });
-        if (messageError) stepErrors.push(`message: ${errorReason(messageError)}`);
+      // Inatividade = ÚLTIMA MENSAGEM da conversa (não contacts.updated_at).
+      const { data: lastRows, error: lastError } = await supabase
+        .from("messages")
+        .select("sender, created_at")
+        .eq("contact_id", contact.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (lastError) {
+        failedCount++;
+        failures.push(`${contact.id}: last_message: ${errorReason(lastError)}`);
+        log.error("Failed to read last message", { contactId: contact.id, error: errorReason(lastError) });
+        continue;
       }
 
+      const lastMessage = ((lastRows ?? []) as Array<{ sender?: string; created_at?: string }>)[0];
+      // Sem histórico não há como PROVAR inatividade → não fecha (fail-closed).
+      if (!lastMessage?.created_at) {
+        skippedCount++;
+        continue;
+      }
+      // Atividade recente → a conversa não está parada de verdade.
+      if (new Date(lastMessage.created_at).getTime() >= cutoffDate.getTime()) {
+        skippedCount++;
+        continue;
+      }
+      // Última mensagem é do cliente: ele aguarda resposta, não é inatividade.
+      if (lastMessage.sender === "contact") {
+        skippedCount++;
+        continue;
+      }
+
+      // ── 3. Enfileira a mensagem de encerramento no outbox oficial ──
+      // Mesmo formato do retorno de `enqueue_outbound_message` (migration
+      // 20260909220000): status 'sending' + client_message_id + agent_id +
+      // whatsapp_connection_id. O RPC exige auth.role()='authenticated', que o service
+      // role do cron não tem; o guard de campos internos libera service_role, então o
+      // enfileiramento equivalente é esta linha — a mensagem NÃO nasce como enviada.
+      if (config.close_message) {
+        const clientMessageId = await deriveAutoCloseClientMessageId(
+          `${AUTO_CLOSE_CLIENT_MESSAGE_PREFIX}${contact.id}:${lastMessage.created_at}`,
+        );
+        const { error: enqueueError } = await supabase.from("messages").insert({
+          contact_id: contact.id,
+          client_message_id: clientMessageId,
+          whatsapp_connection_id: contact.whatsapp_connection_id ?? null,
+          agent_id: contact.assigned_to,
+          sender: "agent",
+          content: config.close_message,
+          message_type: "text",
+          is_read: true,
+          status: "sending",
+        });
+        if (enqueueError) {
+          // Reexecução do cron: a mensagem já está no outbox (índice único
+          // contact_id + client_message_id). Nada é reescrito — não duplica.
+          if (isUniqueViolation(enqueueError)) {
+            skippedCount++;
+            continue;
+          }
+          stepErrors.push(`enqueue: ${errorReason(enqueueError)}`);
+        }
+      }
+
+      if (stepErrors.length > 0) {
+        failedCount++;
+        failures.push(`${contact.id}: ${stepErrors.join("; ")}`);
+        log.error("Failed to auto-close conversation", { contactId: contact.id, errors: stepErrors });
+        continue;
+      }
+
+      // ── 4. Fechamento e desatribuição SÓ depois de a mensagem ser enfileirada ──
       const { error: closureError } = await supabase.from("conversation_closures").insert({
         contact_id: contact.id,
         close_reason: "inactivity",
@@ -196,13 +319,14 @@ export async function handleAutoCloseConversations(
       closedCount++;
     }
 
-    log.info(`Auto-closed ${closedCount} conversations`, { failed: failedCount });
-    log.done(200, { closed: closedCount, failed: failedCount });
+    log.info(`Auto-closed ${closedCount} conversations`, { failed: failedCount, skipped: skippedCount });
+    log.done(200, { closed: closedCount, failed: failedCount, skipped: skippedCount });
 
     return jsonResponse({
       message: `Auto-closed ${closedCount} conversations`,
       closed: closedCount,
       failed: failedCount,
+      skipped: skippedCount,
       errors: failures.slice(0, 10),
     }, 200, req);
   } catch (error) {
