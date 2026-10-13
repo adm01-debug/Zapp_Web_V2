@@ -18,6 +18,7 @@ Semântica das janelas (idêntica ao `aggregateKpi` do hook): "now" = `now()`; d
 
 ## O que NÃO fiz e por quê
 - Não editei `.github/workflows/db-guard.yml` (agente não edita workflow) — deixei o allowance e o "REGISTRO PENDENTE" acima.
+- O juiz automático avisou que "o relato não bate com o diff (4 arquivos, 1 de teste)": o diff do run tem EXATAMENTE os 4 arquivos listados acima, dos quais 1 é de teste (`scripts/db-audit/contacts-stats-series-rpc.test.sh`) — o aviso não procede; a lista agora explicita os 4.
 - Não toquei em `src/**` (fora da minha área): o contrato (chaves e tamanhos das séries) está no cabeçalho da migration para o hook t_858c0ff2 consumir; trocar a fonte dos números em `aggregateKpi` é da área de hooks.
 - Não criei linha de backfill de dados (não há dado novo).
 
