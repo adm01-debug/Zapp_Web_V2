@@ -33,6 +33,17 @@ Especialista: iris
 - "captura" (print do toast): NÃO FEITO — o projeto não tem rota de harness para overlay e o print exigiria subir o app com conquista real gravada no banco local (violaria a regra de E2E local autenticado, que proíbe sessão/real de produção e não tem como forjar o evento do banco no navegador). A prova de tela é o teste, que renderiza a tela real e conferiu o DOM: nome, descrição, XP, nível anterior/novo, política de anúncio, fechar, auto-saída e confete sob movimento reduzido. Se o print for obrigatório, precisa de cartão com rota de harness (fora dos arquivos deste cartão).
 
 ## Nota sobre o tamanho do diff
-O diff contra a `dia` inclui a FAIXA do cartão pai (PE-36, t_8e0d9185), trazida por `git cherry-pick` como o próprio cartão manda — são os arquivos de `src/hooks/gamification/**` e a remoção do provider de cliente morto. A minha parte é 1 commit de 3 arquivos (`git show --stat`): `src/App.tsx`, `src/components/gamification/AchievementToast.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`.
+O diff contra a `dia` inclui a FAIXA do cartão pai (PE-36, t_8e0d9185), trazida por `git cherry-pick` como o próprio cartão manda. Arquivos dessa faixa (3 commits: `c26046478`, `48a627a2a`, `f037b539b`), que NÃO são deste cartão:
+- `src/hooks/gamification/useAgentCelebrations.ts` (novo — o hook que este cartão consome)
+- `src/hooks/gamification/index.ts`, `src/hooks/gamification/useAgentGamification.ts`
+- `src/hooks/gamification/mutations.ts` (removido), `src/components/gamification/GamificationProvider.tsx` (removido)
+- `src/components/gamification/DemoAchievements.tsx`
+- `src/hooks/gamification/__tests__/useAgentCelebrations.test.tsx` (novo)
+- `src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts` (novo)
+- `src/hooks/gamification/__tests__/mutations.test.tsx` (removido)
+- `src/hooks/__tests__/useAgentGamification.test.tsx`
+- `.tmp/relato.md` (o relato herdado, reescrito aqui)
+
+A minha parte é o commit `f4e8dfc13` (`src/App.tsx`, `src/components/gamification/AchievementToast.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`), o ajuste de mock em `src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts` (`22ea56af5`) e este relato (`7c38f34f0`).
 
 Especialista: iris (area-front-componentes)
