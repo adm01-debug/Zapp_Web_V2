@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, renderHook, waitFor } from '@testing-library/react';
 import { EvolutionDisconnectBanner } from '@/components/alerts/EvolutionDisconnectBanner';
 import { useWhatsAppStatus } from '@/hooks/integrations/useWhatsAppStatus';
+import { queryClient } from '@/lib/queryClient';
 
 /**
  * Medição: quantas idas a `whatsapp_connections` DUAS telas montadas ao mesmo
@@ -18,6 +19,7 @@ import { useWhatsAppStatus } from '@/hooks/integrations/useWhatsAppStatus';
 const h = vi.hoisted(() => ({
   consultas: 0,
   linhas: [] as Record<string, unknown>[],
+  contatoComConexao: true,
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));
@@ -37,8 +39,14 @@ vi.mock('@/integrations/supabase/client', () => {
           corrente.order = () => corrente;
           corrente.maybeSingle = async () =>
             tabela === 'contacts'
-              ? { data: { name: 'Contato', whatsapp_connection_id: 'conn-1' }, error: null }
-              : { data: null, error: null };
+              ? {
+                  data: {
+                    name: 'Contato',
+                    whatsapp_connection_id: h.contatoComConexao ? 'conn-1' : null,
+                  },
+                  error: null,
+                }
+              : { data: h.linhas[0] ?? null, error: null };
           corrente.then = (cb: (v: unknown) => void) =>
             cb({ data: tabela === 'whatsapp_connections' ? h.linhas : [], error: null });
           return corrente;
@@ -62,8 +70,11 @@ const CONEXAO = {
 };
 
 beforeEach(() => {
+  // cache de módulo: cada caso mede a partir do zero
+  queryClient.clear();
   h.consultas = 0;
   h.linhas = [CONEXAO];
+  h.contatoComConexao = true;
 });
 
 describe('duas telas montadas leem a lista de conexões uma vez', () => {
@@ -73,6 +84,15 @@ describe('duas telas montadas leem a lista de conexões uma vez', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(h.consultas).toBeGreaterThan(0));
+
+    expect(h.consultas).toBe(1);
+  });
+
+  it('contato sem conexão própria: 1 ida (antes: primeira conectada + instância)', async () => {
+    h.contatoComConexao = false;
+    const { result } = renderHook(() => useWhatsAppStatus('5511999999999'));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(h.consultas).toBe(1);
   });
