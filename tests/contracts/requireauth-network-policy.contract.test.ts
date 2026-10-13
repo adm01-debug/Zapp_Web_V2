@@ -43,6 +43,23 @@ function fakeRpc(outcome: { data: unknown; error: unknown }) {
 const user = (id = 'user-1') => ({ data: { user: { id } }, error: null });
 const bearer = (headers: Record<string, string> = {}) => ({ authorization: 'Bearer token-valido', ...headers });
 
+/**
+ * Lookup fake de `profiles.is_active` (R2-AUTH-004) — perfil ATIVO. Necessário
+ * desde que `requireAuth` passou a consultar o perfil DEPOIS da política: sem a
+ * injeção, o caminho permitido cairia no client service_role real (503 offline).
+ * Registra os `user_id` consultados para provar a passagem pela trava.
+ */
+function activeProfile() {
+  const calls: string[] = [];
+  return {
+    calls,
+    lookup: (userId: string) => {
+      calls.push(userId);
+      return Promise.resolve({ data: { is_active: true }, error: null });
+    },
+  };
+}
+
 describe('canonicalEndpointFromUrl — endpoint canônico estável a partir da URL', () => {
   it('extrai o nome da função do gateway /functions/v1/<nome>', () => {
     expect(
@@ -153,15 +170,17 @@ describe('requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3)', 
       data: [{ allowed: true, reason: null, rate_limit_max_requests: 25, rate_limit_window_seconds: 120 }],
       error: null,
     });
+    const profile = activeProfile();
     const res = await requireAuth(
       req('https://edge.example.com/functions/v1/multiplix-dispatch', {
         ...bearer(),
         'cf-ipcountry': 'br',
         'x-forwarded-for': '1.2.3.4, 9.9.9.9',
       }),
-      { getUser: () => Promise.resolve(user('user-1')), policyRpc: rpc },
+      { getUser: () => Promise.resolve(user('user-1')), policyRpc: rpc, getProfileActive: profile.lookup },
     );
     expect(res).toEqual({ userId: 'user-1' });
+    expect(profile.calls).toEqual(['user-1']); // o perfil ativo é lido pelo user_id autenticado
     expect(rpc.calls[0].args.p_ip).toBe('9.9.9.9');
     expect(rpc.calls[0].args.p_country_code).toBe('BR');
   });
@@ -180,7 +199,7 @@ describe('requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3)', 
     });
     await requireAuth(
       req('https://edge.example.com/functions/v1/multiplix-dispatch', bearer()),
-      { getUser: () => Promise.resolve(user()), policyRpc: rpc },
+      { getUser: () => Promise.resolve(user()), policyRpc: rpc, getProfileActive: activeProfile().lookup },
     );
     expect(rpc.calls).toHaveLength(1); // UMA consulta por requisição (sem duplicar por handler)
     expect(rpc.calls[0].fn).toBe('resolve_network_policy');
@@ -192,7 +211,7 @@ describe('requireAuth — política de rede obrigatória (R2-AUTH-022 / 27.3)', 
     const rpc = fakeRpc({ data: [{ allowed: true, reason: null }], error: null });
     await requireAuth(
       req('https://edge.example.com/functions/v1/auth-login', bearer()),
-      { getUser: () => Promise.resolve(user()), policyRpc: rpc, defaultMaxRequests: 10, defaultWindowSeconds: 60 },
+      { getUser: () => Promise.resolve(user()), policyRpc: rpc, getProfileActive: activeProfile().lookup, defaultMaxRequests: 10, defaultWindowSeconds: 60 },
     );
     expect(rpc.calls[0].args.p_default_max_requests).toBe(10);
     expect(rpc.calls[0].args.p_default_window_seconds).toBe(60);
