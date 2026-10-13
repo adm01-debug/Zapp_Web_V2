@@ -4258,6 +4258,9 @@ export type Database = {
           created_at: string
           id: string
           instance: string
+          investigated_at: string | null
+          investigated_by: string | null
+          investigation_notes: string | null
           paused_by: string | null
           paused_until: string
           reason: string
@@ -4269,6 +4272,9 @@ export type Database = {
           created_at?: string
           id?: string
           instance: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_notes?: string | null
           paused_by?: string | null
           paused_until: string
           reason: string
@@ -4280,6 +4286,9 @@ export type Database = {
           created_at?: string
           id?: string
           instance?: string
+          investigated_at?: string | null
+          investigated_by?: string | null
+          investigation_notes?: string | null
           paused_by?: string | null
           paused_until?: string
           reason?: string
@@ -4287,6 +4296,20 @@ export type Database = {
           resumed_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "instance_pauses_investigated_by_fkey"
+            columns: ["investigated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_investigated_by_fkey"
+            columns: ["investigated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instance_pauses_paused_by_fkey"
             columns: ["paused_by"]
@@ -11528,6 +11551,17 @@ export type Database = {
           outcome: string
         }[]
       }
+      instance_auth_event_series: {
+        Args: { p_window?: string }
+        Returns: {
+          auth_failures: number
+          bucket: string
+          disconnected: number
+          errors: number
+          instance: string
+          total: number
+        }[]
+      }
       is_account_locked: {
         Args: { check_email: string }
         Returns: {
@@ -11635,6 +11669,10 @@ export type Database = {
       mark_multiplix_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: undefined
+      }
+      mark_pause_investigated: {
+        Args: { p_notes?: string; p_pause_id: string }
+        Returns: Json
       }
       mark_talkx_recipient_dispatch_started: {
         Args: { p_claim_token: string; p_recipient_id: string }
