@@ -100,6 +100,16 @@ const OPCOES_ADIAR: Array<{ label: string; minutes: number | 'tomorrow9' }> = [
   { label: 'Amanhã 9h', minutes: 'tomorrow9' },
 ];
 
+/**
+ * Etapa 059 (auditoria) — o alvo e o foco das ações do menu do sino. O gatilho
+ * da linha media 40 px com anel de foco, mas os botões de adiar/remover/escolher
+ * do popover ficavam com os ~28 px do `py-1.5` e sem anel: alvo perdido no toque
+ * e sem retorno no teclado. `min-h-10` (mesmo 40 px dos gatilhos) + o
+ * `focus-visible:ring-2` do design system fecham os dois; não é componente novo.
+ */
+const CLASSE_ACAO_MENU =
+  'flex w-full min-h-10 items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
 interface RemindCellProps {
   item: WorkItem;
   now?: Date;
@@ -164,7 +174,7 @@ export function RemindCell({ item, now, onSnooze, onClearReminder, onOpenReminde
               key={o.label}
               type="button"
               onClick={() => acao(() => onSnooze?.(item, o.minutes))}
-              className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+              className={CLASSE_ACAO_MENU}
             >
               {o.label}
             </button>
@@ -175,7 +185,7 @@ export function RemindCell({ item, now, onSnooze, onClearReminder, onOpenReminde
         <button
           type="button"
           onClick={() => acao(() => onClearReminder?.(item))}
-          className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-accent"
+          className={`${CLASSE_ACAO_MENU} text-[hsl(var(--destructive-text))]`}
         >
           Remover
         </button>
@@ -183,7 +193,7 @@ export function RemindCell({ item, now, onSnooze, onClearReminder, onOpenReminde
           <button
             type="button"
             onClick={() => acao(() => onOpenReminder(item))}
-            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+            className={CLASSE_ACAO_MENU}
           >
             Escolher…
           </button>

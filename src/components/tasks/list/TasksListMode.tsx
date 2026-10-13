@@ -28,9 +28,10 @@ interface Props extends WorkItemCardActions {
  * fica com o que não é tabela — carregamento e os dois vazios — e mantém a
  * mesma API para o `TasksModule` (a montagem não muda).
  *
- * `onMoveTo`/`onDelete` seguem no contrato da Lista porque são eles que a
- * coluna "Estado" (060) e o menu ⋮ da linha (061) vão consumir; até lá o que a
- * tabela usa é o clique da linha (detalhes), o checkbox e o contato.
+ * O `onMoveTo` JÁ é consumido: a coluna "Estado" (060) passa o menu de mover
+ * pelo `StatusCell`. O `onDelete` segue no contrato porque o menu ⋮ da linha
+ * (061) é quem o vai consumir; até lá o que a tabela usa é o clique da linha
+ * (detalhes), o checkbox, o contato e o mover.
  */
 export function TasksListMode({
   byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onClearFilter, hasMounted,

@@ -21,6 +21,71 @@ import type { BucketsByDue } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { makeTaskRow } from '@/test/mocks/tarefas';
 
+// ─── WCAG no jsdom: lê os tokens REAIS de `tokens.css`, resolve o par que as
+//     classes aplicadas pintam e mede a razão. Mesmo medidor de
+//     `movimentoEContraste` (jsdom não carrega o CSS do app nem calcula layout;
+//     o que se prova é o par que a classe REALMENTE aplica).
+import fs from 'node:fs';
+import path from 'node:path';
+type RGB = [number, number, number];
+function parseHsl(s: string): RGB {
+  const m = s.match(/(-?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/)!;
+  return [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])];
+}
+function hslToRgb(h: number, s: number, l: number): RGB {
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+function luminancia([r, g, b]: RGB): number {
+  const [rs, gs, bs] = [r, g, b].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+/** Razão de contraste WCAG entre dois tokens HSL (alfa 1). */
+const razao = (cor: string, base: string): number => {
+  const l1 = luminancia(hslToRgb(...parseHsl(cor)));
+  const l2 = luminancia(hslToRgb(...parseHsl(base)));
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+};
+/** Variáveis de um bloco do `tokens.css` (`:root {` / `.dark {`). */
+function variaveis(css: string, cabecalho: string): Record<string, string> {
+  const idx = css.indexOf(cabecalho);
+  const abre = css.indexOf('{', idx);
+  let profundidade = 1;
+  let i = abre + 1;
+  while (profundidade > 0 && i < css.length) {
+    if (css[i] === '{') profundidade++;
+    else if (css[i] === '}') profundidade--;
+    i++;
+  }
+  const vars: Record<string, string> = {};
+  const re = /--([a-z0-9-]+):\s*([^;]+);/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(css.slice(abre + 1, i - 1)))) vars[m[1]] = m[2].trim().replace(/\s+/g, ' ');
+  return vars;
+}
+const TOKENS_CSS = fs.readFileSync(path.resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
+const CLARO = variaveis(TOKENS_CSS, ':root {');
+const ESCURO = { ...CLARO, ...variaveis(TOKENS_CSS, '.dark {') };
+/** O token de TEXTO que a classe do elemento pinta — sem ele, o teste não passa. */
+function tokenDeTexto(el: Element): string {
+  const m = (el.getAttribute('class') ?? '').match(/text-\[hsl\(var\(--([a-z0-9-]+)\)\)\]/);
+  if (!m) throw new Error(`sem token de texto resolvível: ${el.getAttribute('class')}`);
+  return m[1];
+}
+
 const AGORA = new Date(2026, 9, 11, 18, 0);          // domingo, 11/10/2026 18:00 (local)
 const ONTEM = new Date(2026, 9, 10, 17, 0).toISOString();
 const HOJE_1330 = new Date(2026, 9, 11, 13, 30).toISOString();
@@ -302,5 +367,36 @@ describe('060 — célula Estado', () => {
     );
     expect(screen.queryByTestId('status-cell')).toBeNull();
     expect(screen.getByTestId('status-pill').textContent).toBe('Aguardando');
+  });
+});
+
+describe('059 — auditoria: alvo, foco e token das ações do menu do sino', () => {
+  it('adiar/remover/escolher têm alvo de 40 px e anel de foco; "Remover" usa o vermelho de TEXTO do tema', async () => {
+    renderTabela(item({ id: 'a1', remind_at: HOJE_1330 }));
+    fireEvent.click(within(screen.getByTestId('task-row')).getByTestId('remind-cell'));
+
+    const quinze = await screen.findByRole('button', { name: '15 min' });
+    const remover = screen.getByRole('button', { name: 'Remover' });
+    const escolher = screen.getByRole('button', { name: /Escolher/ });
+
+    for (const [rotulo, botao] of [['15 min', quinze], ['Remover', remover], ['Escolher…', escolher]] as const) {
+      expect(botao.className, `${rotulo}: alvo`).toContain('min-h-10');
+      expect(botao.className, `${rotulo}: anel de foco`).toContain('focus-visible:ring-2');
+      expect(botao.className, `${rotulo}: cor do anel`).toContain('focus-visible:ring-ring');
+    }
+
+    // "Remover" usa o par de TEXTO do tema e NUNCA o vermelho de PREENCHIMENTO cru.
+    expect(remover.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
+    expect(tokenDeTexto(remover)).toBe('destructive-text');
+
+    // O número: o par aplicado fecha AA (≥4,5:1) nos dois temas. E o vermelho
+    // cru do defeito ficava abaixo no claro — é o gap que a troca fecha (no
+    // escuro o token de preenchimento é claro o bastante e passava).
+    for (const [nome, vars] of [['claro', CLARO], ['escuro', ESCURO]] as const) {
+      expect(razao(vars['destructive-text'], vars['popover']), `${nome}: --destructive-text sobre --popover`)
+        .toBeGreaterThanOrEqual(4.5);
+    }
+    expect(razao(CLARO['destructive'], CLARO['popover']), 'claro: o vermelho cru não fecha AA')
+      .toBeLessThan(4.5);
   });
 });
