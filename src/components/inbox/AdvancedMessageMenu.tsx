@@ -11,10 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { sendOutboundMessage, sendRichOutboundMessage } from '@/services/outbound-message.service';
 import { toast } from 'sonner';
 import {
@@ -48,6 +59,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
   const [pollDialog, setPollDialog] = useState(false);
   const [contactDialog, setContactDialog] = useState(false);
   const [statusDialog, setStatusDialog] = useState(false);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
 
   // Sticker state
   const [stickerUrl, setStickerUrl] = useState('');
@@ -70,6 +82,10 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
   const [isSendingOutbound, setIsSendingOutbound] = useState(false);
 
   const { sendStatusMessage, isLoading } = useEvolutionApi();
+  // `send-status` publica para TODA a base da conexão (não tem contato-alvo) e o
+  // servidor só aceita admin/supervisor (evolução: R2EXT-STATUS). `isSupervisor`
+  // do useUserRole já inclui admin, então é o MESMO par papel do servidor.
+  const { isSupervisor } = useUserRole();
 
   const handleSendSticker = useCallback(async () => {
     if (!stickerUrl.trim()) return;
@@ -152,18 +168,27 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
       await sendStatusMessage(instanceName, { type: 'text', content: statusText });
       toast.success('Status publicado!');
       setStatusText('');
+      setStatusConfirmOpen(false);
       setStatusDialog(false);
     } catch {
       toast.error('Erro ao publicar status');
     }
   }, [statusText, instanceName, sendStatusMessage]);
 
-  const menuItems = useCallback(() => [
-    { icon: Sticker, label: 'Figurinha', onClick: () => { setPopoverOpen(false); setStickerDialog(true); } },
-    { icon: BarChart3, label: 'Enquete', onClick: () => { setPopoverOpen(false); setPollDialog(true); } },
-    { icon: Contact2, label: 'Cartão de Contato', onClick: () => { setPopoverOpen(false); setContactDialog(true); } },
-    { icon: Radio, label: 'Status/Story', onClick: () => { setPopoverOpen(false); setStatusDialog(true); } },
-  ], []);
+  const menuItems = useCallback(() => {
+    const items = [
+      { icon: Sticker, label: 'Figurinha', onClick: () => { setPopoverOpen(false); setStickerDialog(true); } },
+      { icon: BarChart3, label: 'Enquete', onClick: () => { setPopoverOpen(false); setPollDialog(true); } },
+      { icon: Contact2, label: 'Cartão de Contato', onClick: () => { setPopoverOpen(false); setContactDialog(true); } },
+    ];
+    // Status/Story só para admin/supervisor: o servidor nega `send-status` para os
+    // demais (o status não tem contato-alvo e publicaria para toda a base). Não
+    // oferecemos um item que o servidor vai negar depois do clique.
+    if (isSupervisor) {
+      items.push({ icon: Radio, label: 'Status/Story', onClick: () => { setPopoverOpen(false); setStatusDialog(true); } });
+    }
+    return items;
+  }, [isSupervisor]);
 
   return (
     <>
@@ -328,12 +353,33 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
                 rows={4}
               />
             </div>
-            <Button onClick={handleSendStatus} disabled={isLoading || !statusText.trim()} className="w-full">
+            <Button onClick={() => setStatusConfirmOpen(true)} disabled={isLoading || !statusText.trim()} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Publicar
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação do Status/Story: send-status publica para toda a base da conexão */}
+      <AlertDialog open={statusConfirmOpen} onOpenChange={setStatusConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Radio className="w-5 h-5 text-primary" />
+              Publicar status para todos os contatos?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso aparece para todos os seus contatos. Confirme se este é o conteúdo que você quer publicar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSendStatus} disabled={isLoading}>
+              Publicar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
