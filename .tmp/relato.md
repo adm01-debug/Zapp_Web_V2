@@ -14,6 +14,9 @@ Especialista: worker (geral)
 ## Documento/código
 - Nada de DDL, Edge, migration ou dependência nova. Diff só nos 2 arquivos citados no cartão.
 
+## Testes removidos (o cartão mandou remover o código junto com os testes)
+O bloco `Resultado de ai-classify-tickets aplicado (IA-114)` (6 testes) e a fixture `mockTags` existiam só para exercitar a leitura das etiquetas; sem a fonte não há como exercitá-los. Foram substituídos pelo bloco novo `Estado sem etiquetas` (2 testes) que cobra o contrato novo: (a) nenhuma consulta a tabela é disparada — o `from` do mock lança e reprova a suíte se a leitura voltar; (b) o botão "Classificar em Lote" não anuncia sucesso com a lista vazia. A expectativa "handles empty tags list" virou o teste de estado vazio. Nenhum `it(...)` foi pulado (`.skip`/`.todo`).
+
 ## O que NÃO fiz e por quê
 - Não removi o `invoke('ai-classify-tickets')` do botão "Classificar em Lote": está fora do critério (que cita `ai_conversation_tags`/`ai-auto-tag`) e a Edge é de outra trilha. Com a lista vazia o botão passa a avisar "Nenhum ticket carregado para aplicar as classificações do servidor." e não diz sucesso; um teste novo cobre isso.
 - Não toquei em `src/services/contact.service.ts` (ainda lê `ai_conversation_tags`) nem em `AIAutoTagsConfig.tsx`: fora dos arquivos do cartão. Registro como comentário no cartão.
