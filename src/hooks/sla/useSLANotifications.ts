@@ -56,7 +56,7 @@ export const useSLANotifications = () => {
       }
 
       // Show browser notification if enabled
-      if (settings.browserNotifications && settings.desktopAlerts) {
+      if (settings.browserNotifications) {
         showBrowserNotification(title, description, {
           tag: `sla-breach-first-response-${slaRecordId}`,
         });

@@ -14,7 +14,6 @@ export interface NotificationSettings {
   slaBreachSound: boolean;
   newMessageSound: boolean;
   mentionSound: boolean;
-  desktopAlerts: boolean;
   quietHoursEnabled: boolean;
   quietHoursStart: string; // HH:mm
   quietHoursEnd: string; // HH:mm
@@ -39,13 +38,15 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   slaBreachSound: true,
   newMessageSound: true,
   mentionSound: true,
-  desktopAlerts: true,
   quietHoursEnabled: false,
   quietHoursStart: '22:00',
   quietHoursEnd: '08:00',
   sentimentAlertEnabled: true,
   sentimentAlertThreshold: 30,
-  sentimentConsecutiveCount: 3,
+  // Igual ao default da coluna `user_settings.sentiment_consecutive_count`
+  // (migration 20251222172655) e ao fallback da Edge `sentiment-alert`: quem nunca
+  // salvou precisa ver o mesmo numero que o alerta usa.
+  sentimentConsecutiveCount: 2,
   transcriptionNotificationEnabled: true,
   messageSoundType: 'chime',
   mentionSoundType: 'bell',
