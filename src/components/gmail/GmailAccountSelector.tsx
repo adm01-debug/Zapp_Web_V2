@@ -6,7 +6,7 @@ import type { GmailAccount } from '@/hooks/gmail/gmailTypes';
  * conta está saudável (`synced`) e nada precisa ser dito. O estado vem do backend
  * (`gmail_accounts.sync_status`), não é inferido no front.
  */
-export function gmailAccountStateLabel(syncStatus: GmailAccount['sync_status']): string | null {
+function gmailAccountStateLabel(syncStatus: GmailAccount['sync_status']): string | null {
   switch (syncStatus) {
     case 'reauth_required': return 'precisa reconectar';
     case 'error': return 'falha ao sincronizar';
