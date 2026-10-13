@@ -22,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   updateRows: [{ id: 'c1' }] as { id: string }[],
   /** Linhas que a consulta do duplicado EXCLUÍDO devolve (default: nenhuma). */
   duplicadoExcluido: [] as { id: string }[],
+  /** Erro devolvido pela consulta do duplicado (default: sucesso). */
+  duplicadoErro: null as null | { message: string },
   /** Filtros da consulta do duplicado: [metodo, ...args]. */
   lookup: [] as unknown[][],
   getById: vi.fn(),
@@ -52,7 +54,7 @@ vi.mock('@/integrations/supabase/client', () => ({
               not: (col2: string, op: string, val2: unknown) => {
                 mocks.lookup.push(['not', col2, op, val2]);
                 return {
-                  limit: async () => ({ data: mocks.duplicadoExcluido, error: null }),
+                  limit: async () => ({ data: mocks.duplicadoExcluido, error: mocks.duplicadoErro }),
                 };
               },
             };
@@ -177,6 +179,19 @@ describe('useContactsCRUD — erro de telefone duplicado diz a verdade', () => {
       message: 'duplicate key value violates unique constraint "contacts_phone_key"',
     };
     mocks.duplicadoExcluido = [];
+
+    const caught = await editarCaindoNoErro();
+
+    expect((caught as Error).message).toBe(MENSAGEM_PADRAO);
+  });
+
+  it('contraponta: falha na consulta do duplicado não vira "sem excluído" silencioso — cai na mensagem padrão', async () => {
+    mocks.updateError = {
+      code: '23505',
+      message: 'duplicate key value violates unique constraint "contacts_phone_key"',
+    };
+    mocks.duplicadoExcluido = [{ id: 'ex-1' }];
+    mocks.duplicadoErro = { message: 'network error' };
 
     const caught = await editarCaindoNoErro();
 
