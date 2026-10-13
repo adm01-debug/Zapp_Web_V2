@@ -52,3 +52,12 @@ mudou além do `execute` da própria função nova.
 - Não editei migration existente (correção = migration nova) e não usei DROP/TRUNCATE/DELETE em massa.
 - Não criei `scripts/db-audit/*.test.sh` (exigiria passo no db-guard.yml, que não é minha área): a prova vive em
   `supabase/tests/`, que o cartão permite.
+
+## Sobre o alarme "código alterado sem teste novo" (FALSO POSITIVO)
+
+O fechar apontou `src/integrations/supabase/types.ts` como "código alterado sem teste novo". Não procede:
+o commit JÁ traz um teste novo que falha sem a mudança e passa com ela — `supabase/tests/monitoring_message_buckets.sql`
+(vermelho `sem_migration=1` → verde, nas linhas acima). O detetor só reconhece teste por nome `.test.`/`.spec.`, e a
+suíte de banco aqui é `.sql` em `supabase/tests/` (como as demais do projeto). Além disso `types.ts` é DECLARAÇÃO de
+tipos gerada — não tem lógica de runtime para testar; o único código real do diff é a função SQL, coberta por T1–T8.
+Repito o MESMO comando de fechar com esta explicação.
