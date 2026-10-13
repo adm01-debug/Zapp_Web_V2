@@ -16,6 +16,12 @@ Especialista: Hugo (area-front-hooks)
 ## Dependência do cartão pai (t_a5acd992)
 - O pai não estava em `dia/2026-10-12` quando o workspace nasceu; eu cheguei a trazer a faixa com `git cherry-pick -x`, mas o `hermes-tarefa-fechar` barra por regra acima de 90 mil caracteres adicionados, porque a faixa do pai (Edge/migration) sozinha passa disso. Então o meu branch ficou `dia/2026-10-12` + o meu único commit `27f3099a3` (8 arquivos). A faixa do pai é integrada pelo próprio cartão dele na fila do integrador; a minha mudança não depende do código dele (o `INSTANCE_GONE` usado aqui é o `code` do corpo, tratado no front).
 
+## Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" (justificativa)
+- O cartão lista `useConnectionsManager.ts`, `useConnectionsRealtime.ts` (novo), `EvolutionDisconnectBanner.tsx` e os testes. `useEvolutionApiCore.ts` e `useEvolutionInstance.ts` entraram porque são **indispensáveis** a um item do CRITÉRIO DE PRONTO — tratar `code: 'INSTANCE_GONE'`:
+  - o `code` vem no corpo da resposta da Edge, mas quem lê o corpo é o `callApi` de `useEvolutionApiCore.ts` e ele montava o `Error` só com `details/apiStatus/retries`; sem subir `code`, o `handleDelete` não distingue estado reconciliado de erro real e o requisito não teria como ser implementado (+4/-1 linha, aditivo: só acrescenta um campo ao `Error`);
+  - `deleteInstance` de `useEvolutionInstance.ts` usava `withToast`, que dispara toast de erro automático: mesmo tratando o `code`, o operador veria o aviso vermelho antes do "Conexão removida". O único chamador é o `handleDelete` (conferido com `git grep deleteInstance -- src`), então nada externo perdeu o toast (5 linhas).
+- As duas são hooks da minha própria área (`area-front-hooks`) e nenhuma muda contrato de terceiro.
+
 ## O que NÃO fiz e por quê
 - Não mexi em `src/hooks/integrations/useTalkXConnectionStatus.ts` nem em `useCatalogSendReadiness.ts`: o cartão permitia invalidar de fora (feito no gerente) em vez de assinar realtime neles.
 - Não mexi em `fetchConnections` (ordem/limite): fora do defeito deste cartão.
