@@ -21,7 +21,7 @@
    fallback
  }: ProtectedRouteProps) {
    const { user, loading: authLoading } = useAuth();
-   const { loading: rolesLoading, hasRole } = useUserRole();
+   const { loading: rolesLoading, hasRole, rolesLoadError } = useUserRole();
    const location = useLocation();
    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
    const [mfaGate, setMfaGate] = useState<{ userId: string; status: 'required' | 'ok' | 'error' } | null>(null);
@@ -118,12 +118,13 @@
       };
     }, [loading, user]);
 
+    const falhaCarregamentoPapeis = Boolean(requiredRoles?.length && rolesLoadError);
     const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
     const isPermissioned = !requiredPermission || hasPermission;
     // Só decide acesso quando saiu da verificação: sem isso o registro dispararia
     // enquanto ainda estamos buscando permissão/MFA (o conteúdo segue fail closed).
     const podeDecidirAcesso =
-      Boolean(user) && !loading && gate === 'ok' && !(requiredPermission && hasPermission === null);
+      Boolean(user) && !loading && gate === 'ok' && !falhaCarregamentoPapeis && !(requiredPermission && hasPermission === null);
     const semAcesso = podeDecidirAcesso && (!isAuthorized || !isPermissioned);
     // Com `fallback` o ramo é do chamador: não redireciona e não registra.
     const deveRegistrarNegado = semAcesso && !fallback;
@@ -221,6 +222,23 @@
                 Sair e Entrar Novamente
               </button>
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (falhaCarregamentoPapeis) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center" role="alert">
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-destructive">Erro ao verificar permissões</h1>
+            <p className="text-muted-foreground">Não foi possível confirmar seu papel de acesso. Tente novamente.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+            >
+              Tentar Novamente
+            </button>
           </div>
         </div>
       );
