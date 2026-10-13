@@ -36,6 +36,23 @@ local, sem `searchParams` (auditado no E37).
 | Relatórios Agendados | `useScheduledReportConfigs.ts` / `ScheduledReportsManager.tsx` | tabela `scheduled_report_configs` — **owner-only** desde o E40: cada usuário vê/edita só os próprios relatórios (`created_by`), admin vê tudo. Migrations `20260926113806_scheduled_report_configs_owner_only.sql` e `20260926140000_fix_scheduled_report_configs_insert_owner_check.sql` | `created_by` = profile do usuário, ou admin |
 | XP / Nível | `agent_stats.xp`/`level` (via `useLeaderboard`/gamificação) | triggers atualizam `xp` atomicamente; `level` recalculado por `update_agent_level()` (trigger separado, preexistente) | mesma fonte do ranking |
 
+## War Room — fonte de dados por número
+
+Tela `src/components/dashboard/WarRoomDashboard.tsx`, alimentada por `src/hooks/business/useWarRoomData.ts`
+(refetch a cada 30 s) e por `useWarRoomAlerts.ts` (alertas em tempo real). Registrar aqui do mesmo modo:
+de onde cada número vem e o que ainda não está certo.
+
+| Número | Fonte | Estado |
+|---|---|---|
+| Conversas ativas por agente | `contacts.assigned_to` dos contatos abertos | ok |
+| Máximo de chats | `profiles.max_chats` (padrão 5) | ok |
+| Tempo médio de resposta por agente | `agent_stats.avg_response_time_seconds` (`useWarRoomData.ts:112`) | **débito PB-11** — a coluna não tem escritor: cai para 0 |
+| Resolvidas hoje | `agent_stats.conversations_resolved` (`:113`) | **débito PB-12** — é o acumulado, não o dia; a RPC `dashboard_leaderboard(p_period)` já calcula por período no servidor |
+| Satisfação do agente | `agent_stats.customer_satisfaction_score` (`:114`) | **débito PB-13** — coluna sem escritor: cai para 0 |
+| Online / ocupado | presença em tempo real (`presence`), não o cadastro | ok (atualiza sem refetch) |
+
+Decisão e referência dos cartões: `docs/adr/ADR-009-paridade-batch1-batch2.md`.
+
 ## Padrão de RLS/RPC do módulo
 
 - Guard de staff: função `is_admin_or_supervisor(auth.uid())` (SQL, `SECURITY DEFINER`) — checa

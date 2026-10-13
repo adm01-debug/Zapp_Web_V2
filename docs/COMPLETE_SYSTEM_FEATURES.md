@@ -276,6 +276,20 @@
 | 8.7 | Notificações de breach de SLA | ✅ | `src/hooks/useSLANotifications.ts` |
 | 8.8 | Provider de notificações SLA | ✅ | `src/components/notifications/SLANotificationProvider.tsx` |
 
+**Estado atual (2026-10-12).** O prazo da 1ª resposta vigente é resolvido **no servidor** por
+`resolve_applicable_sla` (`supabase/migrations/20261013012747_sla_resolve_applicable.sql`): hierarquia
+`sla_rules` > `sla_configurations.is_default` > padrão do sistema (5 min). A RPC é `SECURITY DEFINER` e
+`register_first_response_internal` / `mark_first_response` passam a usá-la, com degradação para o padrão
+de 5 min quando o chamador não vê o contato (o gatilho de mensagem nunca bloqueia a gravação). A decisão
+está em `docs/adr/ADR-009-paridade-batch1-batch2.md` (D1). O **SLA de Resolução continua removido**
+(commit 70169c6b7).
+
+**Lacuna conhecida:** conversa que o cliente abriu e ninguém respondeu **não existe** em
+`conversation_sla` — o único escritor sempre grava `first_response_at`, então indicadores e War Room só
+enxergam o estouro depois da resposta tardia. Falta o job que abre a linha na 1ª mensagem do cliente e
+marca o estouro no prazo (PB-40). Atenção: `docs/SLA-ESCALATION-CRON.md` (2026-04-11) é desenho antigo —
+a tabela `sla_violations` e os `cron.schedule` que ele descreve **não existem** no banco.
+
 ---
 
 ## 9. Gamificação
@@ -318,6 +332,12 @@
 | 10.15 | Gráfico de tendência de sentimento | ✅ | `src/components/dashboard/SentimentTrendChart.tsx` |
 | 10.16 | Partículas flutuantes decorativas | ✅ | `src/components/dashboard/FloatingParticles.tsx` |
 | 10.17 | Aurora Borealis (efeito decorativo) | ✅ | `src/components/effects/AuroraBorealis.tsx` |
+
+**War Room — débitos conhecidos (2026-10-12).** Os números por agente vêm de `agent_stats` em
+`src/hooks/business/useWarRoomData.ts`: `avgResponseTime` e `satisfaction` caem para `0` quando a coluna
+está vazia (a RPC `dashboard_leaderboard` já calcula por período corretamente) e `resolvedToday` lê
+`conversations_resolved` acumulado, não o dia. A correção está nos cartões PB-11 a PB-13 e as fontes por
+card estão em `docs/dashboard/README.md`.
 
 ---
 
@@ -376,6 +396,13 @@
 | 14.5 | Indicador de horário comercial | ✅ | `src/components/connections/BusinessHoursIndicator.tsx` |
 | 14.6 | Mensagem de ausência | ✅ | Tabela `away_messages` |
 | 14.7 | Sincronização com Evolution API | ✅ | `supabase/functions/evolution-sync/` |
+
+**Autorização da Edge (2026-10-12).** A função `evolution-api` classifica cada ação por papel
+(`supabase/functions/_shared/evolution-control-authz.ts`): as ações sensíveis de conexão (criar/conectar/
+desconectar/reiniciar instância, configurar webhook, integrações do provedor, editar/apagar mensagem e
+etiquetas) exigem **admin/supervisor**; `instance-info` e `list-instances` continuam de leitura mas o
+token/apikey/hash da instância é removido do corpo (`sanitizeInstanceResponse` em
+`supabase/functions/evolution-api/index.ts`). Ver `docs/adr/ADR-009-paridade-batch1-batch2.md`.
 
 ---
 
@@ -833,11 +860,21 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=pipeline` → `TasksModule` em modo Quadro (`TASKS_ROUTE_PROPS.pipeline`, `forceMode`) |
-| Componentes | `src/components/tasks/TasksModule.tsx`; negócios lidos por `src/hooks/crm/useContactCrm360.ts` e `src/components/inbox/tabs/OpenDealsList.tsx` |
+| Rota | Não há tela própria. A porta de entrada "Quadro" (`?view=pipeline`) foi removida na fusão Quadro → Tarefas (E17) e o item de navegação com id `pipeline` não existe mais. |
+| Onde os negócios aparecem | `src/components/inbox/tabs/Crm360Tab.tsx` (aba CRM 360 do contato) e `src/components/inbox/tabs/OpenDealsList.tsx` |
+| Leitura | `src/hooks/crm/useContactCrm360.ts` — estágios de `sales_pipeline_stages` (`:183`), negócios de `sales_deals` (`:182`) e atividades de `deal_activities` (`:194`) |
 | Tabelas | `sales_deals`, `deal_activities`, `sales_pipeline_stages` |
+| Decisão | ADR-009 — o ciclo de vida do negócio **não** será reativado |
 
-**Funcionalidades:** quadro Kanban de negócios (reusa o módulo de Tarefas na rota `pipeline`), estágios configuráveis, valores monetários, prioridades e atividades de negócio vinculadas ao contato. **Atualização (2026-10-08):** a tela dedicada `SalesPipelineView` não existe mais; o menu "Quadro" aponta para o módulo de Tarefas.
+**Funcionalidades:** não existe quadro Kanban de negócios. A tela dedicada `SalesPipelineView` foi
+removida em 2026-10-08 e não há criação, edição, exclusão, ganho ou perda de negócio na UI. O que existe
+é a visão de negócios **dentro do CRM 360 do contato**: o funil configurado, os negócios vinculados ao
+contato e o botão "Avançar etapa →" (`Crm360Tab.tsx:170`), que grava `sales_deals.stage_id`
+(`useContactCrm360.ts:246`) e registra a atividade em `deal_activities` (`:248`).
+
+**Limites conhecidos:** o avanço de etapa grava a atividade **sem** `performed_by`, então a política de
+INSERT de `deal_activities` descarta o log em silêncio para agente comum (PB-01); os estágios são lidos
+sem filtrar `is_active` e a detecção de "Propostas" usa `name.includes('propost')` (PB-06).
 
 ---
 

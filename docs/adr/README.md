@@ -25,6 +25,7 @@ An ADR is a short document (typically 1-3 pages) that records:
 | 007 | [ADR-007-multiplix-ponte-singu-canal-e-aptidao.md](./ADR-007-multiplix-ponte-singu-canal-e-aptidao.md) | Multiplix: ponte Singu, canal não oficial, aptidão sem consentimento e destino de empresa | Accepted | 2026-09-26 |
 | 007 | [ADR-007-multiplix-ponte-singu.md](./ADR-007-multiplix-ponte-singu.md) | Multiplix: ponte de acesso ao Singu e decisões de Fase 0 | Superseded | 2026-09-26 |
 | 008 | [ADR-008-motor-de-chamadas-whatsapp.md](./ADR-008-motor-de-chamadas-whatsapp.md) | Motor de chamadas de voz pelo WhatsApp (API oficial × meowcaller × Wavoip × só eventos) | Proposed | 2026-10-10 |
+| 009 | [ADR-009-paridade-batch1-batch2.md](./ADR-009-paridade-batch1-batch2.md) | Paridade V3 → V2 dos documentos de features (batch 1 e batch 2) | Accepted | 2026-10-12 |
 
 ## Guidelines
 
@@ -54,4 +55,4 @@ Proposed → Accepted → (Deprecated | Superseded by ADR-NNN)
 
 ---
 
-*Last updated: 2026-10-10*
+*Last updated: 2026-10-12*
