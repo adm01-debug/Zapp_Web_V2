@@ -28,6 +28,8 @@ export const slaQuery: { pendente: boolean; liberar: (() => void) | null } = {
   pendente: false,
   liberar: null,
 };
+/** Regras devolvidas pela consulta a `sla_rules` (a política `notify_on_warning` vem delas). */
+export const slaRulesQuery: { rows: unknown[]; erro: Error | null } = { rows: [], erro: null };
 
 /** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
 export const dedupeResult = { valor: true };
@@ -86,6 +88,34 @@ export function supabaseMock() {
   };
   canal.subscribe = () => ({ unsubscribe: vi.fn() });
 
+  /** Resposta por tabela — o mesmo veredito serve para `maybeSingle()`, `single()` e o `await` da cadeia. */
+  const responder = async (tabela: string) => {
+    if (tabela === 'contacts' && contactsQuery.erro) throw contactsQuery.erro;
+    if (tabela === 'sla_configurations' && slaQuery.pendente) {
+      await new Promise<void>((resolve) => {
+        slaQuery.liberar = resolve;
+      });
+    }
+    if (tabela === 'sla_rules') {
+      if (slaRulesQuery.erro) return { data: null, error: slaRulesQuery.erro };
+      return { data: slaRulesQuery.rows, error: null };
+    }
+    return { data: contactRow, error: null };
+  };
+
+  /** Construtor encadeável: `.select().eq().order()` aguardado devolve a resposta da tabela. */
+  const chain = (tabela: string): Record<string, unknown> => {
+    const builder: Record<string, unknown> = {
+      eq: () => builder,
+      order: () => builder,
+      maybeSingle: () => responder(tabela),
+      single: () => responder(tabela),
+      then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+        responder(tabela).then(resolve, reject),
+    };
+    return builder;
+  };
+
   return {
     supabase: {
       channel: (topico: string) => {
@@ -95,21 +125,7 @@ export function supabaseMock() {
       removeChannel,
       functions: { invoke: (...args: unknown[]) => invoke(...args) },
       from: (tabela: string) => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: async () => {
-              if (tabela === 'contacts' && contactsQuery.erro) throw contactsQuery.erro;
-              if (tabela === 'sla_configurations' && slaQuery.pendente) {
-                await new Promise<void>((resolve) => {
-                  slaQuery.liberar = resolve;
-                });
-              }
-              return { data: contactRow, error: null };
-            },
-            single: async () => ({ data: contactRow, error: null }),
-          }),
-          order: () => ({ limit: async () => ({ data: [], error: null }) }),
-        }),
+        select: () => chain(tabela),
         insert: async () => ({ error: null }),
         update: () => ({ eq: async () => ({ error: null }) }),
       }),
@@ -161,6 +177,8 @@ export function resetAlertKit() {
   contactsQuery.erro = null;
   slaQuery.pendente = false;
   slaQuery.liberar = null;
+  slaRulesQuery.rows = [];
+  slaRulesQuery.erro = null;
   sonnerToast.error.mockClear();
   sonnerToast.info.mockClear();
   sonnerToast.warning.mockClear();

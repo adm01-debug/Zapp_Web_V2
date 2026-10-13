@@ -58,6 +58,130 @@ function parseSlaRow(raw: unknown): SlaRowAlerta | null {
 }
 
 /**
+ * Contrato do que interessa de uma regra de SLA para o alerta: o escopo (para a hierarquia) e o
+ * `metadata` com `notify_on_warning`/`escalation_notes`. Regra fora do contrato é ignorada.
+ */
+const slaRuleScopeSchema = z.object({
+  contact_id: z.string().uuid().nullable().optional(),
+  company: z.string().nullable().optional(),
+  job_title: z.string().nullable().optional(),
+  contact_type: z.string().nullable().optional(),
+  queue_id: z.string().uuid().nullable().optional(),
+  agent_id: z.string().uuid().nullable().optional(),
+  metadata: z
+    .object({
+      notify_on_warning: z.boolean().optional(),
+      escalation_notes: z.string().optional(),
+    })
+    .nullish(),
+});
+
+/** Política de alerta que sobrevive à hierarquia de regras. */
+export interface SlaAlertPolicy {
+  notifyOnWarning: boolean;
+  escalationNotes: string | null;
+}
+
+/**
+ * Sem regra aplicável o sistema avisa e não inventa nota — é o comportamento de sempre. É também o
+ * resultado quando a leitura das regras falha (por RLS, por exemplo): o alerta nunca é engolido por
+ * uma política que não deu para ler.
+ */
+export const DEFAULT_SLA_ALERT_POLICY: SlaAlertPolicy = Object.freeze({
+  notifyOnWarning: true,
+  escalationNotes: null,
+});
+
+/** Atributos crus do contato que a hierarquia usa para escolher a regra. */
+export interface SlaRuleScopeAttrs {
+  contactId: string;
+  company: string | null;
+  jobTitle: string | null;
+  contactType: string | null;
+  queueId: string | null;
+  agentId: string | null;
+}
+
+/**
+ * Regra aplicável → política de alerta.
+ *
+ * Mesma hierarquia e mesmos desempates de `useApplicableSLA`
+ * (contato > empresa > cargo > tipo de contato > fila > agente, com as regras já ordenadas por
+ * prioridade decrescente): a primeira regra de cada nível fecha o nível e o mais específico vence.
+ * A ordem é replicada porque a linha de `conversation_sla` aponta a configuração de prazo, não a
+ * regra — e só a regra carrega `notify_on_warning`/`escalation_notes`. Regra fora do contrato é
+ * ignorada em vez de derrubar o alerta.
+ */
+export function pickRuleAlertPolicy(rules: unknown[], attrs: SlaRuleScopeAttrs): SlaAlertPolicy {
+  let doContato: SlaAlertPolicy | undefined;
+  let daEmpresa: SlaAlertPolicy | undefined;
+  let doCargo: SlaAlertPolicy | undefined;
+  let doTipo: SlaAlertPolicy | undefined;
+  let daFila: SlaAlertPolicy | undefined;
+  let doAgente: SlaAlertPolicy | undefined;
+
+  for (const raw of rules) {
+    const parsed = slaRuleScopeSchema.safeParse(raw);
+    if (!parsed.success) continue;
+    const rule = parsed.data;
+    const policy = (): SlaAlertPolicy => ({
+      notifyOnWarning: rule.metadata?.notify_on_warning ?? true,
+      escalationNotes: (rule.metadata?.escalation_notes ?? '').trim() || null,
+    });
+
+    if (rule.contact_id && rule.contact_id === attrs.contactId && !doContato) {
+      doContato = policy();
+      break; // o nível mais específico já foi encontrado
+    }
+    if (!rule.contact_id && rule.company && rule.company === attrs.company && !daEmpresa) {
+      daEmpresa = policy();
+    }
+    if (
+      !rule.contact_id && !rule.company &&
+      rule.job_title && rule.job_title === attrs.jobTitle && !doCargo
+    ) {
+      doCargo = policy();
+    }
+    if (
+      !rule.contact_id && !rule.company && !rule.job_title &&
+      rule.contact_type && rule.contact_type === attrs.contactType && !doTipo
+    ) {
+      doTipo = policy();
+    }
+    if (!rule.contact_id && rule.queue_id && rule.queue_id === attrs.queueId && !daFila) {
+      daFila = policy();
+    }
+    if (!rule.contact_id && rule.agent_id && rule.agent_id === attrs.agentId && !doAgente) {
+      doAgente = policy();
+    }
+  }
+
+  return doContato ?? daEmpresa ?? doCargo ?? doTipo ?? daFila ?? doAgente ?? DEFAULT_SLA_ALERT_POLICY;
+}
+
+/**
+ * Política de alerta da regra aplicável ao contato. Nunca lança: falha de leitura cai no padrão.
+ * A leitura é por alerta (e não de uma vez) para que uma regra ajustada valha no próximo aviso.
+ */
+async function resolveAlertPolicy(
+  attrs: SlaRuleScopeAttrs,
+): Promise<SlaAlertPolicy> {
+  try {
+    const { data, error } = await supabase
+      .from('sla_rules')
+      .select('contact_id, company, job_title, contact_type, queue_id, agent_id, metadata')
+      .eq('is_active', true)
+      .order('priority', { ascending: false });
+    if (error || !data) return DEFAULT_SLA_ALERT_POLICY;
+    return pickRuleAlertPolicy(data, attrs);
+  } catch (error) {
+    // Regra ilegível não pode silenciar aviso: cai no padrão.
+    log.warn('falha ao ler as regras de SLA — política padrão', { error });
+    return DEFAULT_SLA_ALERT_POLICY;
+  }
+}
+
+/**
  * Prazo de primeira resposta da própria linha: uma consulta por chave primária.
  *
  * Resolver a hierarquia de regras (contato > empresa > cargo > tipo > fila > agente) aqui duplicaria
@@ -119,15 +243,37 @@ export function useSLANotifications(): void {
       contactId: string,
     ): Promise<void> => {
       if (cancelled) return;
-      const prefix = severity === 'breach' ? 'sla-breach' : 'sla-warning';
-      if (!claimNotificationEvent(`${prefix}:${slaId}`, SLA_ALERT_DEDUPE_TTL_MS)) return;
 
-      const { data: contact } = await supabase
+      // Uma leitura por alerta: identidade do contato (nome/telefone) e os atributos crus que a
+      // hierarquia de regras usa. A decisão de avisar sai daí, antes de consumir o dedupe.
+      const { data: contact, error: contactError } = await supabase
         .from('contacts')
-        .select('name, phone')
+        .select('name, phone, company, job_title, contact_type, queue_id, assigned_to')
         .eq('id', contactId)
         .maybeSingle();
       if (cancelled) return;
+      // Sem o contato o alerta ainda vale (só sai sem o nome): erro de leitura não engole o aviso.
+      if (contactError) {
+        log.warn('falha ao ler o contato do alerta — segue sem o nome', { error: contactError });
+      }
+
+      const policy = await resolveAlertPolicy({
+        contactId,
+        company: contact?.company ?? null,
+        jobTitle: contact?.job_title ?? null,
+        contactType: contact?.contact_type ?? null,
+        queueId: contact?.queue_id ?? null,
+        agentId: contact?.assigned_to ?? null,
+      });
+      if (cancelled) return;
+
+      // A regra aplicável manda não avisar no risco: nada é apresentado nem reivindicado. O estouro
+      // continua avisando — `notify_on_warning` fala do aviso, não da violação do prazo.
+      if (severity === 'warning' && !policy.notifyOnWarning) return;
+
+      const prefix = severity === 'breach' ? 'sla-breach' : 'sla-warning';
+      if (!claimNotificationEvent(`${prefix}:${slaId}`, SLA_ALERT_DEDUPE_TTL_MS)) return;
+
       // Nome (ou telefone) só aparece na tela do agente; nada disso vai para log.
       const quem = contact?.name || contact?.phone || null;
 
@@ -135,7 +281,7 @@ export function useSLANotifications(): void {
         severity === 'breach'
           ? '⚠️ SLA de Primeira Resposta Violado'
           : '⚠️ SLA de Primeira Resposta em Risco';
-      const description =
+      const baseDescription =
         severity === 'breach'
           ? quem
             ? `O contato ${quem} não recebeu resposta no prazo.`
@@ -143,6 +289,10 @@ export function useSLANotifications(): void {
           : quem
             ? `O contato ${quem} está perto de estourar o prazo de primeira resposta.`
             : 'Um contato está perto de estourar o prazo de primeira resposta.';
+      // As notas de escalonamento da regra acompanham o alerta (quando a regra tem).
+      const description = policy.escalationNotes
+        ? `${baseDescription} ${policy.escalationNotes}`
+        : baseDescription;
 
       // sonner é o mesmo caminho dos alertas do chat: suporta a ação "Abrir conversa".
       const emit = severity === 'breach' ? toast.error : toast.warning;
