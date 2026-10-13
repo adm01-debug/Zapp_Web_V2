@@ -10,7 +10,7 @@ Especialista: iris (telas e componentes; retomada: o trabalho anterior veio do s
 - vermelho antes (StatusChips da base + testes novos): `bunx vitest run .../StatusChips.test.tsx .../StatusChips.identidade-profile.test.tsx .../StatusChips.contrasteChipAtendendo.test.tsx` -> 3 arquivos falhados, 25 testes falhados / 1 passado. O componente da base conta sozinho pelos próprios critérios e ignora os números filtrados, que é o defeito do cartão.
 - vermelho comportamental extra (guarda removida): com o `chipCounts.ts` da base (sem `profileId != null`) o `identidade-profile` acusa `Expected 0, Received "Em atendimento1"` no chip com perfil nulo; com a guarda restaurada, verde.
 - verde depois: `bunx vitest run .../StatusChips.test.tsx .../StatusChips.identidade-profile.test.tsx .../StatusChips.contrasteChipAtendendo.test.tsx src/hooks/inbox/__tests__/chipCounts.test.ts` -> "Test Files 4 passed (4); Tests 60 passed (60)".
-- verificação rápida: no bloco FATOS MEDIDOS PELO FECHAR abaixo.
+- verificação rápida: `zapp-verify . --rapido` -> `OK db_guard 1s; OK tipos 289s; OK lint 9s; OK migrations 2s` e `VERIFY: VERDE SEM BANCO (301s)`. Concluído, sem ressalva: nenhuma etapa ficou vermelha nem pulada; o `banco_local` não é verificado pelo modo rápido sem conjunto, igual às entregas anteriores deste cartão.
 - confirmei no código ATUAL (dia/2026-10-13) que o defeito ainda existia: o `StatusChips.tsx` da base ainda tinha o `useMemo` contando por conta própria, então reapliquei o trabalho anterior em vez de fechar sem commit.
 
 ## Esclarecimento de expectativas de teste (herança dos pais)
