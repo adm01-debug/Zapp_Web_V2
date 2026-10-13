@@ -1,10 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { getLogger } from '@/lib/logger';
 import type { ConnectionInfo, HealthLog, MessageStats, UptimeInfo, SparklineData, InstanceUptime, TimePeriod } from './types';
 import { periodMs, periodBuckets, HEALTHY_STATUSES, SLA_WINDOW_MS, AVAILABILITY_WINDOW_MS, HEALTH_LOGS_LIMIT } from './types';
 
 const log = getLogger('MonitoringData');
+
+// Ao vivo: uma mensagem nova (ou que mudou de estado) relê o painel na hora, sem
+// esperar o ciclo de 30 s do polling. Em horário de pico isso seria uma consulta
+// por mensagem, então a rajada é agrupada: a primeira releitura sai imediatamente
+// e as demais cabem em uma única releitura no fim desta janela.
+const MESSAGE_REFRESH_THROTTLE_MS = 4_000;
 
 function computeUptime(logs: HealthLog[], now: Date): UptimeInfo {
   // R2-INF-027: o SLA é das últimas 24h, independente do período selecionado.
@@ -178,7 +185,17 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
   const [sparklines, setSparklines] = useState<SparklineData>({ messages: [], latency: [], uptime: [] });
   const [instanceUptimes, setInstanceUptimes] = useState<InstanceUptime[]>([]);
 
+  // Última janela pedida à leitura: a releitura ao vivo precisa reler o MESMO
+  // período que a tela mostra (sem isto cairia no default '12h' e trocaria o
+  // gráfico sob o usuário). `generationRef` guarda a releitura mais recente.
+  const lastPeriodRef = useRef<TimePeriod>('12h');
+  const generationRef = useRef(0);
+
   const fetchData = useCallback(async (period: TimePeriod = '12h') => {
+    lastPeriodRef.current = period;
+    // Duas releituras podem se sobrepor (evento ao vivo x troca de período): a
+    // resposta da mais antiga é descartada para não sobrescrever a mais nova.
+    const generation = ++generationRef.current;
     try {
       const now = new Date();
       const since = new Date(now.getTime() - periodMs[period]);
@@ -197,6 +214,8 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         fetchMessageBuckets(messageSince, now, messageWindow.bucketSize),
         fetchMessageBuckets(since, now, periodMs[period] / 8),
       ]);
+
+      if (generation !== generationRef.current) return;
 
       if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
       if (logsRes.data) {
@@ -238,9 +257,49 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     } catch (err) {
       log.error('Monitoring fetch error:', err);
     } finally {
-      setLoading(false);
+      if (generation === generationRef.current) setLoading(false);
     }
   }, [onConnectionsUpdate]);
+
+  const fetchDataRef = useRef(fetchData);
+  useEffect(() => { fetchDataRef.current = fetchData; }, [fetchData]);
+
+  // Realtime ao vivo (V3 `realtime_message_fanout` -> V2): assina `public.messages`
+  // em UM tópico (`monitoring-messages`) compartilhado por todos os painéis
+  // montados. O wrapper cuida do tópico único e da ressincronização: ao voltar a
+  // receber eventos depois de uma queda (SUBSCRIBED após CHANNEL_ERROR/TIMED_OUT),
+  // ao `online` da janela e ao voltar o foco, ele chama `onReconnect`.
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRefreshAtRef = useRef<number | null>(null);
+
+  const refreshFromRealtime = useCallback(() => {
+    const now = Date.now();
+    const elapsed = lastRefreshAtRef.current === null ? MESSAGE_REFRESH_THROTTLE_MS : now - lastRefreshAtRef.current;
+    if (elapsed >= MESSAGE_REFRESH_THROTTLE_MS) {
+      if (refreshTimerRef.current) { clearTimeout(refreshTimerRef.current); refreshTimerRef.current = null; }
+      lastRefreshAtRef.current = now;
+      void fetchDataRef.current(lastPeriodRef.current);
+      return;
+    }
+    // Já existe uma releitura agendada para o fim da janela: a rajada inteira cabe nela.
+    if (refreshTimerRef.current) return;
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      lastRefreshAtRef.current = Date.now();
+      void fetchDataRef.current(lastPeriodRef.current);
+    }, MESSAGE_REFRESH_THROTTLE_MS - elapsed);
+  }, []);
+
+  useEffect(() => () => {
+    if (refreshTimerRef.current) { clearTimeout(refreshTimerRef.current); refreshTimerRef.current = null; }
+  }, []);
+
+  useSupabaseRealtime({
+    channelName: 'monitoring-messages',
+    table: 'messages',
+    onAll: refreshFromRealtime,
+    onReconnect: refreshFromRealtime,
+  });
 
   return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, messageStatsPartial, uptime, sparklines, instanceUptimes, fetchData };
 }
