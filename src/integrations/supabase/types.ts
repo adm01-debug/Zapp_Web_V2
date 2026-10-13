@@ -11896,6 +11896,22 @@ export type Database = {
         Args: { p_campaign_id: string; p_contact_ids: string[] }
         Returns: number
       }
+      queue_goal_metrics: {
+        Args: { p_days?: number }
+        Returns: {
+          alerts_enabled: boolean
+          assignment_rate: number
+          avg_wait_minutes: number
+          max_avg_wait_minutes: number
+          max_messages_pending: number
+          max_waiting_contacts: number
+          messages_pending: number
+          min_assignment_rate: number
+          queue_id: string
+          queue_name: string
+          waiting_contacts: number
+        }[]
+      }
       require_contact_edit_permission: {
         Args: { p_contact_id: string }
         Returns: undefined
