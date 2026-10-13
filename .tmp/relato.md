@@ -1,6 +1,7 @@
 Especialista: workersql
 
 ## O que mudou e por quê
+Contagem do diff desta entrega: 3 arquivos no total — 1 migration, 1 teste (1 arquivo de teste) e este relato.
 - `supabase/migrations/20261013210002_paridade_visibilidade_fila.sql` (novo, aditivo): alinha quatro
   pontos ao predicado único `public.is_contact_visible_to_user(contact_id, auth.uid())` — o mesmo que
   já governa a leitura de `messages`/`conversations` (inclui o membro ATIVO da fila do contato):
