@@ -11,9 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import {
   Bell, Volume2, VolumeX, Play, Moon,
   AlertTriangle, MessageSquare, AtSign, RotateCcw,
-  CheckCircle2, TrendingDown, Activity, Mic,
+  CheckCircle2, TrendingDown, Activity, Mic, Wifi, Smartphone, Mail,
 } from 'lucide-react';
 import { NotificationSettings, SoundTypeOption } from '@/hooks/system/useNotificationSettings';
+import { useConnectionAlertPreferences } from '@/hooks/system/useConnectionAlertPreferences';
 import { playNotificationSound, SoundType, NotificationType } from '@/utils/notificationSounds';
 import { cn } from '@/lib/utils';
 
@@ -237,6 +238,57 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
           </div>
         </CardContent>
       )}
+    </Card>
+  );
+}
+
+/**
+ * PD-38 — cartão "Alertas de Conexão" da tela de Notificações.
+ *
+ * Só os CANAIS moram aqui: `push_enabled` (notificação do navegador) e
+ * `email_enabled` (e-mail). O TIPO do aviso (conexão degradada / desconectada),
+ * que é o interruptor mestre, é lido pelo banner dentro do app
+ * (EvolutionDisconnectBanner) — este cartão não o duplica.
+ * Cada interruptor grava na hora pelo hook (upsert otimista com rollback).
+ */
+export function ConnectionAlertPreferencesCard() {
+  const { preferences, updatePreference } = useConnectionAlertPreferences();
+
+  return (
+    <Card className="border-secondary/20 bg-card">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-warning/15 flex items-center justify-center">
+            <Wifi className="w-5 h-5 text-warning" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Alertas de Conexão</CardTitle>
+            <CardDescription>Por onde avisar quando a conexão de WhatsApp cair</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <NotifRow
+          icon={Smartphone}
+          iconColor="text-primary"
+          title="Navegador"
+          desc="Notificação do navegador quando a conexão cair"
+          enabled={preferences.push_enabled}
+          onToggle={(checked) => updatePreference({ push_enabled: checked })}
+        />
+        <Separator />
+        <NotifRow
+          icon={Mail}
+          iconColor="text-info"
+          title="E-mail"
+          desc="Aviso por e-mail quando a conexão cair"
+          enabled={preferences.email_enabled}
+          onToggle={(checked) => updatePreference({ email_enabled: checked })}
+        />
+        <p className="text-xs text-muted-foreground">
+          Estas preferências valem apenas para os avisos de conexão de WhatsApp.
+        </p>
+      </CardContent>
     </Card>
   );
 }
