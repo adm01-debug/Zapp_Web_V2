@@ -117,8 +117,8 @@ describe('AdvancedMessageMenu — Status/Story só para admin/supervisor (PE-57)
     expect(sendStatusMessageMock).not.toHaveBeenCalled();
     expect(screen.getByText(/aparece para todos os seus contatos/i)).toBeTruthy();
 
-    const confirmar = screen.getAllByRole('button', { name: 'Publicar' }).at(-1)!;
-    fireEvent.click(confirmar);
+    const botoes = screen.getAllByRole('button', { name: 'Publicar' });
+    fireEvent.click(botoes[botoes.length - 1]);
 
     await waitFor(() =>
       expect(sendStatusMessageMock).toHaveBeenCalledWith('wpp1', {
