@@ -21,7 +21,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261011000015_fix_message_reactions_select_policy_user_id_type.sql"
+migration="$repo_root/supabase/migrations/20261013133412_fix_message_reactions_select_policy_user_id_type.sql"
 postgres_image="${N142_REACTIONS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-n142-reactions-test-$$"
 

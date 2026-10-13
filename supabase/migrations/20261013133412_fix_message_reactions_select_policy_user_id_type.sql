@@ -1,4 +1,4 @@
--- 20261011000015_fix_message_reactions_select_policy_user_id_type
+-- 20261013133412_fix_message_reactions_select_policy_user_id_type
 -- Rollback: DROP POLICY IF EXISTS "message_reactions_select_policy" ON public.message_reactions; CREATE POLICY "message_reactions_select_policy" ON public.message_reactions FOR SELECT TO authenticated USING (is_admin_or_supervisor(auth.uid()) OR user_id = auth.uid() OR contact_id IN (SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid()))));
 -- Fix (N-142): a policy message_reactions_select_policy comparava user_id com
 -- auth.uid(), mas message_reactions.user_id guarda public.profiles.id (perfil),
