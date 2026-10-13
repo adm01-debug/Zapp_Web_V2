@@ -15,8 +15,11 @@
  *  - a prioridade é um radiogroup de verdade: Média é o padrão e as setas
  *    trocam a escolha, com volta no fim.
  */
-import '@/test/mocks/tarefas';
-
+// Sem `import '@/test/mocks/tarefas'`: o harness compartilhado é criado por outro
+// cartão; este teste NÃO depende dele (o modal não toca Supabase/useAuth aqui —
+// o único serviço externo, `useContactsSearch`, é trocado logo abaixo). Trazer o
+// harness criava uma dependência entre cartões: empilhado sem ele, o arquivo
+// falhava no import e derrubava a suíte inteira (era o defeito do refazer).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
 import { render, screen, cleanup, fireEvent, within, waitFor } from '@testing-library/react';
