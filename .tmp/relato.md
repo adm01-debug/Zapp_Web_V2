@@ -10,9 +10,10 @@ Especialista: workertestes
   `admin_add_role`. Sessão FALSA (`installFakeSession`), REST/RPC/Edge dublados em `page.route` (a fronteira) — nunca o
   sujeito. Antivacuidade: o `combobox` da linha tem de começar no papel ATUAL antes de trocar, e o `WeakMap`
   `REGISTRO_POR_PAGINA` + `afterEach` reprovam o teste se alguma requisição real escapar (`redeBarrada` vazio).
-- `playwright.config.ts`: projeto novo `chromium-admin` (`testMatch: admin-papeis`) com `storageState` VAZIO explícito, e
-  `admin-papeis\.spec\.ts` somado ao `testIgnore` do projeto base — sem isso o spec rodaria duas vezes. É config de
-  teste, não código de produção.
+- `playwright.config.ts` (INDISPENSÁVEL, e não é código de produção): o cartão pede um `e2e/admin-*.spec.ts` novo e o
+  validador do próprio repositório (`scripts/ci/ci-e2e-projects.unit.mjs` + `playwright-config-e81.unit.mjs`) exige que
+  todo spec pertença a um projeto NOMEADO; sem a linha do projeto `chromium-admin` (e sem somar `admin-papeis\.spec\.ts`
+  ao `testIgnore` do projeto base) o spec ou não é executado ou roda duas vezes na mesma sessão.
 - `supabase/functions/approve-password-reset/index.test.ts`: NÃO escrevi de novo — ele JÁ EXISTE no workspace, veio no
   commit `39fa1b79a` (`git merge-base --is-ancestor 39fa1b79a HEAD` verdade) e já cobre os 4 casos pedidos: papel
   (supervisor 403), status (já processada 409), aprovação dupla / auto-aprovação (403) e resposta sem link
