@@ -11634,6 +11634,19 @@ export type Database = {
         Args: { p_dispatch_id: string }
         Returns: boolean
       }
+      my_active_sessions: {
+        Args: never
+        Returns: {
+          auth_session_id: string
+          device_id: string
+          id: string
+          ip_address: string
+          is_current: boolean
+          last_activity_at: string
+          started_at: string
+          user_agent: string
+        }[]
+      }
       my_calls_kpi: {
         Args: {
           p_channel?: string
