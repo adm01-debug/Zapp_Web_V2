@@ -41,11 +41,11 @@ function renderDialog() {
 }
 
 function banner() {
-  return screen.getByTestId('new-task-coerencia');
+  return screen.getByTestId('nt-coerencia');
 }
 
 function ajustarBtn() {
-  return screen.queryByTestId('new-task-coerencia-ajustar') as HTMLButtonElement | null;
+  return screen.queryByTestId('nt-coerencia-ajustar') as HTMLButtonElement | null;
 }
 
 function classeDoBanner() {
@@ -78,7 +78,7 @@ describe('NewTaskDialog — coerência prazo × lembrete (etapa 163)', () => {
     renderDialog();
     definirPrazo('2026-10-20');
 
-    expect(screen.queryByTestId('new-task-coerencia')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('nt-coerencia')).not.toBeInTheDocument();
   });
 
   it('VERDE: lembrete no futuro e antes do prazo mostra a confirmação e nenhum ajuste', () => {
