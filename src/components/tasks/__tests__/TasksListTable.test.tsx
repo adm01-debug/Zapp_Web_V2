@@ -13,6 +13,8 @@
  *     a conversa sem abrir os detalhes;
  *  6. as 4 colunas que as etapas 056–060 vão preencher já existem como célula.
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within, fireEvent, cleanup } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -44,6 +46,89 @@ function buckets(over: Partial<BucketsByDue> = {}): BucketsByDue {
 
 /** A primeira renderização não anima a entrada (o ref é o mesmo do modo). */
 const temMontado = { current: true };
+
+/**
+ * Medição dos dois pontos da recusa, sem string literal no lugar de conta:
+ *
+ *  - ALTURA DE ALVO: lida das classes REAIS que o elemento renderiza. No Tailwind
+ *    `1` = 0,25rem = 4 px, então `h-10`/`min-h-10` valem 40 px (a regra de tela).
+ *  - CONTRASTE: calculado a partir dos tokens REAIS de `src/styles/tokens.css`,
+ *    nos dois temas, compondo a superfície translúcida do grupo (`bg-muted/30`
+ *    sobre `bg-background`) como o navegador compõe — sRGB, alfa sobre o fundo.
+ */
+const REM_PX = 16;
+
+function alturaDeclarada(el: Element): number {
+  const px = (el.getAttribute('class') ?? '')
+    .split(/\s+/)
+    .map((c) => /^(?:min-)?h-(\d+(?:\.\d+)?)$/.exec(c))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => Number(m[1]) * 0.25 * REM_PX);
+  return Math.max(0, ...px);
+}
+
+/** Valores de `:root` (claro) e `.dark` lidos do próprio tokens.css — nada digitado à mão. */
+function tokensDoTema(tema: 'claro' | 'escuro'): Record<string, string> {
+  const css = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8');
+  const inicio = css.indexOf(tema === 'claro' ? ':root {' : '.dark {');
+  if (inicio < 0) throw new Error(`bloco ${tema} não encontrado em tokens.css`);
+  const bloco = css.slice(inicio, css.indexOf('\n}', inicio));
+  const tokens: Record<string, string> = {};
+  for (const m of bloco.matchAll(/--([a-z-]+):\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%\s*;/g)) {
+    tokens[`--${m[1]}`] = `${m[2]} ${m[3]}% ${m[4]}%`;
+  }
+  return tokens;
+}
+
+type RGB = [number, number, number];
+
+function hslParaRgb(valor: string): RGB {
+  const [h, s, l] = valor.split(' ').map((p) => parseFloat(p));
+  const lum = l / 100;
+  const c = (1 - Math.abs(2 * lum - 1)) * (s / 100);
+  const hLinha = (((h % 360) + 360) % 360) / 60;
+  const x = c * (1 - Math.abs((hLinha % 2) - 1));
+  const m = lum - c / 2;
+  const base: RGB =
+    hLinha < 1 ? [c, x, 0] :
+    hLinha < 2 ? [x, c, 0] :
+    hLinha < 3 ? [0, c, x] :
+    hLinha < 4 ? [0, x, c] :
+    hLinha < 5 ? [x, 0, c] : [c, 0, x];
+  return [base[0] + m, base[1] + m, base[2] + m];
+}
+
+/** `cor` com alfa sobre `fundo` (a composição que o navegador faz, em sRGB). */
+function sobrepor(cor: RGB, fundo: RGB, alfa: number): RGB {
+  return [0, 1, 2].map((i) => cor[i] * alfa + fundo[i] * (1 - alfa)) as RGB;
+}
+
+function luminancia([r, g, b]: RGB): number {
+  const canal = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b);
+}
+
+function contraste(a: RGB, b: RGB): number {
+  const [claro, escuro] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+  return (claro + 0.05) / (escuro + 0.05);
+}
+
+const ESCALA_DE_TEXTO = new Set([
+  'text-3xs', 'text-2xs', 'text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl',
+  'text-left', 'text-center', 'text-right', 'text-justify',
+]);
+
+/** O par de cor de texto que o elemento REALMENTE aplica, como nome de token. */
+function tokenDeTexto(el: Element): string {
+  for (const classe of (el.getAttribute('class') ?? '').split(/\s+/)) {
+    const arbitrario = /^text-\[hsl\(var\((--[a-z-]+)\)\)\]$/.exec(classe);
+    if (arbitrario) return arbitrario[1];
+    if (ESCALA_DE_TEXTO.has(classe)) continue;
+    const simples = /^text-([a-z][a-z-]*)$/.exec(classe);
+    if (simples) return `--${simples[1]}`;
+  }
+  throw new Error(`sem classe de cor de texto em "${el.getAttribute('class')}"`);
+}
 
 interface Acoes {
   onOpen: ReturnType<typeof vi.fn>;
@@ -158,7 +243,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
     expect(acoes.onOpen).not.toHaveBeenCalled();
   });
 
-  it('4b) a linha VENCIDA/concluída usa o checkbox de reabrir', () => {
+  it('4b) a linha CONCLUÍDA (7 dias) usa o checkbox de reabrir', () => {
     const feita = item({ id: 'c1', title: 'Já foi', status: 'done', completed_at: new Date().toISOString() });
     const acoes = renderTabela(buckets({ done7d: [feita] }));
 
@@ -224,5 +309,78 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
     expect(screen.getByRole('table')).toBeTruthy();
     expect(screen.getByTestId('task-row').getAttribute('data-item-id')).toBe('n1');
     expect(screen.getByText('Na tabela')).toBeTruthy();
+  });
+
+  it('7) o título é um <button> nativo: foco pelo teclado e um clique só abrem os detalhes', () => {
+    const alvo = item({ id: 'kb1', title: 'Abrir pelo teclado' });
+    const acoes = renderTabela(buckets({ noDue: [alvo] }));
+
+    const titulo = within(screen.getByTestId('task-row')).getByRole('button', { name: 'Abrir pelo teclado' });
+
+    // Botão NATIVO (não um <span>, não tabIndex/onKeyDown à mão): Enter/Espaço, foco e o
+    // anel de foco vêm do navegador. Era o que faltava para o teclado alcançar o Sheet na
+    // Lista — o modo padrão — depois da troca para tabela.
+    expect(titulo.tagName).toBe('BUTTON');
+    expect(titulo.getAttribute('type')).toBe('button');
+    expect(titulo.className).toContain('focus-visible:ring-2');
+
+    titulo.focus();
+    expect(document.activeElement).toBe(titulo);
+
+    // O título abre UMA vez: o `stopPropagation` impede o clique da linha de somar.
+    fireEvent.click(titulo);
+    expect(acoes.onOpen).toHaveBeenCalledTimes(1);
+    expect(acoes.onOpen).toHaveBeenCalledWith(alvo);
+  });
+
+  it('8) todo alvo (grupo, dica, título, contato e "ver mais") declara 40 px ou mais', () => {
+    renderTabela(
+      buckets({
+        overdue: [item({ id: 'o1' })],
+        upcoming: [item({ id: 'u1', due_date: new Date(2026, 9, 20, 12, 0).toISOString() })],
+        today: [item({
+          id: 'a1',
+          title: 'Alvo medido',
+          contact: { id: 'ct1', name: 'Maria Souza', phone: null, avatar_url: null },
+        })],
+        doneOlder: [item({ id: 'c9', status: 'done' })],
+      }),
+      new Date(2026, 9, 11, 10, 0)
+    );
+
+    // O rodapé "ver mais (30 dias)" só existe com concluídas de 8 a 30 dias e o grupo aberto.
+    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+
+    const alvos: Array<[string, HTMLElement]> = [
+      ['recolher do grupo', screen.getByRole('button', { name: /Atrasadas/ })],
+      ['dica Info do grupo', screen.getByRole('button', { name: /Ordenado por prazo/ })],
+      ['título da linha', screen.getByRole('button', { name: 'Alvo medido' })],
+      ['contato da linha', screen.getByRole('button', { name: /Maria Souza/ })],
+      ['"ver mais (30 dias)"', screen.getByRole('button', { name: /ver mais \(30 dias\)/ })],
+    ];
+
+    for (const [nome, el] of alvos) {
+      expect(alturaDeclarada(el), `${nome}: ${alturaDeclarada(el)}px`).toBeGreaterThanOrEqual(40);
+    }
+
+    // A dica `Info` também ganha foco visível (antes não tinha nenhum).
+    expect(alvos[1][1].className).toContain('focus-visible:ring-2');
+  });
+
+  it('9) o título "Hoje" aplica o par de TEXTO do aviso e passa AA contra o fundo do grupo', () => {
+    renderTabela(buckets({ today: [item({ id: 'h1' })] }), new Date(2026, 9, 11, 10, 0));
+
+    const botao = screen.getByRole('button', { name: /^Hoje/ });
+    // A superfície real por baixo do título é a linha do grupo: `bg-muted/30` sobre `bg-background`.
+    expect((botao.closest('tr') as HTMLElement).className).toContain('bg-muted/30');
+    // O ícone do grupo já usava o par de TEXTO (`--warning-text`); o título tem de usar o mesmo.
+    expect(tokenDeTexto(botao)).toBe('--warning-text');
+
+    for (const tema of ['claro', 'escuro'] as const) {
+      const t = tokensDoTema(tema);
+      const superficie = sobrepor(hslParaRgb(t['--muted']), hslParaRgb(t['--background']), 0.3);
+      const razao = contraste(hslParaRgb(t[tokenDeTexto(botao)]), superficie);
+      expect(razao, `${tema}: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });
