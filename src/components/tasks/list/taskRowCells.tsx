@@ -103,7 +103,7 @@ const OPCOES_ADIAR: Array<{ label: string; minutes: number | 'tomorrow9' }> = [
 /**
  * Etapa 059 (auditoria) — o alvo e o foco das ações do menu do sino. O gatilho
  * da linha media 40 px com anel de foco, mas os botões de adiar/remover/escolher
- * do popover ficavam com os ~28 px do `py-1.5` e sem anel: alvo perdido no toque
+ * do popover ficavam com os ~32 px do `py-1.5` (12 px de padding + 20 px de linha) e sem anel: alvo perdido no toque
  * e sem retorno no teclado. `min-h-10` (mesmo 40 px dos gatilhos) + o
  * `focus-visible:ring-2` do design system fecham os dois; não é componente novo.
  */
