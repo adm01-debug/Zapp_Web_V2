@@ -38,24 +38,26 @@ export function CSATAutoConfig() {
   // `client_message_id` é o id do encerramento (contrato da Edge
   // `csat-auto-send`). Os encerramentos recentes dão os ids candidatos; entre
   // eles, a mensagem mais nova é a última pesquisa enfileirada.
-  const { data: ultimoEnvio, isLoading: carregandoUltimoEnvio } = useQuery({
+  const { data: ultimoEnvio, isLoading: carregandoUltimoEnvio, isError: erroUltimoEnvio } = useQuery({
     queryKey: ['csat-ultimo-envio'],
     queryFn: async () => {
-      const { data: encerramentos } = await supabase
+      const { data: encerramentos, error: erroEncerramentos } = await supabase
         .from('conversation_closures')
         .select('id')
         .order('created_at', { ascending: false })
         .limit(25);
+      if (erroEncerramentos) throw erroEncerramentos;
       const ids = (encerramentos ?? [])
         .map((encerramento) => encerramento.id)
         .filter((id): id is string => Boolean(id));
       if (ids.length === 0) return null;
-      const { data: convites } = await supabase
+      const { data: convites, error: erroConvites } = await supabase
         .from('messages')
         .select('created_at')
         .in('client_message_id', ids)
         .order('created_at', { ascending: false })
         .limit(1);
+      if (erroConvites) throw erroConvites;
       return convites?.[0]?.created_at ?? null;
     },
   });
@@ -136,9 +138,11 @@ export function CSATAutoConfig() {
           <p className="text-xs text-muted-foreground mt-2" data-testid="csat-ultimo-envio">
             {carregandoUltimoEnvio
               ? 'Verificando o último envio…'
-              : ultimoEnvio
-                ? `Último envio: ${new Date(ultimoEnvio).toLocaleString('pt-BR')}`
-                : 'Nenhuma pesquisa enviada ainda.'}
+              : erroUltimoEnvio
+                ? 'Não foi possível verificar o último envio.'
+                : ultimoEnvio
+                  ? `Último envio: ${new Date(ultimoEnvio).toLocaleString('pt-BR')}`
+                  : 'Nenhuma pesquisa enviada ainda.'}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">

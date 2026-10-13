@@ -17,6 +17,7 @@ const banco = vi.hoisted(() => ({
   encerramentos: [] as { id: string }[],
   ultimoConvite: null as string | null,
   filtroIds: null as string[] | null,
+  erroLeitura: false,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -31,7 +32,12 @@ vi.mock('@/integrations/supabase/client', () => {
       return {
         select: () => ({
           order: () => ({
-            limit: () => Promise.resolve({ data: banco.encerramentos, error: null }),
+            limit: () =>
+              Promise.resolve(
+                banco.erroLeitura
+                  ? { data: null, error: new Error('falha de leitura') }
+                  : { data: banco.encerramentos, error: null },
+              ),
           }),
         }),
       };
@@ -110,6 +116,7 @@ describe('CSATAutoConfig — sincronização do formulário com a configuração
     banco.encerramentos = [];
     banco.ultimoConvite = null;
     banco.filtroIds = null;
+    banco.erroLeitura = false;
   });
 
   it('mostra no formulário os valores da configuração carregada', async () => {
@@ -202,6 +209,18 @@ describe('CSATAutoConfig — sincronização do formulário com a configuração
 
     await waitFor(() =>
       expect(screen.getByTestId('csat-ultimo-envio')).toHaveTextContent('Nenhuma pesquisa enviada ainda.'),
+    );
+  });
+
+  it('avisa quando a leitura do último envio falha, em vez de dizer que não houve envio', async () => {
+    banco.config = { ...CONFIG_SALVA };
+    banco.erroLeitura = true;
+    renderConfig();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('csat-ultimo-envio')).toHaveTextContent(
+        'Não foi possível verificar o último envio.',
+      ),
     );
   });
 
