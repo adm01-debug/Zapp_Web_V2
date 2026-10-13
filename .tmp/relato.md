@@ -1,27 +1,24 @@
-Especialista: workertestes
+Especialista: workersql
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `supabase/migrations/20261013235907_saved_filters_inbox_limites.sql` (NOVO, aditivo): três limites dos presets de filtro do inbox, cada um com o defeito do cartão:
+  1. **Nome único sem curinga.** Índice único `saved_filters_user_entity_lower_name_key` em `(user_id, entity_type, lower(name))`. Resolve a dependência de `.ilike` (em que `%` e `_` viram curinga): o `lower(name)` compara o nome como texto, não como padrão.
+  2. **Teto de 20 por usuário.** Função `public.enforce_saved_filters_inbox_limite()` (SECURITY INVOKER, `search_path` fixo) + gatilho `BEFORE INSERT OR UPDATE`. Conta as linhas do mesmo `(user_id, entity_type)` **excluindo `id <> new.id`** — por isso editar uma linha no teto continua permitido, e só a 21ª entrada é recusada, com erro claro (`Limite de 20 filtros salvos do inbox por usuário atingido.`, `ERRCODE check_violation`). Usa `pg_advisory_xact_lock` por `(user_id, 'inbox_filters')` para que duas gravações simultâneas não passem juntas pelo `count(*)`.
+  3. **RLS.** A policy de compartilhamento `"Users can view shared filters"` passa a ter `USING (is_shared = true AND entity_type <> 'inbox_filters')`: um preset de inbox nunca aparece para outro usuário, nem com `is_shared = true`. As policies de "own" ficam intactas.
+- **Escopo do teto:** só vale para `entity_type = 'inbox_filters'` (tipo novo, sem dado legado). Os demais tipos de filtro salvo seguem sem teto, de propósito, para não quebrar dado existente no `BEFORE UPDATE`. O `${...}` do gatilho é agnóstico ao tipo.
+- `supabase/tests/saved_filters_inbox_limites.sql` (NOVO): a prova. Roda os papéis REAIS: `set local role authenticated` + claims de JWT (nunca como postgres/superusuário). Escreve dentro de uma transação e dá `ROLLBACK` no fim (não deixa dado). `\set ON_ERROR_STOP on`: vermelho vira código de saída ≠ 0.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+Comandos no banco LOCAL descartável (`zapp-db-local psql <cópia> v2-261013161910b7 < arquivo`); produção não foi tocada.
+- vermelho antes (estado pré-correção no banco local: gatilho e índice removidos e policy antiga restaurada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=3` · `ERROR: saved_filters_inbox_limites T1 FALHOU: nome repetido em caixa diferente foi aceito`
+- verde depois (migration aplicada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=0` · `saved_filters_inbox_limites: OK (nome unico case-insensitive; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario)`
+- rollback executável (`-- Rollback:` da migration rodado dentro de transação e revertido): `RC=0` · `rollback: OK (desfaz gatilho, funcao, indice e restaura a policy antiga)`; conferido depois que gatilho e índice seguem aplicados.
+- `hermes-db-migrar <arquivo>` → `APLICADA no banco LOCAL 'v2-261013161910b7'`.
+
+O verde cobre as quatro provas do CRITÉRIO DE PRONTO: 20 presets aceitos, 21ª recusada com erro claro, nome repetido em caixa diferente recusado (`pRESET 1` vs `Preset 1`), e o usuário B não lê o preset de inbox de A (só enxerga o compartilhado de outro `entity_type`). O teste chama o índice e o gatilho REAIS; some a correção e ele fica vermelho (acima).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei `src/hooks/chat/useSavedFilters.ts` (o `.or('user_id.eq...,is_shared.eq.true')` e o aviso de UI são do cartão filho do hugo). A migration é compatível com a leitura atual.
+- Não criei `scripts/db-audit/*.test.sh` novo: isso exigiria passo em `.github/workflows/db-guard.yml` (fora dos arquivos que o cartão permite) e viraria órfão no inventário. A prova ficou em `supabase/tests/`, que é o local de suíte SQL do repositório.
+- Não revoguei o `SELECT` de `anon` em `saved_filters` (aparece em `scripts/db-audit/grants-baseline.json`): é anterior a este cartão, a RLS já bloqueia as linhas para `anon`, e mexer em GRANT muda o baseline. Registro como achado fora do escopo.
+- Não impus a regra de "nome 1-40 caracteres" como CHECK de tabela: o O QUE FAZER pede índice único, teto de 20 e ajuste de RLS (é o que a migration faz). Um CHECK largo atingiria todos os `entity_type` e poderia falhar sobre dado legado de outro tipo; se a paridade exigir, a validação de tamanho é da camada do hook de filtros (cartão do hugo), não de uma trava de tabela.
