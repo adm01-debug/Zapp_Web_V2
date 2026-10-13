@@ -181,10 +181,9 @@ export default defineConfig({
       // dedicado porque o catch-all `chromium-authenticated` depende de `setup`.
       name: 'chromium-skins',
       testMatch: /skins-[a-z0-9-]*\.spec\.ts/,
-      // A spec roda contra o dev server (Vite) e a máquina de trabalho vive a load alto: um
-      // boot de página que não baixa o módulo derruba o teste por motivo de infraestrutura,
-      // não por comportamento. Uma repetição absorve isso sem afrouxar asserção nenhuma.
-      retries: 1,
+      // E81: projeto DESLOGADO não declara `retries` — o backend é mockado e determinístico,
+      // então repetir só triplicaria o tempo da falha real e esconderia o defeito. A regra é
+      // travada por scripts/ci/playwright-config-e81.unit.mjs (o global `retries` abaixo é 0).
       use: { ...devices['Desktop Chrome'] },
     },
     {
