@@ -19,6 +19,9 @@ Especialista: iris (area-front-componentes)
 - verde depois: `npx vitest run src/hooks/system/__tests__/useBackendHealth.test.ts src/hooks/connections/__tests__/useDegradedConnections.test.tsx src/components/ui/__tests__/global-connection-banners.test.tsx src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx` → `Test Files 4 passed (4); Tests 37 passed (37)`.
 - tipos: `npx tsc --noEmit -p tsconfig.app.json` → exit 0, zero linha de erro. Lint dos arquivos NOVOS: `npx eslint` neles → exit 0, zero aviso. O `src/pages/Index.tsx` continua com as 2 ocorrências que JÁ estavam no baseline (`scripts/ci/eslint-baseline.json`, `react-hooks/set-state-in-effect` na linha 101 e `no-restricted-imports` na 5); meu diff ali só acrescentou o lazy import e a montagem, sem tocar nessas linhas.
 
+## Exceção de arquivo (o juiz apontou; é deliberado)
+- `src/pages/Index.tsx` (4 linhas: lazy import + `<GlobalConnectionBanners …/>`) e o mock do lazy em `src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx` NÃO estão na lista literal de arquivos do cartão, mas são indispensáveis: o layout principal que monta **todos** os avisos globais da família é o `Index.tsx` (é lá que vivem `OfflineIndicator`, `ConnectionToast`, `EvolutionDisconnectBanner` e `MfaAdminNudge`, nas linhas logo acima da minha). O critério do cartão ("avisos montados no layout principal") não tem como ser cumprido dentro de `src/components` — nenhum componente é montado globalmente sem passar por ele. O mock no teste irmão é só para o teste de teclado não subir o realtime do store de conexões. Nenhum outro arquivo fora da lista foi tocado.
+
 ## O que NÃO fiz e por quê
 - Não toquei em Edge Function, migration, RLS nem no `offline-indicator` (fora do escopo).
 - O hook de polling ficou em `src/hooks/system/useBackendHealth.ts` junto do banner, como o cartão permite; se o coordenador quiser a divisão exata do UI-05 (hook do Hugo × banner), ele pode ser extraído sem alterar o componente.
