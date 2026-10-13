@@ -67,6 +67,12 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     'refresh-data': () => {
       window.location.reload();
     },
+    // t_8e895114 — `transfer-chat` era anunciado (Ctrl+Shift+T) e não tinha
+    // tratador. Abre o mesmo TransferDialog do header pelo evento que o
+    // ChatPanel já escutava (o painel do contato o dispara).
+    'transfer-chat': () => {
+      document.dispatchEvent(new CustomEvent('open-transfer-dialog'));
+    },
     'toggle-sidebar': () => {
       document.dispatchEvent(new CustomEvent('toggle-sidebar'));
     },

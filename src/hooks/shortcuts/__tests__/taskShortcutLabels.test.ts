@@ -39,9 +39,15 @@ describe('etapa 84 — rótulos de Tarefas fora do chunk de entrada', () => {
   });
 
   it('os atalhos globais continuam com nome e descrição inline', () => {
+    // Havia também um piso de contagem (>20), que provava que o corte do budget
+    // não tinha vazado para os globais. t_8e895114 removeu os atalhos que eram
+    // anunciados sem nenhum tratador, então o piso perdeu sentido: o contrato é
+    // o rótulo inline, e ele continua valendo para TODO global.
     const globais = DEFAULT_SHORTCUTS.filter(s => !s.scope);
-    expect(globais.length).toBeGreaterThan(20);
+    expect(globais.length).toBeGreaterThan(0);
     expect(globais.every(s => !!s.name && !!s.description)).toBe(true);
+    // e o corte continua sendo só dos 7 de Tarefas
+    expect(atalhosDoModulo().every(s => !s.name && !s.description)).toBe(true);
   });
 
   it('o chunk sob demanda cobre exatamente os 7 ids, com os textos originais', () => {
