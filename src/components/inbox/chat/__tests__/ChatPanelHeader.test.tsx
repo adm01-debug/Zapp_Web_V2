@@ -14,10 +14,11 @@ vi.mock('@/hooks/sla/useApplicableSLA', () => ({ useApplicableSLA: mocks.useAppl
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/lib/popupManager', () => ({ openChatPopup: vi.fn() }));
 vi.mock('@/components/inbox/SLAIndicator', () => ({
-  SLAIndicator: ({ firstResponseMinutes }: { firstResponseMinutes?: number }) => (
+  SLAIndicator: ({ firstResponseMinutes, firstMessageAt }: { firstResponseMinutes?: number; firstMessageAt?: Date | string }) => (
     <div
       data-testid="sla-indicator"
       data-minutes={firstResponseMinutes === undefined ? '' : String(firstResponseMinutes)}
+      data-first-message-at={firstMessageAt instanceof Date ? firstMessageAt.toISOString() : String(firstMessageAt ?? '')}
     />
   ),
 }));
@@ -289,6 +290,56 @@ describe('ChatPanelHeader', () => {
       </Wrapper>
     );
     expect(screen.getByTestId('sla-indicator')).toHaveAttribute('data-minutes', '5');
+  });
+
+  // ── PB-34: base do cronometro = inicio do ciclo aberto ────────────────────
+
+  it('PB-34: com nova mensagem do cliente, o timer comeca nela (nao no createdAt do contato)', () => {
+    const conversation = {
+      ...mockConversation,
+      createdAt: '2026-01-01T00:00:00Z',
+      lastMessage: {
+        content: 'Ainda preciso', timestamp: new Date(), sender: 'contact', created_at: '2026-06-02T14:00:00Z',
+      },
+      contact: {
+        ...mockConversation.contact,
+        conversation_sla: [{ first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' }],
+      },
+    } as unknown as Conversation;
+
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={conversation} />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('sla-indicator')).toHaveAttribute(
+      'data-first-message-at',
+      '2026-06-02T14:00:00.000Z'
+    );
+  });
+
+  it('PB-34: sem ciclo aberto, mantem a base anterior do cabecalho (createdAt)', () => {
+    const conversation = {
+      ...mockConversation,
+      createdAt: '2026-01-01T00:00:00Z',
+      lastMessage: { content: 'Combinado', timestamp: new Date(), sender: 'agent', created_at: '2026-01-01T00:10:00Z' },
+      contact: {
+        ...mockConversation.contact,
+        conversation_sla: [{ first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' }],
+      },
+    } as unknown as Conversation;
+
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={conversation} />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('sla-indicator')).toHaveAttribute(
+      'data-first-message-at',
+      '2026-01-01T00:00:00Z'
+    );
   });
 
   // ── N-048: nome longo acessível e nível de título correto ──────

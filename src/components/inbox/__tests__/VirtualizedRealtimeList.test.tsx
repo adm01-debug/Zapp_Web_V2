@@ -260,6 +260,71 @@ describe('VirtualizedRealtimeList — SLA não é 1:1 com o contato', () => {
   });
 });
 
+describe('VirtualizedRealtimeList — ciclo aberto do cronometro de SLA (PB-34)', () => {
+  function comMensagens(
+    conversation: ConversationWithMessages,
+    mensagens: Array<{ entrada: boolean; em: string; status?: string }>
+  ): ConversationWithMessages {
+    conversation.messages = mensagens.map((m, i) => ({
+      id: `m-${i}`,
+      contact_id: conversation.contact.id,
+      sender: m.entrada ? 'contact' : 'agent',
+      created_at: m.em,
+      status: m.status ?? (m.entrada ? null : 'sent'),
+      is_deleted: false,
+      content: '',
+    })) as unknown as ConversationWithMessages['messages'];
+    return conversation;
+  }
+
+  it('cliente escreveu depois da resposta: o timer comeca na mensagem nova, nao no atendimento antigo', () => {
+    const conversation = comMensagens(
+      withConversationSla(makeConversation({ id: 'c1' }), [
+        { first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' },
+      ]),
+      [
+        { entrada: true, em: '2026-01-01T00:00:00Z' },
+        { entrada: false, em: '2026-01-01T00:10:00Z' },
+        { entrada: true, em: '2026-06-02T14:00:00Z' },
+      ]
+    );
+
+    renderList([conversation]);
+
+    expect(mocks.slaIndicator).toHaveBeenCalledTimes(1);
+    expect(mocks.slaIndicator).toHaveBeenCalledWith(
+      expect.objectContaining({ firstMessageAt: new Date('2026-06-02T14:00:00Z') })
+    );
+  });
+
+  it('cliente respondido e sem nova mensagem: a linha nao tem timer', () => {
+    const conversation = comMensagens(
+      withConversationSla(makeConversation({ id: 'c1' }), [
+        { first_message_at: '2026-01-01T00:00:00Z', first_response_at: '2026-01-01T00:10:00Z' },
+      ]),
+      [{ entrada: true, em: '2026-01-01T00:00:00Z' }, { entrada: false, em: '2026-01-01T00:10:00Z' }]
+    );
+
+    renderList([conversation]);
+
+    expect(screen.getByTestId('conversation-item')).toBeInTheDocument();
+    expect(mocks.slaIndicator).not.toHaveBeenCalled();
+  });
+
+  it('linha aberta obsoleta (resposta humana registrada depois) nao mantem o timer preso', () => {
+    const conversation = comMensagens(
+      withConversationSla(makeConversation({ id: 'c1' }), [
+        { first_message_at: '2026-09-24T11:00:00Z', first_response_at: null },
+      ]),
+      [{ entrada: true, em: '2026-09-24T11:00:00Z' }, { entrada: false, em: '2026-09-24T11:10:00Z' }]
+    );
+
+    renderList([conversation]);
+
+    expect(mocks.slaIndicator).not.toHaveBeenCalled();
+  });
+});
+
 describe('VirtualizedRealtimeList — prazo granular de SLA por conversa (R2-SLA-003)', () => {
   // Contato com histórico (1 linha fechada + 1 aberta) e todos os atributos que
   // alimentam o resolver de SLA.

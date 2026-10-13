@@ -20,6 +20,7 @@ import {
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
+import { resolveFirstResponseCycleStart, type SlaCycleRow } from '@/adapters/inboxAdapter';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
@@ -76,6 +77,15 @@ function ChatPanelHeaderBase({
     agentId: conversation.assignedTo?.id ?? null,
   });
   const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
+  // PB-34: a base do cronometro e o INICIO DO CICLO ABERTO (linha aberta do
+  // conversation_sla ou a ultima mensagem do cliente ainda sem resposta) — o
+  // createdAt do contato prendia o timer num atendimento antigo ja resolvido.
+  // Sem ciclo aberto, mantem a base anterior (o selo nao aparece respondido).
+  const slaRows = (conversation.contact as unknown as { conversation_sla?: SlaCycleRow[] | null }).conversation_sla;
+  const cycleStartedAt = resolveFirstResponseCycleStart({
+    slaRows,
+    messages: conversation.lastMessage ? [conversation.lastMessage] : [],
+  });
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
@@ -147,7 +157,7 @@ function ChatPanelHeaderBase({
             {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
             {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
             <SLAIndicator
-              firstMessageAt={conversation.createdAt}
+              firstMessageAt={cycleStartedAt ?? conversation.createdAt}
               firstResponseAt={conversation.firstResponseAt ?? null}
               firstResponseMinutes={firstResponseMinutes}
             />

@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { resolveFirstResponseCycleStart } from '@/adapters/inboxAdapter';
 
 // Alturas calibradas para o conteudo real da linha (nome + linha de cargo
 // opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
@@ -373,8 +374,15 @@ const ConversationRow = memo(({
   const slaRows = (conversation.contact as unknown as {
     conversation_sla?: Array<{ first_message_at: string | null; first_response_at: string | null }>;
   }).conversation_sla;
-  const openSlaRow = slaRows?.find((r) => r.first_response_at === null);
-  const firstMessageAt = openSlaRow?.first_message_at ?? (!slaRows?.length ? conversation.contact.created_at : undefined);
+  // Ciclo ABERTO do cronometro de 1a resposta (PB-34): a linha aberta do
+  // conversation_sla quando ela bate com as mensagens carregadas; senao a
+  // ultima mensagem do cliente ainda SEM resposta humana. Sem ciclo aberto
+  // NAO existe timer — nem a linha historica fechada nem o created_at do
+  // contato podem manter o cronometro preso num atendimento antigo.
+  const firstMessageAt = resolveFirstResponseCycleStart({
+    slaRows,
+    messages: conversation.messages,
+  })?.toISOString();
   const tags = conversation.contact.tags ?? [];
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
