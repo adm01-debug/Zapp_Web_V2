@@ -11,6 +11,7 @@ import {
   escapeLabelValue,
   renderPrometheus,
   resolveRequestId,
+  resolveTraceId,
   withRequestId,
 } from "./observability.ts";
 
@@ -112,6 +113,105 @@ Deno.test("errorResponseWithRequestId: 4xx mantém a mensagem e o requestId", as
   assert(res.status === 403, `esperado 403, veio ${res.status}`);
   const body = await res.json();
   assert(body.error === "Forbidden" && body.requestId === "corr-403", JSON.stringify(body));
+});
+
+// ─── 034 · leitura do x-correlation-id e do traceparent (paridade com o wrapper) ──
+
+Deno.test("correlation: lê o x-correlation-id quando só ele veio (nome canônico)", () => {
+  const id = resolveRequestId(reqWith({ "x-correlation-id": "corr-canon-1234" }));
+  assert(id === "corr-canon-1234", `esperado o id de x-correlation-id, veio ${id}`);
+});
+
+Deno.test("correlation: x-correlation-id tem precedência sobre x-request-id", () => {
+  const id = resolveRequestId(reqWith({ "x-correlation-id": "corr-correl-1234", "x-request-id": "corr-request-1234" }));
+  assert(id === "corr-correl-1234", `esperado x-correlation-id, veio ${id}`);
+});
+
+Deno.test("correlation: x-correlation-id inválido cai para o x-request-id válido", () => {
+  const id = resolveRequestId(reqWith({ "x-correlation-id": "curto", "x-request-id": "corr-request-1234" }));
+  assert(id === "corr-request-1234", `esperado o x-request-id no lugar do inválido, veio ${id}`);
+});
+
+Deno.test("correlation: sem os dois cabeçalhos gera id novo (comportamento antigo preservado)", () => {
+  const id = resolveRequestId(reqWith({ "x-request-id": "corr-request-1234" }));
+  assert(id === "corr-request-1234", `esperado o x-request-id, veio ${id}`);
+  assert(UUID_RE.test(resolveRequestId(reqWith())), "sem cabeçalho deveria gerar UUID");
+});
+
+Deno.test("traceparent: lê o trace-id de um W3C v0 válido", () => {
+  const traceId = resolveTraceId(reqWith({ traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" }));
+  assert(traceId === "4bf92f3577b34da6a3ce929d0e0e4736", `trace-id divergiu: ${traceId}`);
+});
+
+Deno.test("traceparent: trace-id/parent-id tudo zero é inválido (W3C)", () => {
+  assert(
+    resolveTraceId(reqWith({ traceparent: "00-00000000000000000000000000000000-00f067aa0ba902b7-01" })) === null,
+    "trace-id zero deveria ser descartado",
+  );
+  assert(
+    resolveTraceId(reqWith({ traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000000-01" })) === null,
+    "parent-id zero deveria ser descartado",
+  );
+});
+
+Deno.test("traceparent: versão diferente de 00 e valor malformado são ignorados", () => {
+  assert(resolveTraceId(reqWith({ traceparent: "01-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" })) === null, "versão 01 não é v0");
+  assert(resolveTraceId(reqWith({ traceparent: "00-curto-00f067aa0ba902b7-01" })) === null, "trace-id curto deveria falhar");
+  assert(resolveTraceId(reqWith()) === null, "sem traceparent deveria ser null");
+});
+
+Deno.test("withRequestId: id canônico volta em X-Correlation-Id e no log", async () => {
+  let ctxCorrelation: string | undefined;
+  const handler = withRequestId("health", (_req, ctx) => {
+    ctxCorrelation = ctx.correlationId;
+    return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
+  });
+
+  const { result: res, logs } = await capturarLogs(() =>
+    handler(reqWith({ "x-correlation-id": "corr-canon-9999" }))
+  );
+
+  assert(ctxCorrelation === "corr-canon-9999", `ctx.correlationId divergiu: ${ctxCorrelation}`);
+  assert(res.headers.get("x-correlation-id") === "corr-canon-9999", "resposta sem X-Correlation-Id");
+  assert(res.headers.get("x-request-id") === "corr-canon-9999", "resposta sem X-Request-ID casando");
+  const linha = logs.find((l) => l.includes('"rid":"corr-canon-9999"'));
+  assert(linha !== undefined, `nenhuma linha estruturada com o rid canônico: ${JSON.stringify(logs)}`);
+});
+
+Deno.test("withRequestId: trace-id do traceparent entra no log como traceId", async () => {
+  const handler = withRequestId("metrics", (_req, ctx) => {
+    return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
+  });
+
+  const { logs } = await capturarLogs(() =>
+    handler(reqWith({
+      "x-correlation-id": "corr-trace-1234",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    }))
+  );
+
+  const linha = logs.find((l) => l.includes('"rid":"corr-trace-1234"'));
+  assert(linha !== undefined, `sem linha de conclusão: ${JSON.stringify(logs)}`);
+  assert((linha as string).includes('"traceId":"4bf92f3577b34da6a3ce929d0e0e4736"'), `traceId ausente: ${linha}`);
+});
+
+Deno.test("errorResponseWithRequestId: devolve X-Correlation-Id e correlationId, com traceId quando há traceparent", async () => {
+  const res = errorResponseWithRequestId(
+    "Unauthorized",
+    401,
+    reqWith({ traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" }),
+    "corr-401-abc",
+  );
+  assert(res.headers.get("x-correlation-id") === "corr-401-abc", "envelope sem o cabeçalho X-Correlation-Id");
+  const body = await res.json();
+  assert(body.correlationId === "corr-401-abc", `envelope sem correlationId: ${JSON.stringify(body)}`);
+  assert(body.traceId === "4bf92f3577b34da6a3ce929d0e0e4736", `envelope sem traceId: ${JSON.stringify(body)}`);
+});
+
+Deno.test("errorResponseWithRequestId: sem traceparent não inventa traceId", async () => {
+  const res = errorResponseWithRequestId("Forbidden", 403, reqWith(), "corr-403-xyz");
+  const body = await res.json();
+  assert(body.traceId === undefined, `não deveria ter traceId: ${JSON.stringify(body)}`);
 });
 
 // ─── 035 · authorizeObservability ─────────────────────────────────────────────

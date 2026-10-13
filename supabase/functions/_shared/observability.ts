@@ -6,11 +6,13 @@
  * nem withRequestId". Este módulo fecha o que é comum às três edges novas:
  *
  * 034 — Correlation ID (`withRequestId`):
- *   (a) valida o `x-request-id` que o cliente (wrapper de invoke) mandou ou gera um;
- *   (b) reescreve a requisição com o id RESOLVIDO, para o `X-Request-ID` da resposta
- *       (que `getCorsHeaders` já ecoa) ser exatamente o mesmo que foi logado;
+ *   (a) valida o id que o cliente (wrapper de invoke) mandou — `x-correlation-id`
+ *       (nome canônico) ou, na falta dele, `x-request-id` — ou gera um;
+ *   (b) reescreve a requisição com o id RESOLVIDO, para `X-Request-ID`/`X-Correlation-Id`
+ *       da resposta serem exatamente o mesmo que foi logado;
  *   (c) ecoa o id no envelope de erro (`errorResponseWithRequestId`);
- *   (d) registra UMA linha estruturada por requisição com `rid`/`status`/`durationMs`.
+ *   (d) registra UMA linha estruturada por requisição com `rid`/`status`/`durationMs`
+ *       e, quando veio, o `traceId` do `traceparent` W3C.
  *   Sem isso, um erro do chat não era rastreável front → edge → `query_telemetry`
  *   pelo mesmo id: cada camada inventava o seu.
  *
@@ -35,16 +37,52 @@ import { timingSafeEqual } from './hmac-validation.ts';
  */
 const REQUEST_ID_RE = /^[A-Za-z0-9._-]{8,64}$/;
 
-/** O id de correlação da requisição: o `x-request-id` válido do cliente ou um novo. */
+/**
+ * `traceparent` W3C Trace Context v0: `00-<trace-id 32hex>-<parent-id 16hex>-<flags 2hex>`.
+ * Só a versão `00` é aceita; versões futuras têm layout diferente e não devem ser lidas
+ * como se fossem v0.
+ */
+const TRACEPARENT_RE = /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
+
+/** trace-id/parent-id "tudo zero" são inválidos no W3C (mesmo formato, valor proibido). */
+const ZERO_32 = '0'.repeat(32);
+const ZERO_16 = '0'.repeat(16);
+
+/**
+ * O id de correlação da requisição. Ordem de leitura: `x-correlation-id` (o nome
+ * canônico, que o wrapper do front manda), depois `x-request-id` (compatibilidade com
+ * chamadores antigos que só usam este) e, sem nenhum válido, um id novo. Validar o
+ * formato ao ecoar é o que impede injeção de cabeçalho por valor cru.
+ */
 export function resolveRequestId(req: Request): string {
-  const raw = req.headers.get('x-request-id');
-  if (raw !== null && REQUEST_ID_RE.test(raw)) return raw;
+  for (const name of ['x-correlation-id', 'x-request-id']) {
+    const raw = req.headers.get(name);
+    if (raw !== null && REQUEST_ID_RE.test(raw)) return raw;
+  }
   return crypto.randomUUID();
 }
 
+/**
+ * O `trace-id` (32 hex) do `traceparent` W3C válido, ou `null`. É só para LOG: a
+ * correlação da Edge continua sendo o id curto; o trace-id costura a cadeia
+ * navegador → Edge → banco. Valor ausente/fora do formato é ignorado, nunca ecoado.
+ */
+export function resolveTraceId(req: Request): string | null {
+  const raw = req.headers.get('traceparent');
+  if (raw === null) return null;
+  const m = TRACEPARENT_RE.exec(raw.trim());
+  if (m === null) return null;
+  if (m[1] === ZERO_32 || m[2] === ZERO_16) return null;
+  return m[1];
+}
+
 export interface RequestContext {
-  /** O mesmo id que vira `X-Request-ID` na resposta e `rid` no log estruturado. */
+  /** O mesmo id que vira `X-Request-ID`/`X-Correlation-Id` na resposta e `rid` no log. */
   requestId: string;
+  /** Mesmo valor de `requestId`, sob o nome canônico `x-correlation-id` do front. */
+  correlationId: string;
+  /** `trace-id` do `traceparent` recebido, ou `null`; entra só no log estruturado. */
+  traceId: string | null;
 }
 
 /**
@@ -57,6 +95,7 @@ function withResolvedRequestId(req: Request, requestId: string): Request {
   try {
     const headers = new Headers(req.headers);
     headers.set('x-request-id', requestId);
+    headers.set('x-correlation-id', requestId);
     return new Request(req, { headers });
   } catch {
     // Corpo já consumido/não reescrevível: segue com a requisição original — o id do
@@ -77,39 +116,46 @@ export function withRequestId(
 ): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     const requestId = resolveRequestId(req);
+    const traceId = resolveTraceId(req);
     const started = Date.now();
     let res: Response;
     try {
-      res = await handler(withResolvedRequestId(req, requestId), { requestId });
+      res = await handler(withResolvedRequestId(req, requestId), {
+        requestId,
+        correlationId: requestId,
+        traceId,
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(JSON.stringify({
-        level: 'error', fn: fnName, rid: requestId, msg: 'handler falhou', error: msg,
+        level: 'error', fn: fnName, rid: requestId, traceId, msg: 'handler falhou', error: msg,
       }));
       res = errorResponseWithRequestId('Internal server error', 500, req, requestId);
     }
-    return finalizeResponse(res, fnName, requestId, started);
+    return finalizeResponse(res, fnName, requestId, traceId, started);
   };
 }
 
-/** Garante o eco do id no cabeçalho e registra a linha de conclusão da requisição. */
+/** Garante o eco do id nos cabeçalhos e registra a linha de conclusão da requisição. */
 function finalizeResponse(
   res: Response,
   fnName: string,
   requestId: string,
+  traceId: string | null,
   started: number,
 ): Response {
   let out = res;
-  if (res.headers.get('x-request-id') !== requestId) {
+  if (res.headers.get('x-request-id') !== requestId || res.headers.get('x-correlation-id') !== requestId) {
     try {
       const headers = new Headers(res.headers);
       headers.set('X-Request-ID', requestId);
+      headers.set('X-Correlation-Id', requestId);
       out = new Response(res.body, { status: res.status, statusText: res.statusText, headers });
     } catch {
       // Cabeçalho imutável (resposta vinda de `fetch`, por exemplo): preserva o corpo e
       // segue — a correlação continua no log estruturado abaixo.
       console.warn(JSON.stringify({
-        level: 'warn', fn: fnName, rid: requestId, msg: 'cabeçalho X-Request-ID imutável na resposta',
+        level: 'warn', fn: fnName, rid: requestId, traceId, msg: 'cabeçalho de correlação imutável na resposta',
       }));
       out = res;
     }
@@ -118,6 +164,7 @@ function finalizeResponse(
     level: out.status >= 400 ? 'error' : 'info',
     fn: fnName,
     rid: requestId,
+    traceId,
     status: out.status,
     durationMs: Date.now() - started,
   }));
@@ -135,16 +182,29 @@ export function errorResponseWithRequestId(
   req: Request,
   requestId: string,
 ): Response {
+  const traceId = resolveTraceId(req);
   let body = message;
   if (status >= 500) {
-    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
+    console.error(JSON.stringify({ level: 'error', source: 'edge', status, rid: requestId, traceId, msg: message }));
     body = 'Internal server error';
   }
   return new Response(
-    JSON.stringify({ error: body, requestId }),
+    JSON.stringify({
+      error: body,
+      requestId,
+      // Nome canônico do front (mesmo valor de `requestId`) — é o id que o cliente
+      // casa com a linha de log da Edge.
+      correlationId: requestId,
+      ...(traceId !== null ? { traceId } : {}),
+    }),
     {
       status,
-      headers: { ...getCorsHeaders(req), 'X-Request-ID': requestId, 'Content-Type': 'application/json' },
+      headers: {
+        ...getCorsHeaders(req),
+        'X-Request-ID': requestId,
+        'X-Correlation-Id': requestId,
+        'Content-Type': 'application/json',
+      },
     },
   );
 }
