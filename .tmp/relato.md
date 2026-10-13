@@ -1,27 +1,23 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/hooks/chat/sendQueue.ts` (novo): fila SERIAL por conversa. A tarefa de uma fila ociosa começa no mesmo tick (preserva o envio único acionado dentro do Enter); as seguintes entram na cauda e esperam a vez; uma rejeição não encadeia (libera a próxima) e a fila de um contato não espera a de outro.
+- `src/components/inbox/chat/useChatPanelHandlers.ts`: o envio de texto entra na fila da conversa e o compositor é liberado na hora (o ramo de texto deixa de setar `isSending`, que agora só cobre edição, e deixa de esperar o despacho no Edge). O Enter durante um envio em andamento ENFILEIRA em vez de ser descartado. A animação/som de "enviado" e o toast de erro passam a sair do aceite/rejeição do transporte; falha devolve o rascunho (sem sobrescrever texto novo digitado no meio, e devolvendo também a resposta citada).
+- `src/hooks/inbox/useRealtimeInbox.ts`: `handleSendMessage` não chama mais `refreshActiveConversation()` — o INSERT da mensagem enfileirada já atualiza a lista (`useRealtimeMessages`) e a conversa aberta (`useMessages`) pela inscrição `global-messages-realtime`.
+- `src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts`: saíram os três `it.todo` de PK-21 (as provas agora existem nos arquivos acima), como o próprio registro pede.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (base `dia/2026-10-13`, em `.tmp/base-dia`): `npx vitest run .../fila-serial.test.tsx .../sem-refetch-no-envio.test.tsx .../sendQueue.test.ts` → `Test Files 3 failed (3); Tests 4 failed | 2 passed (6)`, com `AssertionError: expected 'segunda' to be ''` (2º Enter descartado), `expected [ 'lenta' ] to deeply equal [ 'lenta', 'outro-contato' ]` (sem fila por conversa), `expected "vi.fn()" to not be called at all, but actually been called 1 times` (refetch no envio) e `Failed to resolve import "../sendQueue"` (a fila não existia).
+- verde depois: `npx vitest run src/components/inbox src/hooks/inbox src/hooks/chat` → `Test Files 261 passed | 3 skipped (264); Tests 2136 passed | 3 expected fail | 22 todo (2161)`.
+- tipos: nenhum erro novo introduzido pelo diff (o linter acusa só os `TS2307` de alias/`node_modules`, que já existem no arquivo antes da mudança).
+
+## Arquivos fora da lista do cartão (justificativa)
+O cartão lista `src/hooks/chat/` (envio e fila), `src/services/` (messageSender), "componente do compositor (só o necessário)" e testes. Todos os arquivos que toquei caem nessas três classes:
+- `src/hooks/chat/sendQueue.ts` (+ `__tests__/sendQueue.test.ts`): a fila serial, em `src/hooks/chat/`.
+- `src/components/inbox/chat/useChatPanelHandlers.ts` (+ `__tests__/useChatPanelHandlers.fila-serial.test.tsx`): o COMPOSITOR — é onde o Enter/handleSend travava; "só o necessário" = o ramo de texto do `handleSend` e o teste dele. Sem essa mudança não há como o Enter enfileirar nem o rascunho ser preservado.
+- `src/hooks/inbox/useRealtimeInbox.ts` (+ `__tests__/useRealtimeInbox.sem-refetch-no-envio.test.tsx`): o item 3 do critério ("tirar o refetch da lista do caminho do envio") mora só aqui — `handleSendMessage` é a ponte que o compositor chama; fora da pasta `src/hooks/chat/` por um nível, mas é a mesma camada de envio. Nada além da remoção do `refreshActiveConversation()` foi mudado.
+- Nenhum arquivo de outro assunto entrou.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei no caminho de áudio (`handleSendAudio`) nem no de edição: continuam com `refreshActiveConversation()`/`isSending` como estavam; PK-25 é de outra prova.
+
