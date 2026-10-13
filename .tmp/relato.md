@@ -1,4 +1,4 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 ## O que mudou e por quê
 - `supabase/migrations/20261013160000_instance_pause_investigation.sql` (aditiva): as 3 colunas pedidas em `public.instance_pauses` (`investigated_at`, `investigated_by` FK→profiles, `investigation_notes` com limite de 1000 e sem HTML — CHECK no BANCO, não só na função), o consistente `(investigated_at IS NULL) = (investigated_by IS NULL)`, e as 2 RPCs:
