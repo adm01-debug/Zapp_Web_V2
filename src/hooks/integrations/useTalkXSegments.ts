@@ -414,6 +414,112 @@ export function useSegmentLibraryStats() {
 }
 
 /* ------------------------------------------------------------------ */
+/* X114 — seleção em massa e ações pela RPC guardada                   */
+/* (talkx_segment_bulk_action, entregue em t_9c7ad8fc)                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ações que a RPC guardada aceita. "Excluir" da biblioteca é `archive`
+ * (decisão N22: arquivar, não apagar).
+ */
+export type TalkXSegmentBulkAction = 'draft' | 'activate' | 'deactivate' | 'archive' | 'tag';
+
+/**
+ * Uma linha da RPC `talkx_segment_bulk_action`: o resultado é POR SEGMENTO — o
+ * lote nunca devolve um único veredito nem para no primeiro item recusado.
+ */
+export interface TalkXSegmentBulkResult {
+  segment_id: string;
+  action: TalkXSegmentBulkAction;
+  succeeded: boolean;
+  status: string | null;
+  archived_at: string | null;
+  tags: string[] | null;
+  error_code: string | null;
+  error_message: string | null;
+}
+
+/** Teto de ids por chamada da RPC (t_9c7ad8fc); acima disso o lote é dividido. */
+export const BULK_ACTION_MAX_IDS = 200;
+
+type TalkXBulkRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string; code?: string | null } | null;
+}>;
+
+/** Resultado de falha de um segmento: nada foi aplicado e o hook diz o porquê. */
+const bulkFailure = (
+  segmentId: string,
+  action: TalkXSegmentBulkAction,
+  code: string,
+  message: string,
+): TalkXSegmentBulkResult => ({
+  segment_id: segmentId,
+  action,
+  succeeded: false,
+  status: null,
+  archived_at: null,
+  tags: null,
+  error_code: code,
+  error_message: message,
+});
+
+/**
+ * Aplica uma ação da biblioteca a vários segmentos pela RPC guardada
+ * `talkx_segment_bulk_action`. A guarda de uso de X101 é decidida NO SERVIDOR,
+ * por segmento: item em campanha `scheduled`/`sending`/`paused` volta
+ * `succeeded: false` com `error_code` `P0001` e o nome da campanha dentro de
+ * `error_message`. O hook repete o veredito do servidor — item bloqueado nunca
+ * aparece como aplicado.
+ *
+ * O lote é dividido em chamadas de no máximo `BULK_ACTION_MAX_IDS` (a RPC recusa
+ * acima disso) e a falha de uma chamada não descarta as outras: cada segmento
+ * recebe o próprio resultado.
+ */
+export async function applySegmentBulkAction(input: {
+  action: TalkXSegmentBulkAction;
+  ids: string[];
+  tag?: string;
+}): Promise<TalkXSegmentBulkResult[]> {
+  // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem
+  // resposta" na hora de casar as linhas devolvidas.
+  const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== '')));
+  if (ids.length === 0) throw new Error('Selecione ao menos um segmento.');
+  const tag = input.tag?.trim();
+  // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
+  if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em massa.');
+
+  const rpc = supabase.rpc as unknown as TalkXBulkRpc;
+  const results: TalkXSegmentBulkResult[] = [];
+
+  for (let start = 0; start < ids.length; start += BULK_ACTION_MAX_IDS) {
+    const chunk = ids.slice(start, start + BULK_ACTION_MAX_IDS);
+    const args: Record<string, unknown> = { p_action: input.action, p_segment_ids: chunk };
+    if (input.action === 'tag') args.p_tag = tag;
+    const { data, error } = await rpc('talkx_segment_bulk_action', args);
+
+    if (error) {
+      // Erro de entrada/transporte desta chamada: nada dela foi aplicado. Vira
+      // falha item a item em vez de derrubar o lote inteiro.
+      for (const id of chunk) results.push(bulkFailure(id, input.action, error.code ?? 'ERRO', error.message));
+      continue;
+    }
+
+    const rows = (Array.isArray(data) ? data : []) as TalkXSegmentBulkResult[];
+    const byId = new Map(rows.map((row) => [row.segment_id, row]));
+    for (const id of chunk) {
+      const row = byId.get(id);
+      // Sem linha para o segmento não há prova de aplicação: falha, não sucesso.
+      results.push(row
+        ? { ...row, succeeded: row.succeeded === true }
+        : bulkFailure(id, input.action, 'SEM_RESPOSTA', 'O servidor não respondeu por este segmento.'));
+    }
+  }
+
+  return results;
+}
+
+/* ------------------------------------------------------------------ */
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -499,6 +605,17 @@ export function useTalkXSegments() {
     onSuccess: () => invalidate(),
   });
 
+  // X114 — seleção em massa da biblioteca. Guardamos só os ids: "selecionar
+  // todos" é o que a tela considerar visível (filtro/página), não o catálogo.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const bulkAction = useMutation({
+    mutationFn: (input: { action: TalkXSegmentBulkAction; ids?: string[]; tag?: string }) =>
+      applySegmentBulkAction({ action: input.action, ids: input.ids ?? selectedIds, tag: input.tag }),
+    // A ação pode mudar status/arquivo/tags: lista e KPIs voltam do servidor.
+    onSuccess: () => invalidate(),
+  });
+
   return {
     segments: segmentsQuery.data ?? [],
     isLoading: segmentsQuery.isLoading,
@@ -512,5 +629,17 @@ export function useTalkXSegments() {
     refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
     viewMode, setViewMode,
+    // X114 — seleção e ações em massa (RPC guardada talkx_segment_bulk_action).
+    // `runBulkAction` devolve o resultado POR SEGMENTO; a tela decide o que
+    // mostrar, mas item barrado pela guarda chega aqui com `succeeded: false`.
+    selectedIds,
+    isSelected: (id: string) => selectedIds.includes(id),
+    toggleSelect: (id: string) => setSelectedIds((prev) =>
+      (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
+    selectAll: (ids: string[]) => setSelectedIds(Array.from(new Set(ids))),
+    clearSelection: () => setSelectedIds([]),
+    runBulkAction: (input: { action: TalkXSegmentBulkAction; ids?: string[]; tag?: string }) =>
+      bulkAction.mutateAsync(input),
+    isBulkRunning: bulkAction.isPending,
   };
 }
