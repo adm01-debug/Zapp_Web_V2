@@ -234,7 +234,7 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('65')).toBeInTheDocument();
   });
 
-  it('mostra a faixa no tooltip com os pesos de cada componente e o CSAT', async () => {
+  it('mostra a faixa no tooltip junto da formula (mensagens/conversas/resposta) com os pesos e o CSAT', async () => {
     // 100 msgs→20; 4 conversas→10; 10 min→20; CSAT 5 (3 avaliações)→15 = 65
     contactStatsMock = { totalMessages: 100, totalConversations: 4, avgResponseTimeMinutes: 10, csatAverage: 5, csatCount: 3 };
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
