@@ -106,9 +106,9 @@ export function escapeLikeWildcards(term: string): string {
 }
 
 /**
- * Cláusula `.or()` da busca: colunas da própria `email_threads` mais, quando houver,
- * os contatos que casaram o termo (`contact_id` é coluna da thread — não vira join,
- * então thread sem contato não é excluída).
+ * Cláusula `.or()` da busca: colunas da própria `email_threads`, mais, quando houver, os
+ * contatos que casaram o termo (`contact_id` é coluna da thread — não vira join, então
+ * thread sem contato não é excluída) e os `thread_id` que a RPC casou no corpo/anexo.
  */
 export function emailThreadSearchOr(
   term: string,
