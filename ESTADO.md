@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -40,9 +40,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | A | 54 |
 | B | 1 |
 | C | 3 |
-| D | 6 |
+| D | 7 |
 | E | 17 |
-| **total** | **81** |
+| **total** | **82** |
 
 ## Tabela
 
@@ -71,8 +71,8 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | A | `src/components/admin/useAdminData.ts:256` |
-| `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
-| `csp-report` | D | `supabase/config.toml:58` |
+| `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:61` |
+| `csp-report` | D | `supabase/config.toml:64` |
 | `detect-new-device` | A | `src/hooks/ui/useDeviceDetection.ts:112` |
 | `elevenlabs-agent-token` | E | — sem chamador no repositório — |
 | `elevenlabs-dialogue` | A | `src/components/voice/ElevenLabsDialogue.tsx:63` |
@@ -89,7 +89,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | A | `src/services/chat.service.ts:16` · `supabase/functions/_shared/evolution-webhook-messages.ts:270` |
-| `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
+| `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:83` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
 | `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:22` |
 | `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
@@ -98,27 +98,28 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `gmail-sync` | E | — sem chamador no repositório — |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
-| `message-delivery` | A | `src/services/outbound-message.service.ts:223` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/services/outbound-message.service.ts:223` · `supabase/config.toml:55` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:8` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:6` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:397` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
 | `multiplix-voices` | E | — sem chamador no repositório — |
-| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:44` |
+| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:50` |
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
 | `recover-message-media` | E | — sem chamador no repositório — |
+| `request-password-reset` | D | `supabase/config.toml:45` |
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
-| `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
+| `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:74` |
 | `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
 | `send-rate-limit-alert` | E | — sem chamador no repositório — |
 | `send-scheduled-report` | A | `src/hooks/chat/useScheduledReports.ts:142` |
 | `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
 | `status` | E | — sem chamador no repositório — |
-| `sync-call-records` | D | `supabase/config.toml:73` |
-| `talkx-ai` | D | `supabase/config.toml:83` |
-| `talkx-link` | B | `supabase/functions/talkx-send/index.ts:455` · `supabase/config.toml:65` |
+| `sync-call-records` | D | `supabase/config.toml:79` |
+| `talkx-ai` | D | `supabase/config.toml:89` |
+| `talkx-link` | B | `supabase/functions/talkx-send/index.ts:455` · `supabase/config.toml:71` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
 | `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:450` · `src/hooks/integrations/useTalkX.ts:466` · `src/hooks/integrations/useTalkX.ts:475` · `src/hooks/integrations/useTalkXTemplates.ts:182` · `supabase/functions/talkx-scheduler/index.ts:294` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
