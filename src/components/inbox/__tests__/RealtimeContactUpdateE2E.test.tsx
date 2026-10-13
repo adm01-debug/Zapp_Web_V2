@@ -160,19 +160,22 @@ function makeContact(overrides: MockContact = {}) {
 }
 
 function makeContactsQuery() {
-  return {
-    select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
-      })),
-      in: vi.fn((_: string, ids: string[]) =>
-        Promise.resolve({ data: ids.map((id) => contactsById[id]).filter(Boolean), error: null })
-      ),
-      eq: vi.fn((_: string, value: string) => ({
-        maybeSingle: vi.fn().mockResolvedValue({ data: contactsById[value] ?? null, error: null }),
-      })),
+  const chain = {
+    // PD-51 (t_d0f7873a): a Inbox agora filtra `.is('deleted_at', null)` nas
+    // duas leituras de contatos — o fake precisa suportar a chamada e segui-la
+    // encadeando (o dado devolvido é o mesmo; a semântica do filtro é do banco).
+    is: vi.fn(() => chain),
+    order: vi.fn(() => ({
+      limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
+    })),
+    in: vi.fn((_: string, ids: string[]) =>
+      Promise.resolve({ data: ids.map((id) => contactsById[id]).filter(Boolean), error: null })
+    ),
+    eq: vi.fn((_: string, value: string) => ({
+      maybeSingle: vi.fn().mockResolvedValue({ data: contactsById[value] ?? null, error: null }),
     })),
   };
+  return { select: vi.fn(() => chain) };
 }
 
 interface MockMessagesChain {
