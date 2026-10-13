@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useConnectionsRealtime } from '@/hooks/inbox/useConnectionsRealtime';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,19 +34,13 @@ export function EvolutionDisconnectBanner() {
 
   useEffect(() => {
     void fetchStatus();
-
-    // Real-time updates on connection status changes
-    const channel = supabase
-      .channel('disconnect-banner')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'whatsapp_connections' },
-        () => { void fetchStatus(); }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  // Real-time das mudanças de status. Antes o canal tinha nome FIXO
+  // ('disconnect-banner') e, como o gerente de conexões abria o mesmo tipo de
+  // canal, as duas telas brigavam pela assinatura; agora o tópico é único por
+  // montagem e o cleanup fecha o canal.
+  useConnectionsRealtime({ onChange: () => { void fetchStatus(); } });
 
   const handleReconnect = async (conn: DisconnectedInstance) => {
     setReconnecting(conn.instance_id);
