@@ -5,6 +5,78 @@ import { ensureValidToken, runGmailFullSync, syncMessageIds } from "../_shared/g
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
+// Renovação do watch de push (a assinatura do Gmail expira sozinha). O cron roda
+// 1x/dia: renovar quando faltam <= 24 h coloca o watch na janela e ele é
+// renovado ANTES de expirar, qualquer que seja a vida real da assinatura (7 dias
+// do Gmail, ou 24 h como a V3 documenta). Rodar o cron de novo no mesmo dia cai
+// no ramo "still_valid" logo após a 1ª renovação — idempotente.
+export const GMAIL_WATCH_RENEWAL_WINDOW_MS = 24 * 60 * 60 * 1000;
+const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+const GMAIL_PUBSUB_TOPIC_ENV = "GMAIL_PUBSUB_TOPIC";
+
+export type GmailWatchRenewalStatus = "renewed" | "still_valid" | "skipped_no_topic" | "error";
+
+export interface GmailWatchRenewalResult {
+  status: GmailWatchRenewalStatus;
+  expiration?: string | null;
+  error?: string;
+}
+
+interface GmailWatchAccount {
+  id: string;
+  watch_expiration: string | null;
+}
+
+// Renova o watch SÓ quando ele está expirado ou dentro da janela de renovação;
+// um watch ainda válido não gera chamada à API (idempotente entre execuções).
+// Nunca lança: o polling do cron cobre a perda do push, então a falha vira
+// `status: "error"` no resultado e warning no log — registrada, nunca silenciosa.
+// Sem tópico configurado não inventa um destino: devolve `skipped_no_topic`,
+// que aparece no log e na resposta do cron (o watch, nesse caso, é o único jeito
+// de o push voltar e o operador precisa ver o motivo).
+export async function renewGmailWatchIfNeeded(
+  supabase: SupabaseClient,
+  account: GmailWatchAccount,
+  accessToken: string,
+  log: Logger,
+  options: { topicName?: string | null; now?: Date } = {},
+): Promise<GmailWatchRenewalResult> {
+  const now = options.now ?? new Date();
+  const currentMs = account.watch_expiration ? new Date(account.watch_expiration).getTime() : Number.NaN;
+  const needsRenewal = !Number.isFinite(currentMs) || currentMs - now.getTime() <= GMAIL_WATCH_RENEWAL_WINDOW_MS;
+  if (!needsRenewal) return { status: "still_valid", expiration: account.watch_expiration };
+
+  const topicName = options.topicName ?? Deno.env.get(GMAIL_PUBSUB_TOPIC_ENV) ?? "";
+  if (!topicName) {
+    log.warn("Gmail watch renewal skipped: no Pub/Sub topic configured", { accountId: account.id, env: GMAIL_PUBSUB_TOPIC_ENV });
+    return { status: "skipped_no_topic" };
+  }
+
+  try {
+    const response = await fetch(`${GMAIL_API}/watch`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ topicName, labelIds: ["INBOX"], labelFilterBehavior: "INCLUDE" }),
+    });
+    if (!response.ok) throw new Error(`Watch renewal failed (${response.status})`);
+    const watchData = await response.json();
+    const expirationMs = Number.parseInt(String(watchData.expiration ?? ""), 10);
+    if (!Number.isFinite(expirationMs)) throw new Error("Watch renewal returned no expiration");
+    const expiration = new Date(expirationMs).toISOString();
+    const { error } = await supabase
+      .from("gmail_accounts")
+      .update({ watch_expiration: expiration })
+      .eq("id", account.id);
+    if (error) throw new Error("Failed to persist Gmail watch expiration");
+    log.info("Gmail watch renewed", { accountId: account.id, watchExpiration: expiration });
+    return { status: "renewed", expiration };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.warn("Gmail watch renewal failed", { accountId: account.id, error: msg });
+    return { status: "error", error: msg };
+  }
+}
+
 // R2-API-011B — avanço de cursor incremental por compare-and-swap: o UPDATE só
 // grava se o history_id da linha ainda for o lido no início da tentativa
 // (account.history_id). 0 linhas = outro fluxo já moveu o cursor → conflito:
@@ -53,29 +125,34 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
   const log = new Logger("gmail-cron-sync");
   try {
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
-    const { data: accounts, error } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at, history_id, is_active").eq("is_active", true);
+    const { data: accounts, error } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at, history_id, is_active, watch_expiration").eq("is_active", true);
     if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
-    const results: Array<{ id: string; synced?: number; error?: string; cursor_advanced?: boolean }> = [];
+    const results: Array<{ id: string; synced?: number; error?: string; cursor_advanced?: boolean; watch?: GmailWatchRenewalResult }> = [];
     for (let i = 0; i < accounts.length; i += BATCH) {
       const batch = accounts.slice(i, i + BATCH);
       const batchResults = await Promise.allSettled(batch.map(async (account) => {
+        let watch: GmailWatchRenewalResult | undefined;
         try {
           const accessToken = await ensureValidToken(supabase, account, log);
+          // Watch renovado independente do sync: se a renovação falhar, o sync
+          // do dia continua (o polling cobre a perda do push) e o motivo sai no
+          // resultado/log da conta, nunca em silêncio.
+          watch = await renewGmailWatchIfNeeded(supabase, account, accessToken, log);
           if (!account.history_id) {
             // conta sem history_id: full sync (todas as páginas; cursor só no fim, sem falhas)
             await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
             const result = await runGmailFullSync(supabase, account.id, accessToken, log, "in:inbox", 50);
             if (result.failed > 0) throw new Error(`Full sync incompleto: ${result.failed} mensagens falharam`);
-            return { id: account.id, synced: result.synced };
+            return { id: account.id, synced: result.synced, watch };
           } else {
             // sync incremental: aplica só os IDs do histórico; cursor avança só sem falhas e via CAS
             const r = await runGmailCronIncrementalSync(supabase, account, accessToken, log);
-            return { id: account.id, synced: r.synced, cursor_advanced: r.cursor_advanced };
+            return { id: account.id, synced: r.synced, cursor_advanced: r.cursor_advanced, watch };
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           await supabase.from("gmail_accounts").update({ last_error: msg, sync_status: "error" }).eq("id", account.id);
-          return { id: account.id, error: msg };
+          return { id: account.id, error: msg, watch };
         }
       }));
       for (const r of batchResults) results.push(r.status === "fulfilled" ? r.value : { id: "unknown", error: String(r.reason) });

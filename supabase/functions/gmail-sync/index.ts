@@ -182,18 +182,26 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       }
 
       case "setup-watch": {
-        if (!body.topic_name) throw new Error("Missing topic_name");
+        // Tópico: o do pedido ou o configurado no ambiente (mesmo usado pelo cron
+        // para renovar). Sem nenhum dos dois não inventa destino — 400 explícito.
+        const topicName = body.topic_name || Deno.env.get("GMAIL_PUBSUB_TOPIC") || "";
+        if (!topicName) { log.done(400); return errorResponse("Missing topic_name", 400, req); }
         const response = await fetch(`${GMAIL_API}/watch`, {
           method: "POST",
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ topicName: body.topic_name, labelIds: ["INBOX"] }),
+          body: JSON.stringify({ topicName, labelIds: ["INBOX"], labelFilterBehavior: "INCLUDE" }),
         });
         if (!response.ok) throw new Error(`Watch setup failed: ${await response.text()}`);
         const watchData = await response.json();
-        await supabase.from("gmail_accounts").update({
-          history_id: watchData.historyId,
-          watch_expiration: new Date(Number.parseInt(watchData.expiration)).toISOString(),
+        const expirationMs = Number.parseInt(String(watchData.expiration ?? ""), 10);
+        if (!Number.isFinite(expirationMs)) throw new Error("Watch setup returned no expiration");
+        // Grava o vencimento de verdade: o update não pode falhar em silêncio, e o
+        // history_id só é trocado pelo novo (quando vier) — nunca zerado.
+        const { error: watchError } = await supabase.from("gmail_accounts").update({
+          history_id: watchData.historyId ?? account.history_id,
+          watch_expiration: new Date(expirationMs).toISOString(),
         }).eq("id", account.id);
+        if (watchError) throw new Error("Failed to persist Gmail watch");
         log.done(200);
         return jsonResponse({ success: true, ...watchData }, 200, req);
       }
