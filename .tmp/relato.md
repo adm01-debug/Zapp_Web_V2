@@ -46,4 +46,8 @@ O diff contra a `dia` inclui a FAIXA do cartão pai (PE-36, t_8e0d9185), trazida
 
 A minha parte é o commit `f4e8dfc13` (`src/App.tsx`, `src/components/gamification/AchievementToast.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`), o ajuste de mock em `src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts` (`22ea56af5`) e este relato (`7c38f34f0`).
 
+Por que a faixa não é afrouxamento de teste nem trabalho fora de escopo:
+- Os testes que "sumiram" (`src/hooks/gamification/__tests__/mutations.test.tsx` removido e as 6 linhas de `src/hooks/__tests__/useAgentGamification.test.tsx`) foram apagados/ajustados pelo CARTÃO PAI, que removeu `mutations.ts` e a escrita no cliente — teste não existe sem o código que ele cobre. Não fui eu: `git show --stat f4e8dfc13 22ea56af5` não toca em nenhum dos dois, e nenhum teste foi pulado ou teve asserção enfraquecida por mim.
+- Os arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" (`src/hooks/gamification/useAgentCelebrations.ts`, `index.ts`, `useAgentGamification.ts`, `mutations.ts`, `GamificationProvider.tsx`, `DemoAchievements.tsx`) são exatamente a faixa da dependência obrigatória, trazida por `git cherry-pick` e não editada por mim — o meu diff próprio (`f4e8dfc13`) é só `src/App.tsx` + o componente + o teste novo.
+
 Especialista: iris (area-front-componentes)
