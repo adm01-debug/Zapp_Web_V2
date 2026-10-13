@@ -74,6 +74,7 @@ function fakeAdmin(opts: {
   const stateRows: StateRow[] = [];
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const updateCalls: Array<Record<string, unknown>> = [];
+  const upsertCalls: Array<{ row: Record<string, unknown>; options: Record<string, unknown> }> = [];
   const updateResults = [...(opts.updateResults ?? [])];
   const account = opts.account === undefined ? ACCOUNT : opts.account;
 
@@ -81,6 +82,7 @@ function fakeAdmin(opts: {
     stateRows,
     rpcCalls,
     updateCalls,
+    upsertCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       rpcCalls.push({ fn, args });
       if (fn === "consume_gmail_oauth_state") {
@@ -121,6 +123,8 @@ function fakeAdmin(opts: {
             error: null,
           },
           single: { data: opts.accountError ? null : account, error: opts.accountError ?? null },
+        }, (m, args) => {
+          if (m === "upsert") upsertCalls.push({ row: args[0] as Record<string, unknown>, options: (args[1] ?? {}) as Record<string, unknown> });
         }) as Record<string, unknown>;
         builder.update = (row: Record<string, unknown>) => {
           updateCalls.push(row);
@@ -242,6 +246,26 @@ Deno.test("retorno legítimo consome o state e conclui a troca (200)", async () 
   assertEquals(calls.exchange, ["code-1"]);
   assertEquals(admin.stateRows[0].consumed, true);
   assertEquals(admin.rpcCalls.some((c) => c.fn === "store_gmail_tokens"), true);
+});
+
+Deno.test("reconectar a mesma conta atualiza a linha existente e limpa o erro anterior", async () => {
+  const admin = fakeAdmin({ existingAccountUserId: "user-1" });
+  const calls = newCalls();
+  const deps = makeDeps("user-1", admin, calls);
+
+  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
+  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
+
+  assertEquals(res.status, 200);
+  assertEquals(admin.upsertCalls.length, 1);
+  const { row, options } = admin.upsertCalls[0];
+  // mesmo e-mail -> mesma linha (ON CONFLICT), não cria uma conta duplicada
+  assertEquals(options.onConflict, "email_address");
+  assertEquals(row.email_address, "user@gmail.com");
+  // o estado de erro/reauth anterior é limpo na reconexão
+  assertEquals(row.last_error, null);
+  assertEquals(row.sync_status, "pending");
+  assertEquals(row.is_active, true);
 });
 
 Deno.test("replay: o mesmo state não troca o code uma segunda vez", async () => {
