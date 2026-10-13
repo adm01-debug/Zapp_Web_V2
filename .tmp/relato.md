@@ -19,6 +19,9 @@ Especialista: worker (sql) (area-sql-banco)
 ## Sobre o aviso "SEM DDL/migration" do fechar (não procede)
 O rodapé do cartão é um template que traz "sem DDL/Edge/dependência nova salvo se o pedido original exigia". Este cartão de banco tem o pedido original JUSTAMENTE sobre a migration/RPC #174 (o defeito é a troca de conexão padrão feita por dois UPDATE sem transação; a correção é a RPC atômica, que só existe no banco). A migration e a suíte de banco estão na entrega porque o pedido original as exige — nada de DDL fora do escopo. Não há como retirar a migration sem reabrir o defeito original.
 
+## Sobre o aviso do juiz (gatilho BEFORE UPDATE de updated_at) — não procede
+A RPC não faz um UPDATE em massa: cada comando atinge só linhas que de fato mudam de valor (no máximo a padrão antiga e o alvo). A suíte prova isso em A.2b (o caminho antigo, de dois UPDATE soltos, toca 3 linhas) contra B.5b (a RPC nova toca exatamente 2 linhas: padrão antiga + alvo) e B.5 (as linhas intocadas C3/C4 preservam o updated_at). Ou seja, o efeito colateral já está medido e limitado por teste; não há gatilho a desligar.
+
 ## O que NÃO fiz e por quê
 - Não toquei na chave `rpc:talkx_campaign_window_open:*` nem na NOTA 2026-10-11: são de outro cartão (t_7457095e) e continuam válidas enquanto a migration do talkx estiver fora de `dia/`.
 - Não alterei a migration do #174 além do stack: o corpo e o rollback vieram dos commits originais, inclusive a linha `-- Rollback (SQL executavel, na ordem)` já no formato do modelo.
