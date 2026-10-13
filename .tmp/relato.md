@@ -58,9 +58,15 @@ Da correção deste refazer (commit `dbd630b84`):
 
 ## Pontos do revisor
 
-- Ponto 1: parti do commit da entrega por cherry-pick (`a1fc5fe75`, `4ec8af77a`, `41782aaca`) — não recomecei.
-- Ponto 2: reproduzi o vermelho (`Tests 1 failed | 15 passed (16)`, 503 no lugar de `{ userId }`) e corrigi a causa no teste que a própria entrega deixou desalinhado, `tests/contracts/requireauth-network-policy.contract.test.ts` (injeção de `getProfileActive` = perfil ativo + asserção de que o perfil é lido por `user_id`), sem afrouxar asserção alguma.
-- Ponto 3: prova — `vitest run --config vitest.contracts.config.ts --reporter=dot` verde (`Test Files  89 passed (89)`; `Tests  1379 passed (1379)`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`; fecho citando o sha `dbd630b84`.
+Ponto 1: parti do commit da entrega por cherry-pick (`a1fc5fe75`, `4ec8af77a`, `41782aaca`) — não recomecei.
+
+Ponto 2: reproduzi o vermelho e corrigi a causa no teste desalinhado. Arquivo: `tests/contracts/requireauth-network-policy.contract.test.ts`. Teste que prova: os 3 casos do caminho permitido, que agora injetam `getProfileActive` = perfil ativo; vermelho antes `Tests 1 failed | 15 passed (16)` (o caminho permitido devolvia 503 no lugar de `{ userId: 'user-1' }`), verde depois `Tests 16 passed (16)`. Sem afrouxar asserção alguma (o teste ganhou a asserção `expect(profile.calls).toEqual(['user-1'])`).
+
+Ponto 3: prova executada agora. Comando: `./node_modules/.bin/vitest run --config vitest.contracts.config.ts --reporter=dot` → linhas de resultado:
+`Test Files  89 passed (89)`
+`Tests  1379 passed (1379)`
+Comando: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (142s) — o banco NÃO foi verificado`.
+sha da correção: `dbd630b84`.
 
 ## O que NÃO fiz e por quê
 
