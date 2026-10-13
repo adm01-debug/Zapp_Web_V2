@@ -12,7 +12,7 @@
 // comportamento de ponta a ponta, não um mock do handler.
 //
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read \
-//   supabase/functions/request-password-reset/index_test.ts
+//   supabase/functions/request-password-reset/index.test.ts
 import {
   handleRequestPasswordReset,
   MAX_REASON_LENGTH,
