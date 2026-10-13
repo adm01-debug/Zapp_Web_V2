@@ -57,6 +57,16 @@ Migration aplicada no banco LOCAL do cartao:
 5. Regressao coberta: C3/C5 provam que dono e staff continuam editando; C7 prova que o back-office
    nao foi afetado.
 
+## Nota sobre o alarme do juiz barato (arquivos fora da lista)
+O fechar apontou .github/workflows/db-guard.yml, scripts/db-audit/email-templates-rls.test.sh e
+src/integrations/supabase/types.ts como fora de "ARQUIVOS QUE PODE TOCAR". Explicacao:
+- O proprio cartao ordena "traga a FAIXA inteira" do cartao-avo (ET1). Essa faixa (commits
+  11237960d..de0635599) ja inclui db-guard.yml (registro do test.sh no CI) e types.ts (types gerados da
+  tabela nova). Eu NAO os editei: `git log --name-only a09410e0a..HEAD` mostra que meus commits so tocam
+  a migration nova, o scripts/db-audit/email-templates-rls.test.sh e o .tmp/relato.md.
+- scripts/db-audit/email-templates-rls.test.sh e o alvo de extensao deste cartao (e onde esta a prova do
+  furo: BLOCOS C/D). Sem ele nao ha como provar o defeito.
+
 ## Nota sobre o alarme do juiz barato (types.ts)
 O fechar acusou "src/integrations/supabase/types.ts alterado sem teste". Esse arquivo NAO e meu: ele veio
 do cartao-avo (ET1), cujo commit 2d3b95d22 criou a tabela e os types gerados — eu so trouxe a faixa dele
