@@ -12,7 +12,7 @@
  *  - o campo de data era uma caixa de texto com a dica "30 (dias)": não havia
  *    atalho de período nenhum (7/30/60/90/180).
  */
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -116,6 +116,18 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     f.create.mockReset();
     f.update.mockReset();
     f.create.mockResolvedValue(undefined);
+  });
+
+  // X111: o construtor de segmentos vive no endereço (`?view=talkx&tab=segments&mode=new`).
+  // O `window.location` do jsdom é COMPARTILHADO por todos os testes do arquivo: um
+  // teste que abre o construtor sem publicar (o "em breve" de lead_score, por exemplo)
+  // deixa `mode=new` no endereço, e o `renderView()` do teste seguinte já monta no
+  // construtor — o botão "Novo segmento" nunca aparece e o `findByRole` estoura o teto
+  // de 5 s. Limpar a rota devolve a biblioteca como estado inicial; a asserção de cada
+  // teste continua a mesma. Mesmo idioma dos irmãos do módulo (route/groups/builder/
+  // detailFresh), que esta prova era a única a não ter.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
   });
 
   it('lista: mostra o rótulo legível e grava o valor do banco', async () => {
