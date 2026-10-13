@@ -18,6 +18,9 @@ Especialista: worker (sql) (area-sql-banco)
    no USING/WITH CHECK de cada uma; todas restritas ao papel `authenticated`; helper segue
    SECURITY DEFINER com o ramo de FILA; unicidade `(contact_id, field_name)` preservada.
 
+O diff do cartão tem 3 arquivos: a migration, o teste (1 arquivo de teste) e o proprio
+`.tmp/relato.md` (versionado pelo scaffold do cartão).
+
 ## Efeitos colaterais (passada feita)
 Operacao puramente DDL: nenhum UPDATE/INSERT em dado -> nenhum gatilho disparado, `updated_at`
 intacto; uma transacao (gateway, sem BEGIN/COMMIT); nenhum GRANT, papel ou ACL alterado;
