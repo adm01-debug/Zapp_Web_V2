@@ -28,6 +28,12 @@ Especialista: worker (geral)
   → `Test Files 35 passed (35); Tests 358 passed | 1 todo (359)`
 
 ## O que NÃO fiz e por quê
+- O cartão lista `src/hooks/team-chat/useTeamChatPanel.ts`, mas esse caminho não
+  existe: o hook mora em `src/components/team-chat/useTeamChatPanel.ts` (o
+  `useTeamChatPanel` é exportado de lá e o `src/hooks/team-chat/` só tem os
+  hooks vizinhos — `useTeamMessages`, tipos, etc.). É esse o arquivo do defeito
+  relatado no cartão (o `.select(... )` com embed de `profiles` está nele), então
+  foi o arquivo editado.
 - Não mexi no SQL da RPC: o desempate por `id` para mensagens com o MESMO
   `created_at` do cursor é do banco (N-072, "fora do HEAD, traga"); o SQL atual
   compara só `created_at < v_before_at`. Está comentado no hook.
