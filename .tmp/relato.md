@@ -39,6 +39,17 @@ Especialista: workersql (area-sql-banco)
 - `node scripts/ci/check-test-inventory.mjs` → o meu .test.sh não aparece mais como órfão (o
   workflow db-guard.yml ganhou o passo do PE-09).
 
+## Arquivos fora da lista do cartão (por que foram indispensáveis)
+- scripts/db-audit/search-email-threads.test.sh — é A MINHA ÁREA (SOUL do worker sql: "onde o
+  arquivo mora: supabase/migrations/**, supabase/tests/** e scripts/db-audit/**"). O cartão lista
+  supabase/tests/ como área de teste, mas a prova de banco deste repositório mora em
+  scripts/db-audit/*.test.sh (harness com papéis reais), que é o formato exigido. Sem esse arquivo
+  não existe prova do defeito.
+- .github/workflows/db-guard.yml — o próprio hermes-tarefa-fechar bloqueia o fechamento enquanto um
+  .test.sh novo não tem passo no CI (`INVENTÁRIO DE TESTES: .test.sh novo sem passo no CI`). O passo
+  é uma linha, aditiva, e chama o retry-disposable-postgres-test.sh como todos os vizinhos; sem ele
+  o cartão não fecha. Não alterei nenhum passo existente nem afrouxei guarda.
+
 ## O que NÃO fiz e por quê
 - Não liguei a RPC no pré-filtro da tela: `src/lib/emailThreadQuery.ts` e a caixa são da área de
   hooks/telas (não estão nos arquivos que posso tocar). Deixei o contrato no comentário do cartão
