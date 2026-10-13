@@ -35,8 +35,13 @@ function serviceMock(opts: { admins?: unknown[] } = {}) {
       select: () => builder,
       eq: () => builder,
       lt: () => builder,
-      // thenable: await .from("user_roles").select("user_id").eq("role","admin")
-      then: (resolve: (v: unknown) => void) => resolve({ data: opts.admins ?? [], error: null }),
+      gte: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      // thenable: user_roles devolve os admins; security_alerts (dedupe) devolve
+      // lista vazia para não tratar um admin como alerta aberto.
+      then: (resolve: (v: unknown) => void) =>
+        resolve({ data: _table === "security_alerts" ? [] : (opts.admins ?? []), error: null }),
     };
     return builder;
   };
@@ -141,7 +146,11 @@ function captureMock(opts: { admins?: unknown[]; blockError?: { message: string 
       select: () => b,
       eq: () => b,
       lt: () => b,
-      then: (resolve: (v: unknown) => void) => resolve({ data: opts.admins ?? [], error: null }),
+      gte: () => b,
+      order: () => b,
+      limit: () => b,
+      then: (resolve: (v: unknown) => void) =>
+        resolve({ data: table === "security_alerts" ? [] : (opts.admins ?? []), error: null }),
     };
     return b;
   };
@@ -292,15 +301,19 @@ function serviceMockBlockedIps(
     return builder;
   };
 
-  const makeGenericBuilder = () => {
+  const makeGenericBuilder = (t: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const b: any = {
       insert: () => Promise.resolve({ data: null, error: null }),
       upsert: () => Promise.resolve({ data: null, error: null }),
       select: () => b,
       eq: () => b,
+      lt: () => b,
+      gte: () => b,
+      order: () => b,
+      limit: () => b,
       then: (resolve: (v: unknown) => void) =>
-        resolve({ data: opts.admins ?? [], error: null }),
+        resolve({ data: t === "security_alerts" ? [] : (opts.admins ?? []), error: null }),
     };
     return b;
   };
@@ -308,7 +321,7 @@ function serviceMockBlockedIps(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase: any = {
     from: (t: string) =>
-      t === "blocked_ips" ? makeBlockedIpsBuilder() : makeGenericBuilder(),
+      t === "blocked_ips" ? makeBlockedIpsBuilder() : makeGenericBuilder(t),
   };
   return { supabase, table };
 }

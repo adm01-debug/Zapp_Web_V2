@@ -33,7 +33,23 @@ import { timingSafeEqual } from "../_shared/hmac-validation.ts";
  * o único estado que autoriza o texto a dizer "bloqueado" é `blockedPersisted`
  * (sem erro nas escritas de blocked_ips). Falha de gravação → o alerta/notificação
  * registram o evento sem afirmar o bloqueio e marcam `blocked_persisted: false` no metadata.
+ *
+ * Deduplicação (achado de 13/10/2026, auditoria 05-features-admin).
+ *
+ * Defeito fechado: cada chamada criava um `security_alert` novo e um lote de
+ * `notifications` para TODO admin, sem janela. Quando o RA1/PE-102 ligar a Edge,
+ * a mesma rajada de um IP viraria uma notificação por chamada.
+ *
+ * Regra agora: alerta de rate limit ABERTO (`is_resolved = false`) do mesmo
+ * `(ip_address, endpoint)` criado dentro da janela (padrão 30 min,
+ * configurável) é atualizado no lugar — `request_count` e `last_seen_at` no
+ * metadata — em vez de criar outro. A `notification` aos admins só sai na
+ * CRIAÇÃO do alerta ou na ESCALADA de gravidade (warning/medium →
+ * blocked/high), nunca na atualização de rotina.
  */
+
+/** Janela padrão de deduplicação por (ip, endpoint), em minutos. */
+export const DEDUPE_WINDOW_DEFAULT_MINUTES = 30;
 
 export interface RateLimitAlertDeps {
   /**
@@ -44,6 +60,32 @@ export interface RateLimitAlertDeps {
   supabase?: any;
   /** Override do INTERNAL_ALERT_SECRET (facilita o teste sem tocar no env). */
   internalSecret?: string;
+  /** Janela de deduplicação (ip, endpoint) em minutos; padrão 30. */
+  dedupeWindowMinutes?: number;
+  /** Relógio injetável para testar janela e prazos sem esperar. */
+  now?: () => Date;
+}
+
+/** 1 = alerta/aviso; 2 = bloqueio/high. Usado para detectar escalada. */
+function severityRank(alertType: unknown, severity: unknown): 1 | 2 {
+  if (alertType === "rate_limit_blocked" || severity === "high") return 2;
+  return 1;
+}
+
+/**
+ * Janela de deduplicação vinda do ambiente. Protegido: em ambiente sem
+ * `--allow-env` (testes Deno) a leitura lança — devolve undefined e vale o
+ * padrão de 30 min.
+ */
+function windowMinutesFromEnv(): number | undefined {
+  try {
+    const raw = Deno.env.get("RATE_LIMIT_ALERT_WINDOW_MINUTES");
+    if (!raw) return undefined;
+    const parsed = parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function handleRateLimitAlert(
@@ -78,6 +120,8 @@ export async function handleRateLimitAlert(
 
     const { ip_address, endpoint, request_count, blocked } = parsed.data;
 
+    const now = deps.now ? deps.now() : new Date();
+
     // ── R2-API-057: só afirmamos bloqueio quando ele de fato persistiu ──
     // A gravação em `blocked_ips` roda ANTES de montar o alerta e a notificação.
     // `blockedPersisted` é o único estado que autoriza o texto a dizer "bloqueado";
@@ -85,7 +129,6 @@ export async function handleRateLimitAlert(
     let blockedPersisted = false;
     if (blocked) {
       const blockDuration = 15;
-      const now = new Date();
       const expiresAt = new Date(now.getTime() + blockDuration * 60 * 1000);
       const reason = `Rate limit exceeded: ${request_count} requests to ${endpoint}`;
 
@@ -131,47 +174,126 @@ export async function handleRateLimitAlert(
       }
     }
 
-    log.info(`Rate limit alert: IP ${ip_address} hit ${endpoint} ${request_count} times. Blocked: ${blockedPersisted}`);
-
+    const alertType = blockedPersisted ? "rate_limit_blocked" : "rate_limit_warning";
+    const severity = blockedPersisted ? "high" : "medium";
+    const title = blockedPersisted
+      ? `IP ${ip_address} bloqueado por Rate Limit`
+      : `Alerta de Rate Limit para IP ${ip_address}`;
     const outcome = blockedPersisted
       ? "O IP foi bloqueado."
       : blocked
         ? "Falha ao gravar o bloqueio; o IP segue liberado."
         : "Limite próximo.";
+    const description = `O IP ${ip_address} fez ${request_count} requisições para ${endpoint}. ${outcome}`;
 
-    const { error: alertError } = await supabaseClient
+    log.info(`Rate limit alert: IP ${ip_address} hit ${endpoint} ${request_count} times. Blocked: ${blockedPersisted}`);
+
+    // ── Deduplicação por (ip, endpoint) numa janela configurável ──
+    // Alerta aberto do mesmo par criado dentro da janela é ATUALIZADO no lugar.
+    const configuredWindow = deps.dedupeWindowMinutes ?? windowMinutesFromEnv();
+    const windowMinutes = configuredWindow && configuredWindow > 0
+      ? configuredWindow
+      : DEDUPE_WINDOW_DEFAULT_MINUTES;
+    const windowStartIso = new Date(now.getTime() - windowMinutes * 60 * 1000).toISOString();
+
+    // Busca por IP (sem filtrar endpoint no PostgREST — evita depender de
+    // sintaxe jsonb no filtro) e casa o endpoint no metadata em memória.
+    const { data: openAlerts, error: openError } = await supabaseClient
       .from("security_alerts")
-      .insert({
-        alert_type: blockedPersisted ? "rate_limit_blocked" : "rate_limit_warning",
-        severity: blockedPersisted ? "high" : "medium",
-        title: blockedPersisted
-          ? `IP ${ip_address} bloqueado por Rate Limit`
-          : `Alerta de Rate Limit para IP ${ip_address}`,
-        description: `O IP ${ip_address} fez ${request_count} requisições para ${endpoint}. ${outcome}`,
-        ip_address,
-        metadata: { endpoint, request_count, blocked, blocked_persisted: blockedPersisted, timestamp: new Date().toISOString() },
-      });
+      .select("id, alert_type, severity, metadata")
+      .eq("ip_address", ip_address)
+      .eq("is_resolved", false)
+      .gte("created_at", windowStartIso)
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-    if (alertError) {
-      log.error("Error creating alert", { error: alertError.message });
-      throw alertError;
+    if (openError) log.error("Error reading open alerts", { error: openError.message });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = (openAlerts ?? []).find((row: any) => {
+      const meta = row?.metadata ?? {};
+      return typeof row?.alert_type === "string" &&
+        row.alert_type.startsWith("rate_limit") &&
+        meta.endpoint === endpoint;
+    });
+
+    // A notificação aos admins só sai na criação ou na escalada de gravidade.
+    let shouldNotify = false;
+
+    if (existing) {
+      const escalating = severityRank(alertType, severity) >
+        severityRank(existing.alert_type, existing.severity);
+      shouldNotify = escalating;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const patch: Record<string, any> = {
+        description,
+        metadata: {
+          ...(existing.metadata ?? {}),
+          endpoint,
+          request_count,
+          blocked,
+          blocked_persisted: blockedPersisted,
+          last_seen_at: now.toISOString(),
+        },
+      };
+      if (escalating) {
+        patch.alert_type = alertType;
+        patch.severity = severity;
+        patch.title = title;
+      }
+
+      const { error: updateError } = await supabaseClient
+        .from("security_alerts")
+        .update(patch)
+        .eq("id", existing.id);
+      if (updateError) {
+        log.error("Error updating alert", { error: updateError.message });
+        throw updateError;
+      }
+    } else {
+      shouldNotify = true;
+      const { error: alertError } = await supabaseClient
+        .from("security_alerts")
+        .insert({
+          alert_type: alertType,
+          severity,
+          title,
+          description,
+          ip_address,
+          metadata: {
+            endpoint,
+            request_count,
+            blocked,
+            blocked_persisted: blockedPersisted,
+            timestamp: now.toISOString(),
+            last_seen_at: now.toISOString(),
+          },
+        });
+
+      if (alertError) {
+        log.error("Error creating alert", { error: alertError.message });
+        throw alertError;
+      }
     }
 
-    const { data: admins } = await supabaseClient
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin");
+    if (shouldNotify) {
+      const { data: admins } = await supabaseClient
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
 
-    if (admins && admins.length > 0) {
-      const notifications = admins.map((admin: { user_id: string }) => ({
-        user_id: admin.user_id,
-        type: "security",
-        title: blockedPersisted ? "IP Bloqueado" : "Alerta de Rate Limit",
-        message: `IP ${ip_address} - ${request_count} requisições para ${endpoint}`,
-        metadata: { ip_address, endpoint, request_count, blocked, blocked_persisted: blockedPersisted },
-      }));
+      if (admins && admins.length > 0) {
+        const notifications = admins.map((admin: { user_id: string }) => ({
+          user_id: admin.user_id,
+          type: "security",
+          title: blockedPersisted ? "IP Bloqueado" : "Alerta de Rate Limit",
+          message: `IP ${ip_address} - ${request_count} requisições para ${endpoint}`,
+          metadata: { ip_address, endpoint, request_count, blocked, blocked_persisted: blockedPersisted },
+        }));
 
-      await supabaseClient.from("notifications").insert(notifications);
+        await supabaseClient.from("notifications").insert(notifications);
+      }
     }
 
     log.done(200);
