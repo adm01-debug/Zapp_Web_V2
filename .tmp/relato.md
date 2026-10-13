@@ -1,27 +1,32 @@
-Especialista: workertestes
+Especialista: worker (telas)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Retomada (conflito com a ponta atual)
+Cartão de retomada: a entrega anterior estava parada por conflito com a ponta do dia. O workspace novo abriu sobre a ponta dia/2026-10-13 (HEAD inicial 453e6b69f9). Trouxe os 6 commits do trabalho anterior com `git cherry-pick 3a74f8908d..b88940c2c`, resolvi os conflitos preservando o que já tinha entrado na ponta e ajustei só o necessário.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Antes de mexer conferi que o defeito do pedido (X147) ainda existia na ponta: a tela 11 desenhava o ritmo com um `AreaChart` de buckets de minuto e a tela 12 idem, sem janela (60/30/15), sem série "Previsto" e sem balão de término. A lacuna existia.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+FAIXA DO PAI: commits 7b73d5815c, 72acd8306d, f58fe6f9c3, 4f914b5e96, b114cc840d, b88940c2c do cartão TL-156 (branch v2/tl-156-ritmo-series-telas-11-12-r2) — são deste cartão por retomada (o cartão manda trazê-los), não são trabalho novo.
+
+## O que mudou e por quê
+- src/components/talkx/tracking/TalkXRateChart.tsx (novo, do pai): card do ritmo com séries Enviadas (área), Entregues (tracejada, pelo minuto da entrega) e Previsto (tracejada, só com forecast), select de janela que muda a janela da série, balão "Término estimado" e linha de teto — fecha o X147.
+- src/components/talkx/tracking/talkxRatePanel.ts (novo, do pai): funções puras das séries/janela/previsto usadas pelo card (buildRateSeries, forecastFromCampaign).
+- src/components/talkx/TalkXLiveMonitor.tsx (tela 11): o rail troca o AreaChart de buckets pelo TalkXRateChart com janela/previsto/término; o TalkXHealthCard que já tinha entrado na ponta segue no mesmo rail (resolução do conflito preservando os dois lados).
+- src/components/talkx/TalkXCampaignRunning.tsx (tela 12): TabOverview passa a receber rateCard/rateSeries e mantém o insight "Pico de Respostas" (replyGrowthPct) que já tinha entrado na ponta; a query de histórico passa a devolver rows+at+buckets+replyGrowthPct (a aba Resultados continua consumindo buckets).
+- src/hooks/integrations/useTalkXMonitor.ts (1 linha, do pai): expõe isFetching para o estado "buscando" do monitor.
+- src/components/talkx/__tests__/TalkXRateChart.test.tsx (novo, do pai): prova o card (séries, janela, previsto e término).
+- src/components/talkx/__tests__/TalkXCampaignActionsCard.test.tsx: adiciona ReferenceLine ao mock de recharts. Sem isso o teste da aba Configurações quebrava ao renderizar o card novo do ritmo (o mock de recharts não tinha ReferenceLine). É ajuste mínimo de teste exigido pela entrada do card; é o "vermelho antes" abaixo.
+
+## Como resolvi cada conflito (preservando o que já tinha entrado na ponta)
+- props de TabOverview: união — mantive rateCard/rateSeries (do pai) e replyGrowthPct (da ponta).
+- query de histórico: união — { rows, at } (do pai) + { buckets, replyGrowthPct } (da ponta).
+- TalkXLiveMonitor: mantive no mesmo rail o TalkXHealthCard (da ponta) e o TalkXRateChart (do pai).
+- o card antigo de buckets (chartData + TalkXQueryBoundary do ritmo) saiu junto com o card novo do pai; os dados da ponta (segmentos, resultados/buckets, Pico de Respostas) seguem intactos.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `npx vitest run src/components/talkx` → `Test Files 1 failed | 110 passed (111)` — `TalkXCampaignActionsCard.test.tsx` : `No "ReferenceLine" export is defined on the "recharts" mock`.
+- verde depois: `npx vitest run src/components/talkx` → `Test Files 111 passed (111)`, `Tests 957 passed (957)` (inclui o novo TalkXRateChart.test.tsx).
+- lint dos arquivos tocados: `npx eslint src/components/talkx/TalkXCampaignRunning.tsx src/components/talkx/TalkXLiveMonitor.tsx src/components/talkx/tracking/talkxRatePanel.ts src/components/talkx/tracking/TalkXRateChart.tsx src/hooks/integrations/useTalkXMonitor.ts` → sem saída (0 problemas).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não alterei recharts/mock de nenhum outro teste, nem código fora dos arquivos do cartão (evidência + testes deles + os arquivos novos do item X147).
+- Não toquei em DDL/Edge/migration nem adicionei dependência.
