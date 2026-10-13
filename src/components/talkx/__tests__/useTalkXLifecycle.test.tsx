@@ -168,6 +168,7 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
       expect(talkx.updateCampaign.mutateAsync).not.toHaveBeenCalled();
       expect(result.current.error).toBe('Escolha a data e hora do agendamento.');
       expect(result.current.intent?.kind).toBe('schedule');
+      expect(result.current.intent?.target.id).toBe('c1');
       expect(result.current.isPending).toBe(false);
     },
   );
