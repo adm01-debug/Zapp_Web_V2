@@ -1,18 +1,56 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workersql (area-sql-banco)
+
+## Retomada (rebase) — como resolvi
+Trouxe a entrega parada para a ponta de hoje: `git cherry-pick` dos 2 commits da
+branch `v2/n097-talkx-banco-pre-checagem-retomada-26101014437e39` (d442d3e21 wiring;
+pai 54127a16bb banco) sobre a base `dia/2026-10-13`. Dois conflitos, ambos em
+arquivo de componente, resolvidos PRESERVANDO o que já entrou na ponta:
+- `src/components/talkx/TalkXCampaignRunning.tsx` (linha do import de `./talkxShared`):
+  mantive o `InsightCard` que a ponta adicionou E incluí os 2 imports novos do N-097.
+- `src/components/talkx/TalkXLiveMonitor.tsx` (bloco X148 "Saúde da Campanha"): mantive
+  o bloco X148 inteiro E acrescentei a linha do `useTalkXServerResumePrecheck`.
+Depois reescrevi os 2 commits por assunto (banco / wiring) a partir da base, sem
+alterar conteúdo — só para não deixar a migration com data antiga.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `supabase/migrations/20261013235903_talkx_campaign_resume_precheck.sql` (NOVO, versão
+  de hoje): `talkx_campaign_resume_precheck(uuid)` e `talkx_campaign_segment_progress(uuid)`,
+  SECURITY DEFINER, `SET search_path = public, pg_temp`, REVOKE de PUBLIC/anon e GRANT a
+  authenticated/service_role, escopo admin/supervisor ou service_role. A versão antiga
+  (20261010071435) foi renomeada via `hermes-db-migrar --nova` por exigência do cartão
+  (data de hoje >= `generated_at` de schema-catalog.json = 2026-10-04 e > maior do ledger).
+- `scripts/db-audit/talkx-resume-precheck.test.sh` (NOVO): prova em Postgres 17 descartável
+  com papel real (`SET LOCAL ROLE authenticated` + claims). Aponta o caminho do arquivo novo.
+- `.github/workflows/db-guard.yml`: passo do teste (check-test-inventory).
+- Wiring do front (mesmo cartão, trazido junto): `TalkXServerResumePrecheck.tsx`,
+  `useTalkXServerResumePrecheck.ts`, `TalkXCampaignRunning.tsx`, `TalkXLiveMonitor.tsx`,
+  `useTalkXResumeChecklist.ts` e o teste do componente.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (base sem a correção, `TALKX_RESUME_PRECHECK_MIGRATION=.tmp/sem-correcao.sql`):
+  `bash scripts/db-audit/talkx-resume-precheck.test.sh` →
+  `ERROR: function public.talkx_campaign_resume_precheck(unknown) does not exist` (exit 1)
+- verde depois: `bash scripts/db-audit/talkx-resume-precheck.test.sh` →
+  `[PASS] tudo ok -> can_resume=true` (…) `talkx-resume-precheck: OK` (exit 0)
+- componente: `npx vitest run src/components/talkx/__tests__/TalkXServerResumePrecheck.test.tsx`
+  → `Test Files 1 passed (1); Tests 5 passed (5)`
+- migration aplicada no banco LOCAL do cartão: `hermes-db-migrar supabase/migrations/20261013235903_talkx_campaign_resume_precheck.sql`
+  → `APLICADA no banco LOCAL 'v2-261013115268aa'` (CREATE FUNCTION x2, REVOKE, GRANT, COMMENT, COMMIT)
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (banco_local é pulado sem o nome do
+  conjunto, que é como o fechar chama; tipos/lint/migrations/db_guard OK)
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## Todos os caminhos do mesmo defeito (git grep)
+`git grep -n "talkx_campaign_resume_precheck"` → só `useTalkXResumeChecklist.ts` (comentário)
+além dos arquivos acima. `talkx_campaign_segment_progress` aparece em
+`src/components/talkx/tracking/TalkXSegmentProgressTable.tsx`, `talkxSegmentProgress.ts` e no
+teste ao lado (leitura da RPC de N-096) — são do mesmo X142 e a RPC agora existe no banco;
+não os toquei porque o cartão não os cita.
+
+## Passada de efeitos colaterais
+Funções novas e aditivas: nenhum GRANT/papel/ACL existente mudou (só REVOKE/GRANT das
+funções criadas); nada de gatilho nem escrita em dado. Rollback executável no topo
+(dropa as 2 funções). Nenhuma outra migration ou arquivo de outro módulo foi alterado.
+
+## NÃO FEITO (fora do título X142)
+Faltam da etapa X142, que não são deste cartão: status do template, limite diário,
+recorrência, autoresposta e o fixture talkx-window-cases.json.
