@@ -18,3 +18,4 @@ Especialista: hugo
 
 - Não liguei `messageStatsPartial` a nenhum texto de tela: os arquivos de tela/componente não estão na lista de ARQUIVOS QUE PODE TOCAR deste cartão (é da área de componentes). Fica uma linha em `useEvolutionMonitoring`/`MonitoringStatsCards` para quem pegar isso.
 - Não mexi em migration nem no SQL da RPC: vieram prontos do cartão pai (t_cb75a447) e a prova de banco está no cartão dele.
+- Os arquivos `src/integrations/supabase/types.ts`, `supabase/migrations/20261013230006_monitoring_message_buckets.sql` e `supabase/tests/monitoring_message_buckets.sql` aparecem no diff porque a seção DEPENDÊNCIA deste cartão manda trazer a FAIXA inteira do pai (t_cb75a447) por cherry-pick quando ela não está no workspace — foi o caso (`git merge-base --is-ancestor 73fea5235e HEAD` era falso). São o trabalho do cartão pai, entraram sem edição minha e são o que a RPC que este cartão chama precisa para existir.
