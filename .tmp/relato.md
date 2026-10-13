@@ -1,61 +1,43 @@
-<<<<<<< HEAD
-Especialista: worker
-
-(relato em construcao)
-=======
-Especialista: worker (sql) (area-sql-banco)
+Especialista: worker (geral)
 
 ## O que mudou e por quê
-- supabase/migrations/20261012233536_gamification_revoke_client_rpcs.sql (novo): REVOKE EXECUTE de
-  PUBLIC, anon e authenticated em public.add_agent_xp(uuid,integer),
-  public.grant_agent_achievement(uuid,text,text,text,integer),
-  public.increment_agent_messages(uuid,text) e public.update_agent_streak(uuid,boolean); GRANT
-  EXECUTE só para service_role. Fecha a fronteira invocável pelo cliente nas 4 RPCs de gamificação
-  — antes (20260930113613) authenticated tinha EXECUTE e um agente logado inflava o próprio XP/nível
-  por chamada direta a /rest/v1/rpc/*. Não muda corpo de função, tabela, policy nem gatilho.
-- supabase/tests/gamification_revoke_client_rpcs.sql (novo): prova em banco descartável, rodando como
-  postgres com SET LOCAL ROLE authenticated, transação revertida (sem side effect).
+
+- `docs/adr/ADR-009-paridade-batch1-batch2.md` (novo): registra as decisões D1–D5 da auditoria de
+  paridade V3 → V2 (batch 1 e 2) com o estado de cada uma (D1/PB-39 e D4/PB-18-19 implementados no
+  repositório; D5/PB-36 pendente), o que ficou deliberadamente de fora (tags, exportar/importar/edição em
+  massa, reativar ciclo de vida de negócios, SLA de Resolução, webhook externo de SLA, QR persistido,
+  widgets, A/B clássico) e o estado conferido de negócios, SLA, War Room e conexões. Índice atualizado em
+  `docs/adr/README.md`.
+- `docs/COMPLETE_SYSTEM_FEATURES.md` §37: a seção descrevia o quadro Kanban de negócios na rota
+  `?view=pipeline` → `TasksModule`, que **não existe mais** (a porta de entrada "Quadro" foi removida na
+  fusão Quadro → Tarefas; `src/components/pipeline/` não existe e nenhum item de navegação tem id
+  `pipeline`). Passou a apontar onde os negócios realmente aparecem (CRM 360 do contato), com o avanço de
+  etapa e os limites conhecidos (PB-01, PB-06). Título mantido — o guarda `SL-223` exige o título exato.
+- `docs/COMPLETE_SYSTEM_FEATURES.md` §8, §10 e §14: notas de estado atual conferíveis — SLA resolvido no
+  servidor (D1) e a lacuna de conversa nunca respondida (PB-40), débitos do War Room (PB-11 a PB-13) e a
+  autorização por papel da Edge `evolution-api` (PB-05), cada uma com `arquivo:linha` ou o cartão.
+- `docs/dashboard/README.md`: nova seção "War Room — fonte de dados por número", no padrão do arquivo
+  (de onde cada número vem e qual débito segue aberto).
 
 ## Prova
-- vermelho antes: `zapp-db-local psql . <copia> < .tmp/red-vacuidade.sql` (restaura os 4 GRANTs a
-  authenticated em uma transação revertida) →
-  `NOTICE: RED T1: authenticated tem EXECUTE em add_agent_xp = t`
-  `NOTICE: RED T2: chamada direta como authenticated -> P0001 / p_xp exceeds single-call maximum of 500, got 9999`
-  Ou seja: sem a migration a barreira era só a guarda de entrada (P0001), não a ACL — a asserção T2
-  do teste (exige 42501 + 'permission denied for function') FALHA. A prova não é vacuosa.
-- verde depois: `zapp-db-local psql . <copia> < supabase/tests/gamification_revoke_client_rpcs.sql`
-  →
-  `NOTICE: T1 OK: public.add_agent_xp(uuid,integer) -> anon=false authenticated=false PUBLIC=false service_role=true`
-  `NOTICE: T1 OK: public.grant_agent_achievement(uuid,text,text,text,integer) -> anon=false authenticated=false PUBLIC=false service_role=true`
-  `NOTICE: T1 OK: public.increment_agent_messages(uuid,text) -> anon=false authenticated=false PUBLIC=false service_role=true`
-  `NOTICE: T1 OK: public.update_agent_streak(uuid,boolean) -> anon=false authenticated=false PUBLIC=false service_role=true`
-  `NOTICE: T3 OK: sent=10 streak=1 best=1 conquista=1 xp=1 achievements=1`
-  `NOTICE: T2 OK add_agent_xp: 42501 - permission denied for function add_agent_xp`
-  `NOTICE: T2 OK grant_agent_achievement: 42501 - permission denied for function grant_agent_achievement`
-  `NOTICE: T2 OK increment_agent_messages: 42501 - permission denied for function increment_agent_messages`
-  `NOTICE: T2 OK update_agent_streak: 42501 - permission denied for function update_agent_streak`
-  `GAMIFICATION REVOKE CLIENT RPCS: OK`  (exit=0)
-- ACL conferida direto no banco local após aplicar a migration (has_function_privilege):
-  anon=f authenticated=f service_role=t nas 4 funções.
-- T3 prova que a pontuação de verdade não quebrou: INSERT de uma mensagem do agente no marco de 10
-  (gatilho trg_gamification_on_message_sent) incrementa messages_sent 9→10, current_streak/best_streak
-  0→1 e concede a conquista '10 Mensagens' com XP pela rotina interna SECURITY DEFINER — nada disso
-  passa pelo RPC público revogado.
+
+- Guarda da doc de features: `node --test scripts/ci/complete-system-features-doc.unit.mjs` →
+  `tests 7; pass 7; fail 0` (cobre as seções 35..48, o título da §37 e a existência de todo arquivo de
+  código citado a partir da §35).
+- Guarda do mapa do Dashboard: `node --test scripts/ci/dashboard-readme-drift.unit.mjs` →
+  `tests 6; pass 6; fail 0` (nenhum caminho citado inexistente no README).
+- Verificação do projeto: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (dependencias, db_guard,
+  tipos, lint, migrations OK).
+- Diff do commit próprio é só de documentação (`git diff --name-only HEAD~1 HEAD` = os 4 arquivos acima).
 
 ## O que NÃO fiz e por quê
-- Não toquei src/ (fora da minha área). O único consumidor cliente das 4 RPCs é
-  src/hooks/gamification/mutations.ts, usado só pela GamificationProvider, que não está montada no
-  app; nenhuma tela chama essas RPCs (git grep em src/). Depois do REVOKE, qualquer chamada daquela
-  camada recebe 42501 — comportamento pretendido pelo cartão.
-- Não toquei o corpo das 4 funções nem o gatilho: a pontuação de servidor já é SECURITY DEFINER e não
-  depende do EXECUTE de authenticated.
-- Não criei scripts/db-audit/*.test.sh nem passo em .github/workflows/db-guard.yml (fora dos arquivos
-  do cartão); a prova ficou em supabase/tests/, como o cartão indica.
-- Não citei identificador, URL nem o papel do banco real.
 
-## Passada de efeitos colaterais
-- Só ACL: nenhum UPDATE/INSERT de dados, nenhum gatilho disparado pela migration (nenhum DML).
-- Rollback real e executável no cabeçalho (GRANTs de volta a authenticated + service_role, estado de
-  20260930113613); nada tocado além do EXECUTE de authenticated.
-- Atômica: um único arquivo, sem DDL de tabela.
->>>>>>> 0eba2d9cd (chore(db): relato da revogacao de EXECUTE das RPCs de gamificacao)
+- Não criei doc novo além do ADR (o ADR é o produto pedido) e não toquei em código nem em banco.
+- Não apliquei as migrations dos cartões pai em nenhum banco: é doc-only, e aplicar migration é decisão
+  do dono (D3). Os cartões pai trouxeram a faixa inteira para esta base (`fix(edge)` da Evolution,
+  revogação das RPCs de gamificação e `resolve_applicable_sla`), então as afirmações do ADR batem com o
+  código presente aqui.
+- Não corrigi `docs/SLA-ESCALATION-CRON.md` (fora dos arquivos permitidos) — o ADR e a §8 registram que
+  ele é desenho antigo com tabela e cron jobs que não existem no banco.
+- Não escrevi teste novo: os dois guardas de CI acima já validam, por conteúdo, exatamente os arquivos que
+  toquei (a §37 e o README do dashboard). O ADR é novo e não tem guarda próprio.
