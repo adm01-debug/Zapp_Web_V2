@@ -10,12 +10,12 @@ import React from 'react';
  * Defeito medido em AIProviderHealthPanel.tsx: a consulta usava
  * `.eq('function_name', 'ai-proxy')`. O roteador central (`generateWithRouting`)
  * grava em `ai_usage_logs.function_name` o nome da FUNÇÃO CHAMADORA (voice-agent,
- * ai-auto-tag, classify-*, chatbot-l1, ...), não "ai-proxy". Quando não havia
+ * classify-intent, classify-*, chatbot-l1, ...), não "ai-proxy". Quando não havia
  * nenhuma linha `ai-proxy` na janela, o painel geral declarava "nenhuma chamada
  * de IA foi observada", escondendo a atividade real.
  *
  * O mock abaixo HONRA os filtros pedidos (diferente do mock de sem-observacoes):
- * com o filtro errado, uma fixture só de voice-agent/ai-auto-tag volta vazia e
+ * com o filtro errado, uma fixture só de voice-agent/classify-intent volta vazia e
  * prova o defeito (vermelho). Sem o filtro, as mesmas linhas viram observações.
  */
 const estado: { linhas: Record<string, unknown>[]; erro: null | { message: string } } = {
@@ -76,8 +76,8 @@ describe('R2-API-043 — painel cobre as chamadas de IA fora do ai-proxy', () =>
     estado.erro = null;
   });
 
-  it('fixture só com voice-agent/ai-auto-tag produz observações no painel geral', async () => {
-    estado.linhas = [log('voice-agent'), log('ai-auto-tag')];
+  it('fixture só com voice-agent/classify-intent produz observações no painel geral', async () => {
+    estado.linhas = [log('voice-agent'), log('classify-intent')];
     renderizar();
 
     // O painel geral precisa CONTAR as chamadas das funções modernas.

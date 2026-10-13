@@ -64,3 +64,19 @@ describe('SystemFeaturesView — título com ícone, não emoji (t_638c8a1a)', (
     expect(titulo.parentElement?.parentElement?.querySelector('svg')).not.toBeNull();
   });
 });
+
+// t_dd25f4b4: o catálogo de produto não lista mais as etiquetas de contato nem as
+// tabelas locais do módulo removido (contacts.tags, ai_conversation_tags).
+describe('SystemFeaturesView — catálogo sem etiquetas de contato', () => {
+  it('nenhum item do catálogo menciona tag/etiqueta de contato', () => {
+    abrirCatalogo();
+
+    // O único resíduo aceitável com a palavra "tag" é o contrato EXTERNO do CRM
+    // (contact_tags_ext), que não é o modelo local de etiqueta de contato.
+    expect(screen.queryByText(/etiqueta/i)).toBeNull();
+    expect(screen.queryByText(/Tags\/etiquetas em contatos/i)).toBeNull();
+    expect(screen.queryByText(/ai_conversation_tags/i)).toBeNull();
+    expect(screen.queryByText(/contacts\.tags/i)).toBeNull();
+    expect(screen.getByText(/contact_tags_ext/)).toBeInTheDocument();
+  });
+});

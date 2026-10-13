@@ -66,11 +66,6 @@ const mockByAgent = [
   { name: 'Agente B', mensagens: 50 },
 ];
 
-const mockByTag = [
-  { name: 'VIP', contatos: 30 },
-  { name: 'Lead', contatos: 70 },
-];
-
 const mockByType = [
   { name: 'WhatsApp', value: 80 },
   { name: 'SMS', value: 20 },
@@ -177,16 +172,16 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
   });
 
-  it('ContactsCharts: linha, pizza e barras têm <title> e <desc> próprios', () => {
+  it('ContactsCharts: linha e pizza têm <title> e <desc> próprios; não há gráfico por tag', () => {
     instalarRO();
     const { container } = render(
       <ContactsCharts
-        data={{ daily: mockDaily, byType: mockByType, byTag: mockByTag }}
+        data={{ daily: mockDaily, byType: mockByType }}
         isLoading={false}
       />,
     );
     const svgs = [...container.querySelectorAll('svg.recharts-surface[role]')];
-    expect(svgs.length).toBe(3);
+    expect(svgs.length).toBe(2);
     const porTitulo = (t: string) => svgs.find((svg) => svg.querySelector(':scope > title')?.textContent === t);
     expect(porTitulo('Novos contatos por dia')?.getAttribute('aria-label')).toBe(
       'Gráfico de novos contatos por dia. Máximo de novos contatos: 5 em 02/01.',
@@ -194,9 +189,9 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     expect(porTitulo('Contatos por tipo')?.getAttribute('aria-label')).toBe(
       'Gráfico de contatos por tipo. Maior tipo: WhatsApp com 80.',
     );
-    expect(porTitulo('Contatos por tag')?.getAttribute('aria-label')).toBe(
-      'Gráfico de contatos por tag. Maior etiqueta: Lead com 70.',
-    );
+    // A série/etiqueta saiu dos relatórios: nenhum gráfico nem texto por tag.
+    expect(porTitulo('Contatos por tag')).toBeUndefined();
+    expect(container.textContent).not.toMatch(/tag/i);
     for (const svg of svgs) {
       expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
     }
