@@ -27,6 +27,19 @@ Especialista: Hugo (area-front-hooks)
 - Ponto 3: removidas as linhas em branco no fim de `ContactDetails.tsx` (agora
   `}` + uma quebra); conferido com `od -c` do fim do arquivo.
 
+## Sobre os avisos do juiz
+- Teste removido/afrouxado: SIM, e foi o cartão que mandou. O card pede "hook sem
+  referência a tags de contato"; a função de tags saiu do app (ordem do Joaquim,
+  12/10), então os casos de teste que escreviam/líam `contact.tags` saíram junto
+  com o código (`ab6a87cacf`). Os testes que cobrem o bloqueio REAL na Evolution
+  e a resolução de instância seguem no arquivo e passam: 6 verdes.
+- Critério de pronto: o hook não cita mais `tags` (conferível em
+  `useContactQuickActions.ts`); a lógica de bloqueio fica pela Evolution, sem a
+  coluna de tags; o VIP NÃO tem coluna dedicada (`is_vip` não existe no schema,
+  reconhecimento de 13/10), então não há onde persistir e as ações de VIP saíram
+  — o selo do cabeçalho continua derivado de `contact.tags` (legado) e está
+  registrado como ponto do cartão TG-A.
+
 ## O que NÃO fiz e por quê
 - Nenhuma mudança de lógica: a recusa era só de texto/formatação e o revisor
   confirmou que a lógica e o escopo estão corretos.
