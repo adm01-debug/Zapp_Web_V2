@@ -16,6 +16,11 @@ vi.mock('@/lib/logger', () => ({
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
+// Overlay de gamificação: o assunto aqui é o listener do Team Chat, então o toast de
+// conquista é neutralizado como os outros overlays do App (Toaster, Sonner, LiveRegion).
+vi.mock('@/components/gamification/AchievementToast', () => ({
+  AchievementCelebrationToaster: () => null,
+}));
 vi.mock('@/components/errors/ErrorBoundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
 }));
