@@ -1,18 +1,51 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (ci) (area-verificacao-ci)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- scripts/db-audit/lint-migrations-content.mjs (novo): lint estático do CONTEÚDO das migrations — porte do
+  scripts/lint-migrations.mjs + do antipadrão (a) do check-migration-gates.mjs da V3. Regras: ML-001 (SECURITY
+  DEFINER sem SET search_path), ML-004 (CREATE TABLE de app em public./zapp. sem ENABLE ROW LEVEL SECURITY),
+  ML-005 (GRANT EXECUTE a PUBLIC/anon, inclusive grant quebrado em várias linhas), ML-008 (SECURITY DEFINER +
+  GRANT TO authenticated sem checagem do chamador no corpo) e ANTIPADRAO (EXCEPTION WHEN OTHERS ... RAISE NOTICE
+  sem re-raise; `RAISE NOTICE ...; RAISE;` passa). Com CHANGED_FILES linta só o diff; sem ele varre o diretório.
+  Exceções ficam documentadas no manifesto: arquivo listado em exceptions[] do scripts/db-audit/migration-evidence.json
+  (o mesmo "manifesto de exceções" do check-migration-drift.mjs) é dispensado — seu conteúdo já é fixado por sha256
+  ali e qualquer edição é recusada pelo drift checker no mesmo job. MIGRATION_LINT_MANIFEST e MIGRATIONS_DIR
+  sobrescrevem caminhos para teste.
+- scripts/db-audit/lint-migrations-content.test.mjs (novo): testes do lint (o cartão pede "testes do lint").
+- .github/workflows/db-guard.yml: passo "Lint de conteudo das migrations alteradas" (roda em pull_request e
+  merge_group; CHANGED_FILES = `git diff --name-only origin/<base>...HEAD -- 'supabase/migrations/*.sql'`, o mesmo
+  padrão de paths-filter do ci.yml) e `fetch-depth: 0` no checkout — sem histórico o merge-base não existe e o
+  diff sairia vazio.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (guarda desligada): fixture com SECURITY DEFINER sem search_path + GRANT a anon →
+  `MIGRATIONS_DIR=.tmp/demo-migrations node scripts/db-audit/lint-migrations-content.mjs` →
+  "lint-migrations-content: 2 violacao(oes) em 1 migration(s)" com [ML-001] e [ML-005], EXIT=1. A V2 não tinha
+  nenhuma guarda de conteúdo (nem check-migration-drift.mjs, nem os testes anteriores do glob), então a suíte nova
+  falha sem este arquivo.
+- verde depois: `node --test scripts/db-audit/lint-migrations-content.test.mjs` → "ℹ tests 10 / ℹ pass 10 / ℹ fail 0".
+- cadeia inteira (shell do workflow exercitado com o componente real): `BASE_REF=main bash --noprofile --norc -euo
+  pipefail .tmp/step.sh` imprime "Lintando migrations alteradas:" e roda o lint; com BASE_REF vazio imprime "Sem
+  base_ref ... pulado." e sai 0; `bash -n` do mesmo bloco: OK.
+- guarda contra a árvore de hoje: `CHANGED_FILES="$(git diff --name-only origin/main...HEAD -- 'supabase/migrations/*.sql')"
+  node scripts/db-audit/lint-migrations-content.mjs` → 1 violação em 50 migrations, e é achado REAL (abaixo).
+
+## Achado (é do lint, não do escopo deste cartão)
+- ML-008 aponta supabase/migrations/20261007004252_talkx_engine_window_contract.sql:263 —
+  public.talkx_engine_window_open é SECURITY DEFINER, tem GRANT EXECUTE TO authenticated e nenhuma checagem do
+  chamador no corpo (nem auth.uid()/auth.role(), nem has_role(), nem current_profile_id()): qualquer autenticado
+  lê a janela de qualquer campanha. Correção = migration nova redefinindo a função com a guarda (arquivo fora da
+  lista deste cartão). Registrei em kanban_comment.
+- No mesmo glob, talkx-schedule-timezone-contract.test.mjs tem 2 falhas PRÉ-EXISTENTES (411 testes, 409 passam);
+  nenhum dos 3 arquivos do meu diff é lido por esse teste.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não implementei ML-002/ML-003/ML-007/ML-009 da V3: o cartão nomeia ML-001, ML-004, ML-005, ML-008 e o antipadrão.
+- ML-008 aceita auth.uid(), auth.role(), has_role() e current_profile_id(). auth.role() é exatamente o que o próprio
+  ML-008 da V3 aceita; has_role() é nomeado no cartão; current_profile_id() é o helper de identidade do chamador das
+  RPCs da V2. Sem os dois últimos, 4 RPCs legítimas do merge de hoje (talkx_engine_window_contract,
+  p1_department_whatsapp_mode, team_chat_direct_conversation_race_guard, scope_wa_label_rpc_by_connection) eram
+  falso positivo e a guarda barraria um merge sem relação com elas. Se o revisor preferir o par literal do cartão, é
+  trocar uma linha; os 4 arquivos viram pendência de banco (cartão próprio).
+- Corrigi um falso positivo de regex no porte: "SECURITY DEFINER" citado no texto de `comment on function ... is '...'`
+  casava ML-001; agora comentário e string de linha são mascarados na detecção (com teste próprio).
