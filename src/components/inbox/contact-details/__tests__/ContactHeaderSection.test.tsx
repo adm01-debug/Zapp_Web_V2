@@ -9,11 +9,28 @@ vi.mock('@/hooks/crm/useExternalContact360', () => ({
   useExternalContact360: () => ({ data: crm360DataMock }),
 }));
 
+// Estatísticas reais do contato (ContactService.fetchStats). Padrão: sem dados →
+// o cabeçalho não mostra pontuação nenhuma.
+let contactStatsMock: unknown = null;
+vi.mock('@/hooks/crm/useContactStats', () => ({
+  useContactStats: () => ({ data: contactStatsMock }),
+}));
+
 vi.mock('@/integrations/supabase/externalClient', () => ({
   isExternalConfigured: false,
 }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (_key: string, fallback = false) => fallback }));
+// Isola o cabeçalho do painel de colaboração em tempo real (assina presence via
+// WebSocket); aqui só interessa a pontuação vinda de ContactService.fetchStats.
+vi.mock('@/components/inbox/RealtimeCollaboration', () => ({
+  RealtimeCollaboration: () => null,
+}));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => true }));
+// Não assina o canal realtime de e-mails não lidos (WebSocket) — fora do escopo
+// desta prova, que é a pontuação do cabeçalho.
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({
+  useContactUnreadEmails: () => ({ count: 0, status: 'idle' }),
+}));
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -54,6 +71,7 @@ describe('ContactHeaderSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     crm360DataMock = null;
+    contactStatsMock = null;
   });
 
   // ========== RENDERING ==========
@@ -199,21 +217,35 @@ describe('ContactHeaderSection', () => {
     expect(disabledBtn).toBeTruthy();
   });
 
-  // ========== ENGAGEMENT SCORE ==========
-  it('shows engagement score badge', () => {
+  // ========== PONTUAÇÃO DE ENGAJAMENTO (dados reais ou nenhuma) ==========
+  it('NAO mostra pontuacao quando nao ha dados de conversa (nada inventado)', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    // With positive sentiment (50+25) + high priority (+15) + company (+5) + customer type (+5) = 100 capped
-    expect(screen.getByText('100')).toBeInTheDocument();
+    // Sem ContactService.fetchStats não há número: nem badge numérico nem anel.
+    expect(screen.queryByText('50')).not.toBeInTheDocument();
+    expect(screen.queryByText('100')).not.toBeInTheDocument();
+    // O anel de engajamento (SVG do avatar) não é renderizado.
+    expect(document.querySelector('svg[viewBox="0 0 108 108"]')).toBeNull();
   });
 
-  it('shows lower engagement for neutral contact', () => {
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={{ ...baseEnriched, ai_sentiment: 'neutral', ai_priority: 'low', company: null, contact_type: null }}
-      />
-    );
-    expect(screen.getByText('50')).toBeInTheDocument();
+  it('mostra a pontuacao calculada dos dados reais (exemplo: 65/100)', () => {
+    // 100 msgs → 20; 4 conversas → 10; 10 min → 20; CSAT 5 → 15 = 65
+    contactStatsMock = { totalMessages: 100, totalConversations: 4, avgResponseTimeMinutes: 10, csatAverage: 5, csatCount: 3 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('65')).toBeInTheDocument();
+  });
+
+  it('mostra a faixa no tooltip junto da formula (mensagens/conversas/resposta)', async () => {
+    contactStatsMock = { totalMessages: 100, totalConversations: 4, avgResponseTimeMinutes: 10, csatAverage: 5, csatCount: 3 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('65');
+    fireEvent.pointerMove(badge, { pointerType: 'mouse' });
+    expect(await screen.findByText(/Engajamento Médio \(65\/100\)/)).toBeInTheDocument();
+    expect(screen.getByText(/mensagens: 100, conversas: 4, resposta média: 10 min/)).toBeInTheDocument();
+  });
+
+  it('nao mostra pontuacao com enrich rico quando nao ha estatisticas (o cabecalho nao inventa)', () => {
+    render(<ContactHeaderSection contact={baseContact} enrichedData={{ ...baseEnriched, ai_priority: 'low', company: null, contact_type: null }} />);
+    expect(screen.queryByText(/^\d{1,3}$/)).not.toBeInTheDocument();
   });
 
   // ========== APELIDO (paridade com o nome exibido na lista de conversas) ==========
@@ -387,80 +419,58 @@ describe('ContactHeaderSection', () => {
   //   hsl(160 70% 28%) → L≈0.1461 → 5.35:1 ✅
   //   hsl(38 90% 32%)  → L≈0.1634 → 4.92:1 ✅
   //   hsl(0 84% 48%)   → L≈0.1660 → 4.86:1 ✅
+  // As cores agora são exercitadas por DADOS REAIS (estatísticas do contato).
 
-  // Smoke: prova que jsdom/cssstyle processa inline styles corretamente.
+  const HOT = { totalMessages: 200, totalConversations: 10, avgResponseTimeMinutes: 15, csatAverage: 5, csatCount: 1 }; // 100
+
   it('smoke: inline styles são processadas pelo jsdom (assertion positiva + negativa)', () => {
+    contactStatsMock = HOT;
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    // Positiva: badge tem a cor correta para score=100 (hot)
     expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
-    // Negativa: toHaveStyle distingue valores distintos
     expect(badge).not.toHaveStyle('background-color: hsl(38 90% 32%)');
   });
 
   it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
-    // baseEnriched: positive+high+company+customer = 100
+    contactStatsMock = HOT;
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    expect(screen.getByText('100')).toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 
   it('badge de alto engajamento usa texto branco (necessário para ratio WCAG)', () => {
+    contactStatsMock = HOT;
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('color: rgb(255, 255, 255)');
+    expect(screen.getByText('100')).toHaveStyle('color: rgb(255, 255, 255)');
   });
 
   it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
-    // positive(+25) + low(nada) + company(+5) + no type(nada) = 50+25+5 = 80
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={{ ...baseEnriched, ai_priority: 'low', contact_type: null }}
-      />
-    );
-    const badge = screen.getByText('80');
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    // 200 msgs → 40; 10 conversas → 25; 16 min → 15; sem CSAT = 80
+    contactStatsMock = { totalMessages: 200, totalConversations: 10, avgResponseTimeMinutes: 16, csatAverage: null, csatCount: 0 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('80')).toHaveStyle('background-color: hsl(160 70% 28%)');
   });
 
   it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.92:1 com branco)', () => {
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={{ ...baseEnriched, ai_sentiment: 'neutral', ai_priority: 'low', company: null, contact_type: null }}
-      />
-    );
-    // score = 50 (base sem bônus — mínimo alcançável pela fórmula atual)
-    const badge = screen.getByText('50');
-    expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
+    // 100 msgs → 20; 4 conversas → 10; 10 min → 20; CSAT 5 → 15 = 65
+    contactStatsMock = { totalMessages: 100, totalConversations: 4, avgResponseTimeMinutes: 10, csatAverage: 5, csatCount: 3 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('65')).toHaveStyle('background-color: hsl(38 90% 32%)');
   });
 
-  it('score mínimo é 50 — ramo s<50 em getScoreBadgeBg é código defensivo não alcançável', () => {
-    // A fórmula só faz adições (base 50 + bônus). Sentiment negativo não subtrai.
-    // Logo hsl(0 84% 48%) nunca é ativado com a implementação atual.
-    // Este teste documenta esse invariante: qualquer enrichedData produz score >= 50.
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={{ ...baseEnriched, ai_sentiment: 'negative', ai_priority: 'low', company: null, contact_type: null }}
-      />
-    );
-    const badge = screen.getByText('50');
-    expect(badge).toBeInTheDocument();
-    // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
-    expect(badge).not.toHaveStyle('background-color: hsl(0 84% 48%)');
-  });
-
-  it('badge usa cor de médio engajamento na fronteira score=75 (abaixo do limiar hot 80)', () => {
-    // positive(+25) + low(0) + no company(0) + no type(0) = 50+25 = 75; 75 < 80 → warm
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={{ ...baseEnriched, ai_priority: 'low', company: null, contact_type: null }}
-      />
-    );
-    const badge = screen.getByText('75');
+  it('badge usa cor de médio engajamento na fronteira score=79 (abaixo do limiar hot 80)', () => {
+    // 195 msgs → 39; 10 conversas → 25; 16 min → 15 = 79; 79 < 80 → warm
+    contactStatsMock = { totalMessages: 195, totalConversations: 10, avgResponseTimeMinutes: 16, csatAverage: null, csatCount: 0 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('79');
     expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
     expect(badge).not.toHaveStyle('background-color: hsl(160 70% 28%)');
   });
+
+  it('score baixo (pouco histórico real) usa a cor de baixo engajamento — ramo agora alcançável', () => {
+    // 1 mensagem → 0.2 → round 0 → faixa baixa → hsl(0 84% 48%)
+    contactStatsMock = { totalMessages: 1, totalConversations: 0, avgResponseTimeMinutes: 0, csatAverage: null, csatCount: 0 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    expect(screen.getByText('0')).toHaveStyle('background-color: hsl(0 84% 48%)');
+  });
 });
+
