@@ -137,11 +137,11 @@ CREATE TABLE public.talkx_blacklist (
 CREATE VIEW public.talkx_engine_health AS
 SELECT kind, observed_at, metric_count, metric_rate, status, return_message
   FROM (VALUES
-    ('stalled_campaign',  now() - interval '20 min',  NULL::bigint,  NULL::double precision, 'stalled',  NULL),
-    ('stale_lease',       now() - interval '5 min',  NULL::bigint,  NULL::double precision, 'active',   NULL),
-    ('outcome_unknown_24h', now() - interval '1 hour', 3::bigint,     NULL::double precision, NULL,       NULL),
-    ('failure_rate_15m',  now() - interval '10 min', NULL::bigint,  0.12::double precision, NULL,       NULL),
-    ('cron_run',          now() - interval '1 min',  NULL::bigint,  NULL::double precision, 'ok',       'last run completed')
+    ('stalled_campaign',  now() - interval '20 min',  NULL::bigint,  NULL::numeric, 'stalled',  NULL),
+    ('stale_lease',       now() - interval '5 min',  NULL::bigint,  NULL::numeric, 'active',   NULL),
+    ('outcome_unknown_24h', now() - interval '1 hour', 3::bigint,     NULL::numeric, NULL,       NULL),
+    ('failure_rate_15m',  now() - interval '10 min', NULL::bigint,  0.12::numeric, NULL,       NULL),
+    ('cron_run',          now() - interval '1 min',  NULL::bigint,  NULL::numeric, 'ok',       'last run completed')
   ) AS t(kind, observed_at, metric_count, metric_rate, status, return_message);
 
 -- Perfis: p1 admin, p2 dono das campanhas, p3 outro agente.
@@ -362,6 +362,9 @@ expect 'authenticated com EXECUTE' "$(psql_q "SELECT has_function_privilege('aut
 expect 'SECURITY DEFINER com search_path fixo' "$(psql_q "SELECT prosecdef AND 'search_path=public, pg_temp' = ANY(proconfig) FROM pg_proc WHERE oid='$sig'::regprocedure")" 't'
 case_done acl
 psql_test < "$migration" >/dev/null || fail 'segunda aplicacao da migration falhou'
+# A migration do monitor acima recria a funcao com o corpo anterior (sem o bloco motor).
+# Reaplicar a migration do engine health devolve a funcao do N-117 antes do caso (11).
+psql_test < "$migration_engine" >/dev/null || fail 'segunda aplicacao da migration do engine health falhou'
 expect 'uma unica funcao' "$(psql_q "SELECT count(*) FROM pg_proc WHERE proname='talkx_monitor_panel'")" '1'
 case_done replay
 pass '(10) ACL, SECURITY DEFINER, search_path fixo e migration replayavel'
