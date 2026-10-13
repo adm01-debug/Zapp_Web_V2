@@ -145,10 +145,19 @@ function makeRequest(body: unknown): Request {
 }
 
 function run(body: unknown, admin: CreateUserAdminClient): Promise<Response> {
+  return runWith(body, admin, async () => ({ allowed: true }));
+}
+
+/** Permite scriptar o rate limit (persistente) para provar o gate e a chave. */
+function runWith(
+  body: unknown,
+  admin: CreateUserAdminClient,
+  enforceRateLimit: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>,
+): Promise<Response> {
   return handleCreateUserRequest(makeRequest(body), {
     caller: callerOk,
     admin,
-    checkRateLimit: () => ({ allowed: true }),
+    enforceRateLimit,
   });
 }
 
@@ -325,7 +334,36 @@ Deno.test("R2-AUTH-016b (k): auditoria grava ator, ação e user_id criado, sem 
   );
 });
 
-Deno.test("R2-AUTH-016b (l): falha ao gravar auditoria -> erro + compensação", async () => {
+Deno.test("rate limit (IP): negado antes de autenticar -> 429 e nada criado", async () => {
+  const { admin, calls } = fakeAdmin();
+  const res = await runWith(BODY_BASE, admin, async () => ({ allowed: false }));
+  assert(res.status === 429, `esperado 429, veio ${res.status}`);
+  assert(calls.length === 0, `nada pode tocar banco/GoTrue antes do gate: ${JSON.stringify(calls)}`);
+});
+
+Deno.test("rate limit (usuario): limite persistente por USUARIO apos autenticar -> 429", async () => {
+  // Primeira chamada = pre-auth (por IP) permite; a segunda = pos-auth (por
+  // usuario) nega. Prova que o handler conta por conta, nao so por IP.
+  const { admin, calls } = fakeAdmin();
+  const keys: string[] = [];
+  const res = await runWith(BODY_BASE, admin, async (key) => {
+    keys.push(key);
+    return { allowed: !key.includes(":user:") };
+  });
+  assert(res.status === 429, `esperado 429, veio ${res.status}`);
+  assert(
+    keys.length === 2 &&
+      keys[0] === "create-user:unknown" &&
+      keys[1] === `create-user:user:${CALLER_ID}`,
+    `chaves inesperadas: ${JSON.stringify(keys)}`,
+  );
+  assert(
+    !calls.includes("auth.admin.createUser"),
+    `nao pode criar com o limite por usuario estourado: ${JSON.stringify(calls)}`,
+  );
+});
+
+Deno.test("R2-AUTH-016 (l): falha ao gravar auditoria -> erro + compensação", async () => {
   const { admin, deleted } = fakeAdmin({ failOn: { "audit_logs:insert": { message: "permission denied" } } });
   const res = await run(BODY_BASE, admin);
   await assertFalhaComCompensacao(res, deleted, "auditoria");

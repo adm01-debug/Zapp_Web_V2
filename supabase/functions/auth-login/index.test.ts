@@ -10,7 +10,10 @@
 //   * o erro de decisão responde 503 sem revelar regras/listas;
 //   * o caminho permitido autentica e devolve a sessão;
 //   * o limite configurável de `auth-login` prevalece sobre os hardcoded;
-//   * a negação NÃO chama signInWithPassword nem record_failed_login.
+//   * a negação NÃO chama signInWithPassword nem record_failed_login;
+//   * se o contador PERSISTENTE do limite por e-mail estiver indisponível, o
+//     login falha FECHADO (503) sem autenticar — a guarda por conta não pode
+//     cair para o contador em memória, que zera a cada isolate.
 //
 // Run with:
 //   deno test --config scripts/ci/deno.json supabase/functions/auth-login/index.test.ts
@@ -345,6 +348,33 @@ Deno.test("falha de transporte que REJEITA a promise responde 503 e NÃO registr
   assertEquals(res.status, 503);
   assertEquals(anon.calls.length, 1);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+Deno.test("limiter persistente indisponível: login por e-mail falha FECHADO (503) sem autenticar", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon();
+  const keys: string[] = [];
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    {
+      admin,
+      anon,
+      enforceRateLimit: (key: string) => {
+        keys.push(key);
+        // O limite por IP respondeu normal; o por e-mail sinaliza indisponibilidade.
+        return Promise.resolve(key.includes("email") ? { allowed: true, unavailable: true } : { allowed: true });
+      },
+    },
+  );
+
+  assertEquals(res.status, 503);
+  // errorResponse reescreve 5xx: mensagem genérica de indisponibilidade.
+  assertEquals((await res.json()).error, "Internal server error");
+  // Fail-closed ANTES de lock/signIn: nenhuma credencial foi conferida.
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  assertEquals(keys, [`auth-login:${IP}`, "auth-login-email:a@b.com"]);
 });
 
 Deno.test("resposta sem sessão e sem erro responde 503 e NÃO registra tentativa", async () => {

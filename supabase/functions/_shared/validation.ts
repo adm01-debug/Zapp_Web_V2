@@ -322,7 +322,7 @@ export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
   windowMs = 60_000
-): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
+): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
   if (!local.allowed) return { ...local, persistent: false };
   try {
@@ -334,7 +334,12 @@ export async function enforceRateLimit(
     });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
-    if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
+    if (!row || typeof row.allowed !== "boolean") {
+      // A RPC respondeu, mas sem o contrato esperado: o contador persistente não
+      // vale. Marca `unavailable` para quem precisa falhar FECHADO (auth-login),
+      // sem mudar o comportamento de quem aceita o fallback local.
+      return { ...local, persistent: false, unavailable: true };
+    }
     return {
       allowed: row.allowed,
       remaining: typeof row.remaining === "number" ? row.remaining : 0,
@@ -342,7 +347,7 @@ export async function enforceRateLimit(
     };
   } catch (err) {
     console.warn("[rate-limit] limiter persistente indisponivel; usando contador local:", String(err));
-    return { ...local, persistent: false };
+    return { ...local, persistent: false, unavailable: true };
   }
 }
 

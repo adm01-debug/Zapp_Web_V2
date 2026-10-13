@@ -72,7 +72,7 @@ export interface AuthLoginDeps {
     key: string,
     maxRequests: number,
     windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
+  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;
 }
 
 // Limites hardcoded atuais (fallback quando não há regra ativa de rate limit).
@@ -147,6 +147,16 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     const userAgent = sanitizeString(rec.userAgent ?? req.headers.get("user-agent"), 512) ?? null;
 
     const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
+    // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
+    // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
+    // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
+    // forca bruta por conta — na duvida, nega com indisponibilidade (503) em vez de
+    // aceitar. O login legitimo segue normal quando o banco responde.
+    if (emailRl.unavailable) {
+      log.error("rate limit persistente indisponivel; negando login por e-mail");
+      log.done(503, { reason: "rate_limit_unavailable" });
+      return errorResponse("Serviço de autenticação indisponível", 503, req);
+    }
     if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const { data: lockData, error: lockError } = await deps.admin.rpc("is_account_locked", { check_email: email });

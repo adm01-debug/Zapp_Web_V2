@@ -1,108 +1,39 @@
-Especialista: designer (worker (design), skill `design-system-zapp`) — retomada do cartão aberto por iris (telas) por rebase.
+Especialista: edgar
 
-# [refazer 1] colunas do Quadro: subtítulo curto + limite de Fazendo (080, 082, 083)
+# fix(seguranca): limite de tentativas persistente nas Edges administrativas e guarda de estado no reset de senha
 
-## Ponto 1 (o único item do "corrigir"): conflito com a ponta de dia/2026-10-12
-O workspace já nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12), então não houve rebase de
-branch: trouxe a FAIXA do trabalho anterior por `git cherry-pick 9c01d7ed6 113bf61f0 2f6cf568e`
-(SHA anterior = 2f6cf568e, fila `v2/colunas-quadro-subtitulo-limite-fazendo-2610111753c50b`).
-Conflitos em `BoardColumn.tsx` (5 hunks) e `TasksBoardMode.tsx` (2 hunks) — resolvidos preservando o
-que já entrou na base:
-- `BoardColumn.tsx`: mantive o lado da ponta — `pressaoArrasto` (etapa 094), `realceEspera`/
-  `ring-warning` (etapa 096), `colapsada`/`flex-none` (etapa 093) e o rodapé do Concluído (etapa 092);
-  descartei a versão antiga que reescrevia essas mesmas linhas.
-- `TasksBoardMode.tsx`: mantive o lado da ponta inteiro (`alvoTranco` + `tremerColuna` + deps
-  `[onMove, onRequestWaitingReason, onReorder, tremerColuna]` e `pressaoArrasto={pressaoArrasto}`),
-  porque a ponta já tinha toast de limite cheio (`toast.error('Fazendo está cheio (máx. 3)…')`) e o
-  tranco por coluna de destino. Resultado: `TasksBoardMode.tsx` ficou IDÊNTICO à base (0 linhas no
-  diff) — o arquivo não entra no meu diff.
-- Só a parte que a base ainda NÃO tinha foi mantida do trabalho anterior: o subtítulo vem do dado
-  canônico `KANBAN_COLUMNS.subtitle` (`col.subtitle`), acrescentado em `workItem.types.ts`
-  (etapa 081, dado do pai t_15507eb6). Removi o mapa local `SUBTITULOS_COLUNA` que a ponta havia
-  criado no cabeçalho, porque os 5 textos dele (`Capture primeiro`/`Próximo passo`/`Até 3 agora`/
-  `Com motivo`/`7 dias à vista`) CONTRADIZEM a seção 3 do plano e o destino do guarda-chuva do
-  cartão. Deixei comentário no cartão para o revisor conferir essa escolha.
+## Sensibilidade
+- O diff toca `rateLimit`/`enforceRateLimit` e o caminho `service_role` (RPC `consume_rate_limit`) nas quatro edges administrativas e no `auth-login`. Nada foi afrouxado: cada teste novo prova o caso NEGADO (429/503/409) ANTES de qualquer efeito (nenhum e-mail, nenhuma escrita de auditoria, nenhuma chamada a `signInWithPassword`, nenhum `createUser`). Nenhuma referência ao banco/endpoint de produção — só fakes e o banco local.
+- O que muda para quem chama: excesso de requisições continua 429; o login ganha 503 explícito de indisponibilidade quando o contador persistente cai (antes caía para o contador em memória); aprovar/rejeitar um pedido já decidido por outra requisição passa a 409 em vez de sobrescrever. Nenhum endpoint/assinatura externa mudou.
 
-## Ponto 2: rodar o teste do cartão e a verificação
-- Teste do cartão: `npx vitest run src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx`
-  → `Test Files 1 passed (1)` / `Tests 8 passed (8)`.
-- Regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files 29 passed (29)` /
-  `Tests 329 passed | 1 todo (330)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (o banco local não foi verificado: não
-  há nome de conjunto neste cartão). Antes disso o typecheck ficou vermelho por dependência ausente
-  (`TypeScript local nao encontrado`) — resolvido com `bun install` (651 packages), não era código.
+## Arquivos alterados (batem com o `git diff --stat`)
+Números do diff: 12 arquivos alterados — 6 de código, 5 de arquivo de teste e este `.tmp/relato.md`; 5 arquivos de teste; casos de teste novos medidos pelo fechar (ver bloco FATOS MEDIDOS).
+Código (6): `supabase/functions/_shared/validation.ts`, `supabase/functions/auth-login/index.ts`, `supabase/functions/create-user/index.ts`, `supabase/functions/approve-password-reset/index.ts`, `supabase/functions/revoke-auth-sessions/index.ts`, `supabase/functions/get-sip-password/index.ts`.
+Testes (5): `supabase/functions/auth-login/index.test.ts`, `supabase/functions/create-user/index.test.ts`, `supabase/functions/approve-password-reset/index.test.ts`, `supabase/functions/revoke-auth-sessions/index.test.ts`, `supabase/functions/get-sip-password/index.test.ts`.
+Mais este próprio `.tmp/relato.md` (relatório do cartão).
 
-## O que mudou e por quê (contra a seção 3 do plano)
-- `src/components/tasks/board/BoardColumn.tsx`: o cabeçalho imprime `col.subtitle`, o subtítulo curto
-  do dado canônico, no lugar do mapa local. Linha da tabela da seção 3: "Colunas Caixa de entrada
-  (A organizar), A fazer (Próximas ações), Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando
-  (Dependências externas), Concluído (Últimos 7 dias)" → etapas 080–081 (tabela de etapas, linhas
-  339 e 340). A política longa continua só no tooltip do ⓘ (não duplica texto).
-- `src/hooks/tasks/workItem.types.ts`: `KANBAN_COLUMNS` ganha `subtitle` (5 textos da linha 138 da
-  seção 3), mantendo a `policy` longa — etapa 081.
-- `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (novo): trava as
-  etapas 080, 082 e 083 medindo o DOM renderizado (não texto solto): os 5 subtítulos presentes, o
-  primeiro `<span>` da coluna sendo o rótulo, contador "3/3", `role="progressbar"` com
-  `aria-valuenow`/`aria-valuemax` = 3 e 3 segmentos `bg-destructive` quando cheio (1 primário + 2
-  `bg-muted` com 1/3), rodapé `col-limit-footer-doing` com svg, tranco
-  `motion-safe:animate-wiggle` + `border-destructive` na coluna de destino, toast
-  `Fazendo está cheio (máx. 3). Conclua um item antes.`, `onMove` não chamado, volta ao normal aos
-  700 ms e reorder interno da coluna cheia sem tranco.
+## Sobre `auth-login/index.ts` (não está na lista de "ARQUIVOS QUE PODE TOCAR")
+Foi indispensável: o item 1 de "O QUE FAZER" manda literalmente "no `auth-login`, falhar fechado no limite por e-mail quando a RPC falhar (sem derrubar o login legítimo: mensagem de indisponibilidade)". O PROBLEMA aponta que "no `auth-login` isso vira falha aberta" (`validation.ts:343`). Sem tocar `auth-login/index.ts` não há como cumprir esse item; a lista de arquivos do cartão apenas não o repetiu. Não toquei em mais nada ali além do bloco do limite por e-mail e do seam de teste. Se o dono preferir separar em outro cartão, é só reverter este arquivo (nada dos outros 4 dependem dele).
 
-## Prova (vermelho antes, verde depois)
-- verde (teste do cartão): `npx vitest run …/BoardColumn.subtitulo-limite.test.tsx` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- vermelho por mutação (o teste mede a classe/texto REAL): trocando `{col.subtitle}` por
-  `{'Capture primeiro'}` → `Test Files 1 failed (1)` / `Tests 2 failed | 6 passed (8)`; trocando
-  `shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70'` pelo ramo neutro →
-  `Tests 2 failed | 6 passed (8)`. Em ambos, a árvore foi restaurada e o teste voltou a
-  `Tests 8 passed (8)`; `git status --short` limpo depois das duas.
-- As etapas 082 e 083 já existiam na ponta (barra, rodapé, toast e tranco entraram por outro cartão);
-  o que este cartão acrescenta na ponta é o subtítulo canônico. O teste novo passa a TRAVAR 082/083.
+## O que mudou e por quê
+- `_shared/validation.ts`: `enforceRateLimit` agora sinaliza `unavailable: true` quando a RPC `consume_rate_limit` falha ou devolve contrato inválido. O `allowed` continua sendo o contador local, então nenhum outro caller muda de comportamento (mudança aditiva/compatível).
+- `auth-login/index.ts`: a guarda por e-mail (lockout por conta) falha FECHADO — se o persistente está indisponível, responde 503 ("Serviço de autenticação indisponível", mascarado no corpo a "Internal server error" como os demais 503) em vez de aceitar só com o contador em memória, que zera a cada cold start. O login legítimo segue normal quando o banco responde.
+- `create-user`, `approve-password-reset`, `revoke-auth-sessions`, `get-sip-password`: `checkRateLimit` (memória, zera por isolate) trocado por `enforceRateLimit` (tabela `edge_rate_limits`). Dois limites por edge: por IP ANTES de autenticar e por USUÁRIO DEPOIS da autenticação, chave `<edge>:user:<id>` — cobre a conta admin comprometida trocando de IP (o risco citado no PROBLEMA).
+- `approve-password-reset/index.ts`: os dois UPDATEs (aprovar e rejeitar) viram compare-and-swap `.eq("id", requestId).eq("status","pending").select("id")`; se as linhas afetadas forem 0, responde 409. Duas aprovações simultâneas: a que perde recebe 409 e não reescreve `reviewed_by`/`status`.
+- Handlers ganharam seams de injeção (`enforceRateLimit`, e `caller`/`client`/`env`) para provar o gate sem tocar rede — mesmo padrão já usado em `auth-login`.
+
+Ramos de erro, antes → depois:
+- auth-login (limite por e-mail): antes só existia 429; agora existe um ramo `unavailable` → 503 ANTES do 429. O 429 e o caminho feliz ficaram idênticos.
+- approve-password-reset: os UPDATEs ganharam o filtro `status=pending` + checagem de linhas; o ramo de erro (`updateError` → 500) e a auditoria depois do UPDATE não mudaram. O envio de e-mail continua ANTES do UPDATE (preserva a invariante "falha de e-mail → nada aprovado"); consequência assumida: na corrida, a requisição perdedora pode já ter enviado o e-mail antes de receber 409, mas a linha é decidida uma única vez.
+- revoke-auth-sessions / get-sip-password: o limite por IP continua o primeiro passo; nenhum ramo de erro foi removido ou movido.
+
+## Prova
+- vermelho antes: `deno test --config scripts/ci/deno.json --allow-env --allow-read supabase/functions/approve-password-reset/index.test.ts` com o guard do approve neutralizado (`if (false && ...)`) → `FAILED | 11 passed | 1 failed`, falhando exatamente em "aprovação concorrente: UPDATE afeta 0 linhas -> 409 e nada auditado".
+- verde depois: guard restaurado (`git checkout --`) → os dois testes de concorrência voltam a `ok` (0 failed).
+- suite edge completa: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')` → `ok | 1767 passed (16 steps) | 0 failed | 3 ignored (57s)`.
+- limiter persistente indisponível: caso novo em `auth-login/index.test.ts` prova 503 e `signInWithPassword` NÃO chamado.
+- zapp-verify: ver o bloco FATOS MEDIDOS do fechar.
 
 ## O que NÃO fiz e por quê
-- Não mexi em `TasksBoardMode.tsx` (ficou igual à base) nem em `src/components/ui/*`.
-- Não reimplementei nada de 082/083 já presente na ponta (o cartão manda provar e não reescrever).
-- Sem migration, Edge Function ou dependência nova; nenhuma informação sai do sistema.
-
-
-## Aviso do juiz sobre o Ponto 1 — NÃO procede (o diff não tem como mostrar rebase)
-O `jev-juiz` pede prova de merge/rebase dentro do diff; aqui não existe merge para mostrar: o workspace
-JÁ nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12) e a resolução foi trazer só a faixa que
-faltava. `git log --oneline dia/2026-10-12..HEAD` devolve exatamente os 3 commits do trabalho anterior
-(`e25134fcd`, `6c0171b68`, `a2aadd1e7`) e nenhum outro. A prova VISÍVEL de que o conflito foi resolvido
-preservando a ponta é o OPOSTO de um arquivo alterado: `TasksBoardMode.tsx` ficou com ZERO linhas no
-diff (o lado da ponta inteiro permaneceu) e `BoardColumn.tsx` conserva `pressaoArrasto` (094),
-`realceEspera` (096) e `colapsada` (093). Um merge commit aqui só acrescentaria ruído ao diff.
-
-## Aviso do juiz sobre escopo — por que `src/hooks/tasks/workItem.types.ts` entrou
-O cartão manda trazer a faixa do trabalho anterior e este arquivo carrega a etapa 081 (dado do pai
-t_15507eb6): sem `KANBAN_COLUMNS.subtitle` não há de onde tirar os 5 subtítulos que a etapa 080 exige no
-cabeçalho. São 1 campo no tipo e 5 strings; o componente apenas lê. Sem ele eu teria de inventar um mapa
-local dentro do componente — exatamente o que removi por contrariar a seção 3 do plano.
-
-## `zapp-verify full`
-`zapp-verify full .` foi tentado e estourou o teto de 420 s da ferramenta (não devolveu VERDE nem
-VERMELHO). A verificação que vale como prova, e que é a pedida no critério de pronto 3, é
-`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)`.
-
-## Linhas da tabela do plano (critério de pronto 1)
-- Etapa 080 — seção 3, linha 138: "Colunas Caixa de entrada (A organizar), A fazer (Próximas ações),
-  Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando (Dependências externas), Concluído
-  (Últimos 7 dias)"; tabela de etapas, linha 339.
-- Etapa 081 — tabela de etapas, linha 340 ("Acrescentar `subtitle` curto mantendo a `policy` longa em
-  `workItem.types.ts`") — dono declarado no plano: hugo; quem trouxe foi o ramo do cartão pai.
-- Etapa 082 — seção 3, linha 139 ("Fazendo com barra de progresso azul e rodapé 'Seu limite é de 3
-  tarefas em execução.'"); tabela de etapas, linha 341.
-- Etapa 083 — tabela de etapas, linha 342 ("Soltar em Fazendo cheio faz a coluna tremer curto
-  (em movimento reduzido só a borda muda), mostra toast explicativo e devolve o cartão").
-
-## Casos de teste do cartão (critério de pronto 2), 8 no total
-1. Etapa 080 · "cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho"
-2. Etapa 080 · "a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ"
-3. Etapa 082 · "cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite"
-4. Etapa 082 · "parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva"
-5. Etapa 082 · "coluna SEM limite duro não ganha barra nem rodapé"
-6. Etapa 083 · "treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card"
-7. Etapa 083 · "o tranco é curto: depois do tempo a coluna volta ao normal"
-8. Etapa 083 · "reorganizar por dentro da coluna cheia NÃO treme nem avisa (B8 segue valendo)"
+- Não criei migration: a tabela `edge_rate_limits` e a RPC `consume_rate_limit` já existem (migration `20260905020000_edge_rate_limits.sql`); o cartão não pediu DDL.
+- Não mexi no PR0 de aprovação/rejeição além dos dois UPDATEs deste cartão.

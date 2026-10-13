@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 
 // ── Seams de injeção (R2-AUTH-016) ──────────────────────────────────────────
 // O handler exportado recebe o que faz efeito (client admin service_role, client
@@ -33,7 +33,9 @@ export interface CreateUserAdminClient {
 
 export interface CreateUserDeps {
   env?: (name: string) => string;
-  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
+  // Rate limit persistente (edge_rate_limits) em vez do contador em memoria, que
+  // zera a cada cold start (achado cubic P1). Mesmo seam do teste.
+  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
   caller?: CreateUserCallerClient;
   admin?: CreateUserAdminClient;
 }
@@ -44,10 +46,11 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
 
   const log = new Logger("create-user");
   const env = deps.env ?? requireEnv;
-  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
 
+  // Pre-auth: protege a funcao de quem ainda nao se autenticou (chave por IP).
   const ip = getClientIP(req);
-  const rl = rateLimit(`create-user:${ip}`, 5, 60_000);
+  const rl = await rateLimit(`create-user:${ip}`, 5, 60_000);
   if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   try {
@@ -66,6 +69,11 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
       log.warn("Invalid auth token");
       return errorResponse("Não autorizado", 401, req);
     }
+
+    // Pos-auth: chave por USUARIO. O limite por IP sozinho nao segura uma conta
+    // admin comprometida que troca de IP; o contador por usuario e persistente.
+    const userRl = await rateLimit(`create-user:user:${caller.id}`, 5, 60_000);
+    if (!userRl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
     const adminClient: CreateUserAdminClient = deps.admin ?? createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
     // R2-AUTH-016b: um admin pode acumular mais de um papel (ex.: agent + admin).

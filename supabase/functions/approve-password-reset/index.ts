@@ -7,7 +7,7 @@ import {
   requireEnv,
   isAllowedOrigin,
   Logger,
-  checkRateLimit,
+  enforceRateLimit,
   getClientIP,
 } from "../_shared/validation.ts";
 import { ApprovePasswordResetSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -43,7 +43,8 @@ export interface ApproveResetEmailClient {
 
 export interface ApproveResetDeps {
   env?: (name: string) => string;
-  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
+  // Rate limit persistente (edge_rate_limits) em vez do contador em memoria.
+  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
   caller?: ApproveResetCallerClient;
   admin?: ApproveResetAdminClient;
   emailClient?: ApproveResetEmailClient;
@@ -84,10 +85,11 @@ export async function handleApprovePasswordResetRequest(
 
   const log = new Logger("approve-password-reset");
   const env = deps.env ?? requireEnv;
-  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
 
+  // Pre-auth: protege a funcao de quem ainda nao se autenticou (chave por IP).
   const ip = getClientIP(req);
-  const rl = rateLimit(`approve-reset:${ip}`, 10, 60_000);
+  const rl = await rateLimit(`approve-reset:${ip}`, 10, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
@@ -110,6 +112,11 @@ export async function handleApprovePasswordResetRequest(
       log.warn("Invalid auth token");
       return errorResponse("Unauthorized", 401, req);
     }
+
+    // Pos-auth: chave por USUARIO. Sem isso, um admin comprometido que troca de IP
+    // passa so pelo contador por IP — e o contador em memoria zerava a cada isolate.
+    const userRl = await rateLimit(`approve-reset:user:${caller.id}`, 10, 60_000);
+    if (!userRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     // Só ADMIN aprova. O fluxo redefine a senha da conta alvo (eleva privilégio);
     // supervisor NÃO pode fazer isso por esta via — era `is_admin_or_supervisor`.
@@ -155,7 +162,10 @@ export async function handleApprovePasswordResetRequest(
     const now = new Date().toISOString();
 
     if (action === "reject") {
-      const { error: updateError } = await supabaseAdmin
+      // CAS: so troca quem ainda esta 'pending'. Se outro pedido (aprovacao
+      // concorrente) ja decidiu, nenhuma linha e afetada e respondemos 409 —
+      // antes, o UPDATE cego sobrescrevia a decisao do outro admin.
+      const { data: rejectedRows, error: updateError } = await supabaseAdmin
         .from("password_reset_requests")
         .update({
           status: "rejected",
@@ -164,11 +174,17 @@ export async function handleApprovePasswordResetRequest(
           rejection_reason: rejectionReason || "Solicitação rejeitada pelo administrador",
           updated_at: now,
         })
-        .eq("id", requestId);
+        .eq("id", requestId)
+        .eq("status", "pending")
+        .select("id");
 
       if (updateError) {
         log.error("Reject update failed", { error: updateError.message });
         return internalErrorResponse(updateError, req);
+      }
+      if (!Array.isArray(rejectedRows) || rejectedRows.length === 0) {
+        log.warn("Request changed state before reject", { requestId });
+        return errorResponse("Request already processed", 409, req);
       }
 
       const auditError = await recordAudit(supabaseAdmin, {
@@ -206,7 +222,10 @@ export async function handleApprovePasswordResetRequest(
       // diria "aprovado / e-mail enviado" sem nada ter sido entregue.
       log.error("Reset email send failed", { requestId, error: sendError?.message });
     } else {
-      const { error: updateError } = await supabaseAdmin
+      // CAS: marca 'approved' so em quem ainda esta 'pending' e confere as linhas
+      // afetadas. Duas aprovacoes simultaneas: a que perde recebe 409 e nao
+      // reescreve reviewed_by de quem venceu.
+      const { data: approvedRows, error: updateError } = await supabaseAdmin
         .from("password_reset_requests")
         .update({
           status: "approved",
@@ -214,11 +233,17 @@ export async function handleApprovePasswordResetRequest(
           reviewed_at: now,
           updated_at: now,
         })
-        .eq("id", requestId);
+        .eq("id", requestId)
+        .eq("status", "pending")
+        .select("id");
 
       if (updateError) {
         log.error("Approve update failed", { error: updateError.message });
         return internalErrorResponse(updateError, req);
+      }
+      if (!Array.isArray(approvedRows) || approvedRows.length === 0) {
+        log.warn("Request changed state before approve", { requestId });
+        return errorResponse("Request already processed", 409, req);
       }
     }
 
