@@ -10,6 +10,8 @@ Especialista: worker (sql) (area-sql-banco)
   REFERENCES permite FK apontando para a tabela). service_role nao e tocado.
 - supabase/tests/revoke_truncate_trigger_references.sql: suite T1-T8 no banco local, com
   PAPEL REAL (SET LOCAL ROLE anon/authenticated/service_role), numa transacao com ROLLBACK.
+- .tmp/relato.md: este proprio relato (ja versionado na branch base; a atualizacao entra no
+  diff para deixar a arvore limpa, como o hermes-tarefa-fechar exige) — 3o arquivo do diff.
 
 ## Prova
 - vermelho antes (migration ainda NAO aplicada no banco local):
