@@ -42,6 +42,8 @@ import { AIToolsCard } from './overview/AIToolsCard';
 import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
+import { WidgetConfigSheet } from './WidgetConfigSheet';
+import { useDashboardWidgets } from '@/hooks/analytics/useDashboardWidgets';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
@@ -119,6 +121,10 @@ export function DashboardView() {
   const { data: slaMetrics } = useSLAMetrics('today');
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
+  // Instância ÚNICA da personalização da Visão Geral: o painel "Personalizar"
+  // e a seção de Gamificação leem/escrevem o MESMO estado. Duas instâncias
+  // separadas fariam o toggle do painel não surtir efeito até recarregar.
+  const widgetConfig = useDashboardWidgets();
 
   // Agente só pode navegar para as próprias abas — bloqueia o vazamento por
   // clique nos cards (Ferramentas de IA → Sentimento → Relatórios etc.), já
@@ -184,6 +190,22 @@ export function DashboardView() {
           <div data-testid="dash-banner">
             <SectionErrorBoundary sectionName="Saudação">
               <GreetingBanner personal={!isStaff} />
+            </SectionErrorBoundary>
+          </div>
+          {/* Personalização da Visão Geral: monta o WidgetConfigSheet (antes
+              existia o componente, mas nada o abria). Fica no topo da aba,
+              disponível para staff e agente — o layout persiste por navegador. */}
+          <div className="flex justify-end" data-testid="dash-personalizar">
+            <SectionErrorBoundary sectionName="Personalizar widgets">
+              <WidgetConfigSheet
+                widgets={widgetConfig.widgets}
+                isEditMode={widgetConfig.isEditMode}
+                setIsEditMode={widgetConfig.setIsEditMode}
+                onToggleVisibility={widgetConfig.toggleWidgetVisibility}
+                onUpdateSize={widgetConfig.updateWidgetSize}
+                onReorder={widgetConfig.reorderWidgets}
+                onReset={widgetConfig.resetToDefaults}
+              />
             </SectionErrorBoundary>
           </div>
           <DashboardZone id="numeros" title="Números de hoje">
@@ -273,7 +295,7 @@ export function DashboardView() {
           </div>
           <div data-testid="dash-gamification">
             <SectionErrorBoundary sectionName="Gamificação">
-              <GamificationSection stats={stats} isStaff={isStaff} />
+              <GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={widgetConfig.visibleWidgets} />
             </SectionErrorBoundary>
           </div>
           </DashboardZone>
