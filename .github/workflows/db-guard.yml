@@ -240,6 +240,11 @@ jobs:
       - name: Validar migrations localmente
         run: node scripts/db-audit/check-migration-drift.mjs
 
+      # Modelos de e-mail (email_templates): o contrato de RLS e lido/escrito
+      # como os papeis reais (authenticated/anon), nunca como postgres.
+      - name: Simular contrato de acesso dos modelos de e-mail (email_templates)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-templates-rls.test.sh
+
       # Harness descartavel na mesma major do banco oficial. Exercita o SQL real e
       # prova que cada regressao de ACL/contrato encerra com codigo nao zero.
       - name: Simular regressões do contrato mcp_exec

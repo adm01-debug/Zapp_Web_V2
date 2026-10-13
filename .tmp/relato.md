@@ -1,27 +1,38 @@
-Especialista: workertestes
+Especialista: workersql (refazer por senior; area-sql-banco)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Pontos da recusa
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Ponto 1: impedir troca de created_by em UPDATE por qualquer papel.
+- O que mudei: em `supabase/migrations/20261012112503_email_templates_rls.sql`, mantive a policy de UPDATE para dono/staff em modelo compartilhado, mas removi o GRANT de UPDATE de tabela inteira e troquei por GRANT colunar apenas para `name`, `subject`, `body`, `category`, `is_shared` e `updated_at`. `created_by` ficou sem privilégio de UPDATE para `authenticated`, então nem dono nem staff conseguem reatribuir autoria. Não usei gatilho/função; por isso o rollback executável continua correto ao dropar a tabela nova, que remove grants, policies, triggers e índices criados nela.
+- Teste que prova: `scripts/db-audit/email-templates-rls.test.sh` agora confere B33 (`authenticated sem UPDATE em created_by`) e B34 (`authenticated com UPDATE nas 6 colunas editaveis`).
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Ponto 2: teste real em que staff e dono tentam mudar created_by e falham, com vermelho→verde.
+- O que mudei: em `scripts/db-audit/email-templates-rls.test.sh`, acrescentei B20/B21 para staff tentando reatribuir `created_by` de modelo compartilhado e B22/B23 para dono tentando reatribuir `created_by` do próprio modelo. Os passos executam a migration real em PostgreSQL descartável e rodam como papel `authenticated`, não por mock nem regex de SQL.
+- Vermelho antes: com a migration anterior restaurada temporariamente e o teste novo mantido, `bash scripts/db-audit/email-templates-rls.test.sh` saiu com `RED_STATUS=1` e `[FAIL] B20 staff nao reatribui created_by do compartilhado: deveria falhar, mas passou`.
+- Verde depois: com a correção aplicada, `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-templates-rls.test.sh` passou até `B38 reaplicar recria a tabela` e terminou com `== TODOS OS PASSOS PASSARAM ==`.
 
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+Ponto 3: corrigir relato/comentário que prometia garantia que a policy não dava.
+- O que mudei: no comentário de decisão 5 da migration, removi a afirmação de que `WITH CHECK = USING` impedia reatribuição; agora o comentário diz a garantia real: INSERT exige `created_by = auth.uid()` e UPDATE não recebe grant na coluna `created_by`. Também ajustei a decisão de ACL para explicar que UPDATE é colunar, não grant irrestrito de tabela.
+- Teste que prova: os mesmos B20–B23 exercitam a impossibilidade prática de reatribuição; B33/B34 provam o contrato de grant que sustenta a garantia.
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## Arquivos do diff
+O diff tem 5 arquivos no total e 1 arquivo de teste alterado (`scripts/db-audit/email-templates-rls.test.sh`).
+`.github/workflows/db-guard.yml`
+`.tmp/relato.md`
+`scripts/db-audit/email-templates-rls.test.sh`
+`src/integrations/supabase/types.ts`
+`supabase/migrations/20261012112503_email_templates_rls.sql`
+
+## Verificações executadas
+- `bash scripts/db-audit/email-templates-rls.test.sh` com a migration anterior restaurada temporariamente: falhou em B20 como esperado (`staff ... deveria falhar, mas passou`).
+- `bash scripts/db-audit/email-templates-rls.test.sh`: passou e terminou com `== TODOS OS PASSOS PASSARAM ==`.
+- `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-templates-rls.test.sh`: passou e terminou com `== TODOS OS PASSOS PASSARAM ==`.
+- `git diff --name-only $(git merge-base HEAD dia/2026-10-13)...HEAD`: lista exatamente os 5 arquivos acima.
+- Varredura local dos arquivos de código/teste do diff pelo identificador do banco de produção: `prod_id_found=no`.
+
+## Arquivos fora da lista literal do pedido original
+- `scripts/db-audit/email-templates-rls.test.sh`: indispensável porque o fluxo de banco do repositório roda contratos SQL descartáveis em `scripts/db-audit/`; o motivo da recusa anterior registrou que este arquivo de teste já estava justificado.
+- `.github/workflows/db-guard.yml`: indispensável para colocar esse contrato no DB Guard offline; o motivo da recusa anterior também registrou que o passo no CI já estava justificado.
+
+## O que não fiz
+- Não adicionei gatilho/função porque o GRANT colunar resolve o ponto com diff menor; por isso não houve novo objeto para acrescentar ao rollback além da tabela nova já dropada pelo bloco executável.
