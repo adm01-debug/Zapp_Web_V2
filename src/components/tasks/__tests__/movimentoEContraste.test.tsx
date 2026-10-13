@@ -175,13 +175,19 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
   }
 
   it('o texto dos chips de prioridade usa o par de TEXTO (não a cor de preenchimento)', () => {
+    // D12 / etapa 170: Alta é o vermelho (par de texto `--destructive-text`).
     const { container: high } = render(<PriorityChip priority="high" />);
-    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
+    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
 
     const { container: urgent } = render(<PriorityChip priority="urgent" />);
     expect(urgent.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
     expect(urgent.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
+
+    // Média é o âmbar (Média âmbar, D12) — e não o `primary` do segmento.
+    const { container: medium } = render(<PriorityChip priority="medium" />);
+    expect(medium.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
+    expect(medium.firstElementChild?.className).not.toMatch(/(^|\s)text-primary(\s|$)/);
   });
 
   it('DueChip: atrasado e "Hoje" usam o par de TEXTO do estado', () => {

@@ -1,5 +1,5 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -7,6 +7,17 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import type { Priority } from '@/hooks/tasks/workItem.types';
 import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
@@ -23,6 +34,10 @@ import { DestinationBlock } from './new-task/DestinationBlock';
 import { TaskPreview } from './new-task/TaskPreview';
 import { InfoBox } from './new-task/InfoBox';
 import { NewTaskFooter } from './new-task/NewTaskFooter';
+import {
+  esquecerRascunhoDaCaptura,
+  lerRascunhoDaCaptura,
+} from './new-task/rascunhoDaCaptura';
 
 interface Props {
   /** Contato já escolhido quando o modal nasce a partir de um contato (etapa 157). */
@@ -73,16 +88,50 @@ export function NewTaskDialog({
   const { closeModal } = useTasksUi();
   const { createAndGetId, cancel, refetch } = useMyWorkItems();
 
-  const [title, setTitle] = useState('');
+  // Etapa 171: o ⋯ do QuickAdd deixa o que já foi digitado aqui (a leitura não
+  // consome — ver `rascunhoDaCaptura`). Sem rascunho, o modal nasce vazio.
+  const rascunho = lerRascunhoDaCaptura();
+
+  const [title, setTitle] = useState(rascunho?.title ?? '');
   const [touched, setTouched] = useState(false);
-  const [contactId, setContactId] = useState<string | null>(defaultContactId);
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
-  const [remindAt, setRemindAt] = useState<string | null>(defaultRemindAt);
+  const [contactId, setContactId] = useState<string | null>(rascunho?.contactId ?? defaultContactId);
+  const [priority, setPriority] = useState<Priority>(rascunho?.priority ?? 'medium');
+  const [dueDate, setDueDate] = useState<string | null>(rascunho?.dueDate ?? defaultDueDate);
+  const [remindAt, setRemindAt] = useState<string | null>(rascunho?.remindAt ?? defaultRemindAt);
   const [enviando, setEnviando] = useState(false);
+
+  /**
+   * Etapa 169: abaixo de 900px a prévia vira acordeão sob o formulário. O acordeão
+   * é um `Collapsible` de verdade (o gatilho traz `aria-expanded`); em ≥900px o
+   * gatilho some e a prévia aparece fixa na coluna da direita.
+   */
+  const [previaAberta, setPreviaAberta] = useState(false);
+
+  /**
+   * Etapa 170: fechar com título digitado pede confirmação. `criando` evita o
+   * pedido no fechamento legítimo (logo depois do INSERT, com o título ainda no
+   * campo).
+   */
+  const [confirmandoDescarte, setConfirmandoDescarte] = useState(false);
+  const [criando, setCriando] = useState(false);
 
   const titleError = touched && !title.trim() ? 'Informe o título da tarefa.' : null;
   const podeCriar = title.trim().length > 0;
+
+  /** Fecha de fato: esvazia o rascunho do QuickAdd e manda o modal embora. */
+  const fechar = () => {
+    esquecerRascunhoDaCaptura();
+    closeModal();
+  };
+
+  /** Etapa 170: Esc, X e clique fora passam por aqui antes de fechar. */
+  const tentarFechar = () => {
+    if (!criando && title.trim().length > 0) {
+      setConfirmandoDescarte(true);
+      return;
+    }
+    fechar();
+  };
 
   /**
    * Etapa 165: o `ContactCombobox` só devolve o id, então a prévia lê a busca
@@ -111,6 +160,7 @@ export function NewTaskDialog({
     if (!texto || enviando) return;
 
     setEnviando(true);
+    setCriando(true);
     let id: string | null = null;
     try {
       id = await createAndGetId({
@@ -124,10 +174,11 @@ export function NewTaskDialog({
     } catch {
       // O hook já avisa ("Erro ao criar tarefa" / "O horario do aviso ja passou").
       setEnviando(false);
+      setCriando(false);
       return;
     }
 
-    closeModal();
+    fechar();
     if (!id) return; // 23505: o pedido repetido caiu no índice único (já existe).
     // O hook já tocou "Tarefa criada" simples; aqui vai a versão com "Desfazer".
     toast.dismiss();
@@ -160,8 +211,17 @@ export function NewTaskDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(aberto) => { if (!aberto) closeModal(); }}>
-      <DialogContent size="lg" data-testid="new-task-dialog" className="gap-5">
+    <Dialog open onOpenChange={(aberto) => { if (!aberto) tentarFechar(); }}>
+      <DialogContent
+        size="lg"
+        data-testid="new-task-dialog"
+        className="gap-5"
+        // Etapa 170: com título digitado, Esc e o clique fora pedem confirmação
+        // em vez de descartar o rascunho.
+        onEscapeKeyDown={(e) => { e.preventDefault(); tentarFechar(); }}
+        onPointerDownOutside={(e) => { e.preventDefault(); tentarFechar(); }}
+        onInteractOutside={(e) => { e.preventDefault(); tentarFechar(); }}
+      >
         <div className="flex items-start gap-3">
           <span
             aria-hidden="true"
@@ -176,7 +236,10 @@ export function NewTaskDialog({
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start" onKeyDown={ctrlEnter}>
+        <div
+          className="flex flex-col gap-5 min-[900px]:flex-row min-[900px]:items-start"
+          onKeyDown={ctrlEnter}
+        >
           <div className="min-w-0 flex-1 space-y-5">
             <div onKeyDown={enterNoTitulo}>
               <TaskTitleField
@@ -217,16 +280,44 @@ export function NewTaskDialog({
             <InfoBox />
           </div>
 
-          <div className="space-y-3 lg:shrink-0">
-            <TaskPreview
-              title={title}
-              priority={priority}
-              contactId={contactId}
-              contact={contatoDaPrevia}
-              dueDate={dueDate}
-              remindAt={remindAt}
-              now={now}
-            />
+          <div className="min-w-0 space-y-3 min-[900px]:w-56 min-[900px]:shrink-0">
+            {/*
+              Etapa 169: abaixo de 900px a prévia vira acordeão sob o formulário —
+              o gatilho só existe aí (`min-[900px]:hidden`) e o painel fica oculto
+              enquanto fechado. Em ≥900px o gatilho some e a prévia ocupa a coluna
+              da direita, sempre visível (o `min-[900px]:block` vence o `hidden`).
+            */}
+            <Collapsible
+              open={previaAberta}
+              onOpenChange={setPreviaAberta}
+              className="min-[900px]:contents"
+            >
+              <CollapsibleTrigger
+                data-testid="nt-previa-gatilho"
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm font-medium leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-[900px]:hidden"
+              >
+                Prévia da tarefa
+                <ChevronDown
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 transition-transform motion-safe:data-[state=open]:rotate-180"
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent
+                forceMount
+                data-testid="nt-previa-painel"
+                className="pt-3 min-[900px]:block min-[900px]:pt-0"
+              >
+                <TaskPreview
+                  title={title}
+                  priority={priority}
+                  contactId={contactId}
+                  contact={contatoDaPrevia}
+                  dueDate={dueDate}
+                  remindAt={remindAt}
+                  now={now}
+                />
+              </CollapsibleContent>
+            </Collapsible>
             <DestinationBlock />
           </div>
         </div>
@@ -234,9 +325,32 @@ export function NewTaskDialog({
         <NewTaskFooter
           enviando={enviando}
           podeCriar={podeCriar}
-          onCancelar={closeModal}
+          onCancelar={tentarFechar}
           onCriar={() => void criar()}
         />
+
+        {/* Etapa 170: o descarte do rascunho pede confirmação. */}
+        <AlertDialog open={confirmandoDescarte} onOpenChange={setConfirmandoDescarte}>
+          <AlertDialogContent data-testid="nt-descarte">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Descartar o rascunho?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O título digitado e os ajustes do formulário serão perdidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="nt-descarte-continuar">
+                Continuar editando
+              </AlertDialogCancel>
+              <AlertDialogAction
+                data-testid="nt-descarte-confirmar"
+                onClick={() => { setConfirmandoDescarte(false); fechar(); }}
+              >
+                Descartar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

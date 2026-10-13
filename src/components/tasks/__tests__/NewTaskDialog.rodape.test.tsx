@@ -129,23 +129,36 @@ describe('NewTaskDialog — rodapé do modal (etapa 167)', () => {
     expect(sonda()).toHaveTextContent('aberto');
   });
 
-  it('"Cancelar" fecha o modal sem gravar', () => {
+  it('"Cancelar" com rascunho pede confirmação e só descarta depois de confirmar', async () => {
     montar();
     fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
-    expect(sonda()).toHaveTextContent('fechado');
+    // Etapa 170: com título digitado o modal NÃO fecha sozinho.
+    expect(await screen.findByTestId('nt-descarte')).toBeInTheDocument();
+    expect(sonda()).toHaveTextContent('aberto');
+
+    fireEvent.click(screen.getByTestId('nt-descarte-confirmar'));
+
+    await waitFor(() => expect(sonda()).toHaveTextContent('fechado'));
     expect(supabaseMock.insert).not.toHaveBeenCalled();
   });
 
-  it('Esc cancela o modal sem gravar', async () => {
+  it('Esc com rascunho pede confirmação e "Continuar editando" preserva o texto', async () => {
     montar();
     fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
 
     fireEvent.keyDown(document.body, { key: 'Escape' });
 
-    await waitFor(() => expect(sonda()).toHaveTextContent('fechado'));
+    expect(await screen.findByTestId('nt-descarte')).toBeInTheDocument();
+    expect(sonda()).toHaveTextContent('aberto');
+
+    fireEvent.click(screen.getByTestId('nt-descarte-continuar'));
+
+    await waitFor(() => expect(screen.queryByTestId('nt-descarte')).toBeNull());
+    expect(titulo().value).toBe('Ligar para Ana');
+    expect(sonda()).toHaveTextContent('aberto');
     expect(supabaseMock.insert).not.toHaveBeenCalled();
   });
 });
