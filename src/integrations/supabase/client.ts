@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { LOCAL_SUPABASE, SUPABASE_URL } from '@/config/supabase';
+import { createSafeStorage } from '@/lib/safeStorage';
 
 export { SUPABASE_URL } from '@/config/supabase';
 
@@ -23,7 +24,10 @@ export const GOOGLE_OAUTH_ENABLED = true;
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // Adapter protegido: em modo privado/cookies bloqueados o acesso direto a
+    // `window.localStorage` pode lançar e derrubar o import do módulo. Cai
+    // para memória da aba quando o storage persistente não está utilizável.
+    storage: createSafeStorage(),
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
