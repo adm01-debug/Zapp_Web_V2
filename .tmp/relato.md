@@ -30,3 +30,6 @@ A entrega `29b1671c0` acrescentou 3 linhas a `_shared/evolution-control-authz.ts
 - `819005597` — cherry-pick da entrega `29b1671c0` (feat(evolution-api): ação pairing-code para parear por código).
 - `ec38d7a0` — `chore(ci): regenera o espelho de cobertura de authz apos a acao pairing-code`.
 - `a98e9a25b` — `docs(estado): atualiza ancoras do evolution-api deslocadas pela acao pairing-code`.
+
+## Sobre o aviso do juiz ("código alterado sem teste novo neste commit")
+Meu trabalho neste cartão é só corrigir dois DOCUMENTOS derivados (o espelho de cobertura e as âncoras do ESTADO.md); não há teste novo cabível para uma regeneração de documento, e o próprio cartão pede "rode este MESMO comando de novo sem mudar nada e explique por quê" quando o cartão é doc-only. O código de produção que aparece no diff (`_shared/evolution-control-authz.ts`, `evolution-api/index.ts`) NÃO é meu: é a entrega `29b1671c0` que o cartão mandou trazer por `git cherry-pick` (commit `819005597`), e esse commit JÁ traz o teste que prova a ação — `supabase/functions/evolution-api/session-flavor-routes.test.ts` (+128 linhas), no MESMO commit. A prova vermelho→verde do MEU conserto é o próprio espelho do CI: a régua N217 e a guarda de âncoras do ESTADO.md passam de vermelho (`not ok`) a verde (`pass`) conforme a seção "Prova".
