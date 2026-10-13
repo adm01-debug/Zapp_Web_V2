@@ -1,34 +1,25 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/hooks/ui/useUiPreferences.ts` (novo, R2-PREF-001): motor da sincronização das preferências de UI com a tabela `user_ui_preferences` criada pela migration do cartão anterior. Lê a linha do dono (`from('user_ui_preferences').select('prefs').eq('user_id', uid).maybeSingle()`), adota o valor do servidor, agrupa as escritas num debounce de 400 ms e grava com `upsert({ user_id, prefs }, { onConflict: 'user_id' })`. O `localStorage` continua sendo o cache do boot offline; sem sessão o motor só usa o cache e não chama o servidor. O snapshot expõe `serverPrefs` (só a cópia lida da conta) além de `prefs` (cópia com a escrita local aguardando envio): os hooks de preferência adotam valor de `serverPrefs`, nunca de `prefs`.
+- `src/hooks/ui/useDensity.ts`, `src/hooks/chat/useMessageSignature.ts`, `src/hooks/chat/useQuickReplies.ts`, `src/hooks/ui/useCustomShortcuts.ts`, `src/components/settings/theme/useThemePreset.ts`: cada um mantém a API que já tinha e passa a (a) adotar o valor da conta depois da primeira leitura, desde que o usuário não tenha mexido naquele ajuste nesta aba, e (b) espelhar cada gravação no objeto da conta. O cache local (`ui-density`, `chat_signature_enabled`, `quick-reply-favorites`, `custom-keyboard-shortcuts`, o storage de tema) continua sendo escrito exatamente como antes, e continua sendo o valor de partida antes da resposta do servidor.
+- `src/hooks/ui/useCustomShortcuts.ts`: `resetAllBindings` também remove a chave `shortcuts` da conta (`clearUiPreference`), coerente com o resto — o upsert manda o objeto `prefs` inteiro, então apagar a chave é o que a remove dos dois lugares. A gravação ilegível vinda de outra aba continua NÃO apagando a preferência vigente (o `setState` seguiu dentro do `try`, como estava na base).
+- Nada de DDL, Edge Function ou dependência nova entrou neste diff: só hooks e o teste.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `npx vitest run src/hooks/ui/__tests__/useUiPreferences.integracao.test.tsx` com `src/hooks/ui/useDensity.ts` restaurado para a base (`git checkout -- src/hooks/ui/useDensity.ts`) → `Tests 3 failed | 2 passed (5)`; as três provas de densidade (valor da conta vence o cache, ciclo gravado, edição durante a leitura atrasada) falham porque o hook antigo nunca fala com o servidor. Depois: `cp .tmp/backup-useDensity.txt src/hooks/ui/useDensity.ts` (arquivo restaurado, commit c2d52854a4).
+- verde depois: `npx vitest run src/hooks/ui/__tests__/useUiPreferences.test.tsx src/hooks/ui/__tests__/useUiPreferences.integracao.test.tsx` → `Test Files 2 passed (2); Tests 13 passed (13)`.
+- os 8 cenários do motor: servidor vence o cache e o cache local acompanha a cópia vencedora; sem sessão usa só o cache e não chama o servidor; três escritas viram UM upsert com o objeto inteiro e `onConflict: 'user_id'`; gravar uma preferência nova não descarta as anteriores; resposta atrasada do servidor não desfaz a edição feita durante a leitura; falha de leitura deixa `ready` com o cache preservado; falha de gravação mantém a fila e o próximo envio acerta; `clearPreference` tira a chave do objeto enviado.
+- regressão dos consumidores: `npx vitest run` sobre os 28 arquivos de teste que citam os 5 hooks → `Test Files 28 passed (28); Tests 265 passed (265)`.
+- banco local (conjunto `v2-2610131502c845`, o banco da tarefa que o `hermes-db-migrar` subiu com as migrations): `zapp-db-local psql <workspace> v2-2610131502c845 < .tmp/prova-sql.txt` → `OK_IDA_E_VOLTA | t`, `OK_GATILHO | t`, `ROLLBACK`. O script da ida-e-volta (fixture sintética em `auth.users`, escrita do MESMO objeto que o hook envia, releitura comparando cada campo e o `updated_at` do gatilho, tudo em transação com ROLLBACK) está em `.tmp/prova-sql.txt`; o `.tmp` é ignorado pelo git, por isso ele não entra no commit.
+- o hook fala com a MESMA tabela/coluna que o SQL do cartão anterior criou: `user_ui_preferences.user_id` + `prefs` jsonb, leitura pelo `user_id` do próprio usuário (RLS de linha própria) e gravação por upsert com `onConflict: 'user_id'` — provado pelo `.tmp/prova-sql.txt` acima.
 
-## Teste novo deste cartão de banco
-- O cartão pede a prova como suíte SQL em `supabase/tests/` (`user_ui_preferences.sql`), não como
-  `.test.ts`/`.test.sh`. Ela é o teste novo vermelho→verde: sem a migration, o mesmo arquivo falha
-  (`relation does not exist`, exit=3) e, com ela aplicada, passa (exit=0). O único arquivo de código
-  tocado além da migration é `src/integrations/supabase/types.ts`, que é derivado do schema (não tem
-  comportamento para testar) — por isso não há teste vitest novo no commit.
+## Antes de entregar (afinar-hooks)
+- Canais: leitura (with sessão → `serverPrefs`), cache local, gravação agrupada, remoção de chave e mudança de aba (o listener de `storage` do store de atalhos continua igual). Cenário "escrita nova não descarta as anteriores" e o de `clearPreference` cobrem os canais que poderiam perder dado.
+- Corrida: a resposta atrasada do servidor é mesclada por cima da cópia local (`mesclarComPendentes`) e, na ponta, o hook só adota `serverPrefs` se o usuário não mexeu — os dois testes de corrida provam que a escolha do usuário sobrevive. O `loading` nunca fica preso: `status` sai de `loading` no `finally`, e o cenário de falha de leitura afirma `ready === true`.
+- Contrato: nenhuma função exportada mudou de assinatura; o campo `serverPrefs` é aditivo no retorno de `useUiPreferences`. Todos os arquivos de teste que chamam esses hooks (28) rodaram verdes.
+- Textos: os comentários novos dizem exatamente o que o código faz (de onde vem o valor adotado, quem vence quem, o que o upsert manda).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não mexi em arquivo fora da lista do cartão (nem em SQL, nem em telas): a prova no banco local foi feita com um script em `.tmp`, sem alterar `supabase/migrations` ou `supabase/tests`.
+- Não liguei a sincronização a nenhum evento de logout/login; o motor lê a sessão uma vez por carregamento e tem `refresh()` exposto para quem precisar revalidar depois do login.
