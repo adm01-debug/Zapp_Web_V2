@@ -161,7 +161,7 @@ describe('StatusChips', () => {
     // ainda assim sai de Todas/Não lidas/Em atendimento; c3 está sem responsável
     // e não entra em Aguardando. Todas são contadas em Arquivadas.
     const withArchived: ConversationWithMessages[] = [
-      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
+      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
       makeConversation({ id: 'c2', assigned_to: CURRENT_PROFILE_ID, unreadCount: 1, conversation_status: 'archived' }),
       makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'archived' }),
       makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'archived' }),
