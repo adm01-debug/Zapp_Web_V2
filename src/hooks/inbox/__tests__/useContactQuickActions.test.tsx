@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useContactQuickActions } from '../useContactQuickActions';
+import { queryClient } from '@/lib/queryClient';
 import type { ConversationContact } from '@/types/chat';
 
 const h = vi.hoisted(() => {
@@ -21,12 +22,33 @@ const h = vi.hoisted(() => {
   // Cadeia de select usada por useChatMediaSending/archiveContact:
   // select(...) → eq(...) → { maybeSingle | single | limit → maybeSingle }
   let currentTable = '';
+  // Lista compartilhada (useConnectionsList): `select().order()` devolve um ARRAY
+  // de conexões; o fixture guarda uma linha de whatsapp_connections, então
+  // derivamos id/status dela para o filtro e a resolução de instância.
+  const listaDeConexoes = (): Record<string, unknown>[] => {
+    const linha = state.rows[currentTable] as Record<string, unknown> | null | undefined;
+    return linha
+      ? [{
+          id: 'conn-1',
+          name: 'Principal',
+          phone_number: null,
+          status: 'connected',
+          is_default: true,
+          created_at: '2026-01-01T00:00:00Z',
+          ...linha,
+        }]
+      : [];
+  };
   const terminal = (): Record<string, unknown> => ({
     maybeSingle: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
     single: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
     limit: () => terminal(),
+    order: async () => ({ data: listaDeConexoes(), error: null }),
   });
-  const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
+  const select = vi.fn(() => ({
+    eq: vi.fn(() => terminal()),
+    order: async () => ({ data: listaDeConexoes(), error: null }),
+  }));
   const from = vi.fn((table: string) => {
     currentTable = table;
     return { update, select };
@@ -76,6 +98,9 @@ const invokeCalls = () =>
 describe('useContactQuickActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // A lista de conexões vive num cache de módulo: zera para cada caso resolver
+    // a instância do SEU fixture e de fato tocar whatsapp_connections.
+    queryClient.clear();
     h.state.error = null;
     h.state.failNextUpdate = false;
     h.state.invokeError = null;
