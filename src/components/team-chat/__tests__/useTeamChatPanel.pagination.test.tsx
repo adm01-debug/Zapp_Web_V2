@@ -16,33 +16,31 @@ import type { TeamConversation } from '@/hooks/chat/useTeamChat';
 const f = vi.hoisted(() => {
   const rpcCalls: Array<{ nome: string; args: Record<string, unknown> }> = [];
   const tabelasLidas: string[] = [];
+  const primeiraPagina = [
+    {
+      id: 'm-old-2', conversation_id: 'conv-a', sender_id: 'user-9', content: 'antiga 2',
+      message_type: 'text', reply_to_id: null, media_url: null, media_type: null,
+      media_bucket: null, media_path: null, is_edited: false,
+      created_at: '2026-10-04T10:00:00+00:00', updated_at: '2026-10-04T10:00:00+00:00',
+      sender_name: 'Zeca', sender_avatar: 'https://cdn.example/avatar-zeca.png',
+    },
+    {
+      id: 'm-old-1', conversation_id: 'conv-a', sender_id: 'user-8', content: 'antiga 1',
+      message_type: 'text', reply_to_id: null, media_url: null, media_type: null,
+      media_bucket: null, media_path: null, is_edited: false,
+      created_at: '2026-10-04T09:00:00+00:00', updated_at: '2026-10-04T09:00:00+00:00',
+      sender_name: 'Ana', sender_avatar: 'https://cdn.example/avatar-ana.png',
+    },
+  ];
   // A RPC devolve DESC (mais novas primeiro) e JÁ achatada.
-  const rpcResult = {
-    data: [
-      {
-        id: 'm-old-2', conversation_id: 'conv-a', sender_id: 'user-9', content: 'antiga 2',
-        message_type: 'text', reply_to_id: null, media_url: null, media_type: null,
-        media_bucket: null, media_path: null, is_edited: false,
-        created_at: '2026-10-04T10:00:00+00:00', updated_at: '2026-10-04T10:00:00+00:00',
-        sender_name: 'Zeca', sender_avatar: 'https://cdn.example/avatar-zeca.png',
-      },
-      {
-        id: 'm-old-1', conversation_id: 'conv-a', sender_id: 'user-8', content: 'antiga 1',
-        message_type: 'text', reply_to_id: null, media_url: null, media_type: null,
-        media_bucket: null, media_path: null, is_edited: false,
-        created_at: '2026-10-04T09:00:00+00:00', updated_at: '2026-10-04T09:00:00+00:00',
-        sender_name: 'Ana', sender_avatar: 'https://cdn.example/avatar-ana.png',
-      },
-    ],
-    error: null,
-  };
+  const rpcResult: { data: unknown[]; error: null } = { data: primeiraPagina, error: null };
   const builder: Record<string, unknown> = {};
   for (const m of ['select', 'eq', 'lt', 'or', 'order', 'limit', 'neq', 'in']) {
     builder[m] = (...args: unknown[]) => { void args; return builder; };
   }
   (builder as { then?: unknown }).then = (onFulfilled: (v: unknown) => unknown) =>
     Promise.resolve({ data: [], error: null }).then(onFulfilled);
-  return { rpcCalls, tabelasLidas, rpcResult, builder };
+  return { rpcCalls, tabelasLidas, rpcResult, primeiraPagina, builder };
 });
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -112,6 +110,7 @@ describe('useTeamChatPanel — página anterior vem da RPC achatada (get_team_me
   beforeEach(() => {
     f.rpcCalls.length = 0;
     f.tabelasLidas.length = 0;
+    f.rpcResult.data = [...f.primeiraPagina];
   });
 
   it('pagina por p_before_id em vez de ler team_messages direto', async () => {
@@ -146,5 +145,23 @@ describe('useTeamChatPanel — página anterior vem da RPC achatada (get_team_me
       name: 'Ana',
       avatar_url: 'https://cdn.example/avatar-ana.png',
     });
+  });
+
+  it('avança o cursor a cada página e para quando a página volta vazia', async () => {
+    const { result } = renderHook(() => useTeamChatPanel(convA));
+
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { await result.current.fetchOlderMessages(); });
+    expect(result.current.hasOlderMessages).toBe(true);
+
+    f.rpcResult.data = [];
+    await act(async () => { await result.current.fetchOlderMessages(); });
+
+    const cursores = f.rpcCalls
+      .filter(c => c.nome === 'get_team_messages_page')
+      .map(c => c.args.p_before_id);
+    // 1ª página: cursor inicial (mensagem mais nova); 2ª: a mais antiga recebida.
+    expect(cursores).toEqual(['m-new', 'm-old-1']);
+    expect(result.current.hasOlderMessages).toBe(false);
   });
 });
