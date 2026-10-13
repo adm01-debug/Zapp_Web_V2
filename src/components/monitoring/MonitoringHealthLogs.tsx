@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, XCircle, AlertTriangle, Clock, Search, Filter } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Clock, Search, Filter, Timer, KeyRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -14,14 +14,19 @@ import type { HealthLog } from './hooks/useEvolutionMonitoring';
 
 interface Props { healthLogs: HealthLog[]; }
 
-const statusCfg: Record<string, { icon: typeof CheckCircle2; color: string; bg: string }> = {
-  connected: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
-  healthy: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
-  disconnected: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/5' },
-  error: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/5' },
-  degraded: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/5' },
+/** Status que o filtro "Erro" agrupa (inclui timeout e no_credentials). */
+const ERRO_STATUS = ['disconnected', 'error', 'timeout', 'no_credentials'];
+
+const statusCfg: Record<string, { label: string; icon: typeof CheckCircle2; color: string; bg: string }> = {
+  connected: { label: 'Conectado', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5' },
+  healthy: { label: 'Saudável', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5' },
+  disconnected: { label: 'Desconectado', icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/5' },
+  error: { label: 'Erro', icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/5' },
+  timeout: { label: 'Tempo esgotado', icon: Timer, color: 'text-warning', bg: 'bg-warning/5' },
+  no_credentials: { label: 'Sem credencial', icon: KeyRound, color: 'text-warning', bg: 'bg-warning/5' },
+  degraded: { label: 'Degradado', icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/5' },
 };
-const defaultCfg = { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted/30' };
+const defaultCfg = { label: 'Desconhecido', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted/30' };
 
 export function MonitoringHealthLogs({ healthLogs }: Props) {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -32,7 +37,7 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
 
   const filtered = useMemo(() => healthLogs.filter(log => {
     if (statusFilter === 'ok' && !['connected', 'healthy'].includes(log.status)) return false;
-    if (statusFilter === 'error' && !['disconnected', 'error'].includes(log.status)) return false;
+    if (statusFilter === 'error' && !ERRO_STATUS.includes(log.status)) return false;
     if (statusFilter === 'degraded' && log.status !== 'degraded') return false;
     if (instanceFilter !== 'all' && log.instance_id !== instanceFilter) return false;
     if (search && !log.instance_id.toLowerCase().includes(search.toLowerCase()) &&
@@ -41,7 +46,7 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
   }), [healthLogs, statusFilter, instanceFilter, search]);
 
   const okCount = filtered.filter(l => ['connected', 'healthy'].includes(l.status)).length;
-  const errCount = filtered.filter(l => ['disconnected', 'error'].includes(l.status)).length;
+  const errCount = filtered.filter(l => ERRO_STATUS.includes(l.status)).length;
   const hasFilters = statusFilter !== 'all' || instanceFilter !== 'all' || search;
 
   return (
@@ -53,7 +58,7 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
             <CardDescription>{filtered.length} de {healthLogs.length} registros</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className="text-3xs text-emerald-500">✓ {okCount}</Badge>
+            <Badge variant="outline" className="text-3xs text-success">✓ {okCount}</Badge>
             <Badge variant="outline" className="text-3xs text-destructive">✗ {errCount}</Badge>
           </div>
         </div>
@@ -100,14 +105,14 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">{log.instance_id}</span>
-                        <Badge variant="outline" className={cn('text-3xs', cfg.color)}>{log.status}</Badge>
+                        <Badge variant="outline" className={cn('text-3xs', cfg.color)}>{cfg.label}</Badge>
                       </div>
                       {log.error_message && <p className="text-2xs text-destructive mt-0.5 truncate max-w-sm">{log.error_message}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
                     {log.response_time_ms != null && (
-                      <span className={cn('font-medium', log.response_time_ms < 300 ? 'text-emerald-500' : log.response_time_ms < 800 ? 'text-amber-500' : 'text-destructive')}>
+                      <span className={cn('font-medium', log.response_time_ms < 300 ? 'text-success' : log.response_time_ms < 800 ? 'text-warning' : 'text-destructive')}>
                         {log.response_time_ms}ms
                       </span>
                     )}

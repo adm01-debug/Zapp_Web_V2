@@ -9,8 +9,10 @@ import {
 import {
   Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
   Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
-  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock,
+  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock, HeartPulse,
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
@@ -42,12 +44,19 @@ interface ConnectionCardProps {
   onQueues: (id: string, name: string) => void;
   onSettings: (instanceName: string, name: string) => void;
   onSyncHistory: (connection: WhatsAppConnection) => void;
+  /** Provedor atual recusou o histórico (Evolution GO): esconde a ação. */
+  historyNotSupported?: boolean;
+  /** Health check por conexão (staff/admin). Ausente = item não aparece. */
+  onHealthCheck?: (connection: WhatsAppConnection) => void;
+  /** id da conexão com health check em andamento. */
+  checkingHealth?: string | null;
 }
 
 export function ConnectionCard({
   connection, syncingHistory,
   onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,
   onBusinessHours, onQueues, onSettings, onSyncHistory,
+  historyNotSupported = false, onHealthCheck, checkingHealth,
 }: ConnectionCardProps) {
   const status = statusConfig[connection.status] || statusConfig.disconnected;
   const StatusIcon = status.icon;
@@ -55,7 +64,7 @@ export function ConnectionCard({
   // Exclusão de conexão é destrutiva (apaga a instância na Evolution e o
   // vínculo local): só admin vê o item. As duas ações destrutivas passam por
   // confirmação — nada executa no primeiro clique.
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isSupervisor } = useUserRole();
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -124,6 +133,11 @@ export function ConnectionCard({
                     </span>
                   </div>
                 )}
+                {connection.last_health_check && !Number.isNaN(new Date(connection.last_health_check).getTime()) && (
+                  <p className="text-3xs text-muted-foreground mt-1">
+                    Último check {formatDistanceToNow(new Date(connection.last_health_check), { addSuffix: true, locale: ptBR })}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -156,13 +170,19 @@ export function ConnectionCard({
                   <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}><Clock className="w-4 h-4 mr-2" />Horário de Atendimento</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}><Link2 className="w-4 h-4 mr-2" />Vincular Filas</DropdownMenuItem>
                   {connection.instance_id && (
-                    <>
-                      <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
-                      <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
-                        {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <History className="w-4 h-4 mr-2" />}
-                        Sincronizar Histórico
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
+                  )}
+                  {connection.instance_id && !historyNotSupported && (
+                    <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
+                      {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <History className="w-4 h-4 mr-2" />}
+                      Sincronizar Histórico
+                    </DropdownMenuItem>
+                  )}
+                  {isSupervisor && onHealthCheck && (
+                    <DropdownMenuItem disabled={checkingHealth === connection.id} onClick={() => onHealthCheck(connection)}>
+                      {checkingHealth === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <HeartPulse className="w-4 h-4 mr-2" />}
+                      Checar agora
+                    </DropdownMenuItem>
                   )}
                   {isAdmin && (
                     <>
