@@ -98,6 +98,33 @@ Especialista: iris
   complementar de que os 7 de Tarefas continuam SEM `name`/`description` inline e todos
   os globais continuam com os dois. Nenhuma outra asserção foi afrouxada.
 
+## Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" (por que estou neles)
+
+O cartão lista `src/components/inbox/`, `src/hooks/ui/useCustomShortcuts.ts` e testes.
+Os arquivos de código que o juiz apontou (`defaultShortcuts.ts`,
+`useGlobalKeyboardShortcuts.ts` e `chipCounts.ts`, com os respectivos testes) são os que
+o próprio cartão manda mexer no "O QUE FAZER 1" e no "PROBLEMA": `defaultShortcuts.ts` é
+citado por nome no PROBLEMA
+("`defaultShortcuts.ts` anuncia atalhos sem tratador"), e o tratador de atalho global
+mora em `src/hooks/ui/useGlobalKeyboardShortcuts.ts` (o `useCustomShortcuts.ts` que o
+cartão autoriza é o store de customização, que só guarda a tecla — não tem como
+implementar tratador nem tirar item da lista por lá). A busca do inbox é decidida em
+`src/hooks/inbox/chipCounts.ts` (`passesExtraFilters`), que é a regra que o contador do
+chip e a lista compartilham — mexer só no componente não corrigiria o defeito do título.
+Sem esses quatro, o critério 1 e metade do 2 não teriam como ficar verdes. Não toquei
+nenhum arquivo de outro assunto, não criei dependência, migration ou exportação.
+
+## Testes existentes: nada foi pulado ou removido
+
+Nenhum `it`/`it.skip`/`describe` saiu; os dois pontos que o juiz marcou são asserções
+substituídas, ambas explicadas acima ("Testes existentes que mudei"): `compartilhadas`
+passou de `['none:/','none:delete']` para `['none:delete']` (o `/` saiu junto com o
+`focus-input`, que não tinha tratador) e `globais.length > 20` virou o contrato de
+rótulo inline, mais forte e coerente com o nome do teste. O
+`InboxFilters.nomes-seletores.test.tsx` (teste de rótulo dos seletores, N-045) ganhou um
+`vi.mock` de `useSavedFilters` para continuar exercitando o componente real; nenhuma
+asserção dele mudou.
+
 ## NÃO fiz (e por quê)
 
 - **Seletor de ordenação**: a lista já ordena por não lidas + última mensagem
