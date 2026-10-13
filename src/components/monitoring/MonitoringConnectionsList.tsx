@@ -9,11 +9,13 @@ import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { ConnectionInfo, WebhookTestResult } from './hooks/useEvolutionMonitoring';
+import type { ConnectionInfo } from './hooks/useEvolutionMonitoring';
+import type { WebhookTestState } from './hooks/useMonitoringActions';
+import { WebhookTestResultView } from './MonitoringWebhookPanel';
 
 interface Props {
   connections: ConnectionInfo[];
-  webhookTest: WebhookTestResult;
+  webhookTest: WebhookTestState;
   onCheckWebhook: (id: string) => void;
   onTestWebhook: (id: string) => void;
 }
@@ -113,7 +115,7 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                       <Settings2 className="w-3.5 h-3.5 mr-1" />Webhook
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => onTestWebhook(conn.instance_id)} disabled={webhookTest.status === 'testing'} className="text-xs h-8">
-                      {webhookTest.status === 'testing' ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Testando</> : <><PlayCircle className="w-3.5 h-3.5 mr-1" />Testar</>}
+                      {webhookTest.status === 'testing' && webhookTest.instance === conn.instance_id ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Testando</> : <><PlayCircle className="w-3.5 h-3.5 mr-1" />Testar</>}
                     </Button>
                   </div>
                 </div>
@@ -124,6 +126,11 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                       <p className="text-3xs text-center text-muted-foreground mt-2">Escaneie com WhatsApp</p>
                     </div>
                   </motion.div>
+                )}
+                {webhookTest.instance === conn.instance_id && (
+                  <div className="mt-4">
+                    <WebhookTestResultView webhookTest={webhookTest} />
+                  </div>
                 )}
               </CardContent>
             </Card>
