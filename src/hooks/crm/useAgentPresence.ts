@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 export type PresenceStatus = 'online' | 'away' | 'offline';
 
@@ -92,7 +93,7 @@ function join(userId: string) {
     if (seq !== joinSeq) return;
 
     const ch = supabase
-      .channel('agent-presence-changes')
+      .channel(uniqueRealtimeTopic('agent-presence-changes'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: TABLE },

@@ -4,3 +4,4 @@ export * from './messageSender';
 export * from './useMessageUpdateBatcher';
 export * from './useRealtimeNotifications';
 export * from './useSupabaseRealtime';
+export * from './useRealtimeReconnect';

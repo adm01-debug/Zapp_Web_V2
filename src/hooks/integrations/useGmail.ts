@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { toast } from 'sonner';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 import { callGmailFunction } from '../gmail/gmailApi';
@@ -78,6 +80,10 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     void queryClient.invalidateQueries({ queryKey: ['gmail-threads'] });
     void queryClient.invalidateQueries({ queryKey: ['gmail-thread-counts'] });
   }, [queryClient]);
+
+  // Um e-mail que chegou durante a queda não é reentregue pelo realtime:
+  // revalida as threads e as contagens quando a rede volta.
+  useRealtimeReconnect(invalidateThreadData);
 
   const connectGmail = useMutation({
     mutationFn: async () => {
@@ -445,7 +451,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
 
   const subscribeToThreads = useCallback(() => {
     if (!activeAccount) return () => {};
-    const channel = supabase.channel('gmail-threads-realtime')
+    const channel = supabase.channel(uniqueRealtimeTopic('gmail-threads-realtime'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'email_threads', filter: `gmail_account_id=eq.${activeAccount.id}` }, invalidateThreadData)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_messages', filter: `gmail_account_id=eq.${activeAccount.id}` }, () => { queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); })
       .subscribe();

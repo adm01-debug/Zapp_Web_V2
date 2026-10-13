@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
 
@@ -122,10 +124,18 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     refetchInterval: 30000,
   });
 
+  // Revalidar os alertas vale para os dois caminhos: evento novo e reconexão
+  // (um alerta criado durante a queda não volta pelo realtime).
+  const revalidarAlertas = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
+  }, [queryClient]);
+
+  useRealtimeReconnect(revalidarAlertas);
+
   // Real-time subscription for new alerts
   useEffect(() => {
     const channel = supabase
-      .channel('warroom-alerts-realtime')
+      .channel(uniqueRealtimeTopic('warroom-alerts-realtime'))
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'warroom_alerts' },

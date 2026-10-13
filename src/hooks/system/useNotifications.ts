@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, createElement } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
@@ -93,6 +95,11 @@ export function useNotifications() {
     }
   }, [user]);
 
+  // Depois de uma queda o canal volta, mas as notificações criadas durante a
+  // queda não são reentregues pelo servidor: recarrega a lista para o sino não
+  // ficar defasado esperando o próximo evento ou uma recarga manual.
+  useRealtimeReconnect(fetchNotifications, !!user);
+
   useEffect(() => {
     activeUserIdRef.current = userId;
 
@@ -108,7 +115,7 @@ export function useNotifications() {
     if (!user) return;
 
     const channel = supabase
-      .channel('notifications-changes')
+      .channel(uniqueRealtimeTopic('notifications-changes'))
       .on(
         'postgres_changes',
         {

@@ -230,7 +230,7 @@ describe('useGmail', () => {
       await waitFor(() => expect(result.current.activeAccount).toBeDefined());
 
       const cleanup = result.current.subscribeToThreads();
-      expect(supabase.channel).toHaveBeenCalledWith('gmail-threads-realtime');
+      expect(supabase.channel).toHaveBeenCalledWith(expect.stringMatching(/^gmail-threads-realtime:.+/));
       expect(mockCh.on).toHaveBeenCalledTimes(2);
       expect(mockCh.subscribe).toHaveBeenCalledOnce();
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { toast } from '@/hooks/ui/use-toast';
 import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
@@ -102,7 +104,7 @@ export function useConnectionsManager() {
     void fetchConnections();
 
     const channel = supabase
-      .channel('whatsapp-connections-changes')
+      .channel(uniqueRealtimeTopic('whatsapp-connections-changes'))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'whatsapp_connections' },
@@ -138,6 +140,13 @@ export function useConnectionsManager() {
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, []);
+
+  // Depois de uma queda o canal volta, mas um status que mudou durante o
+  // silêncio não é reentregue: revalida a lista para o painel não ficar com
+  // "conectado"/QR velhos até a próxima recarga manual.
+  useRealtimeReconnect(() => {
+    void fetchConnections();
+  });
 
   const fetchConnections = async () => {
     setLoading(true);

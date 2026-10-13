@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
@@ -36,7 +37,7 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
     let desativado = false;
 
     const channel = supabase
-      .channel('transcription-notifications')
+      .channel(uniqueRealtimeTopic('transcription-notifications'))
       .on(
         'postgres_changes',
         {

@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { TeamConversation, TeamMember, TeamMessage } from './teamChatTypes';
 import { queryKeys } from './queryKeys';
@@ -104,22 +106,24 @@ export function useTeamConversations() {
     staleTime: 10000,
   });
 
+  // A caixa de entrada revalida tanto por evento de realtime quanto por
+  // reconexão (a lista some/volta do estado certo sem recarga manual).
+  const revalidarInbox = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+  }, [queryClient]);
+
+  useRealtimeReconnect(revalidarInbox, !!profile);
+
   useEffect(() => {
     if (!profile) return;
     const channel = supabase
-      .channel('team-chat-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_conversation_members' }, () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-      })
+      .channel(uniqueRealtimeTopic('team-chat-updates'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, revalidarInbox)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_conversation_members' }, revalidarInbox)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, revalidarInbox)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [profile, queryClient]);
+  }, [profile, revalidarInbox]);
 
   return query;
 }

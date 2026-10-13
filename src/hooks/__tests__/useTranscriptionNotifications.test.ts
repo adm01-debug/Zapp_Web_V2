@@ -54,7 +54,7 @@ describe('useTranscriptionNotifications', () => {
 
   it('subscribes to transcription-notifications channel', () => {
     renderHook(() => useTranscriptionNotifications());
-    expect(mockChannel).toHaveBeenCalledWith('transcription-notifications');
+    expect(mockChannel).toHaveBeenCalledWith(expect.stringMatching(/^transcription-notifications:.+/));
   });
 
   it('does not subscribe when disabled', () => {

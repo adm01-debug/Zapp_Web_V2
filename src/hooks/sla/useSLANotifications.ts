@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
@@ -64,7 +65,7 @@ export const useSLANotifications = () => {
     };
 
     const channel = supabase
-      .channel('sla-breaches')
+      .channel(uniqueRealtimeTopic('sla-breaches'))
       .on(
         'postgres_changes',
         {

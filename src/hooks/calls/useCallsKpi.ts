@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 
 export interface CallsKpi {
   total: number;
@@ -107,17 +109,22 @@ export function useCallsKpi({ period, channel, scope, enabled = true }: UseCalls
     },
   });
 
+  // Revalidar serve para os dois caminhos: evento de realtime e reconexão.
+  const revalidarKpi = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['calls-kpi'] });
+  }, [queryClient]);
+
+  useRealtimeReconnect(revalidarKpi, enabled);
+
   useEffect(() => {
     const canal = supabase
-      .channel('calls-kpi-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['calls-kpi'] });
-      })
+      .channel(uniqueRealtimeTopic('calls-kpi-realtime'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, revalidarKpi)
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
     };
-  }, [queryClient]);
+  }, [queryClient, revalidarKpi]);
 
   return query;
 }

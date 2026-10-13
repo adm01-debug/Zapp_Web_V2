@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { MessageRow } from '@/types/chat';
 import { ContactRow } from '@/types/contact';
 import { 
@@ -193,7 +194,7 @@ export class RealtimeService {
 
   static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {
     return supabase
-      .channel(`chat-reactions:${messageId}`)
+      .channel(uniqueRealtimeTopic(`chat-reactions:${messageId}`))
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

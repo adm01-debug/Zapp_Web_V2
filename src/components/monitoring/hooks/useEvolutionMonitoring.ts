@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { useMonitoringData } from './useMonitoringData';
 import { useMonitoringActions } from './useMonitoringActions';
 import { useMonitoringNotifications } from './useMonitoringNotifications';
@@ -39,9 +41,13 @@ export function useEvolutionMonitoring() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Um evento perdido durante a queda não é reentregue: recarrega ao reconectar
+  // para o painel não ficar com o retrato anterior até o próximo tick do polling.
+  useRealtimeReconnect(fetchData);
+
   useEffect(() => {
     const channel = supabase
-      .channel('monitoring-status')
+      .channel(uniqueRealtimeTopic('monitoring-status'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_connections' }, () => fetchData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
