@@ -1,18 +1,20 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: complexo (auditoria de teste RTL + inspeção de componente; sem escrita de código)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Veredito
+VEREDITO: defeito inexistente na base — nada a corrigir, nenhum commit. O diff deste workspace está vazio.
+
+## O que foi verificado e por quê
+- `src/components/talkx/TalkXSuppression.tsx`: `editReasonOptions` não existe no arquivo; nenhum item com `value=""` (o único `value=""` em `src/components/talkx/` é um `<option>` nativo em `TalkXCampaignRunning.tsx:896`, fora do escopo).
+- `REASON_CODES` tem os 6 códigos do enum (`opt_out`, `invalid_number`, `bounce`, `no_commercial_permission`, `lgpd`, `manual`), idênticos ao tipo `ReasonCode` local (linha 36) e ao enum `talkx_blacklist_reason` em `src/integrations/supabase/types.ts`.
+- `openEdit` faz `setEditReason(entry.reason_code ?? 'manual')` (nunca `""`); `openBulkEdit` usa `'keep'`, cujo item `Manter atual` só é renderizado no modo bulk; o `Select` é controlado (`value={editReason}`, sempre string definida). Todo valor possível de `editReason` corresponde a um item renderizado.
+- Falhas silenciosas (critério 4): não existe sentinela-placeholder neste código (a premissa do "disabled" não se aplica); `'keep'` nunca é persistido (`saveEdit` só grava quando `editReason !== 'keep'`); `openEdit`/`openBulkEdit` sempre zeram motivo/expiração/data ao abrir, e fechar define `editing` null — sem estado residual entre abrir/fechar.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- Suite de guarda do cartão-irmão (arquivo em `v2/teste-rtl-select-reason-null-261013013039ca`, executada aqui a partir do branch, sem commit): `npx vitest run src/components/talkx/__tests__/TalkXSuppression.editReasonVazio.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)` na base intacta.
+- Prova por mutação (minha, revertida em seguida com `git checkout --`): injetei `<SelectItem value="">` no modal → `Test Files 1 failed (1); Tests 3 failed (3)`; após reverter, 3/3 verdes. O teste é sensível ao defeito e chama a tela real (mocks só de fronteira: cliente supabase, auth, atividade, sonner); a lista esperada hardcoded é a especificação dos 6 rótulos, não tautologia.
+- Suite pré-existente do módulo: `npx vitest run` nos 10 arquivos `TalkXSuppression.*.test.tsx` + `TalkXSuppressionReasons.test.tsx` → `Test Files 10 passed (10); Tests 71 passed (71)`.
+- `git diff dia/2026-10-13...v2/remover-value-vazio-editreasonoptions-261013090512ee --stat`: só `.tmp/relato.md` (zero código — confirma o relato do cartão-irmão). `git diff ...v2/teste-rtl-select-reason-null-261013013039ca --stat`: só relato + 1 arquivo novo de teste (nenhuma mudança em produção).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não commitei nada: auditoria sem defeito não tem o que commitar (diff vazio, confirmado por `git status --short` limpo).
+- NÃO CONCLUÍ o critério 5 integralmente: `zapp-verify . --rapido` → `VERIFY: VERMELHO em tipos`, 2 execuções, causa `tsc saiu 137 em app` (processo Killed por OOM; máquina com load ~58 e 42/47 GB usados, `free`/`uptime` medidos na hora). `jev-juiz falha` no log: `environment`. Como o diff está vazio, o vermelho não tem relação com este cartão; segui a regra do juiz (rodei 1x extra, repetiu, registro e sigo sem mexer em código). Demais portões medidos: `OK dependencias`, `OK db_guard`.
