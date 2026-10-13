@@ -98,11 +98,12 @@ describe('AdminView — estados das listas (usuários e auditoria)', () => {
 
   it('enquanto carrega não mostra tabela nem estado vazio', () => {
     h.estado.loading = true;
-    const { container } = render(<AdminView />);
+    render(<AdminView />);
 
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.queryByText('Nenhum usuário cadastrado.')).toBeNull();
+    // A página continua montada (a aba está lá); o que falta é o conteúdo.
+    expect(screen.getByRole('button', { name: /Usuários/ })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 

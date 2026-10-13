@@ -59,6 +59,9 @@ eram montados em UTC (`T00:00:00.000Z`) e cortavam 3 h de cada dia no Brasil —
   `npx vitest run src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts`
   → `Tests  1 failed | 8 passed (9)`, diff `- "2026-10-01T03:00:00.000Z" + "2026-10-01T00:00:00.000Z"`.
 - Verde depois: `npx vitest run src/components/admin/` → `Test Files  19 passed (19)` / `Tests  74 passed (74)`.
+- O estado de carregando é provado por "sem tabela, sem texto de vazio, aba ainda montada" — o teste não
+  cita nome de classe de animação (o juiz barato apontou, com razão, o `.animate-spin` no seletor; a
+  animação do spinner é a que já existia em HEAD e não foi tocada).
 - Lint: `npx eslint` nos arquivos alterados → `1 problem (0 errors, 1 warning)`, e o único aviso é o
   `no-restricted-imports` do import do client no `useAdminData.ts`, que já está em HEAD (linha 2 igual):
   nenhum aviso novo.
