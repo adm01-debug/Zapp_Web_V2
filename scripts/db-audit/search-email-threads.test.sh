@@ -80,7 +80,7 @@ for _ in $(seq 1 90); do
   if psql_sql 'SELECT 1' >/dev/null 2>&1; then ready=$((ready + 1)); (( ready >= 2 )) && break; else ready=0; fi
   sleep 1
 done
-(( ready >= 2 )) || fail 'PostgreSQL descartavel nao ficou pronto de forma estavel'
+(( ready >= 2 )) || fail 'FAIL: PostgreSQL de teste não iniciou (bootstrap descartavel instavel)'
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
