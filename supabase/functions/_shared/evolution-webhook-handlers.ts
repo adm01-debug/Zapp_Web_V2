@@ -191,36 +191,55 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
   }
 }
 
+// Presença ("digitando") do CONTATO — PD-68.
+//
+// Segurança em duas camadas:
+// 1. EMISSOR AUTENTICADO: este handler só é alcançado pelo caminho já validado
+//    do evolution-webhook (gate R2-API-021 — assinatura HMAC/EVOLUTION_WEBHOOK_SECRET
+//    ou instanceToken por instância — roda ANTES de qualquer handler; ver
+//    evolution-webhook/index.ts). Aqui dentro o guard residual é fail-closed:
+//    sem instância registrada (getConnectionByInstance) ou sem contato
+//    correspondente, NADA é publicado.
+// 2. CANAL PRIVADO: o broadcast vai no canal `typing:<id>` com
+//    `{ config: { private: true } }`, então a Realtime aplica a RLS de
+//    `realtime.messages` (migration 20261013210002_realtime_canais_privados.sql) —
+//    quem pode assinar e quem pode enviar passa a ser decidido pelo banco, e um
+//    cliente anônimo/estranho não lê nem forja "digitando" alheio.
+//
+// Diferente de grupo (`@g.us`), o JID de difusão (`@broadcast`, inclui
+// `status@broadcast`) NÃO é contato: era a brecha por onde o broadcast público
+// vazava; agora é descartado antes de qualquer acesso ao banco.
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
-  const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
+  const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+
+  // Grupo e difusão não são contatos: não disparam "digitando".
+  if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) return;
+
   const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
-
-  if (jid && !jid.endsWith('@g.us')) {
-    let isComposing = false;
-    if (presences) {
-      for (const [, pState] of Object.entries(presences)) {
-        if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
-      }
-    } else {
-      const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-      isComposing = directStatus === 'composing';
+  let isComposing = false;
+  if (presences) {
+    for (const [, pState] of Object.entries(presences)) {
+      if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
     }
-
-    const phone = normalizePhone(jid);
-    if (phone) {
-      const connection = await getConnectionByInstance(supabase, instance);
-      if (connection) {
-        const contact = await getContactByPhone(supabase, phone, connection.id);
-        if (contact) {
-          const channel = supabase.channel(`typing:${contact.id}`);
-          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-          supabase.removeChannel(channel);
-        }
-      }
-    }
+  } else {
+    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
+    isComposing = directStatus === 'composing';
   }
+
+  const phone = normalizePhone(jid);
+  if (!phone) return;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) return;
+
+  const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
+  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
+  supabase.removeChannel(channel);
 }
 
 // deno-lint-ignore no-explicit-any
