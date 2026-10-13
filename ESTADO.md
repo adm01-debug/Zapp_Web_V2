@@ -84,7 +84,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/hooks/groups/actions.ts:51` · `src/hooks/groups/actions.ts:121` · `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` |
-| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:69` |
+| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:81` |
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:474` · `supabase/functions/evolution-api/index.ts:540` · `supabase/functions/evolution-api/index.ts:701` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:215` · `supabase/functions/_shared/evolution-sync-actions.ts:292` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
