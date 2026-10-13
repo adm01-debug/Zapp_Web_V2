@@ -1,21 +1,24 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris
 
 ## O que mudou e por quê
-- `src/hooks/crm/useContactChangeLog.ts` (novo): hook que lê a trilha de alteração de contato e a entrega pronta para a tela. Lê PAGINADO com `fetchAllRows` (ordem `performed_at desc` + `id desc`), traduz os NOMES das colunas alteradas para pt-BR (`phone`→`Telefone`, `assigned_to`→`Responsável`...) sem receber valor nenhum, traduz a operação (`insert`→`Criado`, `update`→`Alterado`, `soft_delete`→`Excluído`, `restore`→`Restaurado`), devolve `performed_at` exatamente como o banco guarda e resolve o ator em `profiles`. Leitura vazia devolve `[]`; erro sobe; leitura incompleta (erro no meio ou teto de páginas) vira erro em vez de lista parcial apresentada como trilha inteira. Ator com perfil excluído: o nome some (`hasActor=false`) mas a entrada CONTINUA na trilha.
-- `src/hooks/crm/__tests__/useContactChangeLog.test.tsx` (novo): 10 testes com o cliente Supabase mockado — pt-BR dos campos, vocabulário de exclusão/restauração, data intacta, vazio, erro, leitura de 1500 linhas (acima do teto de 1000 do PostgREST) sem repetir nem perder, ator resolvido, ator excluído e falha ao resolver o ator.
-- `src/hooks/crm/index.ts`: exporta `useContactChangeLog`.
-- A leitura de `profiles` (nomes dos atores) trata o `error`: falha sobe como erro da query em vez de o erro ser engolido e todo ator parecer "excluído" (aviso do portão no 1º fechar, recusa real TL-171).
-- A faixa do pai (banco, t_ba716533) foi trazida por `git cherry-pick -x 6b029fb72` (migration + `types.ts` + teste SQL) — sem ela o hook não teria a tabela nem os tipos. Os commits de relato do pai não foram trazidos: são `.tmp/relato.md`, não código.
+- `src/components/contacts/ContactChangeHistory.tsx` (novo): a seção "Histórico" da ficha. Linha do tempo com QUEM (`actorLabel`: nome do perfil resolvido; sem perfil, "Autor não identificado" — não inventa), QUANDO (`dd/MM/aaaa às HH:mm`, pt-BR) e QUAIS CAMPOS (chips com os rótulos do hook — o nome cru da coluna e o valor NUNCA aparecem; a trilha grava só o nome do campo). Três estados explícitos: carregando (esqueleto), erro (mensagem + botão "Tentar novamente" que refaz a leitura) e vazio ("Nenhuma alteração registrada para este contato"). Celular primeiro: `min-w-0` + `flex-wrap`, nada de largura fixa. Tokens do sistema (`text-xs`/`text-2xs`, `muted-foreground`, `success`/`warning`/`info`/`destructive`); ícone decorativo com `aria-hidden`; esqueleto com `motion-safe:animate-pulse`.
+- `src/components/contacts/ContactDetailPanel.tsx:433`: monta a seção no fim do painel (`<ContactChangeHistory contactId={contact.id} />`), sem reorganizar a ficha (a ficha em seções é o CT-031, ainda `scheduled`).
+- `src/components/contacts/__tests__/ContactChangeHistory.test.tsx` (novo): prova renderizando o painel e o componente REAIS; a borda de dados (supabase) é que é mockada — a tela real é quem responde.
+- `src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx`: o painel ganhou um filho que fala direto com a rede, então o teste vizinho o mocka como já mocka `ContactActivityTimeline`/`ContactNotes`/`ContactPurchaseHistory`. Nenhuma asserção existente foi removida ou afrouxada.
+- `e2e/contacts-snapshots.spec.ts` + `e2e/__screenshots__/contacts-historico-390-linux.png`: captura da seção na tela real a 390 px (sessão falsa, relógio parado e backend 100% mockado).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/crm/__tests__/useContactChangeLog.test.tsx` → `Cannot find module '../useContactChangeLog'` / `Test Files 1 failed (1); Tests no tests` (módulo ainda não existia)
-- verde depois: `npx vitest run src/hooks/crm/__tests__/useContactChangeLog.test.tsx` → `Test Files 1 passed (1); Tests 10 passed (10)`
+- vermelho antes: `npx vitest run src/components/contacts/__tests__/ContactChangeHistory.test.tsx` com o componente fora do lugar (`.tmp/`) → `Test Files 1 failed (1)` / `Tests no tests` (não resolve `../ContactChangeHistory`).
+- verde depois: `npx vitest run src/components/contacts/__tests__/ContactChangeHistory.test.tsx src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx` → `Test Files 2 passed (2); Tests 9 passed (9)`.
+- sem regressão na área: `npx vitest run src/components/contacts` → `Test Files 37 passed (37); Tests 268 passed (268)`.
+- captura na tela real: `npx playwright test --project=chromium-contacts-visual -g "Histórico" --reporter=line` → `1 passed (41.9s)`; PNG em `e2e/__screenshots__/contacts-historico-390-linux.png` (331x180, projeto `chromium-contacts-visual`).
+- lint dos arquivos tocados: `npx eslint src/components/contacts/ContactChangeHistory.tsx src/components/contacts/__tests__/ContactChangeHistory.test.tsx` → 0 problemas. (O primeiro aviso — `react-refresh/only-export-components` por exportar o helper `actorLabel` — foi corrigido tirando o `export`.)
+
+## Critério de pronto
+1. **Histórico visível para quem vê o contato** — `ContactDetailPanel.tsx:433` monta a seção. Provas: `ContactChangeHistory.test.tsx:157` (melhor caso: ator, data e rótulos pt-BR; confere também que `phone`/`assigned_to` NÃO aparecem), `:188` (vazio), `:201` (erro + "Tentar novamente" focável e funcional), `:228` (o painel REAL monta a seção, com nome acessível "Histórico" e as linhas da trilha). A captura mostra a seção na tela real a 390 px.
+2. **`zapp-verify . --rapido` verde** — roda no fechar (bloco FATOS MEDIDOS).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `supabase/**` nem reapliquei a migration: é do cartão de banco (pai) e já veio pelo cherry-pick.
-- Não criei tela/componente de histórico: é de outro especialista (telas). O hook já entrega `fieldLabels`, `operationLabel` e `performedAt` prontos.
-
-## Conferências do portão (2º fechar)
-- Migration muda RLS/permissões: é do cartão PAI t_ba716533 (banco), trazida por `git cherry-pick -x 6b029fb72` (`git show --stat 6b029fb72`: migration + `types.ts` + teste SQL). O `revoke all`/`grant select`/policies são da trilha append-only — escrita só pelo gatilho SECURITY DEFINER, leitura sob `is_contact_visible_to_user`. Não tirei porque sem a tabela o hook não existe; não é meu diff (não é de hooks) nem afrouxa nada.
-- "SECURITY DEFINER sem SET search_path": NÃO PROCEDE. A função `public.log_contact_change()` tem `set search_path = public, pg_temp` na linha 129 da migration. Nada a corrigir.
-- "teste novo não chama o código mudado": troquei o teste da chave da query (que só comparava literais) por um que passa pelo hook real — campo fora da lista branca cai no próprio nome (`entries[0].fieldLabels === ['campo_novo']`). Os demais já renderizam o hook com React Query. `Test Files 1 passed (1); Tests 10 passed (10)`.
+- Não reorganizei a ficha em seções nem mexi no layout dela: isso é o CT-031 (`t_305cc73c`), ainda `scheduled` (aguarda o CT-025). A seção "Histórico" entra no fim do painel atual; quando o CT-031 entrar, ela passa a viver dentro do bloco "Histórico recente".
+- Não toquei banco nem hook: a trilha `contact_change_log` e o `useContactChangeLog` vieram do cartão pai `t_a364a46c` (cherry-pick da faixa inteira, `4563dca75`..`b6b09ab28`), como manda a DEPENDÊNCIA do cartão.
+- Nada novo que exporte, baixe, copie ou imprima dado; nenhum log de telefone, token ou texto de mensagem; nenhuma dependência nova; nenhum arquivo fora dos citados no cartão.
