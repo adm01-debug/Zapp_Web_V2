@@ -400,6 +400,27 @@
     --rosa: 335 85% 48%;
     --rosa-foreground: 0 0% 100%;
     --rosa-text: 335 75% 36%;
+
+    /* ===== CONTATOS (redesign RD-002) — superfícies, gradientes, sombras e raios =====
+       Mapa design → token em docs/design/contatos-redesign-2026-10-12/MAPA-TOKENS.md.
+       Tudo DERIVADO dos tokens base desta folha (--background, --card, --card-elevated,
+       --border, --input, --primary, --primary-200/300 e --elev-*): nenhuma matiz nova.
+       Os valores são trincas HSL (sem hsl()) — o componente escreve hsl(var(--contacts-*)).
+       No CLARO painel e superfície elevada coincidem com o branco do sistema; o degrau de
+       nível vem da borda fina (--contacts-line), como no design. */
+    --contacts-page: 221 20% 97%;        /* = --background */
+    --contacts-panel: 0 0% 100%;          /* = --card */
+    --contacts-raised: 0 0% 100%;         /* = --card-elevated */
+    --contacts-line: 221 15% 90%;         /* = --border */
+    --contacts-line-soft: 221 15% 93%;    /* = --input */
+    --contacts-card-gradient: linear-gradient(148deg, hsl(var(--contacts-raised)) 0%, hsl(var(--contacts-panel)) 65%, hsl(var(--contacts-page)) 100%);
+    --contacts-icon-tile: linear-gradient(145deg, hsl(var(--primary-300)) 0%, hsl(var(--primary-200)) 100%);
+    --contacts-select-glow: 0 0 0 1px hsl(var(--primary) / 0.33), var(--elev-3);
+    --contacts-hover-shadow: var(--elev-4), 0 0 0 1px hsl(var(--primary) / 0.07);
+    --contacts-dialog-shadow: var(--elev-5);
+    --contacts-radius-stat: 11px;
+    --contacts-radius-card: 13px;
+    --contacts-radius-dialog: 17px;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */
@@ -577,4 +598,23 @@
     --rosa: 335 80% 74%;
     --rosa-foreground: 335 60% 12%;
     --rosa-text: 335 75% 76%;
+
+    /* ===== CONTATOS (redesign RD-002) — ver a seção no :root =====
+       Grafite e azul do design (fundo #0d0d0f, painel #19191b, elevada #252527,
+       linha #2b2c30) mapeados para os tokens do escuro: page = --background,
+       panel = --card, raised = --card-elevated, line = --border, linha suave = --input.
+       As sombras usam os --elev-* do escuro (mais profundos) herdados do bloco .dark. */
+    --contacts-page: 240 6% 6%;           /* = --background */
+    --contacts-panel: 240 5% 10%;         /* = --card */
+    --contacts-raised: 240 5% 13%;        /* = --card-elevated */
+    --contacts-line: 240 4% 18%;          /* = --border */
+    --contacts-line-soft: 240 5% 14%;     /* = --input */
+    --contacts-card-gradient: linear-gradient(148deg, hsl(var(--contacts-raised)) 0%, hsl(var(--contacts-panel)) 65%, hsl(var(--contacts-page)) 100%);
+    --contacts-icon-tile: linear-gradient(145deg, hsl(var(--primary-300)) 0%, hsl(var(--primary-200)) 100%);
+    --contacts-select-glow: 0 0 0 1px hsl(var(--primary) / 0.33), var(--elev-3);
+    --contacts-hover-shadow: var(--elev-4), 0 0 0 1px hsl(var(--primary) / 0.07);
+    --contacts-dialog-shadow: var(--elev-5);
+    --contacts-radius-stat: 11px;
+    --contacts-radius-card: 13px;
+    --contacts-radius-dialog: 17px;
 }
