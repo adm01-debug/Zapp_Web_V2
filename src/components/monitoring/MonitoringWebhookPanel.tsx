@@ -94,7 +94,7 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
                 </div>
                 <Button size="sm" onClick={() => onTest(conn.instance_id)} disabled={webhookTest.status === 'testing'}>
                   {webhookTest.status === 'testing'
-                    ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Testando...</>
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1 motion-safe:animate-spin" />Testando...</>
                     : <><PlayCircle className="w-3.5 h-3.5 mr-1" />Testar E2E</>
                   }
                 </Button>
@@ -182,7 +182,7 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
             {connections.map(conn => (
               <Button key={conn.id} className="w-full" onClick={() => onReconfigure(conn.instance_id)} disabled={reconfiguring} variant="default">
                 {reconfiguring
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Reconfigurando...</>
+                  ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Reconfigurando...</>
                   : <><Radio className="w-4 h-4 mr-2" />Reconfigurar ({conn.instance_id})</>
                 }
               </Button>

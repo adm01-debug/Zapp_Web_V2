@@ -104,10 +104,10 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                     {offline && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => fetchQr(conn.instance_id)} disabled={loadingQr[conn.instance_id]} className="text-xs h-8">
-                          {loadingQr[conn.instance_id] ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <QrCode className="w-3.5 h-3.5 mr-1" />}QR
+                          {loadingQr[conn.instance_id] ? <Loader2 className="w-3.5 h-3.5 mr-1 motion-safe:animate-spin" /> : <QrCode className="w-3.5 h-3.5 mr-1" />}QR
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => reconnect(conn.instance_id)} disabled={reconnecting[conn.instance_id]} className="text-xs h-8 text-amber-600">
-                          {reconnecting[conn.instance_id] ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}Reconectar
+                          {reconnecting[conn.instance_id] ? <Loader2 className="w-3.5 h-3.5 mr-1 motion-safe:animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}Reconectar
                         </Button>
                       </>
                     )}
@@ -115,7 +115,7 @@ export function MonitoringConnectionsList({ connections, webhookTest, onCheckWeb
                       <Settings2 className="w-3.5 h-3.5 mr-1" />Webhook
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => onTestWebhook(conn.instance_id)} disabled={webhookTest.status === 'testing'} className="text-xs h-8">
-                      {webhookTest.status === 'testing' && webhookTest.instance === conn.instance_id ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Testando</> : <><PlayCircle className="w-3.5 h-3.5 mr-1" />Testar</>}
+                      {webhookTest.status === 'testing' && webhookTest.instance === conn.instance_id ? <><Loader2 className="w-3.5 h-3.5 mr-1 motion-safe:animate-spin" />Testando</> : <><PlayCircle className="w-3.5 h-3.5 mr-1" />Testar</>}
                     </Button>
                   </div>
                 </div>
