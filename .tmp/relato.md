@@ -14,6 +14,7 @@ Especialista: Íris (area-front-componentes)
 
 ## Faixa trazida do cartão pai (t_6f48e99d), por `cherry-pick` como o cartão manda
 - `supabase/functions/invite-user/index.ts`, `supabase/functions/invite-user/index.test.ts` e `supabase/config.toml`: a Edge `invite-user` e o registro dela na configuração do Supabase — o convite que o diálogo passou a chamar. Código do worker (edge); eu só o trouxe, não o alterei.
+- Indispensável: o cartão manda em O QUE FAZER trocar o convite para `invite-user` e pede para trazer a faixa do cartão pai quando ela não estiver integrada; sem esses 3 arquivos o diálogo chamaria uma função que não existe no workspace. É por isso que eles estão no diff: nenhum deles foi escrito ou editado por mim (vêm dos commits bdd3fb256/576e3716f do cartão pai via `cherry-pick`), e nenhum outro arquivo fora de ARQUIVOS QUE PODE TOCAR foi tocado.
 
 ## O que NÃO fiz e por quê
 - Não mexi em `src/pages/Auth.tsx` (aba "Criar Conta"): o cartão lista em ARQUIVOS QUE PODE TOCAR só os dois componentes de `agents/` e os testes, e a remoção da aba é o cartão SG1 — fora do meu escopo por instrução do próprio cartão.
