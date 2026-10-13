@@ -1,31 +1,22 @@
+Especialista: hugo
+
 ## O que mudou e por quê
-- supabase/functions/_shared/gmail-helpers.ts: o refresh recusado pelo Google (`ensureValidToken`) descartava o corpo da resposta e subia sempre "Failed to refresh token" — sem o `invalid_grant` a conta virava `error` mudo. Agora o corpo entra na mensagem; novas funções `isGmailReauthError`, `sanitizeGmailErrorMessage` e `recordGmailAccountFailure` classificam a falha: token revogado/expirado (`invalid_grant`, `unauthorized_client`) → `sync_status='reauth_required'`; falha transitória → `error` com a contagem de tentativas; `last_error` sempre sem token nem e-mail completo.
-- supabase/functions/gmail-cron-sync/index.ts e gmail-sync/index.ts: os dois pontos que gravavam `sync_status='error'` passam a usar `recordGmailAccountFailure`. O ramo de sucesso não mudou (segue gravando `synced` e limpando `last_error`).
-- supabase/functions/gmail-oauth/index.ts: o `exchange-code` já reconecta pela mesma linha (`upsert` com `onConflict: "email_address"`, UNIQUE(email_address)); agora também grava `last_error: null`, para a mensagem de reconexão sumir ao reconectar.
-- Testes: `supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts` (novo) e `supabase/functions/gmail-oauth/index.test.ts` (ganhou a prova de reconexão).
+- src/hooks/gmail/gmailTypes.ts: o tipo `GmailAccount.sync_status` não conhecia `reauth_required`, o estado que o backend grava quando o Google recusa o refresh token (cartão pai t_10bdc717). Extraí `GmailSyncStatus` (`pending|syncing|synced|error|reauth_required`) e usei no campo — mudança ADITIVA: nenhum valor antigo saiu.
+- src/hooks/integrations/useGmail.ts: o hook passa a expor, da conta ATIVA, `syncStatus`, `lastError`, `lastSyncedAt` e o derivado `needsReconnect` (`syncStatus === 'reauth_required'`). `lastError` é o texto que o backend já sanitiza (sem token nem e-mail completo — supabase/functions/_shared/gmail-helpers.ts); o hook só normaliza para string não vazia ou `null`, sem inventar texto próprio. Só acrescentei campos ao retorno (nenhum contrato existente mudou) e conferi os chamadores: GmailIntegrationCard e GmailWebhookMonitor leem `activeAccount.sync_status` como string — seguem compilando.
+- src/hooks/integrations/__tests__/useGmail.syncStatus.test.tsx (novo): 5 casos com o hook REAL contra o payload de `gmail-oauth list-accounts`.
 
-## Escopo do diff (números reais)
-- 7 arquivos no commit: 4 de código (`gmail-helpers.ts`, `gmail-cron-sync/index.ts`, `gmail-sync/index.ts`, `gmail-oauth/index.ts`), 2 de teste e este `.tmp/relato.md`.
-- 2 arquivos de teste; 6 casos de teste novos: 5 em `gmail-reauth-required.test.ts` e 1 em `gmail-oauth/index.test.ts` (reconexão pela mesma linha).
+## Atualização ao vivo (já existia; o teste fixa o contrato)
+A invalidação de `['gmail-accounts']` já acontecia em `syncInbox` (onSuccess) e em `exchangeCode` (o retorno do OAuth = reconectar). Não escrevi código novo para isso; os dois últimos testes provam esse contrato e passam também na base (por isso não contam como prova vermelho→verde).
 
-## Sensibilidade
-- (a) O diff toca o caminho de token/OAuth, mas não mexe em `rateLimit`, `requireRole`, `verifyHmac` nem `DELETE`; usa `service_role` só onde já era usado (funções de sincronização).
-- (b) Nenhuma proteção afrouxada: nenhuma policy, nenhuma RPC, nenhum grant alterado. Nada de migração.
-- (c) Nenhuma referência ao banco/endpoint de produção (as mudanças rodam no banco local da tarefa).
-- (d) Para quem chama: a resposta 500 do `gmail-sync` e o campo `error` do lote do `gmail-cron-sync` agora vêm sanitizados (sem e-mail/token) — texto, não contrato de formato.
-
-## Diagnóstico da conta em error (item 3)
-A causa mais provável é o refresh token expirado/revogado (`invalid_grant`): com o código anterior isso chegava ao banco como "Failed to refresh token", indistinguível de falha de rede. Não consulto produção (regra R1), então não afirmo o estado da conta; o que entrego é a classificação, que faz o próximo ciclo do cron gravar `reauth_required` com o motivo do Google no `last_error`. A conta segue `is_active=true`, então o cron continua a tentar — reconectar (`gmail-oauth` `exchange-code`) volta a linha a `pending` e limpa o erro.
+## Dependência (cartão pai)
+A faixa do pai não estava no workspace (`git merge-base --is-ancestor a9019042a HEAD` = falso). Segui a instrução do cartão e trouxe a faixa inteira de `~/hermes-workspaces/.v2-fila/26101223120ba8.json` (base `dia/2026-10-12`, sha `a9019042a`, 1 commit) via `git cherry-pick` → commit 8351952b2. O meu trabalho de front é o commit ddd65c60a.
+Os 6 arquivos que esse cherry-pick traz (área Edge, código do pai, NÃO escritos por mim): supabase/functions/_shared/gmail-helpers.ts, supabase/functions/gmail-cron-sync/index.ts, supabase/functions/gmail-sync/index.ts, supabase/functions/gmail-oauth/index.ts, supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts, supabase/functions/gmail-oauth/index.test.ts.
 
 ## Prova
-- vermelho antes: `deno test --no-check .../gmail-reauth-required.test.ts` com `gmail-helpers.ts` original (git stash) → `FAILED | 0 passed | 1 failed`
-- verde depois: `deno test --config scripts/ci/deno.json --allow-env --allow-net --allow-read .../gmail-reauth-required.test.ts .../gmail-oauth/index.test.ts .../gmail-helpers.test.ts` → `ok | 34 passed | 0 failed`
-
-## Ramo de erro (antes → depois)
-- `gmail-cron-sync` catch: antes `update({sync_status:'error', last_error: msg})` com a mensagem crua (o corpo do Google podia trazer o endereço) e `return {id, error: msg}`; depois classifica + sanitiza, e o lote continua com `Promise.allSettled` (uma conta não derruba as outras). Se o próprio UPDATE de estado falhar, loga e segue — antes o erro do update também não era propagado.
-- `gmail-sync` sync-inbox catch: antes `error` + mensagem crua e `throw`; depois helper, `throw` mantido (a resposta 500 vem do catch externo, agora com `sanitizeGmailErrorMessage`).
+- vermelho antes (código de produção revertido a HEAD, só o teste novo): `npx vitest run src/hooks/integrations/__tests__/useGmail.syncStatus.test.tsx` → `Test Files 1 failed (1)` / `Tests 3 failed | 2 passed (5)` (os 3 de campo novo falham; os 2 de invalidação já passavam).
+- verde depois: mesmo comando → `Test Files 1 passed (1)` / `Tests 5 passed (5)`.
+- regressão (os 4 testes existentes do useGmail + o novo): `npx vitest run .../useGmail.test.ts .../useGmail.syncParcial.test.tsx .../useGmail.threadListQuery.test.tsx .../useGmail.historicoPaginacao.test.tsx .../useGmail.syncStatus.test.tsx` → `Test Files 5 passed (5)` / `Tests 33 passed (33)`.
 
 ## O que NÃO fiz e por quê
-- Não usei o literal `ok` no sucesso: o estado saudável já usado no módulo é `synced` (front e testes CAS leem esse valor). Criar um segundo estado saudável quebraria consumidores; o "ok" do cartão == `synced` de hoje.
-- Não toquei no front (`GmailIntegrationCard.tsx` / `useGmail.ts`): fora da minha área. Deixo comentário no cartão para a tela mostrar "reconectar" quando `sync_status='reauth_required'`.
-- Não regenerei `deployment-manifest.json` (é do integrador).
+- Não toquei no rótulo pt-BR de "reconectar" na tela (`GmailIntegrationCard.tsx`): é da worker (telas). O hook já entrega `needsReconnect` para ela usar.
+- Não mexi no estado da conta fora do módulo do Gmail (ninguém mais pede) e não criei canal de realtime novo: o cartão pede "invalida após sincronizar/reconectar", que já está feito.
