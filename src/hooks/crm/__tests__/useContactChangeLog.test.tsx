@@ -44,6 +44,7 @@ const h = vi.hoisted(() => {
     rangeCalls: 0,
     orders: [] as string[],
     profiles: [] as Array<{ id: string; name: string | null }>,
+    profilesError: null as string | null,
   };
 
   function builder(table: string) {
@@ -58,7 +59,11 @@ const h = vi.hoisted(() => {
       range: (f: number, t: number) => { state.rangeCalls += 1; from = f; to = t; return q; },
       then: (resolve: (value: unknown) => unknown) => {
         if (table === 'profiles') {
-          return Promise.resolve(resolve({ data: state.profiles, error: null }));
+          return Promise.resolve(resolve(
+            state.profilesError
+              ? { data: null, error: { message: state.profilesError } }
+              : { data: state.profiles, error: null },
+          ));
         }
         if (state.mode === 'error') {
           return Promise.resolve(resolve({ data: null, error: { message: state.errorMessage } }));
@@ -99,6 +104,7 @@ beforeEach(() => {
   h.state.rangeCalls = 0;
   h.state.orders = [];
   h.state.profiles = [{ id: 'prof-1', name: 'Ana' }];
+  h.state.profilesError = null;
 });
 
 describe('useContactChangeLog — campos em pt-BR', () => {
@@ -215,6 +221,17 @@ describe('useContactChangeLog — ator', () => {
     expect(entry.actorName).toBeNull();
     expect(entry.hasActor).toBe(false);
     expect(entry.actorProfileId).toBe('prof-sumido');
+  });
+
+  it('falha ao resolver o ator sobe como erro em vez de marcar todos como excluídos', async () => {
+    h.state.total = 1;
+    h.state.rows = [{ ...h.makeRow(0, 1), performed_by_profile: 'prof-1' }];
+    h.state.profilesError = 'permission denied for table profiles';
+
+    const { result } = renderHook(() => useContactChangeLog('c1'), { wrapper });
+
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+    expect(result.current.entries).toEqual([]);
   });
 
   it('a chave da query é estável e por contato', () => {
