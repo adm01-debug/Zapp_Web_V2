@@ -27,6 +27,12 @@ export const CLAIM_LEASE_SECONDS = 90;
 // iniciado e lease vencido -> resultado AMBIGUO (o re-claim recusa e ela vira
 // 'failed' pela varredura). 45 s cabem com folga nos 90 s do lease.
 export const PROVIDER_POST_TIMEOUT_MS = 45_000;
+// PD-79 (t_76478b12): o limite de envio da Edge tem de acompanhar o throttle do
+// cliente, senão um usuário que envia no ritmo que o app permite toma 429 aqui.
+// O cliente (src/lib/sendThrottle.ts: SEND_THROTTLE_BURST=5 a cada
+// SEND_THROTTLE_WINDOW_MS=3 s) deixa passar até 100 envios/min; o limite da Edge
+// estava em 60/min — abaixo do que o próprio app autoriza.
+export const MESSAGE_DELIVERY_RATE_LIMIT_PER_MINUTE = 100;
 
 function isAbortError(error: unknown): boolean {
   const name = (error as { name?: unknown } | null)?.name;
@@ -422,7 +428,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
 
   const auth = await requireAuth(req);
   if (auth instanceof Response) return auth;
-  const rate = await enforceRateLimit(`message-delivery:${auth.userId}:${getClientIP(req)}`, 60, 60_000);
+  const rate = await enforceRateLimit(
+    `message-delivery:${auth.userId}:${getClientIP(req)}`,
+    MESSAGE_DELIVERY_RATE_LIMIT_PER_MINUTE,
+    60_000
+  );
   if (!rate.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   const messageId = await readMessageId(req);

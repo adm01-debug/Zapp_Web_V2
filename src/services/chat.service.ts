@@ -5,6 +5,36 @@ import { sendOutboundMessage, type OutboundMessageType } from './outbound-messag
 
 const log = getLogger('ChatService');
 
+/**
+ * Mime e extensão do áudio pelo CONTEÚDO do blob (`blob.type`), não por um
+ * `.webm`/`audio/webm` fixo. O MediaRecorder escolhe o mimeType conforme o
+ * navegador (Chrome/Android → audio/webm, Firefox → audio/ogg, Safari → audio/mp4);
+ * subir tudo como webm fazia o objeto do bucket mentir sobre o próprio formato.
+ * Sem tipo reconhecível, cai no webm — o que a gravação do app produz hoje.
+ */
+const AUDIO_EXTENSION_BY_MIME: Record<string, string> = {
+  'audio/webm': 'webm',
+  'audio/ogg': 'ogg',
+  'audio/opus': 'opus',
+  'audio/mp4': 'm4a',
+  'audio/mpeg': 'mp3',
+  'audio/aac': 'aac',
+  'audio/amr': 'amr',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+};
+
+export const DEFAULT_AUDIO_MIME = 'audio/webm';
+
+/** Deriva `{ contentType, extension }` do áudio a partir do tipo do blob. */
+export function resolveAudioUploadMeta(
+  blob: Pick<Blob, 'type'> | null | undefined
+): { contentType: string; extension: string } {
+  const base = (blob?.type ?? '').split(';')[0]!.trim().toLowerCase();
+  const contentType = base.startsWith('audio/') ? base : DEFAULT_AUDIO_MIME;
+  return { contentType, extension: AUDIO_EXTENSION_BY_MIME[contentType] ?? 'webm' };
+}
+
 // Extract first http(s) URL from message content
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
 
@@ -109,10 +139,11 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    const { contentType, extension } = resolveAudioUploadMeta(blob);
+    const fileName = `${contactId}/${Date.now()}.${extension}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 
