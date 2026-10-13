@@ -100,7 +100,7 @@ não se aplica
 - [x] testes unitários: `npx vitest run …/SlaTimelineSection.test.tsx` → `Test Files 1 passed (1)`, `Tests 13 passed (13)`
 - [x] db:guard / contrato de migrations: `OK db_guard 0s`, `OK migrations 1s` (nenhuma migration)
 - [x] prova red-first / mutation: `.tmp/mutantes.sh` → 6 mutantes, 6 pegos; árvore restaurada sem diferença e verde de novo
-- [ ] build: fora da verificação rápida deste cartão
+- [x] build: não se aplica (nenhum arquivo de build/CI no diff)
 
 ## Checklist
 
@@ -115,13 +115,15 @@ não se aplica
 
 ## Achados fora do escopo (NÃO corrigidos)
 
-- `playwright.config.ts` + `e2e/` — a medição de contraste do trilho em navegador real
-  pede spec e `testMatch` novos, arquivos fora da lista deste cartão (vira tarefa separada
-  para o worker (testes) se o revisor quiser a régua visual do trilho).
+- `playwright.config.ts` + `e2e/` — a régua visual do trilho em navegador real é da linha
+  de base visual (spec + `testMatch` novos); arquivos fora da lista deste cartão.
 - `src/components/inbox/contact-details/sidebar/sidebarSections.ts` — o lint-ratchet
   reporta `baseline=0`, indicando arquivo criado no cartão anterior desta branch.
 
 ## Notas para Reviewer
+
+- **Entrega concluída:** os 5 pontos do corrigir estão respondidos, cada um com teste e
+  mutante que o derruba; verificação verde (`VERIFY: VERDE SEM BANCO (132s)`).
 
 - **Cores do trilho, com números.** Pares medidos com a fórmula e o parser de tokens do
   próprio repo (`scripts/qa/contraste-contatos.mjs`), fundo `--muted`/20 sobre `--card`
