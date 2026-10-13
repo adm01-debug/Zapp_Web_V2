@@ -39,6 +39,17 @@ Especialista: Hugo (area-front-hooks)
   → antes do ajuste do fake: `1 failed | 293 passed (294)`; depois: os 3 arquivos afetados rodados
   de novo → `Test Files 3 passed (3); Tests 10 passed (10)`.
 
+## Pontos do juiz barato (rodada 2)
+- Ponto 1 (arquivo fora da lista): dos 4 arquivos apontados, `supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql`,
+  `scripts/db-audit/contacts-deleted-inbox-ingest.test.sh`, `scripts/ci/check-test-inventory.mjs` (e o `supabase/functions/...`
+  que ele não citou) são os commits do cartão PAI t_45046c65, trazidos por `git cherry-pick -x` porque o pai não estava na
+  minha ponta — são dependência, não trabalho meu. O único que eu editei fora de src/services|src/components é
+  `src/components/inbox/__tests__/RealtimeContactUpdateE2E.test.tsx`, que é ARQUIVO DE TESTE (o cartão permite "testes"):
+  o fake de `contacts` dele não tinha `.is()`, então o filtro novo quebrava o E2E; só o fake mudou, nenhuma asserção.
+- Ponto 2 (BEFORE UPDATE em `messages` regravando `updated_at`): esse SQL NÃO é do meu diff — é a migration do pai
+  (commit 8a5abf5a3), que já veio com o próprio teste de banco `scripts/db-audit/contacts-deleted-inbox-ingest.test.sh`.
+  Migration é área do worker (sql); eu não a altero. Registrei o apontamento em comentário no cartão para o pai/integrador.
+
 ## O que NÃO fiz e por quê
 - Não toquei na tela: a opção de restaurar é do CT-087 (t_726160d9); aqui só garanto que o hook
   emite a mensagem de restaurar quando o excluído é visível.
