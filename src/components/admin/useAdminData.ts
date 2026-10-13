@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
 
 export interface UserWithRole {
@@ -48,7 +49,10 @@ const ROLE_CHANGE_ERROR_MESSAGES: Record<string, string> = {
   jwt_session_required: 'Sessão expirada. Faça login novamente.',
 };
 
-function roleChangeErrorMessage(error: { message?: string }): string {
+function roleChangeErrorMessage(error: { code?: string; message?: string }): string {
+  // A negação de RLS (42501/403) chega crua do PostgREST; a UI mostra a
+  // mensagem fixa do helper, sem nome de tabela nem de policy.
+  if (isAccessDeniedError(error)) return describeAccessError(error);
   const message = error.message ?? '';
   for (const [code, text] of Object.entries(ROLE_CHANGE_ERROR_MESSAGES)) {
     if (message.includes(code)) return text;

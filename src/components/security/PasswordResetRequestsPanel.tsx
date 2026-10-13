@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
+import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,7 +55,7 @@ export function PasswordResetRequestsPanel() {
       if (error) throw error;
       toast.success('Solicitação aprovada! Email de reset enviado.');
       fetchRequests();
-    } catch (error) { log.error('Error approving:', error); toast.error(error instanceof Error ? error.message : 'Erro ao aprovar'); }
+    } catch (error) { log.error('Error approving:', error); toast.error(isAccessDeniedError(error) ? describeAccessError(error) : (error instanceof Error ? error.message : 'Erro ao aprovar')); }
     finally { setProcessing(false); setSelectedRequest(null); }
   };
 
@@ -66,7 +67,7 @@ export function PasswordResetRequestsPanel() {
       if (error) throw error;
       toast.success('Solicitação rejeitada');
       setRejectDialogOpen(false); setSelectedRequest(null); fetchRequests();
-    } catch (error) { log.error('Error rejecting:', error); toast.error(error instanceof Error ? error.message : 'Erro ao rejeitar'); }
+    } catch (error) { log.error('Error rejecting:', error); toast.error(isAccessDeniedError(error) ? describeAccessError(error) : (error instanceof Error ? error.message : 'Erro ao rejeitar')); }
     finally { setProcessing(false); }
   };
 
