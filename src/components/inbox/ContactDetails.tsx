@@ -10,6 +10,7 @@ import { PanelRightClose, Plus, Tag, TagsIcon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
+import { CustomFieldsSection } from './contact-details/CustomFieldsSection';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -120,6 +121,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
               contact={contact} enrichedData={enrichedData ?? null}
               onQuickAction={handleQuickAction}
             />
+            <CustomFieldsSection contactId={contact.id} />
             <ContactTagsSection
               tags={quickActions.tags}
               onAddTag={quickActions.addTag} onRemoveTag={quickActions.removeTag}

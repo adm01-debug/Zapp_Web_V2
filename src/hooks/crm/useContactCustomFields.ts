@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ContactService } from '@/services/contact.service';
+import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
 export interface CustomField {
@@ -51,6 +52,20 @@ export function useContactCustomFields(contactId: string | undefined) {
     }
   }, [contactId, fetchFields]);
 
+  const updateField = useCallback(async (fieldId: string, fieldValue: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_custom_fields')
+        .update({ field_value: fieldValue })
+        .eq('id', fieldId);
+      if (error) throw error;
+      setFields(prev => prev.map(f => (f.id === fieldId ? { ...f, field_value: fieldValue } : f)));
+    } catch (err) {
+      log.error('Error updating custom field:', err);
+      throw err;
+    }
+  }, []);
+
   const removeField = useCallback(async (fieldId: string) => {
     try {
       const { error } = await ContactService.deleteCustomField(fieldId);
@@ -62,5 +77,5 @@ export function useContactCustomFields(contactId: string | undefined) {
     }
   }, []);
 
-  return { fields, isLoading, addField, removeField, refetch: fetchFields };
+  return { fields, isLoading, addField, updateField, removeField, refetch: fetchFields };
 }
