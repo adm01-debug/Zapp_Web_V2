@@ -1,9 +1,16 @@
+/**
+ * Estado de sincronização da conta. `reauth_required` é gravado pelo backend
+ * quando o Google recusa o refresh token (revogado/expirado): a conta só volta a
+ * sincronizar com uma nova autorização, então o front precisa saber reconectar.
+ */
+export type GmailSyncStatus = 'pending' | 'syncing' | 'synced' | 'error' | 'reauth_required';
+
 export interface GmailAccount {
   id: string;
   user_id?: string;
   email_address: string;
   is_active: boolean;
-  sync_status: 'pending' | 'syncing' | 'synced' | 'error';
+  sync_status: GmailSyncStatus;
   last_sync_at: string | null;
   last_error: string | null;
   created_at: string;
