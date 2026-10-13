@@ -1,5 +1,5 @@
 /** E98 - frente a11y. O vão de contraste que nenhuma camada mede (ver docstring do teste). */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
 import { contactCards, gotoContacts } from './fixtures/contacts-page';
 import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
@@ -9,12 +9,29 @@ import { filtrarViolacoesBloqueantes } from './support/a11y-impactos';
 const require = createRequire(import.meta.url);
 const AXE = require.resolve('axe-core/axe.min.js');
 
-async function violacoes(page: import('@playwright/test').Page, seletor: string, regras: string[]) {
+type Violacoes = {
+  id: string;
+  impact: string;
+  nos: number;
+  alvos: { seletor: string; html: string; motivo: string }[];
+}[];
+
+/** Injeta o axe-core no documento. Reinjeta a CADA varredura de propósito: reaproveitar a
+ *  instância já custou `Axe is already running` — a flag interna de "run em andamento" vinha
+ *  de uma medição anterior no mesmo documento. */
+async function garantirAxe(page: Page): Promise<void> {
   await page.addScriptTag({ path: AXE });
+}
+
+async function violacoes(page: Page, alvo: string, regras: string[]): Promise<Violacoes> {
+  await garantirAxe(page);
   return page.evaluate(
     async ([sel, ids]) => {
       const axe = (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; impact: string; nodes: { target: string[]; html: string; failureSummary?: string }[] }[] }> } }).axe;
-      const r = await axe.run(sel === 'body' ? document.body : (document.querySelector(sel) ?? document.body), {
+      // `alvo` e um contexto do axe: `'body'` para o documento inteiro, ou um seletor
+      // que limita a varredura aos nos sob medicao (barato sob carga).
+      const contexto = sel === 'body' ? document.body : sel;
+      const r = await axe.run(contexto, {
         runOnly: { type: 'rule', values: ids },
       });
       return r.violations.map((v) => ({
@@ -28,8 +45,31 @@ async function violacoes(page: import('@playwright/test').Page, seletor: string,
         })),
       }));
     },
-    [seletor, regras] as const,
+    [alvo, regras] as const,
   );
+}
+
+/**
+ * Roda uma regra do axe so na subarvore de `alvo`. A lista e a tabela deixam as acoes de
+ * cada linha em `opacity-0` ate o hover, e o axe trata `opacity: 0` como invisivel — por
+ * isso a varredura e por linha (depois do hover) e, para caber no teto do Playwright sob
+ * carga, fica limitada a linha sob medicao em vez do `body` inteiro.
+ */
+async function violacoesNaLinha(alvo: Locator, regras: string[]): Promise<Violacoes> {
+  return alvo.evaluate(async (el, ids) => {
+    const axe = (window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; impact: string; nodes: { target: string[]; html: string; failureSummary?: string }[] }[] }> } }).axe;
+    const r = await axe.run(el as unknown as Element, { runOnly: { type: 'rule', values: ids } });
+    return r.violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      nos: v.nodes.length,
+      alvos: v.nodes.map((node) => ({
+        seletor: node.target.join(' '),
+        html: node.html,
+        motivo: node.failureSummary ?? '',
+      })),
+    }));
+  }, regras);
 }
 
 async function mockContatosVazios(page: Page): Promise<void> {
@@ -88,7 +128,15 @@ async function mockContatosPopulados(page: Page): Promise<void> {
     json(route, CONTATOS_POPULADOS.map((c) => ({ contact_id: c.id, can_delete: true }))));
 }
 
-/** Roda o axe `button-name` e falha se sobrar violacao SERIOUS/CRITICAL. */
+/** Mesma regra, mas varrendo so a linha recem-hoverada (ver `violacoesNaLinha`). */
+async function semViolacaoButtonNameNaLinha(page: Page, alvo: Locator, onde: string): Promise<void> {
+  await garantirAxe(page);
+  const v = await violacoesNaLinha(alvo, ['button-name']);
+  expect(
+    filtrarViolacoesBloqueantes(v),
+    `${onde}: nenhuma violacao SERIOUS ou CRITICAL de button-name\n${JSON.stringify(v, null, 2)}`,
+  ).toHaveLength(0);
+}
 async function semViolacaoButtonName(page: Page, onde: string): Promise<void> {
   const v = await violacoes(page, 'body', ['button-name']);
   expect(
@@ -134,6 +182,11 @@ test.describe('E98 - a11y: contraste e nome acessível na tela de contatos', () 
   // contato. Com a tela vazia o gate acima nao os via -- foi na lista populada que o
   // senior reproduziu `button-name` critical (t_41ad819d). Este cenario cobre os 3.
   test('lista populada: menu de acoes de cada contato tem nome acessivel nas 3 vistas', async ({ page }) => {
+    // O cenario e o mais pesado do arquivo: 3 vistas, 2 contatos e uma varredura por linha.
+    // Medido neste host sob carga (load ~60-75, 24 CPUs): 27,2 s ocioso-bom, 32,5 s no pior
+    // caso -- o teto default de 30 s do projeto fica no fio. O orcamento abaixo e o que o
+    // cartao autoriza para este teste (nao mexe em assercao nem na regra medida).
+    test.setTimeout(60_000);
     await mockContatosPopulados(page);
     await gotoContacts(page);
 
@@ -151,8 +204,11 @@ test.describe('E98 - a11y: contraste e nome acessível na tela de contatos', () 
     const linhas = page.getByTestId('contact-list-item');
     await expect(linhas).toHaveCount(2);
     for (let i = 0; i < (await linhas.count()); i++) {
-      await linhas.nth(i).hover();
-      await semViolacaoButtonName(page, `Lista (linha ${i + 1})`);
+      // Varredura por linha (e so a linha): a acao fica `opacity-0` fora do hover e a
+      // varredura do `body` inteiro, repetida por contato, era o custo que estourava o teto.
+      const linha = linhas.nth(i);
+      await linha.hover();
+      await semViolacaoButtonNameNaLinha(page, linha, `Lista (linha ${i + 1})`);
     }
     await expect(menuDeAcoes('Ana Teste')).toBeVisible();
     await expect(menuDeAcoes('Bruno Teste')).toBeVisible();
@@ -163,8 +219,9 @@ test.describe('E98 - a11y: contraste e nome acessível na tela de contatos', () 
     const linhasTabela = page.locator('tbody tr');
     await expect(linhasTabela).toHaveCount(2);
     for (let i = 0; i < (await linhasTabela.count()); i++) {
-      await linhasTabela.nth(i).hover();
-      await semViolacaoButtonName(page, `Tabela (linha ${i + 1})`);
+      const linha = linhasTabela.nth(i);
+      await linha.hover();
+      await semViolacaoButtonNameNaLinha(page, linha, `Tabela (linha ${i + 1})`);
     }
     await expect(menuDeAcoes('Ana Teste')).toBeVisible();
     await expect(menuDeAcoes('Bruno Teste')).toBeVisible();
@@ -224,7 +281,9 @@ test.describe('TL-175B — Talk X: texto secundário legível no tema claro', ()
     const pintados = await page.locator('.text-foreground-secondary').count();
     expect(pintados, 'a tela mediu 0 elementos com text-foreground-secondary').toBeGreaterThan(0);
 
-    const v = await violacoes(page, 'body', ['color-contrast']);
+    // Varredura limitada aos nós que aplicam o token sob medição: o `body` inteiro com
+    // color-contrast não cabia no teto do Playwright sob carga, e o gate só olha estes nós.
+    const v = await violacoes(page, '.text-foreground-secondary', ['color-contrast']);
     const doToken = v.flatMap((x) => x.alvos).filter((a) => a.html.includes('text-foreground-secondary'));
 
     expect(
@@ -251,7 +310,9 @@ test.describe('TL-175B — Talk X: texto secundário legível no tema claro', ()
     const pintados = await page.locator('.text-foreground-secondary').count();
     expect(pintados, 'a tela mediu 0 elementos com text-foreground-secondary').toBeGreaterThan(0);
 
-    const v = await violacoes(page, 'body', ['color-contrast']);
+    // Varredura limitada aos nós que aplicam o token sob medição: o `body` inteiro com
+    // color-contrast não cabia no teto do Playwright sob carga, e o gate só olha estes nós.
+    const v = await violacoes(page, '.text-foreground-secondary', ['color-contrast']);
     const doToken = v.flatMap((x) => x.alvos).filter((a) => a.html.includes('text-foreground-secondary'));
 
     expect(
