@@ -80,6 +80,8 @@ export default function TalkXView() {
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
+  const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const restoreHelpTriggerFocusRef = useRef(false);
   // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
   // pedindo o editor VAZIO (antes chamava openNew, que é o wizard de campanha). O pedido
   // é limpo quando a aba o atende, para não reabrir o editor sozinho depois.
@@ -258,9 +260,19 @@ export default function TalkXView() {
     setHelpRoute(next);
   }, []);
   const closeHelp = useCallback(() => {
+    restoreHelpTriggerFocusRef.current = true;
     pushTalkXHelpRoute(null);
     setHelpRoute(null);
   }, []);
+
+  useEffect(() => {
+    if (helpRoute || !restoreHelpTriggerFocusRef.current) return;
+    restoreHelpTriggerFocusRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      helpTriggerRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [helpRoute]);
 
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
@@ -422,7 +434,9 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              type="button" onClick={() => changeHelpRoute({})}
+              ref={helpTriggerRef}
+              type="button"
+              onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
               <HelpCircle className="w-4 h-4" />Ajuda
