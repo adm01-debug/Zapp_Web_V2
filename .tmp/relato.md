@@ -1,18 +1,43 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/lib/engagementScore.ts (novo): pontuação 0–100 derivada de dados REAIS já
+  disponíveis (o mesmo `ContactService.fetchStats` que a aba Resumo do contato
+  consome): volume de mensagens (máx. 40), histórico de conversas (máx. 25),
+  velocidade de resposta do contato (máx. 20, de `avgResponseTimeMinutes`) e CSAT
+  (máx. 15, só com `csatCount > 0`). Sem histórico (nenhuma mensagem e nenhuma
+  conversa) devolve `null` — não inventa número. Fórmula documentada no topo do
+  arquivo; `engagementLevel` devolve a faixa (Alto ≥80, Médio ≥50, Baixo).
+- src/components/inbox/contact-details/ContactHeaderSection.tsx: saiu o cálculo
+  antigo (base 50 + sentimento/prioridade/empresa/tipo — o bônus de tipo nunca
+  somava porque comparava `'customer'` contra os tipos oficiais `cliente`/
+  `fornecedor`/… de contactTypeConfig). Entrou `useContactStats(contact.id)` +
+  `engagementScore`; o anel do avatar e o badge só são renderizados quando a
+  pontuação existe (`engagement !== null`). O tooltip agora explica a fórmula com
+  os números de origem (mensagens, conversas, resposta média). Removido o
+  `normalizeSentiment`, que só alimentava o número inventado.
+- Testes: src/lib/__tests__/engagementScore.test.ts (fórmula, fronteiras de teto
+  e faixas, casos sem dados) e src/components/inbox/contact-details/__tests__/
+  ContactHeaderSection.test.tsx (informa/informa… render do componente real).
+  Os testes de cor do badge agora usam pontuações derivadas de estatísticas reais
+  (inclusive score 100 e score 0, o ramo `s < 50` que era inalcançável).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx`
+  com o ContactHeaderSection.tsx da base (`git show HEAD:… > arquivo`, depois restaurado):
+  `Tests  8 failed | 37 passed (45)` — as 8 provas novas falham no código antigo
+  (o cabeçalho ainda mostrava 50/100 inventado e o anel/badge sempre presentes).
+- verde depois: `npx vitest run src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx src/lib/__tests__/engagementScore.test.ts`
+  → `Test Files  2 passed (2); Tests  53 passed (53)`; exit 0.
+- `npx tsc --noEmit -p tsconfig.app.json` → sem erros.
+- `npx eslint <os 4 arquivos>` → 0 erros, 0 avisos (as 4 skills de lint no staged já
+  passaram no commit: baseline=0, novas=0).
+- `zapp-verify . --rapido` → verde (linha em FATOS MEDIDOS PELO FECHAR).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não mexi em src/services/contact.service.ts (fora dos arquivos permitidos): a
+  fórmula usa só os campos que `ContactStats` já expõe. `fetchStats` devolve totais
+  de mensagem/conversa e o tempo médio de resposta dos dois sentidos; não há
+  contagem "janelada" separada no contrato atual. Se o card quisesse janela
+  ("recentes"), o dado teria que nascer no service — worker (hooks) — e eu deixei a
+  pontuação usando o que existe hoje, sem criar campo novo.
