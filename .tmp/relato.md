@@ -1,18 +1,58 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql (nova):
+  * ingest_inbound_message passa a REATIVAR o contato soft-deleted (deleted_at = NULL) quando
+    chega mensagem nova, em vez de escrever no registro oculto. Os lookups passam a preferir o
+    registro VIVO (ORDER BY (deleted_at IS NOT NULL), created_at) quando coexistem as variantes
+    do 9o digito — assim o recadastro do mesmo telefone não acorda um duplicado antigo nem cria
+    contato novo. A reativação entra na trilha real public.contact_deletion_audit ('restore')
+    pelo trigger trg_audit_contact_deletion_change (já existente, não alterado, e que só dispara
+    quando deleted_at muda de fato).
+  * contacts_select_policy passa a exigir deleted_at IS NULL, EXCETO para admin/supervisor, que
+    continuam vendo os excluídos (lixeira/restaurar). A Inbox lê contacts direto sob RLS, então
+    era por aqui que o excluído reaparecia. O UPDATE (restaurar) não muda — a policy de UPDATE
+    não filtra deleted_at — e o purge físico (job/service_role, BYPASSRLS) não passa por policy.
+  * Assinatura, RETURNS, LANGUAGE e search_path de ingest_inbound_message seguem idênticos, e
+    CREATE OR REPLACE preserva a ACL (EXECUTE para service_role): src/integrations/supabase/types.ts
+    continua válido e nenhum GRANT/papel foi tocado.
+- scripts/db-audit/contacts-deleted-inbox-ingest.test.sh (novo): prova em PostgreSQL 17
+  descartável, com os papéis reais (authenticated e service_role). O estado ANTERIOR (a policy de
+  SELECT vigente e as versões anteriores de phone_variants e ingest_inbound_message) é extraído por
+  awk dos próprios arquivos de migration reais, não copiado à mão; a versão sob prova é a do arquivo
+  da migration do cartão.
+- scripts/ci/check-test-inventory.mjs: registra o .test.sh novo na ALLOWLIST (a promoção ao
+  db-guard.yml é do dono do workflow; o agente não edita workflow).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `bash scripts/db-audit/contacts-deleted-inbox-ingest.test.sh` (estado anterior à
+  migration do cartão) →
+  `R.1 estado anterior: o DONO (nao-admin) LE o contato excluido pela policy de SELECT` PASS e
+  `R.3 estado anterior: a mensagem nova NAO reativa o contato (deleted_at segue preenchido)` PASS —
+  a falha fica provada antes; sem a migration o bloco GREEN não passa (exige deleted_at = NULL).
+- verde depois: `bash scripts/db-audit/contacts-deleted-inbox-ingest.test.sh` →
+  `[OK] contrato do contato excluido no inbound/Inbox: RED->GREEN->rollback, todos os passos passaram`
+  (todos os passos PASS, nenhum pulado), incluindo:
+  `G.1 mensagem nova REATIVA o contato excluido (deleted_at = NULL)`,
+  `G.2 a reativacao entrou na trilha como restore, com de/para coerentes`,
+  `G.6 a Inbox (dono, nao-admin) NAO ve mais o contato excluido`,
+  `G.7 admin/supervisor CONTINUA vendo o excluido (lixeira/restaurar)`,
+  `G.8 contraponta: o contato VIVO do dono segue visivel`,
+  `G.9 contraponta: outro agente NAO passa a ver contato alheio`,
+  `G.13 o purge fisico continua funcionando e deixa rastro (purge)`,
+  `C.1/C.2/C.3` a linha `-- Rollback:` do próprio arquivo executa e devolve o ingest e a policy
+  anteriores.
+- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql`
+  registrou `APLICADA_LOCAL`; conferi por `pg_policy`/`pg_proc` que a policy nova (com
+  `deleted_at IS NULL`) e a versão nova de ingest_inbound_message estão no banco local.
+- `node scripts/ci/check-test-inventory.mjs`: o .test.sh novo não aparece entre os órfãos (a
+  ALLOWLIST o cobre); os órfãos listados são pré-existentes de outros cartões.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## O que NÃO fiz e por que
+- Não toquei src/**: o filtro explícito de deleted_at na consulta da Inbox é do cartão filho
+  t_d0f7873a (perfil de telas/hooks). A migration entrega a defesa no banco (RLS), que é a minha área.
+- Não mexi em GRANT, papel ou ACL: a migration só recria a função e a policy; nenhum acesso foi
+  removido além do filtro de excluídos pedido no cartão.
+- Não alterei migrations existentes: correção é migration nova, como manda a regra da área.
+- O rodapé de regras do cartão traz a linha genérica "não edite este arquivo com DDL/migration" —
+  é do template do plano; o próprio cartão pede migration nova em supabase/migrations/**.
