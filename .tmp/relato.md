@@ -1,61 +1,19 @@
-Especialista: workersql
-
-## Arquivos fora da lista do cartão (indispensáveis — não é escopo alheio)
-O cartão exige "PROVA no banco LOCAL com o papel real (agent/anon/service_role) mostrando o que passa e o que é
-negado". Essa prova só existe em `scripts/db-audit/<nome>.test.sh`: o harness sobe um PostgreSQL descartável,
-aplica a migration REAL e roda como `anon`/`authenticated`/`service_role` de verdade. As suítes em
-`supabase/tests/*.sql` (o único diretório de teste que o cartão lista) rodam como `service_role` (BYPASSRLS) e
-portanto NÃO provam negação — usá-las deixaria o critério sem prova. E todo `scripts/db-audit/*.test.sh` novo
-precisa de um passo em `.github/workflows/db-guard.yml`, senão `check-test-inventory.mjs` reprova o teste órfão
-(o próprio `db_guard` do `zapp-verify` roda esse inventário). Por isso os dois arquivos são o mínimo necessário
-para cumprir o critério do cartão, e nada além disso foi tocado.
+Especialista: hugo
 
 ## O que mudou e por quê
-- `supabase/migrations/20261012235745_dashboard_daily_series.sql` (NOVO): cria a RPC
-  `public.dashboard_daily_series(p_days int default 7)` — série diária de atividade no fuso
-  `America/Sao_Paulo`, uma linha por dia do período, com: `messages_received`, `messages_sent`,
-  `new_contacts`, `conversations_opened`, `conversations_resolved`, `active_contacts` e
-  `median_response_time_seconds` (NULL sem amostra). Só ADITIVA: não cria tabela, coluna nem policy;
-  `SECURITY DEFINER` com `SET search_path = public, pg_temp`; `REVOKE ALL ... FROM PUBLIC, anon` e
-  `GRANT EXECUTE ... TO authenticated, service_role`. Trava de papel: `is_admin_or_supervisor(auth.uid())`
-  ou `auth.role() = 'service_role'`; qualquer outro leva `42501 dashboard_daily_series_requires_staff`.
-  `p_days` é limitado a 90 (piso 1) com `greatest(least(coalesce(p_days,7),90),1)`. Rollback no topo com
-  SQL executável: `drop function if exists public.dashboard_daily_series(integer);`.
-- `scripts/db-audit/dashboard-daily-series.test.sh` (NOVO): harness descartável (postgres:17-alpine próprio),
-  aplica a migration REAL e prova, com papéis reais `anon`/`authenticated`/`service_role` (nunca como postgres):
-  números batem com a contagem manual, admin e supervisor leem, agente comum é barrado (42501), `anon`/`PUBLIC`
-  sem EXECUTE, `service_role` lê, `p_days` limitado a 90 (com piso 1), dia sem movimento com contadores 0 e
-  mediana NULL, reaplicação idempotente e o Rollback remove a função (volta ao RED).
-- `.github/workflows/db-guard.yml`: registra o harness como passo (obrigatório — `check-test-inventory.mjs`
-  reprova `.test.sh` órfão; por isso este arquivo entrou no diff além da lista do cartão, ver abaixo).
-- `src/integrations/supabase/types.ts`: NÃO foi tocado. É artefato gerado do banco vivo (o `types-sync`
-  regenera/abre PR depois que a migration chega ao banco); editar à mão aqui criaria drift contra o banco e
-  um arquivo de `src/` sem teste próprio. O tipo da RPC entra junto com a entrega que a consome (filho de front).
+- `src/hooks/dashboard/useDailyMetricsKpis.ts` (novo): hook `useDailyMetricsKpis(days = 7)` sobre a RPC `dashboard_daily_series` — React Query com chave estável `['dashboard', 'daily-metrics-kpis', days]` (trocar o período refaz a consulta) e `staleTime` de 120s. Tipos (`DailyMetricRow`, `DAILY_KPIS_PERIODS` 7/30/90, `DAILY_KPIS_DEFAULT_DAYS`). A consulta só é habilitada para staff: `enabled: isStaff === true` a partir de `useCRMAdminAccess` (is_admin_or_supervisor, o mesmo predicado que a RPC usa no servidor). `isStaff` volta no retorno porque `false` (sem permissão) e `null` (papel ainda sendo conferido) pedem estados diferentes na tela. Erro da RPC sobe como erro da query (não vira série vazia silenciosa) e `normalizeDailyMetricRows` converte a mediana `numeric` (que o PostgREST devolve como string) em número, mantém `null` sem amostra, reafirma a ordem crescente por dia e trata resposta nula/fora do formato como lista vazia.
+- `src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` (novo): 9 testes — 4 da normalização (string→número, null, ordem, formato inválido) e 5 do hook real com `renderHook` + QueryClientProvider, mockando `supabase.rpc` e `useCRMAdminAccess` (staff consulta com p_days do período; não-staff e papel ainda nulo NÃO consultam; troca de período refaz a consulta; erro → `isError`).
+
+## Dependência (cartão pai t_d4a0a146)
+A RPC não estava no meu workspace: trouxe a faixa inteira com `git cherry-pick` (commits `5fca12fa`, `6df803f3`, `8df2863d`, `05382c64`), que entram no diff junto com o meu commit: a migration aditiva `20261012235745_dashboard_daily_series.sql`, o harness `scripts/db-audit/dashboard-daily-series.test.sh` e a entrada no `.github/workflows/db-guard.yml`. Esses 3 arquivos são do cartão pai (lá aplicados no banco LOCAL e provados com papéis reais); não são do meu escopo e não os alterei. O `git cherry-pick --empty=drop` do enunciado foi recusado pelo git 2.43 (opção não existe nesta versão) — usei `git cherry-pick <sha>...`, sem conflito.
 
 ## Prova
-- banco local (papel real, banco descartável próprio): `bash scripts/db-audit/dashboard-daily-series.test.sh` →
-  `[OK] DASHBOARD-03: dashboard_daily_series devolve a serie diaria correta (fuso de Sao Paulo), exige admin/supervisor ou service_role, mantem anon/PUBLIC sem EXECUTE, limita p_days a 90 e o Rollback remove a funcao.`
-  (todas as linhas `[PASS]`, nenhuma falha).
-- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261012235745_dashboard_daily_series.sql` →
-  `BEGIN / CREATE FUNCTION / COMMENT / REVOKE / REVOKE / GRANT / GRANT / COMMIT` e
-  `APLICADA no banco LOCAL 'v2-26101220422aee' (produção não foi tocada).`
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
-
-## Definições das métricas (documentadas no cabeçalho da migration)
-- recebidas/enviadas: `messages` por `sender` ('contact'/'agent'), `is_deleted IS NOT TRUE`, no dia de SP.
-- contatos novos: `contacts.created_at` no dia, `deleted_at IS NULL`.
-- contatos ativos: contatos distintos com alguma mensagem (não deletada) no dia.
-- conversas abertas: contatos cuja PRIMEIRA mensagem (mais antiga, não deletada) caiu no dia — "conversa iniciada
-  no dia"; usa anti-join para o histórico anterior ao período (bounded ao período).
-- conversas resolvidas: `count(DISTINCT contact_id)` em `conversation_closures` no dia (mesma convenção do
-  `dashboard_kpi`, que conta contatos distintos por causa da reabertura no mesmo dia).
-- mediana de resposta: `percentile_cont(0.5)` de `first_response_at - first_message_at` em `conversation_sla`,
-  como o `dashboard_kpi` já faz; NULL quando o dia não tem amostra respondida.
+- vermelho antes: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Failed to resolve import "../useDailyMetricsKpis"` (módulo ainda não criado)
+- verde depois: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
+- sem regressão na área: `npx vitest run src/hooks/dashboard` → `Test Files 7 passed (7); Tests 47 passed (47)`
+- `zapp-verify . --rapido` → VERDE (db_guard OK, tipos OK, lint OK, migrations OK)
 
 ## O que NÃO fiz e por quê
-- Não recriei a view `evolution_daily_metrics` (o cartão veda): a série é calculada na RPC.
-- Não mexi em fila/hook/tela: a trilha de banco vai separada; o consumo fica no filho de front (t_8f12e328).
-- Toquei `scripts/db-audit/**` e `.github/workflows/db-guard.yml`, fora da lista de arquivos do cartão, porque a
-  PROVA exigida ("banco local com o papel real, mostrando o que passa e o que é negado") só existe nesse harness
-  — as suítes `supabase/tests/*.sql` rodam como service_role e não provam negação — e todo `.test.sh` novo precisa
-  do passo no `db-guard.yml`. Nenhum outro arquivo foi tocado.
+- Não toquei `types.ts` nem `src/hooks/dashboard/index.ts`: o cartão lista só o hook novo e os testes, e o tipo da RPC entra pelo types-sync (o pai decidiu o mesmo).
+- Não recriei a view `evolution_daily_metrics` da V3: a V2 calcula a mesma série direto das tabelas operacionais na RPC.
+- Não rodei a prova de banco do cartão pai (harness de SQL): é prova dele; aqui o cartão só pede o hook e a verificação.
