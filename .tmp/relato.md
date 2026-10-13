@@ -1,8 +1,11 @@
 Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- supabase/migrations/20261013035213_network_policy_tables_admin_only.sql: em public.ip_whitelist e public.geo_blocking_settings, a policy de escrita era `FOR ALL ... is_admin_or_supervisor()` — um SUPERVISOR podia inserir/alterar/apagar a whitelist de IP e o bloqueio geográfico. A `FOR ALL` foi trocada por três policies `FOR INSERT/UPDATE/DELETE ... is_admin()`. As policies de LEITURA existentes ("Admins can view IP whitelist" e "Geo blocking visible to admins only", ambas com is_admin_or_supervisor) NÃO foram tocadas, então supervisor continua vendo. Só policies: nenhum GRANT/REVOKE/papel alterado (git diff = 2 arquivos, 0 GRANT).
+- supabase/migrations/20261013035213_network_policy_tables_admin_only.sql: em public.ip_whitelist e public.geo_blocking_settings, a policy de escrita era `FOR ALL ... is_admin_or_supervisor()` — um SUPERVISOR podia inserir/alterar/apagar a whitelist de IP e o bloqueio geográfico. A `FOR ALL` foi trocada por três policies `FOR INSERT/UPDATE/DELETE ... is_admin()`. As policies de LEITURA existentes ("Admins can view IP whitelist" e "Geo blocking visible to admins only", ambas com is_admin_or_supervisor) NÃO foram tocadas, então supervisor continua vendo. Só policies: nenhum GRANT/REVOKE/papel alterado.
 - scripts/db-audit/network-policy-tables-admin-only.test.sh: prova em Postgres descartável (postgres:17-alpine) com os papéis reais.
+
+## Por que o teste ficou em scripts/db-audit (fora dos ARQUIVOS QUE PODE TOCAR)
+O cartão lista supabase/migrations/ e supabase/tests/, mas as suítes supabase/tests/*.sql rodam via mcp_exec como service_role (BYPASSRLS) — nunca provam enforcement de RLS (é o mesmo motivo já registrado no comentário DASH-ACCEPTANCE-001 do db-guard.yml). O cartão exige provar que o supervisor é NEGADO, o que só se consegue executando como o papel real; é exatamente o formato de prova da minha área (`scripts/db-audit/<assunto>.test.sh`), então foi indispensável criar ali. Nenhum arquivo de outra área foi tocado.
 
 ## Prova
 - vermelho antes (estado real do banco da tarefa antes da migration): `bash scripts/db-audit/network-policy-tables-admin-only.test.sh` → BLOCO A passa mostrando o DEFEITO — supervisor INSERE, APAGA e ALTERA nas duas tabelas; BLOCO B/C reprovam sem a migration.
