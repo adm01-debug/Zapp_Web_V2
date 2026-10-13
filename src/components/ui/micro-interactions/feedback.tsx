@@ -71,7 +71,7 @@ export function FeedbackAnimation({ type, show, size = 48 }: FeedbackAnimationPr
           style={{ width: size, height: size }}
         >
           <motion.svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none"
-            stroke={type === 'success' ? 'hsl(142 76% 36%)' : 'hsl(var(--destructive))'}
+            stroke={type === 'success' ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
             strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
           >
             <motion.path d={path} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.1 }} />

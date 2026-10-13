@@ -24,8 +24,8 @@ const iconButtonVariants = cva(
         muted: 'bg-muted text-muted-foreground hover:bg-muted/80',
       },
       size: {
-        sm: 'h-8 w-8',
-        default: 'h-10 w-10',
+        sm: 'h-8 w-8 alvo-toque-44',
+        default: 'h-10 w-10 alvo-toque-44',
         lg: 'h-12 w-12',
         xl: 'h-14 w-14',
       },

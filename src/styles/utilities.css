@@ -245,3 +245,23 @@
 .chip-active.chip-active {
   color: hsl(var(--primary-text));
 }
+
+/* ===== ALVO DE TOQUE 44px — SOMENTE EM PONTEIRO GROSSO (toque) =====
+   t_17d91156. WCAG 2.5.5 (AAA) / WCAG 2.5.8 (AA, 24px) e Apple HIG pedem 44x44 CSS px
+   de alvo para o toque. Os primitivos da UI (fechar do dialog/sheet, checkbox,
+   radio, botões pequenos) nascem com 16-40px, que é o tamanho certo para o mouse.
+   Aqui a mesma caixa cresce para 44x44 APENAS quando o apontador é grosso: no
+   desktop (`pointer: fine`, o padrão) NADA muda — o Chromium liga `(pointer: coarse)`
+   na emulação de celular/tablet e em aparelho de toque de verdade.
+   `display: inline-flex` + centramento entram junto porque o desenho interno (X de
+   16px, check, bolinha) é menor que a caixa e ficaria grudado no canto.
+   Prova em pixel real: e2e/a11y-toque-44px.spec.ts (Chromium, devices['Pixel 5']). */
+@media (pointer: coarse) {
+  .alvo-toque-44 {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
