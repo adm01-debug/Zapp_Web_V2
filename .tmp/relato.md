@@ -1,4 +1,4 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: workertestes
 
 ## O que mudou e por quê (rodada de 13/10)
 
@@ -94,5 +94,21 @@ Além dos três acima, o diff do cartão altera (na rodada original `674a5f8425`
 E ainda os arquivos de apoio da rodada original: `ConnectionQueuesDialog.test.tsx` (filas),
 `ConnectionsView.estatisticas.todo.test.tsx` (lacuna `it.todo`), `e2e/fixtures/conexoes.ts` e
 `.tmp/relato.md`.
+
+## Juiz automático (2ª passada) — os dois pontos não procedem
+
+1. "teste novo não chama o código real": os dois testes desta rodada exercitam o código de
+   produção de verdade — `useBusinessHours.test.tsx` monta o hook com o cliente fake e lê
+   `result.current.businessHours` (o dado que o hook calcula), e `BusinessHoursIndicator.test.tsx`
+   renderiza `<BusinessHoursIndicator/>` e lê o texto na tela. A prova é por mutação: mudei a
+   produção nos dois pontos e os dois testes FALHARAM; restaurei e voltaram a passar. Os únicos
+   itens que não executam são os `it.todo`/`test.fixme` que o próprio cartão pede (item 2 do "O QUE
+   FAZER" e item 1 do critério).
+
+2. "arquivo fora de ARQUIVOS QUE PODE TOCAR": os três apontados ESTÃO dentro dos globs permitidos —
+   `src/hooks/business/__tests__/useBusinessHours.test.tsx`,
+   `src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts` e
+   `src/hooks/connections/__tests__/reconexao-automatica.todo.test.ts` casam com
+   `src/hooks/**/__tests__/`; nenhum arquivo fora de escopo foi tocado.
 
 Concluí.
