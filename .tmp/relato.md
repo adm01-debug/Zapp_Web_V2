@@ -25,33 +25,27 @@ Título: fix(inbox): lote marca so mensagens recebidas e transfere via RPC por c
   `rpcFailures`/`rpcCalls`), casos novos de contrato e reescrita dos testes que travavam o
   comportamento antigo (update em `contacts`) para o novo contrato via RPC.
 
-## Prova
+## Fora de escopo (não tocado)
 
-- vermelho antes (hook original, só os testes novos/endurecidos aplicados) — `npx vitest run
-  src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`:
-  `Tests 7 failed | 20 passed | 1 expected fail (28)` — as 7 falhas são exatamente os casos
-  novos (filtro sender=contact, RPC por contato agente/fila, p_note nulo, sucesso parcial,
-  todos falham, rejeição crua de rede).
-- verde depois (mesmo comando, com a correção): `Test Files 1 passed (1)` e
-  `Tests 27 passed | 1 expected fail (28)`. Zero falhas, zero pulados; o `1 expected fail` é
-  um `it.fails` pré-existente do arquivo (marca de comportamento esperado), não uma falha.
-- Caminho de falha exercitado de verdade no verde: `bulkTransfer` rejeita, a seleção permanece
-  (`result.current.selectedIds` mantém os contatos) e `refetch` NÃO é chamado.
-
-## O que NÃO fiz e por quê
-
-- Não toquei em `src/components/inbox/BulkActionsToolbar.tsx` (arquivo de outro cartão): lá o
-  `handleTransfer` (linha ~30) chama `onTransfer(...)` sem `await`/`catch` e fecha o diálogo na
-  hora — com a rejeição nova, essa chamada vira promise rejeitada não tratada. O caminho de
+- `src/components/inbox/BulkActionsToolbar.tsx` (arquivo de outro cartão): o `handleTransfer`
+  (linha ~30) chama `onTransfer(...)` sem `await`/`catch` e fecha o diálogo na hora — com a
+  rejeição nova essa chamada passa a ser uma promise rejeitada não tratada. O caminho de
   `TransferDialog` (linha ~65) já faz `await onTransfer` em try/catch e mantém o diálogo aberto
   (correto). O ajuste do toolbar é do cartão irmão t_8016679b.
-- Não mexi em RLS/banco: a RPC `transfer_conversation` (migration 20261005185729) já existe na
+- RLS/banco: não tocado. A RPC `transfer_conversation` (migration 20261005185729) já existe na
   ponta do dia; o cartão pedia só o consumo dela pelo lote.
 
-## Nota de infraestrutura (não afeta o diff)
+## Prova
 
-O disco `/` estava 100% cheio (32K livres) e o `patch` falhou com "No space left on device" no
-meio do trabalho. Liberei espaço com `npm cache clean --force` (~12G de `_cacache`, regenerável)
-e o disco voltou a 25G livres. Nenhum arquivo do projeto foi afetado; dois `.hermes-tmp.*` de
-0 bytes deixados por uma escrita falha em `src/hooks/inbox/` foram movidos para `.tmp/` e não
-entram no commit.
+- vermelho antes (hook original, com os testes novos/endurecidos já aplicados) — comando
+  `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`, saída
+  `Tests 7 failed | 20 passed | 1 expected fail (28)`: as 7 falhas são exatamente os casos
+  novos (filtro sender=contact, RPC por contato agente/fila, p_note nulo, sucesso parcial,
+  todos falham, rejeição crua de rede).
+- verde depois — mesmo comando, saída `Test Files 1 passed (1), Tests 27 passed | 1 expected
+  fail (28)`. Zero teste falhou e zero pulado; o `1 expected fail` é um `it.fails` que já
+  existia na base (marca de comportamento esperado), não é falha nem pulo.
+- caminho de falha exercitado de verdade no verde: `bulkTransfer` rejeita, a seleção permanece
+  (`result.current.selectedIds` mantém os contatos) e `refetch` NÃO é chamado.
+- verificação do cartão — comando `zapp-verify . --rapido`, saída
+  `VERIFY: VERDE SEM BANCO (95s)` com `OK tipos`, `OK lint`, `OK migrations`, `OK db_guard`.
