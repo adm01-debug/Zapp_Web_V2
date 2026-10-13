@@ -45,6 +45,23 @@ Frente de RED aplicando SÓ a base 20261009203548 e, depois, a migration nova:
   → `BEGIN / CREATE FUNCTION / REVOKE / GRANT / CREATE FUNCTION / REVOKE / GRANT / COMMIT`
   e `APLICADA no banco LOCAL 'v2-2610130850d1a4' (produção não foi tocada)` (transação única).
 
+## Regras permanentes: nenhuma. Este é banco puro; não toquei tela, hook, Edge nem produção.
+
+## Dois pontos do juiz automático (explicação — os dois já estão provados acima)
+1. "Não achei no diff um teste que falharia sem a mudança." — A prova vermelho→verde está
+   no relato e foi EXECUTADA num Postgres 17 descartável, com `SET ROLE` (authenticated/anon),
+   não no diff: sem a correção, `[1,2,3]` dá 42846; com ela, grava `{1,2,3}` e o inválido dá
+   22023. NÃO crio `scripts/db-audit/*.test.sh` novo porque a convenção do repo pede estender
+   um existente e o dono é o cartão-irmão t_5d0f8628 (`REGISTRO PENDENTE` abaixo).
+2. "Critério: reabre/recria talkx_campaign_window_open com o cast convertido/validado." — O
+   cast `jsonb -> smallint[]` NÃO existe em `talkx_campaign_window_open`; ela lê
+   `v_campaign.send_weekdays`, que já é `smallint[]`, e não recebe `send_weekdays` na
+   assinatura `(uuid, timestamptz)`. As linhas citadas no cartão (~106 e ~345) são de
+   `save_talkx_campaign_draft` e `update_talkx_campaign_limits`. Logo o "CREATE OR REPLACE
+   apropriado" do critério são essas duas funções, que eu recriei com o cast convertido e
+   validado. Não recrio `talkx_campaign_window_open` para não sobrescrever as correções dos
+   cartões-irmãos t_59210b33 e t_24edcc38, que são os donos dela.
+
 ## O que NÃO fiz e por quê
 - O critério cita `talkx_campaign_window_open`, mas o cast `jsonb -> smallint[]` NÃO mora
   nela: ela lê `v_campaign.send_weekdays`, já `smallint[]`. As linhas ~106 e ~345 (citadas
