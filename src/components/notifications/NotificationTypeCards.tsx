@@ -245,10 +245,11 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
 /**
  * PD-38 — cartão "Alertas de Conexão" da tela de Notificações.
  *
- * Só os CANAIS moram aqui: `push_enabled` (notificação do navegador) e
- * `email_enabled` (e-mail). O TIPO do aviso (conexão degradada / desconectada),
- * que é o interruptor mestre, é lido pelo banner dentro do app
- * (EvolutionDisconnectBanner) — este cartão não o duplica.
+ * Traz os DOIS grupos de preferência do aviso de conexão, por usuário:
+ * o TIPO — o interruptor mestre, `alert_on_degraded` (conexão instável) e
+ * `alert_on_disconnected` (conexão caída), que a faixa dentro do app
+ * (EvolutionDisconnectBanner) consulta — e os CANAIS por onde o aviso sai:
+ * `push_enabled` (notificação do navegador) e `email_enabled` (e-mail).
  * Cada interruptor grava na hora pelo hook (upsert otimista com rollback).
  */
 export function ConnectionAlertPreferencesCard() {
@@ -268,6 +269,26 @@ export function ConnectionAlertPreferencesCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-sm font-medium">Quando alertar</p>
+        <NotifRow
+          icon={TrendingDown}
+          iconColor="text-warning"
+          title="Conexão degradada"
+          desc="Avisar quando a conexão ficar instável"
+          enabled={preferences.alert_on_degraded}
+          onToggle={(checked) => updatePreference({ alert_on_degraded: checked })}
+        />
+        <Separator />
+        <NotifRow
+          icon={AlertTriangle}
+          iconColor="text-destructive"
+          title="Conexão desconectada"
+          desc="Avisar quando a conexão cair"
+          enabled={preferences.alert_on_disconnected}
+          onToggle={(checked) => updatePreference({ alert_on_disconnected: checked })}
+        />
+        <Separator />
+        <p className="text-sm font-medium">Por onde avisar</p>
         <NotifRow
           icon={Smartphone}
           iconColor="text-primary"

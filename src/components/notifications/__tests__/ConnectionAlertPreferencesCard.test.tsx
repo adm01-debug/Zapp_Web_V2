@@ -1,12 +1,13 @@
 /**
- * PD-38 (segundo cartão) — "Alertas de Conexão" na tela de Notificações.
+ * PD-38 — "Alertas de Conexão" na tela de Notificações.
  *
- * O cartão só tem DOIS interruptores de CANAL, lidos e gravados pelo hook
- * `useConnectionAlertPreferences` (t_6bf2d93f): `push_enabled` = notificação do
- * navegador, `email_enabled` = e-mail. Cada interruptor grava na hora (o hook
- * faz upsert otimista com rollback) — aqui a prova é que o toque chama
- * `updatePreference` com o campo e o valor certos, e que o estado desenhado vem
- * do hook (não de um mock que já trazia a resposta).
+ * O cartão tem QUATRO interruptores: os dois TIPOS de aviso — o interruptor
+ * mestre que a faixa dentro do app (EvolutionDisconnectBanner) obedece:
+ * `alert_on_degraded` e `alert_on_disconnected` — e os dois CANAIS por onde o
+ * aviso sai: `push_enabled` (navegador) e `email_enabled` (e-mail). A prova
+ * aqui é: (a) o estado desenhado vem do hook (não de um mock que já trouxe a
+ * resposta); (b) o toque chama `updatePreference` com o campo e o valor certos;
+ * (c) o nome acessível de cada interruptor traz o texto visível da linha.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -17,7 +18,7 @@ const h = vi.hoisted(() => ({
     push_enabled: true,
     email_enabled: false,
     alert_on_degraded: true,
-    alert_on_disconnected: true,
+    alert_on_disconnected: false,
   },
 }));
 
@@ -34,20 +35,42 @@ vi.mock('@/hooks/system/useConnectionAlertPreferences', () => ({
 
 import { ConnectionAlertPreferencesCard } from '../NotificationTypeCards';
 
-const navegador = () => screen.getByRole('switch', { name: /Navegador/i });
-const email = () => screen.getByRole('switch', { name: /E-mail/i });
+const degradada = () => screen.getByRole('switch', { name: 'Ativar notificação de Conexão degradada' });
+const desconectada = () => screen.getByRole('switch', { name: 'Ativar notificação de Conexão desconectada' });
+const navegador = () => screen.getByRole('switch', { name: 'Ativar notificação de Navegador' });
+const email = () => screen.getByRole('switch', { name: 'Ativar notificação de E-mail' });
 
-describe('ConnectionAlertPreferencesCard — canais do aviso de conexão', () => {
+describe('ConnectionAlertPreferencesCard — tipo e canal do aviso de conexão', () => {
   beforeEach(() => {
     h.update.mockClear();
   });
 
-  it('mostra exatamente os dois canais e o estado que vem do hook', () => {
+  it('mostra os quatro interruptores com o estado que vem do hook', () => {
     render(<ConnectionAlertPreferencesCard />);
 
-    expect(screen.getAllByRole('switch')).toHaveLength(2);
+    expect(screen.getAllByRole('switch')).toHaveLength(4);
+    expect(degradada()).toHaveAttribute('aria-checked', 'true');
+    expect(desconectada()).toHaveAttribute('aria-checked', 'false');
     expect(navegador()).toHaveAttribute('aria-checked', 'true');
     expect(email()).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('desligar "Conexão degradada" grava alert_on_degraded=false na hora', () => {
+    render(<ConnectionAlertPreferencesCard />);
+
+    fireEvent.click(degradada());
+
+    expect(h.update).toHaveBeenCalledTimes(1);
+    expect(h.update).toHaveBeenCalledWith({ alert_on_degraded: false });
+  });
+
+  it('ligar "Conexão desconectada" grava alert_on_disconnected=true na hora', () => {
+    render(<ConnectionAlertPreferencesCard />);
+
+    fireEvent.click(desconectada());
+
+    expect(h.update).toHaveBeenCalledTimes(1);
+    expect(h.update).toHaveBeenCalledWith({ alert_on_disconnected: true });
   });
 
   it('desligar o canal do navegador grava push_enabled=false na hora', () => {
@@ -68,9 +91,11 @@ describe('ConnectionAlertPreferencesCard — canais do aviso de conexão', () =>
     expect(h.update).toHaveBeenCalledWith({ email_enabled: true });
   });
 
-  it('o texto visível da linha ("Navegador"/"E-mail") está no nome acessível do interruptor', () => {
+  it('o texto visível de cada linha está no nome acessível do interruptor', () => {
     render(<ConnectionAlertPreferencesCard />);
 
+    expect(degradada().getAttribute('aria-label')).toContain('Conexão degradada');
+    expect(desconectada().getAttribute('aria-label')).toContain('Conexão desconectada');
     expect(navegador().getAttribute('aria-label')).toContain('Navegador');
     expect(email().getAttribute('aria-label')).toContain('E-mail');
   });
