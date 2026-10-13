@@ -1,16 +1,21 @@
 /**
- * t_17d91156 — alvos de toque de 44x44 CSS px em PONTEIRO GROSSO (toque).
+ * t_17d91156 / refazer t_9a266076 — alvos de toque de 44x44 CSS px em PONTEIRO GROSSO.
  *
  * Mede PIXEL REAL no Chromium com emulação de celular (`devices['Pixel 5']`:
  * `isMobile` + `hasTouch`, que é o que faz o Chromium reportar
- * `matchMedia('(pointer: coarse)') === true`). O gate não olha classe nenhuma: ele lê
- * `boundingBox()` do alvo de verdade renderizado pela aplicação (fechar do dialog e
- * checkbox de seleção do contato) — a única prova que o jsdom não consegue dar.
+ * `matchMedia('(pointer: coarse)') === true`).
  *
- * O mesmo arquivo prova o outro lado: no ponteiro FINO (mouse, projeto
- * `chromium-a11y`) os dois alvos continuam compactos, ou seja a regra
- * `@media (pointer: coarse)` de `src/styles/utilities.css` (.alvo-toque-44) NÃO muda o
- * visual do desktop.
+ * O gate NÃO mede o `boundingBox()` do desenho: por decisão do refazer t_9a266076 o
+ * desenho continua pequeno (16px no checkbox, 16-24px no X) e é a ÁREA DE TOQUE que
+ * cresce para 44x44 por um `::after` centrado (`.alvo-toque-44`, utilities.css). Então a
+ * prova é de hit-test: nos quatro cantos de um quadrado de 44x44 centrado no controle,
+ * `document.elementFromPoint` tem de devolver o PRÓPRIO controle (o `::after` faz parte da
+ * caixa de hit-test do elemento). Este é o único jeito de medir o alvo de verdade — o
+ * jsdom não aplica media query e o `boundingBox()` mediria o desenho, não o alvo.
+ *
+ * O mesmo arquivo prova o outro lado: no ponteiro FINO (mouse, projeto `chromium-a11y`) os
+ * dois alvos continuam compactos e o clique continua fechando/abrindo — ou seja a regra
+ * `@media (pointer: coarse)` NÃO muda o visual do desktop.
  *
  * Deslogado e determinístico: sessão FALSA (`installFakeSession`) + REST mocks; a rede
  * real fica barrada por `bloquearRedeReal` (qualquer request não mockada aparece no
@@ -79,11 +84,42 @@ async function preparar(page: Page, registro: Registro): Promise<void> {
   await gotoContacts(page);
 }
 
-/** Caixa do alvo em px (falha com mensagem clara se o alvo não renderizou). */
+/** Caixa DESENHADA do alvo em px (prova que o desenho não inflou). */
 async function caixa(alvo: Locator, nome: string) {
   const medida = await alvo.boundingBox();
   expect(medida, `${nome}: alvo sem caixa renderizada`).not.toBeNull();
   return medida!;
+}
+
+/**
+ * Prova a ÁREA DE TOQUE de 44x44: nos quatro cantos de um quadrado de 44x44 centrado no
+ * centro do controle, quem recebe o ponteiro é o próprio controle (`::after` conta como
+ * parte dele). Se a regra coarse sumir, os cantos caem em outro elemento e o teste falha.
+ */
+async function areaToque44(alvo: Locator, nome: string): Promise<void> {
+  const cantos = await alvo.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    // metade de 44, menos 1px para os pontos ficarem DENTRO do alvo
+    const d = 21;
+    const pontos: Array<[number, number]> = [
+      [cx - d, cy - d],
+      [cx + d, cy - d],
+      [cx - d, cy + d],
+      [cx + d, cy + d],
+    ];
+    return pontos.map(([x, y]) => {
+      const alvoPonto = document.elementFromPoint(x, y);
+      return !!alvoPonto && (alvoPonto === el || el.contains(alvoPonto));
+    });
+  });
+  expect(cantos, `${nome}: os 4 cantos do alvo de 44x44 nao recebem o toque`).toEqual([
+    true,
+    true,
+    true,
+    true,
+  ]);
 }
 
 /** Fechar do dialog (Radix DialogPrimitive.Close) do "Adicionar Contato". */
@@ -146,15 +182,30 @@ test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
     expect(await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)).toBe(true);
   });
 
-  test('fechar do dialog e checkbox de seleção medem ≥44x44', async ({ page }) => {
+  test('checkbox de seleção e fechar do dialog têm área de toque de 44x44 sem inflar o desenho', async ({ page }) => {
     // ── Checkbox de seleção do contato (vista Cards, padrão da tela) ──
     await page.getByTitle('Cards').click();
     await expect(contactCards(page)).toHaveCount(2);
     const checkbox = page.getByRole('checkbox', { name: 'Selecionar Ana Teste' });
     await expect(checkbox).toBeVisible();
+
+    // O DESENHO continua 16px (o refazer t_9a266076 tirou o `min-*` que inflava a caixa).
     const c = await caixa(checkbox, 'checkbox de seleção');
-    expect(c.width, `largura do checkbox: ${c.width}px`).toBeGreaterThanOrEqual(44);
-    expect(c.height, `altura do checkbox: ${c.height}px`).toBeGreaterThanOrEqual(44);
+    expect(c.width, `largura do checkbox: ${c.width}px`).toBeLessThanOrEqual(20);
+    expect(c.height, `altura do checkbox: ${c.height}px`).toBeLessThanOrEqual(20);
+
+    // ... mas a ÁREA DE TOQUE é 44x44: os 4 cantos do quadrado de 44 acertam o checkbox.
+    await areaToque44(checkbox, 'checkbox de seleção');
+
+    // ── Botão pequeno (`size="icon"` + `w-8 h-8`): aqui o alvo cresce pela variante
+    // Tailwind `[@media(pointer:coarse)]:min-h-[44px] min-w-[44px]` da cva do Button
+    // (não pela classe `.alvo-toque-44`, que sumiu para não reexibir botão `hidden`). ──
+    const acoes = page.getByRole('button', { name: 'Ações do contato Ana Teste' });
+    const a = await caixa(acoes, 'ações do contato');
+    expect(a.width, `largura das ações: ${a.width}px`).toBeGreaterThanOrEqual(44);
+    expect(a.height, `altura das ações: ${a.height}px`).toBeGreaterThanOrEqual(44);
+    const minH = await acoes.evaluate((el) => getComputedStyle(el).minHeight);
+    expect(minH, `min-height computado das ações: ${minH}`).toBe('44px');
 
     // O alvo maior continua sendo o controle de verdade: o toque marca a seleção.
     await checkbox.click();
@@ -168,18 +219,14 @@ test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
     const fechar = dialogo.getByRole('button', { name: 'Close' });
     await expect(fechar).toBeVisible();
     await esperarEntrada(page, dialogo);
-    // Prova DIRETA do alvo: no centro do 44x44, quem recebe o toque é o próprio botão
-    // (ou o ícone dentro dele) — não o título nem o overlay.
-    const recebe = await fechar.evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      const alvo = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return !!alvo && (alvo === el || el.contains(alvo));
-    });
-    expect(recebe, 'o centro do alvo de 44x44 nao recebe o toque').toBe(true);
 
+    // O X desenhado continua pequeno (24px com p-1 + ícone de 16px).
     const f = await caixa(fechar, 'fechar do dialog');
-    expect(f.width, `largura do fechar: ${f.width}px`).toBeGreaterThanOrEqual(44);
-    expect(f.height, `altura do fechar: ${f.height}px`).toBeGreaterThanOrEqual(44);
+    expect(f.width, `largura do fechar: ${f.width}px`).toBeLessThanOrEqual(32);
+    expect(f.height, `altura do fechar: ${f.height}px`).toBeLessThanOrEqual(32);
+
+    // Área de toque de 44x44 medida por hit-test.
+    await areaToque44(fechar, 'fechar do dialog');
 
     // E o alvo maior não quebrou a ação: o X ainda fecha o dialog. No celular emulado o
     // Playwright erra o ponto do clique no X (o viewport visual não coincide com o de
@@ -209,6 +256,14 @@ test.describe('alvos de toque 44px — desktop (ponteiro fino)', () => {
     const c = await caixa(page.getByRole('checkbox', { name: 'Selecionar Ana Teste' }), 'checkbox de seleção');
     expect(c.width, `largura do checkbox no desktop: ${c.width}px`).toBeLessThanOrEqual(24);
     expect(c.height, `altura do checkbox no desktop: ${c.height}px`).toBeLessThanOrEqual(24);
+
+    // O botão pequeno segue compacto no mouse (a variante coarse não se aplica).
+    const a = await caixa(
+      page.getByRole('button', { name: 'Ações do contato Ana Teste' }),
+      'ações do contato no desktop',
+    );
+    expect(a.width, `largura das ações no desktop: ${a.width}px`).toBeLessThanOrEqual(32);
+    expect(a.height, `altura das ações no desktop: ${a.height}px`).toBeLessThanOrEqual(32);
 
     const dialogo = await abrirDialogo(page);
     await esperarEntrada(page, dialogo);

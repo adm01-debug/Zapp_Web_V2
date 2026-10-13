@@ -24,8 +24,14 @@ interface RippleButtonProps {
 
 const rippleVariants = {
   // Branco do ripple (o mesmo brilho da família `via-white/*` dos botões). Token, não
-  // literal: `--primary-foreground` é `0 0% 100%` no claro e no escuro, então o pixel
-  // renderizado é idêntico ao branco translúcido que estava aqui antes.
+  // literal: em `src/styles/tokens.css` `--primary-foreground` é `0 0% 100%` (branco) tanto
+  // no tema claro (linha 110) quanto no escuro (linha 446), então o pixel renderizado é
+  // idêntico ao branco translúcido que estava aqui antes.
+  // EXCEÇÃO registrada no refazer t_9a266076: no ALTO CONTRASTE ESCURO o token vira
+  // `0 0% 0%` (accessibility.css:35) porque o `--primary` de lá é o violeta claro
+  // (258 100% 65%) — ou seja, nesse modo o ripple fica ESCURO sobre o violeta, que é
+  // exatamente o par de contraste do próprio botão (preto sobre violeta claro). No alto
+  // contraste CLARO o token segue branco (accessibility.css:12).
   default: 'hsl(var(--primary-foreground) / 0.3)',
   primary: 'hsl(var(--primary) / 0.4)',
   ghost: 'hsl(var(--foreground) / 0.1)',

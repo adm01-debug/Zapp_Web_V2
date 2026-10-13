@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { ALVO_TOQUE_GROSSO } from './button';
 
 const iconButtonVariants = cva(
   [
@@ -24,8 +25,8 @@ const iconButtonVariants = cva(
         muted: 'bg-muted text-muted-foreground hover:bg-muted/80',
       },
       size: {
-        sm: 'h-8 w-8 alvo-toque-44',
-        default: 'h-10 w-10 alvo-toque-44',
+        sm: `h-8 w-8 ${ALVO_TOQUE_GROSSO}`,
+        default: `h-10 w-10 ${ALVO_TOQUE_GROSSO}`,
         lg: 'h-12 w-12',
         xl: 'h-14 w-14',
       },
