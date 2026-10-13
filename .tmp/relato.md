@@ -66,3 +66,4 @@ nova `20261013085500_talkx_n102_window_fixes.sql`. Não toquei em RLS/tabelas ne
 ## Fechamento
 - Relato corrigido (Pontos 1-3) e gravado por este cartão t_ad964aab; o fechar commita este
   `.tmp/relato.md` e roda a verificação (zapp-verify --rapido).
+
