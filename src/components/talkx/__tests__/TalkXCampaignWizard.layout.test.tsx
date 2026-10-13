@@ -42,6 +42,9 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     CAMPAIGN_NAME_MAX_LENGTH: 200,
     MESSAGE_LIMIT: 4096,
     MORE_VARIABLES: [],
+    // X123 — a tela traduz o código da RPC pelo helper do hook; no dublê, sem
+    // código reconhecível, o aviso continua sendo o texto cru.
+    explainDraftSaveError: (message: string | null | undefined) => message ?? null,
   };
 });
 
