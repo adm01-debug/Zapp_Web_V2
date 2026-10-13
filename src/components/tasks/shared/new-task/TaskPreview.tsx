@@ -62,7 +62,7 @@ export function TaskPreview({
     <aside
       data-testid="nt-previa"
       aria-labelledby="nt-previa-titulo"
-      className="space-y-2 md:w-56 md:shrink-0"
+      className="space-y-2"
     >
       <h3 id="nt-previa-titulo" className="text-sm font-medium leading-none">
         Prévia da tarefa
