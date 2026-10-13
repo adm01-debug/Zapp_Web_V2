@@ -4,11 +4,11 @@ import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getLogger } from '@/lib/logger';
 import { MessageRow } from '@/types/chat';
 import { ContactRow } from '@/types/contact';
-import { RealtimeService } from '@/services/realtime.service';
+import { RealtimeService, type ConversationsCursor } from '@/services/realtime.service';
 import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 import { sendMessageToContact } from '../realtime/messageSender';
 import {
-  normalizeMessage, buildConversation,
+  normalizeMessage, buildConversation, CONVERSATIONS_PAGE_SIZE,
 } from '../realtime/realtimeUtils';
 import { useRealtimeNotifications } from '../realtime/useRealtimeNotifications';
 import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
@@ -34,6 +34,19 @@ export interface ConversationWithMessages {
   lastMessage: RealtimeMessage | null;
 }
 
+/**
+ * Cursor da próxima página a partir do último item já carregado. A lista chega
+ * ordenada por `contacts.updated_at DESC, id DESC` (mesma chave do cursor no
+ * serviço), então o último item é a borda da página.
+ */
+function cursorFromConversations(
+  conversations: ConversationWithMessages[],
+): ConversationsCursor | null {
+  const last = conversations[conversations.length - 1];
+  if (!last?.contact?.id || !last.contact.updated_at) return null;
+  return { updatedAt: last.contact.updated_at, id: last.contact.id };
+}
+
 export function useRealtimeMessages() {
   const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +61,13 @@ export function useRealtimeMessages() {
   const fetchGenerationRef = useRef(0);
   const firstFetchSettledRef = useRef(false);
   const liveRevisionRef = useRef(0);
+  // Paginação (carregar mais): cursor da próxima página e se ela existe. Ficam
+  // em ref para o `loadMore` não depender de re-render e em estado para a UI.
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const nextCursorRef = useRef<ConversationsCursor | null>(null);
+  const hasMoreRef = useRef(false);
+  const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -176,6 +196,12 @@ export function useRealtimeMessages() {
       setError(null);
       const builtConversations = await RealtimeService.fetchInitialConversations();
       if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
+      // Um refetch/reconexão recarrega a lista do TOPO: a paginação recomeça da
+      // primeira página (não é "carregar mais"). O cursor sai do último item da
+      // primeira página (ordem updated_at DESC/id DESC vinda do serviço).
+      nextCursorRef.current = cursorFromConversations(builtConversations);
+      hasMoreRef.current = builtConversations.length >= CONVERSATIONS_PAGE_SIZE;
+      setHasMore(hasMoreRef.current);
       if (liveRevisionRef.current === startingLiveRevision) {
         commitConversations(builtConversations);
       } else {
@@ -213,6 +239,45 @@ export function useRealtimeMessages() {
           setInitialLoading(false);
         }
       }
+    }
+  }, [commitConversations]);
+
+  /**
+   * Carrega a próxima página (rolagem infinita / botão "carregar mais"). Não mexe
+   * em `loading`/`initialLoading`: é uma continuação da lista, não um refetch.
+   */
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    const cursor = nextCursorRef.current;
+    if (!cursor) {
+      hasMoreRef.current = false;
+      setHasMore(false);
+      return;
+    }
+
+    const generation = fetchGenerationRef.current;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const page = await RealtimeService.fetchConversationsPage(cursor);
+      // Um refetch em voo troca a lista inteira: descartar a página evita colar
+      // itens da janela antiga na lista nova.
+      if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
+
+      nextCursorRef.current = page.nextCursor;
+      hasMoreRef.current = page.hasMore;
+      setHasMore(page.hasMore);
+
+      commitConversations((prev) => {
+        const loaded = new Set(prev.map((c) => c.contact.id));
+        const appended = page.conversations.filter((c) => !loaded.has(c.contact.id));
+        return appended.length > 0 ? [...prev, ...appended] : prev;
+      });
+    } catch (err) {
+      log.error('Error loading more conversations:', err);
+    } finally {
+      loadingMoreRef.current = false;
+      if (mountedRef.current) setLoadingMore(false);
     }
   }, [commitConversations]);
 
@@ -285,5 +350,6 @@ export function useRealtimeMessages() {
     conversations, loading, initialLoading, error, sendMessage, markAsRead,
     refetch: fetchConversations, newMessageNotification,
     dismissNotification, setSelectedContact, setSoundEnabled,
+    hasMore, loadingMore, loadMore,
   };
 }
