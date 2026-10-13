@@ -1,62 +1,44 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useScheduledReports, type ScheduledReportForm } from '@/hooks/chat/useScheduledReports';
 
-export interface ScheduledReportForm {
-  name: string;
-  report_type: string;
-  frequency: string;
-  recipients: string[];
-}
+export type { ScheduledReportForm };
 
 /**
- * Fonte de dados do widget de Relatórios Agendados do dashboard (versão leve,
- * sem edição nem "enviar agora" — ver ScheduledReportsManager.tsx). Extraído
- * do componente para não importar `supabase` direto em `src/components`
- * (regra do lint `no-restricted-imports`).
+ * Fonte de dados do widget de Relatórios Agendados do dashboard.
+ *
+ * Antes esta aba lia/gravava `scheduled_report_configs` — tabela que nenhuma
+ * automação lê —, então o relatório aparecia na tela e nunca saía. Agora delega
+ * para `useScheduledReports` (hook único): a MESMA tabela `scheduled_reports`
+ * que a Edge `send-scheduled-report` lê e atualiza (`last_sent_at`/`next_send_at`).
+ * Continua fora de `src/components` para respeitar `no-restricted-imports`.
  */
 export function useScheduledReportConfigs() {
-  const qc = useQueryClient();
-
-  const { data: configs = [], isLoading } = useQuery({
-    queryKey: ['scheduled-reports'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('scheduled_report_configs').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const { reports, loading, saveReport, deleteReport, setReportActive, reload } = useScheduledReports();
 
   const createConfig = useMutation({
-    mutationFn: async (form: ScheduledReportForm) => {
-      const { error } = await supabase.from('scheduled_report_configs').insert({
-        name: form.name, report_type: form.report_type, frequency: form.frequency, recipients: form.recipients, is_active: true,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (form: ScheduledReportForm) => saveReport(form),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['scheduled-reports'] });
+      reload();
       toast.success('Relatório criado com sucesso');
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const toggleActive = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase.from('scheduled_report_configs').update({ is_active: !isActive }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduled-reports'] }),
-  });
-
-  const deleteConfig = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('scheduled_report_configs').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['scheduled-reports'] }); toast.success('Relatório removido'); },
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => setReportActive(id, !isActive),
+    onSuccess: () => reload(),
     onError: (e: Error) => toast.error(e.message),
   });
 
-  return { configs, isLoading, createConfig, toggleActive, deleteConfig };
+  const deleteConfig = useMutation({
+    mutationFn: (id: string) => deleteReport(id),
+    onSuccess: () => {
+      reload();
+      toast.success('Relatório removido');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return { configs: reports, isLoading: loading, createConfig, toggleActive, deleteConfig };
 }

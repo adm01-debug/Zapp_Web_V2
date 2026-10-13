@@ -17,13 +17,11 @@
  *  - ICON_MAP: per-report-type icon (BarChart3, Users, MessageSquare, Target)
  *  - Framer-motion AnimatePresence for card enter/exit animations
  *  - Full-page layout with <h2> header (not a Card widget)
- *  - Also renders <ScheduledReportConfigs /> at the bottom
  *
  * DO NOT merge with dashboard/ScheduledReportsManager — that file is a
  * self-contained Card widget with inline Supabase mutations, no edit support,
  * plain-text recipients input and no animations.
  */
-import { ScheduledReportConfigs } from './ScheduledReportConfigs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,8 +169,6 @@ export function ScheduledReportsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <ScheduledReportConfigs />
     </div>
   );
 }
