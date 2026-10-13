@@ -15,7 +15,7 @@
  *  - a prioridade é um radiogroup de verdade: Média é o padrão e as setas
  *    trocam a escolha, com volta no fim.
  */
-import '@/test/mocks/tarefas';
+import { resetSupabaseMock } from '@/test/mocks/tarefas';
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -74,6 +74,10 @@ const segmento = (nome: string) => screen.getByRole('radio', { name: nome });
 describe('NewTaskDialog — modal "Nova tarefa" (etapas 154–158)', () => {
   beforeEach(() => {
     cleanup();
+    // O modal usa `useMyWorkItems` (prévia + criação), que lê o perfil do
+    // `useAuth`: o mock do módulo de Tarefas devolve o perfil e volta ao estado
+    // inicial a cada teste.
+    resetSupabaseMock();
     // jsdom não tem as APIs de ponteiro/rolagem que o Radix (Popover) e o cmdk
     // (Command) usam — mesmo polyfill dos outros testes de Tarefas.
     const proto = Element.prototype as unknown as Record<string, () => unknown>;
