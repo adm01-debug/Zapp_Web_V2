@@ -1,13 +1,80 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SmilePlus, X } from 'lucide-react';
-import { useMessageReactions } from '@/hooks/chat/useMessageReactions';
+import { useMessageReactions, type MessageReaction } from '@/hooks/chat/useMessageReactions';
 
 const WHATSAPP_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const EXTENDED_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '👏', '💯', '✅', '❌'];
+
+interface SingleReactionArgs {
+  reactions: MessageReaction[];
+  currentProfileId?: string;
+  addReaction: (emoji: string) => Promise<unknown>;
+  removeReaction: (emoji: string) => Promise<unknown>;
+}
+
+/**
+ * Uma reação por autor por mensagem: tocar em OUTRO emoji troca (remove a antiga e grava a
+ * nova), tocar no MESMO emoji remove. Antes, o `handleReact` só olhava o emoji clicado e um
+ * segundo toque em outro emoji somava outra linha do mesmo autor.
+ *
+ * A troca é otimista: o palpite (`nextEmoji`) entra na tela na hora e, se qualquer gravação
+ * falhar, volta para o emoji anterior. O palpite guarda a lista de reações que o originou
+ * (`base`); quando a consulta devolve uma lista nova (sucesso, invalidate ou realtime) o
+ * palpite expira sozinho — sem efeito e sem estado preso.
+ */
+function useSingleReaction({ reactions, currentProfileId, addReaction, removeReaction }: SingleReactionArgs) {
+  const [optimistic, setOptimistic] = useState<{ emoji: string | null; base: MessageReaction[] } | null>(null);
+
+  const myServerReaction = reactions.find((r) => r.user_id === currentProfileId) ?? null;
+  const serverEmoji = myServerReaction?.emoji ?? null;
+  const myEmoji = optimistic !== null && optimistic.base === reactions ? optimistic.emoji : serverEmoji;
+
+  let viewReactions = reactions;
+  if (myEmoji !== serverEmoji) {
+    viewReactions = reactions.filter((r) => r.user_id !== currentProfileId);
+    if (myEmoji) {
+      viewReactions = [
+        ...viewReactions,
+        {
+          id: myServerReaction?.id ?? 'optimistic',
+          message_id: myServerReaction?.message_id ?? '',
+          user_id: currentProfileId ?? null,
+          contact_id: myServerReaction?.contact_id ?? null,
+          emoji: myEmoji,
+          created_at: myServerReaction?.created_at ?? '',
+          user_name: myServerReaction?.user_name ?? 'Você',
+        },
+      ];
+    }
+  }
+
+  const toggleReaction = useCallback(
+    async (emoji: string) => {
+      const previousEmoji = myEmoji;
+      const nextEmoji = previousEmoji === emoji ? null : emoji;
+
+      setOptimistic({ emoji: nextEmoji, base: reactions });
+      try {
+        if (nextEmoji === null) {
+          await removeReaction(emoji);
+        } else {
+          // Troca: a antiga sai ANTES de a nova entrar, senão o autor fica com duas reações.
+          if (previousEmoji) await removeReaction(previousEmoji);
+          await addReaction(emoji);
+        }
+      } catch {
+        setOptimistic({ emoji: previousEmoji, base: reactions });
+      }
+    },
+    [myEmoji, reactions, addReaction, removeReaction],
+  );
+
+  return { myEmoji, viewReactions, toggleReaction };
+}
 
 interface MessageReactionsProps {
   messageId: string;
@@ -37,7 +104,6 @@ export function MessageReactions({
     reactions,
     addReaction,
     removeReaction,
-    hasReacted,
     currentProfileId,
   } = useMessageReactions(messageId, {
     instanceName,
@@ -48,7 +114,14 @@ export function MessageReactions({
     disableRealtime,
   });
 
-  const groupedReactions = reactions.reduce((acc, reaction) => {
+  const { myEmoji, viewReactions, toggleReaction } = useSingleReaction({
+    reactions,
+    currentProfileId,
+    addReaction,
+    removeReaction,
+  });
+
+  const groupedReactions = viewReactions.reduce((acc, reaction) => {
     if (!acc[reaction.emoji]) {
       acc[reaction.emoji] = {
         emoji: reaction.emoji,
@@ -72,12 +145,7 @@ export function MessageReactions({
   const availableReactions = showExtended ? EXTENDED_REACTIONS : WHATSAPP_REACTIONS;
 
   const handleReact = async (emoji: string) => {
-    if (hasReacted(emoji)) {
-      await removeReaction(emoji);
-    } else {
-      await addReaction(emoji);
-    }
-
+    await toggleReaction(emoji);
     setIsOpen(false);
   };
 
@@ -142,7 +210,7 @@ export function MessageReactions({
         >
           <div className="flex flex-wrap items-center gap-1 max-w-[200px]">
             {availableReactions.map((emoji) => {
-              const userHasReacted = hasReacted(emoji);
+              const userHasReacted = myEmoji === emoji;
 
               return (
                 <motion.button
@@ -199,7 +267,7 @@ export function QuickReactionBar({
   disableRealtime,
 }: QuickReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const { addReaction, removeReaction, hasReacted, currentProfileId } = useMessageReactions(messageId, {
+  const { reactions, addReaction, removeReaction, currentProfileId } = useMessageReactions(messageId, {
     instanceName,
     contactJid,
     externalId,
@@ -208,12 +276,15 @@ export function QuickReactionBar({
     disableRealtime,
   });
 
+  const { myEmoji, toggleReaction } = useSingleReaction({
+    reactions,
+    currentProfileId,
+    addReaction,
+    removeReaction,
+  });
+
   const handleReact = async (emoji: string) => {
-    if (hasReacted(emoji)) {
-      await removeReaction(emoji);
-    } else {
-      await addReaction(emoji);
-    }
+    await toggleReaction(emoji);
     setShowPicker(false);
   };
 
@@ -241,7 +312,7 @@ export function QuickReactionBar({
             onClick={() => handleReact(emoji)}
             className={cn(
               'w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 hover:scale-125 transition-all text-base',
-              hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
+              myEmoji === emoji && 'bg-primary/10 ring-1 ring-primary/30'
             )}
           >
             {emoji}
@@ -269,7 +340,7 @@ export function QuickReactionBar({
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-muted transition-all hover:scale-110',
-                    hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
+                    myEmoji === emoji && 'bg-primary/10 ring-1 ring-primary/30'
                   )}
                 >
                   {emoji}
