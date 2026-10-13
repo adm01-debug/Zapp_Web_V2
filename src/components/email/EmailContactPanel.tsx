@@ -81,7 +81,7 @@ export function EmailContactPanel({
   const displayLabels = thread.label_ids
     .filter(labelId => !SYSTEM_LABELS.has(labelId) && !labelId.startsWith('CATEGORY_'))
     .map(labelId => labels.find(label => label.gmail_label_id === labelId)?.name || labelId);
-  const tags = uniqueTags(thread.tags || [], contact?.tags || [], displayLabels);
+  const tags = uniqueTags(thread.tags || [], displayLabels);
   const [accordionValue, setAccordionValue] = useState<string[]>(['info', 'participants', 'files', 'tags']);
   const copyEmail = async () => {
     if (!displayEmail || !navigator.clipboard?.writeText) return;
@@ -194,9 +194,9 @@ export function EmailContactPanel({
   );
 }
 
-function uniqueTags(threadTags: string[], contactTags: string[], gmailLabels: string[]) {
-  const tags = new Map<string, { key: string; value: string; sources: Array<'Conversa' | 'Contato' | 'Gmail'> }>();
-  const append = (values: string[], source: 'Conversa' | 'Contato' | 'Gmail') => values.forEach(raw => {
+function uniqueTags(threadTags: string[], gmailLabels: string[]) {
+  const tags = new Map<string, { key: string; value: string; sources: Array<'Conversa' | 'Gmail'> }>();
+  const append = (values: string[], source: 'Conversa' | 'Gmail') => values.forEach(raw => {
     const value = raw.trim();
     const key = value.toLocaleLowerCase('pt-BR');
     if (!key) return;
@@ -206,7 +206,6 @@ function uniqueTags(threadTags: string[], contactTags: string[], gmailLabels: st
     } else tags.set(key, { key, value, sources: [source] });
   });
   append(threadTags, 'Conversa');
-  append(contactTags, 'Contato');
   append(gmailLabels, 'Gmail');
   return [...tags.values()];
 }

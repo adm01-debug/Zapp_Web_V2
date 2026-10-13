@@ -2,7 +2,7 @@ import { useState, lazy, Suspense } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
+import { Briefcase, Star, Calendar } from 'lucide-react';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { motion } from 'framer-motion';
 import { format, isValid } from 'date-fns';
@@ -50,12 +50,9 @@ interface ContactHeaderSectionProps {
   isCompact?: boolean;
   hasExpandedSections?: boolean;
   onCollapseAll?: () => void;
-  /** Tags vivas do contato (contacts.tags) — mesma fonte que o botão "Marcar
-   *  VIP" grava via useContactQuickActions. Quando ausente, cai em contact.tags. */
-  tags?: string[] | null;
 }
 
-export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll, tags }: ContactHeaderSectionProps) {
+export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll }: ContactHeaderSectionProps) {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -66,10 +63,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const { data: crmData } = useExternalContact360(crmIntegrationEnabled ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
-  // O selo VIP lê a MESMA fonte que o botão grava — a tag 'VIP' em
-  // contacts.tags (case-insensitive, igual ao useContactQuickActions). Antes
-  // era decidido pelo relationship_score do CRM, fonte divergente (#241).
-  const isVip = (tags ?? contact.tags ?? []).some((t) => t.toLowerCase() === 'vip');
   const firstName = contact.name.trim().split(/\s+/)[0] || 'Sem nome';
   // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome
   // exibido (VirtualizedRealtimeList) — sem isso o mesmo contato mostrava um
@@ -114,7 +107,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(160 70% 28%)' : s >= 50 ? 'hsl(38 90% 32%)' : 'hsl(0 84% 48%)';
 
   if (isCompact) {
-    return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
+    return <CompactContactHeader contact={contact} isVip={false} companyName={companyName ?? undefined} firstName={displayName} />;
   }
 
   return (
@@ -200,11 +193,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           {contactType && (
             <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${getContactTypeBadge(contactType).color}`}>
               {getContactTypeBadge(contactType).label}
-            </Badge>
-          )}
-          {isVip && (
-            <Badge variant="outline" className="h-6 px-2.5 rounded-full text-xs font-semibold bg-warning/15 text-warning border-warning/40">
-              <Crown className="w-3 h-3 mr-1" />VIP
             </Badge>
           )}
           {priorityBadge && (

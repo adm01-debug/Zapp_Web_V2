@@ -200,7 +200,6 @@ export function ContactDetailCard({ contact }: { contact: Contact360Contact }) {
       <InfoRow label="Sentimento" value={contact.sentiment} />
       <InfoRow label="Estágio" value={contact.relationship_stage} icon={Star} />
       <InfoRow label="Fonte" value={contact.source} />
-      {contact.tags && contact.tags.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{contact.tags.map((tag, i) => <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0">{tag}</Badge>)}</div>}
       {contact.notes && <div className="text-3xs text-muted-foreground bg-muted/10 rounded-md p-1.5 mt-1">{contact.notes}</div>}
     </div>
   );

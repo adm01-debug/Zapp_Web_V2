@@ -1,13 +1,8 @@
 /**
- * R2-INB-020 / item 316 — filtro por tag na busca global: contatos cortados pelo
- * LIMIT antes do filtro, mensagens/transcrições fora do escopo da tag e refazer
- * que não pode transformar tag comum em lista gigante de IDs no GET do PostgREST.
- *
- * O banco falso emula dois pontos do PostgREST que importam para o bug:
- *  - filtros entram antes do LIMIT;
- *  - `.in(..., muitosIds)` estoura a URL do GET. A correção não pode depender
- *    dessa lista: deve usar `.overlaps('tags', tags)` em contatos e
- *    `.overlaps('contacts.tags', tags)` com `contacts!inner` em mensagens.
+ * A função de tags de contato foi removida em 2026-10-12. Este arquivo era o
+ * R2-INB-020 (filtro por tag na busca global). Ele fica como prova de AUSÊNCIA:
+ * a busca não carrega tags, não as sugere e não restringe o resultado por elas
+ * — mesmo com contatos que ainda têm `tags` no banco falso.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -215,14 +210,7 @@ function renderBusca() {
   return screen.getByPlaceholderText(/Buscar mensagens/i);
 }
 
-/** Digita o termo com `#` e seleciona a tag pela sugestão. */
-async function buscarComTag(input: HTMLElement, termo: string, tagQuery: string, tagName: string) {
-  fireEvent.change(input, { target: { value: `${termo}#${tagQuery}` } });
-  const sugestao = await screen.findByRole('button', { name: tagName });
-  fireEvent.click(sugestao);
-}
-
-describe('R2-INB-020 — filtro por tag na busca global', () => {
+describe('busca global — filtro por tag removido (2026-10-12)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     roleState.isSupervisor = false;
@@ -230,34 +218,15 @@ describe('R2-INB-020 — filtro por tag na busca global', () => {
     localStorage.clear();
   });
 
-  it('acha o contato marcado mesmo quando ele é o 11º da ordem alfabética e a tag existe em muitos contatos', async () => {
+  it('não sugere tag e não restringe por ela: "#v" não oferece sugestão e a busca traz contatos com e sem a tag', async () => {
     const input = renderBusca();
 
-    await buscarComTag(input, '', 'v', 'VIP');
+    fireEvent.change(input, { target: { value: 'mensagem #v' } });
 
-    // Sem a correção de refazer, a lista de IDs de uma tag comum estoura a URL
-    // antes de a consulta de contatos devolver o resultado.
-    expect(await screen.findByText('Zara Vip')).toBeInTheDocument();
-  });
-
-  it('limita as mensagens aos contatos que carregam a tag sem enviar lista de IDs', async () => {
-    const input = renderBusca();
-
-    await buscarComTag(input, 'mensagem ', 'v', 'VIP');
-
-    await waitFor(() => expect(screen.getByText('1 resultado')).toBeInTheDocument());
-    expect(screen.getByText('Conversa com Zara Vip')).toBeInTheDocument();
-    expect(screen.queryByText('Conversa com Ana 01')).not.toBeInTheDocument();
-  });
-
-  it('limita as transcrições aos contatos que carregam a tag sem enviar lista de IDs', async () => {
-    const input = renderBusca();
-
-    await buscarComTag(input, 'reuniao ', 'v', 'VIP');
-
-    await waitFor(() => expect(screen.getByText('1 resultado')).toBeInTheDocument());
-    expect(screen.getByText('Áudio de Zara Vip')).toBeInTheDocument();
-    expect(screen.queryByText('Áudio de Ana 01')).not.toBeInTheDocument();
+    // Ana 01 não tem a tag VIP — se a busca ainda filtrasse por tag, ela sumiria.
+    expect(await screen.findByText('Conversa com Ana 01')).toBeInTheDocument();
+    expect(await screen.findByText('Conversa com Zara Vip')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'VIP' })).not.toBeInTheDocument();
   });
 
   it('registra erro da consulta local em vez de engolir a falha como resultado vazio silencioso', async () => {
@@ -269,18 +238,5 @@ describe('R2-INB-020 — filtro por tag na busca global', () => {
       'Search messages error:',
       expect.objectContaining({ message: 'falha simulada em messages' }),
     ));
-  });
-
-  it('não deixa falha/escopo vazio da pré-busca de tag esconder resultado de CRM', async () => {
-    roleState.isSupervisor = true;
-    crmIntegrationState.enabled = true;
-    const input = renderBusca();
-
-    await buscarComTag(input, 'clientecrm ', 'c', 'CRM');
-
-    expect(await screen.findByText('Cliente CRM')).toBeInTheDocument();
-    expect(callCRMIntegrationMock).toHaveBeenCalledWith('rpc', expect.objectContaining({
-      rpc: 'search_contacts_advanced',
-    }));
   });
 });
