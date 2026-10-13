@@ -1,27 +1,22 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- src/hooks/communication/useVoiceAgent.ts: passou a escutar o `play()` recusado (`onAutoplayBlocked` do playTtsAudio) e o fim do TTS com falha, guardando o motivo em `ttsIssue`; expôs `replayResponse()` (tocar de novo). Antes o erro do TTS morria num `log.warn` e o operador ficava sem som e sem explicação.
+- src/hooks/voice/types.ts: tipo `VoiceTtsIssue` ('autoplay-blocked' | 'playback-failed') e os dois campos novos no retorno do hook — o hook diz O QUE aconteceu, a tela diz como aparece.
+- src/components/voice/VoiceSearchOverlay.tsx: aviso `role="alert"` em pt-BR com a ação (Tocar resposta / Tentar de novo) ligada a `onRetrySpeak`; as sugestões ficam escondidas enquanto o aviso está na tela.
+- src/components/voice/VoiceSearchOverlayConnected.tsx: passa `ttsIssue` e `onRetrySpeak` para a tela.
+- src/components/inbox/MediaPreview.tsx (VideoPreview): o erro do `<video>` (e a falha de resolução da URL) tira o spinner e mostra "Não foi possível carregar o vídeo." com "Tentar de novo", que remonta o vídeo; o erro é guardado pelo `src` que falhou, então uma URL nova/renovada o limpa sozinha (sem `setState` em efeito). O `refresh()` do `onError` original foi mantido.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: recompus os 5 arquivos de fonte da base (`git show dia/2026-10-13:<arquivo> > <arquivo>`) e rodei `npx vitest run src/components/voice/__tests__/VoiceSearchOverlay.ttsAviso.test.tsx src/components/inbox/__tests__/VideoPreview.erro.test.tsx src/hooks/communication/__tests__/useVoiceAgent.ttsAviso.test.ts` → `Test Files 3 failed (3)` / `Tests 8 failed | 2 passed (10)` (falham as asserções do aviso, da ação e do `ttsIssue`).
+- verde depois (mesmos arquivos restaurados do HEAD): `npx vitest run <os 3 arquivos>` → `Test Files 3 passed (3)` / `Tests 10 passed (10)`.
+- sem regressão: `npx vitest run` nos 9 arquivos de teste do entorno de voz/mídia (useVoiceAgent.interrupcao, playTtsAudio.interrupcao, mediaVolume.players, MediaVolume, componentesDuplicados, FileThumb.video, VideoIosFallback, ImagePreviewVideoFullscreen.aria, VoiceActionBridge) → `Test Files 9 passed (9)` / `Tests 59 passed (59)`.
+- `git status --short` limpo depois da prova vermelha (nada de arquivo da base sobrando).
+
+## Critério de pronto
+1. "se `play()` for recusado ou o TTS falhar, o overlay mostra mensagem em pt-BR e uma ação" — motivo no hook: useVoiceAgent.ts (ttsIssue no `onAutoplayBlocked` e no catch do playback) e `replayResponse`; aviso e ação na tela: VoiceSearchOverlay.tsx (TTS_ISSUE_META + bloco `role="alert"`). Provam: useVoiceAgent.ttsAviso.test.ts (autoplay-blocked, playback-failed, replay limpa o aviso) e VoiceSearchOverlay.ttsAviso.test.tsx (mensagem, rótulo e clique chamando a ação). Rótulos: "Tocar resposta" (autoplay recusado) e "Tentar de novo" (TTS falho).
+2. "o erro tem estado na tela (nada de spinner eterno)" — MediaPreview.tsx (VideoPreview): `loadFailed` a partir do erro do `<video>`/da resolução + bloco de erro com "Tentar de novo". Prova: VideoPreview.erro.test.tsx (spinner sai, aviso entra; retry limpa o erro e remonta o vídeo; vídeo que carrega não mostra aviso).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Mexi em src/hooks/communication/useVoiceAgent.ts e src/hooks/voice/types.ts, que são da área de hooks (Hugo): sem eles a tela não teria de onde ler o motivo da falha de áudio. É o ajuste mínimo (um estado + uma ação), nomeado aqui para o revisor; o resto dos arquivos é das telas/componentes do cartão.
+- Não toquei em `playTtsAudio.ts`: o `onAutoplayBlocked`/`onError` dele já existiam; o que faltava era o consumidor escutá-los.
