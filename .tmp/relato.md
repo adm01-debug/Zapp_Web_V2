@@ -27,3 +27,7 @@ Conferido no código: a V2 não faz `presenceSubscribe` (nem equivalente). `supa
 - Não regenerei `supabase/schema-manifest.json`/`schema-catalog.json`: são o retrato da PRODUÇÃO e o guard de drift explica as colunas novas pela migration pendente.
 - Não mexi em `evolution-api/index.ts`: não há subscribe a adicionar (item acima).
 - Não implementei o "timeout de inatividade": o cartão pediu gravar online/offline pelos eventos do Evolution GO; offline por evento já cobre, e um cron de timeout seria trilha nova (não pedida).
+
+## Arquivos fora da lista do cartão (por que foram indispensáveis)
+- `src/adapters/evolutionAdapter.ts`: o cartão autoriza mexer em `src/integrations/supabase/types.ts` (gerado); ao acrescentar as 3 colunas ao tipo `contacts`, o typecheck ratchet acusa 1 erro NOVO (TS2739) no literal de contato derivado — único consumidor afetado. Sem os 3 campos `null` a verificação fica VERMELHA. São 3 linhas sem lógica; contato derivado só do histórico não tem presença, logo o valor é ausência.
+- `tests/contracts/evolution-presence-status.contract.test.ts`: o cartão pede o teste em `supabase/functions/_shared/__tests__/` (feito, `deno test`). Mas a varredura de teste do `hermes-tarefa-fechar` só reconhece teste em `src/` ou `tests/`; sem um arquivo em `tests/` o fechar acusa "código alterado sem teste". O arquivo espelha os MESMOS 7 casos no runner que o portão reconhece (`vitest.contracts.config.ts`), sem duplicar lógica de produção.
