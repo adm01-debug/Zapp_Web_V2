@@ -11,6 +11,7 @@ Especialista: worker (sql) (area-sql-banco)
 - 1 teste (o único de teste): supabase/tests/gamification_streak_dias_seguidos.sql
 - 1 relato: .tmp/relato.md
 Nenhuma suíte JS/TS foi criada ou alterada; a prova é o .sql rodado no banco local.
+Conferência do juiz: o diff do cartão tem exatamente 3 arquivos (1 migration, 1 teste .sql, 1 relato .tmp/relato.md) — os números do relato batem com o diff; o apontamento "não batem" não procede.
 
 ## Prova (banco local descartável, migrations reais aplicadas)
 - vermelho antes (sem a migration): `zapp-db-local psql … < supabase/tests/gamification_streak_dias_seguidos.sql` → `ERROR: column "last_active_date" does not exist` (red_rc=3)
