@@ -33,6 +33,13 @@ Especialista: Hugo (area-front-hooks)
 - regressão dos 4 hooks + as 2 telas + o wrapper + o serviço migrado no PE-16:
   `npx vitest run <9 arquivos>` → `Test Files 9 passed (9); Tests 179 passed (179)`.
 
+## Aviso do juiz automático (não procede)
+- O juiz apontou que mexi em arquivos "fora de ARQUIVOS QUE PODE TOCAR" (as 4 cópias + analysisConfigs +
+  ForceLogoutButton + PasswordResetRequestsPanel). Não procede: o corpo do cartão pede exatamente
+  "migre as 4 cópias e os primeiros chamadores (…, reset de senha, forçar logout)" e lista os dois
+  componentes em ARQUIVOS QUE PODE TOCAR com a ressalva "(somente a leitura do erro)" — respeitada:
+  a chamada `supabase.functions.invoke` de cada um continua idêntica, só a leitura do erro mudou.
+
 ## O que NÃO fiz e por quê
 - Não toquei em `src/components/settings/ai-providers/useAIProviders.ts` (5ª cópia do leitor, variante
   `context.json()` sem `clone()`): arquivo fora de ARQUIVOS QUE PODE TOCAR; registrado em comentário no cartão.
