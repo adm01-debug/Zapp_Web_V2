@@ -41,6 +41,13 @@ workspace: `git rev-list --reverse --no-merges dia/2026-10-13..b41f506b5` → `e
 
 ## O que NÃO fiz e por quê
 
+- O juiz barato apontou arquivos "fora da lista". Os quatro hooks/componente que marquei são
+  exatamente os que o cartão autoriza (`src/hooks/chat/useTypingPresence.ts`, `useTeamTyping*`,
+  `useTeamPresence*` e o `useConversationViewers` em
+  `src/components/inbox/collaboration/ViewersIndicator.tsx`); o arquivo de teste é novo e o cartão
+  pede teste; `supabase/migrations/20261013210002_...` e `supabase/tests/...` vêm da faixa do pai
+  (dependência de tópico), trazida inteira por `cherry-pick`. Nada aqui é arquivo de outro assunto.
+
 - Não marquei os outros canais (notificações, talkx, gmail, warroom, etc.). A policy
   `can_access_realtime_topic` só conhece `typing:`, `conversation:`, `team-typing-` e
   `team-presence-`; marcar qualquer outro como privado o NEGARIA. Os quatro canais privados são
