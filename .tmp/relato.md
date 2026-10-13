@@ -12,6 +12,9 @@ Especialista: Íris (area-front-componentes)
 - verde depois: `npx vitest run src/components/agents/__tests__/` → `Test Files 4 passed (4); Tests 25 passed (25)`.
 - o teste renderiza o componente REAL e dispara o clique em "Enviar Convite", conferindo a função chamada e o corpo exato do convite; as mensagens de erro são provadas com `context.status` + `context.json()` reais da Edge.
 
+## Faixa trazida do cartão pai (t_6f48e99d), por `cherry-pick` como o cartão manda
+- `supabase/functions/invite-user/index.ts`, `supabase/functions/invite-user/index.test.ts` e `supabase/config.toml`: a Edge `invite-user` e o registro dela na configuração do Supabase — o convite que o diálogo passou a chamar. Código do worker (edge); eu só o trouxe, não o alterei.
+
 ## O que NÃO fiz e por quê
 - Não mexi em `src/pages/Auth.tsx` (aba "Criar Conta"): o cartão lista em ARQUIVOS QUE PODE TOCAR só os dois componentes de `agents/` e os testes, e a remoção da aba é o cartão SG1 — fora do meu escopo por instrução do próprio cartão.
 - Não mexi na Edge `invite-user` (código do worker (edge)): a faixa do cartão pai (t_6f48e99d) foi trazida por `cherry-pick` conforme o cartão manda. Ela ainda não tem a regra de domínio (apontada pelo revisor no cartão pai), mas a tela já mapeia essa causa pela mensagem que a Edge devolver; a regra em si é do worker (edge).
