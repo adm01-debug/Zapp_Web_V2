@@ -84,9 +84,9 @@ verify_jwt = true
 verify_jwt = true
 
 # PE-101 (etapa 086): expurgo de mídia órfã nos buckets `whatsapp-media` e
-# `audio-messages`. Quem chama é o pg_cron (x-cron-secret dedicado no Vault; o
-# agendamento em si vive no PE-102) e o admin pela própria tela, com
-# {"dryRun": true} para pré-visualizar. verify_jwt=false libera o cron externo; a
-# função recusa anônimo antes de listar/apagar qualquer objeto.
+# `audio-messages`. Quem chama é o pg_cron (header `x-cron-secret` conferido
+# contra o env `CRON_SECRET`; o agendamento em si vive no PE-102) e o admin pela
+# própria tela, com {"dryRun": true} para pré-visualizar. verify_jwt=false libera o
+# cron externo; a função recusa anônimo antes de listar/apagar qualquer objeto.
 [functions.cleanup-storage-orphans]
 verify_jwt = false

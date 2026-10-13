@@ -172,7 +172,7 @@ function makeRequest(opts: { cronSecret?: string; bearer?: string; body?: string
   return new Request("https://edge.test/cleanup-storage-orphans", init);
 }
 
-function makeDeps(o: { client: SupabaseLike; maxDeletePerRun?: number }) {
+function makeDeps(o: { client: SupabaseLike; maxDeletePerRun?: number; maxReferenceRows?: number }) {
   return {
     supabase: o.client,
     serviceKey: TEST_SERVICE_KEY,
@@ -180,6 +180,7 @@ function makeDeps(o: { client: SupabaseLike; maxDeletePerRun?: number }) {
     env: () => undefined,
     now: NOW,
     maxDeletePerRun: o.maxDeletePerRun,
+    maxReferenceRows: o.maxReferenceRows,
   };
 }
 
@@ -406,4 +407,58 @@ Deno.test("borda de paginação: referências com total IGUAL à página (1000) 
   assert(ref.failed === false, "leitura das referências falhou");
   assert(ref.paths.size === 1000, `esperava 1000 caminhos, veio ${ref.paths.size}`);
   assert(ctx.ranges.length === 2, `esperava 2 ranges (1000 + vazia), veio ${ctx.ranges.length}`);
+});
+
+Deno.test("fail-closed: referências além do teto (maxRows) → failed, não lê como completo", async () => {
+  // 5 linhas com teto 2: a página cheia enche o teto e a sonda acha mais linha.
+  // Sem a correção o laço pararia em silêncio e as linhas 3..5 ficariam fora do
+  // conjunto — o objeto delas poderia ser apagado como órfão.
+  const valores = Array.from({ length: 5 }, (_, i) => `${PUBLIC}/whatsapp-media/c/r${i}.jpg`);
+  const { client } = makeClient({ refs: { messages: { media_url: valores } } });
+  const ref = await collectReferencedPaths(client, "whatsapp-media", {
+    pageSize: 2,
+    maxRows: 2,
+    sources: [{ table: "messages", column: "media_url" }],
+  });
+  assert(ref.failed === true, `teto de referências não marcou failed: ${JSON.stringify([...ref.paths])}`);
+  assert(ref.paths.size === 2, `esperava o conjunto parcial (2), veio ${ref.paths.size}`);
+});
+
+Deno.test("borda de teto: total EXATAMENTE igual a maxRows (sem mais linhas) não vira failed", async () => {
+  // A sonda confirma que não há linha além do lido: leitura completa, não é falha.
+  const valores = Array.from({ length: 2 }, (_, i) => `${PUBLIC}/whatsapp-media/c/r${i}.jpg`);
+  const { client } = makeClient({ refs: { messages: { media_url: valores } } });
+  const ref = await collectReferencedPaths(client, "whatsapp-media", {
+    pageSize: 2,
+    maxRows: 2,
+    sources: [{ table: "messages", column: "media_url" }],
+  });
+  assert(ref.failed === false, "marcou failed sem haver linha além do teto");
+  assert(ref.paths.size === 2, `esperava 2 caminhos, veio ${ref.paths.size}`);
+});
+
+Deno.test("fail-closed: referência além do teto → handler pula o bucket e nada remove", async () => {
+  // 1001 linhas de referência com teto 1: o handler (maxRows injetado) vê failed e
+  // PRESERVA o bucket — o órfão aparente não pode ser apagado sem saber o que há
+  // referenciado além do teto.
+  const valores = Array.from(
+    { length: 1001 },
+    (_, i) => `${PUBLIC}/whatsapp-media/outro/r${i}.jpg`,
+  );
+  const { client, ctx } = makeClient({
+    entries: entriesWhatsapp(true, false),
+    refs: { messages: { media_url: valores } },
+  });
+  const res = await handleCleanupStorageOrphans(
+    authed(),
+    makeDeps({ client, maxReferenceRows: 1 }),
+  );
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(ctx.removes.length === 0, `removeu com referência truncada (fail-open): ${JSON.stringify(ctx.removes)}`);
+  assert(body.deletedTotal === 0, `deletedTotal errado: ${JSON.stringify(body)}`);
+  assert(
+    (body.errors ?? []).includes("whatsapp-media:reference-read-failed"),
+    `erro não reportado: ${JSON.stringify(body)}`,
+  );
 });
