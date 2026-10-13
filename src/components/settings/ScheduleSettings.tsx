@@ -60,7 +60,7 @@ export function ScheduleSettings() {
   const defaultConnection = connections.find((connection) => connection.is_default) ?? connections[0];
   const selectedConnectionId = chosenConnectionId ?? defaultConnection?.id ?? '';
 
-  const { businessHours, awayMessage, isLoading, isSaving, saveSettings } = useBusinessHours(selectedConnectionId);
+  const { businessHours, isLoading, isSaving, saveSettings } = useBusinessHours(selectedConnectionId);
 
   const loadedHours = useMemo(
     () => (selectedConnectionId ? weekFromRows(businessHours, selectedConnectionId) : []),
@@ -81,10 +81,10 @@ export function ScheduleSettings() {
   };
 
   /**
-   * O upsert só aceita o contrato de `business_hours`: dia 0-6, `is_open`
-   * booleano e horários `HH:MM`. Dia aberto com horário vazio ou fora do
-   * padrão (o campo de hora deixa limpar o valor) é barrado aqui, antes de
-   * qualquer chamada ao banco.
+   * A RPC `save_business_hours` só aceita o contrato de `business_hours`: dia
+   * 0-6, `is_open` booleano e horários `HH:MM`. Dia aberto com horário vazio ou
+   * fora do padrão (o campo de hora deixa limpar o valor) é barrado aqui, antes
+   * de qualquer chamada ao banco.
    */
   const invalidOpenDay = hours.find(
     (hour) => hour.is_open && (!TIME_PATTERN.test(hour.open_time) || !TIME_PATTERN.test(hour.close_time))
@@ -101,10 +101,14 @@ export function ScheduleSettings() {
     }
     setSaveError(null);
     try {
-      await saveSettings(hours, awayMessage);
-      // `saveSettings` é `mutateAsync` (useBusinessHours): resolve no sucesso e
-      // rejeita no erro. No sucesso o rascunho é zerado para a tela voltar a
-      // refletir o que o banco devolveu; na falha ele fica como está.
+      // O horário vai em UMA chamada da RPC atômica `save_business_hours`
+      // (uso `useBusinessHours`): falha no meio não grava metade da semana.
+      // Esta tela NÃO grava `away_messages` — ela não edita a mensagem de
+      // ausência, então não a cria sozinha (a aba Mensagens é quem a salva).
+      await saveSettings(hours);
+      // `saveSettings` é `mutateAsync`: resolve no sucesso e rejeita no erro.
+      // No sucesso o rascunho é zerado para a tela voltar a refletir o que o
+      // banco devolveu; na falha ele fica como está.
       setDraftHours(null);
     } catch {
       // O hook já mostra a falha na tela (toast destrutivo); o rascunho permanece.
