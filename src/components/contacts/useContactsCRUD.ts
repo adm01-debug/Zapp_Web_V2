@@ -109,15 +109,18 @@ const PHONE_DUPLICADO_EXCLUIDO =
  */
 async function duplicatePhoneError(phone: string): Promise<Error> {
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('contacts')
       .select('id')
       .eq('phone', phone.replace(/\D/g, ''))
       .not('deleted_at', 'is', null)
       .limit(1);
-    if (data && data.length > 0) return new Error(PHONE_DUPLICADO_EXCLUIDO);
+    // Só a leitura BEM-SUCEDIDA com linha devolve a mensagem de restaurar.
+    // Erro ou zero linha → mensagem padrão: a consulta é informativa e um
+    // contato excluído com o número só aparece para admin/supervisor (RLS).
+    if (!error && data && data.length > 0) return new Error(PHONE_DUPLICADO_EXCLUIDO);
   } catch {
-    // sem a consulta informativa, a mensagem padrão abaixo continua correta
+    // consulta indisponível: a mensagem padrão abaixo continua correta
   }
   return new Error(PHONE_DUPLICADO);
 }
