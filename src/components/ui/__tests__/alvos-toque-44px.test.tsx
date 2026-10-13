@@ -78,7 +78,6 @@ describe('alvo de toque 44px — botões usam a variante Tailwind, não a classe
       );
       const botao = screen.getByRole('button', { name: `botao ${size}` });
       for (const token of ALVO_TOQUE_GROSSO.split(' ')) {
-        // eslint-disable-next-line no-loop-func
         expect(botao, `botao ${size} sem ${token}`).toHaveClass(token);
       }
       expect(botao, `botao ${size} não deve carregar ${CLASSE}`).not.toHaveClass(CLASSE);
