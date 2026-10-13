@@ -66,7 +66,7 @@ export const MAX_DESTINATARIOS = 10;
  * banco (expor exige RPC — trilha de banco/Edge), então a tela repete a lista só para barrar
  * o domínio errado no formulário; mudar a lista no banco exige mudar aqui também.
  */
-export const DOMINIOS_DA_EMPRESA = ['promobrindes.com.br'];
+const DOMINIOS_DA_EMPRESA = ['promobrindes.com.br'];
 
 export interface DestinatariosAnalisados {
   /** Endereços válidos, sem espaços, sem repetidos e na ordem digitada. */
@@ -79,8 +79,10 @@ export interface DestinatariosAnalisados {
  * Valida o campo de destinatários (texto livre separado por vírgula) usando o MESMO
  * parser de e-mail do resto do app (`src/lib/emailRecipients`): formato, domínio da
  * empresa, limite e repetidos. Devolve os endereços prontos para gravar.
+ * Não é exportada: `react-refresh/only-export-components` exige que o arquivo só exporte
+ * componentes (a prova usa a tela real, não a função).
  */
-export function validarDestinatarios(valor: string): DestinatariosAnalisados {
+function validarDestinatarios(valor: string): DestinatariosAnalisados {
   const invalidos = invalidEmailTokens(valor);
   if (invalidos.length > 0) {
     return { destinatarios: [], erro: `E-mail inválido: ${invalidos.join(', ')}` };
@@ -104,10 +106,14 @@ export function validarDestinatarios(valor: string): DestinatariosAnalisados {
   return { destinatarios, erro: destinatarios.length === 0 ? 'Informe pelo menos um destinatário' : null };
 }
 
-/** "Último envio há 2 dias" / "Nunca enviado" — o status do último envio do relatório. */
-export function textoUltimoEnvio(info: LastSendInfo, agora: Date = new Date()): string {
+/**
+ * "Último envio há 2 dias" / "Nunca enviado" — o status do último envio do relatório.
+ * Usa o relógio real (a opção `baseDate` do date-fns não existe em `FormatDistanceOptions`
+ * desta versão e o typecheck acusava TS2353). Não é exportada: ver `validarDestinatarios`.
+ */
+function textoUltimoEnvio(info: LastSendInfo): string {
   if (info.status === 'never' || !info.at) return 'Nunca enviado';
-  return `Último envio há ${formatDistanceToNow(new Date(info.at), { locale: ptBR, baseDate: agora })}`;
+  return `Último envio há ${formatDistanceToNow(new Date(info.at), { locale: ptBR })}`;
 }
 
 export function ScheduledReportsManager() {
