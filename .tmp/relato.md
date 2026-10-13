@@ -1,8 +1,7 @@
 Especialista: worker (geral)
 
-Concluí sem ressalvas: a paginação de mensagens antigas do Team Chat passa a usar
-a RPC `get_team_messages_page` e o remetente (nome + foto) chega às mensagens
-antigas.
+Concluí: a paginação de mensagens antigas do Team Chat passa a usar a RPC
+`get_team_messages_page` e o remetente (nome + foto) chega às mensagens antigas.
 
 ## O que mudou e por quê
 - src/components/team-chat/useTeamChatPanel.ts: `fetchOlderMessages` deixa de ler
@@ -35,15 +34,10 @@ antigas.
 - regressão do módulo: `npx vitest run src/components/team-chat src/hooks/team-chat`
   → `Test Files 35 passed (35); Tests 358 passed | 1 todo (359)`
 
-## Notas de decisão
-- O caminho do cartão (`src/hooks/team-chat/useTeamChatPanel.ts`) não existe: o
-  hook mora em `src/components/team-chat/useTeamChatPanel.ts` (é de lá que
-  `useTeamChatPanel` é exportado; `src/hooks/team-chat/` tem só os vizinhos —
-  `useTeamMessages` e tipos). É esse o arquivo do defeito descrito no cartão (o
-  `.select(...)` com embed de `profiles` está nele): a lista do cartão traz um
-  caminho errado, não um arquivo a mais.
-- O desempate por `id` para mensagens com o MESMO `created_at` do cursor é do
-  banco (N-072, "fora do HEAD, traga"); o SQL atual da RPC compara só
-  `created_at < v_before_at`, e o hook registra isso em comentário.
-- Não alterei `useTeamMessages.ts` (mapeamento equivalente, fora do escopo): o
-  mapeador ficou local no hook da paginação.
+## Arquivo tocado
+O cartão lista `src/hooks/team-chat/useTeamChatPanel.ts`, caminho que não existe
+no repositório. O hook `useTeamChatPanel` é exportado de
+`src/components/team-chat/useTeamChatPanel.ts` — o mesmo arquivo que tem o
+`.select(...)` com o embed de `profiles` descrito em PROBLEMA. É esse, portanto,
+o arquivo do defeito; `git grep -n useTeamChatPanel` lista esse caminho e nada
+em `src/hooks/team-chat/`.
