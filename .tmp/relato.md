@@ -38,6 +38,12 @@ Nenhuma linha de produção mudou; o diff é exclusivamente o teste do contrato.
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (142s)`.
 - sha da correção: `dbd630b84` (cherry-pick da entrega: `a1fc5fe75` `4ec8af77a` `41782aaca`).
 
+## Pontos do revisor
+
+- Ponto 1: parti do commit da entrega por cherry-pick (`a1fc5fe75`, `4ec8af77a`, `41782aaca`) — não recomecei.
+- Ponto 2: reproduzi o vermelho (`Tests 1 failed | 15 passed (16)`, 503 no lugar de `{ userId }`) e corrigi a causa no teste que a própria entrega deixou desalinhado, `tests/contracts/requireauth-network-policy.contract.test.ts` (injeção de `getProfileActive` = perfil ativo + asserção de que o perfil é lido por `user_id`), sem afrouxar asserção alguma.
+- Ponto 3: prova — `vitest run --config vitest.contracts.config.ts --reporter=dot` verde (`Test Files  89 passed (89)`; `Tests  1379 passed (1379)`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`; fecho citando o sha `dbd630b84`.
+
 ## O que NÃO fiz e por quê
 
 - Não rodei `ci_espelho.sh`: o `HERMES-GUARD` bloqueia a execução do script (classifica
