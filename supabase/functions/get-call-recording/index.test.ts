@@ -279,7 +279,11 @@ Deno.test("item 62/T73: com JWT e dono a resposta e audio, mas nunca contem reco
   const cabecalhosFinais = JSON.stringify([...res.headers.entries()]).toLowerCase();
   assert(!cabecalhosFinais.includes("url"));
   assert(!cabecalhosFinais.includes("bitrix"));
-  assert(!cabecalhosFinais.includes("location"));
+  // O padrao getCorsHeaders agora responde a esta Edge e traz cabeçalhos de
+  // segurança cujo valor contém "geolocation" (Permissions-Policy). A checagem
+  // por substring daria falso positivo; o invariante real é não haver
+  // redirecionamento (cabeçalho Location) para o provedor.
+  assertFalse(res.headers.has("Location"), "a resposta de audio nao pode redirecionar para o provedor");
 });
 
 Deno.test("item 62: o player chama por POST com { callId } e recebe stream, nao JSON com url", async () => {
@@ -420,4 +424,32 @@ Deno.test("T73: OPTIONS de origem fora da allowlist nao recebe Access-Control-Al
   );
 
   assert(res.headers.get("Access-Control-Allow-Origin") === null, "origin fora da allowlist nao recebe o header CORS no preflight");
+});
+
+Deno.test("T73: o CORS do audio vem do padrao do projeto (cabecalhos de seguranca presentes)", async () => {
+  // Prova que get-call-recording passou a responder com o getCorsHeaders(req)
+  // compartilhado: alem do ACAO validado, a resposta carrega os cabecalhos de
+  // seguranca do padrao (X-Content-Type-Options), que a copia local nao tinha.
+  const registro = novoRegistro();
+  const url = new URL(URL_FUNCAO);
+  url.searchParams.set("callId", "c1");
+
+  const res = await handleGetCallRecording(
+    new Request(url.toString(), {
+      method: "GET",
+      headers: {
+        "x-forwarded-for": "203.0.113.30",
+        Authorization: TOKEN,
+        Origin: "https://zapp-web-v2.vercel.app",
+      },
+    }),
+    deps({}, registro),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(res.headers.get("X-Content-Type-Options"), "nosniff");
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "https://zapp-web-v2.vercel.app");
+  assert(res.headers.get("Access-Control-Allow-Origin") !== "*");
+  // O padrao tambem libera o header Range exigido pelo player de audio.
+  assert((res.headers.get("Access-Control-Allow-Headers") ?? "").toLowerCase().includes("range"));
 });

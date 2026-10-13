@@ -1,38 +1,45 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { errorResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
+import {
+  errorResponse,
+  requireEnv,
+  checkRateLimit,
+  getClientIP,
+  getCorsHeaders,
+  Logger,
+} from "../_shared/validation.ts";
 
-// Allowlist de origens — mesma lógica de isAllowedOrigin em _shared/validation.ts,
-// mas sem fallback: origem fora da lista nao recebe Access-Control-Allow-Origin.
-const EXACT_ALLOWED_ORIGINS = new Set([
-  "https://zapp-web-v2.vercel.app",
-]);
+// Os cabecalhos CORS desta Edge vem do padrao do projeto `getCorsHeaders(req)`
+// (allowlist de origem validada em _shared/validation.ts) — nao ha mais copia
+// local da allowlist nem "Access-Control-Allow-Origin: *". A unica diferenca
+// intencional do endpoint de audio: origem fora da allowlist nao recebe
+// Access-Control-Allow-Origin nenhum (o padrao cai no endereco canonico; aqui
+// preferimos nao emitir o cabecalho). E o player de audio usa `range`, que nao
+// esta na lista do padrao, entao ele e acrescentado.
+const AUDIO_ALLOW_HEADERS = "range";
 
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
-function corsDoAudio(origin: string | null): Record<string, string> {
-  const h: Record<string, string> = {
-    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, content-type, range",
-    "Vary": "Origin",
-  };
-  if (origin && isAllowedOrigin(origin)) {
-    h["Access-Control-Allow-Origin"] = origin;
+function corsDoAudio(req: Request): Record<string, string> {
+  const h = getCorsHeaders(req);
+  const origin = req.headers.get("origin");
+  if (!origin || h["Access-Control-Allow-Origin"] !== origin) {
+    delete h["Access-Control-Allow-Origin"];
+  }
+  const liberados = h["Access-Control-Allow-Headers"] ?? "";
+  const jaLiberado = liberados
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .includes(AUDIO_ALLOW_HEADERS);
+  if (!jaLiberado) {
+    h["Access-Control-Allow-Headers"] = liberados
+      ? `${liberados}, ${AUDIO_ALLOW_HEADERS}`
+      : AUDIO_ALLOW_HEADERS;
   }
   return h;
 }
 
 function preflightCors(req: Request): Response | null {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsDoAudio(req.headers.get("Origin")) });
+    return new Response(null, { headers: corsDoAudio(req) });
   }
   return null;
 }
@@ -168,7 +175,7 @@ export async function handleGetCallRecording(
       tamanho: upstream.headers.get("Content-Length"),
       faixa: upstream.headers.get("Content-Range"),
       aceita: upstream.headers.get("Accept-Ranges"),
-    }, corsDoAudio(req.headers.get("Origin")));
+    }, corsDoAudio(req));
 
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch (erro) {
