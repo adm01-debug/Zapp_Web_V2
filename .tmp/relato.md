@@ -1,49 +1,53 @@
-Especialista: workersql
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- supabase/migrations/20261013230001_delete_message_rpc.sql (novo): cria
-  `public.delete_message(p_message_id uuid)` — SECURITY DEFINER, `search_path = public, pg_temp`,
-  negada por padrão (REVOKE PUBLIC/anon/authenticated/service_role; GRANT EXECUTE só a authenticated).
-  Ela marca `is_deleted = true` e grava o rastro (`deleted_by` = profiles.id de quem apagou,
-  `deleted_at`) e **mantém `content` original** (a UI mostra o rótulo). Autoriza por: visibilidade do
-  contato (`is_contact_visible_to_user`, o mesmo predicado de SELECT/INSERT) E a mensagem é do próprio
-  agente (`messages.agent_id` = profile do chamador) OU admin/supervisor. Erro uniforme
-  `message_not_deletable` (42501) para inexistente/fora de visibilidade/sem posse — sem oráculo de
-  existência. Idempotente: segunda chamada devolve false sem tocar no original.
-- supabase/migrations/20261013230001_delete_message_rpc.sql: `ALTER TABLE public.messages ADD COLUMN
-  IF NOT EXISTS deleted_by uuid, deleted_at timestamptz` (aditivo, nullable; nenhum fluxo existente
-  quebra).
-- supabase/tests/delete_message_rpc.sql (novo): prova com papel REAL (SET LOCAL ROLE authenticated/anon/
-  service_role, nunca superusuário) contra o arquivo REAL da migration aplicado via `\i`.
+- `src/services/chat.service.ts`: `deleteMessage` virou o caminho ÚNICO de exclusão — chama a RPC
+  `delete_message` (`supabase.rpc('delete_message', { p_message_id })`) em vez do
+  `.from('messages').update({ is_deleted: true, content: '[Mensagem apagada]' })` que sobrescrevia o
+  texto original. O UPDATE continua acontecendo no SERVIDOR (dentro da RPC), então o realtime segue
+  vendo a mudança de `is_deleted` e não preciso empurrar estado local.
+- `src/components/inbox/chat/MessageHoverToolbar.tsx`: o delete do menu hover deixa de escrever direto
+  na tabela e passa a chamar `ChatService.deleteMessage(message.id)`; o import de
+  `@/integrations/supabase/client` saiu do componente (dado por serviço, como o lint da área pede).
+  Semântica de erro preservada: `{ error }` → `toast.error('Erro ao deletar mensagem')`, sem sucesso e
+  sem `onMessageDeleted`.
+- `src/components/inbox/MessageContextActions.tsx`: mesma troca no menu contextual; mesmo tratamento de
+  erro (rejeição do banco não vira "Mensagem deletada").
+- `src/hooks/chat/useFilesActions.ts`: a exclusão da aba Arquivos chama `ChatService.deleteMessage(item.id)`;
+  no erro continua devolvendo `false`, sem `onRemoved` e sem invalidar as chaves.
+- `src/components/inbox/tabs/FilesTab.tsx`: só a descrição do AlertDialog, que afirmava "o conteúdo vira
+  '[Mensagem apagada]'" — agora diz o que a RPC faz de fato: marca `is_deleted = true`, a mensagem passa a
+  aparecer como "[Mensagem apagada]" e o texto original fica guardado, sem ser sobrescrito.
+- Comentários de código (chat.service.ts, useFilesActions.ts, os dois componentes) atualizados para a
+  semântica nova — nenhum deles descreve mais o UPDATE antigo.
+
+Único caminho e realtime: os 4 pontos de tela agora chamam `ChatService.deleteMessage`. O
+`handleMessageDeleted` de `ChatMessagesArea.tsx` NÃO foi tocado: ele já chamava `ChatService.deleteMessage`,
+ou seja, continua marcando pelo mesmo caminho (o efeito de realtime vem do UPDATE da RPC no servidor) e não
+sobra nenhum vetor `.update().eq('id', …)` de exclusão no código de produção.
 
 ## Prova
-- vermelho antes: `docker exec -i <pg> psql -X -v ON_ERROR_STOP=1 -U postgres -v sem_migration=1 < supabase/tests/delete_message_rpc.sql` → `ERROR: function public.delete_message(unknown) does not exist` (exit 3).
-- verde depois: mesmo comando com `-v mig=/tmp/mig.sql` (aplica o arquivo real) → `NOTICE: T1 OK…T2 OK… T3-T6 OK… T7 OK… T8 OK… T9 OK… T10 OK… T11 OK…` e `NOTICE: delete_message_rpc: TODAS as assercoes passaram (T1-T11)` (exit 0). T1 apaga a própria e confirma `content` intacto + rastro; T2 idempotente; T3-T6 colega/cliente/fora de visibilidade/inexistente respondem IGUAL; T7 admin apaga e preserva; T8/T9 anon e service_role barrados pela ACL; T10 id nulo uniforme e chamador sem profile recusado; T11 ACL + colunas.
-- banco local (schema real, com os gatilhos e policies de verdade): `hermes-db-migrar supabase/migrations/20261013230001_delete_message_rpc.sql` → `APLICADA no banco LOCAL 'v2-26101304039317' (produção não foi tocada)`. Smoke como authenticated contra a estrutura real → `NOTICE: SMOKE OK (banco local real): apagou, rastro gravado, content/proveniencia intactos` (fixture removida ao fim).
-- rollback executado de verdade: apliquei a migration e rodei as 3 linhas do `-- Rollback` → `NOTICE: ROLLBACK OK: funcao e colunas removidas (rollback executavel)`.
-- verificação: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK migrations`; `VERIFY: VERDE SEM BANCO (171s)`.
-
-## Efeitos colaterais (passada obrigatória)
-- Gatilhos no UPDATE: `trg_guard_message_provenance_fields` e `trg_guard_message_delivery_internal_fields` só barram quando `current_user NOT IN ('postgres','service_role')`; como a RPC é SECURITY DEFINER do dono `postgres`, eles liberam — e a RPC não toca `content`/`sender`/`agent_id`/`external_id`/`media_url`/campos de delivery. `update_messages_updated_at` roda no UPDATE (esperado para uma mutação).
-- Atômico: valida tudo (visibilidade/posse/idempotência) ANTES do único UPDATE; falha de validação não altera nada (T3-T6 provam "as recusas nao alteraram nenhuma linha").
-- Sem oráculo: inexistente, fora de visibilidade e sem posse dão a MESMA resposta `message_not_deletable` (T3-T6).
-- Nenhum GRANT/papel/ACL existente mudou: só a assinatura nova recebe/nega EXECUTE.
-- `updated_at` muda no UPDATE (gatilho `update_messages_updated_at`) — isso é ESPERADO aqui: a linha
-  realmente foi alterada (marcada como apagada) e é uma única linha travada por `FOR UPDATE`, não um
-  backfill em massa (o caso que gerou a recusa de 06/10 era um UPDATE em TODAS as linhas). O texto
-  original (`content`) e os campos de proveniência ficam preservados; só o carimbo de atualização e o
-  rastro de exclusão mudam.
+- vermelho antes: com o código antigo restaurado (patch salvo em `.tmp/impl.patch`, `git apply` de volta em
+  seguida) → `npx vitest run` nos 5 arquivos →
+  `Test Files  5 failed (5)` / `Tests  13 failed | 9 passed (22)`
+- verde depois: mesma execução com a mudança `f5a5a8979` →
+  `Test Files  5 passed (5)` / `Tests  22 passed (22)`
+- suíte relacionada (inclui `MessageHoverToolbar.historico-envio.test.tsx` e
+  `ChatMessagesArea.pagination.test.tsx`, que mockam `ChatService`) →
+  `Test Files  7 passed (7)` / `Tests  28 passed (28)`
+- `grep -rn "content: '\[Mensagem apagada\]'\|is_deleted: true" src/` (fora de teste) → sem resultado:
+  nenhum ponto de produção escreve a marcação à mão.
+- testes ajustados para o contrato novo (todos renderizam o componente/hook REAL e mockam só o
+  `@/integrations/supabase/client`): `chat.service.delete.test.ts` (novo), `MessageHoverToolbar.delete.test.tsx`,
+  `MessageContextActions.r2inb014.test.tsx`, `useFilesActions.test.tsx`, `FilesTab.fase6.test.tsx`. O mock de
+  `from` registra a tabela acessada: o teste prova que a exclusão não passa por `from('messages')`.
 
 ## O que NÃO fiz e por quê
-- Não editei `src/integrations/supabase/types.ts` e não toquei nos 4 pontos de UI
-  (`MessageContextActions`, `MessageHoverToolbar`, `useFilesActions`, `chat.service`): o cartão dá os
-  pontos de UI ao filho t_fef320c8 (iris) e manda não editar types.ts — quem regenera é o worker de CI/
-  gen-types. O contrato que a tela precisa consumir é `public.delete_message(uuid) → boolean` (true =
-  apagou; false = já estava apagada) e o texto original segue em `content`.
-- Não dupliquei o gatilho de guarda de `content` (é do cartão ED1/t_8060d654).
-- Não adicionei passos novos em `.github/workflows/db-guard.yml` (arquivo fora dos meus arquivos).
-- **REGISTRO PENDENTE**: `supabase/tests/delete_message_rpc.sql` roda no harness de Postgres
-  descartável (comando na prova), mas ainda não está ligado a um `scripts/db-audit/*.test.sh` nem a um
-  passo do `db-guard.yml`. Quem cuida do inventário de testes/CI (worker de CI) precisa registrá-lo.
-
-Concluí: migration e prova entregues; zapp-verify verde (banco não coberto sem nome de conjunto — aviso previsto no cartão).
+- Não escrevi a RPC/migration: ela é o `feat(db)` do cartão pai (t_cfa99af7) e entrou aqui pelo commit
+  integrado da dependência (`8b91eee2d`, cherry-pick do range `dia/2026-10-13..59d554b0f`), sem alterar nada
+  dela.
+- Não mexi na autorização da RPC (visibilidade do contato + posse da mensagem OU admin/supervisor), que
+  pode fazer a exclusão de mídia RECEBIDA falhar para agente comum: quem decide isso é o banco (worker (sql)).
+  A tela já trata o erro (`Erro ao apagar mensagem`, item segue na lista e na seleção) — coberto no teste.
+- Não adicionei nada de exportar/baixar; nada de tela nova.
+- Estados vazio/carregando/erro da aba Arquivos não mudaram de comportamento; o de erro é o que o teste acima cobre.
