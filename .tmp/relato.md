@@ -26,7 +26,8 @@ Especialista: Íris (area-front-componentes)
 ## Verificação
 - vermelho antes (componente da base, via `git checkout dia/2026-10-13 -- src/components/tasks/agenda/TasksAgendaMode.tsx`): `npx vitest run src/components/tasks/__tests__/TasksAgendaFaixa.test.tsx` → `Test Files 1 failed (1); Tests 5 failed | 1 passed (6)`
 - verde depois: `npx vitest run src/components/tasks/__tests__/TasksAgendaFaixa.test.tsx src/components/tasks/__tests__/TasksAgendaMode.test.tsx src/components/tasks/__tests__/agendaGroups.test.tsx src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 4 passed (4); Tests 86 passed (86)`
-- `zapp-verify . --rapido`: db_guard OK; "tipos" VERMELHO por falha de EXECUÇÃO, não de código — `tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)`, máquina em 44–47 GB de 47 GB e um `git prune` de outro processo com ~3,5 GB; `tsc -p tsconfig.app.json --noEmit` isolado também saiu 137 (SIGKILL/oom), sem nenhum diagnóstico `error TS`.
+- `zapp-verify . --rapido`: db_guard OK; "tipos" VERMELHO por falha de EXECUÇÃO, não de código — `tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)`, máquina com 2–4 GB livres de 47 GB e um `git prune` de outro processo com ~3,5 GB; `tsc -p tsconfig.app.json --noEmit` completo também saiu 137 (SIGKILL/oom), sem nenhum diagnóstico `error TS`.
+- tipos verde (isolado, com o cache incremental do worktree): `node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --incremental --tsBuildInfoFile .tc-cache/app.tsbuildinfo` → RC=0 e nenhum `error TS`.
 
 ## O que NÃO fiz e por quê
 - Não toquei em TasksModule.tsx: a faixa e o cabeçalho vivem no modo Agenda.
