@@ -146,8 +146,8 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
-    'Access-Control-Expose-Headers': 'x-request-id, x-degraded',
+      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id, x-correlation-id, traceparent',
+    'Access-Control-Expose-Headers': 'x-request-id, x-correlation-id, x-degraded',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
