@@ -168,8 +168,12 @@ const testShInGuard = new Set(
 const SUFIXO_SUITE_NODE = /\.(?:test|unit|integration)\.mjs$/;
 const CAMINHO_SUITE_NODE = /scripts\/[A-Za-z0-9_./*-]+\.(?:test|unit|integration)\.mjs/g;
 
-/** Caminhos e globos de suites Node citados nos blocos `run:` de um workflow. */
-export function padroesNodeDeWorkflow(yaml) {
+/**
+ * Caminhos e globos de suíte citados nos blocos `run:` de um workflow, para o padrão
+ * informado. Um caminho só conta se estiver DENTRO de um bloco `run:`: citação em
+ * comentário, nome de etapa ou `env:` NÃO conta — é o que separa registro de execução.
+ */
+export function padroesDeBlocosRun(yaml, padraoCaminho) {
   const linhas = String(yaml).split('\n');
   const padroes = new Set();
   for (let i = 0; i < linhas.length; i += 1) {
@@ -184,9 +188,14 @@ export function padroesNodeDeWorkflow(yaml) {
       if (linha.trimStart().startsWith('#')) continue; // passo comentado não executa nada
       bloco.push(linha);
     }
-    for (const padrao of bloco.join('\n').match(CAMINHO_SUITE_NODE) ?? []) padroes.add(padrao);
+    for (const padrao of bloco.join('\n').match(padraoCaminho) ?? []) padroes.add(padrao);
   }
   return [...padroes].sort();
+}
+
+/** Caminhos e globos de suites Node citados nos blocos `run:` de um workflow. */
+export function padroesNodeDeWorkflow(yaml) {
+  return padroesDeBlocosRun(yaml, CAMINHO_SUITE_NODE);
 }
 
 /** Casa um caminho com um glob simples: `*` não atravessa `/`, `**` atravessa. */
@@ -223,6 +232,78 @@ export function suitesNodeOrfas() {
   return orfaosNode(suitesNodeNoDisco(), padroesNodeDosWorkflows());
 }
 
+// ── 3b. Suítes SQL (.sql): disco vs passos de workflow ────────────────────────
+// t_fceba6d5: as suítes .sql de supabase/tests/ e scripts/db-tests/ eram INVISÍVEIS ao
+// inventário (mesmo defeito que o R2-INF-013 consertou para as suites Node). Uma suíte nova
+// nascia sem passo nenhum e o verificador continuava dizendo OK. Agora todo caminho/globo de
+// .sql citado em um bloco `run:` de QUALQUER workflow conta como coberto; o que não aparece
+// em bloco nenhum precisa estar na ALLOWLIST_SQL com justificativa.
+
+const DIRS_SUITE_SQL = ['supabase/tests', 'scripts/db-tests'];
+const CAMINHO_SUITE_SQL = /(?:supabase\/tests|scripts\/db-tests)\/[A-Za-z0-9_./*-]+\.sql/g;
+
+// Suítes SQL conhecidas ainda fora do CI; remover linha quando a etapa correspondente mergear.
+// Medições de t_fceba6d5 (PostgreSQL 17 descartável): as auto-contidas rodam pelo runner
+// scripts/db-tests/run-suites-postgres.sh; as demais dependem de bootstrap próprio.
+export const ALLOWLIST_SQL = new Set([
+  // supabase/tests — auto-contida, mas a migration sob teste (20261007095739, t_89af1a99)
+  // ainda não está na branch do dia. O runner já a executa; falha só em `No such file`.
+  // Promover quando a migration integrar (o padrão relativo do arquivo passa a servir).
+  'supabase/tests/indeterminate_optout_outbox.sql',
+  // supabase/tests — dependem do envelope `mcp_exec` (SET LOCAL ROLE + request.jwt.claims do
+  // PostgREST) para provar autorização; precisam do harness de sessão antes do passo no CI.
+  'supabase/tests/ai_jobs_lease_efeito_incerto.sql',
+  'supabase/tests/inbox_agregado_por_contato.sql',
+  'supabase/tests/transfer_conversation_atomicidade.sql',
+  // supabase/tests — família RLS/dashboard que roda como service_role (BYPASSRLS) e NÃO prova
+  // enforcement. Supersedidas por scripts/db-audit/dashboard-rls-authorization.test.sh, que
+  // prova o mesmo sob PAPÉIS REAIS; reduzir conforme o dono do dashboard decidir.
+  'supabase/tests/dashboard_kpi_edge_cases.sql',
+  'supabase/tests/dashboard_rpc_filters.sql',
+  'supabase/tests/rls_dashboard.sql',
+  'supabase/tests/rls_whatsapp_media_select_via_messages.sql',
+  'supabase/tests/rls_conversation_tab_counts_files_total.sql',
+  // scripts/db-tests — harness LEGADO que aplica as suítes pelo `mcp_exec`/service_role
+  // (run-all.mjs) contra o banco canônico; nunca pôde rodar no CI por design. As suítes
+  // dependem do schema COMPLETO: no PG limpo 01 e 05 degeneram em PASS vazio (0 objetos) e
+  // 02/03/04 falham por relação ausente (medido). Promover com bootstrap próprio.
+  'scripts/db-tests/01-security-grants.sql',
+  'scripts/db-tests/02-fsm-transitions.sql',
+  'scripts/db-tests/03-gamification-bounds.sql',
+  'scripts/db-tests/04-schema-contracts.sql',
+  'scripts/db-tests/05-rls-smoke.sql',
+]);
+
+/** Suítes SQL sem nenhum bloco `run:` que as execute (fora da ALLOWLIST_SQL). */
+export function orfaosSql(suites, padroes, allowlist = ALLOWLIST_SQL) {
+  return suites.filter(f => !padroes.some(p => casaPadrao(f, p)) && !allowlist.has(f));
+}
+
+/** Suítes SQL versionadas em supabase/tests/ e scripts/db-tests/, do disco. */
+export function suitesSqlNoDisco() {
+  return DIRS_SUITE_SQL
+    .flatMap(d => gitLsFilesOuDisco(d))
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+}
+
+/** Caminhos e globos de suítes SQL citados nos blocos `run:` de um workflow. */
+export function padroesSqlDeWorkflow(yaml) {
+  return padroesDeBlocosRun(yaml, CAMINHO_SUITE_SQL);
+}
+
+/** Todo caminho/globo de suíte SQL declarado nos blocos `run:` dos workflows do repositório. */
+export function padroesSqlDosWorkflows() {
+  const dir = join(root, '.github/workflows');
+  return readdirSync(dir)
+    .filter(f => /\.ya?ml$/.test(f))
+    .flatMap(f => padroesSqlDeWorkflow(readFileSync(join(dir, f), 'utf8')));
+}
+
+export function suitesSqlOrfas() {
+  return orfaosSql(suitesSqlNoDisco(), padroesSqlDosWorkflows());
+}
+
 // ── 4. Detectar órfãos ────────────────────────────────────────────────────────
 
 /**
@@ -254,6 +335,10 @@ export function orfaosDoInventario() {
     orphans.push({ file: f, yaml: 'nenhum bloco run: de workflow' });
   }
 
+  for (const f of suitesSqlOrfas()) {
+    orphans.push({ file: f, yaml: 'nenhum bloco run: de workflow' });
+  }
+
   return orphans;
 }
 
@@ -264,10 +349,11 @@ function principal() {
 
   if (orphans.length === 0) {
     const nodeMsg = `${suitesNodeNoDisco().length} suite(s) Node cobertas por bloco run: (${ALLOWLIST_NODE.size} na allowlist)`;
+    const sqlMsg = `${suitesSqlNoDisco().length} suíte(s) SQL cobertas por bloco run: (${ALLOWLIST_SQL.size} na allowlist)`;
     if (ciUsesGlob) {
-      console.log(`check-test-inventory: OK — ci.yml usa glob (${CI_TS_GLOB}); ${nodeMsg}; .test.sh verificados individualmente`);
+      console.log(`check-test-inventory: OK — ci.yml usa glob (${CI_TS_GLOB}); ${nodeMsg}; ${sqlMsg}; .test.sh verificados individualmente`);
     } else {
-      console.log(`check-test-inventory: OK — todos os testes têm correspondente no CI YAML; ${nodeMsg}`);
+      console.log(`check-test-inventory: OK — todos os testes têm correspondente no CI YAML; ${nodeMsg}; ${sqlMsg}`);
     }
     return 0;
   }
@@ -277,7 +363,7 @@ function principal() {
     console.error(`  ${file}  (não encontrado em ${yaml})`);
   }
   console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
-  console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
+  console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) / ALLOWLIST_SQL (suíte SQL) com justificativa.');
   return 1;
 }
 

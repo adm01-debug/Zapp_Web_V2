@@ -1034,3 +1034,21 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # t_fceba6d5: as suítes .sql de supabase/tests/ eram órfãs — existiam no disco e nenhum
+      # passo do CI as executava (o check-test-inventory nem as enxergava). As AUTO-CONTIDAS
+      # criam a própria superfície de roles/tabelas e rodam numa transação que termina em
+      # ROLLBACK, montando o repo somente-leitura; por isso rodam contra PostgreSQL 17
+      # descartável pelo runner scripts/db-tests/run-suites-postgres.sh — as demais dependem de
+      # bootstrap próprio e seguem na ALLOWLIST_SQL com justificativa. SKIP_DOCKER_SHIM="1":
+      # cada suíte faz CREATE ROLE anon/authenticated/service_role, globais ao cluster — no
+      # docker-shim do E47 colidiriam com as roles do serviço.
+      - name: Provar suítes SQL auto-contidas de supabase/tests (t_fceba6d5)
+        env:
+          SUITES_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: >-
+          bash scripts/db-audit/retry-disposable-postgres-test.sh
+          bash scripts/db-tests/run-suites-postgres.sh
+          supabase/tests/r2_db_022_provenance_trigger.sql
+          supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql

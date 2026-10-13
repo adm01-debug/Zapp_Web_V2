@@ -6,11 +6,18 @@ import { join } from 'node:path';
 
 import {
   ALLOWLIST_NODE,
+  ALLOWLIST_SQL,
   RAIZ,
   casaPadrao,
+  orfaosDoInventario,
   orfaosNode,
+  orfaosSql,
   padroesNodeDeWorkflow,
+  padroesSqlDeWorkflow,
+  padroesSqlDosWorkflows,
   suitesNodeOrfas,
+  suitesSqlNoDisco,
+  suitesSqlOrfas,
 } from './check-test-inventory.mjs';
 
 // Workflow sintetico com as tres formas de bloco `run:` do repositorio: escalar dobrado
@@ -101,4 +108,72 @@ test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa 
   });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+});
+
+// ── t_fceba6d5: suítes SQL de supabase/tests/ e scripts/db-tests/ ─────────────
+// Mesmo defeito que R2-INF-013 achou nas suites Node, agora nas .sql: elas existiam no
+// disco, nenhum passo do CI as executava e o inventario nem olhava para o diretorio.
+const WORKFLOW_SQL = [
+  'name: db-guard',
+  'jobs:',
+  '  offline-contract:',
+  '    steps:',
+  '      # supabase/tests/comentada.sql so aparece em comentario, nao executa',
+  '      - name: prova (supabase/tests/mencionada-no-nome.sql)',
+  '        env:',
+  '          SUITES: supabase/tests/so-no-env.sql',
+  '        run: >-',
+  '          bash scripts/db-audit/retry-disposable-postgres-test.sh',
+  '          bash scripts/db-tests/run-suites-postgres.sh',
+  '          supabase/tests/r2_db_022_provenance_trigger.sql',
+  '      - name: glob',
+  '        run: |',
+  '          node scripts/db-tests/run-glob.mjs "scripts/db-tests/*.sql"',
+  '          # scripts/db-tests/desligada-no-run.sql',
+].join('\n');
+
+test('t_fceba6d5: padroesSqlDeWorkflow le os blocos run e ignora comentario, nome de etapa e env', () => {
+  assert.deepEqual(padroesSqlDeWorkflow(WORKFLOW_SQL), [
+    'scripts/db-tests/*.sql',
+    'supabase/tests/r2_db_022_provenance_trigger.sql',
+  ]);
+});
+
+test('t_fceba6d5: suite SQL fora dos blocos run vira orfa — e a allowlist a absolve', () => {
+  const suites = ['supabase/tests/a.sql', 'supabase/tests/b.sql'];
+  const padroes = padroesSqlDeWorkflow(WORKFLOW_SQL);
+  assert.deepEqual(orfaosSql(suites, padroes, new Set()), ['supabase/tests/a.sql', 'supabase/tests/b.sql']);
+  assert.deepEqual(orfaosSql(suites, padroes, new Set(['supabase/tests/a.sql'])), ['supabase/tests/b.sql']);
+});
+
+test('t_fceba6d5: glob de suite SQL casa um nivel por * (supabase/tests/*.sql)', () => {
+  assert.equal(casaPadrao('supabase/tests/x.sql', 'supabase/tests/*.sql'), true);
+  assert.equal(casaPadrao('supabase/tests/sub/x.sql', 'supabase/tests/*.sql'), false);
+});
+
+test('t_fceba6d5: as duas suites SQL auto-contidas estao num bloco run: real do db-guard', () => {
+  const padroes = padroesSqlDosWorkflows();
+  for (const arquivo of [
+    'supabase/tests/r2_db_022_provenance_trigger.sql',
+    'supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql',
+  ]) {
+    assert.ok(padroes.includes(arquivo), `${arquivo} deveria estar num bloco run: de workflow`);
+  }
+});
+
+test('t_fceba6d5: nenhuma suite SQL de supabase/tests ou scripts/db-tests esta orfa', () => {
+  assert.deepEqual(suitesSqlOrfas(), []);
+  assert.ok(suitesSqlNoDisco().length >= 16, 'as 16 suites SQL do disco devem entrar no inventario');
+});
+
+test('t_fceba6d5: nenhum orfao restante do inventario e uma suite SQL', () => {
+  // O inventario pode ter orfaos .test.sh de outros cartoes (pre-existentes a esta
+  // mudanca); o que esta tarefa garante e que a classe .sql nao tem orfao nenhum.
+  assert.deepEqual(orfaosDoInventario().filter(o => o.file.endsWith('.sql')), []);
+});
+
+test('t_fceba6d5: a ALLOWLIST_SQL nao guarda entrada morta', () => {
+  for (const arquivo of ALLOWLIST_SQL) {
+    assert.ok(existsSync(join(RAIZ, arquivo)), `${arquivo} esta na ALLOWLIST_SQL mas nao existe no repositorio`);
+  }
 });
