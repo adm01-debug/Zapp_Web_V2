@@ -82,3 +82,11 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# CSAT automatico no encerramento: executa a config `csat_auto_config` pela fila
+# canonica de saida. Chamada pelo front com a sessao do atendente
+# (supabase.functions.invoke, que ja manda o JWT): a RLS e a permissao
+# `send_messages` decidem o que o chamador ve e pode enfileirar. verify_jwt=true e
+# o default do CLI; declarado aqui para documentacao explicita.
+[functions.csat-auto-send]
+verify_jwt = true
