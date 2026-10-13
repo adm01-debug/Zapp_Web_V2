@@ -151,7 +151,7 @@ CREATE OR REPLACE VIEW vault.decrypted_secrets AS
   SELECT id, name, secret AS decrypted_secret, created_at FROM vault.secrets;
 INSERT INTO vault.secrets (name, secret) VALUES ('gmail_cron_secret', 'segredo-compartilhado-de-teste')
   ON CONFLICT (name) DO NOTHING;
-INSERT INTO vault.secrets (name, secret) VALUES ('zapp_project_url', 'https://sb-testref.supabase.co')
+INSERT INTO vault.secrets (name, secret) VALUES ('zapp_project_url', 'https://projeto-exemplo.invalid')
   ON CONFLICT (name) DO NOTHING;
 
 -- ── pg_cron (stub FIEL ao 1.6) ─────────────────────────────────────────────────
@@ -310,8 +310,8 @@ expect_value 'A3c. todo job de Edge tem timeout > 0' '3' \
      AND command ~ 'timeout_milliseconds := [1-9]'"
 
 expect_value 'A3d. a URL base nao fica literal no comando (vem de public.zapp_project_url())' '0' \
-  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs') AND command LIKE '%://%supabase.co%'"
-expect_value 'A3e. public.zapp_project_url() resolve do Vault quando o GUC nao existe' 'https://sb-testref.supabase.co' \
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs') AND command LIKE '%://%'"
+expect_value 'A3e. public.zapp_project_url() resolve do Vault quando o GUC nao existe' 'https://projeto-exemplo.invalid' \
   "SELECT public.zapp_project_url()"
 checa_sem_dml_direto "$migration" || fail "A4. $?"
 printf '[PASS] A4. a migration nao faz DML direto em cron.job (so leitura + schedule/alter_job)\n'

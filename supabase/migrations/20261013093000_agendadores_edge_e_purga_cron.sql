@@ -114,7 +114,7 @@ begin
   if v_url is null then
     raise exception 'zapp_project_url_indefinida' using
       errcode = 'P0001',
-      hint = 'defina ALTER DATABASE <db> SET app.settings.supabase_url OU crie o segredo zapp_project_url no Vault: o agendador chama as edges por URL absoluta';
+      hint = 'defina o parametro de banco app.settings.supabase_url (ALTER DATABASE <db> SET ...) com a URL do projeto OU crie o segredo zapp_project_url no Vault: o agendador chama as edges por URL absoluta';
   end if;
   return rtrim(v_url, '/');
 end;
