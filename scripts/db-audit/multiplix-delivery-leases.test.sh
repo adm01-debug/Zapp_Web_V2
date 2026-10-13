@@ -1090,23 +1090,23 @@ item_drain="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix
 psql_test >/dev/null <<'SQL'
 SET request.jwt.claim.role='service_role';
 INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
-VALUES ('30000000-0000-0000-0000-000000000050', 'Fila viva', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+VALUES ('30000000-0000-0000-0000-000000000080', 'Fila viva', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
 INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
-  ('60000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', 0, 'text', 'b1'),
+  ('60000000-0000-0000-0000-000000000081', '30000000-0000-0000-0000-000000000080', 0, 'text', 'b1'),
   -- Bloco proprio do 2o item: a idempotency_key do item e derivada de
   -- (dispatch, recipient, bloco) — repetir o bloco colide no UNIQUE.
-  ('60000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', 1, 'text', 'b2');
+  ('60000000-0000-0000-0000-000000000082', '30000000-0000-0000-0000-000000000080', 1, 'text', 'b2');
 INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at)
-VALUES ('40000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '50000000-0000-0000-0000-000000000051', '+551****0051', 'pending', statement_timestamp());
+VALUES ('40000000-0000-0000-0000-000000000081', '30000000-0000-0000-0000-000000000080', '50000000-0000-0000-0000-000000000081', '+551****0051', 'pending', statement_timestamp());
 INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
-  ('80000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000051', 1, 'sent', 'mx03-4a'),
-  ('80000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000052', 1, 'pending', 'mx03-4b');
+  ('80000000-0000-0000-0000-000000000081', '30000000-0000-0000-0000-000000000080', '40000000-0000-0000-0000-000000000081', '60000000-0000-0000-0000-000000000081', 1, 'sent', 'mx03-4a'),
+  ('80000000-0000-0000-0000-000000000082', '30000000-0000-0000-0000-000000000080', '40000000-0000-0000-0000-000000000081', '60000000-0000-0000-0000-000000000082', 1, 'pending', 'mx03-4b');
 SQL
-segura="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('30000000-0000-0000-0000-000000000050');" 2>&1 | tail -1 || true)"
+segura="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('30000000-0000-0000-0000-000000000080');" 2>&1 | tail -1 || true)"
 [[ "$segura" == "f" ]] \
   || fail "MX03.4: o dreno por item concluiu um disparo com item PENDENTE na fila (veio: $segura)"
-[[ "$(status_disparo 30000000-0000-0000-0000-000000000050)" == "sending" ]] \
-  || fail "MX03.4: o status mudou com item pendente na fila: $(status_disparo 30000000-0000-0000-0000-000000000050)"
+[[ "$(status_disparo 30000000-0000-0000-0000-000000000080)" == "sending" ]] \
+  || fail "MX03.4: o status mudou com item pendente na fila: $(status_disparo 30000000-0000-0000-0000-000000000080)"
 
 # (MX03.5) Protege o CANCEL do F59: o dreno por item nao pode ressuscitar um disparo
 # cancelado. O cancel ja encerra os itens pendentes (caso 4 acima); aqui o que se
@@ -1115,22 +1115,22 @@ segura="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dis
 psql_test >/dev/null <<'SQL'
 SET request.jwt.claim.role='service_role';
 INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
-VALUES ('30000000-0000-0000-0000-000000000060', 'Cancelado', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+VALUES ('30000000-0000-0000-0000-000000000090', 'Cancelado', 'Oi', 'sending', '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
 INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text)
-VALUES ('60000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', 0, 'text', 'b1');
+VALUES ('60000000-0000-0000-0000-000000000091', '30000000-0000-0000-0000-000000000090', 0, 'text', 'b1');
 INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at)
-VALUES ('40000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', '50000000-0000-0000-0000-000000000061', '+551****0061', 'pending', statement_timestamp());
+VALUES ('40000000-0000-0000-0000-000000000091', '30000000-0000-0000-0000-000000000090', '50000000-0000-0000-0000-000000000091', '+551****0061', 'pending', statement_timestamp());
 INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id)
-VALUES ('80000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', '40000000-0000-0000-0000-000000000061', '60000000-0000-0000-0000-000000000061', 1, 'pending', 'mx03-5');
+VALUES ('80000000-0000-0000-0000-000000000091', '30000000-0000-0000-0000-000000000090', '40000000-0000-0000-0000-000000000091', '60000000-0000-0000-0000-000000000091', 1, 'pending', 'mx03-5');
 SQL
-[[ "$(psql_test -Atqc "$service_session SELECT current_status FROM public.transition_multiplix_dispatch('30000000-0000-0000-0000-000000000060','cancel');" 2>&1 | tail -1 || true)" == 'cancelled' ]] \
+[[ "$(psql_test -Atqc "$service_session SELECT current_status FROM public.transition_multiplix_dispatch('30000000-0000-0000-0000-000000000090','cancel');" 2>&1 | tail -1 || true)" == 'cancelled' ]] \
   || fail 'MX03.5: o cancel nao transicionou o disparo (a correcao do F59 deve estar viva)'
-[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE id='80000000-0000-0000-0000-000000000061' AND status='cancelled';" 2>&1 | tail -1)" == '1' ]] \
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE id='80000000-0000-0000-0000-000000000091' AND status='cancelled';" 2>&1 | tail -1)" == '1' ]] \
   || fail 'MX03.5: o cancel nao encerrou o item pendente (protecao do F59 perdida)'
-[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('30000000-0000-0000-0000-000000000060');" 2>&1 | tail -1 || true)" == "f" ]] \
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('30000000-0000-0000-0000-000000000090');" 2>&1 | tail -1 || true)" == "f" ]] \
   || fail 'MX03.5: o dreno por item "concluiu" um disparo CANCELADO (ressuscitou o cancel do F59)'
-[[ "$(status_disparo 30000000-0000-0000-0000-000000000060)" == "cancelled" ]] \
-  || fail "MX03.5: o dreno por item sobrescreveu o status 'cancelled' (veio: $(status_disparo 30000000-0000-0000-0000-000000000060))"
+[[ "$(status_disparo 30000000-0000-0000-0000-000000000090)" == "cancelled" ]] \
+  || fail "MX03.5: o dreno por item sobrescreveu o status 'cancelled' (veio: $(status_disparo 30000000-0000-0000-0000-000000000090))"
 
 
 printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56). E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao do fixture do F89 segue fora de execucao — ver limite conhecido t_1ecff9cb neste arquivo). O contrato do dreno POR ITEM (`complete_multiplix_dispatch_if_items_drained`) em si esta provado em fixture propria (MX03, com o cast 42804 corrigido so para esta RPC): dreno de recipients RECUSA a fila por item, o dreno POR ITEM conclui (completed_with_failures com item falho) e e idempotente, item nao-terminal segura o disparo, e disparo CANCELADO nao e ressuscitado (protege o cancel do F59)\n'
