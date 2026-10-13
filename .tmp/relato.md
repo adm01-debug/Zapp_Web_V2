@@ -18,7 +18,11 @@ NÚMEROS MEDIDOS
 (c) Geometria do botão em 360/768/1280: rótulo e seta se cruzam 16px na vertical, seta irmã imediata do rótulo, par a 0px do centro do botão, rolagem horizontal 0px.
 
 PONTOS DO REVISOR
-1: teste de Auth criado em `src/pages/__tests__/` (jsdom, classe + estrutura), vermelho→verde acima. 2: `e2e/auth.spec.ts` devolvido à base; a geometria ficou no item (c). 3: o comentário do teste não diz mais "navegador real"; diz tokens contra `--background` e remete ao relato, que agora mede os dois fundos e diz qual deu qual número. 4: a primeira linha é `Especialista: iris`. 5: o caso do e2e era `test()` e foi removido, não virou `it()`; a medição no navegador é evidência extra, não substituta; o teste de Auth novo está citado com a prova vermelho→verde.
+Ponto 1: o teste de Auth que o cartão pedia foi criado em `src/pages/__tests__/Auth.botao-entrar.test.tsx` (jsdom, sobre a página real `src/pages/Auth.tsx`), provando `inline-flex items-center justify-center` no botão e o `<svg>` como irmão do texto; vermelho→verde na seção PROVA.
+Ponto 2: `e2e/auth.spec.ts` foi devolvido à versão da base (nenhuma linha minha nele); a medição de geometria que o caso fazia está no item (c), em 360/768/1280.
+Ponto 3: o comentário de `HeroBenefits.test.tsx` não diz mais "navegador real"; diz que a conta de tokens é contra `--background` e remete ao relato, que agora mede os DOIS fundos e diz qual deu qual número (item (a) tokens, item (b) fundo real mapa + véu nos dois temas).
+Ponto 4: a primeira linha deste relato é `Especialista: iris`.
+Ponto 5: o caso do e2e era um `test()` e foi removido, não virou `it()`; a medição no navegador é evidência extra do fundo real, não substituta; o teste de Auth novo está citado com a prova vermelho→verde (removendo `inline-flex` da classe do RippleButton em `Auth.tsx`).
 
 Arquivos: `HeroBenefits.tsx`, `HeroBenefits.test.tsx`, `Auth.botao-entrar.test.tsx`, `e2e/auth.spec.ts`, `.tmp/relato.md`. Autenticação, banco, migration, Edge Function e o `RippleButton` compartilhado ficaram intactos. As capturas são minhas (Playwright, neste workspace, nesta tarefa) e não entraram no commit.
 
