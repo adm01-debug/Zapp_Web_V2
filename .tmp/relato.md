@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## Resultado
 CONCLUÍDO.
@@ -13,5 +13,5 @@ CONCLUÍDO.
 ## Prova (comando e linha de resultado)
 - `npx vitest run src/components/dashboard/__tests__/GoalsDashboard.test.tsx` → `Test Files 1 passed (1), Tests 4 passed (4)`, 0 falhas.
 - Vermelho antes, com os 3 arquivos de produção no estado do cartão pai (`149d7c860`): mesmo comando → `Test Files 1 failed (1), Tests 4 failed (4)`.
-- Regressão das vizinhas: `npx vitest run GoalsDashboard.test.tsx DailyGoalsCard.test.tsx GoalsConfigDialog.test.tsx useGoalsDashboard.test.tsx useGoalsDashboard.contagem.test.tsx` → `Test Files 5 passed (5), Tests 50 passed (52)`, 0 falhas.
+- Regressão das vizinhas: `npx vitest run GoalsDashboard.test.tsx DailyGoalsCard.test.tsx GoalsConfigDialog.test.tsx useGoalsDashboard.test.tsx useGoalsDashboard.contagem.test.tsx` → linha literal do vitest `Test Files 5 passed (5), Tests 50 passed | 1 expected fail | 1 todo (52)` — 0 falhas. À parte: o `1 expected fail` e o `1 todo` já existiam antes deste cartão e seguem iguais.
 - Ramos cobertos pelos 4 testes: carregando (esqueleto presente, "0%" e "Progresso Geral" fora da tela), dados carregados (18% calculado), troca para "Este Mês" (título "Metas do mês", faixa de datas do mês, alvo mensal `2 / 1.000` no lugar do diário `2 / 50`, filtro `created_at` igual a `startOfMonth`), troca para "Esta Semana" (título da semana e alvo `2 / 250`) e o `radiogroup` acessível com os 3 `radio`.
