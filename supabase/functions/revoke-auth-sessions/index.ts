@@ -5,7 +5,7 @@ import {
   jsonResponse,
   requireEnv,
   Logger,
-  checkRateLimit,
+  enforceRateLimit,
   getClientIP,
   internalErrorResponse,
 } from "../_shared/validation.ts";
@@ -220,8 +220,12 @@ export async function handleRevokeAuthSessions(req: Request): Promise<Response> 
     if (req.method !== "POST") return errorResponse("Method not allowed", 405, req);
 
     const ip = getClientIP(req);
-    const rl = checkRateLimit(`revoke-auth-sessions:${ip}`, 20, 60_000);
-    if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+    const rl = await enforceRateLimit(`revoke-auth-sessions:${ip}`, 20, 60_000);
+    if (!rl.allowed) {
+      const limited = errorResponse("Rate limit exceeded", 429, req);
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return errorResponse("Unauthorized", 401, req);
