@@ -50,13 +50,22 @@ Deno.test("classifyEvolutionAction - ação desconhecida cai em control (deny by
 Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa são send", () => {
   for (const action of [
     "send-text", "send-media", "send-audio", "send-template", "send-ptv",
-    "send-reaction", "send-status", "send-chat-presence", "offer-call",
+    "send-reaction", "send-chat-presence", "offer-call",
     "mark-read", "mark-unread", "archive-chat",
   ]) {
     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
   }
   assert(SEND_ACTIONS.has("send-text"));
   assert(SEND_ACTIONS.has("offer-call"));
+});
+
+Deno.test("R2EXT-STATUS: send-status é controle (não tem contato-alvo para gate por visibilidade)", () => {
+  // O status vai para toda a base da conexão: não há contato-alvo. Enquanto
+  // estava em `send`, o envio de não-admin era negado por falta de alvo (efeito
+  // colateral) — como control, a exigência de admin/supervisor é explícita.
+  assertEquals(classifyEvolutionAction("send-status"), "control");
+  assert(CONTROL_ACTIONS.has("send-status"));
+  assert(!SEND_ACTIONS.has("send-status"));
 });
 
 Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a autenticados", () => {
