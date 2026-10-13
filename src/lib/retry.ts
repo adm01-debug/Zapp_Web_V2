@@ -1,7 +1,12 @@
 import { getLogger, generateCorrelationId } from '@/lib/logger';
 import { secureRandomFloat } from './secureRandom';
+import { isIntentionalAbort, isAbortLikeError } from '@/lib/abortError';
 
 const log = getLogger('RetryUtil');
+
+// Re-exportado de @/lib/abortError (módulo puro, sem dependência de logger)
+// para não quebrar callers existentes que importam daqui.
+export { isIntentionalAbort, isAbortLikeError };
 
 interface RetryOptions {
   maxRetries?: number;
@@ -18,6 +23,7 @@ interface RetryOptions {
  * @example
  * const data = await withRetry(() => supabase.from('contacts').select('*'), {
  *   maxRetries: 3,
+ *   shouldRetry: (err) => !isAbortLikeError(err),
  *   onRetry: (err, attempt) => console.log(`Retry ${attempt}`, err),
  * });
  */
@@ -29,7 +35,12 @@ export async function withRetry<T>(
     maxRetries = 3,
     baseDelayMs = 1000,
     maxDelayMs = 10000,
-    shouldRetry = () => true,
+    // PADRÃO SEGURO: não repete sem política explícita.
+    // `() => true` repetiria TUDO, inclusive AbortError (page unload /
+    // navegação), produzindo cascatas "[RetryUtil] All N retries exhausted
+    // AbortError: Page unload". Cada chamador DEVE passar um `shouldRetry`
+    // explícito que exclua abortos.
+    shouldRetry = () => false,
     onRetry,
   } = options;
 
@@ -42,7 +53,29 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
 
-      if (attempt >= maxRetries || !shouldRetry(error, attempt)) {
+      // Aborto intencional (page unload / navegação): nunca repete, nunca é
+      // logado como ERROR. O navegador aborta todos os fetches em voo no
+      // unload; este guard casa por `err.name` e tem precedência sobre
+      // `shouldRetry`.
+      if (isIntentionalAbort(error)) {
+        log.debug(
+          `[${correlationId}] Request aborted (attempt ${attempt + 1}) — not retrying`,
+          error
+        );
+        throw error;
+      }
+
+      // Erro real, mas a política de retry diz que não é retentável.
+      if (!shouldRetry(error, attempt)) {
+        log.warn(
+          `[${correlationId}] Not retryable — aborting after ${attempt + 1} attempt(s)`,
+          error
+        );
+        throw error;
+      }
+
+      // Retentáveis genuínos esgotados.
+      if (attempt >= maxRetries) {
         log.error(
           `[${correlationId}] All ${maxRetries} retries exhausted`,
           error
@@ -80,16 +113,20 @@ export async function withNetworkRetry<T>(
   return withRetry(operation, {
     maxRetries,
     shouldRetry: (error) => {
+      // NUNCA repete requisições abortadas (page unload, navegação): o
+      // navegador aborta todos os fetches em voo no unload e repetir só
+      // produz cascata de "All N retries exhausted" no console.
+      if (error instanceof Error && error.name === 'AbortError') return false;
       if (error instanceof Error) {
         const msg = error.message.toLowerCase();
-        // Retry on network, timeout, or 5xx errors
+        const status = (error as unknown as { status?: number }).status;
+        if (typeof status === 'number' && status >= 500) return true;
+        // Fronteira de palavra impede '502' casar dentro de '5024' ou de URL
         return (
           msg.includes('fetch') ||
           msg.includes('network') ||
           msg.includes('timeout') ||
-          msg.includes('502') ||
-          msg.includes('503') ||
-          msg.includes('504')
+          /\b(502|503|504)\b/.test(msg)
         );
       }
       return false;
