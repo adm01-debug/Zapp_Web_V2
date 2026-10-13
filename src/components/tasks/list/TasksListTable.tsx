@@ -53,9 +53,11 @@ const TONS = {
  * cabeçalho e saem como células vazias, que é o entregável de 056–060.
  *
  * Semântica e teclado: as linhas são `<tr>`; o que é acionável é `<button>`
- * nativo (checkbox, cabeçalho do grupo, contato), então Enter/Espaço, foco e o
- * anel de foco vêm do navegador. O clique do checkbox e do contato não abre os
- * detalhes (`stopPropagation`), quem abre é o clique na LINHA (etapa 063).
+ * nativo (checkbox, cabeçalho do grupo, contato e o TÍTULO), então Enter/Espaço,
+ * foco e o anel de foco vêm do navegador. O título é o caminho de TECLADO para os
+ * detalhes (o `<tr>` não recebe tabIndex/onKeyDown): clique nele — ou Enter/Espaço
+ * — chama `onOpen`. O clique do checkbox e do contato não abre os detalhes
+ * (`stopPropagation`); o clique na LINHA também abre (etapa 063).
  */
 export interface TasksListTableProps {
   byDue: BucketsByDue;
@@ -107,14 +109,14 @@ function GroupRow({
   const Chevron = open ? ChevronDown : ChevronRight;
 
   return (
-    <tr data-testid="list-group-row" data-group={section.key} className="h-9 border-t border-border/60 bg-muted/30">
+    <tr data-testid="list-group-row" data-group={section.key} className="h-10 border-t border-border/60 bg-muted/30">
       <th scope="colgroup" colSpan={COLUNAS.length} className="px-3 text-left font-normal">
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={onToggle}
             aria-expanded={open}
-            className={`flex items-center gap-1.5 text-[13px] font-semibold ${section.titleClass ?? 'text-muted-foreground'} hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded`}
+            className={`flex min-h-10 items-center gap-1.5 text-[13px] font-semibold ${section.titleClass ?? 'text-muted-foreground'} hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded`}
           >
             <Chevron className="h-4 w-4" aria-hidden />
             <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${section.tone}`}>
@@ -132,7 +134,7 @@ function GroupRow({
                 <button
                   type="button"
                   aria-label={section.hint}
-                  className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="-m-[13px] inline-flex h-10 w-10 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
@@ -183,7 +185,17 @@ function ItemRow({
           <div className="min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
+                <button
+                  type="button"
+                  data-testid="task-open"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(item);
+                  }}
+                  className="-my-[10px] flex h-10 w-full min-w-0 items-center rounded text-left text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="min-w-0 truncate">{item.title}</span>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-[320px] text-xs">{item.title}</TooltipContent>
             </Tooltip>
@@ -204,7 +216,7 @@ function ItemRow({
                 e.stopPropagation();
                 onOpenContact(item);
               }}
-              className="flex min-w-0 max-w-full items-center gap-2 rounded text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-10 min-w-0 max-w-full items-center gap-2 rounded text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ContactAvatar name={item.contact.name} avatarUrl={item.contact.avatar_url} size="sm" />
               <span className="truncate text-xs text-foreground">{nome}</span>
@@ -295,7 +307,7 @@ function SectionRows({
             <button
               type="button"
               onClick={() => setShowOlder((s) => !s)}
-              className="w-full rounded-none border-y border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              className="min-h-10 w-full rounded-none border-y border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
             >
               {showOlder ? 'ver menos' : 'ver mais (30 dias)'}
             </button>
@@ -323,7 +335,7 @@ export function TasksListTable({ byDue, now, onOpen, onToggleDone, onOpenContact
       title: 'Hoje',
       icon: Clock,
       tone: TONS.hoje,
-      titleClass: 'text-warning',
+      titleClass: 'text-[hsl(var(--warning-text))]',
       items: byDue.today,
       subtitle: daySubtitle(ancora),
     },
