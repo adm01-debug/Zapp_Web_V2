@@ -9,6 +9,28 @@ import {
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
+import {
+  buildDeadLetterSnapshot,
+  classifyIngestFailure,
+  recordWebhookFailure,
+  type ReplayArgs,
+} from "./webhook-dead-letter.ts";
+
+/**
+ * Desfecho do processamento de uma mensagem recebida.
+ *
+ * `ok: true`  — gravada ou ignorada de propósito (nada se perdeu).
+ * `ok: false, retryable: true`  — falha TRANSITÓRIA: o evento já está na
+ *   dead-letter e o roteador responde 5xx para o provedor reenviar.
+ * `ok: false, retryable: false` — falha PERMANENTE (payload inválido): fica só
+ *   na dead-letter e a resposta é 200 — reenviar repetiria o mesmo erro.
+ */
+export interface InboundResult {
+  ok: boolean;
+  retryable: boolean;
+}
+
+const INBOUND_OK: InboundResult = { ok: true, retryable: false };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // X030 — opt-out por palavra configurável + autoresposta pelo token da instância
@@ -385,7 +407,7 @@ export async function handleIncomingMessage(
   supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
-) {
+): Promise<InboundResult> {
   const payloadKey = isRecord(data.key) ? data.key : null;
   const bestJid = resolveEventJid(key, payloadKey, data);
 
@@ -412,11 +434,11 @@ export async function handleIncomingMessage(
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
     console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
-    return;
+    return INBOUND_OK;
   }
   const message = data.message as Record<string, unknown> | undefined;
   const parsed = parseMessageContent(message, data);
-  if (parsed.messageType === 'reaction') return;
+  if (parsed.messageType === 'reaction') return INBOUND_OK;
 
   let { mediaUrl } = parsed;
   let { content } = parsed;
@@ -432,11 +454,11 @@ export async function handleIncomingMessage(
   // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
   if (!content && messageType === 'text' && !mediaUrl) {
     console.log(`[INCOMING] Ignored empty message ${key.id}`);
-    return;
+    return INBOUND_OK;
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
+  if (!connection) return INBOUND_OK;
 
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
@@ -457,7 +479,7 @@ export async function handleIncomingMessage(
   // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
   // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
   // sem mensagem ou relink parcial.
-  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
+  const replayArgs: ReplayArgs = {
     p_connection_id: connection.id,
     p_phone: phone,
     p_push_name: (data.pushName as string) || null,
@@ -466,18 +488,55 @@ export async function handleIncomingMessage(
     p_media_url: mediaUrl,
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
-  });
+  };
+  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', replayArgs);
   if (txError) {
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
-    return;
+    // Sem telefone/bestJid no log: o identificador fica no hash da dead-letter.
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, externalId: key.id, messageType });
+    const kind = classifyIngestFailure(txError.code);
+    await recordWebhookFailure(supabase, {
+      externalId: key.id,
+      eventType: 'messages.upsert',
+      instance,
+      errorMessage: txError.message,
+      errorCode: txError.code ?? null,
+      snapshot: buildDeadLetterSnapshot({
+        event: 'messages.upsert',
+        instance,
+        messageId: key.id,
+        fromMe: key.fromMe,
+        messageType,
+        messageTimestamp: data.messageTimestamp,
+      }),
+      replayArgs,
+    });
+    return { ok: false, retryable: kind === 'transient' };
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
     contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
     contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
   } | null;
   if (!tx?.contact_id) {
-    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone });
-    return;
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, messageType });
+    // A RPC respondeu sem contato: nao da para dizer que e permanente — pode ser
+    // corrida de conexao. Registra a evidencia e deixa o provedor reenviar.
+    await recordWebhookFailure(supabase, {
+      externalId: key.id,
+      eventType: 'messages.upsert',
+      instance,
+      errorMessage: 'ingest_inbound_message nao retornou contato',
+      errorCode: null,
+      snapshot: buildDeadLetterSnapshot({
+        event: 'messages.upsert',
+        instance,
+        messageId: key.id,
+        fromMe: key.fromMe,
+        messageType,
+        messageTimestamp: data.messageTimestamp,
+      }),
+      replayArgs,
+    });
+    return { ok: false, retryable: true };
   }
 
   // Avatar fica fora da transacao: chamada externa a Evolution GO.
@@ -491,7 +550,7 @@ export async function handleIncomingMessage(
 
   if (tx.outcome === 'duplicate' || !tx.message_id) {
     console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
-    return;
+    return INBOUND_OK;
   }
   if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
@@ -611,6 +670,7 @@ export async function handleIncomingMessage(
       }
     }
   }
+  return INBOUND_OK;
 }
 
 /**

@@ -103,6 +103,13 @@ const ALLOWLIST = new Set([
   // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
   // e cabe junto dos outros testes de container — promover pelo dono do workflow.
   'scripts/db-audit/conversation-closures-reopen-same-day.test.sh',
+  // Dead-letter de webhook (E35/t_45568730): prova, em PG 17 descartável (docker
+  // local), que a migration 20261012120000 acrescenta external_id/replay_payload
+  // sem afrouxar o ACL — service_role grava e lê o evento reprocessável; anon e
+  // authenticated são negados (prova viva com SET ROLE). O passo no db-guard.yml
+  // é uma linha `bash scripts/db-audit/check-webhook-failures-replay.test.sh`,
+  // ao lado do check-webhook-failures-acl — promover pelo dono do workflow.
+  'scripts/db-audit/check-webhook-failures-replay.test.sh',
   // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
   // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.

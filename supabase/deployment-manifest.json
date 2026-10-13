@@ -7,9 +7,9 @@
     "sha256": "154b26da9cbdd54ed6047da35a612eb5509531ca139c116e13ada75ecde941e0"
   },
   "summary": {
-    "function_count": 81,
-    "source_file_count": 161,
-    "verify_jwt_true": 67,
+    "function_count": 82,
+    "source_file_count": 163,
+    "verify_jwt_true": 68,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -206,8 +206,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 35721,
-      "sha256": "c049737bfaa0f48ca40982252b2c05be0b9d79257313383bcbd70bbb34925468"
+      "bytes": 37847,
+      "sha256": "b9ee80c637f99bd6205e612e10595eed0145381d9e4feafdeda775f278943f3e"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -358,6 +358,11 @@
       "path": "supabase/functions/_shared/voice-copilot-authz.ts",
       "bytes": 2736,
       "sha256": "c491b2431c16f9218cb116de8e9e076b8bafa72a11c71f04a80f0bcd868956e5"
+    },
+    {
+      "path": "supabase/functions/_shared/webhook-dead-letter.ts",
+      "bytes": 6352,
+      "sha256": "f231c28daed67af5f942c38bdf7301bb04344254da2a601e16d0730c21138cab"
     },
     {
       "path": "supabase/functions/_shared/webhook-signature.ts",
@@ -566,8 +571,8 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "bytes": 17838,
-      "sha256": "03ec1f7333f7693d83dc45441c06c9165ce87808577d860877b37f01d2b9a0ea"
+      "bytes": 18959,
+      "sha256": "9f55ab77004ca26b47bca0e376b01f20aa5cbdd65d68a6a1e23a930257a4a20e"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -813,6 +818,11 @@
       "path": "supabase/functions/webhook-diagnostic/index.ts",
       "bytes": 14460,
       "sha256": "7faf98e0ef74ddddc176dea6c521bd65a33ce1ac55fb85d56262235eb77bbb3f"
+    },
+    {
+      "path": "supabase/functions/webhook-replay/index.ts",
+      "bytes": 7409,
+      "sha256": "e6220e851a84d3fd9f559ef618d40863065035637cf692084a1ac39a4c515d96"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -1533,7 +1543,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "96420912c42feb65b6173e171c9269dfb1a41068cb3066fe436a3c2abcc6ebef",
+      "source_sha256": "a1d2cd0251386309397e4c394af413df311493621b48c6d75c206ca8a397f255",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1554,6 +1564,7 @@
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-reply.ts",
         "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/webhook-dead-letter.ts",
         "supabase/functions/evolution-webhook/index.ts"
       ]
     },
@@ -2212,6 +2223,21 @@
       ]
     },
     {
+      "name": "webhook-replay",
+      "entrypoint": "supabase/functions/webhook-replay/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "3b10978b32b21fcd66070dc9d69a2609cffd86a0c3bec5725404958ec048e89c",
+      "source_files": [
+        "supabase/functions/_shared/evolution-control-authz.ts",
+        "supabase/functions/_shared/evolution-types.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/webhook-dead-letter.ts",
+        "supabase/functions/webhook-replay/index.ts"
+      ]
+    },
+    {
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
@@ -2230,5 +2256,5 @@
       ]
     }
   ],
-  "manifest_sha256": "eb0db458eb81075d252a8a1bcb116b770941f2520ae2ab020d1494447bcff8f3"
+  "manifest_sha256": "1b29144533b1822b54ff6b2b186a22501ad5ea11f709f52e21d8f5bd7c6ad3bf"
 }
