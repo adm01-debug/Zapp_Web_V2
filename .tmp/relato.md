@@ -18,7 +18,8 @@ Especialista: iris (area-front-componentes)
   `normalizeSentiment`, que só alimentava o número inventado.
 - Testes: src/lib/__tests__/engagementScore.test.ts (fórmula, fronteiras de teto
   e faixas, casos sem dados) e src/components/inbox/contact-details/__tests__/
-  ContactHeaderSection.test.tsx (informa/informa… render do componente real).
+  ContactHeaderSection.test.tsx (render do componente REAL, com só o
+  useContactStats — a fonte de dados — mockado).
   Os testes de cor do badge agora usam pontuações derivadas de estatísticas reais
   (inclusive score 100 e score 0, o ramo `s < 50` que era inalcançável).
 
@@ -33,6 +34,26 @@ Especialista: iris (area-front-componentes)
 - `npx eslint <os 4 arquivos>` → 0 erros, 0 avisos (as 4 skills de lint no staged já
   passaram no commit: baseline=0, novas=0).
 - `zapp-verify . --rapido` → verde (linha em FATOS MEDIDOS PELO FECHAR).
+
+## Testes existentes que mudaram (resposta ao aviso do juiz)
+- Os testes de engajamento da base afirmavam EXATAMENTE o número inventado:
+  `shows engagement score badge` esperava 100 vindo de sentimento/prioridade/
+  empresa/tipo e `shows lower engagement for neutral contact` esperava 50 fixo.
+  O cartão manda eliminar esse número ("Nenhum número inventado no cabeçalho"),
+  então essas asserções saíram junto com o cálculo — não é afrouxamento: nenhuma
+  prova passou a aceitar menos; elas foram trocadas por provas sobre estatísticas
+  reais (65 derivado de 100 mensagens/4 conversas/10 min/CSAT 5, e o caso "sem
+  dados não mostra nada").
+- `badge usa cor de médio engajamento na fronteira score=75` virou uma prova na
+  fronteira real (score=79, logo abaixo do limiar hot=80) e `score mínimo é 50 —
+  ramo s<50 em getScoreBadgeBg é código defensivo não alcançável` virou `score
+  baixo (pouco histórico real) usa a cor de baixo engajamento — ramo agora
+  alcançável`, que agora EXERCITA e assere o ramo de baixo engajamento (antes ele
+  não era alcançável e o teste só documentava isso).
+- As provas de contraste WCAG do badge (alto/médio, texto branco) continuam e
+  agora são alimentadas por estatísticas reais. O arquivo passou de 43 para 45
+  `it(...)`; nenhum `it` foi marcado `skip` nem teve asserção removida sem
+  substituta equivalente ou mais forte.
 
 ## O que NÃO fiz e por quê
 - Não mexi em src/services/contact.service.ts (fora dos arquivos permitidos): a
