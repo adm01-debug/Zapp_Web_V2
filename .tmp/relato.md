@@ -12,6 +12,7 @@ Especialista: edgar
 - Ramos de erro: mantive o comportamento anterior (falha total não avança o ciclo; parcial avança com status próprio) e acrescentei o ramo "nenhum destinatário permitido" → 422 sem avançar o ciclo, em vez de reportar sucesso silencioso.
 
 ## Prova
+- O teste de comportamento é Deno, em `supabase/functions/send-scheduled-report/index.test.ts` — caminho que a checagem do fechar (filtro `src/`|`tests/`) não reconhece como teste; o comando e a saída reais estão abaixo.
 - vermelho antes (gate removido, mesmos testes): `deno test --allow-env --allow-net --filter "pd23" supabase/functions/send-scheduled-report/index.test.ts` → `FAILED | 3 passed | 4 failed | 18 filtered out` e `error: Error: esperado 422, recebido 200`
 - verde depois: `deno test --allow-env --allow-net supabase/functions/send-scheduled-report/index.test.ts` → `ok | 25 passed | 0 failed`
 
