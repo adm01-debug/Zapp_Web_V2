@@ -1,28 +1,18 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- `src/hooks/inbox/useConnectionsRealtime.ts` (novo): o canal de `whatsapp_connections` passa a viver num só lugar, com tópico único por montagem (`uniqueRealtimeTopic`), assinatura e cleanup próprios, e o aviso "WhatsApp conectado!" deduplicado por transição (`announceConnected`). Antes cada consumidor abria um canal de nome FIXO e o `supabase.channel(nome)` devolvia o MESMO canal para os dois — `.on()` em canal já inscrito lança e o unmount de um cortava o realtime do outro.
-- `src/hooks/inbox/useConnectionsManager.ts`: usa o hook novo (saiu o canal fixo `whatsapp-connections-changes`); valida e normaliza o telefone **antes** de chamar a Edge (DDD inexistente ou curto demais vira motivo na tela, não 400 do `create-connection`); no `handleDelete`, `code: 'INSTANCE_GONE'` passa a ser estado a reconciliar (limpa o vínculo local e anuncia "Conexão removida", sem "Erro ao excluir"); excluir, desconectar e definir padrão invalidam `talkx-connection-status` e `catalog-send-readiness`.
-- `src/components/alerts/EvolutionDisconnectBanner.tsx`: usa o mesmo hook (saiu o canal fixo `disconnect-banner`).
-- `src/hooks/evolution/useEvolutionApiCore.ts`: o `code` do corpo de erro sobe no `Error` lançado — sem ele o `INSTANCE_GONE` era indistinguível de erro real. Additivo: só acrescenta o campo.
-- `src/hooks/evolution/useEvolutionInstance.ts`: `deleteInstance` deixou de ter toast próprio e passou a usar `callApi`; o único chamador é o `handleDelete` (conferido por `git grep`), que decide a mensagem e trata o estado reconciliado.
-- Testes novos: `src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts`, `src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts`, `src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx`.
+- `src/components/connections/ConnectionsView.tsx`: `handleSyncHistory` passou a tratar a recusa do provedor — quando a ação `evolution-sync` responde `notSupported` (ou `success === false`) mostra o toast "Histórico não suportado" com a `message` e marca `historyNotSupported`; antes caía no toast de sucesso "Sincronização concluída! 0 mensagens". Novo `handleHealthCheck` usa a ação JÁ existente `connection-health-check` (staff) e mantém `checkingHealth` por id. Os dois estados são repassados ao cartão.
+- `src/components/connections/ConnectionCard.tsx`: mostra "Último check há X" (`formatDistanceToNow` com locale ptBR) quando `last_health_check` existe; novo item "Checar agora" no menu (só `isSupervisor`, desabilitado com spinner enquanto `checkingHealth === id`) que chama `onHealthCheck`; "Sincronizar Histórico" some quando `historyNotSupported`.
+- `src/components/monitoring/MonitoringHealthLogs.tsx`: `statusCfg` ganhou `timeout` (Tempo esgotado) e `no_credentials` (Sem credencial), com rótulo pt-BR no badge no lugar do status cru; o filtro "Erro" e o contador `✗` passam a agrupar os dois; as cores do mapa e do tempo de resposta migraram para tokens do sistema (`success`/`warning`/`destructive`), sem `emerald-*`/`amber-*`.
 
 ## Prova
-- vermelho antes (os 4 arquivos de produção de `src` na versão da base `dia/2026-10-12`, com os testes novos intactos): `npx vitest run src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts` → `Test Files 2 failed | 1 passed (3); Tests 9 failed | 6 passed (15)`
-- verde depois (mesmo comando, arquivos restaurados): `Test Files 3 passed (3); Tests 15 passed (15)`
-- regressão das suítes da área: `npx vitest run src/hooks/inbox src/components/alerts src/hooks/evolution` → `Test Files 28 passed (28); Tests 242 passed | 3 expected fail | 1 todo (246)`
-- lint do arquivo que o ratchet apontou: `npx eslint src/components/alerts/EvolutionDisconnectBanner.tsx` → `✖ 1 problem (0 errors, 1 warning)` — o warning do import do client do Supabase já existia na base.
+- vermelho antes (fontes recolocadas na base `dia/2026-10-13`, testes novos mantidos): `npx vitest run <os 3 testes>` → `Test Files 3 failed (3); Tests 10 failed | 6 passed (16)`; o erro do monitor era `expected '<div …text-emerald-500…' not to match /emerald-\d/` e os cartões na base não renderizavam "Checar agora"/"Último check há X".
+- verde depois (mesmos 3 testes, fontes restauradas): `npx vitest run src/components/monitoring/__tests__/MonitoringHealthLogs.status.test.tsx src/components/connections/__tests__/ConnectionCard.saude.test.tsx src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx` → `Test Files 3 passed (3); Tests 16 passed (16)`, 0 falhas, 0 pulados.
+- regressão na vizinhança: `npx vitest run src/components/connections/__tests__ src/components/monitoring/__tests__` → `Test Files 16 passed (16); Tests 79 passed (79)`.
 
-## Dependência do cartão pai (t_a5acd992)
-- O pai não estava em `dia/2026-10-12` quando o workspace nasceu; eu cheguei a trazer a faixa com `git cherry-pick -x`, mas o `hermes-tarefa-fechar` barra por regra acima de 90 mil caracteres adicionados, porque a faixa do pai (Edge/migration) sozinha passa disso. Então o meu branch ficou `dia/2026-10-12` + os meus commits (`27f3099a3` + `5e7167a96`, 9 arquivos no total). A faixa do pai é integrada pelo próprio cartão dele na fila do integrador; a minha mudança não depende do código dele (o `INSTANCE_GONE` usado aqui é o `code` do corpo, tratado no front).
-
-## Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" (justificativa)
-- O cartão lista `useConnectionsManager.ts`, `useConnectionsRealtime.ts` (novo), `EvolutionDisconnectBanner.tsx` e os testes. `useEvolutionApiCore.ts` e `useEvolutionInstance.ts` entraram porque são **indispensáveis** a um item do CRITÉRIO DE PRONTO — tratar `code: 'INSTANCE_GONE'`:
-  - o `code` vem no corpo da resposta da Edge, mas quem lê o corpo é o `callApi` de `useEvolutionApiCore.ts` e ele montava o `Error` só com `details/apiStatus/retries`; sem subir `code`, o `handleDelete` não distingue estado reconciliado de erro real e o requisito não teria como ser implementado (+4/-1 linha, aditivo: só acrescenta um campo ao `Error`);
-  - `deleteInstance` de `useEvolutionInstance.ts` usava `withToast`, que dispara toast de erro automático: mesmo tratando o `code`, o operador veria o aviso vermelho antes do "Conexão removida". O único chamador é o `handleDelete` (conferido com `git grep deleteInstance -- src`), então nada externo perdeu o toast (5 linhas).
-- As duas são hooks da minha própria área (`area-front-hooks`) e nenhuma muda contrato de terceiro.
+Os testes chamam os componentes reais (o cartão e a view não são substituídos por mock): o de view abre o menu real do `ConnectionCard` e clica em "Sincronizar Histórico"/"Checar agora", e confere o payload de `functions.invoke`; o de cartão afirma o texto "Último check há 5 minutos", a ausência do item em GO e a chamada de `onHealthCheck`.
 
 ## O que NÃO fiz e por quê
-- Não mexi em `src/hooks/integrations/useTalkXConnectionStatus.ts` nem em `useCatalogSendReadiness.ts`: o cartão permitia invalidar de fora (feito no gerente) em vez de assinar realtime neles.
-- Não mexi em `fetchConnections` (ordem/limite): fora do defeito deste cartão.
+- Não traduzi o rótulo "Retry" nem escondi o `instance_id` cru do cartão (apontado no comentário PD-26/t_53fc1ddb): não está no O QUE FAZER deste cartão.
+- O "provedor é GO" é detectado pela RESPOSTA real da ação (`notSupported`), porque o front não conhece o flavor do servidor; o item some da tela logo após a primeira recusa (esconder é derivado do aviso, como o cartão pede).
+- Estados vazio/carregando/erro da tela de Conexões não mudaram; o health check por conexão reaproveita a ação existente e a atualização vem do realtime de `whatsapp_connections`.
