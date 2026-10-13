@@ -1,18 +1,19 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (design) (design-system-zapp)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/components/inbox/conversation-list/StatusChips.tsx: cherry-pick do commit da entrega anterior (3388112c4) — chips em pílula grande (h-11 px-4 rounded-full text-[15px] font-medium border), ativo `border-primary ring-2 ring-primary/40`, inativo `bg-muted/40 border-border text-foreground`, badge redondo (h-7 min-w-7 px-2 rounded-full text-sm font-bold). É o desenho do dono (11/10); não reescrevi nada.
+- src/components/inbox/__tests__/StatusChips.test.tsx: cherry-pick do commit da correção (602266c85) — a prova do chip "Arquivadas" estava presa às classes ANTIGAS (`border-primary/50`, `text-muted-foreground`) e por isso quebrava o empilhamento. Agora mede as classes REAIS do componente e trava a PARIDADE (Arquivadas ativa x outro chip ativo saem com exatamente as mesmas classes), além de 2 provas novas (contador 0 sem arquivadas; clique publica `archived`).
+
+## Ponto da recusa (refazer 1 de 2)
+- Ponto 1 ("quebra os TESTES no empilhamento — StatusChips.test.tsx"): resolvido em 602266c85. O teste pré-correção exigia `border-primary/50`; o componente do desenho novo aplica `border-primary` + `ring-2 ring-primary/40`. O empilhamento reproduzido com `zapp-verify full .` deixa de listar StatusChips.test.tsx entre os arquivos vermelhos.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (teste da recusa, sem a correção): `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` com o arquivo de 3388112c4 → `Tests  1 failed | 18 passed (19)`; erro `Error: expect(element).toHaveClass("border-primary/50")` no caso "aplica o mesmo estilo ativo dos demais chips em Arquivadas".
+- verde depois: `npx vitest run StatusChips.test.tsx StatusChips.contrasteChipAtendendo.test.tsx StatusChips.identidade-profile.test.tsx` → `Test Files  3 passed (3) | Tests  30 passed (30)` (inclui os contratos de contraste AA do chip "Em atendimento").
+- mutação (a prova some sem o componente do desenho novo): removido `h-11` de StatusChips.tsx → `Tests  1 failed | 18 passed (19)`, `AssertionError: chip sem "h-11"`; restaurado → `Tests 19 passed (19)`.
+- `zapp-verify full .` (empilhamento): db_guard OK, tipos OK, lint OK, migrations OK; a suíte lista 2 vermelhos que o diff NÃO toca e que já reprovam/atrapalham fora deste cartão (detalhe no comentário do cartão): talkx/RuleValueInput.test.tsx (pré-existente, reproduz sozinho nos arquivos da base) e inbox/FilesTab.period.integration.test.tsx (flake de carga; passa sozinho). StatusChips*.test.tsx passam no empilhamento.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei ConversationListSidebar.tsx nem InboxFilters.tsx (proibidos pelo cartão).
+- Não mexi em banco, Edge, produção nem credenciais.
+- Gate de tipografia do CI (`medir-tipografia.cjs`) e os 2 testes vermelhos fora do escopo: não são deste cartão (worker (ci) / donos dos arquivos).
