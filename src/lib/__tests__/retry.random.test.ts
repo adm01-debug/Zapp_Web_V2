@@ -42,6 +42,9 @@ describe('withRetry — jitter do backoff', () => {
       maxRetries: 2,
       baseDelayMs: 1000,
       maxDelayMs: 10_000,
+      // O padrão de `withRetry` mudou para seguro (não repete sem política).
+      // Este teste mede o jitter, então pede explicitamente para repetir.
+      shouldRetry: () => true,
     });
 
     await vi.advanceTimersByTimeAsync(0);
@@ -71,6 +74,7 @@ describe('withRetry — jitter do backoff', () => {
       maxRetries: 2,
       baseDelayMs: 1000,
       maxDelayMs: 1_100,
+      shouldRetry: () => true,
     });
 
     await vi.advanceTimersByTimeAsync(0);
