@@ -34,6 +34,10 @@ vi.mock('@/services/contact.service', () => ({
 vi.mock('../ContactActivityTimeline', () => ({ ContactActivityTimeline: () => <div data-testid="timeline" /> }));
 vi.mock('../ContactNotes', () => ({ ContactNotes: () => <div data-testid="notes" /> }));
 vi.mock('../ContactPurchaseHistory', () => ({ ContactPurchaseHistory: () => <div data-testid="purchases" /> }));
+// Seção Histórico (trilha de alterações): filho que fala direto com a rede —
+// mockado como os vizinhos; a prova da seção está em
+// `ContactChangeHistory.test.tsx`, que renderiza o painel com ele REAL.
+vi.mock('../ContactChangeHistory', () => ({ ContactChangeHistory: () => <div data-testid="change-history" /> }));
 vi.mock('@/hooks/integrations/useCatalogSendHistory', () => ({
   useCatalogSendHistory: () => ({ rows: [], isLoading: false, error: null }),
 }));

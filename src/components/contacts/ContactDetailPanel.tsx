@@ -13,6 +13,10 @@ import {
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
 import { ContactPurchaseHistory } from './ContactPurchaseHistory';
+// CT-025 + hook — Histórico de alterações do contato (trilha `contact_change_log`):
+// quem alterou, quando e quais campos. A seção é o mesmo cartão da ficha (não a
+// reorganiza em blocos — isso é o CT-031).
+import { ContactChangeHistory } from './ContactChangeHistory';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -424,6 +428,9 @@ export function ContactDetailPanel<T extends ContactDetail>({
 
             {/* CT-54 — Produtos enviados a este contato */}
             <ContactCatalogSendHistory contactId={contact.id} />
+
+            {/* Histórico — trilha de alterações do contato (quem, quando, quais campos) */}
+            <ContactChangeHistory contactId={contact.id} />
           </div>
         </ScrollArea>
       </motion.div>
