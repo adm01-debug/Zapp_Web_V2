@@ -31,6 +31,7 @@
 | `classify-emoji` | — |
 | `classify-sticker` | — |
 | `cleanup-rate-limit-logs` | `blocked_ips`, `rate_limit_logs`, `security_alerts` |
+| `cleanup-storage-orphans` | — |
 | `connection-health-check` | `connection_health_logs`, `profiles`, `warroom_alerts`, `whatsapp_connections` |
 | `create-user` | `gmail_accounts`, `profiles`, `user_roles`, `user_service_accounts` |
 | `crm-integration` | `carriers`, `companies`, `company_addresses`, `company_social_media`, `contact_phones`, `contacts`, `conversation_closures`, `crm_contact_links`, `crm_sync_outbox`, `customers`, `email_messages`, `email_threads`, `feature_flags`, `gmail_accounts`, `profiles`, `suppliers` |

@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -40,9 +40,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | A | 54 |
 | B | 1 |
 | C | 3 |
-| D | 6 |
+| D | 7 |
 | E | 17 |
-| **total** | **81** |
+| **total** | **82** |
 
 ## Tabela
 
@@ -69,6 +69,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:93` |
 | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:147` · `src/components/inbox/chat/MessageBubble.tsx:325` · `supabase/functions/_shared/evolution-webhook-messages.ts:711` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
+| `cleanup-storage-orphans` | D | `supabase/config.toml:91` |
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | A | `src/components/admin/useAdminData.ts:256` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
