@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, BookOpen, FileText, Search, Upload, Trash2, Edit, Brain, CheckCircle, AlertCircle, Clock, File } from 'lucide-react';
+import { Plus, BookOpen, FileText, Search, Upload, Trash2, Edit, Brain, CheckCircle, AlertCircle, Clock, File, RefreshCw } from 'lucide-react';
 import { useKnowledgeBase, CATEGORIES, CATEGORY_LABELS } from '@/hooks/integrations/useKnowledgeBase';
 
 const statusIcon = (status: string) => {
@@ -22,7 +22,14 @@ const statusIcon = (status: string) => {
 export function KnowledgeBaseView() {
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
   const prefersReducedMotion = useReducedMotion();
-  const { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile } = useKnowledgeBase();
+  const { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
+  // Trava por arquivo: o `ref` barra o segundo clique no MESMO botão antes do
+  // re-render (dois cliques no mesmo tick); o estado só pinta o `aria-busy`.
+  // Linhas diferentes seguem livres — a ação é por arquivo.
+  const deletingRef = useRef<Set<string>>(new Set());
+  const reprocessingRef = useRef<Set<string>>(new Set());
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showEditor, setShowEditor] = useState(false);
@@ -43,6 +50,30 @@ export function KnowledgeBaseView() {
     if (!formTitle.trim() || !formContent.trim()) return;
     const ok = await saveArticle({ title: formTitle, content: formContent, category: formCategory, tags: formTags.split(',').map(t => t.trim()).filter(Boolean), is_published: formPublished }, editingId || undefined);
     if (ok) setShowEditor(false);
+  };
+
+  const handleDeleteFile = async (id: string) => {
+    if (deletingRef.current.has(id)) return;
+    deletingRef.current.add(id);
+    setDeletingIds(prev => new Set(prev).add(id));
+    try {
+      await deleteFile(id);
+    } finally {
+      deletingRef.current.delete(id);
+      setDeletingIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  };
+
+  const handleReprocessFile = async (id: string, status: string) => {
+    if (reprocessingRef.current.has(id) || status === 'processing') return;
+    reprocessingRef.current.add(id);
+    setReprocessingIds(prev => new Set(prev).add(id));
+    try {
+      await reprocessFile(id);
+    } finally {
+      reprocessingRef.current.delete(id);
+      setReprocessingIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
   };
 
   const filteredArticles = articles.filter(a => {
@@ -108,7 +139,32 @@ export function KnowledgeBaseView() {
               <Card key={file.id} className="bg-card/50 border-border/30"><CardContent className="p-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center"><FileText className="w-5 h-5 text-muted-foreground" /></div>
                 <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{file.file_name}</p><p className="text-xs text-muted-foreground">{file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} • {new Date(file.created_at).toLocaleDateString('pt-BR')}</p></div>
-                <div className="flex items-center gap-2">{statusIcon(file.processing_status)}<Badge variant="outline" className="text-3xs">{file.processing_status}</Badge></div>
+                <div className="flex items-center gap-2">
+                  {statusIcon(file.processing_status)}
+                  <Badge variant="outline" className="text-3xs">{file.processing_status}</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-secondary"
+                    aria-label={`Reprocessar arquivo: ${file.file_name}`}
+                    aria-busy={reprocessingIds.has(file.id) ? 'true' : undefined}
+                    disabled={file.processing_status === 'processing' || reprocessingIds.has(file.id)}
+                    onClick={() => handleReprocessFile(file.id, file.processing_status)}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Reprocessar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive"
+                    aria-label={`Excluir arquivo: ${file.file_name}`}
+                    aria-busy={deletingIds.has(file.id) ? 'true' : undefined}
+                    disabled={deletingIds.has(file.id)}
+                    onClick={() => handleDeleteFile(file.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </CardContent></Card>
             ))}
             {files.length === 0 && <div className="text-center py-12 text-muted-foreground"><Upload className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">Nenhum arquivo enviado</p></div>}
