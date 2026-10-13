@@ -35,7 +35,7 @@ A minha entrega é o último commit, `661663154f` — `git diff 16350208f1...HEA
 - "Lembrete programado para antes do prazo." em verde → `CoerenciaLembrete.tsx`, `VISUAL.ok` + `text-success`; teste linha 84.
 - Avisos âmbar/vermelho nos outros casos → `VISUAL.after_due`/`VISUAL.no_due` (âmbar) e `VISUAL.in_past` (vermelho);
   testes linhas 96, 107 e 118. Cada estado distinto é conferido por `data-state` + par de texto, não por texto de prosa.
-- "Ajustar para 1 h antes do prazo" → botão em `CoerenciaLembrete.tsx` (`new-task-coerencia-ajustar`, `h-10` = alvo ≥40 px,
+- "Ajustar para 1 h antes do prazo" → botão em `CoerenciaLembrete.tsx` (`nt-coerencia-ajustar`, `h-10` = alvo ≥40 px,
   `<button type="button">` nativo, foco visível por `focus-visible:ring-2 ring-ring`); o teste linha 130 clica e confere o
   VALOR aplicado nos campos reais: `nt-lembrete-data` = `2026-10-20` e `nt-lembrete-hora` = `22:59` (prazo 23:59 − 1 h),
   com o banner virando verde e o atalho saindo de cena. O teste linha 149 prova o caso NEGADO: prazo já vencido não
@@ -52,7 +52,7 @@ A minha entrega é o último commit, `661663154f` — `git diff 16350208f1...HEA
 
 ## Prova
 - vermelho antes (banner ainda não montado no modal), `npx vitest run src/components/tasks/__tests__/NewTaskDialog.coerencia.test.tsx`:
-  `Test Files 1 failed (1) | Tests 6 failed | 1 passed (7)` — `Unable to find an element by: [data-testid="new-task-coerencia"]`.
+  `Test Files 1 failed (1) | Tests 6 failed | 1 passed (7)` — `Unable to find an element by: [data-testid="nt-coerencia"]`.
 - verde depois: mesmo comando → `Test Files 1 passed (1); Tests 7 passed (7)`.
 - regressão da vizinhança: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 45 passed (45); Tests 557 passed | 1 todo (558)`.
 - `npx eslint` nos 3 arquivos → 0 erro, 0 aviso (o warning de `react-refresh/only-export-components` foi evitado mantendo
