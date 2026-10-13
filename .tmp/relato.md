@@ -2,7 +2,7 @@ Especialista: iris
 
 ## O que mudou e por quê
 - `src/hooks/chat/useConversationActions.ts`: método `reopenConversation(contactId)` — chama a RPC `reopen_conversation` (migration 20261013210003, do cartão pai), avisa por toast ("Conversa reaberta"; "A conversa já está ativa" quando `reopened=false`) e devolve `{ status, reopened }` para quem chamou levar a lista ao chip certo.
-- `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` (novo): confirmação leve (AlertDialog) "Reabrir conversa?" / "Desarquivar conversa?", com nome do contato, botão travado e espera visível enquanto a RPC roda, e motivo do erro dentro do diálogo (não fecha em silêncio).
+- `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` (novo): confirmação leve (AlertDialog) "Reabrir conversa?" / "Desarquivar conversa?", com nome do contato, botão travado e espera visível enquanto a RPC roda, e motivo do erro dentro do diálogo (não fecha em silêncio). O giro da espera usa `motion-safe:animate-spin` (regra permanente de movimento reduzido).
 - `src/components/inbox/conversation-list/reopenChip.ts` (novo): mapa status→chip ('waiting'→Aguardando, resto→Em atendimento) — fonte única para a linha e para o cabeçalho.
 - `src/components/inbox/chat/ChatPanelHeader.tsx`: item "Reabrir conversa"/"Desarquivar conversa" no menu de ações, só quando `conversation.contact.conversation_status` é `resolved`/`archived`.
 - `src/components/inbox/VirtualizedRealtimeList.tsx`: botão na linha da lista (barra de ações do hover) com `aria-label` e tooltip, só para resolvida/arquivada, usando os MESMOS predicados dos chips (`isResolved`/`isArchived` de `chipCounts`) — a ação e o filtro não divergem.

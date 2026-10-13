@@ -74,7 +74,7 @@ export function ConversationReopenDialog({
             disabled={isPending}
             aria-label={verbo}
           >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />}
+            {isPending && <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" aria-hidden="true" />}
             {verbo}
           </AlertDialogAction>
         </AlertDialogFooter>
