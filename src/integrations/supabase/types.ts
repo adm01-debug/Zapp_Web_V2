@@ -11554,6 +11554,10 @@ export type Database = {
         Args: { p_campaign_id: string; p_items: Json }
         Returns: string
       }
+      log_unauthorized_inbox_scope: {
+        Args: { p_scope: string }
+        Returns: undefined
+      }
       mark_first_response: {
         Args: { p_contact_id: string }
         Returns: undefined

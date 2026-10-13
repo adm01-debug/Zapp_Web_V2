@@ -1,18 +1,42 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Pontos do refazer
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Ponto 1: rebase do trabalho aprovado na ponta atual da branch do dia.
+- O que mudei: reapliquei o commit aprovado `b9b68f96515a` sobre `dia/2026-10-13` por cherry-pick sem commit e mantive os arquivos do cartão: `supabase/migrations/20261011142742_inbox_scope_permissions.sql`, `supabase/tests/inbox_scope_permissions.sql` e `src/integrations/supabase/types.ts`.
+- Conflito resolvido: só `.tmp/relato.md` conflitou. O bloco conflitante estava em `.tmp/relato.md:3-62`; descartei o relato antigo de outro cartão que já estava na branch do dia e também descartei o relato obsoleto do commit anterior, substituindo pelo relato atual deste rebase. Não houve conflito de SQL nem de `types.ts`.
+- Prova: `git diff --cached --name-only` listou apenas `.tmp/relato.md`, `src/integrations/supabase/types.ts`, `supabase/migrations/20261011142742_inbox_scope_permissions.sql` e `supabase/tests/inbox_scope_permissions.sql`; `git diff --cached --stat` ficou restrito a esses quatro arquivos.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+Ponto 2: não acrescentar comportamento além da entrega aprovada.
+- O que mantive: a migration aprovada continua aditiva e idempotente; semeia `inbox.view_department` e `inbox.view_all`, atribui a `admin`/`supervisor`, cria `public.log_unauthorized_inbox_scope(text)`, revoga `PUBLIC`/`anon`/`service_role` e libera `authenticated`. O teste SQL real e a assinatura gerada em `types.ts` foram preservados.
+- O que não fiz: não alterei workflow, CI, manifesto, tela, hook, Edge Function nem dados fora das tabelas de catálogo de permissões previstas no cartão.
+
+Ponto 3: rodar teste do cartão e `zapp-verify full .`.
+- Teste do cartão, verde: `zapp-db-local psql . v2-2610130322434c -v ON_ERROR_STOP=1 < supabase/migrations/20261011142742_inbox_scope_permissions.sql` seguido de `zapp-db-local psql . v2-2610130322434c -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> `NOTICE: inbox_scope_permissions: suite OK (T1 catalogo, T2 papeis, T3 ACL, T4 gravacao, T5 dedupe, T6 escopo, T7 invalido, T8 anon, T9 sem identidade, T10 escrita direta, T12 seed idempotente, T13 dedupe por hora, T11 rollback)`.
+- `zapp-verify full .`, primeira execução: gates `db_guard`, `tipos`, `lint` e `migrations` passaram, mas a suíte completa falhou em teste TalkX fora do diff (`RuleValueInput.test.tsx` procurando o botão `Novo segmento`). `jev-juiz falha /home/joaquim_ataides/.local/state/zapp-verify/48b7e929f129/testes.log` classificou como `pre_existing`.
+- Confirmação fora do meu diff: com `git stash`, rodei na base o teste TalkX isolado e ele passou (`Test Files 1 passed (1); Tests 1 passed | 4 skipped (5)`). Reapliquei o stash depois.
+- `zapp-verify full . v2-2610130322434c`: gates até `travas` passaram, mas `banco_local` falhou por diferenças amplas entre o stack local e o retrato de produção (`ESTRUTURA: 185 diferença(s)`), incluindo vários objetos alheios ao cartão; não corrigi porque seria fora do escopo.
+- `zapp-verify full .`, segunda execução exata: gates `db_guard`, `tipos`, `lint` e `migrations` passaram de novo, mas a suíte completa voltou vermelha em testes fora do diff (`FilesTab.period.integration.test.tsx`, `RuleValueInput.test.tsx` e erro assíncrono em `RealtimeInboxView.selectedMessagesError.test.tsx`). `jev-juiz falha` classificou como `pre_existing`.
+- Confirmação na base: com `git stash`, rodei isolados os três testes citados pela segunda execução. TalkX passou, FilesTab passou, e `RealtimeInboxView.selectedMessagesError.test.tsx` reproduziu na base o erro `ERR_INVALID_ARG_TYPE`/WebSocket. Reapliquei o stash depois. Não mexi nesses testes porque são fora dos arquivos permitidos.
+
+## Arquivos alterados
+
+`git diff --cached --name-only`:
+
+.tmp/relato.md
+src/integrations/supabase/types.ts
+supabase/migrations/20261011142742_inbox_scope_permissions.sql
+supabase/tests/inbox_scope_permissions.sql
+
+## Verificações executadas
+
+- `zapp-db-local psql . v2-2610130322434c -v ON_ERROR_STOP=1 < supabase/migrations/20261011142742_inbox_scope_permissions.sql` -> aplicou a migration no banco local.
+- `zapp-db-local psql . v2-2610130322434c -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> `suite OK` incluindo rollback.
+- `bunx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx -t '"em breve": Lead score e Risco de churn ficam desabilitados no catálogo'` -> `Test Files 1 passed (1); Tests 1 passed | 4 skipped (5)` depois de reaplicar o diff.
+- `zapp-verify full .` -> vermelho duas vezes em testes fora do diff; registrado acima com juiz e confirmação na base.
+- `zapp-verify full . v2-2610130322434c` -> vermelho em `banco_local` por diferença estrutural ampla do stack local contra retrato de produção; registrado acima.
+
+## O que NÃO fiz
+
+- Não acessei banco remoto nem produção.
+- Não consertei testes de TalkX/FilesTab/RealtimeInbox nem diferenças gerais do stack local, porque estão fora dos arquivos permitidos e fora do comportamento aprovado deste cartão.
