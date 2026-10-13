@@ -100,9 +100,117 @@
         });
       })();
     </script>
+    <style>
+      /* Tela de abertura (`#root-loading`): pinta já no primeiro quadro, antes de o
+         bundle do React baixar e montar, para o usuário não ver fundo vazio.
+         As cores são literais IGUAIS aos tokens de `src/styles/tokens.css` — neste
+         ponto do boot esse CSS ainda não chegou, mas o script de tema acima já marcou
+         `<html class="dark">`, então claro e escuro saem certos sem flash de tema errado.
+           claro:  --background 221 20% 97% | --foreground 221 20% 12% | --muted-foreground 221 10% 40%
+           escuro: --background 240 6% 6%  | --foreground 210 40% 98% | --muted-foreground 215 20% 75%
+         Só transform/opacity animam (nada de cor ou layout) e a animação não roda com
+         reduzir-movimento ligado. */
+      #root-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: hsl(221 20% 97%);
+        color: hsl(221 20% 12%);
+        font-family: Outfit, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        text-align: center;
+        transition: opacity 0.3s ease;
+      }
+      #root-loading .root-loading__marca {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      #root-loading .root-loading__status {
+        margin-top: 6px;
+        font-size: 13px;
+        color: hsl(221 10% 40%);
+      }
+      #root-loading .root-loading__pontos {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 14px;
+      }
+      #root-loading .root-loading__ponto {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: hsl(221 83% 53%);
+        animation: root-loading-pulso 1.5s infinite ease-in-out;
+      }
+      #root-loading .root-loading__ponto:nth-child(2) { animation-delay: 0.2s; }
+      #root-loading .root-loading__ponto:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes root-loading-pulso {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+      }
+      html.dark #root-loading {
+        background: hsl(240 6% 6%);
+        color: hsl(210 40% 98%);
+      }
+      html.dark #root-loading .root-loading__status {
+        color: hsl(215 20% 75%);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #root-loading { transition: none; }
+        #root-loading .root-loading__ponto {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="root-loading">
+      <div>
+        <div class="root-loading__marca">ZAPP Web</div>
+        <div class="root-loading__status" role="status">Carregando…</div>
+        <div class="root-loading__pontos" aria-hidden="true">
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+          <span class="root-loading__ponto"></span>
+        </div>
+      </div>
+    </div>
+    <script>
+      // A abertura sai assim que o app desenha algo em #root (o React insere os filhos
+      // ali). Se o watchdog de 8s escrever a mensagem de erro em #root, o observador
+      // dispara também e o aviso de erro aparece no lugar da abertura.
+      (function () {
+        var root = document.getElementById('root');
+        var abertura = document.getElementById('root-loading');
+        if (!root || !abertura) return;
+        var soltar = function () {
+          if (abertura.parentNode) abertura.parentNode.removeChild(abertura);
+        };
+        var remover = function () {
+          abertura.style.opacity = '0';
+          var reduzido =
+            window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduzido) {
+            soltar();
+          } else {
+            setTimeout(soltar, 300);
+          }
+        };
+        var observador = new MutationObserver(function () {
+          if (root.childElementCount > 0) {
+            observador.disconnect();
+            remover();
+          }
+        });
+        observador.observe(root, { childList: true });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
