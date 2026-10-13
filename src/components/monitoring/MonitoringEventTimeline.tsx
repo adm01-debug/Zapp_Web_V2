@@ -61,7 +61,7 @@ export function MonitoringEventTimeline() {
     const load = async () => {
       const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
       const [msgRes, healthRes] = await Promise.all([
-        supabase.from('messages').select('id, sender, content, created_at').gte('created_at', oneHourAgo).order('created_at', { ascending: false }).limit(20),
+        supabase.from('messages').select('id, sender, created_at').gte('created_at', oneHourAgo).order('created_at', { ascending: false }).limit(20),
         supabase.from('connection_health_logs').select('id, instance_id, status, error_message, checked_at').order('checked_at', { ascending: false }).limit(15),
       ]);
 
@@ -72,7 +72,7 @@ export function MonitoringEventTimeline() {
         id: m.id,
         type: m.sender === 'contact' ? 'message_in' : 'message_out',
         label: m.sender === 'contact' ? 'Mensagem Recebida' : 'Mensagem Enviada',
-        detail: (m.content || '').slice(0, 60) + ((m.content || '').length > 60 ? '…' : ''),
+        detail: '',
         timestamp: m.created_at,
         isNew: !prevIds.has(m.id),
       }));
@@ -194,7 +194,9 @@ export function MonitoringEventTimeline() {
                             {formatDistanceToNow(new Date(ev.timestamp), { addSuffix: true, locale: ptBR })}
                           </span>
                         </div>
-                        <p className="text-2xs text-muted-foreground truncate mt-0.5">{ev.detail}</p>
+                        {ev.detail && (
+                          <p className="text-2xs text-muted-foreground truncate mt-0.5">{ev.detail}</p>
+                        )}
                       </div>
                     </motion.div>
                   );
