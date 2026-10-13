@@ -17,24 +17,23 @@ Item 1 — linha do tempo usa a MESMA hierarquia do cabeçalho:
 
 Item 2 — conversa encerrada sem resposta não vira "Estourado" com o relógio:
 - src/lib/slaTimeline.ts: o ramo de 1ª resposta sem carimbo e sem violação agora olha
-  `resolved_at` ANTES do ramo pendente. Com `resolved_at`, sai um marco novo
+  `resolved_at` ANTES do ramo de relógio corrente. Com `resolved_at`, sai um marco novo
   `closed_no_response` no instante do fechamento, `durationMs = resolved_at - abertura` (fixo,
-  `Math.max(0, ...)`) e situação julgada por essa duração — o relógio corrente não entra. Sem
-  `resolved_at`, segue pendente como antes (marco na abertura, situação de AGORA). O tipo
-  `SlaMilestoneKind` ganhou `closed_no_response` e o doc-comment do `buildSlaMilestones` foi
-  reescrito para a regra nova.
+  `Math.max(0, ...)`) e situação julgada por essa duração. Sem `resolved_at`, o marco segue na
+  abertura com a situação de AGORA, igual a antes. O tipo `SlaMilestoneKind` ganhou
+  `closed_no_response` e o doc-comment do `buildSlaMilestones` foi reescrito para a regra nova.
 - src/lib/__tests__/slaTimeline.test.ts: 2 testes — fechada em 2min e lida 10 dias depois
-  continua `2min`/`ok` (e o marco `first_response` pendente não existe mais); fechada depois do
-  prazo sai `breached` com a duração do fechamento.
+  continua `2min`/`ok` (e o marco `first_response` de relógio corrente não existe mais para
+  essa linha); fechada depois do prazo sai `breached` com a duração do fechamento.
 
 Job do banco que grava `first_response_breached` (pedido do supervisor): NÃO cobre este caso.
 `git grep` nas migrations mostra que `conversation_sla` só é inserida/atualizada por
 `register_first_response_internal`/`mark_first_response`
 (supabase/migrations/20260903225000_sla_first_response_v2.sql:57-66), e ali
 `first_response_breached` é gravado SEMPRE junto com `first_response_at`
-(`p_responded_at > first_message_at + 5min`). Não há job que marque `breached` no fechamento nem
-que crie a linha aberta (a coluna é `DEFAULT false`), então a linha encerrada sem resposta fica
-com `first_response_at` nulo e a flag falsa — era exatamente o ramo que caía no relógio.
+(`p_responded_at > first_message_at + 5min`). Não há job que marque `breached` no fechamento,
+então a linha encerrada sem resposta fica com `first_response_at` nulo e a flag falsa — era
+exatamente o ramo que caía no relógio.
 
 ## Prova
 - vermelho antes (item 2): `npx vitest run src/lib/__tests__/slaTimeline.test.ts` com o
@@ -46,10 +45,9 @@ com `first_response_at` nulo e a flag falsa — era exatamente o ramo que caía 
 - vermelho/verde do item 1 (execução anterior, ainda válida): `Tests  2 failed | 9 passed (11)`
   (empresa/fila caindo no padrão) → `Test Files 1 passed (1); Tests 11 passed (11)`.
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (419s)`; tipos, lint,
-  migrations e db_guard OK. (A 1ª tentativa saiu VERMELHA em tipos com `tsc saiu 137` — OOM da
-  máquina sob carga; a 2ª execução, mesmo comando, passou.)
+  migrations e db_guard OK.
 
-## O que NÃO fiz e por quê
-- Nenhuma tela/JSX: fora dos arquivos do cartão. O `scope` é API do hook; nenhum consumidor de
-  produção existe ainda (`git grep useContactSlaTimeline` só acha o próprio arquivo e o teste),
-  então passar empresa/fila/agente da conversa é trabalho do cartão da tela.
+## Fora desta entrega
+O `scope` é API do hook; nenhum consumidor de produção existe ainda (`git grep
+useContactSlaTimeline` só acha o próprio arquivo e o teste), então passar empresa/fila/agente
+da conversa é o trabalho do cartão da tela.
