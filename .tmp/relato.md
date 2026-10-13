@@ -1,27 +1,26 @@
-Especialista: workertestes
+Especialista: semisenior
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Pontos do revisor (recusa: CONFLICT com dia/2026-10-13 em .tmp/relato.md)
+- Ponto 1 (trazer dia/2026-10-13 e resolver o conflito de .tmp/relato.md mantendo o RD-083): `git rebase dia/2026-10-13` (base nova `338a420d1e`). O único conflito foi `.tmp/relato.md`, resolvido com o conteúdo do RD-083 (`git checkout --theirs`), chancelado pelo cartão. `ContactCompareDialog.tsx` e o teste novo aplicaram sem conflito — zero mudança de código neste refazer.
+- Ponto 2 (não tocar nas filiais alheias; só rodar as verificações e fechar): nenhuma filial criada, clonada ou alterada — a única ref movida foi `v2/rd-083-comparar-contatos-2610130129ff56` pelo próprio rebase (`Successfully rebased and updated refs/heads/v2/rd-083-comparar-contatos-2610130129ff56`).
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/components/contacts/ContactCompareDialog.tsx`: reescrita do diálogo de comparação no visual novo (herdado da entrega anterior, reaplicado limpo sobre a dia atual). Cabeçalho com contexto "Contatos / Comparação", título em `--font-display`, uma coluna por contato (avatar, nome, selo de tipo). Linhas de campo alinhadas, valores diferentes com `bg-primary/5` + `text-primary` (`data-diff="true"`), vazio como `—`. Limite de 3 contatos; foco devolvido ao gatilho via `onCloseAutoFocus`. Sem animação por item, sem linha de Tags. Interface de props idêntica à anterior (`open`, `onOpenChange`, `contacts`) — o único chamador (`ContactsView.tsx:158`) não precisou de mudança.
+- `src/components/contacts/__tests__/ContactCompareDialog.redesign.test.tsx` (novo): prova coluna por contato, limite de 3, destaque de diferença, `—` no vazio e foco devolvido após Esc.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (componente da dia/2026-10-13 + teste novo, rodado agora): `npx vitest run src/components/contacts/__tests__/ContactCompareDialog.redesign.test.tsx` → `Test Files 1 failed (1); Tests 4 failed | 2 passed (6)`
+- verde depois (componente RD-083 restaurado): mesmo comando → `Test Files 1 passed (1); Tests 6 passed (6)`
+- vizinhos que tocam o componente: `npx vitest run src/components/layout/__tests__/cabecalho-grupo-crm.test.tsx src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx` → `Test Files 2 passed (2); Tests 7 passed (7)` (zero falhas, zero pulados)
+- verificação do repositório: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos (72s)`, `OK lint (4s)`, `OK migrations (1s)`; `VERIFY: VERDE SEM BANCO (77s)`. `banco_local` = AVISO (sem nome de conjunto; o cartão não tem mudança de banco, etapa não se aplica).
+
+## Arquivos (git diff --name-only dia/2026-10-13...HEAD, copiado do comando)
+.tmp/relato.md
+src/components/contacts/ContactCompareDialog.tsx
+src/components/contacts/__tests__/ContactCompareDialog.redesign.test.tsx
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Sem flag nova: o cartão manda substituir o visual no mesmo componente.
+- Nada de exportar/copiar/imprimir; nenhum dado sai do sistema.
+- Não mexi em `ContactMergeDialog`, `ContactsView.tsx` nem em outros dialogs; nenhuma filial tocada.
+- Sem migration: nenhuma mudança de banco.
