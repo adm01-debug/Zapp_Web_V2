@@ -13,6 +13,12 @@ Especialista: worker (geral)
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (392s)` — `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
 - As falhas que sobram no conjunto node das guardas (mesmos arquivos que o espelho roda) são PRÉ-EXISTENTES na base, não novas: numa cópia limpa do HEAD (`git archive HEAD` extraído em `.tmp/base`) o mesmo comando dá `# tests 43 / # pass 36 / # fail 7` — `1` de `implicit-any-ratchet` (`o tsconfig.app.json ... TS7006`) e `6` de `lint-ratchet` (fixtures `--staged`), idênticas antes e depois da minha mudança. Nenhum desses arquivos é tocado pelo diff.
 
+## Pontos do cartão (refazer t_1aa8f9b8)
+- Ponto 1 (partir da entrega com cherry-pick, não recomeçar): feito — `git cherry-pick 0acdc0ce6`, que é a edge nova + o teste Deno; o `2fc637db8` citado no cartão é o relato da entrega (filho de `0acdc0ce6`). Nada foi reescrito.
+- Ponto 2 (reproduzir sobre a ponta e corrigir a causa sem afrouxar asserção): feito — reproduzi o item citado (vermelho `# pass 9 / # fail 2`) e corrigi a causa em `ESTADO.md` (linha da edge + cabeçalho + totais). `scripts/ci/docs-estado-registry-convention.unit.mjs` não foi tocado; a guarda virou `# pass 11 / # fail 0`.
+- Ponto 3 (provar o mesmo comando VERDE e `zapp-verify . --rapido` verde, fechando com o sha): feito — item do cartão saiu da lista de `not ok` do comando do espelho; `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (392s)`; sha `1483112a9`.
+- Observação do juiz ("código alterado sem teste neste commit"): o único commit de código do branch é o cherry-pick `8a6aaddc3`, que traz no MESMO commit a edge `index.ts` e o teste Deno `index.test.ts` (13 casos, `ok | 13 passed | 0 failed`); o meu commit é só doc (`ESTADO.md`), que não pede teste.
+
 ## O que NÃO fiz e por quê
 - Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o HERMES-GUARD recusa executar script de `~/arquitetura-v2` (recusou duas vezes, mensagem "mexer nas guardas/ferramentas do Hermes"). Reproduzi os MESMOS comandos do script à mão — `deno test ...` e `node --test --test-reporter=tap scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs` filtrando `^not ok ` — e o item do cartão desapareceu da lista.
 - Não afrouxei nenhuma asserção: `scripts/ci/docs-estado-registry-convention.unit.mjs` não foi tocado; o diff contra a base é só `ESTADO.md` (7 linhas) + a edge/teste do cherry-pick.
