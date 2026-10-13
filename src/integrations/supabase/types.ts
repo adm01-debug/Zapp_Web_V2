@@ -1971,6 +1971,39 @@ export type Database = {
           },
         ]
       }
+      contact_change_log: {
+        Row: {
+          campos: string[]
+          contact_id: string
+          id: number
+          operation: string
+          performed_at: string
+          performed_by: string | null
+          performed_by_db_role: string
+          performed_by_profile: string | null
+        }
+        Insert: {
+          campos?: string[]
+          contact_id: string
+          id?: never
+          operation: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Update: {
+          campos?: string[]
+          contact_id?: string
+          id?: never
+          operation?: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Relationships: []
+      }
       contact_deletion_audit: {
         Row: {
           contact_id: string
