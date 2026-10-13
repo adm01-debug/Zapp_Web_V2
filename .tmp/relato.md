@@ -12,6 +12,12 @@ Especialista: Íris (area-front-componentes)
   `supabase/tests/voip_profile_credentials_vault.sql`: NÃO editei — chegaram na branch por
   cherry-pick do commit da tarefa pai `t_c0087e07` (a migration da credencial SIP). São a dependência
   que este cartão consome; o diff os mostra só porque estão no mesmo branch.
+- `src/integrations/supabase/types.ts`: adicionei UMA entrada —
+  `set_voip_profile_credentials` com `Args`/`Returns: string` — porque a tarefa pai subiu a migration
+  mas NÃO regenerou os types, e sem isso o `handleSaveRamal` chamando a RPC não compila (o typecheck
+  ratchet acusou `Argument ... not assignable to ...` em useAdminData.ts:240). É o mínimo para a
+  branch ficar verde; a regeneração completa dos types é da trilha de banco (`scripts/db-audit/gen-types.sh`),
+  não deste cartão — deixei `kanban_comment` pedindo a regeneração oficial.
 
 ## O que mudou e por quê
 - `src/components/admin/VoipRamalField.tsx` (novo): bloco "Telefonia (ramal)" do formulário de
