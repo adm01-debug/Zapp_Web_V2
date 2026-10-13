@@ -13,19 +13,17 @@
 -- IP2 — investigacao de incidentes de pausa de instancia (filho do IP1, t_8215f5f9,
 -- migration 20261011183812_instance_pauses.sql). Duas partes, ambas ADITIVAS:
 --   1. Investigacao com ator: 3 colunas na tabela de pausas + RPC mark_pause_investigated,
---      restrita a admin/supervisor, com notas <= 1000 caracteres sem HTML validadas ANTES
---      de qualquer efeito, e UMA linha em public.audit_logs por chamada. A auditoria NAO e
---      reescrita (COALESCE): o primeiro ator e a primeira data ficam congelados e o texto
---      das notas nao e copiado para o audit_logs.
---   2. Serie de eventos de autenticacao: FONTE REAL = public.connection_health_logs, onde o
---      watchdog connection-health-check ja grava uma linha por conexao a cada verificacao
---      ('no_credentials' quando a Evolution devolve 401/403; 'error'/'timeout'/'disconnected'
---      nas demais falhas). instance_auth_event_series('24h'|'7d') agrega por instancia em
---      baldes de 1 hora (24h) ou 1 dia (7d) e devolve SOMENTE contagens: nada de
---      error_message, IP, telefone ou identificacao de pessoa. Sem tabela nova e sem
---      appender novo (o watchdog ja registra o fato). A coluna se chama auth_failures
---      porque a origem separa 401/403 do resto, mas nao um do outro.
--- Nada aqui toca dado existente: as colunas nascem NULL e as funcoes sao novas.
+--      restrita a admin/supervisor, notas <= 1000 sem HTML validadas ANTES do efeito, e UMA
+--      linha em public.audit_logs por chamada. A auditoria NAO e reescrita (COALESCE): o
+--      primeiro ator/data congela e o texto das notas nao vai para o audit_logs.
+--   2. Serie de eventos de autenticacao: FONTE REAL = public.connection_health_logs, que o
+--      watchdog connection-health-check ja grava ('no_credentials' = Evolution devolveu
+--      401/403; 'error'/'timeout'/'disconnected' nas demais falhas). instance_auth_event_series
+--      ('24h'|'7d') agrega por instancia em baldes de 1 hora (24h) ou 1 dia (7d) e devolve SO
+--      contagens — sem error_message, IP, telefone ou identificacao de pessoa. Sem tabela e
+--      sem appender novos (o watchdog ja registra o fato); a coluna se chama auth_failures
+--      porque a origem separa 401/403 do resto, nao um do outro.
+-- Nada toca dado existente: colunas nascem NULL, funcoes sao novas.
 
 -- ============================================================ 1. colunas de investigacao
 ALTER TABLE public.instance_pauses
