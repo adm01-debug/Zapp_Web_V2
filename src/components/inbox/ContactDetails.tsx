@@ -10,6 +10,7 @@ import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
 import { SidebarSection } from './contact-details/sidebar/SidebarSection';
 import { ContactIntelligencePanel } from './contact-details/ContactIntelligencePanel';
+import { ConversationMemorySection } from './contact-details/ConversationMemorySection';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -127,6 +128,7 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             >
               <ContactIntelligencePanel contactId={contact.id} />
             </SidebarSection>
+            <ConversationMemorySection contactId={contact.id} index={4} />
           </Accordion>
         </div>
       </div>
