@@ -1,31 +1,17 @@
-Especialista: Íris (area-front-componentes)
-
+Especialista: iris
 ## O que mudou e por quê
-- src/components/notifications/NotificationTypeCards.tsx: novo cartão exportado `ConnectionAlertPreferencesCard` — título "Alertas de Conexão" e DOIS interruptores de canal, "Navegador" (`push_enabled`) e "E-mail" (`email_enabled`), lidos e gravados pelo hook do t_6bf2d93f (`useConnectionAlertPreferences`); cada interruptor grava na hora via `updatePreference` (upsert otimista do hook). O TIPO do aviso (degradada/desconectada) NÃO foi duplicado aqui: ele é o interruptor mestre e já é lido pela faixa (EvolutionDisconnectBanner).
-- src/components/notifications/NotificationSettingsPanel.tsx: `<ConnectionAlertPreferencesCard />` entra na ordem pedida — entre `<SentimentAlertCard />` (Alertas de Sentimento) e `<PushNotificationCard />` (Notificações Push).
-- src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx: prova nova (4 casos).
-- 3 testes que já existiam do MESMO painel (NotificationSettingsPanel.a11y / .restaurar / .sons.a11y): só RECEBERAM um `vi.mock('@/hooks/system/useConnectionAlertPreferences')`, no mesmo padrão do `usePushNotifications` que já mockam. O painel agora renderiza o cartão novo, e o hook real chama `useAuth`, que lança sem AuthProvider — sem o mock os 3 arquivos quebravam com "useAuth must be used within an AuthProvider". Nenhuma asserção foi removida ou afrouxada (o diff só acrescenta o bloco do mock).
-
-## Onde o cartão mora (o cartão citava outro caminho)
-O cartão pede "src/components/settings/NotificationTypeCards.tsx"; não existe arquivo nesse caminho — a tela Notificações é `src/components/notifications/*` (mesmo nome de arquivo). Alterei os arquivos reais do módulo do título.
-
-## Band anterior (vem do diff desta branch, não foi escrito aqui)
-Esta tarefa depende do cartão anterior da mesma trilha (t_e8b312e0 → t_6bf2d93f). Os dois commits dele foram trazidos para esta branch por cherry-pick (9edaf598f, f14c648cd) e por isso aparecem no diff contra a base `dia/2026-10-13`:
-- supabase/migrations/20261013044440_connection_alert_preferences.sql — tabela `connection_alert_preferences` com RLS por linha (feito no t_e8b312e0).
-- supabase/tests/connection_alert_preferences_rls.sql — prova de RLS da tabela (t_e8b312e0).
-- src/integrations/supabase/types.ts — tipos da tabela (t_e8b312e0).
-- src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx e .janela-manutencao.test.tsx — testes da faixa; a faixa passou a ler `alert_on_disconnected` (t_6bf2d93f).
-- src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx — este EU editei (bloco do mock citado acima). Obs.: ele também aparece no diff pelo cherry-pick se o pai o tiver tocado; o que está aqui é o acréscimo do mock.
-
+- `src/components/notifications/NotificationTypeCards.tsx` (`ConnectionAlertPreferencesCard`): o cartão passou a ter QUATRO interruptores — os dois TIPOS do aviso, `alert_on_degraded` ("Conexão degradada") e `alert_on_disconnected` ("Conexão desconectada", o interruptor mestre que a faixa `EvolutionDisconnectBanner` consulta), e os dois CANAIS, `push_enabled` ("Navegador") e `email_enabled` ("E-mail"). São os mesmos `NotifRow` do cartão, cada um com o `aria-label` do texto visível e gravando na hora por `updatePreference({ <campo>: checked })`. Os dois grupos vêm com o rótulo "Quando alertar" e "Por onde avisar". Tokens do sistema (ícones/cor: `text-warning`, `text-destructive`, `text-primary`, `text-info`), sem animação nova.
+- O comentário do componente foi reescrito: antes dizia "só os CANAIS moram aqui"; agora descreve TIPO + CANAL, que é o que o código faz.
+- `src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx`: agora prova os QUATRO interruptores — o estado vindo do hook, a chamada de `updatePreference` com o campo e o valor certos de cada um, e o `aria-label` de cada um.
+- Nota de caminho: o cartão citava `src/components/settings/...`; o trabalho (e o commit anterior deste mesmo trabalho) vive em `src/components/notifications/`, onde a tela monta o cartão (`NotificationSettingsPanel.tsx`). Mantive o caminho existente para não duplicar componente nem quebrar imports; nenhum arquivo de `settings/` foi tocado.
 ## Prova
-- vermelho antes: `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Tests 4 failed (4)` e `Error: Element type is invalid: expected a string ... but got: undefined` (o componente ainda não existia).
-- verde depois: `npx vitest run src/components/notifications/__tests__/` → `Test Files 12 passed (12)` / `Tests 63 passed (63)` (0 falhas, 0 pulados). Inclui os 3 arquivos de painel que eu mockei.
-
-## Estados e acessibilidade
-- O cartão lê o estado do hook (não há estado local): com tudo ligado, os dois interruptores aparecem ligados; desligado no banco, aparecem desligados.
-- Cada interruptor tem nome acessível pelo texto visível da linha (`aria-label` contém "Navegador" / "E-mail", via o `NotifRow` que já existe na tela e é usado pelas outras linhas).
-- Sem animação nova, sem cor nova (só os tokens já usados nos vizinhos: `bg-warning/15`, `text-primary`, `text-info`, `text-muted-foreground`).
-
+- vermelho antes (componente antigo, só 2 interruptores): `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Tests  4 failed | 2 passed (6)`
+- verde depois: `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Test Files  1 passed (1)`, `Tests  6 passed (6)`
+- suíte da pasta: `npx vitest run src/components/notifications/__tests__` → `Test Files  12 passed (12)`, `Tests  65 passed (65)`
+## Pontos do revisor (refazer 1)
+- Ponto 1: acrescentei os interruptores de TIPO em `ConnectionAlertPreferencesCard` — "Conexão degradada" (`alert_on_degraded`) e "Conexão desconectada" (`alert_on_disconnected`), no mesmo `NotifRow`, com `aria-label` e gravando por `updatePreference`. Provam isso os testes "desligar 'Conexão degradada' grava alert_on_degraded=false" e "ligar 'Conexão desconectada' grava alert_on_disconnected=true".
+- Ponto 2: o teste passou a provar os quatro interruptores: estado vindo do hook (`aria-checked` de cada um), a chamada `updatePreference` com campo e valor certos, e o `aria-label` de cada (teste "o texto visível de cada linha está no nome acessível do interruptor").
+- Ponto 3: a primeira linha de `.tmp/relato.md` é exatamente `Especialista: iris`.
+- Ponto 4: removi a justificativa de que o tipo "já governa a faixa" como motivo para não ter UI — a UI de tipo existe agora. Sobre a captura de tela do item 1: NÃO foi feita (ver abaixo).
 ## O que NÃO fiz e por quê
-- Não mexi em hook, banco, migration nem Edge: a preferência e a RLS já vieram do t_6bf2d93f/t_e8b312e0 (cherry-picked nesta branch, commits 9edaf598f e f14c648cd).
-- Não adicionei interruptor de TIPO (degradada/desconectada) na tela: o cartão pede só os canais, e o tipo já governa a faixa.
+- Captura de tela do item 1: NÃO foi feita. Não há, nesta execução, servidor de desenvolvimento nem navegador (a regra da fábrica proíbe subir preview/Vite e usar sessão autenticada salva — R1 de E2E), e imagem binária no diff é recusada por não ser conferível. A prova visual aqui é o DOM real renderizado pelo teste (quatro interruptores, `aria-checked` e `aria-label` de cada) mais os tokens do sistema usados nos `NotifRow`.
