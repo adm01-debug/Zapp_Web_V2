@@ -171,7 +171,7 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
     expect(result.current.prefs.density).toBe('compact');
 
     await esperarEnvio();
-    expect(h.gravacoes.at(-1)?.prefs.density).toBe('compact');
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.density).toBe('compact');
   });
 
   it('falha na leitura não trava o hook nem joga o cache fora', async () => {
@@ -214,7 +214,7 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
     act(() => { result.current.clearPreference('density'); });
     await esperarEnvio();
 
-    expect(h.gravacoes.at(-1)?.prefs).toEqual({});
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs).toEqual({});
     expect(result.current.prefs.density).toBeUndefined();
   });
 });

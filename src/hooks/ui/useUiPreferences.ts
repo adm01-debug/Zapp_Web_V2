@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { log } from '@/lib/logger';
 
 /**
@@ -305,7 +306,7 @@ export async function enviarPendentes(): Promise<void> {
   try {
     const resposta = await supabase
       .from(UI_PREFERENCES_TABLE)
-      .upsert({ user_id: uid, prefs: corpo }, { onConflict: 'user_id' });
+      .upsert({ user_id: uid, prefs: corpo as unknown as Json }, { onConflict: 'user_id' });
     if (resposta?.error) throw resposta.error;
     enviados.forEach((serializado, chave) => {
       if (pendentes.get(chave) === serializado) pendentes.delete(chave);

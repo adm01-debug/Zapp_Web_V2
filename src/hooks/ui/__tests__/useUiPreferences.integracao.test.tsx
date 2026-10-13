@@ -75,8 +75,8 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     expect(result.current.density).toBe('compact');
     await esperarEnvio();
 
-    expect(h.gravacoes.at(-1)?.user_id).toBe('user-1');
-    expect(h.gravacoes.at(-1)?.prefs).toEqual({ density: 'compact' });
+    expect(h.gravacoes[h.gravacoes.length - 1]?.user_id).toBe('user-1');
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs).toEqual({ density: 'compact' });
   });
 
   it('useDensity: ciclo de densidade continua funcionando e também é gravado', async () => {
@@ -90,7 +90,7 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     act(() => { result.current.cycleDensity(); });
     expect(result.current.density).toBe('dense');
     await esperarEnvio();
-    expect(h.gravacoes.at(-1)?.prefs.density).toBe('dense');
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.density).toBe('dense');
   });
 
   it('useDensity: edição durante a leitura atrasada do servidor não é desfeita', async () => {
@@ -105,7 +105,7 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     await esperarEnvio();
 
     expect(result.current.density).toBe('compact');
-    expect(h.gravacoes.at(-1)?.prefs.density).toBe('compact');
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.density).toBe('compact');
   });
 
   it('useMessageSignature: preferência da conta vence e o toggle vai para o servidor', async () => {
@@ -119,7 +119,7 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     act(() => { result.current.toggleSignature(); });
     expect(result.current.signatureEnabled).toBe(true);
     await esperarEnvio();
-    expect(h.gravacoes.at(-1)?.prefs.signatureEnabled).toBe(true);
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.signatureEnabled).toBe(true);
   });
 
   it('useCustomShortcuts: o mapa de atalhos da conta entra na tela e a edição sobe', async () => {
@@ -135,7 +135,7 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     act(() => { result.current.updateShortcut('templates', 'b', { ctrlKey: true, shiftKey: true }); });
     await esperarEnvio();
     // O envio carrega o mapa inteiro (a leitura do servidor não é perdida ao gravar).
-    expect(h.gravacoes.at(-1)?.prefs.shortcuts).toMatchObject({
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.shortcuts).toMatchObject({
       'focus-input': { key: 'j', modifiers: { ctrlKey: true } },
       templates: { key: 'b', modifiers: { ctrlKey: true, shiftKey: true } },
     });
