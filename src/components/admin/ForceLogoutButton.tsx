@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ReauthGuard } from '@/components/auth/ReauthDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,10 @@ interface ForceLogoutButtonProps {
 
 export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) {
   const [loading, setLoading] = useState(false);
+  // A confirmação do diálogo só ARMA a ação; a revogação em si espera a
+  // re-autenticação (t_5e689954) — forçar logout derruba as sessões do alvo,
+  // então exige identidade confirmada.
+  const [showReauth, setShowReauth] = useState(false);
   // Reentrância: um duplo clique no botão de confirmar dispara o handler duas
   // vezes antes do estado `loading` refletir no DOM. O ref é síncrono e fecha a
   // porta já na primeira entrada, garantindo uma única invocação da Edge Function.
@@ -52,6 +57,7 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
   };
 
   return (
+    <>
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
@@ -75,7 +81,7 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleForceLogout}
+            onClick={() => setShowReauth(true)}
             disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
           >
@@ -85,5 +91,14 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+      {showReauth && (
+        <ReauthGuard
+          open
+          actionLabel={`Forçar logout de ${userName}`}
+          onOpenChange={(next) => { if (!next) setShowReauth(false); }}
+          onConfirmed={handleForceLogout}
+        />
+      )}
+    </>
   );
 }

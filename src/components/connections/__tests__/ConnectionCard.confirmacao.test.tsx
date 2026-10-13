@@ -37,6 +37,15 @@ vi.mock('@/hooks/system/useUserRole', () => ({
     loading: false,
   }),
 }));
+// t_5e689954: a exclusão agora passa pela re-autenticação antes de executar.
+const reauthMock = vi.hoisted(() => ({ reauthenticate: vi.fn(async () => ({ success: true })) }));
+vi.mock('@/hooks/auth/useReauthentication', () => ({
+  useReauthentication: () => ({ reauthenticate: reauthMock.reauthenticate, isReauthenticating: false }),
+}));
+vi.mock('@/hooks/auth/useMFA', () => ({
+  useMFA: () => ({ verifyTOTP: vi.fn(), loading: false }),
+  useMfaFactors: () => ({ data: [], isLoading: false }),
+}));
 
 import { ConnectionCard } from '../ConnectionCard';
 
@@ -92,9 +101,14 @@ describe('ConnectionCard — confirmação das ações destrutivas (t_a369905d)'
     fireEvent.click(within(dialog).getByRole('button', { name: 'Excluir conexão' }));
     expect(props.onDelete).not.toHaveBeenCalled();
 
-    // Nome exato: libera e executa UMA vez com a conexão do cartão.
+    // Nome exato: libera o diálogo, mas a exclusão ainda espera a re-autenticação.
     fireEvent.change(campo, { target: { value: 'Principal' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Excluir conexão' }));
+    expect(props.onDelete).not.toHaveBeenCalled();
+
+    fireEvent.change(await screen.findByLabelText('Senha Atual'), { target: { value: 'segredo' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
     await waitFor(() => expect(props.onDelete).toHaveBeenCalledTimes(1));
     expect(props.onDelete).toHaveBeenCalledWith(connection);
   });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Shield, Users, UserPlus, Trash2, Search, Loader2, Crown, Eye, Headphones, Star, AlertTriangle, RotateCw } from 'lucide-react';
 import { useUserRole } from '@/hooks/system/useUserRole';
@@ -12,6 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ReauthGuard } from '@/components/auth/ReauthDialog';
+
+/** Troca/remoção de papel só executa depois da identidade confirmada. */
+interface PendingRoleAction {
+  label: string;
+  run: () => void | Promise<void>;
+}
 
 const ROLE_CONFIG = {
   admin: { label: 'Administrador', icon: Crown, color: 'bg-destructive/10 text-destructive dark:bg-destructive/20/30 dark:text-destructive', description: 'Acesso total ao sistema' },
@@ -28,6 +36,10 @@ export default function RolesPage() {
     availableUsers, userToRemove, setUserToRemove, updating,
     handleAddRole, handleRemoveRole, groupedUsers,
   } = useRolesPageState();
+  // A role é o que define acesso no sistema: atribuir ou remover só acontece
+  // depois da re-autenticação (t_5e689954). O guarda captura o handler do
+  // render do clique, então o alvo selecionado não se perde ao fechar o diálogo.
+  const [pending, setPending] = useState<PendingRoleAction | null>(null);
 
   if (!isAdmin) {
     return (
@@ -117,7 +129,7 @@ export default function RolesPage() {
                                 <p className="text-xs text-muted-foreground truncate">{user.profile?.email}</p>
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => setUserToRemove(user)} className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
+                            <Button variant="ghost" size="sm" aria-label={`Remover role de ${user.profile?.name || 'usuário'}`} onClick={() => setUserToRemove(user)} className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </motion.div>
@@ -170,7 +182,7 @@ export default function RolesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
-            <Button onClick={handleAddRole} disabled={!selectedUser || updating}>
+            <Button onClick={() => setPending({ label: 'Atribuir papel', run: async () => { setShowAddDialog(false); await handleAddRole(); } })} disabled={!selectedUser || updating}>
               {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Atribuir
             </Button>
           </DialogFooter>
@@ -187,12 +199,21 @@ export default function RolesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={updating}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveRole} disabled={updating} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction onClick={() => setPending({ label: `Remover papel de ${userToRemove?.profile?.name ?? 'usuário'}`, run: handleRemoveRole })} disabled={updating} className="bg-destructive hover:bg-destructive/90">
               {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {pending && (
+        <ReauthGuard
+          open
+          actionLabel={pending.label}
+          onOpenChange={(next) => { if (!next) setPending(null); }}
+          onConfirmed={pending.run}
+        />
+      )}
     </div>
   );
 }

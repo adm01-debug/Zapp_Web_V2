@@ -5,6 +5,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ReauthGuard } from '@/components/auth/ReauthDialog';
 
 /**
  * Confirmação em duas etapas da exclusão da conexão (paridade V3 -> V2,
@@ -23,6 +24,9 @@ export function ConnectionDeleteDialog({
   open, onOpenChange, connectionName, onConfirm,
 }: ConnectionDeleteDialogProps) {
   const [typedName, setTypedName] = useState('');
+  // Etapa 3 (t_5e689954): confirmado o nome, a exclusão ainda espera a
+  // re-autenticação — apagar a instância na Evolution não tem volta.
+  const [showReauth, setShowReauth] = useState(false);
   const matches = typedName.trim() === connectionName.trim();
 
   // Zera o campo ao fechar sem useEffect (o lint barra setState sincrono em
@@ -34,6 +38,7 @@ export function ConnectionDeleteDialog({
   };
 
   return (
+    <>
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -59,7 +64,7 @@ export function ConnectionDeleteDialog({
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={!matches}
-            onClick={onConfirm}
+            onClick={() => setShowReauth(true)}
             className="bg-destructive hover:bg-destructive/90"
           >
             Excluir conexão
@@ -67,5 +72,14 @@ export function ConnectionDeleteDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+      {showReauth && (
+        <ReauthGuard
+          open
+          actionLabel={`Excluir a conexão ${connectionName}`}
+          onOpenChange={(next) => { if (!next) setShowReauth(false); }}
+          onConfirmed={onConfirm}
+        />
+      )}
+    </>
   );
 }

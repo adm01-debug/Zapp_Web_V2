@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +11,15 @@ import {
   UserCheck, UserX, Edit,
 } from 'lucide-react';
 import { ForceLogoutButton } from './ForceLogoutButton';
+import { ReauthGuard } from '@/components/auth/ReauthDialog';
 import { accessLevelConfig, type UserWithRole } from './useAdminData';
 import type { AppRole } from '@/hooks/system/useUserRole';
+
+/** Ação destrutiva retida até a re-autenticação confirmar a identidade. */
+interface PendingAdminAction {
+  label: string;
+  run: () => void | Promise<void>;
+}
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -26,7 +34,12 @@ interface AdminUsersTableProps {
 }
 
 export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser }: AdminUsersTableProps) {
+  // Nenhuma ação destrutiva da tabela sai direto: o clique só arma a ação e o
+  // ReauthGuard só a executa depois da identidade confirmada (t_5e689954).
+  const [pending, setPending] = useState<PendingAdminAction | null>(null);
+
   return (
+    <>
     <Card className="border border-secondary/20 bg-card">
       <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
       <CardContent>
@@ -72,7 +85,7 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                   </TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select value={user.role} onValueChange={(v) => onRoleChange(user.user_id, v as AppRole)}>
+                      <Select value={user.role} onValueChange={(v) => setPending({ label: `Alterar papel de ${nome}`, run: () => onRoleChange(user.user_id, v as AppRole) })}>
                         <SelectTrigger className="w-32" aria-label={`Alterar role de ${nome}`}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
@@ -105,7 +118,10 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                         <ForceLogoutButton userId={user.user_id} userName={user.name} />
                         <Switch
                           checked={user.is_active !== false}
-                          onCheckedChange={() => onToggleActive(user)}
+                          onCheckedChange={() => setPending({
+                            label: user.is_active !== false ? `Desativar ${nome}` : `Ativar ${nome}`,
+                            run: () => onToggleActive(user),
+                          })}
                           aria-label={`Ativar/desativar ${nome}`}
                         />
                       </div>
@@ -118,5 +134,14 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
         </Table>
       </CardContent>
     </Card>
+      {pending && (
+        <ReauthGuard
+          open
+          actionLabel={pending.label}
+          onOpenChange={(next) => { if (!next) setPending(null); }}
+          onConfirmed={pending.run}
+        />
+      )}
+    </>
   );
 }
