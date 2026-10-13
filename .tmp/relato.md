@@ -16,6 +16,9 @@ Especialista: worker (sql) (area-sql-banco)
   → todos os blocos A (defeito) e B (RPC) PASS, incluindo B.5b (o gatilho regrava updated_at em exatamente 2 linhas), B.8/B.9 (falha aborta tudo, padrao anterior permanece), B.14 (sem oráculo), B.15 (anon sem EXECUTE), B.18–B.21 (serializacao por advisory lock, termina com exatamente UMA padrao) — saída final `PASS: TRA-004 ...` e EXIT=0.
 - `git diff --stat dia/2026-10-13` mostra só os 4 arquivos do #174; nenhum marcador de conflito restante.
 
+## Sobre o aviso "SEM DDL/migration" do fechar (não procede)
+O rodapé do cartão é um template que traz "sem DDL/Edge/dependência nova salvo se o pedido original exigia". Este cartão de banco tem o pedido original JUSTAMENTE sobre a migration/RPC #174 (o defeito é a troca de conexão padrão feita por dois UPDATE sem transação; a correção é a RPC atômica, que só existe no banco). A migration e a suíte de banco estão na entrega porque o pedido original as exige — nada de DDL fora do escopo. Não há como retirar a migration sem reabrir o defeito original.
+
 ## O que NÃO fiz e por quê
 - Não toquei na chave `rpc:talkx_campaign_window_open:*` nem na NOTA 2026-10-11: são de outro cartão (t_7457095e) e continuam válidas enquanto a migration do talkx estiver fora de `dia/`.
 - Não alterei a migration do #174 além do stack: o corpo e o rollback vieram dos commits originais, inclusive a linha `-- Rollback (SQL executavel, na ordem)` já no formato do modelo.
