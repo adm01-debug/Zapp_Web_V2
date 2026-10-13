@@ -151,35 +151,32 @@ export function useAuthForm() {
 
   const handlePasskeyLogin = async () => {
     const result = await authenticateWithPasskey(formData.email || undefined);
-    if (!result.success || !result.userId) {
+    if (!result.success || !result.token_hash) {
       toast({ title: 'Erro ao entrar com Passkey', description: 'A autenticação com a passkey não foi concluída.', variant: 'destructive' });
       return;
     }
-    if (!result.userEmail) {
-      toast({ title: 'Erro ao entrar com Passkey', description: 'Não foi possível identificar a conta para enviar o link de acesso.', variant: 'destructive' });
-      return;
-    }
-    const { error } = await supabase.auth.signInWithOtp({
-      email: result.userEmail,
-      options: { shouldCreateUser: false },
+    // A Edge (`verify-authentication`, PH-01) já validou a asserção e devolveu um
+    // `token_hash` de uso único. Trocamos esse token por sessão AQUI: o antigo
+    // `signInWithOtp` só ENVIAVA o link por e-mail e deixava o usuário sem sessão
+    // nenhuma — a tela protegida o devolvia ao /auth (item #71).
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: result.token_hash,
+      type: 'magiclink',
     });
-    if (error) {
-      toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
+    if (error || !data?.session) {
+      // Recusa genérica: não descreve o token nem o estado da conta (sem
+      // enumeração — não revela se a conta existe).
+      toast({
+        title: 'Erro ao entrar com Passkey',
+        description: 'Não foi possível concluir o login com a passkey. Tente novamente.',
+        variant: 'destructive',
+      });
       return;
     }
-    // signInWithOtp só ENVIA o link de acesso por e-mail — NÃO cria sessão.
-    // Anunciar "autenticado" e navegar aqui fazia o usuário ver o login
-    // concluído sem sessão nenhuma (a tela protegida o devolvia ao /auth).
-    // Só anuncia e navega quando existe sessão DE FATO e ela pertence ao
-    // usuário que a passkey validou: sessão de outra conta (login anterior,
-    // aparelho compartilhado) não prova este login.
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.id && session.user.id === result.userId) {
-      toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-      navigate(destinoPosLogin);
-    } else {
-      toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
-    }
+    // A sessão foi criada pelo próprio token — é a prova do login. O destino
+    // pós-login (inclui o gate de 2FA em rota, SH2) é o mesmo do login por senha.
+    toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
+    navigate(destinoPosLogin);
   };
 
   const handleGoogleLogin = async () => {
