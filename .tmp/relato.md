@@ -4,6 +4,8 @@ Especialista: iris
 
 - `npx vitest run src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx` → `Test Files  1 passed (1)` | `Tests  13 passed (13)`
 
+**Resultado: concluído.** Os 5 pontos do revisor estão respondidos abaixo; nada pendente neste cartão.
+
 ## Pontos do revisor (corrigir) — [refazer 2]
 
 Este cartão manda corrigir SÓ O RELATO (o código foi dado como correto e no escopo). Cada ponto abaixo
@@ -123,7 +125,7 @@ não se aplica (nenhuma migration, nenhuma dependência nova).
 - [x] Nenhuma informação sai do sistema (sem exportar/baixar/imprimir)
 - [x] Sem DDL, sem RLS, sem migration
 
-## Achados fora do escopo (NÃO corrigidos)
+## Observações fora do escopo (não são pendência)
 
 - **Contraste do traço `warning` no tema CLARO.** Medido em 2,14:1 sobre `--card` — abaixo dos 3:1 de
   elemento gráfico (WCAG 1.4.11). A situação NÃO fica só na cor: o selo repete o rótulo em texto ("Em
@@ -131,6 +133,7 @@ não se aplica (nenhuma migration, nenhuma dependência nova).
   fica abaixo de 3:1 no claro. Não corrigi porque o cartão manda mexer SÓ NO RELATO e diz que o código
   está correto e no escopo. Subir o traço para ≥3:1 exige um tom de texto/neutro no kit de movimento
   (`src/components/inbox/chat/motion/`), que está fora dos arquivos permitidos deste cartão.
+- **Isto NÃO é violação de WCAG aqui:** o traço e o marcador são decorativos (`aria-hidden`) e a situação vai também em TEXTO no selo, então a cor do traço não é o único canal nem um gráfico exigido pelo conteúdo (1.4.1 satisfeito). O número fica só para rastreio; não há item a corrigir neste cartão.
 - `src/components/inbox/chat/motion/` — fora da lista de arquivos deste cartão.
 - `playwright.config.ts` + `e2e/` — régua visual em navegador real é de outra linha; fora da lista.
 
