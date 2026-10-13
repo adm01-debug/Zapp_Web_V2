@@ -1,7 +1,7 @@
 # 🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD)
 
-**Versão:** 1.0  
-**Data:** 2026-04-11  
+**Versão:** 1.1  
+**Data:** 2026-10-13  
 **Autor:** Claude AI — Compliance Agent  
 **Status:** Aprovado  
 **Base Legal:** Lei 13.709/2018 (LGPD) + GDPR (referência)
@@ -26,6 +26,7 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 - Supabase `tnnnlkbymytvtqngbbqh` (banco principal)
 - Supabase `pgxfvjmuubtbowutlide` (CRM externo)
 - Storage buckets (avatars, audio-messages, whatsapp-media)
+- Provedor externo ElevenLabs (voz e transcrição — ver §4.6)
 
 ---
 
@@ -99,6 +100,31 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 | `avatars` | Imagem perfil | 5 anos* | Excluir |
 | `audio-messages` | Áudio WhatsApp | 2 anos | Excluir |
 | `whatsapp-media` | Mídia geral | 2 anos | Excluir |
+
+### 4.6 Operadores e sub-processadores — ElevenLabs (voz e transcrição)
+
+O Zapp Web V2 é **operador** (§3) e envia conteúdo a um provedor externo, a **ElevenLabs**, nas
+funções de voz e transcrição. O detalhamento (o que sai, finalidade, base legal, retenção do lado
+do provedor, transferência internacional e auditoria do webhook) está em
+[`docs/adr/ADR-009-elevenlabs-operador-de-dados.md`](adr/ADR-009-elevenlabs-operador-de-dados.md).
+
+| Fluxo no produto | O que sai para o provedor | Retenção no produto |
+|---|---|---|
+| Síntese de voz (`elevenlabs-tts`, `elevenlabs-tts-stream`, `elevenlabs-dialogue`) | texto do roteiro (pode citar o cliente) | não persiste |
+| Conversão de voz (`elevenlabs-sts`, `voice-changer`) | áudio do atendente | não persiste |
+| Transcrição (`ai-transcribe-audio`) | áudio do cliente (mensagem recebida) | texto em `messages` (§4.1: 2 anos); áudio no bucket (§4.5: 2 anos) |
+| Conversa em tempo real / transcrição ao vivo (`elevenlabs-agent-token`, `elevenlabs-scribe-token`) | áudio do microfone, **direto do navegador** para o provedor (o servidor só emite credencial de uso único) | não persiste no produto |
+| Efeitos/música e design de voz (`elevenlabs-sfx`, `elevenlabs-voice-design`) | prompt/descrição textual | não persiste |
+
+- **Base legal:** a mesma que rege a conversa de atendimento (§4.1) — execução de contrato /
+  legítimo interesse **do controlador**; o produto trata como operador, por instrução do
+  controlador.
+- **Logs e ledger:** nenhuma Edge de síntese/conversão/transcrição grava o texto ou o áudio no
+  log (só tamanho e metadados), e o **ledger de IA** (`ai_usage_logs`) guarda apenas metadados de
+  consumo (provedor, endpoint, unidade e quantidade) — nunca conteúdo. Única divergência aberta:
+  `elevenlabs-sfx` loga o prompt textual (ver ADR-009, "Limitações declaradas").
+- **Retenção do provedor e transferência internacional:** a confirmar no contrato do provedor
+  (não verificável do repositório); a ADR-009 fica *Proposed* até a confirmação pelo dono.
 
 ---
 
@@ -354,6 +380,7 @@ Deno.serve(async () => {
 - [ ] Política de privacidade atualizada
 - [ ] Termos de uso atualizados
 - [ ] Registro de atividades de tratamento
+- [x] Operador de voz/transcrição (ElevenLabs) registrado — §4.6 e ADR-009
 - [ ] RIPD (Relatório de Impacto)
 
 ---
@@ -372,6 +399,7 @@ Deno.serve(async () => {
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
 | 1.0 | 2026-04-11 | Claude AI | Versão inicial |
+| 1.1 | 2026-10-13 | worker (documentação) | Registra a ElevenLabs como operador de voz/transcrição (§2, §4.6) e cita a ADR-009; atualiza o checklist de documentação |
 
 ---
 
