@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { CircleHelp, Loader2, Mail, Plus, RefreshCw, Search, Wifi } from 'lucide-react';
+import { CircleHelp, Loader2, Mail, Plus, RefreshCw, Search, Wifi, X } from 'lucide-react';
 import { useGmail } from '@/hooks/integrations/useGmail';
 import { useEmailThreadListQuery } from '@/hooks/email/useEmailThreadListQuery';
 import { useEmailThreadForContact } from '@/hooks/integrations/useEmailThreadForContact';
@@ -75,7 +75,25 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     accounts, accountsLoading, accountsError, refetchAccounts, activeAccount,
     threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
     syncLabels, unreadCount, threadsTotalCount, threadsPageCount, subscribeToThreads, requestedThread, downloadAttachment,
+    refetchThreads,
   } = useGmail(accountId, selectedThreadId, listQuery);
+  // Estados da busca do cabeçalho: o termo digitado entra na MESMA consulta da
+  // lista (espera curta de 300 ms), então o rótulo reflete o que a consulta
+  // devolveu — buscando, erro ou nenhum resultado — em vez de a área ficar muda.
+  const globalSearchTerm = globalSearchQuery.trim();
+  const appliedGlobalSearchTerm = debouncedGlobalSearch.trim();
+  // A espera curta ainda não venceu: o termo digitado ainda não foi ao servidor.
+  const globalSearchApplying = globalSearchTerm !== appliedGlobalSearchTerm;
+  const globalSearchActive = globalSearchTerm.length > 0;
+  const globalSearchBusy = globalSearchActive && (globalSearchApplying || threadsLoading);
+  const globalSearchFailed = globalSearchActive && !globalSearchApplying && Boolean(threadsError);
+  const globalSearchEmpty = globalSearchActive && !globalSearchBusy && !globalSearchFailed && !threadsLoading && threads.length === 0;
+  const threadsErrorCopy = useMemo(() => emailLoadErrorCopy(threadsError), [threadsError]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const clearGlobalSearch = useCallback(() => {
+    setGlobalSearchQuery('');
+    setDebouncedGlobalSearch('');
+  }, []);
   // A página pedida nunca passa do intervalo conhecido: no clique ela já é
   // limitada a `Math.min(page, Math.max(1, threadsPageCount))` e, se o total
   // encolher depois (realtime/filtro), este efeito refaz a consulta na última
@@ -248,8 +266,42 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
             <div className="min-w-0"><h1 className="text-xl font-semibold tracking-tight">Email</h1><p className="hidden text-xs text-muted-foreground sm:block">Comunicação profissional, organizada como uma conversa.</p></div>
           </div>
           <div className="relative order-3 hidden w-full flex-1 sm:block md:order-none md:ml-4 md:max-w-xl">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input aria-label="Busca global do Email" value={globalSearchQuery} onChange={event => setGlobalSearchQuery(event.target.value)} placeholder="Buscar e-mails, remetentes, assuntos, anexos…" className="h-10 border-input bg-input pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring" />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                ref={searchInputRef}
+                aria-label="Busca global do Email"
+                aria-busy={globalSearchBusy}
+                value={globalSearchQuery}
+                onChange={event => setGlobalSearchQuery(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    clearGlobalSearch();
+                  } else if (event.key === 'Enter') {
+                    // Enter antecipa a espera curta: envia o termo digitado agora.
+                    event.preventDefault();
+                    setDebouncedGlobalSearch(globalSearchQuery);
+                  }
+                }}
+                placeholder="Buscar e-mails, remetentes, assuntos, anexos…"
+                className="h-10 border-input bg-input pl-10 pr-16 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
+              />
+              {globalSearchBusy && <Loader2 aria-hidden className="absolute right-9 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground motion-safe:animate-spin" />}
+              {globalSearchQuery !== '' && (
+                <Button type="button" variant="ghost" size="icon" aria-label="Limpar busca do Email" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:bg-transparent" onClick={() => { clearGlobalSearch(); searchInputRef.current?.focus(); }}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+            {globalSearchBusy && <p role="status" aria-live="polite" data-testid="busca-global-buscando" className="mt-1 pl-1 text-2xs text-muted-foreground">{`Buscando por "${globalSearchTerm}"…`}</p>}
+            {globalSearchFailed && (
+              <p role="alert" data-testid="busca-global-erro" title={threadsErrorCopy.description} className="mt-1 pl-1 text-2xs text-destructive">
+                {threadsErrorCopy.title}{' '}
+                <button type="button" className="underline underline-offset-2" onClick={() => void refetchThreads()}>Tentar novamente</button>
+              </p>
+            )}
+            {globalSearchEmpty && <p role="status" aria-live="polite" data-testid="busca-global-vazia" className="mt-1 pl-1 text-2xs text-muted-foreground">{`Nenhum resultado para "${globalSearchTerm}"`}</p>}
           </div>
           {accounts.length > 1 && (
             <Select value={activeAccount.id} onValueChange={nextAccountId => { navigateToThread(null, true); setShowComposer(false); setComposerTo(''); setAccountId(nextAccountId); }}>
@@ -267,7 +319,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
 
       <div className="flex min-h-0 flex-1">
         <aside data-testid="email-thread-list" className={cn('w-full shrink-0 border-r border-border bg-inbox-panel md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
-          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={next => setPage(threadsLoading ? next : Math.min(next, Math.max(1, threadsPageCount)))} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={() => setGlobalSearchQuery('')} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
+          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={next => setPage(threadsLoading ? next : Math.min(next, Math.max(1, threadsPageCount)))} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={clearGlobalSearch} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
         </aside>
         <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={handleThreadContextChange} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
