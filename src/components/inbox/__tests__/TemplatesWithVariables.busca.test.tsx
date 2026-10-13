@@ -24,8 +24,14 @@ vi.mock('framer-motion', () => {
 });
 
 const templates = [
-  { id: '1', title: 'Boas-vindas', content: 'Olá {{nome}}!', category: 'geral' },
-  { id: '2', title: 'Promoção', content: 'Oferta da {{empresa}}', category: 'vendas' },
+  {
+    id: '1', title: 'Boas-vindas', content: 'Olá {{nome}}!', category: 'geral',
+    shortcut: null, is_global: false, use_count: 0, created_at: '2026-01-01', updated_at: '2026-01-01',
+  },
+  {
+    id: '2', title: 'Promoção', content: 'Oferta da {{empresa}}', category: 'vendas',
+    shortcut: null, is_global: false, use_count: 0, created_at: '2026-01-01', updated_at: '2026-01-01',
+  },
 ];
 
 function renderComponente() {
