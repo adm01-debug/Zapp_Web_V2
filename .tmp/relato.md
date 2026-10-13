@@ -1,5 +1,12 @@
 Especialista: iris
 
+## Arquivos fora de "ARQUIVOS QUE PODE TOCAR" (justificativa; ponto 1 do juiz)
+Além de `GoalsDashboard.tsx`, `GoalsTable.tsx` e o teste novo (que são a lista), o diff toca 3 arquivos que vêm do CARTÃO PAI `t_84c9c76e` (a seção DEPENDÊNCIA do cartão manda trazer a faixa do pai por cherry-pick):
+- `src/hooks/analytics/useGoalsDashboard.ts` — o pai reescreve as consultas para contagem (`head: true`), soma o filtro `sender='agent'` e cria a consulta de resolvidas; AQUI entra também `loadingProfile` no `isLoading`, indispensável ao critério "sem piscar 0%" (sem isso o `isLoading` fica falso durante a query de perfil).
+- `src/components/dashboard/GoalsConfigDialog.tsx` — alterado só pelo pai (2 linhas), vem junto da faixa.
+- `src/hooks/analytics/__tests__/useGoalsDashboard.contagem.test.tsx` e `.../useGoalsDashboard.test.tsx` e `.../GoalsConfigDialog.test.tsx` — testes do pai que acompanham a faixa.
+Reverter esses arquivos quebraria a faixa do pai e o critério 2. Não há achado fora de escopo: é a dependência declarada no próprio cartão.
+
 ## O que mudou e por quê
 - `src/components/dashboard/GoalsDashboard.tsx` (este cartão): cabeçalho da aba Metas com o seletor de período `Hoje / Esta Semana / Este Mês` (`ToggleGroup` single do design system, `aria-label="Período das metas"`, teclado nativo do Radix), faixa de datas do período em pt-BR e título dinâmico ("Metas do dia / da semana / do mês"). O corpo (4 KPIs + tabela + rail) só renderiza quando o `isLoading` do hook é falso; enquanto carrega entra o `GoalsLoadingSkeleton` (`role="status"`, `aria-label="Carregando metas"`), então a tela mostra esqueleto em vez de piscar "0%". Tokens já existentes (`bg-muted/40`, `border-border/50`, `data-[state=on]:bg-primary`).
 - `src/components/dashboard/goals/GoalsTable.tsx` (este cartão): `title`/`subtitle` viraram props opcionais com os valores antigos como default; a aba Metas passa os títulos coerentes com o período.
@@ -19,7 +26,7 @@ O diff é MAIOR que "2 linhas": a frase anterior estava errada e foi removida. O
 ## Prova
 - vermelho antes (produção no estado do pai, `6014ab961f`): `npx vitest run src/components/dashboard/__tests__/GoalsDashboard.test.tsx` → `Test Files 1 failed (1)` / `Tests 4 failed (4)` (o seletor não existe: `getByRole('radio', { name: 'Esta Semana' })` falha em `GoalsDashboard.test.tsx:155`).
 - verde depois: mesmo comando → `Test Files 1 passed (1)` / `Tests 4 passed (4)`.
-- os 4 arquivos de teste do cartão: `npx vitest run <os 4>` → `Test Files 4 passed (4)` / `Tests 47 passed | 1 expected fail | 1 todo (49)` (ponto 4 da recusa: o é citado o `1 expected fail` e o `1 todo`, não omitidos).
+- os 4 arquivos de teste do cartão: `npx vitest run <os 4>` → `Test Files 4 passed (4)` / `Tests 47 passed | 1 expected fail | 1 todo (49)` (ponto 4 da recusa: é citado o `1 expected fail` e o `1 todo`, não omitidos).
 
 ## Captura nos 3 períodos, claro/escuro, 360 e 1280 px (item 3 do cartão, ponto 3 da recusa)
 NÃO FOI FEITA. Motivo: não existe projeto Playwright com sessão simulada para a tela de Metas; os projetos permitidos (`chromium-contacts-visual`, `chromium-talkx-visual`, `chromium-email-navy`, `chromium-theme`) cobrem outras telas, e a regra R1 proíbe usar `chromium-authenticated`/`e2e/.auth`. A cobertura dos 3 períodos é dada pelo teste de unidade clicando em cada `radio`, nos 3 casos.
@@ -30,4 +37,4 @@ NÃO FOI FEITA. Motivo: não existe projeto Playwright com sessão simulada para
 - Sem banco: `OK db_guard`.
 
 ## Estado da branch (motivo da recusa "a branch andou depois do fechar")
-Rebuild limpo sobre `dia/2026-10-13` (`96dd72dc5f`): 2 commits, trazidos por `git cherry-pick` — `6014ab961f` (pai `t_84c9c76e`, perf) e `b71e3fb644` (este cartão, feat). `git diff 87267bd919 HEAD -- src` é VAZIO: o conteúdo de `src/` iguala a entrega anterior; o que saiu foram os commits `chore(metas): relato ...` empilhados DEPOIS do fechar (eles só tocavam `.tmp/relato.md`), que eram a causa da branch ter andado.
+Rebuild limpo sobre `dia/2026-10-13` (`96dd72dc5f`): commits trazidos por `git cherry-pick` — `6014ab961f` (pai `t_84c9c76e`, perf), `b71e3fb644` (este cartão, feat) e `8533b1a2a5` (relato). `git diff 87267bd919 HEAD -- src` é VAZIO: o conteúdo de `src/` iguala a entrega anterior; o que saiu foram os commits `chore(metas): relato ...` empilhados DEPOIS do fechar (eles só tocavam `.tmp/relato.md`), que eram a causa da branch ter andado.
