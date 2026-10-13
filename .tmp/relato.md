@@ -12,7 +12,8 @@ Corrige o fail-open apontado: em `collectReferencedPaths` o teto `MAX_REFERENCE_
 
 ## Números reais do diff (base `453e6b69f9..HEAD`)
 - 6 arquivos: `index.ts`, `index.test.ts`, `config.toml`, `ESTADO.md`, `MATRIZ_EDGE_TABELA.md`, `.tmp/relato.md`.
-- 1 arquivo de teste: `cleanup-storage-orphans/index.test.ts`, com 17 casos `Deno.test` no total; 3 são novos nesta correção (o resto veio da implementação).
+- 1 arquivo de teste: `cleanup-storage-orphans/index.test.ts`. Casos `Deno.test`: 12 no commit de implementação `1636c5da07` → 17 agora (5 somados nesta correção).
+- Justificativa (ponto 2 do juiz): `ESTADO.md` e `docs/migration/MATRIZ_EDGE_TABELA.md` NÃO podem ser revertidos — são o índice/registro derivado das Edge Functions e a guarda de documentação exige a atualização ao criar uma edge. Não foram tocados nesta correção; vieram no commit de implementação desta mesma entrega.
 
 ## Critério de pronto
 1. Nenhum objeto órfão acumulado: demonstrado pelo teste de drenagem "cron: órfão antigo é apagado; referenciado e jovem ficam" (o órfão elegível sai) e pelo teste de teto (o lote corta e o resto fica para a próxima passada); a função remove os órfãos elegíveis por invocação do cron.
