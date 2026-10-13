@@ -23,7 +23,9 @@ Especialista: iris
 - `npx tsc --noEmit` → sem saída (0 erros).
 - `npx eslint <arquivos alterados>` → 0 errors (1 warning pré-existente: import do client do Supabase em ForceLogoutButton, baseline de lint mantido: novas=0).
 
+## Arquivos tocados fora da lista 'ARQUIVOS QUE PODE TOCAR' (indispensáveis)
+- src/components/admin/ForceLogoutButton.tsx: É INDISPENSÁVEL. O cartão pede re-autenticação no "forçar logout", mas o botão que executa a revogação das sessões mora neste arquivo (AdminUsersTable apenas o renderiza); sem tocá-lo, a ação ficaria sem guarda. O arquivo é do módulo do título (components/admin).
+- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx: teste existente do fluxo de exclusão de conexão; passou a exigir o passo de identidade (não afrouxei: passou a provar que a exclusão NÃO executa antes da re-autenticação).
+
 ## O que NÃO fiz e por quê
 - Não toquei em src/hooks/auth/useReauthentication.ts, src/services/auth.service.ts nem src/lib: são do worker (hooks)/auth, fora da minha área.
-- Arquivos fora da lista do cartão que precisei tocar: `src/components/admin/ForceLogoutButton.tsx` (o "forçar logout" pedido no cartão mora nele, não em AdminUsersTable) e `src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` (teste existente do fluxo de exclusão, que passou a exigir o passo de identidade).
-- Não afrouxei teste: o teste de ConnectionCard passou a provar também que a exclusão NÃO executa antes da re-autenticação.
