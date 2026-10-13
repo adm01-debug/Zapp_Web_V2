@@ -28,6 +28,16 @@ Nenhum teste do cartão de transferência foi afrouxado.
 - vermelho antes: na base, `archiveContact` fazia `supabase.from('contacts').update({ assigned_to: null })` e o em massa usava `status: 'archived'`; o teste do RPC (`expect(rpcCalls).toEqual([...set_conversation_status...])`) não teria a chamada — é exatamente o caminho que o diff troca.
 - contrato conferido: `zapp-esquema set_conversation_status` → `função set_conversation_status({ p_contact_id: string; p_next: string; p_reason?: string })`, que casa com os argumentos usados.
 
+## Ponto do juiz: arquivo fora da lista (ContactDetails.quickActions.test.tsx)
+- O juiz apontou que `src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx` não está
+  em `src/hooks/**/__tests__/`. É **indispensável**: é o teste EXISTENTE que cobre o caminho do MENU
+  ("Arquivar" na ficha do contato), um dos caminhos do CRITÉRIO 1. Ele afirmava
+  `expect(h.update).toHaveBeenCalledWith({ assigned_to: null })` — exatamente o comportamento REMOVIDO
+  pelo fix. Sem ajustá-lo, a suíte ficaria vermelha e o teste passaria a exigir o defeito. Por isso o
+  assert foi trocado pela chamada RPC real (`set_conversation_status`, `archived`/`open`) e
+  `expect(h.update).not.toHaveBeenCalled()`. Não é escopo novo: é o mesmo defeito provado pelo menu,
+  veio junto da entrega aprovada anterior (commit `42a10859a`).
+
 ## O que NÃO fiz e por quê
 - Não toquei na RPC/migration `set_conversation_status`: ela veio do cartão pai, fora do diff.
 - Não reimplementei nada: o conteúdo de produção é o mesmo já aprovado (cherry-pick), só o
