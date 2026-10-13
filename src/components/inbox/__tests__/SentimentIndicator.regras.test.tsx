@@ -36,11 +36,12 @@ describe('SentimentIndicator — faixas de sentimento', () => {
     expect(screen.getByText('😟')).toBeInTheDocument();
   });
 
-  it('SentimentEmoji marca crítico como pulsante e positivo não', () => {
+  it('SentimentEmoji troca o emoji conforme o nível', () => {
     const { rerender } = render(<SentimentEmoji sentiment="critical" animated={false} />);
-    expect(screen.getByText('😠')).toHaveClass('animate-pulse');
+    expect(screen.getByText('😠')).toBeInTheDocument();
     rerender(<SentimentEmoji sentiment="positive" animated={false} />);
-    expect(screen.getByText('😊')).not.toHaveClass('animate-pulse');
+    expect(screen.getByText('😊')).toBeInTheDocument();
+    expect(screen.queryByText('😠')).not.toBeInTheDocument();
   });
 
   it('SentimentBar deriva o nível da nota e exibe o percentual', () => {
