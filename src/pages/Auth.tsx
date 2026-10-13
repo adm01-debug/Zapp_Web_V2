@@ -1,9 +1,9 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquareDot, Mail, ArrowRight, Fingerprint, Loader2, Lock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Smartphone, Mail, ArrowRight, Fingerprint, Loader2, Lock, AlertTriangle } from 'lucide-react';
 import { RippleButton } from '@/components/ui/micro-interactions';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { SocialProof } from '@/components/auth/SocialProof';
@@ -19,6 +19,9 @@ export default function Auth() {
     lockStatus, formData, setFormData, errors,
     handleLogin, handlePasskeyLogin, handleGoogleLogin,
   } = useAuthForm();
+
+  // Movimento reduzido: a marca entra sem deslocar nada.
+  const prefersReducedMotion = useReducedMotion() ?? false;
 
   return (
     <main
@@ -79,41 +82,26 @@ export default function Auth() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="m-auto w-full max-w-[440px]"
         >
-          {/* Compact brand lockup — no more giant icon */}
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-primary/25"
-                style={{ background: 'var(--gradient-primary)' }}
-              >
-                <MessageSquareDot className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="leading-tight">
-                <div className="font-display text-base font-bold tracking-tight text-foreground">
-                  ZAPP Web
-                </div>
-                <div className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  Suite v2
-                </div>
-              </div>
+          {/* Marca — mesmo desenho da V3: ícone grande, título e subtítulo centralizados */}
+          <motion.div
+            initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-8 text-center"
+          >
+            <div
+              className="relative mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[2rem] shadow-2xl shadow-primary/25"
+              style={{ background: 'var(--gradient-primary)' }}
+            >
+              <Smartphone className="h-12 w-12 text-primary-foreground" />
             </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/40 px-2.5 py-1 backdrop-blur-sm">
-              <ShieldCheck className="h-3 w-3 text-success" />
-              <span className="text-3xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Seguro
-              </span>
-            </div>
-          </div>
-
-          {/* Title above the card — more editorial hierarchy */}
-          <div className="mb-5">
-            <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-foreground">
-              Bem-vindo de volta
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Acesse seu painel e continue de onde parou.
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+              ZAPP Web
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Plataforma omnichannel para atendimento
             </p>
-          </div>
+          </motion.div>
 
           {/* Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
@@ -180,33 +168,42 @@ export default function Auth() {
                       </motion.div>
                     </form>
 
-                    {/* Alternative sign-in — compact horizontal */}
-                    <div className="mt-5">
-                      <div className="relative my-4 flex items-center gap-3">
-                        <div className="h-px flex-1 bg-border/40" />
-                        <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                          ou continue com
-                        </span>
-                        <div className="h-px flex-1 bg-border/40" />
-                      </div>
-                      <div className={passkeyAvailable && GOOGLE_OAUTH_ENABLED ? 'grid grid-cols-2 gap-2' : ''}>
-                        {passkeyAvailable && (
+                    {/* Entrada alternativa — largura total, na ordem da V3 */}
+                    <div className="mt-5 space-y-4">
+                      {passkeyAvailable && (
+                        <>
+                          <div className="relative flex items-center gap-3">
+                            <div className="h-px flex-1 bg-border/40" />
+                            <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              ou
+                            </span>
+                            <div className="h-px flex-1 bg-border/40" />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-11 gap-2 rounded-xl border-border/50 hover:bg-muted/50"
+                            className="h-11 w-full gap-2 rounded-xl border-border/50 hover:bg-muted/50"
                             disabled={passkeyLoading}
                             onClick={handlePasskeyLogin}
                           >
                             {passkeyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
-                            <span className="text-sm font-medium">Passkey</span>
+                            <span className="text-sm font-medium">Entrar com Passkey</span>
                           </Button>
-                        )}
-                        {GOOGLE_OAUTH_ENABLED && (
+                        </>
+                      )}
+                      {GOOGLE_OAUTH_ENABLED && (
+                        <>
+                          <div className="relative flex items-center gap-3">
+                            <div className="h-px flex-1 bg-border/40" />
+                            <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              ou continue com
+                            </span>
+                            <div className="h-px flex-1 bg-border/40" />
+                          </div>
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-11 gap-2 rounded-xl border-border/50 hover:bg-muted/50"
+                            className="h-11 w-full gap-2 rounded-xl border-border/50 hover:bg-muted/50"
                             onClick={handleGoogleLogin}
                           >
                             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -215,10 +212,10 @@ export default function Auth() {
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                             </svg>
-                            <span className="text-sm font-medium">Google</span>
+                            <span className="text-sm font-medium">Entrar com Google</span>
                           </Button>
-                        )}
-                      </div>
+                        </>
+                      )}
                     </div>
                     <SocialProof />
                     <p className="mt-5 text-center text-xs text-muted-foreground">
@@ -230,7 +227,7 @@ export default function Auth() {
           </motion.div>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 text-center text-2xs text-muted-foreground">
-            © {new Date().getFullYear()} ZAPP Web · Todos os direitos reservados
+            © {new Date().getFullYear()} Promo Brindes. Todos os direitos reservados.
           </motion.p>
         </motion.div>
       </div>
