@@ -11,6 +11,11 @@ Especialista: Íris (area-front-componentes)
   `supabase/migrations/20261013210002_realtime_canais_privados.sql` (migration do pai) e
   `supabase/tests/realtime_canais_privados.sql` (teste de banco do pai).
   O que EU escrevi está enumerado logo abaixo.
+- Nenhum arquivo fora de 'ARQUIVOS QUE PODE TOCAR' foi tocado por MIM: os arquivos acima (inclusive
+  `src/hooks/team-chat/useTeamTyping.ts`, `src/hooks/team-chat/useTeamPresence.ts` e
+  `src/hooks/team-chat/__tests__/useTeamTyping.test.tsx`) chegaram já prontos pelo `git cherry-pick`
+  da faixa do pai, exatamente como o cartão manda ("fechar JUNTA a faixa do pai"). Eu não editei
+  nenhum deles.
 - Nenhuma "assinatura"/HMAC/segredo entra aqui; não há palavra dessas no diff novo.
 
 ## O que mudou e por quê (a tela liga o que o pai deixou pronto)
