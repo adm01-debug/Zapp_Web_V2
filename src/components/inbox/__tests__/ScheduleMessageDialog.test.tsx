@@ -16,6 +16,13 @@ import { ScheduleMessageDialog } from '@/components/inbox/ScheduleMessageDialog'
 const toastMock = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 
+// Ponto de controle de "reduzir movimento" (mesma técnica do kit de microinterações).
+const reduce = vi.hoisted(() => ({ value: false }));
+vi.mock('framer-motion', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('framer-motion')>()),
+  useReducedMotion: () => reduce.value,
+}));
+
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 /** instante local (fuso do processo) de uma data/hora de calendário, como ISO */
 const instanteLocal = (ano: number, mes: number, dia: number, h: number, min: number) =>
@@ -164,5 +171,143 @@ describe('ScheduleMessageDialog — R2-INB-010: fecha e limpa o rascunho só ap�
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(texto.value).toBe('');
     expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+  });
+});
+
+/**
+ * R3 — o produtor (ChatPanel.handleScheduleMessage) passa a RELANÇAR a falha.
+ * Estados do diálogo: spinner com largura estável → check em sucesso; falha com
+ * faixa destructive (mola) e "Tentar de novo"; foco no botão; movimento reduzido.
+ */
+describe('ScheduleMessageDialog — mensagem de erro por causa (componente real)', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    toastMock.mockClear();
+    reduce.value = false;
+  });
+
+  const erroNaTela = async (erro: unknown) => {
+    const onSchedule = vi.fn(() => Promise.reject(erro));
+    render(<ScheduleMessageDialog open onOpenChange={vi.fn()} onSchedule={onSchedule} />);
+    fireEvent.change(screen.getByPlaceholderText(/digite a mensagem/i), { target: { value: 'Olá' } });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('agendar-mensagem'));
+    });
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+    return screen.getByTestId('falha-agendamento').textContent ?? '';
+  };
+
+  it.each([
+    ['403 no status', { status: 403 }, 'Sem permissão para agendar nesta conversa'],
+    ['403 como texto', { statusCode: '403' }, 'Sem permissão para agendar nesta conversa'],
+    ['RLS 42501', { code: '42501' }, 'Sem permissão para agendar nesta conversa'],
+    [
+      'recusa de RLS do Postgres',
+      { message: 'new row violates row-level security policy for table "scheduled_messages"' },
+      'Sem permissão para agendar nesta conversa',
+    ],
+    ['falha de rede', new Error('Failed to fetch'), 'Não foi possível agendar. Tente de novo.'],
+    ['erro de gravação', { code: '23514', message: 'check constraint' }, 'Não foi possível agendar. Tente de novo.'],
+  ])('%s', async (_nome, erro, esperado) => {
+    expect(await erroNaTela(erro)).toContain(esperado);
+  });
+});
+
+describe(`ScheduleMessageDialog — estados de envio (TZ=${TZ})`, () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    toastMock.mockClear();
+    reduce.value = false;
+  });
+
+  const preencher = (onSchedule: (m: string, s: Date, a?: File) => Promise<void> | void, onOpenChange = vi.fn()) => {
+    render(<ScheduleMessageDialog open onOpenChange={onOpenChange} onSchedule={onSchedule} />);
+    const texto = screen.getByPlaceholderText(/digite a mensagem/i) as HTMLTextAreaElement;
+    fireEvent.change(texto, { target: { value: 'Enviar proposta' } });
+    return { texto, onOpenChange };
+  };
+
+  const clicarAgendar = async () => {
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('agendar-mensagem'));
+    });
+  };
+
+  it('403: diálogo aberto, faixa de permissão visível, rascunho preservado e sem toast de sucesso', async () => {
+    const onSchedule = vi.fn(() =>
+      Promise.reject(Object.assign(new Error('row-level security'), { statusCode: '403' })),
+    );
+    const { texto, onOpenChange } = preencher(onSchedule);
+    const arquivo = new File(['conteúdo'], 'contrato.pdf', { type: 'application/pdf' });
+    fireEvent.change(document.getElementById('file-upload') as HTMLInputElement, { target: { files: [arquivo] } });
+
+    await clicarAgendar();
+
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+    expect(screen.getByText('Sem permissão para agendar nesta conversa')).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(texto.value).toBe('Enviar proposta');
+    expect(screen.getByText('contrato.pdf')).toBeTruthy();
+    expect(toastMock).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+    expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeTruthy();
+  });
+
+  it('falha genérica: mensagem recuperável e botão "Tentar de novo"', async () => {
+    const onSchedule = vi.fn(() => Promise.reject(new Error('Failed to fetch')));
+    preencher(onSchedule);
+
+    await clicarAgendar();
+
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+    expect(screen.getByText('Não foi possível agendar. Tente de novo.')).toBeTruthy();
+  });
+
+  it('"Tentar de novo" reenvia com o mesmo rascunho e conclui', async () => {
+    const onSchedule = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Failed to fetch'))
+      .mockResolvedValueOnce(undefined);
+    const { texto, onOpenChange } = preencher(onSchedule);
+
+    await clicarAgendar();
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /tentar de novo/i }));
+    });
+
+    await waitFor(() => expect(onSchedule).toHaveBeenCalledTimes(2));
+    expect(texto.value).toBe('Enviar proposta');
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(texto.value).toBe('');
+  });
+
+  it('sucesso: check no botão ANTES de fechar e limpar o rascunho', async () => {
+    const onSchedule = vi.fn(() => Promise.resolve());
+    const { texto, onOpenChange } = preencher(onSchedule);
+
+    await clicarAgendar();
+
+    expect(screen.getByTestId('agendar-mensagem')).toHaveAttribute('data-state', 'success');
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(texto.value).toBe('');
+  });
+
+  it('com movimento reduzido: faixa e selo entregam o estado sem deslocamento', async () => {
+    reduce.value = true;
+    const onSchedule = vi.fn(() => Promise.reject(new Error('Failed to fetch')));
+    preencher(onSchedule);
+
+    await clicarAgendar();
+
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+    const faixa = screen.getByTestId('falha-agendamento');
+    expect(faixa).toHaveAttribute('data-motion', 'reduced');
+    expect(screen.getByTestId('selo-agendamento')).toHaveAttribute('data-motion', 'reduced');
+    expect(screen.getByTestId('agendar-mensagem')).toHaveAttribute('data-motion', 'reduced');
+    // Sem deslocamento: nada de transform de entrada na faixa.
+    expect(faixa.getAttribute('style') ?? '').not.toMatch(/translate|scale/);
   });
 });

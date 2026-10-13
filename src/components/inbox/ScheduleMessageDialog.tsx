@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -10,26 +10,82 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, Loader2, Paperclip } from 'lucide-react';
-import { format, addDays, addHours, setHours, setMinutes } from 'date-fns';
+import { AlertTriangle, Calendar, Clock, Paperclip, RefreshCw } from 'lucide-react';
+import { format, addDays, setHours, setMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { localInstantFromDayAndTime } from '@/lib/localDay';
 import { toast } from '@/hooks/ui/use-toast';
+import { cn } from '@/lib/utils';
+import { MorphButton, toneClasses, type MorphState } from '@/components/inbox/chat/motion';
+import { zappMotion, zappSpring } from '@/lib/motion';
 
 interface ScheduleMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // R2-INB-010: o agendamento é assíncrono. O diálogo só pode fechar e limpar o
   // rascunho DEPOIS que a persistência confirmar; por isso o retorno é aguardável.
+  // O produtor REJEITA em falha (upload, referência do anexo ou gravação), e é
+  // esse lance que mantém o diálogo aberto e o rascunho intacto.
   onSchedule: (message: string, scheduledAt: Date, attachment?: File) => Promise<void> | void;
 }
+
+/**
+ * Traduz o erro do produtor para a voz do produto.
+ *
+ * Permissão (403 / RLS `42501` / recusa de escrita do Storage) tem mensagem
+ * própria — reenviar não resolve e o usuário precisa saber disso. Qualquer outra
+ * causa (rede, contrato, anexo) é falha recuperável: convida a tentar de novo.
+ */
+function mensagemDeErroAoAgendar(erro: unknown): string {
+  const e = erro as
+    | { status?: number; statusCode?: number | string; code?: string; message?: string }
+    | null
+    | undefined;
+  const status = Number(e?.status ?? e?.statusCode ?? Number.NaN);
+  const codigo = String(e?.code ?? '');
+  const texto = String(e?.message ?? '');
+  const semPermissao =
+    status === 403 ||
+    codigo === '42501' ||
+    /row-level security|permission denied|not authorized|sem permissão|unauthorized|403/i.test(texto);
+
+  return semPermissao
+    ? 'Sem permissão para agendar nesta conversa'
+    : 'Não foi possível agendar. Tente de novo.';
+}
+
+/**
+ * Quanto o check de sucesso fica na tela antes de o diálogo fechar: uma passada
+ * de mola lenta do token de movimento — nenhum tempo solto aqui.
+ */
+const SUCESSO_MS = zappMotion.duration.slow * 1000;
 
 export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: ScheduleMessageDialogProps) {
   const [message, setMessage] = useState('');
   const [date, setDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
   const [time, setTime] = useState('09:00');
   const [attachment, setAttachment] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitState, setSubmitState] = useState<MorphState>('idle');
+  const [erro, setErro] = useState<string | null>(null);
+
+  const agendarRef = useRef<HTMLDivElement>(null);
+  const fecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reduce = useReducedMotion() ?? false;
+
+  // Estado próprio do agendamento: o check de sucesso e a faixa de falha não
+  // reaproveitam estado de outro recurso e não há prazo sem limpeza.
+  useEffect(
+    () => () => {
+      if (fecharTimerRef.current) clearTimeout(fecharTimerRef.current);
+    },
+    [],
+  );
+
+  // Foco devolvido ao botão principal quando a falha aparece (teclado).
+  useEffect(() => {
+    if (!erro) return;
+    agendarRef.current?.querySelector('button')?.focus();
+  }, [erro]);
 
   const quickSchedules = [
     { label: 'Amanhã 9h', getDate: () => setMinutes(setHours(addDays(new Date(), 1), 9), 0) },
@@ -50,32 +106,44 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
       return;
     }
 
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (submitState === 'loading') return;
+    setErro(null);
+    setSubmitState('loading');
 
     try {
       // Só anuncia sucesso, fecha e apaga o rascunho depois que a persistência confirmar.
       await onSchedule(message, scheduledDate, attachment || undefined);
+      setSubmitState('success');
       toast({
         title: 'Mensagem agendada!',
         description: `Será enviada em ${format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
       });
 
-      onOpenChange(false);
-      setMessage('');
-      setAttachment(null);
+      // O check fica visível por um instante antes de o diálogo sair.
+      fecharTimerRef.current = setTimeout(() => {
+        fecharTimerRef.current = null;
+        onOpenChange(false);
+        setMessage('');
+        setAttachment(null);
+        setSubmitState('idle');
+      }, SUCESSO_MS);
     } catch (err) {
       // Falha ao persistir: mantém o diálogo aberto e o rascunho intacto para nova
-      // tentativa (o produtor já reporta a causa; aqui garantimos que nada é apagado).
+      // tentativa (o produtor já reporta a causa; aqui nada é apagado).
+      setSubmitState('idle');
+      const texto = mensagemDeErroAoAgendar(err);
+      setErro(texto);
       toast({
         title: 'Não foi possível agendar',
-        description: 'A mensagem não foi salva. Revise os dados e tente novamente.',
+        description: texto,
         variant: 'destructive',
       });
-      void err;
-    } finally {
-      setIsSubmitting(false);
     }
+  };
+
+  const handleRetry = () => {
+    setErro(null);
+    void handleSchedule();
   };
 
   const handleQuickSchedule = (getDate: () => Date) => {
@@ -85,6 +153,17 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
   };
 
   const previewDate = localInstantFromDayAndTime(date, time);
+  const info = toneClasses('info');
+  const falha = toneClasses('destructive');
+
+  // Com movimento reduzido nada se desloca: só opacidade/cor mudam.
+  const entradaFaixa = reduce
+    ? { opacity: 0 }
+    : { opacity: 0, y: -zappMotion.distance.small, scale: 0.98 };
+  const visivelFaixa = reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 };
+  const saidaFaixa = reduce
+    ? { opacity: 0, transition: { duration: 0 } }
+    : { opacity: 0, y: -zappMotion.distance.small, transition: { duration: zappMotion.duration.fast } };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,10 +183,10 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
               {quickSchedules.map((schedule) => (
                 <motion.button
                   key={schedule.label}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={reduce ? undefined : { scale: 1.05 }}
+                  whileTap={reduce ? undefined : { scale: 0.95 }}
                   onClick={() => handleQuickSchedule(schedule.getDate)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  className="min-h-10 px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-muted/80 transition-colors"
                 >
                   {schedule.label}
                 </motion.button>
@@ -168,6 +247,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="min-h-10"
                   onClick={() => setAttachment(null)}
                 >
                   Remover
@@ -176,7 +256,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
             ) : (
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full min-h-10"
                 onClick={() => document.getElementById('file-upload')?.click()}
               >
                 <Paperclip className="w-4 h-4 mr-2" />
@@ -191,36 +271,91 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
             />
           </div>
 
-          {/* Preview */}
-          {previewDate && (
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                A mensagem será enviada em{' '}
-                <span className="font-medium text-foreground">
-                  {format(previewDate, "EEEE, dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-                </span>
-              </p>
-            </div>
-          )}
+          {/* Selo de data/hora (info) — atualiza ao escolher */}
+          <AnimatePresence initial={false}>
+            {previewDate && (
+              <motion.div
+                key="selo-agendamento"
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: zappMotion.distance.small }}
+                animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, y: zappMotion.distance.small }}
+                transition={reduce ? { duration: 0 } : zappSpring.soft}
+                data-testid="selo-agendamento"
+                data-motion={reduce ? 'reduced' : 'full'}
+                className={cn('flex items-center gap-2 rounded-lg border px-3 py-2', info.border, info.soft)}
+              >
+                <Calendar className={cn('w-4 h-4 shrink-0', info.text)} aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">
+                  Será enviada em{' '}
+                  <span className="font-medium text-foreground">
+                    {format(previewDate, "EEEE, dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Falha inline com 'Tentar de novo' */}
+          <AnimatePresence initial={false}>
+            {erro && (
+              <motion.div
+                key="faixa-falha"
+                role="alert"
+                initial={entradaFaixa}
+                animate={visivelFaixa}
+                exit={saidaFaixa}
+                transition={reduce ? { duration: 0 } : zappSpring.soft}
+                data-testid="falha-agendamento"
+                data-motion={reduce ? 'reduced' : 'full'}
+                className={cn(
+                  'flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2',
+                  falha.border,
+                  falha.soft,
+                )}
+              >
+                <AlertTriangle className={cn('w-4 h-4 shrink-0', falha.text)} aria-hidden="true" />
+                <p className="flex-1 text-sm text-foreground">{erro}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-10"
+                  onClick={handleRetry}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Tentar de novo
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitState === 'loading'}
+              className="min-h-10"
+            >
               Cancelar
             </Button>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button
+            <motion.div
+              ref={agendarRef}
+              whileHover={reduce ? undefined : { scale: 1.02 }}
+              whileTap={reduce ? undefined : { scale: 0.98 }}
+            >
+              <MorphButton
+                state={submitState}
                 onClick={handleSchedule}
-                disabled={!message.trim() || isSubmitting}
-                className="bg-whatsapp hover:bg-whatsapp-dark"
+                disabled={!message.trim()}
+                loadingLabel="Agendando…"
+                successLabel="Agendada!"
+                errorLabel="Falhou"
+                data-testid="agendar-mensagem"
+                className="min-h-10 bg-whatsapp text-primary-foreground hover:bg-whatsapp-dark"
               >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Clock className="w-4 h-4 mr-2" />
-                )}
                 Agendar
-              </Button>
+              </MorphButton>
             </motion.div>
           </div>
         </div>

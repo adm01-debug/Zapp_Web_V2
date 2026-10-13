@@ -190,6 +190,29 @@ async function scheduleAttachment(file: File, scheduledAt = new Date(Date.now() 
   });
 }
 
+/**
+ * R3 — falha não pode sair em silêncio: o produtor precisa RELANÇAR para o
+ * diálogo manter-se aberto e não anunciar sucesso. Devolve o erro relançado
+ * (`undefined` quando o handler resolve, que seria o defeito).
+ */
+async function scheduleAttachmentEsperandoErro(
+  file: File,
+  scheduledAt = new Date(Date.now() + 3600_000),
+) {
+  const props = mocks.dialogsProps.current as unknown as {
+    onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
+  };
+  let erro: unknown;
+  await act(async () => {
+    try {
+      await props.onScheduleMessage('Olá, segue o anexo', scheduledAt, file);
+    } catch (e) {
+      erro = e;
+    }
+  });
+  return erro;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.storageFrom.mockReturnValue({
@@ -251,21 +274,46 @@ describe('ChatPanel — anexo agendado no path canônico do contato', () => {
   it('limpa o objeto do storage quando a persistência do agendamento falha', async () => {
     mocks.scheduleMessage.mockRejectedValueOnce(new Error('insert falhou'));
     renderPanel();
-    await scheduleAttachment(createFile());
+    const erro = await scheduleAttachmentEsperandoErro(createFile());
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
     const [uploadedPath] = mocks.upload.mock.calls[0] as [string];
     expect(mocks.remove.mock.calls[0][0]).toEqual([uploadedPath]);
     expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1);
+    // R3: o erro de gravação é RELANÇADO (sem isso o diálogo anunciaria sucesso).
+    expect(erro).toBeInstanceOf(Error);
+    expect((erro as Error).message).toBe('insert falhou');
   });
 
   it('limpa o objeto quando a referência durável (locator) não é gerada', async () => {
     mocks.getPublicUrl.mockReturnValue({ data: null });
     renderPanel();
-    await scheduleAttachment(createFile());
+    const erro = await scheduleAttachmentEsperandoErro(createFile());
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
     expect(mocks.scheduleMessage).not.toHaveBeenCalled();
+    expect((erro as Error).message).toMatch(/referência durável/i);
+  });
+
+  it('relança o erro de permissão do upload (403) e limpa o objeto órfão', async () => {
+    mocks.upload.mockResolvedValueOnce({
+      error: { message: 'new row violates row-level security policy', statusCode: '403' },
+    });
+    renderPanel();
+    const erro = await scheduleAttachmentEsperandoErro(createFile());
+
+    expect((erro as { statusCode?: string }).statusCode).toBe('403');
+    expect(mocks.scheduleMessage).not.toHaveBeenCalled();
+    // Sem storagePath não há objeto gravado a remover.
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it('não relança quando a gravação confirma (caminho de sucesso)', async () => {
+    renderPanel();
+    const erro = await scheduleAttachmentEsperandoErro(createFile());
+
+    await waitFor(() => expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1));
+    expect(erro).toBeUndefined();
   });
 
   it.each([
