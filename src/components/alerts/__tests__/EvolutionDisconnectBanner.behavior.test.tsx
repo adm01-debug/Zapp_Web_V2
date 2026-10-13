@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * R2-API-042 (BACKLOG_VERIFICADO #216): a Edge Function `evolution-api` usa HTTP 200
@@ -12,6 +13,7 @@ import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
  */
 const h = vi.hoisted(() => ({
   rows: [] as unknown[],
+  preferencias: null as unknown,
   invoke: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -19,11 +21,22 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
+    from: (table: string) => ({
+      select: () =>
+        table === 'connection_alert_preferences'
+          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
+          : { eq: async () => ({ data: h.rows }) },
+    }),
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => undefined,
     functions: { invoke: h.invoke },
   },
+}));
+
+// PD-38: o banner consulta a preferência via React Query + useAuth; os testes montam com os
+// provedores do app (TestQueryWrapper) e um usuário sintético.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
 }));
 
 vi.mock('sonner', () => ({ toast: { success: h.toastSuccess, error: h.toastError } }));
@@ -31,7 +44,7 @@ vi.mock('sonner', () => ({ toast: { success: h.toastSuccess, error: h.toastError
 const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
 
 async function clicarReconectar() {
-  const { findByRole } = render(<EvolutionDisconnectBanner />);
+  const { findByRole } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
   const botao = await findByRole('button', { name: /reconectar/i });
   fireEvent.click(botao);
 }
@@ -89,7 +102,7 @@ describe('EvolutionDisconnectBanner — não cobre nem intercepta a barra de aba
   });
 
   it('o aviso não é um overlay no topo: ancora no rodapé, fora da faixa da barra de abas', async () => {
-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
+    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
     await findByText(/está desconectada/i);
 
     const faixa = container.querySelector('[role="region"]');
@@ -102,7 +115,7 @@ describe('EvolutionDisconnectBanner — não cobre nem intercepta a barra de aba
   });
 
   it('não engole o ponteiro: o wrapper é pointer-events-none e só o cartão é pointer-events-auto', async () => {
-    const { container, findByText } = render(<EvolutionDisconnectBanner />);
+    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
     await findByText(/está desconectada/i);
 
     const faixa = container.querySelector('[role="region"]');
