@@ -38,6 +38,13 @@ Especialista: worker (sql) (area-sql-banco)
 - Nenhum GRANT/papel existente mudou; nao toquei `contacts` nem policy de outra tabela.
 - Sem oraculo: a trilha nao revela valor algum, so o nome do campo.
 
+## Sobre o alerta do juiz barato (types.ts sem teste no mesmo commit)
+- O teste que prova o defeito e `supabase/tests/contact_change_log.sql` (suite .sql, vermelho→verde
+  na secao Prova), commitado junto. `src/integrations/supabase/types.ts` NAO e codigo sob teste:
+  e o espelho de tipos que o cartao mandou atualizar para nao ficar defasado da tabela nova —
+  nao ha como testar um tipo em runtime; a prova de que a forma bate com o banco e a propria suite
+  (mesmas colunas.
+
 ## O que NAO fiz e por que
 - Nao toquei no hook/painel (t_a364a46c, perfil de hooks): fora da minha area. Deixei o contrato
   exato da tabela em comentario no cartao do hook.
