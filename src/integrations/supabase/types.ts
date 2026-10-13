@@ -11291,6 +11291,18 @@ export type Database = {
           last_message_at: string
         }[]
       }
+      get_monitoring_message_buckets: {
+        Args: {
+          p_bucket: string
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          bucket_start: string
+          incoming: number
+          outgoing: number
+        }[]
+      }
       get_multiplix_cron_secret: { Args: never; Returns: string }
       get_own_gmail_accounts: {
         Args: never
