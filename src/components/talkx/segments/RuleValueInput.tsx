@@ -13,7 +13,7 @@ import { RULE_FIELDS, type RuleField, type RuleOp } from '@/hooks/integrations/u
  *     valor do banco (`Prestador de Serviço` na tela, `prestador_servico` na regra);
  *   - data: período em dias, com os atalhos 7/30/60/90/180 e digitação livre;
  *   - número: caixa numérica, sem máscara;
- *   - texto/lista de tags: caixa de texto.
+ *   - texto: caixa de texto.
  * `está preenchido`/`está vazio` não pedem valor (o controle não aparece).
  *
  * O valor continua sendo o `value: string` que o motor de regras

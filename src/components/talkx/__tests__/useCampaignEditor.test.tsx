@@ -15,7 +15,7 @@ const f = vi.hoisted(() => ({
   // Histórico de versões: consumido pelo TalkXTemplateEditor (renderizado nesta
   // suíte). O wizard NÃO o usa: resolve a versão por current_version_id.
   fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
-  contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
+  contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number; current_version_id?: string | null }[],
@@ -195,11 +195,11 @@ describe('useCampaignEditor — draft integrity', () => {
   it('oferece os filtros do passo 1 pelo catálogo de regras e consulta o motor (V24)', () => {
     render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
 
-    // X126: a trilha "Filtros de audiência" passou a ser o componente dos 7
+    // X126: a trilha "Filtros de audiência" passou a ser o componente dos
     // controles do mock (antes, o editor genérico de regras com "Adicionar
     // filtro"). O que o caso protege continua igual: os filtros vêm do catálogo
-    // de regras e a lista/contagem saem do motor.
-    expect(screen.getByRole('group', { name: 'Tags' })).toBeInTheDocument();
+    // de regras e a lista/contagem saem do motor. Sem o controle de Tag (12/10).
+    expect(screen.queryByRole('group', { name: 'Tags' })).toBeNull();
     expect(screen.getByRole('group', { name: 'Localização' })).toBeInTheDocument();
     // A lista e a contagem do passo 1 saem do motor (não mais do SELECT morto).
     expect(capturedQuery('talkx-audience-contacts')).toBeDefined();
@@ -421,7 +421,7 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(lastSavedFilter()).toBeNull();
   });
 
-  it('converte o snapshot solto do V23 em regras e descarta os filtros mortos (V24)', async () => {
+  it('converte o snapshot solto do V23 em regras e descarta os filtros mortos e o de tag (V24)', async () => {
     const campaign = {
       id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
       audience_filters: { company: 'Acme', tag: 'VIP', city: 'Recife', state: 'PE', status: 'open', group: 'Grupo A', inactive: true, birthday: 'this_month', search: 'ana' },
@@ -429,13 +429,15 @@ describe('useCampaignEditor — draft integrity', () => {
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
 
+    // O filtro de tag do snapshot NÃO entra: a função de tags não existe mais.
     expect(rulesToPostgrest(result.current.audienceRules))
-      .toBe('and(company.eq."Acme",tags.cs.{"VIP"},city.eq."Recife",state.eq."PE",conversation_status.eq."open")');
+      .toBe('and(company.eq."Acme",city.eq."Recife",state.eq."PE",conversation_status.eq."open")');
     expect(result.current.companyFilter).toBe('Acme');
-    expect(result.current.tagFilter).toBe('VIP');
     expect(result.current.contactSearch).toBe('ana');
     // group/inactive/birthday eram filtros mortos: não são convertidos nem expostos.
     expect(result.current).not.toHaveProperty('cityFilter');
+    expect(result.current).not.toHaveProperty('tagFilter');
+    expect(result.current).not.toHaveProperty('setTagFilter');
     expect(result.current).not.toHaveProperty('groupFilter');
     expect(result.current).not.toHaveProperty('inactiveFilter');
     expect(result.current).not.toHaveProperty('birthdayFilter');
@@ -444,7 +446,7 @@ describe('useCampaignEditor — draft integrity', () => {
   it('o rascunho salvo com regras reabre com as mesmas regras (V24)', async () => {
     const first = renderHook(() => useCampaignEditor({ id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts' } as never, vi.fn()));
     await act(async () => {});
-    act(() => { first.result.current.setCompanyFilter('Acme'); first.result.current.setTagFilter('VIP'); });
+    act(() => { first.result.current.setCompanyFilter('Acme'); });
     act(() => first.result.current.addAudienceRule('city'));
     const cityRule = first.result.current.audienceRules.groups[0].rules.find((rule) => rule.field === 'city');
     if (!cityRule) throw new Error('a regra de cidade deveria existir');
@@ -455,7 +457,6 @@ describe('useCampaignEditor — draft integrity', () => {
     const saved = calls[calls.length - 1]?.[0] as { audience_filters?: SegmentRules } | undefined;
     const savedFilter = rulesToPostgrest(saved?.audience_filters) ?? '';
     expect(savedFilter).toContain('company.eq."Acme"');
-    expect(savedFilter).toContain('tags.cs.{"VIP"}');
     expect(savedFilter).toContain('city.eq."Recife"');
     first.unmount();
 
@@ -467,8 +468,25 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(second.result.current.audienceRules).toEqual({ groups: saved?.audience_filters?.groups });
     expect(second.result.current.companyFilter).toBe('Acme');
-    expect(second.result.current.tagFilter).toBe('VIP');
     expect(second.result.current.contactSearch).toBe('ana');
+  });
+
+  it('regra de tag do rascunho salvo não volta para o motor nem filtra em silêncio (12/10)', async () => {
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
+      audience_filters: {
+        groups: [{
+          id: 'g1', match: 'and', rules: [
+            { id: 'r1', field: 'tags', op: 'contains', value: 'VIP' },
+            { id: 'r2', field: 'city', op: 'eq', value: 'Recife' },
+          ],
+        }],
+      },
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(rulesToPostgrest(result.current.audienceRules)).toBe('city.eq."Recife"');
   });
 
   it('marcar um filtro de cidade consulta o motor com a regra correspondente (V24)', async () => {
@@ -1128,7 +1146,7 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
 
   it('mesma entrada produz a mesma prévia no wizard e no editor de template', () => {
     const MSG = 'Olá {{nome}} da {{empresa}}';
-    const contact = { id: 'contact-1', name: 'João Silva', nickname: null, company: 'Sua Empresa', phone: '5511999999999', avatar_url: null, tags: [] };
+    const contact = { id: 'contact-1', name: 'João Silva', nickname: null, company: 'Sua Empresa', phone: '5511999999999', avatar_url: null };
     f.contacts = [contact];
     const template = makeTemplate({ content: MSG });
     f.templates = [template];
