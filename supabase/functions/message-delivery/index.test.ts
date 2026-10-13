@@ -1,4 +1,6 @@
-import { handleMessageDeliveryRequest, providerPayload } from './index.ts';
+import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
+import { deliverOutbound, handleMessageDeliveryRequest, providerPayload } from './index.ts';
+import { resetInstanceTokenCache } from '../_shared/evolution-instance-token.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -149,4 +151,114 @@ Deno.test('message delivery does not call the redundant mark_first_response RPC'
   if (/\.rpc\(\s*['"]mark_first_response['"]/.test(src)) {
     throw new Error('a RPC mark_first_response não pode ser chamada: o trigger já registra o SLA');
   }
+});
+
+// ---------------------------------------------------------------------------
+// TRA-002 / E15 (item #18): o envio tem de sair pela credencial da PRÓPRIA
+// conexão do claim. A Evolution GO escolhe a instância pelo apikey (o nome no
+// path v2 é descartado na tradução), então entregar sem o token da conexão faz
+// o envio de uma conexão sair pela instância global — ou falhar fechado.
+// ---------------------------------------------------------------------------
+
+function comEnv(vars: Record<string, string | undefined>, fn: () => void | Promise<void>) {
+  const anteriores = new Map<string, string | undefined>();
+  for (const [chave, valor] of Object.entries(vars)) {
+    anteriores.set(chave, Deno.env.get(chave));
+    if (valor === undefined) Deno.env.delete(chave); else Deno.env.set(chave, valor);
+  }
+  const restaurar = () => {
+    for (const [chave, valor] of anteriores) {
+      if (valor === undefined) Deno.env.delete(chave); else Deno.env.set(chave, valor);
+    }
+  };
+  const resultado = fn();
+  if (resultado instanceof Promise) return resultado.finally(restaurar);
+  restaurar();
+}
+
+function servicoFalso(tokens: Record<string, string | null>) {
+  const consultas: string[] = [];
+  return {
+    consultas,
+    rpc: (fn: string, args?: Record<string, unknown>) => {
+      if (fn !== 'get_instance_token') throw new Error(`RPC inesperada: ${fn}`);
+      const nome = String(args?.p_instance_id ?? '');
+      consultas.push(nome);
+      return Promise.resolve({ data: tokens[nome] ?? null, error: null });
+    },
+  };
+}
+
+function fetcherEspiao() {
+  const chamadas: { url: string; apikey: string }[] = [];
+  const fetcher = (url: string, opcoes: RequestInit) => {
+    chamadas.push({ url, apikey: (opcoes.headers as Record<string, string>).apikey });
+    return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+  };
+  return { chamadas, fetcher };
+}
+
+Deno.test('TRA-002: message-delivery entrega com o token da PRÓPRIA conexão do claim (sem EVOLUTION_INSTANCE_TOKEN)', async () => {
+  resetInstanceTokenCache();
+  await comEnv({
+    EVOLUTION_API_FLAVOR: 'go',
+    EVOLUTION_INSTANCE_NAME: 'principal',
+    // critério 2: o envio não pode depender do env — o token vem do Vault
+    EVOLUTION_INSTANCE_TOKEN: undefined,
+  }, async () => {
+    const service = servicoFalso({ secundaria: 'token-da-secundaria' });
+    const { chamadas, fetcher } = fetcherEspiao();
+    const resposta = await deliverOutbound(
+      service, 'https://go.example.com', 'admin-key-global',
+      { path: '/message/sendText/secundaria', body: { number: '5511999998888', text: 'oi' } },
+      'secundaria', fetcher,
+    );
+    assertEquals(service.consultas, ['secundaria'], 'o token tem de ser resolvido pelo nome da conexão do claim');
+    assertEquals(chamadas.length, 1);
+    assertEquals(chamadas[0].apikey, 'token-da-secundaria');
+    assertEquals(chamadas[0].url, 'https://go.example.com/send/text');
+    assertEquals(resposta.status, 200);
+  });
+});
+
+Deno.test('TRA-002: conexão não-padrão sem token no Vault falha fechado (400, nenhuma rede)', async () => {
+  resetInstanceTokenCache();
+  await comEnv({
+    EVOLUTION_API_FLAVOR: 'go',
+    EVOLUTION_INSTANCE_NAME: 'principal',
+    EVOLUTION_INSTANCE_TOKEN: 'token-da-global',
+  }, async () => {
+    const service = servicoFalso({ secundaria: null });
+    const { chamadas, fetcher } = fetcherEspiao();
+    const resposta = await deliverOutbound(
+      service, 'https://go.example.com', 'admin-key-global',
+      { path: '/message/sendText/secundaria', body: { number: '5511999998888', text: 'oi' } },
+      'secundaria', fetcher,
+    );
+    assertEquals(chamadas.length, 0, 'sem credencial da conexão nenhum POST pode sair');
+    assertEquals(resposta.status, 400);
+    assertEquals((await resposta.json()).error, 'instance token ausente');
+  });
+});
+
+Deno.test('TRA-002: o fallback do env vale só para a instância padrão — e o token do Vault vence', async () => {
+  resetInstanceTokenCache();
+  await comEnv({
+    EVOLUTION_API_FLAVOR: 'go',
+    EVOLUTION_INSTANCE_NAME: 'principal',
+    EVOLUTION_INSTANCE_TOKEN: 'token-da-global',
+  }, async () => {
+    const comVault = servicoFalso({ principal: 'token-vault-principal' });
+    const semVault = servicoFalso({ principal: null });
+    const a = fetcherEspiao();
+    const b = fetcherEspiao();
+    await deliverOutbound(comVault, 'https://go.example.com', 'admin-key-global',
+      { path: '/message/sendText/principal', body: { number: '5511999998888', text: 'oi' } }, 'principal', a.fetcher);
+    // zera o cache (isolate quente) para provar o fallback quando o Vault não tem token
+    resetInstanceTokenCache('principal');
+    await deliverOutbound(semVault, 'https://go.example.com', 'admin-key-global',
+      { path: '/message/sendText/principal', body: { number: '5511999998888', text: 'oi' } }, 'principal', b.fetcher);
+    assertEquals(a.chamadas[0]?.apikey, 'token-vault-principal');
+    assertEquals(b.chamadas[0]?.apikey, 'token-da-global');
+  });
 });

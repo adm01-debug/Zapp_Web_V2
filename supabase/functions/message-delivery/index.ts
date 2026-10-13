@@ -11,6 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import {
   EFFECT_MESSAGE_SEND,
   enqueueEffectReconcile,
@@ -259,6 +260,35 @@ export function providerPayload(
   }
 }
 
+/**
+ * E15 / TRA-002 (#18): entrega o outbound à Evolution com a credencial da
+ * PRÓPRIA conexão do claim. O token sai de `get_instance_token` pelo
+ * `whatsapp_instance_name` (Vault, E18/E19) — nunca da key global, que faria a
+ * GO atender pela instância padrão. Sem token resolvido, `evoFetch` falha
+ * fechado (400, antes de qualquer rede) em vez de emprestar a credencial da
+ * padrão. `resolveInstanceToken` não lança: sem credencial segura devolve null.
+ */
+export async function deliverOutbound(
+  service: InstanceTokenClient,
+  evolutionUrl: string,
+  evolutionKey: string,
+  outbound: { path: string; body: Record<string, unknown> },
+  instanceName: string,
+  fetcher?: (url: string, options: RequestInit) => Promise<Response>,
+): Promise<Response> {
+  const instanceToken = await resolveInstanceToken(service, instanceName);
+  return evoFetch(
+    evolutionUrl,
+    evolutionKey,
+    outbound.path,
+    outbound.body,
+    fetcher,
+    undefined,
+    undefined,
+    instanceToken ?? undefined,
+  );
+}
+
 async function failClaim(
   service: ServiceClient,
   claim: Claim,
@@ -392,7 +422,9 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     providerPostAttempted = true;
-    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
+    const providerResponse = await deliverOutbound(
+      service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+    );
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
