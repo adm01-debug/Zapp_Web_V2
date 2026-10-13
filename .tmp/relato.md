@@ -4,8 +4,22 @@ Dependência: este cartão parte do cartão pai t_09a10b28 (`feat(system): pági
 de rate limit no servidor com erro visível`), que NÃO estava na minha base. Trouxe a faixa
 inteira por cherry-pick — commit `c03ef75156` (`git cherry-pick $(git rev-list --reverse
 --no-merges dia/2026-10-13..96eb9a92ba7048059e65e58696cad94b86870356)`), como manda o
-aviso de dependência. Os arquivos de `src/hooks/**` que aparecem no diff são desses dois
-commits de dependência/correção, não da minha implementação de tela.
+aviso de dependência do cartão.
+
+**Por que tocar `src/hooks/system/useRateLimitLogs.ts` e o teste dele foi indispensável**
+(aviso 1 do juiz): (a) o hook do cartão pai não está na minha base e o meu cartão pede a tela
+"coerente com o hook novo" — sem a faixa trazida, a tela não compila (não existem `total`,
+`totalPages`, `error`, `filters`, `setFilters` no arquivo que veio na base); (b) o filtro do
+pai mandava `.ilike()` com o termo entre aspas (`escapeOrFilterValue`) e o tempo esgotado era
+silenciado — os dois pontos que a revisão do pai já apontou; como o meu teste da tela renderiza
+o **hook real** contra o cliente Supabase dublê e prova o padrão enviado ao servidor, deixá-lo
+como estava faria a prova do filtro carimbar um defeito conhecido; (c) `sampleSize` existe para
+o denominador da proporção que a própria tela desenha, que o hook do pai quebrou ao trocar
+`logs` de 100 linhas por uma página. Não há arquivo de tela capaz de consertar esses três
+pontos de fora. Nada de `src/components/security/**`, banco ou política foi tocado.
+
+Os arquivos de `src/hooks/**` que aparecem no diff vêm do commit de dependência
+(`c03ef75156`) e do commit de correção (`f1bba33ce9`), não da minha implementação de tela.
 
 ## O que mudou e por quê
 
