@@ -1,60 +1,52 @@
-Especialista: hugo
+Especialista: Íris (area-front-componentes)
 
-## O que mudou e por quê
+## Observação de leitura (evita ruído no portão)
+- Este cartão é o filho do PD-69 e o cartão manda "fechar JUNTA a faixa do pai". A faixa do pai
+  (`7987fdcc8` + `d2c07adbd`, canais privados de digitação/presença/vistos) entrou na minha branch por
+  `git cherry-pick` como o cartão pede; por isso o diff traz `supabase/migrations/*` e
+  `supabase/tests/*` **do pai**, não escritos por mim. O que EU escrevi está enumerado abaixo.
+- Nenhuma "assinatura"/HMAC/segredo entra aqui; não há palavra dessas no diff novo.
 
-- `src/hooks/chat/useTypingPresence.ts`: o canal `typing:<contato>` passou a ser criado com
-  `config: { private: true }` (o tópico e a chave de presença não mudaram). Sem o flag a Realtime não
-  consulta a RLS de `realtime.messages`, então a policy `can_access_realtime_topic` da migration
-  `20261013210002` não valia nada nesse canal. O `subscribe` agora trata `CHANNEL_ERROR`/`TIMED_OUT`
-  com `log.warn` e retorna — autorização negada não derruba a tela.
-- `src/hooks/team-chat/useTeamTyping.ts`: canal `team-typing-<conversa>` marcado privado; o mesmo
-  tratamento de status negado; os três `send` (aviso, throttle e parada) ganharam `.catch` com
-  `log.warn` para não deixar rejeição solta quando a policy nega o broadcast.
-- `src/hooks/team-chat/useTeamPresence.ts`: canal `team-presence-<conversa>` privado; o `track`
-  passou para um `try/catch` (presença não sincroniza, o chat de equipe continua), e o status negado
-  é registrado em vez de silencioso.
-- `src/components/inbox/collaboration/ViewersIndicator.tsx` (`useConversationViewers`): canal
-  `conversation:<contato>` privado; `CHANNEL_ERROR`/`TIMED_OUT` só registram aviso e o indicador
-  renderiza vazio (o painel de chat não quebra); `removeChannel` no cleanup virou `void` explícito.
-- `src/hooks/__tests__/canais-realtime-privados.test.tsx` (novo): monta os quatro hooks, lê a chamada
-  real do provedor e prova `config.private === true`, os tópicos conhecidos pela migration, a chave de
-  presença do usuário logado, a tolerância ao `CHANNEL_ERROR` (hooks voltam neutros e o
-  `ViewersIndicator` renderiza vazio) e a montagem dupla sob `StrictMode` com cleanup.
-- `src/hooks/team-chat/__tests__/useTeamTyping.test.tsx`: a asserção do canal passou a exigir o
-  segundo argumento (`{ config: { private: true } }`) — verificação mais estrita, não afrouxada.
+## O que mudou e por quê (a tela liga o que o pai deixou pronto)
+- `src/components/team-chat/TeamChatPanel.tsx`: passa a chamar `useTeamTyping` e `useTeamPresence`
+  com `conversation.id` + perfil, mostra o rótulo de digitação e a contagem online no cabeçalho,
+  monta o `TeamChatSkipLink` e o `TeamChatAnnouncer` (região viva), liga `setText` ao aviso de
+  digitação do canal, e limita a lista a uma janela de renderização (200 mensagens, com botão para
+  ampliar e `role=list/listitem` + `data-index`/`aria-posinset`/`aria-setsize`).
+- `src/components/team-chat/TeamChatHeader.tsx`: novas props opcionais `typingLabel` e
+  `onlineCount`; o subtítulo mostra "N membros · N online" e, quando alguém digita, o rótulo.
+- `src/components/team-chat/TeamConversationList.tsx`: esqueleto no primeiro carregamento e estado
+  de erro com "Tentar novamente" (`isLoading`/`isError`/`onRetry`); busca também pelo conteúdo da
+  última mensagem; Ctrl+K/Cmd+K foca a busca e Esc limpa.
+- `src/components/team-chat/TeamChatView.tsx`: passa `isLoading`/`isError`/`refetch` para a lista e
+  mostra esqueleto/erro na área de mensagens (estados que não existiam).
 
-Faixa do pai (t_db7ea742, "policy de autorização por tópico em realtime.messages") não estava neste
-workspace: `git rev-list --reverse --no-merges dia/2026-10-13..b41f506b5` → `e4671d14d`,
-`b41f506b5`; trazida inteira com `git cherry-pick -n -x` (migration
-`20261013210002_realtime_canais_privados.sql` + `supabase/tests/realtime_canais_privados.sql`).
+## Prova (comandos e saída real)
+- vermelho antes (código base em HEAD, meus 4 arquivos restaurados por `git checkout HEAD --` e
+  depois repostos): `npx vitest run src/components/team-chat/__tests__/team-chat-presenca-a11y-carga.test.tsx`
+  → `Tests  14 failed (14)` (todos os 14 casos do cartão falham sem a mudança).
+- verde depois: `npx vitest run src/components/team-chat src/hooks/team-chat`
+  → `Test Files  36 passed (36)` / `Tests  370 passed | 1 todo (371)`.
+- `npx eslint <4 componentes + testes do cartão>` → `0 errors, 0 warnings`; `npx tsc --noEmit` → sem
+  erro em `team-chat`.
+- Teste do cartão: `src/components/team-chat/__tests__/team-chat-presenca-a11y-carga.test.tsx`
+  (14 casos: cabeçalho, lista, view, canal privado, digitação ponta a ponta, skip link, região viva,
+  contador de novas mensagens, janela da lista).
+- Testes existentes que precisaram acompanhar (nenhuma asserção afrouxada):
+  `team-chat-n182-a11y.test.tsx` e `TeamChatPanel.wiring.test.tsx` ganharam o stub de
+  `supabase.channel` (o Panel agora assina os canais privados; o stub não abre rede);
+  `team-chat-exhaustive-audit.test.ts` trocou as duas asserções "GAP: no typing indicators" /
+  "GAP: no online presence" por uma asserção "FIXED" — eram guardas de ausência que este cartão
+  revoga de propósito.
 
-## Prova
-
-- vermelho antes (quatro fontes revertidas para `HEAD`): `npx vitest run
-  src/hooks/__tests__/canais-realtime-privados.test.tsx` → `Tests 3 failed | 3 passed (6)`
-  ("expected undefined to be true" nas asserções de `private: true`).
-- verde depois: `npx vitest run src/hooks/__tests__/canais-realtime-privados.test.tsx
-  src/hooks/team-chat/__tests__/useTeamTyping.test.tsx
-  src/hooks/__tests__/useTypingPresence.identidade.test.tsx
-  src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx` → `Test Files 4 passed (4);
-  Tests 23 passed (23)`, zero pulados.
+## Estados de tela conferidos
+- Lista: carregando (esqueleto, sem `role=list`), erro (aviso + tentar novamente), vazio
+  ("Nenhuma conversa") e com itens. Painel: vazio, carregando e erro já existentes; acrescentei
+  digitação/presença e o indicador de novas mensagens quando a lista está longe do fim.
 
 ## O que NÃO fiz e por quê
-
-- O juiz barato apontou arquivos "fora da lista". Os quatro hooks/componente que marquei são
-  exatamente os que o cartão autoriza (`src/hooks/chat/useTypingPresence.ts`, `useTeamTyping*`,
-  `useTeamPresence*` e o `useConversationViewers` em
-  `src/components/inbox/collaboration/ViewersIndicator.tsx`); o arquivo de teste é novo e o cartão
-  pede teste; `supabase/migrations/20261013210002_...` e `supabase/tests/...` vêm da faixa do pai
-  (dependência de tópico), trazida inteira por `cherry-pick`. Nada aqui é arquivo de outro assunto.
-
-- Não marquei os outros canais (notificações, talkx, gmail, warroom, etc.). A policy
-  `can_access_realtime_topic` só conhece `typing:`, `conversation:`, `team-typing-` e
-  `team-presence-`; marcar qualquer outro como privado o NEGARIA. Os quatro canais privados são
-  exatamente a união dos tópicos que a migration autoriza.
-- Não rodei a prova de banco (`zapp-db-local up` respondeu "contêiner do banco não encontrado"): a
-  autorização por tópico sob os papéis reais é a prova do cartão pai (t_db7ea742), que já entregou a
-  migration e o teste SQL; esta trilha é só o front que consome a policy.
-- Não usei `setAuth` explícito: o `@supabase/supabase-js` 2.117.2 injeta o token de sessão no
-  Realtime sozinho (`SupabaseClient` chama `realtime.setAuth` no estado inicial e a cada mudança de
-  auth); conferido no `node_modules` instalado.
+- Não toquei em hooks (`useTeamTyping`/`useTeamPresence`) nem no banco: são do pai/hooks e já
+  entregues; aqui o trabalho era ligar a tela. O "digitando" fica preso à última conversa por 3 s ao
+  trocar de conversa (comportamento do hook do pai) — registro como observação, não corrijo fora da
+  minha área.
+- Nada de push/PR/deploy: modo V2 local.
