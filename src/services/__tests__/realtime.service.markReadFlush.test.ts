@@ -21,7 +21,7 @@ const h = vi.hoisted(() => {
   const logger = { error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() };
   // Resposta de cada PATCH. Um nó "thenable" deixa a cadeia
   // update().in().eq().eq() ser aguardada sem depender do SDK.
-  const responder = vi.fn((..._args: unknown[]) => Promise.resolve({ error: null }));
+  const responder = vi.fn((..._args: unknown[]) => Promise.resolve({ error: null as unknown }));
   const buildNode = () => {
     const node: { eq?: () => unknown; then?: unknown } = {};
     node.eq = () => node;
