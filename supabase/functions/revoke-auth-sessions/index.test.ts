@@ -6,7 +6,9 @@ import {
   decideThirdPartyRevocation,
   normalizeRole,
   resolveEffectiveRole,
+  handleRevokeAuthSessions,
 } from "./index.ts";
+import { resetRateLimitServiceClient } from "../_shared/validation.ts";
 
 const A = "00000000-0000-4000-8000-000000000001";
 const B = "00000000-0000-4000-8000-000000000002";
@@ -243,4 +245,54 @@ Deno.test("resolveEffectiveRole lê effective_role e nega em erro", async () => 
     rpc() { return Promise.resolve({ data: null, error: { message: "boom" } }); },
   };
   if (await resolveEffectiveRole(errClient, A) !== null) fail("erro no RPC deveria negar (null)");
+});
+
+// O limite vive FORA do isolate (RPC service_role `consume_rate_limit`). Prova:
+// com o decisor persistente negando, a função responde 429 + Retry-After ANTES de
+// qualquer auth — e o RPC foi de fato consultado.
+Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com Retry-After", async () => {
+  const savedUrl = Deno.env.get("SUPABASE_URL");
+  const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "stub-service-key");
+  resetRateLimitServiceClient();
+
+  const originalFetch = globalThis.fetch;
+  const seen: string[] = [];
+  globalThis.fetch = ((input: RequestInfo | URL) => {
+    const url = typeof input === "string"
+      ? input
+      : input instanceof URL
+      ? input.toString()
+      : (input as Request).url;
+    seen.push(url);
+    if (url.includes("/rest/v1/rpc/consume_rate_limit")) {
+      return Promise.resolve(new Response(JSON.stringify([{ allowed: false, remaining: 0 }]), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }));
+    }
+    return Promise.resolve(new Response("nao stubado", { status: 599 }));
+  }) as typeof fetch;
+
+  try {
+    const req = new Request("https://stub.supabase.co/functions/v1/revoke-auth-sessions", {
+      method: "POST",
+      headers: { Authorization: "Bearer token-de-teste" },
+      body: JSON.stringify({ scope: "self" }),
+    });
+    const res = await handleRevokeAuthSessions(req);
+    if (res.status !== 429) fail(`esperado 429, veio ${res.status}`);
+    if (res.headers.get("Retry-After") === null) fail("o 429 deve trazer Retry-After");
+    if (!seen.some((u) => u.includes("/rest/v1/rpc/consume_rate_limit"))) {
+      fail(`deveria consultar o limiter persistente: ${seen.join(",")}`);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetRateLimitServiceClient();
+    if (savedUrl === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", savedUrl);
+    if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
+  }
 });
