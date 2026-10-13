@@ -1,4 +1,4 @@
-Especialista: worker
+Especialista: semisenior
 
 ## O que mudou e por quê
 - `docs/LGPD-RETENTION-POLICY.md` (v1.0 → v1.1): nova seção **§4.6 Operadores e sub-processadores — ElevenLabs
@@ -42,7 +42,7 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
 - `grep -n "persiste se enviado como mensagem" docs/LGPD-RETENTION-POLICY.md
   docs/adr/ADR-009-elevenlabs-operador-de-dados.md` → `LGPD-RETENTION-POLICY.md:113` e
   `ADR-009-elevenlabs-operador-de-dados.md:91`.
-- `git diff --stat 93360f20be^...HEAD` (só arquivos deste cartão, sem diff alheio): `.tmp/relato.md`,
+- `git diff --stat dia/2026-10-15...HEAD` (só arquivos deste cartão, sem diff alheio): `.tmp/relato.md`,
   `docs/LGPD-RETENTION-POLICY.md`, `docs/adr/ADR-009-elevenlabs-operador-de-dados.md`.
 
 ## O que NÃO fiz e por quê
