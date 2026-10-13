@@ -1,45 +1,36 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useContactQuickActions.ts (docstring, linhas 11-13): trocada a
-  afirmação "era o único ponto do app que escrevia etiquetas" pela verdade do
-  diff — `src/services/contact-bulk.service.ts` continua gravando a coluna
-  (fora do escopo, registrado no cartão).
-- src/hooks/inbox/useContactQuickActions.ts (docstring, linhas 18-24): alinhado o
-  parágrafo do VIP ao código real — o selo do cabeçalho NÃO sumiu,
-  `ContactHeaderSection` ainda o deriva de `contact.tags` (legado), ponto do
-  cartão TG-A; a coluna `is_vip` não existe no schema.
-- src/components/inbox/ContactDetails.tsx: removidas as duas linhas em branco no
-  fim do arquivo (sobra da remoção do `ContactTagsSection`); arquivo termina com
-  uma quebra de linha.
+- `src/hooks/inbox/__tests__/useContactQuickActions.test.tsx` (único arquivo do meu commit): o arquivo deixou de
+  citar `tags` de contato — a fixture `makeContact` não declara mais marcador/etiqueta e nenhuma asserção depende
+  deles. O teste passou a provar três coisas que o cartão pede:
+  (a) o hook expõe SÓ `block` (`Object.keys(result.current) === ['block']`, sem VIP e sem addTag/removeTag/markVip);
+  (b) bloquear e o Desfazer vão para a Evolution de verdade (`update-block-status`, status `block`/`unblock`,
+  instância resolvida pelo fluxo real contacts.whatsapp_connection_id → whatsapp_connections.instance_id) e NÃO
+  gravam nada em `contacts` — o `update` do cliente é espionado e fica provado que nunca é chamado em caminho
+  nenhum (sucesso, Desfazer, sem-conexão resolvível, erro da edge e dois cliques concorrentes);
+  (c) nenhum texto de etiqueta/marcador (`VIP`, `Bloqueado`, `etiqueta`) sai nos avisos — o aviso é
+  "Maria Silva bloqueado" com Desfazer.
+- Nenhum teste foi removido, pulado nem teve timeout aumentado; a cobertura virou assertions mais fortes (de 6 para
+  7 casos), não menos.
+
+## GAP registrado (passo 4 do cartão)
+O reconhecimento (card t_e71f3ba9) diz que `is_vip`/`blocked_at` NÃO existem no schema e este cartão proíbe
+migration. Logo, a coluna dedicada do passo 2(a)/(b) não existe para ser testada: cobri a AUSÊNCIA da escrita em
+etiquetas (`update` nunca chamado) e a ausência da ação de VIP. O selo VIP que ainda aparece no cabeçalho é legado
+(derivado no `ContactHeaderSection`), tratado no cartão TG-A — fora daqui.
+
+## FAIXA DO PAI
+Esta branch foi cortada em cima da branch do cartão pai, que a `dia/2026-10-13` local ainda não tinha recebido:
+- `ab6a87cacf` `refactor(inbox): useContactQuickActions não grava mais etiquetas de contato` — do cartão t_7aaefc5d
+- `bf7bc41027` `docs(inbox): alinha comentários do useContactQuickActions ao código real` — do cartão t_7aaefc5d
+- `87713e252d`, `23ca893998` `docs(inbox): relato ...` — relato do cartão t_7aaefc5d
+NÃO são deste cartão. Este cartão contribui UM commit, só de teste.
 
 ## Prova
-- npx vitest run src/hooks/inbox/__tests__/useContactQuickActions.test.tsx → `Test Files 1 passed (1); Tests 6 passed (6)`
-- Lint ratchet no commit: `baseline=0, atual=0, novas=0` — OK, nenhuma dívida nova.
-
-## Pontos do revisor
-- Ponto 1: feita a troca da frase do docstring sobre ser "o único ponto" —
-  `useContactQuickActions.ts:11-13`, conferido em `git grep` que
-  `contact-bulk.service.ts` ainda grava a coluna.
-- Ponto 2: alinhado o texto do VIP ao diff — `useContactQuickActions.ts:18-24`;
-  conferido em `ContactHeaderSection.tsx:74` que `isVip` ainda deriva de
-  `contact.tags`.
-- Ponto 3: removidas as linhas em branco no fim de `ContactDetails.tsx` (agora
-  `}` + uma quebra); conferido com `od -c` do fim do arquivo.
-
-## Sobre os avisos do juiz
-- Teste removido/afrouxado: SIM, e foi o cartão que mandou. O card pede "hook sem
-  referência a tags de contato"; a função de tags saiu do app (ordem do Joaquim,
-  12/10), então os casos de teste que escreviam/líam `contact.tags` saíram junto
-  com o código (`ab6a87cacf`). Os testes que cobrem o bloqueio REAL na Evolution
-  e a resolução de instância seguem no arquivo e passam: 6 verdes.
-- Critério de pronto: o hook não cita mais `tags` (conferível em
-  `useContactQuickActions.ts`); a lógica de bloqueio fica pela Evolution, sem a
-  coluna de tags; o VIP NÃO tem coluna dedicada (`is_vip` não existe no schema,
-  reconhecimento de 13/10), então não há onde persistir e as ações de VIP saíram
-  — o selo do cabeçalho continua derivado de `contact.tags` (legado) e está
-  registrado como ponto do cartão TG-A.
-
-## O que NÃO fiz e por quê
-- Nenhuma mudança de lógica: a recusa era só de texto/formatação e o revisor
-  confirmou que a lógica e o escopo estão corretos.
+- vermelho antes (com o hook anterior, que ainda usava etiquetas de contato): `
+  git show dia/2026-10-13:src/hooks/inbox/useContactQuickActions.ts > src/hooks/inbox/useContactQuickActions.ts`
+  + `npx vitest run src/hooks/inbox/__tests__/useContactQuickActions.test.tsx` → `Tests  4 failed | 3 passed (7)`.
+- verde depois (restaurado o hook do cartão pai): mesmo comando → `Test Files  1 passed (1) | Tests  7 passed (7)`.
+- `git grep -n "tags" -- src/hooks/inbox/__tests__/useContactQuickActions.test.tsx` → sem resultado (exit 1): o
+  arquivo não cita etiquetas de contato.
