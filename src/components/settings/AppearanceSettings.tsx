@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Palette, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
+import { Palette, RefreshCw, GraduationCap, LayoutGrid, Save, Loader2, AlertCircle } from 'lucide-react';
 import { AvatarUpload } from '@/components/settings/AvatarUpload';
 import { motion } from '@/components/ui/motion';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { normalizeLanguage } from '@/i18n';
 
 interface AppearanceSettingsProps {
   settings: {
@@ -15,7 +17,24 @@ interface AppearanceSettingsProps {
   };
   updateSettings: (updates: Partial<AppearanceSettingsProps['settings']>) => void;
   onResetOnboarding: () => void;
+  /** `isSaving`/`onSave` vêm do hook canônico (`useUserSettings`) na SettingsView: um só dono da escrita. */
+  isSaving: boolean;
+  onSave: () => Promise<boolean> | void;
 }
+
+/** Valores que o dono da preferência (`useTheme`) entende; qualquer outro cai em 'system'. */
+const TEMA_VALORES = ['light', 'dark', 'system'];
+
+/**
+ * O <Select> trabalha com o código do i18n (`pt|en|es`, os idiomas que existem em `resources`)
+ * e grava na coluna o código que ela já usa (`pt-BR|en-US|es`), para o valor exibido nunca
+ * ficar vazio e o valor salvo nunca divergir do que está em vigor.
+ */
+const IDIOMAS = [
+  { code: 'pt', db: 'pt-BR', label: 'Português (Brasil)' },
+  { code: 'en', db: 'en-US', label: 'English (US)' },
+  { code: 'es', db: 'es', label: 'Español' },
+];
 function DensitySelector() {
   const { density, setDensity } = useDensity();
   const options: { value: DensityMode; label: string; desc: string }[] = [
@@ -38,7 +57,19 @@ function DensitySelector() {
   );
 }
 
-export function AppearanceSettings({ settings, updateSettings, onResetOnboarding }: AppearanceSettingsProps) {
+export function AppearanceSettings({ settings, updateSettings, onResetOnboarding, isSaving, onSave }: AppearanceSettingsProps) {
+  const [erroAoSalvar, setErroAoSalvar] = useState<string | null>(null);
+  // O que a tela mostra é o valor em vigor (normalizado como o hook faz na leitura),
+  // nunca um vazio por causa de um valor legado vindo do banco.
+  const temaAtual = TEMA_VALORES.includes(settings.theme) ? settings.theme : 'system';
+  const idiomaAtual = normalizeLanguage(settings.language);
+
+  const handleSave = async () => {
+    setErroAoSalvar(null);
+    const ok = await onSave();
+    if (ok === false) setErroAoSalvar('Não foi possível salvar suas preferências. Tente novamente.');
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="border border-secondary/20 bg-card hover:border-secondary/30 transition-all">
@@ -57,7 +88,7 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
 
           <div className="space-y-2">
             <Label>Tema</Label>
-            <Select value={settings.theme} onValueChange={(value) => updateSettings({ theme: value })}>
+            <Select value={temaAtual} onValueChange={(value) => updateSettings({ theme: value })}>
               <SelectTrigger aria-label="Tema"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dark">Escuro</SelectItem>
@@ -69,12 +100,15 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
 
           <div className="space-y-2">
             <Label>Idioma</Label>
-            <Select value={settings.language} onValueChange={(value) => updateSettings({ language: value })}>
+            <Select
+              value={idiomaAtual}
+              onValueChange={(code) => updateSettings({ language: IDIOMAS.find((i) => i.code === code)?.db ?? code })}
+            >
               <SelectTrigger aria-label="Idioma"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                <SelectItem value="en-US">English (US)</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
+                {IDIOMAS.map((i) => (
+                  <SelectItem key={i.code} value={i.code}>{i.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -102,6 +136,27 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
                 Reiniciar Tour
               </Button>
             </div>
+          </div>
+
+          {/* Botão honesto: grava só as preferências desta aba (tema, idioma e voz) no hook
+              canônico. Antes ele vivia no cabeçalho global da SettingsView, onde prometia
+              salvar também as abas de operação que gravam por conta própria. */}
+          <div className="pt-4 border-t border-border space-y-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Tema e idioma já valem nesta sessão; salvar mantém a escolha na sua conta.
+              </p>
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2" aria-label="Salvar preferências">
+                {isSaving
+                  ? <><Loader2 className="w-4 h-4 motion-safe:animate-spin" /> Salvando...</>
+                  : <><Save className="w-4 h-4" /> Salvar preferências</>}
+              </Button>
+            </div>
+            {erroAoSalvar && (
+              <p role="alert" data-testid="appearance-save-error" className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" /> {erroAoSalvar}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
