@@ -24,6 +24,8 @@ Especialista: worker (sql) (area-sql-banco)
   direto segue negado, G) anon/service_role não gravam pela RPC, H) `entity_id` inválido não derruba,
   I) o ROLLBACK roda e devolve a função anterior.
 
+- `.tmp/relato.md`: este relato (arquivo do próprio cartão, também entra no diff). Total do diff: estes 3 arquivos, 1 deles de teste.
+
 **Verificação do que NÃO mudou:** o INSERT direto em `audit_logs` pelo cliente JÁ é bloqueado no banco pela
 política existente `"Block direct audit log inserts"` (WITH CHECK false) — confirmei as 4 policies de
 `audit_logs` antes de mexer, então a migration NÃO toca policy, RLS nem tabela. As duas linhas de ACL
