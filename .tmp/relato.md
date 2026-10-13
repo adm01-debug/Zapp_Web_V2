@@ -1,5 +1,8 @@
 Especialista: worker (auth) (area-auth-seguranca)
 
+## Números do diff (conferidos)
+`git diff --stat 96dd72dc5f HEAD` = **4 arquivos**: `supabase/migrations/20261009203548_...` e o rollback do pai (2 commits cherry-pick do t_37e0dde7, não são trabalho novo), a migration NOVA `20261013085500_talkx_n102_window_fixes.sql` e o teste NOVO `scripts/db-audit/talkx-n102-window-open-access.test.mjs`. **1 arquivo de teste, 3 casos de teste novos** (BLOCO A vermelho, BLOCO B verde, BLOCO C rollback).
+
 ## O que mudou e por quê
 - `supabase/migrations/20261013085500_talkx_n102_window_fixes.sql` (NOVO, único arquivo desta fatia): tira o `EXECUTE` de `authenticated` em `public.talkx_campaign_window_open(uuid, timestamptz)` e o deixa só para `service_role` (`REVOKE ALL ... FROM PUBLIC, anon, authenticated;` + `GRANT EXECUTE ... TO service_role;`). Motivo: a base 20261009203548 criou a função `SECURITY DEFINER` e concedeu `EXECUTE` a `authenticated` sem checagem de ator (linhas 533-536 do arquivo base), então qualquer usuário autenticado podia chamar a RPC para a campanha de outro dono/tenant e inferir a janela (dias e horário de não perturbe). Não toquei a base 20261009203548 nem o corpo da função (as fatias de cast e de fuso cuidam disso).
 
