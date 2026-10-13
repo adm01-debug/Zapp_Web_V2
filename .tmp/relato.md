@@ -1,18 +1,23 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/components/inbox/stickers/StickerManager.tsx: o "+" virou botão real (abre um input de arquivo com `aria-label`), converte para WebP, sobe para o bucket `stickers` e mostra a revisão (`StickerUploadPreview`); a linha de `stickers` nasce no "Salvar" e o "Cancelar" devolve o objeto — acabou o toast de sucesso sem escrita e o aviso que mandava usar um botão inexistente.
+- src/components/inbox/stickers/StickerManager.tsx: mutações de favorito/excluir/categoria passam a usar `select('id')` e a tratar erro e 0 linhas (RLS filtra em silêncio, sem `error`), com toast de erro; a consulta ganhou estado de erro com "Tentar de novo".
+- src/components/inbox/stickers/StickerManager.tsx: o contador de uso é aguardado e conferido (0 linhas e `use_count` nulo tratados) — antes o update era disparado sem consumir a promessa e nunca chegava ao banco. O envio da figurinha em si continua imediato: a falha ao contar não interrompe.
+- src/components/inbox/stickers/StickerTypes.ts: "Despedida" ganhou emoji distinto (🫡) de "Cumprimento" (👋); eram os dois 👋.
+- src/components/inbox/stickers/PersonalStickers.tsx: o selo da pasta pessoal diz "figurinhas" em vez de "fotos".
+- src/components/inbox/stickers/StickerCategoryBar.tsx + src/hooks/sticker-picker/useStickerPicker.ts + src/components/inbox/StickerPicker.tsx: no Seletor, "Recentes" ordena por `created_at` (mais novas primeiro) e "Mais usadas" virou filtro próprio (por `use_count`), com a legenda do rodapé coerente ("· Recentes" / "· Mais usadas").
+- src/components/inbox/stickers/StickerManager.tsx: `aria-label` nos dois botões de tamanho da grade.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/inbox/stickers/__tests__/StickerManager.envio.test.tsx src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx` → `Test Files  2 failed (2)` / `Tests  9 failed (9)` (o "+" real não existia, o contador não era consumido, "Mais usadas" não existia).
+- verde depois: mesmo comando → `Test Files  2 passed (2)` / `Tests  9 passed (9)`.
+- regressão da área: `npx vitest run src/components/inbox/stickers src/hooks/sticker-picker src/hooks/integrations/__tests__/usePersonalStickers.webp.test.tsx src/lib/__tests__/stickerImage.test.ts src/components/inbox` → `1 failed | 206 passed (207)`, `1681 passed | 1 todo (1683)`; a única falha (`FilesTab.period.integration.test.tsx`, alheia a figurinhas) roda verde isolada: `Tests  9 passed | 1 todo (10)` — era falso vermelho por carga.
+- `npx tsc -b --force` → exit 0 (sem erro de tipo).
+
+## Estados da tela alterada
+- Carregando: a grade segue em `loading` (`isLoading`). Vazio: mensagem própria da grade. Erro: novo bloco `role="alert"` com "Não foi possível carregar as figurinhas" e botão "Tentar de novo" (`refetch`).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não removo o objeto de storage ao excluir a linha no gerenciador: o cartão cobre envio/erros/contador/filtros; limpeza de objeto na exclusão não está no pedido.
+- Não chamo a classificação por IA no upload do gerenciador (`aiCategory: 'outros'`): mantém a revisão sem acionar Edge nova.
