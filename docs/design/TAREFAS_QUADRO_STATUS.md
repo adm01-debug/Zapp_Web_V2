@@ -162,7 +162,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 | arquivo | o que muda |
 |---|---|
 | `src/hooks/tasks/workItemAggregates.ts` | `dayGroupLabel` (Hoje / Amanhã / "Seg 05/10" dentro de 7 dias / "Semana que vem" acima disso) e `groupUpcomingByDay` (ordena por prazo → prioridade e agrupa dias consecutivos); `PRIORITY_WEIGHT` extraído do `bucketByStatus` e reusado |
-| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups` + `hint`; subcabeçalho `text-xs` (12px, ver divergência 4); tooltip no cabeçalho; "Sem prazo" com `defaultOpen={noDue.length <= 10}`; `renderCard` extraído (o card estava duplicado nos dois caminhos) |
+| `src/components/tasks/list/TasksListTable.tsx` | subcabeçalho dos dias de "Próximas" ("Hoje", "Amanhã", "Seg 05/10", …, "Semana que vem") em `text-xs` (12px, ver divergência 4) — na etapa 49 o rótulo era um `<div>` inline em `TasksListMode.tsx` e a etapa 050 (Lista em tabela) passou a renderizá-lo no `<th>` desta linha; `groups` + `hint`, tooltip do cabeçalho ("Ordenado por prazo, depois prioridade") e "Sem prazo" com `defaultOpen={noDue.length <= 10}` seguem do plano da etapa 49 (`renderCard` extraído) |
 | `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 3 casos: rótulos (incluindo a fronteira +7 / +8 dias), agrupamento ordenado por prazo e desempate por prioridade |
 | `src/components/tasks/__tests__/taskComponents.test.tsx` | 3 casos: subcabeçalhos + "Semana que vem"; "Sem prazo" abre com 10 e recolhe com 11; tooltip do cabeçalho. Harness novo `renderLista` com `TooltipProvider` (a app fornece em `AppProviders.tsx:75`) |
 

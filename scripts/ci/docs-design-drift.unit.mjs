@@ -14,7 +14,7 @@
 //      reprova arbitrário com equivalente exato). Quem "cumprisse a doc" reprovava no CI.
 //
 // Os dois invariantes são ancorados no CÓDIGO — a lista `TABS` de `ConversationTabs.tsx` e a
-// classe real do subcabeçalho em `TasksListMode.tsx` —, e não no texto de hoje: renomear,
+// classe real do subcabeçalho em `TasksListTable.tsx` —, e não no texto de hoje: renomear,
 // reordenar ou retipografar o código deixa estes testes vermelhos até o doc acompanhar.
 // Fixtures em string provam os dois lados de cada regra (ordem antiga sem marca de superação
 // falha; ordem contratada passa).
@@ -34,7 +34,7 @@ const DOCS_DE_ABAS = [
   'docs/design/PLANO_INBOX_360_CONVERSA.md',
   'docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md',
 ];
-const LISTA_DE_TAREFAS = 'src/components/tasks/list/TasksListMode.tsx';
+const ARQUIVO_DO_SUBCABECALHO = 'src/components/tasks/list/TasksListTable.tsx';
 const DOC_DE_TIPOGRAFIA = 'docs/design/TAREFAS_QUADRO_STATUS.md';
 
 // ===========================================================================
@@ -177,15 +177,22 @@ const REGISTRA_O_VETO = /text-xs|reprov|pro[íi]be|n[ãa]o usa|vigente|trocad|su
 
 /** Classe de tamanho do subcabeçalho dos grupos de "Próximas", lida do código real. */
 function tipografiaDoSubcabecalho(tsx) {
-  // Duas linhas do JSX citam `{g.label}` com `className`; só a que RENDERIZA o rótulo
-  // (`<div className="px-1 text-xs …">{g.label}</div>`) carrega o token de tipografia.
-  const candidatas = tsx.split('\n').filter((l) => l.includes('className') && l.includes('{g.label}'));
-  assert.ok(candidatas.length > 0, `${LISTA_DE_TAREFAS}: não achei o subcabeçalho dos grupos (linha com {g.label})`);
-  for (const linha of candidatas) {
-    const tokens = linha.match(TAMANHO) ?? [];
-    if (tokens.length > 0) return tokens;
+  // Duas linhas do JSX citam `{g.label}`: a `key={\`dia-${g.label}\`}` (template literal, não
+  // renderiza) e o nó que RENDERIZA o rótulo. Na etapa 050 a Lista virou tabela e esse nó
+  // passou de `<div …>{g.label}</div>` inline para um `<th …>` cuja tag de abertura pode
+  // ocupar a linha ANTERIOR — então o `className` é lido no próprio elemento (a linha do
+  // rótulo e até duas acima), nunca num `className` solto mais distante.
+  const linhas = tsx.split('\n');
+  const rotulos = linhas.map((l, i) => i).filter((i) => linhas[i].includes('{g.label}'));
+  assert.ok(rotulos.length > 0, `${ARQUIVO_DO_SUBCABECALHO}: não achei o subcabeçalho dos grupos (linha com {g.label})`);
+  for (const i of rotulos) {
+    const elemento = [linhas[i], ...linhas.slice(Math.max(0, i - 2), i)].filter((l) => l.includes('className'));
+    for (const linha of elemento) {
+      const tokens = linha.match(TAMANHO) ?? [];
+      if (tokens.length > 0) return tokens;
+    }
   }
-  assert.fail(`${LISTA_DE_TAREFAS}: o subcabeçalho dos grupos perdeu o token de tipografia`);
+  assert.fail(`${ARQUIVO_DO_SUBCABECALHO}: o subcabeçalho dos grupos perdeu o token de tipografia`);
 }
 
 function violacoesDeTipografia(doc, tokensDoCodigo) {
@@ -196,9 +203,9 @@ function violacoesDeTipografia(doc, tokensDoCodigo) {
     if (REGISTRA_O_VETO.test(linha)) return;
     violacoes.push(`linha ${i + 1} cita tamanho arbitrário sem registrar o veto do guard-rail: ${linha.trim().slice(0, 90)}`);
   });
-  const indice = linhas.findIndex((l) => l.trim().startsWith('|') && l.includes('TasksListMode.tsx') && /subcabe/i.test(l));
+  const indice = linhas.findIndex((l) => l.trim().startsWith('|') && l.includes('TasksListTable.tsx') && /subcabe/i.test(l));
   if (indice < 0) {
-    violacoes.push('a tabela de Mudanças perdeu a linha do subcabeçalho de TasksListMode.tsx');
+    violacoes.push('a tabela de Mudanças perdeu a linha do subcabeçalho de TasksListTable.tsx');
   } else {
     for (const token of linhas[indice].match(TAMANHO) ?? []) {
       if (!tokensDoCodigo.includes(token)) {
@@ -229,7 +236,7 @@ const FIX_ORDEM_DO_PAINEL_DIREITO = [
   '- Abas (h-44, underline): **Contato · Histórico · Tarefas · Notas · Arquivos**.',
 ].join('\n');
 
-const LINHA_FALSA = '| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups`; subcabeçalho `text-[12px]`; tooltip no cabeçalho |';
+const LINHA_FALSA = '| `src/components/tasks/list/TasksListTable.tsx` | "Próximas" recebe `groups`; subcabeçalho `text-[12px]`; tooltip no cabeçalho |';
 const FIX_TIPOGRAFIA_FALSA = ['| arquivo | o que muda |', '|---|---|', LINHA_FALSA].join('\n');
 const FIX_TIPOGRAFIA_OK = [
   '**Regra do plano:** subcabeçalho `text-[12px]` (reprovado pelo guard-rail: o token equivalente é `text-xs`).',
@@ -321,7 +328,7 @@ test('subcabeçalho de "Próximas" (fixture): arbitrário com o veto registrado 
 });
 
 test('doc de Tarefas/Quadro cita a classe do subcabeçalho que o código usa', () => {
-  const tokens = tipografiaDoSubcabecalho(ler(LISTA_DE_TAREFAS));
+  const tokens = tipografiaDoSubcabecalho(ler(ARQUIVO_DO_SUBCABECALHO));
   const violacoes = violacoesDeTipografia(ler(DOC_DE_TIPOGRAFIA), tokens);
   assert.deepEqual(violacoes, [], `${DOC_DE_TIPOGRAFIA}: ${violacoes.join('; ')}`);
 });
