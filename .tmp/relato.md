@@ -15,7 +15,9 @@ Especialista: Hugo (area-front-hooks)
   `.not('deleted_at','is',null)`); a consulta passa pela policy de SELECT, que só devolve o
   excluído a admin/supervisor, então não há segunda cópia da regra de papel no front. Se a
   consulta informativa falhar, a mensagem padrão ("Já existe outro contato com este número de
-  telefone.") continua correta.
+  telefone.") continua correta. A leitura desestrutura `{ data, error }` e só devolve a mensagem de
+  restaurar na leitura BEM-SUCEDIDA com linha; erro de rede cai na mensagem padrão (não engole a
+  falha como "sem excluído"), e há teste para esse caminho.
 - Testes novos: src/services/__tests__/realtime.service.contatos-excluidos.test.ts (fake
   PostgREST que aplica de verdade `is/in/not` — prova que o contato com `deleted_at` preenchido é
   cortado nas duas leituras, e que o contato vivo continua passando) e
