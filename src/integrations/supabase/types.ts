@@ -7060,32 +7060,41 @@ export type Database = {
       }
       sla_delivery_rules: {
         Row: {
+          applies_to: string | null
           breach_minutes: number
           contact_id: string | null
           created_at: string
           created_by: string | null
+          custom_message: string | null
           id: string
           is_active: boolean
+          name: string | null
           updated_at: string
           warning_minutes: number
         }
         Insert: {
+          applies_to?: string | null
           breach_minutes: number
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          custom_message?: string | null
           id?: string
           is_active?: boolean
+          name?: string | null
           updated_at?: string
           warning_minutes: number
         }
         Update: {
+          applies_to?: string | null
           breach_minutes?: number
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          custom_message?: string | null
           id?: string
           is_active?: boolean
+          name?: string | null
           updated_at?: string
           warning_minutes?: number
         }
@@ -11971,10 +11980,13 @@ export type Database = {
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
       resolve_sla_delivery_rule: {
-        Args: { p_contact_id: string }
+        Args: { p_contact_id: string; p_applies_to?: string }
         Returns: {
+          applies_to: string | null
           breach_minutes: number
           contact_id: string
+          custom_message: string | null
+          name: string | null
           rule_id: string
           source: string
           warning_minutes: number

@@ -119,7 +119,6 @@ const ALLOWLIST = new Set([
   // contato>global>30/60 e o rollback executável. Passo de uma linha em db-guard.yml — promover
   // pelo dono do workflow (agente não edita workflow).
   'scripts/db-audit/sla-delivery-rules.test.sh',
->>>>>>> d1ead1b2e (feat(sla): paridade V3 do alerta de atraso de entrega (sla_delivery_rules + resolve_sla_delivery_rule))
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

@@ -229,4 +229,94 @@ psql_file "$migration" >/dev/null
 expect_value 'reaplicacao idempotente: 1 global' '1' "SELECT count(*) FROM public.sla_delivery_rules WHERE contact_id IS NULL"
 expect_value 'reaplicacao idempotente: ainda 30/60' '30|60' "SELECT warning_minutes||'|'||breach_minutes FROM public.sla_delivery_rules WHERE contact_id IS NULL"
 
+# --- 7. extras: nome, mensagem propria e escopo por instancia/canal -------------
+# Contrato da migration supabase/migrations/20261013030417_sla_delivery_rules_extras.sql:
+# 3 colunas novas (CHECK aceita NULL = a linha do seed passa sem backfill), RPC trocada por
+# (uuid, text) devolvendo nome/mensagem/escopo e respeitando o escopo pedido, precedencia
+# contato > global > 30/60 preservada, rollback executavel e reaplicacao idempotente.
+migration_extras="$repo_root/supabase/migrations/20261013030417_sla_delivery_rules_extras.sql"
+
+# Vermelho: no estado anterior (so a migration do SD1) as colunas e a RPC com escopo nao existem.
+expect_value 'extras: ausentes antes da migration' '0|true' \
+  "SELECT (SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='sla_delivery_rules' AND column_name IN ('name','custom_message','applies_to'))::text||'|'||(to_regprocedure('public.resolve_sla_delivery_rule(uuid,text)') IS NULL)::text"
+
+psql_file "$migration_extras" >/dev/null
+
+expect_value 'extras: 3 colunas text opcionais' 'applies_to|text|YES;custom_message|text|YES;name|text|YES' \
+  "SELECT string_agg(column_name||'|'||data_type||'|'||is_nullable, ';' ORDER BY column_name) FROM information_schema.columns WHERE table_schema='public' AND table_name='sla_delivery_rules' AND column_name IN ('name','custom_message','applies_to')"
+expect_value 'extras: 3 CHECKs por nome' '3' \
+  "SELECT count(*) FROM pg_constraint WHERE conrelid='public.sla_delivery_rules'::regclass AND contype='c' AND conname IN ('sla_delivery_rules_name_check','sla_delivery_rules_custom_message_check','sla_delivery_rules_applies_to_check')"
+expect_value 'extras: RLS continua ligada com as 4 politicas' 'true|4' \
+  "SELECT c.relrowsecurity||'|'||(SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='sla_delivery_rules') FROM pg_class c WHERE c.oid='public.sla_delivery_rules'::regclass"
+expect_value 'extras: a regra que ja existia passou sem backfill (3 campos nulos)' '1|true' \
+  "SELECT count(*)::text||'|'||bool_and(name IS NULL AND custom_message IS NULL AND applies_to IS NULL) FROM public.sla_delivery_rules WHERE contact_id IS NULL AND warning_minutes=30 AND breach_minutes=60"
+
+expect_value 'extras: assinatura (uuid, text) existe e a antiga sumiu' 'true|true' \
+  "SELECT (to_regprocedure('public.resolve_sla_delivery_rule(uuid,text)') IS NOT NULL)::text||'|'||(to_regprocedure('public.resolve_sla_delivery_rule(uuid)') IS NULL)::text"
+expect_value 'extras: retorno ganhou name/custom_message/applies_to' 'true' \
+  "SELECT (pg_get_function_result('public.resolve_sla_delivery_rule(uuid,text)'::regprocedure) LIKE '%name text%' AND pg_get_function_result('public.resolve_sla_delivery_rule(uuid,text)'::regprocedure) LIKE '%custom_message text%' AND pg_get_function_result('public.resolve_sla_delivery_rule(uuid,text)'::regprocedure) LIKE '%applies_to text%')::text"
+expect_value 'extras: authenticated executa a RPC nova; anon nao' 'true|false' \
+  "SELECT has_function_privilege('authenticated','public.resolve_sla_delivery_rule(uuid,text)','EXECUTE')||'|'||has_function_privilege('anon','public.resolve_sla_delivery_rule(uuid,text)','EXECUTE')"
+expect_value 'extras: anon segue sem privilegio na tabela' 'f' \
+  "SELECT has_table_privilege('anon','public.sla_delivery_rules','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')"
+
+# Fixture: uma regra global COM escopo (inst-1) e uma regra do contato COM escopo (inst-1).
+psql_sql "INSERT INTO public.sla_delivery_rules (contact_id, warning_minutes, breach_minutes, name, custom_message, applies_to) VALUES (NULL, 5, 10, 'Regra instancia 1', 'Atencao: seu pedido de entrega esta atrasado.', 'inst-1')" >/dev/null
+psql_sql "INSERT INTO public.sla_delivery_rules (contact_id, warning_minutes, breach_minutes, name, applies_to) VALUES ('$CONTACT_A', 7, 9, 'Regra contato A', 'inst-1')" >/dev/null
+
+expect_value_as 'escopo: a regra da instancia vence a regra sem escopo' 'Regra instancia 1|Atencao: seu pedido de entrega esta atrasado.|inst-1|5|10|global' "$AGENT_JWT" \
+  "SELECT name||'|'||custom_message||'|'||applies_to||'|'||warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule(NULL, 'inst-1')"
+expect_value_as 'escopo: outra instancia nao herda a regra de inst-1' '30|60|global' "$AGENT_JWT" \
+  "SELECT warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule(NULL, 'inst-2')"
+expect_value_as 'escopo: sem canal informado a regra de instancia nao vaza' '30|60|global' "$AGENT_JWT" \
+  "SELECT warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule(NULL)"
+expect_value_as 'escopo: precedencia mantida (contato vence global)' "Regra contato A|$CONTACT_A|7|9|inst-1|contact" "$AGENT_JWT" \
+  "SELECT name||'|'||contact_id||'|'||warning_minutes||'|'||breach_minutes||'|'||applies_to||'|'||source FROM public.resolve_sla_delivery_rule('$CONTACT_A', 'inst-1')"
+expect_value_as 'escopo: regra do contato de outra instancia nao entra' '30|60|global' "$AGENT_JWT" \
+  "SELECT warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule('$CONTACT_A', 'inst-2')"
+expect_value_as 'escopo: contato sem regra usa a global da instancia' '5|10|global' "$AGENT_JWT" \
+  "SELECT warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule('$CONTACT_B', 'inst-1')"
+expect_value_as 'extras: a RPC devolve sempre 1 linha' '1' "$AGENT_JWT" \
+  "SELECT count(*) FROM public.resolve_sla_delivery_rule('$CONTACT_A','inst-1')"
+
+# Sem regra ativa: padrao 30/60 sem nome/mensagem/escopo.
+psql_sql "UPDATE public.sla_delivery_rules SET is_active=false" >/dev/null
+expect_value_as 'extras: padrao 30/60 vem sem nome, mensagem e escopo' 'true|30|60|default' "$AGENT_JWT" \
+  "SELECT (name IS NULL AND custom_message IS NULL AND applies_to IS NULL)::text||'|'||warning_minutes||'|'||breach_minutes||'|'||source FROM public.resolve_sla_delivery_rule(NULL)"
+
+# --- 8. validacao das colunas novas --------------------------------------------
+expect_error_as 'extras: nome em branco recusado' 'check constraint' "$ADMIN_JWT" \
+  "INSERT INTO public.sla_delivery_rules (warning_minutes, breach_minutes, name) VALUES (30, 60, '   ')"
+expect_error_as 'extras: mensagem acima de 1000 recusada' 'check constraint' "$ADMIN_JWT" \
+  "INSERT INTO public.sla_delivery_rules (warning_minutes, breach_minutes, custom_message) VALUES (30, 60, repeat('a', 1001))"
+expect_error_as 'extras: mensagem com tag HTML recusada' 'check constraint' "$ADMIN_JWT" \
+  "INSERT INTO public.sla_delivery_rules (warning_minutes, breach_minutes, custom_message) VALUES (30, 60, '<b>Seu pedido atrasou</b>')"
+expect_error_as 'extras: escopo com espaco/caractere invalido recusado' 'check constraint' "$ADMIN_JWT" \
+  "INSERT INTO public.sla_delivery_rules (warning_minutes, breach_minutes, applies_to) VALUES (30, 60, 'inst 1!')"
+expect_ok_as 'extras: texto simples com < isolado e aceito' "$ADMIN_JWT" \
+  "INSERT INTO public.sla_delivery_rules (warning_minutes, breach_minutes, custom_message) VALUES (30, 60, 'Prazo de entrega < 2h')"
+
+# --- 9. rollback executavel dos extras + reaplicacao idempotente ----------------
+mapfile -t rollback_extras < <(grep -E '^--   ' "$migration_extras" | sed -E 's/^--   //')
+(( ${#rollback_extras[@]} >= 7 )) || fail "rollback dos extras nao tem os 7 statements esperados (tem ${#rollback_extras[@]})"
+for stmt in "${rollback_extras[@]}"; do
+  [[ -n "$stmt" ]] || fail 'statement de rollback dos extras vazio'
+  psql_sql "$stmt" >/dev/null || fail "rollback dos extras falhou em: $stmt"
+done
+expect_value 'rollback dos extras removeu as 3 colunas' '0' \
+  "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='sla_delivery_rules' AND column_name IN ('name','custom_message','applies_to')"
+expect_value 'rollback dos extras restaurou resolve_sla_delivery_rule(uuid)' 'true|true' \
+  "SELECT (to_regprocedure('public.resolve_sla_delivery_rule(uuid)') IS NOT NULL)::text||'|'||(to_regprocedure('public.resolve_sla_delivery_rule(uuid,text)') IS NULL)::text"
+expect_value 'rollback dos extras restaurou os grants da RPC antiga' 'true|false' \
+  "SELECT has_function_privilege('authenticated','public.resolve_sla_delivery_rule(uuid)','EXECUTE')||'|'||has_function_privilege('anon','public.resolve_sla_delivery_rule(uuid)','EXECUTE')"
+expect_value 'rollback dos extras conservou a tabela e as politicas' 'true|4' \
+  "SELECT (to_regclass('public.sla_delivery_rules') IS NOT NULL)::text||'|'||(SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='sla_delivery_rules')"
+expect_value_as 'rollback dos extras: a RPC antiga volta respondendo pelo global' '1|global' "$AGENT_JWT" \
+  "SELECT count(*)::text||'|'||min(source) FROM public.resolve_sla_delivery_rule('$CONTACT_B')"
+
+psql_file "$migration_extras" >/dev/null
+psql_file "$migration_extras" >/dev/null
+expect_value 'extras: reaplicacao idempotente (3 colunas, RPC nova, 4 politicas)' '3|true|4' \
+  "SELECT (SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='sla_delivery_rules' AND column_name IN ('name','custom_message','applies_to'))::text||'|'||(to_regprocedure('public.resolve_sla_delivery_rule(uuid,text)') IS NOT NULL)::text||'|'||(SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='sla_delivery_rules')::text"
+
 printf 'SLA delivery rules PostgreSQL 17 behavioral contract: PASS\n'
