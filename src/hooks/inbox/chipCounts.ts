@@ -22,7 +22,7 @@ export interface ExtraFilterContext {
   search?: string | null;
   /** Tipo de contato selecionado no ContactTypeFilter. */
   selectedContactType?: string | null;
-  /** Painel Filtros: status, etiquetas, atendente e intervalo de datas. */
+  /** Painel Filtros: status, atendente e intervalo de datas. */
   filters?: InboxFiltersState | null;
 }
 
@@ -84,7 +84,7 @@ const CHIPS: ChipTab[] = ['all', 'unread', 'attending', 'waiting', 'resolved', '
 
 /**
  * Filtros que a lista aplica por cima do chip, na MESMA ordem e com as MESMAS
- * bordas: busca (nome/telefone/e-mail), painel Filtros (status, etiquetas,
+ * bordas: busca (nome/telefone/e-mail), painel Filtros (status,
  * atendente, intervalo de datas) e tipo de contato. `useInboxFilters.ts` chama
  * esta função na sua filtragem, então lista e contador compartilham o código.
  *
