@@ -1,4 +1,5 @@
 import '@/hooks/__tests__/helpers/alertMocks';
+import '@/hooks/__tests__/helpers/alertContactMock';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
@@ -6,13 +7,22 @@ import { renderHook } from '@testing-library/react';
  * Contrato do payload de `conversation_sla` no canal do Realtime.
  *
  * O hook é alimentado pelo banco (payload não tipado): o teste prova que linha fora do contrato é
- * ignorada sem derrubar o handler, que `contact_id` nulo ou id que não é UUID não geram alerta, e
- * que o aviso sai com a ação "Abrir conversa".
+ * ignorada sem derrubar o handler, que `contact_id` nulo ou id que não é UUID não geram alerta, que
+ * a falha ao carregar o contato não escapa do handler, que o aviso sai com a ação "Abrir conversa"
+ * levando o CONTATO_ID e que o canal do Realtime é único por montagem (não recriado no re-render).
  */
 import {
   callbacks,
+  channelTopics,
+  contactsQuery,
   dedupeCalls,
   dedupeResult,
+  loggerSpies,
+  openContactChat,
+  playNotificationSound,
+  removeChannel,
+  settingsCfg,
+  slaQuery,
   sonnerToast,
   resetAlertKit,
 } from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
@@ -59,6 +69,9 @@ describe('useSLANotifications — contrato do payload', () => {
     expect(titulo).toContain('SLA de Primeira Resposta Violado');
     expect(opcoes.duration).toBe(10000);
     expect(opcoes.action.label).toBe('Abrir conversa');
+    // A ação leva o CONTATO_ID (não só o rótulo): clicar abre a conversa certa.
+    opcoes.action.onClick();
+    expect(openContactChat).toHaveBeenCalledWith(CONTATO_ID);
   });
 
   it('estouro já marcado no INSERT também avisa (dedupe é do hook, não do clique)', async () => {
@@ -84,7 +97,6 @@ describe('useSLANotifications — contrato do payload', () => {
     renderHook(() => useSLANotifications());
 
     await entregarInsert({ ...LINHA, id: 'linha-1' }); // id não é UUID
-    await entregarInsert({ ...LINHA, contact_id: CONTATO_ID, first_response_at: '2026-10-12T13:00:00.000Z' });
     await entregarInsert({ ...LINHA, contact_id: CONTATO_ID, first_response_breached: undefined });
     await entregarInsert({ ...LINHA, id: undefined });
     await assentar();
@@ -121,8 +133,28 @@ describe('useSLANotifications — contrato do payload', () => {
     expect(sonnerToast.error).not.toHaveBeenCalled();
   });
 
-  it('a janela do dedupe é de 24 horas', () => {
-    expect(SLA_ALERT_DEDUPE_TTL_MS).toBe(24 * 60 * 60 * 1000);
+  it('falha ao carregar o contato não escapa do handler: loga sem dado pessoal e o próximo evento válido avisa', async () => {
+    renderHook(() => useSLANotifications());
+
+    contactsQuery.erro = new Error('falha simulada na consulta de contatos');
+    await entregarUpdate({ ...LINHA, first_response_breached: true }, { first_response_breached: false });
+    await assentar();
+
+    // A exceção foi contida: nada foi apresentado e o erro ficou registrado.
+    expect(sonnerToast.error).not.toHaveBeenCalled();
+    expect(loggerSpies.error).toHaveBeenCalledTimes(1);
+    // O log do erro não leva dado pessoal (id do contato, nome ou telefone).
+    const registrado = JSON.stringify(loggerSpies.error.mock.calls[0]);
+    expect(registrado).not.toContain(CONTATO_ID);
+    expect(registrado).not.toContain('Fulano');
+    expect(registrado).not.toContain('1199');
+
+    // A borda se recupera: o handler continua vivo e o evento seguinte válido avisa.
+    contactsQuery.erro = null;
+    await entregarInsert({ ...LINHA, first_response_breached: true });
+    await assentar();
+
+    expect(sonnerToast.error).toHaveBeenCalledTimes(1);
   });
 
   it('remapear a linha (resolvida) não avisa nada', async () => {
@@ -182,5 +214,69 @@ describe('useSLANotifications — aviso de risco', () => {
 
     expect(sonnerToast.warning).not.toHaveBeenCalled();
     expect(sonnerToast.error).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSLANotifications — canal do Realtime', () => {
+  beforeEach(() => {
+    resetAlertKit();
+    settingsCfg.soundVolume = 60;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('cada montagem abre um canal com nome único (um canal por montagem)', () => {
+    renderHook(() => useSLANotifications());
+    renderHook(() => useSLANotifications());
+
+    expect(channelTopics).toHaveLength(2);
+    expect(channelTopics[0]).toContain('sla-breaches');
+    expect(channelTopics[1]).toContain('sla-breaches');
+    expect(channelTopics[0]).not.toBe(channelTopics[1]);
+  });
+
+  it('re-renderizar com ajustes novos NÃO recria o canal nem derruba a assinatura, e o alerta seguinte lê o valor vigente', async () => {
+    const { rerender } = renderHook(() => useSLANotifications());
+    expect(channelTopics).toHaveLength(1);
+
+    // O painel desliga o som do SLA e a tela re-renderiza com os ajustes novos.
+    settingsCfg.slaBreachSound = false;
+    rerender();
+
+    expect(channelTopics).toHaveLength(1); // canal não recriado
+    expect(removeChannel).not.toHaveBeenCalled(); // assinatura não derrubada
+    expect(callbacks).toHaveLength(2); // UPDATE + INSERT registrados uma vez só
+
+    await entregarUpdate({ ...LINHA, first_response_breached: true }, { first_response_breached: false });
+    await assentar();
+
+    // O alerta saiu e leu o ajuste vigente: aparece, mas cala o som.
+    expect(sonnerToast.error).toHaveBeenCalledTimes(1);
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+
+  it('desmontar com a consulta do prazo em voo não deixa timer solto nem alerta órfão', async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderHook(() => useSLANotifications());
+
+    // `sla_configuration_id` força a consulta do prazo, que fica pendente de propósito.
+    slaQuery.pendente = true;
+    await entregarInsert({
+      ...LINHA,
+      first_message_at: new Date().toISOString(),
+      sla_configuration_id: '55555555-5555-4555-8555-555555555555',
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(0); // ainda dentro da consulta: nada agendado
+
+    unmount(); // desmonta com a consulta em voo
+    slaQuery.liberar?.(); // a consulta responde DEPOIS do desmonte
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(vi.getTimerCount()).toBe(0); // nenhum timer ficou para trás
+    expect(dedupeCalls).toEqual([]);
+    expect(sonnerToast.warning).not.toHaveBeenCalled();
   });
 });

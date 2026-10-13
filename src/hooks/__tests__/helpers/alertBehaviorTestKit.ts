@@ -13,6 +13,21 @@ export const requestNotificationPermission = vi.fn();
 export const toast = vi.fn();
 export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() };
 export const invoke = vi.fn();
+/** Ação "Abrir conversa" dos toasts — o clique precisa levar o CONTATO_ID, não só o rótulo. */
+export const openContactChat = vi.fn();
+/** `supabase.removeChannel`: prova que a assinatura NÃO é derrubada no re-render. */
+export const removeChannel = vi.fn();
+/** Tópicos pedidos a `supabase.channel`, na ordem — prova o canal único por montagem. */
+export const channelTopics: string[] = [];
+/** Spies estáveis do logger: o teste confere o que foi registrado (erro sem dado pessoal). */
+export const loggerSpies = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+/** Quando preenchido, a consulta a `contacts` rejeita — prova o try/catch do handler. */
+export const contactsQuery: { erro: Error | null } = { erro: null };
+/** Com `pendente`, a consulta a `sla_configurations` só responde quando o teste chamar `liberar()`. */
+export const slaQuery: { pendente: boolean; liberar: (() => void) | null } = {
+  pendente: false,
+  liberar: null,
+};
 
 /** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
 export const dedupeResult = { valor: true };
@@ -73,13 +88,24 @@ export function supabaseMock() {
 
   return {
     supabase: {
-      channel: () => canal,
-      removeChannel: vi.fn(),
+      channel: (topico: string) => {
+        channelTopics.push(topico);
+        return canal;
+      },
+      removeChannel,
       functions: { invoke: (...args: unknown[]) => invoke(...args) },
-      from: () => ({
+      from: (tabela: string) => ({
         select: () => ({
           eq: () => ({
-            maybeSingle: async () => ({ data: contactRow, error: null }),
+            maybeSingle: async () => {
+              if (tabela === 'contacts' && contactsQuery.erro) throw contactsQuery.erro;
+              if (tabela === 'sla_configurations' && slaQuery.pendente) {
+                await new Promise<void>((resolve) => {
+                  slaQuery.liberar = resolve;
+                });
+              }
+              return { data: contactRow, error: null };
+            },
             single: async () => ({ data: contactRow, error: null }),
           }),
           order: () => ({ limit: async () => ({ data: [], error: null }) }),
@@ -96,12 +122,16 @@ export function authMock() {
 }
 
 export function loggerMock() {
-  const logger = () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() });
-  return { getLogger: logger, log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } };
+  return { getLogger: () => loggerSpies, log: loggerSpies };
 }
 
 export function toastMock() {
   return { toast };
+}
+
+/** Mock da ação "Abrir conversa"; registrado só pelos testes que a exercitam (o de sentimento usa a real). */
+export function sendProductMock() {
+  return { openContactChat: (...args: unknown[]) => openContactChat(...args) };
 }
 
 export function dedupeMock() {
@@ -121,6 +151,16 @@ export function resetAlertKit() {
   playNotificationSound.mockClear();
   showBrowserNotification.mockClear();
   invoke.mockClear();
+  openContactChat.mockClear();
+  removeChannel.mockClear();
+  loggerSpies.debug.mockClear();
+  loggerSpies.info.mockClear();
+  loggerSpies.warn.mockClear();
+  loggerSpies.error.mockClear();
+  channelTopics.length = 0;
+  contactsQuery.erro = null;
+  slaQuery.pendente = false;
+  slaQuery.liberar = null;
   sonnerToast.error.mockClear();
   sonnerToast.info.mockClear();
   sonnerToast.warning.mockClear();
