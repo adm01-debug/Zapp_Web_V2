@@ -3,10 +3,16 @@ import { renderHook, act } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({
   invalidateQueries: vi.fn(),
-  existingContact: null as null | { id: string; name: string },
+  /** Grafias devolvidas pela busca por variante de telefone. */
+  candidates: [] as { id: string; name: string; phone: string | null }[],
+  lookupError: null as null | { message: string },
+  /** Filtros `.or(...)` montados pelo hook (registra as variantes consultadas). */
+  orFilters: [] as string[],
   insertPayloads: [] as Record<string, unknown>[],
-  eqPhoneArgs: [] as string[],
   sendOutboundMessage: vi.fn(),
+  /** Promessa da Edge Function de avatar (controlada para provar não-bloqueio). */
+  avatarPromise: null as null | Promise<unknown>,
+  avatarCalls: 0,
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -30,65 +36,84 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
       select: () => ({
-        eq: (field: string, value: unknown) => {
-          // registra o valor consultado por telefone para provar que a checagem
-          // de duplicidade usa o telefone LIMPO (só dígitos), não o formatado
-          if (field === 'phone') mocks.eqPhoneArgs.push(String(value));
+        // usado pelo useEffect de conexões (whatsapp_connections): encadeado com .eq().then
+        eq: () => ({
+          then: (cb: (v: unknown) => void) => cb({ data: [] }),
+        }),
+        or: (filter: string) => {
+          mocks.orFilters.push(filter);
           return {
-            maybeSingle: async () => ({ data: mocks.existingContact, error: null }),
-            // usado pelo useEffect de conexões (whatsapp_connections): encadeado com .then
-            then: (cb: (v: unknown) => void) => cb({ data: [] }),
+            // busca da lista (searchQuery): .or().limit()
+            limit: async () => ({ data: [], error: null }),
+            // busca de candidatos por variante: .or().order().limit()
+            order: () => ({
+              limit: async () => ({ data: mocks.candidates, error: mocks.lookupError }),
+            }),
           };
         },
-        or: () => ({
-          limit: async () => ({ data: [], error: null }),
-        }),
       }),
       insert: (payload: Record<string, unknown>) => {
         mocks.insertPayloads.push(payload);
         return {
           select: () => ({
-            single: async () => ({ data: { id: 'novo-id' }, error: null }),
+            single: async () => ({
+              data: { id: 'novo-id', name: payload.name },
+              error: null,
+            }),
           }),
         };
       },
     }),
-    functions: { invoke: async () => ({ data: null, error: null }) },
+    functions: {
+      invoke: () => {
+        mocks.avatarCalls += 1;
+        return mocks.avatarPromise ?? Promise.resolve({ data: null, error: null });
+      },
+    },
   },
 }));
 
 import { useNewConversation } from '../useNewConversation';
 
+function startSend(
+  phone: string,
+  name: string,
+  onStarted = vi.fn(),
+  onClose = vi.fn(),
+) {
+  const { result } = renderHook(() => useNewConversation(true, onStarted, onClose));
+  act(() => {
+    result.current.setMode('new');
+    result.current.setNewPhone(phone);
+    result.current.setNewName(name);
+    result.current.setMessageText('Olá');
+  });
+  return { result, onStarted, onClose };
+}
+
 describe('useNewConversation — criação de contato e invalidação de contadores', () => {
   beforeEach(() => {
     mocks.invalidateQueries.mockReset();
-    mocks.existingContact = null;
+    mocks.candidates = [];
+    mocks.lookupError = null;
+    mocks.orFilters = [];
     mocks.insertPayloads = [];
-    mocks.eqPhoneArgs = [];
     mocks.sendOutboundMessage.mockReset();
     mocks.sendOutboundMessage.mockResolvedValue(undefined);
+    mocks.avatarPromise = null;
+    mocks.avatarCalls = 0;
     mocks.toastSuccess.mockReset();
     mocks.toastError.mockReset();
   });
 
-  it('cria contato com telefone normalizado, invalida os contadores e envia a mensagem', async () => {
-    const onStarted = vi.fn();
-    const onClose = vi.fn();
-    const { result } = renderHook(() => useNewConversation(true, onStarted, onClose));
-
-    act(() => {
-      result.current.setMode('new');
-      // telefone FORMATADO — o cleanedNewPhone deve ser só dígitos ('11999990000')
-      result.current.setNewPhone('(11) 99999-0000');
-      result.current.setNewName('Fulano de Teste');
-      result.current.setMessageText('Olá');
-    });
+  it('cria contato com telefone normalizado, consulta todas as variantes, invalida os contadores e envia a mensagem', async () => {
+    const { result, onStarted, onClose } = startSend('(11) 99999-0000', 'Fulano de Teste');
 
     await act(async () => {
       await result.current.handleSend();
     });
 
-    // payload do insert: telefone LIMPO (só dígitos) + nome + connection null
+    // payload do insert: telefone canônico (DDD + 9º dígito) + nome + connection null
     expect(mocks.insertPayloads).toHaveLength(1);
     expect(mocks.insertPayloads[0]).toEqual(expect.objectContaining({
       name: 'Fulano de Teste',
@@ -96,10 +121,14 @@ describe('useNewConversation — criação de contato e invalidação de contado
       whatsapp_connection_id: null,
     }));
 
-    // a checagem de duplicidade consultou o telefone LIMPO, não o formatado
-    expect(mocks.eqPhoneArgs).toContain('11999990000');
+    // a checagem de duplicidade consultou as variantes (E.164, 55…, sem o 9º dígito)
+    const lookupFilter = mocks.orFilters.find((f) => f.includes('phone.eq.'));
+    expect(lookupFilter).toBeTruthy();
+    expect(lookupFilter).toContain('phone.eq.11999990000');
+    expect(lookupFilter).toContain('phone.eq.1199990000');
+    expect(lookupFilter).toContain('phone.eq.5511999990000');
 
-    // invalida as duas queries agregadas (via invalidateContactsAggregates)
+    // invalida as queries agregadas (via invalidateContactsAggregates)
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['contacts-type-counts'] });
 
@@ -115,25 +144,64 @@ describe('useNewConversation — criação de contato e invalidação de contado
     expect(mocks.toastSuccess).toHaveBeenCalled();
   });
 
-  it('não cria contato duplicado quando já existe um com o telefone', async () => {
-    mocks.existingContact = { id: 'existente', name: 'Contato Existente' };
-    const { result } = renderHook(() => useNewConversation(true, vi.fn(), vi.fn()));
-
-    act(() => {
-      result.current.setMode('new');
-      result.current.setNewPhone('(11) 99999-0000');
-      result.current.setNewName('Outro Nome');
-      result.current.setMessageText('Olá');
-    });
+  it('não cria duplicata quando o contato já existe em variante SEM o nono dígito', async () => {
+    // base real guarda 10 dígitos (celular antigo sem o 9) — a variante precisa casar
+    mocks.candidates = [{ id: 'existente', name: 'Contato Existente', phone: '1199990000' }];
+    const { result, onStarted, onClose } = startSend('(11) 99999-0000', 'Outro Nome');
 
     await act(async () => {
       await result.current.handleSend();
     });
 
-    // nenhum insert, nenhuma invalidação, nenhum envio — só o erro de duplicidade
     expect(mocks.insertPayloads).toHaveLength(0);
     expect(mocks.invalidateQueries).not.toHaveBeenCalled();
     expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+    expect(onStarted).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expect(mocks.toastError).toHaveBeenCalledWith('Já existe um contato com este número: Contato Existente');
+  });
+
+  it('recusa número que não normaliza e não cria contato', async () => {
+    const { result } = startSend('123', 'Nome');
+
+    await act(async () => {
+      await result.current.handleSend();
+    });
+
+    expect(mocks.insertPayloads).toHaveLength(0);
+    expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith('Número de telefone inválido');
+  });
+
+  it('não espera o avatar: o envio conclui com a Edge Function de avatar pendente', async () => {
+    // promessa que nunca resolve — se o hook a aguardasse, handleSend travaria
+    mocks.avatarPromise = new Promise(() => {});
+    const { result, onStarted, onClose } = startSend('(11) 99999-0000', 'Fulano');
+
+    await act(async () => {
+      await result.current.handleSend();
+    });
+
+    expect(mocks.avatarCalls).toBeGreaterThan(0);
+    expect(onStarted).toHaveBeenCalledWith('novo-id');
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledOnce();
+  });
+
+  it('falha do envio avisa que o contato FICOU criado (sem órfão silencioso)', async () => {
+    mocks.sendOutboundMessage.mockRejectedValue(new Error('sem conexão'));
+    const { result, onClose } = startSend('(11) 99999-0000', 'Fulano');
+
+    await act(async () => {
+      await result.current.handleSend();
+    });
+
+    expect(mocks.insertPayloads).toHaveLength(1);
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'Contato "Fulano" criado, mas a mensagem não foi enviada.',
+    );
+    // o fluxo não fecha como sucesso
+    expect(onClose).not.toHaveBeenCalled();
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
   });
 });
