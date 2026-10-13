@@ -23,6 +23,15 @@ Especialista: Íris (area-front-componentes)
   `npx vitest run src/components/team-chat/__tests__/TeamChatPanel.wiring.test.tsx`
   → `Test Files  1 passed (1); Tests  4 passed (4)`
 
+## Pré-requisito (NÃO é meu — vem do cartão pai t_74af822e)
+O diff contra a branch do dia também lista os arquivos do cartão-pai (Hugo, `area-front-hooks`),
+cherry-pickados para esta branch porque eu dependo deles: `src/hooks/team-chat/useTeamReadState.ts`,
+`useTeamMessages.ts`, `queryKeys.ts`, `README.md`, os testes `useTeamReadState.test.tsx` /
+`useTeamMessages.test.tsx`, `supabase/migrations/20261009214931_team_message_read_state_view.sql`,
+`src/integrations/supabase/types.ts`, `scripts/db-audit/team-message-read-state.test.sh` e
+`.github/workflows/db-guard.yml`. Os MEUS arquivos são só `TeamMessageItem.tsx` e
+`__tests__/TeamMessageItem.status.test.tsx`.
+
 ## O que NÃO fiz e por quê
 - tooltip com os NOMES ("Lido por X, Y"): o componente não recebe quem leu. A view
   `team_message_read_state` (do cartão anterior) só expõe `read_count`/`all_read`,
