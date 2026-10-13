@@ -1054,6 +1054,20 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
+      # Figurinha PESSOAL (stickers.owner_id): a "so sua" nao pode aparecer na biblioteca
+      # compartilhada e o dono NAO-admin precisa subir/ver/excluir a propria figurinha, no banco
+      # e no bucket 'stickers'. O contrato aplica os ARQUIVOS de migration reais (as policies de
+      # public.stickers e de storage.objects) num PostgreSQL 17 descartavel e roda como os papeis
+      # reais (authenticated/anon): RED com o vazamento e o dono bloqueado, GREEN pela migration
+      # 20261013181309, e o bloco `-- Rollback` executavel do proprio arquivo devolvendo o estado
+      # anterior. Cria container proprio e roda CREATE ROLE anon/authenticated/service_role — as
+      # roles sao globais ao cluster, entao o docker-shim do E47 colidiria (SKIP_DOCKER_SHIM=1).
+      - name: Provar privacidade da figurinha pessoal no banco e no storage
+        env:
+          STICKERS_PERSONAL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/stickers-personal-rls-storage.test.sh
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
