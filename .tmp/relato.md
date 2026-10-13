@@ -37,8 +37,10 @@ Comando: `bash scripts/db-audit/talkx-monitor-panel.test.sh`
 - NAO commitei as duas migrations que o teste exercita (`20261010060000_talkx_monitor_panel.sql` e
   `20261010085230_talkx_monitor_panel_engine_health.sql`) nem `scripts/ci/check-test-inventory.mjs`:
   o cartao permite so o arquivo de teste (reorientacao do supervisor, 13/10). Para rodar as duas
-  provas acima restaurei as migrations apenas no worktree, executei e as retirei antes do commit;
-  o diff da branch contra a base `63e3556d76` e de UM arquivo (`A scripts/db-audit/talkx-monitor-panel.test.sh`).
+  provas acima restaurei as migrations apenas no worktree, executei e as retirei antes do commit:
+  o diff da branch contra a base `63e3556d76` tem 2 arquivos — o teste
+  (`A scripts/db-audit/talkx-monitor-panel.test.sh`, o unico do escopo) e este relato
+  (`M .tmp/relato.md`) — e mais nada.
 - `depende de t_e295a21f` (N-117 motor health) e da migration X140 do monitor panel: nenhuma das duas
   esta na branch do dia, entao na base o teste para em
   `FAIL: migration ausente: supabase/migrations/20261010060000_talkx_monitor_panel.sql`
