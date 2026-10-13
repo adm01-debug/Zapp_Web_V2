@@ -17,6 +17,9 @@ Especialista: Íris (area-front-componentes)
 1. "se `play()` for recusado ou o TTS falhar, o overlay mostra mensagem em pt-BR e uma ação" — motivo no hook: useVoiceAgent.ts (ttsIssue no `onAutoplayBlocked` e no catch do playback) e `replayResponse`; aviso e ação na tela: VoiceSearchOverlay.tsx (TTS_ISSUE_META + bloco `role="alert"`). Provam: useVoiceAgent.ttsAviso.test.ts (autoplay-blocked, playback-failed, replay limpa o aviso) e VoiceSearchOverlay.ttsAviso.test.tsx (mensagem, rótulo e clique chamando a ação). Rótulos: "Tocar resposta" (autoplay recusado) e "Tentar de novo" (TTS falho).
 2. "o erro tem estado na tela (nada de spinner eterno)" — MediaPreview.tsx (VideoPreview): `loadFailed` a partir do erro do `<video>`/da resolução + bloco de erro com "Tentar de novo". Prova: VideoPreview.erro.test.tsx (spinner sai, aviso entra; retry limpa o erro e remonta o vídeo; vídeo que carrega não mostra aviso).
 
+## Juiz barato (ANTES DE ENTREGAR)
+- "MOVIMENTO: animação sem 'motion-safe:'" apontou as quatro linhas do meu teste do vídeo que citavam `.animate-spin` num seletor. Não é classe aplicada na tela — era string de `querySelector`. Corrigi o teste para selecionar o spinner pela classe do lucide (`svg.lucide-loader-circle`), e re-rodei vermelho e verde. As animações do spinner (`animate-pulse`/`animate-spin`) são da base, não deste cartão.
+
 ## O que NÃO fiz e por quê
 - Mexi em src/hooks/communication/useVoiceAgent.ts e src/hooks/voice/types.ts, que são da área de hooks (Hugo): sem eles a tela não teria de onde ler o motivo da falha de áudio. É o ajuste mínimo (um estado + uma ação), nomeado aqui para o revisor; o resto dos arquivos é das telas/componentes do cartão.
 - Não toquei em `playTtsAudio.ts`: o `onAutoplayBlocked`/`onError` dele já existiam; o que faltava era o consumidor escutá-los.
