@@ -281,7 +281,7 @@ export function StickerManager({ onSend, mode = 'manager' }: StickerManagerProps
               disabled={uploading || !!pendingUpload}
               aria-label="Adicionar nova figurinha"
             >
-              {uploading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Plus className="w-4 h-4" aria-hidden="true" />}
+              {uploading ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" /> : <Plus className="w-4 h-4" aria-hidden="true" />}
               <span className="hidden sm:inline">Adicionar</span>
             </Button>
           </div>
