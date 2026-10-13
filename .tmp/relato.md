@@ -80,4 +80,19 @@ asserção de TESTE que confere a presença do spinner do estado de carregamento
 classe, não CSS de animação de produção. Nenhuma animação é autorada nesse arquivo, e ele nem faz
 parte desta rodada (veio do commit aprovado `674a5f8425`). Não há `motion-safe` a aplicar.
 
+## Outros arquivos do diff do cartão (citados)
+
+Além dos três acima, o diff do cartão altera (na rodada original `674a5f8425`, não nesta):
+
+- `src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx` — config/perfil:
+  só o campo alterado é enviado, sem vazar padrões locais.
+- `src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts` — criação de nova conexão:
+  validação/normalização e estados do fluxo.
+- `src/hooks/connections/__tests__/reconexao-automatica.todo.test.ts` — lacuna registrada como
+  `it.todo` (não finge cobertura).
+
+E ainda os arquivos de apoio da rodada original: `ConnectionQueuesDialog.test.tsx` (filas),
+`ConnectionsView.estatisticas.todo.test.tsx` (lacuna `it.todo`), `e2e/fixtures/conexoes.ts` e
+`.tmp/relato.md`.
+
 Concluí.
