@@ -15,6 +15,7 @@ Fonte da série: o watchdog `connection-health-check` JÁ grava em `public.conne
 - migration: `hermes-db-migrar supabase/migrations/20261013160000_instance_pause_investigation.sql` → `APLICADA no banco LOCAL 'v2-26101315358410' (produção não foi tocada)`; reapliquei o mesmo arquivo (`zapp-db-local psql .`) sem erro → a migration é idempotente.
 - rollback de verdade: o T10 executa o bloco `-- Rollback:` copiado do arquivo contra o schema real, confere que as 2 funções, as 3 colunas e os 3 CHECKs somem, e `ROLLBACK TO SAVEPOINT` restaura.
 - efeitos colaterais conferidos: `pg_trigger` em `public.instance_pauses` e `public.audit_logs` → 0 (nenhum gatilho dispara no UPDATE/INSERT); nenhum GRANT, RLS ou papel preexistente foi tocado (os REVOKE/GRANT são só nas 2 funções novas).
+- verificação do repositório: `zapp-verify . --rapido` → `OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (48s)`; o banco_local não é conferido por esse comando — a prova de banco desta entrega é a suíte SQL acima, rodada com papel real.
 
 ## Contrato para os filhos do IP2 (tela)
 - série: `instance_auth_event_series(p_window)` → linhas `{bucket, instance, auth_failures, disconnected, errors, total}`.
