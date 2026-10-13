@@ -74,7 +74,6 @@ describe('serverLogin', () => {
   it.each([
     ['rede', () => { throw new TypeError('Failed to fetch'); }],
     ['5xx', () => jsonResponse(500, { error: 'Internal error' })],
-    ['429', () => jsonResponse(429, { error: 'Rate limit exceeded' })],
     ['200 sem tokens', () => jsonResponse(200, { ok: true })],
     ['corpo nao-JSON', () => new Response('<html>', { status: 502 })],
   ])('%s vira unavailable para o chamador cair no signInWithPassword', async (_name, impl) => {
@@ -83,6 +82,87 @@ describe('serverLogin', () => {
     expect(r.ok).toBe(false);
     if (r.ok) throw new Error('unreachable');
     expect(r.unavailable).toBe(true);
+  });
+
+  /** Resposta 429 da edge `auth-login`, com o corpo generico dela. */
+  const rateLimitedResponse = (headers: Record<string, string> = {}) =>
+    new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json', ...headers },
+    });
+
+  /**
+   * O BUG: o 429 do rate limit da edge caia no ramo generico e a pessoa lia
+   * "Login temporariamente indisponivel. Tente novamente em instantes." — como se
+   * o servico estivesse fora. Sao MUITAS TENTATIVAS: mensagem propria, e por isso
+   * o 429 sai da lista acima (deixou de ser `unavailable`).
+   */
+  it('429 tem mensagem propria e nao e indisponivel nem lockout de conta', async () => {
+    fetchMock.mockResolvedValue(rateLimitedResponse());
+    const r = await serverLogin('a@b.co', 'x');
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error('unreachable');
+    expect(r.unavailable).toBe(false);
+    if (!('rateLimited' in r)) throw new Error('esperava rateLimited');
+    expect(r.rateLimited).toBe(true);
+    expect(r.error).toBe('Muitas tentativas de login. Aguarde alguns minutos.');
+    expect(r.error).not.toMatch(/indisponivel/i);
+    // Nem lockout: a senha nao foi conferida, entao nao ha tentativa contabilizada
+    // (com attempts > 0 a tela de login anunciaria "N tentativas restantes").
+    expect(r.lock.isLocked).toBe(false);
+    expect(r.lock.attempts).toBe(0);
+  });
+
+  it('429 nao revela se a conta existe: a mensagem nao depende do corpo da edge', async () => {
+    // A edge usa o mesmo "Rate limit exceeded" para o limite por IP e por e-mail;
+    // a mensagem do front nao pode derivar de nada disso nem do e-mail digitado.
+    fetchMock.mockResolvedValueOnce(rateLimitedResponse());
+    const porIp = await serverLogin('nao-existe@b.co', 'x');
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Email rate limit exceeded' }), { status: 429 }),
+    );
+    const porEmail = await serverLogin('existe@b.co', 'x');
+    if (porIp.ok || porEmail.ok) throw new Error('unreachable');
+    expect(porIp.error).toBe(porEmail.error);
+    expect(String(porIp.error)).not.toMatch(/@|conta|existe|senha/i);
+  });
+
+  it('429 sem corpo JSON (proxy/CDN) ainda vira rateLimited, com a mensagem generica', async () => {
+    // O ramo do 429 nao pode depender do corpo: um 429 de proxy/CDN vem HTML.
+    fetchMock.mockResolvedValue(new Response('<html>429</html>', { status: 429 }));
+    const r = await serverLogin('a@b.co', 'x');
+    if (r.ok || !('rateLimited' in r)) throw new Error('esperava rateLimited');
+    expect(r.error).toBe('Muitas tentativas de login. Aguarde alguns minutos.');
+    expect(r.retryAfterSeconds).toBeNull();
+  });
+
+  it('429 usa o Retry-After em segundos quando a edge o envia', async () => {
+    fetchMock.mockResolvedValue(rateLimitedResponse({ 'Retry-After': '45' }));
+    const r = await serverLogin('a@b.co', 'x');
+    if (r.ok || !('rateLimited' in r)) throw new Error('esperava rateLimited');
+    expect(r.retryAfterSeconds).toBe(45);
+    expect(r.error).toBe('Muitas tentativas de login. Tente novamente em 45s.');
+  });
+
+  it('429 aceita Retry-After como data HTTP', async () => {
+    const em90s = new Date(Date.now() + 90_000).toUTCString();
+    fetchMock.mockResolvedValue(rateLimitedResponse({ 'Retry-After': em90s }));
+    const r = await serverLogin('a@b.co', 'x');
+    if (r.ok || !('rateLimited' in r)) throw new Error('esperava rateLimited');
+    expect(r.retryAfterSeconds).toBeGreaterThan(60);
+    expect(r.retryAfterSeconds).toBeLessThanOrEqual(90);
+    expect(r.error).toContain('min.');
+  });
+
+  it('Retry-After ilegivel ou no passado nao vira espera inventada', async () => {
+    const casos = ['em breve', '0', new Date(Date.now() - 60_000).toUTCString()];
+    for (const valor of casos) {
+      fetchMock.mockResolvedValue(rateLimitedResponse({ 'Retry-After': valor }));
+      const r = await serverLogin('a@b.co', 'x');
+      if (r.ok || !('rateLimited' in r)) throw new Error('esperava rateLimited');
+      expect(r.retryAfterSeconds).toBeNull();
+      expect(r.error).toBe('Muitas tentativas de login. Aguarde alguns minutos.');
+    }
   });
 
   /**
