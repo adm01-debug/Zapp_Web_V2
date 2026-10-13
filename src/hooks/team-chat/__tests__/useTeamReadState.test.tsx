@@ -131,6 +131,28 @@ describe('useTeamReadState — estado real de leitura por mensagem própria', ()
     expect(deriveOwnMessageStatus(linhaView({ read_count: 3, all_read: true }))).toBe('read');
   });
 
+  it('sem mensagem própria na página, não abre canal de recibos (nada a observar)', async () => {
+    let ids: string[] = [];
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client }, children);
+    const { rerender } = renderHook(() => useTeamReadState('c1', ids), { wrapper });
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // A consulta está desabilitada sem ids: um canal só para invalidar chave
+    // desabilitada é assinatura de rede à toa em toda conversa aberta.
+    expect(h.canais).toHaveLength(0);
+
+    // Quando a página passa a ter mensagem própria, o canal aparece.
+    ids = ['m-1'];
+    rerender();
+
+    await waitFor(() => expect(h.canais).toHaveLength(1));
+    expect(h.canais[0].nome).toBe('team-read-state-c1');
+  });
+
   it('assina os recibos da conversa e invalida a chave raiz; fecha o canal na desmontagem', async () => {
     const { unmount } = render('c1', ['m-1']);
 

@@ -70,7 +70,9 @@ Eventos assinados nos canais de dados: `useTeamConversations` escuta `*` em
 `useTeamMessages` escuta `*` em `team_messages` com
 `filter: conversation_id=eq.<conversationId>`; `useTeamReadState` escuta `*` em
 `team_message_receipts` (sem filtro, como `useTeamConversations`) e revalida só a
-chave da conversa aberta — é o que faz o tick de "entregue/lido" mudar ao vivo;
+chave da conversa aberta — e só depois que a página tem mensagem própria (sem
+id próprio a consulta está desabilitada e o canal não abre) — é o que faz o tick
+de "entregue/lido" mudar ao vivo;
 `useTeamMessageReactions` escuta
 `*` em `team_message_reactions` com o mesmo filtro. O badge de não lidas do
 módulo (`useTeamUnreadTotal`) não abre canal nem dispara consulta: lê o

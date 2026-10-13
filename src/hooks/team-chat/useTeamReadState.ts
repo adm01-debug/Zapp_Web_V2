@@ -47,7 +47,8 @@ export function deriveOwnMessageStatus(state?: TeamMessageReadState): TeamMessag
  * `ownMessageIds` vem da página aberta (`useTeamMessages`): a consulta é
  * escopada à conversa E a esses ids, então o volume é o da própria página (200)
  * e não o histórico inteiro da conversa. Sem mensagem própria o hook não
- * consulta nada.
+ * consulta nada — e também não abre o canal dos recibos, que só serve para
+ * revalidar essa consulta.
  */
 export function useTeamReadState(
   conversationId: string | null,
@@ -98,8 +99,14 @@ export function useTeamReadState(
     },
   });
 
+  // O canal dos recibos vive enquanto houver o que observar: sem mensagem
+  // própria na página a consulta está DESABILITADA e invalidar a chave não
+  // mudaria tick nenhum — um canal por conversa aberta só por isso é assinatura
+  // de rede à toa. Quando a página passa a ter id próprio, o canal entra.
+  const temIds = idsKey.length > 0;
+
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !temIds) return;
     const channel = supabase
       .channel(`team-read-state-${conversationId}`)
       // Sem filtro por `conversation_id`: a publicação replica
@@ -113,7 +120,7 @@ export function useTeamReadState(
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId, queryClient]);
+  }, [conversationId, queryClient, temIds]);
 
   return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading };
 }
