@@ -9,8 +9,7 @@
 -- Projeção com RLS e fonte local (X037).
 -- Refazer 2: cursor p_after, RLS no DDD. Nada disto pré-existia. Sem BEGIN/COMMIT.
 
--- 1. DDD -> UF/região (X037).
--- Tabela de referência: só leitura p/ authenticated.
+-- 1. DDD -> UF/região (só leitura p/ authenticated).
 CREATE TABLE IF NOT EXISTS public.talkx_ddd_regions (
   ddd smallint PRIMARY KEY,
   state char(2) NOT NULL,
@@ -78,9 +77,8 @@ REVOKE ALL ON TABLE public.talkx_contact_attributes FROM PUBLIC, anon;
 GRANT SELECT ON TABLE public.talkx_contact_attributes TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.talkx_contact_attributes TO service_role;
 
--- 3. Helper dedicado do ramo gestor (dono da conta opera com papel admin;
--- sem coluna nova em profiles: quando o produto definir ownership, entra aqui
--- sem tocar nas policies).
+-- 3. Helper do ramo gestor (dono opera com papel admin; sem coluna nova em
+-- profiles: quando o produto definir ownership, entra aqui sem tocar nas policies).
 CREATE OR REPLACE FUNCTION public.can_manage_contacts(p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -105,15 +103,11 @@ CREATE POLICY talkx_contact_attributes_select
     OR public.is_contact_visible_to_user(contact_id, auth.uid())
   );
 
--- 4. Refresh dos atributos locais em UPSERT ÚNICO (sem loop) COM CURSOR.
--- Cobertura total: cada chamada processa uma página (ORDER BY id LIMIT p_limit)
--- a partir de p_after; o chamador repete passando o last_id até processed = 0.
--- Retorna (processed, last_id) da página. Elegibilidade (AND, sem OR): contato
--- não apagado (deleted_at IS NULL) e não legado (is_lid_legacy = false).
--- Telefone ausente/inválido só zera UF/região, sem excluir a linha.
--- DO UPDATE sem WHERE de guarda: as colunas locais (vendedor, UF/região,
--- funil, última mensagem) são disjuntas das colunas do CRM/compras (X038/X040),
--- então reprocessar nunca destrói dado de outra fonte.
+-- 4. Refresh dos atributos locais: página (ORDER BY id LIMIT p_limit) a partir de
+-- p_after; o chamador repete com o last_id até processed = 0. Elegível (AND): não
+-- apagado (deleted_at IS NULL) e não legado (is_lid_legacy = false). Telefone
+-- inválido só zera UF/região. DO UPDATE sem guarda: colunas locais são disjuntas
+-- das do CRM/compras (X038/X040).
 CREATE OR REPLACE FUNCTION public.talkx_refresh_local_attributes(p_limit integer DEFAULT 500, p_after uuid DEFAULT NULL)
 RETURNS TABLE (processed integer, last_id uuid)
 LANGUAGE plpgsql
