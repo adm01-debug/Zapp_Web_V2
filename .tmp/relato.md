@@ -13,9 +13,12 @@ Especialista: Íris (area-front-componentes)
 - verde depois: `npx vitest run src/components/agents/__tests__/` → `Test Files 4 passed (4); Tests 25 passed (25)`.
 - o teste renderiza o componente REAL e dispara o clique em "Enviar Convite", conferindo a função chamada e o corpo exato do convite; as mensagens de erro são provadas com `context.status` + `context.json()` reais da Edge.
 
+## Arquivos fora da lista 'ARQUIVOS QUE PODE TOCAR' — por que são indispensáveis
+- `supabase/functions/invite-user/index.ts`, `supabase/functions/invite-user/index.test.ts`, `supabase/config.toml`: são a faixa do cartão pai (t_6f48e99d), que o cartão manda trazer por `cherry-pick` quando ainda não estiver integrada. São indispensáveis porque a tarefa é justamente apontar o diálogo para essa Edge: sem eles o diálogo chamaria uma função inexistente no workspace. Não foram escritos nem editados por mim (vêm dos commits bdd3fb256/576e3716f do cartão pai).
+- `src/components/agents/inviteErrors.ts` (arquivo novo, dentro do módulo do cartão): indispensável porque as duas funções usadas pelo diálogo não podem ser exportadas de um arquivo de componente — a regra `react-refresh/only-export-components` criaria ocorrência nova no ratchet de lint (eu tentei: o lint barrou com `2 ocorrência(s) nova(s)`). Além disso o teste precisa da `describeInviteError` exportada. Extrair para um arquivo do próprio módulo foi a menor mudança que mantém o lint verde; a alternativa (deixar as funções dentro do diálogo) é o que o lint reprova.
+
 ## Faixa trazida do cartão pai (t_6f48e99d), por `cherry-pick` como o cartão manda
-- `supabase/functions/invite-user/index.ts`, `supabase/functions/invite-user/index.test.ts` e `supabase/config.toml`: a Edge `invite-user` e o registro dela na configuração do Supabase — o convite que o diálogo passou a chamar. Código do worker (edge); eu só o trouxe, não o alterei.
-- Indispensável: o cartão manda em O QUE FAZER trocar o convite para `invite-user` e pede para trazer a faixa do cartão pai quando ela não estiver integrada; sem esses 3 arquivos o diálogo chamaria uma função que não existe no workspace. É por isso que eles estão no diff: nenhum deles foi escrito ou editado por mim (vêm dos commits bdd3fb256/576e3716f do cartão pai via `cherry-pick`), e nenhum outro arquivo fora de ARQUIVOS QUE PODE TOCAR foi tocado.
+- `supabase/functions/invite-user/index.ts`, `supabase/functions/invite-user/index.test.ts` e `supabase/config.toml`: a Edge `invite-user` e o registro dela na configuração do Supabase — o convite que o diálogo passou a chamar. Código do worker (edge); eu só o trouxe, não o alterei (vêm dos commits bdd3fb256/576e3716f do cartão pai via `cherry-pick`).
 
 ## O que NÃO fiz e por quê
 - Não mexi em `src/pages/Auth.tsx` (aba "Criar Conta"): o cartão lista em ARQUIVOS QUE PODE TOCAR só os dois componentes de `agents/` e os testes, e a remoção da aba é o cartão SG1 — fora do meu escopo por instrução do próprio cartão.
