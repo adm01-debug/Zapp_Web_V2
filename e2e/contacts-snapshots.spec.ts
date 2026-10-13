@@ -171,3 +171,65 @@ for (const tema of ['light', 'dark'] as const) {
     }
   });
 }
+
+/**
+ * Captura de referência da seção "Histórico" da ficha do contato (trilha
+ * `contact_change_log`), celular primeiro: 390 px, o painel ocupa a tela.
+ *
+ * Mesmo padrão do resto do arquivo: sessão FALSA, relógio parado e backend
+ * mockado; a única rota de trilha que existe aqui é a desta captura, então a
+ * imagem não depende de nenhum dado real.
+ *
+ * Regerar a captura (Linux, mesmo SO do CI):
+ *
+ *     bun run test:e2e -- --project=chromium-contacts-visual -g "Histórico"
+ */
+test.describe('Contatos — seção Histórico na ficha (celular, captura)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('a ficha mostra o Histórico com quem, quando e quais campos', async ({ page }) => {
+    test.setTimeout(90_000);
+    const registro: Registro = { writesApp: [], mapbox: [], redeBarrada: [] };
+    await page.clock.setFixedTime(AGORA);
+    // O Playwright casa as rotas na ordem inversa: o guarda entra primeiro.
+    await bloquearRedeReal(page, registro);
+    await mockAppShell(page, registro);
+    await mockBackendContatos(page);
+    // Depois do backend de contatos, para vencer o mock genérico de `contacts`.
+    await page.route(/\/rest\/v1\/contact_change_log/, (route) =>
+      json(route, [
+        {
+          id: 3, contact_id: CONTATOS[0].id, operation: 'update', campos: ['phone', 'assigned_to'],
+          performed_at: new Date(AGORA.getTime() - 3_600_000).toISOString(),
+          performed_by: null, performed_by_profile: 'prof-1', performed_by_db_role: null,
+        },
+        {
+          id: 2, contact_id: CONTATOS[0].id, operation: 'insert', campos: ['name'],
+          performed_at: new Date(AGORA.getTime() - 2 * 3_600_000).toISOString(),
+          performed_by: null, performed_by_profile: null, performed_by_db_role: null,
+        },
+      ]));
+    await page.route(/\/rest\/v1\/profiles/, (route) => json(route, [{ id: 'prof-1', name: 'Ana Rita' }]));
+    await installFakeSession(page);
+    await gotoContacts(page);
+    await page.getByTitle('Cards').click();
+    await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });
+    await contactCards(page).first().click({ position: { x: 80, y: 90 } });
+
+    const painel = page.getByRole('dialog', { name: /^Detalhes do contato / });
+    await expect(painel).toBeVisible();
+    const secao = page.getByTestId('change-history');
+    await expect(secao).toBeVisible();
+    // QUEM (nome do perfil), QUANDO (data) e QUAIS CAMPOS (rótulo pt-BR) na tela real.
+    await expect(secao).toContainText('Alterado');
+    await expect(secao).toContainText('Ana Rita');
+    await expect(secao).toContainText('Telefone');
+
+    await page.addStyleTag({ content: SEM_TOASTS });
+    await page.evaluate(() => document.fonts.ready);
+    await secao.screenshot({
+      path: path.join(SNAPSHOT_DIR, `contacts-historico-390-${PLATFORM}${SNAPSHOT_EXT}`),
+      animations: 'disabled',
+    });
+  });
+});
