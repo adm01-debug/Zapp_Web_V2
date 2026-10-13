@@ -1,5 +1,13 @@
 Especialista: Hugo (area-front-hooks)
 
+## Origem do range (cartão pai trazido por cherry-pick)
+- O commit do cartão pai (PE-16, id de correlação) não estava na base `dia/2026-10-13` do meu workspace,
+  então eu o trouxe por cherry-pick, como o cartão manda. É esse commit que altera
+  `src/services/outbound-message.service.ts` (+ `src/services/__tests__/outbound-message.service.test.ts`)
+  e `supabase/functions/_shared/validation.ts` (+ `supabase/functions/_shared/validation.cors.test.ts`):
+  injeção do `x-request-id`/`x-correlation-id` e do cabeçalho no CORS. Nada disso é meu diff de hoje —
+  está citado aqui só porque aparece no range do cartão.
+
 ## O que mudou e por quê
 - src/lib/invokeEdge.ts: ganhou o leitor ÚNICO do corpo de erro (`readEdgeErrorBody`) e o tradutor
   `parseEdgeError` (envelope canônico `{error:{code,message,fields}}`, código plano `{error,message}` e
