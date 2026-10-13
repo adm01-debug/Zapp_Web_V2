@@ -660,12 +660,14 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).not.toContain('forward');
     });
 
-    it('GAP: no typing indicators', () => {
-      expect(panelSrc).not.toMatch(/typing.*indicator/i);
-    });
-
-    it('GAP: no online/offline presence', () => {
-      expect(panelSrc).not.toMatch(/usePresence|onlineStatus/i);
+    it('FIXED: digitação e presença entram no Panel pelos canais privados (PD-69)', () => {
+      // Antes eram lacunas ("no typing indicators" / "no online presence"); agora
+      // o Panel liga os hooks dos canais privados por conversa.
+      expect(panelSrc).toMatch(/useTeamTyping\(conversation\.id/);
+      expect(panelSrc).toContain('typingLabel');
+      expect(panelSrc).toMatch(/useTeamPresence\(conversation\.id/);
+      expect(panelSrc).toContain('onlineCount');
+      expect(headerSrc).toContain('typingLabel');
     });
 
     it('FIXED: message reactions (emoji) are composed into the Panel', () => {

@@ -32,6 +32,20 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   }),
 }));
 
+vi.mock('@/integrations/supabase/client', () => {
+  // Canais privados de digitação/presença (PD-69): stub sem rede — o teste é de a11y.
+  const channel = () => {
+    const ch: Record<string, unknown> = {};
+    ch.on = () => ch;
+    ch.subscribe = () => ch;
+    ch.track = () => Promise.resolve();
+    ch.send = () => Promise.resolve();
+    ch.presenceState = () => ({});
+    return ch;
+  };
+  return { supabase: { from: vi.fn(), storage: { from: vi.fn() }, channel, removeChannel: vi.fn() } };
+});
+
 vi.mock('@/components/inbox/chat/AIRewriteButton', () => ({ AIRewriteButton: () => null }));
 vi.mock('@/components/inbox/StickerPicker', () => ({ StickerPicker: () => null }));
 vi.mock('@/components/inbox/AudioMemePicker', () => ({ AudioMemePicker: () => null }));

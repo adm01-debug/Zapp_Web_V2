@@ -41,6 +41,10 @@ interface TeamChatHeaderProps {
   speed: number;
   showSearch: boolean;
   showStats?: boolean;
+  /** PD-69/F85: rótulo "Fulano está digitando...", quando alguém digita. */
+  typingLabel?: string | null;
+  /** PD-69/F86: quantos membros estão online na conversa. */
+  onlineCount?: number;
   isMuted?: boolean;
   canTransfer?: boolean;
   isGroupCreator?: boolean;
@@ -64,6 +68,8 @@ export function TeamChatHeader({
   speed,
   showSearch,
   showStats,
+  typingLabel,
+  onlineCount,
   isMuted,
   canTransfer,
   isGroupCreator,
@@ -95,10 +101,12 @@ export function TeamChatHeader({
         </Avatar>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-[15px] text-foreground truncate">{conversation.name}</h3>
-          <p className="text-xs text-muted-foreground">
-            {conversation.type === 'group'
-              ? `${conversation.members?.length || 0} membros`
-              : 'Chat direto'}
+          <p className="text-xs text-muted-foreground truncate">
+            {typingLabel
+              ? typingLabel
+              : isGroup
+                ? `${conversation.members?.length || 0} membros${(onlineCount ?? 0) > 0 ? ` · ${onlineCount} online` : ''}`
+                : 'Chat direto'}
           </p>
         </div>
       </div>

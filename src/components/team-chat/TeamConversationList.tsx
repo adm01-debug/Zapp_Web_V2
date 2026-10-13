@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback, KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react';
 import { Search, X, Plus, MessageSquare, Users, Hash, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { useActiveDepartments, ActiveDepartment } from '@/hooks/team-chat/useActiveDepartments';
@@ -22,6 +23,11 @@ const FILTERS: { key: FilterType; label: string }[] = [
 
 interface Props {
   conversations: TeamConversation[];
+  /** Primeiro carregamento: a lista mostra esqueleto no lugar das conversas. */
+  isLoading?: boolean;
+  /** Falha ao carregar: a lista mostra o aviso e o botão de tentar de novo. */
+  isError?: boolean;
+  onRetry?: () => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNewConversation?: () => void;
@@ -32,6 +38,9 @@ interface Props {
 
 export function TeamConversationList({
   conversations,
+  isLoading,
+  isError,
+  onRetry,
   selectedId,
   onSelect,
   onNewConversation,
@@ -43,6 +52,19 @@ export function TeamConversationList({
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [managingDept, setManagingDept] = useState<ActiveDepartment | null>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // F83/N-182: Ctrl+K (ou Cmd+K) leva o foco para a busca; Esc limpa.
+  useEffect(() => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const { data: departments = [] } = useActiveDepartments(activeFilter === 'department' || !!managingDept);
 
@@ -50,7 +72,10 @@ export function TeamConversationList({
     let result = conversations;
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(c => (c.name ?? '').toLowerCase().includes(q));
+      result = result.filter(c =>
+        (c.name ?? '').toLowerCase().includes(q) ||
+        (c.last_message?.content ?? '').toLowerCase().includes(q),
+      );
     }
     if (activeFilter === 'direct') result = result.filter(c => c.type === 'direct');
     else if (activeFilter === 'group') result = result.filter(c => c.type === 'group');
@@ -78,9 +103,12 @@ export function TeamConversationList({
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
+            ref={searchRef}
             placeholder="Buscar..."
+            aria-label="Buscar conversas (Ctrl+K)"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape' && search) { e.preventDefault(); setSearch(''); } }}
             className="pl-8 h-8 text-sm bg-muted/40 border-0 focus-visible:ring-1"
           />
           {search && (
@@ -121,7 +149,28 @@ export function TeamConversationList({
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="flex-1 overflow-y-auto" aria-busy="true" aria-label="Carregando conversas">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+              <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 p-4 text-center">
+          <p className="text-sm text-muted-foreground">Não foi possível carregar as conversas.</p>
+          {onRetry && (
+            <Button size="sm" variant="outline" onClick={onRetry}>
+              Tentar novamente
+            </Button>
+          )}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
