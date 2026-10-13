@@ -1,18 +1,33 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/dashboard/GoalsDashboard.tsx` (este cartão): cabeçalho da aba Metas com o seletor de período `Hoje / Esta Semana / Este Mês` (`ToggleGroup` single do design system, `aria-label="Período das metas"`, teclado nativo do Radix), faixa de datas do período em pt-BR e título dinâmico ("Metas do dia / da semana / do mês"). O corpo (4 KPIs + tabela + rail) só renderiza quando o `isLoading` do hook é falso; enquanto carrega entra o `GoalsLoadingSkeleton` (`role="status"`, `aria-label="Carregando metas"`), então a tela mostra esqueleto em vez de piscar "0%". Tokens já existentes (`bg-muted/40`, `border-border/50`, `data-[state=on]:bg-primary`).
+- `src/components/dashboard/goals/GoalsTable.tsx` (este cartão): `title`/`subtitle` viraram props opcionais com os valores antigos como default; a aba Metas passa os títulos coerentes com o período.
+- `src/components/dashboard/__tests__/GoalsDashboard.test.tsx` (NOVO, este cartão): renderiza o `GoalsDashboard` real com react-query e o supabase mockado, clica em cada período e lê a tela.
+
+## `useGoalsDashboard.ts` (honestamente, ponto 1 da recusa)
+O diff é MAIOR que "2 linhas": a frase anterior estava errada e foi removida. O que o diff faz nesse arquivo:
+- PARCELA DO CARTÃO PAI `t_84c9c76e` (`perf(metas): conta no banco em vez de baixar linhas do periodo`, sha `4a1b9fdb92` / commit `63ff34c75e`, base `dia/2026-10-12`): as 4 consultas passam a CONTAR no banco (`{ count: 'exact', head: true }`) em vez de baixar as linhas do período; entra o filtro `sender='agent'`; entra a consulta NOVA de resolvidas (`.maybeSingle()` sobre `conversation_outcomes`); e o teste novo `useGoalsDashboard.contagem.test.tsx`.
+- PARCELA DESTE CARTÃO: `loadingProfile` no OR do `isLoading` (a linha `const isLoading = loadingProfile || loadingMessages || ...`). Sem ela o `isLoading` fica falso durante a query de perfil e a tela pisca "0%" — é o que fecha o critério 2 deste cartão.
+
+## Testes tocados (ponto 2 da recusa, com origem)
+- `src/components/dashboard/__tests__/GoalsDashboard.test.tsx` — NOVO, deste cartão.
+- `src/components/dashboard/__tests__/GoalsConfigDialog.test.tsx` — do cartão pai `t_84c9c76e` (acompanha a mudança de `GoalsConfigDialog.tsx`).
+- `src/hooks/analytics/__tests__/useGoalsDashboard.contagem.test.tsx` — NOVO, do cartão pai `t_84c9c76e`.
+- `src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx` — do cartão pai `t_84c9c76e`.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (produção no estado do pai, `6014ab961f`): `npx vitest run src/components/dashboard/__tests__/GoalsDashboard.test.tsx` → `Test Files 1 failed (1)` / `Tests 4 failed (4)` (o seletor não existe: `getByRole('radio', { name: 'Esta Semana' })` falha em `GoalsDashboard.test.tsx:155`).
+- verde depois: mesmo comando → `Test Files 1 passed (1)` / `Tests 4 passed (4)`.
+- os 4 arquivos de teste do cartão: `npx vitest run <os 4>` → `Test Files 4 passed (4)` / `Tests 47 passed | 1 expected fail | 1 todo (49)` (ponto 4 da recusa: o é citado o `1 expected fail` e o `1 todo`, não omitidos).
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## Captura nos 3 períodos, claro/escuro, 360 e 1280 px (item 3 do cartão, ponto 3 da recusa)
+NÃO FOI FEITA. Motivo: não existe projeto Playwright com sessão simulada para a tela de Metas; os projetos permitidos (`chromium-contacts-visual`, `chromium-talkx-visual`, `chromium-email-navy`, `chromium-theme`) cobrem outras telas, e a regra R1 proíbe usar `chromium-authenticated`/`e2e/.auth`. A cobertura dos 3 períodos é dada pelo teste de unidade clicando em cada `radio`, nos 3 casos.
+
+## Verificação do cartão (`zapp-verify . --rapido`) — NÃO CONCLUÍ pelo ambiente
+- `zapp-verify . --rapido` → `VERIFY: VERMELHO em tipos`; o passo `tipos` falha em EXECUÇÃO: `tsc ... exit 137` (`Killed` = SIGKILL/OOM) e `tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo` → `tsc -b falhou com exit null`. É falha de execução, não reprovação de tipo.
+- 5 tentativas entre 06:58 e 07:26 (logs em `/home/joaquim_ataides/.local/state/zapp-verify/7c156c3084e3/tipos.log` e `.tmp/verify.log`), todas com a máquina sob pressão extrema: load average 35–137, swap 100% em uso (`Free swap = 0kB`), 4–5 `tsc` de outros agentes ao mesmo tempo. `tsc -p tsconfig.node.json` passa (`RC=0`), confirmando que o TS falha só quando o projeto grande é morto por falta de memória.
+- Sem banco: `OK db_guard`.
+
+## Estado da branch (motivo da recusa "a branch andou depois do fechar")
+Rebuild limpo sobre `dia/2026-10-13` (`96dd72dc5f`): 2 commits, trazidos por `git cherry-pick` — `6014ab961f` (pai `t_84c9c76e`, perf) e `b71e3fb644` (este cartão, feat). `git diff 87267bd919 HEAD -- src` é VAZIO: o conteúdo de `src/` iguala a entrega anterior; o que saiu foram os commits `chore(metas): relato ...` empilhados DEPOIS do fechar (eles só tocavam `.tmp/relato.md`), que eram a causa da branch ter andado.
