@@ -56,6 +56,24 @@ function roleChangeErrorMessage(error: { message?: string }): string {
   return 'Erro ao atualizar role';
 }
 
+// Mensagens claras para os erros da RPC `set_voip_profile_credentials`
+// (PostgREST devolve o texto do RAISE EXCEPTION em `error.message`).
+const RAMAL_ERROR_MESSAGES: Record<string, string> = {
+  ramal_em_uso: 'Este ramal já está em uso por outro atendente.',
+  invalid_ramal: 'Ramal inválido: use letras, números e . _ @ + - (até 64 caracteres).',
+  invalid_sip_password: 'Informe a senha SIP (1 a 256 caracteres).',
+  not_authorized: 'Apenas administradores podem definir o ramal.',
+  profile_not_found: 'Usuário não encontrado para definir o ramal.',
+};
+
+function ramalErrorMessage(error: { message?: string }): string {
+  const message = error.message ?? '';
+  for (const [code, text] of Object.entries(RAMAL_ERROR_MESSAGES)) {
+    if (message.includes(code)) return text;
+  }
+  return 'Erro ao salvar o ramal.';
+}
+
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
   basic: { label: 'Básico', description: 'Acesso apenas aos próprios atendimentos' },
   standard: { label: 'Padrão', description: 'Acesso a atendimentos e contatos atribuídos' },
@@ -211,6 +229,28 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     return true;
   }, [fetchData]);
 
+  // PE-104/105: provisiona a credencial SIP do atendente pela RPC atômica
+  // `set_voip_profile_credentials` (SECURITY DEFINER, admin/supervisor). A senha vai
+  // direto para o Vault — nunca fica em coluna comum nem volta para a tela.
+  const handleSaveRamal = useCallback(async (
+    profileId: string,
+    ramal: string,
+    sipPassword: string,
+  ): Promise<boolean> => {
+    const { error } = await supabase.rpc('set_voip_profile_credentials', {
+      p_profile_id: profileId,
+      p_ramal: ramal,
+      p_sip_password: sipPassword,
+    });
+    if (error) {
+      toast.error(ramalErrorMessage(error));
+      return false;
+    }
+    toast.success('Ramal salvo.');
+    fetchData();
+    return true;
+  }, [fetchData]);
+
   interface CreateUserPayload {
     name: string;
     nickname?: string;
@@ -298,6 +338,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     handleRoleChange,
     handleToggleActive,
     handleSaveUser,
+    handleSaveRamal,
     handleCreateUser,
   };
 }

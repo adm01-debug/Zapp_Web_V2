@@ -22,6 +22,7 @@ import { CrisisRoom } from './CrisisRoom';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
+import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
@@ -56,7 +57,7 @@ export function AdminView() {
   const [newUserGoogleServices, setNewUserGoogleServices] = useState({ google_sheets: false, google_docs: false, google_calendar: false, google_drive: false });
   const [creatingUser, setCreatingUser] = useState(false);
 
-  const { users, auditLogs, loading, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } = useAdminData(activeTab as 'users' | 'audit' | 'crm');
+  const { users, auditLogs, loading, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } = useAdminData(activeTab as 'users' | 'audit' | 'crm');
 
   useEffect(() => { if (isSupervisor) fetchData(); }, [isSupervisor, activeTab, fetchData]);
 
@@ -200,6 +201,11 @@ export function AdminView() {
                 </div>
                 <Switch id="edit_download" checked={editingUser.can_download ?? false} onCheckedChange={(checked) => setEditingUser({ ...editingUser, can_download: checked })} />
               </div>
+              {isAdmin && (
+                <VoipRamalField
+                  onSave={(ramal, sipPassword) => handleSaveRamal(editingUser.id, ramal, sipPassword)}
+                />
+              )}
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={onSaveUser} disabled={savingUser} className="bg-primary hover:bg-primary/90">
