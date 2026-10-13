@@ -32,6 +32,7 @@ FAIXA DO PAI: commits `7b73d5815c`, `72acd8306d`, `f58fe6f9c3`, `4f914b5e96`, `b
 - Desfeito o `git rm --cached`: o `.tmp/relato.md` versionado voltou a ser rastreado (como na base), então o diff do cartão fica só nos 7 arquivos de código/teste acima, mais o próprio `.tmp/relato.md`, que é artefato da fábrica e já era versionado na base.
 
 ## O que NÃO fiz e por quê
+- MOVIMENTO (aviso automático do fechar): é falso positivo. O texto `animate-pulse` aparece só DENTRO do teste, num comentário e numa asserção `expect(classes).not.toContain('animate-pulse')` que justamente prova que o esqueleto NÃO tem a classe nua; o componente anima com `motion-safe:animate-pulse`. Não adicionei nenhuma animação sem `motion-safe:`.
 - Não toquei em DDL, Edge Function, migration nem dependência nova.
 - Não mexi no script `hermes-tarefa-fechar`, no `.gitignore`, no `.tmp/cartao.md` nem no `.devin`.
 - O portão do integrador sinaliza "padrão sensível" por causa da variável local `teto por minuto` (`max_per_minute`) que já existia na tela; não é mudança de política de limite — é só o valor lido para a linha de teto do gráfico.
