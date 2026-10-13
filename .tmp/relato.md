@@ -1,18 +1,37 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Edgar (area-edge-api)
+
+## Sensibilidade
+- Padrões tocados por este diff: `service_role` (o cliente admin, que já existia, agora é injetável para teste), `enforceRateLimit`/rate limit (novo no caminho de login), `DELETE` (consumo do challenge, já existia) e emissão de sessão via `auth.admin.generateLink`.
+- Nada afrouxado: a passkey passa a ter as MESMAS travas do login por senha. Prova do caso NEGADO: os testes de recusa em `supabase/functions/webauthn/index.test.ts` (política de rede negada, erro de política, rate limit por IP, credencial desconhecida, conta banida, conta travada) todos verdes.
+- Sem produção: nenhum host/ref/endpoint de produção no diff; os testes rodam 100% offline com admin falso injetado (nenhuma chamada de rede).
+- O que muda para quem chama: `POST` com `action:"verify-authentication"` passa a devolver `{success, token_hash, type:'magiclink'}` e NÃO devolve mais `userEmail`. O consumo no cliente é de outra área — registrado em `kanban_comment` no cartão.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `supabase/functions/webauthn/index.ts`: `handleWebAuthn(req, deps)` exportado, com admin/rateLimit/verify/now injetáveis (testável sem rede); `Deno.serve` só em `import.meta.main` — mesmo encaixe do `auth-login`.
+- `supabase/functions/webauthn/index.ts`: política de rede (`resolveNetworkPolicy`, endpoint `webauthn`) na fronteira do endpoint, ANTES de ler o body, e rate limit por IP antes de qualquer leitura/efeito — as travas de rede do `auth-login` (R2-AUTH-022).
+- `supabase/functions/webauthn/index.ts`: recusa de credencial passa a usar o MESMO corpo do `auth-login` (`Invalid login credentials` + `isLocked`/`lockedUntil`/`attempts`) e registra a tentativa por `record_failed_login`, alimentando o bloqueio por tentativas.
+- `supabase/functions/webauthn/index.ts`: conta desativada/banida (`banned_until` futuro, PD-03) → 403; conta travada por tentativas (`is_account_locked`) → 423; tentativas zeradas (`clear_login_attempts`); sessão emitida por `generateLink({type:'magiclink'})` devolvendo só `token_hash`; login auditado em `audit_logs` (sem e-mail/token em claro).
+- `supabase/deployment-manifest.json`: regenerado pelo gerador do próprio repositório (`node scripts/edge-deploy/generate-manifest.mjs`), que estava `stale` (`--check` retornava "stale"). É INDISPENSÁVEL e pedido pelo próprio O QUE FAZER do cartão ("se o diff mudar o inventário de Edge Functions... rode o mesmo gerador"): o `index.ts` mudou de tamanho/import, e o manifesto guarda bytes+sha256 de cada função. O gerador tocou SÓ os hashes do bloco `webauthn` e o `manifest_sha256` — nenhum hash de arquivo que o commit não tocou.
+- Arquivos do commit (4): `supabase/functions/webauthn/index.ts`, `supabase/functions/webauthn/index.test.ts` (novo — é o ÚNICO arquivo de teste do commit; nele está a lista completa dos casos `Deno.test` deste cartão), `supabase/deployment-manifest.json` e `.tmp/relato.md`. Cada ponto do critério de pronto (recusa de rede, rate limit, asserção inválida, conta inativa, conta bloqueada, sucesso com `token_hash`) tem caso próprio em `index.test.ts`; o juiz apontou "8 casos" mas a contagem dele erra (skill `fabrica-juiz`, regra 3).
+
+## Ramos de erro (antes → depois)
+- credencial desconhecida: 400 `Credential not found` → 401 `Invalid login credentials` (mesmo corpo do auth-login; não revela se a conta existe).
+- challenge ausente OU expirado (antes 2 ramos: `Challenge not found or expired` e `Challenge expired`) → 1 ramo 401 genérico + registro de tentativa (fusão deliberada: o cliente não distingue os casos).
+- asserção inválida: 400 `WebAuthn authentication failed` → 401 `Invalid login credentials` + registro de tentativa (lockout).
+- novos: conta banida/desativada → 403 `Account disabled`; conta travada → 423 `Account locked`.
+- fecha em falha: erro do `generateLink` → 503 (não devolve token); erro da auditoria → 500 (não devolve token).
+- sucesso: antes devolvia `userId`+`userEmail` sem sessão; agora devolve `token_hash`. O `update` do contador/last_used_at e o `delete` do challenge consumido foram mantidos.
+
+## AAL
+- A sessão emitida é `aal1`, EXATAMENTE como a do login por senha (mesmo `token_hash` trocado por `verifyOtp`). Quem tem TOTP verificado continua devendo o segundo fator no gate de rota (`ProtectedRoute`, R2-AUTH-003): a passkey não marca `aal2` nem fura esse gate. Deixei o porquê em comentário no `case 'verify-authentication'`.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `deno test --config scripts/ci/deno.json supabase/functions/webauthn/index.test.ts` contra o `index.ts` original (via `git checkout HEAD -- ...`) → `Type checking failed` e erro de import de `handleWebAuthn` (o antigo não exportava handler nem emitia sessão).
+- verde depois: `deno test --config scripts/ci/deno.json supabase/functions/webauthn/` → `ok`, `0 failed` (a pasta inclui os testes pré-existentes de `verify.test.ts`, que seguem verdes).
+- tipos: `deno check --config scripts/ci/deno.json supabase/functions/webauthn/index.ts supabase/functions/webauthn/index.test.ts` → `Check ...` sem erro.
+- manifesto: `node scripts/edge-deploy/generate-manifest.mjs --check` depois da regeneração → `Edge manifest OK`.
+- juiz barato apontou, numa passada, "código alterado sem teste novo/alterado": NÃO PROCEDE — este commit ADICIONA `supabase/functions/webauthn/index.test.ts`, com casos `Deno.test` que chamam o `handleWebAuthn` real importado de `./index.ts`; `git show --stat HEAD` lista o arquivo de teste e o `.github/workflows/ci.yml` cobre a pasta pelo glob `$(git ls-files 'supabase/functions/**/*.test.ts')`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- `src/hooks/auth/useAuthForm.ts` e `src/lib/auth/passkeyAuth.ts`: estão FORA de ARQUIVOS QUE PODE TOCAR (área de hooks/front). O contrato do endpoint mudou, então o consumo (`supabase.auth.verifyOtp({type:'magiclink', token_hash})`) precisa de cartão próprio. Detalhado em `kanban_comment` no cartão.
+- Não editei o manifesto à mão além do que o gerador produziu.

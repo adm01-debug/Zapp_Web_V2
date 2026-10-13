@@ -801,8 +801,8 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "bytes": 11048,
-      "sha256": "8c31019dd1707d906b962ded1aa4228cb14a463cd4a7c557d581541efcd1ab51"
+      "bytes": 21428,
+      "sha256": "f5725e0ddffea5a5846da5d9e212daec6d5a6ca54bb7443f4a2fe29041e9925b"
     },
     {
       "path": "supabase/functions/webauthn/verify.ts",
@@ -2185,7 +2185,7 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "61775649ed853bedfb1e1371c314a6716c21f9ae8d04c41abdc219c4a71efbd5",
+      "source_sha256": "a4b6d90c957adb6f759017c6ba24b0d46ef23490fce3974b0e31a81b2b64c7e8",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2230,5 +2230,5 @@
       ]
     }
   ],
-  "manifest_sha256": "eb0db458eb81075d252a8a1bcb116b770941f2520ae2ab020d1494447bcff8f3"
+  "manifest_sha256": "b07cf976f64c3df9896605bf7e1015280430166425081763bf94b88e5bc55675"
 }
