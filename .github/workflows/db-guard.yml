@@ -82,6 +82,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # E31 (t_2e6a6730): o passo "Lint de conteudo das migrations alteradas"
+          # compara o PR com origin/<base> via `git diff`; com o fetch raso
+          # padrao (depth=1) o merge-base nao existe e o diff sairia vazio.
+          fetch-depth: 0
 
       # E49 (auditoria de GitHub Actions, 2026-09-26): ataca a causa raiz dos
       # drifts documentados no CLAUDE.md (02/09, 04/09, 24-26/09) — um arquivo
@@ -209,6 +213,35 @@ jobs:
 
       - name: Testar comparadores de catalogo, manifesto e migrations
         run: node --test scripts/db-audit/*.test.mjs
+
+      # E31 (t_2e6a6730): o check-migration-drift.mjs valida nome, formato,
+      # duplicata e SQL vazio, mas nao olha o que o SQL FAZ. Este passo porta
+      # para os arquivos ALTERADOS no PR o lint de conteudo da V3
+      # (scripts/lint-migrations.mjs): SECURITY DEFINER sem SET search_path,
+      # CREATE TABLE sem ENABLE ROW LEVEL SECURITY, GRANT EXECUTE a PUBLIC/anon,
+      # SECURITY DEFINER com GRANT TO authenticated sem auth.uid()/has_role() e
+      # EXCEPTION WHEN OTHERS que engole a falha. Linta SO o diff para nao
+      # reprovar a divida historica ja aplicada (831 migrations em 12/10/2026);
+      # excecoes ficam documentadas no manifesto (migration-evidence.json).
+      # Roda no PR (branch protection) e no merge_group (o que de fato entra na
+      # main); push na main so recebe merge ja aprovado pelo PR.
+      - name: Lint de conteudo das migrations alteradas
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "${BASE_REF:-}" ]; then
+            echo "Sem base_ref (evento ${{ github.event_name }}) — lint de conteudo pulado."
+            exit 0
+          fi
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD" -- 'supabase/migrations/*.sql' || true)"
+          if [ -z "$changed" ]; then
+            echo "Nenhuma migration alterada neste diff — lint de conteudo pulado."
+            exit 0
+          fi
+          echo "Lintando migrations alteradas:"
+          echo "$changed"
+          CHANGED_FILES="$changed" node scripts/db-audit/lint-migrations-content.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
