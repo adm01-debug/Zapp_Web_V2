@@ -19,7 +19,8 @@ NÚMEROS MEDIDOS
 
 PONTOS DO REVISOR
 Ponto 1: o teste de Auth que o cartão pedia foi criado em `src/pages/__tests__/Auth.botao-entrar.test.tsx` (jsdom, sobre a página real `src/pages/Auth.tsx`), provando `inline-flex items-center justify-center` no botão e o `<svg>` como irmão do texto; vermelho→verde na seção PROVA.
-Ponto 2: `e2e/auth.spec.ts` foi devolvido à versão da base (nenhuma linha minha nele); a medição de geometria que o caso fazia está no item (c), em 360/768/1280.
+Ponto 2: `e2e/auth.spec.ts` foi devolvido à versão da base; a medição de geometria que o caso fazia está no item (c), em 360/768/1280.
+Prova crua da reversão: `git diff dia/2026-10-13 HEAD -- e2e/auth.spec.ts | wc -l` → 0; `git diff --quiet dia/2026-10-13 HEAD -- e2e/auth.spec.ts && echo sim` → sim; `grep -c 'a seta do botão Entrar fica na mesma linha do rótulo' e2e/auth.spec.ts` → 0; `md5sum e2e/auth.spec.ts` → e6a93f6b3d12b9d62e622593b2843750, o mesmo md5 de `git show dia/2026-10-13:e2e/auth.spec.ts`. O arquivo passa por 2 commits (o cherry-pick que trouxe e o meu, que devolveu), mas o diff líquido contra a base é zero.
 Ponto 3: o comentário de `HeroBenefits.test.tsx` não diz mais "navegador real"; diz que a conta de tokens é contra `--background` e remete ao relato, que agora mede os DOIS fundos e diz qual deu qual número (item (a) tokens, item (b) fundo real mapa + véu nos dois temas).
 Ponto 4: a primeira linha deste relato é `Especialista: iris`.
 Ponto 5: o caso do e2e era um `test()` e foi removido, não virou `it()`; a medição no navegador é evidência extra do fundo real, não substituta; o teste de Auth novo está citado com a prova vermelho→verde (removendo `inline-flex` da classe do RippleButton em `Auth.tsx`).
