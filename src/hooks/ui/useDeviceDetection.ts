@@ -35,68 +35,135 @@ interface SessionAuthIdRow {
   auth_session_id: string | null;
 }
 
+// ─── Aviso de dispositivo novo no login (R2-AUTH-004) ────────────────────────
+// `detect-new-device` só era chamada quando alguém abria a aba Segurança
+// (SecurityOverview / DevicesPanel). O aviso precisa acontecer no próprio login;
+// por isso as funções abaixo são de módulo (não useCallback do render) e o
+// AuthProvider as chama fora do ciclo de render do hook.
+
+/** Prefixo da guarda no sessionStorage — uma entrada por sessão Auth. */
+const DEVICE_CHECK_GUARD_PREFIX = 'zapp.device-check';
+
+/**
+ * Chave de guarda derivada do access_token por hash curto e irreversível:
+ * identifica a sessão Auth sem gravar token (nem pedaço dele) no navegador.
+ */
+export function sessionGuardKey(accessToken: string): string {
+  let hash = 0;
+  for (let i = 0; i < accessToken.length; i++) {
+    hash = ((hash << 5) - hash) + accessToken.charCodeAt(i);
+    hash &= hash;
+  }
+  return `${DEVICE_CHECK_GUARD_PREFIX}:${Math.abs(hash).toString(36)}`;
+}
+
+/** Generate device fingerprint */
+function generateFingerprint(): string {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('fingerprint', 2, 2);
+  }
+
+  const components = [
+    navigator.userAgent,
+    navigator.language,
+    screen.colorDepth,
+    `${screen.width}x${screen.height}`,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || 'unknown',
+    canvas.toDataURL(),
+  ];
+
+  // Simple hash function
+  const hash = components.join('|').split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+
+  return Math.abs(hash).toString(36);
+}
+
+/** Get browser info */
+function getBrowserInfo(): { browser: string; os: string; deviceName: string } {
+  const ua = navigator.userAgent;
+  let browser = 'Unknown';
+  let os = 'Unknown';
+
+  // Browser detection
+  if (ua.includes('Chrome')) browser = 'Chrome';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari')) browser = 'Safari';
+  else if (ua.includes('Edge')) browser = 'Edge';
+  else if (ua.includes('Opera')) browser = 'Opera';
+
+  // OS detection
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+  // Device name
+  const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
+  const deviceName = isMobile ? 'Dispositivo Móvel' : 'Desktop';
+
+  return { browser, os, deviceName };
+}
+
+/**
+ * Chama a Edge `detect-new-device` no login: uma vez por sessão Auth (guarda em
+ * sessionStorage), só depois de `aal2` quando há fator MFA pendente. Quem chama
+ * NÃO pode esperar por esta promessa — ela é disparada fora do callback de auth
+ * (que roda sob o lock do Supabase) e nunca trava o login. Qualquer falha
+ * (rede, Edge indisponível, assurance ilegível) é silenciosa: nenhum token,
+ * telefone ou texto de mensagem entra em log.
+ */
+export async function notifyNewDeviceOnLogin(): Promise<void> {
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    if (!accessToken) return;
+
+    const guardKey = sessionGuardKey(accessToken);
+    if (sessionStorage.getItem(guardKey) === '1') return;
+
+    // Com fator MFA cadastrado, o aviso só vale depois do desafio (aal2). Com o
+    // desafio pendente a guarda NÃO é marcada, para o aviso acontecer no evento
+    // MFA_CHALLENGE_VERIFIED (um aal1 do meio do fluxo não consome a sessão).
+    const { data: assurance, error: assuranceError } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || !assurance) return;
+    if (assurance.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2') return;
+
+    sessionStorage.setItem(guardKey, '1');
+
+    const { browser, os, deviceName } = getBrowserInfo();
+    await supabase.functions.invoke('detect-new-device', {
+      body: {
+        device_fingerprint: generateFingerprint(),
+        browser,
+        os,
+        device_name: deviceName,
+      },
+    });
+  } catch {
+    // Falha silenciosa por desenho: o aviso de dispositivo novo não pode
+    // atrapalhar nem atrasar o login.
+    log.warn('[useDeviceDetection] Aviso de dispositivo novo não enviado');
+  }
+}
+
 export function useDeviceDetection() {
   const { user } = useAuth();
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
-
-  // Generate device fingerprint
-  const generateFingerprint = useCallback(() => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('fingerprint', 2, 2);
-    }
-    
-    const components = [
-      navigator.userAgent,
-      navigator.language,
-      screen.colorDepth,
-      `${screen.width}x${screen.height}`,
-      new Date().getTimezoneOffset(),
-      navigator.hardwareConcurrency || 'unknown',
-      canvas.toDataURL(),
-    ];
-
-    // Simple hash function
-    const hash = components.join('|').split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-
-    return Math.abs(hash).toString(36);
-  }, []);
-
-  // Get browser info
-  const getBrowserInfo = useCallback(() => {
-    const ua = navigator.userAgent;
-    let browser = 'Unknown';
-    let os = 'Unknown';
-
-    // Browser detection
-    if (ua.includes('Chrome')) browser = 'Chrome';
-    else if (ua.includes('Firefox')) browser = 'Firefox';
-    else if (ua.includes('Safari')) browser = 'Safari';
-    else if (ua.includes('Edge')) browser = 'Edge';
-    else if (ua.includes('Opera')) browser = 'Opera';
-
-    // OS detection
-    if (ua.includes('Windows')) os = 'Windows';
-    else if (ua.includes('Mac')) os = 'macOS';
-    else if (ua.includes('Linux')) os = 'Linux';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-
-    // Device name
-    const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
-    const deviceName = isMobile ? 'Dispositivo Móvel' : 'Desktop';
-
-    return { browser, os, deviceName };
-  }, []);
 
   // Check device on login
   const checkDevice = useCallback(async () => {
@@ -125,7 +192,7 @@ export function useDeviceDetection() {
     } catch (error) {
       log.error('Error checking device:', error);
     }
-  }, [user, generateFingerprint, getBrowserInfo]);
+  }, [user]);
 
   // Fetch user devices
   const fetchDevices = useCallback(async () => {

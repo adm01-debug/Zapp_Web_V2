@@ -7,6 +7,7 @@ import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
+import { notifyNewDeviceOnLogin } from '@/hooks/ui/useDeviceDetection';
 
 interface AuthContextType {
   user: User | null;
@@ -149,6 +150,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
         // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.
         clearInboxDraftSessions();
+      }
+
+      // R2-AUTH-004 (item 6): aviso de dispositivo novo no próprio login — a
+      // Edge `detect-new-device` antes só era chamada quando alguém abria a aba
+      // Segurança. Disparo com setTimeout(0) FORA do callback de auth: este
+      // callback roda sob o lock do Supabase e qualquer `await` aqui trava
+      // getSession/signOut (o mesmo laço do BUG-6). A função relê a sessão
+      // corrente, então não corre com o estado deste render; falha é silenciosa
+      // e o login nunca espera por ela. MFA_CHALLENGE_VERIFIED é o evento em que
+      // a sessão vira aal2 — é quando o aviso pode sair com fator pendente.
+      if (event === 'SIGNED_IN' || event === 'MFA_CHALLENGE_VERIFIED') {
+        setTimeout(() => { void notifyNewDeviceOnLogin(); }, 0);
       }
     });
 
