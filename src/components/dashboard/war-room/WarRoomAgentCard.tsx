@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -16,14 +17,28 @@ interface AgentCardProps {
 }
 
 export function WarRoomAgentCard({ agent, onClick }: AgentCardProps) {
-  const isOverloaded = agent.activeChats >= agent.maxChats;
-  const utilizationPercent = (agent.activeChats / agent.maxChats) * 100;
+  // Capacidade não configurada não é "0 de 0" nem "sobrecarregado": sem teto não há
+  // utilização a medir nem estouro a acusar (a barra e o rótulo saem vazios).
+  const hasCapacity = agent.maxChats > 0;
+  const isOverloaded = hasCapacity && agent.activeChats >= agent.maxChats;
+  const utilizationPercent = hasCapacity ? Math.min(100, (agent.activeChats / agent.maxChats) * 100) : 0;
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
 
   return (
     <motion.div
       whileHover={{ y: -2 }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Agente ${agent.name}, ${agent.status}`}
       onClick={onClick}
-      className={cn("p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md", isOverloaded && "border-warning bg-warning/5")}
+      onKeyDown={handleKeyDown}
+      className={cn("p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", isOverloaded && "border-warning bg-warning/5")}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="relative">
@@ -40,11 +55,12 @@ export function WarRoomAgentCard({ agent, onClick }: AgentCardProps) {
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">Chats</span>
-          <span className={cn(isOverloaded && "text-warning font-medium")}>{agent.activeChats}/{agent.maxChats}</span>
+          <span className={cn(isOverloaded && "text-warning font-medium")}>{hasCapacity ? `${agent.activeChats}/${agent.maxChats}` : '—'}</span>
         </div>
         <Progress value={utilizationPercent} className="h-1.5" />
         <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-          <div><div className="text-muted-foreground">Resp.</div><div className="font-medium">{agent.avgResponseTime}s</div></div>
+          {/* `avgResponseTime` null = nenhuma 1ª resposta medida hoje (não é "0s medido"). */}
+          <div><div className="text-muted-foreground">Resp.</div><div className="font-medium">{agent.avgResponseTime === null ? '—' : `${agent.avgResponseTime}s`}</div></div>
           <div><div className="text-muted-foreground">Hoje</div><div className="font-medium">{agent.resolvedToday}</div></div>
         </div>
       </div>
