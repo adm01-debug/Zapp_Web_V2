@@ -1,27 +1,45 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Como resolvi o motivo da retomada (conflito)
+A entrega anterior estava na branch `v2/estados-vazios-carregamento-5-telas-2610101800d689`
+(commit 99e391be1) e conflitava com a ponta do dia. Trouxe o commit para a ponta atual do
+workspace com `git cherry-pick 99e391be1` e resolvi os 3 conflitos PRESERVANDO o que já havia
+entrado na ponta:
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+- `MediaMigrationTool.tsx`: a ponta já tinha trocado o rótulo da barra antiga; mantive a correção
+  da entrega (indicador indeterminado, sem percentual fixo). O `<Progress>` real do resultado
+  (barra com `value={progress}` do backend) continua onde estava.
+- `AuditLogDashboard.tsx`: conflito só no bloco de estado — a ponta tinha adicionado
+  `expandedLogId` (expandir detalhes) e a entrega adicionava `truncated` (aviso de corte). Fiquei
+  com OS DOIS.
+- `TeamConversationList.tsx`: a ponta tinha reestruturado a lista para `role="list"`/`role="listitem"`
+  com navegação por teclado; a entrega trazia o skeleton de carregamento. Mantive a estrutura mais
+  nova da ponta (não voltei para `role="listbox"`/`option`) e ENXERTEI o estado de carregamento
+  (skeleton com stagger + `role="status"`), preservando o que já entrou.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Conferi no código atual que os 5 defeitos ainda existiam antes de mexer (o diff abaixo é a
+correção deles).
+
+## O que mudou e por quê
+- `src/components/team-chat/TeamConversationList.tsx`: passa a distinguir carregando de vazio —
+  skeleton (7 linhas, mesma largura/stagger do Inbox) enquanto `loading`, e "Nenhuma conversa" só
+  quando terminou e não há itens. `TeamChatView.tsx` passa `loading={conversationsLoading}`.
+- `src/components/crm360/CRM360ExplorerView.tsx`: `return null` durante `roleLoading` virou
+  `<Skeleton>` (não some a tela enquanto checa permissão).
+- `src/components/dashboard/WarRoomDashboard.tsx`: as 3 listas (filas/alertas/agentes) ganharam
+  mensagem "Sem … no período" quando o array está vazio.
+- `src/components/admin/MediaMigrationTool.tsx`: barra fixa de 30% virou indicador indeterminado
+  animado (sem percentual inventado), com `motion-safe`.
+- `src/components/security/AuditLogDashboard.tsx`: quando a página volta cheia (`>= 200`), o rótulo
+  vira "Últimos 200" e aparece aviso de que pode haver registros fora do recorte.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- verde depois: `npx vitest run` dos 5 testes da entrega + suíte do team-chat →
+  `Test Files 16 passed (16); Tests 227 passed (227)` (nenhum pulado, nenhuma falha).
+- Os 5 testes que provam cada defeito: `MediaMigrationTool.progresso.test.tsx` (não há mais
+  `progressbar` com `value={30}`), `CRM360ExplorerView.carregando.test.tsx`,
+  `WarRoomDashboard.estados.test.tsx`, `AuditLogDashboard.corte.test.tsx`,
+  `TeamConversationList.estados.test.tsx`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não alterei contratos de banco, Edge nem dependências: o pedido é só de UI.
