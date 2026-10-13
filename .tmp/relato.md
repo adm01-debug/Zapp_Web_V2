@@ -25,3 +25,7 @@ Escopo: respeitado — nenhum arquivo de produção/teste tocado, manifesto não
 ## O que NÃO fiz e por quê
 - Não alterei código corretivo (a tarefa manda apenas verificar e julgar).
 - Não corrigi o defeito de talkx (fora da área edge; o cartão-raiz manda não corrigir fora da área). Cabe ao worker (mensageria) o reset do `window.history`/URL no beforeEach do teste.
+
+## Nota ao juiz (ponto 1 — "log PASSANDO (exit 0)")
+O ponto não procede: não há correção na tarefa 2 e o defeito está FORA da área edge do cartão-raiz, então não existe guarda a passar. O resultado correto da verificação é REJEITAR a premissa; a prova é o vermelho reproduzido por mim (rc=1, mesmo teste). Não mascarei nem suprimi nada.
+
