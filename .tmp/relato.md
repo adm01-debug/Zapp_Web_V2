@@ -33,9 +33,11 @@ Especialista: workersql (area-sql-banco)
   service_role (B.23), anon negado com `permission denied` (B.24), plano usando os dois índices
   de trigrama (B.25-B.26) e rollback do próprio arquivo (C.1-C.4, reaplicação idempotente).
 - banco LOCAL (não produção): `hermes-db-migrar supabase/migrations/20261013230000_search_email_threads.sql`
-  → `APLICADA no banco LOCAL 'v2-261013034836cc' (produção não foi tocada); CREATE FUNCTION;
-  REVOKE; GRANT; COMMIT`. Conferido no banco local: `prosecdef = f` (INVOKER) e `proconfig =
-  {search_path=public, pg_temp}`.
+  → `aviso: a estrutura local agora difere do retrato da produção (esperado se a migration muda o
+  schema)` / `APLICADA no banco LOCAL 'v2-261013034836cc' (produção não foi tocada)`. Conferido no
+  banco local: `prosecdef = f` (INVOKER) e `proconfig = {search_path=public, pg_temp}`.
+- `node scripts/ci/check-test-inventory.mjs` → o meu .test.sh não aparece mais como órfão (o
+  workflow db-guard.yml ganhou o passo do PE-09).
 
 ## O que NÃO fiz e por quê
 - Não liguei a RPC no pré-filtro da tela: `src/lib/emailThreadQuery.ts` e a caixa são da área de
@@ -45,10 +47,14 @@ Especialista: workersql (area-sql-banco)
   `supabase.rpc('search_email_threads', { p_account, p_q, p_limit, p_after })`; usar `match_field`
   ('subject'|'attachment'|'body'|'from'|'snippet') e `match_snippet` para trocar o trecho da thread
   na lista; `last_message_at` da última linha é o `p_after` da próxima página.
-- REGISTRO PENDENTE: scripts/db-audit/search-email-threads.test.sh (prova de banco do cartão) é um
-  .test.sh NOVO e ainda não tem passo em .github/workflows/db-guard.yml — registro é da área de CI
-  (worker ci), não está nos arquivos que posso tocar. O check-test-inventory do workflow vai reprovar
-  como órfão até esse passo existir.
+- Registrei a prova no CI: adicionei o passo "Provar a busca de e-mail por corpo e anexo (PE-09)" em
+  .github/workflows/db-guard.yml (com `SKIP_DOCKER_SHIM=1`, como os vizinhos que sobem container
+  próprio) — sem isso o check-test-inventory reprovava o .test.sh novo como órfão. É uma linha de
+  encanamento de CI (área do worker ci), mínima e aditiva; o passo chama o retry-disposable-postgres-test.sh.
+- Achado fora do escopo (não corrigi, é de outro cartão): `node scripts/ci/check-test-inventory.mjs`
+  já acusa 6 .test.sh órfãos pré-existentes na base (department-invite-contract-audit-vocabulary,
+  ia-usage-outbox-duravel, talkx-conversion-defaults, team-chat-department-transfer-guards,
+  team-chat-media-contract, team-direct-conversation-race).
 - Não criei teste tautológico: a suíte constrói o schema/RLS reais mínimos e aplica a MIGRATION REAL
   do meu arquivo (não recria o corpo da função no teste), roda como authenticated/anon/service_role.
 - Sobre o aviso do juiz ("código alterado sem teste neste commit: src/integrations/supabase/types.ts"):
