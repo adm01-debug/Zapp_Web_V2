@@ -1,5 +1,15 @@
 Especialista: workersql
 
+## Arquivos fora da lista do cartão (indispensáveis — não é escopo alheio)
+O cartão exige "PROVA no banco LOCAL com o papel real (agent/anon/service_role) mostrando o que passa e o que é
+negado". Essa prova só existe em `scripts/db-audit/<nome>.test.sh`: o harness sobe um PostgreSQL descartável,
+aplica a migration REAL e roda como `anon`/`authenticated`/`service_role` de verdade. As suítes em
+`supabase/tests/*.sql` (o único diretório de teste que o cartão lista) rodam como `service_role` (BYPASSRLS) e
+portanto NÃO provam negação — usá-las deixaria o critério sem prova. E todo `scripts/db-audit/*.test.sh` novo
+precisa de um passo em `.github/workflows/db-guard.yml`, senão `check-test-inventory.mjs` reprova o teste órfão
+(o próprio `db_guard` do `zapp-verify` roda esse inventário). Por isso os dois arquivos são o mínimo necessário
+para cumprir o critério do cartão, e nada além disso foi tocado.
+
 ## O que mudou e por quê
 - `supabase/migrations/20261012235745_dashboard_daily_series.sql` (NOVO): cria a RPC
   `public.dashboard_daily_series(p_days int default 7)` — série diária de atividade no fuso
