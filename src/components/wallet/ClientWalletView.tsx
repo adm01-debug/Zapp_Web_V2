@@ -12,11 +12,50 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Wallet, Plus, Trash2, Users, Phone, ArrowUpDown, UserCheck } from 'lucide-react';
+import { Wallet, Plus, Trash2, Users, Phone, ArrowUpDown, UserCheck, AlertTriangle } from 'lucide-react';
 import { useClientWallet } from '@/hooks/business/useClientWallet';
+
+/**
+ * R2-API-068: com a leitura das regras recusada pelo banco, a tela dizia
+ * "Nenhuma regra configurada" — afirmava o que não leu. O aviso abaixo sobe o
+ * motivo e a tela deixa de afirmar vazio; com a lista já carregada, ela fica
+ * visível e o aviso marca que pode estar desatualizada.
+ */
+function WalletRulesErrorNotice({ source, message, temRegras }: { source: 'load' | 'toggle' | 'delete'; message: string; temRegras: boolean }) {
+  const titulo = source === 'load'
+    ? 'Não foi possível carregar as regras da carteira'
+    : source === 'toggle'
+      ? 'Não foi possível ativar/desativar a regra'
+      : 'Não foi possível excluir a regra';
+
+  return (
+    <div role="alert" className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm">
+      <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">{titulo}</p>
+        <p className="text-muted-foreground">{message}</p>
+        {source === 'load' && (
+          <p className="text-muted-foreground">
+            {temRegras
+              ? 'A lista abaixo pode estar desatualizada.'
+              : 'Nenhuma regra foi lida: isso não confirma que não existam regras cadastradas.'}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function ClientWalletView() {
   const w = useClientWallet();
+
+  const avisoDeErro = w.isError && w.error ? (
+    <WalletRulesErrorNotice
+      source={w.errorSource ?? 'load'}
+      message={w.error}
+      temRegras={w.rules.length > 0}
+    />
+  ) : null;
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
@@ -91,11 +130,15 @@ export function ClientWalletView() {
 
       <Card className="border border-secondary/20 bg-card">
         <CardHeader><CardTitle className="text-lg">Regras de Atribuição</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {avisoDeErro}
           {w.loading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
           ) : w.rules.length === 0 ? (
-            <EmptyState icon={Wallet} title="Nenhuma regra configurada" description="Configure regras para atribuir clientes automaticamente" illustration="wallet" size="sm" actionLabel="Criar Primeira Regra" onAction={() => w.setIsAddDialogOpen(true)} />
+            // Leitura recusada não é vazio confirmado: quem responde é o aviso acima.
+            w.isError ? null : (
+              <EmptyState icon={Wallet} title="Nenhuma regra configurada" description="Configure regras para atribuir clientes automaticamente" illustration="wallet" size="sm" actionLabel="Criar Primeira Regra" onAction={() => w.setIsAddDialogOpen(true)} />
+            )
           ) : (
             <Table>
               <TableHeader>
