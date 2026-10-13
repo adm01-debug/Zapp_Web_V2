@@ -7,11 +7,14 @@
  * o que o hook manda para o banco, não só o toast.
  *
  * Casos cobertos: estado inicial, modo de seleção (intocabilidade dos Sets),
- * `selectAll` com deduplicação e lista vazia, marcar como lido (contatos, não lidos e
- * erro), transferência (agente/fila, mensagem ignorada, sem seleção, erro), arquivamento
- * desfazível (retrato da seleção, restauração por contato, erro, e o SELECT de RLS em
- * `it.fails`), avatares em lote (contadores, resposta sem números, erro `Error` e
- * rejeição não-`Error`), e o `loading` durante a operação.
+ * `selectAll` com deduplicação e lista vazia, marcar como lido (filtro por
+ * `sender='contact'` + contatos, não lidos e erro), transferência via RPC
+ * atômica `transfer_conversation` POR contato (agente/fila, nota ignorada,
+ * sucesso parcial e total que rejeitam mantendo a seleção, rejeição crua de
+ * rede), arquivamento desfazível (retrato da seleção, restauração por contato,
+ * erro, e o SELECT de RLS em `it.fails`), avatares em lote (contadores, resposta
+ * sem números, erro `Error` e rejeição não-`Error`), e o `loading` durante a
+ * operação.
  *
  * Fuso horário e paginação não se aplicam (não há data nem leitura paginada aqui).
  */
@@ -42,6 +45,7 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   invoke: vi.fn(),
   from: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: mocks.toast }));
@@ -52,7 +56,7 @@ vi.mock('@/hooks/system/useUndoableAction', () => ({
 // cadeia de Realtime para dentro do teste.
 vi.mock('@/hooks/chat/useRealtimeMessages', () => ({}));
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: mocks.from, functions: { invoke: mocks.invoke } },
+  supabase: { from: mocks.from, rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
 }));
 
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
@@ -64,6 +68,10 @@ let selectQueue: DbResult[] = [];
 let recorded: RecordedCall[] = [];
 let updateGate: Promise<void> | null = null;
 let lastUndo: UndoOptions | null = null;
+// Estado da RPC de transferência: cada `p_contact_id` pode falhar de forma
+// independente, então o mapa abaixo permite provar o caminho de sucesso PARCIAL.
+let rpcFailures: Record<string, unknown> = {};
+let rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
 function buildChain(
   call: RecordedCall,
@@ -121,12 +129,20 @@ beforeEach(() => {
   recorded = [];
   updateGate = null;
   lastUndo = null;
+  rpcFailures = {};
+  rpcCalls = [];
 
   mocks.execute.mockImplementation(async (options: UndoOptions) => {
     lastUndo = options;
     await options.action();
   });
   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
+  mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+    rpcCalls.push({ name, args });
+    const failure = rpcFailures[args.p_contact_id as string];
+    if (failure) return { data: null, error: failure };
+    return { data: `event-${args.p_contact_id as string}`, error: null };
+  });
 
   mocks.from.mockImplementation((table: string) => ({
     update: (payload: unknown) => {
@@ -242,7 +258,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
     expect(mocks.toast.success).not.toHaveBeenCalled();
   });
 
-  it('marca só as mensagens NÃO lidas dos contatos selecionados e recarrega', async () => {
+  it('marca só as mensagens NÃO lidas RECEBIDAS (sender=contact) dos contatos selecionados e recarrega', async () => {
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -255,7 +271,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
       table: 'messages',
       op: 'update',
       payload: { is_read: true },
-      filters: { contact_id: ['c1', 'c2'], is_read: false },
+      filters: { contact_id: ['c1', 'c2'], is_read: false, sender: 'contact' },
     });
     expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) marcada(s) como lida(s)');
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -302,7 +318,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
   });
 });
 
-describe('useInboxBulkActions — bulkTransfer', () => {
+describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por contato)', () => {
   it('sem seleção não toca o banco', async () => {
     const { result } = renderInbox();
 
@@ -311,9 +327,10 @@ describe('useInboxBulkActions — bulkTransfer', () => {
     });
 
     expect(recorded).toEqual([]);
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
-  it('agente: grava assigned_to no lote, limpa a seleção e recarrega', async () => {
+  it('agente: uma RPC por contato, destino só em p_to_agent_id, limpa a seleção e recarrega', async () => {
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -321,19 +338,19 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('agent', 'ag-2');
     });
 
-    expect(recorded).toHaveLength(1);
-    expect(recorded[0]).toMatchObject({
-      table: 'contacts',
-      op: 'update',
-      payload: { assigned_to: 'ag-2' },
-      filters: { id: ['c1', 'c2'] },
-    });
+    expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
+    expect(rpcCalls.map((c) => c.args)).toEqual([
+      { p_contact_id: 'c1', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: 'c2', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+    ]);
+    // Nada de UPDATE solto em contacts: o único caminho é a RPC atômica.
+    expect(recorded).toEqual([]);
     expect(mocks.toast.success).toHaveBeenCalledWith('2 contato(s) transferido(s)');
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('fila: grava queue_id (e não assigned_to)', async () => {
+  it('fila: manda p_to_queue_id e deixa p_to_agent_id nulo', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -341,10 +358,16 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('queue', 'q-7');
     });
 
-    expect(recorded[0].payload).toEqual({ queue_id: 'q-7' });
+    expect(rpcCalls).toHaveLength(1);
+    expect(rpcCalls[0].args).toEqual({
+      p_contact_id: 'c1',
+      p_to_agent_id: null,
+      p_to_queue_id: 'q-7',
+      p_note: null,
+    });
   });
 
-  it('a mensagem opcional NÃO é persistida (o update não ganha campo de texto)', async () => {
+  it('a mensagem opcional NÃO é persistida (p_note vai nulo)', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -352,16 +375,61 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('agent', 'ag-2', 'recado do operador');
     });
 
-    expect(recorded[0].payload).toEqual({ assigned_to: 'ag-2' });
+    expect(rpcCalls[0].args).toEqual({
+      p_contact_id: 'c1',
+      p_to_agent_id: 'ag-2',
+      p_to_queue_id: null,
+      p_note: null,
+    });
   });
 
-  it('erro do banco: avisa e mantém a seleção', async () => {
-    updateQueue.push({ error: { message: 'rls' } });
+  it('sucesso parcial: tenta os dois, avisa as contagens, mantém a seleção e rejeita', async () => {
+    rpcFailures.c2 = { message: 'contato sem permissao', code: '42501' };
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toMatchObject({
+        message: 'contato sem permissao',
+      });
+    });
+
+    // Não abortou no primeiro erro: tentou o lote inteiro.
+    expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual(['c1', 'c2']);
+    expect(mocks.toast.error).toHaveBeenCalledWith(
+      'Erro ao transferir contatos: 1 de 2 contato(s) transferido(s); 1 falharam',
+    );
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(result.current.selectedIds.has('c2')).toBe(true);
+    expect(refetch).not.toHaveBeenCalled();
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('todos falham: rejeita, avisa 0 de N, mantém a seleção e não recarrega', async () => {
+    rpcFailures.c1 = { message: 'rls', code: '42501' };
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
     await act(async () => {
-      await result.current.bulkTransfer('queue', 'q-1');
+      await expect(result.current.bulkTransfer('queue', 'q-1')).rejects.toMatchObject({ message: 'rls' });
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith(
+      'Erro ao transferir contatos: 0 de 1 contato(s) transferido(s); 1 falharam',
+    );
+    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(refetch).not.toHaveBeenCalled();
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('rejeição crua da RPC (rede): preserva o toast de erro, mantém a seleção e propaga', async () => {
+    mocks.rpc.mockRejectedValue(new Error('network down'));
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toThrow('network down');
     });
 
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao transferir contatos');
