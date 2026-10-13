@@ -64,6 +64,10 @@ BEGIN
   IF p_days IS NULL OR jsonb_typeof(p_days) <> 'array' OR jsonb_array_length(p_days) = 0 THEN
     RAISE EXCEPTION 'p_days_deve_ser_array_nao_vazio' USING ERRCODE = '22023';
   END IF;
+  -- Teto duro: no maximo 7 dias (garante loop limitado e evita lote arbitrario).
+  IF jsonb_array_length(p_days) > 7 THEN
+    RAISE EXCEPTION 'p_days_tem_mais_de_7_dias' USING ERRCODE = '22023';
+  END IF;
   IF p_connection_id IS NULL
      OR NOT EXISTS (SELECT 1 FROM public.whatsapp_connections WHERE id = p_connection_id) THEN
     RAISE EXCEPTION 'conexao_nao_encontrada' USING ERRCODE = '22023';
