@@ -1,4 +1,4 @@
-Especialista: worker (design) (design-system-zapp)
+Especialista: designer
 
 ## O que mudou e por quê
 - src/styles/utilities.css: a regra `@media (pointer: coarse) .alvo-toque-44` deixou de inflar a
@@ -96,3 +96,22 @@ Especialista: worker (design) (design-system-zapp)
   local então não afirmo que ele passou aqui.
 - Não rodei a suíte vitest inteira (memória da fábrica: 1 suite por vez no WSL); rodei só o contrato
   alterado e o e2e do cartão.
+
+## Critérios de pronto do cartão
+- Critério 1 (alvos >=44px medidos por teste): e2e/a11y-toque-44px.spec.ts mede a ÁREA DE TOQUE
+  por `elementFromPoint` nos 4 cantos de um quadrado 44x44 centrado no controle (verde, 3 passed) e
+  o contrato vitest trava as classes (`Test Files 1 passed (1), Tests 6 passed (6)`); o vermelho foi
+  provado por mutação do CSS (`largura do checkbox: 44px` != <=20).
+- Critério 2 (grep de cor literal em src/components/ui): `git grep -nE "#[0-9a-fA-F]{3,8}|rgba?\(|hsl\([0-9]"
+  -- src/components/ui` só devolve (a) os seletores ESTRUTURAIS do recharts em
+  src/components/ui/chart.tsx:48 (`[stroke='#ccc']`/`[stroke='#fff']`, variantes arbitrárias do Tailwind
+  que casam os nós internos do recharts, não pintam cor) e (b) um `linear-gradient(#fff 0 0)` de máscara
+  em micro-interactions/buttons.tsx:264. NENHUMA cor literal pintada sobra. Os dois literais do cartão
+  (rgba(255,255,255,0.3) em buttons.tsx; hsl(142 76% 36%) em feedback.tsx) viraram
+  `hsl(var(--primary-foreground) / 0.3)` e `hsl(var(--success))`.
+- Critério 3 (contraste do X do dialog/sheet registrado): o X é `opacity-70` sobre `bg-background`.
+  Compondo `--foreground` a 70% sobre o fundo (sRGB, hsl do tokens.css: claro fg 221 20% 12% / bg
+  221 20% 97%; escuro fg 210 40% 98% / bg 240 6% 6%; alto contraste accessibility.css:7/32/35),
+  mediu-se claro 6,06:1 / escuro 9,19:1 / alto-contraste-claro 8,45:1 / alto-contraste-escuro 9,58:1 —
+  todos acima do 3:1 de objeto gráfico (WCAG 1.4.11). O `opacity-70` FICA; nada a subir.
+- Critério 4 (`zapp-verify . --rapido` verde): rodado no `hermes-tarefa-fechar`.
