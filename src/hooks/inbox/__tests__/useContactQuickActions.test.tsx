@@ -212,44 +212,4 @@ describe('useContactQuickActions', () => {
     // undoToast é a função `toast` em si (chamada direta); toast.error é método.
     expect(h.toast).not.toHaveBeenCalled();
   });
-
-  it('removeTag("Bloqueado") chama unblock real antes de remover a tag visual', async () => {
-    const c = makeContact({ tags: ['Cliente', 'Bloqueado', 'VIP'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.removeTag('bloqueado'); });
-    expect(invokeCalls()).toContainEqual(
-      expect.objectContaining({
-        instanceName: 'inst-1',
-        number: '5511999999999@s.whatsapp.net',
-        status: 'unblock',
-      }),
-    );
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'VIP'] });
-    expect(result.current.tags).toEqual(['Cliente', 'VIP']);
-  });
-
-  it('addTag("Bloqueado") redireciona para o bloqueio real; não grava como tag comum', async () => {
-    const c = makeContact({ tags: ['Cliente'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.addTag('  bloqueado  '); });
-    expect(invokeCalls()).toContainEqual(
-      expect.objectContaining({
-        instanceName: 'inst-1',
-        number: '5511999999999@s.whatsapp.net',
-        status: 'block',
-      }),
-    );
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'Bloqueado'] });
-    expect(h.update).not.toHaveBeenCalledWith({ tags: ['Cliente', 'bloqueado'] });
-    expect(result.current.tags).toEqual(['Cliente', 'Bloqueado']);
-  });
-
-  it('addTag preserva as existentes e removeTag tira só a pedida', async () => {
-    const c = makeContact({ tags: ['Cliente', 'Raro'] });
-    const { result } = renderHook(() => useContactQuickActions(c));
-    await act(async () => { await result.current.addTag('  Novo  '); });
-    expect(h.update).toHaveBeenCalledWith({ tags: ['Cliente', 'Raro', 'Novo'] });
-    await act(async () => { await result.current.removeTag('Raro'); });
-    expect(h.update).toHaveBeenLastCalledWith({ tags: ['Cliente', 'Novo'] });
-  });
 });

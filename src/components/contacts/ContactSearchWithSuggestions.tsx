@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Search, Clock, Sparkles, X, Tag, Building, User,
+  Search, Clock, Sparkles, X, Building, User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,6 @@ interface ContactSearchWithSuggestionsProps {
   value: string;
   onChange: (val: string) => void;
   uniqueCompanies: string[];
-  uniqueTags: string[];
   totalCount: number;
 }
 
@@ -36,7 +35,7 @@ function clearRecentSearches() {
 }
 
 export function ContactSearchWithSuggestions({
-  value, onChange, uniqueCompanies, uniqueTags, totalCount,
+  value, onChange, uniqueCompanies, totalCount,
 }: ContactSearchWithSuggestionsProps) {
   const [focused, setFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -61,16 +60,13 @@ export function ContactSearchWithSuggestions({
   const suggestions = useMemo(() => {
     if (!value.trim()) return [];
     const lower = value.toLowerCase();
-    const items: { type: 'company' | 'tag'; label: string; icon: typeof Building }[] = [];
+    const items: { type: 'company'; label: string; icon: typeof Building }[] = [];
 
     uniqueCompanies.filter(c => c.toLowerCase().includes(lower)).slice(0, 3)
       .forEach(c => items.push({ type: 'company', label: c, icon: Building }));
 
-    uniqueTags.filter(t => t.toLowerCase().includes(lower)).slice(0, 3)
-      .forEach(t => items.push({ type: 'tag', label: t, icon: Tag }));
-
     return items;
-  }, [value, uniqueCompanies, uniqueTags]);
+  }, [value, uniqueCompanies]);
 
   const showDropdown = focused && (recentSearches.length > 0 || suggestions.length > 0 || !value);
 

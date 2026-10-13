@@ -21,6 +21,9 @@ const SEGMENT_TIMEZONE = 'America/Sao_Paulo';
 /* ------------------------------------------------------------------ */
 
 export type RuleField =
+  // 'tags' fica no tipo e no catálogo só por dado legado: nenhum controle escreve
+  // esse campo desde 12/10/2026 (as tags de contato saíram do produto) e
+  // TalkXAudienceFilters/CONTROLLED_FIELDS ainda precisa renderizar regra antiga.
   | 'tags' | 'company' | 'contact_type' | 'conversation_status' | 'channel_type'
   | 'consent_status' | 'lead_score' | 'risk_score' | 'ai_priority' | 'ai_sentiment'
   | 'lead_origin' | 'updated_at' | 'created_at' | 'email'
@@ -121,7 +124,7 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
 };
 
 export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }], join: 'or' });
-export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
+export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'company', op: 'contains', value: '' });
 
 /**
  * O conector que vale para o segmento inteiro. Regras gravadas antes deste
@@ -294,7 +297,7 @@ export async function countAudience(rules: SegmentRules | null | undefined, segm
   return Number(result?.eligible ?? 0);
 }
 
-export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null; tags: string[] | null }
+export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null }
 
 /**
  * X017 — a amostra/lista do público passa a vir da RPC talkx_resolve_audience

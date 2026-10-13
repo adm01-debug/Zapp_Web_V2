@@ -12,7 +12,6 @@ export interface SearchContactResult {
   relationship_score: number;
   relationship_stage: string | null;
   sentiment: string | null;
-  tags: string[];
   company_id: string | null;
   company_name: string | null;
   company_cnpj: string | null;

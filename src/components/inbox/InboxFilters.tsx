@@ -28,7 +28,6 @@ import { FILTER_OPTIONS } from './ContactTypeFilter';
 
 export interface InboxFiltersState {
   status: string[];
-  tags: string[];
   agentId: string | null;
   dateRange: {
     from: Date | null;
@@ -94,7 +93,7 @@ export function InboxFilters({
   }, [filters, onFiltersChange]);
 
   const clearFilters = useCallback(() => {
-    onFiltersChange({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
+    onFiltersChange({ status: [], agentId: null, dateRange: { from: null, to: null } });
     if (onShowAllChange) onShowAllChange(false);
     if (onContactTypeChange) onContactTypeChange(null);
     if (onQueueChange) onQueueChange(null);
