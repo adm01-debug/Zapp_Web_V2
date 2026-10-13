@@ -18,7 +18,7 @@ Especialista: worker (testes) (area-testes-do-produto)
 - Produção restaurada byte a byte: `git diff b21adb04a6 -- supabase/functions/message-delivery/index.ts` vazio; `grep -rn MUTACAO supabase/functions/` → nenhuma.
 
 ## Números reais do diff da branch (medidos agora, sem número à mão)
-- `git diff --name-only dia/2026-10-13..HEAD` → 6 arquivos; destes, 2 são de teste (`supabase/functions/message-delivery/index.test.ts` e `scripts/db-audit/message-delivery-phase1-behavior.test.sh`).
+- `git diff --name-only dia/2026-10-13..HEAD` → exatamente estes 6 arquivos: `.tmp/relato.md`, `scripts/db-audit/message-delivery-phase1-behavior.test.sh`, `scripts/db-audit/message-delivery-phase1-runtime.sql`, `supabase/functions/message-delivery/index.test.ts`, `supabase/functions/message-delivery/index.ts`, `supabase/migrations/20261013210004_outbound_post_started.sql`. Destes, 2 são de teste (`index.test.ts` e `message-delivery-phase1-behavior.test.sh`).
 - `index.test.ts` no range ganha 20 casos `Deno.test` (14 do cartão pai + 6 meus); o arquivo vai de 22 para 28 casos (meu commit `084d52ae8b`).
 - Eu alterei APENAS `supabase/functions/message-delivery/index.test.ts` (meu commit de teste) + `.tmp/relato.md`.
 
