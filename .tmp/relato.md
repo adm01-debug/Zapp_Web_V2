@@ -36,7 +36,11 @@ Verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO 
 Traga só a faixa do pai 1 (`dia/2026-10-13..ad07fb517`, 8 commits): é dela que vêm os ticks de leitura (PE-70) —
 `useTeamReadState`, leitura de `read_state` em `useTeamMessages`, `queryKeys` e o rótulo acessível em
 `TeamMessageItem`. Na base `dia/2026-10-13` nada disso existe (`git show dia/2026-10-13:src/hooks/team-chat/useTeamReadState.ts` → path inexistente),
-então a spec de ticks não passaria sem ela.
+então a spec de ticks não passaria sem ela. A faixa também traz, e o diff real muda:
+`supabase/migrations/20261009214931_team_message_read_state_view.sql`, `src/integrations/supabase/types.ts`,
+`scripts/db-audit/team-message-read-state.test.sh`, `src/hooks/team-chat/README.md` e `.github/workflows/db-guard.yml`
+— são o lado banco/documentação da MESMA view `team_message_read_state` que a spec exercita por REST mockado; vêm
+inteiros, conforme o cartão manda, e eu não os editei.
 A faixa do pai 2 (`dia/2026-10-13..21de1d52`) NÃO entrou: o que ela faz e que a minha spec usa (painel
 `EvolutionMonitoringDashboard` + a ACL `ADMIN_ONLY` do `evolution-monitor`) JÁ está na base
 (`git show dia/2026-10-13:src/services/navigation.service.ts` → `{ id: 'evolution-monitor', ... roles: ADMIN_ONLY }`),
