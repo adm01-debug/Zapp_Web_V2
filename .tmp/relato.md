@@ -1,4 +1,6 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
+
+Área: telas e componentes (area-front-componentes).
 
 ## O que mudou e por quê
 - src/components/security/AclAlertsPanel.tsx (novo): painel dos alertas de regressão de permissão da tabela `security_acl_alerts` (a que o monitor do cartão pai grava): severidade, objeto, identidade (papel + privilégio), quando foi detectada e quando foi resolvida; ABERTAS primeiro e mais recentes dentro de cada grupo; estados de carregando, de erro (role=alert, o `error` não é engolido) e o vazio com o texto do cartão; recorte visível quando bate no teto de leitura; `<section aria-label="Regressões de permissão">`.
@@ -21,8 +23,10 @@ Especialista: Íris (area-front-componentes)
 - "atualização ao vivo (tópico único)" NÃO é assinatura realtime: `security_acl_alerts` não está na publicação `supabase_realtime` (a migration do cartão pai não publica a tabela) e a guarda `scripts/db-audit/check-realtime-subscriptions.mjs`, que roda no db-guard, recusa assinatura de tabela fora da publicação — comprovei com fixture: `evaluateRealtimeSubscriptions('.tmp/guard-fixture')` → `absentFromPublication= [ 'public.security_acl_alerts' ]`. Publicar a tabela é de quem escreve migration/CI, não do front. A atualização ao vivo ficou pelo refresh de 30 s do hook do repo (`useVisiblePolling`, pausa com a aba em segundo plano), mesmo padrão de `PasswordResetRequestsPanel` e `RateLimitRealtimeAlerts`. Deixei comentário no cartão para o worker de banco/CI publicar a tabela; publicado, o poll vira channel em uma linha.
 - Não tratei contraste/tokens: o painel usa só Badge/Card/CardDescription e `text-muted-foreground` do design system, como os painéis irmãos da mesma aba; medido com axe no navegador (tema escuro), esses tokens do design system ficam abaixo de AA (badge destructive 3,0; muted 3,62; muted-foreground 4,15 — exigido 4,5). É do design system (worker design), não deste cartão.
 
-## Arquivos no diff que NÃO são desta entrega (cherry-pick do cartão pai)
-- `supabase/migrations/20261013230008_security_acl_alerts_monitor.sql`, `supabase/tests/security_acl_alerts_monitor.sql` e `scripts/db-audit/pg-cron-jobs-baseline.json`: são o commit do CARTÃO PAI (`t_9dce259e`, worker sql — o monitor que cria/grava `security_acl_alerts`), cherry-pickado para esta branch porque o painel lê a tabela que ele cria. O diff contra a base do dia mostra esses 3 arquivos por causa disso; nenhuma linha deles foi tocada aqui.
+## Arquivos do diff fora da lista literal do cartão — por quê
+- `src/components/security/__tests__/AclAlertsPanel.test.tsx`, `src/components/security/__tests__/SecurityView.a11y.test.tsx` e `e2e/a11y-config-admin.spec.ts`: são o item **"testes"** da lista (o cartão pede "testes e captura" no O QUE FAZER); o teste de view já existia e só ganhou o mock do painel novo, no mesmo formato do mock do QuarantinePanel que já estava lá.
+- `e2e/__screenshots__/security-acl-alerts-light-linux.png`: é a **"captura"** pedida no item 1 do O QUE FAZER, gerada pelo teste de navegador acima (sessão fake + mocks, nenhum banco); versionada por convenção do próprio projeto (os snapshots de `e2e/__screenshots__/` são versionados).
+- `supabase/migrations/20261013230008_security_acl_alerts_monitor.sql`, `supabase/tests/security_acl_alerts_monitor.sql` e `scripts/db-audit/pg-cron-jobs-baseline.json`: NÃO são desta entrega — são o commit do CARTÃO PAI (`t_9dce259e`, worker sql, o monitor que cria/grava `security_acl_alerts`), cherry-pickado como o DEPENDÊNCIA do cartão manda ("traga a FAIXA inteira"). Nenhuma linha deles foi tocada aqui.
 
 ## Aviso de arquivo
 - `.tmp/relato.md` é arquivo versionado na base do dia (veio no commit do cartão pai): este relato substitui o dele e vai no commit do fechamento; nenhum arquivo de entrega foi tocado por isso.
