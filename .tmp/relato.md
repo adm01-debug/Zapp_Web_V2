@@ -1,18 +1,25 @@
 Especialista: Hugo (area-front-hooks)
 
+Concluí o cartão: o hook e o teste estão no commit, e a verificação rodou verde.
+
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+
+- `src/hooks/contacts/useContactsDataSource.ts` (novo): devolve `{ fonte: 'singu' | 'zapp' | 'indisponivel', carregando }` para o selo "Origem dos dados" do cabeçalho (o visual é o RD-013, da íris). `zapp` quando a ligação com o Singu está desligada (a flag `crm.integration`, o mesmo `useCRMIntegrationEnabled`); `singu` quando a ligação está ligada e a consulta ao Singu não falhou; `indisponivel` quando a consulta falhou (Singu fora do ar). `carregando` significa que há consulta ao Singu em voo; nesse momento `fonte` é a origem esperada e a tela mostra o esqueleto.
+- `src/hooks/contacts/__tests__/useContactsDataSource.test.ts` (novo): exercita o hook de verdade, trocando só o portão da integração e o lote de CRM (o serviço que o `realAdapter` do CT-002 usa). 6 casos: `zapp` com a ligação desligada, `singu` com o lote respondendo, `carregando` com o lote em voo, `indisponivel` com o lote falhando, a volta para `singu` depois de um refetch que dá certo (o aviso não fica preso) e a prova de que o hook não dispara requisição.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- vermelho antes: `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts` → `Error: Failed to resolve import "../useContactsDataSource" ... Does the file exist?` / `Test Files 1 failed (1); Tests no tests`.
+- verde depois: `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts` → `Test Files 1 passed (1); Tests 6 passed (6)`.
+- vizinhança: `npx vitest run src/hooks/contacts src/hooks/crm` → `Test Files 18 passed (18); Tests 111 passed | 1 expected fail (112)`.
+- o teste morde o comportamento: com `if (batchState === 'erro')` neutralizado por um `false &&`, a mesma execução dá `Test Files 1 failed (1); Tests 2 failed | 4 passed (6)` (caem os dois casos de `indisponivel`); a mutação foi revertida e a suíte voltou verde.
+
+## Como ele lê o Singu sem pedir dado de novo
+
+O módulo já dispara o lote de CRM (`useExternalContact360Batch` → `ExternalCRMService.getContact360Batch` → edge `crm-integration`, ação `contactLookupBatch`) — o mesmo caminho do `realAdapter` do contrato do CT-002. O hook não abre consulta nova nem chama a saúde da Edge: ele lê o estado dessa consulta compartilhada no cache do React Query, pela família de chave `['external-contact-360-batch', …]` (o mesmo `getQueryCache().findAll(...)` por prefixo que `useTalkXCampaignList` usa), mais o portão `crm.integration`. O teste "não faz requisição nova: sozinho, não chama o lote de CRM" monta o hook sem o hook do módulo: `getContact360Batch` fica com zero chamadas e o estado sai `{ fonte: 'singu', carregando: false }`. Nos casos em que o hook do módulo também é montado, o lote é chamado uma vez só.
+
+## Decisões de escopo
+
+- Escolhi ler a consulta compartilhada em vez de criar consulta própria: assim o selo reflete o que o módulo realmente consultou, sem requisição a mais.
+- O adaptador de teste do CT-002 (`singu-adapter.mock.ts`) fica de fora do hook: ele lê a consulta que o adaptador real já faz, e o mock vive só em dev/teste.
+- O visual do selo é o RD-013 (íris) e a flag `contacts.v2` decide se o cabeçalho novo existe (RD-011/RD-013); o contrato deste hook responde de onde vêm os dados, e com a integração desligada a resposta é `zapp`.
