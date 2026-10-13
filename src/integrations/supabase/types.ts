@@ -10856,6 +10856,19 @@ export type Database = {
         }
         Returns: Json
       }
+      dashboard_daily_series: {
+        Args: { p_days?: number }
+        Returns: {
+          metric_date: string
+          messages_received: number
+          messages_sent: number
+          new_contacts: number
+          conversations_opened: number
+          conversations_resolved: number
+          active_contacts: number
+          median_response_time_seconds: number | null
+        }[]
+      }
       dashboard_hourly_volume: {
         Args: { p_agent?: string; p_days?: number; p_queue?: string }
         Returns: {
