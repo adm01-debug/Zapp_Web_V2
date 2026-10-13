@@ -59,9 +59,15 @@ nenhum teste existente foi removido/afrouxado (o diff de teste só acrescenta).
   `20260930200000_enforce_enqueue_connection_scope.sql`, e é o que o teste reproduz.
 - Nada de export/import/edição em massa; nenhum dado real, nenhuma URL de produção, nenhum push/deploy.
 
-## DÚVIDA / LIMITE
-Adjacente e fora do escopo (registrado em comentário no cartão, não corrigido): a drenagem da fila offline
-(`deliverQueuedOfflineMessage`) usa o `clientMessageId` como identidade da fila local
-(`offlineQueue.remove(clientMessageId)`), então não pode rotacionar o id; se aquela linha já terminou em
-`failed` no servidor, a drenagem bate em 409 em toda reconexão. Precisa de decisão de contrato em cartão
-próprio.
+## CONCLUÍDO
+Concluí o que o cartão pede: o reenvio da mesma mensagem depois de falha definitiva cria uma mensagem
+nova (id novo, linha nova), a falha anterior fica no histórico, a idempotência do caso ambíguo continua
+igual e nenhum teste existente foi removido ou afrouxado.
+
+## O que NÃO fiz e por quê
+- Não mexi na drenagem da fila offline (`deliverQueuedOfflineMessage`), achado adjacente registrado em
+  comentário no cartão: ela usa o `clientMessageId` como identidade da fila local
+  (`offlineQueue.remove(clientMessageId)`) e não pode rotacionar o id — é decisão de contrato para cartão
+  próprio, fora dos arquivos deste.
+- Não toquei em RPC, migration, RLS nem Edge Function: o contrato do banco foi lido (não alterado) e é o
+  que o teste reproduz.
