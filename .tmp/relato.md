@@ -25,6 +25,8 @@ Especialista: Hugo (area-front-hooks)
 - src/lib/__tests__/invokeEdge.erro.test.ts: teste que prova o código do servidor no erro do cliente.
 
 ## Prova
+- Range do cartão desde `dia/2026-10-13`: 14 arquivos (4 deles de teste); inclui o commit do pai trazido
+  por cherry-pick e o `.tmp/relato.md` (documentação) — as contagens exatas saem de `git diff --stat`.
 - vermelho antes: `npx vitest run src/lib/__tests__/invokeEdge.erro.test.ts` com o wrapper ANTERIOR →
   `Tests 7 failed | 1 passed (8)` (`The instanceof assertion needs a constructor but undefined was given`
   — `EdgeFunctionError` e `error.code` não existiam).
