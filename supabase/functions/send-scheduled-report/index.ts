@@ -157,22 +157,16 @@ export async function handleScheduledReport(
       }
       case "sla_compliance": {
         const { data: sla } = await supabase.from("conversation_sla").select("*").gte("created_at", weekAgo.toISOString());
-        // Mesma regra de elegibilidade do SLA de 1ª resposta do painel
-        // (src/hooks/sla/slaFirstResponse.ts): AVALIADA = conversa com desfecho
-        // (violada ou respondida no prazo); PENDENTE = sem desfecho, fora do
-        // numerador E do denominador; a violação manda sobre o carimbo. Sem
-        // nenhuma avaliada NÃO existe taxa (nunca 100%).
-        const tally = tallyFirstResponse(sla || []);
+        const total = sla?.length || 0;
+        const responseBreached = sla?.filter((s: Record<string, unknown>) => s.first_response_breached).length || 0;
+        const resolutionBreached = sla?.filter((s: Record<string, unknown>) => s.resolution_breached).length || 0;
         reportData = {
           title: "Cumprimento de SLA",
           period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          evaluatedConversations: tally.evaluated,
-          onTimeResponses: tally.onTime,
-          responseBreaches: tally.breached,
-          pendingResponses: tally.pending,
-          responseComplianceRate: tally.evaluated > 0
-            ? `${Math.round((tally.onTime / tally.evaluated) * 100)}%`
-            : "N/A",
+          totalConversations: total,
+          responseComplianceRate: total > 0 ? `${Math.round(((total - responseBreached) / total) * 100)}%` : "N/A",
+          resolutionComplianceRate: total > 0 ? `${Math.round(((total - resolutionBreached) / total) * 100)}%` : "N/A",
+          responseBreaches: responseBreached, resolutionBreaches: resolutionBreached,
         };
         break;
       }
@@ -290,31 +284,6 @@ if (import.meta.main) {
   Deno.serve((req) => handleScheduledReport(req));
 }
 
-/**
- * Elegibilidade ÚNICA do SLA de 1ª resposta, espelhando
- * `src/hooks/sla/slaFirstResponse.ts` (R2-SLA-001 / #458): a violação manda sobre o
- * carimbo; sem violação, o carimbo da resposta = no prazo; sem nenhum dos dois =
- * pendente, fora do numerador E do denominador. O painel e o histórico usam a mesma
- * regra; o relatório agendado passa a usá-la também.
- */
-function tallyFirstResponse(
-  rows: Array<Record<string, unknown>>,
-): { evaluated: number; onTime: number; breached: number; pending: number } {
-  const tally = { evaluated: 0, onTime: 0, breached: 0, pending: 0 };
-  for (const row of rows) {
-    if (row.first_response_breached) {
-      tally.breached++;
-      tally.evaluated++;
-    } else if (row.first_response_at) {
-      tally.onTime++;
-      tally.evaluated++;
-    } else {
-      tally.pending++;
-    }
-  }
-  return tally;
-}
-
 function calculateNextSend(frequency: string): string {
   const next = new Date();
   switch (frequency) {
@@ -353,10 +322,9 @@ function formatKey(key: string): string {
   const map: Record<string, string> = {
     totalMessages: "Total de Mensagens", messagesReceived: "Mensagens Recebidas", messagesSent: "Mensagens Enviadas",
     newContacts: "Novos Contatos", totalAnalyses: "Análises Realizadas", avgSentiment: "Sentimento Médio",
-    avgSatisfaction: "Satisfação Média", evaluatedConversations: "Conversas Avaliadas",
-    onTimeResponses: "Respostas no Prazo", pendingResponses: "Sem 1ª Resposta (pendentes)",
-    responseComplianceRate: "Taxa de Resposta no Prazo",
-    responseBreaches: "Violações de Resposta",
+    avgSatisfaction: "Satisfação Média", totalConversations: "Total de Conversas",
+    responseComplianceRate: "Taxa de Resposta no Prazo", resolutionComplianceRate: "Taxa de Resolução no Prazo",
+    responseBreaches: "Violações de Resposta", resolutionBreaches: "Violações de Resolução",
   };
   return map[key] || key;
 }

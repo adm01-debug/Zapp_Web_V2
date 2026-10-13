@@ -20,6 +20,18 @@ import {
 
 const MAX_REQUEST_BYTES = 8 * 1024;
 const WORKER_NAME = 'edge:message-delivery';
+// Lease que a Edge pede ao claim_outbound_message (30..300 por contrato da RPC).
+export const CLAIM_LEASE_SECONDS = 90;
+// PD-79 (t_ea8decbb): o POST ao provedor TI M tem de terminar antes do lease de
+// CLAIM_LEASE_SECONDS vencer. Com o timeout >= lease, a linha ficaria com POST
+// iniciado e lease vencido -> resultado AMBIGUO (o re-claim recusa e ela vira
+// 'failed' pela varredura). 45 s cabem com folga nos 90 s do lease.
+export const PROVIDER_POST_TIMEOUT_MS = 45_000;
+
+function isAbortError(error: unknown): boolean {
+  const name = (error as { name?: unknown } | null)?.name;
+  return name === 'TimeoutError' || name === 'AbortError';
+}
 
 type Claim = {
   message_id: string;
@@ -275,6 +287,7 @@ export async function deliverOutbound(
   outbound: { path: string; body: Record<string, unknown> },
   instanceName: string,
   fetcher?: (url: string, options: RequestInit) => Promise<Response>,
+  signal?: AbortSignal,
 ): Promise<Response> {
   const instanceToken = await resolveInstanceToken(service, instanceName);
   return evoFetch(
@@ -284,14 +297,85 @@ export async function deliverOutbound(
     outbound.body,
     fetcher,
     undefined,
-    undefined,
+    signal,
     instanceToken ?? undefined,
   );
 }
 
-async function failClaim(
+/**
+ * PD-79 (t_ea8decbb): dispara o POST ao provedor sob um timeout MENOR que o lease
+ * do claim. O timeout aborta a requisição; o chamador trata o abort como resultado
+ * AMBÍGUO (a mensagem pode ter saído) — nunca reenvio automático. Devolver o
+ * resultado em vez de lançar deixa o caminho ambíguo explícito e testável.
+ */
+export async function dispatchProviderPost(
+  deliver: (signal: AbortSignal) => Promise<Response>,
+  timeoutMs: number = PROVIDER_POST_TIMEOUT_MS,
+): Promise<{ ok: boolean; response: Response | null; aborted: boolean }> {
+  try {
+    const response = await deliver(AbortSignal.timeout(timeoutMs));
+    return { ok: true, response, aborted: false };
+  } catch (error) {
+    return { ok: false, response: null, aborted: isAbortError(error) };
+  }
+}
+
+/**
+ * PD-79: carimba no banco que o POST ao provedor VAI sair, com fencing por
+ * (id, token) em status='sending'. A RPC recusa lease vencido — aí o POST NÃO
+ * pode sair (nada foi enviado; a linha segue retomável). Idempotente no mesmo token.
+ */
+export async function markOutboundPostStarted(
   service: ServiceClient,
-  claim: Claim,
+  messageId: string,
+  claimToken: string,
+): Promise<{ marked: boolean; code?: string }> {
+  const { error } = await service.rpc('mark_outbound_post_started', {
+    p_message_id: messageId,
+    p_claim_token: claimToken,
+  });
+  if (error) return { marked: false, code: error.code };
+  return { marked: true };
+}
+
+/**
+ * PD-78 / PD-79: quando o claim volta VAZIO a linha não pode ficar muda em
+ * 'sending'. A RPC fail_outbound_unclaimed decide o motivo NO BANCO (o chamador
+ * não informa: telefone inválido -> sem conexão conectada -> genérico) e marca a
+ * linha 'failed' — nunca reenvia. O ator é o profile que clicou; a RPC resolve o
+ * papel (dono ou admin/supervisor ativo). Com lease VIVO a RPC recusa (42501).
+ */
+export async function recordUnclaimedFailure(
+  service: ServiceClient,
+  messageId: string,
+  agentId: string,
+): Promise<{ recorded: boolean; reason: string | null; code?: string }> {
+  const { data, error } = await service.rpc('fail_outbound_unclaimed', {
+    p_message_id: messageId,
+    p_agent_id: agentId,
+  });
+  if (error) return { recorded: false, reason: null, code: error.code };
+  const reason = (asRecord(data)?.delivery_failure_reason as string | undefined) ?? 'nao_despachada';
+  return { recorded: true, reason };
+}
+
+/**
+ * Resultado AMBÍGUO: o POST já saiu (ou pode ter saído) e não há recibo confiável.
+ * Marca a linha terminal NÃO retentável e enfileira a reconciliação somente-leitura.
+ * Nunca reenvia automaticamente.
+ */
+export async function settleAmbiguousDelivery(
+  service: ServiceClient & ReconcileClient,
+  claim: Pick<Claim, 'message_id' | 'claim_token'>,
+  externalId: string | null = null,
+): Promise<void> {
+  await failClaim(service, claim);
+  await enqueueDeliveryReconciliation(service, claim as Claim, externalId);
+}
+
+export async function failClaim(
+  service: ServiceClient,
+  claim: Pick<Claim, 'message_id' | 'claim_token'>,
 ): Promise<void> {
   const { error } = await service.rpc('fail_outbound_message', {
     p_message_id: claim.message_id,
@@ -377,7 +461,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     p_message_id: messageId,
     p_agent_id: profile.id,
     p_worker: WORKER_NAME,
-    p_lease_seconds: 90,
+    p_lease_seconds: CLAIM_LEASE_SECONDS,
   });
   if (claimError) {
     console.error(JSON.stringify({ event: 'message_delivery_claim_error', code: claimError.code }));
@@ -397,7 +481,27 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     if (existing.external_id && ['sent', 'delivered', 'read'].includes(existing.status || '')) {
       return jsonResponse({ messageId, status: existing.status, externalId: existing.external_id, idempotent: true }, 200, req);
     }
-    return errorResponse('Message delivery is already in progress or cannot be sent', 409, req);
+    // PD-78 / PD-79: o claim vazio não pode ficar mudo. A RPC decide o motivo NO
+    // BANCO (telefone inválido -> sem conexão conectada -> genérico) e marca a
+    // linha 'failed' — nunca reenvia. Com lease VIVO a RPC recusa (42501): a
+    // entrega está em curso, devolvemos 409 sem tocar na linha.
+    const failure = await recordUnclaimedFailure(service, messageId, profile.id);
+    if (!failure.recorded) {
+      if (failure.code === '42501') {
+        return errorResponse('Message delivery is already in progress', 409, req);
+      }
+      console.error(JSON.stringify({ event: 'message_delivery_unclaimed_error', code: failure.code }));
+      return errorResponse('Message delivery cannot be dispatched', 409, req);
+    }
+    console.error(JSON.stringify({ event: 'message_delivery_unclaimed', reason: failure.reason }));
+    // Corpo legível pelo cliente: `reason` é o motivo decidido no banco e `error`
+    // mantém o formato que o resto das edges usa em non-2xx.
+    return jsonResponse({
+      messageId,
+      status: 'failed',
+      reason: failure.reason,
+      error: `Message not dispatched: ${failure.reason}`,
+    }, 409, req);
   }
 
   // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
@@ -421,10 +525,35 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+
+    // PD-79: carimba o POST iniciado IMEDIATAMENTE antes de disparar. Sem isso, um
+    // POST que passe do lease de 90 s deixaria a linha reivindicável de novo
+    // (reenvio duplicado ao WhatsApp). A marca recusa lease vencido — aí NÃO
+    // disparamos: nada saiu e a linha segue retomável, sem resultado ambíguo.
+    const mark = await markOutboundPostStarted(service, claim.message_id, claim.claim_token);
+    if (!mark.marked) {
+      console.error(JSON.stringify({ event: 'message_delivery_post_mark_failed', code: mark.code }));
+      return errorResponse('Message delivery claim is no longer valid; nothing was sent', 409, req);
+    }
+
     providerPostAttempted = true;
-    const providerResponse = await deliverOutbound(
-      service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+    const post = await dispatchProviderPost((signal) =>
+      deliverOutbound(
+        service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+        undefined, signal,
+      )
     );
+    if (!post.ok || !post.response) {
+      // Timeout/aborto/rede DEPOIS do POST: a mensagem pode ter saído. Resultado
+      // AMBÍGUO — nunca reenvio automático. Marca a linha terminal não retentável
+      // e enfileira a reconciliação somente-leitura.
+      await settleAmbiguousDelivery(service, claim, null);
+      console.error(JSON.stringify({
+        event: post.aborted ? 'message_delivery_post_timeout' : 'message_delivery_post_error',
+      }));
+      return errorResponse('Message delivery outcome is uncertain', 502, req);
+    }
+    const providerResponse = post.response;
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }

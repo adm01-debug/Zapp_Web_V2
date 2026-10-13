@@ -1,5 +1,15 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { deliverOutbound, handleMessageDeliveryRequest, providerPayload } from './index.ts';
+import {
+  deliverOutbound,
+  handleMessageDeliveryRequest,
+  providerPayload,
+  dispatchProviderPost,
+  markOutboundPostStarted,
+  recordUnclaimedFailure,
+  failClaim,
+  PROVIDER_POST_TIMEOUT_MS,
+  CLAIM_LEASE_SECONDS,
+} from './index.ts';
 import { resetInstanceTokenCache } from '../_shared/evolution-instance-token.ts';
 
 function assertStatus(actual: number, expected: number) {
@@ -261,4 +271,112 @@ Deno.test('TRA-002: o fallback do env vale só para a instância padrão — e o
     assertEquals(a.chamadas[0]?.apikey, 'token-vault-principal');
     assertEquals(b.chamadas[0]?.apikey, 'token-da-global');
   });
+});
+
+// ---------------------------------------------------------------------------
+// PD-79 (t_ea8decbb): carimbo do POST iniciado + timeout MENOR que o lease.
+//
+// Antes: o POST ao provedor podia passar dos 90 s do claim. Como o lease vencia
+// durante o POST, a linha voltava a ser reivindicável e o MESMO envio saía de novo
+// (duplicado no WhatsApp). Também não havia timeout: uma conexão pendurada
+// segurava o POST até o runtime matar a edge. Agora: (1) carimba o POST iniciado
+// logo antes de disparar, com fencing (id, token); (2) dispara sob
+// AbortSignal.timeout(45 s) < lease(90 s); (3) timeout/aborto é resultado AMBÍGUO
+// -> linha terminal NÃO retentável + reconciliação somente-leitura (nunca reenvio).
+// ---------------------------------------------------------------------------
+
+function rpcEspiao(
+  respostas: Record<string, { data?: unknown; error?: { code?: string } | null }> = {},
+) {
+  const chamadas: { fn: string; args?: Record<string, unknown> }[] = [];
+  return {
+    chamadas,
+    rpc: (fn: string, args?: Record<string, unknown>) => {
+      chamadas.push({ fn, args });
+      const escolhida = respostas[fn] ?? { data: null, error: null };
+      return Promise.resolve({ data: escolhida.data ?? null, error: escolhida.error ?? null });
+    },
+  };
+}
+
+// PD-79: o timeout do POST tem de ser MENOR que o lease, senão o POST pode passar
+// do lease e a linha volta a ser reivindicável (reenvio duplicado). A invariante é
+// checada dentro do teste que exercita o caminho real do AbortSignal.timeout.
+Deno.test('PD-79: POST abortado por timeout é resultado AMBÍGUO e o timeout cabe no lease (nunca reenvio automático)', async () => {
+  const leaseMs = CLAIM_LEASE_SECONDS * 1000;
+  if (!(PROVIDER_POST_TIMEOUT_MS > 0 && PROVIDER_POST_TIMEOUT_MS < leaseMs)) {
+    throw new Error(`timeout ${PROVIDER_POST_TIMEOUT_MS}ms não é menor que o lease ${leaseMs}ms`);
+  }
+  // deliver que só termina quando o sinal aborta: prova o caminho real do
+  // AbortSignal.timeout — o abort chega como TimeoutError e é classificado.
+  const resultado = await dispatchProviderPost(
+    (signal) => new Promise<Response>((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason));
+    }),
+    1,
+  );
+  assertEquals(resultado.ok, false);
+  assertEquals(resultado.aborted, true);
+  assertEquals(resultado.response, null);
+});
+
+Deno.test('PD-79: erro de rede no POST não é confundido com abort (os dois são ambíguos)', async () => {
+  const resultado = await dispatchProviderPost(() => Promise.reject(new Error('connection reset')));
+  assertEquals(resultado.ok, false);
+  assertEquals(resultado.aborted, false);
+});
+
+Deno.test('PD-79: POST bem-sucedido devolve a resposta do provedor', async () => {
+  const resultado = await dispatchProviderPost(
+    () => Promise.resolve(new Response(JSON.stringify({ key: { id: 'x' } }), { status: 200 })),
+  );
+  assertEquals(resultado.ok, true);
+  assertEquals(resultado.aborted, false);
+  assertEquals(resultado.response?.status, 200);
+});
+
+Deno.test('PD-79: entrega ambígua grava transição NÃO retentável no banco', async () => {
+  const service = rpcEspiao();
+  await failClaim(service, { message_id: 'm', claim_token: 'tok' });
+  const chamada = service.chamadas.find((c) => c.fn === 'fail_outbound_message');
+  if (!chamada) throw new Error('fail_outbound_message não foi chamada');
+  assertEquals(chamada.args?.p_retryable, false);
+  assertEquals(chamada.args?.p_claim_token, 'tok');
+});
+
+Deno.test('PD-79: o carimbo do POST iniciado usa o token do claim e propaga a recusa da RPC', async () => {
+  const service = rpcEspiao({ mark_outbound_post_started: { error: { code: 'P0002' } } });
+  const mark = await markOutboundPostStarted(service, 'm', 'tok-do-claim');
+  assertEquals(mark.marked, false);
+  assertEquals(mark.code, 'P0002');
+  assertEquals(service.chamadas[0]?.fn, 'mark_outbound_post_started');
+  assertEquals(service.chamadas[0]?.args?.p_claim_token, 'tok-do-claim');
+  assertEquals(service.chamadas[0]?.args?.p_message_id, 'm');
+});
+
+// ---------------------------------------------------------------------------
+// PD-78: o claim vazio não pode ficar mudo. A RPC fail_outbound_unclaimed decide
+// o motivo NO BANCO e marca a linha 'failed' (nunca reenvia). O ator é o profile
+// que clicou; a RPC resolve o papel (dono ou admin/supervisor ativo). Com lease
+// VIVO a RPC recusa (42501) e a linha não é tocada.
+// ---------------------------------------------------------------------------
+
+Deno.test('PD-78: claim vazio grava o motivo e devolve o status gravado pela RPC', async () => {
+  const service = rpcEspiao({
+    fail_outbound_unclaimed: { data: { delivery_failure_reason: 'sem_conexao_conectada' } },
+  });
+  const failure = await recordUnclaimedFailure(service, 'm1', 'agente-que-clicou');
+  assertEquals(failure.recorded, true);
+  assertEquals(failure.reason, 'sem_conexao_conectada');
+  assertEquals(service.chamadas[0]?.fn, 'fail_outbound_unclaimed');
+  assertEquals(service.chamadas[0]?.args?.p_message_id, 'm1');
+  assertEquals(service.chamadas[0]?.args?.p_agent_id, 'agente-que-clicou');
+});
+
+Deno.test('PD-78: claim vazio com lease VIVO não pisa na linha (RPC recusa 42501)', async () => {
+  const service = rpcEspiao({ fail_outbound_unclaimed: { error: { code: '42501' } } });
+  const failure = await recordUnclaimedFailure(service, 'm1', 'outro-agente');
+  assertEquals(failure.recorded, false);
+  assertEquals(failure.code, '42501');
+  assertEquals(failure.reason, null);
 });

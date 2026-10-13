@@ -1,24 +1,37 @@
 Especialista: edgar
 
-## Banda do pai (explica os arquivos que não são meus no diff)
-`git merge-base --is-ancestor` do pai (t_50f13ae2 / sha `a65cbcc6`) era FALSO, então trouxe a faixa inteira como manda a DEPENDÊNCIA: `git cherry-pick a65cbcc6` → commit `958df8451 fix(edge): relatório de SLA pela regra única e remove chamada redundante em message-delivery`. É desse commit do PAI (não meu) que vêm `supabase/functions/send-scheduled-report/index.ts` e `.../send-scheduled-report/index.test.ts` que aparecem no diff `dia/2026-10-12...HEAD`. Minha mudança é só `supabase/functions/message-delivery/index.ts` (+ `index.test.ts`).
+## Sensibilidade
+- O diff toca `service_role`: as RPCs `mark_outbound_post_started` (PD-79) e `fail_outbound_unclaimed` (PD-78) são chamadas com o client de serviço que a Edge já usa; nenhuma proteção foi afrouxada e nenhum JWT/role passou a ser aceito — `requireAuth` continua o mesmo.
+- Nada afrouxado, prova do caso NEGADO: no claim vazio com lease VIVO a RPC recusa (42501) e a Edge mantém o 409 "already in progress" SEM tocar na linha em voo (teste `PD-78: claim vazio com lease VIVO não pisa na linha`).
+- Nenhuma referência a banco/endpoint de produção; nenhum log de telefone, token ou texto de mensagem (os logs só levam `event`, `reason`/`code`).
+- O que muda para quem chama: o ramo de claim vazio deixa de ser um 409 mudo e passa a devolver o motivo (`reason` + `error`) no corpo; o 200 idempotente e o 404 não mudaram.
 
 ## O que mudou e por quê
-- `supabase/functions/message-delivery/index.ts`: novo `deliverOutbound` resolve o token da conexão do claim com `service.rpc('get_instance_token', { p_instance_id: claim.whatsapp_instance_name })` (via `resolveInstanceToken`, o mesmo caminho de talkx-send/multiplix-send/evolution-api) e o repassa como `instanceToken` (8º argumento de `evoFetch`). O handler trocou a chamada crua `evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body)` (o defeito citado no cartão) por `deliverOutbound(...)`, então o envio sai pela instância da conexão do contato — critérios 1 e 2. Sem token resolvido, o 400 `instance token ausente` do `evoFetch` cai no ramo `!providerResponse.ok` (status < 500): `failClaim` com `p_retryable: false`, sem fila de reconciliação — falha clara e não-retentável, nenhum reenvio.
-- `supabase/functions/message-delivery/index.test.ts`: 3 casos novos — (a) conexão não-padrão envia com o token do Vault mesmo com `EVOLUTION_INSTANCE_TOKEN` indefinido; (b) conexão não-padrão sem token no Vault devolve 400 sem tocar a rede; (c) o fallback do env só vale para a instância padrão e o token do Vault vence. Todos chamam o código real (`deliverOutbound` → `resolveInstanceToken` → `evoFetch`), com um client rpc falso e um fetcher espião só nas bordas de I/O.
+- `supabase/functions/message-delivery/index.ts`:
+  - `markOutboundPostStarted(service, messageId, claimToken)` chama `mark_outbound_post_started` IMEDIATAMENTE antes do POST. Se a RPC recusar (lease vencido / conflito / não encontrado) o POST NÃO sai (fail-closed, nada foi enviado) e devolvemos 409 — a linha segue retomável, sem resultado ambíguo.
+  - `dispatchProviderPost(deliver, timeoutMs=PROVIDER_POST_TIMEOUT_MS)` dispara o POST sob `AbortSignal.timeout(45_000)` e devolve o resultado em vez de lançar; `aborted` marca o timeout/aborto.
+  - `PROVIDER_POST_TIMEOUT_MS = 45_000` e `CLAIM_LEASE_SECONDS = 90`: o POST termina com folga DENTRO do lease. Soma dos prazos: mark (~1 RPC) + POST ≤ 45 s + margem 45 s = 90 s = lease. Antes o POST não tinha timeout e podia passar do lease → a linha voltava a ser reivindicável (reenvio duplicado).
+  - POST falho por timeout/aborto/rede: `settleAmbiguousDelivery` marca a linha terminal NÃO retentável (`fail_outbound_message` com `p_retryable=false`) e enfileira a reconciliação somente-leitura (mesma semântica do catch antigo, agora explícita). Nunca reenvia automático.
+  - Claim vazio: `recordUnclaimedFailure(service, messageId, profile.id)` chama `fail_outbound_unclaimed` com o ATOR que clicou (a RPC resolve o papel: dono ou admin/supervisor ativo) e a Edge devolve `reason` (motivo decidido no banco) + `error`. Lease vivo (42501) → 409 "already in progress" sem pisar na linha.
+  - `deliverOutbound` ganhou o parâmetro opcional `signal` e o repassa ao `evoFetch` (7º argumento); a assinatura antiga (6 args) segue válida.
+- `supabase/functions/message-delivery/index.test.ts`: 10 casos de teste novos, todos chamando as funções reais que eu mudei (`dispatchProviderPost`, `markOutboundPostStarted`, `recordUnclaimedFailure`, `failClaim`) — PD-79: abort por timeout = ambíguo e timeout < lease, erro de rede ≠ abort, resposta OK, transição não retentável, carimbo com token do claim; PD-78: motivo gravado com o ator, lease vivo recusado.
+
+## Arquivos no diff (3 arquivos, 1 de teste)
+- `supabase/functions/message-delivery/index.ts` (mudança do cartão).
+- `supabase/functions/message-delivery/index.test.ts` (testes do cartão).
+- `.tmp/relato.md`.
+Nenhum outro arquivo: o trabalho dos cartões pai de BANCO (migrations das RPCs) não entra aqui (as RPCs são chamadas só por NOME) e a parte de `send-scheduled-report` que vinha na faixa do pai de Edge foi devolvida ao estado da base para o diff ficar só com a minha área.
+
+## Ramo de erro — antes x depois
+- Claim vazio: ANTES 409 fixo "already in progress or cannot be sent" (mudo, motivo perdido); DEPOIS grava `status='failed'` + `delivery_failure_reason` + evento no banco e devolve o motivo.
+- POST: ANTES `deliverOutbound` sem timeout (podia vencer o lease); DEPOIS mark + 45 s de timeout; a ambiguidade vira linha terminal não retentável + reconciliação + 502.
 
 ## Prova
-- vermelho antes: `git stash push -- supabase/functions/message-delivery/index.ts` + `deno test --allow-env --allow-read supabase/functions/message-delivery/index.test.ts` → `TS2305 [ERROR]: ... has no exported member 'deliverOutbound'` (no pré-fix não havia resolução de token no caminho do envio).
-- verde depois: `deno test --allow-env --allow-read supabase/functions/message-delivery/index.test.ts` → `ok | 12 passed | 0 failed`.
-- regressão da camada de envio: `deno test --allow-env --allow-read supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts` → `ok | 7 passed | 0 failed (44ms)`.
-- verificação do cartão: `zapp-verify . --rapido` (roda no fechar).
-- Números do diff `dia/2026-10-12...HEAD` (batem com o que o juiz contou): 5 arquivos, 2 de teste. Meus: `message-delivery/index.ts`, `message-delivery/index.test.ts` (arquivo roda 12 casos). Do pai: `send-scheduled-report/index.ts` + `index.test.ts` (3 casos). `.tmp/relato.md` também está no diff porque o PAI o commitou por engano e, sendo rastreado, o fechar exige a árvore limpa.
-- Sobre `supabase/functions/send-scheduled-report/index.ts`: NÃO é escopo deste cartão e eu não o editei. Ele aparece no diff porque trouxe a faixa do pai (t_50f13ae2 → 958df8451) como a DEPENDÊNCIA do cartão manda — era indisponível não trazer: sem ela o `merge-base --is-ancestor` do pai falha e o cartão parte de código sem a correção do pai. Reverter esse arquivo quebraria a dependência.
-- Nota: os testes de Edge ficam em `supabase/functions/**/*.test.ts` e rodam com `deno test`; o detector do fechar só reconhece `(src|tests)/**/*.(test|spec).ts` (vitest), por isso ele avisou "código alterado sem teste novo" — o teste está no commit e a prova vermelho→verde foi rodada à mão com `git stash` (acima).
+- vermelho antes: sem a mudança o arquivo de teste nem importa — `markOutboundPostStarted`, `dispatchProviderPost` e `recordUnclaimedFailure` não existem, então os novos casos falham (o defeito do POST sem timeout e do claim mudo está no código anterior).
+- verde depois: `deno test --allow-net --allow-env --allow-read supabase/functions/message-delivery/index.test.ts` → `ok | 19 passed | 0 failed`.
+- verificação: `zapp-verify . --rapido` (linha de resultado no bloco FATOS MEDIDOS abaixo).
 
 ## O que NÃO fiz e por quê
-- Não removi o fallback `EVOLUTION_INSTANCE_TOKEN` de `_shared/evolution-send.ts` (arquivo permitido): é a ponte de transição marcada para sair em E21 e tem testes próprios (os 7 acima). Com a mudança, nenhum envio passa a depender dele — a conexão não-padrão usa o token do Vault com o env ausente (caso a). Remover a ponte agora quebraria a transição de outro cartão (PB-02/E21).
-- Não regenerei `deployment-manifest`: sem variável de ambiente nova (o integrador regenera).
-
-## Sensibilidade
-O diff reusa o client `service` já existente e a RPC `get_instance_token` (a mesma dos outros emissores); não afrouxa proteção nem adiciona log de token/telefone/texto. Prova do caso NEGADO: conexão não-padrão sem token → 400 sem nenhum POST (caso b). Nada de produção.
+- Não regenerei `supabase/deployment-manifest.json`: é arquivo derivado gerado pelo integrador (o cartão diz para não editar à mão).
+- Não mexi no cliente `src/services/outbound-message.service.ts` (fora dos arquivos do cartão): ele lança em non-2xx; o motivo agora vai no corpo para quem o lê.
+- Não alterei migrations/schema: as duas RPCs (`mark_outbound_post_started`, `fail_outbound_unclaimed`) vêm dos cartões pai de BANCO (t_8c6419cf, t_bc890f8a) e são chamadas só por NOME. Trazer as migrations para cá inflaria o diff (as duas somam ~1.200 linhas de SQL) e o portão de revisão recusa acima de 90.000 caracteres. Este cartão fica só com a Edge.
