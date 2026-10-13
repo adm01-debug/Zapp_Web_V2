@@ -83,7 +83,9 @@ function sanitizeResult(raw: Record<string, unknown>): Record<string, unknown> {
   return { action, response, data };
 }
 
-Deno.serve(async (req) => {
+// `import.meta.main` (mesmo padrão de `elevenlabs-sts`/`elevenlabs-tts-stream`): o
+// handler pode ser importado por teste sem subir o servidor.
+export async function handleVoiceAgent(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -101,7 +103,13 @@ Deno.serve(async (req) => {
     }
 
     const { transcript } = parsed.data;
-    log.info("Processing voice command", { transcript: transcript.substring(0, 100) });
+    // LGPD (doc 07, achado do log de voz): o log registra só METADADOS da fala —
+    // tamanho e um identificador curto da requisição —, NUNCA o texto. A fala
+    // pode conter dado pessoal e o `Logger` já carimba `rid` próprio na linha.
+    log.info("Processing voice command", {
+      transcript_length: transcript.length,
+      request_id: crypto.randomUUID().slice(0, 8),
+    });
 
     // Despacho central (auditoria do Bloco 05): sem URL fixa do gateway, sem chave
     // fixa no consumidor e sem modelo fixo — provedor e modelo são decididos no
@@ -211,4 +219,8 @@ Deno.serve(async (req) => {
       req
     );
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleVoiceAgent);
+}

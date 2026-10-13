@@ -2,7 +2,39 @@ import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHea
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
-Deno.serve(async (req) => {
+// LAC P2 (doc 07, achado de voz): o streaming ao provedor PAGO não tinha teto —
+// uma rede travada deixava a request pendurada até o gateway cortar, e o consumo
+// pago só entrava no ledger quando havia resposta (no erro, sumia). O prazo
+// abaixo aborta a chamada, devolve 504 claro e registra o consumo no ledger
+// mesmo quando o provedor não responde.
+const ELEVENLABS_TTS_TIMEOUT_MS = 30_000;
+
+/** O estouro de prazo chega como `AbortError` ou `TimeoutError` — mesma causa. */
+function isTimeoutError(err: unknown): boolean {
+  if (typeof err === "object" && err !== null) {
+    const name = (err as { name?: unknown }).name;
+    return name === "AbortError" || name === "TimeoutError";
+  }
+  return false;
+}
+
+/**
+ * `fetch` com prazo: devolve a resposta OU a causa da falha sem resposta
+ * (`timedOut`: prazo estourado × erro de rede). Não engole o erro — só o
+ * classifica, para o chamador decidir o status e o ledger.
+ */
+async function fetchComPrazo(
+  input: string,
+  init: RequestInit,
+): Promise<{ response: Response } | { timedOut: boolean }> {
+  try {
+    return { response: await fetch(input, init) };
+  } catch (err) {
+    return { timedOut: isTimeoutError(err) };
+  }
+}
+
+export async function handleElevenLabsTtsStream(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -30,7 +62,7 @@ Deno.serve(async (req) => {
     log.info(`Streaming TTS: ${text.length} caracteres, voice: ${selectedVoiceId}`);
 
     const iniciadoEm = Date.now();
-    const response = await fetch(
+    const envio = await fetchComPrazo(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream?output_format=mp3_44100_128`,
       {
         method: 'POST',
@@ -50,29 +82,57 @@ Deno.serve(async (req) => {
             use_speaker_boost: true,
           },
         }),
+        signal: AbortSignal.timeout(ELEVENLABS_TTS_TIMEOUT_MS),
       }
     );
+    const response = "response" in envio ? envio.response : null;
+    const prazoEstourou = "timedOut" in envio ? envio.timedOut : false;
 
     // SL-013 / IA-003 B6 — consumo PAGO (streaming) também entra no ledger:
     // antes, a geração paga saía sem nenhuma linha em `ai_usage_logs`.
     // Unidade cobrada = CARACTERE: a medição vai em `metadata`, com as colunas
-    // de token NULL e `usage_unknown: true` (IA-053).
+    // de token NULL e `usage_unknown: true` (IA-053). A linha é escrita TAMBÉM
+    // no caminho de erro (timeout/rede): quando o provedor não respondeu, a
+    // quantidade fica NULL (não afirmamos um consumo que não medimos) e o motivo
+    // vai em `errorMessage`.
     await logAiUsageDetached({
       functionName: "elevenlabs-tts-stream",
       userId: auth.userId,
       model: selectedModel,
       durationMs: Date.now() - iniciadoEm,
-      status: response.ok ? "success" : "error",
-      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      status: response?.ok ? "success" : "error",
+      errorMessage: response === null
+        ? (prazoEstourou
+          ? `ElevenLabs timeout (${ELEVENLABS_TTS_TIMEOUT_MS}ms)`
+          : "ElevenLabs network error")
+        : (response.ok ? null : `ElevenLabs HTTP ${response.status}`),
       usageUnknown: true,
       metadata: {
         provider: "elevenlabs",
         endpoint: "/v1/text-to-speech/stream",
         billing_unit: "character",
-        billing_quantity: text.length,
-        http_status: response.status,
+        billing_quantity: response === null ? null : text.length,
+        http_status: response?.status ?? null,
       },
     });
+
+    if (response === null) {
+      log.error("ElevenLabs unreachable", { timeout: prazoEstourou });
+      // 504 claro e SEM vazar detalhe interno (`errorResponse` mascararia o corpo
+      // de um 5xx para "Internal server error").
+      if (prazoEstourou) {
+        return jsonResponse(
+          { error: { code: "AI_TIMEOUT", message: "O provedor de voz demorou para responder. Tente novamente." } },
+          504,
+          req,
+        );
+      }
+      return jsonResponse(
+        { error: { code: "AI_PROVIDER_UNREACHABLE", message: "Não foi possível falar com o provedor de voz. Tente novamente." } },
+        502,
+        req,
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -95,4 +155,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsTtsStream);
+}
