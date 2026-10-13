@@ -25,7 +25,7 @@ function cardProps(contact: Contact) {
 }
 
 // ── ContactCard (view padrão / "Cards") ──────────────────────────────────────
-describe('ContactCard · cargo e tags (view padrão)', () => {
+describe('ContactCard · cargo (view padrão)', () => {
   it('mostra o cargo quando o contato tem job_title', () => {
     render(<ContactCard {...cardProps(baseContact({ job_title: 'Gerente de Compras' }))} />);
     expect(screen.getByText('Gerente de Compras')).toBeInTheDocument();
@@ -36,24 +36,11 @@ describe('ContactCard · cargo e tags (view padrão)', () => {
     expect(screen.queryByText('Gerente de Compras')).not.toBeInTheDocument();
   });
 
-  it('mostra até 2 tags e o contador do restante', () => {
-    render(<ContactCard {...cardProps(baseContact({ tags: ['vip', 'atacado', 'sudeste'] }))} />);
-    expect(screen.getByText('vip')).toBeInTheDocument();
-    expect(screen.getByText('atacado')).toBeInTheDocument();
-    expect(screen.queryByText('sudeste')).not.toBeInTheDocument();
-    expect(screen.getByText('+1')).toBeInTheDocument();
-  });
-
-  it('com 2 tags exatas não mostra contador', () => {
-    render(<ContactCard {...cardProps(baseContact({ tags: ['vip', 'atacado'] }))} />);
-    expect(screen.getByText('vip')).toBeInTheDocument();
-    expect(screen.getByText('atacado')).toBeInTheDocument();
-    expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
-  });
-
-  it('sem tags não mostra nenhuma badge de tag', () => {
-    render(<ContactCard {...cardProps(baseContact({ tags: [] }))} />);
-    expect(screen.queryByText('vip')).not.toBeInTheDocument();
+  it('não renderiza etiquetas mesmo que o dado ainda venha com tags (função removida)', () => {
+    const comTags = { ...baseContact(), tags: ['vip', 'atacado'] } as unknown as Contact;
+    const { container } = render(<ContactCard {...cardProps(comTags)} />);
+    expect(container.textContent).not.toContain('vip');
+    expect(container.textContent).not.toContain('atacado');
     expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
   });
 });

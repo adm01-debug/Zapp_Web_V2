@@ -12,7 +12,6 @@ function contato(over: Partial<Contact> & Pick<Contact, 'id' | 'name'>): Contact
     avatar_url: null,
     company: null,
     job_title: null,
-    tags: null,
     contact_type: 'cliente',
     created_at: '2026-09-01T00:00:00.000Z',
     ...over,

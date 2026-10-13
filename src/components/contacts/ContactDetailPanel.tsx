@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap, Package,
+  Calendar, Clock, Zap, Package,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -43,7 +43,6 @@ interface ContactDetail {
   job_title?: string | null;
   avatar_url?: string | null;
   contact_type?: string | null;
-  tags?: string[] | null;
   created_at: string;
 }
 
@@ -358,21 +357,6 @@ export function ContactDetailPanel<T extends ContactDetail>({
                 ))}
               </div>
             </div>
-
-            {/* Tags */}
-            {contact.tags && contact.tags.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Tag className="w-3 h-3" />
-                  Tags
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {contact.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Activity Summary — reflete carregando/indisponível/valor real
                 em vez de afirmar "0"/"—" enquanto o dado não é conhecido. (#253) */}

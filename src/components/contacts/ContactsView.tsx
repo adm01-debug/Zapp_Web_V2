@@ -13,7 +13,6 @@ import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
-import { ContactBulkTagDialog } from './ContactBulkTagDialog';
 import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
 import { ContactDetailPanel } from './ContactDetailPanel';
@@ -47,7 +46,7 @@ export function ContactsView() {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
     isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
-    isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
+    detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
     handleContactClick,
   } = useContactsViewState();
@@ -57,7 +56,7 @@ export function ContactsView() {
     contactCountByType, uniqueCompanies, uniqueJobTitles, uniqueTags,
     searchInput, debouncedSearch: search, handleSearchChange, clearSearch,
     activeTab, setActiveTab, filterCompany, setFilterCompany,
-    filterJobTitle, setFilterJobTitle, filterTag, setFilterTag,
+    filterJobTitle, setFilterJobTitle,
     filterDateRange, setFilterDateRange, sortBy, setSortBy,
     showLegacy, setShowLegacy,
     activeFiltersCount, clearFilters, page, setPage, pageSize,
@@ -159,13 +158,6 @@ export function ContactsView() {
         open={isCompareOpen} onOpenChange={setIsCompareOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
       />
-      <ContactBulkTagDialog
-        open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
-        contactIds={selectedIds} allTags={uniqueTags}
-        onComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
-        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
-      />
-
       <ContactStatsCards
         totalAll={contactCountByType['all'] ?? 0}
         fornecedoresAll={contactCountByType['fornecedor'] ?? 0}
@@ -183,13 +175,11 @@ export function ContactsView() {
         activeTab={activeTab}
         filterCompany={filterCompany} setFilterCompany={setFilterCompany}
         filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
-        filterTag={filterTag} setFilterTag={setFilterTag}
         filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
         uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
         onApplyPreset={handleApplyPreset}
         groupByCompany={groupByCompany} setGroupByCompany={setGroupByCompany}
         selectedIds={selectedIds}
-        onBulkTag={() => setIsBulkTagOpen(true)}
         onCompare={() => setIsCompareOpen(true)}
         canMerge={canMerge}
         onMerge={() => setIsMergeOpen(true)}
@@ -266,7 +256,6 @@ export function ContactsView() {
         onActionComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
         onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
         onCountersChanged={invalidateContactAggregates}
-        availableTags={uniqueTags}
         canDeleteSelection={canDeleteSelection}
         canChangeType={isSupervisor}
         canChangeTypeSelection={canChangeTypeSelection}

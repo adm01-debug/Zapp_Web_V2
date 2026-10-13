@@ -7,7 +7,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Building, Briefcase, Tag, CalendarDays, TrendingUp, Heart,
+  Building, Briefcase, CalendarDays, TrendingUp, Heart,
   RotateCcw, Sparkles,
 } from 'lucide-react';
 
@@ -32,8 +32,6 @@ interface ContactAdvancedFiltersProps {
   setFilterCompany: (val: string) => void;
   filterJobTitle: string;
   setFilterJobTitle: (val: string) => void;
-  filterTag: string;
-  setFilterTag: (val: string) => void;
   filterDateRange: string;
   setFilterDateRange: (val: string) => void;
   filterSentiment?: string;
@@ -42,7 +40,6 @@ interface ContactAdvancedFiltersProps {
   setFilterLeadScoreRange?: (val: [number, number]) => void;
   uniqueCompanies: string[];
   uniqueJobTitles: string[];
-  uniqueTags: string[];
   onClearFilters: () => void;
   activeFiltersCount: number;
 }
@@ -50,11 +47,10 @@ interface ContactAdvancedFiltersProps {
 export function ContactAdvancedFilters({
   filterCompany, setFilterCompany,
   filterJobTitle, setFilterJobTitle,
-  filterTag, setFilterTag,
   filterDateRange, setFilterDateRange,
   filterSentiment, setFilterSentiment,
   filterLeadScoreRange, setFilterLeadScoreRange,
-  uniqueCompanies, uniqueJobTitles, uniqueTags,
+  uniqueCompanies, uniqueJobTitles,
   onClearFilters, activeFiltersCount,
 }: ContactAdvancedFiltersProps) {
   return (
@@ -107,22 +103,6 @@ export function ContactAdvancedFilters({
             <SelectContent>
               <SelectItem value="__all__">Todos os cargos</SelectItem>
               {uniqueJobTitles.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Tag */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium flex items-center gap-2 text-muted-foreground">
-            <Tag className="w-3.5 h-3.5" />Etiqueta
-          </Label>
-          <Select value={filterTag || '__all__'} onValueChange={(v) => setFilterTag(v === '__all__' ? '' : v)}>
-            <SelectTrigger className="h-10"><SelectValue placeholder="Todas" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas as etiquetas</SelectItem>
-              {uniqueTags.map((t) => (
                 <SelectItem key={t} value={t}>{t}</SelectItem>
               ))}
             </SelectContent>
