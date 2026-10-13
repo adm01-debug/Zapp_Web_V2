@@ -68,7 +68,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: { from: startOfDay(parseDayKey(DIA) as Date), to: endOfDay(parseDayKey(DIA) as Date) },
       });
@@ -89,7 +88,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: { from: startOfDay(hoje), to: endOfDay(hoje) },
       });
@@ -106,7 +104,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: {
           from: startOfDay(parseDayKey('2026-09-28') as Date),
@@ -125,7 +122,7 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     const { result } = montar();
 
     act(() => {
-      result.current.setFilters({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
+      result.current.setFilters({ status: [], agentId: null, dateRange: { from: null, to: null } });
     });
 
     expect(result.current.filters.dateRange.from).toBeNull();
