@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
 
 /**
  * D3 (revisado por Joaquim em 29/09) = reconciliar com o Bitrix24 via `voximplant.statistic.get`,
@@ -24,35 +25,52 @@ export interface GravacaoDaChamada {
   blob: Blob | null;
 }
 
-async function authorizationDoUsuario(): Promise<string> {
-  const { data, error } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (error || !token) throw new Error('Sessao invalida para buscar a gravacao');
-  return `Bearer ${token}`;
+function statusDoErro(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null;
+  const erro = error as {
+    status?: unknown;
+    context?: { status?: unknown };
+    response?: { status?: unknown };
+  };
+  const status = erro.status ?? erro.context?.status ?? erro.response?.status;
+  return typeof status === 'number' ? status : null;
 }
 
-function urlDaFuncao(): string {
-  return `${SUPABASE_URL.replace(/\/$/, '')}/functions/v1/get-call-recording`;
+async function normalizarBytesComoBlob(data: unknown): Promise<Blob | null> {
+  if (data instanceof Response) return data.blob();
+  if (data instanceof Blob) return data;
+  if (data instanceof ArrayBuffer) return new Blob([data], { type: 'application/octet-stream' });
+  if (ArrayBuffer.isView(data)) {
+    const bytes = new Uint8Array(data.byteLength);
+    bytes.set(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+    return new Blob([bytes.buffer], { type: 'application/octet-stream' });
+  }
+  return null;
+}
+
+function blobEhJson(blob: Blob): boolean {
+  return blob.type.toLowerCase().startsWith('application/json');
 }
 
 /**
  * Busca a gravacao (T67) SO quando a chamada diz que tem.
  *
- * A Edge `get-call-recording` preserva a garantia do T73: o front nunca recebe
- * `recording_url`. O hook baixa o stream autenticado como Blob e entrega os BYTES
- * (`{ disponivel, blob, buscando }`) - nao a URL assinada do provedor e tambem nenhum
- * endereco `blob:` pronto: quem cria e revoga o `blob:` local e o `RecordingPlayer`, no
- * mesmo efeito (TEL-RECORDING-001).
+ * A Edge `get-call-recording` preserva a garantia do T73: o front nunca recebe `recording_url`.
+ * O hook invoca a Edge autenticada com `supabase.functions.invoke` + `edgeAuthHeaders` e entrega
+ * os BYTES (`{ disponivel, blob, buscando }`) - nao a URL assinada do provedor e tambem nenhum
+ * endereco `blob:` pronto: quem cria e revoga o `blob:` local e o `RecordingPlayer`, no efeito dele
+ * (TEL-RECORDING-001).
  *
  * Refazer #62: o cache da query guarda o BLOB, nunca uma URL `blob:` - a URL e criada por
  * montagem a partir do Blob cacheado e revogada no desmontar, entao a remontagem dentro do
  * `staleTime` nao herda uma URL morta (defeito do refazer #62).
  *
- * Transporte: POST com `{ callId }` no corpo (nunca na query string) e o JWT da sessao; 403/404
- * sao resposta esperada e viram `{ disponivel: false }`; qualquer outra falha (rede, 5xx, sem
- * sessao) PROPAGA - nada aqui engole erro. Blob de tamanho 0, ou resposta JSON, nao e gravacao valida. A resposta e
- * lida como `Response.blob()`, entao o audio chega inteiro seja qual for a `Content-Type`
- * (`audio/mpeg` incluso).
+ * Transporte (T73/T67, preservado nos refazeres anteriores): POST implicito do invoke com
+ * `{ callId }` no corpo (nunca na URL) e bearer/apikey de `edgeAuthHeaders`; sem fallback proprio.
+ * 403/404 sao resposta esperada da Edge e viram `{ disponivel: false }`; qualquer outra falha
+ * (rede, 401, 5xx, erro ao montar auth) PROPAGA - nada aqui engole erro. Blob de tamanho 0 nao e
+ * gravacao valida, e uma resposta JSON (o formato dos erros/controles da Edge) tambem nao: nao ha
+ * bytes de audio nela e nada e fabricado a partir dela (falha fechada).
  */
 export function useCallRecording(callId: string | null | undefined, recordingStatus: string | null | undefined) {
   const temGravacao = recordingStatus === 'available';
@@ -63,24 +81,19 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
     enabled: habilitado,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<GravacaoDaChamada> => {
-      const authorization = await authorizationDoUsuario();
-      const resposta = await fetch(urlDaFuncao(), {
-        method: 'POST',
-        headers: { Authorization: authorization, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId }),
-        cache: 'no-store',
+      const { data, error } = await supabase.functions.invoke('get-call-recording', {
+        body: { callId },
+        headers: await edgeAuthHeaders(),
       });
 
-      if (resposta.status === 403 || resposta.status === 404) {
-        return { disponivel: false, blob: null };
+      if (error) {
+        const status = statusDoErro(error);
+        if (status === 403 || status === 404) return { disponivel: false, blob: null };
+        throw new Error('Falha ao buscar a gravacao da chamada');
       }
-      if (!resposta.ok) throw new Error('Falha ao buscar a gravacao da chamada');
 
-      const blob = await resposta.blob();
-      if (blob.size === 0) return { disponivel: false, blob: null };
-      // JSON e o formato dos erros/respostas de controle da Edge, nunca o audio: se um 200 vier
-      // assim, nao ha bytes de gravacao e nada e fabricado a partir dele (falha fechada).
-      if (blob.type.toLowerCase().startsWith('application/json')) return { disponivel: false, blob: null };
+      const blob = await normalizarBytesComoBlob(data);
+      if (!blob || blob.size === 0 || blobEhJson(blob)) return { disponivel: false, blob: null };
       return { disponivel: true, blob };
     },
   });

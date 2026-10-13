@@ -11,10 +11,14 @@ import {
 } from '@/lib/mediaVolumeStore';
 
 const getSession = vi.fn();
+const invokeMock = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   SUPABASE_URL: 'https://zapp-local.supabase.co',
   SUPABASE_ANON_KEY: 'anon-key-do-teste',
-  supabase: { auth: { getSession: (...args: unknown[]) => getSession(...args) } },
+  supabase: {
+    auth: { getSession: (...args: unknown[]) => getSession(...args) },
+    functions: { invoke: (...args: unknown[]) => invokeMock(...args) },
+  },
 }));
 
 /**
@@ -40,7 +44,6 @@ vi.mock('@/hooks/calls/useCallRecording', async (importOriginal) => {
   };
 });
 
-const fetchMock = vi.fn();
 const createObjectURL = vi.fn();
 const revokeObjectURL = vi.fn();
 let sequenciaDeUrlBlob = 0;
@@ -69,17 +72,18 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
 function respostaAudio(corpo = 'ID3-audio') {
-  return Promise.resolve(new Response(new Blob([corpo], { type: 'audio/mpeg' }), { status: 200 }));
+  return new Blob([corpo], { type: 'audio/mpeg' });
 }
+
+const erroHttp = (status: number) => Object.assign(new Error(`HTTP ${status}`), { context: { status } });
 
 function prepararAmbiente() {
   gravacao.atual = null;
   getSession.mockReset().mockResolvedValue({ data: { session: { access_token: 'jwt-local' } }, error: null });
-  fetchMock.mockReset().mockImplementation(() => respostaAudio());
+  invokeMock.mockReset().mockResolvedValue({ data: respostaAudio(), error: null });
   sequenciaDeUrlBlob = 0;
   createObjectURL.mockReset().mockImplementation(() => `blob:gravacao-${++sequenciaDeUrlBlob}`);
   revokeObjectURL.mockReset();
-  vi.stubGlobal('fetch', fetchMock);
   Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
   Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
 }
@@ -104,7 +108,7 @@ describe('RecordingPlayer (T67)', () => {
   it('nao renderiza nem requisita quando a chamada nao diz que tem', () => {
     renderPlayer(<RecordingPlayer callId="c2" recordingStatus={null} />);
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(invokeMock).not.toHaveBeenCalled();
     expect(getSession).not.toHaveBeenCalled();
   });
 
@@ -113,15 +117,10 @@ describe('RecordingPlayer (T67)', () => {
 
     await screen.findByTestId('tel-recording-player');
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://zapp-local.supabase.co/functions/v1/get-call-recording',
-      expect.objectContaining({
-        method: 'POST',
-        headers: { Authorization: 'Bearer jwt-local', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callId: 'c3' }),
-        cache: 'no-store',
-      }),
-    );
+    expect(invokeMock).toHaveBeenCalledWith('get-call-recording', {
+      body: { callId: 'c3' },
+      headers: expect.objectContaining({ Authorization: 'Bearer jwt-local' }),
+    });
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     const audio = audioDoPlayer(container);
     expect(audio.getAttribute('src')).toBe('blob:gravacao-1');
@@ -135,21 +134,21 @@ describe('RecordingPlayer (T67)', () => {
   });
 
   it('404 da Edge continua sendo tratado como chamada sem gravacao', async () => {
-    fetchMock.mockResolvedValueOnce(new Response('Sem gravacao disponivel', { status: 404 }));
+    invokeMock.mockResolvedValueOnce({ data: null, error: erroHttp(404) });
 
     renderPlayer(<RecordingPlayer callId="c404" recordingStatus="available" />);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(invokeMock).toHaveBeenCalled());
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
     expect(createObjectURL).not.toHaveBeenCalled();
   });
 
   it('resposta 200 sem bytes (blob vazio) e tratada como chamada sem gravacao', async () => {
-    fetchMock.mockResolvedValueOnce(new Response('', { status: 200 }));
+    invokeMock.mockResolvedValueOnce({ data: new Blob([], { type: 'audio/mpeg' }), error: null });
 
     renderPlayer(<RecordingPlayer callId="cvazio" recordingStatus="available" />);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(invokeMock).toHaveBeenCalled());
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
     // Blob vazio nunca vira object URL: nao ha audio para tocar.
     expect(createObjectURL).not.toHaveBeenCalled();
@@ -188,7 +187,7 @@ describe('RecordingPlayer (#62) — URL blob revogada nunca volta do cache', () 
     expect(revokeObjectURL).not.toHaveBeenCalledWith(src2);
     expect(createObjectURL).toHaveBeenCalledTimes(2);
     // ...a partir do Blob que ja estava no cache, sem baixar de novo.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
   });
 });
 
