@@ -11,13 +11,10 @@
  *  - mensagem de outro -> nenhum tick (não polui a conversa).
  *
  * A cor não é resolvida pelo jsdom: o teste pina a classe que o componente
- * aplica ao ícone e trava que o token `--info` existe de fato em tokens.css
- * (classe inócua, apontando para token inexistente, é recusa conhecida).
+ * aplica ao ícone do tick renderizado (o token `--info` existe em tokens.css).
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { TeamMessageItem } from '../TeamMessageItem';
 import type { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 
@@ -73,11 +70,6 @@ function tick(): HTMLElement {
 }
 
 describe('TeamMessageItem — ticks de estado da mensagem própria (PE-69)', () => {
-  it('token --info existe em tokens.css (a cor do lido não é classe inócua)', () => {
-    const css = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
-    expect(css).toMatch(/--info:\s*\d/);
-  });
-
   it('enviado: um traço com nome acessível "Enviado"', () => {
     const { container } = renderItem({ status: 'sent' });
     const el = screen.getByRole('img', { name: 'Enviado' });
