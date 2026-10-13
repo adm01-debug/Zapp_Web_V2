@@ -189,7 +189,8 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     const dialogoPausa = page.getByRole('alertdialog');
     await expect(dialogoPausa).toBeVisible();
     await dialogoPausa.getByPlaceholder('Motivo da pausa (opcional)').fill('pausa de ensaio X034');
-    await dialogoPausa.getByRole('button', { name: 'Pausar', exact: true }).click();
+    // X051: o confirmar vem do diálogo único do lifecycle ("Pausar agora").
+    await dialogoPausa.getByRole('button', { name: 'Pausar agora', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(2);
     expect(harness.envios[1]).toEqual({
@@ -198,8 +199,12 @@ test.describe('Talk X · lançamento com provedor falso', () => {
       reason: 'pausa de ensaio X034',
     });
 
-    // 4) RETOMAR — a campanha pausada volta a enviar.
+    // 4) RETOMAR — a campanha pausada volta a enviar. X051: o controlador único
+    //    pede confirmação também para retomar (antes o botão disparava direto).
     await page.getByRole('button', { name: 'Retomar', exact: true }).click();
+    const dialogoRetomar = page.getByRole('alertdialog');
+    await expect(dialogoRetomar).toBeVisible();
+    await dialogoRetomar.getByRole('button', { name: 'Retomar', exact: true }).click();
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(3);
     expect(harness.envios[2]).toEqual({ campaignId: CAMPAIGN_ID, action: 'start' });
 
@@ -207,7 +212,9 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     await page.getByRole('button', { name: 'Cancelar campanha', exact: true }).click();
     const dialogoCancelar = page.getByRole('alertdialog');
     await expect(dialogoCancelar).toBeVisible();
-    await dialogoCancelar.getByRole('button', { name: 'Confirmar cancelamento', exact: true }).click();
+    // X051: o confirmar do kit é "Cancelar" (a saída é "Voltar") — antes era
+    // "Confirmar cancelamento".
+    await dialogoCancelar.getByRole('button', { name: 'Cancelar', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(4);
     expect(harness.envios[3]).toMatchObject({ campaignId: CAMPAIGN_ID, action: 'cancel' });
