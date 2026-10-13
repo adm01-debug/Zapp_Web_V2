@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
+import { loadConnectionsList } from '@/hooks/inbox/useConnectionsList';
 
 export interface WhatsAppStatusMessage {
   id: string;
@@ -156,17 +157,14 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       contact = fallback.data;
     }
 
+    // Lista compartilhada (mesma chave/cache das outras telas): resolve tanto o
+    // fallback "primeira conectada" quanto a instância da conexão, numa leitura
+    // só — antes eram dois SELECTs encadeados.
+    const lista = await loadConnectionsList();
     let connectionId = contact?.whatsapp_connection_id;
 
     if (!connectionId) {
-      const { data: connection } = await supabase
-        .from('whatsapp_connections')
-        .select('id')
-        .eq('status', 'connected')
-        .limit(1)
-        .maybeSingle();
-
-      connectionId = connection?.id;
+      connectionId = lista.find((conn) => conn.status === 'connected')?.id;
     }
 
     if (!connectionId) {
@@ -176,11 +174,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       };
     }
 
-    const { data: connection } = await supabase
-      .from('whatsapp_connections')
-      .select('instance_id')
-      .eq('id', connectionId)
-      .maybeSingle();
+    const connection = lista.find((conn) => conn.id === connectionId);
 
     return {
       contactName: contact?.name ?? null,

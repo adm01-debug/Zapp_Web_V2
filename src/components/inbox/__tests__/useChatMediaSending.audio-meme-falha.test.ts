@@ -79,7 +79,11 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 vi.mock('@/integrations/supabase/client', () => {
   const responderDaTabela = (tabela: string) => {
-    const resultado =
+    const corrente: Record<string, unknown> = {};
+    corrente.select = () => corrente;
+    corrente.eq = () => corrente;
+    corrente.limit = () => corrente;
+    corrente.maybeSingle = async () =>
       tabela === 'contacts'
         ? {
             data: estado.contatoConnectionId
@@ -88,11 +92,24 @@ vi.mock('@/integrations/supabase/client', () => {
             error: null,
           }
         : { data: estado.instanceId ? { instance_id: estado.instanceId } : null, error: null };
-    const corrente: Record<string, unknown> = {};
-    corrente.select = () => corrente;
-    corrente.eq = () => corrente;
-    corrente.limit = () => corrente;
-    corrente.maybeSingle = async () => resultado;
+    // Lista compartilhada (`useConnectionsList`): select().order() devolve as
+    // LINHAS da tabela (array), não um único registro.
+    corrente.order = async () => ({
+      data: estado.instanceId
+        ? [
+            {
+              id: estado.contatoConnectionId ?? 'conn-1',
+              name: 'Principal',
+              phone_number: null,
+              status: 'connected',
+              instance_id: estado.instanceId,
+              is_default: true,
+              created_at: '2026-01-01T00:00:00Z',
+            },
+          ]
+        : [],
+      error: null,
+    });
     return corrente;
   };
   return {
@@ -127,6 +144,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 import { useChatMediaSending } from '../useChatMediaSending';
+import { queryClient } from '@/lib/queryClient';
 import { VoiceChangerPicker } from '../VoiceChangerPicker';
 import { AudioMemePicker } from '../AudioMemePicker';
 
@@ -210,6 +228,10 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     estado.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
+
+    // A lista de conexões virou cache compartilhado (`['connections']`): zera
+    // entre casos para cada um ler a conexão do SEU estado.
+    queryClient.clear();
 
     MockMediaRecorder.instances = [];
     getUserMedia.mockReset();

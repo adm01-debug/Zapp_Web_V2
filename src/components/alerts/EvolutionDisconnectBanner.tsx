@@ -1,49 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConnectionsRealtime } from '@/hooks/inbox/useConnectionsRealtime';
+import {
+  invalidateConnectionsList,
+  useConnectionsList,
+  type ConnectionListItem,
+} from '@/hooks/inbox/useConnectionsList';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-interface DisconnectedInstance {
-  id: string;
-  instance_id: string;
-  phone_number: string | null;
-  status: string;
-}
-
 export function EvolutionDisconnectBanner() {
-  const [disconnected, setDisconnected] = useState<DisconnectedInstance[]>([]);
-  const [dismissed, setDismissed] = useState(false);
   const [reconnecting, setReconnecting] = useState<string | null>(null);
+  // Recusa do operador (X): guarda a lista que estava na tela quando ele fechou.
+  // Como o React Query devolve um objeto novo a cada releitura que traz dado
+  // diferente, uma mudança de conexão (realtime) faz a faixa reaparecer — o
+  // mesmo efeito do `setDismissed(false)` a cada `fetchStatus`, sem estado
+  // derivado sincronizado em efeito.
+  const [dismissedFor, setDismissedFor] = useState<ConnectionListItem[] | null>(null);
   const reduceMotion = useReducedMotion() ?? false;
 
-  const fetchStatus = async () => {
-    const { data } = await supabase
-      .from('whatsapp_connections')
-      .select('id, instance_id, phone_number, status')
-      .eq('status', 'disconnected');
-    if (data && data.length > 0) {
-      setDisconnected(data as DisconnectedInstance[]);
-      setDismissed(false); // Re-show if new disconnections
-    } else {
-      setDisconnected([]);
-    }
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão do banner, sem estado derivado de props para sincronizar.
-    void fetchStatus();
-  }, []);
+  // Lista compartilhada: uma única leitura de `whatsapp_connections` para todas
+  // as telas, com 30s de validade (ver src/hooks/inbox/useConnectionsList.ts).
+  const { data } = useConnectionsList();
+  const disconnected = (data ?? []).filter((conn) => conn.status === 'disconnected');
+  const dismissed = dismissedFor !== null && dismissedFor === data;
 
   // Real-time das mudanças de status. Antes o canal tinha nome FIXO
   // ('disconnect-banner') e, como o gerente de conexões abria o mesmo tipo de
   // canal, as duas telas brigavam pela assinatura; agora o tópico é único por
   // montagem e o cleanup fecha o canal.
-  useConnectionsRealtime({ onChange: () => { void fetchStatus(); } });
+  // O evento derruba o cache compartilhado: a faixa (e qualquer outra tela
+  // montada) relê a lista do banco em vez de servir o cache de 30s.
+  useConnectionsRealtime({
+    onChange: () => {
+      void invalidateConnectionsList();
+    },
+  });
 
-  const handleReconnect = async (conn: DisconnectedInstance) => {
+  const handleReconnect = async (conn: ConnectionListItem) => {
     setReconnecting(conn.instance_id);
     try {
       const { data, error } = await supabase.functions.invoke('evolution-api/instance/connect', {
@@ -120,7 +116,7 @@ export function EvolutionDisconnectBanner() {
             </button>
           )}
           <button
-            onClick={() => setDismissed(true)}
+            onClick={() => setDismissedFor(data ?? null)}
             className="shrink-0 p-1 rounded hover:bg-white/20 transition-colors"
             aria-label="Fechar alerta"
           >

@@ -13,6 +13,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
+  // `loadConnectionsList` (lista compartilhada) vive no módulo `queryClient`,
+  // que instancia `QueryClient`: o mock precisa da classe e de um fetchQuery
+  // que devolva a lista vazia (o caso de conexões TEM teste próprio em
+  // useConnectionsList.test.tsx).
+  QueryClient: class {
+    fetchQuery = () => Promise.resolve([]);
+  },
 }));
 
 vi.mock('@/services/outbound-message.service', () => ({

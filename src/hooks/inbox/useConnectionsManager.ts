@@ -7,6 +7,7 @@ import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { queryClient } from '@/lib/queryClient';
 import { normalizeE164BR } from '@/lib/calls/phone';
 import { useConnectionsRealtime, type ConnectionsChange } from '@/hooks/inbox/useConnectionsRealtime';
+import { invalidateConnectionsList } from '@/hooks/inbox/useConnectionsList';
 
 export interface WhatsAppConnection {
   id: string;
@@ -104,6 +105,9 @@ function validarTelefoneConexao(bruto: string): PhoneValidation {
 function invalidarStatusDeConexao(): void {
   void queryClient.invalidateQueries({ queryKey: ['talkx-connection-status'] });
   void queryClient.invalidateQueries({ queryKey: ['catalog-send-readiness'] });
+  // Lista compartilhada (`['connections']`): a faixa de desconexão e as demais
+  // telas releem do banco em vez de servir o cache de 30s.
+  void invalidateConnectionsList();
 }
 
 
@@ -170,6 +174,9 @@ export function useConnectionsManager() {
   // mesmo hook, então os dois deixaram de brigar pelo canal).
   const { announceConnected } = useConnectionsRealtime({
     onChange: (payload: ConnectionsChange) => {
+      // Qualquer evento muda a lista compartilhada: derruba o cache para as
+      // outras telas (faixa de desconexão, nova conversa, status) relerem.
+      void invalidateConnectionsList();
       if (payload.eventType === 'UPDATE') {
         const newConn = payload.new as WhatsAppConnection;
         setConnections((prev) =>

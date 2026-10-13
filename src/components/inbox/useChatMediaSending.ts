@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeMediaUrl } from '@/utils/normalizeMediaUrl';
 import { toast } from '@/hooks/ui/use-toast';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
+import { loadConnectionsList } from '@/hooks/inbox/useConnectionsList';
 
 /** Motivo único da recusa quando a conexão WhatsApp não resolve: mesmo texto no toast e na rejeição. */
 const CONEXAO_WHATSAPP_INDISPONIVEL = 'Conexão WhatsApp não disponível.';
@@ -27,25 +28,22 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         .eq('id', contactId)
         .maybeSingle();
 
+      // Lista compartilhada (mesma chave/cache das outras telas): uma leitura de
+      // `whatsapp_connections` em vez de dois SELECTs por chamada.
+      const lista = await loadConnectionsList();
+
       if (contact?.whatsapp_connection_id) {
         setWhatsappConnectionId(contact.whatsapp_connection_id);
-        const { data: conn } = await supabase
-          .from('whatsapp_connections')
-          .select('instance_id')
-          .eq('id', contact.whatsapp_connection_id)
-          .maybeSingle();
+        const conn = lista.find((item) => item.id === contact.whatsapp_connection_id);
         if (conn?.instance_id) {
           setInstanceName(conn.instance_id);
           return conn.instance_id;
         }
       }
 
-      const { data: fallbackConn } = await supabase
-        .from('whatsapp_connections')
-        .select('instance_id')
-        .eq('status', 'connected')
-        .limit(1)
-        .maybeSingle();
+      // Sem conexão no contato, cai na primeira conectada — a lista já vem
+      // ordenada por `created_at`, então o fallback é determinístico.
+      const fallbackConn = lista.find((item) => item.status === 'connected');
 
       if (fallbackConn?.instance_id) {
         setInstanceName(fallbackConn.instance_id);

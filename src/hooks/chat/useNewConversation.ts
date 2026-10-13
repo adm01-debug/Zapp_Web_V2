@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
+import { loadConnectionsList } from '@/hooks/inbox/useConnectionsList';
+import { log } from '@/lib/logger';
 
 interface ContactResult {
   id: string;
@@ -34,14 +36,23 @@ export function useNewConversation(
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    supabase.from('whatsapp_connections').select('id, name').eq('status', 'connected')
-      .then(({ data }) => {
+    void (async () => {
+      try {
+        // Lista compartilhada: mesma chave/cache usados pela faixa de desconexão,
+        // pelo envio de mídia e pelo status do WhatsApp (30s de validade).
+        const lista = await loadConnectionsList();
         if (cancelled) return;
-        if (data && data.length > 0) {
-          setConnections(data);
-          setSelectedConnection(data[0].id);
+        const conectadas = lista
+          .filter((conn) => conn.status === 'connected')
+          .map((conn) => ({ id: conn.id, name: conn.name }));
+        if (conectadas.length > 0) {
+          setConnections(conectadas);
+          setSelectedConnection(conectadas[0].id);
         }
-      });
+      } catch (err) {
+        log.error('useNewConversation: falha ao carregar as conexões', err);
+      }
+    })();
     return () => {
       cancelled = true;
     };

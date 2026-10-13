@@ -1,10 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useWhatsAppStatus } from '../integrations/useWhatsAppStatus';
+import { queryClient } from '@/lib/queryClient';
 
 // Mocks
 const mockMaybeSingle = vi.fn();
 const mockInvoke = vi.fn();
+// Lista compartilhada (`useConnectionsList`): lê whatsapp_connections por
+// select().order(), sem filtro — os casos AQUI decidem quais linhas existem.
+const mockConnections = vi.fn();
+
+const CONEXAO_CONECTADA = {
+  id: 'conn1',
+  name: 'Principal',
+  phone_number: null,
+  status: 'connected',
+  instance_id: 'inst1',
+  is_default: true,
+  created_at: '2026-01-01T00:00:00Z',
+};
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -21,12 +35,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       // whatsapp_connections
       return {
         select: () => ({
-          eq: (_: string, val: string) => {
-            if (val === 'connected') {
-              return { limit: () => ({ maybeSingle: () => mockMaybeSingle() }) };
-            }
-            return { maybeSingle: () => mockMaybeSingle() };
-          },
+          order: () => mockConnections(),
         }),
       };
     },
@@ -43,6 +52,13 @@ vi.mock('@/lib/logger', () => ({
 describe('useWhatsAppStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // A lista de conexões vive num cache compartilhado: zera o cache e as filas
+    // de mock para cada caso ler as SUAS linhas.
+    queryClient.clear();
+    mockMaybeSingle.mockReset();
+    mockInvoke.mockReset();
+    mockConnections.mockReset();
+    mockConnections.mockResolvedValue({ data: [CONEXAO_CONECTADA], error: null });
   });
 
   // ========== NO PHONE ==========
@@ -69,8 +85,10 @@ describe('useWhatsAppStatus', () => {
   it('sets error when no WhatsApp connection available', async () => {
     mockMaybeSingle
       .mockResolvedValueOnce({ data: null }) // contact lookup (original phone)
-      .mockResolvedValueOnce({ data: null }) // contact lookup (cleaned phone fallback)
-      .mockResolvedValueOnce({ data: null }); // fallback connection
+      .mockResolvedValueOnce({ data: null }); // contact lookup (cleaned phone fallback)
+
+    // Lista compartilhada vazia: sem nenhuma conexão conectada para o fallback.
+    mockConnections.mockResolvedValueOnce({ data: [], error: null });
 
     const { result } = renderHook(() => useWhatsAppStatus('+5511999999999'));
 
@@ -101,9 +119,13 @@ describe('useWhatsAppStatus', () => {
   // ========== FALLBACK CONNECTION ==========
   it('uses fallback connection when contact has no whatsapp_connection_id', async () => {
     mockMaybeSingle
-      .mockResolvedValueOnce({ data: { whatsapp_connection_id: null } }) // contact without connection
-      .mockResolvedValueOnce({ data: { id: 'fallback1', instance_id: 'inst-fallback' } }) // fallback
-      .mockResolvedValueOnce({ data: { instance_id: 'inst-fallback' } }); // connection details
+      .mockResolvedValueOnce({ data: { whatsapp_connection_id: null } }); // contact without connection
+
+    // A primeira CONECTADA da lista compartilhada é o fallback.
+    mockConnections.mockResolvedValueOnce({
+      data: [{ ...CONEXAO_CONECTADA, id: 'fallback1', instance_id: 'inst-fallback' }],
+      error: null,
+    });
 
     mockInvoke
       .mockResolvedValueOnce({ data: [] })

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
+import { queryClient } from '@/lib/queryClient';
 
 /**
  * A faixa de conexões desconectadas é renderizada como irmã do <AppShell> (src/pages/Index.tsx),
@@ -16,7 +17,7 @@ const h = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
+    from: () => ({ select: () => ({ order: async () => ({ data: h.rows, error: null }) }) }),
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => undefined,
   },
@@ -26,6 +27,9 @@ const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, s
 
 describe('a11y: faixa de conexões desconectadas (landmark)', () => {
   beforeEach(() => {
+    // A lista de conexões agora vive num cache compartilhado (`['connections']`):
+    // limpa entre casos para cada um ler as SUAS linhas (h.rows).
+    queryClient.clear();
     h.rows = [desconectada];
   });
 

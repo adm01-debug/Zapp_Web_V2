@@ -16,7 +16,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
+    from: () => ({ select: () => ({ order: async () => ({ data: [], error: null }) }) }),
     channel: (...args: unknown[]) => h.channel(...args),
     removeChannel: (...args: unknown[]) => h.removeChannel(...args),
     functions: { invoke: vi.fn() },

@@ -23,7 +23,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
+    from: () => ({ select: () => ({ order: async () => ({ data: h.rows, error: null }) }) }),
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => undefined,
     functions: { invoke: (...args: unknown[]) => h.invoke(...args) },
