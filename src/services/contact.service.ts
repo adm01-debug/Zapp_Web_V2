@@ -141,7 +141,13 @@ export class ContactService {
     const authorsMap = new Map(authors.map(a => [a.id, a]));
     return (data || []).map(note => ({
       ...note,
-      author: authorsMap.get(note.author_id),
+      // Autor sempre definido: sem perfil correspondente, usa o mesmo placeholder
+      // da V3 ("Usuário removido") em vez de deixar `author` undefined na tela.
+      author: authorsMap.get(note.author_id) ?? {
+        id: note.author_id,
+        name: 'Usuário removido',
+        avatar_url: null,
+      },
     }));
   }
 
@@ -149,7 +155,7 @@ export class ContactService {
     contactId: string,
     authorId: string,
     content: string,
-    options?: { category?: string; dueDate?: string | null },
+    options?: { category?: string; dueDate?: string | null; isPinned?: boolean },
   ) {
     const { data, error } = await supabase
       .from('contact_notes')
@@ -159,6 +165,9 @@ export class ContactService {
         content,
         category: options?.category ?? 'note',
         due_date: options?.dueDate ?? null,
+        // `is_pinned` explícito no insert (aceita fixar já na criação). Ausente
+        // vale `false`, que é o mesmo `DEFAULT false` da coluna no banco.
+        is_pinned: options?.isPinned ?? false,
       })
       .select()
       .single();
@@ -176,8 +185,8 @@ export class ContactService {
 
    static async updateNote(
      noteId: string,
-     updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>,
-   ) {
+     updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }>,
+     ) {
      const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
      if (error) throw error;
      return data;
