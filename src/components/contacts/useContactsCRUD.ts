@@ -90,6 +90,38 @@ type ContactEditSource = Omit<Contact, 'latitude' | 'longitude'> & {
   longitude?: number | string | null;
 };
 
+const PHONE_DUPLICADO = 'Já existe outro contato com este número de telefone.';
+const PHONE_DUPLICADO_EXCLUIDO =
+  'Já existe um contato excluído com este número de telefone. Restaure-o e tente de novo.';
+
+/**
+ * t_d0f7873a — o 23505 do UPDATE em `contacts` era reconhecido pelo nome
+ * REMOVIDO da constraint (`contacts_phone_unique`, retirada em
+ * 20260827130300_drop_duplicate_phone_constraint_m04.sql); a viva é
+ * `contacts_phone_key`. Sem reconhecer o próprio erro, a tela mostrava o texto
+ * cru do Postgres em inglês.
+ *
+ * Quando o número pertence a um contato EXCLUÍDO, a mensagem orienta restaurar.
+ * A consulta passa pela policy de SELECT, que só devolve o excluído a
+ * admin/supervisor — é o banco que decide quem vê a opção, não uma segunda
+ * cópia da regra no front. Consulta informativa: se falhar, a mensagem padrão
+ * já diz a verdade.
+ */
+async function duplicatePhoneError(phone: string): Promise<Error> {
+  try {
+    const { data } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('phone', phone.replace(/\D/g, ''))
+      .not('deleted_at', 'is', null)
+      .limit(1);
+    if (data && data.length > 0) return new Error(PHONE_DUPLICADO_EXCLUIDO);
+  } catch {
+    // sem a consulta informativa, a mensagem padrão abaixo continua correta
+  }
+  return new Error(PHONE_DUPLICADO);
+}
+
 export function useContactsCRUD() {
   const { profile } = useAuth();
   const feedback = useActionFeedback();
@@ -214,8 +246,8 @@ export function useContactsCRUD() {
           .eq('id', contact.id)
           .select('id');
         if (error) {
-          if (error.code === '23505' && error.message?.includes('contacts_phone_unique')) {
-            throw new Error('Já existe outro contato com este número de telefone.');
+          if (error.code === '23505' && error.message?.includes('contacts_phone_key')) {
+            throw await duplicatePhoneError(contact.phone);
           }
           throw error;
         }

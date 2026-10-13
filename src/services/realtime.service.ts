@@ -50,6 +50,7 @@ export class RealtimeService {
       const { data, error } = await supabase
         .from('contacts')
         .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+        .is('deleted_at', null)
         .in('id', idsChunk);
         
       if (error) {
@@ -128,9 +129,14 @@ export class RealtimeService {
   }
 
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
+    // PD-51 (t_d0f7873a): contato soft-deleted (deleted_at preenchido) não pode
+    // voltar pela Inbox. A policy de SELECT já o esconde do não-admin; o filtro
+    // explícito é a defesa pedida e vale para todos os papéis (admin/supervisor
+    // continua enxergando o excluído na lixeira, não aqui).
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
       .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       
