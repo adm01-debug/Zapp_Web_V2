@@ -5,7 +5,8 @@ Especialista: Íris (area-front-componentes)
   usuário — campo Ramal e campo Senha SIP (`type="password"`, nasce vazio e é limpo depois de
   salvar; a senha salva NUNCA volta para a tela). Botão "Salvar ramal" habilita só com os dois
   campos preenchidos e bloqueia inputs/botão durante a gravação. Status do salvamento em
-  `role="status" aria-live="polite"`, rótulos ligados por `htmlFor`/`aria-describedby`.
+  `role="status" aria-live="polite"`, rótulos ligados por `htmlFor`/`aria-describedby`. O spinner de
+  gravação usa `motion-safe:animate-spin` (respeita reduzir movimento).
 - `src/components/admin/AdminView.tsx`: renderiza o bloco no diálogo de edição de usuário, gated
   por `{isAdmin && (...)}` — supervisor não alcança (a linha só oferece "Editar" para admin).
 - `src/components/admin/useAdminData.ts`: `handleSaveRamal(profileId, ramal, sipPassword)` chama a
