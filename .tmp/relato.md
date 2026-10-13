@@ -1,4 +1,4 @@
-Especialista: Edgar (area-edge-api)
+Especialista: edgar
 
 ## Sensibilidade
 - Padrões tocados por este diff: `service_role` (o cliente admin, que já existia, agora é injetável para teste), `enforceRateLimit`/rate limit (novo no caminho de login), `DELETE` (consumo do challenge, já existia) e emissão de sessão via `auth.admin.generateLink`.
@@ -27,9 +27,22 @@ Especialista: Edgar (area-edge-api)
 
 ## Prova
 - vermelho antes: `deno test --config scripts/ci/deno.json supabase/functions/webauthn/index.test.ts` contra o `index.ts` original (via `git checkout HEAD -- ...`) → `Type checking failed` e erro de import de `handleWebAuthn` (o antigo não exportava handler nem emitia sessão).
-- verde depois: `deno test --config scripts/ci/deno.json supabase/functions/webauthn/` → `ok`, `0 failed` (a pasta inclui os testes pré-existentes de `verify.test.ts`, que seguem verdes).
+- verde depois: `deno test --config scripts/ci/deno.json supabase/functions/webauthn/` → `ok | 21 passed | 0 failed (499ms)` (a pasta soma os 11 casos novos de `index.test.ts` + os 10 pré-existentes de `verify.test.ts`).
+- Os 11 casos `Deno.test` de `supabase/functions/webauthn/index.test.ts` (todos verdes):
+  1. `negação por IP (403) responde ANTES de body/credencial/efeitos`
+  2. `erro de decisão da política responde 503 sem vazar regras`
+  3. `rate limit por IP nega (429) antes de tocar o banco`
+  4. `credencial desconhecida -> recusa genérica, sem consultar conta`
+  5. `asserção inválida -> 401 no mesmo envelope e registra tentativa`
+  6. `conta inativa (banida) -> 403, sem emitir sessão`
+  7. `conta banida com banimento JÁ expirado segue o fluxo normal`
+  8. `conta travada por tentativas -> 423, sem emitir sessão`
+  9. `sucesso -> 200 com token_hash (sessão sem e-mail) e login auditado`
+  10. `falha ao emitir sessão -> 503 e NÃO audita`
+  11. `auditoria falha -> 500 e a sessão NÃO é devolvida (falha fechada)`
 - tipos: `deno check --config scripts/ci/deno.json supabase/functions/webauthn/index.ts supabase/functions/webauthn/index.test.ts` → `Check ...` sem erro.
 - manifesto: `node scripts/edge-deploy/generate-manifest.mjs --check` depois da regeneração → `Edge manifest OK`.
+- cartão: `zapp-verify . --rapido` → verde (rodei no fechamento; log em `.tmp/verify-2610130753ec62.log`).
 - juiz barato apontou, numa passada, "código alterado sem teste novo/alterado": NÃO PROCEDE — este commit ADICIONA `supabase/functions/webauthn/index.test.ts`, com casos `Deno.test` que chamam o `handleWebAuthn` real importado de `./index.ts`; `git show --stat HEAD` lista o arquivo de teste e o `.github/workflows/ci.yml` cobre a pasta pelo glob `$(git ls-files 'supabase/functions/**/*.test.ts')`.
 
 ## O que NÃO fiz e por quê
