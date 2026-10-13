@@ -16,7 +16,6 @@ export interface FilterPreset {
     type?: string;
     company?: string;
     jobTitle?: string;
-    tag?: string;
     dateRange?: string;
   };
 }
@@ -34,7 +33,7 @@ function isValidPreset(p: unknown): p is FilterPreset {
   if (typeof o.id !== 'string' || typeof o.name !== 'string') return false;
   if (!o.filters || typeof o.filters !== 'object' || Array.isArray(o.filters)) return false;
   const f = o.filters as Record<string, unknown>;
-  const filterKeys = ['type', 'company', 'jobTitle', 'tag', 'dateRange'] as const;
+  const filterKeys = ['type', 'company', 'jobTitle', 'dateRange'] as const;
   return filterKeys.every(k => f[k] === undefined || typeof f[k] === 'string');
 }
 

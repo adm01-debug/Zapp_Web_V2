@@ -78,12 +78,11 @@ describe('aggregateCrm360', () => {
     expect(result.interacoes.map((i) => i.id)).toEqual(['purchase-p1', 'event-e1', 'activity-a1']);
   });
 
-  it('produtos de interesse: dedup e limitado a 3', () => {
+  it('não inventa interesses: as tags de contato saíram do produto', () => {
     const result = aggregateCrm360({
       purchases: [], deals: [], stages: [],
-      tagNames: ['VIP', 'VIP', 'Catálogo', 'Personalização', 'Alta prioridade'],
       activities: [], events: [],
     }, NOW);
-    expect(result.interesses).toEqual(['VIP', 'Catálogo', 'Personalização']);
+    expect(result.interesses).toEqual([]);
   });
 });

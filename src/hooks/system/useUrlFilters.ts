@@ -8,7 +8,6 @@ import { useSearchParams } from 'react-router-dom';
 
 export interface UrlFiltersState {
   status: string[];
-  tags: string[];
   agentId: string | null;
   dateFrom: string | null;
   dateTo: string | null;
@@ -16,7 +15,6 @@ export interface UrlFiltersState {
 
 const PARAM_KEYS = {
   status: 'status',
-  tags: 'tags',
   agentId: 'agent',
   dateFrom: 'from',
   dateTo: 'to',
@@ -32,11 +30,9 @@ export function useUrlFilters() {
   // Parse filters from URL
   const filters = useMemo<UrlFiltersState>(() => {
     const statusParam = searchParams.get(PARAM_KEYS.status);
-    const tagsParam = searchParams.get(PARAM_KEYS.tags);
 
     return {
       status: statusParam ? statusParam.split(',').filter(Boolean) : [],
-      tags: tagsParam ? tagsParam.split(',').filter(Boolean) : [],
       agentId: searchParams.get(PARAM_KEYS.agentId),
       dateFrom: searchParams.get(PARAM_KEYS.dateFrom),
       dateTo: searchParams.get(PARAM_KEYS.dateTo),
@@ -54,15 +50,6 @@ export function useUrlFilters() {
           params.set(PARAM_KEYS.status, newFilters.status.join(','));
         } else {
           params.delete(PARAM_KEYS.status);
-        }
-      }
-
-      // Handle tags array
-      if (newFilters.tags !== undefined) {
-        if (newFilters.tags.length > 0) {
-          params.set(PARAM_KEYS.tags, newFilters.tags.join(','));
-        } else {
-          params.delete(PARAM_KEYS.tags);
         }
       }
 
@@ -111,7 +98,6 @@ export function useUrlFilters() {
   const hasActiveFilters = useMemo(() => {
     return (
       filters.status.length > 0 ||
-      filters.tags.length > 0 ||
       filters.agentId !== null ||
       filters.dateFrom !== null ||
       filters.dateTo !== null

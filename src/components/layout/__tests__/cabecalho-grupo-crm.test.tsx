@@ -67,7 +67,6 @@ vi.mock('@/contexts/LayoutScrollContext', () => ({ useLayoutScroll: () => ({ cur
 vi.mock('@/components/contacts/ContactDialogs', () => ({ ContactDialogs: () => null }));
 vi.mock('@/components/contacts/ContactMergeDialog', () => ({ ContactMergeDialog: () => null }));
 vi.mock('@/components/contacts/ContactCompareDialog', () => ({ ContactCompareDialog: () => null }));
-vi.mock('@/components/contacts/ContactBulkTagDialog', () => ({ ContactBulkTagDialog: () => null }));
 vi.mock('@/components/contacts/ContactStatsCards', () => ({ ContactStatsCards: () => null }));
 vi.mock('@/components/contacts/ContactTypeTabs', () => ({ ContactTypeTabs: () => null }));
 vi.mock('@/components/contacts/ContactToolbar', () => ({ ContactToolbar: () => null }));

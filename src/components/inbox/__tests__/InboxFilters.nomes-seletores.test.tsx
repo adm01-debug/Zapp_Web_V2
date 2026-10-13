@@ -18,10 +18,6 @@ vi.mock('@/hooks/crm/useAgents', () => ({
   useAgents: () => ({ agents: [] }),
 }));
 
-vi.mock('@/hooks/inbox/useInboxFilterTags', () => ({
-  useInboxFilterTags: () => ({ data: [] }),
-}));
-
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: false, roles: ['admin'] }),
 }));

@@ -178,14 +178,12 @@ const regra = (field: string, op: string, value: string): SegmentRule =>
   ({ id: 'r', field, op, value } as SegmentRule);
 
 describe('isRuleComplete — por tipo de campo', () => {
-  it('texto, enum e array exigem valor não vazio', () => {
+  it('texto e enum exigem valor não vazio', () => {
     expect(isRuleComplete(regra('company', 'eq', 'Acme'))).toBe(true);
     expect(isRuleComplete(regra('company', 'eq', ''))).toBe(false);
     expect(isRuleComplete(regra('company', 'eq', '   '))).toBe(false);
     expect(isRuleComplete(regra('contact_type', 'eq', 'lead'))).toBe(true);
     expect(isRuleComplete(regra('contact_type', 'eq', ''))).toBe(false);
-    expect(isRuleComplete(regra('tags', 'contains', 'vip'))).toBe(true);
-    expect(isRuleComplete(regra('tags', 'contains', ''))).toBe(false);
   });
 
   it('número e data exigem valor numérico válido', () => {

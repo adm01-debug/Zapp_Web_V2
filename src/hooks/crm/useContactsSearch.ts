@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ContactService, Contact } from '@/services/contact.service';
-import { filterCustomTags } from '@/lib/tags';
 import {
   CONTACTS_AGGREGATE_QUERY_OPTIONS,
   readShowLegacyPreference,
@@ -26,7 +25,6 @@ export function useContactsSearch() {
   const [activeTab, setActiveTab] = useState('all');
   const [filterCompany, setFilterCompany] = useState('');
   const [filterJobTitle, setFilterJobTitle] = useState('');
-  const [filterTag, setFilterTag] = useState('');
   const [filterDateRange, setFilterDateRange] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [page, setPage] = useState(0);
@@ -49,7 +47,6 @@ export function useContactsSearch() {
   const handleTabChange = useCallback((v: string) => { setActiveTab(v); setPage(0); }, []);
   const handleCompanyChange = useCallback((v: string) => { setFilterCompany(v); setPage(0); }, []);
   const handleJobTitleChange = useCallback((v: string) => { setFilterJobTitle(v); setPage(0); }, []);
-  const handleTagChange = useCallback((v: string) => { setFilterTag(v); setPage(0); }, []);
   const handleDateRangeChange = useCallback((v: string) => { setFilterDateRange(v); setPage(0); }, []);
   const handleSortChange = useCallback((v: string) => { setSortBy(v); setPage(0); }, []);
   const handleShowLegacyChange = useCallback((v: boolean) => {
@@ -78,7 +75,6 @@ export function useContactsSearch() {
     activeTab,
     filterCompany,
     filterJobTitle,
-    filterTag,
     dateFrom,
     sortField,
     sortDirection,
@@ -94,7 +90,6 @@ export function useContactsSearch() {
         contact_type_filter: activeTab === 'all' ? null : activeTab,
         company_filter: filterCompany,
         job_title_filter: filterJobTitle,
-        tag_filter: filterTag,
         date_from: dateFrom,
         sort_field: sortField,
         sort_direction: sortDirection,
@@ -189,14 +184,12 @@ export function useContactsSearch() {
 
   const uniqueCompanies = useMemo(() => [...new Set(contacts.map(c => c.company).filter(Boolean))] as string[], [contacts]);
   const uniqueJobTitles = useMemo(() => [...new Set(contacts.map(c => c.job_title).filter(Boolean))] as string[], [contacts]);
-  const uniqueTags = useMemo(() => filterCustomTags([...new Set(contacts.flatMap(c => c.tags || []))]), [contacts]);
 
-  const activeFiltersCount = [filterCompany, filterJobTitle, filterTag, filterDateRange !== 'all' ? filterDateRange : ''].filter(Boolean).length;
+  const activeFiltersCount = [filterCompany, filterJobTitle, filterDateRange !== 'all' ? filterDateRange : ''].filter(Boolean).length;
 
   const clearFilters = useCallback(() => {
     setFilterCompany('');
     setFilterJobTitle('');
-    setFilterTag('');
     setFilterDateRange('all');
     setSortBy('name_asc');
     setPage(0);
@@ -217,7 +210,6 @@ export function useContactsSearch() {
     contactCountByType,
     uniqueCompanies,
     uniqueJobTitles,
-    uniqueTags,
     searchInput,
     debouncedSearch,
     handleSearchChange,
@@ -228,8 +220,6 @@ export function useContactsSearch() {
     setFilterCompany: handleCompanyChange,
     filterJobTitle,
     setFilterJobTitle: handleJobTitleChange,
-    filterTag,
-    setFilterTag: handleTagChange,
     filterDateRange,
     setFilterDateRange: handleDateRangeChange,
     sortBy,
