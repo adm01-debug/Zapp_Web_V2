@@ -193,49 +193,55 @@ export function PeriodFilterSelector({
 
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverTrigger asChild>
-        <button
-          className={cn(
-            'inline-flex items-center gap-1.5 w-full justify-center whitespace-nowrap text-xs px-3 py-2 rounded-xl font-medium transition-all duration-150 select-none',
-            hasFilter
-              ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-              : 'bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/60'
-          )}
-        >
-          <CalendarDays className="w-3.5 h-3.5" />
-          <PeriodLabel period={period} from={customFrom} to={customTo} />
-          <span className={cn(
-            'ml-1 px-1.5 py-0.5 rounded-full text-3xs font-bold tabular-nums',
-            hasFilter ? 'bg-primary-foreground/20' : 'bg-foreground/10'
-          )}>
-            {filteredCount}{totalCount !== filteredCount ? `/${totalCount}` : ''}
-          </span>
-          {hasFilter && (
-            <span
-              role="button"
-              className="ml-0.5 p-0.5 rounded-full hover:bg-primary-foreground/20"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPeriodChange('all');
-                onClearCustom();
-              }}
-              aria-label="Remover filtro de data"
-            >
-              <X className="w-3 h-3" />
+      {/* Acessibilidade: o "remover filtro" era um <span role="button"> DENTRO
+          do <button> gatilho — controle interativo aninhado, sem teclado. Agora
+          é um <button> irmão, com nome acessível e ativável por teclado. */}
+      <div className="flex w-full items-center gap-1">
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              'inline-flex items-center gap-1.5 flex-1 justify-center whitespace-nowrap text-xs px-3 py-2 min-h-11 rounded-xl font-medium transition-all duration-150 select-none',
+              hasFilter
+                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                : 'bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/60'
+            )}
+          >
+            <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />
+            <PeriodLabel period={period} from={customFrom} to={customTo} />
+            <span className={cn(
+              'ml-1 px-1.5 py-0.5 rounded-full text-3xs font-bold tabular-nums',
+              hasFilter ? 'bg-primary-foreground/20' : 'bg-foreground/10'
+            )}>
+              {filteredCount}{totalCount !== filteredCount ? `/${totalCount}` : ''}
             </span>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 pointer-events-auto scale-[0.7] origin-top-left" align="start" side="bottom" sideOffset={4}>
+          </button>
+        </PopoverTrigger>
+        {hasFilter && (
+          <button
+            type="button"
+            aria-label="Remover filtro de data"
+            className="shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => {
+              onPeriodChange('all');
+              onClearCustom();
+            }}
+          >
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+      <PopoverContent className="w-auto p-0 pointer-events-auto" align="start" side="bottom" sideOffset={4}>
         <div className="flex min-h-[340px]">
           {/* Presets column */}
-          <div className="w-[160px] border-r border-border bg-muted/30 p-2 flex flex-col gap-0.5">
+          <div className="flex w-40 flex-col gap-0.5 border-r border-border bg-muted/30 p-2">
             <p className="text-3xs text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
             {presets.map((p) => (
               <button
                 key={p.key}
+                type="button"
                 className={cn(
-                  'w-full text-left text-[13px] px-2.5 py-2 rounded-lg transition-all duration-150 font-medium',
+                  'flex w-full min-h-11 items-center text-left text-sm px-2.5 py-2 rounded-lg transition-all duration-150 font-medium',
                   period === p.key
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-foreground/80 hover:bg-muted hover:text-foreground'
@@ -257,7 +263,8 @@ export function PeriodFilterSelector({
               <p className="text-2xs text-muted-foreground font-semibold uppercase tracking-widest">Período personalizado</p>
               {(customFrom || customTo) && (
                 <button
-                  className="text-3xs text-destructive hover:underline font-medium"
+                  type="button"
+                  className="inline-flex min-h-11 items-center text-3xs text-destructive hover:underline font-medium"
                   onClick={() => {
                     onClearCustom();
                     onPeriodChange('all');

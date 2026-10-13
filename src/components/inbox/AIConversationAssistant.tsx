@@ -259,8 +259,8 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
               <RefreshCcw className="h-3 w-3" />
               Tentar
             </Button>
-            <Button size="sm" variant="ghost" className="h-7 rounded-lg px-1.5 text-3xs text-muted-foreground" onClick={handleDismissAutoplayWarning}>
-              <X className="h-3 w-3" />
+            <Button size="sm" variant="ghost" aria-label="Dispensar aviso de áudio" className="h-7 rounded-lg px-1.5 text-3xs text-muted-foreground" onClick={handleDismissAutoplayWarning}>
+              <X className="h-3 w-3" aria-hidden="true" />
             </Button>
           </div>
         </motion.div>
@@ -278,7 +278,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
       )}
 
       {isLoading && (
-        <div className="space-y-3">
+        <div role="status" aria-live="polite" aria-atomic="true" className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <Loader2 className="w-4 h-4 text-primary animate-spin" />
             <span className="text-xs font-medium text-muted-foreground">Analisando {filteredMessages.length} mensagens...</span>
