@@ -151,6 +151,8 @@ CREATE OR REPLACE VIEW vault.decrypted_secrets AS
   SELECT id, name, secret AS decrypted_secret, created_at FROM vault.secrets;
 INSERT INTO vault.secrets (name, secret) VALUES ('gmail_cron_secret', 'segredo-compartilhado-de-teste')
   ON CONFLICT (name) DO NOTHING;
+INSERT INTO vault.secrets (name, secret) VALUES ('zapp_project_url', 'https://sb-testref.supabase.co')
+  ON CONFLICT (name) DO NOTHING;
 
 -- ── pg_cron (stub FIEL ao 1.6) ─────────────────────────────────────────────────
 CREATE SCHEMA IF NOT EXISTS cron;
@@ -307,6 +309,10 @@ expect_value 'A3c. todo job de Edge tem timeout > 0' '3' \
   "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs')
      AND command ~ 'timeout_milliseconds := [1-9]'"
 
+expect_value 'A3d. a URL base nao fica literal no comando (vem de public.zapp_project_url())' '0' \
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs') AND command LIKE '%://%supabase.co%'"
+expect_value 'A3e. public.zapp_project_url() resolve do Vault quando o GUC nao existe' 'https://sb-testref.supabase.co' \
+  "SELECT public.zapp_project_url()"
 checa_sem_dml_direto "$migration" || fail "A4. $?"
 printf '[PASS] A4. a migration nao faz DML direto em cron.job (so leitura + schedule/alter_job)\n'
 
@@ -379,6 +385,6 @@ expect_value 'D2. o rollback remove a RPC de reivindicacao' 'true' \
 expect_value 'D3. o rollback remove o indice de vencimento' 'true' \
   "SELECT (to_regclass('public.scheduled_reports_due_idx') IS NULL)::text"
 expect_value 'D4. o rollback remove as funcoes que a migration criou' '0' \
-  "SELECT count(*) FROM pg_proc WHERE proname IN ('next_report_send_at','zapp_purge_crm_sync_outbox','zapp_purge_ai_rate_limits','purge_cron_job_run_details','apply_zapp_agendadores_e_purga_cron')"
+  "SELECT count(*) FROM pg_proc WHERE proname IN ('next_report_send_at','zapp_project_url','zapp_purge_crm_sync_outbox','zapp_purge_ai_rate_limits','purge_cron_job_run_details','apply_zapp_agendadores_e_purga_cron')"
 
 printf '\n[OK] contrato dos agendadores Edge + purga do log do cron: TODAS as assercoes passaram.\n'

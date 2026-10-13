@@ -74,6 +74,11 @@ const ALLOWLIST = new Set([
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  // py-102 (t_c2f65e14): agenda as edges auto-close/send-scheduled-report/cleanup-rate-limit-logs,
+  // a RPC de claim dos relatorios vencidos e as purgas diarias (inclui a do log do cron), em
+  // PG 17 descartavel (docker local). Passo de uma linha em db-guard.yml — promover pelo dono do
+  // workflow (agente nao edita workflow).
+  'scripts/db-audit/agendadores-edge-e-purga-cron.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
