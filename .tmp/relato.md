@@ -1,5 +1,12 @@
 Especialista: worker (design) (design-system-zapp)
 
+## Tamanho e forma do diff (medido)
+- `git diff --stat dia/2026-10-12 HEAD` → 5 arquivos, `338 insertions(+), 97 deletions(-)`: `src/pages/Auth.tsx`,
+  `src/components/auth/HeroBenefits.tsx`, `src/components/auth/__tests__/HeroBenefits.test.tsx`, `e2e/auth.spec.ts`, `.tmp/relato.md`.
+  Dois são de teste: `HeroBenefits.test.tsx` (arquivo NOVO, 6 casos: `grep -c "  it(" = 6`) e `e2e/auth.spec.ts` (+1 caso novo:
+  `git show d4d4d17c6 -- e2e/auth.spec.ts | grep -c "^+  test(" = 1`). Novos casos de teste = 6 + 1 = 7.
+- Conclusão: CONCLUÍ o cartão — as 2 correções entraram e estão provadas abaixo.
+
 ## O que mudou e por quê
 - [refazer 1] Retomo o trabalho da branch `v2/login-v3-seta-contraste-2610111302ded9` sobre a ponta de `dia/2026-10-12`
   (o motivo da recusa foi só o conflito com a ponta). Trouxe por `git cherry-pick` commit a commit, preservando o que já
