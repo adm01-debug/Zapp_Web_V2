@@ -7,9 +7,10 @@
  * exercitado. A listagem paginada e a janela de estatística são enfileiradas em
  * filas separadas (a que tem `.range()` é a listagem).
  *
- * Casos: recorte de página no servidor, `count` exato, filtros com o escape de
- * `escapeOrFilterValue`, ordem determinística com desempate, volta à página 1,
- * erro exposto ao chamador e resposta obsoleta descartada quando o filtro muda.
+ * Casos: recorte de página no servidor, `count` exato, filtros com os curingas do
+ * LIKE escapados, ordem determinística com desempate, volta à página 1, erro da
+ * consulta e tempo esgotado expostos ao chamador, e resposta obsoleta descartada
+ * quando o filtro muda.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -160,7 +161,7 @@ describe('useRateLimitLogs', () => {
     expect(result.current.totalPages).toBe(2);
   });
 
-  it('aplica filtros no servidor e escapa o termo de busca com escapeOrFilterValue', async () => {
+  it('aplica filtros no servidor e escapa os curingas do LIKE no padrão literal', async () => {
     mocks.pagina.push({ data: [], count: 0 });
 
     const { result } = renderHook(() => useRateLimitLogs(true));
@@ -168,8 +169,8 @@ describe('useRateLimitLogs', () => {
 
     act(() => {
       result.current.setFilters({
-        ip: '10.0, eq.admin',
-        endpoint: 'a"b',
+        ip: '10.0.0.1, now()',
+        endpoint: '50%_a\\b',
         blockedOnly: true,
       });
     });
@@ -177,9 +178,12 @@ describe('useRateLimitLogs', () => {
     await waitFor(() => expect(ultimaPagina().ilike).toHaveLength(2));
 
     const pagina = ultimaPagina();
+    // `.ilike()` manda o valor cru como parâmetro URL: vírgula e aspas são
+    // literais e NÃO entram na gramática do `.or()`. Só os curingas do LIKE
+    // (`\`, `%`, `_`) precisam de escape para o termo ser buscado como texto.
     expect(pagina.ilike).toEqual([
-      ['ip_address', '"%10.0, eq.admin%"'],
-      ['endpoint', '"%a\\"b%"'],
+      ['ip_address', '%10.0.0.1, now()%'],
+      ['endpoint', '%50\\%\\_a\\\\b%'],
     ]);
     expect(pagina.eq).toEqual([['blocked', true]]);
     expect(pagina.range).toEqual([0, 24]);
@@ -265,7 +269,30 @@ describe('useRateLimitLogs', () => {
     expect(result.current.logs[0].id).toBe('novo');
     expect(result.current.total).toBe(7);
     expect(result.current.loading).toBe(false);
-    expect(ultimaPagina().ilike).toEqual([['ip_address', '"%10.0.0.1%"']]);
+    expect(ultimaPagina().ilike).toEqual([['ip_address', '%10.0.0.1%']]);
+  });
+
+  it('expõe o tempo esgotado em vez de silenciar a consulta cortada', async () => {
+    const ctl = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(ctl.signal);
+    const pendente = deferred<Resposta>();
+    mocks.pagina.push({ deferred: pendente });
+
+    const { result } = renderHook(() => useRateLimitLogs(true));
+    await waitFor(() => expect(mocks.consultas.some(c => c.range !== null)).toBe(true));
+
+    // O tempo estoura com a consulta ainda em voo: o componente continua montado,
+    // então o chamador precisa ver o motivo em vez de uma tela vazia silenciosa.
+    ctl.abort();
+    pendente.resolve({ data: [log('a')], count: 1 });
+
+    await waitFor(() =>
+      expect(result.current.error).toBe('Tempo esgotado ao carregar os logs de rate limit.'),
+    );
+    expect(result.current.logs).toEqual([]);
+    expect(result.current.loading).toBe(false);
+
+    timeoutSpy.mockRestore();
   });
 
   it('mantém a janela recente de estatística (limit) separada da listagem paginada', async () => {
@@ -283,6 +310,7 @@ describe('useRateLimitLogs', () => {
     expect(result.current.stats).toEqual({
       totalRequests: 8,
       blockedRequests: 1,
+      sampleSize: 2,
       uniqueIPs: 2,
       topEndpoints: [{ endpoint: '/api/v1/messages', count: 8 }],
       topIPs: [

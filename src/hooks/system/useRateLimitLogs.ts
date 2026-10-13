@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
-import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 
 export interface RateLimitLog {
   id: string;
@@ -19,6 +18,8 @@ export interface RateLimitLog {
 export interface RateLimitStats {
   totalRequests: number;
   blockedRequests: number;
+  /** Linhas da janela recente: denominador das proporções (não é o total da listagem). */
+  sampleSize: number;
   uniqueIPs: number;
   topEndpoints: { endpoint: string; count: number }[];
   topIPs: { ip: string; count: number; blocked: boolean }[];
@@ -86,8 +87,21 @@ function calculateStats(data: RateLimitLog[]): RateLimitStats {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  return { totalRequests, blockedRequests, uniqueIPs, topEndpoints, topIPs };
+  return { totalRequests, blockedRequests, sampleSize: data.length, uniqueIPs, topEndpoints, topIPs };
 }
+
+/**
+ * Escapa os curingas do LIKE (`\`, `%`, `_`) para que o termo digitado seja
+ * buscado como texto literal, e só então o envolve em `%…%`. `.ilike()` manda o
+ * valor cru como parâmetro URL (não passa pela gramática do `.or()`), então
+ * aspas e vírgulas são inofensivas; sem o escape, porém, um `%` digitado pelo
+ * usuário viraria "qualquer coisa".
+ */
+function likePattern(term: string): string {
+  return `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+}
+
+const TIMEOUT_MESSAGE = 'Tempo esgotado ao carregar os logs de rate limit.';
 
 function errorMessage(cause: unknown): string {
   if (cause instanceof Error && cause.message) return cause.message;
@@ -128,7 +142,8 @@ export function useRateLimitLogs(enabled = true) {
   // Listagem: filtro, ordem e recorte de página são resolvidos no SERVIDOR
   // (`range` + `count: 'exact'`), não cortando um lote fixo no cliente.
   const fetchPage = useCallback(async (signal: AbortSignal) => {
-    const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
+    const timeout = AbortSignal.timeout(15_000);
+    const requestSignal = AbortSignal.any([signal, timeout]);
     const page = Math.max(1, filters.page);
     const pageSize = Math.max(1, filters.pageSize);
     const from = (page - 1) * pageSize;
@@ -140,8 +155,8 @@ export function useRateLimitLogs(enabled = true) {
 
       const ip = filters.ip.trim();
       const endpoint = filters.endpoint.trim();
-      if (ip) query = query.ilike('ip_address', escapeOrFilterValue(`%${ip}%`));
-      if (endpoint) query = query.ilike('endpoint', escapeOrFilterValue(`%${endpoint}%`));
+      if (ip) query = query.ilike('ip_address', likePattern(ip));
+      if (endpoint) query = query.ilike('endpoint', likePattern(endpoint));
       if (filters.blockedOnly) query = query.eq('blocked', true);
 
       // Ordem determinística com desempate por `id`: sem ele, duas linhas com o
@@ -154,7 +169,10 @@ export function useRateLimitLogs(enabled = true) {
       const { data, count, error: queryError } = await query.abortSignal(requestSignal);
 
       // Resposta obsoleta (filtro trocado ou desmontagem): não sobrescreve o estado novo.
-      if (requestSignal.aborted) return;
+      if (signal.aborted) return;
+      // Tempo esgotado: a consulta foi cortada, mas o chamador precisa ver o
+      // motivo — uma tela vazia em silêncio é indistinguível de "não há log".
+      if (timeout.aborted) { setError(TIMEOUT_MESSAGE); return; }
       if (queryError) throw queryError;
 
       setLogs(data ?? []);
@@ -162,7 +180,7 @@ export function useRateLimitLogs(enabled = true) {
       setError(null);
     } catch (cause) {
       if (signal.aborted) return;
-      setError(errorMessage(cause));
+      setError(timeout.aborted ? TIMEOUT_MESSAGE : errorMessage(cause));
     } finally {
       if (!signal.aborted) setLoading(false);
     }
