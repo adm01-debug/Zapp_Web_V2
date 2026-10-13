@@ -23,6 +23,12 @@ Testes citados: `src/components/monitoring/__tests__/MonitoringInboxSilence.beha
 - Não mexi em navegação/permissão: a view `evolution-monitor` já é `ADMIN_ONLY` (`src/services/navigation.service.ts:157`), então a tela e o editor de limiar aparecem para quem já pode abrir o monitor. A gravação continua barrada pela RLS de `global_settings` para quem não é admin, e a recusa vira mensagem no formulário.
 - Nenhuma dependência nova, nenhuma migration, nada tocando produção.
 
+## Arquivos herdados do cartão pai (não são o meu escopo)
+
+O cartão manda trazer a FAIXA dos pais quando ela não está no workspace. `git merge-base --is-ancestor 1b01ad327 HEAD` era FALSO, então trouxe a faixa inteira:
+`git cherry-pick -x 0d163cf9 a0f047b5 c22f24d9 460447ff 2a70d135 de0317a4 684865df 1b01ad327` (o mesmo conjunto de `git rev-list --reverse --no-merges dia/2026-10-13..1b01ad327`; o git local é 2.43 e não conhece `--empty=drop`, então liste os commits um a um).
+É isso que explica os arquivos do diff que o cartão não lista em "ARQUIVOS QUE PODE TOCAR": `supabase/migrations/20261013230009_admin_inbox_silence.sql` e `supabase/tests/admin_inbox_silence.sql` (cartão t_38ab6fff, a RPC) e `src/components/monitoring/hooks/useInboxSilence.ts`, `src/services/inbox.service.ts`, `src/integrations/supabase/types.ts` (cartão t_aad84794, o hook). Não editei nenhum deles — são o trabalho dos pais, trazido por obrigação de dependência. O meu commit (`0edc59b5fc`) toca só os 3 arquivos do cartão.
+
 ## Verificação
 
 `zapp-verify . --rapido` no fechar: ver a linha FECHADO abaixo.
