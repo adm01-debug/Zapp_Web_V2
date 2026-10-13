@@ -14,10 +14,11 @@ Cartão de preparação (sem correção de código): montar a base de trabalho p
 - `zapp-verify . --rapido` (1a execucao): `OK dependencias`, `OK db_guard`, `FALHOU tipos 358s` — falha de EXECUCAO, nao de codigo: `tc-rapido: tsc saiu 137 em app (falha de execucao, NAO e aprovacao)` apos `esperando vaga no pool 'pesado' (3 em uso)`. `jev-juiz falha <log>` classificou `environment (certeza 0.90; rodar de novo ajuda: 0.65)`. Meu diff nao tem nenhum arquivo TypeScript (so a migration), entao o typecheck nao quebrou por ele. As re-execucoes seguintes nao completaram nesta sessao (o terminal encerra o processo de fundo); a verificacao final vale pela execucao do proprio `hermes-tarefa-fechar`.
 
 ## Valores para os cartões seguintes (escolha do nome da migration nova)
-- HEAD apos os cherry-picks: `5908ddc3b259f3abc0286ed3ace234d2df9ceb7a`
+- HEAD na ponta: `e2a006451ca5bdc79591e9a6459e40c969e21d33` (esse commit acrescenta apenas `.tmp/relato.md` sobre a base dos cherry-picks `5908ddc3b259f3abc0286ed3ace234d2df9ceb7a`). Conferido nesta retentativa: `git status --short` limpo.
 - Timestamp MAXIMO do ledger `supabase/migrations/` (apos esta importacao): `20261009203548`
 - `generated_at` de `supabase/schema-catalog.json`: `2026-10-04`
-- Alvo: `<HOJE>_talkx_n102_window_fixes.sql` com AAAAMMDDHHMMSS de hoje, MAIOR que `20261009203548` e `>= 2026-10-04` (ex.: `20261013120000`).
+- Alvo: `<HOJE>_talkx_n102_window_fixes.sql` com AAAAMMDDHHMMSS de hoje (2026-10-13), MAIOR que `20261009203548` e `>= 2026-10-04` (ex.: `20261013120000`).
+- Conferido nesta retentativa: a migration BASE `20261009203548_...dnd.sql` esta presente e legivel (536 linhas / 39376 bytes) e o blob e identico ao da ponta recusada `2c186a4809` (`git diff HEAD 2c186a4809 -- <arquivo>` vazio).
 
 ## O que NAO fiz e por quê (importante para os filhos)
 1. `2c186a480` (commit citado no cartao) nao entrou, e nao podia entrar sozinho. Tentado: `git cherry-pick -x 2c186a4809` -> `CONFLICT (modify/delete)` nas DUAS unicas coisas que ele muda (`supabase/migrations/20261010124150_talkx_n102_window_fixes.sql` e `scripts/db-audit/talkx-n102-window.test.sh`), porque nenhum dos dois existe no dia: sao criados pelos commits anteriores da mesma branch (`4f519980bb`/`52ae13ee8c`). O filho `t_a631f82f` cria a migration NOVA `<HOJE>_talkx_n102_window_fixes.sql` (substituindo a `20261010124150`) e o `t_5d0f8628` cria o `.test.sh` — trazer os dois inflaria o diff em ~46k com arquivos que os proprios filhos vao recriar (foi exatamente o tamanho que causou a recusa anterior). Nao inventei nada: apenas nao puxei o que e substituido.
