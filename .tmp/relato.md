@@ -56,6 +56,10 @@ Especialista: worker (design) (design-system-zapp)
 ## O que NÃO fiz e por quê
 - Não trouxe `30bdb0ee1`/`585f89cdc`/`c5ceb2fca`: o conteúdo deles já está em `dia/2026-10-12` (ou em redação mais nova) —
   trazê-los reintroduziria a variante antiga (abas/Criar Conta/h1) que a base removeu de propósito.
+- `e2e/auth.spec.ts` (não listado nominalmente no cartão, mas indispensável): o cartão pede provar que rótulo e seta ficam na
+  MESMA LINHA e "medir no navegador real" em 3 tamanhos — em jsdom (vitest) o layout não é calculado, então a única prova é o
+  navegador de verdade. É o e2e que já existe para `/auth` (projeto `chromium`, deslogado) e o teste é ADITIVO: só acrescenta
+  um `it`, sem tocar nenhum outro teste do arquivo.
 - Não mexi em `icon.ts` nem guardei captura/PNG: não é o defeito deste cartão e imagem grande não entra no diff.
 - Fora do escopo (só registro, `kanban_comment`): `e2e/auth.spec.ts` já tinha 4 testes VERMELHOS na base, anteriores a este cartão
   (procuram as abas cadastro, removidas em `687dc2749`); nada neste diff os toca e o teste NOVO passa. Também na base: aviso axe
