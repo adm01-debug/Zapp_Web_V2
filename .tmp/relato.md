@@ -19,13 +19,17 @@ Especialista: iris
 2. **`zapp-verify . --rapido` verde** — roda no fechar (bloco FATOS MEDIDOS).
 
 ## Dependência — arquivos que vieram do cartão pai (não escritos por mim)
-Cherry-pick da faixa inteira do pai `t_a364a46c` (`4563dca75`..`b6b09ab28`), como manda a DEPENDÊNCIA do cartão:
+Por que aparecem arquivos fora de `ARQUIVOS QUE PODE TOCAR`: a **DEPENDÊNCIA** do próprio cartão manda cherry-pickar a faixa do pai `t_a364a46c` (`4563dca75`..`b6b09ab28`) — é o hook/banco que a seção consome, sem ele a tela não lê nada. Cherry-pick da faixa inteira:
 - `supabase/migrations/20261013051916_contact_change_log.sql` — a trilha `contact_change_log` (tabela append-only, gatilho de auditoria, RLS de leitura).
 - `supabase/tests/contact_change_log.sql` — prova de banco da trilha.
 - `src/hooks/crm/useContactChangeLog.ts` — o hook que a minha seção consome.
 - `src/hooks/crm/index.ts` — export do hook no barril.
 - `src/integrations/supabase/types.ts` — tipos da tabela nova.
 - `src/hooks/crm/__tests__/useContactChangeLog.test.tsx` — teste do hook.
+
+## Pontos do juiz barato (e o que fiz)
+- **Arquivos fora de `ARQUIVOS QUE PODE TOCAR`**: os do pai são obrigatórios (DEPENDÊNCIA manda o cherry-pick, ver seção acima); `e2e/contacts-snapshots.spec.ts` e o PNG da captura são o "testes e captura" do O QUE FAZER do cartão — prova na tela real e o arquivo de imagem versionado.
+- **CONFERÊNCIA sobre a migration (SECURITY DEFINER sem `SET search_path`)**: não procede — `supabase/migrations/20261013051916_contact_change_log.sql:129` tem `set search_path = public, pg_temp` (minúsculas; o grep do juiz não casou). Aliás do fechar de 07/10: a entrega segue e a migration é do pai, não a escrevi.
 
 ## O que NÃO fiz e por quê
 - Não reorganizei a ficha em seções nem mexi no layout dela: isso é o CT-031 (`t_305cc73c`), ainda `scheduled` (aguarda o CT-025). A seção "Histórico" entra no fim do painel atual; quando o CT-031 entrar, ela passa a viver dentro do bloco "Histórico recente".
