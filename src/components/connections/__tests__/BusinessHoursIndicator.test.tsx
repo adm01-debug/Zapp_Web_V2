@@ -66,10 +66,14 @@ function setup(showLabel = true) {
   );
 }
 
-/** HH:MM de hoje, deslocado em `deltaMinutes`. */
+/** Agora em São Paulo — a MESMA referência de fuso que o componente usa. */
+function agoraBrasil(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+}
+
+/** HH:MM em São Paulo, deslocado em `deltaMinutes` a partir de agora. */
 function hojeDeslocado(deltaMinutes: number): string {
-  const agora = new Date();
-  const d = new Date(agora.getTime() + deltaMinutes * 60000);
+  const d = new Date(agoraBrasil().getTime() + deltaMinutes * 60000);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
@@ -114,12 +118,15 @@ describe('BusinessHoursIndicator — estados do selo', () => {
   });
 
   it('fora da janela do dia (hora atual fora do intervalo) mostra “Fechado”', async () => {
-    // Monta uma janela que comprovadamente não contém a hora atual.
-    const agoraMinutos = new Date().getHours() * 60 + new Date().getMinutes();
+    // Monta, no MESMO fuso de São Paulo que o componente usa, uma janela que
+    // comprovadamente não contém a hora atual — sem depender do fuso da máquina
+    // e sem encostar no limite de minuto (que oscilaria na virada).
+    const agora = agoraBrasil();
+    const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
     const janela =
-      agoraMinutos >= 60
-        ? { open: '00:00', close: hojeDeslocado(-60) } // termina uma hora atrás
-        : { open: hojeDeslocado(1), close: '23:59' }; // começa um minuto à frente
+      agoraMinutos >= 120
+        ? { open: '00:00', close: hojeDeslocado(-120) } // terminou duas horas atrás
+        : { open: hojeDeslocado(5), close: '23:59' }; // só começa daqui a cinco minutos
     h.rows = [{ is_open: true, open_time: `${janela.open}:00`, close_time: `${janela.close}:00` }];
 
     setup();

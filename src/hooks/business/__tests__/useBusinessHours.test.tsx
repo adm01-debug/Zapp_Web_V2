@@ -121,8 +121,11 @@ describe('useBusinessHours — leitura', () => {
     expect(result.current.businessHours).toHaveLength(7);
     const dom = result.current.businessHours.find((d) => d.day_of_week === 0);
     const seg = result.current.businessHours.find((d) => d.day_of_week === 1);
+    const sab = result.current.businessHours.find((d) => d.day_of_week === 6);
     expect(dom).toMatchObject({ is_open: false, whatsapp_connection_id: 'conn-1' });
     expect(seg).toMatchObject({ is_open: true, open_time: '09:00', close_time: '18:00' });
+    // O título do teste promete "domingo e sábado": o sábado tem de ser conferido.
+    expect(sab).toMatchObject({ is_open: false, whatsapp_connection_id: 'conn-1' });
     expect(result.current.awayMessage).toMatchObject({
       is_enabled: true,
       whatsapp_connection_id: 'conn-1',

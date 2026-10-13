@@ -24,17 +24,18 @@ test.describe('Conexões — tela e estados honestos', () => {
 
   test('a lista tem conexões OU o vazio é explicado — nunca os dois ao mesmo tempo', async ({ page }) => {
     const vazio = page.getByText('Nenhuma conexão configurada');
-    const seloConectado = page.getByText('Conectado', { exact: true });
-    const seloDesconectado = page.getByText('Desconectado', { exact: true });
+    const seloConectado = page.getByText('Conectado', { exact: true }).first();
+    const seloDesconectado = page.getByText('Desconectado', { exact: true }).first();
 
-    const temVazio = await vazio.isVisible().catch(() => false);
-    const temCartao =
-      (await seloConectado.first().isVisible().catch(() => false)) ||
-      (await seloDesconectado.first().isVisible().catch(() => false));
+    // Espera o primeiro sinal real (lista OU vazio) ANTES de decidir: ler
+    // isVisible() crua media a tela ainda carregando e oscilava.
+    await expect(vazio.or(seloConectado).or(seloDesconectado)).toBeVisible();
 
-    // Uma das duas leituras precisa ser verdadeira, e elas são exclusivas.
-    expect(temVazio || temCartao).toBe(true);
-    if (temVazio) expect(temCartao).toBe(false);
+    const temVazio = await vazio.isVisible();
+    const temCartao = (await seloConectado.isVisible()) || (await seloDesconectado.isVisible());
+
+    // Exatamente uma das duas leituras é verdadeira.
+    expect(temVazio).not.toBe(temCartao);
   });
 
   test('abre o diálogo de nova conexão e o Cancelar fecha sem criar nada', async ({ page }) => {
