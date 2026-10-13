@@ -20,8 +20,8 @@ Especialista: worker (sql) (area-sql-banco)
   / `T4 ok: service_role intacto` / `T5 ok: anon sem INSERT/UPDATE/DELETE em contact_custom_fields`
   / `T6 ok: anon recebe 42501 ao tentar INSERT` / `T7 ok: leitura e escrita legitimas do authenticated seguem via RLS (n=1)`
   / `T8 ok: tabela nova em public nao herda TRUNCATE/TRIGGER/REFERENCES` / ROLLBACK → exit 0
-- `-- Rollback:` executavel: a linha 2 do arquivo rodada no banco local dentro de BEGIN..ROLLBACK
-  → `grants_de_volta = 1086` (181 relacoes x 2 papeis x 3 privilegios), sem erro.
+- `-- Rollback:` executavel: as 3 linhas `--   <stmt>;` do arquivo rodadas no banco local dentro
+  de BEGIN..ROLLBACK → `grants_de_volta = 1086` (181 relacoes x 2 papeis x 3 privilegios), sem erro.
 - suite de RLS existente, verde com a migration aplicada (6/6 PASS): rls_dashboard,
   rls_conversation_tab_counts_files_total, rls_whatsapp_media_select_via_messages,
   dashboard_rpc_filters, dashboard_kpi_edge_cases, inbox_agregado_por_contato.

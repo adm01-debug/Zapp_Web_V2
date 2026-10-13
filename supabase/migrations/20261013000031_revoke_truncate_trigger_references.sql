@@ -1,5 +1,10 @@
 -- revoke_truncate_trigger_references
--- Rollback: GRANT TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA public TO anon, authenticated; GRANT INSERT, UPDATE, DELETE ON public.contact_custom_fields TO anon; ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT TRUNCATE, TRIGGER, REFERENCES ON TABLES TO anon, authenticated;
+-- Rollback: devolve os privilegios revogados — os 3 DDL para anon/authenticated em toda a public, a escrita de anon em contact_custom_fields e o default privilege do dono postgres.
+-- Rollback (SQL executável, na ordem):
+--   GRANT TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+--   GRANT INSERT, UPDATE, DELETE ON public.contact_custom_fields TO anon;
+--   ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT TRUNCATE, TRIGGER, REFERENCES ON TABLES TO anon, authenticated;
+--
 -- Classe: ACL (nenhum dado removido, nenhuma policy criada ou alterada).
 -- Achado da auditoria de paridade V3 -> V2 (docs/plans/PLANO_PARIDADE_V3_BATCH1_BATCH2_2026-10-12.md):
 -- o padrao do Supabase deixa anon/authenticated com TRUNCATE, TRIGGER e REFERENCES em TODA
