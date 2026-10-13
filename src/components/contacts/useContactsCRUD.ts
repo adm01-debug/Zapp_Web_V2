@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
-import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { openContactInChat } from '@/lib/openContactInChat';
 import { secureRandomChars, BASE36_MAIUSCULO } from '@/lib/secureRandom';
 
 interface ContactFormData {
@@ -112,20 +112,10 @@ export function useContactsCRUD() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const openContactChat = useCallback((contactId: string) => {
-    const appWindow = window as Window & { __pendingOpenContactId?: string };
-    appWindow.__pendingOpenContactId = contactId;
-    if (new URLSearchParams(window.location.search).get('view') !== 'inbox') {
-      navigateToView('inbox');
-    }
-    let attempts = 0;
-    const tryDispatch = () => {
-      attempts++;
-      window.dispatchEvent(new CustomEvent('open-contact-chat', { detail: { contactId } }));
-      if (attempts < 15) setTimeout(tryDispatch, 200);
-    };
-    setTimeout(tryDispatch, 150);
-  }, []);
+  // Abre a conversa pela função única do produto (src/lib/openContactInChat.ts):
+  // cancelamento da cadeia anterior, parada ao ser consumida e limpeza dos
+  // timers ficam em um lugar só, iguais aos do Catálogo.
+  const openContactChat = useCallback((contactId: string) => openContactInChat(contactId), []);
 
   const generateProtocol = useCallback(() => {
     const now = new Date();
