@@ -117,8 +117,9 @@ describe('TalkXWizardReview — recomendações reais do motor (T09)', () => {
     renderReview(reviewEd());
 
     expect(screen.queryByText('Recomendações')).not.toBeInTheDocument();
-    expect(screen.queryByText('Risco de opt-out')).not.toBeInTheDocument();
-    // A linha honesta de resposta projetada continua dizendo que não há histórico.
-    expect(screen.getByText('sem histórico suficiente')).toBeInTheDocument();
+    expect(screen.getByText('Taxa de resposta projetada')).toBeInTheDocument();
+    expect(screen.getByText('Risco de opt-out')).toBeInTheDocument();
+    expect(screen.getAllByText('Sem dados ainda')).toHaveLength(2);
+    expect(screen.queryByText('sem histórico suficiente')).not.toBeInTheDocument();
   });
 });
