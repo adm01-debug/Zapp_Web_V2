@@ -115,7 +115,7 @@ export function CoerenciaLembrete({
 
   return (
     <div
-      data-testid="new-task-coerencia"
+      data-testid="nt-coerencia"
       data-state={state}
       role={papel}
       className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-3 py-2 ${classe}`}
@@ -125,7 +125,7 @@ export function CoerenciaLembrete({
       {ajuste !== null && (
         <button
           type="button"
-          data-testid="new-task-coerencia-ajustar"
+          data-testid="nt-coerencia-ajustar"
           onClick={() => onAjustar(ajuste)}
           className={
             'ml-auto h-10 shrink-0 rounded-lg px-3 text-xs font-semibold ' +
