@@ -1,152 +1,212 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+/**
+ * Prazo aplicável de 1ª resposta — `useApplicableSLA`.
+ *
+ * O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.rpc`, o
+ * resolvedor do banco PB-39, e `supabase.from`, a leitura compartilhada que só
+ * alimenta o prazo de resolução). Fica provado que: o prazo de 1ª resposta sai
+ * de UMA chamada por contato (nunca da hierarquia montada no cliente), dois
+ * consumidores do mesmo contato compartilham a leitura, sem contato não há
+ * chamada, e o nível que decidiu o prazo (`matchedLevel`) chega ao chamador.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 
-// Estado "vivo" que o mock lê na hora da query (mesmo padrão de
-// src/hooks/__tests__/useCatalogFavorites.test.ts).
 const h = vi.hoisted(() => ({
-  rules: [] as Array<Record<string, unknown>>,
-  configs: [] as Array<Record<string, unknown>>,
+  rpcRows: [] as Array<Record<string, unknown>>,
+  rpcError: null as null | { message: string },
+  calls: [] as Array<{ fn: string; contactId: string }>,
+  rules: [] as Array<{ id: string; resolution_minutes: number }>,
+  defaultConfig: null as null | { name: string; resolution_minutes: number },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn((table: string) => {
+    rpc: (fn: string, args: { p_contact_id: string }) => {
+      h.calls.push({ fn, contactId: args.p_contact_id });
+      return Promise.resolve({ data: h.rpcRows, error: h.rpcError });
+    },
+    from: (table: string) => {
       const builder: Record<string, unknown> = {};
-      const chain = () => builder;
-      builder.select = vi.fn(chain);
-      builder.eq = vi.fn(chain);
-      builder.order = vi.fn(chain);
-      builder.limit = vi.fn(chain);
-      builder.then = (
-        onFulfilled?: (v: unknown) => unknown,
-        onRejected?: (e: unknown) => unknown
-      ) =>
+      const mesmo = () => builder;
+      builder.select = mesmo;
+      builder.eq = mesmo;
+      builder.limit = mesmo;
+      builder.then = (ok?: (v: unknown) => unknown, falhou?: (e: unknown) => unknown) =>
         Promise.resolve(
-          table === 'sla_rules' ? { data: h.rules, error: null } : { data: h.configs, error: null }
-        ).then(onFulfilled, onRejected);
+          table === 'sla_rules'
+            ? { data: h.rules, error: null }
+            : { data: h.defaultConfig ? [h.defaultConfig] : [], error: null },
+        ).then(ok, falhou);
       return builder;
-    }),
+    },
   },
 }));
 
-type Params = Parameters<typeof useApplicableSLA>[0];
+import { useApplicableSLA } from '../useApplicableSLA';
 
-const rule = (overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> => ({
-  id: 'r',
-  name: 'Regra',
+const CONTATO = 'c1';
+
+const linhaRpc = (over: Record<string, unknown> = {}) => ({
   first_response_minutes: 2,
-  resolution_minutes: 10,
-  contact_id: null,
-  company: null,
-  job_title: null,
-  contact_type: null,
-  queue_id: null,
-  agent_id: null,
-  ...overrides,
+  matched_level: 'contact',
+  rule_id: 'rule-c1',
+  rule_name: 'Ouro do contato',
+  ...over,
 });
 
-let activeUnmount: (() => void) | null = null;
-let activeQueryClient: QueryClient | null = null;
-
-function render(params: Params) {
+function setup() {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity, staleTime: Infinity } },
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
-  activeQueryClient = queryClient;
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
-  const rendered = renderHook(() => useApplicableSLA(params), { wrapper });
-  activeUnmount = rendered.unmount;
-  return rendered;
+  return { queryClient, wrapper };
 }
 
-describe('useApplicableSLA — contrato da hierarquia de regras (R2-SLA-003)', () => {
-  beforeEach(() => {
-    h.rules = [];
-    h.configs = [];
-  });
+beforeEach(() => {
+  h.rpcRows = [];
+  h.rpcError = null;
+  h.calls = [];
+  h.rules = [];
+  h.defaultConfig = null;
+  vi.clearAllMocks();
+});
 
-  afterEach(() => {
-    activeUnmount?.();
-    activeUnmount = null;
-    activeQueryClient?.clear();
-    activeQueryClient = null;
-  });
+describe('useApplicableSLA — o prazo vem da RPC do banco', () => {
+  it('resolve a 1ª resposta com UMA chamada por contato e devolve o nível casado', async () => {
+    h.rpcRows = [linhaRpc()];
+    const { wrapper } = setup();
 
-  it('regra de 2 min no nível job_title prevalece sobre contact_type de 30 min, mesmo sem contact_id/company/queue/agent', async () => {
-    h.rules = [
-      rule({
-        id: 'r-title',
-        name: 'Título 2 min',
-        job_title: 'Gerente',
-        first_response_minutes: 2,
-        resolution_minutes: 10,
-      }),
-      rule({
-        id: 'r-type',
-        name: 'Tipo 30 min',
-        contact_type: 'lead',
-        first_response_minutes: 30,
-        resolution_minutes: 120,
-      }),
-    ];
-
-    const { result } = render({ jobTitle: 'Gerente', contactType: 'lead' });
+    const { result } = renderHook(
+      () => useApplicableSLA({ contactId: CONTATO, company: 'Acme' }),
+      { wrapper },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({
+
+    expect(h.calls).toEqual([{ fn: 'resolve_applicable_sla', contactId: CONTATO }]);
+    expect(result.current.data).toMatchObject({
       firstResponseMinutes: 2,
-      resolutionMinutes: 10,
-      ruleName: 'Título 2 min',
-      ruleId: 'r-title',
+      ruleName: 'Ouro do contato',
+      ruleId: 'rule-c1',
+      matchedLevel: 'contact',
     });
   });
 
-  it('contact (2 min) prevalece sobre company (30 min) ainda que a regra de company tenha prioridade maior', async () => {
-    h.rules = [
-      rule({ id: 'r-comp', name: 'Empresa 30 min', company: 'Acme', first_response_minutes: 30 }),
-      rule({ id: 'r-cont', name: 'Contato 2 min', contact_id: 'c1', first_response_minutes: 2 }),
-    ];
+  it('dois consumidores do MESMO contato compartilham a leitura (sem N+1 por conversa)', async () => {
+    h.rpcRows = [linhaRpc()];
+    const { wrapper } = setup();
 
-    const { result } = render({ contactId: 'c1', company: 'Acme' });
+    const { result } = renderHook(
+      () => ({
+        badge: useApplicableSLA({ contactId: CONTATO }),
+        header: useApplicableSLA({ contactId: CONTATO }),
+      }),
+      { wrapper },
+    );
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({
-      firstResponseMinutes: 2,
-      resolutionMinutes: 10,
-      ruleName: 'Contato 2 min',
-      ruleId: 'r-cont',
-    });
+    await waitFor(() =>
+      expect(result.current.badge.isSuccess && result.current.header.isSuccess).toBe(true),
+    );
+
+    expect(h.calls).toHaveLength(1);
+    expect(result.current.header.data).toEqual(result.current.badge.data);
   });
 
-  it('fallback: configuração default ativa governa quando nenhuma regra casa', async () => {
-    h.configs = [
-      { name: 'Padrão Comercial', first_response_minutes: 2, resolution_minutes: 45 },
+  it('propaga o nível que decidiu o prazo (ex.: configuração global)', async () => {
+    h.rpcRows = [
+      linhaRpc({ matched_level: 'global_default', rule_id: null, rule_name: 'Padrão Comercial', first_response_minutes: 15 }),
     ];
+    const { wrapper } = setup();
 
-    const { result } = render({ contactId: 'c1' });
-
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({
-      firstResponseMinutes: 2,
-      resolutionMinutes: 45,
-      ruleName: 'Padrão Comercial',
+
+    expect(result.current.data).toMatchObject({
+      firstResponseMinutes: 15,
+      matchedLevel: 'global_default',
       ruleId: null,
     });
   });
 
-  it('fallback: padrão do sistema quando não há regra nem configuração default', async () => {
-    const { result } = render({ contactId: 'c1' });
+  it('nível desconhecido não vaza: cai em system_default', async () => {
+    h.rpcRows = [linhaRpc({ matched_level: 'qualquer_coisa' })];
+    const { wrapper } = setup();
 
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual({
+
+    expect(result.current.data?.matchedLevel).toBe('system_default');
+  });
+
+  it('sem contato não há chamada nenhuma (nada de leitura por linha vazia)', async () => {
+    const { wrapper } = setup();
+
+    const { result } = renderHook(
+      () => useApplicableSLA({ company: 'Acme', queueId: 'q1' }),
+      { wrapper },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(h.calls).toHaveLength(0);
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.data).toBeUndefined();
+  });
+});
+
+describe('useApplicableSLA — prazo de resolução (linha do tempo)', () => {
+  it('usa a resolução da regra que a RPC casou', async () => {
+    h.rpcRows = [linhaRpc({ rule_id: 'rule-c1' })];
+    h.rules = [{ id: 'rule-c1', resolution_minutes: 240 }];
+    h.defaultConfig = { name: 'Padrão Comercial', resolution_minutes: 45 };
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    await waitFor(() => expect(result.current.data?.resolutionMinutes).toBe(240));
+  });
+
+  it('agente sem ver as regras (RLS) cai na configuração padrão, não em zero', async () => {
+    h.rpcRows = [linhaRpc({ rule_id: 'rule-fora-do-alcance', matched_level: 'company' })];
+    h.rules = [];
+    h.defaultConfig = { name: 'Padrão Comercial', resolution_minutes: 45 };
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    await waitFor(() => expect(result.current.data?.resolutionMinutes).toBe(45));
+  });
+
+  it('sem regra visível e sem padrão, a resolução é a do sistema (60), nunca inventada', async () => {
+    h.rpcRows = [];
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toMatchObject({
       firstResponseMinutes: 5,
       resolutionMinutes: 60,
-      ruleName: 'Padrão do Sistema',
       ruleId: null,
+      matchedLevel: 'system_default',
     });
+  });
+});
+
+describe('useApplicableSLA — falha da RPC não vira prazo inventado', () => {
+  it('erro da RPC vira erro da consulta (o chamador cai no seu fallback)', async () => {
+    h.rpcRows = [];
+    h.rpcError = { message: 'permission denied for function resolve_applicable_sla' };
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useApplicableSLA({ contactId: CONTATO }), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 });
