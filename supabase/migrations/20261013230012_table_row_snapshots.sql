@@ -95,8 +95,25 @@ declare
   v_estimada bigint;
   v_dia      date := (now() at time zone 'utc')::date;
   v_gravadas integer := 0;
+  -- TETO de voltas por chamada: o loop tem lista fixa, mas o teto explicito
+  -- impede que uma edicao futura transforme isto numa drenagem sem limite numa
+  -- transacao so (recusa real de 06/10).
+  v_teto_tabelas  constant integer := 64;
+  -- TETO de exclusoes por chamada na retencao: o job roda todo dia e drena aos
+  -- poucos; nunca apaga um volume ilimitado de uma vez. 90 dias x 15 tabelas
+  -- =~ 1350 linhas, muito abaixo do teto.
+  v_teto_retencao constant integer := 5000;
 begin
+  if coalesce(array_length(v_tabelas, 1), 0) > v_teto_tabelas then
+    raise exception 'table_row_snapshots: lista de tabelas acima do teto de %', v_teto_tabelas
+      using errcode = '54000';
+  end if;
+
   foreach v_t in array v_tabelas loop
+    if v_gravadas >= v_teto_tabelas then
+      raise exception 'table_row_snapshots: teto de voltas (%) excedido', v_teto_tabelas
+        using errcode = '54000';
+    end if;
     v_oid := to_regclass('public.' || v_t);
     if v_oid is null then
       -- Tabela critica sumiu: e o proprio sintoma que o monitor existe para ver.
@@ -125,8 +142,17 @@ begin
   end loop;
 
   -- Retencao: 90 dias. So apaga retratos deste monitor, nunca dado de negocio.
-  delete from public.table_row_snapshots
-   where snapshot_date < v_dia - 90;
+  -- Limitada por chamada (v_teto_retencao): nunca uma exclusao sem teto numa
+  -- transacao so. O job roda todo dia e drena o excedente aos poucos.
+  with alvo as (
+    select id
+      from public.table_row_snapshots
+     where snapshot_date < v_dia - 90
+     order by snapshot_date
+     limit v_teto_retencao
+  )
+  delete from public.table_row_snapshots s
+   where s.id in (select id from alvo);
 
   return v_gravadas;
 end;
