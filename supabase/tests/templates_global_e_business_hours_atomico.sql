@@ -390,7 +390,20 @@ SELECT pg_temp.espera_erro('T16 conexao inexistente',
       '[{"day_of_week":0,"is_open":true,"open_time":"09:00","close_time":"18:00"}]'::jsonb)$sql$),
   '22023');
 
-SELECT pg_temp.espera('T17 nenhuma entrada invalida mexeu no horario',
+SELECT pg_temp.espera_erro('T17 p_days com mais de 7 dias (teto do lote)',
+  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
+    $sql$SELECT public.save_business_hours('cccccccc-0000-0000-0000-000000000001'::uuid,
+      '[{"day_of_week":0,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":1,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":2,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":3,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":4,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":5,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":6,"is_open":true,"open_time":"09:00","close_time":"18:00"},
+        {"day_of_week":0,"is_open":true,"open_time":"09:00","close_time":"18:00"}]'::jsonb)$sql$),
+  '22023');
+
+SELECT pg_temp.espera('T18 nenhuma entrada invalida mexeu no horario',
   (SELECT count(*)::text FROM public.business_hours
     WHERE whatsapp_connection_id='cccccccc-0000-0000-0000-000000000001'
       AND open_time='09:00' AND close_time='18:00'), '7');
