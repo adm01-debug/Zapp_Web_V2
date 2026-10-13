@@ -1,5 +1,18 @@
 Especialista: Íris (area-front-componentes)
 
+## Arquivos fora da lista do cartão — por quê
+- `AdminView.tsx`, `VoipRamalField.tsx`, `useAdminData.ts`: o cartão cita `UserFormDialog.tsx`, que
+  NÃO existe no V2 (nem no V3) — o formulário de edição de usuário é inline em `AdminView.tsx`, na
+  MESMA pasta/área (`src/components/admin/**`, area-front-componentes). Sem tocar `AdminView.tsx` não
+  haveria como o campo aparecer no cadastro (critério nº 1); `VoipRamalField.tsx` é o bloco do campo
+  (novo, testável); `useAdminData.ts` é o hook de dados do Admin, onde a RPC é chamada porque
+  componente não importa `@/integrations/supabase/client` (regra de lint) — é o único jeito de o
+  formulário chamar a RPC sem criar import restrito novo. Nada fora de `src/components/admin/**`.
+- `supabase/migrations/20261013230011_voip_profile_credentials.sql` e
+  `supabase/tests/voip_profile_credentials_vault.sql`: NÃO editei — chegaram na branch por
+  cherry-pick do commit da tarefa pai `t_c0087e07` (a migration da credencial SIP). São a dependência
+  que este cartão consome; o diff os mostra só porque estão no mesmo branch.
+
 ## O que mudou e por quê
 - `src/components/admin/VoipRamalField.tsx` (novo): bloco "Telefonia (ramal)" do formulário de
   usuário — campo Ramal e campo Senha SIP (`type="password"`, nasce vazio e é limpo depois de
