@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -20,11 +21,13 @@ interface ConnectionDisconnectDialogProps {
   onOpenChange: (open: boolean) => void;
   connectionName: string;
   phoneNumber: string;
-  onConfirm: () => void;
+  /** Desconectar em voo: mantém o diálogo aberto com o spinner e trava tudo. */
+  pending?: boolean;
+  onConfirm: () => void | Promise<void>;
 }
 
 export function ConnectionDisconnectDialog({
-  open, onOpenChange, connectionName, phoneNumber, onConfirm,
+  open, onOpenChange, connectionName, phoneNumber, pending = false, onConfirm,
 }: ConnectionDisconnectDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -38,9 +41,16 @@ export function ConnectionDisconnectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">
-            Desconectar
+          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); void onConfirm(); }}
+            disabled={pending}
+            aria-busy={pending}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            {pending
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Desconectando…</>
+              : 'Desconectar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

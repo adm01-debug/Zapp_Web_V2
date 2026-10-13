@@ -61,6 +61,18 @@ export function ConnectionsView() {
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [settingsDialog, setSettingsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
 
+  // Conexão com o desconectar em voo: a view mantém o id para o cartão mostrar o
+  // estado `disconnecting` (botão pulsando) e o diálogo aguardar até terminar.
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
+  const handleDisconnectWithState = async (connection: Parameters<typeof handleDisconnect>[0]) => {
+    setDisconnectingId(connection.id);
+    try { await handleDisconnect(connection); }
+    finally { setDisconnectingId(null); }
+  };
+
+  const connectedCount = connections.filter((c) => c.status === 'connected').length;
+  const offlineCount = connections.filter((c) => c.status !== 'connected').length;
+
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
@@ -159,12 +171,15 @@ export function ConnectionsView() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total de Conexões', value: connections.length, color: 'text-primary' },
-          { label: 'Conectadas', value: connections.filter(c => c.status === 'connected').length, color: 'text-status-online' },
-          { label: 'Desconectadas', value: connections.filter(c => c.status !== 'connected').length, color: 'text-status-offline' },
+          { label: 'Total de Conexões', value: connections.length, color: 'text-primary',
+            sub: `${connections.length} instância${connections.length === 1 ? '' : 's'} configurada${connections.length === 1 ? '' : 's'}` },
+          { label: 'Conectadas', value: connectedCount, color: 'text-status-online',
+            sub: connectedCount > 0 ? 'Recebendo mensagens' : 'Nenhuma ativa' },
+          { label: 'Desconectadas', value: offlineCount, color: 'text-status-offline',
+            sub: offlineCount > 0 ? 'Precisam reconectar' : 'Tudo funcionando' },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p></CardContent></Card>
+            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p><p className="text-xs text-muted-foreground mt-1">{stat.sub}</p></CardContent></Card>
           </motion.div>
         ))}
       </div>
@@ -189,7 +204,8 @@ export function ConnectionsView() {
             <StaggeredItem key={connection.id}>
               <ConnectionCard
                 connection={connection} syncingHistory={syncingHistory}
-                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={handleDisconnect}
+                disconnecting={disconnectingId === connection.id}
+                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={handleDisconnectWithState}
                 onSetDefault={handleSetDefault} onDelete={handleDelete}
                 onBusinessHours={(id, name) => setBusinessHoursDialog({ open: true, connectionId: id, connectionName: name })}
                 onQueues={(id, name) => setQueuesDialog({ open: true, connectionId: id, connectionName: name })}

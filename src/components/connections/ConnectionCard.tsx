@@ -33,9 +33,10 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 interface ConnectionCardProps {
   connection: WhatsAppConnection;
   syncingHistory: string | null;
+  disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void;
+  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -45,7 +46,7 @@ interface ConnectionCardProps {
 }
 
 export function ConnectionCard({
-  connection, syncingHistory,
+  connection, syncingHistory, disconnecting = false,
   onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,
   onBusinessHours, onQueues, onSettings, onSyncHistory,
 }: ConnectionCardProps) {
@@ -60,22 +61,29 @@ export function ConnectionCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 
+  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
+  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  const handleConfirmDisconnect = async () => {
+    await onDisconnect(connection);
+    setConfirmDisconnect(false);
+  };
+
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
-      <Card className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all">
+      <Card className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
               <motion.div
                 animate={connection.status === 'connecting' ? { rotate: 360 } : {}}
                 transition={{ duration: 1, repeat: connection.status === 'connecting' ? Infinity : 0, ease: 'linear' }}
-                className={cn('w-12 h-12 rounded-xl flex items-center justify-center', connection.status === 'connected' ? 'bg-whatsapp/10' : 'bg-muted')}
+                className={cn('w-12 h-12 shrink-0 rounded-xl flex items-center justify-center', connection.status === 'connected' ? 'bg-whatsapp/10' : 'bg-muted')}
               >
                 <Smartphone className={cn('w-6 h-6', connection.status === 'connected' ? 'text-whatsapp' : 'text-muted-foreground')} />
               </motion.div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{connection.name}</h3>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate font-semibold">{connection.name}</h3>
                   {connection.is_default && <Badge variant="secondary" className="text-xs"><Star className="w-3 h-3 mr-1" />Padrão</Badge>}
                   <Badge variant="outline" className={cn('text-xs',
                     connection.status === 'connected' && 'border-status-online text-status-online',
@@ -87,8 +95,8 @@ export function ConnectionCard({
                   </Badge>
                   <BusinessHoursIndicator connectionId={connection.id} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">{connection.phone_number}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate text-sm text-muted-foreground">{connection.phone_number}</p>
                   {connection.battery_level != null && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       {connection.is_plugged ? <BatteryCharging className="w-3.5 h-3.5 text-success" /> :
@@ -100,13 +108,10 @@ export function ConnectionCard({
                   )}
                   {(connection.retry_count ?? 0) > 0 && (
                     <Badge variant="outline" className="text-3xs border-warning/30 text-warning">
-                      Retry {connection.retry_count}/{connection.max_retries || 5}
+                      Tentativa {connection.retry_count}/{connection.max_retries || 5}
                     </Badge>
                   )}
                 </div>
-                {connection.instance_id && (
-                  <p className="text-xs text-muted-foreground mt-1">Instância: <code className="bg-muted px-1 rounded">{connection.instance_id}</code></p>
-                )}
                 {connection.health_status && (
                   <div className="flex items-center gap-2 mt-1">
                     <span className="relative flex h-2 w-2">
@@ -127,7 +132,7 @@ export function ConnectionCard({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="sm" onClick={() => onCopyId(connection.id)}><Copy className="w-4 h-4 mr-2" />Copiar ID</Button>
               </motion.div>
@@ -139,8 +144,19 @@ export function ConnectionCard({
                 </motion.div>
               )}
               {connection.status === 'connected' && (
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="outline" size="sm" onClick={() => setConfirmDisconnect(true)}><WifiOff className="w-4 h-4 mr-2" />Desconectar</Button>
+                <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={disconnecting}
+                    aria-busy={disconnecting}
+                    className={cn(disconnecting && 'animate-pulse')}
+                    onClick={() => setConfirmDisconnect(true)}
+                  >
+                    {disconnecting
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Desconectando…</>
+                      : <><WifiOff className="w-4 h-4 mr-2" />Desconectar</>}
+                  </Button>
                 </motion.div>
               )}
 
@@ -185,7 +201,8 @@ export function ConnectionCard({
         onOpenChange={setConfirmDisconnect}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        onConfirm={() => onDisconnect(connection)}
+        pending={disconnecting}
+        onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (
         <ConnectionDeleteDialog
