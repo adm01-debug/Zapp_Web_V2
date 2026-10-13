@@ -1,5 +1,8 @@
 -- user_settings_onboarding_completed
--- Rollback: ALTER TABLE public.user_settings DROP COLUMN IF EXISTS onboarding_completed; ALTER TABLE public.user_settings ENABLE TRIGGER update_user_settings_updated_at;
+-- Rollback: descarta a coluna nova (o dado do flag vai junto — antes da migration a coluna não existia, não há valor antigo a devolver) e garante o gatilho `update_user_settings_updated_at` religado.
+-- Rollback (SQL executável, na ordem):
+--   alter table public.user_settings drop column if exists onboarding_completed;
+--   alter table public.user_settings enable trigger update_user_settings_updated_at;
 -- versão 20261013044344 reservada para user-settings-onboarding-completed-26101301381314 (hermes-db-migrar --nova)
 --
 -- ============================================================================
