@@ -37,6 +37,16 @@ corrigi o que o revisor do pai apontou e este cartão torna visível ao usuário
 eram montados em UTC (`T00:00:00.000Z`) e cortavam 3 h de cada dia no Brasil — agora `inicioDoDiaLocal`
 /`fimDoDiaLocal` usam o fuso do navegador; e o `afterEach` com `vi.unstubAllGlobals()` no teste.
 
+**6. Testes que já existiam e foram tocados (nenhum afrouxado)**
+- `AdminView.a11y.test.tsx`: só a string do rótulo conferido passou de `Nível de Acesso` para
+  `Nível de acesso (informativo)` — a asserção continua checando a associação label→combobox.
+- `AdminView.section-error-boundary.test.tsx` e `AdminView.servicosGoogle.test.tsx`: o mock do hook
+  ganhou os campos que o contrato agora tem (`auditTotal`, `error`) e os dois exports usados pela tela
+  (`MIN_PASSWORD_LENGTH`, `AUDIT_PAGE_SIZE`), para o mock não mentir sobre o contrato.
+- `useAdminDataColumns.test.ts`: veio no cherry-pick do cartão pai (mesmos 3 campos no mock).
+- Nenhum teste foi pulado, relaxado ou trocado por mock que já trazia a resposta: as provas de tela
+  renderizam o `AdminView`/`AdminUsersTable` reais.
+
 ## Prova (comando e linha de resultado)
 
 - Vermelho antes, 1 (tela): com `AdminView.tsx`/tabelas no estado de HEAD (via `git show HEAD:<arq>`)
