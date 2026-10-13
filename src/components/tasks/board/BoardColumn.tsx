@@ -14,11 +14,13 @@ import type { WorkItemCardActions } from '../shared/cardActions';
 import { usePressaoLonga } from '../shared/pointerMedia';
 
 const SUBTITULOS_COLUNA: Record<WorkItemStatus, string> = {
-  backlog: 'Capture primeiro',
-  todo: 'Próximo passo',
-  doing: 'Até 3 agora',
-  waiting: 'Com motivo',
-  done: '7 dias à vista',
+  // Etapa 080: textos da seção 3 do plano (tabela 3.5, imagem 05) — o subtítulo
+  // curto fica à vista e a política longa continua só no tooltip do ⓘ.
+  backlog: 'A organizar',
+  todo: 'Próximas ações',
+  doing: 'Conclua uma para iniciar outra',
+  waiting: 'Dependências externas',
+  done: 'Últimos 7 dias',
   cancelled: '',
 };
 
