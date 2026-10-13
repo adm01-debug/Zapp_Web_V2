@@ -1,29 +1,47 @@
-Especialista: workersql
-
-## Arquivos alterados (todos os 3 do diff, 1 deles de prova)
-- `supabase/migrations/20261013210004_outbound_post_started.sql` (novo): correção.
-- `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (prova deste assunto).
-- `scripts/db-audit/message-delivery-phase1-runtime.sql` (retrato canônico da API de entrega; acrescenta o RPC e a coluna novos).
-- `.tmp/relato.md`: este relato (arquivo versionado no workspace; o fechar exige árvore limpa, por isso vai no commit).
+Especialista: Edgar (area-edge-api)
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013210004_outbound_post_started.sql` (novo, aditivo, com `-- Rollback:` na 1ª linha, `BEGIN/COMMIT`, `SET search_path`, GRANT/REVOKE explícitos):
-  1. coluna durável `public.messages.delivery_post_started_at timestamptz` — carimbo do instante em que a Edge marcou que o POST ao provedor ia sair;
-  2. RPC `mark_outbound_post_started(p_message_id uuid, p_claim_token uuid)` **só service_role** — fencing por (id, token) em `status='sending'` sem recibo, idempotente no mesmo token, e **recusa marcar sob lease vencido** (a Edge não dispara POST fora de lease);
-  3. `claim_outbound_message` passa a **RECUSAR** linha com POST iniciado **E** lease vencido (resultado ambíguo → 'verificar', nunca reenvia sozinho). Sem marca, nada muda: lease vencido continua retomável;
-  4. o mesmo `guard_message_delivery_internal_fields` estendido: `authenticated` não forja nem limpa o carimbo por INSERT/UPDATE direto.
-- `scripts/db-audit/message-delivery-phase1-behavior.test.sh` e `...-runtime.sql`: prova do comportamento e cobertura do novo RPC no retrato canônico (ACL/definição da função + contrato da coluna).
+- `supabase/functions/message-delivery/index.ts`: o corpo de erro da entrega passa a carregar
+  `error` (mensagem fixa pt-BR), `code` (estável), `retryable` e `ambiguous`. Fonte única do código
+  por ramo: `classifyProviderFailure()` (recusa do provedor) + `unconfirmedReceiptFailure()` /
+  `preDispatchFailure()`; o corpo é montado só em `deliveryFailureBody()`/`deliveryFailureResponse()`.
+  Assim EV1/M2 conseguem traduzir "número inválido" sem confundir com "instância desconectada" e
+  sem oferecer reenvio cego quando o POST já saiu.
+- `supabase/functions/message-delivery/index.test.ts`: testes de RAMO de verdade do handler (o
+  handler ganhou um parâmetro opcional `deps` só para isto; os defaults de produção são os reais
+  `requireAuth`/`enforceRateLimit`/`createClient`/`requireEnv`/`evoFetch`).
 
-## Por que toquei arquivos além da migration (fora da lista literal do cartão)
-Os dois arquivos são de prova, na minha área (scripts/db-audit/**, banco), NÃO código de produção. O cartão pediu "PROVA no banco LOCAL com o papel real (agent/anon/service_role)" e "atualize ou crie testes dos arquivos que tocar": os `supabase/tests/*.sql` que o cartão cita só rodam contra um projeto vivo via `mcp_exec`, não rodam no banco local; a única prova executável de RPC/lease/ACL deste assunto é o harness `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (já registrado no `db-guard.yml`), que sobe PostgreSQL 17 descartável e roda como os papéis reais. Estendi esse harness existente em vez de criar `.test.sh` novo (arquivo novo ficaria órfão no CI — regra da área). O `...-runtime.sql` é o retrato canônico que o harness usa; sem ele o RPC novo ficaria fora da cobertura de ACL/definição.
+Mapa por ramo (antes → depois):
+- taxa do próprio Zapp estourou: `errorResponse('Rate limit exceeded', 429)` → `429` + `code=rate_limited`, `retryable=true`, `ambiguous=false`.
+- claim vazio e não enviado: `errorResponse('...already in progress...', 409)` → `409` + `code=in_progress`.
+- recusa 4xx do provedor: `502` "Message provider rejected the delivery" → `422` `invalid_number` (número/não registrado), `409` `instance_unavailable` (instância desconectada/401), ou `422` `provider_rejected` (demais).
+- 429 do provedor: → `429` + `code=rate_limited`.
+- 5xx do provedor: `502` → `502` + `code=provider_unavailable`, `ambiguous=true`; reconciliação continua só aqui (o `enqueueDeliveryReconciliation` passou a seguir `failure.ambiguous`, que só é true no 5xx — mesmo efeito de antes).
+- 200 sem id, recibo não gravado, e exceção DEPOIS do POST: `502` → `502` + `code=receipt_unconfirmed`, `ambiguous=true`, reconciliação igual a antes.
+- exceção ANTES do POST (mídia/payload do pedido não montável): `502` "Message delivery failed" → `422` + `code=media_invalid`, `ambiguous=false`, SEM chamar o provedor e SEM reconciliar.
+
+## Sensibilidade
+- O diff toca: leitura de `SUPABASE_SERVICE_ROLE_KEY` (inalterada) e a resposta do rate limit (`enforceRateLimit` só foi injetado para teste; a lógica não mudou).
+- Nenhuma proteção afrouxada: `requireAuth` continua antes de ler o corpo; nenhum segredo/PII voltou na resposta. Prova: no teste do 5xx o corpo do provedor traz o telefone (`5511999999999`) e o texto de erro, e o teste afirma que NENHUM dos dois aparece em `JSON.stringify(body)`.
+- Nenhuma referência a banco/endpoint de produção: o teste injeta um cliente falso e um `evoFetch` falso; nenhuma rede, nenhum segredo.
+- O que muda para quem chama: `error` continua no mesmo campo e continua sendo a mensagem; os campos novos são aditivos. O status HTTP de falha do provedor mudou (era sempre `502`) — o cliente (`outbound-message.service.ts`) trata qualquer não-2xx como erro e lê só `.error`.
 
 ## Prova
-- vermelho antes (cópia temporária do harness em `.tmp/`, sem aplicar a migration): `bash .tmp/red-before.test.sh` → `ERROR: function "public.mark_outbound_post_started(uuid,uuid)" does not exist` (EXIT=1).
-- verde depois: `bash scripts/db-audit/message-delivery-phase1-behavior.test.sh` → `[OK] Message delivery phase 1: authz, structural contracts, token-bound replay, expired leases, concurrency, rollback and compatibility validated on PostgreSQL 17.` (EXIT=0). Cobre, com papel real: ACL (`service_role=true`, `authenticated=false`, `anon=false`), coluna criada, lease vencido ANTES do POST → `delivery_claim_expired` e retomada permitida, lease vencido DEPOIS do POST → `claim` devolve 0 (não reenvia) e o ambíguo vai a `failed` via `fail_outbound_message(retryable=false)`, token errado → `outbound_delivery_claim_conflict`, token nulo → `invalid_delivery_post_mark`, idempotência no mesmo token, `authenticated` não forja o carimbo (`message_delivery_internal_fields_forbidden`), e `complete` continua fechando a linha normalmente (sem efeito colateral).
-- rollback de verdade: apliquei a migration no banco local (`hermes-db-migrar …` → `APLICADA no banco LOCAL`), executei as 4 linhas do `-- Rollback (SQL executável, na ordem):` → `CREATE FUNCTION / CREATE FUNCTION / DROP FUNCTION / ALTER TABLE`, EXIT=0, zero erro; reapliquei a migration (estado final conferido: `col=1`, `fn=1`, `svc=true`, `auth=false`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (banco local é o passo do fechar; tipos/lint/migrations/db_guard OK).
+- Escopo do diff (checagem mecânica do fechar): 6 arquivos, 2 de teste, 11 casos de teste novos.
+- vermelho antes: `git show cd9f5e69e8:supabase/functions/message-delivery/index.ts > .../index.ts` e `deno test --no-check supabase/functions/message-delivery/index.test.ts` → `error: SyntaxError: The requested module './index.ts' does not provide an export named 'classifyProviderFailure'` / `FAILED | 0 passed | 1 failed` (a base não tem código estável nem os helpers). Arquivo restaurado em seguida; `git diff --stat` ficou vazio.
+- verde depois: `deno test supabase/functions/message-delivery/index.test.ts` → `ok | 22 passed | 0 failed (38ms)`, type-check limpo. (A contagem de testes novos/alterados do commit está no bloco FATOS MEDIDOS.)
+
+## Dependência trazida (PD-79, cartão pai t_8c6419cf)
+A seção DEPENDÊNCIA do cartão manda literalmente rodar `git cherry-pick --empty=drop $(git rev-list --reverse --no-merges dia/2026-10-13..<sha do pai>)` antes de começar — por isso estes arquivos entraram no commit mesmo não estando em "ARQUIVOS QUE PODE TOCAR": são a banda OBRIGATÓRIA do pai, não um achado do escopo. Vieram
+íntegros do pai (`a4d3f44074`, `4a9d27aa6f`), sem alteração minha, para o schema local ter a coluna/RPC do PD-79:
+- `supabase/migrations/20261013210004_outbound_post_started.sql` (coluna + RPC do POST iniciado)
+- `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (auditoria do pai)
+- `scripts/db-audit/message-delivery-phase1-runtime.sql` (runtime de auditoria do pai)
+Os arquivos escritos por este cartão são os 2 de `message-delivery` (`index.ts` e `index.test.ts`); o commit tem 6 arquivos no total, contando `.tmp/relato.md`.
 
 ## O que NÃO fiz e por quê
-- Não toquei `supabase/functions/message-delivery/index.ts`: a chamada `mark_outbound_post_started` antes do POST é da Edge (cartão filho t_ea8decbb). Contrato entregue: RPC `(p_message_id uuid, p_claim_token uuid)`, e claim vazio em linha ambígua = "não reenviar".
-- Não toquei `src/**` nem `src/integrations/supabase/types.ts`: escopo do cartão é migration+prova; nenhum `RETURNS` de função existente mudou e `zapp-verify` passou em `tipos`.
-- Sem DROP/DELETE/DML e sem GRANT/RLS fora do pedido; a única escrita é a DDL aditiva e o REVOKE/GRANT do próprio RPC novo.
+- Não liguei `mark_outbound_post_started` (coluna/RPC do PD-79): essa chamada é do cartão irmão do PD-79 (t_ea8decbb), não veio por dependência para este workspace. O `ambiguous` foi derivado do ponto do código (`providerPostAttempted`), como o cartão permite.
+- Não mexi em `_shared/validation.ts`: a mudança ficou contida no `message-delivery`, então nenhuma outra Edge que usa `errorResponse` muda de comportamento.
+- `p_retryable` em `fail_outbound_message` continua `false` (sem mudança): uma nova tentativa segue sendo ação explícita do operador. O `retryable` da resposta é o sinal separado para o cliente.
+- No ramo de claim vazio, `ambiguous=false`: o caso "POST iniciado + lease vencido" só é distinguível pela marca do PD-79, que não está integrada nesta base — quem resolve esse ramo é o fluxo PD-78/PD-79 (`fail_outbound_unclaimed`), fora deste cartão.
+- `code=media_invalid` cobre qualquer carga inválida ANTES do POST (mídia ou payload persistido), não só mídia.
