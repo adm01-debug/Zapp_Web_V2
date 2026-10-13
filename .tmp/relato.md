@@ -1,18 +1,45 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
+
+## Motivo do retomar (conflito) e como resolvi
+Conferi no código ATUAL da ponta de dia/2026-10-12 se o defeito do pedido ainda existia.
+Já NÃO existe: a própria entrega anterior já está integrada na ponta. O commit com o título
+idêntico está na base do meu workspace.
+
+Prova (git log do arquivo):
+- `git log --oneline -5 -- src/components/settings/SettingsView.tsx`
+  → `656284628 feat(settings): agrupa abas de Configurações em dois níveis (categoria + abas)`
+- `git rev-parse HEAD` e `git merge-base HEAD dia/2026-10-12` → ambos `96dd72dc5` (base = ponta do dia)
+- `git show HEAD:src/components/settings/SettingsView.tsx | grep -n TAB_GROUPS` → `68:const TAB_GROUPS ...`
+  (a navegação em dois níveis já está no arquivo da ponta)
+
+O único delta entre a branch antiga e a ponta atual é uma troca de token de tema já aplicada
+pela ponta (`bg-whatsapp` → `bg-primary`), que não pertence a este cartão e foi preservada:
+- `git diff v2/settingsview-agrupar-15-abas-2610101751a09c HEAD -- src/components/settings/SettingsView.tsx`
+  → só a linha do botão Salvar (`bg-whatsapp` → `bg-primary`).
+
+Como o defeito já está resolvido no código atual, fecho SEM commit de código (diff vazio), conforme
+o cartão manda.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+Nada. Nenhum arquivo tocado — a correção pedida já entrou na ponta de dia/2026-10-12 pelo commit
+`656284628`.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+## Prova do critério de pronto no código da ponta
+1. Abas em grupos lógicos, sem scroll horizontal: `SettingsView.tsx` monta `TAB_GROUPS` (5 grupos:
+   Atendimento, Inteligência artificial, Qualidade, Aparência, Sistema) numa `<nav>` com
+   `flex flex-wrap` (nível 1) e um `<TabsList>` com `flex flex-wrap h-auto ... gap-1` (nível 2).
+   Não há mais `overflow-x`, fade nem seta pulsante na barra.
+2. Nenhuma aba perdida: 16 entradas em `TABS_META` (12 staff-only + 4 pessoais), todas presentes
+   em algum grupo de `TAB_GROUPS`.
+3. Teste da área (verde, executado agora):
+   `npx vitest run src/components/settings/__tests__/SettingsView.test.tsx`
+   → `Test Files  1 passed (1); Tests  9 passed (9)`
+   Os 9 casos cobrem o guard RBAC das 12 abas staff-only, o min-h 44px no celular e o agrupamento
+   em dois níveis (5 grupos, 16 abas sem órfã/duplicata, troca de grupo).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não usei cherry-pick: o conteúdo do commit antigo (`5534b8e93` / branch
+  `v2/settingsview-agrupar-15-abas-2610101751a09c`) já está presente na ponta; trazê-lo de novo
+  duplicaria histórico sem mudar arquivo.
+- Não criei commit de código nem teste novo: o cartão manda fechar sem commit quando o defeito já
+  está corrigido, e o teste que prova o comportamento já existe na ponta.
