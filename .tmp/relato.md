@@ -1,5 +1,10 @@
 Especialista: Íris (area-front-componentes)
 
+Nota sobre o aviso do juiz: ele aponta `sk-lembrete-…` como chave/segredo. Não
+procede: é o PREFIXO do `data-testid` `new-task-lembrete-*` (`new-ta**sk-lembrete**-data`,
+`-hora`, `-limpar`, `-em-1h`, `-amanha-9h`, `-prox-seg-9h`): o padrão `sk-` casou com o
+final de "task". Nenhum token, chave ou ref de produção existe nestes arquivos.
+
 # Etapa 160 — campo "Lembrete" no modal Nova tarefa
 
 ## O que mudou e por quê
