@@ -1,57 +1,55 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: hugo
 
 ## O que mudou e por quê
-- supabase/migrations/20261013012531_custom_emoji_use_rpc.sql (nova): cria
-  `public.increment_custom_emoji_use(p_emoji_id uuid)` — plpgsql, SECURITY DEFINER,
-  `search_path = public, pg_temp` — que faz SÓ `use_count = use_count + 1` no
-  `public.custom_emojis` e devolve o novo contador. Motivo: a policy de UPDATE da
-  tabela (vigente desde 20260320133103) só deixa o dono/admin; para o atendente
-  comum, `use_count + 1` no emoji de OUTRO dono não gera erro — o UPDATE atinge 0
-  linhas e o contador fica parado, enviesando a ordenação por uso. A RPC resolve
-  sem abrir UPDATE na tabela (o DEFINER escreve no lugar do atendente).
-  Contrato: `supabase.rpc('increment_custom_emoji_use', { p_emoji_id: <uuid> })`
-  → inteiro. Erros: 22023 id nulo, P0002 emoji inexistente, 42501 sem sessão.
-  Não toca em name/category/is_favorite/uploaded_by nem em updated_at (contador
-  não é edição). ACL: EXECUTE só para `authenticated`; PUBLIC, anon e service_role
-  revogados; nenhum GRANT de tabela foi alterado.
-- supabase/tests/custom_emoji_use_rpc_increment.sql (nova): prova em PostgreSQL 17
-  descartável, aplicando as 3 migrations REAIS de `custom_emojis` (via `\i`, ordem
-  cronológica) + a migration nova, e exercendo como PAPEL REAL (`SET LOCAL ROLE
-  authenticated` + JWT sintético, conferindo `current_user`), nunca como postgres.
-  Cobre: contador sobe por RPC em emoji alheio (1 → 2); UPDATE direto do atendente
-  em use_count/nome/categoria/favorito do emoji alheio atinge 0 linhas (RLS segue
-  barrando) e o contador não muda; o RPC não reescreve nenhum outro campo nem
-  updated_at; id nulo → 22023; inexistente → P0002; anon → 42501; ACL (authenticated
-  tem EXECUTE, anon/service_role não, PUBLIC revogado no proacl); RLS ligada.
+- src/hooks/integrations/useCustomEmojis.ts (handleFileSelect): agora lê o usuário
+  autenticado e sobe em `<auth.uid()>/emoji_<ts>_<uuid>.<ext>` em vez da raiz. A
+  policy de INSERT do bucket `custom-emojis` aceita admin/supervisor OU a pasta do
+  próprio uid — na raiz, o atendente comum recebia erro de permissão (item 1).
+  Sem sessão identificada, aborta com toast.error em vez de tentar a raiz.
+- src/hooks/integrations/useCustomEmojis.ts (handleSend): o UPDATE direto em
+  `use_count` atinge 0 linhas para emoji de outro dono (policy de UPDATE é do
+  dono/admin) e sumia sem erro; trocado pela RPC `increment_custom_emoji_use`
+  (PB-35, SECURITY DEFINER), com toast.error quando ela falha (item 3).
+- src/hooks/integrations/useCustomEmojis.ts (handleConfirmUpload): trava de
+  reentrância por ref (síncrona, antes de qualquer await) + estado `saving`
+  exposto; nome passa por `trim()` e nome vazio é recusado com toast.error — dois
+  cliques no mesmo tick criavam duas linhas (item 2).
+- src/components/inbox/CustomEmojiPicker.tsx: Salvar desabilitado enquanto salva
+  (spinner) e enquanto o nome estiver vazio (com `title` explicando); Cancelar
+  desabilitado durante o save; fechar o popover com prévia pendente agora chama
+  `handleCancelUpload` (remove o objeto do Storage) em vez de só limpar o estado —
+  era o caminho do órfão (item 2).
+- src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx (novo): 9
+  testes cobrindo caminho com uid, sessão ausente, cancelar sem órfão, fechar o
+  popover sem órfão, duplo clique em 1 linha, nome vazio barrado, nome com trim,
+  envio pela RPC e erro da RPC.
+- Exclusão (handleDelete): NÃO mudou. A extração do caminho
+  (`split('/custom-emojis/')[1]`) já devolve `uid/arquivo` no formato novo e o
+  nome antigo da raiz no legado; a policy de DELETE não mudou, então o objeto
+  antigo da raiz continua sendo apagado quando quem apaga tem permissão (item 1).
 
 ## Prova
-- vermelho antes: `psql ... -v sem_correcao=1` (sem aplicar a migration nova) →
-  `ERROR: PB-35 FALHOU [T1 ... esperado 1, obtido ERRO 42883]` e exit 3 — sem a RPC
-  o contador do emoji alheio não sobe.
-- verde depois: mesmo `psql` com a migration aplicada → todas as asserções
-  `NOTICE: PASS [...]` e `PB-35 OK`, exit 0 (os FATOS MEDIDOS do fechar trazem o resumo).
-- aplicação real no banco da tarefa: `hermes-db-migrar supabase/migrations/20261013012531_custom_emoji_use_rpc.sql`
-  → `APLICADA no banco LOCAL 'v2-2610122222db82' (produção não foi tocada)`.
+- vermelho antes: `npx vitest run src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx`
+  com os dois arquivos de origem restaurados ao HEAD → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`
+- verde depois: mesmo comando com a correção → `Test Files 1 passed (1); Tests 9 passed (9)`
+- sem regressão no teste que já existia:
+  `npx vitest run ...uploadUid.test.tsx ...persistencia.test.tsx` → `Test Files 2 passed (2); Tests 16 passed (16)`
+- verificação do cartão: `zapp-verify . --rapido` (bloco FATOS MEDIDOS deste fechar)
 
-## Nota de efeito colateral
-- `custom_emojis` não tem gatilho de updated_at, então o UPDATE do contador não
-  reescreve data nenhuma; ainda assim escolhi NÃO tocar updated_at e o teste
-  trava isso (T6b). O "não encontrado" devolve erro (P0002) para id inexistente,
-  sem risco de oráculo: `custom_emojis` já tem SELECT liberado a todo authenticated.
+## Dependência (cartão pai t_1d123124, não integrado)
+`git merge-base --is-ancestor 9e0ee270d HEAD` era falso; a faixa do pai (1 commit)
+foi trazida com `git cherry-pick -x 9e0ee270d` → novo sha `0cbeb8f17` (migration
+`increment_custom_emoji_use` + seu teste no banco local). Sem conflito.
 
-## Sobre o aviso do juiz automático (não procede)
-- Ponto 1 (\"teste não chama o código mudado\"): falso positivo de leitor — o teste é
-  `supabase/tests/custom_emoji_use_rpc_increment.sql` e NÃO copia o corpo da função:
-  ele aplica a migration REAL com `\i :mig_dir/20261013012531_custom_emoji_use_rpc.sql`
-  (o mesmo arquivo do diff) e chama `public.increment_custom_emoji_use(...)` por SQL
-  sob `SET LOCAL ROLE authenticated`. Não há mock nem literal à mão: a função exercida
-  é a que a migration criou. Primeiro aplica as 3 migrations reais de `custom_emojis`
-  para a tabela/policies serem as de produção.
-- Ponto 2 (\"números do relato não batem com o diff\"): o diff tem 3 arquivos — a
-  migration nova, o teste novo e `.tmp/relato.md` (este arquivo, que já era versionado
-  na base do dia e por isso entra no `git diff`). São exatamente esses três.
-
-## Fora do meu escopo (para o cartão do hugo)
-- A leitura do contador pelo app deve passar a chamar a RPC; a policy de INSERT no
-  bucket `custom-emojis` (qualquer authenticated sobe no bucket alheio) é de Edge/auth
-  e não foi tocada aqui.
+## O que NÃO fiz e por quê
+- Não mexi em handleDelete nem na migration/policy do bucket `custom-emojis`: nada
+  a mudar no código (a extração de caminho serve os dois formatos) e a policy já
+  é a trilha de banco, fora dos arquivos deste cartão.
+- Não editei `src/integrations/supabase/types.ts` (fora dos arquivos permitidos): a
+  RPC é nova e o types.ts ainda não está sincronizado; segui o padrão já existente
+  no repositório (`src/components/dashboard/useSentimentData.ts`) com
+  `// eslint-disable-next-line @typescript-eslint/no-explicit-any` e comentário do
+  motivo no código.
+- Não adiei o upload para o Salvar (a alternativa da V3): escolhi o outro caminho
+  que o cartão permite — remover o objeto ao fechar com prévia pendente — para não
+  mudar o fluxo do atendente nem o formato do `pendingUpload`.
