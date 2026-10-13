@@ -1,19 +1,17 @@
-Especialista: hugo
+Especialista: iris
 
 ## O que mudou e por quê
-- `src/hooks/dashboard/useDailyMetricsKpis.ts` (novo): hook `useDailyMetricsKpis(days = 7)` sobre a RPC `dashboard_daily_series` — React Query com chave estável `['dashboard', 'daily-metrics-kpis', days]` (trocar o período refaz a consulta) e `staleTime` de 120s. Tipos (`DailyMetricRow`, `DAILY_KPIS_PERIODS` 7/30/90, `DAILY_KPIS_DEFAULT_DAYS`). A consulta só é habilitada para staff: `enabled: isStaff === true` a partir de `useCRMAdminAccess` (is_admin_or_supervisor, o mesmo predicado que a RPC usa no servidor). `isStaff` volta no retorno porque `false` (sem permissão) e `null` (papel ainda sendo conferido) pedem estados diferentes na tela. Erro da RPC sobe como erro da query (não vira série vazia silenciosa) e `normalizeDailyMetricRows` converte a mediana `numeric` (que o PostgREST devolve como string) em número, mantém `null` sem amostra, reafirma a ordem crescente por dia e trata resposta nula/fora do formato como lista vazia.
-- `src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` (novo): 9 testes — 4 da normalização (string→número, null, ordem, formato inválido) e 5 do hook real com `renderHook` + QueryClientProvider, mockando `supabase.rpc` e `useCRMAdminAccess` (staff consulta com p_days do período; não-staff e papel ainda nulo NÃO consultam; troca de período refaz a consulta; erro → `isError`).
-
-## Dependência (cartão pai t_d4a0a146)
-A RPC não estava no meu workspace: trouxe a faixa inteira com `git cherry-pick` (commits `5fca12fa`, `6df803f3`, `8df2863d`, `05382c64`), que entram no diff junto com o meu commit: a migration aditiva `20261012235745_dashboard_daily_series.sql`, o harness `scripts/db-audit/dashboard-daily-series.test.sh` e a entrada no `.github/workflows/db-guard.yml`. Esses 3 arquivos são do cartão pai (lá aplicados no banco LOCAL e provados com papéis reais); não são do meu escopo e não os alterei. O `git cherry-pick --empty=drop` do enunciado foi recusado pelo git 2.43 (opção não existe nesta versão) — usei `git cherry-pick <sha>...`, sem conflito.
+- src/components/dashboard/overview/DailyMetricsKpis.tsx (novo): a faixa pedida pelo cartão — cartões com valor, variação e mini-série. Valor = TOTAL do período devolvido pela RPC; variação = último dia contra o anterior (rótulo "vs. dia anterior"); mini-série = um ponto por dia do período. Estados separados: skeleton (`daily-kpis-skeleton`), erro (`daily-kpis-error`) e vazio explícito (`daily-kpis-empty`, "Sem métricas diárias nos últimos 7 dias") — nenhum deles se confunde com zero real. Só staff: `if (isStaff !== true) return null`. Rodapé `daily-kpis-caption` diz que o número do topo é total do período (o número não é lido como "hoje"; os KPIs de hoje são a faixa de cima).
+- src/components/dashboard/overview/dailyMetricsKpisMath.ts (novo): `lastDayVariationPct` (pura) — % do último dia sobre o anterior; sem dia anterior ou base 0 devolve null (não inventa percentual). Ficou fora do .tsx porque exportar não-componente ali reprovava o ratchet de lint (react-refresh/only-export-components).
+- src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx (novo): prova renderizando o componente REAL sobre o hook REAL; mocka só a RPC (`supabase.rpc`) e `useCRMAdminAccess`.
+- src/components/dashboard/DashboardView.tsx: import + nova zona "Últimos 7 dias" logo depois de "Números de hoje", com `{isStaff && …}` e dentro do `SectionErrorBoundary`, para não sobrar zona vazia para quem não é staff nem derrubar a tela se a faixa falhar.
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Failed to resolve import "../useDailyMetricsKpis"` (módulo ainda não criado)
-- verde depois: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
-- sem regressão na área: `npx vitest run src/hooks/dashboard` → `Test Files 7 passed (7); Tests 47 passed (47)`
-- `zapp-verify . --rapido` → VERDE (db_guard OK, tipos OK, lint OK, migrations OK)
+- vermelho antes: com a faixa forçada a `return null` (mutação temporária em DailyMetricsKpis.tsx, revertida por cópia em .tmp) → `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx` → `Tests 5 failed | 3 passed (8)` (as 5 que exigem a faixa aparecem; as 3 que passam são as unitárias de `lastDayVariationPct` e a de não-staff, que esperam ausência).
+- verde depois (commit cf87dcdc6): `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx src/components/dashboard/__tests__/DashboardView.test.tsx src/components/dashboard/__tests__/DashboardView.section-error.test.tsx` → `Test Files 3 passed (3); Tests 14 passed (14)`, zero pulados.
+- lint: pre-commit → `Lint ratchet (staged, 4 arquivo(s)): baseline=0, atual=0, mantidas=0, removidas=0, novas=0 / OK: nenhuma nova divida de lint foi introduzida.`
+- casos cobertos: skeleton; não-staff (nem chama a RPC); série vazia → vazio explícito; erro da RPC → erro (não vazio); total 10+15=25 com +50% e 2 barras; dia sem mediana não entra como barra 0 na mini-série.
 
 ## O que NÃO fiz e por quê
-- Não toquei `types.ts` nem `src/hooks/dashboard/index.ts`: o cartão lista só o hook novo e os testes, e o tipo da RPC entra pelo types-sync (o pai decidiu o mesmo).
-- Não recriei a view `evolution_daily_metrics` da V3: a V2 calcula a mesma série direto das tabelas operacionais na RPC.
-- Não rodei a prova de banco do cartão pai (harness de SQL): é prova dele; aqui o cartão só pede o hook e a verificação.
+- Nenhum hook, RPC ou tipo alterado: a RPC `dashboard_daily_series` e `useDailyMetricsKpis` são do cartão pai t_8f12e328, trazidos por cherry-pick (faixa dia/2026-10-12..732aa9d42) — sem push, modo V2.
+- Sem exportar/baixar/compartilhar nada; sem DDL nem dependência nova.
