@@ -32,6 +32,8 @@ interface AppShellProps {
   userEmail: string;
   signOut: () => void;
   unreadNotifications: number;
+  /** PE-31 — total de não lidas do Teams (mesma fonte do selo do Chat). */
+  teamsUnread?: number;
   showChecklist: boolean;
   loading: boolean;
 }
@@ -50,6 +52,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
   userEmail,
   signOut,
   unreadNotifications,
+  teamsUnread,
   showChecklist,
   loading,
 }, _ref) {
@@ -96,6 +99,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
             userEmail={userEmail}
             signOut={signOut}
             unreadNotifications={unreadNotifications}
+            teamsUnread={teamsUnread}
           />
         </Suspense>
       )}
@@ -106,6 +110,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(function AppSh
           currentView={currentView}
           onViewChange={handleViewChange}
           inboxBadge={unreadNotifications || undefined}
+          teamsBadge={teamsUnread || undefined}
           profile={profile}
           userEmail={userEmail}
           signOut={signOut}

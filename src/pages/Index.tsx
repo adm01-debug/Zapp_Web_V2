@@ -14,6 +14,7 @@ import { useTranscriptionNotifications } from '@/hooks/communication/useTranscri
 import { logAudit } from '@/lib/audit';
 import { useKeyboardNavigation } from '@/hooks/ui/useKeyboardNavigation';
 import { useGmailOAuth } from '@/hooks/integrations/useGmailOAuth';
+import { useInboxUnreadTotal } from '@/hooks/inbox/useInboxUnreadTotal';
 import { Sparkles } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { toast } from 'sonner';
@@ -96,6 +97,12 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
  
    useGmailOAuth(user, false, setCurrentView);
 
+  // PE-30/31 — o shell recebia `unreadNotifications={0}` fixo: nem o selo do Chat
+  // nem o do Teams existiam. Uma única instância do hook alimenta as duas barras
+  // (lateral e do celular) e o título da aba; sem sessão ele não consulta nem
+  // abre canal (`enabled`).
+  const unreadTotal = useInboxUnreadTotal(!!user);
+
   useEffect(() => {
     if (!loadingOnboarding && hasCompletedOnboarding === false && user) {
       setShowWelcome(true);
@@ -120,7 +127,8 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           profile={profile}
           userEmail={user.email || ''}
           signOut={signOut}
-          unreadNotifications={0}
+          unreadNotifications={unreadTotal.count}
+          teamsUnread={unreadTotal.teams}
           showChecklist={showChecklist}
           loading={false}
         />
