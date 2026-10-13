@@ -1,12 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useTheme, type Theme } from '@/hooks/ui/useTheme';
+// `changeAppLanguage` é o caminho único de troca de idioma (é ele que o
+// `useLanguage().changeLanguage` usa) — função de módulo, estável para as callbacks.
+import { changeAppLanguage } from '@/i18n';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 
 // Default ElevenLabs voice: Custom system voice
 const DEFAULT_TTS_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 const DEFAULT_TTS_SPEED = 1.0;
+
+// O banco guarda o tema como texto livre: aceita só os valores que o `useTheme`
+// entende, para um valor estranho ('' ou antigo) nunca derrubar a interface.
+const normalizeTheme = (value: unknown): Theme =>
+  value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
 
 export interface UserSettings {
   id?: string;
@@ -77,9 +86,27 @@ const DEFAULT_SETTINGS: UserSettings = {
 
 export function useUserSettings() {
   const { user } = useAuth();
+  // Tema e idioma têm dono FORA deste hook: o `useTheme` (classe no <html> +
+  // localStorage['theme']) e o i18n (localStorage['language']). Este hook só
+  // grava/lê `user_settings.theme|language` e chama esses donos.
+  const { setTheme } = useTheme();
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Escolha feita na tela nesta sessão. Sem isso, um fetch que responde atrasado
+  // (login lento, troca de usuário) aplica o valor do banco por cima do que o
+  // usuário acabou de escolher.
+  const escolhaLocalRef = useRef(false);
+
+  // Hidratação: leva para a interface (tema) e para o i18n (idioma) o que o banco
+  // tem. Sem isto, salvar 'Escuro' em um computador não mudava nada no outro.
+  const aplicarPreferencias = useCallback((theme: unknown, language: unknown) => {
+    if (escolhaLocalRef.current) return;
+
+    setTheme(normalizeTheme(theme));
+    changeAppLanguage(typeof language === 'string' ? language : DEFAULT_SETTINGS.language);
+  }, [setTheme]);
 
   // Fetch settings from DB
   useEffect(() => {
@@ -87,6 +114,10 @@ export function useUserSettings() {
       setIsLoading(false);
       return;
     }
+
+    let ativo = true;
+    // Usuário novo: o que está no banco volta a mandar sobre o cache local.
+    escolhaLocalRef.current = false;
 
     const fetchSettings = async () => {
       setIsLoading(true);
@@ -97,6 +128,8 @@ export function useUserSettings() {
           .eq('user_id', user.id)
           .maybeSingle();
 
+        if (!ativo) return;
+
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
@@ -104,7 +137,7 @@ export function useUserSettings() {
         }
 
         if (data) {
-          setSettings({
+          const doBanco: UserSettings = {
             id: data.id,
             user_id: data.user_id,
             business_hours_enabled: data.business_hours_enabled ?? DEFAULT_SETTINGS.business_hours_enabled,
@@ -128,22 +161,51 @@ export function useUserSettings() {
             compact_mode: data.compact_mode ?? DEFAULT_SETTINGS.compact_mode,
             tts_voice_id: data.tts_voice_id ?? DEFAULT_SETTINGS.tts_voice_id,
             tts_speed: data.tts_speed ?? DEFAULT_SETTINGS.tts_speed,
-          });
+          };
+
+          // Resposta atrasada: se o usuário já escolheu tema/idioma nesta sessão,
+          // o valor do banco NÃO volta para o estado (senão o <Select> mostraria
+          // um tema que não é o que está aplicado na tela).
+          setSettings((prev) =>
+            escolhaLocalRef.current
+              ? { ...doBanco, theme: prev.theme, language: prev.language }
+              : doBanco,
+          );
+
+          // Hidratação no login: o tema e o idioma do banco passam a valer NESTE
+          // dispositivo (o localStorage continua sendo só o cache do boot).
+          aplicarPreferencias(data.theme, data.language);
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
       } finally {
-        setIsLoading(false);
+        if (ativo) setIsLoading(false);
       }
     };
 
     void fetchSettings();
-  }, [user?.id]);
+
+    return () => {
+      ativo = false;
+    };
+  }, [user?.id, aplicarPreferencias]);
 
   // Update settings locally
   const updateSettings = useCallback((updates: Partial<UserSettings>) => {
+    // Aplica na hora (é o que o atendente espera ao escolher 'Escuro'): o estado
+    // local alimenta o <Select>, e os donos de verdade são chamados aqui.
+    if ('theme' in updates) {
+      escolhaLocalRef.current = true;
+      setTheme(normalizeTheme(updates.theme));
+    }
+
+    if ('language' in updates) {
+      escolhaLocalRef.current = true;
+      changeAppLanguage(updates.language ?? DEFAULT_SETTINGS.language);
+    }
+
     setSettings((prev) => ({ ...prev, ...updates }));
-  }, []);
+  }, [setTheme]);
 
   // Save settings to DB
   const saveSettings = useCallback(async () => {
@@ -163,9 +225,12 @@ export function useUserSettings() {
       // Automação é GLOBAL (`global_settings` / `auto_close_config`).
       const settingsData = {
         user_id: user.id,
-        browser_notifications_enabled: settings.browser_notifications_enabled,
+        // `browser_notifications_enabled` NÃO entra: é a mesma coluna que o hook
+        // canônico useNotificationSettings grava na hora em que o interruptor é
+        // mexido. Gravá-la aqui, a partir da cópia lida no mount, DESFAZIA o que
+        // o usuário acabou de escolher ao clicar em "Salvar Alterações".
         // As preferências de som (sound_enabled, quiet_hours_enabled,
-        // quiet_hours_start, quiet_hours_end) pertencem ao hook canônico
+        // quiet_hours_start, quiet_hours_end) pertencem ao mesmo hook canônico
         // useNotificationSettings — NÃO gravá-las aqui de novo. Como há várias
         // instâncias deste hook na sessão, um upsert com o valor lido no mount
         // sobrescreve o que o hook de notificações acabou de salvar e o botão
