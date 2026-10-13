@@ -22,6 +22,8 @@ Especialista: workersql
 - supabase/tests/autoria_e_oraculo_de_papel.sql (novo): prova F1/F2/F3 no banco local,
   exercitando RLS pelo papel real (set local role authenticated + request.jwt.claims),
   em uma transação com ROLLBACK no fim.
+- .tmp/relato.md: este próprio relato (arquivo versionado na branch) — fecha os três
+  arquivos que o diff mostra.
 
 ## Prova
 - vermelho antes: `zapp-db-local psql . v2-2610130332ad03 -v ON_ERROR_STOP=1 < .tmp/vermelho_antes.sql`
