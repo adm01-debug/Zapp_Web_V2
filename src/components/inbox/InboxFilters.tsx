@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, User, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { appDayEnd, appDayStart, appMonthStart } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
-import { useInboxFilterTags } from '@/hooks/inbox/useInboxFilterTags';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
@@ -73,14 +72,12 @@ export function InboxFilters({
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
-  const { data: tags = [] } = useInboxFilterTags();
   const { isAdmin, isSupervisor } = useUserRole();
   const { queues } = useQueues();
   const canShowAll = isAdmin || isSupervisor;
 
   const activeFiltersCount =
     filters.status.length +
-    filters.tags.length +
     (filters.agentId ? 1 : 0) +
     (filters.dateRange.from ? 1 : 0) +
     (selectedContactType ? 1 : 0) +
@@ -94,13 +91,6 @@ export function InboxFilters({
       ? filters.status.filter(s => s !== status)
       : [...filters.status, status];
     onFiltersChange({ ...filters, status: newStatus });
-  }, [filters, onFiltersChange]);
-
-  const toggleTag = useCallback((tagId: string) => {
-    const newTags = filters.tags.includes(tagId)
-      ? filters.tags.filter(t => t !== tagId)
-      : [...filters.tags, tagId];
-    onFiltersChange({ ...filters, tags: newTags });
   }, [filters, onFiltersChange]);
 
   const clearFilters = useCallback(() => {
@@ -217,31 +207,6 @@ export function InboxFilters({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <Separator />
-              </>
-            )}
-
-            {/* Etiquetas */}
-            {tags.length > 0 && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> Etiquetas
-                  </Label>
-                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                    {tags.map(tag => (
-                      <Button
-                        key={tag.id}
-                        variant={filters.tags.includes(tag.id) ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        {tag.name}
-                      </Button>
-                    ))}
-                  </div>
                 </div>
                 <Separator />
               </>

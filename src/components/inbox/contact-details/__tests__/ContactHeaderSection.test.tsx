@@ -249,35 +249,18 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('Mari')).toBeInTheDocument();
   });
 
-  // ========== SELO VIP — fonte é contacts.tags, a mesma que o botão grava (#241) ==========
-  it('mostra o selo VIP quando a tag vip está em contacts.tags (case-insensitive)', () => {
+  // ========== SELO VIP saiu (a tag vip não decide mais o selo; D-T2) ==========
+  it('nao mostra o selo VIP mesmo com a tag vip em contacts.tags', () => {
     render(
       <ContactHeaderSection
         contact={{ ...baseContact, tags: ['vip'] }}
         enrichedData={baseEnriched}
       />
     );
-    expect(screen.getByText('VIP')).toBeInTheDocument();
-  });
-
-  it('prop tags (tags vivas do hook) tem prioridade e também liga o selo', () => {
-    render(
-      <ContactHeaderSection
-        contact={baseContact}
-        enrichedData={baseEnriched}
-        tags={['VIP']}
-      />
-    );
-    expect(screen.getByText('VIP')).toBeInTheDocument();
-  });
-
-  it('NAO mostra o selo por relationship_score alto do CRM sem a tag (fonte antiga removida)', () => {
-    crm360DataMock = { found: true, contact: { nome_tratamento: null, apelido: null, relationship_score: 95 }, company: null };
-    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     expect(screen.queryByText('VIP')).not.toBeInTheDocument();
   });
 
-  it('mostra a coroa no modo compacto quando a tag VIP está presente', () => {
+  it('nao mostra a coroa no modo compacto mesmo com a tag VIP', () => {
     const { container } = render(
       <ContactHeaderSection
         contact={{ ...baseContact, tags: ['VIP'] }}
@@ -285,7 +268,7 @@ describe('ContactHeaderSection', () => {
         isCompact={true}
       />
     );
-    expect(container.querySelector('svg.lucide-crown')).toBeTruthy();
+    expect(container.querySelector('svg.lucide-crown')).toBeNull();
   });
 
   // ========== NOME DE TRATAMENTO DO CRM x APELIDO (sem duplicar a mesma palavra) ==========
