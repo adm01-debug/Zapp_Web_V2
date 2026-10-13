@@ -1,18 +1,53 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workersql (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013230000_search_email_threads.sql: aditiva. Cria a RPC
+  `public.search_email_threads(p_account uuid, p_q text, p_limit integer, p_after timestamptz)`
+  que devolve `(thread_id, match_field, match_snippet, last_message_at)` e procura o termo em
+  email_threads (assunto/remetente/snippet), no CORPO (email_messages.body_text) e no NOME DO
+  ANEXO (email_attachments.filename) — o que a busca atual não alcançava (emailThreadSearchOr só
+  olhava email_threads). Dois índices GIN de trigrama (body_text, filename) sustentam o ILIKE
+  '%termo%'. `p_after` é o cursor de `last_message_at` para paginar.
+- A RPC é SECURITY INVOKER e `SET search_path = public, pg_temp`: roda como o chamador e NÃO fura
+  a RLS de email_threads/email_messages/email_attachments — a visibilidade vigente (dono da conta
+  ou admin/supervisor, via gmail_accounts) vale sem eu copiar predicado nenhum. Se a política de
+  e-mail mudar depois, a busca continua limitada ao que o usuário vê.
+- Entrada tratada: `btrim`, corte em 120 chars e curingas de LIKE (`%` `_` `\`) escapados para
+  literal. Termo vazio ou só espaços devolve ZERO linha (nunca a caixa inteira); sem regex do
+  usuário. `p_limit` é limitado a [1,100].
+- Grants explícitos: `REVOKE ALL ... FROM PUBLIC` e `GRANT EXECUTE` só para authenticated e
+  service_role — anon não executa. Nenhum GRANT/papel/ACL de tabela existente foi tocado.
+- src/integrations/supabase/types.ts: entrada `search_email_threads` em Functions (Args/Returns)
+  para o pré-filtro tipar a chamada.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (BLOCO A da suíte, com a busca antiga = filtro só em email_threads): a suíte
+  reproduz o defeito antes de aplicar a migration — `A.1 (DEFEITO) termo do CORPO nao acha nada
+  so com o filtro de email_threads`, `A.2 (DEFEITO) termo do ANEXO tambem nao acha nada`,
+  `A.3 a funcao de busca ainda nao existe`.
+- verde depois: `bash scripts/db-audit/search-email-threads.test.sh` →
+  `PE-09 search_email_threads (postgres:17-alpine): 33 cenarios aprovados.`
+  (33/33 PASS, 0 FAIL) cobrindo: corpo casa (B.5-B.7), anexo casa (B.8-B.9), escopo por conta
+  (B.10-B.11), RLS com papel real authenticated (B.12 usuário sem conta vê 0; B.13 admin canônico
+  vê), paginação p_limit/p_after (B.16-B.17), vazio/só espaços/curinga literal (B.18-B.22),
+  service_role (B.23), anon negado com `permission denied` (B.24), plano usando os dois índices
+  de trigrama (B.25-B.26) e rollback do próprio arquivo (C.1-C.4, reaplicação idempotente).
+- banco LOCAL (não produção): `hermes-db-migrar supabase/migrations/20261013230000_search_email_threads.sql`
+  → `APLICADA no banco LOCAL 'v2-261013034836cc' (produção não foi tocada); CREATE FUNCTION;
+  REVOKE; GRANT; COMMIT`. Conferido no banco local: `prosecdef = f` (INVOKER) e `proconfig =
+  {search_path=public, pg_temp}`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não liguei a RPC no pré-filtro da tela: `src/lib/emailThreadQuery.ts` e a caixa são da área de
+  hooks/telas (não estão nos arquivos que posso tocar). Deixei o contrato no comentário do cartão
+  para quem monta o pré-filtro em paralelo.
+- Contrato da RPC para o pré-filtro: chamar
+  `supabase.rpc('search_email_threads', { p_account, p_q, p_limit, p_after })`; usar `match_field`
+  ('subject'|'attachment'|'body'|'from'|'snippet') e `match_snippet` para trocar o trecho da thread
+  na lista; `last_message_at` da última linha é o `p_after` da próxima página.
+- REGISTRO PENDENTE: scripts/db-audit/search-email-threads.test.sh (prova de banco do cartão) é um
+  .test.sh NOVO e ainda não tem passo em .github/workflows/db-guard.yml — registro é da área de CI
+  (worker ci), não está nos arquivos que posso tocar. O check-test-inventory do workflow vai reprovar
+  como órfão até esse passo existir.
+- Não criei teste tautológico: a suíte constrói o schema/RLS reais mínimos e aplica a MIGRATION REAL
+  do meu arquivo (não recria o corpo da função no teste), roda como authenticated/anon/service_role.
