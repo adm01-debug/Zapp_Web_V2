@@ -8,6 +8,7 @@ import { Eye, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { log } from '@/lib/logger';
 
 interface Viewer {
   id: string;
@@ -24,8 +25,11 @@ export function useConversationViewers(contactId: string) {
   useEffect(() => {
     if (!user?.id || !contactId) return;
 
+    // PRIVADO (PD-68): `conversation:<contactId>` é protegido pela policy de
+    // `realtime.messages` (só quem enxerga o contato assina). Sem `private:
+    // true` a Realtime não consulta a RLS e o canal volta a ser público.
     const channel = supabase.channel(`conversation:${contactId}`, {
-      config: { presence: { key: user.id } },
+      config: { private: true, presence: { key: user.id } },
     });
 
     channel
@@ -47,7 +51,15 @@ export function useConversationViewers(contactId: string) {
         setViewers(presentViewers);
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status !== 'SUBSCRIBED') {
+          // Canal privado negado (policy, token sem sessão) ou fora do ar: a
+          // lista de "visualizando" fica vazia, mas o painel de chat NÃO quebra.
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            log.warn('[useConversationViewers] canal privado de visualização indisponível:', status);
+          }
+          return;
+        }
+        try {
           const { data: profile } = await supabase
             .from('profiles')
             .select('name, avatar_url')
@@ -59,10 +71,12 @@ export function useConversationViewers(contactId: string) {
             is_typing: false,
             online_at: new Date().toISOString(),
           });
+        } catch (error) {
+          log.warn('[useConversationViewers] falha ao publicar a presença:', error);
         }
       });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { void supabase.removeChannel(channel); };
   }, [contactId, user?.id]);
 
   return viewers;

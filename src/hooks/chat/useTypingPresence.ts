@@ -116,9 +116,14 @@ export function useTypingPresence({
   useEffect(() => {
     if (!conversationId) return;
 
-    // Create presence channel for this conversation
+    // Create presence channel for this conversation. PRIVADO (PD-69): o tópico
+    // `typing:<contactId>` está protegido pela policy de `realtime.messages`
+    // (can_access_realtime_topic); sem `private: true` a Realtime não consulta a
+    // RLS e o canal volta a ser público. O token de sessão é injetado sozinho
+    // pelo supabase-js (>= 2.38) no `realtime.setAuth`.
     const channel = supabase.channel(`typing:${conversationId}`, {
       config: {
+        private: true,
         presence: {
           key: presenceKey,
         },
@@ -195,10 +200,16 @@ export function useTypingPresence({
       }
     });
 
-    // Subscribe to channel
+    // Subscribe to channel. Canal privado: se a autorização falhar (policy
+    // negou, token sem sessão, tempo esgotado) o aviso NÃO derruba a tela — a
+    // presença simplesmente não sincroniza e a conversa segue funcionando.
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         log.debug('Subscribed to typing presence for conversation:', conversationId);
+        return;
+      }
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        log.warn('[useTypingPresence] canal privado de digitação indisponível:', status);
       }
     });
 

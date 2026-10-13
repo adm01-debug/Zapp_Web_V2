@@ -1,18 +1,53 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+
+- `src/hooks/chat/useTypingPresence.ts`: o canal `typing:<contato>` passou a ser criado com
+  `config: { private: true }` (o tópico e a chave de presença não mudaram). Sem o flag a Realtime não
+  consulta a RLS de `realtime.messages`, então a policy `can_access_realtime_topic` da migration
+  `20261013210002` não valia nada nesse canal. O `subscribe` agora trata `CHANNEL_ERROR`/`TIMED_OUT`
+  com `log.warn` e retorna — autorização negada não derruba a tela.
+- `src/hooks/team-chat/useTeamTyping.ts`: canal `team-typing-<conversa>` marcado privado; o mesmo
+  tratamento de status negado; os três `send` (aviso, throttle e parada) ganharam `.catch` com
+  `log.warn` para não deixar rejeição solta quando a policy nega o broadcast.
+- `src/hooks/team-chat/useTeamPresence.ts`: canal `team-presence-<conversa>` privado; o `track`
+  passou para um `try/catch` (presença não sincroniza, o chat de equipe continua), e o status negado
+  é registrado em vez de silencioso.
+- `src/components/inbox/collaboration/ViewersIndicator.tsx` (`useConversationViewers`): canal
+  `conversation:<contato>` privado; `CHANNEL_ERROR`/`TIMED_OUT` só registram aviso e o indicador
+  renderiza vazio (o painel de chat não quebra); `removeChannel` no cleanup virou `void` explícito.
+- `src/hooks/__tests__/canais-realtime-privados.test.tsx` (novo): monta os quatro hooks, lê a chamada
+  real do provedor e prova `config.private === true`, os tópicos conhecidos pela migration, a chave de
+  presença do usuário logado, a tolerância ao `CHANNEL_ERROR` (hooks voltam neutros e o
+  `ViewersIndicator` renderiza vazio) e a montagem dupla sob `StrictMode` com cleanup.
+- `src/hooks/team-chat/__tests__/useTeamTyping.test.tsx`: a asserção do canal passou a exigir o
+  segundo argumento (`{ config: { private: true } }`) — verificação mais estrita, não afrouxada.
+
+Faixa do pai (t_db7ea742, "policy de autorização por tópico em realtime.messages") não estava neste
+workspace: `git rev-list --reverse --no-merges dia/2026-10-13..b41f506b5` → `e4671d14d`,
+`b41f506b5`; trazida inteira com `git cherry-pick -n -x` (migration
+`20261013210002_realtime_canais_privados.sql` + `supabase/tests/realtime_canais_privados.sql`).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+
+- vermelho antes (quatro fontes revertidas para `HEAD`): `npx vitest run
+  src/hooks/__tests__/canais-realtime-privados.test.tsx` → `Tests 3 failed | 3 passed (6)`
+  ("expected undefined to be true" nas asserções de `private: true`).
+- verde depois: `npx vitest run src/hooks/__tests__/canais-realtime-privados.test.tsx
+  src/hooks/team-chat/__tests__/useTeamTyping.test.tsx
+  src/hooks/__tests__/useTypingPresence.identidade.test.tsx
+  src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx` → `Test Files 4 passed (4);
+  Tests 23 passed (23)`, zero pulados.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+
+- Não marquei os outros canais (notificações, talkx, gmail, warroom, etc.). A policy
+  `can_access_realtime_topic` só conhece `typing:`, `conversation:`, `team-typing-` e
+  `team-presence-`; marcar qualquer outro como privado o NEGARIA. Os quatro canais privados são
+  exatamente a união dos tópicos que a migration autoriza.
+- Não rodei a prova de banco (`zapp-db-local up` respondeu "contêiner do banco não encontrado"): a
+  autorização por tópico sob os papéis reais é a prova do cartão pai (t_db7ea742), que já entregou a
+  migration e o teste SQL; esta trilha é só o front que consome a policy.
+- Não usei `setAuth` explícito: o `@supabase/supabase-js` 2.117.2 injeta o token de sessão no
+  Realtime sozinho (`SupabaseClient` chama `realtime.setAuth` no estado inicial e a cada mudança de
+  auth); conferido no `node_modules` instalado.
