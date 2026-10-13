@@ -11430,6 +11430,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      inbox_unread_total: { Args: never; Returns: number }
       increment_agent_messages: {
         Args: { p_profile_id: string; p_type: string }
         Returns: Json
