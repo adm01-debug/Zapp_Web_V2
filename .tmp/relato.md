@@ -22,3 +22,4 @@ Os 2 testes novos: (1) pelo componente REAL do lote (`BulkActionsToolbar` + `Tra
 ## O que NÃO fiz e por quê
 - Não mexi no hook `useInboxBulkActions.ts` (fora dos arquivos do cartão): o resultado por linha (contagem de falhas) já vem dele.
 - Não escolhi a opção (a): a decisão do PD-84/85 está no código como (b), e o cartão manda seguir a decisão encontrada.
+- Os arquivos `src/hooks/inbox/useInboxBulkActions.ts` e `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` aparecem no diff porque o cartão MANDA clonar o trabalho dos pais por cherry-pick; eu não os editei à mão (o conteúdo veio do commit do pai t_2901d317, ver `git log --oneline` deste branch). Meu commit é só o `70c341def0`.
