@@ -12094,6 +12094,7 @@ export type Database = {
         Args: { p_campaign_id: string; p_expected_revision: number }
         Returns: Json
       }
+      supervisor_copilot_snapshot: { Args: never; Returns: Json }
       store_gmail_tokens: {
         Args: {
           p_access_token: string
