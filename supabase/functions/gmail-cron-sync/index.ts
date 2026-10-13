@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, runGmailFullSync, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
@@ -74,13 +74,8 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          try {
-            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
-          } catch (recordErr) {
-            log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
-          }
-          return { id: account.id, error: sanitizeGmailErrorMessage(msg) };
+          await supabase.from("gmail_accounts").update({ last_error: msg, sync_status: "error" }).eq("id", account.id);
+          return { id: account.id, error: msg };
         }
       }));
       for (const r of batchResults) results.push(r.status === "fulfilled" ? r.value : { id: "unknown", error: String(r.reason) });
