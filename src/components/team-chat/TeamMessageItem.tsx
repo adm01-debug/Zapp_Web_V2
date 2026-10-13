@@ -17,6 +17,16 @@ import type { ReactionGroup } from '@/components/ui/message-reactions';
 import { MessageStatus } from '@/components/inbox/MessageStatus';
 import { normalizeTeamMessageStatus } from '@/hooks/team-chat/teamMessageStatus';
 
+/** Rótulo do tick por estado — o nome que o leitor de tela anuncia. */
+const TICK_LABEL: Record<'sent' | 'delivered' | 'read' | 'failed' | 'pending', string> = {
+  pending: 'Enviando mensagem',
+  sent: 'Enviado',
+  delivered: 'Entregue',
+  read: 'Lido',
+  failed: 'Falha no envio',
+};
+
+
 interface Props {
   msg: TeamMessage;
   isMine: boolean;
@@ -56,6 +66,15 @@ export const TeamMessageItem = memo(function TeamMessageItem({
     rawStatus === 'sending' ? 'pending'
     : rawStatus === 'deleted' ? null
     : rawStatus;
+
+  // Nome acessível do tick. "Lido" numa conversa em grupo é "lido por todos"
+  // (o estado `read` só vem do all_read da view): dizer só "Lido" esconderia
+  // que outro participante ainda não leu.
+  const tickLabel = displayStatus === 'read' && conversationType === 'group'
+    ? 'Lido por todos os participantes'
+    : displayStatus
+      ? TICK_LABEL[displayStatus]
+      : null;
 
   return (
     <>
@@ -180,11 +199,25 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                         <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-primary-foreground' : 'text-muted-foreground')}>
                           {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
                         </span>
-                        {isMine && displayStatus && (
-                          <MessageStatus
-                            status={displayStatus}
-                            className={cn('opacity-70', isMine && 'text-primary-foreground')}
-                          />
+                        {isMine && displayStatus && tickLabel && (
+                          <span
+                            role="img"
+                            aria-label={tickLabel}
+                            className={cn(
+                              'inline-flex items-center',
+                              // O tick nasce dentro do balão próprio (bg-primary), mas o
+                              // MessageStatus pinta o ícone de text-muted-foreground — que
+                              // some no roxo. Recolorimos o ícone filho: lido fica na cor
+                              // 'info' do sistema; enviado/entregue ganham a cor do texto
+                              // do balão. É o mesmo par de cores que o MessageBubble do
+                              // inbox (mensagem própria) já usa.
+                              displayStatus === 'read'
+                                ? '[&>svg]:text-info'
+                                : '[&>svg]:text-primary-foreground',
+                            )}
+                          >
+                            <MessageStatus status={displayStatus} />
+                          </span>
                         )}
                       </div>
                     </div>
