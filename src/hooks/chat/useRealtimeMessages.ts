@@ -37,10 +37,16 @@ export interface ConversationWithMessages {
 export function useRealtimeMessages() {
   const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
   const [loading, setLoading] = useState(true);
+  // R2-INB-*: distingue a PRIMEIRA carga de qualquer refetch/reconexão. `loading`
+  // fica true a cada busca (o RefreshCw gira com ele), mas a lista só deve trocar
+  // por esqueletos enquanto a primeira busca ainda não trouxe conversas — antes a
+  // sidebar usava `loading` e a lista piscava a cada refetch/reconexão.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const conversationsRef = useRef<ConversationWithMessages[]>([]);
   const mountedRef = useRef(true);
   const fetchGenerationRef = useRef(0);
+  const firstFetchSettledRef = useRef(false);
   const liveRevisionRef = useRef(0);
 
   useEffect(() => {
@@ -198,7 +204,15 @@ export function useRealtimeMessages() {
         });
       });
     } finally {
-      if (mountedRef.current && generation === fetchGenerationRef.current) setLoading(false);
+      if (mountedRef.current && generation === fetchGenerationRef.current) {
+        setLoading(false);
+        // Só a primeira busca resolvida encerra o estado de "primeira carga";
+        // refetch/reconexão não devolvem a lista ao esqueleto.
+        if (!firstFetchSettledRef.current) {
+          firstFetchSettledRef.current = true;
+          setInitialLoading(false);
+        }
+      }
     }
   }, [commitConversations]);
 
@@ -268,7 +282,7 @@ export function useRealtimeMessages() {
   };
 
   return {
-    conversations, loading, error, sendMessage, markAsRead,
+    conversations, loading, initialLoading, error, sendMessage, markAsRead,
     refetch: fetchConversations, newMessageNotification,
     dismissNotification, setSelectedContact, setSoundEnabled,
   };
