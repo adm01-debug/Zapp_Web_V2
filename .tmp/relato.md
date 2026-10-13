@@ -11,8 +11,10 @@ Especialista: Hugo (area-front-hooks)
 - espelho do CI (mesmos comandos do `ci_espelho.sh`): node -> `# tests 1334 / # pass 1325 / # fail 8`, com exatamente as MESMAS 8 falhas da base (Talk X x2, lint-ratchet --staged x6) — nenhuma falha nova, o item do cartão saiu da lista; deno -> `ok | 1715 passed (16 steps) | 0 failed`; contratos -> `Test Files 89 passed (89); Tests 1379 passed (1379)`.
 - `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (tipos, lint, db_guard, migrations: OK).
 
-## Ponto 1 ([refazer]): ESPELHO DO CI vermelho em `ESTADO.md cita só âncoras reais`
-- A causa era o deslocamento de linha em `serverLogin.ts` deixando a âncora de `auth-login` apontando para a linha errada. Alinhada em `ESTADO.md:63` para `:87` (a linha que contém `functions/v1/auth-login`). Prova: a guarda passa em isolamento (11/11) e a falha sai da lista do espelho, que fica idêntica à base.
+## Pontos do revisor ([refazer])
+- Ponto 1 ([refazer] — partir da entrega com cherry-pick): parti do commit da entrega com `git cherry-pick -x 1cc310895b 191141a73`, sem recomeçar; o ramo do refazer carrega o código original (`src/lib/serverLogin.ts`, `src/services/auth.service.ts`, `src/hooks/auth/useAuthForm.ts` e os testes) intacto.
+- Ponto 2 ([refazer] — causa do ESPELHO DO CI, sem afrouxar asserção): a causa era o deslocamento de linha no `serverLogin.ts` que deixou a âncora publicada de `auth-login` apontando para a linha errada. Alinhada em `ESTADO.md:63` de `src/lib/serverLogin.ts:72` para `:87` (a linha que contém `functions/v1/auth-login`). Nenhuma asserção da guarda foi tocada; o teste da guarda é o que prova.
+- Ponto 3 ([refazer] — provar verde e fechar citando o sha): guarda em isolamento -> `# pass 11 / # fail 0`; espelho do CI (mesmos comandos do `ci_espelho.sh`) sem falha nova vs a base (item do cartão saiu da lista); `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO`. SHA da correção: `ce48330329` (entrega: `0f8aa38ce3` + `3344cb2374`).
 
 ## O que NÃO fiz e por quê
 - Não executei `bash ~/arquitetura-v2/integrador/ci_espelho.sh`: bloqueado pelo HERMES-GUARD ("mexer nas guardas/ferramentas do Hermes e proibido"). Rodei os mesmos comandos que o script agrega, um a um, e comparei com a base pelo mesmo critério (só falha NOVA reprova).
