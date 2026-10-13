@@ -14,3 +14,7 @@ Especialista: iris
 ## O que NÃO fiz e por quê
 - Não mexi em `useReactionMutations.ts` nem no banco: o cartão limita os arquivos ao componente e a seus testes; a autoria por linha no banco é do cartão pai (já trazido).
 - Nada novo que exporte, baixe, copie ou imprima; sem log de telefone, token ou texto de mensagem.
+
+## Nota para o portão (aviso de arquivo fora da lista)
+- O cartão lista `src/components/inbox/chat/MessageReactions.tsx`, mas `handleReact` mora em `src/components/inbox/MessageReactions.tsx` — o caminho com `/chat/` não existe neste repositório; é o mesmo componente, e é o único arquivo de tela tocado por este commit.
+- `supabase/migrations/20261013210000_message_reactions_autoria.sql` e `supabase/tests/rls_message_reactions_autoria.sql` (2 commits `c15b8e3f4`, `0376e8c40`) são a faixa do cartão pai `t_8d53f9bd` trazida por `git cherry-pick`, conforme a instrução do cartão ("traga a FAIXA inteira"); não editei esses arquivos.
