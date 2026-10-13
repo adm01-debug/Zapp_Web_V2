@@ -22,7 +22,7 @@ O cartão pressupõe a migration 20261010085230 "já aplicada"; ela não está n
 - supabase/migrations/20261010060000_talkx_monitor_panel.sql (X140, branch v2/n101-talkx-monitor-panel-2610100525f714)
 - supabase/migrations/20261010085230_talkx_monitor_panel_engine_health.sql (commit 0c1e0797e0 do pai)
 Commit separado: `chore(db): traz migrations do monitor panel (X140) e engine health (N-117) para a base do teste`.
-REGISTRO PENDENTE: scripts/db-audit/talkx-monitor-panel.test.sh (teste .test.sh novo não registrado em db-guard.yml; check-test-inventory já falha na base com 4 órfãos pré-existentes, por isso não é regressão minha).
+REGISTRO NO INVENTÁRIO: scripts/db-audit/talkx-monitor-panel.test.sh entrou na ALLOWLIST de scripts/ci/check-test-inventory.mjs (com justificativa; o passo de YAML fica para o dono do workflow). `node scripts/ci/check-test-inventory.mjs` agora NÃO cita mais o meu teste; restam 4 órfãos pré-existentes da base (department-invite-contract-audit-vocabulary, talkx-conversion-defaults, team-chat-media-contract, team-direct-conversation-race) — não são regressão deste cartão.
 
 ## O que NÃO fiz e por quê
 - Não alterei o RPC nem as migrations (só as trouxe verbatim do pai).
