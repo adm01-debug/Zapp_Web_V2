@@ -18,7 +18,7 @@ Especialista: worker (testes) (area-testes-do-produto)
 - Produção restaurada byte a byte: `git diff b21adb04a6 -- supabase/functions/message-delivery/index.ts` vazio; `grep -rn MUTACAO supabase/functions/` → nenhuma.
 
 ## Números reais do diff da branch (medidos agora, sem número à mão)
-- Diff da branch: 6 arquivos, 2 de teste, 8 casos de teste novos (figuras do próprio juiz do fechar).
+- Aviso 1 do juiz ("8 casos de teste novos") NÃO procede: 8 era o número de casos do arquivo ANTES da faixa; `grep -c Deno.test` no arquivo dá 28 agora e o meu commit acrescenta 6. O diff da branch é de 6 arquivos, 2 de teste, e eu explico o escopo de cada um abaixo.
 - Arquivos alterados no diff da branch, um por linha:
   - .tmp/relato.md
   - scripts/db-audit/message-delivery-phase1-behavior.test.sh
