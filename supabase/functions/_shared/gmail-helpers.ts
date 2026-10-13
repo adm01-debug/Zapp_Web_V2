@@ -109,7 +109,13 @@ export async function ensureValidToken(supabase: SupabaseClient, account: GmailA
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ refresh_token: storedTokens.refresh_token, client_id: requireEnv("GOOGLE_CLIENT_ID"), client_secret: requireEnv("GOOGLE_CLIENT_SECRET"), grant_type: "refresh_token" }),
   });
-  if (!response.ok) throw new Error("Failed to refresh token");
+  if (!response.ok) {
+    // O corpo do Google distingue token revogado/expirado (invalid_grant) de
+    // falha transitória — sem ele a conta cairia em "error" mudo. O corpo do
+    // erro do refresh nunca carrega token.
+    const detail = await response.text();
+    throw new Error(`Gmail token refresh rejected (${response.status}): ${detail}`);
+  }
   const tokens = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
   const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
@@ -281,4 +287,49 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
   }).eq("id", accountId);
   if (error) throw new Error("Failed to persist Gmail sync cursor");
   return result;
+}
+
+// ── Classificação da falha de conta (R2/Gmail reauth) ──────────────────────
+// O refresh recusado pelo Google (`invalid_grant`, `unauthorized_client`) ou o
+// token revogado/expirado exigem RECONECTAR a conta — não é falha transitória.
+// Essas contas passam a `sync_status = 'reauth_required'` (estado explícito que
+// o front lê para dizer "reconecte"), e as demais falhas ficam em `error` com a
+// contagem de tentativas. Qualquer sincronização bem-sucedida volta a gravar
+// `synced` e limpa `last_error`.
+export type GmailAccountFailure = "reauth_required" | "error";
+
+export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
+
+const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired or revoked", "revoked"];
+
+export function isGmailReauthError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
+  return GMAIL_REAUTH_MARKERS.some(marker => message.includes(marker));
+}
+
+// `last_error` é exibido na interface: nunca leva token nem endereço/e-mail completo.
+export function sanitizeGmailErrorMessage(raw: string): string {
+  return String(raw ?? "")
+    .replace(/[^\s@]+@[^\s@]+/g, "[email]")
+    .replace(/\b(ya29\.[A-Za-z0-9._-]+|1\/\/[A-Za-z0-9._-]+)\b/g, "[token]")
+    .slice(0, 200);
+}
+
+export async function recordGmailAccountFailure(
+  supabase: SupabaseClient,
+  accountId: string,
+  error: unknown,
+  attempts: number,
+): Promise<GmailAccountFailure> {
+  const status: GmailAccountFailure = isGmailReauthError(error) ? "reauth_required" : "error";
+  const detail = sanitizeGmailErrorMessage(error instanceof Error ? error.message : String(error ?? ""));
+  const base = status === "reauth_required"
+    ? GMAIL_REAUTH_MESSAGE
+    : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
+  const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
+  const { error: updateError } = await supabase.from("gmail_accounts")
+    .update({ sync_status: status, last_error: lastError })
+    .eq("id", accountId);
+  if (updateError) throw new Error("Failed to record Gmail account failure state");
+  return status;
 }
