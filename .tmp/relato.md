@@ -1,63 +1,29 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- scripts/db-audit/talkx-monitor-panel.test.sh:
+  1. a fixture view public.talkx_engine_health passou a usar `numeric` em metric_rate (antes `double precision`), espelhando a view real: a migration 20261003242707_talkx_log_saude_alertas.sql (linhas 285-286) declara `metric_count bigint` e `metric_rate numeric`. As colunas kind/observed_at/status/return_message já eram text/timestamptz.
+  2. o caso (10) "migration replayavel" agora reaplica TAMBÉM a migration do engine health.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Causa real do vermelho (medida, não suposta)
+A view de fixture NÃO era o motivo: ela já expunha as seis colunas que o RPC lê (kind, observed_at, metric_count, metric_rate, status, return_message). O vermelho vinha do caso (10): ele reaplicava só a migration do monitor (20261010060000), cujo corpo da função NÃO tem o bloco motor; com isso o caso (11) media uma função já revertida, o JSON saía sem a chave `motor` e as cinco asserções ficavam vazias. A correção reaplica a migration do engine (20261010085230) antes do caso (11) — sem tocar em nenhuma asserção.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
+- vermelho antes (sem as minhas mudanças, com a migration 20261010085230 do cartão pai):
+  `bash scripts/db-audit/talkx-monitor-panel.test.sh` → `FAIL: motor.stalled_campaign [esperado: true | obtido: ]` (EXIT=1)
+- mutação (só a produção): no bloco motor da migration 20261010085230 troquei `'stalled_campaign', EXISTS (...)` por `'stalled_campaign', FALSE` e rodei de novo →
+  `FAIL: motor.stalled_campaign [esperado: true | obtido: false]` (EXIT=1); restaurei depois o arquivo do pai, byte-idêntico.
+- verde depois: `bash scripts/db-audit/talkx-monitor-panel.test.sh` →
+  `PASS: (11) bloco motor presente em health com stalled_campaign=true, stale_lease=true, outcome_unknown_24h=3, failure_rate_15m=0.12, cron_status=ok`
+  `PASS: todos os 20 casos medidos` (EXIT=0, zero FAIL). Saída completa em .tmp/test-green.txt.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Dependência do cartão pai (t_e295a21f · N-117)
+O cartão pressupõe a migration 20261010085230 "já aplicada"; ela não está na branch do dia — só existe em commits não integrados. Trago para a base, verbatim, o que o pai entregou, sem alterar nenhum dos dois arquivos:
+- supabase/migrations/20261010060000_talkx_monitor_panel.sql (X140, branch v2/n101-talkx-monitor-panel-2610100525f714)
+- supabase/migrations/20261010085230_talkx_monitor_panel_engine_health.sql (commit 0c1e0797e0 do pai)
+Commit separado: `chore(db): traz migrations do monitor panel (X140) e engine health (N-117) para a base do teste`.
+REGISTRO PENDENTE: scripts/db-audit/talkx-monitor-panel.test.sh (teste .test.sh novo não registrado em db-guard.yml; check-test-inventory já falha na base com 4 órfãos pré-existentes, por isso não é regressão minha).
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não alterei o RPC nem as migrations (só as trouxe verbatim do pai).
+- Não enfraqueci, pulei nem aumentei timeout de nenhuma asserção; as 5 do critério continuam medindo a view.
