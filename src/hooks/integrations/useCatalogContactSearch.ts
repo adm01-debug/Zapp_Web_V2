@@ -42,8 +42,15 @@ export function buildContactSearchFilter(query: string): string | null {
   return clauses.join(',');
 }
 
+/** Rótulo único do estado de erro da busca, usado pela tela. */
+export const CONTACT_SEARCH_ERROR_MESSAGE = 'Não foi possível buscar contatos. Tente de novo.';
+
 /** Sem busca (ou termo curto demais): 15 contatos mais recentes.
- * Com busca (≥ 2 chars): nome ou telefone (telefone só por dígitos). */
+ * Com busca (≥ 2 chars): nome ou telefone (telefone só por dígitos).
+ *
+ * A consulta rejeitada (rede/RLS) LANÇA depois de logar: antes o `error` era
+ * descartado e o chamador só via uma lista vazia — a tela anunciava "Nenhum
+ * contato encontrado" para quem na verdade não conseguiu perguntar nada. */
 export async function fetchCatalogContactResults(query: string): Promise<ContactResult[]> {
   const filter = buildContactSearchFilter(query);
   const request = filter
@@ -57,7 +64,11 @@ export async function fetchCatalogContactResults(query: string): Promise<Contact
         .select('id, name, phone, avatar_url, company')
         .order('updated_at', { ascending: false })
         .limit(15);
-  const { data } = await request;
+  const { data, error } = await request;
+  if (error) {
+    log.error('Falha ao buscar contatos do catálogo:', error.message);
+    throw new Error(CONTACT_SEARCH_ERROR_MESSAGE);
+  }
   return data || [];
 }
 

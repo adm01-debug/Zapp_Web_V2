@@ -41,6 +41,7 @@ vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   // CT-43 — useSendProduct importa esta constante do módulo real; ela precisa
   // existir no mock, senão o import estoura ao montar o dialog.
   CONTACT_SEARCH_MIN_CHARS: 2,
+  CONTACT_SEARCH_ERROR_MESSAGE: 'Não foi possível buscar contatos. Tente de novo.',
 }));
 
 const mockSendOutboundMessage = vi.hoisted(() => vi.fn());
