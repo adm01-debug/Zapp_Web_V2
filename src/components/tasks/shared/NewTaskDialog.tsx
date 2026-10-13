@@ -43,7 +43,7 @@ export function NewTaskDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        data-testid="new-task-dialog"
+        data-testid="nt-dialog"
         className="max-w-[min(538px,calc(100vw_-_2rem))]"
       >
         <DialogHeader>
