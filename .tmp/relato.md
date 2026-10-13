@@ -48,10 +48,15 @@ Especialista: worker (design) (design-system-zapp)
 ## Pontos do revisor (só em [refazer])
 - Ponto 1 (conflito com a ponta de `dia/2026-10-12`): refeito por `git cherry-pick` commit a commit, com as saídas cruas no
   "O que mudou" acima (o `CONFLICT (content): Merge conflict in src/pages/Auth.tsx` de `30bdb0ee1` e o seu descarte preservando a
-  base; o `empty` de `c5ceb2fca`). A ponta preservada é a própria `96dd72dc5`; os 2 commits que faltavam (`ca6fef3bb` painel e
-  `4a3fae343` fix) entraram por cima dela. Não é merge de `dia/2026-10-11`: a base da tarefa é `dia/2026-10-12`, que é
-  descendente de `dia/2026-10-11` (`git merge-base --is-ancestor dia/2026-10-11 dia/2026-10-12` = verdadeiro), então trazer
-  `dia/2026-10-11` seria andar para trás. O `zapp-verify --rapido` é rodado por este próprio `hermes-tarefa-fechar` logo após o juiz.
+  base; o `empty` de `c5ceb2fca`). Não é merge de `dia/2026-10-11`: a base da tarefa é `dia/2026-10-12`, descendente de
+  `dia/2026-10-11` (`git merge-base --is-ancestor dia/2026-10-11 dia/2026-10-12` → `ANCESTOR=sim`), então trazer
+  `dia/2026-10-11` seria andar para trás; ela já está contida na base.
+  Prova de que o conflito foi resolvido SEM perder nada da base:
+  `git diff --stat dia/2026-10-12 HEAD` → só 5 arquivos (`src/pages/Auth.tsx`, `src/components/auth/HeroBenefits.tsx`,
+  `src/components/auth/__tests__/HeroBenefits.test.tsx`, `e2e/auth.spec.ts`, `.tmp/relato.md`), `338 insertions(+), 97 deletions(-)`;
+  e `git diff dia/2026-10-12 HEAD -- src/pages/Auth.tsx` → exatamente UMA linha trocada (a classe do `RippleButton`), com o resto
+  do `Auth.tsx` da base (h2 "Bem-vindo de volta", sem abas) intacto. O `zapp-verify --rapido` é rodado por este próprio
+  `hermes-tarefa-fechar` depois do juiz.
 
 ## O que NÃO fiz e por quê
 - Não trouxe `30bdb0ee1`/`585f89cdc`/`c5ceb2fca`: o conteúdo deles já está em `dia/2026-10-12` (ou em redação mais nova) —
