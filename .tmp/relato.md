@@ -6,6 +6,13 @@ Especialista: iris
 - src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx (novo): prova renderizando o componente REAL sobre o hook REAL; mocka só a RPC (`supabase.rpc`) e `useCRMAdminAccess`.
 - src/components/dashboard/DashboardView.tsx: import + nova zona "Últimos 7 dias" logo depois de "Números de hoje", com `{isStaff && …}` e dentro do `SectionErrorBoundary`, para não sobrar zona vazia para quem não é staff nem derrubar a tela se a faixa falhar.
 
+## Arquivos do cartão pai (trazidos por cherry-pick, NÃO alterados por mim)
+A base dia/2026-10-13 não tinha a dependência do cartão pai t_8f12e328; ela veio por cherry-pick da faixa dia/2026-10-12..732aa9d42, então aparece no diff contra a base sem eu ter tocado nela:
+- supabase/migrations/20261012235745_dashboard_daily_series.sql (RPC da série diária)
+- scripts/db-audit/dashboard-daily-series.test.sh (auditoria da migration)
+- .github/workflows/db-guard.yml (guarda do banco)
+- src/hooks/dashboard/useDailyMetricsKpis.ts e src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx (hook que a faixa consome)
+
 ## Prova
 - vermelho antes: com a faixa forçada a `return null` (mutação temporária em DailyMetricsKpis.tsx, revertida por cópia em .tmp) → `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx` → `Tests 5 failed | 3 passed (8)` (as 5 que exigem a faixa aparecem; as 3 que passam são as unitárias de `lastDayVariationPct` e a de não-staff, que esperam ausência).
 - verde depois (commit cf87dcdc6): `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx src/components/dashboard/__tests__/DashboardView.test.tsx src/components/dashboard/__tests__/DashboardView.section-error.test.tsx` → `Test Files 3 passed (3); Tests 14 passed (14)`, zero pulados.
