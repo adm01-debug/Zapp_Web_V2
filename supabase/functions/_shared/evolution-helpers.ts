@@ -196,10 +196,94 @@ export const STATUS_PRIORITY: Record<string, number> = {
 
 export function shouldUpdateStatus(currentStatus: string | null, newStatus: string): boolean {
   if (!currentStatus) return true;
-  if (newStatus === 'deleted' || newStatus === 'failed') return true;
+  if (newStatus === 'deleted') return true;
+  // 'failed' NAO e mais um passe livre: o STATUS_PRIORITY dele e -1, entao a
+  // comparacao normal ja impedia o rebaixamento — o `|| newStatus === 'failed'`
+  // de antes furava essa regra e um ERROR do provedor que chegasse DEPOIS do
+  // DELIVERY_ACK/READ apagava a entrega ja confirmada (delivered/read -> failed).
+  // Continua valendo a partir de 'sending'/desconhecido (que e quando o erro
+  // realmente importa).
+  if (newStatus === 'failed') return (STATUS_PRIORITY[currentStatus] ?? 0) <= 0;
   const currentPriority = STATUS_PRIORITY[currentStatus] ?? 0;
   const newPriority = STATUS_PRIORITY[newStatus] ?? 0;
   return newPriority > currentPriority;
+}
+
+/** Conteudo normalizado para comparar o eco ao da linha pendente. */
+export function normalizeOutboundContent(content: string | null | undefined): string {
+  if (typeof content !== 'string') return '';
+  return content.replace(/\s+/g, ' ').trim();
+}
+
+export interface PendingOutboundClaim {
+  id: string;
+  claimToken: string;
+}
+
+/**
+ * Acha a linha outbound PENDENTE que um eco (send.message) ou um recibo
+ * (messages.update) pode adotar — e so ela.
+ *
+ * Defeito corrigido (12/10/2026): o casamento antigo pegava QUALQUER linha
+ * `sender='agent'` do mesmo tipo com `external_id` nulo dentro de 60s/300s,
+ * ordenava por `created_at ASC` e adotava a primeira. Dai:
+ *   a) duas mensagens seguidas — o eco da segunda caia na primeira (recibo na
+ *      linha errada);
+ *   b) mensagem digitada no celular adotava uma linha 'failed' (o unico filtro
+ *      era `external_id` nulo) — ressuscitava envio que tinha falhado;
+ *   c) na corrida envio x webhook estampava o `external_id` ANTES do
+ *      `complete_outbound_message`, que entao conflitava (502 "Erro ao enviar"
+ *      numa mensagem que o provedor ja tinha entregado).
+ *
+ * Regras agora:
+ *   - `status='sending'` e `external_id` nulo: nunca adota 'failed'/terminal;
+ *   - CLAIM DE ENTREGA VIVO (`delivery_claim_expires_at` no futuro, o que implica
+ *     `delivery_claim_token` preenchido): e a evidencia de que o message-delivery
+ *     esta enviando ESTA linha. Sem claim vivo — mensagem digitada no celular —
+ *     nao ha linha nossa para adotar;
+ *   - conteudo do eco igual ao da linha (quando o eco traz texto): e o que
+ *     desempata duas mensagens seguidas;
+ *   - sem conteudo (recibo) so adota quando ha exatamente UM candidato; com dois
+ *     ou mais e ambiguo, nao adota (fail-closed);
+ *   - erro de consulta nao adota nada.
+ * Devolve o claim token junto: o chamador limpa o claim e o guarda em
+ * `delivery_last_claim_token`, que e o que faz o `complete_outbound_message`
+ * enxergar a adocao como IDEMPOTENTE em vez de conflito.
+ */
+export async function findPendingOutboundClaim(
+  supabase: EvolutionDbClient,
+  opts: {
+    contactId: string;
+    connectionId: string;
+    messageType?: string;
+    content?: string | null;
+    limit?: number;
+  },
+): Promise<PendingOutboundClaim | null> {
+  let query = supabase.from('messages')
+    .select('id, content, message_type, delivery_claim_token')
+    .eq('whatsapp_connection_id', opts.connectionId)
+    .eq('contact_id', opts.contactId)
+    .eq('sender', 'agent')
+    .eq('status', 'sending')
+    .is('external_id', null)
+    .gte('delivery_claim_expires_at', new Date().toISOString());
+  if (opts.messageType) query = query.eq('message_type', opts.messageType);
+
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .limit(opts.limit ?? 10);
+  if (error || !Array.isArray(data)) return null;
+
+  const candidates = data.filter((row) =>
+    typeof row.id === 'string' && typeof row.delivery_claim_token === 'string'
+  );
+  const wanted = normalizeOutboundContent(opts.content);
+  const chosen = wanted
+    ? candidates.find((row) => normalizeOutboundContent(row.content as string | null) === wanted) ?? null
+    : (candidates.length === 1 ? candidates[0] : null);
+  if (!chosen) return null;
+  return { id: chosen.id as string, claimToken: chosen.delivery_claim_token as string };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

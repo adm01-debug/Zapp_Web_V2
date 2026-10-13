@@ -2,7 +2,7 @@
 
 import {
   isRecord, normalizePhone, resolveEventJid, toEventRecords, shouldUpdateStatus,
-  getConnectionByInstance, getContactByPhone,
+  getConnectionByInstance, getContactByPhone, findPendingOutboundClaim,
 } from "./evolution-helpers.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 import { EvolutionMessagesUpdateStatusSchema } from "./schemas.ts";
@@ -59,26 +59,43 @@ export async function handleSendMessage(supabase: EvolutionDbClient, instance: s
         if (contact?.id) {
           const msgPayload = entry.message || baseData.message;
           let webhookMsgType = 'text';
+          let echoedText: string | null = null;
           if (isRecord(msgPayload)) {
             if (msgPayload.imageMessage) webhookMsgType = 'image';
             else if (msgPayload.videoMessage) webhookMsgType = 'video';
             else if (msgPayload.audioMessage) webhookMsgType = 'audio';
             else if (msgPayload.documentMessage || msgPayload.documentWithCaptionMessage) webhookMsgType = 'document';
             else if (msgPayload.stickerMessage) webhookMsgType = 'sticker';
+            // Texto do eco: desempata duas mensagens seguidas (o eco da segunda
+            // caia na PRIMEIRA linha pendente, que era a adotada por created_at ASC).
+            if (webhookMsgType === 'text') {
+              if (typeof msgPayload.conversation === 'string') echoedText = msgPayload.conversation;
+              else if (isRecord(msgPayload.extendedTextMessage) && typeof msgPayload.extendedTextMessage.text === 'string') {
+                echoedText = msgPayload.extendedTextMessage.text;
+              }
+            }
           }
 
-          const recentCutoff = new Date(Date.now() - 300_000).toISOString();
-          const { data: pendingMessage } = await supabase.from('messages')
-            .select('id').eq('contact_id', contact.id).eq('sender', 'agent')
-            .eq('message_type', webhookMsgType).is('external_id', null)
-            .gte('created_at', recentCutoff).order('created_at', { ascending: true })
-            .limit(1).maybeSingle();
+          const pending = await findPendingOutboundClaim(supabase, {
+            contactId: contact.id,
+            connectionId: connection.id,
+            messageType: webhookMsgType,
+            content: webhookMsgType === 'text' ? echoedText : null,
+          });
 
-          if (pendingMessage?.id) {
+          if (pending) {
+            // Limpa o claim de entrega e o guarda em delivery_last_claim_token:
+            // e o que faz o complete_outbound_message tratar a adocao como
+            // idempotente em vez de conflitar com 502.
             await supabase.from('messages')
-              .update({ status: 'sent', external_id: externalId, status_updated_at: now })
-              .eq('id', pendingMessage.id);
-            updatedMessageId = pendingMessage.id as string;
+              .update({
+                status: 'sent', external_id: externalId, status_updated_at: now,
+                delivery_claim_token: null, delivery_claimed_at: null,
+                delivery_claim_expires_at: null, delivery_claimed_by: null,
+                delivery_last_claim_token: pending.claimToken,
+              })
+              .eq('id', pending.id);
+            updatedMessageId = pending.id;
           }
         }
       }
@@ -156,6 +173,43 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
           .eq('sender', 'agent')
           .order('created_at', { ascending: false }).limit(1).maybeSingle();
         if (outboundMessage?.id) currentMessage = outboundMessage;
+      }
+
+      // Corrida envio x webhook (12/10): o recibo delivered/read chega ANTES de o
+      // message-delivery estampar o external_id, entao a busca por external_id
+      // acima nao acha nada — e o recibo era DESCARTADO (log "skipping stub") ou
+      // virava um stub '[Mensagem recebida]' do contato carregando o NOSSO
+      // external_id. A linha pendente com CLAIM DE ENTREGA VIVO e a unica
+      // evidencia de que este recibo e NOSSO: adota a linha, grava o external_id
+      // + o status do recibo e guarda o claim em delivery_last_claim_token (torna
+      // o complete idempotente). Sem claim vivo — mensagem digitada no celular —
+      // o helper devolve null e o fluxo segue como antes.
+      if (!currentMessage?.id && connection?.id && (newStatus === 'delivered' || newStatus === 'read')) {
+        const remoteJid = resolveEventJid(entry, baseData);
+        const receiptPhone = remoteJid ? normalizePhone(remoteJid) : null;
+        if (receiptPhone) {
+          const receiptContact = await getContactByPhone(supabase, receiptPhone, connection.id);
+          if (receiptContact?.id) {
+            const pending = await findPendingOutboundClaim(supabase, {
+              contactId: receiptContact.id,
+              connectionId: connection.id,
+            });
+            if (pending) {
+              await supabase.from('messages')
+                .update({
+                  status: newStatus, external_id: key.id, status_updated_at: now,
+                  delivery_claim_token: null, delivery_claimed_at: null,
+                  delivery_claim_expires_at: null, delivery_claimed_by: null,
+                  delivery_last_claim_token: pending.claimToken,
+                })
+                .eq('id', pending.id);
+              // A linha ja esta no status do recibo: o bloco abaixo ve o estado
+              // final e nao repete a escrita. sender='agent' tambem faz o recibo
+              // ser tratado como NOSSO pelos encadeamentos TalkX/Multiplix.
+              currentMessage = { id: pending.id, status: newStatus, sender: 'agent' };
+            }
+          }
+        }
       }
 
       // O recibo e NOSSO quando o provedor disse (fromMe === true) ou quando a

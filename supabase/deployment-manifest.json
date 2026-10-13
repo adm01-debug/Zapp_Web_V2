@@ -166,8 +166,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-helpers.ts",
-      "bytes": 19194,
-      "sha256": "32f66be17a4cc176a888fba7ae19bf57bdbc75b733df0a282032bac14c0be736"
+      "bytes": 23037,
+      "sha256": "a4d8d47339165a964ad3b568ac07abdd39dfb2ca12774b5faba9ec33442bb611"
     },
     {
       "path": "supabase/functions/_shared/evolution-instance-token.ts",
@@ -206,13 +206,13 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 37847,
-      "sha256": "b9ee80c637f99bd6205e612e10595eed0145381d9e4feafdeda775f278943f3e"
+      "bytes": 38275,
+      "sha256": "97d4980920d1be2d9d1294e70bc30979d942a8c84791bc12e6cbed8c30996870"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 23276,
-      "sha256": "47d94b0b16b65cf80d06ee00b876e152060806ddcc9047c586bb4d37ea2d92e0"
+      "bytes": 26260,
+      "sha256": "049b076b2c3144bc00ce78bc10ec0260e3a5aea5f0c96fcb89db21026a849e79"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -1132,7 +1132,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "3170ae895c1ac389f62cdd761ddae302b73789abe5b6d142824f98057e19f498",
+      "source_sha256": "a0498b72f9582246c89479c2316ca51be771fb9737d3b61b18a9cc84a1fe35f6",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1543,7 +1543,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a1d2cd0251386309397e4c394af413df311493621b48c6d75c206ca8a397f255",
+      "source_sha256": "595bf786ffa06aa6282b28e0dd16476c8c50e4c122a7bdc4d6a3535c216ae2c0",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1790,7 +1790,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "77e0eaabc5edbdd4f2df77b4a0685c88d0fbb950452ed6672836675adaa7c2a6",
+      "source_sha256": "b46432715847ea2c75c75bb52c1f597196440158c0a780dd396171d6b2259522",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1828,7 +1828,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "24911c6d4c828e3aec3a8a2491d9480826cf1eca9ea949d3f875be4b7ec3a8a5",
+      "source_sha256": "69502d3e98464bafdd71ed292c97e0de4f1517e68a7fba168577fb864289b3f3",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1914,7 +1914,7 @@
       "name": "recover-message-media",
       "entrypoint": "supabase/functions/recover-message-media/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6e2f3b9de0af2f962b57b6bd5e2213cb441a2c1ab28efcdf3d2df4741caa810d",
+      "source_sha256": "710ae001aec48e28cacfdd1620987055c6dbfe4ea092836a4a3f391e8efb642c",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -2098,7 +2098,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f96cb2b820ada22ec8220745c734d3b41c61b37c4d207fcbc35e2a514291cf79",
+      "source_sha256": "37dc25f6a9ceaffc814feecaa26c15597f0ad0334a384f5b7fdcda5348a6d495",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -2241,7 +2241,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "1861c7901c6f1faecc7ad644fdbf331158218be286215b638a36697eab2f958c",
+      "source_sha256": "938522db8ff368df6b4240fa73eca314e8e908dd2b4c00724c6cd0ebdfbd65b4",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -2256,5 +2256,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1b29144533b1822b54ff6b2b186a22501ad5ea11f709f52e21d8f5bd7c6ad3bf"
+  "manifest_sha256": "f0a53428abea63e9bd463fc3bf838c256bb2fc6a5f0020c1366b47eab4e333e4"
 }

@@ -5,6 +5,7 @@ import { attributeMultiplixReply, attributeTalkXReply } from "./talkx-reply.ts";
 import {
   isRecord, normalizePhone, resolveEventJid,
   getConnectionByInstance, getContactByPhone, fetchProfilePicFromApi, persistProfilePicture,
+  findPendingOutboundClaim,
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
@@ -375,14 +376,25 @@ export async function handleOutgoingWhatsAppMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
-  const recentCutoff = new Date(Date.now() - 60_000).toISOString();
-  const { data: pendingMessage } = await supabase.from('messages').select('id')
-    .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
-    .is('external_id', null).gte('created_at', recentCutoff)
-    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  // Linha pendente que este eco pode adotar: exige CLAIM DE ENTREGA VIVO e, para
+  // texto, conteudo igual — sem isso o eco de duas mensagens seguidas caia na
+  // linha errada e um `failed` digitado no celular era ressuscitado. Quando
+  // adota, limpa o claim e guarda o token em delivery_last_claim_token para o
+  // complete_outbound_message ficar idempotente.
+  const pending = await findPendingOutboundClaim(supabase, {
+    contactId: contact.id,
+    connectionId: connection.id,
+    messageType: parsed.messageType,
+    content: parsed.messageType === 'text' ? parsed.content : null,
+  });
 
-  if (pendingMessage?.id) {
-    await supabase.from('messages').update({ status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString() }).eq('id', pendingMessage.id);
+  if (pending) {
+    await supabase.from('messages').update({
+      status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString(),
+      delivery_claim_token: null, delivery_claimed_at: null,
+      delivery_claim_expires_at: null, delivery_claimed_by: null,
+      delivery_last_claim_token: pending.claimToken,
+    }).eq('id', pending.id);
     return;
   }
 
