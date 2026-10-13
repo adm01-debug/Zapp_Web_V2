@@ -3,15 +3,19 @@ Especialista: worker (geral)
 # Auditoria — testes irmãos com render pesado + timeout padrão de 5 s (TalkX)
 
 ## O que mudou
-Nenhum arquivo de teste. Auditoria somente-leitura de `src/components/talkx/__tests__/` e vizinhos
-que importam a árvore TalkX. Commit: `docs(testes): auditoria de risco de timeout padrão na árvore
-TalkX` (o relato). Escopo respeitado por desenho do cartão: nada foi corrigido aqui.
+Auditoria somente-leitura de `src/components/talkx/__tests__/` e vizinhos que importam a árvore
+TalkX. Nenhum arquivo de teste foi tocado; a entrega é a lista priorizada abaixo (commit
+`docs(testes): auditoria de risco de timeout padrão na árvore TalkX (relato priorizado)`).
 
-## Prova (comando + linha de resultado)
-Comando: `python3 .tmp/audit_resumo.py` (lê os imports, conta `findBy*`/`waitFor` e `timeout:` por arquivo)
-
-Resultado: `AUDITORIA OK: 79 arquivos .test.tsx; 28 importam componente de topo/pagina; 1 tem timeout
-explicito; risco ALTO=12 MEDIO=4 BAIXO=5`
+## Prova (comandos + linhas de resultado)
+1. `python3 .tmp/audit_resumo.py` — lê os imports, conta `findBy*`/`waitFor` e `timeout:` por arquivo:
+   `AUDITORIA OK: 79 arquivos .test.tsx; 28 importam componente de topo/pagina; 1 tem timeout explicito; risco ALTO=12 MEDIO=4 BAIXO=5`
+2. `npx vitest run src/components/talkx/__tests__/TalkXSegments.groups.test.tsx` (1 dos ALTO, monta o
+   `TalkXSegments` real):
+   `Test Files 1 passed (1)` / `Tests 10 passed (10)`
+3. `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` (o caso de referência,
+   `TalkXSegments` real + `findBy` sem timeout): o caso "em breve" reproduz o defeito no estado atual
+   da base — é exatamente o defeito que o cartão `t_929fd1a5` corrige. Confirma que o risco é real.
 
 ## Causa do defeito de referência
 `RuleValueInput.test.tsx` monta o `TalkXSegments` REAL (sem mock da árvore) e faz
@@ -27,7 +31,7 @@ componentes locais leves → fora do risco.
 
 ## ALTO (12) — mesmo padrão do RuleValueInput
 1. `src/components/talkx/__tests__/RuleValueInput.test.tsx` — TalkXSegments real; 5 `findBy` + 1
-   `waitFor` (6), timeout: NÃO; 5 casos ("em breve": Lead score e Risco de churn…). **Caso confirmado.**
+   `waitFor` (6), timeout: NÃO; 5 casos. **Caso confirmado.**
 2. `src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx` — TalkXSuppression real;
    26 + 11 (37), timeout: NÃO; 16 casos.
 3. `src/components/talkx/__tests__/TalkXSuppression.add.test.tsx` — TalkXSuppression real; 14 + 4
@@ -67,7 +71,7 @@ componentes locais leves → fora do risco.
     7 `findBy`, timeout: SIM (2 explícitos).
 
 ## Sem risco
-28 - (12+4+5) = 7 arquivos importam topo e não esperam com `findBy`/`waitFor`: `TalkXAnalytics.hooks`,
+7 dos 28 importam topo e não esperam com `findBy`/`waitFor`: `TalkXAnalytics.hooks`,
 `TalkXCampaignRunning.remote-completion`, `TalkXCampaignWizard.layout`, `TalkXMultiSegmentos`,
 `TalkXWizardDelivery.confirmacao`, `TalkXWizardDelivery.recomendacoes-cta`, `useCampaignEditor`.
 
