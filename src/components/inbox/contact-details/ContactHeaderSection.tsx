@@ -103,6 +103,15 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
 
   const engagement = engagementScore(contactStats ?? null);
 
+  // Texto do tooltip: acompanha a formula de engagementScore, com o peso de
+  // cada componente. O tempo de resposta so entra como numero quando foi
+  // medido (> 0); zero significa "nenhuma resposta medida" e vira
+  // "sem medida" — antes o cabecalho exibia "resposta media: 0 min", que
+  // sugere resposta instantanea (dado inventado).
+  const avgResponse = contactStats?.avgResponseTimeMinutes ?? 0;
+  const csatCount = contactStats?.csatCount ?? 0;
+  const showCsat = csatCount > 0 && contactStats?.csatAverage != null;
+
   // Anel SVG: usa tokens do tema (decorativo, sem requisito de contraste de texto).
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
   // Badge com número: L reduzido para garantir ≥ 4.5:1 com texto branco (WCAG 1.4.3).
@@ -147,7 +156,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Engajamento {engagementLevel(engagement)} ({engagement}/100) — mensagens: {contactStats?.totalMessages ?? 0}, conversas: {contactStats?.totalConversations ?? 0}, resposta média: {contactStats?.avgResponseTimeMinutes ?? 0} min
+                      Engajamento {engagementLevel(engagement)} ({engagement}/100) — mensagens: {contactStats?.totalMessages ?? 0} (até 40), conversas: {contactStats?.totalConversations ?? 0} (até 25), resposta média: {avgResponse > 0 ? `${avgResponse} min` : 'sem medida'} (até 20){showCsat ? `, satisfação: ${contactStats?.csatAverage} (${csatCount} avaliações, até 15)` : ''}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

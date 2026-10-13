@@ -234,13 +234,33 @@ describe('ContactHeaderSection', () => {
     expect(screen.getByText('65')).toBeInTheDocument();
   });
 
-  it('mostra a faixa no tooltip junto da formula (mensagens/conversas/resposta)', async () => {
+  it('mostra a faixa no tooltip com os pesos de cada componente e o CSAT', async () => {
+    // 100 msgs→20; 4 conversas→10; 10 min→20; CSAT 5 (3 avaliações)→15 = 65
     contactStatsMock = { totalMessages: 100, totalConversations: 4, avgResponseTimeMinutes: 10, csatAverage: 5, csatCount: 3 };
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('65');
     fireEvent.pointerMove(badge, { pointerType: 'mouse' });
     expect(await screen.findByText(/Engajamento Médio \(65\/100\)/)).toBeInTheDocument();
-    expect(screen.getByText(/mensagens: 100, conversas: 4, resposta média: 10 min/)).toBeInTheDocument();
+    const tip = screen.getByText(/mensagens: 100/);
+    // Cada componente entra com o seu peso (a fórmula é explicada, não só listada).
+    expect(tip).toHaveTextContent('mensagens: 100 (até 40)');
+    expect(tip).toHaveTextContent('conversas: 4 (até 25)');
+    expect(tip).toHaveTextContent('resposta média: 10 min (até 20)');
+    // O CSAT (média e quantidade de avaliações) aparece e fecha a conta 65/100.
+    expect(tip).toHaveTextContent('satisfação: 5 (3 avaliações, até 15)');
+  });
+
+  it('tooltip usa "sem medida" (e omite o CSAT) quando não há resposta medida nem avaliações', async () => {
+    // 50 msgs→10; 2 conversas→5; resposta 0 = não medida→0; sem CSAT→0 = 15
+    contactStatsMock = { totalMessages: 50, totalConversations: 2, avgResponseTimeMinutes: 0, csatAverage: null, csatCount: 0 };
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
+    const badge = screen.getByText('15');
+    fireEvent.pointerMove(badge, { pointerType: 'mouse' });
+    expect(await screen.findByText(/Engajamento Baixo \(15\/100\)/)).toBeInTheDocument();
+    const tip = screen.getByText(/mensagens: 50/);
+    expect(tip).toHaveTextContent('resposta média: sem medida (até 20)');
+    expect(tip).not.toHaveTextContent('resposta média: 0 min');
+    expect(tip).not.toHaveTextContent('satisfação');
   });
 
   it('nao mostra pontuacao com enrich rico quando nao ha estatisticas (o cabecalho nao inventa)', () => {
