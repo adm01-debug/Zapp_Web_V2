@@ -144,7 +144,8 @@ describe('useCustomEmojis — ordenação e paginação', () => {
     );
     // 500 + 2 novas; a repetida não entra duas vezes.
     expect(view.result.current.emojis).toHaveLength(CUSTOM_EMOJIS_PAGE_SIZE + 2);
-    expect(view.result.current.emojis.at(-1)?.id).toBe('e501');
+    const lista = view.result.current.emojis;
+    expect(lista[lista.length - 1]?.id).toBe('e501');
     expect(view.result.current.hasMore).toBe(false);
   });
 });
