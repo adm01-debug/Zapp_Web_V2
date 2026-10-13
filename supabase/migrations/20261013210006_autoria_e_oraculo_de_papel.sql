@@ -25,9 +25,11 @@
 --                 autoria forjavel/ausente. Agora um BEFORE INSERT carimba o autor a
 --                 partir de auth.uid(); quando nao ha JWT (service_role/interno) o valor
 --                 explicito e preservado.
---   F2 (UPDATE)   calls e email_messages tinham policy de UPDATE so com USING, sem
---                 WITH CHECK: o agente podia reescrever agent_id/gmail_account_id do
---                 registro e reatribui-lo a outro dono. WITH CHECK espelha o USING.
+--   F2 (UPDATE)   calls e email_messages tinham policy de UPDATE so com USING. No
+--                 Postgres, USING vira WITH CHECK implicito quando o WITH CHECK e
+--                 omitido, entao a reatribuicao ja era negada na pratica — mas de forma
+--                 implicita e invisivel. O WITH CHECK passa a ser explicito (pedido do
+--                 cartao) espelhando o USING, deixando a regra auditavel em pg_policies.
 --   F3 (oraculo)  has_role/is_admin_or_supervisor/is_admin/get_profile_role_for_check
 --                 respondiam por qualquer _user_id: qualquer autenticado descobria se
 --                 OUTRO usuario e admin. Passam a usar public.secd_caller_ok (mesmo

@@ -11,9 +11,10 @@
 -- Tudo em UMA transacao com ROLLBACK no fim: nenhum dado fica. Qualquer assertiva
 -- falha com excecao (ON_ERROR_STOP do chamador reprova); passa com 'OK'.
 --
--- A prova NAO e tautologica: cada assertiva contradiz o comportamento antigo —
--- F1 insere sem autoria (antes gravava NULL), F2 reescreve o dono (antes passava) e
--- F3 pergunta por um usuario que E admin (antes respondia true).
+-- A prova que discrimina a correcao e F1 e F3 (comprovadas em vermelho-antes com
+-- .tmp/vermelho_antes.sql): F1 insere sem autoria (antes gravava NULL) e F3 pergunta
+-- por um usuario que E admin (antes respondia true). F2 confirma que a negacao de
+-- reatribuicao/ataque de dono segue valendo com o WITH CHECK agora explicito.
 
 begin;
 
