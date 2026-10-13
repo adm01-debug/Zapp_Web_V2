@@ -21,6 +21,6 @@ Fonte da série (decisão): o V2 não tem tabela de eventos de auth, mas o watch
 - investigação: `mark_pause_investigated(p_pause_id, p_notes)` → `{id, instance, investigated_at, investigated_by, investigation_notes, ja_investigada}`.
 
 ## O que NÃO fiz e por quê
-- Sem tabela e sem appender novos de eventos de auth: a fonte real já existe no watchdog.
-- Não editei `supabase/schema-manifest.json` nem `schema-catalog.json` (regenerados pelo workflow de sync; não se edita à mão).
-- Este workspace carrega a faixa do IP1 por cherry-pick (commit `chore(db): traz faixa do IP1...`), porque a branch do dia ainda não tinha as pausas; os arquivos do IP1 aparecem no diff, mas não são desta entrega.
+- Sem tabela/appender novos de auth (a fonte real já existe no watchdog); não editei `schema-manifest.json`/`schema-catalog.json` (regenerados pelo sync).
+- Este workspace carrega a faixa do IP1 por cherry-pick (`chore(db): traz faixa do IP1...`): a branch do dia ainda não tinha as pausas; os arquivos do IP1 estão no diff, mas não são desta entrega.
+- O juiz avisou "código alterado sem teste novo (`types.ts`)": o teste desta entrega é a suíte SQL `supabase/tests/instance_pause_investigation.sql`, que não casa com o padrão de nome de teste do juiz; os types foram tipados no mesmo escopo — nada a corrigir.
