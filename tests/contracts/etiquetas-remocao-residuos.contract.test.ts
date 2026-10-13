@@ -40,12 +40,14 @@ describe('resíduos da remoção de Etiquetas (TRA-010)', () => {
     expect(read('src/hooks/crm/index.ts')).not.toMatch(/useTags/);
   });
 
-  it('o inventário distingue contacts.tags, ai_conversation_tags e contact_tags_ext', () => {
+  it('o inventário não lista etiquetas de contato; mantém só o contrato externo do CRM', () => {
     const inventario = read('src/components/docs/featuresSectionsData.ts');
 
-    expect(inventario).toMatch(/contacts\.tags/);
-    expect(inventario).toMatch(/"ai_conversation_tags"/);
+    // Fica: o contrato EXTERNO do CRM (não é modelo local de etiqueta).
     expect(inventario).toMatch(/contact_tags_ext/);
+    // Saiu (t_dd25f4b4): o array de etiqueta do contato e a tabela local do módulo removido.
+    expect(inventario).not.toMatch(/contacts\.tags/);
+    expect(inventario).not.toMatch(/ai_conversation_tags/);
     // As tabelas LOCAIS removidas não podem voltar ao inventário.
     expect(inventario).not.toMatch(/"contact_tags"/);
     expect(inventario).not.toMatch(/"tags"/);
