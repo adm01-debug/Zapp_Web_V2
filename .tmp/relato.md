@@ -17,6 +17,8 @@ Especialista: Hugo (area-front-hooks)
 
 ## O que NÃO fiz e por quê
 
+- `src/components/inbox/ConversationListSidebar.tsx` aparece no diff do cartão porque veio do cherry-pick de `e863a7413` (cartão-pai, já entregue): eu não abri nem editei esse arquivo — o único commit em que ele muda é o trazido do pai. Nenhuma linha da minha autoria toca telas.
+
 - Não editei `useRealtimeMessages.ts` (somente leitura no cartão) nem telas (`RealtimeInboxView`, `ConversationListSidebar` vida da UI): o visual da Inbox é do worker (telas).
 - Não pluguei `markManyMessagesAsRead` em nenhuma tela: hoje nenhuma tela marca várias conversas de uma vez; ela é a entrada em lote usada por `markMessagesAsRead` e pelos casos 2 e 5 do contrato.
 - Não tratei o "flapping" da conversa selecionada (estabilização do `selectedContactId`): isso é estado de UI em `useInboxUIState`, fora dos arquivos que o cartão autoriza, e o sintoma que o cartão descreve na leitura (contador que não zera) está coberto pelo efeito novo.
