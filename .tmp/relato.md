@@ -43,6 +43,21 @@ uma flag de `localStorage` que o hook deixou de ler (MORTA). Resultado: o
   - `npx playwright test --project=chromium-onboarding-dispensar --workers=1 --timeout=120000` → `1 passed`
   - `npx playwright test --project=chromium-telefonia --workers=1 --timeout=120000` → `8 passed`
 
+## Faixa do cartão PAI (cherry-pick — não é trabalho meu)
+
+Para o critério de pronto (`settings-persistencia` verde no projeto `chromium-settings`)
+o workspace precisava da faixa do cartão pai, que ainda não está na branch do dia;
+trouxe os 6 commits por cherry-pick (`67d7c72a4 8a891ca5e 863b52422 177e2e792
+776e021a1 4c9a29ce4`, como fez o próprio pai). Estes arquivos aparecem no diff do
+cartão mas NÃO foram editados por mim:
+
+- `e2e/settings-persistencia.spec.ts`, `playwright.config.ts`
+- `src/components/settings/AppearanceSettings.tsx`, `src/components/settings/SettingsView.tsx`
+- `src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx`, `src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx`, `src/components/settings/__tests__/SettingsView.test.tsx`
+- `src/hooks/__tests__/useOnboarding.test.tsx`, `src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx`, `src/hooks/__tests__/useUserSettings.test.tsx`, `src/hooks/ui/__tests__/useDensity.test.ts`
+- `src/hooks/system/useUserSettings.ts`, `src/hooks/ui/useOnboarding.ts`, `src/i18n/index.ts`, `src/integrations/supabase/types.ts`
+- `supabase/migrations/20261013044344_user_settings_onboarding_completed.sql`, `supabase/tests/user_settings_onboarding_completed.sql`
+
 ## O que NÃO fiz e por quê
 
 - `playwright.config.ts` aparece no diff do cartão (ESCOPO GLOBAL) por CHERRY-PICK
