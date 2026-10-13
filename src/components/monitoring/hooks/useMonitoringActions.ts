@@ -84,15 +84,26 @@ export function groupExpectedEvents(expected: string[]): Array<{ label: string; 
   return CATEGORY_ORDER.filter((l) => groups.has(l)).map((label) => ({ label, events: groups.get(label)! }));
 }
 
-function stagesFor(outcome: 'ok' | 'sem-credencial' | 'entrega-falhou' | 'sem-rede', status?: number): WebhookTestStage[] {
+function stagesFor(outcome: 'ok' | 'sem-credencial' | 'credencial-recusada' | 'entrega-falhou' | 'sem-rede', status?: number): WebhookTestStage[] {
   const signatureOk: WebhookTestStage = { id: 'signature', label: STAGE_SIGNATURE, state: 'ok', detail: 'Credencial presente' };
   const deliveryOk: WebhookTestStage = { id: 'delivery', label: STAGE_DELIVERY, state: 'ok', detail: `Webhook respondeu HTTP ${status ?? 200}` };
-  const persistence: WebhookTestStage = { id: 'persistence', label: STAGE_PERSISTENCE, state: 'ok', detail: PERSISTENCE_NOTE };
+  // A Gravação NÃO é medida pelo servidor: o autoteste usa o evento reservado, que
+  // nada grava. Marcar 'ok' aqui seria um ícone verde sem medição — fica neutro.
+  const persistence: WebhookTestStage = { id: 'persistence', label: STAGE_PERSISTENCE, state: 'skipped', detail: PERSISTENCE_NOTE };
 
   if (outcome === 'sem-credencial') {
     return [
       { id: 'signature', label: STAGE_SIGNATURE, state: 'fail', detail: 'Credencial ausente — o webhook responderia 401' },
       { id: 'delivery', label: STAGE_DELIVERY, state: 'skipped', detail: 'Não executada: sem credencial não há o que entregar' },
+      { id: 'persistence', label: STAGE_PERSISTENCE, state: 'skipped', detail: 'Não executada' },
+    ];
+  }
+  // 401/403 do webhook = a credencial foi RECUSADA: a falha é de assinatura, não de
+  // entrega — a entrega nem chega a ser executada.
+  if (outcome === 'credencial-recusada') {
+    return [
+      { id: 'signature', label: STAGE_SIGNATURE, state: 'fail', detail: `Credencial recusada pelo webhook (HTTP ${status ?? 401})` },
+      { id: 'delivery', label: STAGE_DELIVERY, state: 'skipped', detail: 'Não executada: o webhook recusou a assinatura' },
       { id: 'persistence', label: STAGE_PERSISTENCE, state: 'skipped', detail: 'Não executada' },
     ];
   }
@@ -149,13 +160,6 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
       if (!res || res.action !== 'selftest') throw new Error('Resposta inesperada do autoteste no servidor.');
       const latencyMs = typeof res.latencyMs === 'number' ? res.latencyMs : undefined;
 
-      if (res.reason === 'sem-instancia') {
-        setWebhookTest({
-          status: 'error', instance: instanceId, reason: res.reason, stages: stagesFor('sem-rede'),
-          message: res.error || 'Instância não informada ao autoteste.',
-        });
-        return;
-      }
       if (res.reason === 'sem-credencial') {
         setWebhookTest({
           status: 'error', instance: instanceId, reason: res.reason, latencyMs, stages: stagesFor('sem-credencial'),
@@ -163,10 +167,16 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
         });
         return;
       }
+      // O servidor devolve o status do webhook na resposta. 401/403 = credencial
+      // recusada (falha de assinatura); os demais só falharam na entrega.
       if (!res.ok) {
+        const refused = res.status === 401 || res.status === 403;
         setWebhookTest({
-          status: 'error', instance: instanceId, reason: res.reason ?? 'falha', latencyMs, stages: stagesFor('entrega-falhou', res.status),
-          message: res.error || `Webhook respondeu HTTP ${res.status ?? '—'}`,
+          status: 'error', instance: instanceId, reason: refused ? 'credencial-recusada' : (res.reason ?? 'falha'), latencyMs,
+          stages: stagesFor(refused ? 'credencial-recusada' : 'entrega-falhou', res.status),
+          message: refused
+            ? `O webhook recusou a credencial da instância (HTTP ${res.status}). Confira o token no Vault e teste de novo.`
+            : (res.error || `Webhook respondeu HTTP ${res.status ?? '—'}`),
         });
         return;
       }
