@@ -19,11 +19,11 @@ Especialista: iris
 - Guarda do CI do 2º ponto (vermelho antes → verde depois): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 scripts/ci/docs-estado-registry-convention.unit.mjs`
   - antes: `ESTADO.md cita só âncoras reais ... FAILED` — `AssertionError: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest``
   - depois: `ok | 11 passed | 0 failed (29s)`
-- Guarda do 1º ponto: `node scripts/ci/implicit-any-ratchet.mjs` → `implicit-any errors: 0 (baseline: 0)`
+- Guarda do 1º ponto: `node scripts/ci/implicit-any-ratchet.mjs` → nesta máquina NÃO fecha, por falha do compilador e não por erro de tipo: `ERRO no implicit-any ratchet: tsc saiu com exit null (falha de CLI, nao lista de diagnosticos): (vazia)`. O `tsc` direto (`node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --noImplicitAny`) devolve exit 137 (SIGKILL do OOM killer), com `load average 47` e ~3 GB livres. O baseline é 0 e o diff desta rodada (1 linha de `ESTADO.md`, nenhum `.ts`/`.tsx`) não tem nenhum `error TS7`; o aborto é carga da máquina compartilhada.
 - Testes do cartão: `npx vitest run src/components/knowledge src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` → `Test Files 4 passed (4); Tests 30 passed (30)`
 
 ## Pontos da entrega (refazer 2)
-- Ponto 1 — `implicit-any-ratchet.mjs`: não havia `any` novo no diff; o vermelho anterior era operacional (o `tsc` local não estava instalado e o ratchet abortava por ausência do compilador). Após `bun install`, roda e devolve `implicit-any errors: 0 (baseline: 0)`.
+- Ponto 1 — `implicit-any-ratchet.mjs`: o diff não adiciona `any` (nesta rodada, nenhum `.ts`/`.tsx`); segue vermelho aqui apenas porque o `tsc` é morto pelo OOM killer (exit 137 / `exit null` — falha de execução, não lista de diagnósticos). Não é ponto de código; é memória da máquina.
 - Ponto 2 — âncora do `ESTADO.md`: realinhada de `:99` para `:126`, a linha do invoke atual de `ai-kb-ingest`; a guarda deno passa `11 passed | 0 failed`. Nesta rodada só `ESTADO.md` foi tocado.
 - Ponto 3 — `zapp-verify full .` (pedido no corpo do cartão): reproduzi o comando. O conjunto `tipos` fica vermelho só por OOM do `tsc` (exit 137, "falha de execução, NÃO é aprovação"), sob load ~45–148 e menos de 3 GB livres; não há como um diff de 1 linha de `ESTADO.md` (nenhum `.ts`/`.tsx`) gerar erro de tipo. Não é ponto de código; é carga da máquina compartilhada.
 
