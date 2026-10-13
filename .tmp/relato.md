@@ -1,61 +1,28 @@
-Especialista: hugo
+Especialista: Íris (area-front-componentes)
+
+Cartão: t_27e4d0db — fix(emojis): acessibilidade e erros visíveis no seletor de emoji personalizado
 
 ## O que mudou e por quê
-- src/hooks/integrations/useCustomEmojis.ts (handleFileSelect): agora lê o usuário
-  autenticado e sobe em `<auth.uid()>/emoji_<ts>_<uuid>.<ext>` em vez da raiz. A
-  policy de INSERT do bucket `custom-emojis` aceita admin/supervisor OU a pasta do
-  próprio uid — na raiz, o atendente comum recebia erro de permissão (item 1).
-  Sem sessão identificada, aborta com toast.error em vez de tentar a raiz.
-- src/hooks/integrations/useCustomEmojis.ts (handleSend): o UPDATE direto em
-  `use_count` atinge 0 linhas para emoji de outro dono (policy de UPDATE é do
-  dono/admin) e sumia sem erro; trocado pela RPC `increment_custom_emoji_use`
-  (PB-35, SECURITY DEFINER), com toast.error quando ela falha (item 3).
-- src/hooks/integrations/useCustomEmojis.ts (handleConfirmUpload): trava de
-  reentrância por ref (síncrona, antes de qualquer await) + estado `saving`
-  exposto; nome passa por `trim()` e nome vazio é recusado com toast.error — dois
-  cliques no mesmo tick criavam duas linhas (item 2).
-- src/components/inbox/CustomEmojiPicker.tsx: Salvar desabilitado enquanto salva
-  (spinner `motion-safe:animate-spin`, respeita reduzir movimento) e enquanto o
-  nome estiver vazio (com `title` explicando); Cancelar
-  desabilitado durante o save; fechar o popover com prévia pendente agora chama
-  `handleCancelUpload` (remove o objeto do Storage) em vez de só limpar o estado —
-  era o caminho do órfão (item 2).
-- src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx (novo): 9
-  testes cobrindo caminho com uid, sessão ausente, cancelar sem órfão, fechar o
-  popover sem órfão, duplo clique em 1 linha, nome vazio barrado, nome com trim,
-  envio pela RPC e erro da RPC.
-- Exclusão (handleDelete): NÃO mudou. A extração do caminho
-  (`split('/custom-emojis/')[1]`) já devolve `uid/arquivo` no formato novo e o
-  nome antigo da raiz no legado; a policy de DELETE não mudou, então o objeto
-  antigo da raiz continua sendo apagado quando quem apaga tem permissão (item 1).
+- `src/components/inbox/CustomEmojiPicker.tsx`: `aria-label="Favoritar"` e `aria-label="Excluir"` nos controles do overlay de cada emoji, que antes eram botões anônimos (só ícone, nenhum nome acessível) — PROBLEMA item 1.
+- mesmo arquivo: `group-focus-within:opacity-100` no overlay + `focus-visible:ring-2` nos dois botões: com foco por teclado o overlay aparece e o foco fica visível (antes o overlay só aparecia no hover do mouse).
+- mesmo arquivo: `normalizeSearch()` (NFD + remoção de diacríticos + minúscula) aplicado a nome e categoria na busca — "coracao", "CORACAO" e "AMOR" passam a achar "Coração" (antes só acerto exato de acento/caixa).
+- mesmo arquivo: `aria-label="Limpar busca"` no botão X da busca (mesma auditoria de rótulos).
+- `src/components/inbox/__tests__/CustomEmojiPicker.acessibilidade.test.tsx` (novo): renderiza o componente REAL `CustomEmojiPicker` (não mock do componente).
+
+## Item 2 do cartão: Tooltip + Popover, verificado em execução (registro)
+O cartão pede para verificar o Tooltip envolvendo o Popover "e registrar". Verifiquei em execução: o teste "abre e fecha o popover com o Tooltip junto, sem loop de render" abre o popover, fecha com Esc e reabre — nenhum loop, nenhum estouro de render. NÃO removi o Tooltip: a V2 oferece o tooltip no hover e não há defeito a corrigir aqui.
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx`
-  com os dois arquivos de origem restaurados ao HEAD → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`
-- verde depois: mesmo comando com a correção → `Test Files 1 passed (1); Tests 9 passed (9)`
-- sem regressão no teste que já existia:
-  `npx vitest run ...uploadUid.test.tsx ...persistencia.test.tsx` → `Test Files 2 passed (2); Tests 16 passed (16)`
-- verificação do cartão: `zapp-verify . --rapido` (bloco FATOS MEDIDOS deste fechar)
-
-## Dependência (cartão pai t_1d123124, não integrado)
-`git merge-base --is-ancestor 9e0ee270d HEAD` era falso; a faixa do pai (1 commit,
-autor worker (sql)) foi trazida com `git cherry-pick -x 9e0ee270d` → novo sha
-`0cbeb8f17`. Sem conflito. Os dois arquivos de `supabase/` que o diff mostra
-(`supabase/migrations/20261013012531_custom_emoji_use_rpc.sql` e
-`supabase/tests/custom_emoji_use_rpc_increment.sql`) vêm SÓ desse cherry-pick: são
-o pré-requisito que o próprio cartão manda trazer (item 3 depende da RPC do pai).
-Não escrevi nem alterei SQL — se o portão preferir, eles podem ser descartados e
-deixados para a integração da faixa do pai.
+- vermelho antes: `npx vitest run src/components/inbox/__tests__/CustomEmojiPicker.acessibilidade.test.tsx` com o componente na base (sem a minha mudança) → `Tests 3 failed | 1 passed (4)`, erros: `Unable to find an element with the alt text: Coração`, `Unable to find an accessible element with the role "button" and name "Favoritar"`, `... name "Limpar busca"`.
+- verde depois: `npx vitest run src/components/inbox/__tests__/CustomEmojiPicker.acessibilidade.test.tsx src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx` → `Test Files 2 passed (2); Tests 13 passed (13)`.
 
 ## O que NÃO fiz e por quê
-- Não mexi em handleDelete nem na migration/policy do bucket `custom-emojis`: nada
-  a mudar no código (a extração de caminho serve os dois formatos) e a policy já
-  é a trilha de banco, fora dos arquivos deste cartão.
-- Não editei `src/integrations/supabase/types.ts` (fora dos arquivos permitidos): a
-  RPC é nova e o types.ts ainda não está sincronizado; segui o padrão já existente
-  no repositório (`src/components/dashboard/useSentimentData.ts`) com
-  `// eslint-disable-next-line @typescript-eslint/no-explicit-any` e comentário do
-  motivo no código.
-- Não adiei o upload para o Salvar (a alternativa da V3): escolhi o outro caminho
-  que o cartão permite — remover o objeto ao fechar com prévia pendente — para não
-  mudar o fluxo do atendente nem o formato do `pendingUpload`.
+- NÃO CONCLUÍ o item 2 do CRITÉRIO DE PRONTO ("erro de upload visível com nova tentativa"): a mensagem de erro de upload nasce em `src/hooks/integrations/useCustomEmojis.ts`, que só emite `toast.error` e não expõe nenhum estado de erro para a tela ler. Esse arquivo é da área de hooks e NÃO está em "ARQUIVOS QUE PODE TOCAR" (só `CustomEmojiPicker.tsx` + testes) — não toquei nele. Criado o cartão novo **t_9d534f75** ("fix(emojis): erro de upload com retry e ordenacao/paginacao do hook de emojis") para a área de hooks; também registrei no comentário #11826.
+- Não fiz "desempate estável e carregar mais além de 500" (`.order('use_count').limit(500)` em `fetchEmojis`) pelo mesmo motivo (hook): está no cartão novo t_9d534f75.
+- Não fiz confirmação/"Desfazer" ao excluir: `handleDelete` é do hook — também no t_9d534f75.
+- Atenção de colisão: o cartão pai (t_25ece6dc) foi devolvido em refazer nesse mesmo hook; quem pegar o t_9d534f75 deve combinar com esse refazer.
+
+Concluí os critérios 1 (controles acessíveis por teclado: rótulos + foco visível, provado no teste) e 3 (zapp-verify verde). O critério 2 depende do hook e está no cartão novo acima.
+
+## Estado da tela alterada
+- carregando (spinner), vazio ("Clique em + para adicionar") e lista com emojis: os três já existiam e seguem funcionando; a mudança é de rótulos, foco e busca. Nenhum valor/teto/escala/prop foi alterado — nada além do componente e do teste foi tocado.
