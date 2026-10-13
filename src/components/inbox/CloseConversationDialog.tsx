@@ -83,6 +83,34 @@ export function CloseConversationDialog({
   }, [open, contactId]);
 
 
+  // CSAT automático: encerrar a conversa é a única porta de envio da pesquisa
+  // (Edge `csat-auto-send`, que decide config/consentimento/cooldown e é
+  // idempotente por `closure_id`). A chamada roda DEPOIS do encerramento
+  // confirmado e NUNCA o bloqueia: falha da Edge vira aviso discreto, e uma
+  // recusa normal (config desligada, cooldown, consentimento revogado) fica
+  // em silêncio — a tela de configuração explica esses casos.
+  const triggerCsatAutoSend = async (closureId?: string | null) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('csat-auto-send', {
+        body: {
+          contact_id: contactId,
+          ...(closureId ? { closure_id: closureId } : {}),
+        },
+      });
+      if (error) throw error;
+      const resultado = data as { sent?: boolean } | null;
+      if (resultado?.sent === true) {
+        toast.info('Pesquisa de satisfação enviada ao cliente');
+      }
+    } catch (erro) {
+      console.warn(
+        '[CloseConversationDialog] CSAT auto-send falhou (não bloqueia o encerramento):',
+        erro,
+      );
+      toast.info('Conversa encerrada, mas a pesquisa de satisfação não pôde ser enviada.');
+    }
+  };
+
   const handleClose = async () => {
     if (!reason || saving) {
       if (!reason) {
@@ -105,6 +133,9 @@ export function CloseConversationDialog({
       if (error || data?.length !== 1 || data[0]?.conversation_status !== 'resolved') {
         throw error ?? new Error('Encerramento não confirmado pelo servidor');
       }
+      // O encerramento é a chave de idempotência da pesquisa: a Edge usa este
+      // id como `client_message_id`, então a mesma conversa nunca gera duas.
+      const closureId = data[0]?.closure_id;
 
       // The RPC commits closure, FSM transition and timeline event together.
       window.dispatchEvent(
@@ -123,6 +154,8 @@ export function CloseConversationDialog({
         setNotes('');
       }
       onClosed?.();
+      // Fora do caminho crítico: o fechamento já está confirmado e persistido.
+      void triggerCsatAutoSend(closureId);
     } catch (error) {
       console.warn('[CloseConversationDialog] Falha no encerramento atômico:', error);
       toast.error('Não foi possível encerrar a conversa. Nenhuma alteração parcial foi salva.');

@@ -34,6 +34,32 @@ export function CSATAutoConfig() {
     },
   });
 
+  // "Último envio": o convite de CSAT é a linha de `messages` cujo
+  // `client_message_id` é o id do encerramento (contrato da Edge
+  // `csat-auto-send`). Os encerramentos recentes dão os ids candidatos; entre
+  // eles, a mensagem mais nova é a última pesquisa enfileirada.
+  const { data: ultimoEnvio, isLoading: carregandoUltimoEnvio } = useQuery({
+    queryKey: ['csat-ultimo-envio'],
+    queryFn: async () => {
+      const { data: encerramentos } = await supabase
+        .from('conversation_closures')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(25);
+      const ids = (encerramentos ?? [])
+        .map((encerramento) => encerramento.id)
+        .filter((id): id is string => Boolean(id));
+      if (ids.length === 0) return null;
+      const { data: convites } = await supabase
+        .from('messages')
+        .select('created_at')
+        .in('client_message_id', ids)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      return convites?.[0]?.created_at ?? null;
+    },
+  });
+
   const [isEnabled, setIsEnabled] = useState(config?.is_enabled ?? false);
   const [delayMinutes, setDelayMinutes] = useState(config?.delay_minutes ?? 5);
   const [template, setTemplate] = useState(config?.message_template ?? DEFAULT_MESSAGE_TEMPLATE);
@@ -77,7 +103,7 @@ export function CSATAutoConfig() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['csat-auto-config'] });
-      toast({ title: 'Configuração CSAT salva!', description: 'As pesquisas de satisfação serão enviadas automaticamente.' });
+      toast({ title: 'Configuração CSAT salva!', description: 'A pesquisa é enviada quando o atendente encerra a conversa.' });
     },
     onError: (err: Error) => {
       toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
@@ -92,7 +118,7 @@ export function CSATAutoConfig() {
           CSAT Automático
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Envie pesquisas de satisfação automaticamente quando um ticket for resolvido.
+          Envie a pesquisa de satisfação automaticamente quando o atendente encerra a conversa.
         </p>
       </div>
 
@@ -103,14 +129,23 @@ export function CSATAutoConfig() {
             Configuração
           </CardTitle>
           <CardDescription>
-            A pesquisa será enviada via WhatsApp após o encerramento do atendimento.
+            A pesquisa sai por WhatsApp no encerramento da conversa: uma vez por conversa, e só
+            se o contato não tiver consentimento revogado nem tiver recebido pesquisa nos últimos
+            30 dias.
           </CardDescription>
+          <p className="text-xs text-muted-foreground mt-2" data-testid="csat-ultimo-envio">
+            {carregandoUltimoEnvio
+              ? 'Verificando o último envio…'
+              : ultimoEnvio
+                ? `Último envio: ${new Date(ultimoEnvio).toLocaleString('pt-BR')}`
+                : 'Nenhuma pesquisa enviada ainda.'}
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-sm font-medium">Ativar CSAT Automático</Label>
-              <p className="text-xs text-muted-foreground">Enviar pesquisa ao resolver ticket</p>
+              <p className="text-xs text-muted-foreground">Enviar pesquisa ao encerrar a conversa</p>
             </div>
             <Switch aria-label="Ativar CSAT Automático" checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
@@ -129,7 +164,7 @@ export function CSATAutoConfig() {
               onChange={e => setDelayMinutes(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Tempo de espera antes de enviar a pesquisa (0 = imediato)
+              O envio automático é imediato: este atraso ainda não é aplicado.
             </p>
           </div>
 

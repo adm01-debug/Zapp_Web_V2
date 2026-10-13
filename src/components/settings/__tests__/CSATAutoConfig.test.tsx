@@ -14,6 +14,9 @@ const banco = vi.hoisted(() => ({
   config: null as Record<string, unknown> | null,
   updates: [] as Record<string, unknown>[],
   inserts: [] as Record<string, unknown>[],
+  encerramentos: [] as { id: string }[],
+  ultimoConvite: null as string | null,
+  filtroIds: null as string[] | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -23,6 +26,33 @@ vi.mock('@/integrations/supabase/client', () => {
   const from = (table: string) => {
     if (table === 'whatsapp_connections') {
       return { select: () => Promise.resolve({ data: conexoes, error: null }) };
+    }
+    if (table === 'conversation_closures') {
+      return {
+        select: () => ({
+          order: () => ({
+            limit: () => Promise.resolve({ data: banco.encerramentos, error: null }),
+          }),
+        }),
+      };
+    }
+    if (table === 'messages') {
+      return {
+        select: () => ({
+          in: (_coluna: string, ids: string[]) => {
+            banco.filtroIds = ids;
+            return {
+              order: () => ({
+                limit: () =>
+                  Promise.resolve({
+                    data: banco.ultimoConvite ? [{ created_at: banco.ultimoConvite }] : [],
+                    error: null,
+                  }),
+              }),
+            };
+          },
+        }),
+      };
     }
     // csat_auto_config
     return {
@@ -77,6 +107,9 @@ describe('CSATAutoConfig — sincronização do formulário com a configuração
     banco.config = null;
     banco.updates = [];
     banco.inserts = [];
+    banco.encerramentos = [];
+    banco.ultimoConvite = null;
+    banco.filtroIds = null;
   });
 
   it('mostra no formulário os valores da configuração carregada', async () => {
@@ -134,6 +167,42 @@ describe('CSATAutoConfig — sincronização do formulário com a configuração
   it('o seletor de conexão WhatsApp é alcançável por nome', async () => {
     renderConfig();
     expect(screen.getByRole('combobox', { name: 'Conexão WhatsApp' })).toBeInTheDocument();
+  });
+
+  it('descreve o envio real e NÃO promete o atraso que a Edge não aplica', async () => {
+    banco.config = { ...CONFIG_SALVA };
+    renderConfig();
+
+    await waitFor(() =>
+      expect(screen.getByText(/no encerramento da conversa: uma vez por conversa/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText('O envio automático é imediato: este atraso ainda não é aplicado.')).toBeInTheDocument();
+    // A promessa antiga ("tempo de espera") não pode sobreviver em nenhum texto.
+    expect(screen.queryByText(/Tempo de espera antes de enviar/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Enviar pesquisa ao resolver ticket/i)).not.toBeInTheDocument();
+  });
+
+  it('mostra a data do último envio, achando o convite pelo id do encerramento', async () => {
+    banco.config = { ...CONFIG_SALVA };
+    banco.encerramentos = [{ id: 'closure-9' }, { id: 'closure-8' }];
+    banco.ultimoConvite = '2026-10-12T15:30:00.000Z';
+    renderConfig();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('csat-ultimo-envio')).toHaveTextContent(/^Último envio: /),
+    );
+    // O convite é procurado por `client_message_id` ∈ ids dos encerramentos.
+    expect(banco.filtroIds).toEqual(['closure-9', 'closure-8']);
+  });
+
+  it('avisa quando nenhuma pesquisa foi enviada ainda', async () => {
+    banco.config = { ...CONFIG_SALVA };
+    banco.encerramentos = [];
+    renderConfig();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('csat-ultimo-envio')).toHaveTextContent('Nenhuma pesquisa enviada ainda.'),
+    );
   });
 
   it('o axe não acusa violações de label na tela', async () => {

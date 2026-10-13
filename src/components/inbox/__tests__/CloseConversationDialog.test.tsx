@@ -1,13 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const { mockRpc, mockToast } = vi.hoisted(() => ({
+const { mockRpc, mockInvoke, mockToast } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
-  mockToast: { error: vi.fn(), success: vi.fn() },
+  mockInvoke: vi.fn(),
+  mockToast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc: mockRpc },
+  supabase: { rpc: mockRpc, functions: { invoke: mockInvoke } },
 }));
 
 vi.mock('sonner', () => ({ toast: mockToast }));
@@ -50,8 +51,11 @@ import { CloseConversationDialog } from '../CloseConversationDialog';
 describe('CloseConversationDialog', () => {
   it('reuses its idempotency key after a lost RPC response', async () => {
     mockRpc.mockReset();
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue({ data: { sent: true }, error: null });
     mockToast.error.mockReset();
     mockToast.success.mockReset();
+    mockToast.info.mockReset();
     mockRpc
       .mockResolvedValueOnce({ data: null, error: new Error('response lost') })
       .mockResolvedValueOnce({ data: [{ conversation_status: 'resolved' }], error: null });
@@ -74,6 +78,75 @@ describe('CloseConversationDialog', () => {
     expect(mockRpc.mock.calls[0][0]).toBe('close_conversation_atomic');
     expect(mockRpc.mock.calls[0][1].p_client_request_id)
       .toBe(mockRpc.mock.calls[1][1].p_client_request_id);
+    // A pesquisa só sai após o encerramento CONFIRMADO, e uma vez só.
+    await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(1));
+  });
+
+  it('dispara a pesquisa CSAT (csat-auto-send) ao encerrar, com contact_id e closure_id', async () => {
+    mockRpc.mockReset();
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue({ data: { sent: true }, error: null });
+    mockToast.info.mockReset();
+    mockRpc.mockResolvedValueOnce({
+      data: [{ conversation_status: 'resolved', closure_id: '70000000-0000-0000-0000-0000000000c1' }],
+      error: null,
+    });
+
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={vi.fn()}
+        contactId="50000000-0000-0000-0000-000000000009"
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Escolher motivo' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
+
+    await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(1));
+    expect(mockInvoke).toHaveBeenCalledWith('csat-auto-send', {
+      body: {
+        contact_id: '50000000-0000-0000-0000-000000000009',
+        closure_id: '70000000-0000-0000-0000-0000000000c1',
+      },
+    });
+    await waitFor(() =>
+      expect(mockToast.info).toHaveBeenCalledWith('Pesquisa de satisfação enviada ao cliente'),
+    );
+  });
+
+  it('não desfaz o encerramento quando a Edge de CSAT falha', async () => {
+    mockRpc.mockReset();
+    mockInvoke.mockReset();
+    mockToast.info.mockReset();
+    mockToast.success.mockReset();
+    mockToast.error.mockReset();
+    const onOpenChange = vi.fn();
+    mockInvoke.mockResolvedValue({ data: null, error: new Error('edge down') });
+    mockRpc.mockResolvedValueOnce({
+      data: [{ conversation_status: 'resolved', closure_id: '70000000-0000-0000-0000-0000000000c2' }],
+      error: null,
+    });
+
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={onOpenChange}
+        contactId="50000000-0000-0000-0000-000000000010"
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Escolher motivo' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
+
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalledWith('Conversa encerrada com registro'));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    await waitFor(() =>
+      expect(mockToast.info).toHaveBeenCalledWith(
+        'Conversa encerrada, mas a pesquisa de satisfação não pôde ser enviada.',
+      ),
+    );
+    expect(mockToast.error).not.toHaveBeenCalled();
   });
 
   it('arquiva a conversa via set_conversation_status com p_next archived e avisa a lista', async () => {
