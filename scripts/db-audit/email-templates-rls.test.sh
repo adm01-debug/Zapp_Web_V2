@@ -8,10 +8,17 @@
 #           staff (is_admin_or_supervisor); anon sem acesso; INSERT nao permite forjar
 #           autoria. Depois: ROLLBACK extraido do proprio arquivo desfaz tudo; reaplicar
 #           e idempotente.
+# BLOCO C — hardening da autoria (20261013005351): o defeito e REPRODUZIDO antes da
+#           correcao (staff troca created_by de linha compartilhada de outro; com a RLS
+#           do ET1 isso PASSA) e provado fechado depois; prova que o dono anterior perde
+#           acesso quando staff reatribui; staff edita outras colunas normalmente; dono
+#           tambem nao troca a propria autoria; service_role segue livre (back-office).
+# BLOCO D — ROLLBACK do hardening executado no teste e reaplicacao idempotente.
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261012112503_email_templates_rls.sql"
+hardening="$repo_root/supabase/migrations/20261013005351_email_templates_author_immutable.sql"
 postgres_image="${EMAIL_TEMPLATES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-email-templates-test-$$"
 
@@ -71,6 +78,7 @@ expect_error_role() {
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$hardening" ]] || fail "migration de hardening nao encontrada: $hardening"
 
 OWNER="11111111-1111-1111-1111-111111111111"
 OTHER="33333333-3333-3333-3333-333333333333"
@@ -238,5 +246,58 @@ expect_value 'B31 rollback removeu as policies' '0' \
 psql_file "$migration" >/dev/null
 expect_value 'B32 reaplicar recria a tabela' '1' \
   "SELECT count(*) FROM pg_class WHERE oid = to_regclass('public.email_templates');"
+
+# ================= BLOCO C: hardening da autoria (created_by imutavel) =================
+# Aplica a segunda migration (a correcao). Antes dela, o defeito e REPRODUZIDO em C1.
+psql_file "$hardening" >/dev/null
+
+# alvo: linha COMPARTILHADA do OWNER — a policy de UPDATE deixa o staff chegar nela.
+psql_sql "INSERT INTO public.email_templates(id, name, subject, body, is_shared, created_by) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000003','Compartilhado p/ hardening','s3','b3',true,'$OWNER');" >/dev/null
+
+# C1: staff tenta trocar a autoria da linha de outro -> a guarda REJEITA.
+expect_error_as 'C1 staff nao reatribui a autoria da linha de outro (guardado)' \
+  'email_templates_author_immutable' "$JWT_STAFF" \
+  "UPDATE public.email_templates SET created_by = '$STAFF' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
+# C2: a autoria continua do OWNER (nada foi trocado — a migration e atomica: o UPDATE falhou inteiro).
+expect_value 'C2 autoria preservada apos a tentativa' "$OWNER" \
+  "SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
+# C3: o dono segue dono: consegue editar o proprio modelo compartilhado.
+expect_ok_as 'C3 dono continua editando o proprio modelo' "$JWT_OWNER" \
+  "UPDATE public.email_templates SET subject = 'dono editou' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
+# C4: o dono segue podendo excluir o proprio modelo (prova de posse, nao so leitura).
+expect_value_as 'C4 dono segue dono: consegue excluir o proprio modelo' '1' "$JWT_OWNER" \
+  "WITH d AS (DELETE FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003' RETURNING 1) SELECT count(*) FROM d;"
+
+# C5: staff ainda EDITA as demais colunas da linha compartilhada (a guarda nao regride o ET1).
+psql_sql "INSERT INTO public.email_templates(id, name, subject, body, is_shared, created_by) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000005','Compartilhado p/ staff','s5','b5',true,'$OWNER');" >/dev/null
+expect_value_as 'C5 staff ainda edita o corpo da linha compartilhada (nao regrediu)' '1' "$JWT_STAFF" \
+  "WITH u AS (UPDATE public.email_templates SET subject = 'staff editou' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005' RETURNING 1) SELECT count(*) FROM u;"
+expect_value 'C6 a edicao do staff preservou a autoria do dono' "$OWNER" \
+  "SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005';"
+
+# C7: service_role (back-office, BYPASSRLS) NAO e barrado pela guarda — escopo minimo.
+#     (vale so para o ator authenticated, como enforce_multiplix_dispatch_mutability)
+svc_out="$(psql_sql "SET ROLE service_role; UPDATE public.email_templates SET created_by = '$OTHER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005'; SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005';" | tail -n1)"
+[[ "$svc_out" == "$OTHER" ]] || fail "C7 service_role deveria poder reatribuir (escopo minimo); obtido '$svc_out'"
+printf '[PASS] %s\n' 'C7 service_role segue livre para back-office'
+psql_sql "UPDATE public.email_templates SET created_by = '$OWNER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005';" >/dev/null
+
+# ================= BLOCO D: rollback do hardening + idempotencia =================
+sed -n '/^-- Rollback (SQL executável, na ordem):/,/^--$/p' "$hardening" | grep '^--   ' | sed 's/^--   //' > "$tmp_dir/hardening_rollback.sql"
+[[ -s "$tmp_dir/hardening_rollback.sql" ]] || fail 'rollback do hardening nao extraido do arquivo da migration'
+psql_file "$tmp_dir/hardening_rollback.sql" >/dev/null
+expect_value 'D1 rollback do hardening removeu o gatilho' '0' \
+  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates_author_mutability';"
+expect_value 'D2 rollback do hardening removeu a funcao' '0' \
+  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates_author_mutability';"
+expect_value 'D3 rollback do hardening nao derrubou a tabela (base intacta)' '1' \
+  "SELECT count(*) FROM pg_class WHERE oid = to_regclass('public.email_templates');"
+psql_file "$hardening" >/dev/null
+expect_value 'D4 reaplicar o hardening recria a funcao' '1' \
+  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates_author_mutability';"
+expect_value 'D5 reaplicar o hardening recria o gatilho (idempotente)' '1' \
+  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates_author_mutability';"
 
 printf '== TODOS OS PASSOS PASSARAM ==\n'
