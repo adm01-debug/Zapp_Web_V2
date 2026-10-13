@@ -489,6 +489,11 @@ jobs:
           TALKX_SEND_BUDGET_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-send-budget.test.sh
 
+      - name: Simular pre-checagem de retomada no servidor (N-097)
+        env:
+          TALKX_RESUME_PRECHECK_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-resume-precheck.test.sh
+
       - name: Simular eventos do ciclo de vida gravados no servidor (V12)
         env:
           TALKX_V12_LIFECYCLE_EVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
