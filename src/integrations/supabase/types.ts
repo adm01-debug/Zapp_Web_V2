@@ -10422,6 +10422,7 @@ export type Database = {
         Returns: number
       }
       ai_rate_limit_purge: { Args: { p_older_than: string }; Returns: number }
+      ai_sentiment_summary: { Args: { p_days?: number }; Returns: Json }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
       ai_usage_cost_summary: {
         Args: { p_since: string; p_top_functions?: number; p_until: string }
