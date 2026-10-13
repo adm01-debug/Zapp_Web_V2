@@ -72,9 +72,9 @@ function abrirDialogoAdicao() {
 }
 
 describe('AdminView — acessibilidade dos seletores (N-063)', () => {
-  it('getByLabelText("Nível de Acesso") encontra o combobox do diálogo de edição', () => {
+  it('getByLabelText("Nível de acesso (informativo)") encontra o combobox do diálogo de edição', () => {
     abrirDialogoEdicao();
-    expect(screen.getByLabelText('Nível de Acesso')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nível de acesso (informativo)')).toBeInTheDocument();
   });
 
   it('getByLabelText("Role") encontra o combobox do diálogo de adição', () => {

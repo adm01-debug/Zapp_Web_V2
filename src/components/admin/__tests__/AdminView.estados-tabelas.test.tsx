@@ -180,4 +180,36 @@ describe('AdminView — estados das listas (usuários e auditoria)', () => {
     fireEvent.change(senha, { target: { value: '12345678' } });
     expect(screen.getByText('Mínimo 8 caracteres')).toBeInTheDocument();
   });
+
+  it('o nível de acesso se apresenta como informativo, não como permissão', () => {
+    h.estado.users = [
+      {
+        id: 'p1',
+        user_id: 'u1',
+        name: 'Ana Silva',
+        email: 'ana@test.local',
+        avatar_url: null,
+        nickname: null,
+        signature: null,
+        role: 'agent',
+        job_title: null,
+        department: null,
+        phone: null,
+        access_level: 'full',
+        max_chats: null,
+        can_download: false,
+        is_active: true,
+        created_at: '2026-10-01T00:00:00.000Z',
+      },
+    ];
+    render(<AdminView />);
+
+    expect(screen.getByRole('columnheader', { name: 'Acesso (informativo)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Editar Ana Silva/i }));
+    expect(screen.getByLabelText('Nível de acesso (informativo)')).toBeInTheDocument();
+    expect(
+      screen.getByText('Informativo: este nível não libera nada hoje — quem dá acesso é o papel (Role).'),
+    ).toBeInTheDocument();
+  });
 });

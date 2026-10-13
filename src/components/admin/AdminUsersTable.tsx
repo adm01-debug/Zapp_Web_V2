@@ -38,7 +38,9 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
               <TableHead>Usuário</TableHead>
               <TableHead>Cargo/Depto</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Acesso</TableHead>
+              {/* `profiles.access_level` está DEPRECATED e nada no sistema o impõe:
+                  a coluna mostra o dado, mas não pode parecer que concede acesso. */}
+              <TableHead>Acesso (informativo)</TableHead>
               <TableHead>Status</TableHead>
               {isAdmin && <TableHead>Ações</TableHead>}
             </TableRow>
@@ -87,6 +89,10 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="supervisor">Supervisor</SelectItem>
                           <SelectItem value="agent">Atendente</SelectItem>
+                          {/* A role `special_agent` existe no enum `app_role` e é usada
+                              pelo VisibilityGrantsManager; sem esta opção o seletor
+                              ficava vazio e não havia como promover ninguém. */}
+                          <SelectItem value="special_agent">Agente Especial</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (

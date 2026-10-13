@@ -223,7 +223,7 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="access_level">Nível de Acesso</Label>
+                  <Label htmlFor="access_level">Nível de acesso (informativo)</Label>
                   <Select value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
                     <SelectTrigger id="access_level"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -234,6 +234,8 @@ export function AdminView() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */}
+                  <p className="text-xs text-muted-foreground">Informativo: este nível não libera nada hoje — quem dá acesso é o papel (Role).</p>
                 </div>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
