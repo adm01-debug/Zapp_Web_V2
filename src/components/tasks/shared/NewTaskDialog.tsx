@@ -100,18 +100,10 @@ export function NewTaskDialog({
   const [remindAt, setRemindAt] = useState<string | null>(rascunho?.remindAt ?? defaultRemindAt);
   const [enviando, setEnviando] = useState(false);
 
-  /**
-   * Etapa 169: abaixo de 900px a prévia vira acordeão sob o formulário. O acordeão
-   * é um `Collapsible` de verdade (o gatilho traz `aria-expanded`); em ≥900px o
-   * gatilho some e a prévia aparece fixa na coluna da direita.
-   */
+  /** Etapa 169: <900px a prévia vira acordeão (gatilho com `aria-expanded`). */
   const [previaAberta, setPreviaAberta] = useState(false);
 
-  /**
-   * Etapa 170: fechar com título digitado pede confirmação. `criando` evita o
-   * pedido no fechamento legítimo (logo depois do INSERT, com o título ainda no
-   * campo).
-   */
+  /** Etapa 170: `criando` evita o pedido no fechamento legítimo pós-INSERT. */
   const [confirmandoDescarte, setConfirmandoDescarte] = useState(false);
   const [criando, setCriando] = useState(false);
 
@@ -281,12 +273,8 @@ export function NewTaskDialog({
           </div>
 
           <div className="min-w-0 space-y-3 min-[900px]:w-56 min-[900px]:shrink-0">
-            {/*
-              Etapa 169: abaixo de 900px a prévia vira acordeão sob o formulário —
-              o gatilho só existe aí (`min-[900px]:hidden`) e o painel fica oculto
-              enquanto fechado. Em ≥900px o gatilho some e a prévia ocupa a coluna
-              da direita, sempre visível (o `min-[900px]:block` vence o `hidden`).
-            */}
+            {/* Etapa 169: <900px o gatilho (`min-[900px]:hidden`) controla o
+                painel; ≥900px o gatilho some e a prévia ocupa a coluna. */}
             <Collapsible
               open={previaAberta}
               onOpenChange={setPreviaAberta}
