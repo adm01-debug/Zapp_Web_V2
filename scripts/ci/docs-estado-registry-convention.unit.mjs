@@ -57,7 +57,9 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
   .filter((n) => fs.existsSync(path.join(dirFuncoes, n, 'index.ts')))
   .sort();
 
-const invoca = (n) => new RegExp(`invoke\\(\\s*['"\`]${n}['"\`]`);
+// `invoke(` = chamada direta do supabase-js; `invokeEdge(` = wrapper central do front
+// (src/lib/invokeEdge.ts) que injeta o id de correlacao — mesmo chamador de front, grupo A.
+const invoca = (n) => new RegExp(`invoke(?:Edge)?\\(\\s*['"\`]${n}['"\`]`);
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 
