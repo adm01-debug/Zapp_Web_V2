@@ -1,27 +1,27 @@
-Especialista: workertestes
+Especialista: edgar
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê (recusa do revisor, [refazer])
+Corrige o fail-open apontado: em `collectReferencedPaths` o teto `MAX_REFERENCE_ROWS` (e `MAX_SCAN_PER_BUCKET`) cortava a leitura de referências em silêncio, e um objeto cuja linha estava além do teto podia ser apagado como órfão.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+- `supabase/functions/cleanup-storage-orphans/index.ts`
+  - laço de referências: separado o fim normal (`rows.length < pageSize` = última página) da borda de teto. Ao atingir `maxRows` com página cheia, sonda UMA linha além do lido (`range(offset+rows.length, offset+rows.length)`); se houver linha (ou erro de sonda), devolve `{ paths, failed: true }` — o bucket é pulado e o erro `reference-read-failed` é reportado (fail-closed). Se a sonda vier vazia, a leitura está completa e segue normal.
+  - `CleanupInjected.maxReferenceRows`: seam de teste para injetar o teto e provar a borda no handler real (não usada em produção, onde vale o default).
+  - `MAX_SCAN_PER_BUCKET`: mantido como `truncated` (aviso + só apaga o que foi listado e comparado) — é seguro como o revisor concordou; não vale para referências.
+- `supabase/config.toml`: comentário alinhado ao código/relato — `x-cron-secret` conferido contra o env `CRON_SECRET` (antes dizia "dedicado no Vault").
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Pontos do revisor
+- Ponto 1: feito. `collectReferencedPaths` separa os dois casos e devolve `failed: true` quando há linha além do teto; teste unitário prova (`maxRows: 2`, 5 linhas → `failed === true`). Teto de scan de bucket mantido como aviso, como o revisor autorizou (só apaga o que foi listado/comparado).
+- Ponto 2: feito. Teste Deno com `maxRows` pequeno prova `failed === true`; e o teste do handler (com `maxReferenceRows: 1` injetado) prova que NADA é removido (`ctx.removes.length === 0`) e `whatsapp-media:reference-read-failed` aparece em `errors`. Borda extra: total EXATAMENTE igual ao teto, sem linha além, NÃO vira `failed`.
+- Ponto 3: feito. Comentário do `config.toml` agora diz env `CRON_SECRET`.
+- Ponto 4: `wc -l` do arquivo de teste = 464 (a contagem anterior citada, 407, estava errada — o revisor já notou que era 409). `zapp-verify . --rapido` ficou VERDE nesta rodada (tipos OK, 216s) — não houve OOM desta vez; a ressalva anterior não se aplica.
+- Comando de CI de cada teste: `index.test.ts` linha 16.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `deno test ... supabase/functions/cleanup-storage-orphans/index.test.ts` (com o laço antigo) → `FAILED | 15 passed | 2 failed (135ms)`; erro: `teto de referências não marcou failed: ["c/r0.jpg","c/r1.jpg"]` e o handler removeu com referência truncada.
+- verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/cleanup-storage-orphans/index.test.ts` → `ok | 17 passed | 0 failed (101ms)`.
+- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (228s)`.
+- comando exato de cada teste na linha `16` do `index.test.ts`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não mexi em `listBucketObjects`/`MAX_SCAN_PER_BUCKET` (aviso, não fail-closed): só limita o que já foi lido e comparado, o revisor considerou aceitável.
+- Sem migration, sem deploy, sem produção.
