@@ -19,7 +19,7 @@ Especialista: workertestes
   - faixas do sentimento (70→80), mapa de emoji (`:fire:`), ordem isSafeUrl (aceitar ftp), filtro do painel de atalhos, filtro de busca dos templates, `selectedCount===0` da toolbar;
   - validação da enquete (`<2`→`<1`), botão Encaminhar sem seleção, erro da Edge Function do STT, Ctrl+Enter sem seleção, erro de resposta da conversão de voz.
 - verde depois (3 rodadas, com a produção restaurada): `npx vitest run <11 arquivos>` → `Test Files 11 passed (11); Tests 53 passed (53)` nas 3 execuções.
-- verificação do cartão: `zapp-verify . --rapido` (rodado pelo `hermes-tarefa-fechar`).
+- verificação do cartão: `zapp-verify . --rapido` (rodado pelo `hermes-tarefa-fechar`). 1ª rodada: VERMELHO em `tipos` — a fixture do teste de busca não preenchia os campos obrigatórios de `Template` (`shortcut/is_global/use_count/created_at/updated_at`); corrigido o tip do teste (commit novo) e a rodada seguinte passou.
 
 ## O que NÃO fiz e por quê
 - `MessageTemplates`, `AgentReassignmentPanel`, `BulkActionsToolbar` (já existia `ContactTypeFilter.grupos.test.tsx` para o `contactTypeFilter`), `FileUploader.attachClip` e a telemetria de reação já têm teste na branch: `MessageTemplates.a11y-buttons.test.tsx`, `AgentReassignmentPanel.rotulos-botao.test.tsx`, `ContactTypeFilter.grupos.test.tsx`, `FileUploader.n-039/r2-inb-011/sl202-refs.test.tsx` e a família `useMessageReactions*`/`useReactionMutations*`. Por isso não criei teste duplicado.
