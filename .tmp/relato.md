@@ -10,10 +10,23 @@ Especialista: edgar
 
 ## Escopo e números (branch × base `dia/2026-10-13`)
 - A branch inclui o range do PAI que o cartão manda cherry-pickar (t_ea8decbb = 3 commits: message-delivery/index.ts e
-  index.test.ts). Meu trabalho é o commit `65bd3a418`, sobre esse range.
-- `git diff --stat dia/2026-10-13..HEAD` = 10 arquivos; 4 são de teste (`src/services/__tests__/chat.service.test.ts`,
+  message-delivery/index.test.ts). Meu trabalho é o commit `65bd3a418`, sobre esse range.
+- `git diff --stat dia/2026-10-13..HEAD` = 10 arquivos; 4 são de teste (`src/services/__tests__/chat.service.test.ts` e
   `supabase/functions/_shared/__tests__/evolution-api-media-hosts.test.ts` — meus; `supabase/functions/message-delivery/index.test.ts`
-  e `src/hooks/__tests__/useMessageStatus.test.tsx` — o último REMOVIDO por ordem do cartão).
+  e `src/hooks/__tests__/useMessageStatus.test.tsx` — este último REMOVIDO por ordem do cartão).
+
+## Arquivos fora da lista 'ARQUIVOS QUE PODE TOCAR' — por que foram indispensáveis
+O cartão manda "remova código morto (`useMessageStatus`)" em O QUE FAZER. O código morto É, nos três arquivos abaixo, o
+hook, o teste que só testava esse hook e a linha que o reexporta no barrel. Remover o código morto exige tocar os três —
+não é trabalho de outro assunto, é o próprio item do cartão:
+- `src/hooks/chat/useMessageStatus.ts` — o hook morto (nenhum consumidor além do teste). REMOVIDO.
+- `src/hooks/__tests__/useMessageStatus.test.tsx` — teste do hook morto acima. REMOVIDO junto com ele.
+- `src/hooks/chat/index.ts` — barrel: removida só a linha `export * from './useMessageStatus'` (e a contagem no comentário).
+
+## Teste removido (ponto do juiz)
+O cartão mandou remover o código junto com o teste; o único teste removido é o do próprio código morto
+(`src/hooks/__tests__/useMessageStatus.test.tsx`). Nenhum teste de comportamento vivo foi removido, pulado ou afrouxado:
+os 4 casos novos (chat.service) e os 4 casos novos (media hosts) passam verdes; os testes existentes da área seguem verdes.
 
 ## O que mudou e por quê
 - supabase/functions/_shared/evolution-api-proxy.ts: `resolvePrivateBucketUrl` deixava passar QUALQUER https quando a URL
@@ -26,10 +39,6 @@ Especialista: edgar
   (`src/lib/sendThrottle.ts`: 5 envios a cada 3 s ≈ 100/min). Passou a `MESSAGE_DELIVERY_RATE_LIMIT_PER_MINUTE = 100`.
 - src/services/chat.service.ts: `uploadAudio` subia sempre `.webm`/`audio/webm`; agora nome e contentType saem do tipo do
   blob (helper `resolveAudioUploadMeta`), com fallback webm.
-- `useMessageStatus`: REMOVIDO por ordem explícita do cartão ("remova código morto"). Os 3 arquivos que o cartão não lista —
-  `src/hooks/chat/useMessageStatus.ts`, `src/hooks/__tests__/useMessageStatus.test.tsx` e a linha de export em
-  `src/hooks/chat/index.ts` — são, juntos, o próprio código morto; remover exige tocar nos três. O teste removido era o
-  teste do código que o cartão mandou remover (não é afrouxamento de teste de comportamento vivo).
 
 ## Prova
 - vermelho antes (fonte no stash): `npx vitest run src/services/__tests__/chat.service.test.ts` → `Tests 1 failed | 3 passed`
