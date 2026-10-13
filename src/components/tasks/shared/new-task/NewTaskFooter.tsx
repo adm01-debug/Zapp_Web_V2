@@ -17,12 +17,15 @@ interface Props {
  * `Ctrl+Enter` (ou `Cmd+Enter`) em qualquer campo criam a tarefa (a tecla é
  * tratada no modal, dono do rascunho). "Esc cancela" não tem legenda aqui
  * porque é o `Esc` do próprio diálogo, que já volta pelo `closeModal`.
+ *
+ * Etapa 169: em telas estreitas (o caso de 360px) o rodapé fica FIXO no pé do
+ * modal enquanto o formulário rola, para "Criar tarefa" não sair da vista.
  */
 export function NewTaskFooter({ enviando, podeCriar, onCancelar, onCriar }: Props) {
   return (
     <div
       data-testid="nt-rodape"
-      className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:bg-background"
     >
       <p data-testid="nt-dica" className="text-2xs text-muted-foreground">
         <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-sans text-2xs">Enter</kbd>{' '}
