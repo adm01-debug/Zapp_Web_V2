@@ -11946,6 +11946,10 @@ export type Database = {
         Args: { p_campaign_id: string; p_recipient_ids: string[] }
         Returns: Json
       }
+      save_business_hours: {
+        Args: { p_connection_id: string; p_days: Json }
+        Returns: undefined
+      }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
