@@ -51,9 +51,9 @@ export function SecurityNotificationsPanel() {
         <CardContent className="flex items-start gap-4 p-4">
           <BellOff className="w-5 h-5 text-muted-foreground mt-0.5" />
           <div>
-            <h4 className="font-medium">Notificações Push Indisponíveis</h4>
+            <h4 className="font-medium">Alertas do Navegador Indisponíveis</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              Os alertas push estão temporariamente desativados nesta versão.
+              Os alertas do navegador estão temporariamente desativados nesta versão.
             </p>
           </div>
         </CardContent>
@@ -67,9 +67,9 @@ export function SecurityNotificationsPanel() {
         <CardContent className="flex items-start gap-4 p-4">
           <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
           <div>
-            <h4 className="font-medium">Notificações Push Não Suportadas</h4>
+            <h4 className="font-medium">Alertas do Navegador Não Suportados</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              Seu navegador não suporta notificações push. Tente usar Chrome, Firefox, Edge ou Safari.
+              Seu navegador não suporta alertas do navegador. Tente usar Chrome, Firefox, Edge ou Safari.
             </p>
           </div>
         </CardContent>
@@ -82,10 +82,10 @@ export function SecurityNotificationsPanel() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bell className="w-5 h-5" />
-          Notificações Push de Segurança
+          Alertas de Segurança no Navegador
         </CardTitle>
         <CardDescription>
-          Receba alertas de segurança em tempo real no seu navegador
+          Avisos de segurança no navegador, enquanto o Zapp estiver aberto
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -147,7 +147,7 @@ export function SecurityNotificationsPanel() {
 
         {/* Security alerts info */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Tipos de alertas que você receberá:</Label>
+          <Label className="text-sm font-medium">Tipos de alertas monitorados:</Label>
           <div className="grid gap-3">
             <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
               <Shield className="w-4 h-4 text-destructive" />
@@ -207,8 +207,8 @@ export function SecurityNotificationsPanel() {
           <div>
             <h4 className="font-medium text-info">Por que ativar?</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              Receba alertas instantâneos sobre atividades suspeitas na sua conta, 
-              mesmo quando não estiver usando o aplicativo. Isso permite uma resposta 
+              Receba avisos sobre atividades suspeitas na sua conta enquanto estiver 
+              com o Zapp aberto no navegador. Isso permite uma resposta 
               rápida a possíveis ameaças de segurança.
             </p>
           </div>

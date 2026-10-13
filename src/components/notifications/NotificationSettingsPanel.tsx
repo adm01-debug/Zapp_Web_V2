@@ -28,7 +28,7 @@ export function NotificationSettingsPanel() {
     const granted = await requestNotificationPermission();
     toast({
       title: granted ? '✅ Permissão concedida' : '⚠️ Permissão negada',
-      description: granted ? 'Você receberá notificações do navegador.' : 'Ative as notificações nas configurações do navegador.',
+      description: granted ? 'Você receberá alertas do navegador enquanto o Zapp estiver aberto.' : 'Ative as notificações nas configurações do navegador.',
       variant: granted ? undefined : 'destructive',
     });
   };
@@ -96,7 +96,7 @@ export function NotificationSettingsPanel() {
               </div>
               <div>
                 <CardTitle id="notif-browser-title" className="text-lg">Notificações do Navegador</CardTitle>
-                <CardDescription>Pop-ups mesmo com a aba minimizada</CardDescription>
+                <CardDescription>Avisos do navegador enquanto o Zapp estiver aberto</CardDescription>
               </div>
             </div>
             <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} aria-labelledby="notif-browser-title" />
