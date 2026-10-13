@@ -1,76 +1,58 @@
-Especialista: workersql (area-sql-banco)
+Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- supabase/migrations/20261013230000_search_email_threads.sql: aditiva. Cria a RPC
-  `public.search_email_threads(p_account uuid, p_q text, p_limit integer, p_after timestamptz)`
-  que devolve `(thread_id, match_field, match_snippet, last_message_at)` e procura o termo em
-  email_threads (assunto/remetente/snippet), no CORPO (email_messages.body_text) e no NOME DO
-  ANEXO (email_attachments.filename) — o que a busca atual não alcançava (emailThreadSearchOr só
-  olhava email_threads). Dois índices GIN de trigrama (body_text, filename) sustentam o ILIKE
-  '%termo%'. `p_after` é o cursor de `last_message_at` para paginar.
-- A RPC é SECURITY INVOKER e `SET search_path = public, pg_temp`: roda como o chamador e NÃO fura
-  a RLS de email_threads/email_messages/email_attachments — a visibilidade vigente (dono da conta
-  ou admin/supervisor, via gmail_accounts) vale sem eu copiar predicado nenhum. Se a política de
-  e-mail mudar depois, a busca continua limitada ao que o usuário vê.
-- Entrada tratada: `btrim`, corte em 120 chars e curingas de LIKE (`%` `_` `\`) escapados para
-  literal. Termo vazio ou só espaços devolve ZERO linha (nunca a caixa inteira); sem regex do
-  usuário. `p_limit` é limitado a [1,100].
-- Grants explícitos: `REVOKE ALL ... FROM PUBLIC` e `GRANT EXECUTE` só para authenticated e
-  service_role — anon não executa. Nenhum GRANT/papel/ACL de tabela existente foi tocado.
-- src/integrations/supabase/types.ts: entrada `search_email_threads` em Functions (Args/Returns)
-  para o pré-filtro tipar a chamada.
+- `src/lib/emailThreadQuery.ts`: `emailThreadSearchOr(term, contactIds, threadIds)` ganha um
+  terceiro parâmetro opcional que acrescenta `id.in.(...)` ao `.or` — a lista de `thread_id` que
+  a RPC de busca casou. Como o parâmetro é opcional (default `[]`), o contrato antigo da função
+  continua idêntico e a cláusula é só somada. Somam-se também `EMAIL_THREAD_SEARCH_PAGE_SIZE`,
+  `EMAIL_THREAD_SEARCH_MAX_PAGES`, o tipo `EmailThreadSearchMatch` e o coletor de cursor
+  `collectEmailSearchThreadIds`, que percorre a RPC por `p_after` (cursor = `last_message_at` da
+  última linha) até a página vir incompleta ou o teto de páginas cair.
+- `src/hooks/integrations/useGmail.ts`: quando há termo, além do `.or` de colunas que já existia
+  (assunto/trecho/remetente + contatos), o hook chama a RPC `search_email_threads` (SECURITY
+  INVOKER, respeita a RLS) e junta os `thread_id` que ela achou — é o que faz o termo aparecer no
+  CORPO (`email_messages.body_text`) e no NOME DO ANEXO (`email_attachments.filename`), que a
+  consulta PostgREST da lista não alcançava. Os `id.in.(...)` entram no MESMO `.or`, então os
+  filtros estruturais (pasta, estado, período, anexos) continuam valendo para a busca, como o
+  cartão pede. Erro da RPC é propagado (`if (error) throw error`), vira `threadsError` da lista.
+- Sem termo: nada muda — a RPC e a consulta de contatos nem rodam; a consulta da lista é byte a
+  byte a de antes.
+
+Por que ADITIVO e não substituindo o `.or` antigo: assunto/remetente/trecho já eram encontrados e
+precisam continuar sendo mesmo se a RPC truncar no teto de páginas ou se o cursor empatar um
+`last_message_at`. Assim o diff é puramente soma de alcance (corpo/anexo) e não troca um canal por
+outro — evita a regressão clássica desta área.
+
+`p_after` é o cursor de `last_message_at`; a paginação por cursor fica toda dentro de
+`collectEmailSearchThreadIds`. O cancelamento de resposta antiga continua por conta da React Query:
+a chave é `['gmail-threads', activeAccount?.id, effectiveListQuery]` e `effectiveListQuery` inclui o
+termo, então a resposta de um termo velho é descartada e não mexe no `loading` do termo novo.
 
 ## Prova
-- vermelho antes (BLOCO A da suíte, com a busca antiga = filtro só em email_threads): a suíte
-  reproduz o defeito antes de aplicar a migration — `A.1 (DEFEITO) termo do CORPO nao acha nada
-  so com o filtro de email_threads`, `A.2 (DEFEITO) termo do ANEXO tambem nao acha nada`,
-  `A.3 a funcao de busca ainda nao existe`.
-- verde depois: `bash scripts/db-audit/search-email-threads.test.sh` →
-  `PE-09 search_email_threads (postgres:17-alpine): 33 cenarios aprovados.`
-  (33/33 PASS, 0 FAIL) cobrindo: corpo casa (B.5-B.7), anexo casa (B.8-B.9), escopo por conta
-  (B.10-B.11), RLS com papel real authenticated (B.12 usuário sem conta vê 0; B.13 admin canônico
-  vê), paginação p_limit/p_after (B.16-B.17), vazio/só espaços/curinga literal (B.18-B.22),
-  service_role (B.23), anon negado com `permission denied` (B.24), plano usando os dois índices
-  de trigrama (B.25-B.26) e rollback do próprio arquivo (C.1-C.4, reaplicação idempotente).
-- banco LOCAL (não produção): `hermes-db-migrar supabase/migrations/20261013230000_search_email_threads.sql`
-  → `aviso: a estrutura local agora difere do retrato da produção (esperado se a migration muda o
-  schema)` / `APLICADA no banco LOCAL 'v2-261013034836cc' (produção não foi tocada)`. Conferido no
-  banco local: `prosecdef = f` (INVOKER) e `proconfig = {search_path=public, pg_temp}`.
-- `node scripts/ci/check-test-inventory.mjs` → o meu .test.sh não aparece mais como órfão (o
-  workflow db-guard.yml ganhou o passo do PE-09).
+- vermelho antes: `npx vitest run src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx`
+  (com `src/hooks/integrations/useGmail.ts` na versão da base) →
+  `Test Files 1 failed (1); Tests 3 failed | 7 passed (10)` — as 3 falhas são exatamente as que
+  dependem da RPC (`records.rpc` com 2 chamadas de cursor, casamento por `id.in.`, erro da RPC).
+- verde depois: `npx vitest run src/lib/__tests__/emailThreadQuery.test.ts src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx`
+  → `Test Files 2 passed (2); Tests 25 passed (25)`.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (122s)` (tipos OK, lint OK).
+- testes que proveem o comportamento novo (arquivos tocados): `useGmail.threadListQuery.test.tsx`
+  (RPC chamada com `p_account`/`p_q`; `id.in.(t9)` somado ao `.or`; sem casamento na RPC o `.or`
+  mantém `subject.ilike` e NÃO ganha `id.in.`; erro da RPC vira `threadsError`; cursor percorre 2
+  páginas com `p_after` correto) e `emailThreadQuery.test.ts` (o `or` soma `id.in.`; o coletor para
+  no fim e no teto de páginas). Testes existentes de busca/contatos ficaram intactos — não afrouxei
+  nenhum.
 
-## Arquivos fora da lista do cartão (por que foram indispensáveis)
-- scripts/db-audit/search-email-threads.test.sh — é A MINHA ÁREA (SOUL do worker sql: "onde o
-  arquivo mora: supabase/migrations/**, supabase/tests/** e scripts/db-audit/**"). O cartão lista
-  supabase/tests/ como área de teste, mas a prova de banco deste repositório mora em
-  scripts/db-audit/*.test.sh (harness com papéis reais), que é o formato exigido. Sem esse arquivo
-  não existe prova do defeito.
-- .github/workflows/db-guard.yml — o próprio hermes-tarefa-fechar bloqueia o fechamento enquanto um
-  .test.sh novo não tem passo no CI (`INVENTÁRIO DE TESTES: .test.sh novo sem passo no CI`). O passo
-  é uma linha, aditiva, e chama o retry-disposable-postgres-test.sh como todos os vizinhos; sem ele
-  o cartão não fecha. Não alterei nenhum passo existente nem afrouxei guarda.
+## Dependência (handoff)
+Este cartão depende do `t_59d66c7a`. Os commits do pai não estavam no meu workspace; puxei-os por
+`git cherry-pick -x` (`dia/2026-10-13..8a7d5fd6c`, 5 commits — a migration
+`20261013230000_search_email_threads.sql`, os types e o teste de banco). O integrador precisa
+considerar essa base ao integrar.
 
 ## O que NÃO fiz e por quê
-- Não liguei a RPC no pré-filtro da tela: `src/lib/emailThreadQuery.ts` e a caixa são da área de
-  hooks/telas (não estão nos arquivos que posso tocar). Deixei o contrato no comentário do cartão
-  para quem monta o pré-filtro em paralelo.
-- Contrato da RPC para o pré-filtro: chamar
-  `supabase.rpc('search_email_threads', { p_account, p_q, p_limit, p_after })`; usar `match_field`
-  ('subject'|'attachment'|'body'|'from'|'snippet') e `match_snippet` para trocar o trecho da thread
-  na lista; `last_message_at` da última linha é o `p_after` da próxima página.
-- Registrei a prova no CI: adicionei o passo "Provar a busca de e-mail por corpo e anexo (PE-09)" em
-  .github/workflows/db-guard.yml (com `SKIP_DOCKER_SHIM=1`, como os vizinhos que sobem container
-  próprio) — sem isso o check-test-inventory reprovava o .test.sh novo como órfão. É uma linha de
-  encanamento de CI (área do worker ci), mínima e aditiva; o passo chama o retry-disposable-postgres-test.sh.
-- Achado fora do escopo (não corrigi, é de outro cartão): `node scripts/ci/check-test-inventory.mjs`
-  já acusa 6 .test.sh órfãos pré-existentes na base (department-invite-contract-audit-vocabulary,
-  ia-usage-outbox-duravel, talkx-conversion-defaults, team-chat-department-transfer-guards,
-  team-chat-media-contract, team-direct-conversation-race).
-- Não criei teste tautológico: a suíte constrói o schema/RLS reais mínimos e aplica a MIGRATION REAL
-  do meu arquivo (não recria o corpo da função no teste), roda como authenticated/anon/service_role.
-- Sobre o aviso do juiz ("código alterado sem teste neste commit: src/integrations/supabase/types.ts"):
-  a única mudança de TS é a assinatura tipada da RPC (Args/Returns) espelhando a função do banco — é a
-  superfície gerada que o pré-filtro consome, não lógica. A prova do defeito é a suíte de banco
-  scripts/db-audit/search-email-threads.test.sh (33 cenários vermelho→verde), que aplica a migration
-  real e roda como os papéis reais; não há teste de vitest cabível para um type-only. Repito o mesmo
-  comando de fechar sem mudar nada.
+- A busca por corpo/anexo é limitada (2 páginas × 50 = 100 casamentos) de propósito: um termo de
+  uma letra não pode virar varredura ilimitada (mesmo espírito do OTH-005).
+- A RPC ordena por `last_message_at DESC` e só aceita esse cursor; se dois casamentos empatarem o
+  `last_message_at` na borda de página, o `<` estrito pode pular linhas. É limitação do contrato da
+  RPC definido pelo pai; por isso o `.or` de colunas ficou junto, cobrindo assunto/remetente/trecho.
+- Não mexi na RPC, na migration nem nos types (fora da minha área/handoff do pai).
