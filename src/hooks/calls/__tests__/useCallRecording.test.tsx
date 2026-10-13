@@ -57,7 +57,7 @@ const estadoDaQuery = (queryClient: QueryClient, callId: string) =>
 describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => {
   beforeEach(() => {
     headersDaEdge.mockReset().mockResolvedValue({
-      apikey: 'anon-key-do-teste',
+      apikey: 'chave-publica-de-teste',
       Authorization: 'Bearer jwt-do-usuario-teste',
     });
     invokeDaEdge.mockReset().mockResolvedValue({ data: blobDeAudio('audio/mpeg'), error: null });
@@ -114,7 +114,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
     expect(invokeDaEdge).toHaveBeenCalledWith('get-call-recording', {
       method: 'POST',
       headers: {
-        apikey: expect.any(String),
+        apikey: 'chave-publica-de-teste',
         Authorization: 'Bearer jwt-do-usuario-teste',
         'Content-Type': 'application/json',
       },
@@ -196,7 +196,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
 
   it('sem sessao valida usa os headers do helper e propaga 401 da Edge', async () => {
     headersDaEdge.mockResolvedValueOnce({
-      apikey: 'anon-sem-sessao',
+      apikey: 'chave-publica-sem-sessao',
       Authorization: 'Bearer anon-sem-sessao',
     });
     invokeDaEdge.mockResolvedValueOnce({ data: null, error: erroHttp(401) });
@@ -208,7 +208,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
     expect(invokeDaEdge).toHaveBeenCalledWith('get-call-recording', {
       method: 'POST',
       headers: {
-        apikey: expect.any(String),
+        apikey: 'chave-publica-sem-sessao',
         Authorization: 'Bearer anon-sem-sessao',
         'Content-Type': 'application/json',
       },
