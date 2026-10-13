@@ -261,6 +261,7 @@ const METRICAS_PROPS = {
   data: {
     overallRate: 80,
     totalConversations: 240,
+    hasSample: true,
     firstResponse: { rate: 50, onTime: 12, breached: 3 },
   },
   periodLabel: 'Últimos 30 dias',

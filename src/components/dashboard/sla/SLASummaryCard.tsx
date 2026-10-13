@@ -22,6 +22,8 @@ interface SLASummaryCardProps {
   overallRate: number;
   onTime: number;
   breached: number;
+  /** `false` quando o período não tem nenhuma 1ª resposta avaliada: a taxa não existe (nunca 0%/100% sem amostra). */
+  hasSample: boolean;
   overallTrend?: TrendInfo;
   firstResponseTrend?: TrendInfo;
 }
@@ -42,8 +44,11 @@ function TrendLine({ trend, invert, compact }: { trend?: TrendInfo; invert?: boo
   );
 }
 
-export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTime, breached, overallTrend, firstResponseTrend }: SLASummaryCardProps) {
+export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTime, breached, hasSample, overallTrend, firstResponseTrend }: SLASummaryCardProps) {
   const tone = getSLARateTone(overallRate);
+  // Sem amostra não há taxa: o número vira travessão e a barra some — nada de 0% pintado de crítico.
+  const rateTextClass = hasSample ? SLA_RATE_TEXT_CLASS[tone] : 'text-muted-foreground';
+  const rateBarClass = hasSample ? SLA_RATE_BG_CLASS[tone] : 'bg-muted-foreground/30';
 
   return (
     <DashboardCard testid="sla-summary-card" variant="comfortable">
@@ -58,10 +63,10 @@ export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTi
       <div className="p-4 rounded-xl bg-muted/20 border border-border/50">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-foreground">Taxa de 1ª Resposta no Prazo</span>
-          <span className={cn('text-2xl font-bold tabular-nums leading-none', SLA_RATE_TEXT_CLASS[tone])}>{Math.round(overallRate)}%</span>
+          <span data-testid="sla-summary-rate" className={cn('text-2xl font-bold tabular-nums leading-none', rateTextClass)}>{hasSample ? `${Math.round(overallRate)}%` : '—'}</span>
         </div>
         <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-          <div className={cn('h-full rounded-full', SLA_RATE_BG_CLASS[tone])} style={{ width: `${Math.min(overallRate, 100)}%` }} />
+          <div className={cn('h-full rounded-full', rateBarClass)} style={{ width: `${hasSample ? Math.min(overallRate, 100) : 0}%` }} />
         </div>
         <TrendLine trend={overallTrend} />
       </div>
@@ -71,7 +76,7 @@ export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTi
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Respostas no Prazo</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{onTime}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{hasSample ? onTime : '—'}</p>
               <TrendLine trend={firstResponseTrend} compact />
             </div>
           </div>
@@ -81,7 +86,7 @@ export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTi
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Respostas com Violação</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{breached}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{hasSample ? breached : '—'}</p>
               <TrendLine trend={firstResponseTrend} invert compact />
             </div>
           </div>

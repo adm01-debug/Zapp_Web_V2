@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
@@ -43,16 +44,27 @@ vi.mock('@/components/settings/SLARulesManager', () => ({ SLARulesManager: () =>
 
 import { SLADashboard } from '../SLADashboard';
 
+// O dashboard passou a usar `useQueryClient` (o botão "Tentar de novo" do estado de erro
+// invalida a query) — o teste agora fornece o provider. Nenhuma asserção mudou.
+function renderDashboard() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <SLADashboard />
+    </QueryClientProvider>,
+  );
+}
+
 describe('SLADashboard — 1a resposta nao aparece 3x', () => {
   it('removeu os cards redundantes "Visao Geral do SLA" e "Resumo de Violacoes"', () => {
-    render(<SLADashboard />);
+    renderDashboard();
     expect(screen.queryByText('Visão Geral do SLA')).toBeNull();
     expect(screen.queryByText('Resumo de Violações')).toBeNull();
     expect(screen.queryByText('Violações 1ª Resposta')).toBeNull();
   });
 
   it('mostra so o dado ainda nao exibido nos cards de metrica: avaliadas e pendentes', () => {
-    render(<SLADashboard />);
+    renderDashboard();
     expect(screen.getByText('Conversas avaliadas')).toBeInTheDocument();
     expect(screen.getByText('Pendentes de 1ª resposta')).toBeInTheDocument();
     expect(screen.getByText('40')).toBeInTheDocument();
