@@ -29,6 +29,17 @@ const PARAM_KEYS = {
   to: 'to',
 } as const;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * `?queue=` e `?agent=` vão direto para colunas uuid (`queues.id`, `profiles.id`) — um id
+ * inválido (link editado à mão, id de outro sistema) fazia o PostgREST devolver 22P02 e a
+ * leitura do dashboard quebrava. Valor não-uuid é IGNORADO (null), nunca repassado.
+ */
+function uuidParam(value: string | null): string | null {
+  return value && UUID_RE.test(value) ? value : null;
+}
+
 function rangeForPeriod(period: DashboardFiltersState['period']): { from: Date; to: Date } {
   const now = new Date();
   switch (period) {
@@ -63,8 +74,8 @@ export function useDashboardUrlFilters(): [DashboardFiltersState, (filters: Dash
   const filters = useMemo<DashboardFiltersState>(() => {
     const periodParam = searchParams.get(PARAM_KEYS.period);
     const period: DashboardFiltersState['period'] = isValidPeriod(periodParam) ? periodParam : 'today';
-    const queueId = searchParams.get(PARAM_KEYS.queue);
-    const agentId = searchParams.get(PARAM_KEYS.agent);
+    const queueId = uuidParam(searchParams.get(PARAM_KEYS.queue));
+    const agentId = uuidParam(searchParams.get(PARAM_KEYS.agent));
 
     if (period === 'custom') {
       const fromParam = searchParams.get(PARAM_KEYS.from);
