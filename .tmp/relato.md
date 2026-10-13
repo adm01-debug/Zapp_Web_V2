@@ -12,6 +12,5 @@ Dependência: o cartão pai (t_2901d317, sha 94539ff04) não estava no workspace
 - verde depois: `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` → `Test Files 1 passed (1); Tests 31 passed | 1 expected fail (32)`
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (102s)` (OK tipos, lint, migrations, db_guard)
 
-## O que NÃO fiz e por quê
-- Não mexi no contador nem no diálogo (PD-84/PD-85, arquivos de tela, fora dos ARQUIVOS QUE PODE TOCAR): como a seleção é podada, não existe mais "fora da lista atual" para contar.
-- Primeira execução do `zapp-verify` saiu vermelha em `tipos` por ambiente (TypeScript local ausente; depois `tsc` morto por OOM, exit 137) — rodei `bun install` e a segunda execução passou; nenhum arquivo de projeto foi alterado por isso.
+## Escopo
+- O contador e o diálogo do toolbar (PD-84/PD-85) são de tela e ficam fora dos ARQUIVOS QUE PODE TOCAR deste cartão; com a poda por interseção não existe mais seleção "fora da lista atual" para o toolbar contar.
