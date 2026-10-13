@@ -10454,6 +10454,39 @@ export type Database = {
         Args: { p_contact_id: string; p_message_id: string; p_phone: string }
         Returns: Json
       }
+      audit_log_list: {
+        Args: {
+          p_cursor?: string
+          p_cursor_id?: string
+          p_from?: string
+          p_limit?: number
+          p_to?: string
+        }
+        Returns: {
+          action: string
+          actor_name: string
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          ip_address: string
+          user_agent: string
+          user_id: string
+        }[]
+      }
+      audit_log_summary: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          admin_logins_7d: number
+          denied_24h: number
+          permission_changes_24h: number
+          rls_failures_24h: number
+          sensitive_actions: number
+          total_logs: number
+          unique_users: number
+        }[]
+      }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
