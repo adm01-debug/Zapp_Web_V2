@@ -4,13 +4,17 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgents, type AgentWithStats } from '@/hooks/crm/useAgents';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Check, ChevronDown, EyeOff, Loader2, RotateCcw, Send, UserRound, X } from 'lucide-react';
+import { Check, ChevronDown, EyeOff, Loader2, Mic, Pause, Play, RotateCcw, Send, Square, Trash2, UserRound, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { WhisperAudioPlayer } from './WhisperAudioPlayer';
+import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
+import { createStorageObjectId, removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
 import { cn } from '@/lib/utils';
 import { zappMotion, zappTransition, zappPopoverVariants } from '@/lib/motion';
 
@@ -28,7 +32,12 @@ interface WhisperMessage {
   sender_name?: string;
   is_read: boolean;
   created_at: string;
+  /** Caminho no bucket `audio-messages` (`<uid>/<conversa>/<uuid>`), quando a nota é por voz. */
+  audio_path: string | null;
 }
+
+/** Mensagem de erro do upload de áudio (o INSERT tem tradução própria). */
+const ERRO_UPLOAD_AUDIO = 'Não foi possível enviar o áudio do sussurro. Tente de novo.';
 
 /** Mola curta (180–260 ms) para o painel do seletor de destinatário. */
 const MOLA_CURTA = { type: 'spring', stiffness: 420, damping: 32, mass: 0.7 } as const;
@@ -260,7 +269,7 @@ function SeletorDestino({ agents, carregando, valor, onSelecionar, reduzido }: S
 }
 
 export function WhisperMode({ contactId, targetAgentId, className }: WhisperModeProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const queryClient = useQueryClient();
   const { agents, isLoading: carregandoAgentes } = useAgents();
   const reduzido = useReducedMotion() ?? false;
@@ -274,6 +283,23 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
 
   const isMountedRef = useRef(true);
   const enviadoTimerRef = useRef<number | null>(null);
+
+  // Nota de voz: o gravador é o motor do PE-59/PE-24 (limite de 300 s e liberação de
+  // microfone incluídos) e a prévia obedece ao volume único do app.
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [previaTocando, setPreviaTocando] = useState(false);
+  const previaRef = useRef<HTMLAudioElement | null>(null);
+  useMediaElementVolume(previaRef);
+
+  const {
+    isRecording,
+    duration,
+    audioUrl,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+    formatDuration,
+  } = useAudioRecorder({ onRecordingComplete: (blob) => setAudioBlob(blob) });
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -295,7 +321,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     queryFn: async () => {
       const { data } = await supabase
         .from('whisper_messages')
-        .select('id, content, sender_id, is_read, created_at')
+        .select('id, content, sender_id, is_read, created_at, audio_path')
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -384,6 +410,89 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
   };
 
+  /** uid autenticado: a policy do bucket exige o objeto em `<auth.uid()>/...`. */
+  const uidGravador = profile?.user_id ?? user?.id ?? '';
+
+  const podeGravar = Boolean(destinoId) && Boolean(uidGravador) && !isSending && !isRecording;
+
+  const iniciarGravacao = () => {
+    if (!podeGravar) return;
+    setErro(null);
+    setPreviaTocando(false);
+    void startRecording();
+  };
+
+  const descartarGravacao = () => {
+    setAudioBlob(null);
+    setPreviaTocando(false);
+    cancelRecording();
+  };
+
+  const alternarPrevia = () => {
+    const elemento = previaRef.current;
+    if (!elemento) return;
+    if (previaTocando) {
+      elemento.pause();
+      return;
+    }
+    const resultado = elemento.play();
+    if (resultado && typeof resultado.catch === 'function') void resultado.catch(() => undefined);
+  };
+
+  const sendWhisperAudio = async () => {
+    if (!audioBlob || !profile?.id || !destinoId || !uidGravador || isSending) return;
+
+    setErro(null);
+    setIsSending(true);
+
+    // Contrato do cartão pai: exatamente três segmentos UUID (`<uid>/<conversa>/<uuid>`),
+    // como a constraint `whisper_messages_audio_path_formato` exige.
+    const caminho = `${uidGravador}/${contactId}/${createStorageObjectId()}`;
+    const { error: erroUpload } = await supabase.storage
+      .from('audio-messages')
+      .upload(caminho, audioBlob, { contentType: 'audio/webm', metadata: { duration } });
+
+    if (!isMountedRef.current) return;
+
+    if (erroUpload) {
+      setIsSending(false);
+      setErro(ERRO_UPLOAD_AUDIO);
+      return;
+    }
+
+    const { error } = await supabase.from('whisper_messages').insert({
+      contact_id: contactId,
+      sender_id: profile.id,
+      target_agent_id: destinoId,
+      content: '',
+      audio_path: caminho,
+    });
+
+    if (!isMountedRef.current) return;
+    setIsSending(false);
+
+    if (error) {
+      // A nota não virou linha: o objeto recém-enviado vira órfão, então sai (best-effort)
+      // e a prévia continua na tela para o retry reenviar.
+      setErro(traduzirErroWhisper(error));
+      void removeStoredObjectBestEffort('audio-messages', caminho);
+      return;
+    }
+
+    descartarGravacao();
+    setEnviadoOk(true);
+    if (enviadoTimerRef.current !== null) window.clearTimeout(enviadoTimerRef.current);
+    enviadoTimerRef.current = window.setTimeout(() => {
+      if (isMountedRef.current) setEnviadoOk(false);
+    }, 1500);
+    queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
+  };
+
+  const reenviarSussurro = () => {
+    if (audioBlob) void sendWhisperAudio();
+    else void sendWhisper();
+  };
+
   if (!isSupervisor && whispers.length === 0) return null;
 
   const conteudoPainel = (
@@ -406,7 +515,10 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
           whispers.slice().reverse().map(w => (
             <div key={w.id} className="text-xs p-1.5 rounded bg-muted/50">
               <span className="font-medium text-warning">{w.sender_name}:</span>{' '}
-              <span className="text-foreground">{w.content}</span>
+              {w.audio_path ? (
+                <WhisperAudioPlayer audioPath={w.audio_path} autor={w.sender_name} className="mt-1" />
+              ) : null}
+              {w.content ? <span className="text-foreground">{w.content}</span> : null}
             </div>
           ))
         )}
@@ -430,7 +542,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                 <span className="flex-1">{erro}</span>
                 <button
                   type="button"
-                  onClick={sendWhisper}
+                  onClick={reenviarSussurro}
                   disabled={isSending}
                   className="inline-flex shrink-0 items-center gap-1 rounded font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                 >
@@ -454,46 +566,146 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
             </div>
           </div>
 
-          <div className="flex gap-1.5">
-            <Input
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              placeholder="Orientação para o agente..."
-              aria-label="Mensagem do sussurro"
-              className="h-10 text-xs"
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                if (podeEnviar) void sendWhisper();
-              }}
-            />
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex" tabIndex={destinoId ? -1 : 0}>
-                    <Button
-                      size="icon"
-                      className="h-10 w-10 shrink-0"
-                      onClick={sendWhisper}
-                      disabled={!podeEnviar}
-                      aria-label="Enviar sussurro"
-                    >
-                      {isSending ? (
-                        <Loader2 data-testid="sussurro-enviando" className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
-                      ) : enviadoOk ? (
-                        <Check data-testid="sussurro-enviado-ok" className="h-4 w-4 text-success" aria-hidden="true" />
-                      ) : (
-                        <Send className="h-4 w-4" aria-hidden="true" />
-                      )}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!destinoId && (
-                  <TooltipContent side="top">Escolha um destinatário para enviar o sussurro</TooltipContent>
+          {isRecording ? (
+            <div
+              data-testid="sussurro-gravando"
+              className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5"
+            >
+              <span className="h-2 w-2 shrink-0 rounded-full bg-destructive motion-safe:animate-pulse" aria-hidden="true" />
+              <span
+                role="timer"
+                aria-label="Tempo de gravação do sussurro"
+                className="flex-1 text-xs tabular-nums text-foreground"
+              >
+                {formatDuration(duration)}
+              </span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={descartarGravacao}
+                aria-label="Cancelar gravação do sussurro"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => stopRecording()}
+                aria-label="Parar gravação do sussurro"
+              >
+                <Square className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            </div>
+          ) : audioBlob ? (
+            <div
+              data-testid="sussurro-previa"
+              className="flex items-center gap-2 rounded-md border border-border/40 bg-muted/40 px-2 py-1.5"
+            >
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={alternarPrevia}
+                aria-label={previaTocando ? 'Pausar prévia do sussurro por voz' : 'Ouvir prévia do sussurro por voz'}
+              >
+                {previaTocando ? (
+                  <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+              </Button>
+              <span className="flex-1 text-xs tabular-nums text-muted-foreground">{formatDuration(duration)}</span>
+              <audio
+                ref={previaRef}
+                src={audioUrl ?? undefined}
+                preload="metadata"
+                className="hidden"
+                onPlay={() => setPreviaTocando(true)}
+                onPause={() => setPreviaTocando(false)}
+                onEnded={() => setPreviaTocando(false)}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={descartarGravacao}
+                aria-label="Descartar gravação do sussurro"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => void sendWhisperAudio()}
+                disabled={isSending}
+                aria-label="Enviar nota de sussurro por voz"
+              >
+                {isSending ? (
+                  <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" aria-hidden="true" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5">
+              <Input
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder="Orientação para o agente..."
+                aria-label="Mensagem do sussurro"
+                className="h-10 text-xs"
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  e.preventDefault();
+                  if (podeEnviar) void sendWhisper();
+                }}
+              />
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1.5" tabIndex={destinoId ? -1 : 0}>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-10 w-10 shrink-0"
+                        onClick={iniciarGravacao}
+                        disabled={!podeGravar}
+                        aria-label="Gravar nota de sussurro por voz"
+                      >
+                        <Mic className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        onClick={sendWhisper}
+                        disabled={!podeEnviar}
+                        aria-label="Enviar sussurro"
+                      >
+                        {isSending ? (
+                          <Loader2 data-testid="sussurro-enviando" className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+                        ) : enviadoOk ? (
+                          <Check data-testid="sussurro-enviado-ok" className="h-4 w-4 text-success" aria-hidden="true" />
+                        ) : (
+                          <Send className="h-4 w-4" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!destinoId && (
+                    <TooltipContent side="top">Escolha um destinatário para enviar o sussurro</TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       )}
     </>
