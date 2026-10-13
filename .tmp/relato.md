@@ -1,7 +1,7 @@
 Especialista: workertestes
 
 ## O que mudou e por quê
-Substituí os quatro arquivos de teste que só espelhavam a lógica (redeclaravam tipos e funções e testavam as próprias cópias) por testes que importam o código de produção. Nenhum arquivo de src/ além dos quatro foi tocado.
+Substituí os quatro arquivos de teste que só espelhavam a lógica (redeclaravam tipos e funções e testavam as próprias cópias) por testes que importam o código de produção. Nenhum arquivo de src/ além dos quatro foi tocado. Mudar a expectativa desses testes é o próprio objetivo do cartão: nada de cobertura foi removido, e sim substituído por cobertura que prende o código real.
 
 - src/utils/__tests__/whatsappFileTypes.test.ts: importa WHATSAPP_FILE_TYPES, getAllowedExtensions, getAllowedMimeTypes, getFileInputAccept, validateFile, formatFileSize, getFileCategory, getMaxSizeForCategory, getFileExtension, getFileNameFromUrl, getContactTypeInfo e CONTACT_TYPES do módulo real; cobre as cinco categorias, os limites (imagem/vídeo/áudio 16 MB, documento 100 MB, sticker 0,5 MB), o aceite até o limite e a recusa acima dele, a recusa de formato perigoso e os helpers.
 - src/utils/__tests__/imageCompression.test.ts: importa compressImage, createImagePreview e formatCompressionInfo; cobre o caminho de arquivo não-imagem/GIF (wasCompressed false, ratio 1), o de imagem já pequena e dentro das dimensões sem recompressão (createImageBitmap simulado) e a formatação do resumo.
@@ -18,8 +18,8 @@ Cada defeito abaixo tem teste que roda hoje contra o código real e congela o co
 ## Prova
 - vermelho antes: mutação temporária em src/utils/whatsappFileTypes.ts (maxSizeMB da imagem 16 -> 8), depois revertida com git checkout. Comando npx vitest run src/utils/__tests__/whatsappFileTypes.test.ts devolveu "Test Files 1 failed (1); Tests 4 failed | 15 passed (19)", com "AssertionError: expected 8 to be 16". Isso comprova que os testes prendem o código de produção. Depois de reverter, git status mostrou só os quatro arquivos de teste modificados.
 - verde depois: npx vitest run dos quatro arquivos devolveu "Test Files 4 passed (4); Tests 44 passed (44)".
-- verificação do cartão: zapp-verify . --rapido (rodada agora).
+- verificação do cartão: zapp-verify . --rapido -> "VERIFY: VERDE SEM BANCO (94s)", com OK em db_guard, tipos, lint e migrations.
 
 ## O que NÃO fiz e por quê
-- Não alterei código de produção além dos quatro arquivos de teste. Os defeitos acima ficam registrados, não corrigidos: o cartão pede o registro e permite só o export de resolveHierarchy, que não foi necessário.
+- Não alterei código de produção além dos quatro arquivos de teste. Os defeitos acima ficam congelados por teste; a correção não é deste cartão, que pede o registro e permite só o export de resolveHierarchy (não usado, pois a hierarquia foi exercida pelo hook real).
 - Não espelhei tipos/funções nos arquivos de teste: só há pequenos construtores de entrada (makeFile/rule) para montar dados de teste.
