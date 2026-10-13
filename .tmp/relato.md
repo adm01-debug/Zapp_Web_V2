@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 Dependência: este cartão parte do cartão pai t_09a10b28 (`feat(system): página e filtra logs
 de rate limit no servidor com erro visível`), que NÃO estava na minha base. Trouxe a faixa
