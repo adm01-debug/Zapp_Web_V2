@@ -1,18 +1,49 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+Nada foi alterado por mim — o defeito do cartão NÃO existe mais no código atual.
+A correção já está integrada na base `dia/2026-10-12` pelo commit `239272ef9`
+("fix(notificacoes): refazer nome acessivel dos sons e axe escopado (N-198"),
+que é uma entrega do MESMO cartão (mensagem do commit: "Cartão V2: 261010164304cd"),
+equivalente ao commit `d7f6800d3` citado no cartão e que está em outra branch.
+Como o cartão manda fechar sem commit quando já está resolvido, não criei commit de código:
+`git status --short` = diff vazio.
+
+O que já está no código atual:
+- `src/components/notifications/NotificationTypeCards.tsx` — `SelectTrigger` com
+  `aria-label={`Som de ${tipo}`}` (linha 62) e botão de teste com
+  `aria-label={`Testar som de ${tipo}`}` (linha 73); `TIPO_LABEL` mapeia o tipo para o
+  texto visível da linha (`achievement` -> "transcrição de áudio").
+- `src/components/notifications/NotificationSettingsPanel.tsx` — botão mestre com
+  `aria-label="Testar som"` (linha 68).
+- `src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx` — o
+  teste do critério de pronto (já existe na base).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (estado anterior ao commit integrado, sem mudar a árvore):
+  `git show 239272ef9^:src/components/notifications/NotificationTypeCards.tsx | grep -n "SelectTrigger"`
+  -> `48: <SelectTrigger className="w-[130px]">` (sem aria-label).
+  `git show 239272ef9^:src/components/notifications/NotificationSettingsPanel.tsx | grep -n "Testar som"`
+  -> só `65: <Label ...>Testar som</Label>` (o botão não tinha nome acessível).
+- verde depois (agora):
+  `npx vitest run src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx`
+  -> `Test Files 1 passed (1); Tests 4 passed (4)`.
+  O teste localiza exatamente: `getByRole('combobox', { name: 'Som de <tipo>' })` para os 5
+  tipos e `getByRole('button', { name: 'Testar som' })` / `'Testar som de <tipo>'`, e roda o
+  axe escopado nesses nós esperando `violations` de nome acessível vazias.
+- verificação do repositório: `zapp-verify . --rapido` -> `OK db_guard`, `OK tipos`,
+  `OK lint`, `OK migrations`; `VERIFY: VERDE SEM BANCO (201s)`. Zero falhas. O banco fica
+  fora porque este cartão não tem DDL nem migration (é só tela).
+- `git diff --stat` contra a base: só `.tmp/relato.md` (o relato). Nenhum arquivo de código
+  mudou, coerente com "a correção já existe, feche sem commit de código".
+
+## Onde mais o defeito poderia estar (lista dos caminhos)
+- `git grep -n "SelectTrigger" -- src/components/notifications` -> só
+  `NotificationTypeCards.tsx:62`, já com o rótulo.
+- `git grep -n "Testar som" -- src` (fora de `__tests__`) -> só
+  `NotificationTypeCards.tsx:73` e `NotificationSettingsPanel.tsx:65,68`, todos nomeados.
+- Nenhum outro seletor de som ou botão "Testar som" existe no módulo de notificações.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não commitei código: nada havia para corrigir (base já traz a correção e o teste).
+- Não toquei em nenhum arquivo fora dos citados no cartão.
