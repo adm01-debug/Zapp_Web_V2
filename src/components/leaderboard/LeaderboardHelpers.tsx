@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import type { LeaderboardAgent } from '@/hooks/gamification/useLeaderboard';
 import { secureRandomFloat } from '../../lib/secureRandom';
 import {
-  Trophy, Medal, Crown, Star, Flame, TrendingUp, TrendingDown, Minus,
+  Trophy, Medal, Crown, Star, Flame, TrendingUp,
   Sparkles, Zap, Target, Award, ChevronRight,
 } from 'lucide-react';
 
@@ -27,8 +27,7 @@ export const achievementIcons: Record<string, { icon: typeof Trophy; color: stri
   'consistent': { icon: Medal, color: 'text-success', label: 'Consistent' },
 };
 
-export function RankBadge({ rank, previousRank }: { rank: number; previousRank: number }) {
-  const rankChange = previousRank - rank;
+export function RankBadge({ rank }: { rank: number }) {
   const getRankStyle = () => {
     switch (rank) {
       case 1: return { bg: 'bg-gradient-to-br from-primary to-warning', shadow: 'shadow-glow-primary-sm', icon: Crown, iconColor: 'text-primary-foreground' };
@@ -40,20 +39,15 @@ export function RankBadge({ rank, previousRank }: { rank: number; previousRank: 
   const style = getRankStyle();
   const Icon = style.icon;
 
+  // A posição anterior NÃO vem do servidor (useLeaderboard usa previousRank = rank),
+  // então não existe histórico de variação. Exibir seta de subida/descida ou o traço
+  // de "sem mudança" seria variação fabricada; o badge mostra só a posição atual.
   return (
     <div className="flex items-center gap-2">
       <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}
         className={`relative w-9 h-9 rounded-full ${style.bg} ${style.shadow} flex items-center justify-center`}>
         {Icon ? <Icon className={`w-4 h-4 ${style.iconColor}`} /> : <span className="text-sm font-bold text-foreground">{rank}</span>}
       </motion.div>
-      {rankChange !== 0 && (
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-          className={`flex items-center gap-0.5 text-xs font-medium ${rankChange > 0 ? 'text-success' : 'text-destructive'}`}>
-          {rankChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-          <span>{Math.abs(rankChange)}</span>
-        </motion.div>
-      )}
-      {rankChange === 0 && rank > 3 && <Minus className="w-3 h-3 text-muted-foreground" />}
     </div>
   );
 }
@@ -117,7 +111,7 @@ export function LeaderboardRow({ agent, index }: { agent: LeaderboardAgent; inde
       }`}>
       <CelebrationParticles isVisible={showCelebration} />
       <div className="flex items-center gap-3">
-        <RankBadge rank={agent.rank} previousRank={agent.previousRank} />
+        <RankBadge rank={agent.rank} />
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative">
             <Avatar className="w-10 h-10 ring-2 ring-border/30">
