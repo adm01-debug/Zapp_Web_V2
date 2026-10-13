@@ -1,42 +1,63 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
-## Arquivos no diff (5 arquivos, 1 de teste)
-Cartão pediu só scripts/db-audit/talkx-monitor-panel.test.sh. Os outros 4 e o porquê de cada:
-- scripts/db-audit/talkx-monitor-panel.test.sh — o alvo (1 arquivo de teste, o pedido do cartão).
-- supabase/migrations/20261010060000_talkx_monitor_panel.sql — trazido verbatim do X140: sem ele o teste nem aplica a migration (a base do dia não tem o arquivo). NÃO editei o conteúdo; copiei do commit d4c4ee3a52 (a versão corrigida do X140, com o gatilho desligado na transação e o NULL negado).
-- supabase/migrations/20261010085230_talkx_monitor_panel_engine_health.sql — trazido verbatim do cartão pai t_e295a21f (commit 0c1e0797e0), sem alteração. O cartão pressupõe esta migration "já aplicada"; ela não está na branch do dia.
-- scripts/ci/check-test-inventory.mjs — o teste .test.sh novo ficaria órfão no CI; entrou na ALLOWLIST com justificativa (o passo de YAML é do dono do workflow, agente não edita workflow).
-- .tmp/relato.md — este relato (já era versionado na base).
+## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
 
-## O que mudou no teste e por quê
-1. Fixture: `metric_rate` da view public.talkx_engine_health passou a `numeric` (era `double precision`), espelhando a view real (migration 20261003242707_talkx_log_saude_alertas.sql, linhas 285-286: metric_count bigint, metric_rate numeric).
-2. Fixture: adicionei o gatilho de produção `update_talkx_recipients_updated_at` (public.update_updated_at_column + BEFORE UPDATE em talkx_recipients). Sem ele a migration corrigida do X140 não aplica — o `ALTER TABLE ... DISABLE TRIGGER` falha com "trigger does not exist".
-3. Caso (10): além de reaplicar a migration do monitor, reaplica também a do engine health — a do monitor recria a função com o corpo anterior (sem o bloco motor) e zerava o caso (11).
-4. Caso (12) novo: prova que o backfill de failed_at não regrava updated_at (a conferência do juiz sobre o gatilho).
+Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
+arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
 
-## Causa real do vermelho (medida, não suposta)
-A view de fixture NÃO era o motivo: ela já expunha as seis colunas que o RPC lê. O vermelho vinha do caso (10): reaplicava só a migration do monitor (20261010060000), cujo corpo da função NÃO tem o bloco motor; o caso (11) media então uma função revertida, o JSON saía sem a chave `motor` e as cinco asserções do critério ficavam vazias.
+- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
+  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
+  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
+  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
+  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
+  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
+  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
+- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
+  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
+  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
+  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
+  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
+  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
+  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
 
-## Conferência do juiz (gatilho BEFORE UPDATE no backfill)
-A migration que trago já desliga SÓ esse gatilho, dentro da transação:
-  linha 23 (antes do UPDATE):  ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;
-  linha 29 (depois do UPDATE): ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
-E o caso (12) prova pelo teste: os 6 failed da campanha C entram com `updated_at` sentinela 2001-01-01; depois do backfill (e do replay do caso 10) `updated_at` continua o sentinela e `failed_at` veio dele.
+Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
+por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
+na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
 
-## Prova
-- vermelho antes (sem as minhas mudanças, com a migration 20261010085230 do pai):
-  `bash scripts/db-audit/talkx-monitor-panel.test.sh` -> `FAIL: motor.stalled_campaign [esperado: true | obtido: ]` (EXIT=1)
-- mutação A (motor, só a produção): no bloco motor da migration 20261010085230 troquei `'stalled_campaign', EXISTS (...)` por `'stalled_campaign', FALSE` ->
-  `FAIL: motor.stalled_campaign [esperado: true | obtido: false]` (EXIT=1)
-- mutação B (gatilho, só a produção): removi o `DISABLE TRIGGER` da migration 20261010060000 ->
-  `FAIL: backfill preservou updated_at (campanha C) [esperado: 0 | obtido: 6]` (EXIT=1)
-- verde depois: `bash scripts/db-audit/talkx-monitor-panel.test.sh` ->
-  `PASS: (11) bloco motor presente em health com stalled_campaign=true, stale_lease=true, outcome_unknown_24h=3, failure_rate_15m=0.12, cron_status=ok`
-  `PASS: (12) backfill de failed_at preserva updated_at (gatilho da tabela desligado so na transacao)`
-  `PASS: todos os 21 casos medidos` (EXIT=0, zero FAIL). Saída completa em .tmp/test-green.txt.
-- inventário: `node scripts/ci/check-test-inventory.mjs` não cita mais o meu teste; restam 4 órfãos pré-existentes da base (department-invite-contract-audit-vocabulary, talkx-conversion-defaults, team-chat-media-contract, team-direct-conversation-race) — não são regressão deste cartão.
+Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
+(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
+
+## Prova (executada agora, nesta ponta)
+
+- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
+  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
+  - rodada 1: `1 skipped` / `8 passed (39.6s)`
+  - rodada 2: `1 skipped` / `8 passed (42.9s)`
+  - rodada 3: `1 skipped` / `8 passed (55.2s)`
+  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
+- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
+  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
+  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
+- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
+  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
+  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
+  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
+  só `.tmp/relato.md`. `git status --short` → limpo.
+
+## test.fixme existentes na spec (1 de verdade, 0 test.skip)
+
+- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
+  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
+  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
+  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
+  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
+- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
+  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
 
 ## O que NÃO fiz e por quê
-- Não alterei o RPC nem as migrations (trouxe verbatim quem já as entregou).
-- Não enfraqueci, pulei nem aumentei timeout de asserção; as 5 do critério continuam medindo a view.
-- Dependência registrada: depende de t_e295a21f (N-117) e do X140, que seguem sem integração na branch do dia.
+
+- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
+  já contém o pedido inteiro.
+- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
+- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.

@@ -98,10 +98,6 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
-  // N-117 (Fase 11 · monitor): painel do TalkX (kpis, comparativo, serie e bloco motor lido
-  // de talkx_engine_health). Prova em PostgreSQL 17 descartavel; o passo de uma linha em
-  // db-guard.yml fica para o dono do workflow.
-  'scripts/db-audit/talkx-monitor-panel.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
