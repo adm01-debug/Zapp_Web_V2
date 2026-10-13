@@ -16,3 +16,4 @@ Especialista: Hugo (area-front-hooks)
 ## O que NÃO fiz e por quê
 - Não removi a gravação de `away_messages` do hook: ela é usada pela aba Mensagens, que edita a ausência (fora do meu escopo de arquivos). O que a tela de horário deixou de fazer é criá-la sozinha.
 - Não mexi na migration/RPC (cartão pai, t_7fa76169): apenas a chamo pelo nome/assinatura que ela expõe.
+- `supabase/migrations/20261013050848_templates_global_e_save_business_hours.sql`, `supabase/tests/templates_global_e_business_hours_atomico.sql` e `src/integrations/supabase/types.ts` aparecem no diff da branch porque são a faixa do cartão PAI (t_7fa76169, sha d9e0c46f1), que eu trouxe para esta base com `git cherry-pick` da faixa `dia/2026-10-13..d9e0c46f1` — não são edição minha deste cartão; são a RPC atômica que eu passei a chamar.
