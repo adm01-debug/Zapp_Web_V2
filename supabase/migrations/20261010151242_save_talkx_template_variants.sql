@@ -1,14 +1,13 @@
--- save_talkx_template_variants: grava o conjunto de variantes A/B/C de um template numa
--- transacao atomica (0, 2 ou 3 variantes; 1 isolada nao e A/B).
--- Regras: p_variants precisa ser array JSON; exatamente um controle com conteudo (so
--- espacos nao conta); pesos inteiros > 0 somando 100; labels A/B/C sem duplicata; ids do
--- input precisam ser uuid valido e pertencer ao template; ids existentes sao preservados
--- (UPDATE por id, INSERT so para novas); remover variante com destinatario e recusado.
---
--- Rollback: drop function if exists public.save_talkx_template_variants(uuid, timestamptz, jsonb);
+-- save_talkx_template_variants
+-- Rollback: a funcao e nova (nao substitui corpo anterior); basta remove-la.
 -- Rollback (SQL executavel, na ordem):
 --   drop function if exists public.save_talkx_template_variants(uuid, timestamptz, jsonb);
--- A funcao e nova (nao substitui corpo anterior); basta remove-la.
+-- Grava o conjunto de variantes A/B/C de um template numa transacao atomica (0, 2 ou 3
+-- variantes; 1 isolada nao e A/B). Regras: p_variants precisa ser array JSON; exatamente um
+-- controle com conteudo (so espacos nao conta); pesos inteiros > 0 somando 100; labels A/B/C
+-- sem duplicata; ids do input precisam ser uuid valido e pertencer ao template; ids
+-- existentes sao preservados (UPDATE por id, INSERT so para novas); remover variante com
+-- destinatario e recusado.
 
 CREATE OR REPLACE FUNCTION public.save_talkx_template_variants(
   p_template_id uuid,
