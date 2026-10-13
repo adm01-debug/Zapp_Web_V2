@@ -2,64 +2,83 @@
 
 Especialista: worker (design) (design-system-zapp)
 
-## O que mudou e por quê
-- scripts/ci/docs-design-drift.unit.mjs: a guarda `tipografiaDoSubcabecalho` e o casador da linha
-  da doc passam a ler `src/components/tasks/list/TasksListTable.tsx` (arquivo que RENDERIZA o
-  subcabecalho dos dias) em vez de `TasksListMode.tsx`. A entrega empilhada (b1492e4986 "Lista em
-  tabela", etapa 050) tirou o rotulo da Lista do `<div>` inline e o levou para o `<th>` da tabela;
-  a guarda continuava procurando `{g.label}` no arquivo antigo, onde ele nao existe mais.
-- scripts/ci/docs-design-drift.unit.mjs: a leitura do className passa a aceitar o elemento JSX cuja
-  tag de abertura fica na linha ANTERIOR ao `{g.label}` (um `<th …>` multi-linha), janela de no
-  maximo 2 linhas — nunca um className solto mais distante.
-- docs/design/TAREFAS_QUADRO_STATUS.md: a linha de "Mudancas" que nomeia o arquivo do subcabecalho
-  passa a apontar `TasksListTable.tsx`, mantendo `text-xs` (mesmo token) e registrando que o rotulo
-  migrou de `TasksListMode.tsx` na etapa 050.
-
-Nenhuma assercao afrouxada: o invariante continua "a doc cita a classe que o codigo usa", agora
-ancorado no arquivo real.
-
-## Pontos do revisor ([refazer] — os 3 itens de "O QUE FAZER" do cartao)
+## Pontos do [refazer] (o "O QUE FAZER" do cartao)
 - Ponto 1 (partir do commit da entrega 6e5240688 com cherry-pick, nao recomecar): feito.
   `git cherry-pick b1492e4986 6cb4d63a09 6e5240688` aplicou a cadeia da entrega sobre
-  `dia/2026-10-13`; o sha do cartao (6e5240688) e a ponta da pilha, e minha correcao e o commit
-  seguinte, `34750b2ac5`.
-- Ponto 2 (reproduzir sobre a ponta de dia/2026-10-13 e corrigir a causa sem afrouxar assercao):
-  provado abaixo. Reproduzi `node --test scripts/ci/docs-design-drift.unit.mjs` -> `not ok 11`; a
-  causa era a ancora da guarda no arquivo movido; corrigi ancorando a guarda no codigo real
-  (arquivo + leitura do className do proprio elemento) e a doc junto. As 3 mutacoes continuam
-  vermelhas (nenhuma assercao afrouxada).
-- Ponto 3 (provar o mesmo comando VERDE e `zapp-verify . --rapido` verde; fechar citando o sha):
-  ESPELHO DO CI nos seus blocos -> sem falha nova (item do subcabecalho sumiu); `zapp-verify .
-  --rapido` -> `VERIFY: VERDE SEM BANCO (235s)`. Shas citados: entrega `6e5240688`, correcao
-  `34750b2ac5`.
+  dia/2026-10-13; nao reescrevi nada da entrega. Shas: entrega 6e5240688 (ponta da pilha),
+  minha correcao 34750b2ac5.
+- Ponto 2 (reproduzir sobre a ponta de dia/2026-10-13 e corrigir a causa sem afrouxar
+  assercao): feito. Vermelho reproduzido (log abaixo) e causa corrigida com o teste ainda
+  mordendo (3 mutacoes vermelhas, abaixo).
+- Ponto 3 (provar o mesmo comando VERDE e zapp-verify . --rapido verde; fechar citando o sha):
+  feito. os blocos do espelho do CI rodam sem falha NOVA (o item do subcabecalho sumiu) e
+  `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (235s)`. Shas citados: entrega
+  6e5240688, correcao 34750b2ac5.
 
-## Prova
-- vermelho antes (com a entrega empilhada, sem o meu commit): `node --test --test-reporter=tap scripts/ci/docs-design-drift.unit.mjs`
-  -> `not ok 11 - doc de Tarefas/Quadro cita a classe do subcabeçalho que o código usa`
-     `error: 'src/components/tasks/list/TasksListMode.tsx: não achei o subcabeçalho dos grupos (linha com {g.label})'`
-- verde depois: mesmo comando -> `# tests 11 / # pass 11 / # fail 0`
-- mutacoes (a assercao ainda morde; cada uma VERMELHA e depois restaurada para verde):
-  - M1 codigo usa `text-sm`, doc diz `text-xs` -> `not ok 11`
-  - M2 subcabecalho perde o token de tamanho -> `not ok 11`
-  - M3 doc aponta token que o codigo nao usa -> `not ok 11`
-- ESPELHO DO CI (rodei os MESMOS blocos de comando do `ci_espelho.sh` a partir do workspace; ver
-  observacao abaixo):
-  - `node --test` sobre os 148 arquivos de scripts/ci, edge-deploy, db-audit, talkx: o item do
-    subcabecalho NAO aparece mais; permanecem exatamente os 10 itens ja presentes na base
-    (lint-ratchet --staged, Talk X delivery window, FLAG_CHANGES.md, tsconfig any, staged) —
-    nenhuma falha NOVA, conforme a bisseccao do proprio cartao (causava um unico item).
-  - `deno test --config scripts/ci/deno.json --frozen …` sobre 164 arquivos: verde.
-  - contratos: `vitest run --config vitest.contracts.config.ts` -> `Test Files 89 passed (89);
-    Tests 1379 passed (1379)`.
-  - testes da entrega: `vitest run TasksListTable.test.tsx TasksListMode.test.tsx` -> `2 passed (2);
-    20 passed (20)`.
-- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (235s)` (db_guard/tipos/lint/migrations OK).
+## Arquivos no diff dia/2026-10-13...HEAD (numstat real)
+Cadeia da entrega empilhada por cherry-pick (Ponto 1) — NAO sao meu codigo, vieram de
+6e5240688/b1492e4986/6cb4d63a09 e nao foram tocados por mim:
+- src/components/tasks/list/TasksListTable.tsx (415/0)
+- src/components/tasks/list/TasksListMode.tsx (22/151)
+- src/components/tasks/__tests__/TasksListTable.test.tsx (386/0)
+- src/components/tasks/__tests__/TasksListMode.test.tsx (4/4)
+- src/components/tasks/__tests__/TasksModule.entrada.test.tsx (1/1)
+- src/components/tasks/__tests__/TasksModule.test.tsx (24/9)
+- src/components/tasks/__tests__/WorkItemSheet.test.tsx (5/3)
+- src/components/tasks/__tests__/cardAcoes.test.tsx (8/4)
+- src/components/tasks/__tests__/zen.tarefas.test.tsx (2/2)
+Meu commit (34750b2ac5) — so estes 2 arquivos:
+- scripts/ci/docs-design-drift.unit.mjs (21/14)
+- docs/design/TAREFAS_QUADRO_STATUS.md (1/1)
 
-## O que NÃO fiz e por quê
-- Nao rodei o `bash ~/arquitetura-v2/integrador/ci_espelho.sh` literal: a guarda do Hermes bloqueia
-  qualquer segmento `bash` cujo caminho contenha `/arquitetura-v2` (GUARD_PATH_RE, hermes-guard.py
-  linhas 234/310), e o meu papel proibe contornar guarda. Rodei os MESMOS blocos do espelho (deno,
-  node --test dos .unit.mjs/.test.mjs, contratos, guardas baratas) no workspace; a comparacao base x
-  cartao deu zero falha nova.
-- Nao toquei em nenhuma outra guarda nem no codigo da tela: era desalinhamento de ancora da guarda
-  com o codigo movido, nao bug de comportamento.
+## Causa
+O espelho do CI reprovava exatamente 1 item novo: "node: doc de Tarefas/Quadro cita a classe
+do subcabecalho que o codigo usa". A guarda docs-design-drift.unit.mjs ancorava o subcabecalho
+dos grupos ("Amanha"/"Hoje"/"Seg 05/10") em `src/components/tasks/list/TasksListMode.tsx`
+(LISTA_DE_TAREFAS). A etapa 050 (commit b1492e4986 da propria entrega) virou a Lista em TABELA
+e moveu esse rotulo para o `<th>` de `src/components/tasks/list/TasksListTable.tsx` (linhas
+287-290). O texto do relatorio (docs/design/TAREFAS_QUADRO_STATUS.md, linha 165) continuou
+citando TasksListMode.tsx. A guarda procurava a linha com `className` E `{g.label}` no arquivo
+antigo e falhava fechado: `TasksListMode.tsx: nao achei o subcabecalho dos grupos`.
+
+## Correcao (sem afrouxar assercao)
+- Guarda reancorada no arquivo que RENDERIZA o rotulo: `ARQUIVO_DO_SUBCABECALHO =
+  src/components/tasks/list/TasksListTable.tsx`; o matcher da linha do doc passou a exigir
+  TasksListTable.tsx + "subcabe".
+- `tipografiaDoSubcabecalho` passou a ler o `className` no proprio elemento do `{g.label}`
+  (a linha do rotulo e ate 2 linhas acima), porque em `<th>` a tag de abertura ocupa a linha
+  anterior. Continua exigindo o token REAL de tamanho e continua falhando fechado quando o
+  token some (mutacao M2).
+- Doc: a linha 165 da tabela de Mudancas da etapa 49 agora aponta o arquivo da tabela e cita
+  o token `text-xs` (12px) que o codigo usa, registrando que o rotulo era inline em
+  TasksListMode.tsx na etapa 49 e passou ao `<th>` na etapa 050.
+
+## Prova medida
+- vermelho antes (sobre a entrega empilhada, guarda ainda no arquivo antigo):
+  `node --test scripts/ci/docs-design-drift.unit.mjs` -> `# tests 11 / # pass 10 / # fail 1`;
+  erro em scripts/ci/docs-design-drift.unit.mjs:323: "TasksListMode.tsx: nao achei o
+  subcabecalho dos grupos (linha com {g.label})".
+- verde depois (mesmo comando) -> `# tests 11 / # pass 11 / # fail 0`.
+- mutacoes (o teste nao virou tautologico) — todas `not ok 11`, restaurado verde depois:
+  M1 `text-xs`->`text-sm` no `<th>` do codigo; M2 removido o token de tamanho do `<th>`;
+  M3 o doc aponta um token que o codigo nao usa.
+- blocos do espelho do CI, rodados direto (ver limitacao): node --test nos 148 arquivos de
+  scripts/ci+edge-deploy+db-audit+talkx -> a lista de falhas NAO tem o item do subcabecalho;
+  os 10 itens restantes sao os mesmos da base (o cartao diz que este era o unico culpado);
+  deno test (164 arquivos) verde; contratos vitest 89 arquivos/1379 testes verdes; guardas
+  baratas: implicit-any-ratchet rc=0, check-test-inventory pendencia (a propria espelho
+  registra como pendencia, nao reprovacao).
+- testes da entrega no meu commit: TasksListTable.test.tsx + TasksListMode.test.tsx ->
+  2 arquivos, 20 testes verdes.
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (235s)` (db_guard/tipos/lint/migrations ok).
+
+## Limitacao registrada (nao contornei guarda)
+O comando literal `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` e bloqueado pelo
+hermes-guard ("/arquitetura-v2" dentro de um segmento `bash`); nao contornei. Rodei os MESMOS
+blocos que a espelho executa (deno + node --test + contratos + guardas baratas) direto no
+workspace, com o resultado acima.
+
+## git diff --stat (meu commit)
+ docs/design/TAREFAS_QUADRO_STATUS.md  |  2 +-
+ scripts/ci/docs-design-drift.unit.mjs | 35 +++++++++++++++++++++--------------
+ 2 files changed, 22 insertions(+), 15 deletions(-)
