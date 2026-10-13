@@ -137,3 +137,16 @@ Deno.test('media delivery never turns timeline placeholders into captions and pr
   const quoted = result.body.quoted as { key?: { id?: string } } | undefined;
   if (quoted?.key?.id !== 'wa-message-id') throw new Error('quoted reply metadata was not preserved');
 });
+
+// R2-SLA-001 — o SLA de 1ª resposta é gravado pelo trigger
+// trg_messages_sla_first_response dentro de complete_outbound_message() quando a
+// mensagem vira 'sent'. A RPC mark_first_response chamada daqui era redundante e
+// falhava sempre com 42501 (exige auth.uid(); este caminho roda com service_role).
+// Guarda de regressão: a chamada não pode voltar. O registro pelo trigger é
+// provado em scripts/db-audit/sla-first-response-delivery-contract.test.mjs.
+Deno.test('message delivery does not call the redundant mark_first_response RPC', async () => {
+  const src = await Deno.readTextFile(new URL('./index.ts', import.meta.url));
+  if (/\.rpc\(\s*['"]mark_first_response['"]/.test(src)) {
+    throw new Error('a RPC mark_first_response não pode ser chamada: o trigger já registra o SLA');
+  }
+});
