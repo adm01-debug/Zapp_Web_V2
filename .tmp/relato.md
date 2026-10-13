@@ -11,7 +11,7 @@ Por que não os 6: o conjunto completo tem 149820 caracteres adicionados e o `he
 
 ## Prova
 - Integridade byte a byte origem x destino (`md5sum`), todas idênticas: `51cf07bf1a87362c72b98d0d92ced304` (PARTE3 = achados_3.md), `b3172d45701f76e7aafd4dbaf7ee0814` (PARTE5 = achados_5_fluxos_banco.md), `612f9c2d2783edf994450f0de254fe53` (plano).
-- Sem segredo nem dado pessoal: busca (`search_files`, regex de JWT `eyJ...`, `sk-`, `ghp_`, hex/hash longo, telefone `+55`/`(DD)9...`, `tnnnlkbymytvtqngbbqh`, `service_role_key`/`anon_key`/`Bearer`) nos 6 arquivos-fonte -> 0 ocorrências; os casamentos de "token"/"chave"/"secret" são texto conceitual (ex.: `x-cron-secret`, chave de cache) e o único e-mail é o exemplo `a@x.com`. O id do projeto de produção NÃO aparece.
+- Sem segredo nem dado pessoal: busca (`search_files`, regex de JWT `eyJ...`, `sk-`, `ghp_`, hex/hash longo, telefone `+55`/`(DD)9...`, `service_role_key`/`anon_key`/`Bearer`) nos 6 arquivos-fonte -> 0 ocorrências; os casamentos de "token"/"chave"/"secret" são texto conceitual (ex.: `x-cron-secret`, chave de cache) e o único e-mail é o exemplo `a@x.com`. O identificador do banco real NÃO aparece.
 - Verificação: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (232s)` (dependencias OK, db_guard OK, tipos OK, lint OK, migrations OK).
 - `git diff --stat` conferido contra os arquivos listados: só os 3 arquivos acima (+ o relato).
 
