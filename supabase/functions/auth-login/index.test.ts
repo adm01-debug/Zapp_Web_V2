@@ -41,15 +41,29 @@ function get(): Request {
 }
 
 /** Fake do client service_role: registra cada RPC e devolve o resultado scriptado. */
-function fakeAdmin(policy: { data: unknown; error: unknown }, extra: Record<string, { data: unknown; error: unknown }> = {}) {
+function fakeAdmin(
+  policy: { data: unknown; error: unknown },
+  extra: Record<string, { data: unknown; error: unknown }> = {},
+  signOutError: { message?: string } | null = null,
+) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  const signOuts: Array<{ jwt: string; scope?: string }> = [];
   return {
     calls,
+    signOuts,
     rpc(fn: string, args: Record<string, unknown>) {
       calls.push({ fn, args });
       if (fn === "resolve_network_policy") return Promise.resolve(policy);
       if (fn in extra) return Promise.resolve(extra[fn]);
       return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+    },
+    auth: {
+      admin: {
+        signOut(jwt: string, scope?: string) {
+          signOuts.push({ jwt, scope });
+          return Promise.resolve({ error: signOutError });
+        },
+      },
     },
   };
 }
@@ -360,4 +374,205 @@ Deno.test("resposta sem sessão e sem erro responde 503 e NÃO registra tentativ
   assertEquals(res.status, 503);
   assertEquals(anon.calls.length, 1);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+// ── modo `verify` (reautenticação sem trocar a sessão) ────────────────────────
+// `{email,password,mode:'verify'}` valida a senha e devolve `{ok:true}` SEM
+// tokens, revogando a sessão temporária criada pelo GoTrue (escopo `local`).
+// As recusas (rede, rate limit, lockout, senha) são IDÊNTICAS ao login, e o
+// login normal (sem `mode` ou `mode:'login'`) não passa por signOut.
+
+function verifyBody(email = "a@b.com", password = "secret") {
+  return JSON.stringify({ email, password, mode: "verify" });
+}
+
+Deno.test("verify: senha correta devolve {ok:true} SEM tokens e revoga a sessão temporária", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    },
+  );
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 200);
+  const body = (await res.json()) as Record<string, unknown>;
+  // Nenhum token: o corpo é exatamente {ok:true}.
+  assertEquals(body, { ok: true });
+  assertEquals("access_token" in body, false);
+  assertEquals("refresh_token" in body, false);
+
+  // A senha foi conferida pelo GoTrue e a sessão temporária foi revogada
+  // (escopo `local` = só ela, sem derrubar a sessão real do usuário).
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.signOuts, [{ jwt: "tok", scope: "local" }]);
+
+  // Ordem igual ao login: política -> lock -> (verify: signOut) -> tentativas zeradas.
+  assertEquals(admin.calls.map((c) => c.fn), [
+    "resolve_network_policy",
+    "is_account_locked",
+    "clear_login_attempts",
+  ]);
+});
+
+Deno.test("verify: senha errada tem recusa idêntica ao login (401) e não cria sessão", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 1 }], error: null },
+    },
+  );
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 400 } });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody("a@b.com", "wrong")), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).error, "Invalid login credentials");
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+  // Sem sessão: nada a revogar.
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: conta inativa/recusada pelo GoTrue (4xx) recusa como o login (401)", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 1 }], error: null },
+    },
+  );
+  // GoTrue recusa usuário inativo/banido com 4xx (não 429): mesma trilha de recusa.
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 403 } });
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).error, "Invalid login credentials");
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: conta bloqueada responde 423 sem tocar no GoTrue nem na sessão", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: {
+        data: [{ is_locked: true, locked_until: new Date(Date.now() + 60000).toISOString(), attempts: 5 }],
+        error: null,
+      },
+    },
+  );
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 423);
+  assertEquals((await res.json()).error, "Account locked");
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: rede negada responde 403 antes de qualquer efeito", async () => {
+  const admin = fakeAdmin(POLICY_DENY_IP);
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP, "cf-ipcountry": "br" }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 403);
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+  assertEquals(rl.calls.length, 0);
+});
+
+Deno.test("verify: falha ao revogar a sessão temporária responde 503 (falha fechada)", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    },
+    { message: "logout failed" },
+  );
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: rl.enforceRateLimit,
+  });
+
+  assertEquals(res.status, 503);
+  assertEquals((await res.json()).error, "Internal server error");
+  // A senha não pode voltar como aceita enquanto a sessão temporária não é revogada.
+  assertEquals(admin.signOuts, [{ jwt: "tok", scope: "local" }]);
+});
+
+Deno.test("mode desconhecido responde 400 antes de qualquer efeito", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+  );
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "banana" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 400);
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("login com `mode:'login'` explícito devolve tokens e NÃO revoga sessão", async () => {
+  const admin = fakeAdmin(
+    { data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null },
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    },
+  );
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "login" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.access_token, "tok");
+  assertEquals(body.refresh_token, "ref");
+  assertEquals(admin.signOuts.length, 0);
 });

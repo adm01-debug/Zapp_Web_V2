@@ -23,8 +23,26 @@ import {
 //    registrar tentativa (R2-AUTH-021): outage do provedor nao conta no lockout;
 // 5. GoTrue aceita -> tentativas zeradas -> 200 com a sessao; o front faz setSession.
 // verify_jwt = false: ainda nao existe sessao. Rate limit por IP e por e-mail.
+//
+// MODOS (body.mode):
+// - ausente/`login`: fluxo acima, devolve a sessao (nao mudou).
+// - `verify` (reautenticacao, ADR-006): mesma ordem e MESMOS codigos de recusa
+//   que o login (403/503 de rede, 429, 423 de lock, 401/503 do GoTrue); quando a
+//   senha e aceita, REVOGA a sessao temporaria que o GoTrue criou para conferir a
+//   senha (escopo `local`: so ela, sem derrubar a sessao real do usuario — que
+//   pode estar em AAL2) e responde `{ok:true}` SEM tokens. Assim o chamador
+//   valida a senha sem trocar a propria sessao (era o defeito: a reautenticacao
+//   substituia a sessao AAL2 por uma AAL1, mandava ao /2fa e deixava sessao orfa).
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@.]{2,63}$/;
+
+type LoginMode = "login" | "verify";
+
+/** `mode` ausente/vazio = login; valor desconhecido = null (400, falha fechada). */
+function parseLoginMode(raw: unknown): LoginMode | null {
+  if (raw === undefined || raw === null || raw === "") return "login";
+  return raw === "login" || raw === "verify" ? raw : null;
+}
 
 type LockRow = { is_locked: boolean; locked_until: string | null; attempts: number };
 
@@ -65,8 +83,25 @@ export interface LoginAnonClient {
   };
 }
 
+/**
+ * Client service_role do login: RPC de política/lockout e, no modo `verify`,
+ * `auth.admin.signOut` para encerrar a sessão temporária criada pelo GoTrue.
+ * O tipo é estrutural (não acopla a uma versão de `@supabase/supabase-js`), mas
+ * exige as duas formas que o handler realmente usa.
+ */
+export interface LoginAdminClient extends NetworkPolicyRpcClient {
+  auth: {
+    admin: {
+      signOut: (
+        jwt: string,
+        scope?: "local" | "global" | "others",
+      ) => PromiseLike<{ error: { message?: string } | null }>;
+    };
+  };
+}
+
 export interface AuthLoginDeps {
-  admin: NetworkPolicyRpcClient;
+  admin: LoginAdminClient;
   anon: LoginAnonClient;
   enforceRateLimit: (
     key: string,
@@ -140,6 +175,9 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     }
     const rec = (body ?? {}) as Record<string, unknown>;
 
+    const mode = parseLoginMode(rec.mode);
+    if (mode === null) return errorResponse("invalid mode", 400, req);
+
     const email = sanitizeString(rec.email, 254)?.toLowerCase();
     if (!email || !EMAIL_RE.test(email)) return errorResponse("invalid email", 400, req);
     const password = typeof rec.password === "string" ? rec.password : "";
@@ -190,10 +228,31 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       return jsonResponse({ error: "Invalid login credentials", ...lock }, 401, req);
     }
 
+    const s = signIn.session;
+
+    // Modo `verify` (reautenticação): a senha foi aceita, mas a sessão que o
+    // GoTrue criou só serviu para conferir a senha — o chamador JÁ tem sessão
+    // (possivelmente AAL2) e não pode receber nem trocar por estes tokens.
+    // Revoga a sessão temporária no escopo `local` (só ela; NÃO derruba a sessão
+    // real do usuário, ao contrário de `global`). Falha ao revogar = 503: sem
+    // tokens e sem deixar sessão órfã viva (falha fechada).
+    if (mode === "verify") {
+      const { error: outError } = await deps.admin.auth.admin.signOut(s.access_token, "local");
+      if (outError) {
+        log.error("verify signOut failed", {});
+        log.done(503, { reason: "signout" });
+        return errorResponse("Auth service unavailable", 503, req);
+      }
+    }
+
     const { error: clearError } = await deps.admin.rpc("clear_login_attempts", { p_email: email });
     if (clearError) log.error("clear_login_attempts failed", { code: rpcErrorCode(clearError) });
 
-    const s = signIn.session;
+    if (mode === "verify") {
+      log.done(200, { mode: "verify", userId: signIn.user?.id });
+      return jsonResponse({ ok: true }, 200, req);
+    }
+
     log.done(200, { userId: signIn.user?.id });
     return jsonResponse(
       {
