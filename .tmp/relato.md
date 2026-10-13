@@ -21,3 +21,6 @@ listar; vazio + Adicionar; criar (payload exato ao servidor); editar Enter; edit
 - Não mexi em `src/services/contact.service.ts` nem em migration/policy: a permissão é decidida pela RLS existente na tabela; o cartão limita o SQL a outra trilha.
 - Não usei nem criei etiqueta/tag.
 - Não coloquei a seção entre as 3 do `sidebarSections` (professional/personal/singu): aquela config é de outro plano e o teste dela fixa o default nas 3; segui o precedente da seção já montada direto no acordeão.
+
+## Ajuste pós-checagem do portão
+- Os 3 spinners usavam `animate-spin` sem `motion-safe:`; troquei por `motion-safe:animate-spin` (regra de movimento). Teste verde de novo (9 passed).

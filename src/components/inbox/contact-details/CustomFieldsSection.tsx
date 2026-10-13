@@ -121,7 +121,7 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-4 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-label="Carregando campos" />
+          <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-label="Carregando campos" />
         </div>
       ) : fields.length === 0 ? (
         <p className="px-1 py-2 text-xs text-muted-foreground">
@@ -282,7 +282,7 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
               onClick={() => void handleAdd()}
               className="h-7 text-xs"
             >
-              {savingAdd ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Salvar'}
+              {savingAdd ? <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" /> : 'Salvar'}
             </Button>
           </div>
         </div>
@@ -312,7 +312,7 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Remover'}
+              {deleting ? <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" /> : 'Remover'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
