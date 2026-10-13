@@ -7022,6 +7022,98 @@ export type Database = {
           },
         ]
       }
+      sla_alert_events: {
+        Row: {
+          alert_type: string
+          contact_id: string
+          created_at: string
+          id: string
+          queue_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          queue_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+        }
+        Update: {
+          alert_type?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          queue_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_alert_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_alert_preferences: {
+        Row: {
+          alert_first_response: boolean
+          alert_resolution: boolean
+          enabled: boolean
+          severity_breached: boolean
+          severity_warning: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_first_response?: boolean
+          alert_resolution?: boolean
+          enabled?: boolean
+          severity_breached?: boolean
+          severity_warning?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_first_response?: boolean
+          alert_resolution?: boolean
+          enabled?: boolean
+          severity_breached?: boolean
+          severity_warning?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sla_configurations: {
         Row: {
           created_at: string
@@ -11786,6 +11878,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_sla_alert: {
+        Args: { p_alert_type: string; p_contact_id: string; p_severity: string }
+        Returns: string
+      }
       record_talkx_conversion: {
         Args: {
           p_attribution?: Json
@@ -11929,6 +12025,10 @@ export type Database = {
         Returns: Json
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
+      resolve_sla_alert: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       resolve_talkx_outcome_unknown: {
         Args: {
           p_confirm_duplicate_risk?: boolean
