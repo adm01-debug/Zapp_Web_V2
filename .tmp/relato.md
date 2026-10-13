@@ -1,5 +1,14 @@
 Especialista: vera
 
+## Arquivos no diff (contra a branch do dia)
+git diff --name-only (contra a base do dia):
+.github/workflows/db-guard.yml
+scripts/db-audit/lint-migrations-content.mjs
+scripts/db-audit/lint-migrations-content.test.mjs
+
+Além destes três, aparece modificado .tmp/relato.md — que já É versionado nesta branch (veio de cartão anterior,
+apesar de .tmp/ estar no .gitignore). Nenhum outro arquivo foi tocado.
+
 ## O que mudou e por quê
 - scripts/db-audit/lint-migrations-content.mjs (novo, na lista do cartão): lint estático do CONTEÚDO das migrations —
   porte do scripts/lint-migrations.mjs + do antipadrão (a) do check-migration-gates.mjs da V3. Regras: ML-001 (SECURITY
@@ -11,17 +20,13 @@ Especialista: vera
   "manifesto de exceções" do check-migration-drift.mjs) é dispensado — seu conteúdo já é fixado por sha256 ali e
   qualquer edição é recusada pelo drift checker no mesmo job. MIGRATION_LINT_MANIFEST e MIGRATIONS_DIR sobrescrevem
   caminhos para teste.
-- .github/workflows/db-guard.yml (na lista do cartão): passo "Lint de conteudo das migrations alteradas" (roda em
-  pull_request e merge_group; CHANGED_FILES = `git diff --name-only origin/<base>...HEAD -- 'supabase/migrations/*.sql'`,
-  o mesmo padrão de paths-filter do ci.yml) e `fetch-depth: 0` no checkout — sem histórico o merge-base não existe e o
-  diff sairia vazio. Sem ligar no workflow a guarda existiria e não rodaria em PR nenhum, e o critério 1 do cartão
-  ("migration insegura é barrada no PR") não teria como ser cumprido.
+- .github/workflows/db-guard.yml (na lista do cartão): passo "Lint de conteudo das migrations alteradas", que roda em
+  pull_request e merge_group com CHANGED_FILES = a lista de arquivos alterados contra `origin/<base>` filtrada a
+  `supabase/migrations/*.sql` (o mesmo padrão de paths-filter do ci.yml), mais `fetch-depth: 0` no checkout — sem
+  histórico o merge-base não existe e o diff sairia vazio. Sem ligar no workflow a guarda existiria e não rodaria em
+  PR nenhum, e o critério 1 do cartão ("migration insegura é barrada no PR") não teria como ser cumprido.
 - scripts/db-audit/lint-migrations-content.test.mjs (novo): 10 casos de teste do lint — autorizado pelas REGRAS do
   cartão ("atualize ou crie testes dos arquivos que tocar e liste-os no relato").
-
-O diff tem 4 arquivos: os 2 da lista do cartão, o teste acima e .tmp/relato.md — que já É versionado nesta branch
-(veio de cartão anterior, apesar de .tmp/ estar no .gitignore) e por isso aparece modificado. Nenhum outro arquivo foi
-tocado.
 
 ## Prova
 - vermelho antes (guarda desligada): fixture com SECURITY DEFINER sem search_path + GRANT a anon →
@@ -33,9 +38,9 @@ tocado.
 - cadeia inteira (shell do workflow exercitado com o componente real): `BASE_REF=main bash --noprofile --norc -euo
   pipefail .tmp/step.sh` imprime "Lintando migrations alteradas:" e roda o lint; com BASE_REF vazio imprime "Sem
   base_ref ... pulado." e sai 0; `bash -n` do mesmo bloco: OK.
-- guarda contra a árvore de hoje: `CHANGED_FILES="$(git diff --name-only origin/main...HEAD -- 'supabase/migrations/*.sql')"
-  node scripts/db-audit/lint-migrations-content.mjs` → 1 violação em 50 migrations, e é achado REAL (abaixo).
-- verificacao do cartão: `zapp-verify . --rapido` — resultado no bloco FATOS MEDIDOS abaixo, posto pelo fechar.
+- guarda contra a árvore de hoje: rodei o lint com o conjunto das 50 migrations alteradas do diff contra origin/main →
+  1 violação, e é achado REAL (abaixo).
+- verificação do cartão: `zapp-verify . --rapido` — resultado no bloco FATOS MEDIDOS abaixo, posto pelo fechar.
 
 ## Achado (é do lint, não do escopo deste cartão)
 - ML-008 aponta supabase/migrations/20261007004252_talkx_engine_window_contract.sql:263 —
