@@ -1,18 +1,49 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workertestes
+Área: worker (testes) — area-testes-do-produto
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `e2e/admin-papeis.spec.ts` (novo, 7 testes): o e2e de admin só tinha `a11y-config-admin.spec.ts`. Cobre
+  (1) trocar papel pela RPC `admin_set_role`, (2) desativar usuário com `is_active=false` no profile DA LINHA,
+  (3) forçar logout via `revoke-auth-sessions` com escopo global e usuário alvo, (4) supervisor barrado na view
+  Administração (portão do ViewRouter: heading "Acesso restrito"), (5) agente barrado na mesma view, (6) supervisor
+  barrado em `/admin/*` (redireciona para `/access-denied`), (7) admin atribui role pela tela `/admin/roles` com a RPC
+  `admin_add_role`. Sessão FALSA (`installFakeSession`), REST/RPC/Edge dublados em `page.route` (a fronteira) — nunca o
+  sujeito. Antivacuidade: o `combobox` da linha tem de começar no papel ATUAL antes de trocar, e o `WeakMap`
+  `REGISTRO_POR_PAGINA` + `afterEach` reprovam o teste se alguma requisição real escapar (`redeBarrada` vazio).
+- `playwright.config.ts`: projeto novo `chromium-admin` (`testMatch: admin-papeis`) com `storageState` VAZIO explícito, e
+  `admin-papeis\.spec\.ts` somado ao `testIgnore` do projeto base — sem isso o spec rodaria duas vezes. É config de
+  teste, não código de produção.
+- `supabase/functions/approve-password-reset/index.test.ts`: NÃO escrevi de novo — ele JÁ EXISTE no workspace, veio no
+  commit `39fa1b79a` (`git merge-base --is-ancestor 39fa1b79a HEAD` verdade) e já cobre os 4 casos pedidos: papel
+  (supervisor 403), status (já processada 409), aprovação dupla / auto-aprovação (403) e resposta sem link
+  ("admin aprova: e-mail sai pelo GoTrue e a resposta NÃO traz link"), mais 401/429/origem canônica. Reescrever seria
+  devolver o que a V2 já faz.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- Vermelho antes (mutação 1 — revertida SÓ a produção do cartão pai):
+  `git checkout 0b764774c^ -- src/pages/admin/useRolesPageState.ts` (volta o INSERT/DELETE direto em `user_roles`) →
+  `bun run test:e2e -- --project=chromium-admin --grep admin_add_role` → `1 failed` em
+  `expect(captura.rpcs[0]).toEqual({...})` (spec linha 299). Restaurado com `git checkout HEAD -- <arquivo>`.
+- Vermelho antes (mutação 2): `supabase.rpc('admin_set_role_MUTACAO', ...)` em
+  `src/components/admin/useAdminData.ts` → `bun run test:e2e -- --project=chromium-admin --grep admin_set_role` →
+  `1 failed` em `expect(captura.rpcs[0]).toEqual({...})` (spec linha 204). Restaurado com `git checkout HEAD -- <arquivo>`;
+  `git status` limpo depois das duas.
+- Verde depois (estabilidade, 3 rodadas): `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5193 bun run test:e2e --
+  --project=chromium-admin --workers=1 --repeat-each=3 --reporter=line` → `21 passed (6.0m)` (7 testes × 3, zero falha).
+- Deno (3 rodadas): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+  supabase/functions/approve-password-reset/index.test.ts` → `ok | 9 passed | 0 failed` nas três.
+- Validadores do CI que olham o `playwright.config.ts`: `node scripts/ci/ci-e2e-projects.unit.mjs` → `pass 9, fail 0`;
+  `node scripts/ci/playwright-config-e81.unit.mjs` → `pass 6, fail 0`.
+- Verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (`db_guard`, `tipos`, `lint`, `migrations` OK).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Nenhuma linha de código de produção foi alterada (o cartão proíbe): as duas mutações acima foram desfeitas e o diff
+  do cartão tem só o spec novo, o `playwright.config.ts` e este `.tmp/relato.md` (documento, não código).
+- Servidor de teste: subi o MEU Vite em `127.0.0.1:5193` (`--strictPort`) porque a porta padrão pode ser de outro
+  workspace (`reuseExistingServer`) — testar o servidor alheio mediria o código errado.
+- Sob carga alta da máquina (load ~70) o guard de montagem de 8 s do app ("Falha ao inicializar o app") apareceu 2×
+  antes; por isso tirei o `beforeAll` de aquecimento do spec (o hook de 30 s estourava e derrubava teste que passa) e o
+  helper `irPara` recarrega a página quando vê esse guard, que é ruído de infra. Nenhum timeout de asserção foi
+  afrouxado e nenhum teste foi pulado.
+- `node scripts/ci/check-test-inventory.mjs` acusa 6 `.test.sh` órfãos em `scripts/db-audit/` — estado pré-existente,
+  fora do meu diff (banco é do worker (sql)).
