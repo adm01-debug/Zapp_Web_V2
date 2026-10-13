@@ -231,4 +231,87 @@ expect_failure 'trigger bloqueia identidade mesmo com bypass RLS' "UPDATE public
 psql_file "$migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='contact_notes'")" == '4' ]] || fail 'segunda aplicacao nao foi idempotente'
 
+# ---------------------------------------------------------------------------
+# Notas fixadas (is_pinned) — migration 20261013002758_contact_notes_pinned.
+# Estado da fixture aqui: 1 nota ("owner note", autor 001, contato 001).
+# A fixture nasceu minimalista: completamos created_at/updated_at e o gatilho de
+# updated_at da tabela real (update_contact_notes_updated_at) antes de aplicar a
+# migration, para provar que o ADD COLUMN nao dispara gatilho nenhum.
+# ---------------------------------------------------------------------------
+pinned_migration="$repo_root/supabase/migrations/20261013002758_contact_notes_pinned.sql"
+[[ -f "$pinned_migration" ]] || fail "migration das fixadas ausente: $pinned_migration"
+
+psql_sql "
+  ALTER TABLE public.contact_notes
+    ADD COLUMN IF NOT EXISTS created_at timestamp with time zone NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT now();
+  CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger
+    LANGUAGE plpgsql AS \$fn\$ BEGIN NEW.updated_at = now(); RETURN NEW; END \$fn\$;
+  DROP TRIGGER IF EXISTS update_contact_notes_updated_at ON public.contact_notes;
+  CREATE TRIGGER update_contact_notes_updated_at
+    BEFORE UPDATE ON public.contact_notes
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+" >/dev/null
+
+written_before="$(psql_sql "SELECT to_char(updated_at,'YYYYMMDDHH24MISSUS') FROM public.contact_notes LIMIT 1")"
+
+# VERMELHO ANTES: sem a migration a coluna nao existe e fixar falha.
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contact_notes' AND column_name='is_pinned'")" == '0' ]] || fail 'fixture ja tinha is_pinned antes da migration'
+expect_failure 'sem a coluna is_pinned, fixar nota falha' "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001'; UPDATE public.contact_notes SET is_pinned=true;"
+
+# VERDE DEPOIS: aplica a migration real.
+psql_file "$pinned_migration" >/dev/null
+
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contact_notes' AND column_name='is_pinned' AND data_type='boolean' AND is_nullable='NO' AND column_default='false'")" == '1' ]] || fail 'is_pinned ausente ou fora do contrato (boolean NOT NULL DEFAULT false)'
+[[ "$(psql_sql "SELECT count(*) FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid WHERE i.indrelid='public.contact_notes'::regclass AND c.relname='contact_notes_pinned_idx' AND i.indisvalid AND pg_get_expr(i.indpred, i.indrelid)='is_pinned'")" == '1' ]] || fail 'indice parcial contact_notes_pinned_idx ausente/invalido/sem predicado is_pinned'
+
+# Caso legado: a nota anterior continua false e o ADD COLUMN NAO disparou o gatilho de updated_at.
+[[ "$(psql_sql "SELECT count(*) FROM public.contact_notes WHERE is_pinned")" == '0' ]] || fail 'ADD COLUMN marcou nota antiga como fixada'
+[[ "$(psql_sql "SELECT to_char(updated_at,'YYYYMMDDHH24MISSUS') FROM public.contact_notes LIMIT 1")" == "$written_before" ]] || fail 'ADD COLUMN disparou o gatilho de updated_at na nota antiga'
+
+# O indice parcial E usado no caminho das fixadas (nao e indice de fachada).
+plan="$(psql_sql "SET enable_seqscan=off; EXPLAIN (COSTS OFF) SELECT id FROM public.contact_notes WHERE contact_id='30000000-0000-0000-0000-000000000001' AND is_pinned;")"
+[[ "$plan" == *contact_notes_pinned_idx* ]] || fail "indice parcial das fixadas nao foi usado: $plan"
+
+# Autor fixa e desfixa a PROPRIA nota (caminho feliz pela RLS real).
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001'; UPDATE public.contact_notes SET is_pinned=true WHERE author_id='10000000-0000-0000-0000-000000000001';" >/dev/null
+[[ "$(psql_sql "SELECT is_pinned FROM public.contact_notes WHERE author_id='10000000-0000-0000-0000-000000000001'")" == 't' ]] || fail 'autor nao conseguiu fixar a propria nota'
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000001'; UPDATE public.contact_notes SET is_pinned=false WHERE author_id='10000000-0000-0000-0000-000000000001';" >/dev/null
+[[ "$(psql_sql "SELECT is_pinned FROM public.contact_notes WHERE author_id='10000000-0000-0000-0000-000000000001'")" == 'f' ]] || fail 'autor nao conseguiu desfixar a propria nota'
+
+# Membro da fila (contato visivel) NAO fixa a nota de outro autor...
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002'; WITH changed AS (UPDATE public.contact_notes SET is_pinned=true WHERE author_id='10000000-0000-0000-0000-000000000001' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'membro de fila fixou a nota de outro autor'
+# ... mas fixa a PROPRIA nota.
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002'; INSERT INTO public.contact_notes (contact_id,author_id,content) VALUES ('30000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002','queue pinned note'); UPDATE public.contact_notes SET is_pinned=true WHERE author_id='10000000-0000-0000-0000-000000000002';" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM public.contact_notes WHERE is_pinned")" == '1' ]] || fail 'autor membro de fila nao fixou a propria nota'
+
+# Outsider (contato oculto) nao le nem fixa nota nenhuma.
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000003'; WITH changed AS (UPDATE public.contact_notes SET is_pinned=true WHERE author_id='10000000-0000-0000-0000-000000000001' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'outsider fixou nota de contato oculto'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000003'; SELECT count(*) FROM public.contact_notes;")" == '0' ]] || fail 'outsider leu notas apos a migration das fixadas'
+
+# anon: sem privilegio de tabela — fixar e recusado.
+expect_failure 'anon nao fixa nota' "SET ROLE anon; UPDATE public.contact_notes SET is_pinned=true;"
+
+# service_role (BYPASSRLS) fixa qualquer nota.
+[[ "$(psql_sql "SET ROLE service_role; WITH changed AS (UPDATE public.contact_notes SET is_pinned=true WHERE author_id='10000000-0000-0000-0000-000000000001' RETURNING 1) SELECT count(*) FROM changed;")" == '1' ]] || fail 'service_role nao fixou nota'
+
+# ACL inalterada pela migration.
+[[ "$(psql_sql "SELECT has_table_privilege('anon','public.contact_notes','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')")" == 'f' ]] || fail 'anon ganhou privilegio com a migration das fixadas'
+[[ "$(psql_sql "SELECT has_table_privilege('authenticated','public.contact_notes','SELECT') AND has_table_privilege('authenticated','public.contact_notes','INSERT') AND has_table_privilege('authenticated','public.contact_notes','UPDATE') AND has_table_privilege('authenticated','public.contact_notes','DELETE') AND NOT has_table_privilege('authenticated','public.contact_notes','TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')")" == 't' ]] || fail 'CRUD de authenticated mudou com a migration das fixadas'
+
+# Idempotencia: reaplicar nao muda nada nem perde as marcacoes.
+psql_file "$pinned_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contact_notes' AND column_name='is_pinned'")" == '1' ]] || fail 'segunda aplicacao duplicou a coluna'
+[[ "$(psql_sql "SELECT count(*) FROM pg_class c JOIN pg_index i ON i.indexrelid=c.oid WHERE i.indrelid='public.contact_notes'::regclass AND c.relname='contact_notes_pinned_idx'")" == '1' ]] || fail 'segunda aplicacao duplicou o indice'
+[[ "$(psql_sql "SELECT count(*) FROM public.contact_notes WHERE is_pinned")" == '2' ]] || fail 'segunda aplicacao perdeu as marcacoes de fixada'
+
+# Rollback de verdade: as duas linhas do cabecalho desmontam o que a migration criou...
+psql_sql "DROP INDEX IF EXISTS public.contact_notes_pinned_idx; ALTER TABLE public.contact_notes DROP COLUMN IF EXISTS is_pinned;" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contact_notes' AND column_name='is_pinned'")" == '0' ]] || fail 'rollback nao removeu a coluna'
+[[ "$(psql_sql "SELECT count(*) FROM pg_class c JOIN pg_index i ON i.indexrelid=c.oid WHERE i.indrelid='public.contact_notes'::regclass AND c.relname='contact_notes_pinned_idx'")" == '0' ]] || fail 'rollback nao removeu o indice'
+
+# ... e reaplicar volta ao estado verde (deixa a fixture pronta).
+psql_file "$pinned_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contact_notes' AND column_name='is_pinned' AND is_nullable='NO'")" == '1' ]] || fail 'reaplicacao apos rollback nao restaurou a coluna'
+
 printf 'Inbox contact authorization PostgreSQL 17 behavioral contract: PASS\n'

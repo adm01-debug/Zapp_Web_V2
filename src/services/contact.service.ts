@@ -115,7 +115,7 @@ export class ContactService {
       (from, to) =>
         supabase
           .from('contact_notes')
-          .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
+          .select(`id, contact_id, author_id, content, category, is_done, is_pinned, due_date, created_at, updated_at`)
           .eq('contact_id', contactId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })

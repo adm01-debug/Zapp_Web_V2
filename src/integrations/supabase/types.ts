@@ -2041,6 +2041,7 @@ export type Database = {
           due_date: string | null
           id: string
           is_done: boolean
+          is_pinned: boolean
           updated_at: string
         }
         Insert: {
@@ -2052,6 +2053,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_done?: boolean
+          is_pinned?: boolean
           updated_at?: string
         }
         Update: {
@@ -2063,6 +2065,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_done?: boolean
+          is_pinned?: boolean
           updated_at?: string
         }
         Relationships: [
