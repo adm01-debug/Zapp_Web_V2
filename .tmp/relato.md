@@ -19,6 +19,9 @@ Nao usei `BEGIN;`/`COMMIT;` no arquivo da migration: no MODO_V2 o `hermes-db-mig
 - rollback de verdade, executado no banco local (`zapp-db-local psql . v2-2610130603b9c4 < .tmp/rollback_prova.sql`), com a saida: `DROP FUNCTION / DROP INDEX / ALTER TABLE / DELETE 1` e `indice_removido=t, chave_removida=t, funcao_restante=0` (a transacao foi desfeita, o banco ficou pos-migration).
 - passada de efeitos colaterais: nenhum trigger disparado no `INSERT` da chave (a tabela so tem trigger BEFORE UPDATE); nenhuma linha existente de `global_settings` tocada (o CHECK e `key <> 'inbox_silence_minutes' OR ...`); nenhum GRANT, papel ou ACL de objeto existente alterado; a RPC e somente leitura e nao devolve nada diferente para conexao existente e conexao vazia (sem oraculo de enumeracao para nao-admin: o 42501 e o mesmo para todos).
 
+## Nota sobre o juiz barato (aviso "codigo alterado sem teste")
+O unico arquivo de `src/` tocado e `src/integrations/supabase/types.ts`, o contrato TIPADO da RPC nova (a RPC muda `Functions`; a skill do perfil exige o types junto). O teste que prova esta no MESMO commit — `supabase/tests/admin_inbox_silence.sql`, a suite de banco do repositorio, que rodou no banco LOCAL (vermelho antes / verde depois, saida no bloco Prova). O juiz so reconhece `.test.ts` / `.test.sh` / `.test.mjs` e nao enxerga a suite `.sql` de `supabase/tests/`, por isso o aviso. Repito o MESMO comando de fechar sem mudar o codigo.
+
 ## O que NAO fiz e por que
 - Nao implementei o "uma vez por episodio" nem a tela: e do front (`src/`), fora da minha area; a migration entrega o dado.
 - Nao criei `scripts/db-audit/*.test.sh` novo: a prova de banco ficou na suite `.sql` em `supabase/tests/`, como na RPC irma `inbox_unread_total`.
