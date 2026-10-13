@@ -367,4 +367,18 @@ expect_value 'C2b. sem permissao o erro e explicito, nunca silencioso' '1' \
 expect_value 'C3. anon nao executa as funcoes de manutencao' 'f' \
   "SELECT has_function_privilege('anon','public.zapp_purge_crm_sync_outbox(integer,integer,integer)','EXECUTE')"
 
+printf '\n[INFO] BLOCO D: a linha -- Rollback: do arquivo e executavel\n'
+mkdir -p .tmp
+awk '/Rollback \(SQL execut.{1,2}vel, na ordem\)/{f=1;next} f&&/^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration" > .tmp/rollback.sql
+[[ -s .tmp/rollback.sql ]] || fail 'D0. a secao de rollback do arquivo esta vazia'
+psql_file .tmp/rollback.sql >/dev/null
+expect_value 'D1. o rollback desagenda os 6 jobs' '0' \
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details')"
+expect_value 'D2. o rollback remove a RPC de reivindicacao' 'true' \
+  "SELECT (to_regprocedure('public.claim_due_scheduled_reports(integer)') IS NULL)::text"
+expect_value 'D3. o rollback remove o indice de vencimento' 'true' \
+  "SELECT (to_regclass('public.scheduled_reports_due_idx') IS NULL)::text"
+expect_value 'D4. o rollback remove as funcoes que a migration criou' '0' \
+  "SELECT count(*) FROM pg_proc WHERE proname IN ('next_report_send_at','zapp_purge_crm_sync_outbox','zapp_purge_ai_rate_limits','purge_cron_job_run_details','apply_zapp_agendadores_e_purga_cron')"
+
 printf '\n[OK] contrato dos agendadores Edge + purga do log do cron: TODAS as assercoes passaram.\n'
