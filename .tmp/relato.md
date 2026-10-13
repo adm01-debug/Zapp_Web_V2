@@ -1,63 +1,20 @@
-Especialista: worker (sql) (area-sql-banco; prova de papel real por provar-rls-com-papel-real)
+Especialista: hugo
 
 ## O que mudou e por quê
 
-- `supabase/migrations/20261013230006_monitoring_message_buckets.sql` (NOVO, único artefato de banco): cria a RPC
-  `public.get_monitoring_message_buckets(p_from timestamptz, p_to timestamptz, p_bucket interval)` que devolve uma
-  linha por balde — `(bucket_start timestamptz, incoming bigint, outgoing bigint)`. Ela agrega `public.messages` NO
-  BANCO, então não há mais teto de linhas: o gráfico de monitoramento montava os baldes no navegador a partir de no
-  máximo 1.000 mensagens e, em período movimentado, cortava a curva e subestimava o total. `incoming` = sender
-  'contact'; `outgoing` = qualquer outro sender (preserva a semântica anterior do hook). O balde é ancorado no início
-  da hora cheia / dia civil no fuso America/Sao_Paulo e é half-open (`>= p_from`, `< p_to`); a âncora nunca
-  ultrapassa `p_to`. Restrita a staff (`is_admin_or_supervisor`) — o mesmo conjunto que a policy SELECT de
-  `public.messages` já deixava ver todas as mensagens, então o `SECURITY DEFINER` não amplia o que o papel via.
-  `revoke all ... from public, anon` e `grant execute ... to authenticated`; não há caminho de serviço para esta
-  leitura de tela, então service_role fica negado. A 1ª linha tem `-- Rollback:` com o SQL executável (drop da função).
-
-- `src/integrations/supabase/types.ts`: adiciona a assinatura da RPC em `Functions` (ordem alfabética) para o
-  `supabase.rpc('get_monitoring_message_buckets', ...)` tipar — o cliente do cartão filho usa `p_bucket` como string
-  e recebe `{ bucket_start: string; incoming: number; outgoing: number }[]`.
-
-- `supabase/tests/monitoring_message_buckets.sql` (NOVO, provado em Postgres 17 descartável): T1 baldes de hora,
-  direção e borda da janela; T2 1.200 mensagens somando 1.200 (o corte antigo era 1.000); T3 ancoragem no fuso
-  America/Sao_Paulo (hora cheia e meia-noite civil mesmo com `p_from` no meio da hora); T4 anon negado no GRANT
-  (42501); T5 authenticated fora do staff negado pelo guard (42501 `monitoring_staff_required`); T6 entradas
-  inválidas abortam com 22023 (bucket < 1 minuto, janela invertida, janela > 5.000 baldes, bucket nulo); T7 bordas
-  half-open (14:37:29 fora / 14:37:30 dentro / 14:40:00 fora); T8 service_role negado. Papel sempre por `SET LOCAL
-  ROLE` + `request.jwt.claims`, nunca superusuário.
+- `src/components/monitoring/hooks/useMonitoringData.ts`: o `fetchData` deixou de trazer mensagens cruas (`.from('messages').select('sender, created_at')` sem limit) e passou a ler a agregação do servidor via `supabase.rpc('get_monitoring_message_buckets', { p_from, p_to, p_bucket })` (RPC do cartão pai t_cb75a447). Uma linha por balde, então nada é cortado: a curva e a soma cobrem a janela inteira mesmo com mais de 1.000 mensagens. Cada linha vira rótulo com `formatBucketLabel(Date.parse(bucket_start), period, bucketSize)`; `incoming`/`outgoing`/`total` são a soma das linhas. As 8 barras do card de mensagens também vêm da RPC (janela deslizante do período, `periodMs[period]/8`), remontadas por posição em `sparklineFromBuckets` — nenhum balde é descartado.
+- Sinalização: novo estado `messageStatsPartial` devolvido pelo hook, marcado por `aggregationPartial(rows, messageSince)`. Fica verdadeiro quando a RPC falha (erro registrado em log, sem telefone/token/texto) ou quando o primeiro balde devolvido começa depois do início da janela pedida — a tela consegue dizer que a soma não cobre o período em vez de exibir um número incompleto como se fosse o total. `loading` continua sendo liberado no `finally`, e a falha da RPC nunca sobe para o `Promise.all` (o `fetchMessageBuckets` trata), então o resto do painel (conexões, SLA, uptime) não cai junto.
+- `localDayIndex` foi removido (o agrupamento por dia civil passou a ser do servidor, que ancora os baldes em America/Sao_Paulo); `computeSparklines` perdeu o parâmetro de mensagens e agora devolve só latência/uptime, que continuam saindo dos health logs.
+- `src/components/monitoring/__tests__/useMonitoringData.buckets.test.ts` (R2-INF-028, atualizado): roda o hook real com o Supabase mockado e confere a janela e o `interval` exatos pedidos à RPC em 7d (`p_from` 30/09 03:00Z, `86400 seconds`), 24h (24 baldes de hora cheia) e 1h (6 baldes de 10 min distintos, `600 seconds`); que nenhuma consulta vai na tabela `messages` (o teto de linhas do PostgREST não tem por onde cortar); que uma agregação de 24x200 = 4.800 é exibida como 4.800; que os baldes zerados mantêm as 24 entradas; e que falha da RPC e janela furada ficam sinalizadas com `messageStatsPartial = true`.
 
 ## Prova
 
-Vermelho antes (função inexistente, sem a migration):
-`docker exec -i <pg17> psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v sem_migration=1 < supabase/tests/monitoring_message_buckets.sql`
-→ `ERROR: function public.get_monitoring_message_buckets(timestamp with time zone, timestamp with time zone, interval) does not exist`
-
-Verde depois (mesmo comando, com a migration real via `-v mig=...`):
-→ `NOTICE: T1 OK … T2 OK … T3 OK … T7 OK … T4 OK … T5 OK … T8 OK … T6 OK`
-→ `### TODOS OS CENARIOS (T1-T8) PASSARAM ###`
-
-Migration aplicada no banco local da tarefa:
-`hermes-db-migrar supabase/migrations/20261013230006_monitoring_message_buckets.sql`
-→ `BEGIN / CREATE FUNCTION / REVOKE / GRANT / COMMIT` · `APLICADA no banco LOCAL ... (produção não foi tocada)`
-
-Passada de efeitos colaterais (skill armadilhas-workersql): a RPC é `STABLE` e só lê `public.messages` — nenhum
-INSERT/UPDATE/DELETE, logo nenhum gatilho (updated_at, audit) dispara; é um único `RETURN QUERY` (atômico); a
-resposta/erro é igual para janela vazia ou cheia (sem oráculo de existência); nenhum GRANT/ACL de objeto existente
-mudou além do `execute` da própria função nova.
+- vermelho antes (hook anterior, sem esta mudança): `npx vitest run src/components/monitoring/__tests__/useMonitoringData.buckets.test.ts` → `Test Files 1 failed (1) / Tests 6 failed (6)` (o hook antigo não chama a RPC: `messageStatsPartial` indefinido e nenhum balde).
+- verde depois: mesmo comando → `Test Files 1 passed (1) / Tests 6 passed (6)`.
+- regressão do módulo: `npx vitest run src/components/monitoring` → `Test Files 5 passed (5) / Tests 28 passed (28)` (inclui `sla-janela-24h.test.tsx`, cujo mock não tem `rpc` e continua verde porque a falha da RPC não derruba o resto).
+- verificação do cartão: `zapp-verify . --rapido` (bloco FATOS do fechar).
 
 ## O que NÃO fiz e por quê
 
-- Não toquei `useMonitoringData.ts` nem os testes do hook: essa é a outra metade do cartão do hook
-  (t_c3c48a64), que passa a chamar esta RPC. Deixei o contrato documentado na migration e em `types.ts` para ele.
-- Não editei migration existente (correção = migration nova) e não usei DROP/TRUNCATE/DELETE em massa.
-- Não criei `scripts/db-audit/*.test.sh` (exigiria passo no db-guard.yml, que não é minha área): a prova vive em
-  `supabase/tests/`, que o cartão permite.
-
-## Sobre o alarme "código alterado sem teste novo" (FALSO POSITIVO)
-
-O fechar apontou `src/integrations/supabase/types.ts` como "código alterado sem teste novo". Não procede:
-o commit JÁ traz um teste novo que falha sem a mudança e passa com ela — `supabase/tests/monitoring_message_buckets.sql`
-(vermelho `sem_migration=1` → verde, nas linhas acima). O detetor só reconhece teste por nome `.test.`/`.spec.`, e a
-suíte de banco aqui é `.sql` em `supabase/tests/` (como as demais do projeto). Além disso `types.ts` é DECLARAÇÃO de
-tipos gerada — não tem lógica de runtime para testar; o único código real do diff é a função SQL, coberta por T1–T8.
-Repito o MESMO comando de fechar com esta explicação.
+- Não liguei `messageStatsPartial` a nenhum texto de tela: os arquivos de tela/componente não estão na lista de ARQUIVOS QUE PODE TOCAR deste cartão (é da área de componentes). Fica uma linha em `useEvolutionMonitoring`/`MonitoringStatsCards` para quem pegar isso.
+- Não mexi em migration nem no SQL da RPC: vieram prontos do cartão pai (t_cb75a447) e a prova de banco está no cartão dele.
