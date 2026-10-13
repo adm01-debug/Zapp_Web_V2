@@ -31,7 +31,7 @@ declare -a CASES_EXPECTED=(
   series_total series_delivered_minute kpis stalled high_failure vs_yesterday_null
   vs_yesterday_value empty_campaign hour_bucket segment_filter failed_at_trigger
   owner_ok admin_ok other_agent_denied missing_campaign_denied anon_denied
-  invalid_args acl replay motor_health
+  invalid_args acl replay motor_health backfill_preserva_updated_at
 )
 case_done() { CASES_SEEN["$1"]=1; }
 
@@ -132,6 +132,16 @@ CREATE TABLE public.talkx_blacklist (
   origin text NOT NULL DEFAULT 'manual'
 );
 
+-- Gatilho de updated_at como em producao (public.update_updated_at_column + trigger
+-- update_talkx_recipients_updated_at). A migration do monitor desliga APENAS este gatilho,
+-- dentro da transacao, antes do backfill de failed_at — sem ele o teste nao consegue nem
+-- aplicar a migration (ALTER TABLE ... DISABLE TRIGGER falharia).
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
+CREATE TRIGGER update_talkx_recipients_updated_at
+  BEFORE UPDATE ON public.talkx_recipients
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- View de saude do motor (N-117): mesma estrutura da view real
 -- talkx_engine_health, com dados de teste para o bloco motor.
 CREATE VIEW public.talkx_engine_health AS
@@ -199,8 +209,12 @@ INSERT INTO public.talkx_campaigns (id, status, created_by, started_at, updated_
    now() - interval '1 hour', now() - interval '1 hour');
 INSERT INTO public.talkx_recipients (campaign_id, status, sent_at, delivered_at)
 SELECT '50000000-0000-0000-0000-00000000000c', 'delivered', public.m(2), public.m(1) FROM generate_series(1, 54);
-INSERT INTO public.talkx_recipients (campaign_id, status) -- falha entra pelo INSERT (trigger)
-SELECT '50000000-0000-0000-0000-00000000000c', 'failed' FROM generate_series(1, 6);
+-- Os 6 failed entram antes da migration (que adiciona failed_at e faz o backfill
+-- failed_at = updated_at). updated_at fixo num sentinela antigo: prova que o backfill
+-- nao regrava updated_at (gatilho desligado na transacao).
+INSERT INTO public.talkx_recipients (campaign_id, status, updated_at)
+SELECT '50000000-0000-0000-0000-00000000000c', 'failed', timestamptz '2001-01-01 00:00:00+00'
+  FROM generate_series(1, 6);
 
 -- D: com envio ontem (3 envios, 1 resposta ontem) e hoje 2 respostas; pausada por motivo automatico.
 INSERT INTO public.talkx_campaigns (id, status, pause_reason, created_by, started_at, updated_at) VALUES
@@ -379,6 +393,16 @@ expect 'motor.cron_status' "$(psql_q "SELECT '$resmotor'::jsonb->'health'->'moto
 expect 'motor e objeto' "$(psql_q "SELECT jsonb_typeof('$resmotor'::jsonb->'health'->'motor')")" 'object'
 case_done motor_health
 pass '(11) bloco motor presente em health com stalled_campaign=true, stale_lease=true, outcome_unknown_24h=3, failure_rate_15m=0.12, cron_status=ok'
+
+# --- (12) backfill de failed_at nao regrava updated_at (so o gatilho da tabela e desligado) --
+# A migration do monitor faz UPDATE ... SET failed_at = updated_at em todo failed sem failed_at.
+# Com o gatilho BEFORE UPDATE ativo, updated_at de todas as linhas tocadas seria regravado
+# (recusa real de 06/10). Aqui a campanha C tem os 6 failed com updated_at sentinela antigo:
+# depois do backfill (e do replay do caso 10) updated_at tem de continuar o sentinela.
+expect 'backfill preservou updated_at (campanha C)' "$(psql_q "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='$(camp c)' AND status='failed' AND updated_at <> timestamptz '2001-01-01 00:00:00+00'")" '0'
+expect 'failed_at veio do updated_at no backfill (campanha C)' "$(psql_q "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='$(camp c)' AND status='failed' AND failed_at = timestamptz '2001-01-01 00:00:00+00'")" '6'
+case_done backfill_preserva_updated_at
+pass '(12) backfill de failed_at preserva updated_at (gatilho da tabela desligado so na transacao)'
 
 for c in "${CASES_EXPECTED[@]}"; do
   [[ -n "${CASES_SEEN[$c]:-}" ]] || fail "caso nao medido: $c"
