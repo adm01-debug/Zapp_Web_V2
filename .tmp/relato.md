@@ -1,18 +1,31 @@
-Especialista: Hugo (area-front-hooks)
-
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+
+- `src/components/talkx/__tests__/RuleValueInput.test.tsx`: acrescenta um `afterEach(() => window.history.replaceState(null, '', '/'))` — motivo: o construtor de segmentos do Talk X vive no endereço (X111, `?view=talkx&tab=segments&mode=new`) e o `window.location` do jsdom é COMPARTILHADO por todos os testes do arquivo. O teste "número \"em breve\" (lead_score)" abre o construtor e não publica nem cancela; ele deixa `mode=new` no endereço. O `renderView()` do teste seguinte já monta DENTRO do construtor (a tela abre direto no editor: "Nome do segmento…", Cancelar, Publicar) e o botão "Novo segmento" nunca entra na DOM — o `findByRole` estoura o teto de 5 s (`asyncUtilTimeout` do `src/test/setup.ts`) com "Unable to find role=button name 'Novo segmento'". Limpar a rota em `afterEach` devolve a biblioteca como estado inicial. Mesmo idioma dos 4 irmãos do módulo (route/groups/builder/detailFresh), que já fazem isso e são os únicos a resetar; esta prova era a única sem o reset. Nenhuma asserção foi tocada: o que o teste prova (Lead score e Risco de churn visíveis, "(em breve)", desabilitados, `draggable="false"` e sem condição adicionada) continua igual.
+
+## Por que NÃO é tempo (a causa que o cartão supunha)
+
+O render é síncrono: o botão aparece junto com a montagem, não depois. O teste é instável por ORDEM, não por relógio:
+- sozinho (`-t "ficam desabilitados no catálogo"`): passa;
+- depois do teste de lead_score (`-t "em breve"`): falha sempre em ~5 s;
+- arquivo inteiro: falha sempre.
+Subir `findByRole(..., { timeout: 15000 })` não resolveria: o botão não existe na DOM por causa da rota suja, então esperar mais só atrasaria o vermelho.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+
+- vermelho antes (base 96dd72dc5, sem a mudança): `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 failed (1); Tests 1 failed | 4 passed (5)` e `-t "em breve"` → `Unable to find role="button" and name "Novo segmento"` (o DOM colhido mostra o editor aberto).
+- verde depois: `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 passed (1); Tests 5 passed (5)`, 3 execuções seguidas; e a ordem que falhava `-t "em breve"` → `Tests 2 passed | 3 skipped`.
+
+## Verificação completa
+
+- `zapp-verify . --rapido` roda no `hermes-tarefa-fechar` (saída no log do fechar).
+
+## Outros testes com o mesmo risco (item 4 do cartão)
+
+Varri `src/components/talkx/__tests__/` atrás de prova que monta `TalkXSegments` e clica "Novo segmento":
+`TalkXSegments.route.test.tsx`, `.groups.test.tsx`, `.builder.test.tsx`, `.detailFresh.test.tsx` — TODOS já resetam a rota em `afterEach` (`window.history.replaceState(null, '', '/')`, um por arquivo). `RuleValueInput.test.tsx` era o único sem o reset. Nada a corrigir nos irmãos (não é "1 linha nova", já existe).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+
+- Não aumentei timeout de `findByRole`/`it`: não corrige a causa (rota suja) e o cartão proíbe afrouxar; a asserção segue idêntica.
+- Não toquei em `src/test/setup.ts` (teto global `asyncUtilTimeout`) nem em outro arquivo: fora do escopo do cartão.
+- Não mudei o código de produção (`TalkXSegments.tsx`/`talkxSegmentsRoute.ts`): o comportamento é correto (o construtor abrir pela URL é a feature X111); o defeito era só a prova não isolar o estado.
