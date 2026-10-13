@@ -20,7 +20,7 @@
    requiredPermission,
    fallback
  }: ProtectedRouteProps) {
-   const { user, loading: authLoading } = useAuth();
+   const { user, loading: authLoading, bootstrapError, retryBootstrap } = useAuth();
    const { loading: rolesLoading, hasRole } = useUserRole();
    const location = useLocation();
    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -50,8 +50,13 @@
               </button>
               <button
                 onClick={() => {
-                  void AuthService.signOut();
-                  window.location.href = '/auth';
+                  // O logout remoto tem de terminar ANTES da navegação: navegar
+                  // primeiro descarrega a página e aborta o signOut, e o usuário
+                  // volta logado. O catch evita rejeição solta; o finally garante
+                  // a saída mesmo se o signOut falhar.
+                  void AuthService.signOut().catch(() => undefined).finally(() => {
+                    window.location.assign('/auth');
+                  });
                 }}
                 className="text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
               >
@@ -190,6 +195,26 @@
       return verificandoAcesso;
     }
 
+    // Boot sem resposta do servidor: sem sessão conhecida não dá para decidir
+    // acesso. Mostra o erro com 'Tentar de novo' em vez de jogar o usuário no
+    // /auth como se ele não tivesse sessão.
+    if (!user && bootstrapError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center" role="alert">
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-destructive">Sem conexão com o servidor</h1>
+            <p className="text-muted-foreground">Não foi possível confirmar sua sessão. Verifique a conexão e tente de novo.</p>
+            <button
+              onClick={retryBootstrap}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+            >
+              Tentar de novo
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (!user) {
       return <Navigate to="/auth" state={{ from: location }} replace />;
     }
@@ -213,8 +238,9 @@
               </button>
               <button
                 onClick={() => {
-                  void AuthService.signOut();
-                  window.location.href = '/auth';
+                  void AuthService.signOut().catch(() => undefined).finally(() => {
+                    window.location.assign('/auth');
+                  });
                 }}
                 className="px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
               >
