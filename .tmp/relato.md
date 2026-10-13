@@ -14,14 +14,17 @@ Especialista: Íris (area-front-componentes)
   mensagem apagada -> sem tick, e mensagem de OUTRO participante -> sem tick.
 
 ## Prova
-- vermelho antes (produção revertida para o HEAD, `git checkout HEAD -- TeamMessageItem.tsx`):
+- vermelho antes (produção revertida para o commit-pai `f7cdda1f4d`, `git show f7cdda1f4d:<arquivo> > <arquivo>`):
   `npx vitest run src/components/team-chat/__tests__/TeamMessageItem.status.test.tsx`
-  → `Tests  7 failed | 3 passed (10)` (falham os 7 casos que dependem do nome acessível e da cor; passam os 3 negativos)
+  → `Tests  7 failed | 2 passed (9)` (falham os 7 casos que dependem do nome acessível e da cor; passam os 2 negativos)
 - verde depois (mesmo comando, com a correção):
-  → `Test Files  1 passed (1); Tests  10 passed (10)`
+  → `Test Files  1 passed (1); Tests  9 passed (9)`
 - vizinho que já travava o tick no Panel, ainda verde:
   `npx vitest run src/components/team-chat/__tests__/TeamChatPanel.wiring.test.tsx`
   → `Test Files  1 passed (1); Tests  4 passed (4)`
+- o juiz do fechar apontou "teste novo que não chama o código real": era o caso do
+  teste que só lia `tokens.css` (`readFileSync`), que eu REMOVI — agora os 9 casos
+  renderizam o `TeamMessageItem` real.
 
 ## Pré-requisito (NÃO é meu — vem do cartão pai t_74af822e)
 O diff contra a branch do dia também lista os arquivos do cartão-pai (Hugo, `area-front-hooks`),
