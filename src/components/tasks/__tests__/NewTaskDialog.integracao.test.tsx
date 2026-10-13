@@ -1,36 +1,11 @@
 /**
- * Etapas 172 e 173 (plano, linhas 452–453; T46 — "testes de integração do
- * painel e do modal"; imagem 04, seção 3.4) do modal "Nova tarefa":
- *  - 172 Testes do modal: campos, presets, coerência prazo × lembrete, prévia,
- *        criar, cancelar, descarte, teclado e pré-preenchimento.
- *  - 173 Acessibilidade do modal: axe, foco preso, retorno do foco, anúncio e
- *        movimento reduzido.
- *
- * O que este arquivo prova, e por quê (o que as etapas 154–171 ainda NÃO
- * cobriam por cartão):
- *  - a COERÊNCIA prazo × lembrete MONTADA no modal (etapa 163): os quatro
- *    estados (verde, âmbar, vermelho e o "sem prazo") dirigidos nos campos
- *    REAIS, e o atalho "Ajustar para 1 h antes do prazo" ajustando o campo de
- *    verdade — até agora só a função pura (`workItemPresets.test`) era provada;
- *  - o fluxo INTEGRADO de criar (etapas 159–168 num só caminho): título,
- *    contato real, prioridade, prazo e lembrete num INSERT conferido no cliente
- *    Supabase falso;
- *  - o descarte do rascunho (etapa 170): "Continuar editando" preserva o texto
- *    e "Descartar" fecha sem enviar nada;
- *  - o pré-preenchimento por CONTEXTO (etapas 159/160): `defaultDueDate` e
- *    `defaultRemindAt` chegam aos campos e nascem coerentes;
- *  - o contrato de acessibilidade do modal (etapa 173): anúncio (nome e
- *    descrição ligados), a tela de trás fora da árvore de acessibilidade, o
- *    foco inicial dentro do diálogo, o ciclo de foco dos modais Radix, axe e o
- *    único movimento do modal sob `motion-safe`.
- *
- * Nota de honestidade (01/10/2026, regra do juiz): o TAB nativo (que fecha o
- * ciclo de foco) e o retorno do foco ao gatilho são do NAVEGADOR — o jsdom não
- * os executa, e um `fireEvent` de Tab não move o foco. Por isso o "foco preso"
- * aqui é provado pelo que o próprio componente declara e o jsdom mostra: o
- * diálogo é `role="dialog"` com nome, o foco inicial entra nele, o resto da
- * tela sai com `aria-hidden` e os dois guardas de foco (`data-radix-focus-guard`)
- * ficam montados nas bordas do conteúdo — o resto é comportamento nativo.
+ * Etapas 172 e 173 (plano, linhas 452-453; T46, imagem 04, secao 3.4) do modal
+ * "Nova tarefa": 172 testes do modal, 173 acessibilidade.
+ * Prova a COERENCIA prazo x lembrete MONTADA no modal (verde, ambar, vermelho e
+ * "sem prazo" dirigidos nos campos reais + "Ajustar" corrigindo o campo), o
+ * fluxo INTEGRADO de criar (titulo/contato/prioridade/prazo/lembrete num INSERT
+ * conferido no cliente Supabase falso), o descarte do rascunho, o
+ * pre-preenchimento por contexto e o anuncio/foco/movimento do modal.
  */
 import { resetSupabaseMock, setWriteResult, supabaseMock } from '@/test/mocks/tarefas';
 

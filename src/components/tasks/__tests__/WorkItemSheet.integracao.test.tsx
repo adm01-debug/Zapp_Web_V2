@@ -1,24 +1,11 @@
 /**
- * Etapas 150 e 151 (plano, linhas 423–424; T46 — "testes de integração do
- * painel e do modal"; imagem 03, seção 3.3) do painel "Detalhes da tarefa":
- *  - 150 Testes do painel: campos, motivo obrigatório, validações de lembrete,
- *        Concluir, Salvar, estado de edição, descartar e Ctrl+Enter.
- *  - 151 Acessibilidade do painel: foco, teclado e bottom sheet.
- *
- * O que este arquivo prova, e por quê (o que as etapas 132–147 ainda NÃO
- * cobriam por cartão):
- *  - o caminho BOM do motivo obrigatório: com Aguardando escolhido e o motivo
- *    digitado, o Ctrl+Enter salva ESTADO + MOTIVO no MESMO patch (o teste da
- *    etapa 135 só cobre o bloqueio com a caixa vazia);
- *  - descartar não salva e não move nada — só fecha (a etapa 143 prova o
- *    diálogo e o fechamento, não o "nada foi enviado");
- *  - o bottom sheet do celular (etapas 23/81/D14): acessível pelo mesmo título
- *    do painel, sem violação de axe (aberto e com o diálogo de descarte), e com
- *    o foco PRESO dentro dele — o mesmo contrato de
- *    `src/components/a11y/__tests__/CustomModalFocus.test.tsx`.
- *
- * O gesto é dirigido nos controles REAIS (Radix Select, input, Ctrl+Enter no
- * item), não num mock que já traz a resposta; o que se lê é `onSave`/`onMove`.
+ * Etapas 150 e 151 (plano, linhas 423-424; T46, imagem 03, secao 3.3) do painel
+ * "Detalhes da tarefa": 150 testes do painel, 151 acessibilidade.
+ * Prova o caminho BOM do motivo obrigatorio (Aguardando + motivo no MESMO
+ * Ctrl+Enter), que descartar nao salva nem move nada, e a regua do bottom sheet
+ * (axe aberto e com o dialogo de descarte, foco entrando e a tela de tras fora
+ * da arvore). O gesto e dirigido nos controles REAIS (Radix Select, input,
+ * Ctrl+Enter no item); o que se le e `onSave`/`onMove`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
