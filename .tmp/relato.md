@@ -13,6 +13,7 @@ Especialista: Hugo (area-front-hooks)
 
 ## Integração (faixa dos pais)
 - Os dois cartões pais (VIP t_84b84230, bloqueio t_3d2d385e) não estavam em `dia/2026-10-13`; trouxe a faixa de cada um pelo JSON da fila com `git cherry-pick -x` (merge-base `177db83c88`), resolvendo um conflito em `src/integrations/supabase/types.ts` (mantidas as duas RPCs, `set_contact_vip` e `set_contact_blocked`). Os commits cherry-picked aparecem no diff da branch com `(cherry picked from ...)`, como manda a regra.
+- Arquivos que o diff mostra e que NÃO são do meu commit (vêm inteiros da faixa dos pais cherry-picked): `supabase/migrations/20261012213900_contacts_blocked_at.sql`, `supabase/migrations/20261012224718_contacts_is_vip.sql`, `supabase/tests/contact_is_vip.sql`, `scripts/db-audit/contacts-soft-delete-and-status.test.sh`, `src/adapters/evolutionAdapter.ts` e `src/adapters/__tests__/evolutionAdapter.test.ts` (o `is_vip`/`blocked_at` no contato derivado do WhatsApp). Eles são DDL/banco da minha faixa de dependência, não meu trabalho; o meu commit é só `refactor(inbox)` (hook + tipos + painel + testes).
 
 ## O que NÃO fiz e por quê
 - Os arquivos de componente (`ContactDetails.tsx` e o seu teste) não estão na lista do cartão, mas são os únicos consumidores dos membros que o cartão manda remover; sem essa edição o painel não compila. Fica registrado como a única saída de `src/hooks`/`src/types`.
