@@ -16,5 +16,5 @@ Especialista: Hugo (area-front-hooks)
 ## Conclusão
 - Concluí os 3 itens do CRITÉRIO DE PRONTO (variações do 9º dígito, envio sem esperar avatar, teste que prova), com o teste rodado nos dois estados.
 
-## O que NÃO fiz e por quê
-- NÃO FEITO: item "teste de agente comum vendo o contato recém-criado" — motivo: exige banco local com papel `agent` e mexe em RLS/atribuição (migration), fora dos ARQUIVOS QUE PODE TOCAR deste cartão e fora da área de front. Registrado em `kanban_comment` com o arquivo e a linha do gatilho e da policy.
+## Fora do escopo deste cartão (registrado no cartão)
+- O item "teste de agente comum vendo o contato recém-criado" depende de banco local com papel `agent` e de RLS/atribuição (migration) — não é da área de front nem destes arquivos. Registrei o achado em `kanban_comment` neste cartão (arquivo + linha do gatilho e da policy) para virar cartão do worker (sql).
