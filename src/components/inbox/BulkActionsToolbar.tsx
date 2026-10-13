@@ -136,6 +136,7 @@ export function BulkActionsToolbar({
         open={showTransferDialog}
         onOpenChange={setShowTransferDialog}
         onTransfer={onTransfer}
+        scope="bulk"
       />
     </>
   );

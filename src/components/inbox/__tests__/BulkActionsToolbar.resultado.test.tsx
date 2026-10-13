@@ -39,6 +39,15 @@ vi.mock('@/hooks/crm/useAgents', () => ({
         activeChats: 0,
         max_chats: 5,
       },
+      {
+        id: 'colleague-profile',
+        user_id: 'colleague-auth-id',
+        name: 'Colega da Fila',
+        avatar_url: null,
+        status: 'online',
+        activeChats: 0,
+        max_chats: 5,
+      },
     ],
     isLoading: false,
   }),
@@ -49,6 +58,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { BulkActionsToolbar } from '@/components/inbox/BulkActionsToolbar';
+import { TransferDialog } from '@/components/inbox/TransferDialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 type OnTransfer = (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
@@ -129,5 +139,50 @@ describe('BulkActionsToolbar — o diálogo só fecha depois do resultado', () =
     resolver?.();
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+});
+
+/**
+ * Cartão t_8df239b3: o diálogo do LOTE só oferecia o próprio usuário.
+ *
+ * `BulkActionsToolbar` renderiza a `TransferDialog` sem `queueId`; o diálogo
+ * tratava a conversa como "sem fila" e filtrava os atendentes para o próprio
+ * usuário. Em lote não existe UM `queueId` — a fila muda de conversa para
+ * conversa — e quem valida cada destino é a RPC canônica `transfer_conversation`
+ * (decisão PD-84/85: RPC por contato com resultado por linha). Com `scope='bulk'`
+ * o seletor volta a oferecer os colegas ativos; a conversa ÚNICA sem fila
+ * (scope='single', padrão) continua restrita a você mesmo, como manda o trigger
+ * `trg_prevent_contact_assignee_hijack`.
+ */
+describe('TransferDialog — colegas no lote x self-claim na conversa única', () => {
+  it('lote: o diálogo oferece o colega e transfere para ele', async () => {
+    const onTransfer = vi.fn();
+    renderToolbar(onTransfer);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Transferir' }));
+    const dialog = await screen.findByRole('dialog');
+
+    // Antes da correção o picker só listava "Eu Mesmo": o colega não existia.
+    fireEvent.click(within(dialog).getByText('Colega da Fila'));
+    fireEvent.click(within(dialog).getByRole('button', { name: /transferir/i }));
+
+    await waitFor(() =>
+      expect(onTransfer).toHaveBeenCalledWith('agent', 'colleague-profile', undefined),
+    );
+  });
+
+  it('conversa única sem fila: continua oferecendo só você mesmo', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <TransferDialog open onOpenChange={vi.fn()} onTransfer={vi.fn()} queueId={null} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Eu Mesmo')).toBeInTheDocument();
+    expect(within(dialog).queryByText('Colega da Fila')).not.toBeInTheDocument();
   });
 });
