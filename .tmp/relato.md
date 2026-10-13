@@ -1,36 +1,62 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
+Area: worker (sql) (area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261013005351_email_templates_author_immutable.sql (NOVA): gatilho BEFORE UPDATE + funcao `public.guard_email_templates_author_mutability()` que rejeita (ERRCODE 42501, mensagem `email_templates_author_immutable`) troca de `created_by` quando `auth.role() = 'authenticated'`. Fecha o furo do cartao: a policy `email_templates_update_owner_or_staff_shared` repete USING em WITH CHECK, entao o staff passava na linha COMPARTILHADA de outro e podia reatribuir a autoria no mesmo UPDATE (o dono anterior perdia o modelo).
-- scripts/db-audit/email-templates-rls.test.sh: estendido com BLOCO C (o defeito REPRODUZIDO antes do hardening e provado fechado depois, rodando como o papel real) e BLOCO D (rollback do hardening extraido do proprio arquivo + reaplicar = idempotente). O arquivo ja estava registrado no db-guard pelo cartao-avo (commit de0635599); nao toquei no workflow.
+## O que fiz
+Hardening do contrato da tabela public.email_templates (ET1, migration 20261012112503), fechando o furo
+apontado: a policy de UPDATE (email_templates_update_owner_or_staff_shared) repete USING em WITH CHECK,
+entao o staff que edita a linha COMPARTILHADA de outro podia trocar `created_by` no mesmo UPDATE —
+reatribuia a autoria e o dono anterior perdia o modelo (exploravel depois: o novo "dono" poe
+is_shared=false e esconde a linha de todos).
 
-## Prova
-- vermelho antes: `bash scripts/db-audit/email-templates-rls.test.sh` com a migration de hardening trocada por um stub sem gatilho ->
-  `[FAIL] C1 staff nao reatribui a autoria da linha de outro (guardado): deveria falhar, mas passou` (RC=1).
-- verde depois: mesmo comando ->
-  `[PASS] C1 staff nao reatribui a autoria da linha de outro (guardado)`
-  `[PASS] C2 autoria preservada apos a tentativa`
-  `[PASS] C3/C4 dono segue editando e excluindo o proprio modelo`
-  `[PASS] C5 staff ainda edita o corpo da linha compartilhada (nao regrediu)`
-  `[PASS] C6 a edicao do staff preservou a autoria do dono`
-  `[PASS] C7 service_role segue livre para back-office`
-  `[PASS] D1..D5 rollback remove gatilho+funcao sem derrubar a tabela; reaplicar e idempotente`
-  `== TODOS OS PASSOS PASSARAM ==` (RC=0).
-- banco LOCAL do cartao: `hermes-db-migrar supabase/migrations/20261013005351_email_templates_author_immutable.sql` ->
-  `APLICADA no banco LOCAL 'v2-26101221510dae' (produção não foi tocada)`. (A migration ET1 do cartao-avo teve de ser aplicada antes no banco local por `zapp-db-local psql`, porque o replay le as migrations no inicio do run e a ET1 nasceu depois — registrado.)
+Migration nova e ADITIVA:
+- supabase/migrations/20261013010747_email_templates_hardening.sql
+  1. `guard_email_templates()` (BEFORE INSERT OR UPDATE) + gatilho homonimo:
+     - UPDATE: rejeita (ERRCODE 42501, 'email_templates_author_immutable') qualquer troca de created_by;
+     - is_shared=true so staff: bloqueia a TRANSICAO para true (INSERT, ou UPDATE que liga) quando
+       !is_admin_or_supervisor(auth.uid()); editar linha ja compartilhada NAO e barrado;
+     - a guarda vale so para auth.role()='authenticated' (service_role/back-office livre, como em
+       20260929590000_multiplix_mutability_guard.sql);
+  2. CHECK `email_templates_body_not_blank` (corpo vazio barrado; nome em branco ja e barrado pela ET1).
+- scripts/db-audit/email-templates-rls.test.sh: BLOCO C (o defeito reproduzido ANTES e provado fechado
+  depois, com os papeis reais dono/staff/outro + anon) e BLOCO D (rollback do hardening extraido do
+  proprio arquivo, executado, e reaplicacao idempotente). Arquivo ja registrado no db-guard pelo
+  cartao-avo (commit de0635599) — nao toquei no workflow de CI.
 
-## Por que gatilho e nao WITH CHECK
-WITH CHECK nao enxerga o OLD: nenhuma expressao de policy consegue proibir trocar `created_by` mantendo a linha compartilhada valida. O gatilho e a unica barreira desse caminho e espelha o precedente do repositorio `20260929590000_multiplix_mutability_guard.sql` (guarda so para `authenticated`; service_role/back-office livre — C7 prova).
+## Prova (saida real, do teste que roda com os papeis reais)
+Vermelho SEM a correcao (migration trocada por um stub sem gatilho):
+  RC_VERMELHO=1
+  [FAIL] C1 staff nao reatribui a autoria da linha de outro (guardado): deveria falhar, mas passou
+Verde COM a correcao:
+  RC_VERDE=0 ; == TODOS OS PASSOS PASSARAM ==
+  [PASS] C1..C6 autoria imutavel (staff/outro nao reatribuem; dono edita/exclui; staff edita o corpo)
+  [PASS] C7 service_role segue livre para back-office
+  [PASS] C8/C9 agente comum nao marca is_shared (UPDATE) nem nasce compartilhado (INSERT)
+  [PASS] C10 staff marca is_shared no proprio modelo
+  [PASS] C11/C12 corpo vazio e nome em branco barrados por CHECK
+  [PASS] D1..D3 rollback remove gatilho+funcao e nao derruba a tabela
+  [PASS] D4..D6 reaplicar recria gatilho, funcao e CHECK (idempotente)
+Migration aplicada no banco LOCAL do cartao:
+  `APLICADA no banco LOCAL 'v2-26101221510dae' (producao nao foi tocada)`.
+
+## Escolhas (registradas como o cartao pede)
+- Autoria: RAISE em vez de `NEW.created_by := OLD.created_by` — nao mascara a tentativa de escalada e
+  segue o precedente do multiplix. Efeito identico: created_by nunca difere do OLD.
+- is_shared: barra so a transicao para true; o dono comum continua editando o proprio modelo que ja
+  estava compartilhado (senao eu quebraria a ET1 — foi o que o primeiro rascunho fez e o teste C3 pega).
+- Corpo vazio: usei CHECK e NAO removi o `default ''` da ET1 (nao mexi em objeto existente); com o CHECK,
+  omitir o corpo passa a ser rejeitado — o default fica inalcancavel de proposito.
+- Nao alterei as 4 policies da ET1 (a barreira nova e o gatilho) e nao mexi em GRANT/ACL de objeto
+  existente; so REVOKE da funcao nova (deny by default).
 
 ## Passada de efeito colateral
-1. Gatilhos: a tabela tem `set_email_templates_updated_at` (regrava updated_at) — inalterado; o gatilho novo e BEFORE UPDATE e so pode RAISE, nao escreve. Zero UPDATE de dado nesta migration (sem backfill).
+1. Gatilhos: o `set_email_templates_updated_at` (ET1) segue intacto; o gatilho novo so pode RAISE.
+   Sem backfill (nenhum UPDATE/INSERT de dado nesta migration).
 2. Tudo ou nada: roda em uma transacao (BEGIN/COMMIT do hermes-db-migrar).
-3. Sem oraculo: a guarda nao consulta existencia de nada; o erro 42501 e igual para qualquer linha.
-4. Permissao so a pedida: nenhum GRANT/REVOKE de objeto existente; apenas `REVOKE ALL ... FROM PUBLIC, anon, authenticated` da funcao NOVA (deny by default) e nenhuma policy/papel mudou.
-5. Entrada invalida: a troca de autoria tem teste de erro (C1); nulo nao se aplica (coluna criada pela ET1).
-6. Teste robusto: por comportamento com papel real (authenticated/service_role), sem deparse.
+3. Sem oraculo: a guarda nao consulta existencia de nada; erro igual para qualquer linha.
+4. INSERT: `old.is_shared` e NULL -> coalesce(false), entao a regra de is_shared vale tambem no INSERT.
+5. Regressao coberta: C3/C5 provam que dono e staff continuam editando; C7 prova que o back-office
+   nao foi afetado.
 
-## O que NAO fiz e por que
-- Nao editei a migration ET1 (regra: correcao = migration nova).
-- Nao mexi em src/ nem em supabase/functions/ — front V3 nao usa a tabela no V2; os types gerados ja cobrem as colunas.
-- Nao alterei .github/workflows/db-guard.yml (test.sh ja registrado pelo cartao-avo).
+## Fora do meu alcance / observacao
+- src/integrations/supabase/types.ts ja traz as colunas da tabela (types gerados) — nada a mudar no front.
+- Nao editei a migration da ET1 (correcao = migration nova).
