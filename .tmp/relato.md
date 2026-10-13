@@ -49,6 +49,19 @@ ponto do diff.
   `ChatInputArea.tsx:166`, `ChatMessageInput.tsx:131`, `TeamChatInputArea.tsx:112`.
 - melhor caso (iPhone, inset 47/34 px) e pior caso (sem inset = 0) medidos na captura.
 
+## Verificação em lote (`zapp-verify --rapido`) — FALHA DE AMBIENTE, não do diff
+- O passo `tipos` do fechar falhou por OOM na máquina, não por erro de tipo: o log diz
+  `Killed … tsc saiu 137 em app (falha de execução, NÃO é aprovação)` e
+  `tsc -b falhou com exit null`; `uptime` no momento marcaram `load average: 49.53` com
+  `2.4Gi` de memória livre de 47Gi (vários agentes rodando o mesmo typecheck).
+- O juiz barato classificou: `jev-juiz falha` → "environment (certeza 0.81); rode de
+  novo uma vez; se repetir, registre no relato e siga sem mexer no código". Repetiu
+  igual (148s e depois 92s, sempre `Killed`), então **não mexi no código por isso**.
+- Prova de que o diff não tem erro de tipo: `npx tsc --noEmit --skipLibCheck … --types
+  vitest/globals,node src/styles/__tests__/mobileAreaSeguraRolagem.test.ts` → exit 0, zero
+  erros; e o teste do cartão passou isolado (`Test Files 1 passed; Tests 4 passed`).
+- Nenhuma alteração de código foi feita depois disso: só esta nota de relato.
+
 ## O que NÃO fiz e por quê
 - `src/components/catalog/ProductDetailDialog.tsx:214` usa `scrollbar-hide`, que não tem
   definição em lugar nenhum (nem é utilitário do Tailwind v3). Não é da família deste
