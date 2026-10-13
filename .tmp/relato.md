@@ -1,21 +1,19 @@
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- ESTADO.md: a âncora publicada de `auth-login` passou de `src/lib/serverLogin.ts:72` para `src/lib/serverLogin.ts:87`. A entrega original (t_3f45844b, cherry-pick de 1cc310895b e 191141a73) inseriu linhas acima da invocação `functions/v1/auth-login` no `serverLogin.ts`, deslocando-a; a guarda `docs-estado-registry-convention.unit.mjs` exige que a linha da âncora contenha o próprio nome da edge, e sem isso o ESPELHO DO CI quebra.
-- Parti da entrega com `git cherry-pick -x` dos dois commits de código (não recomecei), para o ramo do refazer carregar o código original + a âncora alinhada.
-- Correção é só de documento/causa; nenhuma asserção da guarda foi afrouxada e nenhum arquivo de `src/` foi tocado.
+- `ESTADO.md`: a âncora publicada de `auth-login` foi realinhada de `src/lib/serverLogin.ts:72` para `src/lib/serverLogin.ts:87` — a linha que contém `functions/v1/auth-login`. O código da entrega (cherry-pick de `1cc310895b` e `191141a73`, em `src/lib/serverLogin.ts`) deslocou essa invocação, e a guarda `docs-estado-registry-convention.unit.mjs` exige que a linha da âncora cite a própria edge; sem o ajuste o ESPELHO DO CI quebra.
+- Parti do commit da entrega com `git cherry-pick -x` (não recomecei). Os arquivos de código vêm do cherry-pick, sem edição minha; a única linha que eu mudei é a do `ESTADO.md`.
 
 ## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` -> `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge / error: 'âncora desatualizada: src/lib/serverLogin.ts:72 não cita `auth-login`'`
+- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` -> `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `error: 'âncora desatualizada: src/lib/serverLogin.ts:72 não cita `auth-login`'`
 - verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` -> `# tests 11 / # pass 11 / # fail 0`
-- espelho do CI (mesmos comandos do `ci_espelho.sh`): node -> `# tests 1334 / # pass 1325 / # fail 8`, com exatamente as MESMAS 8 falhas da base (Talk X x2, lint-ratchet --staged x6) — nenhuma falha nova, o item do cartão saiu da lista; deno -> `ok | 1715 passed (16 steps) | 0 failed`; contratos -> `Test Files 89 passed (89); Tests 1379 passed (1379)`.
-- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (tipos, lint, db_guard, migrations: OK).
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (tipos OK, lint OK, db_guard OK, migrations OK).
+- espelho do CI (os mesmos comandos do `ci_espelho.sh`): node -> `# tests 1334 / # pass 1325 / # fail 8`; deno -> `ok | 1715 passed (16 steps) | 0 failed`; contratos -> `Test Files 89 passed (89); Tests 1379 passed (1379)`. As 8 falhas do node são idênticas às da base (Talk X x2, lint-ratchet --staged x6) — o cartão NÃO traz falha nova, e o item que o cartão aponta saiu da lista.
 
 ## Pontos do revisor ([refazer])
-- Ponto 1 ([refazer] — partir da entrega com cherry-pick): parti do commit da entrega com `git cherry-pick -x 1cc310895b 191141a73`, sem recomeçar; o ramo do refazer carrega o código original (`src/lib/serverLogin.ts`, `src/services/auth.service.ts`, `src/hooks/auth/useAuthForm.ts` e os testes) intacto.
-- Ponto 2 ([refazer] — causa do ESPELHO DO CI, sem afrouxar asserção): a causa era o deslocamento de linha no `serverLogin.ts` que deixou a âncora publicada de `auth-login` apontando para a linha errada. Alinhada em `ESTADO.md:63` de `src/lib/serverLogin.ts:72` para `:87` (a linha que contém `functions/v1/auth-login`). Nenhuma asserção da guarda foi tocada; o teste da guarda é o que prova.
-- Ponto 3 ([refazer] — provar verde e fechar citando o sha): guarda em isolamento -> `# pass 11 / # fail 0`; espelho do CI (mesmos comandos do `ci_espelho.sh`) sem falha nova vs a base (item do cartão saiu da lista); `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO`. SHA da correção: `ce48330329` (entrega: `0f8aa38ce3` + `3344cb2374`).
+- Ponto 1 (partir da entrega com cherry-pick, não recomeçar): feito com `git cherry-pick -x 1cc310895b 191141a73`; o ramo do refazer carrega o código original (`src/lib/serverLogin.ts`, `src/services/auth.service.ts`, `src/hooks/auth/useAuthForm.ts` e os testes) sem reescrita.
+- Ponto 2 (corrigir a causa sem afrouxar asserção): a causa era o deslocamento de linha no `serverLogin.ts`, que deixou a âncora de `auth-login` apontando para a linha errada. Alinhada em `ESTADO.md:63` para `:87`. Nenhuma asserção da guarda foi tocada; o próprio teste da guarda é a prova (11 passed, 0 failed).
+- Ponto 3 (provar verde e fechar citando o sha): guarda 11 passed / 0 failed; espelho do CI sem falha nova versus a base; `zapp-verify --rapido` VERDE. SHA da correção: `ce48330329` (entrega: `0f8aa38ce3` + `3344cb2374`).
 
-## O que NÃO fiz e por quê
-- Não executei `bash ~/arquitetura-v2/integrador/ci_espelho.sh`: bloqueado pelo HERMES-GUARD ("mexer nas guardas/ferramentas do Hermes e proibido"). Rodei os mesmos comandos que o script agrega, um a um, e comparei com a base pelo mesmo critério (só falha NOVA reprova).
-- Não alterei `src/lib/serverLogin.ts` nem os testes: a entrega já vinha correta (`zapp-verify` verde nos tipos); o defeito era apenas a âncora do documento.
+## Nota operacional
+- `bash ~/arquitetura-v2/integrador/ci_espelho.sh` é bloqueado para o worker pelo HERMES-GUARD ("mexer nas guardas/ferramentas do Hermes e proibido"). Rodei os mesmos comandos que o script agrega, um a um, e comparei com a base pelo critério do próprio script (só falha NOVA reprova).
