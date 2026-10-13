@@ -25,4 +25,9 @@ Especialista: Edgar (area-edge-api)
 - Mesma suíte `testes` do noturno, mesmo dono: (a) `src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx` (timeout de 15s só sob carga; isolado passa, é flaky); (b) erro não tratado de WebSocket em `RealtimeInboxView.selectedMessagesError.test.tsx`.
 - Sem isso o passo `testes` do noturno segue vermelho e prende as correções na fila do integrador.
 
+## Critério de pronto — item por item
+1. Único defeito-raiz declarado, com arquivo/trecho: SIM. `src/components/talkx/__tests__/RuleValueInput.test.tsx` (teste da linha 194 vaza a URL; falha cobrada na linha 205/207) + trecho que lê a URL: `TalkXSegments.tsx:43-44` e `106-114`.
+2. Comando exato do guarda/teste com log PASSANDO (exit 0) após a correção: NÃO APLICÁVEL. A correção está fora da área permitida (`src/components/talkx/**`), então não há correção nem log "passando" do arquivo inteiro. O que foi rodado agora: vermelho no arquivo inteiro (rc=1) e verde isolado (rc=0), logs colados acima.
+3. `git diff` só com arquivos da área permitida + manifesto regenerado por script: SIM para o escopo. `git diff --stat HEAD~1 HEAD` = `.tmp/relato.md` (o próprio relato); nenhum arquivo de produção/teste tocado; manifesto NÃO regenerado porque não há mudança de fonte de Edge que o exija.
+
 NÃO CONCLUÍ: o CRITÉRIO DE PRONTO pede o guarda/teste PASSANDO, o que só se consegue corrigindo arquivo fora da área permitida. Declaro o defeito-raiz com prova e paro, conforme a regra de escopo do cartão.
