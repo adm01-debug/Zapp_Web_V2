@@ -434,19 +434,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       return errorResponse('Unable to persist delivery receipt', 502, req);
     }
 
-    // This is intentionally best effort: delivery already has its durable
-    // receipt, so a metric failure must never turn a sent WhatsApp message into
-    // a client-visible send failure.
-    try {
-      const { error: metricError } = await service.rpc('mark_first_response', {
-        p_contact_id: claim.contact_id,
-      });
-      if (metricError) {
-        console.error(JSON.stringify({ event: 'message_delivery_metric_error', code: metricError.code }));
-      }
-    } catch {
-      console.error(JSON.stringify({ event: 'message_delivery_metric_error' }));
-    }
+    // O SLA de 1ª resposta é registrado pelo trigger trg_messages_sla_first_response,
+    // disparado dentro de complete_outbound_message() quando a mensagem vira 'sent'
+    // (20260903225000 + 20261006211248). A RPC mark_first_response aqui era
+    // redundante e falhava sempre com 42501: ela exige auth.uid() e este caminho roda
+    // com service_role. Nada a fazer depois do recibo.
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
     await failClaim(service, claim);
