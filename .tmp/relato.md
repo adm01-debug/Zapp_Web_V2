@@ -1,18 +1,32 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Pontos da recusa / pedido de refazer
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Ponto 1: trazer o trabalho aprovado 45d0fd8fc sem carregar diff alheio e sem divergir da ponta atual.
+- O que fiz: tentei aplicar o commit de código da entrega aprovada (`git cherry-pick -n 619cbcafd`). O cherry-pick ficou vazio porque a base `dia/2026-10-13` já contém o mesmo conteúdo aprovado em `src/lib/queryRetry.ts`, `src/lib/queryClient.ts` e `src/lib/__tests__/queryRetry.test.ts`.
+- Prova: `git diff --name-status dia/2026-10-13..v2/react-query-nao-repete-erro-permanente-26101115141e35 -- src/lib/queryClient.ts src/lib/queryRetry.ts src/lib/__tests__/queryRetry.test.ts` não imprime nada; `git diff --name-only dia/2026-10-13...HEAD` não imprime nada antes deste relato; `git log --oneline dia/2026-10-13..HEAD` não imprimia nada antes deste relato.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+Ponto 2: manter a correção aprovada para retry de React Query em erro permanente.
+- O que ficou na ponta atual: `queryClient.ts` usa `retry: shouldRetryQuery`; `queryRetry.ts` classifica 401/403/404, SQLSTATE permanentes e famílias PGRST/validação como não-retentáveis, preservando retry para falhas transitórias; o teste real do módulo continua em `src/lib/__tests__/queryRetry.test.ts`.
+- Teste que prova: `npx vitest run src/lib/__tests__/queryRetry.test.ts` passou com `Test Files 1 passed (1)` e `Tests 13 passed (13)`.
+
+## Arquivos do diff final
+
+`git diff --name-only dia/2026-10-13...HEAD` após o commit de fechamento:
+
+.tmp/relato.md
+
+Nenhum arquivo de código mudou neste refazer. O único diff é o relato versionado porque `hermes-tarefa-fechar` exige commit novo nesta fila; o trabalho aprovado de código já estava idêntico na ponta atual.
+
+## Verificações executadas agora
+
+- `npx vitest run src/lib/__tests__/queryRetry.test.ts` → `Test Files 1 passed (1)`; `Tests 13 passed (13)`.
+- `zapp-verify . --rapido` → OK em `db_guard`, `tipos`, `lint`, `migrations`; terminou `VERIFY: VERDE SEM BANCO` porque este cartão não mexe em migration e não foi passado conjunto local.
+- `bun run build` → exit 0; Vite terminou `✓ built in 18.04s`.
+- `zapp-verify full .` foi tentado; ele completou `db_guard`, `tipos`, `lint` e `migrations`, mas a execução longa foi encerrada pelo runner antes dos passos finais.
+- Para cobrir os passos finais manualmente, rodei `bun run test`; a suite completa falhou em teste alheio a este cartão: `src/components/talkx/__tests__/RuleValueInput.test.tsx` (`Test Files 1 failed | 1314 passed`; `Tests 1 failed | 11901 passed | 25 expected fail | 14 todo`). Rodei o arquivo isolado e reproduziu `Test Files 1 failed (1); Tests 1 failed | 4 passed (5)`. `jev-juiz falha .tmp/rulevalueinput-vitest.log` classificou como `pre_existing` com certeza 0.98. Não corrigi porque é fora do escopo e o diff de código deste cartão está vazio.
+
+## O que NÃO fiz
+
+- Não alterei código, teste, migration, manifesto nem guarda: a divergência que motivou o refazer já estava resolvida na base atual, e qualquer mudança nova aqui seria escopo inchado.
+- Não corrigi `RuleValueInput.test.tsx`: falha pré-existente e fora do pedido original/refazer.
