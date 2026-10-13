@@ -1,66 +1,24 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: iris
 
 ## O que mudou e por quê
-Arquivos desta entrega: a migration, a suíte de banco e este `.tmp/relato.md` (3 arquivos, 1 de teste).
-- `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql`: conversa
-  RESOLVED/ARQUIVADA volta a ativa quando o cliente escreve. Três peças:
-  1. `reopen_conversation_core(contact_id, performed_by)` — núcleo interno (SECURITY DEFINER,
-     `FOR UPDATE`), sem checagem de chamador; só reabre contato ATIVO (não soft-deleted) em
-     `resolved`/`archived`; destino `waiting` se sem responsável, `open` se atribuído; idempotente
-     (já ativo → `reopened=false`, sem evento).
-  2. `reopen_conversation(contact_id)` — RPC do botão, mesmas guardas do `close_conversation_atomic`
-     (papel `authenticated`/`service_role`, perfil ativo, `is_contact_visible_to_user`) ANTES de
-     qualquer efeito; mesmo erro para contato inexistente e sem permissão (sem oráculo).
-  3. Gatilho `trg_conversation_reopen_on_inbound` (AFTER INSERT em `public.messages`,
-     `sender='contact'` e não deletada) chama o núcleo — cobre TODOS os caminhos de entrada
-     (webhook/ingest/Edge), não só a RPC de ingest.
-  Grava 1 evento `reopen` em `conversation_events` (metadata `previous_status`/`destination`, sem
-  texto de mensagem e sem PII). Roda numa transação: evento falhou, nada persiste.
-- `supabase/tests/reabre_conversa_nova_mensagem.sql`: suíte de banco (10 grupos) do contrato.
-  Dados sintéticos; tudo em `BEGIN…ROLLBACK`.
-
-Por que o FSM vai em dois passos: `enforce_conversation_status_transition` só aceita
-`resolved`/`archived → open`. Então o destino `waiting` (Aguardando, linhagem W1/W2) é alcançado por
-`→ open` e, se for o caso, `→ waiting`, os dois válidos, na mesma função. O gatilho não foi ligado à
-flag `inbox.status-fsm`: ela vem de migration da linhagem W1/W2 ainda fora da base e deixaria a
-reabertura morta.
+- `src/hooks/chat/useConversationActions.ts`: método `reopenConversation(contactId)` — chama a RPC `reopen_conversation` (migration 20261013210003, do cartão pai), avisa por toast ("Conversa reaberta"; "A conversa já está ativa" quando `reopened=false`) e devolve `{ status, reopened }` para quem chamou levar a lista ao chip certo.
+- `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` (novo): confirmação leve (AlertDialog) "Reabrir conversa?" / "Desarquivar conversa?", com nome do contato, botão travado e espera visível enquanto a RPC roda, e motivo do erro dentro do diálogo (não fecha em silêncio).
+- `src/components/inbox/conversation-list/reopenChip.ts` (novo): mapa status→chip ('waiting'→Aguardando, resto→Em atendimento) — fonte única para a linha e para o cabeçalho.
+- `src/components/inbox/chat/ChatPanelHeader.tsx`: item "Reabrir conversa"/"Desarquivar conversa" no menu de ações, só quando `conversation.contact.conversation_status` é `resolved`/`archived`.
+- `src/components/inbox/VirtualizedRealtimeList.tsx`: botão na linha da lista (barra de ações do hover) com `aria-label` e tooltip, só para resolvida/arquivada, usando os MESMOS predicados dos chips (`isResolved`/`isArchived` de `chipCounts`) — a ação e o filtro não divergem.
+- `src/components/inbox/ConversationListSidebar.tsx`, `src/components/inbox/ChatPanel.tsx`, `src/components/inbox/RealtimeInboxView.tsx`: fiação do handler (RPC → troca de chip → refetch) para a linha e para o cabeçalho; o painel não faz acesso a dados, o hook é a única porta.
 
 ## Prova
-- vermelho antes (bloco `-- Rollback:` extraído e executado — 4 `DROP`, ok — e a suíte rodando):
-  `zapp-db-local psql . reabre -v ON_ERROR_STOP=1 < supabase/tests/reabre_conversa_nova_mensagem.sql`
-  → `ERROR: T1 FALHOU: C1 resolveu com responsavel deveria virar open e ficou resolved` (rc=3)
-- verde depois (migration reaplicada):
-  `zapp-db-local psql . reabre -v ON_ERROR_STOP=1 < supabase/tests/reabre_conversa_nova_mensagem.sql`
-  → `NOTICE: reabre_conversa_nova_mensagem: suite OK (T1 resolved->open, T2 archived->waiting, T3
-  no-op idempotente, T4 agente/deletada, T5 soft-deleted, T6 RPC/papeis/sem oracle, T7 atomicidade,
-  T8 ACL, T9 entrada invalida, T10 updated_at 1 linha vs caminho canonico) — 10 grupo(s)
-  verificado(s)` (rc=0)
-- A migration aplica limpa no banco local da tarefa (`zapp-db-local up . reabre` → exit 0; a
-  migration NÃO aparece em `falhas.tsv`).
-
-## Avisos do juiz
-- Números/arquivos: já corrigido acima (o diff tem migration + suíte + relato).
-- `updated_at` reescrito pelo `update_contacts_updated_at`: NÃO PROCEDE como recusa, porque
-  (a) o UPDATE toca UMA linha (a reaberta), não “todas as linhas” — T10 prova antes/depois da linha
-  reaberta e prova que um contato vizinho NÃO muda; (b) é o comportamento PADRÃO da mudança de
-  status nesta base: o fechamento (`sync_contact_status_on_closure`) e o `set_conversation_status`
-  canônico disparam o MESMO gatilho — T10 chama `set_conversation_status` e mostra o mesmo bump;
-  (c) desligar o gatilho exigiria `ALTER TABLE … DISABLE TRIGGER` (ACCESS EXCLUSIVE em `contacts`
-  no meio do path de entrada de mensagem) — pior que o efeito de 1 linha; (d) a alternativa
-  `session_replication_role=replica` desligaria o próprio FSM. Efeito aceito e documentado na suíte.
-
-Passada de efeitos colaterais: os `UPDATE` em `contacts` disparam o FSM (guarda), o
-`update_contacts_updated_at` (1 linha, acima) e o `log_assignment_change` (não dispara:
-`assigned_to` não muda); o `INSERT` em `conversation_events` não tem gatilho de negócio. Nenhum
-GRANT/papel/ACL existente foi alterado — só as funções novas receberam GRANT. Atômico (T7 força o
-INSERT do evento a falhar: mensagem e estado desfazem juntos).
+- vermelho antes: `npx vitest run src/components/inbox/__tests__/VirtualizedRealtimeList.reabrir.test.tsx src/components/inbox/chat/__tests__/ChatPanelHeader.reabrir.test.tsx src/hooks/chat/__tests__/useConversationActions.reopen.test.ts` sem o commit — os 3 arquivos novos falham (não existem botão, item de menu nem `reopenConversation` na base).
+- verde depois: mesmo comando → `Test Files 3 passed (3); Tests 16 passed (16)`
+- sem regressão nos vizinhos: `npx vitest run` dos 9 arquivos da Inbox tocados pela mudança (VirtualizedRealtimeList.test.tsx, ChatPanelHeader.test.tsx, coresCruasInboxCrm.test.tsx, menus-r2-inb-021.test.tsx, useConversationActions.test.ts/.snooze, ConversationListSidebar.test.tsx, RealtimeContactUpdateE2E.test.tsx e os 3 novos) → `Test Files 9 passed (9); Tests 94 passed (94)`
+- `npx tsc -b --force` → sem nenhuma linha de saída (0 erros); `npx eslint` nos arquivos tocados → nenhum erro e nenhum warning novo (o guard de cores da Inbox, `coresCruasInboxCrm.test.tsx`, lê os hovers de `VirtualizedRealtimeList.tsx` e passou com o botão novo).
 
 ## O que NÃO fiz e por quê
-- Não mexi no `ingest_inbound_message` (branch `v2/ingest-inbound-reabre-conversa-2610111149a58e`,
-  t_79ca0cf1): o gatilho em `messages` cobre aquele caminho e substitui a mudança na RPC; se as duas
-  entrarem, a da RPC fica idempotente (sem evento dobrado) — registrado em comentário no cartão.
-- Ações de front (`types.ts`/`useConversationLifecycle`, botão "Reabrir"), Edge e outros repositórios
-  não são da minha área: ficam para o cartão de tela/Edge. A RPC
-  `public.reopen_conversation(p_contact_id uuid)` devolve
-  `(contact_id, conversation_status, conversation_status_changed_at, event_id, reopened)`.
-- Sem tabela nova, sem tocar banco real, sem push.
+- Captura de tela: NÃO versionei. Não existe projeto Playwright visual da Inbox com sessão falsa (a regra R1 proíbe `chromium-authenticated` e `e2e/.auth`); os projetos visuais do repositório são contacts/talkx/email/theme, nenhum cobre a Inbox. A parte visual desta entrega são um item de menu e um ícone de hover com tokens já existentes no mesmo arquivo, e o guard que lê os hovers da lista roda verde.
+- `src/components/inbox/conversation-list/ConversationItem.tsx` (citado no cartão) NÃO existe na V2 — é o nome do arquivo no V3. A linha da lista da V2 mora em `VirtualizedRealtimeList.tsx`; por isso a ação foi colocada lá, e não criei um arquivo novo com aquele nome.
+- `CloseConversationDialog.tsx` também tem "Desarquivar / Reabrir", mas pela RPC genérica `set_conversation_status` (anterior ao `reopen_conversation`); não mexi nele (fora dos arquivos citados) — deixei comentário no cartão.
+- Ferramenta do pai: o `git cherry-pick --empty=drop` do cartão não existe no git 2.43 local; trouxe a mesma faixa com `git cherry-pick -x <3 sha>` e nada ficou vazio.
+
+## Conclusão
+Concluído: reabrir/desarquivar existe no menu do cabeçalho e na linha da lista, com confirmação leve, estado de espera, toast e retorno ao chip certo; verificação rápida verde no fechar.
