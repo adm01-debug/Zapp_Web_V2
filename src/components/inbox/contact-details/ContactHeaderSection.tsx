@@ -50,8 +50,9 @@ interface ContactHeaderSectionProps {
   isCompact?: boolean;
   hasExpandedSections?: boolean;
   onCollapseAll?: () => void;
-  /** Tags vivas do contato (contacts.tags) — mesma fonte que o botão "Marcar
-   *  VIP" grava via useContactQuickActions. Quando ausente, cai em contact.tags. */
+  /** Tags vivas do contato. O painel de detalhes não passa mais esta prop (a
+   *  função de tags de contato saiu do app em 12/10); quando ausente, o selo
+   *  VIP cai em `contact.tags` (legado) — ponto do cartão TG-A. */
   tags?: string[] | null;
 }
 
@@ -66,9 +67,10 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const { data: crmData } = useExternalContact360(crmIntegrationEnabled ? contact.id : undefined);
   const crmContact = crmData?.found ? crmData.contact : null;
   const crmCompany = crmData?.found ? crmData.company : null;
-  // O selo VIP lê a MESMA fonte que o botão grava — a tag 'VIP' em
-  // contacts.tags (case-insensitive, igual ao useContactQuickActions). Antes
-  // era decidido pelo relationship_score do CRM, fonte divergente (#241).
+  // O selo VIP ainda deriva da tag 'VIP' da tabela de contatos (legado). A
+  // escrita dessa tag saiu do app em 12/10 (useContactQuickActions não grava
+  // mais etiquetas); o selo por etiqueta deve sumir quando a coluna dedicada
+  // `is_vip` entrar — ponto do cartão TG-A (decisão D-T2).
   const isVip = (tags ?? contact.tags ?? []).some((t) => t.toLowerCase() === 'vip');
   const firstName = contact.name.trim().split(/\s+/)[0] || 'Sem nome';
   // Mesmo apelido (contacts.nickname) que a lista de conversas usa como nome

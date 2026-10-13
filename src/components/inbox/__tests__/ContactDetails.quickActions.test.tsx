@@ -102,11 +102,6 @@ async function clickUndo() {
 const invokeCalls = () =>
   h.invoke.mock.calls.map((c) => (c[1] as { body: Record<string, unknown> }).body);
 
-/** O selo VIP do cabeçalho é o Badge com ícone Crown — o chip da seção Tags
- *  também mostra o texto "VIP", então o selo se distingue pelo lucide-crown. */
-const seloVip = () =>
-  screen.queryAllByText('VIP').find((el) => el.parentElement?.querySelector('svg.lucide-crown'));
-
 describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   beforeAll(() => {
     // jsdom não implementa Element.scrollTo — ContactDetails rola o painel no mount.
@@ -121,37 +116,6 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
       whatsapp_connections: { instance_id: 'inst-1' },
     };
-  });
-
-  it('"Marcar VIP" grava a tag VIP em contacts.tags; Desfazer remove de verdade', async () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] }));
-    expect(h.from).toHaveBeenCalledWith('contacts');
-    expect(h.eq).toHaveBeenCalledWith('id', 'c1');
-
-    await clickUndo();
-    await waitFor(() => expect(h.update).toHaveBeenLastCalledWith({ tags: [] }));
-  });
-
-  it('o selo VIP do cabeçalho lê a mesma fonte que o botão grava (contacts.tags)', async () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    expect(seloVip()).toBeUndefined();
-    openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] }));
-    // O selo acompanha a escrita do botão sem recarregar a tela.
-    await waitFor(() => expect(seloVip()).toBeTruthy());
-  });
-
-  it('o selo VIP persiste após recarregar o detalhe (tag "vip" em outra caixa vem do banco)', async () => {
-    const recarregada: Conversation = {
-      ...conversation,
-      contact: { ...conversation.contact, tags: ['vip'] },
-    };
-    render(<ContactDetails conversation={recarregada} onClose={() => {}} />);
-    expect(seloVip()).toBeTruthy();
   });
 
   it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
@@ -187,9 +151,8 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
         }),
       ),
     );
-    await waitFor(() =>
-      expect(h.update).toHaveBeenCalledWith({ tags: ['Bloqueado'] }),
-    );
+    // A função de tags de contato não existe mais: nada é escrito em contacts.
+    expect(h.update).not.toHaveBeenCalled();
   });
 
   it('"Bloquear" sem conexão resolvível não escreve tag nem chama a edge', async () => {
@@ -205,17 +168,9 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('erro do banco vira toast.error e nenhum Desfazer é oferecido', async () => {
-    h.state.error = { message: 'row-level security' };
+  it('a seção "Tags" e a ação "Marcar VIP" não existem mais no painel', () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.toast.error).toHaveBeenCalled());
-    expect(h.toast).not.toHaveBeenCalled();
-  });
-
-  it('a seção "Tags" voltou ao painel de detalhes', () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    expect(screen.getByText('Tags')).toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-section-tags')).toBeNull();
+    expect(screen.queryByText('Marcar VIP')).toBeNull();
   });
 });

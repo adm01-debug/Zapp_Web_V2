@@ -1,6 +1,6 @@
 import {
   Phone, PhoneCall, Headphones, Mail, ArrowLeftRight, Video, UserPlus,
-  Star, Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
+  Archive, Ban, Briefcase, MoreHorizontal, ChevronsDownUp, RefreshCw,
 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -215,9 +215,6 @@ export function ContactActionButtons({
           <DropdownMenuContent align="center" className="min-w-[160px]">
             <DropdownMenuItem onClick={() => onQuickAction?.('edit')} className="gap-2 text-xs">
               <Briefcase className="w-3.5 h-3.5 text-primary" />Editar Contato
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onQuickAction?.('vip')} className="gap-2 text-xs">
-              <Star className="w-3.5 h-3.5 text-warning" />Marcar VIP
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className="gap-2 text-xs">
               <Archive className="w-3.5 h-3.5 text-muted-foreground" />Arquivar
