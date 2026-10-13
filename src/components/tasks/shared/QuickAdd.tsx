@@ -53,9 +53,8 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   // O contato do chat é fixo; fora do chat, o chip @ escolhe o contato.
   const contactId = defaultContactId ?? escolhido;
 
-  // Etapa 171 — "Mais opções…" leva a captura para o modal "Nova tarefa", com o
-  // que já foi digitado/ajustado aqui. Sem o contexto de captura do módulo (o
-  // componente também é usado fora dele), o ⋯ segue abrindo os chips no popover.
+  // Etapa 171 — "Mais opções…" leva a captura para o modal "Nova tarefa". Fora do
+  // módulo (sem o contexto) o ⋯ segue abrindo os chips no popover.
   const ui = useTasksUiOptional();
   const abrirMaisOpcoes = () => {
     if (!ui) return false;

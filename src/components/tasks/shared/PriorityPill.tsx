@@ -4,12 +4,8 @@ import type { Priority } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
 /**
- * Um par de cor por prioridade (D12). A pílula tem SEMPRE a cor da prioridade —
- * `--primary` é do SEGMENTO escolhido do controle (`PrioritySegment`), nunca da
- * pílula. A escada é cinza → âmbar → vermelho (contorno) → vermelho (tinta e
- * borda cheias), o mesmo desenho do `PriorityChip`.
- *
- * Os valores `medium`/`high`/`urgent` usam os tokens de TEXTO
+ * D12: a pílula tem SEMPRE a cor da prioridade (`--primary` é do SEGMENTO do
+ * controle). `medium`/`high`/`urgent` usam os tokens de TEXTO
  * (`--warning-text`/`--destructive-text`): a cor crua é de PREENCHIMENTO e como
  * texto ficava em ~2:1 (etapa 80 / E.3).
  */

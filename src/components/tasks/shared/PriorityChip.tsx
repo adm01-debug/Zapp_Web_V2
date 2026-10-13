@@ -2,15 +2,11 @@ import type { Priority } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
 /**
- * D12 (etapa 170): a pílula tem SEMPRE a cor da prioridade — Média é ÂMBAR, não
- * `primary` (o azul é do segmento escolhido do controle). A escada é cinza →
- * âmbar → vermelho (contorno) → vermelho (tinta e borda cheias), a mesma do
- * `PriorityPill`, para a Lista, o Quadro e a prévia do modal combinarem.
+ * D12 (etapa 170): a pílula tem SEMPRE a cor da prioridade (Média é ÂMBAR; o
+ * azul é do segmento do controle), a mesma escada do `PriorityPill`.
  *
- * Etapa 80 (E.3): `text-warning`/`text-destructive` são cor de PREENCHIMENTO — como
- * texto davam 2,1:1 (âmbar no claro) e 2,6:1 (vermelho no escuro). O par de texto
- * (`--warning-text`/`--destructive-text`, em tokens.css) fecha ≥4,5:1 nos dois modos
- * sem mexer em preenchimento nem borda.
+ * Etapa 80 (E.3): `--warning-text`/`--destructive-text` (tokens.css) em vez da cor
+ * de PREENCHIMENTO, que como texto dava ~2:1.
  */
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
