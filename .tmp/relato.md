@@ -10,6 +10,7 @@ Especialista: Íris (area-front-componentes)
 - vermelho antes (componente da base `HEAD` + testes novos): `npx vitest run src/components/security/__tests__/AuditLogDashboard.test.tsx` → `TypeError: supabase.from is not a function` — o componente antigo consulta pelo query-builder, os testes novos mockam as RPCs.
 - verde depois: `npx vitest run src/components/security/__tests__/AuditLogDashboard.test.tsx src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx` → Test Files 2 passed; Tests 14 passed
 - pasta inteira (não quebrou vizinhos): `npx vitest run src/components/security` → Test Files 20 passed; Tests 84 passed
+- ajuste pedido pelo juiz do fechar: os skeletons e o spinner de "Carregar mais" passaram a usar `motion-safe:animate-*` (respeitam reduzir movimento); o teste dos skeletons consulta `[data-testid="audit-skeleton"]`.
 
 ## Critério de pronto (item a item)
 - permissão/erro explícitos e nunca zero: `.tsx` (cards de erro/permissão) + testes "em falha mostra o erro e 'Tentar de novo' — nunca zeros silenciosos", "'Tentar de novo' refaz a leitura e mostra os números" e "sem papel admin diz que não tem permissão e não consulta o banco".
