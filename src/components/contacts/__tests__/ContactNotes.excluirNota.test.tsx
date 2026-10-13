@@ -128,8 +128,9 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
 
     // Capacidade vem do autor real da nota (mesmo dado que a policy usa).
     expect(within(cartaoDoColega).queryAllByRole('button')).toHaveLength(0);
-    expect(within(meuCartao).queryAllByRole('button')).toHaveLength(1);
-    expect(within(meuCartao).getByRole('button')).toHaveAttribute('aria-label', 'Excluir nota');
+    // Nota própria: editar + fixar + excluir (as três ações do autor).
+    expect(within(meuCartao).queryAllByRole('button')).toHaveLength(3);
+    expect(within(meuCartao).getByRole('button', { name: 'Excluir nota' })).toBeInTheDocument();
   });
 
   it('não oferece excluir enquanto o autor logado ainda não é conhecido', async () => {
@@ -144,7 +145,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     h.deleteRows = [{ id: 'nota-minha' }];
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(screen.queryByText('Minha nota')).not.toBeInTheDocument());
     expect(h.deleteCalls).toEqual(['nota-minha']);
@@ -159,7 +160,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     h.deleteRows = [];
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -176,7 +177,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     };
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(screen.queryByText('Minha nota')).not.toBeInTheDocument());
     expect(toastError).toHaveBeenCalled();
