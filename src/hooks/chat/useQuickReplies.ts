@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { getUiPreferences, setUiPreference, useUiPreferences } from '@/hooks/ui/useUiPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -34,6 +35,29 @@ export interface CreateTemplateInput {
 
 const FAVORITES_STORAGE_KEY = 'quick-reply-favorites';
 
+/**
+ * R2-PREF-001 — cache local (boot offline) dos favoritos. Só array de itens com
+ * `templateId` é aceito; qualquer outra coisa (objeto, escalar, lixo) é ignorada.
+ */
+function normalizarFavoritos(valor: unknown): QuickReplyFavorite[] | null {
+  if (!Array.isArray(valor)) return null;
+  return valor.filter((item): item is QuickReplyFavorite =>
+    item !== null && typeof item === 'object' && typeof (item as QuickReplyFavorite).templateId === 'string');
+}
+
+function lerFavoritosLocais(): QuickReplyFavorite[] {
+  try {
+    const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return (stored ? normalizarFavoritos(JSON.parse(stored)) : null) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function gravarFavoritosLocais(favoritos: QuickReplyFavorite[]) {
+  try { localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritos)); } catch { /* storage unavailable */ }
+}
+
 export function useQuickReplies() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -57,20 +81,31 @@ export function useQuickReplies() {
     enabled: !!user?.id,
   });
 
-  // Local favorites storage (synced with localStorage for persistence)
-  const [favorites, setFavorites] = useState<QuickReplyFavorite[]>(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Favoritos: o servidor manda quando há sessão; o localStorage é o cache do boot.
+  const { serverPrefs, ready: prefsProntas } = useUiPreferences();
+  const favoritosDoServidor = normalizarFavoritos(serverPrefs?.quickReplyFavorites);
+  const [favorites, setFavorites] = useState<QuickReplyFavorite[]>(
+    () => normalizarFavoritos(getUiPreferences().quickReplyFavorites) ?? lerFavoritosLocais(),
+  );
+  // Quem já mexeu nos favoritos nesta aba não é sobrescrito por uma leitura tardia.
+  const favoritosTocadosRef = useRef(false);
+  const favoritesRef = useRef(favorites);
+  useEffect(() => { favoritesRef.current = favorites; }, [favorites]);
 
-  // Save favorites to localStorage
+  useEffect(() => {
+    if (!prefsProntas || favoritosTocadosRef.current || !favoritosDoServidor) return;
+    if (JSON.stringify(favoritosDoServidor) === JSON.stringify(favoritesRef.current)) return;
+    setFavorites(favoritosDoServidor);
+    gravarFavoritosLocais(favoritosDoServidor);
+  }, [prefsProntas, favoritosDoServidor]);
+
+  // Save favorites to localStorage and to the user's account
   const saveFavorites = useCallback((newFavorites: QuickReplyFavorite[]) => {
+    favoritosTocadosRef.current = true;
     setFavorites(newFavorites);
-    try { localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites)); } catch { /* storage unavailable */ }
+    gravarFavoritosLocais(newFavorites);
+    // R2-PREF-001: os favoritos acompanham a conta, não só este navegador.
+    setUiPreference('quickReplyFavorites', newFavorites);
   }, []);
 
   // Toggle favorite

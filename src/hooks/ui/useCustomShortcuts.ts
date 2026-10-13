@@ -1,6 +1,13 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { log } from '@/lib/logger';
 import { DEFAULT_SHORTCUTS } from '@/hooks/shortcuts/defaultShortcuts';
+import {
+  clearUiPreference,
+  getUiPreferencesDoServidor,
+  setUiPreference,
+  subscribeUiPreferences,
+  uiPreferencesReady,
+} from '@/hooks/ui/useUiPreferences';
 
 export interface ShortcutBinding {
   id: string;
@@ -91,6 +98,12 @@ interface ShortcutStoreState {
 
 let state: ShortcutStoreState = ESTADO_PADRAO;
 let hydrated = false;
+/**
+ * R2-PREF-001: `true` depois da primeira gravação/limpeza nesta aba. Enquanto
+ * for `false`, uma leitura do servidor pode adotar a preferência da conta; depois
+ * dela, o que está na tela manda (o servidor só recebe).
+ */
+let editadoNaAba = false;
 let recordingListenerAttached = false;
 const listeners = new Set<() => void>();
 
@@ -132,30 +145,74 @@ function aplicarGravados(bindings: StoredBindings): ShortcutBinding[] {
   });
 }
 
-/** Lê o `localStorage` uma vez por aba; depois o estado vive no store. */
-function hydrate() {
-  if (hydrated) return;
-  hydrated = true;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return;
-    state = { ...state, shortcuts: aplicarGravados(JSON.parse(stored) as StoredBindings) };
-  } catch (e) {
-    log.error('Failed to parse stored shortcuts:', e);
-  }
-}
-
-function persist(shortcuts: ShortcutBinding[]) {
+/** O mapa de personalizações (só o que foi redefinido) — é o que vai para o disco e para a conta. */
+function customBindingsDe(shortcuts: ShortcutBinding[]): StoredBindings {
   const customBindings: StoredBindings = {};
   shortcuts.forEach(shortcut => {
     if (shortcut.customKey) {
       customBindings[shortcut.id] = { key: shortcut.customKey, modifiers: shortcut.customModifiers || {} };
     }
   });
+  return customBindings;
+}
+
+function gravarLocal(customBindings: StoredBindings) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(customBindings)); } catch { /* storage unavailable */ }
 }
 
+function lerLocal(): StoredBindings | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as StoredBindings) : null;
+  } catch (e) {
+    log.error('Failed to parse stored shortcuts:', e);
+    return null;
+  }
+}
+
+/**
+ * R2-PREF-001 — os atalhos também vivem na conta (`user_ui_preferences.shortcuts`).
+ * Dois canais: o `localStorage` continua sendo o cache do boot offline, e o
+ * servidor é a fonte quando há sessão. `editadoNaAba` impede que uma leitura
+ * tardia do servidor apague a personalização que o usuário acabou de gravar.
+ */
+function atalhosDoServidor(): StoredBindings | null {
+  if (!uiPreferencesReady()) return null;
+  const bruto = getUiPreferencesDoServidor()?.shortcuts;
+  if (bruto === null || bruto === undefined || typeof bruto !== 'object' || Array.isArray(bruto)) return null;
+  return bruto as StoredBindings;
+}
+
+function adotarAtalhosDoServidor() {
+  const doServidor = atalhosDoServidor();
+  if (!doServidor) return;
+  if (editadoNaAba) return;
+  // Igual ao que já está na tela: veio das nossas próprias gravações, não mexe.
+  if (JSON.stringify(doServidor) === JSON.stringify(customBindingsDe(state.shortcuts))) return;
+  state = { ...state, shortcuts: aplicarGravados(doServidor) };
+  gravarLocal(doServidor);
+  emit();
+}
+
+/** Lê o `localStorage` (e o servidor, quando já respondeu) uma vez por aba. */
+function hydrate() {
+  if (hydrated) return;
+  hydrated = true;
+  // Servidor vence quando existe; sem ele, o cache local de sempre.
+  const base = atalhosDoServidor() ?? lerLocal();
+  if (base) state = { ...state, shortcuts: aplicarGravados(base) };
+  subscribeUiPreferences(adotarAtalhosDoServidor);
+}
+
+function persist(shortcuts: ShortcutBinding[]) {
+  const customBindings = customBindingsDe(shortcuts);
+  gravarLocal(customBindings);
+  // R2-PREF-001: o mesmo mapa que foi para o disco vai para a conta do usuário.
+  setUiPreference('shortcuts', customBindings);
+}
+
 function updateShortcutBinding(id: string, key: string, modifiers: ShortcutModifiers) {
+  editadoNaAba = true;
   const shortcuts = state.shortcuts.map(shortcut =>
     shortcut.id === id ? { ...shortcut, customKey: key, customModifiers: modifiers } : shortcut
   );
@@ -164,6 +221,7 @@ function updateShortcutBinding(id: string, key: string, modifiers: ShortcutModif
 }
 
 function resetShortcutBinding(id: string) {
+  editadoNaAba = true;
   const shortcuts = state.shortcuts.map(shortcut =>
     shortcut.id === id ? { ...shortcut, customKey: undefined, customModifiers: undefined } : shortcut
   );
@@ -173,13 +231,18 @@ function resetShortcutBinding(id: string) {
 
 function resetAllBindings() {
   hydrated = true;
+  editadoNaAba = true;
   try { localStorage.removeItem(STORAGE_KEY); } catch { /* storage unavailable */ }
+  // Sem personalização nenhuma: a chave some também da conta (o upsert manda o objeto inteiro).
+  clearUiPreference('shortcuts');
   setState({ shortcuts: DEFAULT_SHORTCUTS });
 }
 
 /** Outra aba gravou: a preferência vale para a instalação inteira. */
 function rebuildFromStorage() {
   hydrated = true;
+  // ATENÇÃO: o `setState` fica dentro do `try` de propósito — gravação de outra
+  // aba ilegível NÃO pode apagar a preferência vigente (R2-PLAT-008).
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     setState({ shortcuts: stored ? aplicarGravados(JSON.parse(stored) as StoredBindings) : DEFAULT_SHORTCUTS });

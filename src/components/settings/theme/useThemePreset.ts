@@ -11,6 +11,7 @@ import {
   type ThemeConfig,
 } from './presets';
 import { useTheme } from '@/hooks/ui/useTheme';
+import { useUiPreferences } from '@/hooks/ui/useUiPreferences';
 
 /** Erro único de persistência (autosave, Salvar e reset) — mesma mensagem. */
 function notificarFalhaDePersistencia() {
@@ -49,6 +50,7 @@ function mergeConfig(prev: ThemeConfig, partial: Partial<ThemeConfig>): ThemeCon
  */
 export function useThemePreset() {
   const { resolvedTheme } = useTheme();
+  const { serverPrefs, ready: prefsProntas, setPreference } = useUiPreferences();
   const [config, setConfig] = useState<ThemeConfig>(loadThemeConfig);
   const [savedConfig, setSavedConfig] = useState<ThemeConfig>(config);
 
@@ -61,6 +63,23 @@ export function useThemePreset() {
     configRef.current = next;
     setConfig(next);
   }, []);
+
+  /**
+   * R2-PREF-001: o tema também vive no servidor (`user_ui_preferences.theme`).
+   * NESTA ABA ele só é adotado se o usuário ainda não mexeu no tema — a resposta
+   * do servidor que chega depois não pode desfazer a escolha dele. Antes de
+   * mexer, o servidor vence o `localStorage` (a skin acompanha a conta, não o
+   * navegador).
+   */
+  const temaTocadoRef = useRef(false);
+  const temaDoServidor = serverPrefs?.theme as ThemeConfig | undefined;
+
+  useEffect(() => {
+    if (!prefsProntas || temaTocadoRef.current || !temaDoServidor) return;
+    if (JSON.stringify(temaDoServidor) === JSON.stringify(configRef.current)) return;
+    commitConfig(temaDoServidor);
+    if (saveThemeConfig(temaDoServidor)) setSavedConfig(temaDoServidor);
+  }, [prefsProntas, temaDoServidor, commitConfig]);
 
   const hasUnsavedChanges = useMemo(
     () => JSON.stringify(config) !== JSON.stringify(savedConfig),
@@ -77,12 +96,16 @@ export function useThemePreset() {
     (partial: Partial<ThemeConfig>, autoSave = true): boolean => {
       const next = mergeConfig(configRef.current, partial);
       commitConfig(next);
+      temaTocadoRef.current = true;
       if (!autoSave) return true;
       const ok = saveThemeConfig(next);
       if (ok) setSavedConfig(next);
+      // R2-PREF-001: espelha no servidor (agrupado pelo debounce do hook central).
+      // A política do SK01 continua valendo para o `savedConfig` local.
+      setPreference('theme', next);
       return ok;
     },
-    [commitConfig],
+    [commitConfig, setPreference],
   );
 
   const applyPreset = useCallback(
@@ -102,6 +125,7 @@ export function useThemePreset() {
 
   const handleSave = useCallback(() => {
     const atual = configRef.current;
+    temaTocadoRef.current = true;
     if (saveThemeConfig(atual)) {
       setSavedConfig(atual);
       const preset = getPresetById(atual.preset);
@@ -111,24 +135,28 @@ export function useThemePreset() {
     } else {
       notificarFalhaDePersistencia();
     }
-  }, []);
+    // R2-PREF-001: grave ou não no localStorage, a conta recebe o tema.
+    setPreference('theme', atual);
+  }, [setPreference]);
 
   const handleReset = useCallback(() => {
     clearThemeOverrides();
     const def = getDefaultConfig();
     commitConfig(def);
+    temaTocadoRef.current = true;
     // Mesma política do autosave: sucesso confirma o estado salvo; falha
     // mantém a pendência e não promete restauração.
     const ok = saveThemeConfig(def);
     if (ok) setSavedConfig(def);
     applyThemePreset(def.preset, resolvedTheme);
     applyRadius(def.borderRadius);
+    setPreference('theme', def);
     if (ok) {
       toast.success('Tema restaurado ao padrão');
     } else {
       notificarFalhaDePersistencia();
     }
-  }, [commitConfig, resolvedTheme]);
+  }, [commitConfig, resolvedTheme, setPreference]);
 
   return {
     config,
