@@ -285,9 +285,11 @@ printf '[PASS] %s\n' 'C7 service_role segue livre para back-office'
 psql_sql "UPDATE public.email_templates SET created_by = '$OWNER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005';" >/dev/null
 
 # C8: is_shared = true so staff — agente comum nao compartilha o proprio modelo (UPDATE).
+psql_sql "INSERT INTO public.email_templates(id, name, subject, body, is_shared, created_by) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000006','Privado p/ C8','s6','b6',false,'$OWNER');" >/dev/null
 expect_error_as 'C8 agente comum nao marca is_shared no proprio modelo' \
   'email_templates_share_requires_staff' "$JWT_OWNER" \
-  "UPDATE public.email_templates SET is_shared = true WHERE id = 'aaaaaaaa-0000-0000-0000-000000000001';"
+  "UPDATE public.email_templates SET is_shared = true WHERE id = 'aaaaaaaa-0000-0000-0000-000000000006';"
 # C9: idem no INSERT — nao adianta nascer compartilhado sem ser staff.
 expect_error_as 'C9 agente comum nao INSERE modelo ja compartilhado' \
   'email_templates_share_requires_staff' "$JWT_OWNER" \

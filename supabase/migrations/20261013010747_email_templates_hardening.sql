@@ -13,7 +13,8 @@
 --     Escolha RAISE (nao NEW.created_by := OLD.created_by) para nao mascarar a tentativa
 --     de escalada; espelha 20260929590000_multiplix_mutability_guard.sql.
 --  2. Compartilhar (is_shared = true) SO staff: admin/supervisor por
---     public.is_admin_or_supervisor(auth.uid()), no INSERT e no UPDATE. O agente comum
+--     public.is_admin_or_supervisor(auth.uid()). Vale para a TRANSICAO para true (INSERT
+--     ou UPDATE que liga); editar linha ja compartilhada nao e barrado. O agente comum
 --     nao compartilha o proprio modelo; staff compartilha.
 --  3. Guarda so para o papel authenticated (auth.role()): service_role/back-office segue
 --     livre, como na migration do multiplix.
@@ -43,8 +44,12 @@ begin
     raise exception 'email_templates_author_immutable' using errcode = '42501';
   end if;
 
-  -- Compartilhar (is_shared = true) so staff (admin/supervisor).
-  if new.is_shared and not public.is_admin_or_supervisor(auth.uid()) then
+  -- Compartilhar (is_shared = true) so staff (admin/supervisor): bloqueia apenas a
+  -- TRANSICAO para true (INSERT, ou UPDATE que liga) — editar linha ja compartilhada
+  -- nao cai aqui, e o dono comum segue editando o proprio modelo compartilhado.
+  if new.is_shared
+     and coalesce(old.is_shared, false) is not true
+     and not public.is_admin_or_supervisor(auth.uid()) then
     raise exception 'email_templates_share_requires_staff' using errcode = '42501';
   end if;
 
