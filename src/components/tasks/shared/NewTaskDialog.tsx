@@ -1,11 +1,11 @@
 /**
  * Modal "Nova tarefa" (seção 3.4 do plano, imagem 04) — casco mínimo.
  *
- * Aqui vive SÓ a etapa 159 (campo Prazo) nesta fatia: o casco existe para o
- * campo ser montado no modal real, aberto pelo botão do cabeçalho e pelo atalho
- * `N`. As demais seções (título, contato, prioridade, lembrete, prévia) entram
- * por cima sem reescrever isto — o estado do prazo é local e sobe pelo `onChange`
- * do `PrazoField`.
+ * Aqui vivem as etapas 159 (campo Prazo) e 160 (campo Lembrete): o casco existe
+ * para os campos serem montados no modal real, aberto pelo botão do cabeçalho e
+ * pelo atalho `N`. As demais seções (título, contato, prioridade, coerência,
+ * destino, prévia) entram por cima sem reescrever isto — o estado de cada campo é
+ * local e sobe pelo `onChange` respectivo.
  */
 import { useState } from 'react';
 import {
@@ -16,12 +16,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { PrazoField } from './new-task/PrazoField';
+import { RemindField } from './new-task/RemindField';
 
 export interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Prazo inicial (ISO), quando o modal abre a partir de um dia/contexto. */
   defaultDueDate?: string | null;
+  /** Lembrete inicial (ISO), quando o modal abre a partir de um contexto. */
+  defaultRemindAt?: string | null;
   /** Relógio dos atalhos; injetável nos testes. Padrão: agora. */
   now?: Date;
 }
@@ -30,9 +33,11 @@ export function NewTaskDialog({
   open,
   onOpenChange,
   defaultDueDate = null,
+  defaultRemindAt = null,
   now,
 }: NewTaskDialogProps) {
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
+  const [remindAt, setRemindAt] = useState<string | null>(defaultRemindAt);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,6 +51,7 @@ export function NewTaskDialog({
         </DialogHeader>
 
         <PrazoField value={dueDate} onChange={setDueDate} now={now} />
+        <RemindField value={remindAt} onChange={setRemindAt} now={now} />
       </DialogContent>
     </Dialog>
   );
