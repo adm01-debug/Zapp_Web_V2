@@ -1,4 +1,4 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
 - `src/hooks/ui/useUiPreferences.ts` (novo, R2-PREF-001): motor da sincronização das preferências de UI com a tabela `user_ui_preferences` criada pela migration do cartão anterior. Lê a linha do dono (`from('user_ui_preferences').select('prefs').eq('user_id', uid).maybeSingle()`), adota o valor do servidor, agrupa as escritas num debounce de 400 ms e grava com `upsert({ user_id, prefs }, { onConflict: 'user_id' })`. O `localStorage` continua sendo o cache do boot offline; sem sessão o motor só usa o cache e não chama o servidor. O snapshot expõe `serverPrefs` (só a cópia lida da conta) além de `prefs` (cópia com a escrita local aguardando envio): os hooks de preferência adotam valor de `serverPrefs`, nunca de `prefs`.
