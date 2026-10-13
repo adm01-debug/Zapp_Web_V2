@@ -42,4 +42,3 @@ export * from './useUserRole';
 export * from './useFeatureFlag';
 export * from './useCRMIntegrationEnabled';
 export * from './useUserSettings';
-export * from './useVersions';
