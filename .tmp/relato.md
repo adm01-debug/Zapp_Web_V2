@@ -11,6 +11,9 @@ Especialista: worker (sql) (area-sql-banco) — perfil workersql (t_7d403167)
 - vermelho antes: o teste começa exigindo que a RPC NÃO exista antes da migration (`[PASS] vermelho antes: public.crisis_room_snapshot() ainda nao existia`) e o cenário anti-corte mede a consulta no formato antigo como `1000` contra o agregado real `1502`.
 - `hermes-db-migrar supabase/migrations/20261013140359_crisis_room_snapshot.sql` → `APLICADA no banco LOCAL 'v2-2610131358fffb' (produção não foi tocada).`
 
+## Arquivos fora da lista do cartão (indispensáveis)
+- `scripts/db-audit/crisis-room-snapshot.test.sh` e `scripts/ci/check-test-inventory.mjs`: o cartão pede prova com o PAPEL real (authenticated/anon/service_role). A única forma no repositório é `.test.sh` em PostgreSQL 17 descartável (docker) — a suíte `supabase/tests/*.sql` roda como service_role no MCP e não prova autorização. A entrada na ALLOWLIST é obrigatória para o `check-test-inventory` não reprovar o `.test.sh` como órfão. Sem os dois, o critério de prova do cartão fica sem como ser cumprido.
+
 ## O que NÃO fiz e por quê
 - Não liguei o `.test.sh` a `.github/workflows/db-guard.yml` (workflow é do dono; passo de uma linha, REGISTRO PENDENTE).
 - Não toquei `CrisisRoom.tsx`: a troca das consultas do hook é o cartão filho t_ac0acb5c (área src/**, não é minha).
