@@ -1,27 +1,67 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+Dependência: este cartão parte do cartão pai t_09a10b28 (`feat(system): página e filtra logs
+de rate limit no servidor com erro visível`), que NÃO estava na minha base. Trouxe a faixa
+inteira por cherry-pick — commit `c03ef75156` (`git cherry-pick $(git rev-list --reverse
+--no-merges dia/2026-10-13..96eb9a92ba7048059e65e58696cad94b86870356)`), como manda o
+aviso de dependência. Os arquivos de `src/hooks/**` que aparecem no diff são desses dois
+commits de dependência/correção, não da minha implementação de tela.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## O que mudou e por quê
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+- `src/pages/admin/RateLimitDashboard.tsx` (aba Logs): controles de **filtro** (IP, endpoint,
+  "só bloqueados"), **ordem** (campo + botão de inverter direção) e **paginação** (anterior /
+  próxima com "Página X de Y"), todos com `<Label htmlFor>` ou `aria-label` — teclado e leitor
+  de tela entram por elemento nativo (input, checkbox, combobox, button). O cabeçalho deixou
+  de dizer "Últimas 100 requisições monitoradas" e passa a mostrar a **contagem real do
+  servidor** ("Mostrando 1–25 de 42 requisições"), tirada de `total`/`page`, não de
+  `logs.length`. Estados: carregando ("Carregando logs…"), vazio ("Nenhum log encontrado para
+  os filtros aplicados") e erro (`Alert` com a mensagem + botão "Tentar novamente" que chama o
+  `refetch` do hook). A lista renderiza `logs` direto — o recorte da página agora é do servidor
+  (`range` + `count: exact`), então o `logs.slice(0, 20)` não existe mais.
+- `src/pages/admin/RateLimitDashboard.tsx` (cartões acima da aba): **achei os consumidores do
+  dado que mudou de tamanho** — com `logs` virando página (25) e não mais o lote de 100, o
+  cartão "Alertas Ativos" (`logs.filter(blocked).length`) e a proporção de "Bloqueados"
+  (`blockedRequests / logs.length`) passariam a medir só a página. Ambos passam a ler a janela
+  de estatística (`stats.blockedRequests` e `stats.sampleSize`), preservando o sentido antigo.
+- `src/hooks/system/useRateLimitLogs.ts` + teste (correção do cartão pai, trazida por
+  dependência): (a) o filtro mandava `ilike` com o termo entre aspas via `escapeOrFilterValue`
+  — `.ilike()` não tem a gramática do `.or()`, então aspas eram ruído e a busca não era literal;
+  agora escapa só os curingas do LIKE (`\`, `%`, `_`) e envolve em `%…%`; (b) o tempo esgotado
+  era silenciado (`if (requestSignal.aborted) return;`), mostrando tabela vazia sem motivo —
+  agora só a resposta obsoleta (filtro trocado/desmontagem) é descartada em silêncio e o
+  tempo esgotado aparece em `error`; (c) `RateLimitStats` ganhou `sampleSize` (linhas da janela
+  recente), que é o denominador honesto da proporção que a tela desenha.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+
+- vermelho antes (hook, dependência): `npx vitest run src/hooks/system/__tests__/useRateLimitLogs.test.ts`
+  → `Tests  4 failed | 4 passed (8)` — falhava o escape (`'"%10.0.0.1%"'` em vez de `'%10.0.0.1%'`),
+  o tempo esgotado (recebia `null` em vez da mensagem) e o `sampleSize` novo.
+- verde depois (hook): mesmo comando → `Tests  8 passed (8)`.
+- vermelho antes (tela): `npx vitest run src/pages/admin/__tests__/RateLimitDashboard.logs.test.tsx`
+  → `Tests  10 failed (10)` nas linhas do `abrirAbaLogs` (não existia "Filtrar por IP").
+- verde depois (tela + hook + a11y existente): `npx vitest run
+  src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx
+  src/hooks/system/__tests__/useRateLimitLogs.test.ts
+  src/pages/admin/__tests__/RateLimitDashboard.logs.test.tsx`
+  → `Test Files  3 passed (3)` / `Tests  26 passed (26)`.
+- lint: `npx eslint` nos 4 arquivos → exit 0, sem saída (sem aviso novo; o ratchet do pre-commit fica em 0).
+- O teste da tela renderiza o **componente real com o hook real**; o único dublê é o cliente
+  Supabase (`from().select().ilike().eq().order().range().limit().abortSignal()`), que devolve,
+  por fila, a resposta de cada consulta. Provas de servidor: `ilike = [['ip_address','%10.0.0.1%']]`,
+  `eq = [['blocked', true]]`, `range = [0,24]` e depois `[25,49]`, `ordem = [['created_at',false]]`
+  e `[['created_at',true]]`, `count: 'exact'`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+
+- Não fiz captura de tela no navegador: nenhuma cor/token novo entrou (`grep` do diff só acha
+  `text-muted`/`text-sm`/`text-center` neutros e as classes já existentes); o estado de tema é o
+  mesmo da página anterior, e a prova de acessibilidade é o axe no componente real.
+- Não mexi em `src/components/security/**` (painéis das outras abas) nem em política de banco:
+  fora da minha área.
+- O `useVisiblePolling` (30 s) e o refetch por tecla são do hook de dependência; o filtro é
+  aplicado no servidor a cada mudança, com a consulta anterior abortada pelo próprio hook.
+
+CONCLUÍ: a aba Logs filtra, ordena, pagina e conta no servidor, com estados de carregando,
+erro (com tentar de novo) e vazio, tudo com nome acessível.
