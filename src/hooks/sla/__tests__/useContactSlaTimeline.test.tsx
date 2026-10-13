@@ -50,6 +50,22 @@ vi.mock('@/integrations/supabase/client', () => ({
         Promise.resolve(h.tables[table] ?? { data: [], error: null }).then(ok, falhou);
       return builder;
     },
+    // O prazo de 1ª resposta é resolvido pela RPC do banco (PB-39). A dublagem
+    // devolve a MESMA regra que os testes já esperam (2 min, nível contato).
+    rpc: (fn: string, args: { p_contact_id: string }) => {
+      h.ops.push({ table: `rpc:${fn}`, filters: [['p_contact_id', args.p_contact_id]] });
+      return Promise.resolve({
+        data: [
+          {
+            first_response_minutes: REGRA_CONTATO.first_response_minutes,
+            matched_level: 'contact',
+            rule_id: REGRA_CONTATO.id,
+            rule_name: REGRA_CONTATO.name,
+          },
+        ],
+        error: null,
+      });
+    },
   },
 }));
 

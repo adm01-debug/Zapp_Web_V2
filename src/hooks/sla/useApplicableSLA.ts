@@ -1,7 +1,31 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-interface ContactSLAParams {
+/**
+ * Prazo aplicável de 1ª resposta de um contato (PB-39).
+ *
+ * O resolvedor vive no BANCO (`resolve_applicable_sla`, SECURITY DEFINER): ele
+ * conhece a mesma hierarquia que o Edge usa para cobrar o prazo e enxerga as
+ * regras mesmo para o papel `agent`, que a RLS de `sla_rules` bloqueia. Antes
+ * o hook montava a hierarquia no cliente e lia `sla_rules` + `sla_configurations`
+ * POR CONVERSA (2 consultas por linha da lista virtualizada, ambas vazias para
+ * o agente) — daí o prazo errado e o N+1.
+ *
+ * Agora: UMA chamada RPC por contato visível, com chave estável e cacheada
+ * (mesmo contato na lista e no cabeçalho do chat compartilha a MESMA leitura).
+ */
+export type SLAMatchedLevel =
+  | 'contact'
+  | 'company'
+  | 'job_title'
+  | 'contact_type'
+  | 'queue'
+  | 'agent'
+  | 'global_default'
+  | 'system_default';
+
+export interface ContactSLAParams {
   contactId?: string;
   company?: string | null;
   jobTitle?: string | null;
@@ -15,129 +39,136 @@ export interface ApplicableSLA {
   resolutionMinutes: number;
   ruleName: string;
   ruleId: string | null;
+  matchedLevel: SLAMatchedLevel;
 }
 
-const SYSTEM_DEFAULT: ApplicableSLA = {
-  firstResponseMinutes: 5,
-  resolutionMinutes: 60,
-  ruleName: 'Padrão do Sistema',
-  ruleId: null,
-};
+const SYSTEM_DEFAULT_FIRST_RESPONSE_MINUTES = 5;
+const SYSTEM_DEFAULT_RESOLUTION_MINUTES = 60;
+const SYSTEM_DEFAULT_RULE_NAME = 'Padrão do Sistema';
+
+/** TTL da leitura: o prazo configurado muda em minutos, não a cada render. */
+export const APPLICABLE_SLA_STALE_TIME_MS = 60_000;
+
+/** Chave compartilhada das regras ativas (id -> prazo de resolução). */
+export const ACTIVE_SLA_RULES_QUERY_KEY = ['sla-rules-active'] as const;
+/** Chave compartilhada da configuração padrão ativa. */
+export const SLA_DEFAULT_CONFIG_QUERY_KEY = ['sla-configurations-default'] as const;
+
+const MATCHED_LEVELS: readonly SLAMatchedLevel[] = [
+  'contact',
+  'company',
+  'job_title',
+  'contact_type',
+  'queue',
+  'agent',
+  'global_default',
+  'system_default',
+];
+
+function toMatchedLevel(value: string | null | undefined): SLAMatchedLevel {
+  return MATCHED_LEVELS.includes(value as SLAMatchedLevel)
+    ? (value as SLAMatchedLevel)
+    : 'system_default';
+}
 
 /**
- * Resolves the applicable SLA for a contact using a strict hierarchy.
- * Single-pass: iterates rules once, tracking the best match per level.
- * Hierarchy: contact > company > job_title > contact_type > queue > agent
+ * Regras ativas — leitura COMPARTILHADA (uma por sessão, nunca uma por conver-
+ * sa). Serve apenas ao prazo de resolução da linha do tempo: o SLA de Resolução
+ * está fora do resolvedor do banco (DEC-1), então o valor por regra continua
+ * vindo daqui. Se a RLS esconder as regras (agente), a config default cobre.
  */
-function resolveHierarchy(
-  rules: Array<{
-    id: string;
-    name: string;
-    first_response_minutes: number;
-    resolution_minutes: number;
-    contact_id: string | null;
-    company: string | null;
-    job_title: string | null;
-    contact_type: string | null;
-    queue_id: string | null;
-    agent_id: string | null;
-  }>,
-  params: ContactSLAParams
-): ApplicableSLA | null {
-  let contactMatch: ApplicableSLA | null = null;
-  let companyMatch: ApplicableSLA | null = null;
-  let jobTitleMatch: ApplicableSLA | null = null;
-  let contactTypeMatch: ApplicableSLA | null = null;
-  let queueMatch: ApplicableSLA | null = null;
-  let agentMatch: ApplicableSLA | null = null;
-
-  for (const rule of rules) {
-    const sla: ApplicableSLA = {
-      firstResponseMinutes: rule.first_response_minutes,
-      resolutionMinutes: rule.resolution_minutes,
-      ruleName: rule.name,
-      ruleId: rule.id,
-    };
-
-    // Contact-level (highest priority)
-    if (rule.contact_id && rule.contact_id === params.contactId && !contactMatch) {
-      contactMatch = sla;
-      break; // Highest priority found — no need to continue
-    }
-
-    // Company-level (must not have contact_id)
-    if (!rule.contact_id && rule.company && rule.company === params.company && !companyMatch) {
-      companyMatch = sla;
-    }
-
-    // Job title (must not have contact_id or company)
-    if (!rule.contact_id && !rule.company && rule.job_title && rule.job_title === params.jobTitle && !jobTitleMatch) {
-      jobTitleMatch = sla;
-    }
-
-    // Contact type (must not have contact_id, company, or job_title)
-    if (!rule.contact_id && !rule.company && !rule.job_title && rule.contact_type && rule.contact_type === params.contactType && !contactTypeMatch) {
-      contactTypeMatch = sla;
-    }
-
-    // Queue (must not have contact_id)
-    if (!rule.contact_id && rule.queue_id && rule.queue_id === params.queueId && !queueMatch) {
-      queueMatch = sla;
-    }
-
-    // Agent (must not have contact_id)
-    if (!rule.contact_id && rule.agent_id && rule.agent_id === params.agentId && !agentMatch) {
-      agentMatch = sla;
-    }
-  }
-
-  return contactMatch ?? companyMatch ?? jobTitleMatch ?? contactTypeMatch ?? queueMatch ?? agentMatch ?? null;
+export function useActiveSLARules() {
+  return useQuery({
+    queryKey: ACTIVE_SLA_RULES_QUERY_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sla_rules')
+        .select('id, resolution_minutes')
+        .eq('is_active', true);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; resolution_minutes: number }>;
+    },
+    staleTime: APPLICABLE_SLA_STALE_TIME_MS,
+  });
 }
 
-export function useApplicableSLA(params: ContactSLAParams) {
+/** Configuração padrão ativa — leitura compartilhada (só o prazo de resolução). */
+export function useSLADefaultConfig() {
   return useQuery({
-    queryKey: ['applicable-sla', params],
-    queryFn: async (): Promise<ApplicableSLA> => {
-      const { data: rules, error } = await supabase
-        .from('sla_rules')
-        .select('id, name, first_response_minutes, resolution_minutes, contact_id, company, job_title, contact_type, queue_id, agent_id')
-        .eq('is_active', true)
-        .order('priority', { ascending: false });
-
-      if (error) throw error;
-
-      const match = resolveHierarchy(rules || [], params);
-      if (match) return match;
-
-      // Global fallback from sla_configurations
-      const { data: configs } = await supabase
+    queryKey: SLA_DEFAULT_CONFIG_QUERY_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('sla_configurations')
-        .select('name, first_response_minutes, resolution_minutes')
+        .select('name, resolution_minutes')
         .eq('is_active', true)
         .eq('is_default', true)
         .limit(1);
+      if (error) throw error;
+      return (data?.[0] ?? null) as { name: string; resolution_minutes: number } | null;
+    },
+    staleTime: APPLICABLE_SLA_STALE_TIME_MS,
+  });
+}
 
-      if (configs && configs.length > 0) {
+/** Campos que a RPC devolve (o prazo de resolução não faz parte do contrato dela). */
+interface ApplicableSLAResolution {
+  firstResponseMinutes: number;
+  ruleName: string;
+  ruleId: string | null;
+  matchedLevel: SLAMatchedLevel;
+}
+
+export function useApplicableSLA(params: ContactSLAParams) {
+  const contactId = params.contactId ?? null;
+  const { data: activeRules = [] } = useActiveSLARules();
+  const { data: defaultConfig = null } = useSLADefaultConfig();
+
+  const query = useQuery<ApplicableSLAResolution>({
+    queryKey: ['applicable-sla', params],
+    // A RPC exige o contato; sem ele não há prazo a resolver (o antigo caminho
+    // só por empresa/cargo/fila não tinha leitura confiável para o agente).
+    enabled: !!contactId,
+    staleTime: APPLICABLE_SLA_STALE_TIME_MS,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('resolve_applicable_sla', {
+        p_contact_id: contactId as string,
+      });
+      if (error) throw error;
+      const row = (data ?? [])[0];
+      if (!row) {
         return {
-          firstResponseMinutes: configs[0].first_response_minutes,
-          resolutionMinutes: configs[0].resolution_minutes,
-          ruleName: configs[0].name,
+          firstResponseMinutes: SYSTEM_DEFAULT_FIRST_RESPONSE_MINUTES,
+          ruleName: SYSTEM_DEFAULT_RULE_NAME,
           ruleId: null,
+          matchedLevel: 'system_default' as SLAMatchedLevel,
         };
       }
-
-      return SYSTEM_DEFAULT;
+      return {
+        firstResponseMinutes: row.first_response_minutes,
+        ruleName: row.rule_name,
+        ruleId: row.rule_id || null,
+        matchedLevel: toMatchedLevel(row.matched_level),
+      };
     },
-    // Qualquer nível da hierarquia (contact > company > job_title > contact_type >
-    // queue > agent) precisa habilitar a consulta: sem isso, um consumidor que só
-    // conhece job_title ou contact_type nunca resolveria o prazo configurado.
-    enabled:
-      !!params.contactId ||
-      !!params.company ||
-      !!params.jobTitle ||
-      !!params.contactType ||
-      !!params.queueId ||
-      !!params.agentId,
-    staleTime: 30000,
   });
+
+  // A resolução é do MESMO nível que a RPC casou (rule_id), sem remontar a
+  // hierarquia no cliente: é só um id -> valor.
+  const resolutionMinutes = useMemo(() => {
+    const matchedRule = query.data?.ruleId
+      ? activeRules.find((rule) => rule.id === query.data?.ruleId)
+      : undefined;
+    return (
+      matchedRule?.resolution_minutes ??
+      defaultConfig?.resolution_minutes ??
+      SYSTEM_DEFAULT_RESOLUTION_MINUTES
+    );
+  }, [query.data?.ruleId, activeRules, defaultConfig]);
+
+  const data = useMemo<ApplicableSLA | undefined>(
+    () => (query.data ? { ...query.data, resolutionMinutes } : undefined),
+    [query.data, resolutionMinutes],
+  );
+
+  return { ...query, data };
 }

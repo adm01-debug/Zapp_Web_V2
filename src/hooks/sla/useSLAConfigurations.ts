@@ -58,7 +58,25 @@ export function useSLAConfigurations() {
           resolution_minutes: values.resolution_minutes, priority: values.priority, is_default: values.is_default,
         }).eq('id', values.id);
         if (error) throw error;
+        // Um único padrão no sistema (o banco não tem índice único para is_default):
+        // depois de gravar esta linha, se ela é o padrão, desmarca as OUTRAS.
+        if (values.is_default) {
+          const { error: clearError } = await supabase
+            .from('sla_configurations')
+            .update({ is_default: false })
+            .eq('is_default', true)
+            .neq('id', values.id);
+          if (clearError) throw clearError;
+        }
       } else {
+        // No insert não há id para excluir: desmarca os padrões ANTES de gravar.
+        if (values.is_default) {
+          const { error: clearError } = await supabase
+            .from('sla_configurations')
+            .update({ is_default: false })
+            .eq('is_default', true);
+          if (clearError) throw clearError;
+        }
         const { error } = await supabase.from('sla_configurations').insert({
           name: values.name, first_response_minutes: values.first_response_minutes,
           resolution_minutes: values.resolution_minutes, priority: values.priority, is_default: values.is_default,
@@ -68,6 +86,10 @@ export function useSLAConfigurations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-configurations'] });
+      // O prazo aplicável (1ª resposta via RPC, resolução via config padrão) lê
+      // esta tabela: sem invalidar, o cartão/badge seguiria com o prazo antigo.
+      queryClient.invalidateQueries({ queryKey: ['applicable-sla'] });
+      queryClient.invalidateQueries({ queryKey: ['sla-configurations-default'] });
       setShowDialog(false);
       setEditingId(null);
       setForm(defaultForm);
@@ -92,7 +114,11 @@ export function useSLAConfigurations() {
     onError: (_err, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(['sla-configurations'], context.previous);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['sla-configurations'] }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['sla-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['applicable-sla'] });
+      queryClient.invalidateQueries({ queryKey: ['sla-configurations-default'] });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -114,6 +140,8 @@ export function useSLAConfigurations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-configurations'] });
+      queryClient.invalidateQueries({ queryKey: ['applicable-sla'] });
+      queryClient.invalidateQueries({ queryKey: ['sla-configurations-default'] });
       toast.success('SLA removido');
     },
   });

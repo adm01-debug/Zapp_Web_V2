@@ -47,6 +47,10 @@ vi.mock('@/integrations/supabase/client', () => ({
         entry.filters.push(['eq', ...a]);
         return mesmo();
       };
+      builder.neq = (...a: unknown[]) => {
+        entry.filters.push(['neq', ...a]);
+        return mesmo();
+      };
       builder.insert = (payload: unknown) => {
         entry.op = 'insert';
         entry.payload = payload;

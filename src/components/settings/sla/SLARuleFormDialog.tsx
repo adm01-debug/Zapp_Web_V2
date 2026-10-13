@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useSLARules, SLARuleForm, SLARule, SLARuleScope, SLARuleMetadata } from '@/hooks/sla/useSLARules';
+import { useSLAScopeOptions } from '@/hooks/sla/useSLAScopeOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +16,6 @@ import { Search, Loader2, Bell, FileText } from 'lucide-react';
 import { CONTACT_TYPES, SCOPE_LABELS } from './sla-utils';
 import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
 import { cn } from '@/lib/utils';
-import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import {
   SLA_RULE_NAME_MAX,
   SLA_RULE_NOTES_MAX,
@@ -76,52 +74,13 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
   const scopeValue = useWatch({ control: form.control, name: 'scope' });
   const notificarNoAviso = useWatch({ control: form.control, name: 'metadata.notify_on_warning' });
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['sla-scope-companies'],
-    queryFn: async () => {
-      const { data } = await supabase.from('contacts').select('company').not('company', 'is', null);
-      return [...new Set((data || []).map(d => d.company).filter(Boolean))] as string[];
-    },
-    enabled: open && scope === 'company',
-  });
-
-  const { data: jobTitles = [] } = useQuery({
-    queryKey: ['sla-scope-jobtitles'],
-    queryFn: async () => {
-      const { data } = await supabase.from('contacts').select('job_title').not('job_title', 'is', null);
-      return [...new Set((data || []).map(d => d.job_title).filter(Boolean))] as string[];
-    },
-    enabled: open && scope === 'job_title',
-  });
-
-  const { data: queues = [] } = useQuery({
-    queryKey: ['sla-scope-queues'],
-    queryFn: async () => {
-      const { data } = await supabase.from('queues').select('id, name');
-      return data || [];
-    },
-    enabled: open && scope === 'queue',
-  });
-
-  const { data: agents = [] } = useQuery({
-    queryKey: ['sla-scope-agents'],
-    queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('id, name').eq('is_active', true);
-      return data || [];
-    },
-    enabled: open && scope === 'agent',
-  });
-
-  const { data: contacts = [] } = useQuery({
-    queryKey: ['sla-scope-contacts', contactSearch],
-    queryFn: async () => {
-      const { data } = await supabase.from('contacts').select('id, name, phone')
-        .or(`name.ilike.${escapeOrFilterValue(`%${contactSearch}%`)},phone.ilike.${escapeOrFilterValue(`%${contactSearch}%`)}`)
-        .limit(20);
-      return data || [];
-    },
-    enabled: open && scope === 'contact' && contactSearch.length >= 2,
-  });
+  // Opções dos escopos: hook compartilhado e cacheado (`staleTime`), no lugar de
+  // cinco consultas inline que refaziam a cada abertura do diálogo.
+  const { companies, jobTitles, queues, agents, contacts } = useSLAScopeOptions(
+    open,
+    scope,
+    contactSearch,
+  );
 
   // A validação é do schema (`zodResolver`): o submit só chega aqui se o
   // formulário passar. O escopo continua obrigatório, agora declarado no schema.
