@@ -172,7 +172,9 @@ describe('R2-INB-018 — busca embutida no chat usa o mesmo contrato de seleçã
     const resultado = await screen.findByRole('button', { name: /Conversa com Ana Souza/i }, { timeout: 3000 });
     fireEvent.click(resultado);
 
-    expect(onSelectConversation).toHaveBeenCalledWith('contact-9');
+    // DL1: o resultado é uma mensagem, então o id dela vai junto — o painel do
+    // chat realça e rola até a mensagem alvo (antes só abria a conversa).
+    expect(onSelectConversation).toHaveBeenCalledWith('contact-9', 'msg-1');
     expect(closeDialog).toHaveBeenCalledWith('globalSearch');
     // Antes o consumidor só registrava log e mostrava "Resultado selecionado".
     expect(toastMock).not.toHaveBeenCalled();

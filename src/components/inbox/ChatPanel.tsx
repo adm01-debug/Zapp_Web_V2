@@ -26,6 +26,7 @@ import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
 import { useChatMessageNavigation } from './chat/chatMessageNavigation';
+import { useInitialHighlight } from '@/hooks/chat/useInitialHighlight';
 import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary';
 import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
 import { SendErrorBanner } from './chat/SendErrorBanner';
@@ -61,11 +62,15 @@ interface ChatPanelProps {
   onToggleFavorite?: () => void;
   onArchiveConversation?: () => void;
   pinnedConversations?: PinnedChatItem[];
-  onSelectPinned?: (contactId: string) => void;
+  onSelectPinned?: (contactId: string, messageId?: string) => void;
   /** Contrato de paginacao do historico antigo (opcional: ausente = consumidor antigo, sem controle). */
   hasOlderMessages?: boolean;
   loadingOlderMessages?: boolean;
   onLoadOlderMessages?: () => Promise<void> | void;
+  /** DL1 — mensagem alvo de um link direto/busca: o painel realça e rola até ela. */
+  initialHighlightMessageId?: string | null;
+  /** DL1 — avisa o pai que o alvo foi resolvido (achado ou desistido) e pode ser limpo. */
+  onInitialHighlightConsumed?: () => void;
 }
 
 /**
@@ -193,7 +198,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages, initialHighlightMessageId, onInitialHighlightConsumed }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -321,6 +326,33 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     chatNavigation.registerScrollToMessage(handleOpenMessageFromFiles);
     return () => chatNavigation.registerScrollToMessage(null);
   }, [chatNavigation, handleOpenMessageFromFiles]);
+
+  // DL1 — deep link / busca global: acha a mensagem alvo (paginando o histórico, se
+  // preciso) e reusa o MESMO realce+rolagem do "Ver na conversa". O alvo é devolvido
+  // ao pai assim que resolvido, para não repetir o realce a cada render.
+  const handleInitialHighlightFound = useCallback((messageId: string) => {
+    handleOpenMessageFromFiles(messageId);
+    onInitialHighlightConsumed?.();
+  }, [handleOpenMessageFromFiles, onInitialHighlightConsumed]);
+
+  const handleInitialHighlightNotFound = useCallback(() => {
+    toast({
+      title: 'Mensagem não encontrada',
+      description: 'Ela pode ter sido apagada ou está fora do histórico carregado.',
+      variant: 'destructive',
+    });
+    onInitialHighlightConsumed?.();
+  }, [onInitialHighlightConsumed]);
+
+  useInitialHighlight({
+    messageId: initialHighlightMessageId,
+    messages,
+    hasOlderMessages,
+    loadingOlderMessages,
+    loadOlderMessages: onLoadOlderMessages,
+    onFound: handleInitialHighlightFound,
+    onNotFound: handleInitialHighlightNotFound,
+  });
 
   // Pílulas de entrega: rolar até a primeira mensagem do estado e realçar com anel por 1,2 s.
   // O realce e PROPRIO (`deliveryFocusId`) e visual: nunca toca no realce da busca
@@ -498,7 +530,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onSetInputValue={handlers.setInputValue}
           // R2-INB-018: Ctrl+K abre a busca global dentro do chat; selecionar um
           // resultado tem de abrir a conversa dele (mesmo contrato do cabeçalho).
-          onSelectConversation={onSelectPinned}
+          // DL1: resultado de mensagem repassa o id para o realce do alvo.
+          onSelectConversation={(contactId, messageId) => onSelectPinned?.(contactId, messageId)}
         />
       </div>
 

@@ -37,8 +37,10 @@ interface ChatDialogsProps {
    * R2-INB-018: mesmo contrato de seleção/navegação da instância da Inbox. A
    * busca embutida no chat (Ctrl+K) abre o resultado na conversa dele — antes
    * só registrava log e mostrava "Resultado selecionado", sem trocar de conversa.
+   * DL1: quando o resultado é uma mensagem, o id dela vai junto para o painel
+   * realçar e rolar até a mensagem alvo.
    */
-  onSelectConversation?: (contactId: string) => void;
+  onSelectConversation?: (contactId: string, messageId?: string) => void;
 }
 
 export function ChatDialogs({
@@ -63,7 +65,16 @@ export function ChatDialogs({
           <GlobalSearch
             open={dialogs.globalSearch}
             onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')}
-            onSelectResult={(result) => { if (result.contactId) onSelectConversation?.(result.contactId); }}
+            onSelectResult={(result) => {
+              if (!result.contactId) return;
+              // DL1: só mensagem/transcrição têm um alvo a realçar; contato/CRM
+              // abrem a conversa sem alvo (contrato antigo preservado).
+              const alvo = (result.type === 'message' || result.type === 'transcription') && result.id
+                ? result.id
+                : undefined;
+              if (alvo) onSelectConversation?.(result.contactId, alvo);
+              else onSelectConversation?.(result.contactId);
+            }}
             onManageQuickReplies={() => openDialog('quickReplies')}
           />
         )}

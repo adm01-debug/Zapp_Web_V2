@@ -41,6 +41,14 @@ export function useRealtimeInbox() {
    const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
    const uiState = useInboxUIState();
    const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
+   // DL1 — alvo do realce de mensagem (deep link `?message=` ou busca global); o
+   // `ChatPanel` consome e avisa quando acabar, para não reabrir a cada render.
+   // Lido já no init do estado: a URL do link compartilhado não precisa de setState
+   // dentro de efeito (render cascateado) — o efeito abaixo só limpa o parâmetro.
+   const [initialHighlightMessageId, setInitialHighlightMessageId] = useState<string | null>(() => {
+     if (typeof window === 'undefined') return null;
+     return new URLSearchParams(window.location.search).get('message');
+   });
    const [selectedContactFallback, setSelectedContactFallback] = useState<{
      contactId: string;
      contact: ConversationContact;
@@ -75,14 +83,37 @@ export function useRealtimeInbox() {
       appWindow.__pendingOpenContactId = undefined;
     }
     const handler = (e: Event) => {
-      const contactId = (e as CustomEvent).detail?.contactId;
+      const detail = (e as CustomEvent).detail ?? {};
+      const contactId = detail.contactId;
+      const messageId = detail.messageId;
       if (contactId) {
         appWindow.__pendingOpenContactId = undefined;
         setPendingContactId(contactId);
       }
+      if (messageId) setInitialHighlightMessageId(messageId);
     };
     window.addEventListener('open-contact-chat', handler);
     return () => window.removeEventListener('open-contact-chat', handler);
+  }, [setPendingContactId]);
+
+  // DL1 — deep link da Inbox (`?contact=<id>&message=<id>`): abre a conversa e leva
+  // o alvo ao ChatPanel. O parâmetro é limpo da URL depois de consumido (sem nova
+  // entrada no histórico) para não reabrir a mesma mensagem a cada reload nem
+  // deixar o link compartilhado carregando estado de navegação.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const contactId = params.get('contact');
+    const temAlvo = params.has('message');
+    if (!temAlvo && !contactId) return;
+
+    if (contactId) setPendingContactId(contactId);
+
+    params.delete('message');
+    params.delete('contact');
+    const query = params.toString();
+    const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+    window.history.replaceState(window.history.state, '', url);
   }, [setPendingContactId]);
 
   // Load fallback contact
@@ -271,5 +302,7 @@ export function useRealtimeInbox() {
      refetch,
      setSelectedContact,
      markAsRead,
-   };
-}
+     initialHighlightMessageId,
+     setInitialHighlightMessageId,
+     };
+     }

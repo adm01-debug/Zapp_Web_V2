@@ -131,6 +131,10 @@ export function RealtimeInboxView() {
     () => ({ contactId: null, tab: inbox.conversationTab, restaurada: true })
   );
   const activeTab: ConversationTab = resolverAbaAtiva(tabState, inbox.selectedContactId);
+  // DL1 — com um alvo pendente (deep link/busca global) a aba Chat precisa estar
+  // visível: é o painel visível que dá container para o `scrollToMessage` posicionar
+  // a mensagem. Derivado, sem setState dentro de efeito (nada de render cascateado).
+  const activeTabVisivel: ConversationTab = inbox.initialHighlightMessageId ? 'chat' : activeTab;
   // `setConversationTab` desestruturado: chamá-lo como `inbox.setConversationTab`
   // faria o exhaustive-deps exigir o objeto `inbox` inteiro (recriado a cada render).
   const { setConversationTab } = inbox;
@@ -212,6 +216,12 @@ export function RealtimeInboxView() {
 
   const handleGlobalSearchResult = (result: SearchResult) => {
     if (result.contactId) inbox.handleSelectConversation(result.contactId);
+    // DL1 — resultado de mensagem (ou transcrição) leva o alvo ao ChatPanel, que
+    // realça e rola até ela; contato/CRM só abrem a conversa.
+    if ((result.type === 'message' || result.type === 'transcription') && result.id) {
+      inbox.setInitialHighlightMessageId(result.id);
+      setActiveTab('chat');
+    }
   };
 
   // R2-INB-015: com um cache válido a Inbox continua utilizável offline. A tela
@@ -305,7 +315,7 @@ export function RealtimeInboxView() {
             <>
               <div className="flex-1 min-w-0 min-h-0 relative h-full overflow-hidden flex flex-col">
                 <ConversationTabs
-                  activeTab={activeTab}
+                  activeTab={activeTabVisivel}
                   onTabChange={setActiveTab}
                   counts={tabCounts}
                   extraCounts={tabExtraCounts}
@@ -335,7 +345,7 @@ export function RealtimeInboxView() {
                   </div>
                 ) : inbox.selectedContactId && inbox.selectedMessagesLoading ? <ChatFallback /> : (
                   <ConversationTabContent
-                    activeTab={activeTab}
+                    activeTab={activeTabVisivel}
                     onTabChange={setActiveTab}
                     conversation={inbox.legacyConversation}
                     messages={inbox.legacyMessages}
@@ -371,7 +381,17 @@ export function RealtimeInboxView() {
                         conversationActions.archiveContact(inbox.legacyConversation.contact.id);
                       }}
                       pinnedConversations={pinnedConversations}
-                      onSelectPinned={inbox.handleSelectConversation}
+                      onSelectPinned={(contactId, messageId) => {
+                        inbox.handleSelectConversation(contactId);
+                        if (messageId) inbox.setInitialHighlightMessageId(messageId);
+                      }}
+                      initialHighlightMessageId={inbox.initialHighlightMessageId}
+                      onInitialHighlightConsumed={() => {
+                        inbox.setInitialHighlightMessageId(null);
+                        // Mantém o Chat visível depois do realce: sem isto a aba
+                        // persistida (ex.: Arquivos) voltaria a esconder a mensagem.
+                        setActiveTab('chat');
+                      }}
                       hasOlderMessages={inbox.hasOlderMessages}
                       loadingOlderMessages={inbox.loadingOlderMessages}
                       onLoadOlderMessages={inbox.loadOlderMessages}
