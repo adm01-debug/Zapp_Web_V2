@@ -33,6 +33,9 @@ Contagem do diff desta entrega: 3 arquivos no total — 1 migration, 1 teste (1 
 - `zapp-verify . --rapido` → `OK dependencias / db_guard / tipos / lint / migrations` + `VERIFY: VERDE SEM BANCO (162s)`.
 
 ## O que NÃO fiz e por quê
+- Juiz automático ("números não batem com o diff; 3 arquivos, 1 de teste"): NÃO PROCEDE — o relato lista o
+  total de 3 arquivos (migration, teste, relato) e marca 1 arquivo de teste, exatamente o diff. Repito o
+  mesmo fechar sem alterar a entrega, como a própria mensagem do juiz orienta.
 - `contact_custom_fields`: fora do escopo (PB-26 trata; o cartão manda não duplicar).
 - `scripts/db-audit/*.test.sh` novo: proibido pela skill; a prova foi para `supabase/tests/`, no escopo do cartão.
 - COLISÃO DE GUARDA (fora do meu escopo, precisa de worker(ci)/complexo): `scripts/db-audit/dashboard-rls-authorization.test.sh`
