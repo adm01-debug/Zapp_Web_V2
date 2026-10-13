@@ -1,27 +1,19 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- src/components/knowledge/KnowledgeBaseView.tsx: cada linha da aba Arquivos ganhou o botão "Reprocessar" (outline, text-secondary, ícone RefreshCw) e o botão "Excluir" (ghost, text-destructive, ícone Trash2), ambos com `aria-label` único por arquivo (`Reprocessar arquivo: <nome>` / `Excluir arquivo: <nome>`). "Reprocessar" fica desabilitado quando `processing_status === 'processing'` e os dois botões marcam `aria-busy` e se desabilitam enquanto a ação daquela linha corre, sem disparar duas vezes no mesmo clique (trava por id num `ref`, para o duplo clique no mesmo tick). A ação é por arquivo: uma linha ocupada não bloqueia outra.
+- src/components/knowledge/__tests__/KnowledgeBaseView.fileActions.test.tsx (novo): prova pela TELA real — nomes acessíveis únicos por arquivo, os três estados (completed/processing/failed) com o mesmo layout (ícone, selo e as duas ações), Reprocessar bloqueado em "processing", ação chamada uma única vez com o id da linha e `aria-busy` durante a exclusão.
+- src/components/knowledge/__tests__/KnowledgeBaseView.a11y.test.tsx: só o mock do hook ganhou `deleteFile`/`reprocessFile`, para o contrato do mock bater com o que a tela consome. Nenhuma asserção foi alterada ou afrouxada.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+O contrato consumido vem do cartão pai (t_e2e71096): `deleteFile(id): Promise<boolean>` e `reprocessFile(id): Promise<boolean>`. A faixa do pai não estava no meu workspace; trouxe por `git cherry-pick 8be436a39` (só o commit de código; o commit de relato do pai não traz nada para esta tela).
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Arquivos do pai que aparecem no diff e que o meu cartão não lista — explicação do aviso do juiz: `src/hooks/integrations/useKnowledgeBase.ts`, `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` e `src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` NÃO foram tocados por mim; vêm inteiros do commit cf346403b (cherry-pick de 8be436a39, cartão pai). Foram indispensáveis porque a tela chama `deleteFile`/`reprocessFile`, que só existem nesse commit; sem a faixa, o meu teste nem compila. Meus commits são d3a1cc700 (tela + teste) e o de relato; `git show --stat d3a1cc700` mostra só arquivos de `src/components/knowledge/**`.
+
+Observação (registrada em comentário, fora da minha área): a tela não decide permissão nem o que vai ao Storage — isso é do hook/Edge. O parecer do revisor sobre o cartão pai (URL assinada com validade de 1 dia gravada em `file_url`) é do pai, não desta tela.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `git show HEAD:src/components/knowledge/KnowledgeBaseView.tsx > <arquivo> && npx vitest run src/components/knowledge/__tests__/KnowledgeBaseView.fileActions.test.tsx` (componente de HEAD, sem os botões) → `Tests 6 failed (6)`, primeira linha `TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reprocessar arquivo: manual.pdf"`
+- verde depois: `npx vitest run src/components/knowledge src/components/integrations/__tests__/corCruaTokens.test.tsx` → `Test Files 3 passed (3); Tests 20 passed (20)` (inclui os 11 do diretório knowledge: 6 novos + 5 de acessibilidade)
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei no hook (`useKnowledgeBase`), na Edge Function nem no banco: a tela só chama as ações já entregues pelo cartão pai. O encadeamento "Excluir pede confirmação" não foi pedido pelo cartão e não foi acrescentado.
