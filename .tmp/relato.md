@@ -1,27 +1,32 @@
-Especialista: edgar (area-edge-api)
+Especialista: Edgar (area-edge-api)
 
 ## Sensibilidade
-- O diff toca autorização: `+pairing-code` em `CONTROL_ACTIONS` (staff) e em `MAINTENANCE_GATED_ACTIONS`. Nada foi afrouxado — a ação nasce AUTORIZADA a staff (antes ficaria 'read' = qualquer JWT ou nem passava no schema).
-- Nenhum segredo exposto: o número NÃO vai para log, nem para mensagem de erro; o token da instância segue resolvido pelo Vault (`resolveInstanceToken`), com o mesmo fallback de transição.
-- Nada de produção: só a URL/provedor de teste injetado nos testes; sem migration, sem deploy.
+- O MEU diff (vs `dia/2026-10-13`) é só documento: `docs/audits/edge-functions-authz-coverage.md` e a linha 88 do `ESTADO.md`. Não toca `rateLimit`, `service_role`, `requireRole`, `verifyHmac` nem `DELETE`; nenhuma proteção foi afrouxada.
+- A branch carrega, por ordem do cartão, a entrega `29b1671c0` (cherry-pick = commit `819005597`), que é a que mexeu em `CONTROL_ACTIONS` (`_shared/evolution-control-authz.ts`) e em `evolution-api/index.ts`. Essa parte do diff é da entrega original, não desta correção: eu não alterei uma linha de código de produção, só corrigi os dois documentos derivados que ela deixou desalinhados.
+- Nenhuma referência ao banco de produção e nenhum segredo no diff (checagem de ref de produção no diff deu 0 ocorrências).
 
-## Fora de "ARQUIVOS QUE PODE TOCAR" — 1 arquivo, indispensável
-`supabase/functions/_shared/evolution-control-authz.ts`: é ONDE a ação é classificada (staff) e o schema do request é derivado. Sem `+pairing-code` aqui, a ação nova seria rejeitada pelo `EvolutionApiRequestSchema` (422) ou cairia em 'read'. Não há como entregar a ação sem esta linha. Os demais helpers puros ficaram dentro de `supabase/functions/evolution-api/index.ts`, na própria função, para não sair do escopo do cartão.
+## Motivo do refazer resolvido
+A entrega `29b1671c0` acrescentou 3 linhas a `_shared/evolution-control-authz.ts` (2 comentários + a ação `'pairing-code'` no `CONTROL_ACTIONS`) e empurrou as linhas de `evolution-api/index.ts`. Reproduzi sobre a ponta atual de `dia/2026-10-13` com `git cherry-pick 29b1671c0` (commit `819005597`, só o `.tmp/relato.md` conflitou — resolvido tomando o relato da entrega). Isso quebrou DOIS documentos derivados; corrigi os dois:
 
-## O que mudei
-- `supabase/functions/evolution-api/index.ts`: nova ação `pairing-code` (glyph staff). Recebe `number`, normaliza para dígitos, escolhe a rota por flavor e devolve o código de pareamento.
-  - GO: `POST /instance/connect` com corpo `{subscribe:['ALL'], immediate:true, webhookUrl, phone}` (o `webhookUrl` é reafirmado a cada connect, como já faz o 'connect').
-  - v2: `GET /instance/connect/{instância}?number=`.
-  - Fallback GO: se o connect não trouxer o código, lê `/instance/qr` (`data.code`) por um curto período (o GO emite o pareamento de forma assíncrona). Se só vier payload de QR (`2@...`), responde erro explícito e NÃO grava nada.
-  - Sem número → 422, sem chamar o provedor.
-  - Sucesso → `{ ...corpo, status:'qr_pending', pairingCode, code, expiresInSeconds, expiresAt }`; código formatado `XXXX-XXXX`; validade do provedor reusada (`expiresIn`/`validity`, ms→s) ou 60s (piso 15s, teto 300s, mesmo default do QR no V3); atualiza `whatsapp_connections.status='qr_pending'`.
-- Helpers puros exportados na função: `resolvePairingRoute`, `pairingCodeFromResponse`, `formatPairingCode`, `pairingValidity`.
-- `supabase/functions/evolution-api/session-flavor-routes.test.ts`: matriz pura + handler (GO com código no connect, GO sem código lendo `/instance/qr`, v2, sem número → 422, GO só com QR → erro sem gravar).
+## O que mudou e por quê
+- `docs/audits/edge-functions-authz-coverage.md`: regenerado com `REGENERAR_EDGE_AUTHZ_COV=1`. A régua N217 mede `LF/LH` dos 5 helpers de authz e exige que o documento bata com a medição fresca. As +3 linhas do helper subiram o total de 137 para 140 linhas cobertas (o `Set` é coberto na carga do módulo), então o documento tinha de mudar: `137/137`→`140/140`, total `255/305`→`258/308`, `83.6%`→`83.8%`.
+- `ESTADO.md` (linha 88, registro `evolution-webhook`): as âncoras para `supabase/functions/evolution-api/index.ts` apontavam `474`, `540`, `701`; a entrega deslocou essas três linhas em +97 (mesmo conteúdo, novo local: `571`, `637`, `798`). Atualizei só os números das âncoras; nenhum texto de registro mudou.
 
-## Evidência do caminho na Evolution GO
-`docs/migration/GO_GAPS.md` (doc da GO usada pelo V2, seção "Descobertas da doc que MUDAM decisões"): `POST /instance/connect` aceita `{webhookUrl, subscribe:["ALL"], immediate, phone}` — o `phone` é o campo documentado para pedir o pareamento por número. A GO também lista `/instance/pair` como exclusiva, mas não há swagger/código da GO no repositório para desempatar; implementei pelo caminho documentado e tratei o caso NÃO suportado (ver fallback/erro acima). Não supus que sempre há código.
+## Prova
+- vermelho antes (branch com o cherry-pick, antes da correção):
+  - `node --test --test-reporter=tap scripts/ci/edge-coverage-authz.unit.mjs` → `not ok 8 - N217: docs bate com medição fresca e segunda execução é idêntica` · `# pass 7 / # fail 1` (erro: `docs/audits/edge-functions-authz-coverage.md desatualizado`)
+  - `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` → `not ok 2 - ESTADO.md cita só âncoras reais...` (erro: `âncora desatualizada: supabase/functions/evolution-api/index.ts:474 não cita \`evolution-webhook\``)
+- verde depois:
+  - `node --test --test-reporter=tap scripts/ci/edge-coverage-authz.unit.mjs` → `# pass 8 / # fail 0`
+  - `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` → `# pass 11 / # fail 0`
+- `~/arquitetura-v2/integrador/ci_espelho.sh .` (branch) imprime 9 linhas: `guarda: scripts/ci/implicit-any-ratchet.mjs` · os 6 `node: --staged .../stagedLintableFiles/stagedRemovedFiles` (lint-ratchet) · os 2 `node: Talk X ...` — e NÃO traz mais `node: N217 ...` nem o `node: ESTADO.md cita só âncoras reais`.
+- Essas 9 linhas são PRÉ-EXISTENTES na base: rodei a mesma suíte node sobre um snapshot de `96dd72dc5` (ponta de `dia/2026-10-13`, via `git archive`) e saíram exatamente os mesmos 8 itens de lint-ratchet + Talk X; a guarda `implicit-any-ratchet.mjs` também estoura o `timeout 120` da espelho na base (o `tsc` do repo passa de 120s nesta máquina). Ou seja: o cartão não traz falha NOVA ao espelho.
 
-## Prova (comandos rodados agora)
-- `deno test --allow-env --allow-net supabase/functions/evolution-api/session-flavor-routes.test.ts` → `ok | 20 passed | 0 failed (6s)`.
-- `deno test --allow-env --allow-net --allow-read supabase/functions/evolution-api/index.test.ts supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → `ok | 36 passed | 0 failed (214ms)` (inclui a exaustividade da matriz de ações e a cobertura do schema).
-- Vermelho antes: com o handler revertido (`git stash push -- supabase/functions/evolution-api/index.ts`), os casos de `pairing-code` FALHAM (`FAILED | 14 passed | 5 failed`); `git stash pop` restaurou e ficou verde.
+## O que NÃO fiz e por quê
+- Não toquei no código da entrega (`_shared/evolution-control-authz.ts`, `evolution-api/index.ts`, `session-flavor-routes.test.ts`): eles estão certos e passam nas próprias provas; o problema era só documento derivado.
+- Não mexi nas 6 falhas de `lint-ratchet` (staged) nem nas 2 de `Talk X`: são anteriores à base e de outros arquivos (fora do meu escopo). Ficam registradas aqui para o integrador comparar com a mesma lista na base.
+
+## Commits (citando a entrega)
+- `819005597` — cherry-pick da entrega `29b1671c0` (feat(evolution-api): ação pairing-code para parear por código).
+- `ec38d7a0` — `chore(ci): regenera o espelho de cobertura de authz apos a acao pairing-code`.
+- `a98e9a25b` — `docs(estado): atualiza ancoras do evolution-api deslocadas pela acao pairing-code`.
