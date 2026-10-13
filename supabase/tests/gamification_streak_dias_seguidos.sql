@@ -4,7 +4,7 @@
 -- (mensagem enviada OU conversa encerrada), nunca a quantidade de mensagens.
 --
 -- Roda como postgres no banco local da tarefa (a migration aplicada):
---   zapp-db-local psql <copia> <conjunto> -f supabase/tests/gamification_streak_dias_seguidos.sql
+--   zapp-db-local psql <copia> <conjunto> -v ON_ERROR_STOP=1 < supabase/tests/gamification_streak_dias_seguidos.sql
 -- Tudo dentro de BEGIN...ROLLBACK: nenhuma fixture persiste.
 --
 -- O que prova:
@@ -19,7 +19,7 @@
 --   T9  update_agent_streak(true) (caminho do navegador) idempotente no mesmo dia;
 --   T10 backfill: sequencia real do historico, SEM inflar (3 dias seguidos = 3;
 --       com falha no meio conta so o sufixo; ultimo dia anterior a ontem = 0;
---       agente sem historico = 0/NULL);
+--       agente sem historico = 0/NULL); updated_at das linhas NAO e reescrito;
 --   T11 ACL: register_agent_active_day nao executavel por authenticated/anon;
 --       update_agent_streak continua executavel por authenticated.
 
@@ -235,7 +235,14 @@ union all
 select gen_random_uuid(), 'agent', 'bf', (select f from t_ids),
        ((now() at time zone 'America/Sao_Paulo')::date + time '10:00') at time zone 'America/Sao_Paulo';
 
--- Mesmo bloco de backfill da migration (migration 20261013044500, secao 4).
+-- updated_at que o backfill NAO pode reescrever (guardado antes de rodar o bloco)
+create temp table t_tu on commit drop as
+select profile_id, updated_at from public.agent_stats
+ where profile_id in ((select e from t_ids), (select f from t_ids));
+
+-- Mesmo bloco de backfill da migration (migration 20261013044500, secao 4), inclusive o
+-- DISABLE/ENABLE do gatilho update_agent_stats_updated_at, igual ao arquivo versionado.
+alter table public.agent_stats disable trigger update_agent_stats_updated_at;
 with activity as (
   select m.agent_id as profile_id, (m.created_at at time zone 'America/Sao_Paulo')::date as d
     from public.messages m where m.sender = 'agent' and m.agent_id is not null
@@ -270,6 +277,8 @@ update public.agent_stats s
    and not exists (select 1 from public.messages m where m.sender='agent' and m.agent_id = s.profile_id)
    and not exists (select 1 from public.conversation_closures c where c.closed_by = s.profile_id);
 
+alter table public.agent_stats enable trigger update_agent_stats_updated_at;
+
 do $$
 declare st_e int; bs_e int; lad_e date; st_f int; bs_f int; lad_f date; st_a int; bs_a int; lad_a date; hoje date;
 begin
@@ -285,6 +294,16 @@ begin
   select current_streak, best_streak, last_active_date into st_a, bs_a, lad_a from public.agent_stats where profile_id = (select a from t_ids);
   if st_a <> 0 or bs_a <> 0 or lad_a is not null then
     raise exception 'T10c FALHOU: agente sem historico deveria zerar, veio %/%/%', st_a, bs_a, lad_a;
+  end if;
+
+  -- T10d/e: o backfill nao pode reescrever updated_at (gatilho desligado so no bloco)
+  if (select updated_at from public.agent_stats where profile_id = (select e from t_ids))
+     is distinct from (select updated_at from t_tu where profile_id = (select e from t_ids)) then
+    raise exception 'T10d FALHOU: updated_at de e foi reescrito pelo backfill';
+  end if;
+  if (select updated_at from public.agent_stats where profile_id = (select f from t_ids))
+     is distinct from (select updated_at from t_tu where profile_id = (select f from t_ids)) then
+    raise exception 'T10e FALHOU: updated_at de f foi reescrito pelo backfill';
   end if;
 end $$;
 

@@ -263,6 +263,10 @@ BEGIN
 END; $function$;
 
 -- 4. Backfill do histórico real (SEM inflar) --------------------------------------------------------
+-- O gatilho BEFORE UPDATE update_agent_stats_updated_at regrava updated_at em TODA linha tocada.
+-- Desligo SÓ ele durante o backfill (a migration roda em transação única; o rollback restaura) para
+-- a correção de streak não reescrever a data das linhas. O rollback pós-merge reabilita.
+ALTER TABLE public.agent_stats DISABLE TRIGGER update_agent_stats_updated_at;
 WITH activity AS (
   SELECT m.agent_id AS profile_id,
          (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS d
@@ -329,3 +333,5 @@ UPDATE public.agent_stats s
          SELECT 1 FROM public.conversation_closures c
           WHERE c.closed_by = s.profile_id
        );
+
+ALTER TABLE public.agent_stats ENABLE TRIGGER update_agent_stats_updated_at;
