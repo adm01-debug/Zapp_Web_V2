@@ -18,6 +18,7 @@
  */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { queryClient } from '@/lib/queryClient';
 
 const h = vi.hoisted(() => ({
   from: vi.fn(),
@@ -55,10 +56,27 @@ const PHONE = '+5511999999999';
 function chainOf(...results: Array<{ data: unknown }>) {
   const maybeSingle = vi.fn();
   for (const result of results) maybeSingle.mockResolvedValueOnce(result);
+  // Lista compartilhada (useConnectionsList): `select().order()` devolve um ARRAY.
+  // O 2º resultado é o detalhe antigo da conexão; viramos a linha da lista dele.
+  const listaDeConexoes = (): unknown[] => {
+    const detalhe = results[1]?.data as { instance_id?: string } | null | undefined;
+    return detalhe?.instance_id
+      ? [{
+          id: 'conn-1',
+          name: 'Principal',
+          phone_number: null,
+          status: 'connected',
+          instance_id: detalhe.instance_id,
+          is_default: true,
+          created_at: '2026-01-01T00:00:00Z',
+        }]
+      : [];
+  };
   const chain = {
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
     limit: vi.fn(() => chain),
+    order: vi.fn(async () => ({ data: listaDeConexoes(), error: null })),
     maybeSingle,
   };
   return chain;
@@ -87,6 +105,9 @@ async function capturarErro(run: () => Promise<unknown>): Promise<unknown> {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // A lista de conexões vive num cache de módulo: zera para cada caso resolver
+  // a instância do SEU fixture.
+  queryClient.clear();
 });
 
 describe('useChatMediaSending.handleSendAudioMeme — rejeita em falha, resolve só no envio confirmado', () => {
