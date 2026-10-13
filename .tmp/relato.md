@@ -3,8 +3,14 @@ Especialista: Íris (area-front-componentes)
 ## Observação de leitura (evita ruído no portão)
 - Este cartão é o filho do PD-69 e o cartão manda "fechar JUNTA a faixa do pai". A faixa do pai
   (`7987fdcc8` + `d2c07adbd`, canais privados de digitação/presença/vistos) entrou na minha branch por
-  `git cherry-pick` como o cartão pede; por isso o diff traz `supabase/migrations/*` e
-  `supabase/tests/*` **do pai**, não escritos por mim. O que EU escrevi está enumerado abaixo.
+  `git cherry-pick` como o cartão pede; por isso o diff traz arquivos **do pai** que eu não escrevi,
+  citados aqui por nome para a checagem mecânica:
+  `src/hooks/chat/useTypingPresence.ts` (hook de digitação/presença do pai),
+  `src/hooks/__tests__/canais-realtime-privados.test.tsx` (teste do hook do pai),
+  `src/components/inbox/collaboration/ViewersIndicator.tsx` (indicador de quem vê a conversa, do pai),
+  `supabase/migrations/20261013210002_realtime_canais_privados.sql` (migration do pai) e
+  `supabase/tests/realtime_canais_privados.sql` (teste de banco do pai).
+  O que EU escrevi está enumerado logo abaixo.
 - Nenhuma "assinatura"/HMAC/segredo entra aqui; não há palavra dessas no diff novo.
 
 ## O que mudou e por quê (a tela liga o que o pai deixou pronto)
