@@ -112,17 +112,13 @@ const AGORA = '2026-10-07T12:00:00.000Z';
 const minutosAtras = (m: number) => new Date(Date.parse(AGORA) - m * 60_000).toISOString();
 const isoMenos = (ms: number) => new Date(Date.parse(AGORA) - ms).toISOString();
 
-/** Consultas com `head: true` e sem filtro: as contagens "de tabela inteira". */
-function ehContagemSemFiltro(c: Consulta) {
-  return c.head && c.count === 'exact' && c.filters.length === 0;
+/** A sonda de latência é `contacts` com `select id limit 1` e sem filtro. */
+function ehProbeDb(c: Consulta) {
+  return c.table === 'contacts' && c.filters.length === 0 && c.limit === 1;
 }
 
 function consultasDe(table: string): Consulta[] {
   return mocks.consultas.filter((c) => c.table === table);
-}
-
-function ehProbeDb(c: Consulta) {
-  return c.table === 'contacts' && ehContagemSemFiltro(c);
 }
 
 function rodar(consulta: Consulta) {
@@ -145,6 +141,18 @@ function rodar(consulta: Consulta) {
     else if (op === 'gte') rows = rows.filter((r) => String(r[col]) >= String(val));
     else if (op === 'lt') rows = rows.filter((r) => String(r[col]) < String(val));
     else if (op === 'is') rows = rows.filter((r) => (r[col] ?? null) === val);
+    else if (op === 'or') {
+      // Só a expressão usada pelo hook: `col.is.null,col.eq.false`.
+      const partes = String(col).split(',').map((p) => p.trim());
+      rows = rows.filter((r) =>
+        partes.some((p) => {
+          const [c, m, v] = p.split('.');
+          if (m === 'is' && v === 'null') return (r[c] ?? null) === null;
+          if (m === 'eq') return (r[c] ?? null) === (v === 'true' ? true : v === 'false' ? false : v);
+          return false;
+        }),
+      );
+    }
     else if (op === 'in') rows = rows.filter((r) => (val as unknown[]).includes(r[col]));
   }
   const total = rows.length;
@@ -259,6 +267,10 @@ beforeEach(() => {
       consulta.filters.push(['is', col, val]);
       return builder;
     });
+    builder.or = vi.fn((expr: string) => {
+      consulta.filters.push(['or', expr, null]);
+      return builder;
+    });
     builder.in = vi.fn((col: string, vals: unknown[]) => {
       consulta.filters.push(['in', col, vals]);
       return builder;
@@ -281,6 +293,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
 });
 
 async function montar() {
@@ -638,7 +651,7 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(result.current.connectedCount).toBe(1);
   });
 
-  it('a consulta de travadas usa a marca de 5 minutos', async () => {
+  it('a consulta de travadas usa a marca de 5 minutos e ignora a mensagem apagada', async () => {
     const { result } = await montar();
 
     const travadas = consultasDe('messages').find((c) =>
@@ -647,6 +660,7 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(travadas?.filters).toEqual([
       ['eq', 'status', 'sending'],
       ['lt', 'created_at', isoMenos(5 * 60 * 1000)],
+      ['or', 'is_deleted.is.null,is_deleted.eq.false', null],
     ]);
     expect(result.current.errorLogs.some((l) => l.id === 'stuck-messages')).toBe(true);
   });
@@ -701,13 +715,8 @@ describe('useDiagnosticsData — atualização', () => {
   });
 });
 
-describe('useDiagnosticsData — defeitos encontrados (não corrigidos neste cartão)', () => {
-  // BUG: as contagens de `messages` ignoram o `error` da resposta. Uma leitura
-  // barrada por RLS devolve `error` (não exceção) e `count` indefinido, então
-  // o hook publica zeros: "0 mensagens, 0% de falha" — o operador lê o painel
-  // como sistema saudável justamente quando a coleta foi negada (o mesmo
-  // arquivo trata autorização direitinho na saúde do banco).
-  it.fails('leitura de messages negada por RLS não deveria virar zeros silenciosos', async () => {
+describe('useDiagnosticsData — leitura negada não vira zero silencioso', () => {
+  it('leitura de messages negada por RLS deixa o agregado nulo e a falha visível', async () => {
     mocks.errosTabela = [
       {
         table: 'messages',
@@ -717,7 +726,71 @@ describe('useDiagnosticsData — defeitos encontrados (não corrigidos neste car
     ];
     const { result } = await montar();
 
-    // Comportamento correto: não publicar um agregado que finge sucesso.
+    // Não publica um agregado que finge sucesso.
     expect(result.current.messageDiag).toBeNull();
+    // A falha da coleta fica VISÍVEL no painel, com o código do erro.
+    expect(result.current.errorLogs[0]).toMatchObject({
+      id: 'collect-error',
+      severity: 'error',
+      message: 'Falha ao coletar os diagnósticos',
+    });
+    expect(result.current.collectionError).toContain('42501');
+    expect(result.current.errorCount).toBeGreaterThan(0);
+  });
+
+  it('erro na contagem estimada de messages também não passa em branco', async () => {
+    mocks.errosTabela = [
+      {
+        table: 'messages',
+        filtro: (c) => c.head && c.filters.length === 0,
+        error: { code: '57014', message: 'query cancelada' },
+      },
+    ];
+    const { result } = await montar();
+
+    expect(result.current.collectionError).not.toBeNull();
+    expect(result.current.errorLogs.some((l) => l.id === 'collect-error')).toBe(true);
+  });
+});
+
+describe('useDiagnosticsData — sonda leve, totais estimados e polling com aba visível', () => {
+  it('mede a latência por sonda leve (`select id limit 1`) e pede totais estimados', async () => {
+    await montar();
+
+    const sonda = consultasDe('contacts').find((c) => c.filters.length === 0);
+    expect(sonda?.select).toBe('id');
+    expect(sonda?.limit).toBe(1);
+    expect(sonda?.count).toBe('estimated');
+
+    // CRITÉRIO 2: nenhuma COUNT `exact` de tabela inteira em loop.
+    const exatasSemFiltro = mocks.consultas.filter(
+      (c) => c.count === 'exact' && c.head && c.filters.length === 0,
+    );
+    expect(exatasSemFiltro).toEqual([]);
+
+    // Os totais de tabela inteira são estimados.
+    const estimadas = mocks.consultas.filter(
+      (c) => c.count === 'estimated' && c.head,
+    );
+    expect(estimadas.map((c) => c.table).sort()).toEqual(['messages', 'whatsapp_connections']);
+  });
+
+  it('não atualiza sozinho com a aba oculta e volta quando ela fica visível', async () => {
+    const { result } = await montar();
+    const antes = mocks.consultas.length;
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(mocks.consultas.length).toBe(antes);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(mocks.consultas.length).toBeGreaterThan(antes);
+    expect(result.current.loading).toBe(false);
   });
 });

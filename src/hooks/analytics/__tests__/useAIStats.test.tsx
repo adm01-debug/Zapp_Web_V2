@@ -27,7 +27,12 @@ interface TableState {
 const h = vi.hoisted(() => ({
   tables: {} as Record<string, TableState>,
   calls: {} as Record<string, number>,
-  queries: [] as Array<{ table: string; filters: Array<{ op: string; col: string; val: unknown }> }>,
+  queries: [] as Array<{
+    table: string;
+    filters: Array<{ op: string; col: string; val: unknown }>;
+    select?: unknown;
+    count?: string;
+  }>,
   selectCols: {} as Record<string, unknown>,
 }));
 
@@ -50,7 +55,8 @@ vi.mock('@/integrations/supabase/client', () => {
     const erroDaChamada = cfg.callErrors?.[indice] ?? null;
 
     const filters: Array<{ op: string; col: string; val: unknown }> = [];
-    h.queries.push({ table, filters });
+    const registro = { table, filters } as (typeof h.queries)[number];
+    h.queries.push(registro);
     let modoContagem = false;
 
     const matching = () =>
@@ -75,6 +81,8 @@ vi.mock('@/integrations/supabase/client', () => {
     const b: Construtor = {
       select: (cols: unknown, opts?: { count?: string; head?: boolean }) => {
         h.selectCols[table] = cols;
+        registro.select = cols;
+        registro.count = opts?.count;
         if (opts?.count) modoContagem = true;
         return b;
       },
@@ -237,15 +245,17 @@ describe('useAIStats — janela de leitura', () => {
     expect(hook.result.current.data).toBeUndefined();
   });
 
-  it.fails('erro na leitura da janela ANTERIOR não pode virar "alta de 100%"', async () => {
-    // O hook ignora o erro da janela anterior: a falha vira "crescimento".
+  it('erro na leitura da janela ANTERIOR vira erro da consulta (não "alta de 100%")', async () => {
+    // A janela anterior é a BASE do comparativo: se ela falha, o hook não
+    // inventa crescimento — aborta a consulta inteira.
     tabelas(
       { conversation_analyses: [{ id: 'a1', sentiment: 'positivo', sentiment_score: 80, created_at: instante(0) }] },
       { conversation_analyses: [null, { message: 'timeout' }] },
     );
 
-    const { result } = await esperarStats(7);
-    expect(result.current.data?.trends.analyses.direction).not.toBe('up');
+    const hook = renderStats(7);
+    await waitFor(() => expect(hook.result.current.isError).toBe(true));
+    expect(hook.result.current.data).toBeUndefined();
   });
 });
 
@@ -427,6 +437,24 @@ describe('useAIStats — transcrições e alertas', () => {
     const { result } = await esperarStats(7);
     expect(result.current.data?.transcriptionsCount).toBe(2);
     expect(result.current.data?.trends.transcriptions).toEqual({ direction: 'up', change: 1, percentage: 100 });
+  });
+
+  it('as contagens de transcrição usam total estimado, sem varrer `messages` inteira', async () => {
+    tabelas({
+      messages: [
+        { id: 'm1', transcription: 'bom dia', created_at: instante(0) },
+        { id: 'm2', transcription: 'tudo certo', created_at: instante(2) },
+      ],
+    });
+
+    await esperarStats(7);
+
+    const contagens = h.queries.filter((q) => q.table === 'messages' && q.count !== undefined);
+    expect(contagens).toHaveLength(2);
+    for (const c of contagens) {
+      expect(c.count).toBe('estimated');
+      expect(c.select).toBe('id');
+    }
   });
 
   it('os alertas vêm dos audit_logs das últimas 24h, no máximo 5', async () => {

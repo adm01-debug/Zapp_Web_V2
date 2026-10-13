@@ -74,11 +74,14 @@ export function useAIStats(selectedPeriod: PeriodOption) {
         .order('created_at', { ascending: true });
       if (error) throw error;
 
-      const { data: previousAnalyses } = await supabase
+      // Erro na janela anterior não pode virar "alta de 100%": sem base
+      // confiável não há comparativo — aborta a consulta em vez de inventar.
+      const { data: previousAnalyses, error: previousError } = await supabase
         .from('conversation_analyses')
         .select('sentiment, sentiment_score, created_at')
         .gte('created_at', previousPeriodStart.toISOString())
         .lt('created_at', periodStart.toISOString());
+      if (previousError) throw previousError;
 
       const totalAnalyses = currentAnalyses?.length || 0;
       // Média que EXCLUI ausente/inválido em vez de tratá-lo como 0 (IA-023):
@@ -129,19 +132,23 @@ export function useAIStats(selectedPeriod: PeriodOption) {
         positive: data.positive, negative: data.negative, neutral: data.neutral,
       }));
 
-      const { count: currentTranscriptions } = await supabase
-        .from('messages').select('*', { count: 'exact', head: true })
+      // Totais ESTIMADOS: não varrem `messages` inteira a cada 60 s.
+      const { count: currentTranscriptions, error: currentTranscriptionsError } = await supabase
+        .from('messages').select('id', { count: 'estimated', head: true })
         .not('transcription', 'is', null).gte('created_at', periodStart.toISOString());
+      if (currentTranscriptionsError) throw currentTranscriptionsError;
 
-      const { count: prevTranscriptions } = await supabase
-        .from('messages').select('*', { count: 'exact', head: true })
+      const { count: prevTranscriptions, error: prevTranscriptionsError } = await supabase
+        .from('messages').select('id', { count: 'estimated', head: true })
         .not('transcription', 'is', null)
         .gte('created_at', previousPeriodStart.toISOString()).lt('created_at', periodStart.toISOString());
+      if (prevTranscriptionsError) throw prevTranscriptionsError;
 
       const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data: alertData } = await supabase
+      const { data: alertData, error: alertError } = await supabase
         .from('audit_logs').select('id, entity_id, created_at, details').eq('action', 'sentiment_alert')
         .gte('created_at', last24h).order('created_at', { ascending: false }).limit(5);
+      if (alertError) throw alertError;
 
       const activeAlerts: SentimentAlert[] = (alertData || []).map(log => ({
         id: log.id, contactId: log.entity_id, createdAt: log.created_at,
