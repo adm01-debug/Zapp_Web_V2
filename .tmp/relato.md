@@ -1,18 +1,35 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Pontos da recusa
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Ponto 1: remover a criação do gatilho `tag_added` e toda lógica que dependia de `contacts.tags` até a trilha de tags decidir o schema oficial.
+- O que mudei: parti do commit aprovado `40856fc119c6` e mantive só o runtime SQL de mensagem/keyword. Em `supabase/migrations/20261011190932_automation_runtime.sql` removi `enqueue_automation_events_on_tags`, `trg_automation_events_on_tags`, a constraint que aceitava `tag_added` na fila e todos os comentários/contratos que dependiam de `contacts.tags`. O rollback agora remove só o gatilho de mensagem, a função de mensagem, o índice adicionado e as duas tabelas novas.
+- Permissões/RLS: mantive as policies, REVOKE/GRANT e RLS da entrega aprovada porque fazem parte da fila/log novos do runtime de automações; sem isso as tabelas novas ficariam com leitura/escrita indevidas. A prova é o T8, que roda no Postgres real com papéis `authenticated`, `anon`, `service_role`, `app.admin` e `app.agent`: staff lê, agente/anon não leem e a escrita fica só para `service_role`/gatilho.
+- Teste que prova: em `supabase/tests/automation_runtime_events.sql`, a fixture de `public.contacts` não tem coluna `tags`; o T5 confere que não existe função/gatilho de tags e que `trigger_type = 'tag_added'` é rejeitado pela constraint da fila.
+- Vermelho antes: `docker exec ... psql -v mig=/repo/.tmp/approved_with_tags.sql < supabase/tests/automation_runtime_events.sql` -> `RED approved exit=3` e `psql:/repo/.tmp/approved_with_tags.sql:276: ERROR:  column "tags" of relation "contacts" does not exist`.
+- Verde depois: `docker exec ... psql -v mig=/repo/supabase/migrations/20261011190932_automation_runtime.sql -v rollback=/repo/.tmp/rollback.sql < supabase/tests/automation_runtime_events.sql` -> `GREEN rollbackfix exit=0`, com `T5 OK: tag_added não tem função/gatilho e não entra na fila`, `C1 OK: rollback removeu tabelas, funções e gatilhos` e `C2 OK: reaplicar a migration recriou só o gatilho de mensagem`.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## Arquivos alterados
+
+Saída de `git diff --name-only dia/2026-10-13...HEAD`:
+
+.tmp/relato.md
+supabase/migrations/20261011190932_automation_runtime.sql
+supabase/tests/automation_runtime_events.sql
+
+## Verificação executada
+
+- `git diff --check` -> exit 0.
+- `git diff --stat dia/2026-10-13...HEAD` -> 3 arquivos no diff, sendo 1 arquivo de teste SQL: `.tmp/relato.md`, a migration e `supabase/tests/automation_runtime_events.sql`.
+- `python3` sobre o diff -> confirmou ausência do id de produção proibido e `len(diff) < 90000`.
+- Prova vermelho/verde SQL em Postgres 17 descartável via Docker:
+  - vermelho com a migration aprovada anterior: `RED approved exit=3` por dependência de `contacts.tags`.
+  - verde com a migration final: `GREEN rollbackfix exit=0`; notices T1..T9 e C1/C2 passaram.
+
+## O que NÃO fiz
+
+- Não criei gatilho de tag nem adaptação para schema de tags; isso fica fora deste cartão por decisão explícita da recusa.
+- Não alterei types gerados, Edge Functions, front ou CI; o código de produto ficou restrito à migration e ao teste SQL do runtime de automações. O terceiro arquivo do diff é este relato commitado (`.tmp/relato.md`), por isso a contagem correta é 3 arquivos no diff e 1 arquivo de teste.
+- Não fiz merge/rebase manual da branch `dia/2026-10-11`: o workspace foi criado por `hermes-tarefa-iniciar` em cima de `dia/2026-10-13`, e eu trouxe do commit aprovado `40856fc119c6` somente os arquivos SQL deste cartão, depois removi a trilha de tags. Não houve conflito a resolver.
+- Entrega integrável na ponta atual: a branch tem um único commit em cima de `dia/2026-10-13`; o diff de código é só a migration nova e o teste SQL. O comportamento aprovado de mensagem/keyword foi mantido e provado pelos T1..T4/T6..T9; a mudança do refazer é só retirar tags, provada pelo T5.
+- Rodei `zapp-verify . --rapido`; ele não chegou a validar o diff porque o typecheck foi morto pelo sistema com exit 137 (`tc-rapido: tsc saiu 137 em app`). A prova específica deste cartão é o teste SQL vermelho/verde acima, executado em Postgres real e com rollback reaplicado.
