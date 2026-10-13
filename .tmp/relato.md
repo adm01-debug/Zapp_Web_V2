@@ -1,18 +1,39 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior
+Skill usada: area-sql-banco
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+Ponto 1 — rebase do trabalho aprovado na ponta atual preservando o que já entrou na branch
+- O que mudei: trouxe o commit aprovado c8dbbe7a049a para a branch v2/refazer-instance-pauses-whatsapp-t-8215f-26101308095bf3, baseada em dia/2026-10-13, com cherry-pick sem commit. O único conflito material do rebase foi em .tmp/relato.md, porque a branch atual já tinha relato de outro cartão; resolvi removendo os marcadores e escrevendo este relato novo do refazer atual. Os arquivos de produto do commit aprovado entraram sem conflito de conteúdo: src/integrations/supabase/types.ts recebeu apenas os tipos gerados de instance_pauses/funções, e supabase/migrations/20261011183812_instance_pauses.sql + supabase/tests/instance_pauses.sql foram adicionados.
+- Prova: git diff --cached --name-only lista só .tmp/relato.md, src/integrations/supabase/types.ts, supabase/migrations/20261011183812_instance_pauses.sql e supabase/tests/instance_pauses.sql.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Ponto 2 — não acrescentar comportamento além da entrega aprovada
+- O que mudei: não alterei a lógica aprovada da migration nem do teste depois do cherry-pick; só reescrevi o relato conflitado. Não toquei CI, manifesto, docs, telas, Edge Functions, políticas existentes nem arquivos fora da lista permitida.
+- Prova: git show --stat c8dbbe7a049a e git diff --cached --stat mostram o mesmo escopo de produto do commit aprovado (migration, teste SQL e types), mais este relato.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+Ponto 3 — teste do cartão e verificação completa
+- Teste SQL do cartão: zapp-db-local psql . v2-26101308095bf3 -v ON_ERROR_STOP=1 < supabase/migrations/20261011183812_instance_pauses.sql -> exit 0; em seguida zapp-db-local psql . v2-26101308095bf3 -v ON_ERROR_STOP=1 < supabase/tests/instance_pauses.sql -> exit 0, com NOTICE instance_pauses: T1..T9 OK — 12 grupo(s) e NOTICE instance_pauses: suite OK (... T10 rollback executado e estado restaurado).
+- Verificação rápida: zapp-verify . --rapido -> exit 0; OK db_guard, tipos, lint e migrations; VERIFY: VERDE SEM BANCO (104s). O banco foi verificado separadamente pelo teste SQL real acima.
+- Verificação exigida pelo cartão: zapp-verify full . foi executado e NÃO fechou verde neste workspace. Resultado: OK db_guard; OK tipos; OK lint; OK migrations; FALHOU testes (ver /home/joaquim_ataides/.local/state/zapp-verify/1eacf37a5fb5/testes.log). O jev-juiz classificou a falha como pre_existing (certeza 0.88) e mandou não consertar fora do escopo. Confirmei na base sem o meu diff com git stash: bunx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx -> exit 1; Test Files 1 failed (1); Tests 1 failed | 4 passed (5). Essa falha é fora do escopo do cartão e não toca os arquivos alterados aqui.
+
+NÃO CONCLUÍ:
+- Não fechei o cartão com hermes-tarefa-fechar porque o critério explícito pedia zapp-verify full verde, e o full atual está vermelho por falha preexistente fora do diff. Deixei o rebase pronto no workspace e registrei a prova para o próximo passo do Claude/revisor.
+
+Arquivos alterados (git diff --cached --name-only):
+.tmp/relato.md
+src/integrations/supabase/types.ts
+supabase/migrations/20261011183812_instance_pauses.sql
+supabase/tests/instance_pauses.sql
+
+Verificações executadas:
+- bun install -> exit 0.
+- zapp-db-local psql . v2-26101308095bf3 -v ON_ERROR_STOP=1 < supabase/migrations/20261011183812_instance_pauses.sql -> exit 0.
+- zapp-db-local psql . v2-26101308095bf3 -v ON_ERROR_STOP=1 < supabase/tests/instance_pauses.sql -> exit 0; T1..T9 OK — 12 grupo(s); suite OK com T10 rollback executado e estado restaurado.
+- zapp-verify . --rapido -> exit 0; VERIFY: VERDE SEM BANCO (104s).
+- zapp-verify full . -> exit 1; FALHOU testes; 3 failed | 1312 passed; log em /home/joaquim_ataides/.local/state/zapp-verify/1eacf37a5fb5/testes.log.
+- jev-juiz falha /home/joaquim_ataides/.local/state/zapp-verify/1eacf37a5fb5/testes.log -> pre_existing (certeza 0.88).
+- bunx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx com o meu diff stashed -> exit 1; Test Files 1 failed (1); Tests 1 failed | 4 passed (5).
+
+Autorrevisão:
+- Escopo limitado aos arquivos permitidos pelo cartão.
+- Nenhum dado de produção, segredo, deploy, push, PR ou migration em produção foi usado.
+- O teste executa SQL real no banco local e executa o rollback da migration dentro da suíte.
+- A resolução do conflito preservou a ponta atual: o único conflito foi o relato, não houve escolha de comportamento de produto.
