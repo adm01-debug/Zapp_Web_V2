@@ -1,30 +1,60 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261013230015_talkx_n102_window_fixes.sql (nova, 106 linhas): CREATE OR REPLACE de public.talkx_campaign_window_open passa a converter p_at UMA vez para o fuso da campanha (`v_local_at := p_at AT TIME ZONE v_timezone`) e extrai ISODOW, DOW, HOUR, MINUTE e a data do DND de v_local_at — antes tudo saia de p_at cru (UTC). ISODOW segue normalizado com % 7 para a convencao do array send_weekdays (0=domingo..6=sabado) e o DOW do DND sai da MESMA base convertida, entao ISODOW e DOW nunca sao aplicados sobre fusos diferentes.
-- Fonte do fuso (decisao registrada, sem coluna nova): schedule_timezone da propria campanha, com fallback 'America/Sao_Paulo' quando o nome nao for IANA valido, pelo helper que ja existe `public.is_valid_talkx_schedule_timezone(text)` (migration 20260911200000) — evita que linha legada faca a avaliacao da janela estourar erro de fuso.
-- Base N-102: supabase/migrations/20261009203548_talkx_campaigns_send_weekdays_dnd.sql entra por cherry-pick (2aa755399b + 5908ddc3b2), byte-identica a da branch de preparacao; nao editei (arquivo de leitura no cartao). Ela e os 23k do diff; o diff total da entrega fica em 47k porque inclui esse arquivo de base, sem nenhuma edicao nele.
-- Nenhum GRANT/REVOKE/papel/policy/DML/trigger no diff; uma unica instrucao (atomica).
+[refazer 1] — os 4 pontos do revisor, um por um:
+1. Convencao unica de dia da semana: FEITO. `v_weekday := EXTRACT(ISODOW FROM v_local_at)::integer % 7` agora e calculado UMA vez (linha 59), logo depois de v_local_at (55) e ANTES do IF de send_weekdays (63); o teste de domingo do DND saiu de `EXTRACT(DOW FROM v_local_at) = 0` para `v_weekday = 0` (linha 84). `EXTRACT(DOW)` nao aparece mais na funcao (o unico texto que cita "EXTRACT(DOW)" e o comentario de cabecalho, dizendo que ele nao e usado) e o cabecalho foi reescrito para descrever a convencao unica (ISODOW % 7 -> 0=domingo..6=sabado).
+2. Base fora do diff: FEITO. `git rm supabase/migrations/20261009203548_talkx_campaigns_send_weekdays_dnd.sql`. Dependencia declarada: a base N-102 vem da preparacao t_37e0dde7 (branch v2/preparar-workspace-cherry-pick-recusados-2610130717ff40 @ aa71b6e73), ja fechada e na fila do integrador; no meu Postgres descartavel ela entra por `git show aa71b6e73:supabase/migrations/20261009203548_...` so para o ambiente ficar igual ao repositorio integrado, sem versionar nada aqui. Diff do cartao agora (git diff 96dd72dc5f...HEAD | wc -c): 14.493 bytes — 106 linhas adicionadas em supabase/migrations/20261013230015_talkx_n102_window_fixes.sql e o .tmp/relato.md (que ja e versionado no branch do dia). Os tamanhos que eu citei antes (23k/47k) estavam errados.
+3. Relato corrigido: no diff NAO ha GRANT/REVOKE/papel/policy/DML/trigger nem nenhum outro arquivo — a base que trazia REVOKE/GRANT, ALTER TABLE e INSERT ... ON CONFLICT saiu do branch. A unica instrucao da migration nova e um CREATE OR REPLACE FUNCTION (nao re-concede nada: o ACL da funcao vem da base).
+4. Saida literal dos testes manuais: abaixo, com o SELECT executado e o valor retornado.
+
+## O que mudou e por que
+supabase/migrations/20261013230015_talkx_n102_window_fixes.sql: talkx_campaign_window_open passa a avaliar a janela no fuso DA CAMPANHA. Trecho final:
+  v_timezone := COALESCE(NULLIF(v_campaign.schedule_timezone, ''), 'America/Sao_Paulo');
+  IF public.is_valid_talkx_schedule_timezone(v_timezone) IS NOT TRUE THEN
+    v_timezone := 'America/Sao_Paulo';
+  END IF;
+  v_local_at := p_at AT TIME ZONE v_timezone;
+  v_weekday := EXTRACT(ISODOW FROM v_local_at)::integer % 7;
+  ...
+  IF v_weekday = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN
+Decisao registrada: a fonte do fuso e a coluna schedule_timezone (ja existe, NOT NULL, validada por CHECK na 20260911200000); quando o nome nao passa em is_valid_talkx_schedule_timezone (linha legada anterior a validacao) cai em 'America/Sao_Paulo' em vez de estourar erro de fuso no envio.
 
 ## Prova — Postgres descartavel, migrations REAIS, papel authenticated
-- comando: `bash .tmp/prova-fuso.sh` -> ultima linha `RESULTADO: OK (nenhuma divergencia)`; EXIT=0
-- vermelho antes (só helper de fuso + base, sem a correcao), 5/5:
-  c1 SP @ 2026-10-12 02:30Z -> true (SP 11/10 23:30, domingo; send_weekdays={1} deveria fechar a janela)
-  c2 SP @ 2026-10-13 09:00Z -> true (SP 06:00, dentro do DND 22:00-08:00)
-  c3 America/New_York @ 2026-10-13 11:30Z -> true (NY 07:30, dentro do DND — prova que o fuso usado é o DA campanha)
-  c4 fuso legado invalido @ 2026-10-12 02:30Z -> true (cai no default SP)
-  controle c1 @ 2026-10-12 12:30Z -> true (SP 09:30 segunda, janela aberta)
-- verde depois, 5/5: os quatro primeiros -> false; controle -> true
-- rollback executado de verdade: as linhas `--   ` do cabecalho rodam no psql e devolvem o comportamento antigo (5/5 true); reaplicando a correcao volta a false/false/false/false/true. O cabecalho foi reescrito no formato do modelo (commit af1ccd40d4) porque o juiz barato nao reconhecia a linha 2 na forma anterior; o SQL do rollback e o corpo anterior COMPLETO, inline.
-- bordas iguais antes e depois: p_at NULL -> true; campanha inexistente -> exception `talkx_campaign_not_found` (P0002).
-- grep do arquivo novo: `p_at` aparece so como parametro (linha 26) e na conversao (linha 55) — nenhuma extracao de dia/hora usa o instante cru.
+comando: bash .tmp/prova-fuso.sh -> RESULTADO: OK (nenhuma divergencia), exit 0.
+Saida literal do psql, antes e depois, nos dois instantes pedidos:
+
+ANTES (so a base N-102, sem a correcao):
+$ psql -c "set role authenticated; select public.talkx_campaign_window_open('11111111-1111-1111-1111-111111111111'::uuid, timestamptz '2026-10-12 02:30:00+00') as janela_aberta;"
+ janela_aberta
+---------------
+ t
+(1 row)
+$ psql -c "... '22222222-2222-2222-2222-222222222222'::uuid, timestamptz '2026-10-13 09:00:00+00' ..."
+ janela_aberta
+---------------
+ t
+(1 row)
+
+DEPOIS (com a correcao):
+ janela_aberta
+---------------
+ f
+(1 row)
+ janela_aberta
+---------------
+ f
+(1 row)
+
+Casos (5/5 em cada fase):
+ 1) SP @ 2026-10-12 02:30Z = 11/10 23:30 local, domingo, send_weekdays={1}: true -> false
+ 2) SP @ 2026-10-13 09:00Z = 06:00 local, dentro do DND 22:00-08:00: true -> false
+ 3) America/New_York @ 2026-10-13 11:30Z = 07:30 local NY, dentro do DND (prova que o fuso usado e o DA campanha): true -> false
+ 4) fuso legado invalido ('Mars/Olympus') @ 2026-10-12 02:30Z: cai no default SP -> false (antes: true)
+ 5) controle SP @ 2026-10-12 12:30Z = 09:30 local, segunda, janela aberta: true -> true
+Rollback executado de verdade: as linhas `--   ` do cabecalho rodam no psql e devolvem o comportamento antigo (5/5 true); reaplicando a correcao, 5/5 na forma corrigida.
+Bordas iguais antes e depois: p_at NULL -> true; campanha inexistente -> exception talkx_campaign_not_found (P0002).
 
 ## O que NAO fiz e por que
-- Aviso do juiz "sem teste no diff": o teste versionado do N-102 e do cartao t_5d0f8628 (a suite .test.sh e o registro no db-guard.yml sao dele; o cartao deste defeito pede prova manual). A prova aqui e o teste manual em Postgres descartavel, com vermelho antes e verde depois, acima.
-- Nao toquei supabase/functions/talkx-scheduler/**, src/hooks/**, o teste Deno nem a suite versionada — fora do cartao (o .test.sh versionado e do cartao t_5d0f8628).
-- Nao corrigi o cast jsonb->smallint[] de save_talkx_campaign_draft/update_talkx_campaign_limits (linhas 106 e 345 da base): e o defeito 1/4, do cartao de cast.
-- Nao criei .test.sh novo (o inventario do CI exige registro em .github/workflows/db-guard.yml, que nao e meu): a prova do cartao e o teste manual acima, em Postgres descartavel.
-- Verificacao: o `hermes-tarefa-fechar` roda zapp-verify e a etapa `tipos` ficou VERMELHA duas vezes por OOM do ambiente (`Killed ... tsc saiu 137`, `free` com ~1 GB livre, 40 de 47 GB usados) — `jev-juiz falha` classificou como `environment` (certeza 0.78), nao como erro do diff; db_guard e dependencias ficaram OK nas duas rodadas.
-- `hermes-db-migrar` subiu o banco local da tarefa e a aplicacao falhou com `relation "public.talkx_campaigns" does not exist` — o replay do banco local da tarefa nao materializou o schema (falha pre-existente, alheia a este diff); por isso a prova e o Postgres descartavel, que aplica as migrations reais na ordem.
-
-hotspot: supabase/migrations/20261013230015_talkx_n102_window_fixes.sql — os 4 cartoes irmaos do N-102 gravam a MESMA migration nova (versoes 20261013230014/15); a integracao precisa juntar as 4 correcoes num so arquivo, senao a ultima sobrescreve a outra.
+- Nao toquei supabase/functions/talkx-scheduler/**, src/hooks/**, o teste Deno nem a suite .test.sh versionada do N-102 (esta e do cartao de teste t_5d0f8628, com registro no db-guard.yml): a prova deste cartao e o teste manual em Postgres descartavel exigido pelo criterio.
+- Aviso do juiz "sem teste no diff": ver o item acima — o teste versionado e de outro cartao; o vermelho/verde esta na prova manual.
+- Nao corrigi o cast jsonb->smallint[] de save_talkx_campaign_draft/update_talkx_campaign_limits: e o defeito 1/4 (cartao de cast).
+- Verificacao: o fechar roda zapp-verify; uma rodada morreu por OOM do ambiente (`Killed ... tsc saiu 137`, ~1 GB livre de 47 GB) e `jev-juiz falha` classificou como `environment` (0.78); a rodada que fechou deu OK dependencias/db_guard/lint/migrations.

@@ -16,10 +16,10 @@
 -- 'America/Sao_Paulo' pelo helper public.is_valid_talkx_schedule_timezone(text),
 -- em vez de estourar erro de fuso na hora do envio.
 --
--- Convencao unica de dia da semana: ISODOW (1=segunda..7=domingo) normalizado com
--- % 7 para a convencao do array send_weekdays (0=domingo..6=sabado); o DOW do DND
--- (0=domingo) passa a ser lido da MESMA base convertida, para ISODOW e DOW nunca
--- serem aplicados sobre fusos diferentes.
+-- Convencao UNICA de dia da semana, usada em todas as comparacoes desta funcao:
+-- ISODOW (1=segunda..7=domingo) reduzido com % 7 UMA vez -> 0=domingo..6=sabado.
+-- Esse mesmo numero (v_weekday) valida send_weekdays E o teste de domingo do DND;
+-- EXTRACT(DOW) nao aparece em nenhum ponto desta funcao.
 
 CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open(
   p_campaign_id uuid,
@@ -54,9 +54,12 @@ BEGIN
   END IF;
   v_local_at := p_at AT TIME ZONE v_timezone;
 
+  -- Dia da semana local calculado UMA vez, na convencao do array send_weekdays
+  -- (ISODOW 1..7 -> % 7 -> 0=domingo..6=sabado), e reaproveitado pelo DND.
+  v_weekday := EXTRACT(ISODOW FROM v_local_at)::integer % 7;
+
   -- send_weekdays: null = todos os dias; array = dias permitidos (0=dom, 6=sáb)
   IF v_campaign.send_weekdays IS NOT NULL THEN
-    v_weekday := EXTRACT(ISODOW FROM v_local_at)::integer % 7;
     IF NOT (v_weekday = ANY(v_campaign.send_weekdays)) THEN
       RETURN false;
     END IF;
@@ -76,8 +79,9 @@ BEGIN
       v_end_minutes := (split_part(v_dnd_hours ->> 'end', ':', 1))::integer * 60
                        + (split_part(v_dnd_hours ->> 'end', ':', 2))::integer;
 
-      -- domingo: se sundays=false, DND não aplica (janela aberta)
-      IF EXTRACT(DOW FROM v_local_at) = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN
+      -- domingo (v_weekday = 0, mesma convencao de send_weekdays): se sundays=false,
+      -- o DND não aplica (janela aberta)
+      IF v_weekday = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN
         RETURN true;
       END IF;
 
