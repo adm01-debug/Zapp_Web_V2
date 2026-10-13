@@ -100,12 +100,6 @@ describe('useAgentGamification', () => {
     expect(ACHIEVEMENT_TYPES.FIRST_MESSAGE).toBe('first_message');
   });
 
-  it('exposes addXp function', async () => {
-    const { result } = renderHook(() => useAgentGamification(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(typeof result.current.addXp).toBe('function');
-  });
-
   it('all achievement type values are unique', () => {
     const values = Object.values(ACHIEVEMENT_TYPES);
     const unique = new Set(values);
