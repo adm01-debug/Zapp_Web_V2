@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMentionableProfiles } from '@/hooks/inbox/useMentionableProfiles';
 
 interface MentionInputProps {
   value: string;
@@ -20,14 +19,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, disabled 
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState('');
 
-  const { data: agents } = useQuery({
-    queryKey: ['agents-for-mention'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('id, name, avatar_url').eq('is_active', true).limit(20);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const { data: agents } = useMentionableProfiles(showMentions ? mentionFilter : '');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -50,7 +42,9 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, disabled 
     setShowMentions(false);
   };
 
-  const filteredAgents = agents?.filter(a => a.name.toLowerCase().includes(mentionFilter)) || [];
+  // O filtro é feito no servidor (`useMentionableProfiles`): a lista já vem
+  // apenas com quem casa o termo digitado, sem corte pela amostra de 20.
+  const filteredAgents = agents ?? [];
 
   return (
     <div className="relative">

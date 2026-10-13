@@ -13,12 +13,15 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
+import { splitMentionText } from '@/lib/mentionText';
 import { MentionInput } from './MentionInput';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const [newNote, setNewNote] = useState('');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: mentionableNames } = useMentionableProfileNames();
 
   const { data: notes, isLoading } = useQuery({
     queryKey: ['internal-notes', contactId],
@@ -52,14 +55,16 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     onError: () => toast.error('Erro ao adicionar nota'),
   });
 
+  // O selo é montado a partir dos nomes ativos (não de uma regex de palavra):
+  // assim `@Ana Maria` vira um selo inteiro em vez de só `@Ana`.
   const renderNoteContent = (content: string) => {
-    const parts = content.split(/(@\w+)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('@')) {
-        return <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>;
-      }
-      return <span key={i}>{part}</span>;
-    });
+    return splitMentionText(content, mentionableNames ?? []).map((part, i) =>
+      part.isMention ? (
+        <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part.text}</Badge>
+      ) : (
+        <span key={i}>{part.text}</span>
+      ),
+    );
   };
 
   return (

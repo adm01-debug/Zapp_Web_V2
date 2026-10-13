@@ -1,27 +1,48 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# Menções de nota interna: colega ativo encontrável, selo com o nome completo
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/hooks/inbox/useMentionableProfiles.ts` (novo): a lista de mencionáveis agora
+  busca no servidor (`ilike` no `name`), ordenada (`name`, desempate `id`), limitada a
+  20 linhas por consulta e com debounce de 250 ms — era `select(...).limit(20)` sem
+  ordem e sem filtro, com o termo aplicado no cliente, então do 21º colega ativo para
+  cima ninguém aparecia para ser marcado (a linha nem chegava ao navegador). Traz
+  também `useMentionableProfileNames`, que lê TODOS os nomes ativos de forma paginada
+  por `id` (nunca uma amostra), para o selo das notas.
+- `src/lib/mentionText.ts` (novo): `splitMentionText` separa o texto da nota marcando
+  como selo a menção a um nome conhecido. Antes o selo saía de `/(@\w+)/g`, que não
+  cobre espaço: `@Ana Maria` virava selo só de `@Ana`. O reconhecimento é ancorado na
+  lista de nomes ativos (com o nome mais longo vencendo e fronteira de palavra), então
+  cobre nome composto e partícula minúscula (`@Ana da Silva`).
+- `src/components/inbox/collaboration/MentionInput.tsx`: passa a usar
+  `useMentionableProfiles` (fim do `useQuery` local) e deixa de filtrar no cliente — o
+  filtro é do servidor. A menção gravada continua no formato do sistema: `@` + nome do
+  perfil + espaço (`onChange(value.slice(0, lastAtIndex) + `@${agent.name} `)`).
+- `src/components/inbox/collaboration/InternalNotesPanel.tsx`: o selo de cada nota
+  passa a ser montado com `splitMentionText` + os nomes ativos, em vez da regex.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- defeito (selo), antes, com a regex antiga: `node -e "'@Ana Maria veja'.split(/(@\w+)/g)"` → `["","@Ana"," Maria veja"]` (só `@Ana` viraria selo).
+- vermelho antes (módulos ainda inexistentes, testes presentes): `npx vitest run src/lib/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Failed to resolve import "../useMentionableProfiles" ... Test Files 2 failed (2)`.
+- verde depois: `npx vitest run src/lib/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`.
+- sem regressão no consumidor: `npx vitest run src/components/inbox/collaboration/__tests__/MentionInput.a11y.test.tsx` → `Test Files 1 passed (1); Tests 2 passed (2)`.
+- tipos: `npx tsc -p tsconfig.app.json --noEmit` → nenhum erro nos arquivos tocados.
+
+## Item 3 do cartão (aviso ao marcado): canal inexistente — registrado e proposto, como o cartão manda
+- O cartão diz: "se não houver canal, registre e proponha em uma linha no relato, sem
+  criar tabela". Não há canal no cliente: a tabela `notifications` tem a policy
+  `Block authenticated notification inserts` (`WITH CHECK (false)`,
+  `supabase/migrations/20260404174629_...sql`) — insert autenticado é proibido, só
+  escrita server-side — e não há trigger em `contact_notes` que gere notificação de
+  menção. Então registrei aqui e proponho: tratar numa trilha de banco (função/trigger
+  em `contact_notes`), que é do worker (sql), em cartão próprio. Sem tabela nova, sem
+  Edge.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei no compositor do chat (`components/inbox/chat/MentionAutocomplete.tsx`) nem
+  em `get_team_profiles` — são o PO1/PD-86, cartões que mexem no mesmo assunto em outro
+  componente (o chat), fora do meu diff.
+- Não mexi em quem pode ser mencionado (o próprio usuário continua aparecendo, como
+  antes): não está no critério do cartão.
+- Não criei notificação de menção (item 3, acima).
