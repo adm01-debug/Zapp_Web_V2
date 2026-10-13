@@ -176,6 +176,11 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     avatar_fetch_attempted_at: null,
     conversation_status: 'open',
     conversation_status_changed_at: null,
+    // Presenca real do WhatsApp: contato derivado apenas do historico nao tem
+    // evento de presenca associado, entao o estado e ausencia (colunas nullable).
+    presence_status: null,
+    presence_updated_at: null,
+    last_seen_at: null,
     is_lid_legacy: false,
   };
 }
