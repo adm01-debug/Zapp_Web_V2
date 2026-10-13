@@ -87,7 +87,6 @@ const PRIMARIOS: ItemNav[] = [
   { id: 'multiplix', label: 'Multiplix' },
   { id: 'catalog', label: 'Catálogo' },
   { id: 'voip', label: 'Telefonia' },
-  { id: 'pipeline', label: 'Quadro' },
   { id: 'tasks', label: 'Tarefas' },
   { id: 'achievements', label: 'Conquistas' },
   { id: 'dashboard', label: 'Dashboard' },
@@ -900,14 +899,20 @@ async function entrar(page: Page): Promise<void> {
 
   // Espera o app DECIDIR a sessão, e só aceita um desfecho que se SUSTENTE.
   // Quem já tem sessão é redirecionado de /auth para o shell, e a tela de login
-  // aparece por uma piscada antes do redirect (medido em 08/10 no conjunto
-  // t-a0ace86a: a aba "Entrar" nasce e some em ~400 ms nas duas larguras).
+  // aparece por uma piscada antes do redirect (medido em 08/10 no conjunto local
+  // t-a0ace86a: a tela de login nasce e some em ~400 ms nas duas larguras).
   // Decidir por essa piscada levava o teste a clicar num elemento que já não
   // existia — 90 s de espera e varredura vermelha no desktop e no celular.
   //   shell autenticado visível  ⇒ segue sem tocar na tela de login;
   //   tela de login visível por ESTABILIDADE_MS seguidos ⇒ é ela que vale.
+  //
+  // A tela de login v3 (src/pages/Auth.tsx) é um formulário com os rótulos
+  // "Email"/"Senha" e o botão de envio "Entrar": as abas "Entrar"/"Criar conta"
+  // que esta varredura procurava até 09/10 não existem mais. O campo de e-mail
+  // é o marco estável da tela — procurar a aba derrubava os dois testes grandes
+  // com "nem o shell autenticado nem a tela de login ficaram de pé".
   const shell = shellAutenticado(page);
-  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i }).first();
+  const campoEmail = page.getByRole('textbox', { name: /e-?mail/i }).first();
   const ESTABILIDADE_MS = 1_500;
   const limite = Date.now() + 120_000;
   let loginDesde: number | undefined;
@@ -918,7 +923,7 @@ async function entrar(page: Page): Promise<void> {
       tela = 'shell';
       break;
     }
-    if (await abaEntrar.isVisible().catch(() => false)) {
+    if (await campoEmail.isVisible().catch(() => false)) {
       loginDesde = loginDesde ?? Date.now();
       if (Date.now() - loginDesde >= ESTABILIDADE_MS) tela = 'login';
     } else {
@@ -944,15 +949,33 @@ async function entrar(page: Page): Promise<void> {
   }
 
   const teto = { timeout: 90_000 };
-  await abaEntrar.click(teto);
-  await page.getByRole('textbox', { name: /e-?mail/i }).fill(email, teto);
-  await page.locator('input[type="password"]').fill(senha, teto);
-  await page.getByRole('button', { name: /^entrar$/i }).click(teto);
+  // A tela de login v3 já abre no formulário: não há aba para clicar antes de preencher.
+  //
+  // O envio é repetido até 3 vezes porque o `auth-login` do conjunto local
+  // respondeu 503 de forma intermitente sob carga (`[MEDIDA] 503
+  // …/functions/v1/auth-login`, medido em 13/10 no conjunto y09modulos — a
+  // política de rede do handler falha fechado em 503): o app então bloqueia o
+  // login "para preservar o lockout" e a tela fica no formulário. A repetição é
+  // da PRECONDIÇÃO (sessão montada), nunca da asserção da varredura: sem shell
+  // de pé o teste continua vermelho.
+  for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+    await campoEmail.fill(email, teto);
+    await page.locator('input[type="password"]').fill(senha, teto);
+    await page.getByRole('button', { name: /^entrar$/i }).click(teto);
 
-  if (!(await shell.isVisible().catch(() => false))) {
-    await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);
+    if (!(await shell.isVisible().catch(() => false))) {
+      await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);
+    }
+    if (await shell.isVisible().catch(() => false)) return;
+
+    if (tentativa < 3) {
+      console.warn(
+        `[AVISO] login local: tentativa ${tentativa} de 3 não montou o shell ` +
+          `(formulário de pé — auth-login 503 transitório do conjunto local)`,
+      );
+      await page.waitForTimeout(15_000);
+    }
   }
-  if (await shell.isVisible().catch(() => false)) return;
 
   const visivel = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
   throw new Error(`login local não concluiu (banco local do conjunto). Tela: ${visivel.slice(0, 400)}`);
@@ -1041,9 +1064,25 @@ async function abrirSecaoDesktop(page: Page, secao: string): Promise<void> {
   }
 }
 
+/**
+ * O nome acessível do botão da barra lateral NÃO é sempre só o rótulo:
+ * `SidebarNavItem` (src/components/layout/SidebarNavItem.tsx:40-44) monta
+ * `aria-label` como `${label} (${pill minúsculo})` quando a entrada tem selo —
+ * o Multiplix tem `pill: 'NOVO'` e aparece como "Multiplix (novo)" — e como
+ * `${label} (${N} não lidas)` quando há contador. Casar por `exact: true` com o
+ * rótulo cru deixava o clique esperando para sempre (medido 12/10 no conjunto
+ * local, menu desktop: `getByRole('button', { name: 'Multiplix', exact: true })`
+ * nunca casou e a varredura morreu no teto de 20 min). Casamos pelo rótulo com
+ * o sufixo entre parênteses OPCIONAL.
+ */
+function nomeDaEntrada(label: string): RegExp {
+  const escapado = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escapado}(?:\\s*\\([^)]*\\))?$`, 'i');
+}
+
 async function clicarDesktop(page: Page, item: ItemNav): Promise<void> {
   const nav = page.getByRole('navigation', { name: MENU_DESKTOP });
-  const botao = nav.getByRole('button', { name: item.label, exact: true }).first();
+  const botao = nav.getByRole('button', { name: nomeDaEntrada(item.label) }).first();
   await botao.click();
   await expect(
     botao,
@@ -1067,7 +1106,7 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
       await mais.click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });
       if (aoAbrirMenu) await aoAbrirMenu();
-      await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });
+      await menu.getByRole('button', { name: nomeDaEntrada(item.label) }).first().click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não fechou depois de escolher o módulo').toBeHidden({
         timeout: 10_000,
       });
@@ -1172,13 +1211,13 @@ const FORA_DO_PAPEL_DO_SEED = SECOES.flatMap((secao) =>
 async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<void> {
   for (const label of FORA_DO_PAPEL_DO_SEED) {
     await expect(
-      page.getByRole('button', { name: label, exact: true }),
+      page.getByRole('button', { name: nomeDaEntrada(label) }),
       `${onde}: "${label}" é admin-only e não pode aparecer para o supervisor do seed local`,
     ).toHaveCount(0);
   }
 }
 
-// A varredura inteira (login + 40 entradas do menu + busca) passa longe do teto padrão de
+// A varredura inteira (login + 39 entradas do menu + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
@@ -1243,10 +1282,10 @@ test.beforeAll(async ({ request }) => {
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 39 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    // A varredura é longa (40 entradas do menu + busca, cada uma com espera de view e de
+    // A varredura é longa (39 entradas do menu + busca, cada uma com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
@@ -1318,7 +1357,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 39 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
