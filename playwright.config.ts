@@ -125,7 +125,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|auth-a11y\.spec\.ts|auth-teclado\.spec\.ts|auth-sessao-guard\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -171,6 +171,17 @@ export default defineConfig({
       name: 'chromium-a11y',
       testMatch: /a11y-(contraste|config-admin)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Telas de AUTENTICAÇÃO (auth-a11y, auth-teclado, auth-sessao-guard): axe nas
+      // três telas, ordem de TAB/foco/erro e guarda de sessão (ausente, expirada,
+      // corrompida). Rodam DESLOGADAS — sem `setup`, sem secrets, sem banco: a rede
+      // real é barrada por `bloquearRedeReal` e cada spec confere o registro. Projeto
+      // DEDICADO porque o catch-all `chromium-authenticated` faz login real no `setup`;
+      // `storageState` VAZIO explícito para nenhuma sessão salva alimentar a spec.
+      name: 'chromium-auth-deslogado',
+      testMatch: /auth-(a11y|teclado|sessao-guard)\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
       // talkx.spec.ts on Chromium — cobertura focada do Talk X usada pelo
