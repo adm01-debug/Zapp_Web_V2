@@ -28,14 +28,14 @@ const f = vi.hoisted(() => {
     sent,
     handlers,
     channel,
-    channelFactory: vi.fn((_name: string) => channel),
+    channelFactory: vi.fn((_name: string, _opts?: unknown) => channel),
     removeChannel: vi.fn((_channel: unknown) => Promise.resolve('ok')),
   };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    channel: (name: string) => f.channelFactory(name),
+    channel: (name: string, opts?: unknown) => f.channelFactory(name, opts),
     removeChannel: (channel: unknown) => f.removeChannel(channel),
   },
 }));
@@ -69,7 +69,7 @@ describe('useTeamTyping — throttle, parada e limpeza', () => {
   it('assina um canal por conversa', () => {
     renderHook(() => useTeamTyping('conv-1', 'me', 'Eu'));
 
-    expect(f.channelFactory).toHaveBeenCalledWith('team-typing-conv-1');
+    expect(f.channelFactory).toHaveBeenCalledWith('team-typing-conv-1', { config: { private: true } });
     expect(f.handlers).toHaveLength(1);
   });
 

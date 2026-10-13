@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { log } from '@/lib/logger';
 
 interface TypingUser { userId: string; name: string; }
 
@@ -22,7 +23,12 @@ export function useTeamTyping(
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
-    const ch = supabase.channel(`team-typing-${conversationId}`);
+    // PRIVADO (PD-70): o tópico `team-typing-<conversa>` é protegido pela policy
+    // de `realtime.messages` (só membro da conversa de equipe acessa). Sem
+    // `private: true` a Realtime não consulta a RLS e o canal fica público.
+    const ch = supabase.channel(`team-typing-${conversationId}`, {
+      config: { private: true },
+    });
     const hideTimers = hideTimersRef.current;
     channelRef.current = ch;
     ch.on('broadcast', { event: 'typing' }, ({ payload }) => {
@@ -46,7 +52,11 @@ export function useTeamTyping(
       } else {
         setTypingUsers(prev => prev.filter(u => u.userId !== p.userId));
       }
-    }).subscribe();
+    }).subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        log.warn('[useTeamTyping] canal privado de digitação indisponível:', status);
+      }
+    });
     return () => {
       // F88: nenhum timer sobrevive ao unmount — nem o que esconde o aviso
       // recebido, nem o que envia o "parou de digitar" no canal que vai sair.
@@ -75,6 +85,8 @@ export function useTeamTyping(
         type: 'broadcast',
         event: 'typing',
         payload: { userId: currentUserId, name: currentUserName ?? '', typing: false },
+      }).catch((error) => {
+        log.warn('[useTeamTyping] falha ao enviar o aviso de digitação:', error);
       });
       return;
     }
@@ -89,6 +101,8 @@ export function useTeamTyping(
         type: 'broadcast',
         event: 'typing',
         payload: { userId: currentUserId, name: currentUserName ?? '', typing: true },
+      }).catch((error) => {
+        log.warn('[useTeamTyping] falha ao enviar o aviso de digitação:', error);
       });
     }
 
@@ -102,6 +116,8 @@ export function useTeamTyping(
           type: 'broadcast',
           event: 'typing',
           payload: { userId: currentUserId, name: currentUserName ?? '', typing: false },
+        }).catch((error) => {
+          log.warn('[useTeamTyping] falha ao enviar o aviso de parada:', error);
         });
       }
     }, TYPING_STOP_MS);
