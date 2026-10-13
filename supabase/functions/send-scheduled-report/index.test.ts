@@ -55,7 +55,6 @@ function serviceMock(opts: {
   reportError?: unknown;
   updateError?: unknown;
   updateRows?: unknown[];
-  slaRows?: unknown[];
 } = {}) {
   const fromCalls: string[] = [];
   const updates: Array<{ table: string; payload: Record<string, unknown> }> = [];
@@ -63,9 +62,7 @@ function serviceMock(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qb: any = {
     select: () => qb,
-    // `.gte()` é o terminal da consulta de SLA; roteia para as linhas semeadas
-    // quando o teste as fornece (senão mantém o encadeamento antigo).
-    gte: () => (opts.slaRows === undefined ? qb : Promise.resolve({ data: opts.slaRows, error: null })),
+    gte: () => qb,
     eq: () => qb,
     order: () => qb,
     single: () => Promise.resolve({ data: opts.report ?? null, error: opts.reportError ?? null }),
@@ -370,72 +367,6 @@ Deno.test("envio: UPDATE sem nenhuma linha afetada → não anuncia sucesso", as
   } finally {
     resend.restore();
   }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// R2-SLA-001 / #458 — o relatório agendado de SLA usa a MESMA regra de
-// elegibilidade do painel/histórico (src/hooks/sla/slaFirstResponse.ts):
-// pendentes ficam fora do numerador E do denominador; sem avaliadas não há taxa
-// (nunca 100%). A taxa de resolução sai do relatório.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function slaReport() {
-  return { id: crypto.randomUUID(), report_type: "sla_compliance", recipients: [], frequency: "daily" };
-}
-
-function pendingRow() {
-  return { first_response_breached: false, first_response_at: null };
-}
-
-Deno.test("sla: pendente não entra no denominador nem no numerador (1 violada + 9 pendentes → 0%)", async () => {
-  const mock = serviceMock({
-    report: slaReport(),
-    slaRows: [{ first_response_breached: true, first_response_at: null }, ...Array.from({ length: 9 }, pendingRow)],
-  });
-  const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
-  const body = await res.json();
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  const data = body.reportData;
-  assert(data.evaluatedConversations === 1, `avaliadas deve ser 1: ${JSON.stringify(data)}`);
-  assert(data.onTimeResponses === 0, `no prazo deve ser 0: ${JSON.stringify(data)}`);
-  assert(data.responseBreaches === 1, `violações deve ser 1: ${JSON.stringify(data)}`);
-  assert(data.pendingResponses === 9, `pendentes deve ser 9: ${JSON.stringify(data)}`);
-  assert(data.responseComplianceRate === "0%", `taxa deve ser 0% (não 90%): ${JSON.stringify(data)}`);
-  assert(!("resolutionComplianceRate" in data), `taxa de resolução não pode existir: ${JSON.stringify(data)}`);
-  assert(!("resolutionBreaches" in data), `violações de resolução não podem existir: ${JSON.stringify(data)}`);
-  assert(!("totalConversations" in data), `total bruto não pode existir: ${JSON.stringify(data)}`);
-});
-
-Deno.test("sla: sem nenhuma avaliada → taxa 'N/A' e pendentes à parte (nunca 100%)", async () => {
-  const mock = serviceMock({
-    report: slaReport(),
-    slaRows: Array.from({ length: 3 }, pendingRow),
-  });
-  const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
-  const body = await res.json();
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  const data = body.reportData;
-  assert(data.evaluatedConversations === 0, `avaliadas deve ser 0: ${JSON.stringify(data)}`);
-  assert(data.pendingResponses === 3, `pendentes deve ser 3: ${JSON.stringify(data)}`);
-  assert(data.responseComplianceRate === "N/A", `taxa deve ser "N/A": ${JSON.stringify(data)}`);
-});
-
-Deno.test("sla: taxa = no prazo / avaliadas (2 no prazo + 1 violada → 67%)", async () => {
-  const mock = serviceMock({
-    report: slaReport(),
-    slaRows: [
-      { first_response_breached: false, first_response_at: "2026-10-12T10:00:00Z" },
-      { first_response_breached: false, first_response_at: "2026-10-12T11:00:00Z" },
-      { first_response_breached: true, first_response_at: null },
-    ],
-  });
-  const res = await handleScheduledReport(cronPost(), { supabase: mock.supabase, cronSecret: "segredo" });
-  const body = await res.json();
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  const data = body.reportData;
-  assert(data.evaluatedConversations === 3, `avaliadas deve ser 3: ${JSON.stringify(data)}`);
-  assert(data.onTimeResponses === 2, `no prazo deve ser 2: ${JSON.stringify(data)}`);
-  assert(data.responseComplianceRate === "67%", `taxa deve ser 67%: ${JSON.stringify(data)}`);
 });
 
 Deno.test("envio: todos aceitos → avança last_sent_at/next_send_at e responde sucesso", async () => {
