@@ -77,8 +77,11 @@ function variaveis(css: string, cabecalho: string): Record<string, string> {
   return vars;
 }
 const TOKENS_CSS = fs.readFileSync(path.resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
+const A11Y_CSS = fs.readFileSync(path.resolve(__dirname, '../../../styles/accessibility.css'), 'utf8');
 const CLARO = variaveis(TOKENS_CSS, ':root {');
 const ESCURO = { ...CLARO, ...variaveis(TOKENS_CSS, '.dark {') };
+const HC_CLARO = { ...CLARO, ...variaveis(A11Y_CSS, '.high-contrast {') };
+const HC_ESCURO = { ...ESCURO, ...variaveis(A11Y_CSS, '.high-contrast {'), ...variaveis(A11Y_CSS, '.dark.high-contrast {') };
 /** O token de TEXTO que a classe do elemento pinta — sem ele, o teste não passa. */
 function tokenDeTexto(el: Element): string {
   const m = (el.getAttribute('class') ?? '').match(/text-\[hsl\(var\(--([a-z0-9-]+)\)\)\]/);
@@ -392,7 +395,9 @@ describe('059 — auditoria: alvo, foco e token das ações do menu do sino', ()
     // O número: o par aplicado fecha AA (≥4,5:1) nos dois temas. E o vermelho
     // cru do defeito ficava abaixo no claro — é o gap que a troca fecha (no
     // escuro o token de preenchimento é claro o bastante e passava).
-    for (const [nome, vars] of [['claro', CLARO], ['escuro', ESCURO]] as const) {
+    for (const [nome, vars] of [
+      ['claro', CLARO], ['escuro', ESCURO], ['alto contraste', HC_CLARO], ['alto contraste escuro', HC_ESCURO],
+    ] as const) {
       expect(razao(vars['destructive-text'], vars['popover']), `${nome}: --destructive-text sobre --popover`)
         .toBeGreaterThanOrEqual(4.5);
     }
