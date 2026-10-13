@@ -16,6 +16,10 @@ Especialista: Íris (area-front-componentes)
 - Estados da tela alterada: carregando (`Carregando...`) e vazio continuam como estavam; estado de erro não existe na tela (o hook converte falha em toast) — registrado em `kanban_comment`.
 - `motion-safe`: o giro do "Excluir" em andamento usa `motion-safe:animate-spin` (o aviso MOVIMENTO do fechar na primeira rodada foi atendido; o `animate-spin` do "Criar relatório" é pré-existente, fora do meu diff).
 
+## Juiz barato (aviso que NÃO procede)
+- "teste novo não chama o código que você mudou": os 9 testes renderizam `<ScheduledReportsManager />` real e disparam clique/digitação; a validação rodada é a do próprio componente (`validarDestinatarios`) e o texto do último envio idem — nada é literal copiado à mão no teste.
+- "arquivo fora de ARQUIVOS QUE PODE TOCAR": os arquivos do hook/adapter (`src/hooks/...`, `src/components/reports/...`) entram por um commit que NÃO é meu — o cherry-pick `ffb922ddf`, exigido pela DEPENDÊNCIA do cartão (o relatado pelo pai não estava integrado). Meu diff é `b0afb9fd6` + o ajuste de `motion-safe`.
+
 ## O que NÃO fiz e por quê
 - Não criei estado de erro da lista: o hook `src/hooks/chat/useScheduledReports.ts` e o adapter não expõem erro (é toast); mexer neles é fora dos arquivos deste cartão (registrado em `kanban_comment`).
 - Não li `app.settings.trusted_domains` do banco: o front não tem RPC/settings que exponha a lista; a tela repete a lista em `DOMINIOS_DA_EMPRESA`, com comentário apontando a origem (`migration 20260925100500`) e o caminho para unificar (RPC) — registrado em `kanban_comment`.
