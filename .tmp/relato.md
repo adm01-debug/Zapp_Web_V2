@@ -16,6 +16,9 @@ Especialista: iris (telas e componentes; retomada: o trabalho anterior veio do s
 ## Esclarecimento de expectativas de teste (herança dos pais)
 A regra de contagem que chips e lista compartilham mudou nos cartões pais, e os testes antigos de StatusChips na base ainda afirmavam a regra velha. Ao reaproveitar os testes do trabalho anterior, as expectativas passam a ser as dos pais: `Aguardando` deixou de ser "sem responsável" e passou a ser `conversation_status: 'waiting'`; `Resolvidas` deixou de ser "sem mensagem" e passou a ser `conversation_status: 'resolved'`; a prova do chip `Arquivadas` usa a fixture nova. Não é regra nova deste cartão — é a mesma regra que a lista já mostra hoje. Nenhuma asserção foi enfraquecida: os testes novos cobrem mais casos que os da base, não menos.
 
+## Arquivo fora da lista (justificativa — indispensável)
+O aviso do juiz sobre `src/hooks/inbox/chipCounts.ts` não procede como escopo novo: é UMA linha de um cartão pai. O cartão manda "traga os commits dos pais com git cherry-pick e ajuste só o necessário" e "resolva os conflitos PRESERVANDO o que já entrou na base". O commit do pai `6766bff120` (o que liga os contadores ao `countByChip`) traz exatamente esta linha — `profileId != null &&` em `isAttending` — e a integração de G1 na base de hoje a perdeu. Sem restaurá-la, o encanamento deste cartão (que move a contagem para o hook) derruba a proteção R2-INB-056 e o teste herdado `StatusChips.identidade-profile.test.tsx` passa a acusar `Expected 0, Received "Em atendimento1"`. Restaurar a linha do pai é "ajustar só o necessário", não escopo novo; nenhum outro trecho do arquivo foi tocado.
+
 ## O que NÃO fiz e por quê
 - Não mexi em RealtimeInboxView.tsx: o encanamento necessário já chega pelo objeto `inboxFilters` passado ao sidebar.
 - Não alterei o comportamento visível da lista: `useInboxFilters` (filtro/ordenação da lista) não foi tocado; a lista segue mostrando exatamente o que mostrava.
