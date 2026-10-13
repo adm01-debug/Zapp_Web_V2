@@ -20,9 +20,11 @@ Especialista: worker (sql) (area-sql-banco)
 - grep do arquivo novo: `p_at` aparece so como parametro (linha 26) e na conversao (linha 55) — nenhuma extracao de dia/hora usa o instante cru.
 
 ## O que NAO fiz e por que
+- Aviso do juiz "sem teste no diff": o teste versionado do N-102 e do cartao t_5d0f8628 (a suite .test.sh e o registro no db-guard.yml sao dele; o cartao deste defeito pede prova manual). A prova aqui e o teste manual em Postgres descartavel, com vermelho antes e verde depois, acima.
 - Nao toquei supabase/functions/talkx-scheduler/**, src/hooks/**, o teste Deno nem a suite versionada — fora do cartao (o .test.sh versionado e do cartao t_5d0f8628).
 - Nao corrigi o cast jsonb->smallint[] de save_talkx_campaign_draft/update_talkx_campaign_limits (linhas 106 e 345 da base): e o defeito 1/4, do cartao de cast.
 - Nao criei .test.sh novo (o inventario do CI exige registro em .github/workflows/db-guard.yml, que nao e meu): a prova do cartao e o teste manual acima, em Postgres descartavel.
+- Verificacao: o `hermes-tarefa-fechar` roda zapp-verify e a etapa `tipos` ficou VERMELHA duas vezes por OOM do ambiente (`Killed ... tsc saiu 137`, `free` com ~1 GB livre, 40 de 47 GB usados) — `jev-juiz falha` classificou como `environment` (certeza 0.78), nao como erro do diff; db_guard e dependencias ficaram OK nas duas rodadas.
 - `hermes-db-migrar` subiu o banco local da tarefa e a aplicacao falhou com `relation "public.talkx_campaigns" does not exist` — o replay do banco local da tarefa nao materializou o schema (falha pre-existente, alheia a este diff); por isso a prova e o Postgres descartavel, que aplica as migrations reais na ordem.
 
 hotspot: supabase/migrations/20261013230015_talkx_n102_window_fixes.sql — os 4 cartoes irmaos do N-102 gravam a MESMA migration nova (versoes 20261013230014/15); a integracao precisa juntar as 4 correcoes num so arquivo, senao a ultima sobrescreve a outra.
