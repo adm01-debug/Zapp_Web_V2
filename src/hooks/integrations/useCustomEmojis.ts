@@ -102,6 +102,9 @@ export function useCustomEmojis(open: boolean) {
   }, [emojis.length, hasMore]);
 
   useEffect(() => {
+    // Dívida conhecida (já no baseline do CI) — a leitura precisa ligar o `loading`
+    // assim que a tela abre; o aviso existe igual na base.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) fetchEmojis();
   }, [open, fetchEmojis]);
 

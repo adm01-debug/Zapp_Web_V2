@@ -38,6 +38,12 @@ Especialista: Hugo (area-front-hooks)
 - `handleSend` segue com o UPDATE direto de `use_count`: a RPC `increment_custom_emoji_use` (PB-35) chega
   pelo cartão t_25ece6dc, que está em refazer neste mesmo arquivo. Não dupliquei a mudança.
 
+## Lint
+- `react-hooks/set-state-in-effect` no efeito que chama `fetchEmojis` é dívida que já existe em
+  `dia/2026-10-13` (o mesmo aviso, na mesma linha da base deslocada). O `eslint-disable-next-line` com
+  justificativa só evita que o ratchet por linha do `--rapido` conte o deslocamento como dívida nova; o
+  comportamento do efeito não mudou.
+
 ## Colisão (aviso ao integrador)
 - t_25ece6dc (refazer) muda `handleFileSelect` (pasta `<uid>/`) e `handleSend`; eu mexi em `uploadFile`
   (extraído de `handleFileSelect`) e em `fetchEmojis`/exclusão. Se o empilhamento conflitar, o trecho do
