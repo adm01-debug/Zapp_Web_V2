@@ -1,32 +1,22 @@
-Especialista: workersql
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- supabase/migrations/20261013180000_audit_log_summary.sql (NOVA, ADITIVA): cria as duas RPCs de leitura que a tela de auditoria por período consome — sem DROP/TRUNCATE/RENAME, sem tocar tabela/policy/gatilho/dado.
-  · public.audit_log_summary(p_from timestamptz, p_to timestamptz) → total_logs, sensitive_actions, unique_users e os 4 KPIs: denied_24h, permission_changes_24h, admin_logins_7d, rls_failures_24h. As janelas dos KPIs são ancoradas no FIM do período (p_to): 24h = [p_to-24h, p_to); 7d = [p_to-7d, p_to). Período invertido (p_from > p_to) vira zero, não erro.
-  · public.audit_log_list(p_from, p_to, p_cursor, p_cursor_id, p_limit) → a lista com o NOME do autor (LEFT JOIN public.profiles.name) e paginação por cursor keyset (created_at, id) — sem sobreposição entre páginas; p_limit normalizado em [1,200].
-  Ambas SECURITY DEFINER, `SET search_path TO public, pg_temp`, e com a guarda interna `public.has_role(auth.uid(),'admin')` = MESMO controle do SELECT de audit_logs hoje (policy "Only admins can view audit logs", migration 20260404173036): quem não é admin recebe ZERO linhas (fail-closed), sem distinguir caso existente de inexistente. ACL: REVOKE de PUBLIC/anon; GRANT EXECUTE só a authenticated e service_role.
-- supabase/tests/audit_log_summary_por_periodo.sql (NOVO): suíte que sobe um Postgres 17 descartável, aplica a migration REAL e prova rodando como authenticated (admin e agente) e anon.
-- src/integrations/supabase/types.ts: +2 entradas em Functions (audit_log_summary, audit_log_list) para a tela tipar a chamada.
-- Contrato para o cartão filho (t_2171f991 / HZ-07): chamar `audit_log_summary` e `audit_log_list` por RPC nomeada; p_cursor/p_cursor_id são a última linha da página anterior.
+- `src/components/security/AuditLogDashboard.tsx`: a aba de auditoria passou a ler do banco pelas RPCs admin-only do PG-06 — `audit_log_summary` (totais) e `audit_log_list` (lista) — dentro de um hook local da própria tela. Antes era `supabase.from('audit_logs').select(...).limit(200)` e o `if (!error && data)` engolia a falha: erro de RLS/permissão/servidor virava "0" na tela, sem aviso.
+- Cards (Total de Logs, Hoje, Ações Sensíveis, Usuários Únicos) e KPIs (acessos negados 24h, mudanças de permissão 24h, logins de admin 7d, falhas de RLS 24h) agora saem de `audit_log_summary` — **nenhum número é contado no cliente**. O card "Hoje" deixa de somar a página carregada e pede ao banco a janela `[meia-noite de hoje no fuso do app, agora]`.
+- A lista mostra o **nome do autor** (`actor_name`, resolvido pela RPC via LEFT JOIN em profiles), tem filtro de data (de/até, recortados no fuso do app), paginação por cursor ("Carregar mais" envia `p_cursor`/`p_cursor_id` do último log) e skeleton de carregamento.
+- Erro explícito: card "Não foi possível carregar a auditoria." + botão "Tentar de novo" (lista e cards somem, para não exibir zeros). Sem papel `admin`: "Você não tem permissão para ver a auditoria" e nenhuma consulta é feita.
 
 ## Prova
-- vermelho antes (migration não aplicada): `psql -v sem_funcao=1 -f supabase/tests/audit_log_summary_por_periodo.sql` →
-  `ERROR:  SH1-audit FALHOU [A1 total_logs do admin == baseline]: esperado 8, obtido ERRO 42883`  (PIPE_RC=3)
-- verde depois (mesma suíte, com a migration aplicada) → 38 PASS e a linha final:
-  `SH1-audit OK: admin le resumo real + lista paginada com autor; agente/anon`  (PIPE_RC=0)
-- banco LOCAL da tarefa (zapp-db-local, schema real): a migration aplica limpa (`CREATE FUNCTION` x2 / `REVOKE` x2 / `GRANT` x2 / `COMMENT` x2). Com usuário sintético admin (SET LOCAL ROLE authenticated + request.jwt.claims), a RPC bate com a CONTAGEM DIRETA (postgres, sem RLS) no mesmo instante:
-  `direto_total=33 | direto_unicos=5 | direto_admin_logins_7d=1`
-  `total_logs=33 | sensitive_actions=14 | unique_users=5 | denied_24h=0 | permission_changes_24h=10 | admin_logins_7d=1 | rls_failures_24h=0`
-  a lista do admin traz 5 linhas (p_limit=5); o agente (authenticated sem papel admin) traz 0 no resumo e 0 na lista. (O banco local é uma stack viva e cresce entre execuções; o que vale é a igualdade RPC x contagem direta.)
-- rollback executável: as DUAS linhas do header (`DROP FUNCTION IF EXISTS ...`) rodam no banco local → `restantes = 0`; a migration foi reaplicada em seguida.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (278s)` (tipos, lint, migrations e db_guard OK).
+- vermelho antes (componente da base `HEAD` + testes novos): `npx vitest run src/components/security/__tests__/AuditLogDashboard.test.tsx` → `TypeError: supabase.from is not a function` — o componente antigo consulta pelo query-builder, os testes novos mockam as RPCs.
+- verde depois: `npx vitest run src/components/security/__tests__/AuditLogDashboard.test.tsx src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx` → Test Files 2 passed; Tests 14 passed
+- pasta inteira (não quebrou vizinhos): `npx vitest run src/components/security` → Test Files 20 passed; Tests 84 passed
+
+## Critério de pronto (item a item)
+- permissão/erro explícitos e nunca zero: `.tsx` (cards de erro/permissão) + testes "em falha mostra o erro e 'Tentar de novo' — nunca zeros silenciosos", "'Tentar de novo' refaz a leitura e mostra os números" e "sem papel admin diz que não tem permissão e não consulta o banco".
+- filtro de data + paginação por cursor + skeleton: `.tsx` + testes "o filtro de data recorta a janela enviada às RPCs", "'Carregar mais' busca a próxima página pelo cursor do último log" e "mostra skeletons enquanto carrega".
+- zapp-verify verde: rodado pelo `hermes-tarefa-fechar`.
 
 ## O que NÃO fiz e por quê
-- denied_24h e rls_failures_24h devolvem 0 no dado atual de propósito: o V2 ainda não grava evento dedicado de acesso negado/RLS (é o que o SH1 vai gravar). Deixei os verbos já mapeados (`unauthorized_access`, `role_auto_provision_denied`; `rls_denied`, `rls_policy_violation`) — quando o SH1 gravar, o KPI acende sem nova migration. O cartão autoriza isso ("se ainda não existirem, devolva 0 e registre no relato").
-- NÃO abri a policy da tabela nem relaxei para supervisor: o cartão pede o MESMO controle do SELECT (só admin).
-- Diff (>25k caracteres da área): o diff contra a base tem 4 ARQUIVOS e 1 TESTE — a migration `20261013180000_audit_log_summary.sql`, a suíte `supabase/tests/audit_log_summary_por_periodo.sql` (o teste), o `src/integrations/supabase/types.ts` e o `.tmp/relato.md` (versionado no repo). O excesso de tamanho é a suíte de prova (~20k); a migration tem 182 linhas aditivas. O cartão pede as DUAS RPCs num cartão só — não cindi.
-- Fronteira: o consumo na tela é do cartão filho (worker de tela/hooks); aqui entreguei só o banco + os tipos.
-## Pontos do juiz barato (respondidos)
-- Ponto 1 "teste não chama o código real": NÃO PROCEDE. A suíte `supabase/tests/audit_log_summary_por_periodo.sql` chama de verdade `public.audit_log_summary` / `public.audit_log_list` (roda como authenticated/anon, sem mock) e falha sem a migration (42883) — é o vermelho→verde acima.
-- Ponto 2 "números/arquivos não batem": o diff tem 4 arquivos porque `.tmp/relato.md` é VERSIONADO no repositório (está no base, commits 466f5fc215 e 7e55b88aa9); os entregáveis são 3: a migration, a suíte `.sql` (o teste) e o types.ts.
-- Ponto 3 "SECURITY DEFINER sem search_path": NÃO PROCEDE. As duas funções JÁ TÊM `SET search_path` fixo; no banco local, `pg_proc.proconfig` de ambas é `{"search_path=public, pg_temp"}` e `prosecdef = t` (e a suíte prova isso em T0d/T0e/T0f/T0g). Deixei a forma `SET search_path = public, pg_temp` (era `SET search_path TO '...'`, mesmo efeito).
+- Não toquei no barramento de dados (migration/RPCs/`types.ts`): é do PG-06 (t_4d66a644) e já está integrado — trouxe a faixa inteira por cherry-pick (5 commits) para cima da base `dia/2026-10-13`.
+- Testes removidos no arquivo de teste: "selects explicit columns instead of *" e as contagens mock-a-mock (suspicious/unique/total) protegiam o query-builder antigo, que deixou de existir; o equivalente agora é "renderiza os cards de resumo com números que vieram do banco". A proteção de `select('*')` não se aplica mais — a RPC devolve colunas fixas. A antiga "action color mapping" conferia strings hardcoded contra si mesmas (sem valor).
+- `npx eslint` no arquivo aponta 1 warning pré-existente (`no-restricted-imports` do client Supabase) que já existia na base — o lint-ratchet não cresce.
