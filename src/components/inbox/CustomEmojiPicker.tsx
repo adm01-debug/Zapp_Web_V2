@@ -66,7 +66,7 @@ function UploadPreview({ pending, saving, onConfirm, onCancel }: { pending: Pend
       <div className="flex items-center gap-2 justify-end">
         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel} disabled={saving}><X className="w-3 h-3 mr-1" /> Cancelar</Button>
         <Button size="sm" className="h-7 text-xs" onClick={() => onConfirm({ ...pending, selectedCategory: category, name })} disabled={saving || !name.trim()} title={!name.trim() ? 'Dê um nome ao emoji' : undefined}>
-          {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />} Salvar
+          {saving ? <Loader2 className="w-3 h-3 mr-1 motion-safe:animate-spin" /> : <Check className="w-3 h-3 mr-1" />} Salvar
         </Button>
       </div>
     </motion.div>
