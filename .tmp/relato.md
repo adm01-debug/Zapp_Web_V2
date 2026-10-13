@@ -22,6 +22,9 @@ Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
 - SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
 - Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
 
+## Arquivos fora da lista do cartão (indispensáveis)
+- `scripts/db-audit/crisis-room-snapshot.test.sh` e `scripts/ci/check-test-inventory.mjs`: o cartão pede prova com o PAPEL real (authenticated/anon/service_role). A única forma no repositório é `.test.sh` em PostgreSQL 17 descartável (docker) — a suíte `supabase/tests/*.sql` roda como service_role no MCP e não prova autorização. A entrada na ALLOWLIST é obrigatória para o `check-test-inventory` não reprovar o `.test.sh` como órfão. Sem os dois, o critério de prova do cartão fica sem como ser cumprido.
+
 ## O que NÃO fiz e por quê
 - Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
 - Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
