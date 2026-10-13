@@ -72,7 +72,7 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
           <CardContent className="flex flex-col items-center gap-4 p-4">
             {/* Estado (T62) */}
             <p
-              className="text-sm font-medium text-muted-foreground"
+              className={`text-sm font-medium text-muted-foreground ${estado === 'ringing_out' || estado === 'connecting' ? 'motion-safe:animate-pulse' : ''}`}
               aria-live="polite"
               data-testid="tel-active-status"
             >

@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
 
 interface CallKpiCardProps {
   rotulo: string;
@@ -15,20 +15,18 @@ interface CallKpiCardProps {
  * a "1.234" o grid inteiro pularia a cada atualizacao se a altura fosse automatica.
  * Os data-testid sao os do plano: tel-kpi-card, tel-kpi-tile e tel-kpi-value.
  *
- * T75: o tile entra com fade de 150 ms. Sob `prefers-reduced-motion` a entrada e
- * pulada (`initial={false}`) e a transicao tem duracao 0 — o numero aparece no
- * primeiro paint, sem movimento.
- */
+ * T75 — KPI fade 150ms sob useReducedMotion.
+  */
 export function CallKpiCard({ rotulo, valor, carregando = false, dica }: CallKpiCardProps) {
-  const reduzirMovimento = useReducedMotion();
+  const reduzirMotion = useReducedMotion();
 
   return (
     <motion.div
       data-testid="tel-kpi-card"
       className="h-[78px] rounded-lg border border-border bg-card px-3 py-2 flex flex-col justify-between min-w-0"
-      initial={reduzirMovimento ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: reduzirMovimento ? 0 : 0.15 }}
+      initial={reduzirMotion ? undefined : { opacity: 0 }}
+      animate={reduzirMotion ? undefined : { opacity: 1 }}
+      transition={reduzirMotion ? undefined : { duration: 0.15 }}
     >
       <span
         className="text-3xs uppercase tracking-wide text-muted-foreground truncate"

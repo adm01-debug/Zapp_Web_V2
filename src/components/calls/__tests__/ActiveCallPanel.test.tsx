@@ -148,4 +148,25 @@ describe('ActiveCallPanel (T62/T63)', () => {
     expect((screen.getByTestId('tel-mute') as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByTestId('tel-dtmf-toggle') as HTMLButtonElement).disabled).toBe(true);
   });
+
+  // T75 — motion-safe:animate-pulse no status quando Tocando ou Conectando
+  it('aplica motion-safe:animate-pulse ao status quando ringing_out ou connecting', () => {
+    for (const estado of ['ringing_out', 'connecting']) {
+      sessao = { ...sessao, status: estado as typeof sessao.status };
+      const { unmount } = render(<ActiveCallPanel segundos={0} />);
+      const status = screen.getByTestId('tel-active-status');
+      expect(status.classList).toContain('motion-safe:animate-pulse');
+      unmount();
+    }
+  });
+
+  it('nao aplica motion-safe:animate-pulse ao status quando nao e Tocando nem Conectando', () => {
+    for (const estado of ['dialing', 'ringing_in', 'active']) {
+      sessao = { ...sessao, status: estado as typeof sessao.status };
+      const { unmount } = render(<ActiveCallPanel segundos={0} />);
+      const status = screen.getByTestId('tel-active-status');
+      expect(status.classList).not.toContain('motion-safe:animate-pulse');
+      unmount();
+    }
+  });
 });

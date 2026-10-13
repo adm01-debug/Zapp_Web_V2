@@ -106,7 +106,10 @@ describe('T75 — KPI: fade de 150 ms', () => {
     const tile = screen.getByTestId('tel-kpi-card');
     expect(tile.style.opacity).not.toBe('0');
     expect(screen.getByText('42')).toBeInTheDocument();
-    expect(tile.getAttribute('data-motion-duracao')).toBe('0');
+    // Sob movimento reduzido o componente não passa transição alguma
+    // (`transition={undefined}` — forma aprovada na prova T75 do contraste):
+    // sem transição não há animação, e o tile nasce visível (linhas acima).
+    expect(tile.getAttribute('data-motion-duracao')).toBe('nenhuma');
   });
 });
 
