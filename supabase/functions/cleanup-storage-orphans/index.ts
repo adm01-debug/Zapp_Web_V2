@@ -114,6 +114,8 @@ export interface CleanupInjected {
   createSupabase?: (url: string, key: string) => SupabaseLike;
   maxDeletePerRun?: number;
   minAgeDays?: number;
+  /** teto de linhas de referência por (tabela, coluna) — seam de teste do fail-closed */
+  maxReferenceRows?: number;
 }
 
 type Caller = "cron" | "admin";
@@ -297,7 +299,20 @@ export async function collectReferencedPaths(
         paths.add(path);
       }
       scanned += rows.length;
-      if (rows.length < pageSize || scanned >= maxRows) break;
+      if (rows.length < pageSize) break; // última página: todas as linhas foram lidas
+      if (scanned >= maxRows) {
+        // Teto atingido: só é seguro concluir se não houver mais linhas. Sondamos uma
+        // linha além do lido; se existir, o bucket inteiro vira `failed` (fail-closed:
+        // não se apaga o que pode estar referenciado além do teto).
+        const { data: probe, error: probeError } = await client
+          .from(source.table)
+          .select(`id,${source.column}`)
+          .like(source.column, pattern)
+          .order("id", { ascending: true })
+          .range(offset + rows.length, offset + rows.length);
+        if (probeError || (probe ?? []).length > 0) return { paths, failed: true };
+        break;
+      }
       offset += rows.length;
     }
   }
@@ -328,6 +343,7 @@ export async function handleCleanupStorageOrphans(
   const readEnv = _injected?.env ?? ((key: string) => Deno.env.get(key));
   const maxDelete = _injected?.maxDeletePerRun ?? MAX_DELETE_PER_RUN;
   const minAgeDays = _injected?.minAgeDays ?? ORPHAN_MIN_AGE_DAYS;
+  const maxReferenceRows = _injected?.maxReferenceRows;
 
   try {
     const supabaseUrl = readEnv("SUPABASE_URL") ?? "";
@@ -370,7 +386,11 @@ export async function handleCleanupStorageOrphans(
     for (const bucket of BUCKETS) {
       const report: BucketReport = { scanned: 0, candidates: 0, deleted: 0 };
 
-      const referenced = await collectReferencedPaths(supabase, bucket);
+      const referenced = await collectReferencedPaths(
+        supabase,
+        bucket,
+        maxReferenceRows === undefined ? {} : { maxRows: maxReferenceRows },
+      );
       if (referenced.failed) {
         // Fail-closed: sem saber o que está referenciado, NÃO se apaga nada deste bucket.
         errors.push(`${bucket}:reference-read-failed`);
