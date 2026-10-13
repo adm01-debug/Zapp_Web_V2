@@ -4252,6 +4252,71 @@ export type Database = {
           },
         ]
       }
+      instance_pauses: {
+        Row: {
+          auto: boolean
+          created_at: string
+          id: string
+          instance: string
+          paused_by: string | null
+          paused_until: string
+          reason: string
+          resumed_at: string | null
+          resumed_by: string | null
+        }
+        Insert: {
+          auto?: boolean
+          created_at?: string
+          id?: string
+          instance: string
+          paused_by?: string | null
+          paused_until: string
+          reason: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+        }
+        Update: {
+          auto?: boolean
+          created_at?: string
+          id?: string
+          instance?: string
+          paused_by?: string | null
+          paused_until?: string
+          reason?: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instance_pauses_paused_by_fkey"
+            columns: ["paused_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_paused_by_fkey"
+            columns: ["paused_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_resumed_by_fkey"
+            columns: ["resumed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_resumed_by_fkey"
+            columns: ["resumed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_whitelist: {
         Row: {
           added_by: string | null
@@ -10454,6 +10519,10 @@ export type Database = {
         Args: { p_contact_id: string; p_message_id: string; p_phone: string }
         Returns: Json
       }
+      auto_pause_instance: {
+        Args: { p_instance: string; p_minutes: number; p_reason: string }
+        Returns: Json
+      }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
@@ -11481,6 +11550,7 @@ export type Database = {
         Args: { check_country_code: string }
         Returns: boolean
       }
+      is_instance_paused: { Args: { p_instance: string }; Returns: boolean }
       is_ip_blocked: { Args: { check_ip: string }; Returns: boolean }
       is_ip_whitelisted: { Args: { check_ip: string }; Returns: boolean }
       is_privileged_contact_caller: { Args: never; Returns: boolean }
@@ -11656,6 +11726,10 @@ export type Database = {
       pause_dispatches_for_connection: {
         Args: { p_connection_id: string; p_reason: string }
         Returns: number
+      }
+      pause_instance: {
+        Args: { p_instance: string; p_minutes: number; p_reason: string }
+        Returns: Json
       }
       persist_conversation_analysis: {
         Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
@@ -11938,6 +12012,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resume_instance: { Args: { p_instance: string }; Returns: number }
       retry_talkx_recipient: {
         Args: { p_recipient_id: string }
         Returns: boolean
