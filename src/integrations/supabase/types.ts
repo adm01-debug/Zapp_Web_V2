@@ -10374,6 +10374,26 @@ export type Database = {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
       }
+      admin_add_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: {
+          out_role: Database["public"]["Enums"]["app_role"]
+          out_user_id: string
+        }[]
+      }
+      admin_remove_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: {
+          out_role: Database["public"]["Enums"]["app_role"]
+          out_user_id: string
+        }[]
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
