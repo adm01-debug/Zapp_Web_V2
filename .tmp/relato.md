@@ -1,18 +1,53 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-sql-banco)
+Executor do refazer: senior
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+Ponto 1: adicionar caminho SQL de enfileiramento de grupo sem abrir destino duplo em `messages`.
+- O que mudei: `supabase/migrations/20261011155946_enqueue_group_outbound_message.sql` adiciona `messages.whatsapp_group_id`, FK para `whatsapp_groups`, CHECK `messages_single_outbound_destination_chk`, índice de FK e índice único parcial `(whatsapp_group_id, client_message_id)` para idempotência de grupo.
+- O que mudei: a mesma migration cria `public.enqueue_group_outbound_message` com `SECURITY DEFINER`, `search_path = pg_catalog, public`, EXECUTE só para `authenticated`, validação de payload/mídia/JID e recusa sem oracle para grupo inexistente ou fora do escopo.
+- Prova vermelha antes: no script executado agora, antes da migration nova, grupo ainda não tem caminho de fila: `[PASS] C0.1 grupo nao tem caminho de enfileiramento (funcao ausente)` e `[PASS] C0.2 mensagem sem contato (grupo) nao e claimavel pela fila antiga`.
+- Prova verde depois: `bash scripts/db-audit/enqueue-connection-scope.test.sh 2>&1 | tee .tmp/green-enqueue-group.log` -> exit 0; terminou com `[OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado`.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Ponto 2: aplicar escopo de fila/conexão também no grupo, sem oracle de enumeração.
+- O que mudei: `public.enqueue_group_outbound_message` nega usuário comum fora da fila quando a conexão do grupo (ou a conexão resolvida para grupo sem conexão) está vinculada a fila; membro da fila e admin/supervisor continuam permitidos, e conexão sem fila continua inerte por construção.
+- O que mudei no teste: `scripts/db-audit/enqueue-connection-scope.test.sh` cria `g_fila`, `g_free` e `g_sem_conn` e cobre DORA fora da fila, CARLA membro da fila, ADM, grupo inexistente, grupo sem conexão, conexão sem fila, idempotência, claim/complete e regressão do contato.
+- Prova vermelha antes: o mesmo script demonstra o defeito anterior de escopo no caminho de contato antes da migration de escopo: `[PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7`.
+- Prova verde depois: no comando `bash scripts/db-audit/enqueue-connection-scope.test.sh 2>&1 | tee .tmp/green-enqueue-group.log`, os casos C1a, C1b, C1c, C2, C2b, C16, C17 e C18 passaram; a saída completa está em `.tmp/green-enqueue-group.log`.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+Ponto 3: manter o contrato tipado do banco compatível com a coluna/RPC novas.
+- O que mudei: `src/integrations/supabase/types.ts` expõe `messages.whatsapp_group_id` em Row/Insert/Update, a relação `messages_whatsapp_group_id_fkey`, a RPC `enqueue_group_outbound_message` e o retorno com `whatsapp_group_id`.
+- O que mudei: `src/adapters/evolutionAdapter.ts` preenche `whatsapp_group_id: null` no shape real de `NormalizedRealtimeMessage`; é o único ajuste de código necessário para o typecheck depois que `MessageRow` passa a incluir a coluna nullable.
+- Prova verde depois: `bun run typecheck 2>&1 | tee .tmp/typecheck.log` -> exit 0; saída: `$ tsc -b --force`.
+
+Ponto 4: rollback real e executável da migration de grupo.
+- O que mudei: o cabeçalho da migration traz SQL executável que recria o corpo anterior de `public.claim_outbound_message`, remove a RPC de grupo, índices, CHECK e coluna nova.
+- Prova verde depois: no mesmo script, o bloco E executou o rollback extraído da própria migration e conferiu `[PASS] E1 a coluna whatsapp_group_id foi removida`, `[PASS] E2 a RPC de grupo foi removida`, `[PASS] E3 os indices de grupo foram removidos`, `[PASS] E3b o CHECK de destino unico foi removido` e `[PASS] E4 claim volta ao corpo so-de-contato (sem whatsapp_group_id)`.
+
+Arquivos do diff (`git diff --name-only dia/2026-10-13...HEAD`):
+.tmp/relato.md
+scripts/db-audit/enqueue-connection-scope.test.sh
+src/adapters/evolutionAdapter.ts
+src/integrations/supabase/types.ts
+supabase/migrations/20261011155946_enqueue_group_outbound_message.sql
+
+Fatos do diff (`git diff --stat dia/2026-10-13...HEAD`):
+- 5 arquivos no diff; 1 arquivo de teste alterado (`scripts/db-audit/enqueue-connection-scope.test.sh`).
+- 803 inserções e 22 remoções.
+- `git log --oneline dia/2026-10-13..HEAD` mostra um único commit deste cartão: `fix(banco): corrige refazer envio de grupo`.
+
+Comandos de verificação executados:
+- `git show --stat --name-status 4fd3fd8e9ef2` -> confirmou que o commit aprovado anterior tocava os mesmos arquivos reaplicados aqui.
+- `bash scripts/db-audit/enqueue-connection-scope.test.sh 2>&1 | tee .tmp/green-enqueue-group.log` -> exit 0; terminou com `[OK] contrato de escopo de conexao no enfileiramento verificado`, `[OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado` e `[OK] rollback da migration de grupo executado e verificado`.
+- `bun run typecheck 2>&1 | tee .tmp/typecheck.log` -> exit 0; saída `$ tsc -b --force`.
+- `git diff --cached --check` -> exit 0 antes do commit.
+- Varredura dos arquivos do diff pelo identificador do banco de produção -> sem ocorrências.
+- `jev-juiz pronto .tmp/relato.md` -> `jev-juiz (pronto-5): nada a apontar no diff (5 arquivos) nem no relato. Pode fechar.`
+- `zapp-verify . 2>&1 | tee .tmp/zapp-verify-full.log` -> não concluído: a chamada estourou o limite de 420s da ferramenta depois de registrar `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations` e `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto`.
+
+Avisos do juiz barato que não procedem:
+- `scripts/db-audit/enqueue-connection-scope.test.sh` é indispensável porque o comportamento alterado é SQL/RPC/migration; a recusa original exigia prova executando SQL real, inclusive rollback, escopo de fila e claim de grupo. Sem esse arquivo a correção ficaria sem prova.
+- `src/adapters/evolutionAdapter.ts` é indispensável porque `src/integrations/supabase/types.ts` torna `whatsapp_group_id` parte de `MessageRow`; o adaptador real precisa preencher o campo nullable para o typecheck, sem mudar comportamento visual.
+- Não há commit de merge/rebase separado no diff porque `hermes-tarefa-iniciar` criou este workspace já sobre `BASE=dia/2026-10-13`; o diff entrega a reaplicação do commit aprovado anterior sobre a base atual, com um único commit do cartão.
+
+O que NÃO fiz e por quê:
+- Não toquei produção, não usei DESTINO_URL, não fiz push/deploy e não alterei CI/guardas/manifestos.
+- Não acrescentei comportamento fora do commit aprovado anterior; o ajuste de adaptador é só compatibilidade tipada com a coluna nullable nova.
