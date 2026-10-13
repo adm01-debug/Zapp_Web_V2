@@ -1,108 +1,67 @@
-Especialista: designer (worker (design), skill `design-system-zapp`) — retomada do cartão aberto por iris (telas) por rebase.
+Especialista: Íris (area-front-componentes)
 
-# [refazer 1] colunas do Quadro: subtítulo curto + limite de Fazendo (080, 082, 083)
+# Etapa 160 — campo "Lembrete" no modal Nova tarefa
 
-## Ponto 1 (o único item do "corrigir"): conflito com a ponta de dia/2026-10-12
-O workspace já nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12), então não houve rebase de
-branch: trouxe a FAIXA do trabalho anterior por `git cherry-pick 9c01d7ed6 113bf61f0 2f6cf568e`
-(SHA anterior = 2f6cf568e, fila `v2/colunas-quadro-subtitulo-limite-fazendo-2610111753c50b`).
-Conflitos em `BoardColumn.tsx` (5 hunks) e `TasksBoardMode.tsx` (2 hunks) — resolvidos preservando o
-que já entrou na base:
-- `BoardColumn.tsx`: mantive o lado da ponta — `pressaoArrasto` (etapa 094), `realceEspera`/
-  `ring-warning` (etapa 096), `colapsada`/`flex-none` (etapa 093) e o rodapé do Concluído (etapa 092);
-  descartei a versão antiga que reescrevia essas mesmas linhas.
-- `TasksBoardMode.tsx`: mantive o lado da ponta inteiro (`alvoTranco` + `tremerColuna` + deps
-  `[onMove, onRequestWaitingReason, onReorder, tremerColuna]` e `pressaoArrasto={pressaoArrasto}`),
-  porque a ponta já tinha toast de limite cheio (`toast.error('Fazendo está cheio (máx. 3)…')`) e o
-  tranco por coluna de destino. Resultado: `TasksBoardMode.tsx` ficou IDÊNTICO à base (0 linhas no
-  diff) — o arquivo não entra no meu diff.
-- Só a parte que a base ainda NÃO tinha foi mantida do trabalho anterior: o subtítulo vem do dado
-  canônico `KANBAN_COLUMNS.subtitle` (`col.subtitle`), acrescentado em `workItem.types.ts`
-  (etapa 081, dado do pai t_15507eb6). Removi o mapa local `SUBTITULOS_COLUNA` que a ponta havia
-  criado no cabeçalho, porque os 5 textos dele (`Capture primeiro`/`Próximo passo`/`Até 3 agora`/
-  `Com motivo`/`7 dias à vista`) CONTRADIZEM a seção 3 do plano e o destino do guarda-chuva do
-  cartão. Deixei comentário no cartão para o revisor conferir essa escolha.
+## O que mudou e por quê
+Plano `docs/plans/PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md`, seção 3.4
+(imagem 04, modal "Nova tarefa"), linha 119 da tabela de elementos:
+`| "Lembrete — Quando você quer ser avisado": data, hora e Em 1h / Amanhã, 9h / Próx. seg., 9h | FALTA | 160–161 |`
 
-## Ponto 2: rodar o teste do cartão e a verificação
-- Teste do cartão: `npx vitest run src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx`
-  → `Test Files 1 passed (1)` / `Tests 8 passed (8)`.
-- Regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files 29 passed (29)` /
-  `Tests 329 passed | 1 todo (330)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (o banco local não foi verificado: não
-  há nome de conjunto neste cartão). Antes disso o typecheck ficou vermelho por dependência ausente
-  (`TypeScript local nao encontrado`) — resolvido com `bun install` (651 packages), não era código.
+- `src/components/tasks/shared/new-task/RemindField.tsx` (novo) — o campo da etapa 160:
+  rótulo "Lembrete" + legenda "Quando você quer ser avisado", entrada de **data**
+  (`type=date`, testid `new-task-lembrete-data`), entrada de **hora** (`type=time`,
+  testid `new-task-lembrete-hora`) e os três atalhos **Em 1h**, **Amanhã, 9h** e
+  **Próx. seg., 9h**. Apresentação pura: sobe o ISO de `remind_at` por `onChange` e
+  recebe `onChange(null)` no limpar. Nenhuma conta nova — os atalhos chamam
+  `remindPresetISO` e a composição data+hora chama `comporLocal`/`diaLocal`/`horaLocal`
+  (`src/hooks/tasks/workItemPresets.ts`, etapa 161, e `../localDateTime`), para reusar
+  em vez de reimplementar.
+- `src/components/tasks/shared/NewTaskDialog.tsx` — o casco monta o `RemindField` ao
+  lado do `PrazoField`; estado local `remindAt` (com `defaultRemindAt` opcional para o
+  teste/contexto) sobe pelo `onChange`.
+- `src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx` (novo) — 7 casos que
+  renderizam o `NewTaskDialog` REAL (sem mock do campo), com relógio fixo
+  (`now` = terça 13/10/2026 12:00).
 
-## O que mudou e por quê (contra a seção 3 do plano)
-- `src/components/tasks/board/BoardColumn.tsx`: o cabeçalho imprime `col.subtitle`, o subtítulo curto
-  do dado canônico, no lugar do mapa local. Linha da tabela da seção 3: "Colunas Caixa de entrada
-  (A organizar), A fazer (Próximas ações), Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando
-  (Dependências externas), Concluído (Últimos 7 dias)" → etapas 080–081 (tabela de etapas, linhas
-  339 e 340). A política longa continua só no tooltip do ⓘ (não duplica texto).
-- `src/hooks/tasks/workItem.types.ts`: `KANBAN_COLUMNS` ganha `subtitle` (5 textos da linha 138 da
-  seção 3), mantendo a `policy` longa — etapa 081.
-- `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (novo): trava as
-  etapas 080, 082 e 083 medindo o DOM renderizado (não texto solto): os 5 subtítulos presentes, o
-  primeiro `<span>` da coluna sendo o rótulo, contador "3/3", `role="progressbar"` com
-  `aria-valuenow`/`aria-valuemax` = 3 e 3 segmentos `bg-destructive` quando cheio (1 primário + 2
-  `bg-muted` com 1/3), rodapé `col-limit-footer-doing` com svg, tranco
-  `motion-safe:animate-wiggle` + `border-destructive` na coluna de destino, toast
-  `Fazendo está cheio (máx. 3). Conclua um item antes.`, `onMove` não chamado, volta ao normal aos
-  700 ms e reorder interno da coluna cheia sem tranco.
+## Prova
+- vermelho antes: `git restore --source=ea1b1a0a7d -- src/components/tasks/shared/NewTaskDialog.tsx` (casco sem o `RemindField`) e `npx vitest run src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx` →
+  `Test Files 1 failed (1)` / `Tests 7 failed (7)` (falha em `getByTestId('new-task-lembrete-em-1h')` — o campo não estava montado).
+- verde depois: `npx vitest run src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx src/components/tasks/__tests__/NewTaskDialog.prazo.test.tsx` →
+  `Test Files 2 passed (2)` / `Tests 14 passed (14)` (7 daqui + 7 do prazo, sem regressão).
+- vizinhança: `npx vitest run src/components/tasks src/hooks/tasks` →
+  `Test Files 44 passed (44)` / `Tests 550 passed | 1 todo (551)`.
 
-## Prova (vermelho antes, verde depois)
-- verde (teste do cartão): `npx vitest run …/BoardColumn.subtitulo-limite.test.tsx` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- vermelho por mutação (o teste mede a classe/texto REAL): trocando `{col.subtitle}` por
-  `{'Capture primeiro'}` → `Test Files 1 failed (1)` / `Tests 2 failed | 6 passed (8)`; trocando
-  `shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70'` pelo ramo neutro →
-  `Tests 2 failed | 6 passed (8)`. Em ambos, a árvore foi restaurada e o teste voltou a
-  `Tests 8 passed (8)`; `git status --short` limpo depois das duas.
-- As etapas 082 e 083 já existiam na ponta (barra, rodapé, toast e tranco entraram por outro cartão);
-  o que este cartão acrescenta na ponta é o subtítulo canônico. O teste novo passa a TRAVAR 082/083.
+Casos do teste (nome de cada um):
+1. `renderiza o rótulo "Lembrete / Quando você quer ser avisado" e os três atalhos`
+2. `nasce sem lembrete: data e hora vazias e o limpar desabilitado`
+3. `atalho "Em 1h" grava agora + 1 h (remindPresetISO), no dia local 13/10`
+4. `atalho "Amanhã, 9h" grava o dia seguinte às 09:00 (14/10 09:00)`
+5. `atalho "Próx. seg., 9h" grava a próxima segunda às 09:00 (19/10 09:00)`
+6. `escolher só a data assume 09:00 locais; trocar a hora compõe o instante local`
+7. `limpar apaga o valor e volta a desabilitar o botão`
+
+Regras de tela: só tokens do sistema (nenhuma cor literal — `border-border`,
+`text-muted-foreground`, `bg-input`, `ring-ring`, `bg-secondary`); alvos de 40 px
+(`h-10`); botão de limpar com `aria-label` e foco visível; sem `framer-motion` nesta
+fatia; sem largura fixa que estoure 360/768/1280 (campo em `flex`, data `flex-1 min-w-0`).
+
+## Dependência (faixa do cartão irmão) — decisão registrada
+O `NewTaskDialog.tsx` NÃO existe na base `dia/2026-10-13` (who adds the modal shell is a
+sibling step). Trazido por `git cherry-pick ea1b1a0a7d` (cartão irmão **t_44cc5d0c**,
+Etapa 159 — campo Prazo, branch `v2/etapa159-prazo-nova-tarefa-2610131309fac9`), que
+cria o casco mínimo + `new-task/PrazoField.tsx`. Foi esse casco que recebeu o campo da
+Etapa 160 "por cima", como o próprio commit do irmão prevê
+("As demais seções entram por cima sem reescrever isto"). Minha fatia própria é
+`RemindField.tsx` + o mount no casco + o teste — os demais itens do diff são essa faixa
+declarada (`git show --stat bcb928c499` = só os 3 arquivos do meu commit).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `TasksBoardMode.tsx` (ficou igual à base) nem em `src/components/ui/*`.
-- Não reimplementei nada de 082/083 já presente na ponta (o cartão manda provar e não reescrever).
-- Sem migration, Edge Function ou dependência nova; nenhuma informação sai do sistema.
-
-
-## Aviso do juiz sobre o Ponto 1 — NÃO procede (o diff não tem como mostrar rebase)
-O `jev-juiz` pede prova de merge/rebase dentro do diff; aqui não existe merge para mostrar: o workspace
-JÁ nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12) e a resolução foi trazer só a faixa que
-faltava. `git log --oneline dia/2026-10-12..HEAD` devolve exatamente os 3 commits do trabalho anterior
-(`e25134fcd`, `6c0171b68`, `a2aadd1e7`) e nenhum outro. A prova VISÍVEL de que o conflito foi resolvido
-preservando a ponta é o OPOSTO de um arquivo alterado: `TasksBoardMode.tsx` ficou com ZERO linhas no
-diff (o lado da ponta inteiro permaneceu) e `BoardColumn.tsx` conserva `pressaoArrasto` (094),
-`realceEspera` (096) e `colapsada` (093). Um merge commit aqui só acrescentaria ruído ao diff.
-
-## Aviso do juiz sobre escopo — por que `src/hooks/tasks/workItem.types.ts` entrou
-O cartão manda trazer a faixa do trabalho anterior e este arquivo carrega a etapa 081 (dado do pai
-t_15507eb6): sem `KANBAN_COLUMNS.subtitle` não há de onde tirar os 5 subtítulos que a etapa 080 exige no
-cabeçalho. São 1 campo no tipo e 5 strings; o componente apenas lê. Sem ele eu teria de inventar um mapa
-local dentro do componente — exatamente o que removi por contrariar a seção 3 do plano.
-
-## `zapp-verify full`
-`zapp-verify full .` foi tentado e estourou o teto de 420 s da ferramenta (não devolveu VERDE nem
-VERMELHO). A verificação que vale como prova, e que é a pedida no critério de pronto 3, é
-`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)`.
-
-## Linhas da tabela do plano (critério de pronto 1)
-- Etapa 080 — seção 3, linha 138: "Colunas Caixa de entrada (A organizar), A fazer (Próximas ações),
-  Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando (Dependências externas), Concluído
-  (Últimos 7 dias)"; tabela de etapas, linha 339.
-- Etapa 081 — tabela de etapas, linha 340 ("Acrescentar `subtitle` curto mantendo a `policy` longa em
-  `workItem.types.ts`") — dono declarado no plano: hugo; quem trouxe foi o ramo do cartão pai.
-- Etapa 082 — seção 3, linha 139 ("Fazendo com barra de progresso azul e rodapé 'Seu limite é de 3
-  tarefas em execução.'"); tabela de etapas, linha 341.
-- Etapa 083 — tabela de etapas, linha 342 ("Soltar em Fazendo cheio faz a coluna tremer curto
-  (em movimento reduzido só a borda muda), mostra toast explicativo e devolve o cartão").
-
-## Casos de teste do cartão (critério de pronto 2), 8 no total
-1. Etapa 080 · "cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho"
-2. Etapa 080 · "a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ"
-3. Etapa 082 · "cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite"
-4. Etapa 082 · "parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva"
-5. Etapa 082 · "coluna SEM limite duro não ganha barra nem rodapé"
-6. Etapa 083 · "treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card"
-7. Etapa 083 · "o tranco é curto: depois do tempo a coluna volta ao normal"
-8. Etapa 083 · "reorganizar por dentro da coluna cheia NÃO treme nem avisa (B8 segue valendo)"
+- Etapas 156–158 (título, contato, prioridade), 163 (mensagens de coerência), 164
+  (destino) e 165–167 (prévia e rodapé): são de outros cartões (t_36235425, t_0d0f768f,
+  t_50b36fd4). Não dupliquei escopo.
+- Não toquei em `src/components/ui/*` nem em nenhum arquivo fora da lista do cartão
+  (`git diff --name-only 52b433da9d...HEAD` = 5 arquivos, todos em `new-task/` ou
+  `__tests__/`).
+- Nenhuma porta nova de exportar/importar/copiar/imprimir; nenhum dado sai do sistema.
+- A "hora padrão" 09:00 quando só o dia é escolhido segue o atalho "Amanhã, 9h" do
+  próprio plano, para o par dia+hora não nascer vazio.
