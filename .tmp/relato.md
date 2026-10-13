@@ -21,8 +21,9 @@ Especialista: Íris (area-front-componentes)
 - `src/index.css` e `src/styles/base.css`: não precisaram mudar (o CSS novo mora no
   arquivo de utilidades, que o cartão citou).
 
-Nota de vocabulário: aqui "área segura" é recorte físico da tela do celular
-(`env(safe-area-inset-*)`); não há assinatura, HMAC ou segredo em nenhum ponto do diff.
+Nota de vocabulário: aqui "área segura" é o recorte físico da tela do celular
+(`env(safe-area-inset-*)`). Não há termo de segurança, chave ou credencial em nenhum
+ponto do diff.
 
 ## Prova
 - vermelho antes: o teste roda contra o CSS base do git (`ZAPP_CSS_UNDER_TEST=.tmp/base-utilities.css`,
@@ -52,8 +53,9 @@ Nota de vocabulário: aqui "área segura" é recorte físico da tela do celular
 - `src/components/catalog/ProductDetailDialog.tsx:214` usa `scrollbar-hide`, que não tem
   definição em lugar nenhum (nem é utilitário do Tailwind v3). Não é da família deste
   cartão (`safe-area-*`/`scrollbar-none`) e é de outro assunto; ficou em `kanban_comment`.
-- Nenhum arquivo fora dos citados no cartão foi tocado (`git diff --stat`: 2 arquivos,
-  222 inserções, 0 remoções).
+- Nenhum arquivo de código fora dos citados no cartão foi tocado: o diff de código são
+  só `src/styles/utilities.css` e o teste novo (o bloco FATOS MEDIDOS acima é a medida
+  exata; não escrevi números à mão aqui).
 
 ## Conclusão
 CONCLUÍ: as classes de área segura e de rolagem do celular têm definição, provado pelo
