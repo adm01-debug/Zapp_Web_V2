@@ -71,13 +71,15 @@ export interface EvolutionTableBuilder {
   delete(options?: Record<string, unknown>): EvolutionFilterBuilder;
 }
 
-/** `supabase.storage.from(bucket)` — so upload e URL publica sao usados. */
+/** `supabase.storage.from(bucket)` — upload, URL publica e remocao de objeto. */
 export interface EvolutionStorageBucket {
   upload(path: string, file: unknown, options?: Record<string, unknown>): PromiseLike<{
     data: { path?: string } | null;
     error: EvolutionDbError | null;
   }>;
   getPublicUrl(path: string, options?: Record<string, unknown>): { data: { publicUrl: string } };
+  /** Opcional no contrato minimo: o stub de teste que nao remove nao precisa implementar. */
+  remove?(paths: string[]): PromiseLike<{ data: unknown; error: EvolutionDbError | null }>;
 }
 
 /** Canal de broadcast: abre, envia e e descartado pelo client. */

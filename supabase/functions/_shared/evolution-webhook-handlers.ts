@@ -156,35 +156,50 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
     const connection = await getConnectionByInstance(supabase, instance);
 
     if (connection && pushName) {
-      let permanentAvatarUrl: string | null = null;
+      // Host != pps.whatsapp.net fica como veio (URL ja permanente); so o CDN
+      // transitorio do WhatsApp vira objeto no bucket.
+      let rawAvatarUrl: string | null = null;
+      let cdnPicUrl: string | null = null;
       if (typeof profilePicUrl === 'string' && profilePicUrl) {
         // Comparacao por hostname para nao cair em bypass de path
-        // (e.g. evil.com/pps.whatsapp.net/...). URL invalida e descartada: o
-        // catch antes devolvia '' e o else gravava o valor malformado.
+        // (e.g. evil.com/pps.whatsapp.net/...). URL invalida e descartada.
         try {
           const picHost = new URL(profilePicUrl).hostname.toLowerCase();
-          permanentAvatarUrl = picHost === 'pps.whatsapp.net'
-            ? await persistProfilePicture(supabase, phone, profilePicUrl)
-            : profilePicUrl;
+          if (picHost === 'pps.whatsapp.net') cdnPicUrl = profilePicUrl;
+          else rawAvatarUrl = profilePicUrl;
         } catch {
-          permanentAvatarUrl = null;
+          rawAvatarUrl = null;
         }
       }
 
       const existing = await getContactByPhone(supabase, phone, connection.id);
       if (existing) {
+        // O caminho do avatar e por contato: so agora existe o id (o antigo
+        // vinculo vai em previousUrl e e removido depois do upload novo).
+        const permanentAvatarUrl = cdnPicUrl
+          ? await persistProfilePicture(supabase, existing.id, cdnPicUrl, existing.avatar_url as string | null)
+          : rawAvatarUrl;
         const updateData: Record<string, unknown> = { name: pushName, updated_at: new Date().toISOString() };
         if (permanentAvatarUrl) updateData.avatar_url = permanentAvatarUrl;
         await supabase.from('contacts').update(updateData).eq('id', existing.id);
       } else {
         const { error: insertErr } = await supabase.from('contacts').insert({
-          phone, name: pushName, avatar_url: permanentAvatarUrl || null, whatsapp_connection_id: connection.id,
+          phone, name: pushName, avatar_url: rawAvatarUrl, whatsapp_connection_id: connection.id,
         });
         if (insertErr && insertErr.code === '23505') {
           await supabase.from('contacts').update({
-            name: pushName, avatar_url: permanentAvatarUrl || null,
+            name: pushName, avatar_url: rawAvatarUrl,
             whatsapp_connection_id: connection.id, updated_at: new Date().toISOString(),
           }).eq('phone', phone);
+        }
+        // Contato novo: o id so nasce no insert — persiste o avatar depois,
+        // sob o caminho do contato, e grava a URL definitiva.
+        if (cdnPicUrl) {
+          const created = await getContactByPhone(supabase, phone, connection.id);
+          if (created) {
+            const avatar_url = await persistProfilePicture(supabase, created.id, cdnPicUrl, null);
+            if (avatar_url) await supabase.from('contacts').update({ avatar_url }).eq('id', created.id);
+          }
         }
       }
     }

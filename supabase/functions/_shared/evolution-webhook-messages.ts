@@ -484,7 +484,7 @@ export async function handleIncomingMessage(
   if (tx.contact_created || !tx.avatar_url || isWhatsAppCdnUrl(tx.avatar_url)) {
     const picUrl = await fetchProfilePicFromApi(instance, phone);
     if (picUrl) {
-      const avatarUrl = await persistProfilePicture(supabase, phone, picUrl);
+      const avatarUrl = await persistProfilePicture(supabase, tx.contact_id, picUrl, tx.avatar_url);
       if (avatarUrl) await supabase.from('contacts').update({ avatar_url: avatarUrl }).eq('id', tx.contact_id);
     }
   }

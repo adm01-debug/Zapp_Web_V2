@@ -370,24 +370,65 @@ export async function fetchProfilePicFromApi(instance: string, phone: string): P
 }
 
 /**
- * Caminho fixo por telefone dentro do bucket avatars.
+ * Caminho IMPREVISIVEL por gravacao dentro do bucket avatars.
  *
- * Antes o nome levava Date.now e persistProfilePicture apagava os arquivos
- * antigos do numero ANTES de subir o novo. Dois webhooks simultaneos do mesmo
- * contato - contacts.upsert e messages.upsert na criacao - apagavam o arquivo
- * um do outro, e o UPDATE que chegava por ultimo gravava no contato a URL de um
- * objeto ja removido. 99 contatos ficaram sem foto entre 28/08 e 04/09/2026,
- * com mediana de 833ms entre os dois arquivos.
+ * Ate 12/10 o nome era fixo por telefone (`avatars/<ddd>.jpg`): quem tinha o
+ * numero derivava a URL publica do contato, e o bucket (publico para GET) servia
+ * a foto a qualquer um. Agora cada gravacao cai numa pasta do contato com um
+ * token aleatorio (`contacts/<id>/<token>.jpg`); o bucket nao permite listagem,
+ * entao a URL nao e adivinhavel.
  *
- * Com caminho fixo o objeto e sobrescrito, nunca removido: nenhuma URL gravada
- * aponta para arquivo inexistente, qualquer que seja a ordem das chamadas.
+ * O token muda a cada upload, portanto o objeto NUNCA e sobrescrito: o vinculo
+ * antigo e removido no mesmo fluxo (persistProfilePicture/batch-fetch-avatars)
+ * SO depois de o novo existir — nenhuma URL gravada aponta para arquivo removido.
  */
-export function avatarObjectPath(phone: string): string {
-  return `avatars/${phone.replace(/\D/g, '')}.jpg`;
+export function avatarObjectPath(contactId: string): string {
+  return `contacts/${contactId}/${crypto.randomUUID().replace(/-/g, '')}.jpg`;
 }
 
-// deno-lint-ignore no-explicit-any
-export async function persistProfilePicture(supabase: EvolutionDbClient, phone: string, profilePicUrl: string): Promise<string | null> {
+const AVATAR_PUBLIC_MARKER = '/storage/v1/object/public/avatars/';
+
+/**
+ * Extrai o caminho do objeto dentro do bucket avatars a partir da URL publica.
+ * Devolve null para URL vazia, externa ou malformada — quem recebe null NAO
+ * remove nada (fail-closed: nunca apaga o que nao sabe localizar).
+ */
+export function avatarObjectPathFromUrl(url: string | null | undefined): string | null {
+  if (typeof url !== 'string') return null;
+  const idx = url.indexOf(AVATAR_PUBLIC_MARKER);
+  if (idx < 0) return null;
+  const raw = url.slice(idx + AVATAR_PUBLIC_MARKER.length).split(/[?#]/)[0];
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+/** Remove (best-effort) o objeto do bucket apontado por uma URL publica. */
+async function removeAvatarObject(supabase: EvolutionDbClient, url: string | null | undefined): Promise<void> {
+  const path = avatarObjectPathFromUrl(url);
+  if (!path) return;
+  const bucket = supabase.storage.from('avatars');
+  if (typeof bucket.remove !== 'function') return;
+  try {
+    const { error } = await bucket.remove([path]);
+    if (error) console.warn('Avatar remove error:', error);
+  } catch (err) { console.warn('Avatar remove failed:', err); }
+}
+
+/**
+ * Persiste a foto de perfil no bucket avatars sob o caminho do contato.
+ * `previousUrl` (a URL gravada antes) e removida do bucket SO apos o upload
+ * novo ter sucesso, garantindo que a referencia em contacts nunca fique orfa.
+ */
+export async function persistProfilePicture(
+  supabase: EvolutionDbClient,
+  contactId: string,
+  profilePicUrl: string,
+  previousUrl?: string | null,
+): Promise<string | null> {
   try {
     // R2-API-009: a URL do avatar vem da resposta da Evolution — mesmo
     // tratamento de egress (destino validado + teto de bytes) do resto da mídia.
@@ -397,15 +438,21 @@ export async function persistProfilePicture(supabase: EvolutionDbClient, phone: 
     const bytes = download?.bytes;
     if (!bytes || bytes.length < 100) return null;
 
-    const storagePath = avatarObjectPath(phone);
+    const storagePath = avatarObjectPath(contactId);
 
     const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
-      contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
+      contentType: 'image/jpeg', cacheControl: '604800', upsert: false,
     });
     if (error) { console.error('Avatar upload error:', error); return null; }
 
+    // Remove o antigo SO depois do novo subir, e so se for outro objeto: a URL
+    // gravada nunca some antes de existir substituta (fail-closed).
+    if (avatarObjectPathFromUrl(previousUrl) !== storagePath) {
+      await removeAvatarObject(supabase, previousUrl);
+    }
+
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
-    // ?v= quebra o cache do CDN e do navegador, ja que o caminho nao muda mais
+    // ?v= quebra o cache do CDN e do navegador (o token ja muda o caminho)
     return `${urlData.publicUrl}?v=${Date.now()}`;
   } catch (err) { console.error('Avatar persist error:', err); return null; }
 }

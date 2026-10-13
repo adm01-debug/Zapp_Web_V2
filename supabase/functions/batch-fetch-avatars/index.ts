@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
-import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
+import { persistProfilePicture } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
@@ -46,15 +46,18 @@ export async function handleBatchFetchAvatars(
 
     // Backoff: nao reprocessar ocultos/sem-foto por 7 dias.
     // NULL = nunca tentado (sempre entra); contatos novos entram automaticamente.
+    // Contatos com avatar no caminho LEGADO por telefone entram SEMPRE, mesmo
+    // com backoff recente: a migracao precisa remove-los (item do cartao).
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const LEGACY_AVATAR_LIKE = '%/object/public/avatars/avatars/%';
 
     const { data: contacts, error: contactsError } = await supabase
       .from('contacts')
       .select('id, phone, name, avatar_url, avatar_fetch_attempted_at, whatsapp_connection_id')
       .not('whatsapp_connection_id', 'is', null)
       .not('phone', 'like', '%@lid')
-      .or('avatar_url.is.null,avatar_url.like.%pps.whatsapp.net%')
-      .or(`avatar_fetch_attempted_at.is.null,avatar_fetch_attempted_at.lt.${sevenDaysAgo}`)
+      .or(`avatar_url.is.null,avatar_url.like.%pps.whatsapp.net%,avatar_url.like.${LEGACY_AVATAR_LIKE}`)
+      .or(`avatar_fetch_attempted_at.is.null,avatar_fetch_attempted_at.lt.${sevenDaysAgo},avatar_url.like.${LEGACY_AVATAR_LIKE}`)
       .order('created_at', { ascending: false })
       .limit(500);
 
@@ -69,11 +72,15 @@ export async function handleBatchFetchAvatars(
     const { data: connections } = await supabase
       .from('whatsapp_connections').select('id, instance_id').in('id', connectionIds).eq('status', 'connected');
 
-    if (!connections?.length) {
+    // Sem conexao ativa ainda ha o que fazer: os avatares legados sao
+    // re-hospedados do proprio bucket (nao dependem da Evolution).
+    const hasLegacy = contacts.some((c) =>
+      typeof c.avatar_url === 'string' && c.avatar_url.includes('/object/public/avatars/avatars/'));
+    if (!connections?.length && !hasLegacy) {
       return jsonResponse({ success: false, message: 'Nenhuma conex\u00e3o WhatsApp ativa encontrada.' }, 200, req);
     }
 
-    const connectionMap = new Map(connections.map(c => [c.id, c.instance_id]));
+    const connectionMap = new Map((connections ?? []).map(c => [c.id, c.instance_id]));
     const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionKey = Deno.env.get('EVOLUTION_API_KEY');
 
@@ -83,9 +90,6 @@ export async function handleBatchFetchAvatars(
       const batch = contacts.slice(i, i + 5);
 
       await Promise.allSettled(batch.map(async (contact) => {
-        const instanceId = connectionMap.get(contact.whatsapp_connection_id);
-        if (!instanceId || !evolutionUrl || !evolutionKey) { skipped++; return; }
-
         // Marca attempted_at em todos os tentados (sucesso E falha) para o
         // backoff de 7d funcionar nos contatos ocultos/sem-foto.
         const markAttempted = () =>
@@ -93,31 +97,39 @@ export async function handleBatchFetchAvatars(
             .update({ avatar_fetch_attempted_at: new Date().toISOString() })
             .eq('id', contact.id);
 
+        // Caminho legado por telefone (avatars/<ddd>.jpg): re-hospeda o proprio
+        // arquivo no caminho imprevisivel do contato — nao depende de a Evolution
+        // ainda servir a foto — e remove o antigo do bucket.
+        const legacyUrl = typeof contact.avatar_url === 'string'
+            && contact.avatar_url.includes('/object/public/avatars/avatars/')
+          ? contact.avatar_url
+          : null;
+
         try {
-          const baseUrl = evolutionUrl.replace(/\/+$/, '');
-          const resp = await evoFetch(baseUrl, evolutionKey,
-            `/chat/fetchProfilePictureUrl/${instanceId}`, { number: contact.phone },
-            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
-          if (!resp.ok) { failed++; await markAttempted(); return; }
-          const result = await resp.json();
-          const picUrl = extractAvatarUrl(result);
-          if (!picUrl) { failed++; await markAttempted(); return; }
+          let newUrl: string | null;
 
-          const imgResp = await fetch(picUrl, { signal: AbortSignal.timeout(8000) });
-          if (!imgResp.ok) { failed++; await markAttempted(); return; }
-          const blob = await imgResp.arrayBuffer();
-          const bytes = new Uint8Array(blob);
-          if (bytes.length < 100) { failed++; await markAttempted(); return; }
+          if (legacyUrl) {
+            newUrl = await persistProfilePicture(supabase, contact.id, legacyUrl, legacyUrl);
+          } else {
+            const instanceId = connectionMap.get(contact.whatsapp_connection_id);
+            if (!instanceId || !evolutionUrl || !evolutionKey) { skipped++; return; }
 
-          const storagePath = avatarObjectPath(contact.phone);
-          const { error } = await supabase.storage.from('avatars').upload(storagePath, bytes, {
-            contentType: 'image/jpeg', cacheControl: '604800', upsert: true,
-          });
-          if (error) { failed++; await markAttempted(); return; }
+            const baseUrl = evolutionUrl.replace(/\/+$/, '');
+            const resp = await evoFetch(baseUrl, evolutionKey,
+              `/chat/fetchProfilePictureUrl/${instanceId}`, { number: contact.phone },
+              (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(5000) }));
+            if (!resp.ok) { failed++; await markAttempted(); return; }
+            const result = await resp.json();
+            const picUrl = extractAvatarUrl(result);
+            if (!picUrl) { failed++; await markAttempted(); return; }
 
-          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+            newUrl = await persistProfilePicture(supabase, contact.id, picUrl, contact.avatar_url);
+          }
+
+          if (!newUrl) { failed++; await markAttempted(); return; }
+
           await supabase.from('contacts').update({
-            avatar_url: `${urlData.publicUrl}?v=${Date.now()}`,
+            avatar_url: newUrl,
             avatar_fetch_attempted_at: new Date().toISOString(),
           }).eq('id', contact.id);
           updated++;
