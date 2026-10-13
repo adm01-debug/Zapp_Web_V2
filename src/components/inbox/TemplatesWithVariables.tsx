@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { log } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Edit2, Copy, Search, Folder, FileText } from 'lucide-react';
+import { Plus, Edit2, Copy, Search, Folder, FileText, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { AVAILABLE_VARIABLES, replaceVariables } from './template-utils';
 import { TemplateEditorDialog, VariableInserter, TemplatePreview } from './templates/TemplateEditorDialog';
 import type { Template } from './templates/TemplateEditorDialog';
+import { useMessageTemplates } from '@/hooks/chat/useMessageTemplates';
+import { useAuth } from '@/hooks/auth/useAuth';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Variable highlighter
 function VariableHighlighter({ text, className }: { text: string; className?: string }) {
@@ -28,37 +34,88 @@ function VariableHighlighter({ text, className }: { text: string; className?: st
   );
 }
 
+/** Campos que a lista realmente exibe/usa — aceita tanto o `Template` do diálogo quanto o do hook. */
+type TemplateItem = Pick<Template, 'id' | 'title' | 'content' | 'category' | 'shortcut'>;
+
 interface TemplateWithVariablesProps {
-  templates: Template[];
+  /** Lista já carregada pelo pai; sem ela o componente busca em `message_templates`. */
+  templates?: TemplateItem[];
   onUseTemplate: (content: string, variables: Record<string, string>) => void;
   contactData?: { name?: string; company?: string; job_title?: string };
+  /** Chamado depois de uma gravação confirmada (criar, atualizar ou excluir). */
+  onSaved?: () => void;
 }
 
-export function TemplatesWithVariables({ templates, onUseTemplate, contactData }: TemplateWithVariablesProps) {
+export function TemplatesWithVariables({ templates, onUseTemplate, contactData, onSaved }: TemplateWithVariablesProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<TemplateItem | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<TemplateItem | null>(null);
+
+  const { user } = useAuth();
+  const { templates: storedTemplates, fetchTemplates, addTemplate, updateTemplate, deleteTemplate } = useMessageTemplates();
+
+  // Carrega os templates do usuário assim que o componente entra na tela.
+  useEffect(() => { if (user) void fetchTemplates(); }, [user, fetchTemplates]);
+
+  const availableTemplates: TemplateItem[] = templates ?? storedTemplates;
 
   const filteredTemplates = useMemo(() => {
-    return templates.filter(t => {
+    return availableTemplates.filter(t => {
       const matchesSearch = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.content.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [templates, search, categoryFilter]);
+  }, [availableTemplates, search, categoryFilter]);
 
-  const categories = useMemo(() => ['all', ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
+  const categories = useMemo(() => ['all', ...Array.from(new Set(availableTemplates.map(t => t.category)))], [availableTemplates]);
 
-  const handleUseTemplate = (template: Template) => {
+  const takenShortcuts = useMemo(
+    () => availableTemplates
+      .filter(t => t.id !== editingTemplate?.id)
+      .map(t => (t.shortcut || '').toLowerCase())
+      .filter(Boolean),
+    [availableTemplates, editingTemplate?.id],
+  );
+
+  const handleUseTemplate = (template: TemplateItem) => {
     const processedContent = replaceVariables(template.content, contactData);
     onUseTemplate(processedContent, {});
     toast.success(`Template "${template.title}" aplicado!`);
   };
 
-  const handleSave = async (data: Partial<Template>) => {
-    log.debug('Saving template:', { ...editingTemplate, ...data });
-    toast.success(editingTemplate ? 'Template atualizado!' : 'Template criado!');
+  const handleSave = async (data: Partial<Template>): Promise<boolean> => {
+    log.debug('Saving template:', { title: data.title, category: data.category });
+    const saved = editingTemplate
+      ? await updateTemplate({
+          id: editingTemplate.id,
+          title: data.title ?? editingTemplate.title,
+          content: data.content ?? editingTemplate.content,
+          category: data.category ?? editingTemplate.category,
+          shortcut: data.shortcut ?? null,
+        })
+      : await addTemplate({
+          title: data.title ?? '',
+          content: data.content ?? '',
+          shortcut: data.shortcut ?? '',
+          category: data.category ?? 'geral',
+        });
+    if (!saved) {
+      // O hook já mostrou o erro: o diálogo continua aberto e nada é confirmado.
+      return false;
+    }
+    onSaved?.();
+    return true;
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return;
+    const removed = await deleteTemplate(templateToDelete.id);
+    if (removed) {
+      setTemplateToDelete(null);
+      onSaved?.();
+    }
   };
 
   return (
@@ -99,8 +156,9 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
                       <div className="mt-1 text-xs text-muted-foreground line-clamp-2"><VariableHighlighter text={template.content} /></div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template ${template.title}`} onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Usar template ${template.title}`} onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Excluir template ${template.title}`} onClick={() => setTemplateToDelete(template)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
                 </motion.div>
@@ -112,7 +170,29 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
           </div>
         </ScrollArea>
       </CardContent>
-      <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} />
+      <TemplateEditorDialog
+        key={editingTemplate?.id ?? 'novo'}
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        template={editingTemplate}
+        contactData={contactData}
+        takenShortcuts={takenShortcuts}
+        onSave={handleSave}
+      />
+      <AlertDialog open={!!templateToDelete} onOpenChange={(open) => { if (!open) setTemplateToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O template "{templateToDelete?.title}" será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleConfirmDelete()}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

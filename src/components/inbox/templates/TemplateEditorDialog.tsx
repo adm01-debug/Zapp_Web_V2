@@ -16,6 +16,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { log } from '@/lib/logger';
 
 interface Template {
   id: string;
@@ -51,24 +52,35 @@ function VariableInserter({ onInsert, className }: { onInsert: (variable: string
   );
 }
 
+/** Exemplo usado quando a tela não tem os dados do contato — o rótulo diz que é fictício. */
+const CONTACT_EXAMPLE = { name: 'João Silva', company: 'Tech Corp', job_title: 'Gerente Comercial' };
+
 function TemplatePreview({ content, contactData, className }: { content: string; contactData?: { name?: string; company?: string; job_title?: string }; className?: string }) {
-  const previewContent = replaceVariables(content, contactData);
+  const hasContactData = Boolean(contactData?.name || contactData?.company || contactData?.job_title);
+  const previewContent = replaceVariables(content, hasContactData ? contactData : CONTACT_EXAMPLE);
   return (
     <div className={cn('p-3 rounded-lg bg-muted/50 border text-sm', className)}>
-      <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground"><Eye className="w-3 h-3" />Preview com dados do contato</div>
+      <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground"><Eye className="w-3 h-3" />{hasContactData ? 'Preview com dados do contato' : 'Exemplo com dados fictícios'}</div>
       <p className="whitespace-pre-wrap">{previewContent}</p>
     </div>
   );
 }
 
+/** Campos que o editor lê do template que está sendo editado. */
+type TemplateFormValues = Pick<Template, 'id' | 'title' | 'content' | 'category' | 'shortcut'>;
+
 interface TemplateEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template?: Template | null;
-  onSave: (data: Partial<Template>) => Promise<void>;
+  template?: TemplateFormValues | null;
+  /** Dados reais do contato; sem eles o preview é rotulado como exemplo fictício. */
+  contactData?: { name?: string; company?: string; job_title?: string };
+  /** Atalhos já usados por outros templates — o editor avisa antes de gravar. */
+  takenShortcuts?: string[];
+  onSave: (data: Partial<Template>) => Promise<boolean | void>;
 }
 
-export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: TemplateEditorDialogProps) {
+export function TemplateEditorDialog({ open, onOpenChange, template, contactData, takenShortcuts = [], onSave }: TemplateEditorDialogProps) {
   const [title, setTitle] = useState(template?.title || '');
   const [content, setContent] = useState(template?.content || '');
   const [category, setCategory] = useState(template?.category || 'geral');
@@ -97,8 +109,12 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
     if (!title.trim() || !content.trim()) { toast.error('Preencha título e conteúdo'); return; }
     setIsSaving(true);
     try {
-      await onSave({ title, content, category, shortcut: shortcut || null });
-      onOpenChange(false);
+      const saved = await onSave({ title, content, category, shortcut: shortcut || null });
+      // `false` = a gravação falhou (quem chamou já avisou o erro): o diálogo
+      // continua aberto para o usuário corrigir, sem confirmar como sucesso.
+      if (saved !== false) onOpenChange(false);
+    } catch (err) {
+      log.error('Erro ao salvar template', err);
     } finally { setIsSaving(false); }
   };
 
@@ -131,6 +147,9 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">/</span>
                 <Input value={shortcut} onChange={(e) => setShortcut(e.target.value.replace(/[^a-z0-9]/gi, '').toLowerCase())} placeholder="boasvindas" className="pl-7" />
               </div>
+              {shortcut && takenShortcuts.includes(shortcut) && (
+                <p className="text-xs text-destructive">Atalho já usado por outro template</p>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -145,7 +164,7 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
           {content && (
             <div className="space-y-2">
               <Label>Preview</Label>
-              <TemplatePreview content={content} contactData={{ name: 'João Silva', company: 'Tech Corp', job_title: 'Gerente Comercial' }} />
+              <TemplatePreview content={content} contactData={contactData} />
             </div>
           )}
         </div>

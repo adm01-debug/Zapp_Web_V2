@@ -13,6 +13,20 @@ export interface Template {
   use_count: number;
 }
 
+/**
+ * Entrada de `updateTemplate`: só o `id` é obrigatório. As telas que já têm o
+ * template completo continuam passando todos os campos; o editor de templates
+ * com variáveis manda apenas o que o usuário mudou. Campos ausentes não entram
+ * no `update` (o PostgREST não serializa `undefined`).
+ */
+export type TemplateUpdate = {
+  id: string;
+  title?: string;
+  content?: string;
+  shortcut?: string | null;
+  category?: string;
+};
+
 export function useMessageTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +70,7 @@ export function useMessageTemplates() {
     }
   }, [user, toast, fetchTemplates]);
 
-  const updateTemplate = useCallback(async (template: Template) => {
+  const updateTemplate = useCallback(async (template: TemplateUpdate) => {
     try {
       const { error } = await supabase.from('message_templates')
         .update({ title: template.title, content: template.content, shortcut: template.shortcut, category: template.category })
