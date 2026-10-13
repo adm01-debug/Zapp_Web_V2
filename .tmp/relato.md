@@ -51,3 +51,19 @@ sobra nenhum vetor `.update().eq('id', …)` de exclusão no código de produç�
   A tela já trata o erro (`Erro ao apagar mensagem`, item segue na lista e na seleção) — coberto no teste.
 - Não adicionei nada de exportar/baixar; nada de tela nova.
 - Estados vazio/carregando/erro da aba Arquivos não mudaram de comportamento; o de erro é o que o teste acima cobre.
+
+## Pontos do juiz automático (ANTES DE ENTREGAR)
+- Ponto 1 — arquivo fora da lista `ARQUIVOS QUE PODE TOCAR`: `src/components/inbox/tabs/FilesTab.tsx` entrou porque
+  é a tela do MESMO fluxo de exclusão e a descrição do AlertDialog afirmava o efeito antigo ("o conteúdo vira
+  '[Mensagem apagada]'"), que deixou de ser verdade com a RPC; mudança de 3 linhas, mantendo as strings que o teste
+  já cobria. Indispensável porque a tela passaria a mentir sobre a própria ação que este cartão corrige.
+  Já os arquivos `supabase/migrations/20261013230001_delete_message_rpc.sql` e `supabase/tests/delete_message_rpc.sql`
+  NÃO são deste cartão: chegaram no commit de dependência `8b91eee2d` (cherry-pick do range `dia/2026-10-13..59d554b0f`
+  do cartão pai t_cfa99af7), sem nenhuma edição minha — o `git diff` deste cartão (feature + relato) não os toca.
+- Ponto 2 — gatilho `BEFORE UPDATE` de `updated_at` na migration do pai: o UPDATE da RPC atinge UMA linha
+  (`WHERE id = p_message_id AND coalesce(is_deleted, false) = false`), não um lote; e a função é idempotente
+  (segunda chamada devolve `false` sem tocar no original). O arquivo é do cartão pai e lá já foi julgado `ok`
+  (`juiz_estado: ok` na fila); este cartão não altera a migration nem o teste dela.
+
+Concluí: os 4 pontos de tela chamam a RPC por um único caminho (`ChatService.deleteMessage`), nenhum vetor
+`.update().eq('id', …)` de exclusão sobrou no código de produção, os testes ajustados passam e a suíte relacionada passa.
