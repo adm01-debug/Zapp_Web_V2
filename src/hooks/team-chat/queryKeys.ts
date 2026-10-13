@@ -23,6 +23,16 @@ export const queryKeys = {
       ? ['team-conversations']
       : ['team-conversations', profileId],
   messages: (conversationId: string | null): QueryKey => ['team-messages', conversationId],
+  /**
+   * Estado de leitura agregado (view `team_message_read_state`). A raiz
+   * (sem `idsKey`) é a chave que a invalidação por prefixo usa quando chega
+   * recibo ao vivo; a chave da query acrescenta os ids próprios da página,
+   * ordenados, para que a mesma página não gere chave nova a cada render.
+   */
+  readState: (conversationId: string | null, idsKey?: string): QueryKey =>
+    idsKey === undefined
+      ? ['team-message-read-state', conversationId]
+      : ['team-message-read-state', conversationId, idsKey],
   reactions: (conversationId: string): QueryKey => ['team-reactions', conversationId],
   /** O último elemento é o `join` dos ids: a chave histórica juntava os membros assim. */
   members: (conversationId: string, memberIds: string[]): QueryKey => [

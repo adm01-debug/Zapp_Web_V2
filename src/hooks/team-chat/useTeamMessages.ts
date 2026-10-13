@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
 import type { TeamMessage } from './teamChatTypes';
 import { queryKeys } from './queryKeys';
+import { deriveOwnMessageStatus, useTeamReadState } from './useTeamReadState';
 
 const log = getLogger('useTeamMessages');
 
@@ -67,6 +68,29 @@ export function useTeamMessages(conversationId: string | null) {
     enabled: !!conversationId && !!profile,
   });
 
+  const pagina = query.data;
+
+  // Só as mensagens PRÓPRIAS ganham tick. O estado de leitura vem da view para
+  // os ids delas na página aberta — nunca o histórico inteiro da conversa.
+  const ownMessageIds = useMemo(
+    () => (pagina ?? []).filter(m => m.sender_id === profile?.id).map(m => m.id),
+    [pagina, profile?.id],
+  );
+
+  const { readStates } = useTeamReadState(conversationId, ownMessageIds);
+
+  // Mensagem própria: status real (read/delivered/sent). Mensagem alheia: fica
+  // como veio da RPC — tick é só de quem enviou.
+  const messages = useMemo(
+    () =>
+      (pagina ?? []).map(m =>
+        m.sender_id === profile?.id
+          ? { ...m, status: deriveOwnMessageStatus(readStates[m.id]) }
+          : m,
+      ),
+    [pagina, profile?.id, readStates],
+  );
+
   useEffect(() => {
     if (!conversationId) return;
     const channel = supabase
@@ -82,15 +106,15 @@ export function useTeamMessages(conversationId: string | null) {
   useEffect(() => {
     if (!conversationId || !profile) return;
 
-    const messages = query.data;
-    if (!messages?.length) return;
+    const todas = pagina;
+    if (!todas?.length) return;
 
     // Recibo só existe para mensagem alheia: mensagem própria não gera leitura.
     // A RPC aplica a mesma regra no servidor (`sender_id <> current_profile_id`),
     // mas a checagem aqui evita uma chamada por ciclo quando não há o que marcar.
-    if (!messages.some(m => m.sender_id !== profile.id)) return;
+    if (!todas.some(m => m.sender_id !== profile.id)) return;
 
-    const cacheKey = `${conversationId}:${messages[messages.length - 1]?.id}`;
+    const cacheKey = `${conversationId}:${todas[todas.length - 1]?.id}`;
     if (markedRef.current === cacheKey) return;
 
     // TC-010: a marcação só avança DEPOIS que a gravação confirma. Com a falha, a
@@ -124,7 +148,7 @@ export function useTeamMessages(conversationId: string | null) {
 
     void persistir();
     return () => { cancelado = true; };
-  }, [conversationId, profile, query.data]);
+  }, [conversationId, profile, pagina]);
 
-  return { messages: query.data ?? [], isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading };
 }

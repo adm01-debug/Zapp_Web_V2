@@ -20,7 +20,17 @@ const h = vi.hoisted(() => ({
   page: [] as unknown[],
   pageError: null as unknown,
   readError: null as unknown,
+  viewRows: [] as unknown[],
 }));
+
+/** Cadeia mínima da view de leitura: a única leitura direta que o hook faz. */
+function cadeiaView() {
+  const b: Record<string, unknown> = {};
+  for (const metodo of ['select', 'eq', 'in']) b[metodo] = vi.fn(() => b);
+  b.then = (ok: (v: unknown) => unknown, fail?: (e: unknown) => unknown) =>
+    Promise.resolve({ data: h.viewRows, error: null }).then(ok, fail);
+  return b;
+}
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'profile-1' } }),
@@ -69,6 +79,8 @@ describe('useTeamMessages — página e marcação de leitura por RPC (SL-016)',
     h.page = [];
     h.pageError = null;
     h.readError = null;
+    h.viewRows = [];
+    h.from.mockImplementation(() => cadeiaView());
     h.rpc.mockImplementation((nome: string) => {
       if (nome === 'get_team_messages_page') {
         return Promise.resolve({ data: h.page, error: h.pageError });
@@ -113,8 +125,11 @@ describe('useTeamMessages — página e marcação de leitura por RPC (SL-016)',
       media_type: 'audio',
       sender: { id: 'profile-2', name: 'Ana', avatar_url: 'https://x/a.png' },
     });
-    // Nada de leitura direta de tabela: a página vem inteira da RPC.
-    expect(h.from).not.toHaveBeenCalled();
+    // Nada de leitura direta da tabela de mensagens: a página vem inteira da RPC.
+    // A única leitura direta do hook é a view de estado de leitura.
+    expect(h.from).toHaveBeenCalledWith('team_message_read_state');
+    expect(h.from).not.toHaveBeenCalledWith('team_messages');
+    expect(h.from).not.toHaveBeenCalledWith('team_message_receipts');
   });
 
   it('marca a conversa como lida com uma RPC só, sem escrever nas tabelas', async () => {
@@ -127,7 +142,9 @@ describe('useTeamMessages — página e marcação de leitura por RPC (SL-016)',
         p_conversation_id: 'conv-1',
       }),
     );
-    expect(h.from).not.toHaveBeenCalled();
+    // A leitura é gravada pela RPC: nenhum write direto nas tabelas.
+    expect(h.from).not.toHaveBeenCalledWith('team_message_receipts');
+    expect(h.from).not.toHaveBeenCalledWith('team_conversation_members');
 
     const marcas = h.rpc.mock.calls.filter(c => c[0] === 'mark_team_conversation_read');
     expect(marcas).toHaveLength(1);
@@ -143,4 +160,44 @@ describe('useTeamMessages — página e marcação de leitura por RPC (SL-016)',
 
     expect(h.rpc.mock.calls.filter(c => c[0] === 'mark_team_conversation_read')).toHaveLength(0);
   });
+
+  it('preenche o status das mensagens próprias com o estado real de leitura', async () => {
+    h.page = [
+      linha({ id: 'm-3', sender_id: 'profile-2', content: 'dela' }),
+      linha({ id: 'm-2', sender_id: 'profile-1', content: 'meio lida' }),
+      linha({ id: 'm-1', sender_id: 'profile-1', content: 'lida por todos' }),
+      linha({ id: 'm-4', sender_id: 'profile-1', content: 'ninguém leu' }),
+    ];
+    h.viewRows = [
+      linhaView({ message_id: 'm-1', read_count: 3, all_read: true }),
+      linhaView({ message_id: 'm-2', read_count: 1, all_read: false }),
+    ];
+
+    const { result } = renderHook(() => useTeamMessages('conv-1'), { wrapper: TestQueryWrapper });
+
+    await waitFor(() => expect(result.current.messages).toHaveLength(4));
+    await waitFor(() =>
+      expect(
+        Object.fromEntries(result.current.messages.map(m => [m.id, m.status])),
+      ).toEqual({
+        'm-1': 'read',
+        'm-2': 'delivered',
+        'm-3': undefined,
+        'm-4': 'sent',
+      }),
+    );
+
+    // A mensagem alheia não ganha status de tick: o tick é só da própria.
+    expect(result.current.messages.find(m => m.id === 'm-3')?.status).toBeUndefined();
+    expect(h.from).toHaveBeenCalledWith('team_message_read_state');
+  });
+});
+
+const linhaView = (over: Record<string, unknown> = {}) => ({
+  message_id: 'm-1',
+  conversation_id: 'conv-1',
+  member_count: 3,
+  read_count: 0,
+  all_read: false,
+  ...over,
 });
