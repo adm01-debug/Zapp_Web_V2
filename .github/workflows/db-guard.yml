@@ -1034,3 +1034,16 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # N-072 (P1 banco, chat interno): cursor da paginacao de get_team_messages_page
+      # empatava em created_at e p_limit <= 0 passava silencioso. O contrato aplica a
+      # migration 20261010064729 num PostgreSQL 17 descartavel e prova: paginacao sem
+      # duplicata nem lacuna com created_at igual, invalid_limit em 0/negativo/NULL,
+      # guardas not_member/not_authenticated, teto de 200 e ACL preservados. Inicia
+      # container proprio e roda CREATE ROLE anon/authenticated — as roles sao globais
+      # ao cluster, entao o docker-shim do E47 colidiria com as do shim.
+      - name: Provar cursor tiebreak e limite minimo de get_team_messages_page (N-072)
+        env:
+          TEAM_CHAT_PAGE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh
