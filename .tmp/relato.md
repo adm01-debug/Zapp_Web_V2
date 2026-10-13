@@ -10,6 +10,7 @@ O QUE MUDOU
 
 PROVA
 `npx vitest run src/pages/__tests__/Auth.botao-entrar.test.tsx src/components/auth/__tests__/HeroBenefits.test.tsx` → Test Files 2 passed (2), Tests 10 passed (10).
+Nenhum teste existente foi pulado ou afrouxado: `HeroBenefits.test.tsx` foi de 6 `it()` e 15 `expect(` (commit 796deecf0) para 7 `it()` e 20 `expect(` (HEAD), sem `it.skip`/`it.todo` (grep → 0); o `Auth.botao-entrar.test.tsx` novo tem 3 `it()`. A suíte inteira roda: Test Files 2 passed (2), Tests 10 passed (10), 0 pulados.
 Vermelho antes, por mutação no arquivo de produção (restaurado depois, md5 conferido): sem `inline-flex` → `AssertionError: classe inline-flex no botão Entrar: expected [ Array(18) ] to include 'inline-flex'`, Tests 1 failed | 2 passed (3); sem `dark:from-tonal-700` → Tests 2 failed | 5 passed (7); sem `dark:to-[hsl(var(--primary-text))]` → Tests 1 failed | 6 passed (7).
 
 NÚMEROS MEDIDOS
