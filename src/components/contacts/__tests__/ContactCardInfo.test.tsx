@@ -57,7 +57,6 @@ function crmContact(overrides: Partial<SearchContactResult>): SearchContactResul
     relationship_score: 0,
     relationship_stage: null,
     sentiment: null,
-    tags: [],
     company_id: null,
     company_name: null,
     company_cnpj: null,

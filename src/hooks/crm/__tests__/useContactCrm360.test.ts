@@ -5,7 +5,7 @@ const NOW = new Date('2026-09-08T12:00:00Z');
 
 describe('aggregateCrm360', () => {
   it('retorna estado vazio honesto quando nao ha dados', () => {
-    const result = aggregateCrm360({ purchases: [], deals: [], stages: [], tagNames: [], activities: [], events: [] }, NOW);
+    const result = aggregateCrm360({ purchases: [], deals: [], stages: [], activities: [], events: [] }, NOW);
     expect(result.currentStage).toBeNull();
     expect(result.currentDeal).toBeNull();
     expect(result.ticketMedio).toBeNull();
@@ -28,7 +28,7 @@ describe('aggregateCrm360', () => {
         { id: 'p1', title: 'A', amount: 100, purchased_at: oneMonthAgo, status: 'completed' },
         { id: 'p2', title: 'B', amount: 50, purchased_at: oneMonthAgo, status: 'pending' }, // ignorado: nao completed/approved
       ],
-      deals: [], stages: [], tagNames: [], activities: [], events: [],
+      deals: [], stages: [], activities: [], events: [],
     }, NOW);
     expect(withoutPriorWindow.ticketMedio).toBe(100);
     expect(withoutPriorWindow.ticketDeltaPct).toBeNull(); // sem compra na janela anterior
@@ -38,7 +38,7 @@ describe('aggregateCrm360', () => {
         { id: 'p1', title: 'A', amount: 200, purchased_at: oneMonthAgo, status: 'completed' },
         { id: 'p2', title: 'B', amount: 100, purchased_at: eightMonthsAgo, status: 'approved' },
       ],
-      deals: [], stages: [], tagNames: [], activities: [], events: [],
+      deals: [], stages: [], activities: [], events: [],
     }, NOW);
     expect(withBothWindows.ticketDeltaPct).toBe(100); // (200-100)/100 * 100
   });
@@ -54,7 +54,7 @@ describe('aggregateCrm360', () => {
       { id: 'd2', title: 'Deal negociação', value: 2000, status: 'open', stage_id: 's3', expected_close_date: null, updated_at: '2026-09-02' },
       { id: 'd3', title: 'Deal ganho', value: 3000, status: 'won', stage_id: 's3', expected_close_date: null, updated_at: '2026-09-03' },
     ];
-    const result = aggregateCrm360({ purchases: [], deals, stages, tagNames: [], activities: [], events: [] }, NOW);
+    const result = aggregateCrm360({ purchases: [], deals, stages, activities: [], events: [] }, NOW);
     expect(result.pipeline.propostas).toEqual({ total: 1000, count: 1 });
     expect(result.pipeline.negociacao).toEqual({ total: 2000, count: 1 });
     expect(result.pipeline.ganhos).toEqual({ total: 3000, count: 1 });
@@ -74,7 +74,7 @@ describe('aggregateCrm360', () => {
     const purchases = [
       { id: 'p1', title: 'Kit', amount: 100, purchased_at: '2026-09-07T10:00:00Z', status: 'completed' },
     ];
-    const result = aggregateCrm360({ purchases, deals: [], stages: [], tagNames: [], activities, events }, NOW);
+    const result = aggregateCrm360({ purchases, deals: [], stages: [], activities, events }, NOW);
     expect(result.interacoes.map((i) => i.id)).toEqual(['purchase-p1', 'event-e1', 'activity-a1']);
   });
 

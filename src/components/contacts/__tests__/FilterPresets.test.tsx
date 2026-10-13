@@ -35,7 +35,7 @@ describe('FilterPresets — presets inválidos saem no load (etapas 33 e 83)', (
   });
 
   it('não regrava nem avisa quando todos os presets são válidos', () => {
-    const raw = JSON.stringify([preset('ok', { type: 'all', tag: 'vip' })]);
+    const raw = JSON.stringify([preset('ok', { type: 'all', jobTitle: 'Diretor' })]);
     localStorage.setItem(STORAGE_KEY, raw);
 
     render(<FilterPresets onApplyPreset={vi.fn()} currentFilters={{}} />);
