@@ -7,7 +7,7 @@ import { CompanyLogo } from '@/components/contacts/CompanyLogo';
 import { motion } from 'framer-motion';
 import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { normalizeOperationalPriority, normalizeSentiment, type OperationalPriority } from '@/lib/ai-vocabulary';
+import { normalizeOperationalPriority, type OperationalPriority } from '@/lib/ai-vocabulary';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
@@ -17,6 +17,8 @@ import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
+import { useContactStats } from '@/hooks/crm/useContactStats';
+import { engagementScore, engagementLevel } from '@/lib/engagementScore';
 
 // Rótulos da prioridade operacional canônica (EN). O valor cru passa por
 // normalizeOperationalPriority: o legado pt-BR que as funções de análise
@@ -58,6 +60,9 @@ interface ContactHeaderSectionProps {
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll, tags }: ContactHeaderSectionProps) {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  // Dados reais do contato (mesma consulta da aba Resumo). O cabeçalho só
+  // mostra pontuação quando há histórico — sem isso, nenhum número.
+  const { data: contactStats } = useContactStats(contact.id);
 
   const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
   const isFav = isFavorite(contact.id);
@@ -88,7 +93,6 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
       : null;
   const companyName = crmCompany?.nome_fantasia ?? enrichedData?.company;
 
-  const sentiment = normalizeSentiment(enrichedData?.ai_sentiment);
   const priority = normalizeOperationalPriority(enrichedData?.ai_priority);
   const contactType = enrichedData?.contact_type;
   // Selo só para prioridade alta/urgente. Ausente/desconhecido → null (nunca
@@ -97,14 +101,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const priorityBadge =
     priorityLevel === 'high' || priorityLevel === 'urgent' ? priorityConfig[priorityLevel] : null;
 
-  const engagementScore = (() => {
-    let s = 50;
-    if (sentiment.value === 'positivo') s += 25;
-    if (priority.value === 'high') s += 15;
-    if (enrichedData?.company) s += 5;
-    if (contactType === 'customer') s += 5;
-    return Math.min(s, 100);
-  })();
+  const engagement = engagementScore(contactStats ?? null);
 
   // Anel SVG: usa tokens do tema (decorativo, sem requisito de contraste de texto).
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
@@ -125,12 +122,14 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           {/* Avatar with engagement ring */}
           <div className="relative shrink-0">
             <div className="relative inline-block">
-              <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90" viewBox="0 0 108 108">
-                <circle cx="54" cy="54" r="50" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" opacity="0.3" />
-                <motion.circle cx="54" cy="54" r="50" fill="none" stroke={getScoreColor(engagementScore)} strokeWidth="2.5" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 50} initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-                  animate={{ strokeDashoffset: ((100 - engagementScore) / 100) * 2 * Math.PI * 50 }} transition={{ duration: 1, ease: 'easeOut' }} />
-              </svg>
+              {engagement !== null && (
+                <svg className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] -rotate-90" viewBox="0 0 108 108">
+                  <circle cx="54" cy="54" r="50" fill="none" stroke="hsl(var(--muted))" strokeWidth="2.5" opacity="0.3" />
+                  <motion.circle cx="54" cy="54" r="50" fill="none" stroke={getScoreColor(engagement)} strokeWidth="2.5" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 50} initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                    animate={{ strokeDashoffset: ((100 - engagement) / 100) * 2 * Math.PI * 50 }} transition={{ duration: 1, ease: 'easeOut' }} />
+                </svg>
+              )}
               <Avatar data-testid="contact-avatar" className="w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
                 onClick={() => contact.avatar && setShowAvatarPreview(true)}>
                 <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
@@ -138,17 +137,21 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                   {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"
-                      style={{ backgroundColor: getScoreBadgeBg(engagementScore), color: 'white' }}>
-                      {engagementScore}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>Engajamento: {engagementScore >= 80 ? 'Alto' : engagementScore >= 50 ? 'Médio' : 'Baixo'} ({engagementScore}/100)</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {engagement !== null && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"
+                        style={{ backgroundColor: getScoreBadgeBg(engagement), color: 'white' }}>
+                        {engagement}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Engajamento {engagementLevel(engagement)} ({engagement}/100) — mensagens: {contactStats?.totalMessages ?? 0}, conversas: {contactStats?.totalConversations ?? 0}, resposta média: {contactStats?.avgResponseTimeMinutes ?? 0} min
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {crmCompany?.logo_url && (
                 <img src={crmCompany.logo_url} alt={crmCompany.nome_fantasia || ''}
                   className="absolute -top-1 -left-1 w-8 h-8 rounded-md object-contain bg-background border border-border/30 ring-2 ring-background" />
