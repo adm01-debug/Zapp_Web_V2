@@ -58,6 +58,13 @@ const Sonner = lazy(() =>
   import("@/components/ui/sonner")
     .then(m => ({ default: m.Toaster }))
 );
+// Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
+// próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
+// nada dele existe na primeira pintura.
+const AchievementCelebrationToaster = lazy(() =>
+  import("@/components/gamification/AchievementToast")
+    .then(m => ({ default: m.AchievementCelebrationToaster }))
+);
 
 /**
  * Side-effect overlay providers — no children needed here.
@@ -82,6 +89,7 @@ function DeferredProviders() {
         <EasterEggsProvider>{null}</EasterEggsProvider>
       </InAppNotificationProvider>
       <Sonner />
+      <AchievementCelebrationToaster />
     </Suspense>
   );
 }
