@@ -1,14 +1,8 @@
 /**
- * Etapas 169 e 171 (plano, seção 3 / imagem 04).
- *
- * Etapa 169 — responsivo do modal: abaixo de 900px a prévia vira acordeão sob o
- * formulário. O jsdom não faz layout, então o corte de largura é CSS
- * (`min-[900px]:*`); o que É comportamento e dá para provar aqui é o acordeão: o
- * gatilho controla `aria-expanded` e o painel embrulha a MESMA prévia real.
- *
- * Etapa 171 — "Mais opções…" do QuickAdd: dentro do módulo (com o contexto de
- * captura) o ⋯ abre o modal "Nova tarefa" já preenchido com o texto digitado na
- * captura, em vez de abrir os chips no popover.
+ * Etapas 169 e 171 (plano, seção 3). O corte de largura do acordeão é CSS e o
+ * jsdom não faz layout; o que dá para provar aqui é o comportamento: o gatilho
+ * controla `aria-expanded` sobre a prévia REAL (169) e o ⋯ do QuickAdd abre o
+ * modal já preenchido (171).
  */
 import { resetSupabaseMock } from '@/test/mocks/tarefas';
 
