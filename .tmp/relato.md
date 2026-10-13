@@ -76,3 +76,13 @@ Frente de RED aplicando SÓ a base 20261009203548 e, depois, a migration nova:
 - Achado fora do escopo (não corrigido): `talkx_campaign_window_open` tem o mesmo tipo de
   cast inválido em `(v_dnd_hours -> 'holidays')::date[]` (linha ~511 da base) — `jsonb ->
   date[]` também não existe. Fica para um cartão próprio.
+
+## Verificação (zapp-verify --rapido): `tipos` vermelho por FALHA DE AMBIENTE
+Na máquina, `tsc` é morto pelo OOM killer (`Killed ... 137`) com load average ~56 e swap
+esgotado — outros agentes rodando tsc/vitest ao mesmo tempo. `jev-juiz falha` classificou
+como `environment` (certeza 0.80, "rodar de novo ajuda: 0.59") e orienta registrar e seguir
+sem mexer no código. Não é falha da mudança: o diff só ADICIONA um arquivo `.sql`, e os
+passos `dependencias` e `db_guard` do `zapp-verify --rapido` passam. Repeti o fechar várias
+vezes; o resultado `tipos` foi sempre o mesmo `Killed 137` (log em
+`~/.local/state/zapp-verify/58439bd76a2a/tipos.log`).
+
