@@ -1,18 +1,32 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris (area-front-componentes)
+
+## Retomada (entrega parada na fila do integrador por conflito)
+- A base do dia atual (dia/2026-10-13) já tinha integrado o H1 (`countByChip`): `src/hooks/inbox/chipCounts.ts`, `useInboxFilters` usando `countByChip` e `chipCounts.test.ts` entraram por 8b8354c71d. Por isso NÃO precisei do commit 449a3caf5e (o H1 do branch antigo); ele está equivalente/superado na base.
+- Trazo só o commit aprovado que faltava, por `git cherry-pick dd0a3e9922` ("fix(inbox): contadores dos chips usam countByChip") — a correção de telas em si.
+- Conflitos do cherry-pick, resolvidos PRESERVANDO o que já entrou na ponta:
+  - `src/components/inbox/ConversationListSidebar.tsx`: a ponta reorganizou o cabeçalho (InboxFilters condicional no mobile + StatusChips no header). Mantive essa estrutura e apenas acrescentei ao `<StatusChips/>` as props `snoozedIds`, `showAll` e `selectedQueueId` — as mesmas opções que `useInboxFilters` aplica na lista (5 linhas). Descartei o bloco antigo do branch que duplicava StatusChips/InboxFilters.
+  - `src/components/inbox/__tests__/StatusChips.test.tsx`: mantive os testes herdados da ponta (`chama onChipTabChange com archived`, `aplica o mesmo estilo ativo dos demais chips em Arquivadas`) e as fixtures foram ajustadas ao critério novo (status persistido): `c1` do fixture `withArchived` ganhou `conversation_status: 'open'` e o teste `mostra 0 em "Arquivadas"...` passou a usar uma fixture própria sem arquivadas (antes ele dependia da fixture padrão, que agora tem c7/c8 arquivadas).
+
+## Defeito ainda existia? Sim (não fechei "sem commit")
+Na base, `StatusChips.tsx` ainda calculava com as regras antigas (`Resolvidas = messages.length === 0`, `Aguardando = !assigned_to`). Provei o vermelho revertendo SÓ o componente para a base e rodando o teste das fixtures novas:
+- vermelho antes: `git checkout HEAD~1 -- src/components/inbox/conversation-list/StatusChips.tsx && npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` → `Test Files  1 failed (1)` / `Tests  7 failed | 9 passed (16)` (ex.: `expected '1' to be '3'` em Em atendimento).
+- verde depois (componente restaurado): mesma suíte → `Test Files  1 passed (1)` / `Tests  16 passed (16)`.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/inbox/conversation-list/StatusChips.tsx`: o `useMemo` local de contagens saiu; os números vêm de `countByChip(conversations, profile?.id, { snoozedIds, showAll, selectedQueueId })` — o mesmo predicado que a lista usa, então o número do chip bate com o que a lista mostra ao clicar.
+- `src/hooks/inbox/chipCounts.ts` (1 linha): `isAttending` passa a exigir `profileId != null` antes de comparar (`profileId != null && c.assigned_to === profileId`); sem isso uma conversa sem responsável e sem perfil ativo contava como "Em atendimento". Está coberto por `StatusChips.identidade-profile.test.tsx`.
+- `src/components/inbox/ConversationListSidebar.tsx`: passa `snoozedIds`/`showAll`/`selectedQueueId` ao StatusChips (o contador acompanha adiamento, "mostrar todas" e fila selecionada).
+- `src/components/inbox/__tests__/StatusChips.test.tsx` e `StatusChips.identidade-profile.test.tsx`: cada contador usa o status persistido; Resolvidas não conta conversa só por ter 0 mensagens; Aguardando conta `conversation_status === 'waiting'`; arquivadas só no chip Arquivadas.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` (com o componente da base) → `Tests  7 failed | 9 passed (16)`.
+- verde depois: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx src/hooks/inbox/__tests__/chipCounts.test.ts` → `Test Files  3 passed (3)` / `Tests  54 passed (54)`.
+- verde depois (vizinhos): `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.test.tsx src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Test Files  4 passed (4)` / `Tests  25 passed (25)`.
+- `zapp-verify . --rapido`: verde (rodado pelo fechar).
+
+## Ponto 3 do cartão (ContactDetails.tsx)
+O E2 NÃO está no código atual: `archiveContact` continua gravando `assigned_to: null` (src/hooks/chat/useConversationActions.ts:250). Por isso deixei o comentário da linha ~68 do ContactDetails.tsx como está, conforme a instrução "se não, deixe e cite no relato".
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não trouxe o commit 449a3caf5e do branch antigo: seu conteúdo (H1 `chipCounts.ts` + `useInboxFilters`) já está na base atual por 8b8354c71d.
+- Não mexi em arquivo fora do escopo (sem DDL, Edge Function ou dependência nova).
