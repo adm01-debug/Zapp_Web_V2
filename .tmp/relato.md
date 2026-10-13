@@ -1,18 +1,40 @@
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- tests/contracts/_adv_vocabulary-consumers-gaps.test.ts: a entrada do inventário adversarial que pinava o defeito
+  "CSAT ausente vira 0 no war room" em src/hooks/business/useWarRoomData.ts saiu da lista DEFEITOS. No lugar entrou um
+  bloco novo de ratchet INVERSO: o `|| 0` não pode voltar e o `null` do RPC tem de permanecer
+  (`satisfaction: r.satisfaction ?? null`). A entrega empilhada (2e6b475b4) trocou as leituras do War Room pelos RPCs
+  `warroom_agent_today`/`warroom_queue_stats` e passou a preservar a ausência de avaliação como `null`; o inventário,
+  que só MEDE gaps, ficou desalinhado e por isso o espelho do CI reprovava no empilhamento.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `bunx vitest run --config vitest.contracts.config.ts tests/contracts/_adv_vocabulary-consumers-gaps.test.ts`
+  (com 2e6b475b4 empilhado, sem a correção) -> `Tests 1 failed | 37 passed (38)`, falha em
+  `'src/hooks/business/useWarRoomData.ts' :: 'CSAT ausente vira 0 no war room'`.
+- o ratchet novo é vermelho sobre o código velho: `git show 96dd72dc5f:src/hooks/business/useWarRoomData.ts | grep -n "customer_satisfaction_score) || 0"`
+  -> linha 114 presente (antes da entrega), logo as duas asserções novas falham sobre esse código.
+- verde depois: `bunx vitest run --config vitest.contracts.config.ts tests/contracts/_adv_vocabulary-consumers-gaps.test.ts`
+  -> `Test Files 1 passed (1); Tests 38 passed (38)`.
+- suíte de contratos completa (o item do espelho): `bunx vitest run --config vitest.contracts.config.ts --reporter=dot`
+  -> `Test Files 89 passed (89); Tests 1379 passed (1379)`.
+- `zapp-verify . --rapido`: rodado pelo fechar deste cartão.
+
+## Pontos do revisor (refazer)
+- Ponto 1 (partir do commit da entrega por cherry-pick, não recomeçar): `git cherry-pick -x 2e6b475b4` aplicado sobre a
+  ponta (dia/2026-10-13, 96dd72dc5f) — commit e415a95d27. A correção é commit ce50c20b9e; o relato é 90a529e76d.
+- Ponto 2 (reproduzir e corrigir a causa sem afrouxar asserção): a causa é o teste que a própria entrega deixou
+  desalinhado — a entrada defeituosa do inventário em tests/contracts/_adv_vocabulary-consumers-gaps.test.ts. Não afrouxei:
+  troquei uma asserção (bug presente) por duas (bug ausente + comportamento correto presente); a contagem segue 38 e a
+  suíte de contratos inteira passa. Prova no bloco acima.
+- Ponto 3 (provar o mesmo comando VERDE e `zapp-verify . --rapido` verde, fechando citando o sha): o mesmo passo do
+  espelho fica verde acima (89 arquivos / 1379 testes); `zapp-verify . --rapido` rodado pelo fechar. Shas do cartão:
+  e415a95d27 (entrega empilhada) + ce50c20b9e (correção).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não mexi em src/hooks/business/useWarRoomData.ts: o comportamento novo (null preservado) é o correto da entrega e tem
+  teste próprio; o que estava errado era o mapa do inventário adversarial.
+- Não rodei `ci_espelho.sh`: o HERMES-GUARD bloqueia executar o script do integrador (`~/arquitetura-v2/integrador/ci_espelho.sh`).
+  Rodei direto o mesmo passo que o espelho usa para este item (o vitest de contratos), que é exatamente o item reportado.
+- Base: reproduzi sobre a ponta que o `hermes-tarefa-iniciar` me deu (dia/2026-10-13, `96dd72dc5f`), não dia/2026-10-12;
+  a falha é idêntica (mesma entrada, mesmo arquivo).
