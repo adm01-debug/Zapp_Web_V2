@@ -135,8 +135,17 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
                 <code className="flex-1 p-2 bg-muted rounded text-xs font-mono break-all">
                   {enrollmentData.totp.secret}
                 </code>
-                <Button size="sm" variant="outline" onClick={handleCopySecret}>
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCopySecret}
+                  aria-label={copied ? 'Código secreto copiado' : 'Copiar código secreto'}
+                >
+                  {copied ? (
+                    <Check aria-hidden="true" className="w-4 h-4" />
+                  ) : (
+                    <Copy aria-hidden="true" className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -165,6 +174,7 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
                 id="code"
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 maxLength={6}
                 placeholder="000000"
                 value={code}

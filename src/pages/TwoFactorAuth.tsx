@@ -53,14 +53,14 @@ export default function TwoFactorAuth() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center space-y-4"
         >
           <Shield className="w-12 h-12 mx-auto text-destructive" />
-          <p className="text-destructive font-medium">Erro ao verificar autenticação</p>
+          <p className="text-destructive font-medium" role="alert" aria-live="polite">Erro ao verificar autenticação</p>
           <p className="text-muted-foreground text-sm">
             Não foi possível confirmar o status da verificação em duas etapas.
           </p>
@@ -75,27 +75,27 @@ export default function TwoFactorAuth() {
             Voltar para login
           </Button>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
   if (status === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center"
         >
           <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Verificando status de autenticação...</p>
+          <p className="text-muted-foreground" role="status" aria-live="polite">Verificando status de autenticação...</p>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,6 +118,6 @@ export default function TwoFactorAuth() {
           </Button>
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 }

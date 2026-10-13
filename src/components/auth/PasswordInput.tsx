@@ -30,7 +30,6 @@ export function PasswordInput({ id, className, ...props }: PasswordInputProps) {
         size="sm"
         className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
         onClick={() => setShowPassword(!showPassword)}
-        tabIndex={-1}
         aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
         aria-pressed={showPassword}
       >

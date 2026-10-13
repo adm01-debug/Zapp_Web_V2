@@ -97,7 +97,7 @@ export default function ResetPassword() {
 
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle>Link Inválido</CardTitle>
@@ -111,13 +111,13 @@ export default function ResetPassword() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -159,12 +159,12 @@ export default function ResetPassword() {
             </CardHeader>
           </Card>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -217,6 +217,8 @@ export default function ResetPassword() {
 
               {error && (
                 <motion.p
+                  role="alert"
+                  aria-live="polite"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-sm text-destructive"
@@ -239,6 +241,6 @@ export default function ResetPassword() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </main>
   );
 }

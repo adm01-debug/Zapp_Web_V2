@@ -99,12 +99,20 @@ export function ReauthDialog({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="w-4 h-4" />
+                ) : (
+                  <Eye aria-hidden="true" className="w-4 h-4" />
+                )}
               </button>
             </div>
             {error && (
               <motion.p
+                role="alert"
+                aria-live="polite"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-sm text-destructive"
