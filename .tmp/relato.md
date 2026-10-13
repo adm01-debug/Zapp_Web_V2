@@ -1,108 +1,67 @@
-Especialista: designer (worker (design), skill `design-system-zapp`) — retomada do cartão aberto por iris (telas) por rebase.
+Especialista: Íris (area-front-componentes)
 
-# [refazer 1] colunas do Quadro: subtítulo curto + limite de Fazendo (080, 082, 083)
+## Aviso de leitura do band (importante para conferir o diff)
+A base `dia/2026-10-13` não tem `src/components/tasks/shared/NewTaskDialog.tsx` (os irmãos 159/160 não estão na dia).
+Trouxe o casco deles por `git cherry-pick` dos commits `16350208f1` (159) e `d3100bd06f` (160), mais o fix de testid
+`1dd5b55a9a` (160) — 5 dos 7 arquivos do band são ESSES commits, com autoria dos irmãos, não meu código.
+A minha entrega é o último commit, `661663154f` — `git diff 16350208f1...HEAD | wc -c` = 25467, 3 arquivos:
+`NewTaskDialog.tsx` (+7), `new-task/CoerenciaLembrete.tsx` (novo), `__tests__/NewTaskDialog.coerencia.test.tsx` (novo).
 
-## Ponto 1 (o único item do "corrigir"): conflito com a ponta de dia/2026-10-12
-O workspace já nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12), então não houve rebase de
-branch: trouxe a FAIXA do trabalho anterior por `git cherry-pick 9c01d7ed6 113bf61f0 2f6cf568e`
-(SHA anterior = 2f6cf568e, fila `v2/colunas-quadro-subtitulo-limite-fazendo-2610111753c50b`).
-Conflitos em `BoardColumn.tsx` (5 hunks) e `TasksBoardMode.tsx` (2 hunks) — resolvidos preservando o
-que já entrou na base:
-- `BoardColumn.tsx`: mantive o lado da ponta — `pressaoArrasto` (etapa 094), `realceEspera`/
-  `ring-warning` (etapa 096), `colapsada`/`flex-none` (etapa 093) e o rodapé do Concluído (etapa 092);
-  descartei a versão antiga que reescrevia essas mesmas linhas.
-- `TasksBoardMode.tsx`: mantive o lado da ponta inteiro (`alvoTranco` + `tremerColuna` + deps
-  `[onMove, onRequestWaitingReason, onReorder, tremerColuna]` e `pressaoArrasto={pressaoArrasto}`),
-  porque a ponta já tinha toast de limite cheio (`toast.error('Fazendo está cheio (máx. 3)…')`) e o
-  tranco por coluna de destino. Resultado: `TasksBoardMode.tsx` ficou IDÊNTICO à base (0 linhas no
-  diff) — o arquivo não entra no meu diff.
-- Só a parte que a base ainda NÃO tinha foi mantida do trabalho anterior: o subtítulo vem do dado
-  canônico `KANBAN_COLUMNS.subtitle` (`col.subtitle`), acrescentado em `workItem.types.ts`
-  (etapa 081, dado do pai t_15507eb6). Removi o mapa local `SUBTITULOS_COLUNA` que a ponta havia
-  criado no cabeçalho, porque os 5 textos dele (`Capture primeiro`/`Próximo passo`/`Até 3 agora`/
-  `Com motivo`/`7 dias à vista`) CONTRADIZEM a seção 3 do plano e o destino do guarda-chuva do
-  cartão. Deixei comentário no cartão para o revisor conferir essa escolha.
+## O que mudou e por quê
+- `src/components/tasks/shared/new-task/CoerenciaLembrete.tsx` (NOVO): banner de coerência prazo × lembrete do modal.
+  A CLASSIFICAÇÃO não nasce aqui — vem de `checkRemindCoherence` (`src/hooks/tasks/workItemPresets.ts`), a mesma função
+  da etapa 162; o arquivo só decide APRESENTAÇÃO (par de TEXTO AA, ícone, papel de leitura). Zero reimplementação de
+  comparação de datas: o único cálculo próprio é `prazo - 1 h`, e o alvo também passa por `checkRemindCoherence` antes
+  de virar botão — assim o atalho só aparece quando ele realmente resolve.
+  Verde = `text-success` (o verde já é o próprio par de texto); avisos usam o par de TEXTO da etapa 80,
+  `text-[hsl(var(--warning-text))]` / `text-[hsl(var(--destructive-text))]`, porque o modal nasce em PORTAL, fora do
+  `[data-testid="tasks-module"]`, e o remap de `utilities.css` não o alcança.
+- `src/components/tasks/shared/NewTaskDialog.tsx` (+7): monta `<CoerenciaLembrete remindAt dueDate now onAjustar={setRemindAt} />`
+  logo após os dois campos. Sem estado novo, sem efeito: a coerência é derivada de `dueDate`/`remindAt` a cada render.
+- `src/components/tasks/__tests__/NewTaskDialog.coerencia.test.tsx` (NOVO): 7 testes pelo componente REAL (o teste monta
+  `NewTaskDialog` e dirige `PrazoField`/`RemindField` reais por `fireEvent`; nenhum mock que já traz a resposta).
 
-## Ponto 2: rodar o teste do cartão e a verificação
-- Teste do cartão: `npx vitest run src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx`
-  → `Test Files 1 passed (1)` / `Tests 8 passed (8)`.
-- Regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files 29 passed (29)` /
-  `Tests 329 passed | 1 todo (330)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (o banco local não foi verificado: não
-  há nome de conjunto neste cartão). Antes disso o typecheck ficou vermelho por dependência ausente
-  (`TypeScript local nao encontrado`) — resolvido com `bun install` (651 packages), não era código.
+## Os 4 casos de coerência, um por um (pedido do cartão)
+- VERDE, `ok`: `Lembrete programado para antes do prazo.`, `role="status"`, par `success` — teste "VERDE: lembrete no
+  futuro e antes do prazo" (linha 84).
+- ÂMBAR, `after_due`: `O lembrete precisa ser antes do prazo.`, `role="alert"`, par `warning` — teste "ÂMBAR: lembrete
+  depois do prazo" (linha 107).
+- ÂMBAR, `no_due`: `Sem prazo definido — não há como comparar o lembrete com o prazo.`, `role="status"`, par `warning` —
+  teste "ÂMBAR: só lembrete, sem prazo" (linha 118).
+- VERMELHO, `in_past`: `O lembrete precisa estar no futuro.`, `role="alert"`, par `destructive` — teste "VERMELHO:
+  lembrete no passado" (linha 96).
 
-## O que mudou e por quê (contra a seção 3 do plano)
-- `src/components/tasks/board/BoardColumn.tsx`: o cabeçalho imprime `col.subtitle`, o subtítulo curto
-  do dado canônico, no lugar do mapa local. Linha da tabela da seção 3: "Colunas Caixa de entrada
-  (A organizar), A fazer (Próximas ações), Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando
-  (Dependências externas), Concluído (Últimos 7 dias)" → etapas 080–081 (tabela de etapas, linhas
-  339 e 340). A política longa continua só no tooltip do ⓘ (não duplica texto).
-- `src/hooks/tasks/workItem.types.ts`: `KANBAN_COLUMNS` ganha `subtitle` (5 textos da linha 138 da
-  seção 3), mantendo a `policy` longa — etapa 081.
-- `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (novo): trava as
-  etapas 080, 082 e 083 medindo o DOM renderizado (não texto solto): os 5 subtítulos presentes, o
-  primeiro `<span>` da coluna sendo o rótulo, contador "3/3", `role="progressbar"` com
-  `aria-valuenow`/`aria-valuemax` = 3 e 3 segmentos `bg-destructive` quando cheio (1 primário + 2
-  `bg-muted` com 1/3), rodapé `col-limit-footer-doing` com svg, tranco
-  `motion-safe:animate-wiggle` + `border-destructive` na coluna de destino, toast
-  `Fazendo está cheio (máx. 3). Conclua um item antes.`, `onMove` não chamado, volta ao normal aos
-  700 ms e reorder interno da coluna cheia sem tranco.
+## O critério de pronto, item por item
+- "Lembrete programado para antes do prazo." em verde → `CoerenciaLembrete.tsx`, `VISUAL.ok` + `text-success`; teste linha 84.
+- Avisos âmbar/vermelho nos outros casos → `VISUAL.after_due`/`VISUAL.no_due` (âmbar) e `VISUAL.in_past` (vermelho);
+  testes linhas 96, 107 e 118. Cada estado distinto é conferido por `data-state` + par de texto, não por texto de prosa.
+- "Ajustar para 1 h antes do prazo" → botão em `CoerenciaLembrete.tsx` (`new-task-coerencia-ajustar`, `h-10` = alvo ≥40 px,
+  `<button type="button">` nativo, foco visível por `focus-visible:ring-2 ring-ring`); o teste linha 130 clica e confere o
+  VALOR aplicado nos campos reais: `nt-lembrete-data` = `2026-10-20` e `nt-lembrete-hora` = `22:59` (prazo 23:59 − 1 h),
+  com o banner virando verde e o atalho saindo de cena. O teste linha 149 prova o caso NEGADO: prazo já vencido não
+  oferece atalho (o alvo cairia no passado) — nada de botão que não resolve.
+- Usar `workItemFormat.ts`/`workItemPresets.ts` em vez de reimplementar → import de `checkRemindCoherence` do
+  `workItemPresets.ts`; nenhuma função nova de comparação. `workItemFormat.ts` não foi tocado (não era preciso).
+- Testes unitários próprios, cada caso listado → os 7 testes acima e esta lista.
+- Acessibilidade: foco visível no botão, contraste AA pelo par de TEXTO, `role`/`aria-live` (o banner é região de
+  status/alert conforme o estado), ícone com `aria-hidden` (o texto carrega o sentido). Nada de animação (sem
+  `motion-safe` a precisar: efeito nenhum).
+- Estados vazio/carregando/erro: o banner é derivação pura de estado local, sem consulta — não tem carregando nem erro.
+  O "vazio" é o caso `remindAt === null`: `checkRemindCoherence` devolve `ok` com mensagem vazia e o componente retorna
+  `null` (teste linha 77: sem banner).
 
-## Prova (vermelho antes, verde depois)
-- verde (teste do cartão): `npx vitest run …/BoardColumn.subtitulo-limite.test.tsx` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- vermelho por mutação (o teste mede a classe/texto REAL): trocando `{col.subtitle}` por
-  `{'Capture primeiro'}` → `Test Files 1 failed (1)` / `Tests 2 failed | 6 passed (8)`; trocando
-  `shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70'` pelo ramo neutro →
-  `Tests 2 failed | 6 passed (8)`. Em ambos, a árvore foi restaurada e o teste voltou a
-  `Tests 8 passed (8)`; `git status --short` limpo depois das duas.
-- As etapas 082 e 083 já existiam na ponta (barra, rodapé, toast e tranco entraram por outro cartão);
-  o que este cartão acrescenta na ponta é o subtítulo canônico. O teste novo passa a TRAVAR 082/083.
+## Prova
+- vermelho antes (banner ainda não montado no modal), `npx vitest run src/components/tasks/__tests__/NewTaskDialog.coerencia.test.tsx`:
+  `Test Files 1 failed (1) | Tests 6 failed | 1 passed (7)` — `Unable to find an element by: [data-testid="new-task-coerencia"]`.
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 7 passed (7)`.
+- regressão da vizinhança: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 45 passed (45); Tests 557 passed | 1 todo (558)`.
+- `npx eslint` nos 3 arquivos → 0 erro, 0 aviso (o warning de `react-refresh/only-export-components` foi evitado mantendo
+  `ajusteUmaHoraAntes` interna); `npx tsc --noEmit` → exit 0.
+- Verificação do fechar (`zapp-verify . --rapido`): ver o bloco FATOS MEDIDOS no topo deste relato.
 
 ## O que NÃO fiz e por quê
-- Não mexi em `TasksBoardMode.tsx` (ficou igual à base) nem em `src/components/ui/*`.
-- Não reimplementei nada de 082/083 já presente na ponta (o cartão manda provar e não reescrever).
-- Sem migration, Edge Function ou dependência nova; nenhuma informação sai do sistema.
-
-
-## Aviso do juiz sobre o Ponto 1 — NÃO procede (o diff não tem como mostrar rebase)
-O `jev-juiz` pede prova de merge/rebase dentro do diff; aqui não existe merge para mostrar: o workspace
-JÁ nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12) e a resolução foi trazer só a faixa que
-faltava. `git log --oneline dia/2026-10-12..HEAD` devolve exatamente os 3 commits do trabalho anterior
-(`e25134fcd`, `6c0171b68`, `a2aadd1e7`) e nenhum outro. A prova VISÍVEL de que o conflito foi resolvido
-preservando a ponta é o OPOSTO de um arquivo alterado: `TasksBoardMode.tsx` ficou com ZERO linhas no
-diff (o lado da ponta inteiro permaneceu) e `BoardColumn.tsx` conserva `pressaoArrasto` (094),
-`realceEspera` (096) e `colapsada` (093). Um merge commit aqui só acrescentaria ruído ao diff.
-
-## Aviso do juiz sobre escopo — por que `src/hooks/tasks/workItem.types.ts` entrou
-O cartão manda trazer a faixa do trabalho anterior e este arquivo carrega a etapa 081 (dado do pai
-t_15507eb6): sem `KANBAN_COLUMNS.subtitle` não há de onde tirar os 5 subtítulos que a etapa 080 exige no
-cabeçalho. São 1 campo no tipo e 5 strings; o componente apenas lê. Sem ele eu teria de inventar um mapa
-local dentro do componente — exatamente o que removi por contrariar a seção 3 do plano.
-
-## `zapp-verify full`
-`zapp-verify full .` foi tentado e estourou o teto de 420 s da ferramenta (não devolveu VERDE nem
-VERMELHO). A verificação que vale como prova, e que é a pedida no critério de pronto 3, é
-`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)`.
-
-## Linhas da tabela do plano (critério de pronto 1)
-- Etapa 080 — seção 3, linha 138: "Colunas Caixa de entrada (A organizar), A fazer (Próximas ações),
-  Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando (Dependências externas), Concluído
-  (Últimos 7 dias)"; tabela de etapas, linha 339.
-- Etapa 081 — tabela de etapas, linha 340 ("Acrescentar `subtitle` curto mantendo a `policy` longa em
-  `workItem.types.ts`") — dono declarado no plano: hugo; quem trouxe foi o ramo do cartão pai.
-- Etapa 082 — seção 3, linha 139 ("Fazendo com barra de progresso azul e rodapé 'Seu limite é de 3
-  tarefas em execução.'"); tabela de etapas, linha 341.
-- Etapa 083 — tabela de etapas, linha 342 ("Soltar em Fazendo cheio faz a coluna tremer curto
-  (em movimento reduzido só a borda muda), mostra toast explicativo e devolve o cartão").
-
-## Casos de teste do cartão (critério de pronto 2), 8 no total
-1. Etapa 080 · "cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho"
-2. Etapa 080 · "a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ"
-3. Etapa 082 · "cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite"
-4. Etapa 082 · "parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva"
-5. Etapa 082 · "coluna SEM limite duro não ganha barra nem rodapé"
-6. Etapa 083 · "treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card"
-7. Etapa 083 · "o tranco é curto: depois do tempo a coluna volta ao normal"
-8. Etapa 083 · "reorganizar por dentro da coluna cheia NÃO treme nem avisa (B8 segue valendo)"
+- Não toquei `workItemFormat.ts`/`workItemPresets.ts` (fora dos arquivos do cartão e desnecessário).
+- Não implementei criação/cancelamento do modal nem os testes do modal inteiro: isso é a etapa 172 (workertestes).
+- Achado fora da minha área (vai como `kanban_comment`, não como correção): `src/hooks/tasks/useWorkItemDraft.ts`
+  carrega uma CÓPIA PRIVADA de `checkRemindCoherence`, em paralelo à de `workItemPresets.ts` — risco de drift entre o
+  painel e o modal. É do worker (hooks).
