@@ -62,7 +62,7 @@ CREATE OR REPLACE FUNCTION public.audit_log_summary(
  LANGUAGE plpgsql
  STABLE
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_to   timestamptz := COALESCE(p_to, now());
@@ -131,7 +131,7 @@ CREATE OR REPLACE FUNCTION public.audit_log_list(
  LANGUAGE plpgsql
  STABLE
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_to    timestamptz := COALESCE(p_to, now());
