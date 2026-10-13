@@ -23,6 +23,12 @@ export function GreetingBanner({ personal = false }: { personal?: boolean } = {}
   const progress = stats ? levelProgress(stats.xp, stats.level) : 0;
   const nextLevelXp = stats ? xpForNextLevel(stats.level) : 0;
 
+  // Chip de sequência: 0 não é um número útil na tela — "0 dias seguidos" parece
+  // um chip vazio. Zero vira "Comece hoje"; 1 usa singular, o resto plural.
+  const streak = stats?.current_streak ?? 0;
+  const streakText = streak <= 0 ? 'Comece hoje' : streak === 1 ? '1 dia' : `${streak} dias`;
+  const streakLabel = streak <= 0 ? 'Dias seguidos: comece hoje' : `Dias seguidos: ${streakText}`;
+
   return (
     <div className="min-h-[73px] h-auto md:h-[73px] rounded-xl bg-card-elevated border border-border/70 px-4 py-3 md:py-0 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
       <div className="flex items-center gap-3 shrink-0">
@@ -76,9 +82,15 @@ export function GreetingBanner({ personal = false }: { personal?: boolean } = {}
               <Star className="w-3.5 h-3.5" />
               {stats.achievements_count}
             </span>
-            <span data-testid="gami-chip" title="Dias seguidos" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[hsl(354_48%_23%)] text-dash-red">
+            <span
+              data-testid="gami-chip"
+              role="img"
+              aria-label={streakLabel}
+              title={streakLabel}
+              className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[hsl(354_48%_23%)] text-dash-red"
+            >
               <Flame className="w-3.5 h-3.5" />
-              {stats.current_streak}
+              {streakText}
             </span>
           </div>
         </>

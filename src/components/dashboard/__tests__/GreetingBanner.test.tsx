@@ -59,4 +59,28 @@ describe('GreetingBanner', () => {
     render(<GreetingBanner />);
     expect(screen.getByText(/Ana!|Ana,/)).toBeInTheDocument();
   });
+
+  // Chip de sequência: o número cru não diz nada no estado zero. O chip mostra o
+  // texto honesto do dia (sem número solto) e o nome acessível descreve o dado.
+  it('streak 0 mostra "Comece hoje" e nunca um chip vazio com "0"', () => {
+    mockUseAuth.mockReturnValue({ profile: { name: 'Ana Silva', avatar_url: null } });
+    mockUseAgentGamification.mockReturnValue({ stats: baseStats({ current_streak: 0 }) });
+    render(<GreetingBanner />);
+    expect(screen.getAllByTestId('gami-chip')).toHaveLength(3);
+    expect(screen.getByText('Comece hoje')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Dias seguidos: comece hoje' })).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [1, '1 dia', 'Dias seguidos: 1 dia'],
+    [7, '7 dias', 'Dias seguidos: 7 dias'],
+    [45, '45 dias', 'Dias seguidos: 45 dias'],
+  ])('streak %i usa singular/plural "%s" com nome acessível', (streak, texto, nome) => {
+    mockUseAuth.mockReturnValue({ profile: { name: 'Ana Silva', avatar_url: null } });
+    mockUseAgentGamification.mockReturnValue({ stats: baseStats({ current_streak: streak }) });
+    render(<GreetingBanner />);
+    expect(screen.getByText(texto)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: nome })).toBeInTheDocument();
+  });
 });
