@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PanelRightClose, Plus, Tag, TagsIcon, X } from 'lucide-react';
+import { PanelRightClose, Plus, Tag, TagsIcon, X, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
+import { SidebarSection } from './contact-details/sidebar/SidebarSection';
+import { ContactIntelligencePanel } from './contact-details/ContactIntelligencePanel';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -120,6 +122,13 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
               contact={contact} enrichedData={enrichedData ?? null}
               onQuickAction={handleQuickAction}
             />
+            <SidebarSection
+              index={3} value="intelligence" tone="blue"
+              icon={<Brain />} title="Inteligência comercial"
+              subtitle="Risco de churn e melhores horários de contato"
+            >
+              <ContactIntelligencePanel contactId={contact.id} />
+            </SidebarSection>
             <ContactTagsSection
               tags={quickActions.tags}
               onAddTag={quickActions.addTag} onRemoveTag={quickActions.removeTag}
