@@ -11,7 +11,7 @@
  *  - 33: MoveToMenu só existe em ponteiro grosso.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -366,11 +366,11 @@ describe('FASE C2 — integração com o TasksModule (28/29/32)', () => {
     renderModulo();
 
     const card = await screen.findByTestId('work-item-card');
-    const kebab = card.querySelector('[data-state]') ?? card;
-    void kebab;
 
     // O caminho do kebab é o mesmo portão do DnD; aqui ele é acionado pelo menu do card.
-    const botoes = await screen.findAllByRole('button', { name: /mais ações|opções|menu/i });
+    // Etapa 050: no Quadro cada COLUNA também tem o seu kebab — escopar no card evita
+    // pegar o da coluna.
+    const botoes = within(card).getAllByRole('button', { name: /mais ações|opções|menu/i });
     await abrirMenu(botoes[0]);
     const mover = screen.getByRole('menuitem', { name: /Mover para/ });
     mover.focus();
