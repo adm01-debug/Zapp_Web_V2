@@ -57,6 +57,16 @@ Migration aplicada no banco LOCAL do cartao:
 5. Regressao coberta: C3/C5 provam que dono e staff continuam editando; C7 prova que o back-office
    nao foi afetado.
 
+## Arquivos do diff deste cartao (6 no total, 1 de teste)
+| # | arquivo | origem |
+|---|---------|--------|
+| 1 | supabase/migrations/20261013010747_email_templates_hardening.sql | meu (NOVO) |
+| 2 | scripts/db-audit/email-templates-rls.test.sh | meu (BLOCOS C/D — o 1 arquivo de teste) |
+| 3 | .tmp/relato.md | meu (documento) |
+| 4 | supabase/migrations/20261012112503_email_templates_rls.sql | cartao-avo (faixa trazida) |
+| 5 | .github/workflows/db-guard.yml | cartao-avo (faixa trazida) |
+| 6 | src/integrations/supabase/types.ts | cartao-avo (faixa trazida) |
+
 ## Nota sobre o alarme do juiz barato (arquivos fora da lista)
 O fechar apontou .github/workflows/db-guard.yml, scripts/db-audit/email-templates-rls.test.sh e
 src/integrations/supabase/types.ts como fora de "ARQUIVOS QUE PODE TOCAR". Explicacao:
