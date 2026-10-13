@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
-import { Trophy, RefreshCw, ChevronRight } from 'lucide-react';
+import { Trophy, RefreshCw } from 'lucide-react';
 import { LeaderboardRow } from './LeaderboardHelpers';
 
 function LeaderboardSkeleton() {
@@ -34,13 +34,14 @@ export function Leaderboard() {
         </div>
         <div className="flex items-center gap-2">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing} className="h-8 w-8">
+            <Button aria-label="Atualizar ranking" variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing} className="h-8 w-8">
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </motion.div>
           <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
             {(['today', 'week', 'month'] as const).map((range) => (
               <Button key={range} variant="ghost" size="sm" onClick={() => setTimeRange(range)}
+                aria-pressed={timeRange === range}
                 className={`text-xs h-7 px-2.5 transition-all ${timeRange === range ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-transparent'}`}>
                 {range === 'today' ? 'Hoje' : range === 'week' ? 'Semana' : 'Mês'}
               </Button>
@@ -57,14 +58,6 @@ export function Leaderboard() {
           <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
           <p className="text-xs text-muted-foreground mt-1">Os agentes aparecerão aqui conforme ganham XP</p>
         </div>
-      )}
-
-      {agents.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-4 text-center">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary text-xs">
-            Ver ranking completo<ChevronRight className="w-3.5 h-3.5 ml-1" />
-          </Button>
-        </motion.div>
       )}
     </div>
   );
