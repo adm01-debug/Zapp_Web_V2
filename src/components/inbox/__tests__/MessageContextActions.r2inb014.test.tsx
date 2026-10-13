@@ -1,17 +1,19 @@
 /**
  * R2-INB-014 / item 90 — o menu contextual não pode confirmar uma exclusão rejeitada.
  *
- * `MessageContextActions.handleDelete` aguardava a atualização local do Supabase mas
- * ignorava o `{ error }` devolvido pela cadeia PostgREST (que NÃO lança exceção).
- * Resultado: a UI mostrava "Mensagem deletada/removida" e chamava `onMessageDeleted`
- * mesmo quando a marcação local falhava.
+ * `MessageContextActions.handleDelete` aguardava a exclusão e ignorava o `{ error }`
+ * devolvido pelo PostgREST (que NÃO lança exceção). Resultado: a UI mostrava
+ * "Mensagem deletada" e chamava `onMessageDeleted` mesmo com a exclusão falhando.
+ * Desde PE-20 (t_fef320c8) a exclusão sai pelo caminho único
+ * `supabase.rpc('delete_message', { p_message_id })`.
  *
  * Contrato exigido:
- *  - update local resolve `{ error: <algo> }` → toast.error presente, toast.success
+ *  - RPC resolve `{ error: <algo> }` → toast.error presente, toast.success
  *    AUSENTE e `onMessageDeleted` NÃO chamado.
- *  - update local resolve `{ error: null }` → toast.success presente e callback chamado.
+ *  - RPC resolve `{ error: null }` → toast.success presente e callback chamado.
  *  - falha APENAS da Evolution API (deleteMessage rejeita) → o fallback local continua
- *    valendo, desde que o update local venha com `error: null`.
+ *    valendo, desde que a RPC venha com `error: null`.
+ *  - nenhum caminho escreve direto na tabela `messages`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -19,15 +21,12 @@ import React from 'react';
 import { MessageContextActions } from '@/components/inbox/MessageContextActions';
 import type { Message } from '@/types/chat';
 
-const { toastMock, supabaseResult, deleteMessageMock, supabaseChain } = vi.hoisted(() => ({
+const { toastMock, supabaseResult, deleteMessageMock, rpcMock, fromCalls } = vi.hoisted(() => ({
   toastMock: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
   supabaseResult: { error: null as { message: string; code?: string } | null },
   deleteMessageMock: vi.fn(),
-  supabaseChain: {
-    eq: vi.fn(),
-    update: vi.fn(),
-    from: vi.fn(),
-  },
+  rpcMock: vi.fn(),
+  fromCalls: [] as string[],
 }));
 
 vi.mock('sonner', () => ({ toast: toastMock }));
@@ -49,11 +48,17 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
   }),
 }));
 
-// PostgREST: update(...).eq(...) devolve uma Promise com { error } — nunca lança.
-supabaseChain.eq.mockImplementation(() => Promise.resolve(supabaseResult));
-supabaseChain.update.mockImplementation(() => ({ eq: supabaseChain.eq }));
-supabaseChain.from.mockImplementation(() => ({ update: supabaseChain.update }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: supabaseChain.from } }));
+// PostgREST: rpc(...) devolve uma Promise com { error } — nunca lança.
+rpcMock.mockImplementation(() => Promise.resolve(supabaseResult));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    rpc: rpcMock,
+    from: (table: string) => {
+      fromCalls.push(table);
+      throw new Error(`escrita inesperada na tabela: ${table}`);
+    },
+  },
+}));
 
 // Renderiza os itens do dropdown como botões clicáveis.
 vi.mock('@/components/ui/dropdown-menu', () => ({
@@ -102,11 +107,12 @@ function cliqueApagar(onMessageDeleted = vi.fn()) {
 describe('MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fromCalls.length = 0;
     supabaseResult.error = null;
     deleteMessageMock.mockResolvedValue(undefined);
   });
 
-  it('erro no update local → toast de erro, nenhum sucesso e nenhum callback', async () => {
+  it('erro na RPC de exclusão → toast de erro, nenhum sucesso e nenhum callback', async () => {
     supabaseResult.error = { message: 'permission denied', code: '42501' };
 
     const { onMessageDeleted } = cliqueApagar();
@@ -114,12 +120,14 @@ describe('MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco', 
     await waitFor(() => {
       expect(toastMock.error).toHaveBeenCalled();
     });
+    expect(rpcMock).toHaveBeenCalledWith('delete_message', { p_message_id: 'msg-1' });
+    expect(fromCalls).toEqual([]);
     expect(toastMock.error).toHaveBeenCalledWith('Erro ao deletar mensagem');
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(onMessageDeleted).not.toHaveBeenCalled();
   });
 
-  it('sucesso no update local (error: null) → toast de sucesso e callback', async () => {
+  it('sucesso na RPC (error: null) → toast de sucesso e callback', async () => {
     supabaseResult.error = null;
 
     const { onMessageDeleted } = cliqueApagar();
@@ -127,11 +135,13 @@ describe('MessageContextActions — R2-INB-014 exclusão rejeitada pelo banco', 
     await waitFor(() => {
       expect(onMessageDeleted).toHaveBeenCalledWith('msg-1');
     });
+    expect(rpcMock).toHaveBeenCalledWith('delete_message', { p_message_id: 'msg-1' });
+    expect(fromCalls).toEqual([]);
     expect(toastMock.success).toHaveBeenCalledWith('Mensagem deletada para todos');
     expect(toastMock.error).not.toHaveBeenCalled();
   });
 
-  it('falha só da Evolution API mantém o fallback local quando o update local confirma', async () => {
+  it('falha só da Evolution API mantém o fallback local quando a RPC confirma', async () => {
     deleteMessageMock.mockRejectedValue(new Error('evolution fora do ar'));
     supabaseResult.error = null;
 

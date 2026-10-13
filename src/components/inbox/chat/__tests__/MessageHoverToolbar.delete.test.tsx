@@ -4,23 +4,26 @@ import { MessageHoverToolbar } from '../MessageHoverToolbar';
 import { Message } from '@/types/chat';
 import { toast } from 'sonner';
 
-// R2-INB-014: o delete do menu hover NÃO pode confirmar sucesso quando a
-// marcação local (Supabase/PostgREST) volta com `{ error }`. PostgREST não
-// lança: sem checar o campo `error`, a UI mostrava sucesso e chamava
-// onMessageDeleted mesmo com o update rejeitado.
+// R2-INB-014 + PE-20 (t_fef320c8): o delete do menu hover NÃO pode confirmar
+// sucesso quando a marcação (RPC `delete_message`) volta com `{ error }`.
+// PostgREST não lança: sem checar o campo `error`, a UI mostrava sucesso e
+// chamava onMessageDeleted mesmo com a exclusão rejeitada. Desde PE-20 o único
+// caminho é `supabase.rpc('delete_message')` — `from('messages')` não pode
+// aparecer no caminho de exclusão.
 
 const mocks = vi.hoisted(() => ({
-  updateEq: vi.fn(),
+  rpc: vi.fn(),
+  fromCalls: [] as string[],
   deleteMessage: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({
-      update: () => ({
-        eq: (...args: unknown[]) => mocks.updateEq(...args),
-      }),
-    }),
+    rpc: mocks.rpc,
+    from: (table: string) => {
+      mocks.fromCalls.push(table);
+      throw new Error(`escrita inesperada na tabela: ${table}`);
+    },
   },
 }));
 
@@ -89,26 +92,31 @@ function renderToolbar(message: Message, onMessageDeleted = vi.fn()) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.fromCalls.length = 0;
   mocks.deleteMessage.mockResolvedValue(undefined);
 });
 
 describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () => {
-  it('rejeição local ({ error }) mostra erro, sem sucesso e sem callback de remoção', async () => {
-    mocks.updateEq.mockResolvedValue({ error: { message: 'permission denied', code: '42501' } });
+  it('rejeição da RPC ({ error }) mostra erro, sem sucesso e sem callback de remoção', async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'permission denied', code: '42501' } });
     const onMessageDeleted = renderToolbar(makeMessage());
 
     fireEvent.click(screen.getByText('Apagar para todos'));
 
-    await waitFor(() => expect(mocks.updateEq).toHaveBeenCalledWith('id', 'm-1'));
+    await waitFor(() =>
+      expect(mocks.rpc).toHaveBeenCalledWith('delete_message', { p_message_id: 'm-1' })
+    );
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao deletar mensagem'));
 
     expect(toast.success).not.toHaveBeenCalled();
     expect(onMessageDeleted).not.toHaveBeenCalled();
+    // Caminho único: nenhuma escrita direta na tabela `messages`.
+    expect(mocks.fromCalls).toEqual([]);
   });
 
   it('erro local após falha da Evolution API: nem sucesso nem callback', async () => {
     mocks.deleteMessage.mockRejectedValue(new Error('evolution fora'));
-    mocks.updateEq.mockResolvedValue({ error: { message: 'rls' } });
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'rls' } });
     const onMessageDeleted = renderToolbar(makeMessage());
 
     fireEvent.click(screen.getByText('Apagar para todos'));
@@ -119,7 +127,7 @@ describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () =>
   });
 
   it('{ error: null } mantém sucesso e callback', async () => {
-    mocks.updateEq.mockResolvedValue({ error: null });
+    mocks.rpc.mockResolvedValue({ data: true, error: null });
     const onMessageDeleted = renderToolbar(makeMessage());
 
     fireEvent.click(screen.getByText('Apagar para todos'));
@@ -131,7 +139,7 @@ describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () =>
 
   it('preserva o fallback local quando só a Evolution API falha', async () => {
     mocks.deleteMessage.mockRejectedValue(new Error('evolution fora'));
-    mocks.updateEq.mockResolvedValue({ error: null });
+    mocks.rpc.mockResolvedValue({ data: true, error: null });
     const onMessageDeleted = renderToolbar(makeMessage());
 
     fireEvent.click(screen.getByText('Apagar para todos'));
@@ -147,8 +155,8 @@ describe('MessageHoverToolbar — exclusão pelo menu hover (R2-INB-014)', () =>
     );
   });
 
-  it('sem external_id local rejeitado: erro, sem "Mensagem removida" e sem callback', async () => {
-    mocks.updateEq.mockResolvedValue({ error: { message: 'rejected' } });
+  it('sem external_id e RPC rejeitada: erro, sem "Mensagem removida" e sem callback', async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'rejected' } });
     const onMessageDeleted = renderToolbar(makeMessage({ external_id: undefined }));
 
     fireEvent.click(screen.getByText('Apagar mensagem'));

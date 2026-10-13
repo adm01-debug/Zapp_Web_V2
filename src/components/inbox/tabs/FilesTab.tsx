@@ -617,8 +617,9 @@ export function FilesTab({ contactId, contactName, onOpenInChat }: FilesTabProps
           <AlertDialogHeader>
             <AlertDialogTitle>Apagar mensagem?</AlertDialogTitle>
             <AlertDialogDescription>
-              A mensagem é marcada como apagada (is_deleted = true) e o conteúdo vira
-              &quot;[Mensagem apagada]&quot;. Ela some da galeria só aqui no ZAPP — não apaga o
+              A mensagem é marcada como apagada (is_deleted = true) e passa a aparecer como
+              &quot;[Mensagem apagada]&quot; — o texto original continua guardado, sem ser
+              sobrescrito. Ela some da galeria só aqui no ZAPP — não apaga o
               arquivo no WhatsApp do cliente, que continua vendo o que recebeu.
             </AlertDialogDescription>
           </AlertDialogHeader>

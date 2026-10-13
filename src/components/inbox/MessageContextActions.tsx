@@ -3,7 +3,7 @@ import { getLogger } from '@/lib/logger';
 
 const log = getLogger('MessageContextActions');
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
-import { supabase } from '@/integrations/supabase/client';
+import { ChatService } from '@/services/chat.service';
 import { Message } from '@/types/chat';
 import { toast } from 'sonner';
 import {
@@ -63,13 +63,9 @@ export function MessageContextActions({
           log.warn('WhatsApp API delete failed, marking locally only');
         }
       }
-      // Always mark as deleted in local DB
-      const { error } = await supabase
-        .from('messages')
-        .update({ is_deleted: true, content: '[Mensagem apagada]' })
-        .eq('id', message.id);
-
+      // Caminho UNICO de exclusao (PE-20): a RPC preserva o `content` original.
       // PostgREST não lança: sem checar `error`, a UI confirmava exclusão rejeitada.
+      const { error } = await ChatService.deleteMessage(message.id);
       if (error) {
         log.error('Falha ao marcar mensagem como apagada localmente', { error });
         toast.error('Erro ao deletar mensagem');

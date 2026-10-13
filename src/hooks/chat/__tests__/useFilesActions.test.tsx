@@ -9,14 +9,20 @@ import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts'
 import { toast } from 'sonner';
 
 const h = vi.hoisted(() => ({
-  update: vi.fn(),
-  eq: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+// PE-20 (t_fef320c8): a exclusão sai pelo caminho único `supabase.rpc('delete_message')`.
+// `from('messages')` escrito à mão não pode aparecer — o `from` aqui registra e falha.
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: () => ({ update: h.update }) },
+  supabase: {
+    rpc: h.rpc,
+    from: (table: string) => {
+      throw new Error(`escrita inesperada na tabela: ${table}`);
+    },
+  },
 }));
 
 const ITEM: ContactMediaItem = {
@@ -48,21 +54,19 @@ function renderActions(overrides: { onRemoved?: (id: string) => void } = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  h.update.mockReturnValue({ eq: h.eq });
 });
 
 describe('useFilesActions.deleteMessage (etapa 35)', () => {
-  it('sucesso: update fiel, sai da seleção e invalida as três chaves', async () => {
-    h.eq.mockResolvedValue({ error: null });
+  it('sucesso: RPC fiel, sai da seleção e invalida as três chaves', async () => {
+    h.rpc.mockResolvedValue({ data: true, error: null });
     const { result, invalidateSpy, onRemoved } = renderActions();
 
     let outcome = false;
     await act(async () => { outcome = await result.current.deleteMessage(ITEM); });
 
     expect(outcome).toBe(true);
-    // efeito fiel: só marca como apagada no ZAPP; o media_url permanece (nada é apagado de verdade)
-    expect(h.update).toHaveBeenCalledWith({ is_deleted: true, content: '[Mensagem apagada]' });
-    expect(h.eq).toHaveBeenCalledWith('id', 'm2');
+    // caminho único: marca como apagada pela RPC, que preserva o `content` original
+    expect(h.rpc).toHaveBeenCalledWith('delete_message', { p_message_id: 'm2' });
     expect(onRemoved).toHaveBeenCalledWith('m2');
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey('contact-1') });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey('contact-1') });
@@ -72,7 +76,7 @@ describe('useFilesActions.deleteMessage (etapa 35)', () => {
   });
 
   it('erro: toast de erro, NÃO sai da seleção e NÃO invalida', async () => {
-    h.eq.mockResolvedValue({ error: { message: 'rls' } });
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'rls' } });
     const { result, invalidateSpy, onRemoved } = renderActions();
 
     let outcome = true;
@@ -88,7 +92,7 @@ describe('useFilesActions.deleteMessage (etapa 35)', () => {
   // #144 / OTH-002: a exclusão muda o universo de mídia contada pelos chips (etapa 42). Sem
   // invalidar `contactMediaCountsKey`, o chip "Todos"/"Docs" mantém o número antigo após apagar.
   it('#144/OTH-002: excluir mídia invalida os chips por tipo (contactMediaCountsKey)', async () => {
-    h.eq.mockResolvedValue({ error: null });
+    h.rpc.mockResolvedValue({ data: true, error: null });
     const { result, invalidateSpy } = renderActions();
 
     await act(async () => { await result.current.deleteMessage(ITEM); });

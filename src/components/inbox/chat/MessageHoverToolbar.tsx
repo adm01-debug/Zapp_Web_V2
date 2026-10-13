@@ -5,7 +5,7 @@ import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { MessageSendHistorySheet } from './MessageSendHistorySheet';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
-import { supabase } from '@/integrations/supabase/client';
+import { ChatService } from '@/services/chat.service';
 import { toast } from 'sonner';
 import { getLogger } from '@/lib/logger';
 import {
@@ -63,13 +63,11 @@ export function MessageHoverToolbar({
           log.warn('WhatsApp API delete failed, marking locally only');
         }
       }
-      // PostgREST não lança: sem checar `error` a UI confirmava uma exclusão
-      // que o banco rejeitou (R2-INB-014). O fallback local (Evolution API
-      // fora) só é sucesso se a marcação local persistir de fato.
-      const { error } = await supabase
-        .from('messages')
-        .update({ is_deleted: true, content: '[Mensagem apagada]' })
-        .eq('id', message.id);
+      // Caminho UNICO de exclusao (PE-20): a RPC preserva o `content` original
+      // e registra o rastro. PostgREST não lança: sem checar `error` a UI
+      // confirmava uma exclusão que o banco rejeitou (R2-INB-014). O fallback
+      // local (Evolution API fora) só é sucesso se a marcação persistir.
+      const { error } = await ChatService.deleteMessage(message.id);
 
       if (error) {
         log.error('Falha ao marcar mensagem como deletada', error);

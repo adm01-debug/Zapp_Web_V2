@@ -1,19 +1,20 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { contactMediaKey, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import { ChatService } from '@/services/chat.service';
 
 /**
  * Acoes da aba Arquivos (etapa 35).
  *
  * `deleteMessage` centraliza a exclusao que antes vivia duplicada no `FileActionsMenu` e no
- * `FileDetailPanel`, cada um com o seu `window.confirm`. O efeito e fiel ao que o dialogo
- * promete: marca a mensagem como apagada SO no ZAPP (`is_deleted = true` +
- * `content = '[Mensagem apagada]'`); o `media_url` permanece e nada vai para o WhatsApp do
- * cliente. Por isso a UI nao oferece "apagar no WhatsApp" — nao existe esse caminho.
+ * `FileDetailPanel`, cada um com o seu `window.confirm`. Desde PE-20 (cartao t_fef320c8) ela
+ * chama o caminho UNICO `ChatService.deleteMessage` (RPC `delete_message`, migration
+ * 20261013230001), que marca `is_deleted = true`, grava o rastro (deleted_by/deleted_at) e
+ * MANTEM o `content` original; o `media_url` permanece e nada vai para o WhatsApp do cliente.
+ * Por isso a UI nao oferece "apagar no WhatsApp" — nao existe esse caminho.
  *
  * Ordem do sucesso (etapa 35): `update` -> `onRemoved(item.id)` (tira da selecao) ->
  * invalidar `contactMediaKey` e `conversationTabCountsKey`. No erro NAO se remove da
@@ -45,10 +46,8 @@ export function useFilesActions({ contactId, onRemoved }: FilesActionsParams): F
     async (item: ContactMediaItem): Promise<boolean> => {
       setIsDeleting(true);
       try {
-        const { error } = await supabase
-          .from('messages')
-          .update({ is_deleted: true, content: '[Mensagem apagada]' })
-          .eq('id', item.id);
+        // Caminho UNICO (PE-20): a RPC autoriza no banco e preserva o `content`.
+        const { error } = await ChatService.deleteMessage(item.id);
 
         if (error) {
           toast.error('Erro ao apagar mensagem');

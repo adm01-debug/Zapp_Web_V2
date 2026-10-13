@@ -101,11 +101,25 @@ export class ChatService {
     return supabase.from('messages').update({ is_read: true }).eq('id', messageId);
   }
 
+  /**
+   * Caminho UNICO de exclusao de mensagem (PE-20 / cartao t_fef320c8).
+   *
+   * Antes a exclusao era um UPDATE direto a partir de 4 pontos de tela
+   * (`is_deleted = true` + `content = '[Mensagem apagada]'`): o texto original
+   * era sobrescrito (nao havia como auditar o que foi apagado) e o cliente
+   * conseguia reescrever o conteudo de uma mensagem recebida.
+   *
+   * Agora a marcacao mora na RPC `delete_message` (migration 20261013230001):
+   * ela marca `is_deleted`, grava o rastro (`deleted_by`/`deleted_at`), MANTEM
+   * o `content` original (a tela mostra o rotulo) e autoriza no banco por
+   * visibilidade do contato + posse da mensagem. O UPDATE continua acontecendo
+   * no servidor, entao o realtime segue vendo a mudanca de `is_deleted` — nao
+   * preciso empurrar estado local.
+   */
   static async deleteMessage(messageId: string) {
-    return supabase
-      .from('messages')
-      .update({ is_deleted: true, content: '[Mensagem apagada]' })
-      .eq('id', messageId);
+    // types.ts ainda nao tem a assinatura da RPC nova (mesmo cast de
+    // mapboxCostGuard.ts / useSentimentData.ts ate o sync dos tipos).
+    return (supabase as any).rpc('delete_message', { p_message_id: messageId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (PE-20), types.ts ainda nao sincronizado
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {

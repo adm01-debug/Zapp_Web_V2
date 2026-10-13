@@ -7,9 +7,9 @@ import { __resetFilesViewSession } from '@/hooks/chat/useFilesViewState';
 import { toast } from 'sonner';
 
 const h = vi.hoisted(() => ({
-  updateError: { value: null as unknown },
-  update: vi.fn(),
-  eq: vi.fn(),
+  rpcError: { value: null as unknown },
+  rpc: vi.fn(),
+  fromCalls: [] as string[],
 }));
 
 const mockUseContactMedia = vi.fn();
@@ -33,10 +33,17 @@ vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'user-1' 
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+// PE-20 (t_fef320c8): a exclusão sai pelo caminho único `supabase.rpc('delete_message')`;
+// nenhum ponto de tela escreve direto na tabela `messages` (o `from` registra e falha).
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
-    from: () => ({ update: h.update }),
+    rpc: h.rpc,
+    from: (table: string) => {
+      h.fromCalls.push(table);
+      // registra a tabela e devolve uma cadeia inerte: nada de exclusão passa por `from`.
+      return { update: () => ({ eq: () => Promise.resolve({ error: null }) }) };
+    },
     storage: { from: () => ({ createSignedUrls: vi.fn() }) },
   },
 }));
@@ -122,9 +129,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   __resetFilesViewSession();
   localStorage.clear();
-  h.updateError.value = null;
-  h.update.mockImplementation(() => ({ eq: h.eq }));
-  h.eq.mockImplementation(() => Promise.resolve({ error: h.updateError.value }));
+  h.rpcError.value = null;
+  h.fromCalls.length = 0;
+  h.rpc.mockImplementation(() =>
+    Promise.resolve({ data: h.rpcError.value ? null : true, error: h.rpcError.value })
+  );
 });
 
 describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
@@ -246,8 +255,8 @@ describe('FilesTab fase 6 — exclusão com AlertDialog (etapa 35)', () => {
     expect(screen.getByText(/WhatsApp do cliente/)).toBeInTheDocument();
   });
 
-  it('update rejeitado → toast de erro e o item continua na lista e na seleção', async () => {
-    h.updateError.value = { message: 'rls' };
+  it('RPC rejeitada → toast de erro e o item continua na lista e na seleção', async () => {
+    h.rpcError.value = { message: 'rls' };
     renderTab([IMAGE, DOC]);
     await openDeleteDialogForM2();
 
@@ -259,7 +268,7 @@ describe('FilesTab fase 6 — exclusão com AlertDialog (etapa 35)', () => {
     expect(screen.getByText('1 selecionado')).toBeInTheDocument(); // a seleção NÃO zerou
   });
 
-  it('update aceito → update fiel, sucesso e o item sai da seleção (refetch via invalidação)', async () => {
+  it('RPC aceita → caminho único fiel, sucesso e o item sai da seleção (refetch via invalidação)', async () => {
     renderTab([IMAGE, DOC]);
     await openDeleteDialogForM2();
 
@@ -267,8 +276,10 @@ describe('FilesTab fase 6 — exclusão com AlertDialog (etapa 35)', () => {
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(toast.error).not.toHaveBeenCalled();
-    expect(h.update).toHaveBeenCalledWith({ is_deleted: true, content: '[Mensagem apagada]' });
-    expect(h.eq).toHaveBeenCalledWith('id', 'm2');
+    // caminho único (PE-20): RPC `delete_message`, que preserva o `content` original
+    expect(h.rpc).toHaveBeenCalledWith('delete_message', { p_message_id: 'm2' });
+    // nenhuma escrita direta na tabela `messages` a partir da tela
+    expect(h.fromCalls).not.toContain('messages');
     // sem refetch devolver (etapa 09), o item só sai quando a query invalida; aqui o efeito
     // observável é a seleção zerar — a invalidação das chaves é coberta no teste do hook.
     expect(await screen.findByText('0 selecionados')).toBeInTheDocument();
