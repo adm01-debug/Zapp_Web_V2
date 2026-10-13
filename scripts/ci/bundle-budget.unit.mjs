@@ -167,3 +167,40 @@ test("o grupo do runtime de animacao nao captura pacotes vizinhos por nome parec
     );
   }
 });
+
+// ── Ratchet do teto do bundle inicial (SL-103) ────────────────────────────────
+// O teto de `initial-js` mora em performance-budget.json e o gate le o teto DO
+// PROPRIO JSON (bundle-budget.mjs -> evaluate compara o medido com o numero que
+// estiver la). Consequencia: subir de volta o teto antigo (341 KB) e um commit que
+// passa no CI, porque um teto 341 aceita um bundle de 341. Esta checagem trava o
+// teto no valor combinado em 2026-10-12 (340 -> 341 -> 300), FORA do arquivo que
+// ele vigia — com o teto em 341 KB (ou qualquer valor acima de 300) ela fica
+// vermelha com a mensagem "teto frouxo/antigo".
+const TETO_INITIAL_JS_KB = 300;
+const ORCAMENTO_VERSIONADO = JSON.parse(
+  readFileSync(new URL("../../performance-budget.json", import.meta.url), "utf8"),
+);
+
+test("o gate versionado corta o bundle inicial nos 300 KB combinados (nao no teto antigo de 341)", () => {
+  // Chama o gate de verdade (evaluate) com o orcamento de verdade (o JSON que main
+  // le). Tabela de limites: exato, exato+0,1 e o teto antigo. Se alguem devolver o
+  // teto para 341 KB, os dois ultimos casos deixam de reprovar e o teste fica
+  // vermelho com "teto frouxo/antigo".
+  const budgets = ORCAMENTO_VERSIONADO.budgets ?? {};
+  const reprovaInitialJs = (jsKB) =>
+    evaluate({ jsKB, cssKB: 0, largestChunkKB: 0, totalAssetsKB: 0 }, budgets)
+      .some((falha) => falha.startsWith("initial-js:"));
+  assert.equal(reprovaInitialJs(300), false, "limite exato: 300 KB gzip deveria passar");
+  assert.equal(reprovaInitialJs(300.1), true, "limite+0,1 KB gzip deveria reprovar");
+  assert.equal(reprovaInitialJs(341), true, "teto frouxo/antigo: 341 KB gzip (o valor de antes) caberia");
+
+  // A tabela acima sozinha cobre qualquer afrouxamento > 0,1 KB; este assert prende
+  // o valor versionado no combinado para o relato e para o diff do teto.
+  const teto = budgets["initial-js"]?.maxKB;
+  assert.equal(typeof teto, "number", "performance-budget.json precisa de budgets[\"initial-js\"].maxKB numerico");
+  assert.ok(
+    teto <= TETO_INITIAL_JS_KB,
+    `teto frouxo/antigo: initial-js.maxKB = ${teto} KB supera os ${TETO_INITIAL_JS_KB} KB combinados`
+      + " — o gate le este numero, entao subir o teto faz o CI passar sem o bundle caber; baixe o teto (ou prove nova medicao)",
+  );
+});
