@@ -155,7 +155,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
       </Button>
 
       {isLoading && (
-        <motion.div role="status" aria-live="polite" aria-atomic="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 animate-pulse">
+        <motion.div role="status" aria-live="polite" aria-atomic="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 motion-safe:animate-pulse">
           <div className="flex items-center gap-2 px-1"><Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /><span className="text-2xs font-medium text-muted-foreground">Gerando resumo de {filteredMessages.length} mensagens...</span></div>
           <div className="h-16 rounded-xl bg-muted/40 border border-border/20" />
           <div className="space-y-1.5"><div className="h-3 bg-muted/30 rounded w-full" /><div className="h-3 bg-muted/30 rounded w-4/5" /><div className="h-3 bg-muted/30 rounded w-3/5" /></div>

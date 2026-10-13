@@ -7,7 +7,7 @@ Especialista: Íris (area-front-componentes)
 - `src/components/inbox/summary/SummaryResult.tsx`: o botão só-ícone de ouvir ganhou `aria-label={label}`.
 - `src/components/inbox/ObjectionDetector.tsx`: botões só-ícone Copiar/Reescrever/Reanalisar com `aria-label`; estado de carregamento com `role="status" aria-live="polite"` e estado de erro com `role="alert"`.
 - `src/components/inbox/UniversityHelp.tsx`: erro com `role="alert"` e região `role="status" aria-live="polite"` que anuncia "Gerando resposta...".
-- `src/components/inbox/ConversationSummary.tsx` e `src/components/inbox/AIConversationAssistant.tsx`: bloco de carregamento com `role="status" aria-live="polite" aria-atomic="true"`; botão X do aviso de áudio com `aria-label="Dispensar aviso de áudio"` e ícone `aria-hidden`.
+- `src/components/inbox/ConversationSummary.tsx` e `src/components/inbox/AIConversationAssistant.tsx`: bloco de carregamento com `role="status" aria-live="polite" aria-atomic="true"`; botão X do aviso de áudio com `aria-label="Dispensar aviso de áudio"` e ícone `aria-hidden`. No bloco de carregamento do resumo o pulso virou `motion-safe:animate-pulse` (respeita quem pediu movimento reduzido — apontado pela checagem determinística do fechar).
 - `src/components/inbox/ai-tools/HistoryTab.tsx`: quando `sentiment_score`/`message_count` vêm `null`, a tela mostra "—" em vez de "%" e "msgs" soltos; o histórico não propaga mais `null` para o resumo (`?? undefined`).
 - `src/components/inbox/ai-tools/SentimentTab.tsx`: o cast de `agentPerformance` para `[string, number][]` virou filtro em tempo de execução — valor que não é número finito não é renderizado (não quebra a barra de desempenho).
 
