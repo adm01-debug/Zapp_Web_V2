@@ -134,6 +134,18 @@ describe('061 — menu ⋮ da linha', () => {
     expect(acoes.onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('o gatilho ⋮ tem alvo de 40 px e anel de foco visível (regra de tela)', () => {
+    const alvo = item({ id: 'm-size' });
+    renderCom(buckets({ noDue: [alvo] }), mocks());
+    const kebab = within(screen.getByTestId('task-row')).getByRole('button', { name: 'Mais opções' });
+    // h-10 = w-10 = 40 px: o mesmo alvo de toque do primitivo compartilhado.
+    expect(kebab.className).toContain('h-10');
+    expect(kebab.className).toContain('w-10');
+    // foco visível com o anel do sistema (não some com o opacity-0 do hover).
+    expect(kebab.className).toContain('focus-visible:ring-2');
+    expect(kebab.className).toContain('focus-visible:ring-ring');
+  });
+
   it('num item concluído a segunda opção é "Reabrir" e chama onReopen', async () => {
     const feita = item({ id: 'm2', status: 'done', completed_at: new Date().toISOString() });
     const acoes = renderCom(buckets({ done7d: [feita] }), mocks());

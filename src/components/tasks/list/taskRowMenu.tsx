@@ -77,9 +77,9 @@ export function TaskRowMenu({
           data-testid="row-menu"
           aria-label="Mais opções"
           onClick={(e) => e.stopPropagation()}
-          className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:none)]:opacity-100"
         >
-          <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+          <MoreVertical className="h-4 w-4 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
