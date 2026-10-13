@@ -33,6 +33,7 @@ export function EvolutionDisconnectBanner() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão do banner, sem estado derivado de props para sincronizar.
     void fetchStatus();
   }, []);
 
