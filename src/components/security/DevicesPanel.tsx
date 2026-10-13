@@ -63,7 +63,7 @@ export function DevicesPanel() {
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => (
-                <SessionCard key={session.id} session={{ ...session, device_id: session.device_id ?? '', ip_address: session.ip_address ?? '' }} device={(() => { const d = devices.find(d => d.id === session.device_id); return d ? { ...d, device_name: d.device_name ?? '', browser: d.browser ?? '', os: d.os ?? '' } : undefined; })()} isCurrentSession={session.device_id === currentDeviceId} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
+                <SessionCard key={session.id} session={{ ...session, device_id: session.device_id ?? '', ip_address: session.ip_address ?? '' }} device={(() => { const d = devices.find(d => d.id === session.device_id); return d ? { ...d, device_name: d.device_name ?? '', browser: d.browser ?? '', os: d.os ?? '' } : undefined; })()} isCurrentSession={session.is_current} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
               ))}
             </div>
           )}

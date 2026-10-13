@@ -3,12 +3,14 @@ import type { ReactNode } from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
 const mockFrom = vi.fn();
+const mockRpc = vi.fn();
 const mockFunctionsInvoke = vi.fn();
 const selectCalls: string[][] = [];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'token' } } }),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
@@ -87,6 +89,7 @@ function mockInvokeRevokeReject() {
 function setupDefaultMocks() {
   mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
   mockFunctionsInvoke.mockResolvedValue({ data: { revoked: 1 }, error: null });
+  mockRpc.mockResolvedValue({ data: [], error: null });
   mockFrom.mockImplementation((table: string) => {
     if (table === 'user_sessions') {
       return makeBuilder({
@@ -152,11 +155,12 @@ describe('useDeviceDetection', () => {
     expect(result.current.devices).toEqual([]);
   });
 
-  it('fetches devices and sessions when user present', async () => {
+  it('busca as sessões pela RPC my_active_sessions e não lê user_sessions no carregamento', async () => {
     const { result } = renderHook(() => useDeviceDetection());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockFrom).toHaveBeenCalledWith('user_devices');
-    expect(mockFrom).toHaveBeenCalledWith('user_sessions');
+    expect(mockRpc).toHaveBeenCalledWith('my_active_sessions');
+    expect(mockFrom).not.toHaveBeenCalledWith('user_sessions');
   });
 
   it('não usa select("*") — traz só as colunas necessárias de user_devices', async () => {
@@ -165,10 +169,31 @@ describe('useDeviceDetection', () => {
     expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
   });
 
-  it('não usa select("*") — traz só as colunas necessárias de user_sessions', async () => {
-    renderHook(() => useDeviceDetection());
-    await waitFor(() => expect(mockFrom).toHaveBeenCalledWith('user_sessions'));
-    expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
+  // ─── R2-AUTH-005: a sessão atual vem do JWT (is_current), não do device_id ───
+
+  it('duas sessões no mesmo aparelho: só a linha com is_current=true é a atual', async () => {
+    mockRpc.mockResolvedValue({
+      data: [
+        {
+          id: 's1', device_id: 'dev-1', ip_address: '203.0.113.10', user_agent: 'ua',
+          auth_session_id: 'auth-1', started_at: '2026-10-13T10:00:00Z',
+          last_activity_at: '2026-10-13T10:05:00Z', is_current: true,
+        },
+        {
+          id: 's2', device_id: 'dev-1', ip_address: '203.0.113.10', user_agent: 'ua',
+          auth_session_id: 'auth-2', started_at: '2026-10-13T09:00:00Z',
+          last_activity_at: '2026-10-13T09:05:00Z', is_current: false,
+        },
+      ],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useDeviceDetection());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.sessions).toHaveLength(2);
+    // Mesmo device_id nas duas: o JWT é o único critério que separa a atual.
+    expect(result.current.sessions.filter((s) => s.is_current).map((s) => s.id)).toEqual(['s1']);
   });
 
   // ─── Critério 3: encerrar uma revoga só a alvo (scope local) ───

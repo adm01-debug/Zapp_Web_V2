@@ -14,21 +14,21 @@ interface UserDevice {
   last_seen_at: string;
 }
 
-// `auth_session_id` é adicionado pela migration do cartão backend (t_29b824ad,
-// R2-AUTH-004). O types.ts gerado ainda não o conhece — será regenerado pelo
-// types-sync depois do merge — então o acesso a `user_sessions` que toca essa
-// coluna usa `fromTable` (escape dinâmico tipado) em vez do client tipado.
+// Linha de `public.my_active_sessions()` (R2-AUTH-005): o banco devolve SÓ as
+// sessões vivas do próprio chamador e diz qual é a atual a partir do claim
+// `session_id` do JWT. `device_id` não serve para marcar a sessão atual — dois
+// logins no mesmo aparelho compartilham o device_id e apareciam os dois como
+// "Sessão atual". O acesso direto a `user_sessions` continua via `fromTable`
+// (escape dinâmico tipado) só nas mutações, que ainda tocam `auth_session_id`.
 interface UserSession {
   id: string;
   device_id: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  is_active: boolean | null;
   auth_session_id: string | null;
   started_at: string;
   last_activity_at: string;
-  expires_at: string;
-  ended_at: string | null;
+  is_current: boolean;
 }
 
 interface SessionAuthIdRow {
@@ -149,13 +149,13 @@ export function useDeviceDetection() {
     if (!user) return;
 
     try {
-      const { data, error } = await fromTable('user_sessions')
-        .select('id, device_id, ip_address, started_at, auth_session_id')
-        .eq('is_active', true)
-        .order('last_activity_at', { ascending: false });
+      // A lista vem do banco já saneada: só sessões com `auth.sessions` viva, e
+      // `is_current` calculado pelo JWT (não por device_id, que é compartilhado
+      // entre logins no mesmo aparelho).
+      const { data, error } = await supabase.rpc('my_active_sessions');
 
       if (error) throw error;
-      setSessions((data ?? []) as UserSession[]);
+      setSessions((data ?? []) as unknown as UserSession[]);
     } catch (error) {
       log.error('Error fetching sessions:', error);
     }

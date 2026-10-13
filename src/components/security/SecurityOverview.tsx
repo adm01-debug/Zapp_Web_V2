@@ -120,6 +120,10 @@ export function SecurityOverview() {
   const isMFAEnabled = verifiedFactors.length > 0;
   const trustedDevices = devices.filter(d => d.is_trusted).length;
   const unresolvedAlerts = securityAlerts.filter(a => !a.is_resolved).length;
+  // A sessão atual vem do JWT (`is_current`), nunca do device_id: dois logins no
+  // mesmo aparelho compartilham o device_id. O item "Sessões Ativas" mede as
+  // OUTRAS sessões — a que o dono está usando não é acesso estranho à conta.
+  const otherSessions = sessions.filter(s => !s.is_current).length;
 
   const securityItems: SecurityItem[] = [
     {
@@ -151,10 +155,12 @@ export function SecurityOverview() {
     {
       id: 'sessions',
       title: 'Sessões Ativas',
-      description: devicesLoading ? 'Verificando sessões…' : `${sessions.length} sessão(ões) ativa(s)`,
+      description: devicesLoading
+        ? 'Verificando sessões…'
+        : `${sessions.length} sessão(ões) ativa(s), ${otherSessions} além desta`,
       icon: Monitor,
-      status: devicesLoading ? 'loading' : sessions.length <= 3 ? 'on' : 'off',
-      score: devicesLoading ? null : sessions.length <= 3 ? 25 : 15,
+      status: devicesLoading ? 'loading' : otherSessions <= 3 ? 'on' : 'off',
+      score: devicesLoading ? null : otherSessions <= 3 ? 25 : 15,
       maxScore: 25,
     },
     {
