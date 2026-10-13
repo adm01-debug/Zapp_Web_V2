@@ -11,10 +11,18 @@
  * Os alvos vêm de `performance-budget.json` → seção `web-vitals` (E36). Antes
  * havia aqui uma cópia dos limiares, que divergia do arquivo sem ninguém notar:
  * o JSON não era lido por nenhum código. Fonte única agora.
+ *
+ * Além do console, o que foi medido sobe de forma AMOSTRADA para
+ * `web_vitals_samples` (PE-108/SL-231) — o outro lado do arquivo está na seção
+ * "Envio amostrado dos Web Vitals ao servidor", no fim.
  */
 
 import { getLogger } from '@/lib/logger';
 import performanceBudget from '../../performance-budget.json';
+
+// Global injetado pelo `define` do Vite; ausente em jsdom/vitest — o `typeof`
+// guard evita ReferenceError (mesmo padrão de src/lib/errorReporter.ts).
+declare const __ZAPP_BUILD_ID__: string | undefined;
 
 const log = getLogger('WebVitals');
 
@@ -82,6 +90,11 @@ export function initWebVitals() {
   if (typeof window === 'undefined') return;
   if (_initialized) return;
   _initialized = true;
+
+  // PE-108/SL-231: sorteia a amostragem deste documento e já começa a ler o
+  // interruptor. Ler ANTES do unload é o que permite o lote sair no `pagehide`.
+  _vitalsSampled = deveAmostrar();
+  void loadVitalsSwitch();
 
   // LCP - Largest Contentful Paint
   try {
@@ -241,6 +254,8 @@ export function initWebVitals() {
     // Se a janela de 5 s não chegou a completar (saída/aba oculta antes), vale o
     // que se sabe até aqui — o mesmo critério que o Lighthouse usa no fim do trace.
     reportTti();
+    // PE-108/SL-231: o mesmo unload que fecha o relatório é o que leva o lote.
+    flushVitalsToServer();
   };
   // visibilitychange fires on document per spec; attach directly to avoid relying on bubbling.
   document.addEventListener('visibilitychange', () => {
@@ -311,4 +326,197 @@ export function initWebVitals() {
 
 export function getWebVitalsReport(): WebVitalMetric[] {
   return [...metricsBuffer.values()];
+}
+
+// ---------------------------------------------------------------------------
+// Envio amostrado dos Web Vitals ao servidor (PE-108 / SL-231)
+//
+// O que sobe: a métrica, o valor, a ROTA normalizada (pathname sem query string,
+// sem fragmento e com identificador de linha virando `:id`) e a versão do app.
+// NÃO sobe URL completa, user-agent, IP nem identificador de sessão.
+//
+// Como sobe: só ~10% dos documentos amostram; o lote sai UMA vez por documento,
+// no `pagehide`/`visibilitychange`, pela RPC `record_web_vital` — o cliente não
+// tem INSERT em `web_vitals_samples`. Toda falha é silenciosa: telemetria não
+// pode virar erro de tela.
+//
+// Interruptor (chave ausente ou ilegível = DESLIGADO, decisão fail-closed):
+//  - `feature_flags.web_vitals_samples` — visível a todo `authenticated`;
+//  - `global_settings.web_vitals_samples` — como pede o cartão; a leitura dessa
+//    tabela é restrita a admin/supervisor por RLS, então sozinha ela só ligaria
+//    a coleta na sessão de quem é admin.
+// Ligado em QUALQUER uma das duas fontes, a coleta acontece.
+// ---------------------------------------------------------------------------
+
+/** Nome do interruptor, usado nas duas fontes. */
+export const WEB_VITALS_SWITCH_KEY = 'web_vitals_samples';
+
+/** Fatia dos documentos que envia (10%). */
+export const WEB_VITALS_SAMPLE_RATE = 0.1;
+
+/** Teto de amostras por lote: acima disso a RPC recusa o LOTE INTEIRO. */
+export const WEB_VITALS_MAX_BATCH = 50;
+
+/** Uma amostra no formato que `record_web_vital` aceita. */
+export interface WebVitalSample {
+  metric: VitalName;
+  value: number;
+  route: string;
+  app_version: string;
+}
+
+/** Mesmo teto do CHECK de `web_vitals_samples.route`. */
+const ROUTE_MAX_LEN = 200;
+
+/**
+ * Segmento de rota que é identificador: número puro ou hex longo (uuid colado).
+ * Exige pelo menos um dígito, senão um caminho legítimo formado só por letras
+ * 'a'-'f' (`/faced`, `/deadbeef`) viraria `:id`.
+ */
+const ID_SEGMENT = /^(?:\d+|[0-9a-fA-F]{8,}(?:-[0-9a-fA-F]{4,})*)$/;
+const TEM_DIGITO = /\d/;
+
+/**
+ * Rota normalizada: corta query string e fragmento, garante o `/` inicial, troca
+ * identificador de linha por `:id` e respeita o teto de 200 caracteres do CHECK
+ * da tabela. Pathname inesperado vira `/` — nunca sobe URL completa.
+ */
+export function normalizeVitalRoute(pathname: string | null | undefined): string {
+  const semParametros = String(pathname ?? '').replace(/[?#].*$/, '');
+  if (!semParametros.startsWith('/')) return '/';
+  const normalizada = semParametros
+    .split('/')
+    .map((segmento) => (ID_SEGMENT.test(segmento) && TEM_DIGITO.test(segmento) ? ':id' : segmento))
+    .join('/')
+    .replace(/\/{2,}/g, '/')
+    .slice(0, ROUTE_MAX_LEN);
+  return normalizada.startsWith('/') ? normalizada : '/';
+}
+
+/** Interpreta o valor do interruptor em `global_settings` ('on'/'true'/'1'/'yes'). */
+export function switchEnabled(value: string | null | undefined): boolean {
+  const v = String(value ?? '').trim().toLowerCase();
+  return v === 'on' || v === 'true' || v === '1' || v === 'yes';
+}
+
+/**
+ * Sorteio por documento: `true` para ~`rate` das sessões. `rate >= 1` liga tudo e
+ * `rate <= 0` desliga tudo, sem depender do sorteio. `rand` é injetado para o
+ * teste não depender de sorte.
+ */
+export function deveAmostrar(
+  rate: number = WEB_VITALS_SAMPLE_RATE,
+  rand: () => number = Math.random,
+): boolean {
+  if (!Number.isFinite(rate) || rate <= 0) return false;
+  if (rate >= 1) return true;
+  return rand() < rate;
+}
+
+/** Arredonda o que sobe: CLS em 3 casas; as demais métricas (ms) em inteiro. */
+function arredondarVital(name: VitalName, value: number): number {
+  return name === 'CLS' ? Math.round(value * 1000) / 1000 : Math.round(value);
+}
+
+/** Mesma faixa dos CHECKs de `web_vitals_samples` (CLS 0..10; demais 0..600000). */
+function vitalNaFaixa(name: VitalName, value: number): boolean {
+  if (!Number.isFinite(value) || value < 0) return false;
+  return value <= (name === 'CLS' ? 10 : 600000);
+}
+
+/** Versão do app da amostra (`__ZAPP_BUILD_ID__` vem do define do Vite). */
+function versaoDoApp(): string {
+  const build = typeof __ZAPP_BUILD_ID__ === 'string' ? __ZAPP_BUILD_ID__ : '';
+  const limpa = build.replace(/\s+/g, '').slice(0, 40);
+  return limpa || 'unknown';
+}
+
+/**
+ * Monta o lote: só métrica que este coletor mede e valor dentro da faixa da RPC.
+ * A validação é no cliente porque a RPC recusa o LOTE INTEIRO (22023) quando uma
+ * amostra está fora de faixa.
+ */
+export function buildVitalSamples(
+  report: readonly WebVitalMetric[],
+  route: string,
+  appVersion: string,
+): WebVitalSample[] {
+  const samples: WebVitalSample[] = [];
+  for (const metrica of report) {
+    if (!COLLECTED_VITALS.includes(metrica.name as VitalName)) continue;
+    const name = metrica.name as VitalName;
+    if (!vitalNaFaixa(name, metrica.value)) continue;
+    samples.push({ metric: name, value: arredondarVital(name, metrica.value), route, app_version: appVersion });
+    if (samples.length >= WEB_VITALS_MAX_BATCH) break;
+  }
+  return samples;
+}
+
+/**
+ * Envia um lote pela RPC. Devolve `false` quando nada foi enviado (lote vazio,
+ * rede ou sessão indisponível). Nunca lança — quem chama está no unload.
+ */
+export async function sendVitalSamples(
+  samples: readonly WebVitalSample[],
+  send?: (lote: WebVitalSample[]) => Promise<unknown>,
+): Promise<boolean> {
+  if (samples.length === 0) return false;
+  try {
+    const enviar =
+      send ??
+      (async (lote: WebVitalSample[]) => {
+        const { supabase } = await import('@/integrations/supabase/client');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (PE-108), types.ts ainda não sincronizado
+        const { error } = await (supabase as any).rpc('record_web_vital', { p_samples: lote });
+        if (error) throw error;
+      });
+    await enviar([...samples]);
+    return true;
+  } catch (err) {
+    log.debug('[web-vitals] envio ao servidor indisponível', err);
+    return false;
+  }
+}
+
+/** Estado do interruptor: `unknown` = ainda não lido (conta como desligado). */
+let _vitalsSwitch: 'unknown' | 'on' | 'off' = 'unknown';
+/** Sorteio da amostragem deste documento (`null` = `initWebVitals` não rodou). */
+let _vitalsSampled: boolean | null = null;
+/** Trava de um lote por documento — `pagehide` e `visibilitychange` disparam juntos. */
+let _vitalsEnviado = false;
+
+/**
+ * Lê o interruptor nas duas fontes, uma vez por documento. Falha de leitura
+ * (rede, sessão anônima, RLS) desliga — telemetria não pode quebrar a tela.
+ */
+async function loadVitalsSwitch(): Promise<void> {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const [flag, ajuste] = await Promise.all([
+      supabase.from('feature_flags').select('enabled').eq('key', WEB_VITALS_SWITCH_KEY).limit(1),
+      supabase.from('global_settings').select('value').eq('key', WEB_VITALS_SWITCH_KEY).limit(1),
+    ]);
+    const pelaFlag = (flag.data as Array<{ enabled: boolean }> | null)?.[0]?.enabled === true;
+    const peloAjuste = switchEnabled((ajuste.data as Array<{ value: string | null }> | null)?.[0]?.value ?? null);
+    _vitalsSwitch = pelaFlag || peloAjuste ? 'on' : 'off';
+  } catch (err) {
+    _vitalsSwitch = 'off';
+    log.debug('[web-vitals] interruptor indisponível', err);
+  }
+}
+
+/**
+ * Lote do documento no unload. Sem `await` de propósito: `pagehide` não espera
+ * promessa. Um lote por documento, mesmo que o envio falhe.
+ */
+function flushVitalsToServer(): void {
+  if (_vitalsEnviado || _vitalsSampled !== true || _vitalsSwitch !== 'on') return;
+  const samples = buildVitalSamples(
+    getWebVitalsReport(),
+    normalizeVitalRoute(typeof window === 'undefined' ? '' : window.location.pathname),
+    versaoDoApp(),
+  );
+  if (samples.length === 0) return;
+  _vitalsEnviado = true;
+  void sendVitalSamples(samples);
 }

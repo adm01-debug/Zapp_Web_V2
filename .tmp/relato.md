@@ -1,32 +1,79 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- `.tmp/relato.md`: é este próprio relato. A branch base já versiona esse arquivo (apesar de `.tmp/` estar no `.gitignore`), então ele aparece como 4º arquivo do diff — é o único motivo de o diff ter 4 arquivos, dos quais 1 é de teste. Não é código de produto.
-- `supabase/migrations/20261013230010_web_vitals_samples.sql` (novo): medicao de campo dos Web Vitals sem coletor no servidor (PE-108/SL-231). Cria `public.web_vitals_samples` (metric, value, route normalizada, app_version, sampled_on/dia, user_id, created_at) com CHECK de faixa por metrica (CLS 0..10; demais 0..600000 ms), rota sem `?`/`#`/espaco e versao sem espaco; RLS LIGADA e sem GRANT de escrita para cliente (INSERT/UPDATE/DELETE barrados — A4/A5); leitura so para admin (policy + GRANT SELECT). Escrita so pela RPC `public.record_web_vital(jsonb)` SECURITY DEFINER, que valida o LOTE INTEIRO antes de gravar (amostra invalida => 22023, nada pela metade) e aplica rate limit por usuario reusando `public.consume_rate_limit` (60 s, 30 chamadas; estourou => devolve 0 em silencio). Retencao: `public.purge_web_vitals_samples(interval default '30 days')` (so service_role) + `cron.schedule('purge-web-vitals-samples','25 4 * * *')`. Sem PII: rota normalizada no lugar da URL, sem UA/IP/sessao. Rollback executavel no cabecalho.
-- `scripts/db-audit/web-vitals-samples-rpc.test.sh` (novo): prova com os PAPEIS REAIS (authenticated/anon/service_role, `SET ROLE`) em Postgres 17 descartavel, aplicando as migrations REAIS (a minha + a de edge_rate_limits) e extraindo `is_admin` verbatim; cobre EXECUTE/GRANT, gravacao, validacao, atomicidade, rate limit, leitura admin, retencao, job do cron e o rollback.
-- `scripts/ci/check-test-inventory.mjs`: uma linha na ALLOWLIST com justificativa. O inventario JA reprova 6 orfaos pre-existentes de outros cartoes (department-invite, ia-usage-outbox, talkx-conversion-defaults, team-chat-*); o meu NAO aparece na lista (absolvido). O passo no db-guard.yml fica com o dono do workflow.
+
+- `src/lib/web-vitals.ts` — o coletor que já media LCP/FID/CLS/INP/TTFB/FCP/TTI no
+  navegador passou a MANDAR o que mediu, de forma AMOSTRADA, pela RPC
+  `record_web_vital` (o cliente não tem INSERT em `web_vitals_samples`):
+  * `deveAmostrar(rate = 0.1, rand)` decide UMA vez por documento se este
+    documento entra nos ~10% (`initWebVitals` chama no início); `rate >= 1` liga
+    tudo e `rate <= 0` desliga tudo sem depender do sorteio.
+  * `normalizeVitalRoute(pathname)` monta a rota que sobe: corta query string e
+    fragmento, garante o `/` inicial, troca identificador de linha (uuid colado
+    ou número puro, sempre com dígito) por `:id` e respeita o teto de 200
+    caracteres do CHECK de `web_vitals_samples.route`. Não sobe URL completa,
+    user-agent, IP nem id de sessão.
+  * `buildVitalSamples(report, route, appVersion)` filtra o que a RPC aceita —
+    métrica que o coletor mede e valor na faixa dos CHECKs (CLS 0..10; demais
+    0..600000), arredondando CLS em 3 casas e ms em inteiro — porque uma amostra
+    inválida faz a RPC recusar o LOTE INTEIRO (22023).
+  * `sendVitalSamples(samples, send?)` chama a RPC e devolve `false` quando não
+    houve envio; nunca lança (o `catch` só registra em `log.debug`).
+  * `flushVitalsToServer()` dispara o lote no MESMO unload que já fechava o
+    relatório (`pagehide` e `visibilitychange` → `flushAccumulated`), sem `await`
+    (o unload não espera promessa) e com trava de UM lote por documento, já que
+    os dois eventos disparam juntos.
+  * Interruptor lido uma vez por documento, com chave ausente/ilegível = DESLIGADO
+    (fail-closed): `feature_flags.web_vitals_samples` (`switchEnabled` aceita
+    'on'/'true'/'1'/'yes') e `global_settings.web_vitals_samples`, como pede o
+    cartão. A segunda sozinha só ligaria a coleta na sessão de um admin — a
+    leitura de `global_settings` é restrita a admin/supervisor por RLS (migration
+    20260317223223) —, então `true` em QUALQUER uma das duas fontes liga a coleta;
+    assim o interruptor vale para `authenticated` e não só para quem é admin. A
+    leitura é assíncrona e feita ANTES do unload de propósito (o lote só sai com
+    o interruptor já lido).
+- `src/lib/__tests__/web-vitals-envio.test.ts` (NOVO) — chama o módulo REAL
+  (`initWebVitals`), com `PerformanceObserver` dublê e o cliente Supabase
+  mockado: rota normalizada e ausência de PII no lote enviado, um lote por
+  documento mesmo com `pagehide` + `visibilitychange`, saída pelo
+  `visibilitychange`, interruptor desligado (chave ausente) e fora do sorteio
+  não enviam, leitura do interruptor que falha desliga em silêncio, além dos
+  casos puros de `switchEnabled`, `normalizeVitalRoute`, `deveAmostrar`,
+  `buildVitalSamples` e `sendVitalSamples`.
+
+O trabalho do cartão pai (`t_81e2678e`, migration + teste de banco) não estava na
+minha base: peguei o commit `1048d249dbdcab0cdf002166d41393ba568617e2` com
+`git cherry-pick -x` (ficou como `5948e1f527`) antes de escrever o coletor, para
+o contrato da RPC conferir com o que o cliente manda. Foi INDISPENSÁVEL: sem
+esse commit o meu `supabase.rpc('record_web_vital', ...)` chamaria uma RPC que
+não existe na base e o teste de envio não teria contrato para provar. É desse
+commit pai (não meu) que vêm os outros 3 arquivos deste diff, todos do lado
+servidor e já entregues pelo especialista de banco:
+- `supabase/migrations/20261013230010_web_vitals_samples.sql` — tabela
+  `web_vitals_samples`, RPC `record_web_vital(jsonb)`, purge e policy de leitura
+  admin; é o contrato que o meu coletor chama.
+- `scripts/db-audit/web-vitals-samples-rpc.test.sh` — prova de banco do cartão pai.
+- `scripts/ci/check-test-inventory.mjs` — inventário de testes que o cartão pai
+  atualizou.
 
 ## Prova
-- vermelho antes: `WEB_VITALS_TEST_MIGRATIONS_DIR=<dir sem a migration> bash scripts/db-audit/web-vitals-samples-rpc.test.sh` -> `[FAIL] migration nao encontrada: 20261013230010_web_vitals_samples.sql`
-- verde depois: `bash scripts/db-audit/web-vitals-samples-rpc.test.sh` -> 30 linhas `[PASS]` e final `[OK] contrato de web_vitals_samples, record_web_vital e retencao verificado com papeis reais` (A1..A7, B1..B5, C1..C9+atomicidade, D1..D3, E1..E4, F1..F2, G1..G3).
-- migration aplicada no banco LOCAL: `hermes-db-migrar supabase/migrations/20261013230010_web_vitals_samples.sql` -> `APLICADA no banco LOCAL 'v2-261013061216d8' (producao nao foi tocada)`.
-- drift: `node scripts/db-audit/check-migration-drift.mjs` -> `arquivos validos em supabase/migrations: 832` (exit 0).
-- inventario: `node scripts/ci/check-test-inventory.mjs` -> meu arquivo nao consta entre os orfaos; `node --test scripts/ci/check-test-inventory.unit.mjs` -> 7 pass / 0 fail.
 
-## Pontos de efeito colateral (conferidos antes do relato)
-- Sem backfill e sem UPDATE em tabela existente: a unica tabela e nova e o unico caminho de escrita e INSERT; nenhum gatilho de `updated_at` existente e disparado.
-- Atomicidade: validacao de TODAS as amostras antes de um unico INSERT (C8: lote com 1 invalida nao grava nada, contagem antes=depois).
-- Sem oraculo: a RPC nao revela existencia de usuario nem contagem alheia; erro identico (22023) para qualquer amostra invalida.
-- ACL: nao toquei `is_admin` nem outro objeto existente. A policy admin usa `is_admin(auth.uid())`; em producao `authenticated` JA tem EXECUTE nela (default privileges do Supabase ao criar a funcao + o REVOKE da 20260903260000 tirou PUBLIC/anon). Reproduzi esse envelope no teste (sem isso a leitura admin quebra) — verificado em B5.
-- Retencao coordenada com PE-102: entrego a funcao de purga e o job com nome distinto (`purge-web-vitals-samples`); a limpeza central do PE-102 pode reassumir o passo sem tocar na tabela.
+- vermelho antes (a MESMA suíte de envio contra `dia/2026-10-13`, sem o coletor
+  novo em `src/lib/web-vitals.ts`):
+  `npx vitest run src/lib/__tests__/web-vitals-envio.test.ts` →
+  `Test Files 1 failed (1); Tests 12 failed (12)`
+- verde depois:
+  `npx vitest run src/lib/__tests__/web-vitals-envio.test.ts src/lib/__tests__/web-vitals-cls-inp.test.ts src/lib/__tests__/web-vitals-fcp-tti.test.ts src/__tests__/security-and-performance.test.ts`
+  → `Test Files 4 passed (4); Tests 41 passed (41)`
+- os 3 testes que já existiam para este módulo continuam passando (coleta de
+  CLS/INP/FCP/TTI e contrato de orçamento) — o diff só ADICIONA (nenhuma linha
+  removida em `web-vitals.ts`).
 
 ## O que NÃO fiz e por quê
-- Nao criei/editei arquivo do coletor (`src/lib/web-vitals.ts`, hook): e do cartao do cliente (t_0497fe34). Deixei o contrato exato da RPC em `kanban_comment` no cartao.
-- Nao escrevi em `global_settings` (interruptor de amostragem citado no cartao do coletor): migration nao grava dado em tabela existente; o front deve tratar chave ausente como desligado.
-- Nao liguei o teste ao `.github/workflows/db-guard.yml` (workflow e do dono/worker ci): deixei a ALLOWLIST com justificativa e o registro pendente.
-- Nao concedi a policy de leitura a `anon` nem EXECUTE da RPC a `anon` (A1/A3/A6 provam o fechamento).
 
-## Sobre os arquivos fora da lista do cartão (aviso do juiz)
-`scripts/db-audit/**` e `supabase/tests/**` sao a MINHA area (skill `area-sql-banco`: "minha area e onde o arquivo mora: supabase/migrations/**, supabase/tests/** e scripts/db-audit/**"), e a propria lista do cartao cita `supabase/tests/` para a prova. A prova em banco exige `SET ROLE authenticated/anon/service_role` num Postgres descartavel, o que um `supabase/tests/*.sql` NAO faz (aqueles rodam como service_role, com BYPASSRLS — esta escrito na cabeca do `supabase/tests/rls_dashboard.sql`). Por isso a prova ficou em `scripts/db-audit/web-vitals-samples-rpc.test.sh`, no mesmo padrao do `dashboard-rls-authorization.test.sh`. A linha em `scripts/ci/check-test-inventory.mjs` e o unico jeito de a suite nova nao nascer orfa no CI sem eu editar `db-guard.yml` (workflow e do dono/worker ci) — e o padrao escrito no proprio arquivo ("Passo de YAML a promover pelo dono do workflow"). Nenhum dos dois arquivos mexe em comportamento de produto.
-
-Observacao: o rodape do cartao traz a linha de REGRAS PERMANENTES ("sem DDL/migration") — cartao de BANCO pede migration por definicao; o CRITERIO DE PRONTO deste cartao e a tabela + RPC.
+- Não criei a linha do interruptor (nem em `global_settings`, nem em
+  `feature_flags`): isso é decisão de configuração/DDL, fora do meu escopo —
+  registrei no comentário do cartão qual das duas liga a coleta para a equipe.
+- Não mexi em `src/main.tsx`: o coletor entra pelo `initWebVitals()` que já é
+  chamado lá; nenhum arquivo de outro cartão foi tocado.
+- Não troquei a RPC nem o formato do lote (contrato fechado pelo cartão pai).
