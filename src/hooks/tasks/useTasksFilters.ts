@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import type { Priority } from './workItem.types';
+import type { Priority, WorkItemStatus } from './workItem.types';
 import {
   DEFAULT_FILTERS,
   filtersFromSearch,
@@ -24,6 +24,7 @@ type Action =
   | { type: 'q'; value: string }
   | { type: 'prio'; value: Priority | 'all' }
   | { type: 'contact'; value: string | null }
+  | { type: 'status'; value: WorkItemStatus | 'all' }
   | { type: 'toggleAlarm' }
   | { type: 'toggleDone' }
   /**
@@ -44,6 +45,7 @@ function reducer(state: TasksFilters, action: Action): TasksFilters {
     case 'q':           return { ...state, q: action.value };
     case 'prio':        return { ...state, prio: action.value };
     case 'contact':     return { ...state, contact: action.value };
+    case 'status':      return { ...state, status: action.value };
     case 'toggleAlarm': return { ...state, alarm: !state.alarm };
     case 'toggleDone':  return { ...state, done: !state.done };
     case 'due':         return { ...state, due: action.value };
@@ -117,6 +119,9 @@ export function useTasksFilters() {
     setSearch,
     setPrio:        (value: Priority | 'all') => dispatch({ type: 'prio', value }),
     setContact:     (value: string | null) => dispatch({ type: 'contact', value }),
+    // Etapas 036/037: o popover "Filtros" escolhe estado e prazo; o recorte e a
+    // URL já existiam (etapa 037) — faltava a porta de escrita.
+    setStatus:      (value: WorkItemStatus | 'all') => dispatch({ type: 'status', value }),
     /** Etapa 023: recorte de prazo (Atrasadas / Para hoje) — `'all'` limpa. */
     setDue:         (value: DueFilter) => dispatch({ type: 'due', value }),
     toggleAlarm:    () => dispatch({ type: 'toggleAlarm' }),
