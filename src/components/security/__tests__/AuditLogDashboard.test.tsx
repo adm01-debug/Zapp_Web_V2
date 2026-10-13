@@ -1,56 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { AuditLogDashboard } from '../AuditLogDashboard';
+import { appDayStart, appDayStartOfLocalDate, parseDayKey } from '@/lib/localDay';
+
+// ---------------------------------------------------------------- massa
+const log = (over: Record<string, unknown>) => ({
+  id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1',
+  actor_name: 'Ana Agente', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome',
+  created_at: new Date().toISOString(), ...over,
+});
 
 const mockLogs = [
-  { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome', created_at: new Date().toISOString() },
-  { id: '2', action: 'delete', entity_type: 'contact', entity_id: 'c1', user_id: 'uid2', details: { reason: 'test' }, ip_address: '10.0.0.1', user_agent: 'Firefox', created_at: new Date().toISOString() },
-  { id: '3', action: 'create', entity_type: 'message', entity_id: 'm1', user_id: 'uid1', details: null, ip_address: null, user_agent: null, created_at: '2025-01-01T10:00:00Z' },
-  { id: '4', action: 'role_change', entity_type: 'user', entity_id: 'u2', user_id: 'uid3', details: { from: 'agent', to: 'admin' }, ip_address: '172.16.0.1', user_agent: null, created_at: new Date().toISOString() },
-  { id: '5', action: 'export', entity_type: 'contact', entity_id: null, user_id: 'uid1', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome', created_at: new Date().toISOString() },
+  log({ id: '1', action: 'login', actor_name: 'Ana Agente' }),
+  log({ id: '2', action: 'delete', entity_type: 'contact', user_id: 'uid2', actor_name: 'Bruno Lima', details: { reason: 'test' }, ip_address: '10.0.0.1' }),
+  log({ id: '3', action: 'create', entity_type: 'message', user_id: 'uid1', actor_name: 'Ana Agente' }),
+  log({ id: '4', action: 'role_change', entity_type: 'user', user_id: 'uid3', actor_name: 'Carla Souza', details: { from: 'agent', to: 'admin' }, ip_address: '172.16.0.1' }),
+  log({ id: '5', action: 'export', entity_type: 'contact', user_id: 'uid1', actor_name: 'Ana Agente' }),
 ];
 
-// Estado da consulta falsa: dados devolvidos e chamadas registradas do builder.
+const RESUMO = {
+  total_logs: 5, sensitive_actions: 3, unique_users: 3,
+  denied_24h: 2, permission_changes_24h: 1, admin_logins_7d: 4, rls_failures_24h: 0,
+};
+
+// Estado da RPC falsa + papel do usuário logado.
 const estado = vi.hoisted(() => ({
   dados: [] as unknown[],
-  chamadas: {
-    select: '' as string,
-    eq: [] as Array<[string, unknown]>,
-    in: [] as Array<[string, unknown[]]>,
-    like: [] as Array<[string, string]>,
-  },
+  resumo: { total_logs: 0, sensitive_actions: 0, unique_users: 0, denied_24h: 0, permission_changes_24h: 0, admin_logins_7d: 0, rls_failures_24h: 0 },
+  hojeTotal: 0,
+  hojeFromISO: '',
+  erro: null as string | null,
+  chamadas: [] as Array<{ nome: string; args: Record<string, unknown> }>,
+  papel: { isAdmin: true, loading: false },
 }));
-
-type ResultadoConsulta = { data: unknown; error: null };
-type ConstrutorConsulta = PromiseLike<ResultadoConsulta> & {
-  eq: (coluna: string, valor: unknown) => ConstrutorConsulta;
-  in: (coluna: string, valores: unknown[]) => ConstrutorConsulta;
-  like: (coluna: string, padrao: string) => ConstrutorConsulta;
-};
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn((cols: string) => {
-        estado.chamadas.select = cols;
-        return ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() => {
-              const resultado = Promise.resolve({ data: estado.dados, error: null });
-              const construtor: ConstrutorConsulta = {
-                eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
-                in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
-                like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
-                then: resultado.then.bind(resultado),
-              };
-              return construtor;
-            }),
-          })),
-        });
-      }),
-    })),
+    rpc: vi.fn((nome: string, args: Record<string, unknown> = {}) => {
+      estado.chamadas.push({ nome, args });
+      if (estado.erro) return Promise.resolve({ data: null, error: { message: estado.erro } });
+      if (nome === 'audit_log_summary') {
+        const ehHoje = estado.hojeFromISO !== '' && args.p_from === estado.hojeFromISO;
+        return Promise.resolve({ data: [{ ...estado.resumo, total_logs: ehHoje ? estado.hojeTotal : estado.resumo.total_logs }], error: null });
+      }
+      return Promise.resolve({ data: estado.dados, error: null });
+    }),
   },
+}));
+
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({
+    hasRole: (r: string) => (r === 'admin' ? estado.papel.isAdmin : false),
+    loading: estado.papel.loading,
+  }),
 }));
 
 // Padrao do repo para Radix Select em jsdom (ver ContactToolbar.test.tsx): as
@@ -75,199 +77,162 @@ vi.mock('@/components/ui/select', async () => {
   return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
 });
 
+import { AuditLogDashboard } from '../AuditLogDashboard';
+
+const valorDoCartao = (rotulo: string) => screen.getByText(rotulo).previousElementSibling?.textContent;
+const chamadasDe = (nome: string) => estado.chamadas.filter((c) => c.nome === nome);
+
 describe('AuditLogDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     estado.dados = mockLogs;
-    estado.chamadas.eq.length = 0;
-    estado.chamadas.in.length = 0;
-    estado.chamadas.like.length = 0;
-    estado.chamadas.select = '';
-  });
-
-  // ===== QUERY COLUMNS =====
-  describe('Query columns', () => {
-    it('selects explicit columns instead of * for audit_logs', async () => {
-      render(<AuditLogDashboard />);
-      await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
-      expect(estado.chamadas.select).not.toBe('*');
-      expect(estado.chamadas.select).toContain('id');
-      expect(estado.chamadas.select).toContain('action');
-      expect(estado.chamadas.select).toContain('created_at');
-    });
+    estado.resumo = { ...RESUMO };
+    estado.hojeTotal = 0;
+    estado.hojeFromISO = appDayStart(0).toISOString();
+    estado.erro = null;
+    estado.chamadas.length = 0;
+    estado.papel = { isAdmin: true, loading: false };
   });
 
   // ===== RENDERING =====
-  describe('Rendering', () => {
-    it('renders stats cards', async () => {
-      render(<AuditLogDashboard />);
-      await waitFor(() => {
-        expect(screen.getByText('Total de Logs')).toBeInTheDocument();
-        expect(screen.getByText('Hoje')).toBeInTheDocument();
-        expect(screen.getByText('Ações Sensíveis')).toBeInTheDocument();
-        expect(screen.getByText('Usuários Únicos')).toBeInTheDocument();
-      });
-    });
-
-    it('renders filter section', () => {
-      render(<AuditLogDashboard />);
-      expect(screen.getByText('Filtros')).toBeInTheDocument();
-    });
-
-    it('renders search input', () => {
-      render(<AuditLogDashboard />);
-      expect(screen.getByPlaceholderText(/Buscar por ação/)).toBeInTheDocument();
-    });
-
-    it('renders action filter dropdown', () => {
-      render(<AuditLogDashboard />);
-      expect(screen.getByText('Todas as ações')).toBeInTheDocument();
-    });
-
-    it('renders entity filter dropdown', () => {
-      render(<AuditLogDashboard />);
-      expect(screen.getByText('Todas')).toBeInTheDocument();
-    });
-
-    it('renders logs section title', () => {
-      render(<AuditLogDashboard />);
-      expect(screen.getByText(/Logs de Auditoria/)).toBeInTheDocument();
-    });
-
-    it('shows loading skeletons initially', () => {
-      const { container } = render(<AuditLogDashboard />);
-      const skeletons = container.querySelectorAll('.animate-pulse');
-      expect(skeletons.length).toBeGreaterThan(0);
-    });
+  it('renderiza os cards de resumo com números que vieram do banco', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('5'));
+    expect(valorDoCartao('Ações Sensíveis')).toBe('3');
+    expect(valorDoCartao('Usuários Únicos')).toBe('3');
+    expect(valorDoCartao('Acessos negados (24h)')).toBe('2');
+    expect(screen.getByText('Filtros')).toBeInTheDocument();
+    expect(screen.getByText(/Logs de Auditoria/)).toBeInTheDocument();
   });
 
-  // ===== ACTION COLORS =====
-  describe('Action color mapping', () => {
-    it('maps login to green', () => {
-      const colorMap: Record<string, string> = {
-        login: 'bg-green-500/10 text-green-500',
-        delete: 'bg-destructive/10 text-destructive',
-        create: 'bg-blue-500/10 text-blue-500',
-        update: 'bg-yellow-500/10 text-yellow-500',
-        export: 'bg-purple-500/10 text-purple-500',
-        role_change: 'bg-orange-500/10 text-orange-500',
-        mfa_enabled: 'bg-green-500/10 text-green-500',
-        mfa_disabled: 'bg-destructive/10 text-destructive',
-        password_change: 'bg-yellow-500/10 text-yellow-500',
-        logout: 'bg-muted text-muted-foreground',
-      };
-      Object.keys(colorMap).forEach(action => {
-        expect(colorMap[action]).toBeTruthy();
-      });
-    });
+  it('mostra o NOME do autor do log (não o user_id)', async () => {
+    render(<AuditLogDashboard />);
+    expect((await screen.findAllByText('Ana Agente')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Bruno Lima')).toBeInTheDocument();
   });
 
-  // ===== SEARCH FILTER =====
-  describe('Search filtering', () => {
-    it('renders search input with correct placeholder', () => {
-      render(<AuditLogDashboard />);
-      const input = screen.getByPlaceholderText(/Buscar por ação, IP, usuário/);
-      expect(input).toBeInTheDocument();
-    });
-
-    it('accepts search input', () => {
-      render(<AuditLogDashboard />);
-      const input = screen.getByPlaceholderText(/Buscar/);
-      fireEvent.change(input, { target: { value: 'login' } });
-      expect(input).toHaveValue('login');
-    });
+  it('mostra skeletons enquanto carrega', () => {
+    const { container } = render(<AuditLogDashboard />);
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
   });
 
-  // ===== STATS CALCULATION =====
-  describe('Stats logic', () => {
-    it('counts suspicious actions (delete, role_change, export)', () => {
-      const suspicious = mockLogs.filter(l =>
-        l.action.includes('delete') || l.action.includes('role_change') || l.action.includes('export')
-      );
-      expect(suspicious.length).toBe(3);
-    });
-
-    it('counts unique users', () => {
-      const unique = new Set(mockLogs.map(l => l.user_id).filter(Boolean));
-      expect(unique.size).toBe(3);
-    });
-
-    it('counts total logs', () => {
-      expect(mockLogs.length).toBe(5);
-    });
+  // ===== ERRO EXPLÍCITO (antes engolido: erro virava 0) =====
+  it('em falha mostra o erro e "Tentar de novo" — nunca zeros silenciosos', async () => {
+    estado.erro = 'permission denied';
+    render(<AuditLogDashboard />);
+    expect(await screen.findByText('Não foi possível carregar a auditoria.')).toBeInTheDocument();
+    expect(screen.queryByText('Total de Logs')).toBeNull();
+    expect(screen.queryByText('Logs de Auditoria (0)')).toBeNull();
   });
 
-  // ===== ACTION ICON MAPPING =====
-  describe('Action icons', () => {
-    it('maps known actions to icons', () => {
-      const knownActions = ['login', 'logout', 'create', 'update', 'delete', 'mfa_enabled', 'password_change', 'role_change'];
-      knownActions.forEach(action => {
-        expect(action.length).toBeGreaterThan(0);
-      });
-    });
+  it('"Tentar de novo" refaz a leitura e mostra os números', async () => {
+    estado.erro = 'offline';
+    render(<AuditLogDashboard />);
+    await screen.findByText('Não foi possível carregar a auditoria.');
+
+    estado.erro = null;
+    fireEvent.click(screen.getByRole('button', { name: /Tentar de novo/ }));
+
+    await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('5'));
   });
 
-  // ===== EDGE CASES =====
-  describe('Edge cases', () => {
-    it('handles null ip_address gracefully', () => {
-      const log = mockLogs.find(l => l.ip_address === null);
-      expect(log).toBeDefined();
-      expect(log?.ip_address).toBeNull();
-    });
+  // ===== PERMISSÃO =====
+  it('sem papel admin diz que não tem permissão e não consulta o banco', async () => {
+    estado.papel.isAdmin = false;
+    render(<AuditLogDashboard />);
+    expect(await screen.findByText('Você não tem permissão para ver a auditoria')).toBeInTheDocument();
+    expect(estado.chamadas).toHaveLength(0);
+    expect(screen.queryByText('Total de Logs')).toBeNull();
+  });
 
-    it('handles null details gracefully', () => {
-      const log = mockLogs.find(l => l.details === null);
-      expect(log).toBeDefined();
-    });
+  // ===== FILTRO DE DATA =====
+  it('o filtro de data recorta a janela enviada às RPCs', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('5'));
 
-    it('handles log with all null optional fields', () => {
-      const log = { id: '99', action: 'test', entity_type: null, entity_id: null, user_id: null, details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() };
-      expect(log.action).toBe('test');
-    });
+    fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-10-01' } });
+
+    const esperado = appDayStartOfLocalDate(parseDayKey('2026-10-01')!).toISOString();
+    await waitFor(() => expect(chamadasDe('audit_log_list').some((c) => c.args.p_from === esperado)).toBe(true));
+    expect(chamadasDe('audit_log_summary').some((c) => c.args.p_from === esperado)).toBe(true);
+  });
+
+  // ===== PAGINAÇÃO POR CURSOR =====
+  it('"Carregar mais" busca a próxima página pelo cursor do último log', async () => {
+    const pagina = Array.from({ length: 50 }, (_, i) =>
+      log({ id: `p${i}`, created_at: new Date(2026, 9, 10, 12, 0, i).toISOString(), actor_name: 'Página Um' }),
+    );
+    estado.dados = pagina;
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(screen.getAllByText('Página Um').length).toBeGreaterThan(0));
+
+    estado.dados = [log({ id: 'proximo', actor_name: 'Página Dois' })];
+    fireEvent.click(screen.getByRole('button', { name: /Carregar mais/ }));
+
+    await waitFor(() => expect(screen.getByText('Página Dois')).toBeInTheDocument());
+    const ultima = chamadasDe('audit_log_list').at(-1)!;
+    expect(ultima.args.p_cursor).toBe(pagina[49].created_at);
+    expect(ultima.args.p_cursor_id).toBe('p49');
+  });
+
+  // ===== +detalhes (t_638c8a1a) =====
+  it('"+detalhes" abre e recolhe o JSON de details', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('5'));
+
+    const botoes = await screen.findAllByRole('button', { name: '+detalhes' });
+    expect(botoes).toHaveLength(2);
+    expect(botoes[0]).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(botoes[0]);
+    const aberto = screen.getByRole('button', { name: '−detalhes' });
+    expect(aberto).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/"reason": "test"/)).toBeInTheDocument();
+
+    fireEvent.click(aberto);
+    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
   });
 });
 
-// ===== R2-AUTH-032 — concessões/revogações de papel nos filtros e no contador =====
-// O trigger audit_role_changes grava role_granted/role_revoked/role_changed com
-// entity_type='user_roles'; o provisionamento grava role_auto_provisioned. Sem a
-// correção esses registros não entram no contador sensível nem no filtro "Usuários".
+// ===== R2-AUTH-032 — concessões/revogações de papel no filtro e no resumo sensível =====
 const LOGS_PAPEIS = [
-  { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
-  { id: '2', action: 'create', entity_type: 'contact', entity_id: 'c1', user_id: 'uid1', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
-  { id: '3', action: 'delete', entity_type: 'contact', entity_id: 'c2', user_id: 'uid2', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
-  { id: '4', action: 'export', entity_type: 'contact', entity_id: null, user_id: 'uid2', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
-  { id: '5', action: 'role_granted', entity_type: 'user_roles', entity_id: 'ur1', user_id: 'uid3', details: { role: 'admin' }, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
-  { id: '6', action: 'role_revoked', entity_type: 'user_roles', entity_id: 'ur2', user_id: 'uid3', details: { role: 'agent' }, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
+  log({ id: '1', action: 'login', entity_type: 'user', actor_name: 'Ana Agente' }),
+  log({ id: '2', action: 'create', entity_type: 'contact', actor_name: 'Ana Agente' }),
+  log({ id: '3', action: 'delete', entity_type: 'contact', user_id: 'uid2', actor_name: 'Bruno Lima' }),
+  log({ id: '4', action: 'export', entity_type: 'contact', user_id: 'uid2', actor_name: 'Bruno Lima' }),
+  log({ id: '5', action: 'role_granted', entity_type: 'user_roles', user_id: 'uid3', actor_name: 'Carla Souza', details: { role: 'admin' } }),
+  log({ id: '6', action: 'role_revoked', entity_type: 'user_roles', user_id: 'uid3', actor_name: 'Carla Souza' }),
 ];
 
-const valorDoCartao = (rotulo: string) =>
-  screen.getByText(rotulo).previousElementSibling?.textContent;
-
-describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', () => {
+describe('R2-AUTH-032 — papéis no resumo sensível e nos filtros', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     estado.dados = LOGS_PAPEIS;
+    // O resumo vem do banco: delete + export + role_granted + role_revoked = 4 sensíveis.
+    estado.resumo = { ...RESUMO, total_logs: 6, sensitive_actions: 4 };
+    estado.hojeFromISO = appDayStart(0).toISOString();
+    estado.hojeTotal = 0;
+    estado.erro = null;
+    estado.chamadas.length = 0;
+    estado.papel = { isAdmin: true, loading: false };
   });
 
-  it('contador "Ações Sensíveis" soma concessões e revogações de papel', async () => {
+  it('"Ações Sensíveis" reflete o resumo sensível do banco', async () => {
     render(<AuditLogDashboard />);
     await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('6'));
-    // Sensíveis = delete + export + role_granted + role_revoked = 4;
-    // sem a correção o cartão mostrava 2 (só delete/export).
     expect(valorDoCartao('Ações Sensíveis')).toBe('4');
   });
 
-  it('filtro "Papéis (concessões e revogações)" consulta todas as ações role_*', async () => {
+  it('filtro "Papéis (concessões e revogações)" mostra só ações role_*', async () => {
     render(<AuditLogDashboard />);
     await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('6'));
 
     fireEvent.click(screen.getByText('Papéis (concessões e revogações)'));
 
-    await waitFor(() =>
-      expect(estado.chamadas.like).toContainEqual(['action', 'role_%'])
-    );
-    expect(estado.chamadas.eq).not.toContainEqual(['action', 'role_events']);
-    expect(screen.getByText('role_granted')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('role_granted')).toBeInTheDocument());
     expect(screen.getByText('role_revoked')).toBeInTheDocument();
+    expect(screen.queryByText('login')).toBeNull();
+    expect(screen.queryByText('export')).toBeNull();
   });
 
   it('filtro "Usuários" cobre entity_type user e user_roles', async () => {
@@ -276,43 +241,8 @@ describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', (
 
     fireEvent.click(screen.getByText('Usuários'));
 
-    await waitFor(() =>
-      expect(estado.chamadas.in).toContainEqual(['entity_type', ['user', 'user_roles']])
-    );
-    expect(estado.chamadas.eq).not.toContainEqual(['entity_type', 'user']);
-  });
-});
-
-// t_638c8a1a: o "+detalhes" era um <Badge> puramente decorativo — parecia um
-// controle mas não abria nada. A correção o torna um botão de verdade que revela
-// o JSON de `details` (e pode recolher de novo).
-describe('t_638c8a1a — "+detalhes" abre o JSON de details', () => {
-  beforeEach(() => {
-    estado.dados = mockLogs;
-  });
-
-  it('revela e recolhe o details ao clicar', async () => {
-    render(<AuditLogDashboard />);
-    await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
-
-    // Dois registros do mock têm `details` (id 2 e id 4).
-    const botoes = await screen.findAllByRole('button', { name: '+detalhes' });
-    expect(botoes).toHaveLength(2);
-
-    const primeiro = botoes[0];
-    expect(primeiro).toHaveAttribute('aria-expanded', 'false');
-    // Antes de clicar o JSON não está na tela.
-    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
-
-    fireEvent.click(primeiro);
-
-    const aberto = screen.getByRole('button', { name: '−detalhes' });
-    expect(aberto).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText(/"reason": "test"/)).toBeInTheDocument();
-
-    // Clicar de novo recolhe.
-    fireEvent.click(aberto);
-    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
-    expect(screen.getAllByRole('button', { name: '+detalhes' })).toHaveLength(2);
+    await waitFor(() => expect(screen.getByText('role_granted')).toBeInTheDocument());
+    expect(screen.queryByText('delete')).toBeNull();
+    expect(screen.queryByText('export')).toBeNull();
   });
 });

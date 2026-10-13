@@ -1,90 +1,84 @@
 /**
- * R3-02 — o card "Hoje" da Auditoria conta pelo dia **local do navegador**.
+ * R3-02 (revisto na tela real da auditoria) — o card "Hoje" NÃO conta a página
+ * carregada no cliente: o número vem do banco (`audit_log_summary`) recortado no
+ * dia de calendário de hoje, no fuso do app (`appDayStart(0)` → agora).
  *
- * `new Date().toISOString().split('T')[0]` é o dia **UTC**: às 22:30 em São Paulo (UTC-3) ele já
- * aponta para o dia seguinte e, como o `created_at` gravado está em UTC, o `startsWith` conta o
- * conjunto errado — entre 21h e meia-noite o card "Hoje" mostra quase nada e "perde" o dia.
- *
- * Âncora: 30/09/2026 22:30 em São Paulo (22:30 local = 01:30 UTC do dia 01/10).
+ * Antes o card somava `created_at.startsWith(diaLocal)` sobre a página de 200 logs
+ * — o número era só da página e, no antigo recorte UTC, entre 21h e a meia-noite
+ * apontava para o dia seguinte. Agora a janela é enviada à RPC, então "Hoje" bate
+ * com o que o servidor conta — independente de quantas linhas a tela carregou.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { appDayStart } from '@/lib/localDay';
 
-// Massa montada para separar as tres leituras possiveis (dia local, dia UTC e a mistura das duas):
-//   1) 30/09 20:00 SP (30/09 23:00Z) — dia local = hoje; dia UTC = hoje
-//   2) 30/09 22:00 SP (01/10 01:00Z) — dia local = hoje; dia UTC = AMANHA      <- o sintoma (21h-meia-noite)
-//   3) 29/09 23:00 SP (30/09 02:00Z) — ONTEM no calendario local; dia UTC = hoje
-//   4) 30/09 03:00 SP (30/09 06:00Z) — dia local = hoje; dia UTC = hoje
-//   5) 29/09 22:00 SP (30/09 01:00Z) — ONTEM no calendario local; dia UTC = hoje
-// Hoje (local) = {1,2,4} = 3 | dia UTC do "agora" = {2} = 1 | mistura (UTC-do-log x local-do-agora) = {1,3,4,5} = 4
-const LOGS = [
-  { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', details: null, ip_address: null, user_agent: null, created_at: '2026-09-30T23:00:00Z' },
-  { id: '2', action: 'update', entity_type: 'user', entity_id: 'u2', user_id: 'uid2', details: null, ip_address: null, user_agent: null, created_at: '2026-10-01T01:00:00Z' },
-  { id: '3', action: 'delete', entity_type: 'user', entity_id: 'u3', user_id: 'uid3', details: null, ip_address: null, user_agent: null, created_at: '2026-09-30T02:00:00Z' },
-  { id: '4', action: 'create', entity_type: 'document', entity_id: 'd1', user_id: 'uid4', details: null, ip_address: null, user_agent: null, created_at: '2026-09-30T06:00:00Z' },
-  { id: '5', action: 'export', entity_type: 'report', entity_id: 'r1', user_id: 'uid5', details: null, ip_address: null, user_agent: null, created_at: '2026-09-30T01:00:00Z' },
+// Página carregada com 3 logs "de hoje" — se o card contasse a página, mostraria 3.
+const LOGS_DE_HOJE = [
+  { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', actor_name: 'Ana', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
+  { id: '2', action: 'update', entity_type: 'user', entity_id: 'u2', user_id: 'uid2', actor_name: 'Bruno', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
+  { id: '3', action: 'create', entity_type: 'user', entity_id: 'u3', user_id: 'uid3', actor_name: 'Carla', details: null, ip_address: null, user_agent: null, created_at: new Date().toISOString() },
 ];
 
-type LogDeAuditoria = (typeof LOGS)[number];
-type Cadeia = Promise<{ data: LogDeAuditoria[]; error: null }> & { eq: () => Cadeia };
-
-// Cadeia de query "aguardável" (+ .eq, que o componente só usa com filtro ativo).
-const cadeia = (data: LogDeAuditoria[]): Cadeia => {
-  const p = Promise.resolve({ data, error: null }) as Cadeia;
-  p.eq = () => p;
-  return p;
-};
+const estado = vi.hoisted(() => ({
+  dados: [] as unknown[],
+  resumo: { total_logs: 0, sensitive_actions: 0, unique_users: 0, denied_24h: 0, permission_changes_24h: 0, admin_logins_7d: 0, rls_failures_24h: 0 },
+  hojeTotal: 0,
+  chamadas: [] as Array<{ nome: string; args: Record<string, unknown> }>,
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => cadeia(LOGS)),
-        })),
-      })),
-    })),
+    rpc: vi.fn((nome: string, args: Record<string, unknown> = {}) => {
+      estado.chamadas.push({ nome, args });
+      if (nome === 'audit_log_summary') {
+        // A chamada do card "Hoje" é a única cujo p_from é a meia-noite de hoje no fuso do app.
+        const ehHoje = args.p_from === appDayStart(0).toISOString();
+        return Promise.resolve({
+          data: [{ ...estado.resumo, total_logs: ehHoje ? estado.hojeTotal : estado.resumo.total_logs }],
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: estado.dados, error: null });
+    }),
   },
+}));
+
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ hasRole: (r: string) => r === 'admin', loading: false }),
 }));
 
 import { AuditLogDashboard } from '../AuditLogDashboard';
 
-const AGORA = new Date(2026, 8, 30, 22, 30, 0); // 30/09/2026 22:30 horário local
-const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-// Régua independente do util: compara ano/mês/dia locais do instante gravado.
-const ehDiaLocalDeHoje = (iso: string): boolean => {
-  const d = new Date(iso);
-  return (
-    d.getFullYear() === AGORA.getFullYear() &&
-    d.getMonth() === AGORA.getMonth() &&
-    d.getDate() === AGORA.getDate()
-  );
-};
-const ESPERADO_HOJE = LOGS.filter((l) => ehDiaLocalDeHoje(l.created_at)).length;
-
 const valorDoCard = (rotulo: string) => screen.getByText(rotulo).previousElementSibling?.textContent;
+const resumosHoje = () => estado.chamadas.filter((c) => c.nome === 'audit_log_summary' && c.args.p_from === appDayStart(0).toISOString());
 
-describe('AuditLogDashboard — card "Hoje" no fuso do navegador', () => {
+describe('AuditLogDashboard — card "Hoje" vem do banco (janela do dia, fuso do app)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    vi.setSystemTime(AGORA);
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('conta os logs do dia local do usuário, não do dia UTC', async () => {
-    render(<AuditLogDashboard />);
-    // Sanidade: o teste só vale com os logs carregados.
-    await waitFor(() => expect(valorDoCard('Total de Logs')).toBe(String(LOGS.length)));
-    expect(valorDoCard('Hoje')).toBe(String(ESPERADO_HOJE));
+    estado.dados = LOGS_DE_HOJE;
+    estado.resumo = { total_logs: 42, sensitive_actions: 3, unique_users: 5, denied_24h: 0, permission_changes_24h: 0, admin_logins_7d: 0, rls_failures_24h: 0 };
+    estado.hojeTotal = 7;
+    estado.chamadas.length = 0;
   });
 
-  it(`é o mesmo número de logs que a régua local calcula (TZ=${TZ})`, async () => {
+  it('mostra o total do dia que o banco devolveu, não a contagem da página', async () => {
     render(<AuditLogDashboard />);
-    await waitFor(() => expect(valorDoCard('Total de Logs')).toBe(String(LOGS.length)));
-    expect(Number(valorDoCard('Hoje'))).toBe(ESPERADO_HOJE);
+    await waitFor(() => expect(valorDoCard('Total de Logs')).toBe('42'));
+    expect(valorDoCard('Hoje')).toBe('7');
+    // A página tem 3 logs "de hoje"; se o card contasse o cliente mostraria 3.
+    expect(valorDoCard('Hoje')).not.toBe(String(LOGS_DE_HOJE.length));
+  });
+
+  it('pede ao banco a janela [meia-noite do dia, agora]', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(valorDoCard('Hoje')).toBe('7'));
+
+    const chamadas = resumosHoje();
+    expect(chamadas).toHaveLength(1);
+    const args = chamadas[0].args;
+    expect(args.p_from).toBe(appDayStart(0).toISOString());
+    const fim = new Date(String(args.p_to)).getTime();
+    expect(fim).toBeGreaterThanOrEqual(Date.now() - 10_000);
+    expect(fim).toBeLessThanOrEqual(Date.now() + 10_000);
   });
 });
