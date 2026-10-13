@@ -39,6 +39,8 @@ Especialista: worker (design) (design-system-zapp)
 - verde depois (navegador real): `PLAYWRIGHT_BASE_URL=http://localhost:8081 npx playwright test --project=chromium e2e/auth.spec.ts -g "mesma linha"`
   → `1 passed (3.3s)` (projeto `chromium`: login deslogado, sem `setup`, sem segredo e sem sessão salva; Vite local `bun run dev`).
 - verde depois (tipos): `bun run typecheck` → `tsc -b --force`, exit 0, sem erro.
+- verde depois (verificação do projeto): `zapp-verify . --rapido` →
+  `OK db_guard / OK tipos (105s) / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (108s)` (o banco não é tocado por este cartão: só UI/teste).
 - Medidas (razão WCAG do gradiente contra `--background`, calculada dos tokens reais):
   claro — from `--primary` 4,84:1 · to `--primary-text` 8,72:1 · (antes) `--secondary` 3,72:1;
   escuro — from `--primary` 3,70:1 · to `--primary-text` 9,47:1 · (antes) `--secondary` 1,29:1.
