@@ -89,7 +89,7 @@ export function WarRoomDashboard({
   };
 
   return (
-    <div className={cn("space-y-4 bg-background w-full min-w-0", hasCriticalAlerts && "animate-pulse-subtle", className)}>
+    <div className={cn("space-y-4 bg-background w-full min-w-0", hasCriticalAlerts && "motion-safe:animate-pulse-subtle", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2"><Activity className="w-6 h-6 text-primary" /><h1 className="text-2xl font-bold">War Room</h1></div>
@@ -99,7 +99,7 @@ export function WarRoomDashboard({
         <div className="flex items-center gap-2">
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Som de alertas" aria-pressed={settings.soundEnabled} onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Som de alertas</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Atualizar agora" onClick={() => void refetch()}><RefreshCw className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent>Atualizar agora</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Auto-atualização" aria-pressed={autoRefresh} onClick={() => setAutoRefresh(!autoRefresh)}><Clock className={cn("w-4 h-4", autoRefresh && "animate-spin-slow")} /></Button></TooltipTrigger><TooltipContent>Auto-atualização</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label="Auto-atualização" aria-pressed={autoRefresh} onClick={() => setAutoRefresh(!autoRefresh)}><Clock className={cn("w-4 h-4", autoRefresh && "motion-safe:animate-spin-slow")} /></Button></TooltipTrigger><TooltipContent>Auto-atualização</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'} onClick={toggleFullscreen}>{isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Tela cheia</TooltipContent></Tooltip>
         </div>
       </div>
