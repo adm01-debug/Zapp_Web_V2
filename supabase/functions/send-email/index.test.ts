@@ -11,6 +11,7 @@
 //
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/send-email/index.test.ts
 import { buildInvitePayload, handleSendEmailRequest } from "./index.ts";
+import { resetRateLimitServiceClient } from "../_shared/validation.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -139,6 +140,9 @@ Deno.test("R2-API-022: CORS preflight continua livre (OPTIONS sem auth)", async 
 Deno.test("R2-API-022: sem bearer devolve 401 e não toca a rede", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([]);
+    // O limiter persistente roda ANTES da auth, mas com o client service-role
+    // descartado e sem SERVICE_ROLE_KEY ele cai no contador local — nenhum fetch.
+    resetRateLimitServiceClient();
     try {
       const res = await handleSendEmailRequest(makeRequest({ email: "x@empresa.com" }, false));
       assert(res.status === 401, `esperado 401, veio ${res.status}`);
@@ -208,4 +212,38 @@ Deno.test("R2-API-022: admin/supervisor com convite autorizado envia via templat
       stub.restore();
     }
   });
+});
+
+// O limite vive FORA do isolate (RPC service_role `consume_rate_limit`). Prova:
+// com o decisor persistente negando, o relay responde 429 + Retry-After ANTES de
+// qualquer auth/efeito — e o RPC foi de fato consultado.
+Deno.test("rate limit persistente: o limiter decide pelo RPC, não pelo contador em memória", async () => {
+  const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "stub-service-key");
+  resetRateLimitServiceClient();
+  try {
+    await withEnv(ENV_OK, async () => {
+      const stub = withFetch([
+        { match: "/rest/v1/rpc/consume_rate_limit", body: [{ allowed: false, remaining: 0 }] },
+      ]);
+      try {
+        const res = await handleSendEmailRequest(
+          makeRequest({ email: "novo@empresa.com", name: "Ana", role: "supervisor" }),
+        );
+        assert(res.status === 429, `esperado 429, veio ${res.status}`);
+        assert(res.headers.get("Retry-After") !== null, "o 429 deve trazer Retry-After");
+        assert(
+          stub.seen.some((u) => u.includes("/rest/v1/rpc/consume_rate_limit")),
+          `deveria consultar o limiter persistente: ${stub.seen.join(",")}`,
+        );
+        assert(semResend(stub.seen).length === 0, "rate limit não pode chegar ao Resend");
+      } finally {
+        stub.restore();
+      }
+    });
+  } finally {
+    resetRateLimitServiceClient();
+    if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
+  }
 });
