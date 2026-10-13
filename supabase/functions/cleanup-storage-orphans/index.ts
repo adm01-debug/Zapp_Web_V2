@@ -270,7 +270,7 @@ export interface ReferenceResult {
 export async function collectReferencedPaths(
   client: SupabaseLike,
   bucket: string,
-  options: { pageSize?: number; maxRows?: number; sources?: typeof REFERENCE_SOURCES } = {},
+  options: { pageSize?: number; maxRows?: number; sources?: readonly { table: string; column: string }[] } = {},
 ): Promise<ReferenceResult> {
   const pageSize = options.pageSize ?? PAGE_SIZE;
   const maxRows = options.maxRows ?? MAX_REFERENCE_ROWS;

@@ -16,8 +16,10 @@
  * Comando do CI: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/cleanup-storage-orphans/index.test.ts
  */
 import {
+  collectReferencedPaths,
   extractObjectPath,
   handleCleanupStorageOrphans,
+  listBucketObjects,
   type StorageListEntry,
   type SupabaseLike,
 } from "./index.ts";
@@ -42,6 +44,10 @@ interface ClientCtx {
   removes: RemoveCall[];
   likes: Array<[string, string, string]>;
   adminRpc: Array<string>;
+  /** chamadas de storage.list (contadas para a borda de paginação) */
+  listCalls: number;
+  /** ranges de PostgREST pedidos, na ordem */
+  ranges: Array<[number, number]>;
 }
 
 interface ClientOpts {
@@ -74,7 +80,7 @@ function matchesLike(value: string, pattern: string): boolean {
 }
 
 function makeClient(o: ClientOpts): { client: SupabaseLike; ctx: ClientCtx } {
-  const ctx: ClientCtx = { removes: [], likes: [], adminRpc: [] };
+  const ctx: ClientCtx = { removes: [], likes: [], adminRpc: [], listCalls: 0, ranges: [] };
 
   function from(table: string): unknown {
     let cols = "";
@@ -106,6 +112,7 @@ function makeClient(o: ClientOpts): { client: SupabaseLike; ctx: ClientCtx } {
       range: (from: number, to: number) => {
         offset = from;
         limit = to - from + 1;
+        ctx.ranges.push([from, to]);
         return builder;
       },
       then: (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
@@ -136,6 +143,7 @@ function makeClient(o: ClientOpts): { client: SupabaseLike; ctx: ClientCtx } {
     storage: {
       from: (bucket: string) => ({
         list: (prefix: string, opts?: { limit?: number; offset?: number }) => {
+          ctx.listCalls += 1;
           if (o.listErrors?.[bucket]) return Promise.resolve({ data: null, error: o.listErrors[bucket] });
           const all = o.entries?.[`${bucket}|${prefix}`] ?? [];
           const start = opts?.offset ?? 0;
@@ -368,4 +376,34 @@ Deno.test("teto: maxDeletePerRun corta o lote e o resto fica para a próxima", a
   assert(ctx.removes.length === 1 && ctx.removes[0].paths.length === 2, `teto ignorado: ${JSON.stringify(ctx.removes)}`);
   assert(body.deletedTotal === 2, `deletedTotal errado: ${JSON.stringify(body)}`);
   assert(body.buckets["whatsapp-media"].candidates === 3, `candidates errado: ${JSON.stringify(body.buckets)}`);
+});
+
+Deno.test("borda de paginação: prefixo com total IGUAL à página (1000) não perde nem repete objeto", async () => {
+  // Total múltiplo exato do tamanho da página é o caso que já reprovou a área: o laço
+  // tem de pedir a página seguinte (vazia) e parar, sem 416 e sem duplicar.
+  const exatos: StorageListEntry[] = Array.from({ length: 1000 }, (_, i) => ({
+    name: `p${String(i).padStart(4, "0")}.jpg`,
+    id: `id-${i}`,
+    created_at: OLD,
+  }));
+  const { client, ctx } = makeClient({ entries: { "whatsapp-media|": exatos } });
+  const listado = await listBucketObjects(client, "whatsapp-media");
+  assert(listado.failed === false, "list falhou no múltiplo exato");
+  assert(listado.objects.length === 1000, `perdeu/duplicou objeto: ${listado.objects.length}`);
+  assert(listado.truncated === false, "truncou sem necessidade");
+  assert(ctx.listCalls === 2, `esperava 2 chamadas de list (1000 + vazia), veio ${ctx.listCalls}`);
+});
+
+Deno.test("borda de paginação: referências com total IGUAL à página (1000) somam as duas páginas", async () => {
+  const valores = Array.from(
+    { length: 1000 },
+    (_, i) => `${PUBLIC}/whatsapp-media/contato-1/image/r${i}.jpg`,
+  );
+  const { client, ctx } = makeClient({ refs: { messages: { media_url: valores } } });
+  const ref = await collectReferencedPaths(client, "whatsapp-media", {
+    sources: [{ table: "messages", column: "media_url" }],
+  });
+  assert(ref.failed === false, "leitura das referências falhou");
+  assert(ref.paths.size === 1000, `esperava 1000 caminhos, veio ${ref.paths.size}`);
+  assert(ctx.ranges.length === 2, `esperava 2 ranges (1000 + vazia), veio ${ctx.ranges.length}`);
 });
