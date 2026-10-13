@@ -1,15 +1,19 @@
 /**
- * Config das 3 seções do novo sidebar "Detalhes do Contato" (plano
- * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44).
+ * Config das seções do sidebar "Detalhes do Contato" (plano
+ * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44; a seção
+ * `memoria` entrou depois, somente leitura).
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova
- * `contact-sidebar-accordion-state@v2`: só os valores que existem nas 3
- * seções novas sobrevivem; sobra vazia → default (as 3 abertas).
+ * `contact-sidebar-accordion-state@v2`: só os valores que existem nas seções
+ * atuais sobrevivem; sobra vazia → default.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'memoria'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
+// `memoria` fica FORA do default: entra colapsada (o cabeçalho é visível e o
+// atendente abre quando precisa), sem mudar a preferência já gravada de quem
+// usa o painel.
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu'];
 
 const STORAGE_KEY = 'contact-sidebar-accordion-state@v2';
