@@ -204,12 +204,24 @@
           <div className="space-y-4">
             <h1 className="text-2xl font-bold text-destructive">Sem conexão com o servidor</h1>
             <p className="text-muted-foreground">Não foi possível confirmar sua sessão. Verifique a conexão e tente de novo.</p>
-            <button
-              onClick={retryBootstrap}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-            >
-              Tentar de novo
-            </button>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={retryBootstrap}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              >
+                Tentar de novo
+              </button>
+              <button
+                onClick={() => {
+                  void AuthService.signOut().catch(() => undefined).finally(() => {
+                    window.location.assign('/auth');
+                  });
+                }}
+                className="px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       );

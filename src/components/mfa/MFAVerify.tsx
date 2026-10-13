@@ -79,6 +79,7 @@ export function MFAVerify({
             id="mfa-code"
             type="text"
             inputMode="numeric"
+            autoComplete="one-time-code"
             maxLength={6}
             placeholder="000000"
             value={code}
@@ -88,10 +89,15 @@ export function MFAVerify({
             }}
             className={`text-center text-2xl tracking-widest font-mono ${error ? 'border-destructive' : ''}`}
             disabled={verifying || loading}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'mfa-code-erro' : undefined}
             autoFocus
           />
           {error && (
             <motion.p
+              id="mfa-code-erro"
+              role="alert"
+              aria-live="polite"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-sm text-destructive text-center"

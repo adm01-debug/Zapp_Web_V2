@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { AuthService } from '@/services/auth.service';
 
 const estado = vi.hoisted(() => ({
   user: null as { id: string } | null,
@@ -83,6 +84,22 @@ describe('ProtectedRoute — boot sem conexão', () => {
     const botao = screen.getByRole('button', { name: 'Tentar de novo' });
     botao.click();
     expect(estado.retryBootstrap).toHaveBeenCalledTimes(1);
+  });
+
+  it('a tela de erro de boot oferece "Sair" (volta ao login limpando a sessão)', async () => {
+    estado.bootstrapError = true;
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    cenario();
+
+    await waitFor(() => expect(screen.getByText(/não foi possível confirmar/i)).toBeTruthy());
+
+    const sair = screen.getByRole('button', { name: 'Sair' });
+    sair.click();
+
+    await waitFor(() => expect(AuthService.signOut).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/auth'));
+    vi.unstubAllGlobals();
   });
 
   it('sem erro de boot e sem sessão continua indo para /auth', async () => {
