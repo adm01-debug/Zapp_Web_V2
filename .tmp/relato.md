@@ -15,7 +15,8 @@ Especialista: hugo
   exposto; nome passa por `trim()` e nome vazio é recusado com toast.error — dois
   cliques no mesmo tick criavam duas linhas (item 2).
 - src/components/inbox/CustomEmojiPicker.tsx: Salvar desabilitado enquanto salva
-  (spinner) e enquanto o nome estiver vazio (com `title` explicando); Cancelar
+  (spinner `motion-safe:animate-spin`, respeita reduzir movimento) e enquanto o
+  nome estiver vazio (com `title` explicando); Cancelar
   desabilitado durante o save; fechar o popover com prévia pendente agora chama
   `handleCancelUpload` (remove o objeto do Storage) em vez de só limpar o estado —
   era o caminho do órfão (item 2).
