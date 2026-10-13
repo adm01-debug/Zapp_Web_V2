@@ -7,6 +7,7 @@ import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -149,6 +150,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
         // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.
         clearInboxDraftSessions();
+        // A fila de envio offline também é do usuário que saiu: sem isso o texto
+        // dele, parado no disco, drenaria como o próximo atendente a logar aqui.
+        void offlineSendQueue.clear();
       }
     });
 
@@ -219,6 +223,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
        // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
        clearInboxDraftSessions();
+       // Idem para a fila de envio offline: nenhum texto do usuário que saiu fica no disco.
+       void offlineSendQueue.clear();
      }
    };
 
