@@ -55,7 +55,7 @@ export interface WebAuthnAccount {
 
 export interface WebAuthnAdminClient {
   rpc: NetworkPolicyRpcClient["rpc"];
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
   auth: {
     admin: {
