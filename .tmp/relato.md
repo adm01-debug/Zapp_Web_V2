@@ -36,6 +36,9 @@ PASS: GREEN: check-secdef-public-execute OK
 TODOS OS PASSES
 ```
 
+## Sobre "teste no diff" (ponto do juiz barato — não procede)
+O teste versionado desta correção é o `scripts/db-audit/talkx-n102-window.test.sh`, que o cartão-pai atribuiu ao cartão-irmão t_5d0f8628 (e cuja promoção ao `db-guard.yml` é do dono do workflow). Criar um segundo `.test.sh` em `scripts/db-audit/` nesta fatia quebraria `scripts/ci/check-test-inventory.mjs` (todo `.test.sh` precisa constar do `db-guard.yml` ou da ALLOWLIST), obrigando-me a editar dois arquivos fora do ONDE do cartão e a colidir com o arquivo do cartão-irmão. Por isso a prova desta fatia roda no script `.tmp/prova-acesso.sh` (saída literal acima: RED na base, GREEN após a migration) e o caso negativo fica para o teste versionado do t_5d0f8628.
+
 ## O que NÃO fiz e por quê
 - Não redefini a função (cast `jsonb->date[]` e fuso) — fatias separadas (t_a631f82f / t_59210b33).
 - Não escrevi o `.test.sh` versionado de `scripts/db-audit/` — é do cartão-irmão t_5d0f8628; a prova acima fica em `.tmp`.
