@@ -1,18 +1,28 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013035213_network_policy_tables_admin_only.sql: em public.ip_whitelist e public.geo_blocking_settings, a policy de escrita era `FOR ALL ... is_admin_or_supervisor()` — um SUPERVISOR podia inserir/alterar/apagar a whitelist de IP e o bloqueio geográfico. A `FOR ALL` foi trocada por três policies `FOR INSERT/UPDATE/DELETE ... is_admin()`. As policies de LEITURA existentes ("Admins can view IP whitelist" e "Geo blocking visible to admins only", ambas com is_admin_or_supervisor) NÃO foram tocadas, então supervisor continua vendo. Só policies: nenhum GRANT/REVOKE/papel alterado (git diff = 2 arquivos, 0 GRANT).
+- scripts/db-audit/network-policy-tables-admin-only.test.sh: prova em Postgres descartável (postgres:17-alpine) com os papéis reais.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (estado real do banco da tarefa antes da migration): `bash scripts/db-audit/network-policy-tables-admin-only.test.sh` → BLOCO A passa mostrando o DEFEITO — supervisor INSERE, APAGA e ALTERA nas duas tabelas; BLOCO B/C reprovam sem a migration.
+- verde depois: `bash scripts/db-audit/network-policy-tables-admin-only.test.sh` → `NET-POLICY-ADMIN-ONLY ip_whitelist/geo_blocking_settings (postgres:17-alpine): 31 cenarios aprovados.` (exit 0), rodando como `authenticated` (admin e supervisor), `anon` e `service_role` — nunca como postgres.
+  - supervisor: INSERT nega "row-level security"; UPDATE e DELETE afetam 0 linhas; SELECT segue com 1 linha (B.1–B.5, B.11–B.12).
+  - admin: INSERT/UPDATE/DELETE nas duas tabelas funcionam (B.6–B.10); anon não lê (0) nem escreve; service_role segue com BYPASSRLS (B.15–B.19).
+  - inventário: nenhuma policy `cmd='ALL'` restante; ip_whitelist e geo_blocking_settings com 3 de escrita + 1 de leitura (B.20–B.22).
+  - rollback do próprio arquivo executa e devolve a escrita ao supervisor; reaplicar a migration volta a negar (C.1–C.4).
+- migration aplicada no banco LOCAL: `hermes-db-migrar supabase/migrations/20261013035213_network_policy_tables_admin_only.sql` → `BEGIN ... CREATE POLICY ... COMMIT` / `APLICADA no banco LOCAL 'v2-2610130049cc0b' (produção não foi tocada)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (323s)` (dependencias/db_guard/tipos/lint/migrations OK; banco_local não roda sem nome de conjunto, é o normal do fechar).
+
+## Passada de efeito colateral
+1. Gatilhos: a migration só faz DROP/CREATE POLICY, nenhuma escrita de dado; `geo_blocking_settings` tem o trigger update_geo_blocking_settings_updated_at (ip_whitelist não tem gatilho), mas ele NÃO dispara porque não há UPDATE/INSERT.
+2. Tudo ou nada: `hermes-db-migrar` aplicou em uma transação (BEGIN…COMMIT).
+3. Sem oráculo: não há RPC/resposta; é RLS pura, sem caminho que distinga existente de inexistente.
+4. Permissão só a pedida: só policies; zero GRANT/REVOKE.
+5. Entrada inválida: não se aplica (sem função/parâmetro novo).
+6. Teste robusto: não usa deparse de `pg_policies.qual`; confere `policyname`/`cmd`/`roles` (estáveis) e prova pelo comportamento com o papel real.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei no acesso de leitura (o cartão manda manter SELECT para admin/supervisor; supervisor lê nas duas tabelas — B.11/B.12).
+- Nenhum dado real/produção citado; banco de produção não foi tocado.
+- REGISTRO PENDENTE: scripts/db-audit/network-policy-tables-admin-only.test.sh — `.test.sh` novo ainda sem passo em .github/workflows/db-guard.yml (arquivo que não é meu para editar). O `check-test-inventory` já está vermelho na base com 6 órfãos pré-existentes; cabe ao worker (ci)/integrador registrar.
