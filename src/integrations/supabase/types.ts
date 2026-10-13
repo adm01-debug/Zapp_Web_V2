@@ -11999,6 +11999,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      search_email_threads: {
+        Args: {
+          p_account: string
+          p_after?: string
+          p_limit?: number
+          p_q: string
+        }
+        Returns: {
+          last_message_at: string
+          match_field: string
+          match_snippet: string
+          thread_id: string
+        }[]
+      }
       search_knowledge_base: {
         Args: { max_results?: number; search_query: string }
         Returns: {
