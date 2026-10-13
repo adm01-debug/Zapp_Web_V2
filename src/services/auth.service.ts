@@ -13,6 +13,39 @@ export interface SignInResult {
   unavailable: boolean;
 }
 
+/**
+ * Falha transitória de leitura (rede, 429 ou 5xx) — merece nova tentativa antes
+ * de virar estado de erro na tela. Falha de autenticação NÃO entra aqui: ela
+ * segue o caminho de refresh de sessão.
+ */
+const isTransientProfileFailure = (err: unknown): boolean => {
+  if (err instanceof TypeError) return true;
+  const status = (err as { status?: number } | null)?.status;
+  return typeof status === 'number' && (status === 429 || status >= 500);
+};
+
+/** Falha de autenticação (token expirado/negado) que justifica refresh da sessão. */
+const isProfileAuthFailure = (err: unknown): boolean =>
+  typeof err === 'object' && err !== null && (
+    (err as { status?: number }).status === 401 ||
+    (err as { code?: string }).code === 'PGRST301' ||
+    /jwt|unauthorized|token.*expired/i.test((err as { message?: string }).message || '')
+  );
+
+/**
+ * Retry curto do perfil: 1 tentativa + no máximo 2 retentativas, backoff de
+ * 300ms/600ms. Só falha transitória repete — erro de negócio e falha de auth
+ * sobem na hora, para não mascarar o problema real.
+ */
+const PERFIL_RETRY_MAX_RETRIES = 2;
+const PERFIL_RETRY_BASE_DELAY_MS = 300;
+const PERFIL_RETRY_MAX_DELAY_MS = 900;
+
+const atrasoPerfilMs = (tentativa: number): number =>
+  Math.min(PERFIL_RETRY_BASE_DELAY_MS * 2 ** tentativa, PERFIL_RETRY_MAX_DELAY_MS);
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 export class AuthService {
   private static sessionPromise: Promise<Session | null> | null = null;
   private static refreshPromise: Promise<Session | null> | null = null;
@@ -59,23 +92,39 @@ export class AuthService {
       return data as Profile | null;
     };
 
+    // Uma leitura do perfil não pode ser perdida por um blip de rede: repete só
+    // falha transitória, com backoff curto. As retentativas ficam aqui (além do
+    // retry de transporte do cliente) porque o perfil define identidade e
+    // permissões na tela — o custo de repetir é baixo e o de desistir é alto.
+    const buscarComRetentativa = async (): Promise<Profile | null> => {
+      for (let tentativa = 0; ; tentativa += 1) {
+        try {
+          return await fetchOnce();
+        } catch (err) {
+          if (!isTransientProfileFailure(err) || tentativa >= PERFIL_RETRY_MAX_RETRIES) throw err;
+          await sleep(atrasoPerfilMs(tentativa));
+        }
+      }
+    };
+
     try {
-      return await fetchOnce();
+      return await buscarComRetentativa();
     } catch (err) {
-      const authFailure = typeof err === 'object' && err !== null && (
-        (err as { status?: number }).status === 401 ||
-        (err as { code?: string }).code === 'PGRST301' ||
-        /jwt|unauthorized|token.*expired/i.test((err as { message?: string }).message || '')
-      );
-      if (authFailure) {
+      if (isProfileAuthFailure(err)) {
         try {
           const session = await this.refreshSession();
-          if (session) return await fetchOnce();
+          if (session) return await buscarComRetentativa();
         } catch (refreshError) {
+          // Falha transitória na recuperação precisa chegar à tela como erro,
+          // não virar "usuário sem perfil".
+          if (isTransientProfileFailure(refreshError)) throw refreshError;
           log.warn('[AuthService] Session recovery failed', refreshError);
         }
       }
       log.warn('[AuthService] Failed to fetch profile', err);
+      // Falha transitória esgotada: lança para o chamador marcar o perfil como
+      // indisponível. `null` continua significando "não existe perfil".
+      if (isTransientProfileFailure(err)) throw err;
       return null;
     }
   }
