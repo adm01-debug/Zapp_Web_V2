@@ -49,6 +49,10 @@
     {
       "jobname": "vacuum-messages-post-expurgo",
       "schedule": "20 3 2 9 *"
+    },
+    {
+      "jobname": "security-acl-score",
+      "schedule": "23 * * * *"
     }
   ]
 }
