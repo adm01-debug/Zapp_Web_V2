@@ -110,15 +110,15 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // Peças montadas uma vez e usadas nos dois layouts (nada de copiar JSX).
   // Etapa 084 (D16): checkbox CIRCULAR em todas as superfícies, pela mesma peça
   // (`TaskCheckbox`) da Lista, do Quadro, da Agenda, do painel e do modal.
-  // REGRA DE TELA (alvo ≥ 40 px): o círculo VISÍVEL segue com 18 px, mas o alvo
-  // clicável é ampliado a 40 px por um pseudo-elemento (`before:-inset-[11px]`:
-  // 18 + 11 + 11 = 40), sem mexer no layout nem no visual. O clique continua
-  // sendo do próprio botão (`stopPropagation`), então "marcar" não abre o card.
+  // REGRA DE TELA (alvo ≥ 40 px): o próprio `TaskCheckbox` já entrega o alvo de
+  // 40x40 (`h-10 w-10`) com o círculo VISÍVEL de 18 px dentro, então o card não
+  // amplia mais nada — só alinha a peça (nada de pseudo-elemento extra, que
+  // criaria uma área clicável de 62 px por cima do título).
   const checkbox = (
     <TaskCheckbox
       done={isDone}
       onToggle={onToggleDone}
-      className={`relative before:absolute before:-inset-[11px] before:content-[''] ${isAgenda ? 'shrink-0' : 'mt-0.5'}`}
+      className={isAgenda ? 'shrink-0' : 'mt-0.5'}
     />
   );
 

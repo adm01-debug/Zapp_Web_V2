@@ -471,20 +471,21 @@ describe('etapas 084–090 — card redesenhado', () => {
     expect(document.activeElement).toBe(document.body);
   });
 
-  it('alvo ≥ 40 px: o checkbox mantém o círculo de 18 px e amplia o clique por pseudo-elemento', () => {
+  it('alvo ≥ 40 px: o botão do checkbox mede 40x40 e o círculo visível segue 18 px', () => {
     render(<WorkItemCard item={item()} mode="list" onToggleDone={vi.fn()} />);
     const check = screen.getByTestId('task-checkbox');
 
-    // O círculo VISÍVEL não muda: segue 18 px (o visual do D16).
-    expect(check.className).toContain('h-[18px]');
-    expect(check.className).toContain('w-[18px]');
+    // O ALVO é o próprio botão (`TaskCheckbox`): 40x40 = `h-10 w-10`.
+    expect(check.className).toContain('h-10');
+    expect(check.className).toContain('w-10');
 
-    // O alvo é ampliado por um pseudo-elemento ancorado no próprio botão. O inset
-    // sai da CLASSE REAL (não de um número solto): 18 + 2·inset ≥ 40 px.
-    expect(check.className).toContain('relative');
-    const inset = /before:-inset-\[(\d+)px\]/.exec(check.className);
-    expect(inset).not.toBeNull();
-    expect(18 + 2 * Number(inset![1])).toBeGreaterThanOrEqual(40);
-    expect(check.className).toContain("before:content-['']");
+    // O círculo VISÍVEL é o desenho interno e não muda: segue 18 px (o D16).
+    const circle = within(check).getByTestId('task-checkbox-circle');
+    expect(circle.className).toContain('h-[18px]');
+    expect(circle.className).toContain('w-[18px]');
+
+    // O alvo já vem do botão: o card não acrescenta pseudo-elemento, que
+    // estenderia a área clicável (~62 px) por cima do título.
+    expect(check.className).not.toContain('before:-inset');
   });
 });
