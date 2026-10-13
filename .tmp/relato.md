@@ -18,7 +18,7 @@ Especialista: iris
 
 ## Dependência (faixa do pai, trazida por cherry-pick)
 
-O que o diff da branch mostra além do meu commit vem dos dois commits do cartão pai `t_65b3779c` (`ae44f0705` + `e732c507e`), que ainda não estavam integrados e por isso foram trazidos inteiros para o workspace: `src/lib/audio/pttLimits.ts`, `src/lib/audio/__tests__/pttLimits.test.ts`, `src/hooks/inbox/useRealtimeInbox.ts` e `src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` (limites de PTT — PE-24). Não os alterei.
+O que o diff da branch mostra além do meu commit vem dos dois commits do cartão pai `t_65b3779c` (`ae44f0705` + `e732c507e`), que ainda não estavam integrados e por isso foram trazidos inteiros para o workspace: `src/lib/audio/pttLimits.ts`, `src/lib/audio/__tests__/pttLimits.test.ts`, `src/hooks/inbox/useRealtimeInbox.ts` e `src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` (limites de PTT — PE-24). Não os alterei. Foram indispensáveis porque o cartão manda explicitamente trazer a FAIXA do pai por `cherry-pick` quando ela não está no workspace, e o meu código usa `MAX_PTT_DURATION_SEC` desse arquivo.
 
 ## Decisões e limites
 
