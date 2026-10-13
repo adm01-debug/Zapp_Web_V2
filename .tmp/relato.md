@@ -1,5 +1,11 @@
 Especialista: workersql
 
+## Arquivos alterados (todos os 3 do diff, 1 deles de prova)
+- `supabase/migrations/20261013210004_outbound_post_started.sql` (novo): correção.
+- `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (prova deste assunto).
+- `scripts/db-audit/message-delivery-phase1-runtime.sql` (retrato canônico da API de entrega; acrescenta o RPC e a coluna novos).
+- `.tmp/relato.md`: este relato (arquivo versionado no workspace; o fechar exige árvore limpa, por isso vai no commit).
+
 ## O que mudou e por quê
 - `supabase/migrations/20261013210004_outbound_post_started.sql` (novo, aditivo, com `-- Rollback:` na 1ª linha, `BEGIN/COMMIT`, `SET search_path`, GRANT/REVOKE explícitos):
   1. coluna durável `public.messages.delivery_post_started_at timestamptz` — carimbo do instante em que a Edge marcou que o POST ao provedor ia sair;
@@ -8,7 +14,8 @@ Especialista: workersql
   4. o mesmo `guard_message_delivery_internal_fields` estendido: `authenticated` não forja nem limpa o carimbo por INSERT/UPDATE direto.
 - `scripts/db-audit/message-delivery-phase1-behavior.test.sh` e `...-runtime.sql`: prova do comportamento e cobertura do novo RPC no retrato canônico (ACL/definição da função + contrato da coluna).
 
-Por que aqui e não em `supabase/tests/`: os `supabase/tests/*.sql` só rodam contra um projeto vivo via `mcp_exec` (não rodam no banco local). A prova executável de RPC/lease/RLS deste assunto é o harness `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (já registrado no `db-guard.yml`), que sobe PostgreSQL 17 descartável, aplica as migrations REAIS e roda como os papéis reais. Estendi esse harness em vez de criar `.test.sh` novo (arquivo novo ficaria órfão no CI).
+## Por que toquei arquivos além da migration (fora da lista literal do cartão)
+Os dois arquivos são de prova, na minha área (scripts/db-audit/**, banco), NÃO código de produção. O cartão pediu "PROVA no banco LOCAL com o papel real (agent/anon/service_role)" e "atualize ou crie testes dos arquivos que tocar": os `supabase/tests/*.sql` que o cartão cita só rodam contra um projeto vivo via `mcp_exec`, não rodam no banco local; a única prova executável de RPC/lease/ACL deste assunto é o harness `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (já registrado no `db-guard.yml`), que sobe PostgreSQL 17 descartável e roda como os papéis reais. Estendi esse harness existente em vez de criar `.test.sh` novo (arquivo novo ficaria órfão no CI — regra da área). O `...-runtime.sql` é o retrato canônico que o harness usa; sem ele o RPC novo ficaria fora da cobertura de ACL/definição.
 
 ## Prova
 - vermelho antes (cópia temporária do harness em `.tmp/`, sem aplicar a migration): `bash .tmp/red-before.test.sh` → `ERROR: function "public.mark_outbound_post_started(uuid,uuid)" does not exist` (EXIT=1).
