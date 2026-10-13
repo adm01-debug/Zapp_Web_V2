@@ -1,18 +1,20 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/hooks/business/useClientWallet.ts — a falha deixou de ser engolida nos três caminhos do citado `hooks/business/useClientWallet.ts:78-90` e no `fetchData`:
+  - `fetchData`: cada leitura (`client_wallet_rules`, o join em `profiles`, o join em `whatsapp_connections`, as listas completas de `profiles` e `whatsapp_connections`) passa a conferir o `error` devolvido e a anotar a primeira mensagem. No fim, se houve falha, sobe `error` (mensagem) + `errorSource: 'load'` e um aviso destrutivo "Erro ao carregar as regras da carteira"; se não houve, limpa `error`/`errorSource`. A lista que já estava na tela continua preservada (comportamento que já existia e ficou travado no teste "recarga que falha depois de uma carga boa…").
+  - `handleToggleActive`: virou estado otimista com rollback — a linha muda na hora, o valor anterior é lido do estado atual (só leitura) e, se o banco recusar, volta para o valor anterior, com `error`/`isError`/`errorSource: 'toggle'` e aviso. A escrita passou a ser funcional (`prev => …`), que é o que conserta a corrida de duas alternâncias simultâneas.
+  - `handleDeleteRule`: mesmo desenho otimista, guardando o ÍNDICE original para repor a regra na MESMA posição se o banco recusar, com `error`/`isError`/`errorSource: 'delete'` e aviso. Nada mais falha em silêncio.
+  - O retorno passou a expor `error` (string|null), `isError` (boolean) e `errorSource` ('load'|'toggle'|'delete'|null).
+- src/hooks/business/__tests__/useClientWallet.test.tsx — os dois defeitos que estavam travados como `it.fails` foram corrigidos e viraram testes normais (a corrida de duas alternâncias simultâneas e a exclusão negada pelo RLS), mais três testes novos de carga e as asserções de `error`/`isError`/`errorSource`/aviso nas duas mutações negadas. O docblock do arquivo foi atualizado para refletir isso.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (hook na versão da base, só o teste novo): `npx vitest run src/hooks/business/__tests__/useClientWallet.test.tsx` → `Tests 6 failed | 11 passed (17)`. Os 6 são exatamente os caminhos novos: falha de carga expõe error/isError; carga boa limpa error/isError; RLS nas listas auxiliares sobe como carga; alternância negada faz rollback e avisa; duas alternâncias simultâneas; exclusão negada repõe na posição original e avisa.
+- verde depois: `npx vitest run src/hooks/business/__tests__/useClientWallet.test.tsx` → `Test Files 1 passed (1); Tests 17 passed (17)`, zero pulados.
+- regressão dos módulos tocados: `npx vitest run src/hooks/business src/components/wallet` → `Test Files 4 passed (4); Tests 36 passed (36)`.
+- verificação do cartão: `zapp-verify . --rapido` (rodado pelo fechar, abaixo).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei em `src/components/wallet/ClientWalletView.tsx`: o cartão só autoriza o hook e os testes; o estado `error`/`isError`/`errorSource` fica exposto para a tela consumir, e o aviso ao usuário sai pelo `toast` do próprio hook.
+- Não mexi em `handleAddRule` além do que já existia (ele já avisa erro de insert e mantém o diálogo aberto) — o cartão pede as DUAS mutações, alternância e exclusão.
+- Nenhuma migration, Edge Function, dependência nova ou credencial; nada de produção.
