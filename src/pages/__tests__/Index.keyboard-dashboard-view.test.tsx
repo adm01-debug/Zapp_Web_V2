@@ -98,6 +98,11 @@ vi.mock('@/components/alerts/EvolutionDisconnectBanner', () => ({
   EvolutionDisconnectBanner: () => null,
 }));
 vi.mock('@/components/security/MfaAdminNudge', () => ({ MfaAdminNudge: () => null }));
+// Avisos globais de conexao (servidor fora do ar / conexao instavel): o teste
+// e de navegacao por teclado do dashboard; o store de conexoes toca o realtime.
+vi.mock('@/components/ui/global-connection-banners', () => ({
+  GlobalConnectionBanners: () => null,
+}));
 vi.mock('@/components/performance/HotRoutePrefetcher', () => ({
   HotRoutePrefetcher: () => null,
 }));

@@ -24,6 +24,9 @@ const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').t
 const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.OfflineIndicator })));
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
 const EvolutionDisconnectBanner = lazy(() => import('@/components/alerts/EvolutionDisconnectBanner').then(m => ({ default: m.EvolutionDisconnectBanner })));
+// Avisos globais de conexao: servidor (Supabase) fora do ar e conexao instavel
+// (caiu e voltou nos ultimos 10 min, so staff). Ver global-connection-banners.tsx.
+const GlobalConnectionBanners = lazy(() => import('@/components/ui/global-connection-banners').then(m => ({ default: m.GlobalConnectionBanners })));
 const MfaAdminNudge = lazy(() => import('@/components/security/MfaAdminNudge').then(m => ({ default: m.MfaAdminNudge })));
 // E35 — pré-carrega em tempo ocioso os chunks das views quentes (Chat/Teams/Email/Dashboard).
 // Não entra no bundle inicial: todos continuam lazy, apenas saem antes do clique.
@@ -130,6 +133,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           <OfflineIndicator />
           <ConnectionToast />
           <EvolutionDisconnectBanner />
+          <GlobalConnectionBanners onOpenConnections={() => setCurrentView('connections')} />
           <MfaAdminNudge onNavigate={setCurrentView} />
           <HotRoutePrefetcher />
           <WelcomeModal
