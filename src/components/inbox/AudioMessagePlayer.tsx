@@ -112,7 +112,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" crossOrigin="anonymous" />
       <div className={cn('flex items-center gap-3 p-2 rounded-lg min-w-[200px]', isSent ? 'bg-primary-foreground' : 'bg-muted/50')}>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button variant="ghost" size="icon" className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
+          <Button variant="ghost" size="icon" aria-label={hasError ? 'Reproduzir áudio novamente' : isLoading ? 'Carregando áudio' : isPlaying ? 'Pausar áudio' : 'Reproduzir áudio'} className={cn('w-10 h-10 rounded-full [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : hasError ? <RefreshCw className="w-5 h-5" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
         </motion.div>

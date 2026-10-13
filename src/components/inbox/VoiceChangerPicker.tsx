@@ -278,7 +278,8 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                     <Button
                       onClick={startRecording}
                       size="lg"
-                      className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90"
+                      aria-label="Gravar áudio"
+                      className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                     >
                       <Mic className="w-7 h-7" />
                     </Button>
@@ -293,7 +294,8 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                         onClick={stopRecording}
                         size="lg"
                         variant="destructive"
-                        className="rounded-full w-16 h-16"
+                        aria-label="Parar gravação"
+                        className="rounded-full w-16 h-16 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                       >
                         <MicOff className="w-7 h-7" />
                       </Button>

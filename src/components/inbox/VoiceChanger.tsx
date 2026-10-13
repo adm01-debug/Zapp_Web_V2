@@ -212,7 +212,8 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 text-foreground"
+                  aria-label={isPlaying ? 'Parar prévia da voz' : 'Ouvir prévia da voz'}
+                  className="w-8 h-8 text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                   onClick={togglePlayback}
                 >
                   {isPlaying ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}

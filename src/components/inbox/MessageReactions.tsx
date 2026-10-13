@@ -252,7 +252,8 @@ export function QuickReactionBar({
           <PopoverTrigger asChild>
             <button
               data-testid="quick-reaction-more"
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground"
+              aria-label="Mais reações"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
             >
               <SmilePlus className="w-4 h-4" />
             </button>
