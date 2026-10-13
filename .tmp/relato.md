@@ -1,5 +1,9 @@
 Especialista: Íris (area-front-componentes)
 
+CONCLUÍ. As duas falhas do cartão estão corrigidas e provadas por teste que renderiza a tela real:
+comando rodado: `npx vitest run src/components/voice/__tests__/VoiceSearchOverlay.ttsAviso.test.tsx src/components/inbox/__tests__/VideoPreview.erro.test.tsx src/hooks/communication/__tests__/useVoiceAgent.ttsAviso.test.ts`
+linha de resultado: `Test Files 3 passed (3)` / `Tests 10 passed (10)` (zero falhas, zero pulados).
+
 ## O que mudou e por quê
 - src/hooks/communication/useVoiceAgent.ts: passou a escutar o `play()` recusado (`onAutoplayBlocked` do playTtsAudio) e o fim do TTS com falha, guardando o motivo em `ttsIssue`; expôs `replayResponse()` (tocar de novo). Antes o erro do TTS morria num `log.warn` e o operador ficava sem som e sem explicação.
 - src/hooks/voice/types.ts: tipo `VoiceTtsIssue` ('autoplay-blocked' | 'playback-failed') e os dois campos novos no retorno do hook — o hook diz O QUE aconteceu, a tela diz como aparece.
