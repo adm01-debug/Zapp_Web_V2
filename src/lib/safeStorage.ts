@@ -3,7 +3,14 @@
  */
 import { getLogger } from '@/lib/logger';
 
-const log = getLogger('SafeStorage');
+// Lazy: o logger só é resolvido quando há algo para registrar. Assim importar
+// este módulo (o `client.ts` importa, no boot) não depende de `@/lib/logger`
+// estar completo — mocks parciais de logger em testes não quebram o boot.
+let logSafeStorage: ReturnType<typeof getLogger> | null = null;
+function logger() {
+  logSafeStorage ??= getLogger('SafeStorage');
+  return logSafeStorage;
+}
 
 export function safeGetItem(key: string): string | null {
   try {
@@ -18,7 +25,7 @@ export function safeSetItem(key: string, value: string): boolean {
     localStorage.setItem(key, value);
     return true;
   } catch {
-    log.warn(`Failed to write key "${key}"`);
+    logger().warn(`Failed to write key "${key}"`);
     return false;
   }
 }
@@ -49,7 +56,59 @@ export function safeSetJSON(key: string, value: unknown): boolean {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch {
-    log.warn(`Failed to write key "${key}"`);
+    logger().warn(`Failed to write key "${key}"`);
     return false;
   }
+}
+
+/**
+ * Adapter de storage para o cliente Supabase.
+ *
+ * O `client.ts` passava `window.localStorage` direto: em modo privado / com
+ * cookies bloqueados o PRÓPRIO acesso à propriedade pode lançar SecurityError
+ * e derrubar a página já no import do módulo. Aqui a leitura é protegida e,
+ * quando o storage persistente não está utilizável, o adapter mantém a sessão
+ * em um Map na aba (some ao fechar, mas o app continua utilizável).
+ */
+export interface StorageSeguro {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+}
+
+export function createSafeStorage(): StorageSeguro {
+  const memoria = new Map<string, string>();
+
+  const localUtilizavel = (() => {
+    try {
+      return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!localUtilizavel) {
+    logger().warn('localStorage indisponível; sessão mantida em memória nesta aba');
+    return {
+      getItem: (key) => memoria.get(key) ?? null,
+      setItem: (key, value) => { memoria.set(key, value); },
+      removeItem: (key) => { memoria.delete(key); },
+    };
+  }
+
+  return {
+    getItem: (key) => {
+      const persistido = safeGetItem(key);
+      return persistido !== null ? persistido : (memoria.get(key) ?? null);
+    },
+    setItem: (key, value) => {
+      // Storage cheio/bloqueado: mantém o token vivo em memória em vez de
+      // perder a sessão.
+      if (!safeSetItem(key, value)) memoria.set(key, value);
+    },
+    removeItem: (key) => {
+      safeRemoveItem(key);
+      memoria.delete(key);
+    },
+  };
 }
