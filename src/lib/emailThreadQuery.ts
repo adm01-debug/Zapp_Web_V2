@@ -110,12 +110,66 @@ export function escapeLikeWildcards(term: string): string {
  * os contatos que casaram o termo (`contact_id` é coluna da thread — não vira join,
  * então thread sem contato não é excluída).
  */
-export function emailThreadSearchOr(term: string, contactIds: readonly string[] = []): string {
+export function emailThreadSearchOr(
+  term: string,
+  contactIds: readonly string[] = [],
+  threadIds: readonly string[] = [],
+): string {
   const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(term)}%`);
   const clauses = ['subject', 'snippet', 'last_from_name', 'last_from_address']
     .map(column => `${column}.ilike.${pattern}`);
   if (contactIds.length > 0) clauses.push(`contact_id.in.(${contactIds.join(',')})`);
+  // PE-09: os `thread_id` que a RPC casou no corpo/anexo entram ADITIVOS ao OR —
+  // se a RPC estourar o teto de páginas ou o cursor empatar o `last_message_at`,
+  // assunto/remetente/trecho continuam sendo encontrados como antes.
+  if (threadIds.length > 0) clauses.push(`id.in.(${threadIds.join(',')})`);
   return clauses.join(',');
+}
+
+/**
+ * PE-09 — busca que alcança corpo e anexo.
+ *
+ * O termo digitado também mora em colunas que a consulta da lista NÃO vê:
+ * `email_messages.body_text` (corpo) e `email_attachments.filename` (nome do anexo).
+ * A RPC `public.search_email_threads(p_account, p_q, p_limit, p_after)` devolve os
+ * `thread_id` que casam em assunto/remetente/trecho/corpo/anexo, paginando por cursor
+ * (`p_after` = `last_message_at` da última linha). Estes são os parâmetros do contrato
+ * e o resultado é depois combinado com os filtros estruturais (pasta, estado, período,
+ * anexos) na consulta PostgREST da lista.
+ *
+ * O teto de páginas é o que impede uma busca muito ampla (ex.: termo de 1 letra) de
+ * virar varredura ilimitada — mesmo espírito do OTH-005, que tirou a caixa inteira da
+ * consulta. `p_limit` é limitado a 100 pela própria RPC.
+ */
+export const EMAIL_THREAD_SEARCH_PAGE_SIZE = 50;
+export const EMAIL_THREAD_SEARCH_MAX_PAGES = 2;
+
+/** Linha devolvida pela RPC `search_email_threads`. */
+export interface EmailThreadSearchMatch {
+  thread_id: string;
+  last_message_at: string;
+}
+
+/**
+ * Percorre a RPC `search_email_threads` por cursor. Para no fim do resultado (página
+ * incompleta) ou no teto de páginas. Não deduplica: o cursor por `last_message_at` já
+ * anda para trás e cada `thread_id` aparece uma vez por página.
+ */
+export async function collectEmailSearchThreadIds(
+  fetchPage: (after: string | null) => Promise<EmailThreadSearchMatch[]>,
+  pageSize = EMAIL_THREAD_SEARCH_PAGE_SIZE,
+  maxPages = EMAIL_THREAD_SEARCH_MAX_PAGES,
+): Promise<EmailThreadSearchMatch[]> {
+  const matches: EmailThreadSearchMatch[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < maxPages; page += 1) {
+    const chunk = await fetchPage(after);
+    matches.push(...chunk);
+    if (chunk.length < pageSize) return matches;
+    after = chunk[chunk.length - 1]?.last_message_at ?? null;
+    if (!after) return matches;
+  }
+  return matches;
 }
 
 export function emailThreadQueryDescriptor(filters: EmailThreadListFilters, now: Date = new Date()): EmailThreadQueryDescriptor {

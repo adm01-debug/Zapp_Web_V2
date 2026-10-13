@@ -11,8 +11,9 @@ import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import {
-  EMAIL_THREAD_DEFAULT_FILTERS, emailThreadPageCount, emailThreadPageRange, emailThreadQueryDescriptor,
-  emailThreadSearchOr, emailThreadSelectColumns, escapeLikeWildcards, type EmailThreadListQuery,
+  collectEmailSearchThreadIds, EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_SEARCH_PAGE_SIZE, emailThreadPageCount,
+  emailThreadPageRange, emailThreadQueryDescriptor, emailThreadSearchOr, emailThreadSelectColumns,
+  escapeLikeWildcards, type EmailThreadListQuery, type EmailThreadSearchMatch,
 } from '@/lib/emailThreadQuery';
 
 export { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE } from '@/lib/emailThreadQuery';
@@ -149,18 +150,39 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (descriptor.labelId) query = query.contains('label_ids', [descriptor.labelId]);
       if (descriptor.since) query = query.gte('last_message_at', descriptor.since);
       if (descriptor.hasAttachments) query = query.eq('email_messages.has_attachments', true);
-      if (descriptor.search) {
-        // O OR também casa contato pelo `contact_id` da própria thread — coluna,
-        // não join, então thread sem contato não é excluída. Os ids vêm de uma
-        // consulta à tabela de contatos com o mesmo termo saneado.
-        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(descriptor.search)}%`);
+      // PE-09: o termo também mora no corpo (email_messages.body_text) e no nome do
+      // anexo (email_attachments.filename), que esta consulta PostgREST não alcança.
+      // A RPC search_email_threads (SECURITY INVOKER — respeita a RLS) devolve os
+      // thread_id que casam em assunto/remetente/trecho/corpo/anexo, paginando por
+      // cursor (p_after = last_message_at da última linha). Esses ids entram ADITIVOS
+      // ao `.or` de colunas que já existia — combinados com os filtros estruturais
+      // (pasta, estado, período, anexos) e com os contatos que casam o termo —, então
+      // assunto/remetente/trecho seguem sendo encontrados mesmo se a RPC truncar.
+      const searchTerm = descriptor.search;
+      if (searchTerm) {
+        const matches = await collectEmailSearchThreadIds(async (after) => {
+          const args: { p_account: string; p_q: string; p_limit: number; p_after?: string } = {
+            p_account: activeAccount.id,
+            p_q: searchTerm,
+            p_limit: EMAIL_THREAD_SEARCH_PAGE_SIZE,
+          };
+          if (after) args.p_after = after;
+          const { data, error } = await supabase.rpc('search_email_threads', args);
+          if (error) throw error;
+          return (data ?? []) as EmailThreadSearchMatch[];
+        });
+        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(searchTerm)}%`);
         const { data: contactRows, error: contactsError } = await supabase
           .from('contacts')
           .select('id')
           .or(`name.ilike.${pattern},email.ilike.${pattern}`)
           .limit(200);
         if (contactsError) throw contactsError;
-        query = query.or(emailThreadSearchOr(descriptor.search, (contactRows ?? []).map(row => row.id)));
+        query = query.or(emailThreadSearchOr(
+          searchTerm,
+          (contactRows ?? []).map(row => row.id),
+          matches.map(match => match.thread_id),
+        ));
       }
       const range = emailThreadPageRange(effectiveListQuery.page);
       const { data, error, count } = await query
