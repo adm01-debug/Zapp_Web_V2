@@ -42,6 +42,9 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  // O VoiceChangerPicker REAL agora le useReducedMotion: o mock parcial do
+  // framer-motion precisa responder, senao o render quebra (#350).
+  useReducedMotion: () => false,
 }));
 
 // Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a
