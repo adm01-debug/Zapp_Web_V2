@@ -35,7 +35,7 @@ describe('ScheduledReportsManager — frequência "Personalizada"', () => {
       target: { value: 'Fechamento do mês' },
     });
     fireEvent.change(screen.getByPlaceholderText('email1@empresa.com, email2@empresa.com'), {
-      target: { value: 'gestor@empresa.com' },
+      target: { value: 'gestor@promobrindes.com.br' },
     });
     fireEvent.click(screen.getByText('Criar relatório'));
 
@@ -43,7 +43,7 @@ describe('ScheduledReportsManager — frequência "Personalizada"', () => {
     expect(mocks.mutate.mock.calls[0][0]).toMatchObject({
       name: 'Fechamento do mês',
       frequency: 'custom',
-      recipients: ['gestor@empresa.com'],
+      recipients: ['gestor@promobrindes.com.br'],
     });
   });
 
