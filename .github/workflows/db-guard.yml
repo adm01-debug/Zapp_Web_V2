@@ -1052,3 +1052,21 @@ jobs:
           bash scripts/db-tests/run-suites-postgres.sh
           supabase/tests/r2_db_022_provenance_trigger.sql
           supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql
+
+      # t_fceba6d5: as suítes que dependem do SCHEMA COMPLETO (não são auto-contidas) rodam
+      # aqui contra o replay descartável do Supabase (imagem fixada + bootstrap dos serviços +
+      # todas as migrations, tolerando as 21 falhas conhecidas do replay), pelo runner
+      # scripts/db-tests/run-suites-replay.sh. As travas de DNS/agendador são as mesmas do
+      # scripts/db-audit/replay-local.sh: nada aqui toca produção.
+      - name: Provar suítes SQL de schema completo no replay (t_fceba6d5)
+        env:
+          SUITES_REPLAY_IMAGE: public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f
+          SKIP_DOCKER_SHIM: "1"
+        run: >-
+          bash scripts/db-audit/retry-disposable-postgres-test.sh
+          bash scripts/db-tests/run-suites-replay.sh
+          supabase/tests/rls_dashboard.sql
+          supabase/tests/rls_whatsapp_media_select_via_messages.sql
+          supabase/tests/rls_conversation_tab_counts_files_total.sql
+          scripts/db-tests/03-gamification-bounds.sql
+          scripts/db-tests/05-rls-smoke.sql

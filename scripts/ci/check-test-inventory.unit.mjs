@@ -151,13 +151,18 @@ test('t_fceba6d5: glob de suite SQL casa um nivel por * (supabase/tests/*.sql)',
   assert.equal(casaPadrao('supabase/tests/sub/x.sql', 'supabase/tests/*.sql'), false);
 });
 
-test('t_fceba6d5: as duas suites SQL auto-contidas estao num bloco run: real do db-guard', () => {
+test('t_fceba6d5: as suites SQL ligadas estao num bloco run: real do db-guard', () => {
   const padroes = padroesSqlDosWorkflows();
-  for (const arquivo of [
+  for (const f of [
     'supabase/tests/r2_db_022_provenance_trigger.sql',
     'supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql',
+    'supabase/tests/rls_dashboard.sql',
+    'supabase/tests/rls_whatsapp_media_select_via_messages.sql',
+    'supabase/tests/rls_conversation_tab_counts_files_total.sql',
+    'scripts/db-tests/03-gamification-bounds.sql',
+    'scripts/db-tests/05-rls-smoke.sql',
   ]) {
-    assert.ok(padroes.includes(arquivo), `${arquivo} deveria estar num bloco run: de workflow`);
+    assert.ok(padroes.includes(f), `${f} deveria estar num bloco run: do db-guard.yml`);
   }
 });
 

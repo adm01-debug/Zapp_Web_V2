@@ -8,9 +8,9 @@ DECLARE
   v_t2 timestamptz;
   v_status text;
 BEGIN
-  -- Setup: inserir contato de teste
-  INSERT INTO contacts (id, name, conversation_status)
-  VALUES (v_id, 'TEST_FSM_DELETE_ME', 'open');
+  -- Setup: inserir contato de teste (phone sintetico: a coluna e NOT NULL no schema atual)
+  INSERT INTO contacts (id, name, phone, conversation_status)
+  VALUES (v_id, 'TEST_FSM_DELETE_ME', '5500000000000', 'open');
 
   -- FSM-01: open->open no-op (changed_at nao muda)
   SELECT conversation_status_changed_at INTO v_t1 FROM contacts WHERE id = v_id;

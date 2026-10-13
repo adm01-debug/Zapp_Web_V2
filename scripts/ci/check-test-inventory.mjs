@@ -243,35 +243,31 @@ const DIRS_SUITE_SQL = ['supabase/tests', 'scripts/db-tests'];
 const CAMINHO_SUITE_SQL = /(?:supabase\/tests|scripts\/db-tests)\/[A-Za-z0-9_./*-]+\.sql/g;
 
 // Suítes SQL conhecidas ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// Medições de t_fceba6d5 (PostgreSQL 17 descartável): as auto-contidas rodam pelo runner
-// scripts/db-tests/run-suites-postgres.sh; as demais dependem de bootstrap próprio.
+// Medições de t_fceba6d5 (PostgreSQL 17 descartável e replay do Supabase): o runner
+// scripts/db-tests/run-suites-postgres.sh (auto-contidas) e o run-suites-replay.sh (schema
+// completo) já executam as suítes ligadas ao CI; as demais seguem aqui com a razão medida.
 export const ALLOWLIST_SQL = new Set([
-  // supabase/tests — auto-contida, mas a migration sob teste (20261007095739, t_89af1a99)
-  // ainda não está na branch do dia. O runner já a executa; falha só em `No such file`.
-  // Promover quando a migration integrar (o padrão relativo do arquivo passa a servir).
+  // auto-contida, mas a migration sob teste (20261007095739, t_89af1a99) ainda não está na
+  // branch do dia: o runner a executa e falha só em `No such file`. Promover quando integrar.
   'supabase/tests/indeterminate_optout_outbox.sql',
-  // supabase/tests — dependem do envelope `mcp_exec` (SET LOCAL ROLE + request.jwt.claims do
-  // PostgREST) para provar autorização; precisam do harness de sessão antes do passo no CI.
+  // dependem do envelope `mcp_exec` (SET LOCAL ROLE + request.jwt.claims do PostgREST) para
+  // provar autorização; precisam do harness de sessão antes do passo no CI.
   'supabase/tests/ai_jobs_lease_efeito_incerto.sql',
   'supabase/tests/inbox_agregado_por_contato.sql',
   'supabase/tests/transfer_conversation_atomicidade.sql',
-  // supabase/tests — família RLS/dashboard que roda como service_role (BYPASSRLS) e NÃO prova
-  // enforcement. Supersedidas por scripts/db-audit/dashboard-rls-authorization.test.sh, que
-  // prova o mesmo sob PAPÉIS REAIS; reduzir conforme o dono do dashboard decidir.
+  // provam só ESTRUTURA sob service_role e AUTO-PULAM sem dados de produção (medido no
+  // replay): um passo no CI passaria sem provar nada. Supersedidas por
+  // scripts/db-audit/dashboard-rls-authorization.test.sh, que prova sob papéis REAIS.
   'supabase/tests/dashboard_kpi_edge_cases.sql',
   'supabase/tests/dashboard_rpc_filters.sql',
-  'supabase/tests/rls_dashboard.sql',
-  'supabase/tests/rls_whatsapp_media_select_via_messages.sql',
-  'supabase/tests/rls_conversation_tab_counts_files_total.sql',
-  // scripts/db-tests — harness LEGADO que aplica as suítes pelo `mcp_exec`/service_role
-  // (run-all.mjs) contra o banco canônico; nunca pôde rodar no CI por design. As suítes
-  // dependem do schema COMPLETO: no PG limpo 01 e 05 degeneram em PASS vazio (0 objetos) e
-  // 02/03/04 falham por relação ausente (medido). Promover com bootstrap próprio.
+  // harness legado pelo `mcp_exec`/service_role (run-all.mjs) contra o banco canônico; nunca
+  // pôde rodar no CI por design e dependem do schema completo.
+  //   01/04: no replay REAL emitem FAIL de drift de produção (correção fora deste cartão).
+  //   02:    roda no replay mas emite FAIL|02-FSM-02 — `changed_at` não muda dentro de UMA
+  //          transação (now() é transaction_timestamp); precisa comparar entre transações.
   'scripts/db-tests/01-security-grants.sql',
   'scripts/db-tests/02-fsm-transitions.sql',
-  'scripts/db-tests/03-gamification-bounds.sql',
   'scripts/db-tests/04-schema-contracts.sql',
-  'scripts/db-tests/05-rls-smoke.sql',
 ]);
 
 /** Suítes SQL sem nenhum bloco `run:` que as execute (fora da ALLOWLIST_SQL). */
