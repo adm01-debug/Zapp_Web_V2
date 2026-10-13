@@ -459,7 +459,6 @@ function StepAudience({ ed }: { ed: WizardState }) {
             rules={ed.audienceRules}
             onChange={ed.setAudienceRules}
             options={{
-              tags: ed.tags,
               companies: ed.companies,
               sellers: (ed.owners ?? []).map((p) => ({ id: p.id, name: p.name || p.email || 'Sem nome' })),
             }}
@@ -474,10 +473,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             setContactSearch={ed.setContactSearch}
             companyFilter={ed.companyFilter}
             setCompanyFilter={ed.setCompanyFilter}
-            tagFilter={ed.tagFilter}
-            setTagFilter={ed.setTagFilter}
             companies={ed.companies}
-            tags={ed.tags}
             toggleContact={ed.toggleContact}
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}

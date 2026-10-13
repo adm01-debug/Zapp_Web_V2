@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -11,16 +10,19 @@ import {
 /**
  * X126 — trilha "Filtros de audiência" do passo 1 (mock 08).
  *
- * Os 7 controles na ordem do mock — Tags (múltipla), Status do contato, Empresa,
- * Estágio no funil, Vendedor, RFM, Localização (UF e cidade) — e TODOS leem
- * opções e operadores do catálogo de filtros da trilha de segmentos
+ * Os controles na ordem do mock — Status do contato, Empresa, Estágio no
+ * funil, Vendedor, RFM, Localização (UF e cidade) — e TODOS leem opções e
+ * operadores do catálogo de filtros da trilha de segmentos
  * (`RULE_FIELDS`/`RULE_OPS`), o mesmo que o construtor de segmentos usa. Cada
  * escolha vira uma regra no MESMO JSON de `audience_filters`, então a regra
  * montada aqui é a que o motor (`talkx_resolve_audience`) compila.
  *
+ * O controle de Tags saiu daqui (12/10/2026): a função de tags de contato não
+ * existe mais no sistema. Sem ele, nenhum filtro de público oferece tag.
+ *
  * Campo cuja coluna da projeção ainda não entra no motor continua na ordem do
- * mock, DESABILITADO com "sem dados ainda" (A9) — em vez de sumir como faziam
- * os selects de Empresa/Tag antigos. A lista de campos aceitos pelo motor é a
+ * mock, DESABILITADO com "sem dados ainda" (A9) — em vez de sumir quando não há
+ * dado. A lista de campos aceitos pelo motor é a
  * whitelist da migration `20261002391230_talkx_audience_rpc.sql` (linhas
  * 140-163): mandar um campo fora dela derruba a consulta com
  * `invalid_talkx_audience_field`, então um controle sem coluna nunca emite
@@ -34,20 +36,17 @@ const NO_DATA_LABEL = 'sem dados ainda';
 const ANY_VALUE = 'all';
 
 export type AudienceFilterKey =
-  | 'tags' | 'contact_status' | 'company' | 'funnel_stage' | 'seller' | 'rfm' | 'location';
+  | 'contact_status' | 'company' | 'funnel_stage' | 'seller' | 'rfm' | 'location';
 
 export interface AudienceFilterSpec {
   key: AudienceFilterKey;
   label: string;
   /** Campo do catálogo dos segmentos; `null` = a coluna ainda não existe no motor. */
   field: RuleField | null;
-  /** Seleção múltipla: uma regra por valor escolhido (Tags). */
-  multi?: boolean;
 }
 
-/** Os 7 controles, na ordem do mock 08. */
+/** Os controles, na ordem do mock 08 (sem o de Tags). */
 const AUDIENCE_FILTERS: AudienceFilterSpec[] = [
-  { key: 'tags', label: 'Tags', field: 'tags', multi: true },
   { key: 'contact_status', label: 'Status do contato', field: 'conversation_status' },
   { key: 'company', label: 'Empresa', field: 'company' },
   // `dados:estagio_funil` e `dados:segmento_rfm` são colunas da projeção que o
@@ -59,8 +58,6 @@ const AUDIENCE_FILTERS: AudienceFilterSpec[] = [
 ];
 
 export interface AudienceFilterOptions {
-  /** Tags que existem na base carregada (opções do controle "Tags"). */
-  tags: string[];
   /** Empresas que existem na base carregada (opções do controle "Empresa"). */
   companies: string[];
   /** Perfis ativos que podem ser responsáveis (opções do controle "Vendedor"). */
@@ -74,12 +71,15 @@ export interface AudienceFilterOptions {
 const freshId = () => globalThis.crypto.randomUUID();
 
 /**
- * Campos que os 7 controles escrevem. Um controle só é dono da regra do seu
+ * Campos que os controles escrevem. Um controle só é dono da regra do seu
  * campo com o operador do catálogo (`catalogOp`) e no PRIMEIRO grupo — o mesmo
  * grupo em que ele grava. Qualquer outra regra do rascunho (outro operador,
  * campo date/number, regra de outro grupo) fica intocada pelos controles e
  * aparece em "Outras regras", com remover.
  */
+// `tags` segue na lista por dado legado: uma regra de tag que ainda exista no
+// rascunho (a hidratação já descarta) não vira "Outra regra" com texto de tag
+// na tela — nenhum controle escreve esse campo desde 12/10/2026.
 const CONTROLLED_FIELDS: RuleField[] = ['tags', 'conversation_status', 'company', 'assigned_to', 'state', 'city'];
 
 function firstGroup(rules: SegmentRules) {
@@ -126,8 +126,8 @@ function normalizeValue(field: RuleField, value: string): string {
 
 /**
  * Valores do controle — lidos do PRIMEIRO grupo, o mesmo em que `setFilterValue`
- * e `toggleFilterValue` gravam (ler de um grupo e escrever em outro deixaria
- * na tela um valor que o controle não consegue tirar).
+ * grava (ler de um grupo e escrever em outro deixaria na tela um valor que o
+ * controle não consegue tirar).
  */
 function filterValues(rules: SegmentRules, field: RuleField): string[] {
   const [first] = rules.groups;
@@ -148,17 +148,6 @@ function setFilterValue(rules: SegmentRules, field: RuleField, value: string): S
     return normalized
       ? [...withoutControl, { id: freshId(), field, op: catalogOp(field), value: normalized }]
       : withoutControl;
-  });
-}
-
-/** Liga/desliga um valor de campo múltiplo — uma regra por valor. */
-function toggleFilterValue(rules: SegmentRules, field: RuleField, value: string): SegmentRules {
-  const normalized = normalizeValue(field, value);
-  return mapFirstGroup(rules, (kept) => {
-    const withoutValue = kept.filter((rule) => !(isFieldControlRule(rule, field) && rule.value === normalized));
-    return withoutValue.length === kept.length
-      ? [...kept, { id: freshId(), field, op: catalogOp(field), value: normalized }]
-      : withoutValue;
   });
 }
 
@@ -279,26 +268,6 @@ function FilterControl({ spec, rules, onChange, options }: {
   // A9 — a coluna não existe no motor ainda: continua na ordem do mock, desabilitado.
   if (!spec.field) return <NoDataFilter />;
   const field = spec.field;
-
-  if (spec.key === 'tags') {
-    const selected = filterValues(rules, field);
-    const tagList = withSaved(options.tags, selected);
-    if (tagList.length === 0) return <NoDataFilter />;
-    return (
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-        {tagList.map((tag) => (
-          <label key={tag} className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
-            <Checkbox
-              checked={selected.includes(tag)}
-              onCheckedChange={() => onChange(toggleFilterValue(rules, field, tag))}
-              aria-label={tag}
-            />
-            <span className="truncate max-w-[140px]">{tag}</span>
-          </label>
-        ))}
-      </div>
-    );
-  }
 
   if (spec.key === 'location') {
     return (
