@@ -20,9 +20,13 @@
 ALTER TABLE public.talkx_recipients
   ADD COLUMN IF NOT EXISTS failed_at timestamptz;
 
+ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;
+
 UPDATE public.talkx_recipients
    SET failed_at = updated_at
  WHERE status = 'failed' AND failed_at IS NULL;
+
+ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
 
 CREATE OR REPLACE FUNCTION public.trg_talkx_recipients_failed_at()
 RETURNS trigger
@@ -101,9 +105,11 @@ BEGIN
   END IF;
 
   SELECT * INTO v_camp FROM public.talkx_campaigns WHERE id = p_campaign_id;
+  -- NULL nunca autoriza: sem linha em profiles ou created_by nulo, a comparacao
+  -- de dono vira NULL e o IF precisa tratar como negado (42501).
   IF NOT FOUND OR NOT (
-       v_camp.created_by = (SELECT id FROM public.profiles WHERE user_id = v_uid LIMIT 1)
-       OR public.is_admin_or_supervisor(v_uid)
+       COALESCE(v_camp.created_by = (SELECT id FROM public.profiles WHERE user_id = v_uid LIMIT 1), false)
+       OR COALESCE(public.is_admin_or_supervisor(v_uid), false)
      ) THEN
     RAISE EXCEPTION 'acesso negado' USING ERRCODE = '42501';
   END IF;
