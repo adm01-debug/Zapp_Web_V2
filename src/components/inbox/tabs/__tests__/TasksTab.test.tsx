@@ -136,7 +136,7 @@ describe('TasksTab', () => {
     const hook = makeHook({ byStatus: { todo: [makeItem('t1', 'todo', 'Preparar proposta')] } });
     renderTab(hook);
 
-    fireEvent.click(within(screen.getByTestId('tasks-group-todo')).getByRole('button', { name: /concluir tarefa/i }));
+    fireEvent.click(within(screen.getByTestId('tasks-group-todo')).getByRole('checkbox', { name: /concluir tarefa/i }));
 
     expect(hook.complete).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }));
   });
@@ -146,7 +146,7 @@ describe('TasksTab', () => {
     renderTab(hook);
 
     fireEvent.click(screen.getByTestId('tasks-group-toggle-done'));
-    fireEvent.click(within(screen.getByTestId('tasks-group-done')).getByRole('button', { name: /reabrir tarefa/i }));
+    fireEvent.click(within(screen.getByTestId('tasks-group-done')).getByRole('checkbox', { name: /reabrir tarefa/i }));
 
     expect(hook.move).toHaveBeenCalledWith(expect.objectContaining({ id: 'done1' }), 'todo');
   });
