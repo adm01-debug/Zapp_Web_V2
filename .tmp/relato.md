@@ -33,6 +33,11 @@ Especialista: Íris (area-front-componentes)
 - o teste novo monta a tela REAL (`EmailChatInbox`), com `useGmail` mockado devolvendo o mesmo
   `listQuery` que o hook recebe; cada asserção confere também a consulta que foi ao servidor, e o
   teste do erro usa um erro de verdade (`new Error('offline')`) pela copy `emailLoadErrorCopy`.
+- leitura do diff: o `--stat` do fechar inclui a FAIXA do cartão pai (trazida por cherry-pick —
+  `useGmail.ts`, `emailThreadQuery.ts`, `types.ts`, a migration, o teste de banco e os 2 testes que ele
+  alterou). DESTE cartão o diff é só `src/components/email/EmailChatInbox.tsx` e
+  `src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx` (+ este `.tmp/relato.md`). Os
+  testes do pai aparecem como alterados pelo cherry-pick, não porque eu os tenha tocado.
 
 ## Dependência (handoff)
 Este cartão depende do `t_493e3851`. Os commits do pai não estavam no meu workspace; puxei-os por
