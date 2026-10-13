@@ -39,19 +39,22 @@ const slaRowSchema = z.object({
 });
 
 type SlaRow = z.infer<typeof slaRowSchema>;
+/** Linha já validada pelo contrato: `contact_id` existe (o alerta sempre tem para onde levar o usuário). */
+type SlaRowAlerta = Omit<SlaRow, 'contact_id'> & { contact_id: string };
 
 /** Lê o payload pelo contrato; fora dele devolve `null` (nunca lança). */
-function parseSlaRow(raw: unknown): SlaRow | null {
+function parseSlaRow(raw: unknown): SlaRowAlerta | null {
   const parsed = slaRowSchema.safeParse(raw);
   if (!parsed.success) {
     log.warn('payload de conversation_sla fora do contrato — ignorado');
     return null;
   }
-  if (!parsed.data.contact_id) {
+  const { contact_id, ...resto } = parsed.data;
+  if (!contact_id) {
     log.warn('linha de SLA sem contato — ignorada');
     return null;
   }
-  return parsed.data;
+  return { ...resto, contact_id };
 }
 
 /**
@@ -98,6 +101,9 @@ export function useSLANotifications(): void {
 
   useEffect(() => {
     if (!userId) return;
+    // Marca o desmonte: um `handleRow` em voo (consulta do prazo) não pode agendar timer nem
+    // apresentar alerta depois que a tela saiu.
+    let cancelled = false;
     const timers = riskTimers.current;
 
     const clearRisk = (slaId: string): void => {
@@ -112,6 +118,7 @@ export function useSLANotifications(): void {
       slaId: string,
       contactId: string,
     ): Promise<void> => {
+      if (cancelled) return;
       const prefix = severity === 'breach' ? 'sla-breach' : 'sla-warning';
       if (!claimNotificationEvent(`${prefix}:${slaId}`, SLA_ALERT_DEDUPE_TTL_MS)) return;
 
@@ -120,6 +127,7 @@ export function useSLANotifications(): void {
         .select('name, phone')
         .eq('id', contactId)
         .maybeSingle();
+      if (cancelled) return;
       // Nome (ou telefone) só aparece na tela do agente; nada disso vai para log.
       const quem = contact?.name || contact?.phone || null;
 
@@ -156,7 +164,7 @@ export function useSLANotifications(): void {
     };
 
     /** Agenda o aviso de risco para o instante em que a linha cruza 70% do prazo. */
-    const scheduleRiskWarning = (row: SlaRow, limitMinutes: number): void => {
+    const scheduleRiskWarning = (row: SlaRowAlerta, limitMinutes: number): void => {
       clearRisk(row.id);
       const startedAt = new Date(row.first_message_at).getTime();
       if (!Number.isFinite(startedAt)) return;
@@ -165,8 +173,9 @@ export function useSLANotifications(): void {
       const timer = setTimeout(
         () => {
           timers.delete(row.id);
+          if (cancelled) return;
           if (slaStatusForDuration(Date.now() - startedAt, limitMinutes) === 'ok') return;
-          void presentAlert('warning', row.id, row.contact_id as string);
+          void presentAlert('warning', row.id, row.contact_id);
         },
         Math.max(0, riskAt - Date.now() + 1),
       );
@@ -190,7 +199,7 @@ export function useSLANotifications(): void {
           clearRisk(row.id);
           // Só é novidade no INSERT ou quando o estouro acabou de ser marcado.
           if (event === 'INSERT' || !alreadyBreached) {
-            await presentAlert('breach', row.id, row.contact_id as string);
+            await presentAlert('breach', row.id, row.contact_id);
           }
           return;
         }
@@ -202,10 +211,12 @@ export function useSLANotifications(): void {
         }
 
         const limitMinutes = await resolveFirstResponseMinutes(row.sla_configuration_id ?? null);
+        // A consulta pode terminar depois do desmonte: sem agendar timer nem alerta órfão.
+        if (cancelled) return;
         const elapsedMs = Date.now() - new Date(row.first_message_at).getTime();
         if (slaStatusForDuration(elapsedMs, limitMinutes) !== 'ok') {
           // Já chegou em risco (linha antiga/replay): avisa agora, sem agendar.
-          await presentAlert('warning', row.id, row.contact_id as string);
+          await presentAlert('warning', row.id, row.contact_id);
           return;
         }
         scheduleRiskWarning(row, limitMinutes);
@@ -236,6 +247,7 @@ export function useSLANotifications(): void {
       });
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
       timers.forEach((timer) => clearTimeout(timer));
       timers.clear();
