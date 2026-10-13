@@ -147,35 +147,39 @@ Para dados que devem ser removidos completamente:
 DELETE FROM contacts WHERE id = '<contact_id>';
 ```
 
-### 5.4 Purge Automático (Cron Job)
+### 5.4 Purge Automático (Cron Job) — IMPLEMENTADO
 
-```sql
--- Executar semanalmente via pg_cron ou Edge Function
+O expurgo por prazo **existe** desde a migration `20261013043542_lgpd_retention_jobs.sql`.
+Não é SQL solto no documento: a decisão (dias e ação por tabela) fica versionada na
+própria base, em `public.lgpd_retention_policy`, e um único job diário a executa.
 
--- 1. Limpar rate_limit_logs > 30 dias
-DELETE FROM rate_limit_logs 
-WHERE created_at < NOW() - INTERVAL '30 days';
+- Job: `public.lgpd_retention_tick(p_limit int default 1000)`, agendado pelo pg_cron como
+  `lgpd-retention-daily` (`30 4 * * *`). Apaga em lote por tabela (subtransação por tabela:
+  a falha de uma não derruba as outras) e grava 1 linha por tabela em
+  `public.lgpd_retention_runs` (quantas linhas saíram, quando e o erro — **nunca dado pessoal**).
+  Reexecutar sem dado vencido = 0 apagados.
+- Executa só `service_role`/owner: `authenticated` e `anon` não têm `EXECUTE` (nem leitura da
+  política) — a política muda apenas por migration.
+- Expurgo da lixeira de contatos: `public.lgpd_purge_deleted_contacts(p_days int default 30,
+  p_limit int default 500)`. A idade usa o **relógio do servidor** (`contact_deletion_audit.performed_at`),
+  não o `deleted_at` (gravado pelo cliente). Contato restaurado depois, ou sem registro de
+  auditoria, **nunca** é apagado; a linha `purge` do `contact_deletion_audit` sobrevive ao DELETE.
 
--- 2. Limpar login_attempts > 90 dias
-DELETE FROM login_attempts 
-WHERE created_at < NOW() - INTERVAL '90 days';
+Prazos ligados (fonte da verdade: `lgpd_retention_policy`):
 
--- 3. Limpar user_sessions > 90 dias
-DELETE FROM user_sessions 
-WHERE created_at < NOW() - INTERVAL '90 days';
+| dias | tabelas |
+|------|---------|
+| 30  | `rate_limit_logs`, `password_reset_requests`, `mfa_sessions`, `contacts` (lixeira) |
+| 90  | `user_sessions` (`last_activity_at`), `user_devices`, `login_attempts`, `scheduled_messages`, `chatbot_executions`, `webhook_rate_limits`, `query_telemetry`, `conversation_events`, `voice_command_logs`, `performance_snapshots`, `webhook_failures` (`error_at`) |
+| 365 | `blocked_ips`, `ai_usage_logs`, `catalog_send_events`, `meta_capi_events`, `entity_versions` |
 
--- 4. Limpar user_devices > 90 dias (sem login recente)
-DELETE FROM user_devices 
-WHERE last_used_at < NOW() - INTERVAL '90 days';
+> Correção do SQL que existia aqui: `user_devices` **não tem** `last_used_at` (tem `created_at`);
+> `webhook_failures` usa `error_at`. Os nomes de coluna de cada tabela estão na própria política.
 
--- 5. Limpar mfa_sessions > 30 dias
-DELETE FROM mfa_sessions 
-WHERE created_at < NOW() - INTERVAL '30 days';
-
--- 6. Limpar password_reset_requests > 30 dias
-DELETE FROM password_reset_requests 
-WHERE created_at < NOW() - INTERVAL '30 days';
-```
+**Pendente de decisão do dono (registrado e DESLIGADO — não é executado):** `audit_logs` e
+`security_alerts` (a ação é *arquivar*, não apagar); `csat_surveys`, `conversation_analyses`,
+`messages`, `campaigns` e `campaign_contacts` (a ação é *anonimizar* / exclusão operacional com
+dependências — reescrita de dado, não expurgo por data).
 
 ---
 
