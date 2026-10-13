@@ -78,6 +78,15 @@ Especialista: worker (design) (design-system-zapp)
   fica escuro sobre o `--primary` violeta claro daquele modo — que é o par de contraste do botão. Não
   troquei o token (nenhum token novo, `--primary-foreground` é o par de contraste do `--primary`).
 
+## Escopo dos arquivos (por que entram)
+- src/styles/utilities.css, e2e/a11y-toque-44px.spec.ts e playwright.config.ts: os três são a
+  própria matéria do cartão. A regra coarse que precisa deixar de inflar a caixa mora em
+  utilities.css; a medição de área de toque que o revisor pediu para trocar mora no spec; e o spec
+  precisa estar no `chromium-a11y` (pelo `testMatch` que a base já trazia) e fora do
+  `chromium-authenticated` (via `testIgnore`) para não ser coletado pelo catch-all autenticado, que
+  exigiria sessão real (proibida pela R1). Sem essas três linhas o defeito ou não é corrigido ou não
+  é medido.
+
 ## O que NÃO fiz e por quê
 - Não mexi no `display` de nenhum consumidor nem em `src/components/layout/Sidebar.tsx` (já tinha o
   padrão da variante coarse) — fora do defeito do cartão.
