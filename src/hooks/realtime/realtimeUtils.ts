@@ -168,24 +168,29 @@ export interface ContactConversationSummary {
   lastMessage: RealtimeMessage;
 }
 
+export const CONVERSATIONS_PAGE_SIZE = 200;
+
 export function buildConversation(
   contact: ConversationContact,
   messages: RealtimeMessage[],
   summary?: ContactConversationSummary | null
 ): ConversationWithMessages {
-  // Contato cuja amostra global não trouxe NENHUMA mensagem: a conversa é montada
-  // a partir do agregado do banco (última mensagem + não lidas). Sem isso a conversa
-  // voltava com histórico vazio e zero não lidas e sumia da aba "abertas"
-  // (useInboxFilters exige messages.length > 0). Quem está na amostra continua
-  // exatamente como antes — o agregado só cobre a lacuna.
+  // O agregado do banco (RPC get_inbox_contact_summaries) é a fonte de verdade de
+  // TODOS os contatos exibidos: não lidas e última mensagem. A amostra global de
+  // mensagens pode estar truncada e zerava/subcontava as não lidas de um contato
+  // ativo (R2-INB-005); a lista item a item deixa de depender dela. Sem agregado
+  // (caminhos ao vivo, que trazem a linha completa da mensagem), a contagem sai
+  // das mensagens em memória.
   const semAmostra = messages.length === 0 && Boolean(summary);
   const effectiveMessages = semAmostra && summary ? [summary.lastMessage] : messages;
 
   const sortedMessages = sortMessagesByCreatedAt(effectiveMessages);
-  const unreadCount = semAmostra
-    ? summary?.unreadCount ?? 0
+  const unreadCount = summary
+    ? summary.unreadCount
     : sortedMessages.filter((message) => !message.is_read && message.sender === 'contact').length;
-  const lastMessage = sortedMessages.length > 0 ? sortedMessages[sortedMessages.length - 1] : null;
+  const lastMessage = summary
+    ? summary.lastMessage
+    : (sortedMessages.length > 0 ? sortedMessages[sortedMessages.length - 1] : null);
 
   return { contact, messages: sortedMessages, unreadCount, lastMessage };
 }

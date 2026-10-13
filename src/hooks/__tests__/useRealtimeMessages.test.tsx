@@ -129,11 +129,16 @@ function makeMessage(overrides: Record<string, unknown> = {}) {
 }
 
 function makeContactsQuery() {
+  // A lista pagina por `order('updated_at').order('id').limit(n)` (e usa .or no
+  // cursor das páginas seguintes), então a corrente precisa ser encadeável.
+  const listChain: Record<string, unknown> = {};
+  listChain.order = vi.fn(() => listChain);
+  listChain.or = vi.fn(() => listChain);
+  listChain.limit = vi.fn().mockResolvedValue({ data: seededContacts, error: null });
+
   return {
     select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
-      })),
+      order: vi.fn(() => listChain),
       in: vi.fn((_: string, ids: string[]) => {
         return Promise.resolve({
           data: ids.map((id) => contactsById[id]).filter(Boolean),
@@ -151,14 +156,16 @@ function makeContactsQuery() {
 }
 
 function makeMessagesQuery() {
-  // Supports .select().not().order().limit() — realtime.service.ts uses .not() to exclude null contact_id
-  const chain: Record<string, unknown> = {
-    not: vi.fn(() => chain),
-    neq: vi.fn(() => chain),
-    order: vi.fn(() => ({
-      limit: vi.fn().mockResolvedValue({ data: recentMessages, error: null }),
-    })),
-  };
+  // Suporta a janela recente `.select().not().order().limit()` e a busca de não
+  // lidas `.select().in().eq().eq()` (realtime.service.ts).
+  const chain: Record<string, unknown> = {};
+  chain.not = vi.fn(() => chain);
+  chain.neq = vi.fn(() => chain);
+  chain.in = vi.fn(() => chain);
+  chain.eq = vi.fn(() => chain);
+  chain.order = vi.fn(() => ({
+    limit: vi.fn().mockResolvedValue({ data: recentMessages, error: null }),
+  }));
   return { select: vi.fn(() => chain) };
 }
 
@@ -222,46 +229,8 @@ describe('useRealtimeMessages', () => {
       }),
     ];
 
-    // Spy on mock to trace calls
-    const originalIn = vi.fn((_: string, ids: string[]) => {
-      return Promise.resolve({
-        data: ids.map((id) => contactsById[id]).filter(Boolean),
-        error: null,
-      });
-    });
-
-    // Override contacts query to add proper .in() support at top level
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'contacts') {
-        const selectFn = vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
-          })),
-          in: originalIn,
-          eq: vi.fn((_: string, value: string) => ({
-            maybeSingle: vi.fn().mockResolvedValue({
-              data: contactsById[value] ?? null,
-              error: null,
-            }),
-          })),
-        }));
-        return { select: selectFn };
-      }
-      if (table === 'messages') return makeMessagesQuery();
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-          order: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }),
-        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-      };
-    });
-
+    // O mock padrão do beforeEach já cobre contatos (.order().order().limit() e
+    // .in()) e mensagens (.not().order().limit() e .in().eq().eq()).
     const { result } = renderHook(() => useRealtimeMessages());
 
     await waitFor(() => {

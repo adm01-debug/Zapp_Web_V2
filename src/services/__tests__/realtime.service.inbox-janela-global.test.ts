@@ -2,17 +2,18 @@
  * R2-INB-005 (P1 · area hooks/Inbox) — a janela GLOBAL de mensagens transformava
  * conversa ativa em histórico vazio e zero não lidas.
  *
- * A carga inicial da inbox pedia as 1000 (RECENT_MESSAGES_LIMIT) mensagens mais
- * recentes de TODOS os contatos e montava cada conversa apenas com o que caísse
- * nessa amostra global. Fixture com 1001 mensagens de dois contatos: A tem as 1000
- * que ocupam a janela e B fica inteiro fora dela — a conversa de B voltava com
- * `messages: []`, `lastMessage: null` e `unreadCount: 0`, e por isso desaparecia da
- * aba "abertas" (useInboxFilters exige `messages.length > 0`).
+ * A carga da inbox pedia as 1000 (RECENT_MESSAGES_LIMIT) mensagens mais recentes
+ * de TODOS os contatos e montava cada conversa apenas com o que caísse nessa
+ * amostra global. Fixture com 1001 mensagens de dois contatos: A tem as 1000 que
+ * ocupam a janela e B fica inteiro fora dela — a conversa de B voltava com
+ * `messages: []`, `lastMessage: null` e `unreadCount: 0`, e por isso desaparecia
+ * da aba "abertas" (useInboxFilters exige `messages.length > 0`).
  *
- * A correção consulta o agregado POR CONTATO (get_inbox_contact_summaries): última
- * mensagem e não lidas direto do banco, sem inferir ausência de histórico de uma
- * amostra global. Contato sem nenhuma mensagem continua fora da lista (a amostra
- * vazia dele é verdadeira — não pode inflar a inbox).
+ * Agora o agregado POR CONTATO (get_inbox_contact_summaries) é a fonte de verdade
+ * de TODOS os contatos exibidos: última mensagem e não lidas direto do banco, sem
+ * inferir ausência/quantidade a partir da janela. Contato sem nenhuma mensagem e
+ * sem agregado continua fora da lista (a amostra vazia dele é verdadeira — não
+ * pode inflar a inbox).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -166,40 +167,42 @@ describe('RealtimeService.fetchInitialConversations — janela global (R2-INB-00
     expect(b?.messages.length, 'a conversa carrega a última mensagem do contato').toBe(1);
   });
 
-  it('só pergunta o agregado dos contatos ausentes da amostra, em blocos, e não regride quem está nela', async () => {
+  it('consulta o agregado de TODOS os contatos exibidos e não regride quem está na amostra', async () => {
     montarCenario();
 
     const conversas = await RealtimeService.fetchInitialConversations();
 
-    // nada de pedir agregado de 500 contatos: só o contato sem mensagem na janela
+    // o agregado é a fonte de verdade da contagem: pedido para os dois contatos,
+    // não só para quem ficou fora da amostra global
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith('get_inbox_contact_summaries', { p_contact_ids: [CONTATO_B.id] });
+    expect(rpc).toHaveBeenCalledWith('get_inbox_contact_summaries', {
+      p_contact_ids: [CONTATO_A.id, CONTATO_B.id],
+    });
 
     const a = conversaDe(conversas, CONTATO_A.id);
-    expect(a?.unreadCount, 'A continua com o valor derivado da própria amostra').toBe(3);
+    expect(a?.unreadCount, 'sem resumo para A, a contagem cai na própria amostra').toBe(3);
     expect(a?.lastMessage?.content).toBe('A 0');
   });
 
-  it('amostra NÃO truncada (menos de 1000 mensagens): não consulta o agregado nenhuma vez', async () => {
-    // Só há histórico fora da janela quando a janela enche. Com 3 mensagens a
-    // amostra é o histórico inteiro: nem o contato B (sem mensagem na amostra)
-    // justifica a RPC, porque nada ficou de fora dela.
+  it('com amostra curta o agregado é consultado do mesmo jeito (a contagem não depende da janela)', async () => {
     montarCenario({ mensagens: AS_1000_DE_A.slice(0, 3) });
 
     const conversas = await RealtimeService.fetchInitialConversations();
 
-    expect(limitePedidoEmMessages).toEqual([LIMITE_GLOBAL]);
-    expect(rpc, 'amostra curta não pode disparar a RPC do agregado').not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith('get_inbox_contact_summaries', {
+      p_contact_ids: [CONTATO_A.id, CONTATO_B.id],
+    });
     expect(conversaDe(conversas, CONTATO_A.id)?.lastMessage?.content).toBe('A 0');
-    expect(conversaDe(conversas, CONTATO_B.id)?.lastMessage).toBeNull();
+    expect(conversaDe(conversas, CONTATO_B.id)?.lastMessage?.content, 'B sai do agregado, não da amostra')
+      .toBe(ULTIMA_DE_B.content);
   });
 
-  it('fronteira: 999 mensagens (abaixo do teto) também não consultam o agregado', async () => {
+  it('fronteira: o tamanho da amostra não muda quantas vezes o agregado é consultado', async () => {
     montarCenario({ mensagens: AS_1000_DE_A.slice(0, 999) });
 
     await RealtimeService.fetchInitialConversations();
 
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 
   it('não infla a inbox: contato sem nenhuma mensagem segue vazio', async () => {
@@ -212,18 +215,18 @@ describe('RealtimeService.fetchInitialConversations — janela global (R2-INB-00
     expect(b?.unreadCount).toBe(0);
   });
 
-  it('quebra a consulta do agregado em blocos de 200 contatos', async () => {
+  it('consulta o agregado em blocos de 200 contatos (uma página por vez)', async () => {
     const contatos = Array.from({ length: 205 }, (_, i) => ({
       ...CONTATO_B,
       id: `cccccccc-0000-0000-0000-${String(i).padStart(12, '0')}`,
     }));
-    montarCenario({ contatos, mensagens: AS_1000_DE_A, resumos: [] });
+    montarCenario({ contatos, mensagens: [], resumos: [] });
 
     await RealtimeService.fetchInitialConversations();
 
-    expect(rpc).toHaveBeenCalledTimes(2);
+    // a página tem 200 contatos → um único bloco de agregado
+    expect(rpc).toHaveBeenCalledTimes(1);
     expect((rpc.mock.calls[0][1] as { p_contact_ids: string[] }).p_contact_ids).toHaveLength(200);
-    expect((rpc.mock.calls[1][1] as { p_contact_ids: string[] }).p_contact_ids).toHaveLength(5);
   });
 
   it('degradação: erro no agregado não derruba a carga da inbox', async () => {
