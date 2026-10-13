@@ -5,13 +5,35 @@ import { render } from '@testing-library/react';
 vi.mock('@/hooks/communication/useAudioRecorder', () => ({
   useAudioRecorder: () => ({
     isRecording: true,
+    isPaused: false,
     duration: 3,
     audioUrl: null,
+    draftChecked: true,
+    recoveredDraft: null,
+    discardedDraft: null,
+    discardSecondsLeft: 0,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
+    pauseRecording: vi.fn(),
+    resumeRecording: vi.fn(),
     cancelRecording: vi.fn(),
+    undoDiscard: vi.fn(),
+    acceptRecoveredDraft: vi.fn(),
+    dismissRecoveredDraft: vi.fn(),
+    clearDraft: vi.fn(),
+    getLevel: () => -1,
     formatDuration: (s: number) => `00:0${s}`,
   }),
+  levelBufferToHeights: (levels: number[], bars: number, min = 4, max = 28) =>
+    levels.length === 0 ? [] : Array.from({ length: bars }, () => min),
+  sendWithBackoff: async (send: () => Promise<unknown>) => {
+    try {
+      await send();
+      return true;
+    } catch {
+      return false;
+    }
+  },
 }));
 vi.mock('@/hooks/communication/useMediaElementVolume', () => ({
   useMediaElementVolume: () => {},

@@ -185,8 +185,19 @@ describe('useAudioRecorder — ciclo de vida da captura (R2-INB-008)', () => {
     expect(recorder.stop).toHaveBeenCalledTimes(1);
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(onRecordingComplete).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(0);
     expect(result.current.isRecording).toBe(false);
+    // Não há mais timer de captura (o cronômetro parou); o que ficou de pé é a
+    // janela de desfazer do descarte (intervalo da contagem + prazo de 5 s).
+    // Nenhuma gravação sai daqui — a captura foi liberada.
+    expect(vi.getTimerCount()).toBe(2);
+    expect(result.current.discardedDraft).not.toBeNull();
+
+    // Desfazer fecha a janela e devolve o áudio para a prévia, sem sobrar timer.
+    act(() => {
+      result.current.undoDiscard();
+    });
+    expect(vi.getTimerCount()).toBe(0);
+    expect(result.current.discardedDraft).toBeNull();
   });
 
   // PE-24 — o teto de gravação do WhatsApp é 16 min: o padrão do hook vinha de um
