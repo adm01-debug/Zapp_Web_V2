@@ -53,11 +53,22 @@ describe('HeroBenefits (painel esquerdo do /auth)', () => {
   });
 });
 
-// ─── Gradiente do subtítulo: contraste AA nos dois temas ─────────────────────
-// Antes: `to-secondary`. No tema escuro `--secondary` é `240 5% 16%` (quase
-// preto) e o fim de "excelência" media 1,33:1 no navegador real — reprovado.
-// Agora o gradiente termina em `--primary-text`, que já é claro no escuro e
-// escuro no claro (mesmo par de texto usado no DashboardCard/Crm360).
+// ─── Gradiente do subtítulo: contraste >= 3:1 nos dois temas ────────────────
+// ANTES: `from-primary to-secondary`. No escuro `--secondary` é `240 5% 16%`
+// (quase preto): o fim de "excelência" media 1,30:1 contra `--background`
+// (conta sobre tokens.css) e 1,00:1 no pior pixel do fundo REAL (mapa + véu,
+// 1280px, Chromium) — reprovado.
+// DEPOIS: o gradiente termina em `--primary-text` e, no escuro, começa em
+// `--primary-700` pela classe `from-tonal-700` (a escala `tonal` do
+// tailwind.config.ts aponta para `--primary-*`; `from-primary-700` NÃO existe
+// e vira classe morta, sem CSS — foi a 1ª tentativa). O `dark:to-...` repete o
+// fim de propósito: a regra `dark:from-*` sobrescreve `--tw-gradient-to` e o
+// fim ficaria TRANSPARENTE (texto sumindo) se o escuro não declarasse o `to-`.
+// MEDIDO (Chromium, texto escondido, fundo real mapa + véu): pior caso 3,39:1
+// (1280/escuro); claro 3,83:1 a 3,98:1. Contra `--background`: claro 4,83:1 e
+// 8,75:1; escuro 7,50:1 e 9,50:1. Tabela completa no relato do cartão.
+// Aqui a guarda é sobre os tokens contra `--background`; a medição do fundo
+// real é a do relato.
 
 type Rgb = [number, number, number];
 
@@ -106,6 +117,8 @@ describe('HeroBenefits — gradiente do subtítulo', () => {
       const { unmount } = render(<HeroBenefits />);
       const sub = screen.getByText(SUBTITULO);
       expect(sub.className, tema).toContain('from-primary');
+      expect(sub.className, tema).toContain('dark:from-tonal-700');
+      expect(sub.className, tema).toContain('dark:to-[hsl(var(--primary-text))]');
       expect(sub.className, tema).toContain('to-[hsl(var(--primary-text))]');
       expect(sub.className, tema).not.toContain('to-secondary');
       unmount();
@@ -113,23 +126,45 @@ describe('HeroBenefits — gradiente do subtítulo', () => {
     document.documentElement.classList.remove('dark');
   });
 
+  it('a classe dark:from-tonal-700 é uma classe viva (existe no tema)', () => {
+    // Classe escrita à mão que o Tailwind não gera não vira CSS e o defeito
+    // volta silenciosamente. Aqui a corrente é conferida elo por elo:
+    // `from-tonal-700` -> escala `tonal` do tailwind.config.ts -> `--primary-700`
+    // -> token definido em tokens.css.
+    const tailwind = readFileSync(resolve(process.cwd(), 'tailwind.config.ts'), 'utf8');
+    const tonal = tailwind.slice(
+      tailwind.indexOf('tonal: {'),
+      tailwind.indexOf('neutral: {', tailwind.indexOf('tonal: {')),
+    );
+    expect(tonal, 'escala tonal no tailwind.config.ts').toMatch(/700:\s*"hsl\(var\(--primary-700\)\)"/);
+    expect(TOKENS, '--primary-700 definido em tokens.css').toMatch(/--primary-700:/);
+  });
+
   it('o contraste das duas pontas do gradiente fica >= 3:1 nos dois temas', () => {
-    // Lê do COMPONENTE qual token cada ponta usa — assim voltar o `to-secondary`
-    // (quase preto no escuro) volta a ficar vermelho aqui.
+    // Lê do COMPONENTE qual token cada ponta e cada tema usam — assim voltar o
+    // `to-secondary` (quase preto no escuro) ou tirar o `dark:from-tonal-700`
+    // (início escuro sobre o mapa claro) volta a ficar vermelho aqui.
     const { unmount } = render(<HeroBenefits />);
     const classe = screen.getByText(SUBTITULO).className;
     unmount();
-    const de = classe.match(/from-\[hsl\(var\(--([a-z-]+)\)\)\]/) ?? classe.match(/from-([a-z-]+)/);
-    const para = classe.match(/to-\[hsl\(var\(--([a-z-]+)\)\)\]/) ?? classe.match(/to-([a-z-]+)/);
-    expect(de, 'pontas do gradiente no className').toBeTruthy();
-    expect(para, 'pontas do gradiente no className').toBeTruthy();
 
-    // Guarda contra os tokens; a medição sobre o fundo real (mapa + véu) está no
-    // relato do cartão, feita no Chromium com pixel do fundo amostrado.
+    const fim = classe.match(/to-\[hsl\(var\(--([a-z-]+)\)\)\]/);
+    expect(fim, 'ponta final do gradiente no className').toBeTruthy();
+    const nomeFim = fim![1];
+
+    const inicioEscuro = classe.match(/dark:from-([a-z0-9-]+)/);
+    expect(inicioEscuro?.[1], 'ponta inicial do tema escuro (dark:from-*)').toBe('tonal-700');
+    expect(classe).toContain('from-primary');
+
+    // `tonal-700` (classe) = `--primary-700` (token).
+    const inicioPorTema = { claro: 'primary', escuro: 'primary-700' } as const;
+
     for (const [tema, seletor] of [['claro', ':root'], ['escuro', '.dark']] as const) {
       const fundo = token(TOKENS, seletor, 'background');
-      expect(razao(token(TOKENS, seletor, de![1]), fundo), `${tema}: --${de![1]}`).toBeGreaterThanOrEqual(3);
-      expect(razao(token(TOKENS, seletor, para![1]), fundo), `${tema}: --${para![1]}`).toBeGreaterThanOrEqual(3);
+      const de = token(TOKENS, seletor, inicioPorTema[tema]);
+      const para = token(TOKENS, seletor, nomeFim);
+      expect(razao(de, fundo), `${tema}: --${inicioPorTema[tema]}`).toBeGreaterThanOrEqual(3);
+      expect(razao(para, fundo), `${tema}: --${nomeFim}`).toBeGreaterThanOrEqual(3);
     }
   });
 });
