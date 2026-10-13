@@ -1,19 +1,24 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris
 
 ## O que mudou e por quê
-- `src/lib/audio/pttLimits.ts` (novo): fonte única dos limites de PTT do WhatsApp (16 min, 16 MB, mínimo 0,5 s) com `validatePttBlob` (só inspeciona, não sobe nada) e `probeAudioDuration` (mede a duração pelo `<audio>`; devolve `undefined` quando o ambiente não decodifica — jsdom/SSR — para não recusar áudio válido só por falta de medição).
-- `src/hooks/inbox/useRealtimeInbox.ts`: `handleSendAudio` valida o blob ANTES de `ChatService.uploadAudio`; fora dos limites avisa o motivo (toast "Áudio não enviado" com a mensagem exata) e rejeita — nada sobe para o bucket.
-- `src/hooks/communication/useAudioRecorder.ts`: decisão registrada — o teto padrão de gravação sobe de 300 s para `MAX_PTT_DURATION_SEC` (16 min), o limite real do WhatsApp para voz. Antes a gravação era cortada na metade do teto.
-- Testes: `src/lib/audio/__tests__/pttLimits.test.ts` (novo: bordas dos limites e ambientes sem medição), `src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` (recusa antes do upload, com aviso) e `src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` (teto padrão de 16 min).
+
+- `src/hooks/communication/useAudioRecorder.ts`: pausa/retomada (`pauseRecording`/`resumeRecording`, cronômetro congelado enquanto pausado), descarte desfazível (o trecho descartado fica em memória + IndexedDB por 5 s e `undoDiscard` devolve para a prévia), rascunho recuperável por usuário em IndexedDB com expiração (`indexedDbDraftStore`, `DRAFT_TTL_MS`, injetável em teste), gravação concluída/não enviada e trecho interrompido pelo desmonte viram rascunho em vez de sumir, nível real do microfone (`AnalyserNode`; sem analisador `getLevel()` devolve `-1`) e `sendWithBackoff` (3 tentativas com espera progressiva de 1 s/2 s/4 s) — é o que o cartão pede nos itens 1 e 2 do critério.
+- `src/components/inbox/AudioRecorder.tsx`: botão pausar/retomar (`aria-label` "Pausar gravação" / "Retomar gravação"), barra de espaço pausa/retoma e Esc descarta, `role="status" aria-live="polite"` anunciando "Gravando.", "Gravação pausada.", descarte com a contagem e falha de envio, `waveform` desenhado com as 30 alturas medidas (`levelBufferToHeights`) quando há analisador, barra de "Desfazer (Ns)" no descarte, oferta da gravação recuperada ("Usar gravação" / "Gravar nova") antes de abrir o microfone, e envio com recuo que, ao falhar as 3 tentativas, mantém a gravação na tela com botão de nova tentativa (`AlertTriangle`, `aria-label` "Tentar enviar o áudio novamente").
+- `src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts` (novo): pausa congela o cronômetro (5 s pausados não entram na duração), desfazer devolve o áudio, sem desfazer o rascunho fica no disco, gravação não enviada e desmonte no meio gravam rascunho, recuperação do órfão + expiração, `getLevel()` sem analisador, `sendWithBackoff` e `levelBufferToHeights` sem `Math.random`.
+- `src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx` (novo): componente REAL — pausa/retoma pelo botão com anúncio, espaço/Esc, descarte com contagem, oferta da gravação recuperada, e as 3 tentativas de envio.
+- `src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` e `src/components/inbox/__tests__/AudioRecorder.test.tsx`: ajustados à API nova (o mock do hook ganhou os campos novos e a asserção de timer do cancel passou a provar a janela de desfazer + `undoDiscard`, em vez de só contar zero timers).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` → `Tests 2 failed | 13 passed (15)` (áudio de 16 MB+ e áudio vazio subiam para o upload e resolviam `true`).
-- vermelho antes: `npx vitest run src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` → `Tests 1 failed | 5 passed (6)` (a captura era cortada em 301 s, o teto antigo de 300 s).
-- verde depois: `npx vitest run src/lib/audio/__tests__/pttLimits.test.ts src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` → `Test Files 3 passed (3); Tests 25 passed (25)`.
-- regressão: `npx vitest run src/hooks/inbox/__tests__` → `Test Files 19 passed (19); Tests 126 passed | 1 expected fail (127)`.
-- regressão: `npx vitest run src/hooks/__tests__/useAudioRecorder.test.ts src/components/inbox/chat/__tests__ src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts src/components/team-chat/__tests__/useTeamChatPanel.audio-send.test.tsx` → `Test Files 45 passed (45); Tests 336 passed (336)`.
 
-## O que NÃO fiz e por quê
-- As outras portas de upload de áudio ficam fora dos arquivos que o cartão permite tocar e foram registradas no `kanban_comment` (12138): `src/components/omnichannel/OmnichannelChatPanel.tsx:69` (upload direto, sem limites), `src/components/inbox/VoiceChangerPicker.tsx:208-213` (o blob do voice changer sobe para o bucket `audio-memes`) e o chat interno (`src/components/team-chat/useTeamChatPanel.ts:310`, outro bucket, não é WhatsApp).
-- `src/hooks/chat/useChatMediaSending.ts` (caminho citado no cartão) não existe na V2: o arquivo real é `src/components/inbox/useChatMediaSending.ts`, onde o envio de meme/voz recebe URL remota — sem blob nesse caminho, o limite de PTT não se aplica ali.
-- Registrado também que `useChatPanelHandlers.handleAudioSend` (arquivo fora da minha lista) avisa com o texto genérico "Tente novamente." quando o envio rejeita, e com `TOAST_LIMIT = 1` esse texto substitui o motivo específico. O bloqueio de não subir funciona; o texto final do aviso é que fica genérico.
+- vermelho antes (arquivos de produção da base, `git show HEAD:<arquivo>` sobre o meu workspace): `npx vitest run src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts src/components/inbox/__tests__/AudioRecorder.pausa-recuperacao.test.tsx` → `Test Files 2 failed (2); Tests 18 failed | 1 passed (19)`
+- verde depois: mesmo comando → `Test Files 2 passed (2); Tests 19 passed (19)`
+- hook + componente do áudio: `npx vitest run` nos 3 arquivos (novo hook, novo componente, `AudioRecorder.test.tsx`) → `Test Files 3 passed (3); Tests 21 passed (21)`
+- hook do áudio (novo + os dois existentes): `npx vitest run src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts src/hooks/__tests__/useAudioRecorder.test.ts src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` → `Test Files 3 passed (3); Tests 34 passed (34)`
+- regressão nos consumidores do gravador: `npx vitest run src/components/inbox/chat/__tests__ src/components/team-chat/__tests__` → `Test Files 54 passed (54); Tests 504 passed (504)`
+
+## Decisões e limites
+
+- **PD-63:** a janela do rascunho órfão não está no repositório da V2 nem nos assets da paridade; fixei `DRAFT_TTL_MS = 24 h` como constante exportada, com o dono do rascunho sendo o usuário da sessão (mesma convenção `zapp.<area>:<userId>` do `inboxDraftSession.ts`).
+- **`onSend` com falha:** o recuo só vale quando o `onSend` sinaliza a falha (promise rejeitada); sigo mantendo o gravador aberto em falha, como o R2-INB-022 já pedia.
+- **Escopo:** o cartão pedia 5 comportamentos em 2 arquivos, por isso o diff é grande; não movi nada para fora da minha área.
+- **Fora da minha área (não corrigi, registro):** limpar o rascunho de áudio no `SIGNED_OUT` exigiria tocar `src/lib/inboxDraftSession.ts`/auth (dono: worker (auth)/(hooks)); hoje o rascunho já expira pela janela do PD-63, mas o logout não o apaga na hora.
