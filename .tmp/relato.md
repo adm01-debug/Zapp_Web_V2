@@ -1,18 +1,23 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/inbox/__tests__/ConversationListSidebar.topoNovo.test.tsx` (novo, único arquivo do diff): prova o topo da barra de conversas no desktop chamando `ConversationListSidebar` de verdade e com o `StatusChips` REAL (não mockado), com fixture de 3 conversas abertas. Cobre os itens 1, 2 e 4 do cartão:
+  1. ordem no DOM por `compareDocumentPosition`: título → (Atualizar + Zen) → contagem → chips → Filtros → busca → lista;
+  2. existe EXATAMENTE UM botão acessível "Atualizar conversas" (ele chama `inbox.refetch`) e o `InboxFilters` do desktop não recebe `onRefetch`/`isRefetching` (o mock muda de nome para `filtros-com-refetch` se a prop voltar);
+  3. (item 4 do cartão) `axe` sem violações `critical`/`serious` nos temas claro E escuro.
+- Nenhum arquivo de produção foi alterado (o diff tem só o teste); a produção foi mutada só durante a prova por mutação e restaurada a partir de `.tmp/producao.orig.tsx` antes do commit.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- verde depois: `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.topoNovo.test.tsx` → `Test Files 1 passed (1); Tests 5 passed | 1 todo (6)` — rodado 2x seguidas, mesma linha.
+- sem regressão nas suítes vizinhas: `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.test.tsx src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx src/components/inbox/__tests__/StatusChips.test.tsx` → `Test Files 3 passed (3); Tests 25 passed (25)`.
+- prova por mutação (produção revertida depois, `git status` limpo além do teste novo):
+  a) movendo o bloco `<StatusChips />` para fora do topo (para dentro da linha de Filtros/busca) → o teste de ordem falha: `AssertionError: expected false to be true` na cadeia `antes(chips, filtros)`;
+  b) passando `onRefetch`/`isRefetching` para o `InboxFilters` do desktop e inserindo um `<img>` sem `alt` → falham o teste do botão único (`Unable to find an element by: [data-testid="filtros"]`, só existe `filtros-com-refetch`) e os dois `axe` (`expected [ 'image-alt(critical)' ] to deeply equal []`).
+
+## NÃO CONCLUÍ
+- Item 3 do cartão (chips com `aria-pressed` refletindo a seleção): o atributo mora em `src/components/inbox/conversation-list/StatusChips.tsx`, que nesta branch (base `dia/2026-10-13`) ainda é o componente antigo — o redesign dos chips em pílula/badge (commit `abcef6f8e`) foi retirado da fila e está em refazer no cartão `t_b8496016`. Prova da ausência: `git grep -n aria-pressed -- src/components/inbox/conversation-list/` não retorna nada. Por isso o caso está como `it.todo` no arquivo novo, com o motivo e o cartão dependente no comentário; **quando `t_b8496016` entrar, o `it.todo` vira teste verde** (assert: chip ativo com `aria-pressed="true"`, os demais `"false"`, clique repassa e alterna).
+- O que ENTREGUEI do item 3 em vez de fingir: teste verde que prova o encadeamento do qual o `aria-pressed` depende — chip ativo é o do `chipTab` recebido (classe `status-chip-active`) e o clique repassa por `inboxFilters.setChipTab`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei em `StatusChips.tsx` nem em `ConversationListSidebar.tsx`: o cartão limita o diff às suítes de teste e editar produção para fazer o item 3 passar seria mudar a regra de outro cartão.
+- `axe` em jsdom não avalia contraste de cor (sem canvas/CSS computado); o filtro por `critical`/`serious` foi mantido como o cartão pede.
