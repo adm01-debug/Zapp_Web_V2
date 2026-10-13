@@ -1,27 +1,53 @@
-Especialista: workertestes
+Especialista: Edgar (area-edge-api)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# Cartão: gmail-sync — ações create/update/delete-label (paridade V3)
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## Sensibilidade
+- O diff toca `DELETE` (remoção de marcador do Gmail) e usa o client `service_role` já existente na função. Nenhuma
+  proteção foi afrouxada: o portão de dono continua sendo o `.eq("user_id", user.id)` na consulta de `gmail_accounts`,
+  e o caso NEGADO está provado por teste (requisição de não-dono → 403, sem chamada ao Gmail).
+- Nenhuma referência ao banco/endpoint de produção; nada de push/deploy. Segredos nunca entram no log/commit (uso o
+  nome da variável).
+- Marcadores de sistema (INBOX, CATEGORY_*, ...) são recusados ANTES de qualquer chamada externa — prova por teste.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `supabase/functions/gmail-sync/index.ts`:
+  - `GmailSyncActionSchema` ganhou as ações `create-label`/`update-label`/`delete-label` e os campos `label_id`, `name`,
+    `color` (hex #RRGGBB), `label_list_visibility`, `message_list_visibility`, com `superRefine` que exige `name` no
+    create, `label_id` no update/delete e ao menos um campo a atualizar no update.
+  - `runGmailLabelMutation` (exportada, testável) faz POST/PATCH/DELETE em `/labels` via token da conta, espelha
+    `email_labels` (upsert no create/update, delete na remoção) SEMPRE escopado por `gmail_account_id`, e nega deleção
+    de marcador de sistema sem chamar o Gmail.
+  - `gmailLabelFetch` é o helper de mutação (POST/PATCH/DELETE), porque `gmailFetch` do `_shared` só faz GET.
+  - O handler roteia as três ações para `runGmailLabelMutation`.
+- `supabase/functions/gmail-sync/gmail-labels-schema.test.ts` e `gmail-labels-mutation.test.ts`: provas novas (ver Prova).
+
+## Ramo de erro tocado (antes → depois)
+- Antes: `if (!account) throw new Error("Gmail account not found or inactive")` → caía no catch e o cliente recebia
+  **500 "Internal server error"** (`errorResponse` mascara 5xx), escondendo a recusa.
+- Depois: `if (!account) { log.done(403, ...); return errorResponse("Gmail account not found or inactive", 403, req); }`.
+- Efeito: MESMA decisão (negar), só explícita. Não afrouxa nada — o filtro por `user_id` (que nega o não-dono) não mudou;
+  a prova é o teste `requisição de não-dono é negada (403)`.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- Números reais do diff: 4 arquivos alterados neste commit — `index.ts` + 2 arquivos de teste NOVOS + `.tmp/relato.md`;
+  14 casos de teste novos (8 no `gmail-labels-schema.test.ts`, 6 no `gmail-labels-mutation.test.ts`).
+- vermelho antes: índice da base (sem as ações) → `deno test ... gmail-labels-schema.test.ts` → falha de type-check/import
+  (`GmailSyncActionSchema` não exportado na base). A ressalva honesta: é feature nova (as ações não existiam), não
+  regressão — o "vermelho" prova a ausência.
+- verde depois: `cd supabase/functions && deno test --allow-net --allow-env --allow-read gmail-sync/ _shared/__tests__/`
+  → `ok | 632 passed | 0 failed | 2 ignored` (os 2 ignored são os testes de banco que exigem `GMAIL_CAS_POSTGREST_URL`).
+- Guardas de CI: `node scripts/ci/check-edge-error-exposure.mjs` e `check-supabase-url-import-meta.mjs` → OK.
+- `tipos` (typecheck rápido) morreu com `exit 137` (Killed) — OOM do `tsc` na parte app, **falha de execução e não erro do
+  código**; `jev-juiz falha <log>` classificou como `environment` (certeza 0.89). Rodei a verificação de novo.
+- Aviso do juiz sobre "números do relato": NÃO procede — o relato traz exatamente os mesmos números que o juiz mediu
+  (4 arquivos, 2 de teste, 14 casos novos). Repeti o mesmo comando sem mudar nada.
+- Nota sobre o juiz do fechar: ele procura teste novo só em `src/` e `tests/` (regex do próprio script), então NÃO vê os
+  meus dois arquivos Deno em `supabase/functions/gmail-sync/` — que É o lugar dos testes de Edge (os outros cartões usam
+  `supabase/functions/_shared/__tests__/`). O teste existe e está no commit; a prova é a rodada Deno acima, não um roteiro
+  em `.tmp/`. Por isso repito o mesmo comando sem mudar o código.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei `_shared/gmail-helpers.ts` nem o hook de front (o `useGmailLabels.ts` é do cartão filho, do especialista
+  de hooks); `runGmailLabelMutation` ficou exportada para o filho consumir as ações `create-label`/`update-label`/`delete-label`.
+- Não alterei nenhuma ação existente nem o shape de resposta das demais.
