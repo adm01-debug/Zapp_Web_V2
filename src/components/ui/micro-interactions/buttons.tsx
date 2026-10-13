@@ -23,7 +23,10 @@ interface RippleButtonProps {
 }
 
 const rippleVariants = {
-  default: 'rgba(255, 255, 255, 0.3)',
+  // Branco do ripple (o mesmo brilho da família `via-white/*` dos botões). Token, não
+  // literal: `--primary-foreground` é `0 0% 100%` no claro e no escuro, então o pixel
+  // renderizado é idêntico ao branco translúcido que estava aqui antes.
+  default: 'hsl(var(--primary-foreground) / 0.3)',
   primary: 'hsl(var(--primary) / 0.4)',
   ghost: 'hsl(var(--foreground) / 0.1)',
   neon: 'hsl(var(--primary) / 0.6)',
