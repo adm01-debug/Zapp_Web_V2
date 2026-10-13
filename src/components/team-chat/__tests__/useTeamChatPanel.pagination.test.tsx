@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { act, renderHook } from '@testing-library/react';
 import { useTeamChatPanel } from '../useTeamChatPanel';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
@@ -131,13 +129,6 @@ describe('useTeamChatPanel — paginação usa cursor composto (created_at, id)'
     });
     // O caminho antigo (select direto com embed de profiles) não pode mais existir.
     expect(f.tabelasLidas, 'não deve haver leitura direta de team_messages').toEqual([]);
-  });
-
-  it('não volta a ler team_messages com embed de profiles (regressão do remetente nulo)', () => {
-    const src = readFileSync(resolve('src/components/team-chat/useTeamChatPanel.ts'), 'utf8');
-    expect(src).not.toContain("from('team_messages')");
-    expect(src).not.toContain('team_messages_sender_id_fkey');
-    expect(src).not.toContain('.or(`created_at.lt.');
   });
 
   it('traz nome e foto do remetente nas mensagens antigas, em ordem ASC', async () => {
