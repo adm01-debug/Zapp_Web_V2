@@ -16,30 +16,21 @@ O diff contra `dia/2026-10-13` (96dd72dc5f) traz, além do arquivo acima, 2 comm
 4. `prosecdef` e `search_path`: preservados — `true | search_path=public, pg_temp`.
 
 ## Prova
-Script de prova (não versionado — o `.test.sh` versionado é do cartão-irmão t_5d0f8628): `.tmp/prova-acesso.sh`, rodado em `postgres:17-alpine` descartável, aplicando a base REAL (20261009203548) e depois a migration nova, sob roles reais.
+- `node --test scripts/db-audit/talkx-n102-window-open-access.test.mjs` (VERSIONADO no diff; Postgres 17 descartável via docker, base REAL 20261009203548 + a migration nova, sob roles reais):
+```
+✔ BLOCO A (vermelho): com so a base, authenticated executa a RPC de campanha alheia (295ms)
+✔ BLOCO B (verde): a migration tira o EXECUTE de authenticated e mantem so service_role (722ms)
+✔ BLOCO C (rollback): as linhas -- Rollback restauram a ACL anterior, e reaplicar e idempotente (595ms)
+ℹ tests 3  ℹ pass 3  ℹ fail 0
+```
+O teste cobre os caminhos pedidos: `anon`/`authenticated` sem EXECUTE, `authenticated` recebendo `permission denied for function` (42501) e `service_role` executando (retorna `true`); e confere `prosecdef` + `search_path=public, pg_temp`.
+Sem a migration nova o BLOCO A falha (a base deixa `authenticated` executar) — é o vermelho antes/verde depois.
+- `node scripts/db-audit/check-migration-drift.mjs` → `arquivos validos em supabase/migrations: 833; DESTINO_URL ausente - estrutura local validada` (exit 0).
 
-vermelho antes (só a base): a chamada por `authenticated` executa:
-```
-PASS: RED: na base, authenticated executa window_open de campanha alheia (furo reproduzido)
-```
-
-verde depois (base + migration nova):
-```
-PASS: GREEN: anon sem EXECUTE em window_open
-PASS: GREEN: authenticated sem EXECUTE em window_open
-PASS: GREEN: service_role com EXECUTE em window_open
-PASS: GREEN: authenticated recebe 42501 (permission denied) ao chamar window_open
-PASS: GREEN: service_role executa window_open (retorna true)
-PASS: GREEN: SECURITY DEFINER com search_path fixo preservados (true|search_path=public, pg_temp)
-NOTICE:  check-secdef-public-execute: OK (4 funcoes SECURITY DEFINER em public, nenhuma com PUBLIC/anon)
-PASS: GREEN: check-secdef-public-execute OK
-TODOS OS PASSES
-```
-
-## Sobre "teste no diff" (ponto do juiz barato — não procede)
-O teste versionado desta correção é o `scripts/db-audit/talkx-n102-window.test.sh`, que o cartão-pai atribuiu ao cartão-irmão t_5d0f8628 (e cuja promoção ao `db-guard.yml` é do dono do workflow). Criar um segundo `.test.sh` em `scripts/db-audit/` nesta fatia quebraria `scripts/ci/check-test-inventory.mjs` (todo `.test.sh` precisa constar do `db-guard.yml` ou da ALLOWLIST), obrigando-me a editar dois arquivos fora do ONDE do cartão e a colidir com o arquivo do cartão-irmão. Por isso a prova desta fatia roda no script `.tmp/prova-acesso.sh` (saída literal acima: RED na base, GREEN após a migration) e o caso negativo fica para o teste versionado do t_5d0f8628.
+## Sobre o teste versionado
+O teste da fatia está versionado no diff (`scripts/db-audit/talkx-n102-window-open-access.test.mjs`), coberto pelo passo existente `node --test scripts/db-audit/*.test.mjs` do `db-guard.yml` (não fica órfão no `check-test-inventory`). O `.test.sh` de banco do cartão-irmão t_5d0f8628 continua sendo dele.
 
 ## O que NÃO fiz e por quê
 - Não redefini a função (cast `jsonb->date[]` e fuso) — fatias separadas (t_a631f82f / t_59210b33).
-- Não escrevi o `.test.sh` versionado de `scripts/db-audit/` — é do cartão-irmão t_5d0f8628; a prova acima fica em `.tmp`.
+- Não escrevi o `.test.sh` versionado de `scripts/db-audit/` — é do cartão-irmão t_5d0f8628; a prova desta fatia é o `.test.mjs` do BLOCO acima.
 - Não mexi no baseline `known-violations.json` da chave `rpc:talkx_campaign_window_open:*` — é do guard de CI (worker ci), não desta fatia.
