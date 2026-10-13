@@ -365,7 +365,7 @@ export function ScheduledReportsManager() {
               disabled={deleteConfig.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}Excluir
+              {deleteConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}Excluir
             </Button>
           </DialogFooter>
         </DialogContent>

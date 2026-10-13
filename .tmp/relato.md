@@ -14,7 +14,7 @@ Especialista: Íris (area-front-componentes)
 - vermelho antes (componente na versão-base `62559726b`, sem a minha mudança): `npx vitest run src/components/dashboard/__tests__/ScheduledReportsManager.envio-validacao.test.tsx` → `Test Files  1 failed (1)` / `Tests  9 failed (9)` (ex.: "Último envio há 2 dias" ausente; lista gravava `['gestor@promobrindes.com.br','gestor@promobrindes.com.br']` com repetido).
 - verde depois: `npx vitest run src/components/dashboard/__tests__/ScheduledReportsManager.envio-validacao.test.tsx src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx` → `Test Files  3 passed (3)` / `Tests  13 passed (13)`.
 - Estados da tela alterada: carregando (`Carregando...`) e vazio continuam como estavam; estado de erro não existe na tela (o hook converte falha em toast) — registrado em `kanban_comment`.
-- `motion-safe`: nenhuma animação nova (só o `animate-spin` já existente, dentro de `RefreshCw`).
+- `motion-safe`: o giro do "Excluir" em andamento usa `motion-safe:animate-spin` (o aviso MOVIMENTO do fechar na primeira rodada foi atendido; o `animate-spin` do "Criar relatório" é pré-existente, fora do meu diff).
 
 ## O que NÃO fiz e por quê
 - Não criei estado de erro da lista: o hook `src/hooks/chat/useScheduledReports.ts` e o adapter não expõem erro (é toast); mexer neles é fora dos arquivos deste cartão (registrado em `kanban_comment`).
