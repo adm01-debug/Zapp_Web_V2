@@ -1,3 +1,39 @@
+## Pontos do revisor (corrigir)
+
+**Ponto 1: a seção não estava provada DENTRO do acordeão persistido.** O teste antigo
+embrulhava `SlaTimelineSection` num `Accordion` próprio, o que não mostra se ela vive no
+acordeão que salva estado. Agora existe um teste que renderiza o `ContactDetails` real
+(`src/components/inbox/ContactDetails.tsx`), clica no gatilho da seção, lê
+`contact-sidebar-accordion-state@v2` no `localStorage` (tem de conter `sla-timeline`),
+desmonta e REMONTA, e exige a seção aberta (`aria-expanded="true"`). Prova:
+`npx vitest run …/SlaTimelineSection.test.tsx` → `Tests 13 passed (13)`; mutante
+`persistencia do acordeao` (gravar vira no-op em `sidebarSections.ts`) é pego.
+
+**Ponto 2: o trilho tinha cor fixa.** Em `SlaTimelineSection.tsx` a linha passou de um
+`DrawLine` único para um trecho por intervalo, pintado pela SITUAÇÃO do marco acima:
+`ok`→`success`, `warning`→`warning`, `breached`→`destructive`, `na`→`--muted-foreground`
+(neutro). O teste lê o `path` renderizado de cada trecho (`sla-rail-<id>` com
+`data-status`) e exige a classe de token certa; mutantes `trecho ok com tom errado` e
+`trecho neutro sem token neutro` são pegos. Números nos dois temas nas Notas.
+
+**Ponto 3: teclado incompleto no grupo de tipos.** Em `SlaTimelineSection.tsx` o grupo
+ganhou roving tabindex de verdade (←/→/↑/↓, Home/End movem o foco; Enter/Espaço acionam o
+chip focado; só um chip na ordem do Tab) e Esc limpa os filtros — tudo em `onKeyDown` do
+próprio elemento, sem listener global, logo nada para remover no unmount. O teste usa
+`fireEvent.keyDown` e confere `document.activeElement` e `aria-pressed`; mutantes
+`sem roving tabindex` e `sem Esc limpando filtros` são pegos.
+
+**Ponto 4: faltavam o estado de carregamento e a garantia de movimento reduzido.**
+Teste novo congela a leitura de `sla_rules` (promessa pendente no mock) e exige
+`sla-timeline-loading` com `shimmer-skeleton` e nenhuma lista; outro teste liga
+`useReducedMotion` e exige `data-motion="reduced"` nos itens e nos trechos, com o item da
+lista sem deslocamento inicial (sem `translateY`). Mutante `sem estado de carregamento` é pego.
+
+**Ponto 5: relato desalinhado com o histórico.** O relato antigo citava base
+`dia/2026-10-11`; esta branch nasce de `dia/2026-10-13` (`BASE` impresso pelo
+`hermes-tarefa-iniciar`) e o novo relato diz isso, mais a escolha de cor do trilho e a
+montagem dentro do acordeão. Ver "Plano"/"Notas para Reviewer".
+
 ## Descrição
 
 A seção "Linha do tempo de SLA" do painel do contato já existia (commit anterior desta
