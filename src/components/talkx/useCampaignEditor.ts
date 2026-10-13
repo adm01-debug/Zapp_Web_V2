@@ -931,8 +931,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         expectedRevision: draftRevisionRef.current,
       });
       setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
-      if (source === 'manual' && audienceSource === 'segment' && selectedSegments.length > 0) {
-        const ids = selectedSegments.map((s) => s.id);
+      if (source === 'manual' && audienceSource === 'segment' && segmentIds.length > 0) {
+        const ids = Array.from(new Set(segmentIds));
         await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).in('id', ids);
       }
 
@@ -949,7 +949,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegments, snapshotDraftAudience, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, segmentIds, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da

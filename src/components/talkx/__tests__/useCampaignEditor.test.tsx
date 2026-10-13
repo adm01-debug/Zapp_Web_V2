@@ -1414,25 +1414,37 @@ describe('useCampaignEditor — X123 (autosave desde o passo 1, uso do segmento 
     }));
   });
 
-  it('não marca o segmento como usado no autosave; o salvamento explícito marca (X123)', async () => {
-    f.segments = [{ id: 'seg-1', name: 'Compradores', description: '', status: 'active', estimated_count: 10 }];
+  it('não marca o segmento como usado no autosave; o salvamento explícito marca o id do rascunho (X123)', async () => {
+    // A lista de segmentos pode ainda não ter hidratado, mas o rascunho já traz
+    // o id selecionado. O save manual deve marcar este id; autosave, não.
+    f.segments = [];
     const fromSpy = fromTable as unknown as ReturnType<typeof vi.fn>;
-    fromSpy.mockReturnValue({ update: () => ({ in: () => Promise.resolve({ error: null }) }) });
-    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'segment', segment_id: 'seg-1' };
+    const inSpy = vi.fn(() => Promise.resolve({ error: null }));
+    fromSpy.mockReturnValue({ update: () => ({ in: inSpy }) });
+    const campaign = {
+      id: 'draft-1',
+      name: 'Rascunho',
+      status: 'draft',
+      audience_source: 'segment',
+      segment_id: 'seg-1',
+    };
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
     fromSpy.mockClear();
+    inSpy.mockClear();
 
-    // Autosave: o rascunho é gravado, mas o uso do segmento não é reescrito.
+    // Autosave: o rascunho é gravado, mas o uso dos segmentos não é reescrito.
     act(() => result.current.setName('Rascunho do segmento'));
     await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
     expect(f.update).toHaveBeenCalled();
     expect(fromSpy).not.toHaveBeenCalled();
+    expect(inSpy).not.toHaveBeenCalled();
     expect(f.log).not.toHaveBeenCalled();
 
-    // Salvamento explícito: aí sim o segmento passa a contar como usado.
+    // Salvamento explícito: aí sim o segmento selecionado conta como usado.
     await act(async () => { await result.current.handleSave('draft'); });
     expect(fromSpy).toHaveBeenCalledWith('talkx_segments');
+    expect(inSpy).toHaveBeenCalledWith('id', ['seg-1']);
     // Eventos de ciclo de vida continuam no servidor (X025), não no cliente.
     expect(f.log).not.toHaveBeenCalled();
   });
