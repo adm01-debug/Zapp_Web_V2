@@ -214,7 +214,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       const [statusResult] = await Promise.allSettled([
         supabase.functions.invoke('evolution-api/find-status-messages', {
           method: 'POST',
-          body: { instanceName: resolvedInstance, page: 1, offset: 200 },
+          body: { instanceName: resolvedInstance, number: phone, page: 1, offset: 200 },
         }),
         supabase.functions.invoke('evolution-api/send-chat-presence', {
           method: 'POST',

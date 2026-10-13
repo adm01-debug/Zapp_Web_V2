@@ -643,3 +643,132 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     await c.stop();
   }
 });
+
+// ─── PH-03: status/stories só do contato que o usuário pode ver ─────────────
+// Defeito: `find-status-messages` era READ (qualquer autenticado) e devolvia o
+// feed `status@broadcast` da instância inteira; o filtro por contato existia
+// SÓ no navegador. Agora exige o alvo (number/JID), valida a visibilidade do
+// contato e filtra os registros no servidor.
+const PH03_CONTATO = "5511999999999";
+const PH03_OUTRO = "5521888888888";
+
+function statusRecord(participant: string, id: string, fromMe = false): Record<string, unknown> {
+  return {
+    key: { remoteJid: "status@broadcast", fromMe, id, participant: `${participant}@s.whatsapp.net` },
+    fromMe,
+    remoteJid: "status@broadcast",
+    participant: `${participant}@s.whatsapp.net`,
+    messageTimestamp: 1,
+  };
+}
+
+function createStatusFake(records: unknown[]) {
+  const posts: Array<{ path: string }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
+    posts.push({ path: new URL(req.url).pathname });
+    await req.text();
+    return new Response(JSON.stringify({ messages: { records } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("status-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, posts, stop: () => server.shutdown() };
+}
+
+/** Conexão + contato existem no banco local; o token da conexão está no Vault. */
+function makeStatusServiceClient(): any {
+  return {
+    from: (table: string) => {
+      if (table === "whatsapp_connections") return makeQuery({ id: "conn-1" });
+      if (table === "contacts") return makeQuery({ id: "contact-1" });
+      return makeQuery(null);
+    },
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+}
+
+Deno.test("PH-03: find-status-messages devolve SÓ o status do contato pedido", async () => {
+  const fake = createStatusFake([
+    statusRecord(PH03_CONTATO, "A1"),
+    statusRecord(PH03_CONTATO, "A2"),
+    statusRecord(PH03_OUTRO, "B1"),
+    statusRecord(PH03_CONTATO, "meu", true),
+  ]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1, offset: 200 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const lista = await res.json();
+    assert(Array.isArray(lista), "deve devolver uma lista de status");
+    assertEquals(lista.length, 2, "só os status do contato (fora o de outro número e o da própria conta)");
+    assert(
+      lista.every((r: { participant?: string }) => r.participant?.startsWith(PH03_CONTATO)),
+      "nenhum status de outro número pode sair",
+    );
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("PH-03: find-status-messages sem number devolve 400 e não chama o provedor", async () => {
+  const fake = createStatusFake([]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", page: 1 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
+    );
+    assertEquals(res.status, 400, "sem alvo é falha de payload (400), não leitura global");
+    assertEquals(fake.posts.length, 0, "não pode consultar o provedor sem alvo");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("PH-03: agente sem o contato na carteira recebe 403 e o provedor não é chamado", async () => {
+  const fake = createStatusFake([statusRecord(PH03_OUTRO, "B1")]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_OUTRO, page: 1 }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }),
+        supabase: makeStatusServiceClient(),
+      },
+    );
+    assertEquals(res.status, 403, "agente sem visibilidade do contato é negado");
+    const json = await res.json();
+    assertEquals(json?.message, "Sem permissão para acessar este contato/conexão.", "403 neutro, sem revelar se o contato existe");
+    assertEquals(fake.posts.length, 0, "a negação acontece antes de qualquer I/O no provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("PH-03: na GO find-status-messages continua devolvendo goHistoryNotSupported", async () => {
+  const fake = createStatusFake([statusRecord(PH03_CONTATO, "A1")]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json?.notSupported, true, "na GO a rota não é suportada");
+    assertEquals(fake.posts.length, 0, "na GO nem chega ao /chat/findMessages");
+  } finally {
+    await fake.stop();
+  }
+});

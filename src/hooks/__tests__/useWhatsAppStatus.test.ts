@@ -98,6 +98,31 @@ describe('useWhatsAppStatus', () => {
     expect(mockInvoke).toHaveBeenCalledTimes(2);
   });
 
+  // ========== PH-03: alvo do status (contrato com a Edge) ==========
+  // Sem `number`, a Edge não sabe de quem é o status e devolve 400 — o hook é o
+  // único chamador e precisa mandar o telefone.
+  it('envia o telefone do contato como `number` no find-status-messages', async () => {
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: { whatsapp_connection_id: 'conn1' } })
+      .mockResolvedValueOnce({ data: { instance_id: 'inst1' } });
+
+    mockInvoke
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: {} });
+
+    const { result } = renderHook(() => useWhatsAppStatus('+551****9999'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const chamada = mockInvoke.mock.calls.find(
+      ([path]) => path === 'evolution-api/find-status-messages',
+    );
+    expect(chamada, 'find-status-messages precisa ser chamado').toBeTruthy();
+    expect(chamada?.[1]).toMatchObject({ body: { number: '+551****9999' } });
+  });
+
   // ========== FALLBACK CONNECTION ==========
   it('uses fallback connection when contact has no whatsapp_connection_id', async () => {
     mockMaybeSingle

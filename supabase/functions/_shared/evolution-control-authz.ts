@@ -18,6 +18,9 @@
  *     ações de conversa que não entregam conteúdo mas mutam o estado remoto de
  *     um chat (mark-read/unread, archive-chat, send-reaction): o escopo é o
  *     contato da conversa, resolvido por `number` ou pelo JID do alvo.
+ *     `find-status-messages` (stories) entra aqui pelo mesmo escopo: não muta
+ *     estado, mas devolve dado pessoal de um número — antes, em READ_ACTIONS,
+ *     um `agent` lia os status de QUALQUER número (PH-03).
  *   - `read`    → qualquer usuário autenticado (comportamento atual preservado;
  *     a leitura sensível de diagnóstico é tratada separadamente em
  *     `webhook-diagnostic`). Somente as ações listadas em READ_ACTIONS.
@@ -123,6 +126,11 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'mark-read',
   'mark-unread',
   'archive-chat',
+  // PH-03: leitura de status/stories de UM contato. Não entrega conteúdo nem
+  // muta o provedor, mas devolve dado pessoal de um número — por isso segue o
+  // escopo de contato das SEND (admin/supervisor OU visibilidade do alvo) em
+  // vez do gate de JWT das READ, onde devolvia os status de qualquer número.
+  'find-status-messages',
 ]);
 
 /**
@@ -143,7 +151,6 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   // chat / mensagens (consultas)
   'find-chats',
   'find-messages',
-  'find-status-messages',
   'find-contacts',
   'check-numbers',
   'get-media-base64',
