@@ -14,6 +14,11 @@ Especialista: worker (testes) (area-testes-do-produto)
 - vermelho antes (mutação injetada nos 6 módulos e DEPOIS revertida): `npx vitest run src/lib/__tests__/retry.politica.test.ts src/lib/__tests__/safeStorage.test.ts src/lib/__tests__/popupManager.test.ts src/lib/__tests__/webauthnUtils.test.ts src/lib/__tests__/supabaseHelpers.test.ts src/lib/__tests__/avatar-colors.test.ts` → `Test Files 6 failed (6); Tests 13 failed | 90 passed (103)` (saída crua em `.tmp/mutacao-vermelho.txt`)
 - verde depois (produção restaurada, `git diff` dos módulos vazio): mesmo comando → `Test Files 6 passed (6); Tests 103 passed (103)`
 - suíte da área: `npx vitest run src/lib` → `Test Files 118 passed (118); Tests 1645 passed | 5 expected fail (1650)` (saída crua em `.tmp/lib-verde.txt`; os 5 expected fail são pré-existentes, nenhum meu)
+- ESTABILIDADE (3 rodadas seguidas, sem falha nem pulado em nenhuma): mesma lista de 6 arquivos em laço → `Test Files 6 passed (6); Tests 103 passed (103)` na rodada 1/3, 2/3 e 3/3 (saída crua em `.tmp/estabilidade-3x.txt`)
+
+## Pontos do juiz automático
+- Ponto 1 — "critério de pronto não demonstrado (`Testes novos verdes e estáveis, rode 3x`)": demonstrado acima — `Test Files 6 passed (6); Tests 103 passed (103)` nas 3 rodadas (`.tmp/estabilidade-3x.txt`).
+- Ponto 2 — "arquivo que o cartão não lista em ARQUIVOS QUE PODE TOCAR: `src/lib/retry.ts`, `src/lib/abortError.ts`, `src/utils/normalizeMediaUrl.ts`, `src/utils/__tests__/normalizeMediaUrl.test.ts`": esses 4 NÃO foram escritos por mim. Vêm do commit 8ff7f83658 do cartão pai t_753811b3, trazido por cherry-pick porque o cartão MANDA ("se o que eles fazem não estiver no seu workspace, ache o commit em `.v2-fila/*.json` e traga a FAIXA inteira"). Sem eles o `withRetry` testado seria o antigo. `src/lib/retry.ts` é o próprio módulo do meu título. O `git diff` dos 6 módulos de produção da minha lista contra o pai é VAZIO (só testei); a mutação do "vermelho antes" foi injetada e revertida, não ficou no ramo. O único commit de relato do pai (`.tmp/relato.md`) NÃO foi trazido.
 
 ## O que NÃO fiz e por quê
 - `src/lib/lazyWithRetry.ts`: o cartão diz que depende do SH3 e manda esperar — não toquei.
