@@ -1,31 +1,34 @@
-## O que mudou e por quê
+# fix(testes): RuleValueInput.test isola a rota do construtor entre os testes
 
-- `src/components/talkx/__tests__/RuleValueInput.test.tsx`: acrescenta um `afterEach(() => window.history.replaceState(null, '', '/'))` — motivo: o construtor de segmentos do Talk X vive no endereço (X111, `?view=talkx&tab=segments&mode=new`) e o `window.location` do jsdom é COMPARTILHADO por todos os testes do arquivo. O teste "número \"em breve\" (lead_score)" abre o construtor e não publica nem cancela; ele deixa `mode=new` no endereço. O `renderView()` do teste seguinte já monta DENTRO do construtor (a tela abre direto no editor: "Nome do segmento…", Cancelar, Publicar) e o botão "Novo segmento" nunca entra na DOM — o `findByRole` estoura o teto de 5 s (`asyncUtilTimeout` do `src/test/setup.ts`) com "Unable to find role=button name 'Novo segmento'". Limpar a rota em `afterEach` devolve a biblioteca como estado inicial. Mesmo idioma dos 4 irmãos do módulo (route/groups/builder/detailFresh), que já fazem isso e são os únicos a resetar; esta prova era a única sem o reset. Nenhuma asserção foi tocada: o que o teste prova (Lead score e Risco de churn visíveis, "(em breve)", desabilitados, `draggable="false"` e sem condição adicionada) continua igual.
+Especialista: worker (ci) (area-verificacao-ci)
 
-## Por que NÃO é tempo (a causa que o cartão supunha)
+## O que mudou
 
-O render é síncrono: o botão aparece junto com a montagem, não depois. O teste é instável por ORDEM, não por relógio:
-- sozinho (`-t "ficam desabilitados no catálogo"`): passa;
-- depois do teste de lead_score (`-t "em breve"`): falha sempre em ~5 s;
-- arquivo inteiro: falha sempre.
-Subir `findByRole(..., { timeout: 15000 })` não resolveria: o botão não existe na DOM por causa da rota suja, então esperar mais só atrasaria o vermelho.
+`src/components/talkx/__tests__/RuleValueInput.test.tsx` (1 arquivo, +13/-1): um `afterEach(() => window.history.replaceState(null, '', '/'))`, importando `afterEach` do vitest. Nenhuma asserção foi tocada, nem `skip`/`only`, nem timeout.
+
+## A causa (medida, não a do diagnóstico do cartão)
+
+Não era o tempo. O construtor de segmentos do Talk X vive no endereço (`?view=talkx&tab=segments&mode=new` — `TalkXSegments` lê a rota em `useState` e `openBuilder` empurra o `mode=new` para o `window.location`). O `window.location` do jsdom é UM só por arquivo de teste: o teste "em breve" de `lead_score` (o antepenúltimo) abre o construtor, clica num indicador desabilitado e termina sem publicar — o `mode=new` fica no endereço. O `renderView()` do último teste, então, já monta no construtor, sem o botão "Novo segmento"; o `findByRole` esgota os 5 s (asyncUtilTimeout do setup) e estoura. Um timeout maior NÃO consertaria: o botão não existe no DOM.
+
+Prova da causa: o último teste passa sozinho e falha quando o anterior roda antes; os 4 arquivos irmãos do módulo (route/groups/builder/detailFresh) já resetam a URL em `afterEach` — esta prova era a única sem isso.
 
 ## Prova
 
-- vermelho antes (base 96dd72dc5, sem a mudança): `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 failed (1); Tests 1 failed | 4 passed (5)` e `-t "em breve"` → `Unable to find role="button" and name "Novo segmento"` (o DOM colhido mostra o editor aberto).
-- verde depois: `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 passed (1); Tests 5 passed (5)`, 3 execuções seguidas; e a ordem que falhava `-t "em breve"` → `Tests 2 passed | 3 skipped`.
+Vermelho antes (base 96dd72dc5, sem a correção):
+- `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` → `Test Files 1 failed (1)` / `Tests 1 failed | 4 passed (5)` — a falha em "em breve: ... desabilitados no catálogo", 5130 ms, "Unable to find role=button name 'Novo segmento'".
+- ordem que falhava (`-t "em breve"`, roda o de lead_score antes) → `Tests 1 failed | 1 passed`.
 
-## Verificação completa
+Verde depois (commit 61070aa90):
+- `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` (3 execuções seguidas) → `Test Files 1 passed (1)` / `Tests 5 passed (5)` em cada uma.
+- ordem que falhava (`-t "em breve"`) → `Test Files 1 passed (1)` / `Tests 2 passed | 3 skipped (5)`.
 
-- `zapp-verify . --rapido` roda no `hermes-tarefa-fechar` (saída no log do fechar).
+Verificação completa:
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (352s)` (db_guard OK, tipos OK, lint OK, migrations OK), EXIT=0.
 
-## Outros testes com o mesmo risco (item 4 do cartão)
+## Item 4 do cartão — outros testes com o mesmo risco
 
-Varri `src/components/talkx/__tests__/` atrás de prova que monta `TalkXSegments` e clica "Novo segmento":
-`TalkXSegments.route.test.tsx`, `.groups.test.tsx`, `.builder.test.tsx`, `.detailFresh.test.tsx` — TODOS já resetam a rota em `afterEach` (`window.history.replaceState(null, '', '/')`, um por arquivo). `RuleValueInput.test.tsx` era o único sem o reset. Nada a corrigir nos irmãos (não é "1 linha nova", já existe).
+O risco real é a rota ficar no `window.location` entre testes, não "render pesado". Varri os 5 testes de `src/components/talkx/__tests__/` que usam "Novo segmento": `TalkXSegments.route/groups/builder/detailFresh` JÁ têm `window.history.replaceState(null, '', '/')` em `afterEach` — não mexem. Só `RuleValueInput.test.tsx` não tinha, e é o que corrigi.
 
-## O que NÃO fiz e por quê
+## O que não fiz
 
-- Não aumentei timeout de `findByRole`/`it`: não corrige a causa (rota suja) e o cartão proíbe afrouxar; a asserção segue idêntica.
-- Não toquei em `src/test/setup.ts` (teto global `asyncUtilTimeout`) nem em outro arquivo: fora do escopo do cartão.
-- Não mudei o código de produção (`TalkXSegments.tsx`/`talkxSegmentsRoute.ts`): o comportamento é correto (o construtor abrir pela URL é a feature X111); o defeito era só a prova não isolar o estado.
+Nada fora do arquivo do cartão. `git diff --stat` = só `RuleValueInput.test.tsx` (+13/-1) no commit de código.
