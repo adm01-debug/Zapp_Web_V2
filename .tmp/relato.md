@@ -1,18 +1,42 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013000031_revoke_truncate_trigger_references.sql: revoga
+  TRUNCATE, TRIGGER e REFERENCES em TODAS as relacoes de public de uma vez (REVOKE e
+  idempotente) para anon e authenticated; revoga INSERT/UPDATE/DELETE de anon em
+  public.contact_custom_fields; e ajusta ALTER DEFAULT PRIVILEGES FOR ROLE postgres para
+  tabela nova nao herdar os 3. Motivo: o padrao do Supabase deixa os 3 privilegios em toda
+  tabela e eles NAO passam pela RLS (TRUNCATE esvazia sem consultar policy, TRIGGER e DDL,
+  REFERENCES permite FK apontando para a tabela). service_role nao e tocado.
+- supabase/tests/revoke_truncate_trigger_references.sql: suite T1-T8 no banco local, com
+  PAPEL REAL (SET LOCAL ROLE anon/authenticated/service_role), numa transacao com ROLLBACK.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (migration ainda NAO aplicada no banco local):
+  `zapp-db-local psql <workspace> v2-26101220572d35 -v ON_ERROR_STOP=1 < supabase/tests/revoke_truncate_trigger_references.sql`
+  → `ERROR: T1 FALHOU: 747 concessoes de TRUNCATE/TRIGGER/REFERENCES ainda vivas para anon/authenticated` (exit 3)
+- verde depois de `hermes-db-migrar supabase/migrations/20261013000031_...sql` (APLICADA no banco LOCAL):
+  mesmo comando → `T1 ok: 0 concessoes ...` / `T2/T3 ok: anon e authenticated recebem 42501 ao tentar TRUNCATE`
+  / `T4 ok: service_role intacto` / `T5 ok: anon sem INSERT/UPDATE/DELETE em contact_custom_fields`
+  / `T6 ok: anon recebe 42501 ao tentar INSERT` / `T7 ok: leitura e escrita legitimas do authenticated seguem via RLS (n=1)`
+  / `T8 ok: tabela nova em public nao herda TRUNCATE/TRIGGER/REFERENCES` / ROLLBACK → exit 0
+- `-- Rollback:` executavel: a linha 2 do arquivo rodada no banco local dentro de BEGIN..ROLLBACK
+  → `grants_de_volta = 1086` (181 relacoes x 2 papeis x 3 privilegios), sem erro.
+- suite de RLS existente, verde com a migration aplicada (6/6 PASS): rls_dashboard,
+  rls_conversation_tab_counts_files_total, rls_whatsapp_media_select_via_messages,
+  dashboard_rpc_filters, dashboard_kpi_edge_cases, inbox_agregado_por_contato.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (chamado sem nome de conjunto, como o fechar faz).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- NÃO revoguei INSERT/UPDATE/DELETE de anon nas outras 115 tabelas: o cartao pede so em
+  contact_custom_fields e manda listar as demais. Medido no banco local: anon ainda tem
+  INSERT/UPDATE/DELETE (grant inerte do padrao Supabase) em 115 tabelas — lista completa em
+  .tmp/anon-write-grants.txt (anexada). Todas estao bloqueadas pela RLS: a UNICA policy em
+  public que alcanca anon e a de webauthn_challenges, que NEGA ("Block anon access"); as 5 de
+  talkx_campaign_segments sao TO public mas usam auth.uid(), que e NULL para anon. Nao revoguei
+  porque a RLS ja barra e o cartao so pediu contact_custom_fields; recomendo cartao seguinte
+  para fechar grants inertes.
+- NÃO mexi no default ACL de supabase_admin (o cartao pede "para o dono atual" = postgres).
+  Residual registrado: tabela criada por supabase_admin ainda pode herdar os 3 para anon.
+- NÃO toquei GRANT de SELECT (anon mantem SELECT em contact_custom_fields; RLS devolve 0 linhas,
+  provado em T1 do fluxo legitimo) — fora do pedido.
