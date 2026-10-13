@@ -45,6 +45,14 @@ Este cartão depende do `t_493e3851`. Os commits do pai não estavam no meu work
 `search_email_threads`, types, testes de banco/front e relatos). O integrador precisa considerar essa
 base ao integrar.
 
+## Ponto do juiz (arquivos fora dos "ARQUIVOS QUE PODE TOCAR")
+Não procede. As guardas viram no meu diff `.github/workflows/db-guard.yml,
+scripts/db-audit/search-email-threads.test.sh, src/hooks/integrations/useGmail.ts,
+`src/integrations/supabase/types.ts, src/lib/emailThreadQuery.ts` e os testes deles: todos vieram do
+`git cherry-pick -x` da FAIXA do cartão pai `t_493e3851`, que o campo DEPENDÊNCIA do meu cartão exige
+quando o trabalho do pai não está no workspace. Nenhum deles foi tocado por mim — o MEU diff são só
+`EmailChatInbox.tsx`, `__tests__/EmailChatInbox.buscaEstados.test.tsx` e este relato.
+
 ## O que NÃO fiz e por quê
 - Escopo selecionável (tudo / assunto / remetente / anexo): o cartão o marca como opcional e ele não é
   implementável só nesta área — nem a RPC `search_email_threads` nem `emailThreadSearchOr` têm
