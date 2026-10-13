@@ -1,49 +1,48 @@
 Especialista: Edgar (area-edge-api)
 
-## Sensibilidade
-- O diff toca `service_role` (client de serviço) e `requireAuth` — o portão retém para o revisor forte.
-- Nenhuma proteção afrouxada: a trava NOVA só NEGA — 403 neutro para perfil inativo/ausente/null e 503 (fail-closed)
-  quando a consulta falha ou a promise rejeita. Nada que antes era liberado passou a ser liberado. Prova do caso
-  negado: `require-auth-profile-active.test.ts` (inativo → 403, ausente → 403, `is_active` null → 403, erro → 503).
-- Nenhuma referência ao banco/endpoint de produção: os testes usam stub de `fetch` e ids sintéticos.
-- Para quem chama: `requireAuth` passa a fazer 1 leitura extra (`profiles.is_active` por `user_id`, igualdade exata)
-  por requisição autenticada. Usuário ativo não percebe mudança.
-
-## Diff do cartão (os dois commits — medidos pelo fechar)
-17 arquivos, 14 deles de teste, 14 casos de teste novos. Arquivos:
-- `.tmp/relato.md`
-- `supabase/functions/auth-login/index.ts` e `supabase/functions/auth-login/index.test.ts`
-- `supabase/functions/_shared/validation.ts`
-- `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts` (8 casos novos)
-- 12 testes de outras Edges: `ai-proxy`, `classify-emoji`, `classify-sticker`, `classify-audio-meme`,
-  `elevenlabs-dialogue`, `elevenlabs-sts`, `elevenlabs-voice-design`, `fetch-link-preview`, `crm-integration`,
-  `multiplix-voices`, `multiplix-audience`, `ai-kb-ingest` (`index.test.ts` de cada)
-
 ## O que mudou e por quê
-- `supabase/functions/auth-login/index.ts` (+`index.test.ts`, commit `a1fc5fe75`, herdado desta retentativa): o login
-  resolve o perfil por `signIn.user.id` (igualdade exata, sem `ilike`) e, se o perfil estiver ausente/inativo/`null`,
-  revoga a sessão recém-criada, registra a falha (`record_failed_login`) e devolve o MESMO 401/corpo da senha errada —
-  sem oráculo. Erro na consulta → revoga e 500 (fail-closed).
-- `supabase/functions/_shared/validation.ts`: `requireAuth` ganhou a trava R2-AUTH-004 — DEPOIS da autenticação e da
-  política de rede, lê `profiles.is_active` por `user_id` e, se ausente/`false`/`null`, devolve 403 neutro
-  ("Access denied", mesmo corpo da negação de rede); falha/rejeição da consulta → 503 fail-closed. A leitura é
-  injetável (`getProfileActive`); o default é o client `service_role` real. Consumidores herdam a trava sem edição.
-- `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts`: 8 testes offline que chamam o `requireAuth`
-  REAL (getUser/política/perfil injetados), cobrindo inativo, ausente, `is_active` null, ativo (segue), erro na consulta,
-  promise rejeitada, ordem (política antes do perfil) e o `eq`/`user_id` do lookup default.
-- Nos 12 testes das outras Edges só o stub de `fetch`/rota ganhou a resposta da nova leitura `profiles?select=is_active`.
-  O `<handler>` dessas Edges NÃO mudou — é a consequência de a trava morar no middleware compartilhado. Sem esses stubs
-  a leitura cairia no "nao stubado" e viraria 503.
+
+Cartão `[refazer]`: a entrega do pai (t_f534a210, branch da entrega @ 41782aaca) quebra o
+espelho do CI no item `contrato: tests/contracts/requireauth-network-policy.contract.test.ts`
+quando empilhada sobre a ponta do dia. Parti da entrega por cherry-pick (commits `a1fc5fe75`,
+`4ec8af77a`, `41782aaca`), sem recomeçar.
+
+Causa: a entrega acrescentou, em `supabase/functions/_shared/validation.ts`, a leitura de
+`profiles.is_active` dentro de `requireAuth` (R2-AUTH-004), DEPOIS da política de rede e ANTES
+de devolver `{ userId }`. A entrega atualizou os testes de Deno das Edges (stub de `fetch` para
+`profiles?select=is_active`), mas deixou desalinhado o contrato de vitest: os testes do caminho
+permitido injetam `getUser` + `policyRpc` e NÃO injetam `getProfileActive`, então o `requireAuth`
+caía no client `service_role` real, indisponível offline, e devolvia 503 no lugar de `{ userId }`.
+
+Correção (só o teste do contrato, sem afrouxar asserção):
+
+- `tests/contracts/requireauth-network-policy.contract.test.ts`: novo helper `activeProfile()`
+  que injeta um lookup fake de `profiles.is_active` = ativo e registra os `user_id` consultados.
+  Injetado em `getProfileActive` nos três testes que chegam ao caminho permitido (devolve
+  `{ userId }`, orçamento default da RPC e orçamento sobreposto). No teste "preserva o caminho
+  permitido" acrescentei a asserção `expect(profile.calls).toEqual(['user-1'])`, que prova que a
+  trava lê o perfil pelo `user_id` autenticado — nenhuma asserção existente foi relaxada.
+
+Nenhuma linha de produção mudou; o diff é exclusivamente o teste do contrato.
 
 ## Prova
-- vermelho antes (trava do `requireAuth` temporariamente removida): `deno test .../require-auth-profile-active.test.ts`
-  → `FAILED | 2 passed | 6 failed` (perfil inativo/ausente/null seguiam como se ativos).
+
+- vermelho antes (entrega empilhada, sem a minha mudança):
+  `npx vitest run --config vitest.contracts.config.ts requireauth-network-policy`
+  → `Tests  1 failed | 15 passed (16)` — erro:
+  `expected Response { status: 503, ... } to deeply equal { userId: 'user-1' }`
+  (linha 164, no teste "preserva o caminho permitido").
 - verde depois:
-  - `deno test .../require-auth-profile-active.test.ts` → `ok | 8 passed | 0 failed`
-  - `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')` → `ok | 1707 passed | 0 failed | 3 ignored`
-  - `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts` → exit 0
+  `./node_modules/.bin/vitest run --config vitest.contracts.config.ts --reporter=dot`
+  → `Test Files  89 passed (89)` ; `Tests  1379 passed (1379)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (142s)`.
+- sha da correção: `dbd630b84` (cherry-pick da entrega: `a1fc5fe75` `4ec8af77a` `41782aaca`).
 
 ## O que NÃO fiz e por quê
-- `src/hooks/auth/useAuth.tsx` não foi tocado: o Edge já devolve o MESMO 401 de credencial inválida e o front
-  (`AuthService.signIn`) já trata como erro genérico — não há motivo para mudar o front.
-- Não adicionei migration/RPC: a leitura usa a tabela `profiles` existente (`user_id` UNIQUE NOT NULL).
+
+- Não rodei `ci_espelho.sh`: o `HERMES-GUARD` bloqueia a execução do script (classifica
+  `~/arquitetura-v2/integrador/ci_espelho.sh` como ferramenta do Hermes) — relatei o bloqueio em
+  vez de contornar. Rodei exatamente o passo que o espelho usa para contratos
+  (`vitest run --config vitest.contracts.config.ts --reporter=dot`, com o grep de `FAIL`), que é o
+  item do cartão, e ele sai sem nenhum `FAIL`.
+- Não toquei em produção, RPC, policy nem em `validation.ts`. Não afrouxei asserção alguma.
