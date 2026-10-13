@@ -10821,6 +10821,10 @@ export type Database = {
           count: number
         }[]
       }
+      contacts_stats: {
+        Args: { p_include_legacy?: boolean }
+        Returns: Json
+      }
       conversation_closure_day: {
         Args: { p_created_at: string }
         Returns: string

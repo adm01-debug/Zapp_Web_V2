@@ -113,6 +113,14 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // CT-E / PB-30 (paridade V3->V2): prova em Postgres 17 descartavel (docker) que
+  // public.contacts_stats(boolean) calcula no servidor os agregados de Contatos
+  // (total/e-mail/empresa/status/crescimento 30d com piso de amostra/duplicados por
+  // telefone ou e-mail normalizado/lgpd_pending) com o MESMO escopo de
+  // search_contacts (admin tudo, agente so o seu, anon sem EXECUTE, service_role
+  // tudo) e que o Rollback remove a funcao. Passo de uma linha em db-guard.yml a
+  // promover pelo dono do workflow.
+  'scripts/db-audit/contacts-stats-rpc.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
