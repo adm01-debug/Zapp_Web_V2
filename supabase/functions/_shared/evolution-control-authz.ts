@@ -113,6 +113,12 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'get-kafka', 'get-nats', 'get-pusher',
   // catálogo de loja (configuração comercial)
   'get-catalog', 'get-collections',
+  // R2EXT-STATUS: publicar Status/Story (send-status) NÃO tem contato-alvo — o
+  // status vai para toda a base da conexão. Enquanto estava em `send`, a
+  // ausência de alvo fazia o gate negar não-admin por acidente, mas a ação
+  // seguia com o corpo inteiro (campos livres como allContacts) e sem trilha.
+  // Como control, exige admin/supervisor de forma explícita.
+  'send-status',
 ]);
 
 /**
@@ -136,7 +142,6 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-buttons',
   'send-template',
   'send-ptv',
-  'send-status',
   'send-reaction',
   'offer-call',
   'send-chat-presence',
@@ -210,4 +215,93 @@ export function decideSendAuthz(opts: {
     status: 403,
     message: 'Sem permissão para enviar para este contato/conexão.',
   };
+}
+
+/**
+ * R2EXT-STATUS: allowlist do corpo de `send-status`.
+ *
+ * O corpo ia inteiro para `/message/sendStatus/<instância>`. Como a ação não
+ * tem contato-alvo, o chamador podia empurrar campos livres (ex.: `allContacts`,
+ * `statusJidList` com números de fora da empresa) direto para o provedor. Aqui
+ * só sobrevivem os campos que o produto usa, com limite de tamanho, e a lista
+ * de destinatários é reduzida aos contatos conhecidos da conexão.
+ */
+export const STATUS_ALLOWED_FIELDS = ['type', 'content', 'media', 'backgroundColor'] as const;
+
+/** Limite de caracteres do texto do status (mesmo teto das demais mensagens de texto). */
+export const STATUS_CONTENT_MAX_LENGTH = 1024;
+
+export interface StatusPayloadSanitizeResult {
+  /** Corpo já filtrado, pronto para o provedor. */
+  payload: Record<string, unknown>;
+  /** Campos do chamador descartados por não estarem na allowlist. */
+  droppedFields: string[];
+  /** Quantidade de JIDs de `statusJidList` descartados por não serem da empresa. */
+  droppedJids: number;
+  /**
+   * `statusJidList` veio preenchido mas NENHUM JID sobreviveu: publicar assim
+   * cairia no broadcast para toda a base (fail-open) — o chamador deve negar.
+   */
+  emptyTargetList: boolean;
+}
+
+/** Normaliza JID/telefone para dígitos (mesma regra do handler). */
+const normalizeStatusDigits = (value: unknown): string => {
+  const raw = String(value ?? '');
+  return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
+};
+
+/**
+ * Filtra o corpo de `send-status` pela allowlist e restringe `statusJidList`
+ * aos contatos da empresa (`allowedJids`, já em dígitos).
+ */
+export function sanitizeStatusPayload(
+  body: Record<string, unknown>,
+  allowedJids: ReadonlySet<string>,
+): StatusPayloadSanitizeResult {
+  const allowed = new Set<string>(STATUS_ALLOWED_FIELDS);
+  const payload: Record<string, unknown> = {};
+  const droppedFields: string[] = [];
+
+  for (const [key, value] of Object.entries(body)) {
+    // Metadados do contrato E45: não fazem parte do corpo do provedor.
+    if (key === 'action' || key === 'instance' || key === 'instanceName') continue;
+    if (key === 'statusJidList') continue; // tratado abaixo
+    if (!allowed.has(key)) {
+      droppedFields.push(key);
+      continue;
+    }
+    if (key === 'content') {
+      if (typeof value !== 'string') {
+        droppedFields.push(key);
+        continue;
+      }
+      payload.content = value.slice(0, STATUS_CONTENT_MAX_LENGTH);
+      continue;
+    }
+    if (typeof value === 'string') {
+      payload[key] = value;
+      continue;
+    }
+    droppedFields.push(key);
+  }
+
+  let droppedJids = 0;
+  let emptyTargetList = false;
+  const rawList = body.statusJidList;
+  if (Array.isArray(rawList)) {
+    const kept: string[] = [];
+    for (const entry of rawList) {
+      const jid = String(entry ?? '').trim();
+      const digits = normalizeStatusDigits(jid);
+      if (jid && digits && allowedJids.has(digits)) kept.push(jid);
+      else droppedJids += 1;
+    }
+    if (kept.length > 0) payload.statusJidList = kept;
+    else if (rawList.length > 0) emptyTargetList = true;
+  } else if (rawList !== undefined) {
+    droppedFields.push('statusJidList');
+  }
+
+  return { payload, droppedFields, droppedJids, emptyTargetList };
 }

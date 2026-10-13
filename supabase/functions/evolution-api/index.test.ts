@@ -805,3 +805,160 @@ Deno.test("R2EXT-AGENDA: list-instances (v2) não devolve token/apikey/hash", as
     await fake.stop();
   }
 });
+
+// ─── R2EXT-STATUS: Publicar Status/Story é controle e corpo é saneado ────────
+// RED: `send-status` estava em `send` (sem contato-alvo, o gate negava por
+// acidente) e o corpo ia INTEIRO para /message/sendStatus — campos livres
+// (`allContacts`, `font`), texto sem teto e `statusJidList` com números de fora,
+// tudo sem trilha. GREEN: exige admin/supervisor, allowlist + teto, lista só da
+// empresa e linha em `audit_logs` (ator e tipo, jamais conteúdo/telefone).
+
+const CONN_ID = "11111111-1111-1111-1111-111111111111";
+const CONTATO_EMPRESA = "5511911111111";
+const NUMERO_DE_FORA = "5599999999999";
+
+/** Service client que serve a conexão/contatos e captura os inserts de auditoria. */
+function makeStatusServiceClient(opts: { contacts?: string[]; auditError?: { message: string } | null } = {}) {
+  const auditInserts: any[] = [];
+  const client: any = {
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+    from: (table: string) => {
+      if (table === "whatsapp_connections") {
+        const q: any = {
+          select: () => q,
+          eq: () => q,
+          maybeSingle: () => Promise.resolve({ data: { id: CONN_ID }, error: null }),
+        };
+        return q;
+      }
+      if (table === "contacts") {
+        const q: any = {
+          select: () => q,
+          eq: () => q,
+          limit: () => q,
+          then: (resolve: (v: unknown) => unknown) =>
+            resolve({ data: (opts.contacts ?? []).map((phone) => ({ phone })), error: null }),
+        };
+        return q;
+      }
+      if (table === "audit_logs") {
+        return {
+          insert: (row: any) => {
+            auditInserts.push(row);
+            return Promise.resolve({ data: null, error: opts.auditError ?? null });
+          },
+        };
+      }
+      return makeQuery();
+    },
+  };
+  return { client, auditInserts };
+}
+
+Deno.test("R2EXT-STATUS: agente (não-admin) publica status? 403 e ZERO I/O no provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", { instanceName: "PRINCIPAL", type: "text", content: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: svc.client },
+    );
+    assertEquals(res.status, 403, "send-status é controle: agente não publica");
+    assert((await res.json())?.error === true);
+    assertEquals(fake.posts.length, 0, "nada pode chegar ao provedor");
+    assertEquals(svc.auditInserts.length, 0, "sem envio, sem trilha de publicação");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: supervisor publica — allowlist, teto do texto, lista só da empresa e trilha", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  const textoLongo = "a".repeat(2000);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", {
+        instanceName: "PRINCIPAL",
+        type: "text",
+        content: textoLongo,
+        backgroundColor: "#ff0000",
+        allContacts: true,
+        font: 1,
+        statusJidList: [`${CONTATO_EMPRESA}@s.whatsapp.net`, `${NUMERO_DE_FORA}@s.whatsapp.net`],
+      }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assertEquals(res.status, 200, "supervisor publica");
+
+    assertEquals(fake.posts.length, 1, "um único POST ao provedor");
+    const post = fake.posts[0];
+    assertEquals(post.path, "/message/sendStatus/PRINCIPAL");
+    const enviado = post.body;
+    assertEquals(enviado.type, "text");
+    assertEquals((enviado.content as string).length, 1024, "texto cortado no teto");
+    assertEquals(enviado.backgroundColor, "#ff0000");
+    assertEquals(enviado.statusJidList, [`${CONTATO_EMPRESA}@s.whatsapp.net`], "só o JID da empresa sobrevive");
+    assert(!("allContacts" in enviado), "campo livre allContacts descartado");
+    assert(!("font" in enviado), "campo livre font descartado");
+
+    assertEquals(svc.auditInserts.length, 1, "publicação exige trilha");
+    const trilha = svc.auditInserts[0];
+    assertEquals(trilha.action, "evolution_status_published");
+    assertEquals(trilha.user_id, "agent-1");
+    assertEquals(trilha.entity_id, CONN_ID);
+    assertEquals(trilha.details?.type, "text");
+    const serializado = JSON.stringify(trilha);
+    assert(!serializado.includes(textoLongo), "a trilha não guarda o conteúdo");
+    assert(!serializado.includes(CONTATO_EMPRESA), "a trilha não guarda telefone");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: statusJidList só com números de fora nega (não cai no broadcast global)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", {
+        instanceName: "PRINCIPAL",
+        type: "text",
+        content: "oi",
+        statusJidList: [`${NUMERO_DE_FORA}@s.whatsapp.net`],
+      }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assertEquals(res.status, 403, "lista sem nenhum destino da empresa não pode virar broadcast");
+    assert((await res.json())?.error === true);
+    assertEquals(fake.posts.length, 0, "não pode chegar ao provedor");
+    assertEquals(svc.auditInserts.length, 0, "sem publicação não há trilha");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: falha da trilha NÃO publica o status (403/500 e zero I/O)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA], auditError: { message: "audit down" } });
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", { instanceName: "PRINCIPAL", type: "text", content: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assert(res.status >= 400, "sem trilha o status é negado (fail-closed)");
+    assertEquals(fake.posts.length, 0, "não pode publicar sem registro");
+  } finally {
+    await fake.stop();
+  }
+});

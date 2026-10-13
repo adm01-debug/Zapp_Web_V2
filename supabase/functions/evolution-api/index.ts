@@ -4,7 +4,7 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
-import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
@@ -911,7 +911,52 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'send-poll') return await proxy(`/message/sendPoll/${instance}`, 'POST', { number: body.number, name: body.name || body.question, selectableCount: body.selectableCount || 1, values: body.values || body.options });
     if (action === 'send-list') return await proxy(`/message/sendList/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttonText: body.buttonText, sections: body.sections });
     if (action === 'send-buttons') return await proxy(`/message/sendButtons/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttons: body.buttons });
-    if (action === 'send-status') return await proxy(`/message/sendStatus/${instance}`, 'POST', body);
+    if (action === 'send-status') {
+      // R2EXT-STATUS: publicar Status/Story é ação de CONTROLE (gate
+      // admin/supervisor acima). O corpo deixa de ir inteiro ao provedor: passa
+      // pela allowlist (tipo, texto, mídia, cor), o texto ganha teto e a lista
+      // de destinatários é reduzida aos contatos da empresa. A trilha grava ator
+      // e tipo, nunca o conteúdo nem telefone — e falha fechada: sem trilha, o
+      // status não é publicado.
+      const { data: statusConn } = await supabase
+        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+      const companyJids = new Set<string>();
+      if (statusConn?.id) {
+        const { data: contactRows } = await supabase
+          .from('contacts').select('phone').eq('whatsapp_connection_id', statusConn.id).limit(5000);
+        for (const row of (contactRows ?? []) as { phone?: string | null }[]) {
+          const digits = jidToDigits(row.phone);
+          if (digits) companyJids.add(digits);
+        }
+      }
+      const sanitized = sanitizeStatusPayload(body, companyJids);
+      if (sanitized.emptyTargetList) {
+        return new Response(JSON.stringify({ error: true, message: 'A lista de destinatários do status não pertence a esta empresa.' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { error: auditError } = await supabase.from('audit_logs').insert({
+        user_id: callerUserId,
+        action: 'evolution_status_published',
+        entity_type: 'whatsapp_connection',
+        entity_id: statusConn?.id ?? null,
+        details: {
+          instance,
+          type: typeof sanitized.payload.type === 'string' ? sanitized.payload.type : null,
+          has_media: typeof sanitized.payload.media === 'string' && sanitized.payload.media.length > 0,
+          recipients: Array.isArray(sanitized.payload.statusJidList) ? sanitized.payload.statusJidList.length : 0,
+          dropped_fields: sanitized.droppedFields,
+          dropped_jids: sanitized.droppedJids,
+        },
+      });
+      if (auditError) {
+        new Logger('evolution-api').error('send-status: falha ao registrar a auditoria', { error: auditError.message, instance });
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a auditoria do status.' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
+    }
     if (action === 'send-template') return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
     if (action === 'mark-unread') return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
