@@ -62,7 +62,46 @@ export function useScheduledReports() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
   useEffect(() => { fetchReports(); }, [fetchReports]);
+
+  /**
+   * Camada de dados (sem UI) sobre `scheduled_reports` — a MESMA tabela que a Edge
+   * `send-scheduled-report` lê e atualiza. Estas funções propagam o erro para o
+   * chamador decidir o aviso; `handleSave`/`handleDelete`/`toggleActive` são os
+   * invólucros com toast/refresh usados pela tela de Reports, e o widget de
+   * Relatórios Agendados do Dashboard usa estas funções via `useScheduledReportConfigs`.
+   */
+  const saveReport = useCallback(async (input: SaveScheduledReportInput): Promise<void> => {
+    const reportData = {
+      name: input.name.trim(),
+      report_type: input.report_type || 'dashboard_summary',
+      frequency: input.frequency || 'weekly',
+      recipients: input.recipients,
+      format: input.format || 'pdf',
+      is_active: input.is_active ?? true,
+      next_send_at: calculateNextSendAt(input.frequency || 'weekly'),
+      created_by: user?.id || null,
+    };
+
+    if (input.id) {
+      const { error } = await supabase.from('scheduled_reports').update(reportData).eq('id', input.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('scheduled_reports').insert(reportData);
+      if (error) throw error;
+    }
+  }, [user?.id]);
+
+  const deleteReport = useCallback(async (id: string): Promise<void> => {
+    const { error } = await supabase.from('scheduled_reports').delete().eq('id', id);
+    if (error) throw error;
+  }, []);
+
+  const setReportActive = useCallback(async (id: string, isActive: boolean): Promise<void> => {
+    const { error } = await supabase.from('scheduled_reports').update({ is_active: isActive }).eq('id', id);
+    if (error) throw error;
+  }, []);
 
   const addRecipient = useCallback(() => {
     const email = recipientInput.trim();
@@ -77,31 +116,23 @@ export function useScheduledReports() {
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (!editingReport.name?.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!editingReport.recipients?.length) { toast.error('Adicione pelo menos um destinatário'); return; }
+    const name = editingReport.name?.trim();
+    if (!name) { toast.error('Nome é obrigatório'); return; }
+    const recipients = editingReport.recipients ?? [];
+    if (!recipients.length) { toast.error('Adicione pelo menos um destinatário'); return; }
 
     setIsSaving(true);
     try {
-      const reportData = {
-        name: editingReport.name.trim(),
-        report_type: editingReport.report_type || 'dashboard_summary',
-        frequency: editingReport.frequency || 'weekly',
-        recipients: editingReport.recipients,
-        format: editingReport.format || 'pdf',
-        is_active: editingReport.is_active ?? true,
-        next_send_at: calculateNextSendAt(editingReport.frequency || 'weekly'),
-        created_by: user?.id || null,
-      };
-
-      if (editingReport.id) {
-        const { error } = await supabase.from('scheduled_reports').update(reportData).eq('id', editingReport.id);
-        if (error) throw error;
-        toast.success('Relatório atualizado!');
-      } else {
-        const { error } = await supabase.from('scheduled_reports').insert(reportData);
-        if (error) throw error;
-        toast.success('Relatório agendado!');
-      }
+      await saveReport({
+        id: editingReport.id,
+        name,
+        report_type: editingReport.report_type,
+        frequency: editingReport.frequency,
+        recipients,
+        format: editingReport.format,
+        is_active: editingReport.is_active,
+      });
+      toast.success(editingReport.id ? 'Relatório atualizado!' : 'Relatório agendado!');
       setIsDialogOpen(false);
       setEditingReport(EMPTY_REPORT);
       setRecipientInput('');
@@ -112,29 +143,27 @@ export function useScheduledReports() {
     } finally {
       setIsSaving(false);
     }
-  }, [editingReport, user?.id, fetchReports]);
+  }, [editingReport, saveReport, fetchReports]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase.from('scheduled_reports').delete().eq('id', id);
-      if (error) throw error;
+      await deleteReport(id);
       toast.success('Relatório removido!');
       fetchReports();
     } catch (err) {
       log.error('Error deleting report:', err);
       toast.error('Erro ao remover relatório');
     }
-  }, [fetchReports]);
+  }, [deleteReport, fetchReports]);
 
   const toggleActive = useCallback(async (id: string, isActive: boolean) => {
     try {
-      const { error } = await supabase.from('scheduled_reports').update({ is_active: isActive }).eq('id', id);
-      if (error) throw error;
+      await setReportActive(id, isActive);
       fetchReports();
     } catch (err) {
       log.error('Error toggling report:', err);
     }
-  }, [fetchReports]);
+  }, [setReportActive, fetchReports]);
 
   const handleSendNow = useCallback(async (report: ScheduledReport) => {
     try {
@@ -167,10 +196,53 @@ export function useScheduledReports() {
     isSaving, addRecipient, removeRecipient,
     handleSave, handleDelete, toggleActive, handleSendNow,
     openCreateDialog, openEditDialog,
+    // Camada de dados crua, para quem só precisa ler/gravar (widget do Dashboard).
+    saveReport, deleteReport, setReportActive, reload: fetchReports,
   };
 }
 
 export type { ScheduledReport };
+
+/** Campos que um formulário de agendamento fornece (sem id). */
+export interface ScheduledReportForm {
+  name: string;
+  report_type?: string;
+  frequency?: string;
+  recipients: string[];
+  format?: string;
+  is_active?: boolean;
+}
+
+/** Formulário + id opcional: com id atualiza a linha, sem id insere uma nova. */
+export interface SaveScheduledReportInput extends ScheduledReportForm {
+  id?: string;
+}
+
+export type LastSendStatus = 'sent' | 'never';
+
+export interface LastSendInfo {
+  /** `sent` quando a Edge registrou um envio em `last_sent_at`; `never` quando não há registro. */
+  status: LastSendStatus;
+  /** Rótulo pt-BR pronto para a tela. */
+  label: string;
+  /** Instante do último envio registrado, ou `null`. */
+  at: string | null;
+}
+
+/**
+ * Traduz `last_sent_at` no "resultado do último envio" que a tela mostra.
+ *
+ * A Edge `send-scheduled-report` só grava `last_sent_at` quando o envio termina
+ * (ela não persiste falha por destinatário), então o front distingue apenas
+ * "houve envio registrado" de "nunca enviado" — nunca "quantos receberam".
+ * Persistir o resultado por destinatário exigiria coluna nova (workersql).
+ */
+export function describeLastSend(report: Pick<ScheduledReport, 'last_sent_at'>): LastSendInfo {
+  const at = report.last_sent_at ?? null;
+  return at
+    ? { status: 'sent', label: 'Enviado', at }
+    : { status: 'never', label: 'Nunca enviado', at: null };
+}
 
 export const REPORT_TYPES = [
   { value: 'dashboard_summary', label: 'Resumo do Dashboard', icon: 'BarChart3', description: 'Métricas gerais de atendimento' },
