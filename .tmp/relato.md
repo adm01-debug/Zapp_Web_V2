@@ -1,18 +1,26 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.my_active_sessions() (SECURITY DEFINER, search_path fixo em 'public') que devolve SO as linhas de public.user_sessions do proprio chamador (us.user_id = auth.uid()) que tem sessao Auth VIVA — INNER JOIN auth.sessions por id E user_id, com (not_after IS NULL OR not_after > now()). Assim a linha orfa (sem auth.sessions, as 13 medidas) e a sessao Auth ja expirada somem da lista, sem apagar a tabela de inventario. Cada linha leva is_current vindo do JWT do chamador: session_id == us.auth_session_id (le request.jwt.claim.session_id e, se vazio, request.jwt.claims->>'session_id'). EXECUTE so para authenticated; PUBLIC e anon revogados (anon recebe 42501).
+- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.expire_orphan_user_sessions(), idempotente, que MARCA is_active=false + ended_at para as linhas sem auth.sessions viva (nada e' apagado). Agendado no pg_cron 1x/dia ('23 3 * * *', nome expire-orphan-user-sessions) e roda uma vez no proprio migration para sanear as orfas ja existentes. ACL: sem EXECUTE para authenticated/anon.
+- supabase/tests/my_active_sessions.sql (novo): prova por papel real (set_config('role',...)) — T1 so as vivas do chamador (orfa e expirada nao aparecem, B nao vaza), T2 is_current pelo claim session_id (A e B), T3 anon barrado (42501), T4 sem identidade (auth.uid() nulo) devolve 0 linhas, T5 limpeza idempotente (1a vez marca, 2a vez = 0; sessao Auth apagada sai da lista), T6 ACL das duas funcoes. Tudo numa transacao que termina em ROLLBACK.
+- src/integrations/supabase/types.ts: entram os tipos da RPC my_active_sessions (ciência do postgrest/child t_b4c0ae4e).
+- scripts/db-audit/pg-cron-jobs-baseline.json: entra o job expire-orphan-user-sessions com o schedule '23 3 * * *' — o item 2 do cartao agenda um job novo e o baseline reprova "job novo" if stale; e' arquivo da minha area (scripts/db-audit/**), por isso entrou apesar de o cartao citar so supabase/tests.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (funcionalidade ausente): `zapp-db-local psql <workspace> v2-2610130558f3a3 -v ON_ERROR_STOP=1 < supabase/tests/my_active_sessions.sql` → `ERROR: function public.my_active_sessions() does not exist` / EXIT_RED=3
+- verde depois: mesmo comando → `NOTICE: my_active_sessions: suite OK (T1 so as vivas do chamador, T2 is_current pelo JWT, T3 anon barrado, T4 sem identidade 0 linhas, T5 limpeza idempotente, T6 ACL) — 6 grupo(s)` / EXIT_GREEN=0
+- guarda de SECURITY DEFINER: `zapp-db-local psql <workspace> v2-2610130558f3a3 < scripts/db-audit/check-secdef-public-execute.sql` → `NOTICE: check-secdef-public-execute: OK (285 funcoes SECURITY DEFINER em public, nenhuma com PUBLIC/anon)`
+- baseline do cron: `node --test scripts/db-audit/pg-cron-jobs-baseline.test.mjs` → `pass 12 / fail 0`
+- rollback de verdade (3 comandos do cabecalho, em transacao que volta atras): `BEGIN; select cron.unschedule(jobid) from cron.job where jobname='expire-orphan-user-sessions'; drop function if exists public.expire_orphan_user_sessions(); drop function if exists public.my_active_sessions(); ROLLBACK;` → `unschedule t / DROP FUNCTION / DROP FUNCTION / ROLLBACK`; estado depois = 2 funcoes e 1 job (nada foi perdido).
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (105s)` e `zapp-db-local travas <workspace> v2-2610130558f3a3` → `TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)`.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## Efeitos colaterais conferidos
+- O UPDATE da limpeza mexe so em is_active/ended_at; o unico gatilho de user_sessions (trg_user_sessions_auth_session_guard) dispara apenas em INSERT/UPDATE OF auth_session_id, entao nao ha reescrita de data nem efeito em coluna alheia. user_sessions nao tem updated_at.
+- Nada e' apagado (so' is_active=false); sem TRUNCATE/DROP/DELETE em massa; nenhum GRANT em objeto existente; nenhuma funcao overload criada. my_active_sessions devolve somente a linha do proprio auth.uid() — nao ha oraculo de enumeracao (resposta igual para usuario existente ou nao).
+- Sem identificador/URL do banco real no diff nem no relato.
+
+## O que NAO fiz e por que
+- Nao troquei o front (useDeviceDetection/DevicesPanel/SecurityOverview) para chamar a RPC: e' o cartao filho t_b4c0ae4e (worker de telas/hooks). Esta entrega so o contrato do banco; o hook precisa passar a chamar my_active_sessions() e usar is_current no lugar de device_id === currentDeviceId.
+
+NÃO CONCLUÍ: nada — cartao concluido.
