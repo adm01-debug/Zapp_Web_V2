@@ -15,6 +15,9 @@ Nenhum mock entrega o resultado pronto: o hook é dublado, mas quem decide o sel
 - verde depois (`npx vitest run src/components/security src/hooks/__tests__/useDeviceDetection.test.tsx`): `Test Files 22 passed (22); Tests 111 passed (111)`
 - types: `npx tsc --noEmit -p tsconfig.app.json` → sem erro em DevicesPanel, SecurityOverview ou useDeviceDetection
 
+## Arquivos fora da lista do cartão (aviso do juiz)
+`supabase/migrations/20261013230007_my_active_sessions.sql`, `supabase/tests/my_active_sessions.sql`, `src/integrations/supabase/types.ts` e `scripts/db-audit/pg-cron-jobs-baseline.json` entraram no diff por CHERRY-PICK da faixa do cartão pai (`dia/2026-10-13..f8ba2455341ec102797139a76f2e25b50329f8b8`, branch `v2/sessoes-reais-do-usuario-2610130558f3a3`), como o próprio cartão manda: sem a RPC `my_active_sessions` (e o tipo gerado que a conhece) não há o que chamar. Nenhum deles foi editado por mim.
+
 ## O que NÃO fiz e por quê
 - `endSession` e `removeDevice` continuam lendo `user_sessions` via `fromTable` para achar `auth_session_id`: o cartão pede a RPC na LEITURA da lista; mexer nas mutações é outra trilha.
 - Não subi servidor nem rodei e2e autenticado (R1/E2E): produção fora de alcance.
