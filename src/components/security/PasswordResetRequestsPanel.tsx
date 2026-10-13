@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { parseEdgeError } from '@/lib/invokeEdge';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,7 +52,7 @@ export function PasswordResetRequestsPanel() {
     setProcessing(true);
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
-      if (error) throw error;
+      if (error) throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);
       toast.success('Solicitação aprovada! Email de reset enviado.');
       fetchRequests();
     } catch (error) { log.error('Error approving:', error); toast.error(error instanceof Error ? error.message : 'Erro ao aprovar'); }
@@ -63,7 +64,7 @@ export function PasswordResetRequestsPanel() {
     setProcessing(true);
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: selectedRequest.id, action: 'reject', rejectionReason: reason } });
-      if (error) throw error;
+      if (error) throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);
       toast.success('Solicitação rejeitada');
       setRejectDialogOpen(false); setSelectedRequest(null); fetchRequests();
     } catch (error) { log.error('Error rejecting:', error); toast.error(error instanceof Error ? error.message : 'Erro ao rejeitar'); }

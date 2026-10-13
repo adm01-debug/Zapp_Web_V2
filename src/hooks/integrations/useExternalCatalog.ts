@@ -4,6 +4,7 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('ExternalCatalog');
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { parseEdgeError } from '@/lib/invokeEdge';
 
 // ─── Types ────────────────────────────────────────────────────
 export interface ExternalCategory {
@@ -177,35 +178,22 @@ export class CatalogEdgeError extends Error {
   }
 }
 
-interface EdgeErrorBody {
-  error?: string;
-  code?: string;
-}
-
-/**
- * O corpo `{ error, code }` de uma resposta não-2xx vive em `error.context`
- * (Response) — sem lê-lo o usuário só veria "Edge Function returned a non-2xx
- * status code". Mesmo padrão de useMultiplixAudience.ts.
- */
-async function readEdgeErrorBody(context: unknown): Promise<EdgeErrorBody | null> {
-  const response = context as Response | undefined;
-  if (!response || typeof response.clone !== 'function') return null;
-  try {
-    return (await response.clone().json()) as EdgeErrorBody;
-  } catch {
-    return null;
-  }
-}
-
 async function invokeAction<T = unknown>(action: string, params: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.functions.invoke('promogifts-catalog', {
     body: { action, params },
   });
   if (error) {
-    const status = (error as { context?: { status?: number } }).context?.status ?? null;
-    const body = await readEdgeErrorBody((error as { context?: unknown }).context);
-    const code = body?.code ?? (status === 429 ? 'CATALOG_RATE_LIMITED' : null);
-    throw new CatalogEdgeError(body?.error || error.message, code, status);
+    // O corpo `{ error, code }` de uma resposta não-2xx vive em `error.context`
+    // (Response) — a leitura é centralizada em `parseEdgeError`; sem ela o
+    // usuário só veria "Edge Function returned a non-2xx status code".
+    const parsed = await parseEdgeError(error, 'Falha ao chamar promogifts-catalog');
+    const raw = (parsed.raw && typeof parsed.raw === 'object' ? parsed.raw : {}) as { code?: string };
+    // O código de domínio vem só do `code` do corpo: no 429 a edge não manda
+    // `code` (o `error` é uma frase), e é o status que define o rate limit.
+    const code = typeof raw.code === 'string' && raw.code !== ''
+      ? raw.code
+      : (parsed.status === 429 ? 'CATALOG_RATE_LIMITED' : null);
+    throw new CatalogEdgeError(parsed.message, code, parsed.status);
   }
   if (data?.error) {
     throw new CatalogEdgeError(data.error, data.code ?? null, null);
