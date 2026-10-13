@@ -12,7 +12,7 @@
  *  - o campo de data era uma caixa de texto com a dica "30 (dias)": não havia
  *    atalho de período nenhum (7/30/60/90/180).
  */
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -86,6 +86,13 @@ import { RuleRow } from '@/components/talkx/segments/RuleRow';
 import type { SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 
+// Sob pico de carga da fábrica (load >2× CPUs) a montagem da árvore TalkX inteira pode
+// passar do teto de 5 s do `findBy` (`asyncUtilTimeout`, em src/test/setup.ts) e do
+// testTimeout de 15 s do projeto. Os tetos maiores NÃO afrouxam nenhuma asserção — só dão
+// folga ao mount; o isolamento de rota continua no afterEach abaixo.
+vi.setConfig({ testTimeout: 20000 });
+const ESPERA_MOUNT = { timeout: 15000 };
+
 function renderView() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -98,10 +105,10 @@ function renderView() {
 /** Abre o construtor, nomeia o segmento e adiciona uma condição pelo catálogo. */
 async function condicaoPeloCatalogo(filtro: string, nome = 'Segmento por tipo') {
   renderView();
-  fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
-  fireEvent.change(await screen.findByPlaceholderText('Nome do segmento…'), { target: { value: nome } });
-  fireEvent.click(screen.getByRole('button', { name: filtro }));
-  return screen.findByRole('button', { name: /Publicar segmento/ });
+  fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }, ESPERA_MOUNT));
+  fireEvent.change(await screen.findByPlaceholderText('Nome do segmento…', {}, ESPERA_MOUNT), { target: { value: nome } });
+  fireEvent.click(await screen.findByRole('button', { name: filtro }, ESPERA_MOUNT));
+  return screen.findByRole('button', { name: /Publicar segmento/ }, ESPERA_MOUNT);
 }
 
 /** Regras que o construtor mandou gravar. */
@@ -116,6 +123,18 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     f.create.mockReset();
     f.update.mockReset();
     f.create.mockResolvedValue(undefined);
+  });
+
+  // X111: o construtor de segmentos vive no endereço (`?view=talkx&tab=segments&mode=new`).
+  // O `window.location` do jsdom é COMPARTILHADO por todos os testes do arquivo: um
+  // teste que abre o construtor sem publicar (o "em breve" de lead_score, por exemplo)
+  // deixa `mode=new` no endereço, e o `renderView()` do teste seguinte já monta no
+  // construtor — o botão "Novo segmento" nunca aparece e o `findByRole` estoura o teto
+  // de 5 s. Limpar a rota devolve a biblioteca como estado inicial; a asserção de cada
+  // teste continua a mesma. Mesmo idioma dos irmãos do módulo (route/groups/builder/
+  // detailFresh), que esta prova era a única a não ter.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
   });
 
   it('lista: mostra o rótulo legível e grava o valor do banco', async () => {
@@ -193,7 +212,7 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
 
   it('número "em breve" (lead_score): botão desabilitado e sem condição adicionada', async () => {
     renderView();
-    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }, ESPERA_MOUNT));
     // O botão continua visível com o MESMO nome acessível ("Lead score"), mas
     // desabilitado: a coluna nunca é calculada e o filtro seria morto.
     const leadScore = screen.getByRole('button', { name: 'Lead score' });
@@ -204,7 +223,7 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
 
   it('"em breve": Lead score e Risco de churn ficam desabilitados no catálogo', async () => {
     renderView();
-    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }, ESPERA_MOUNT));
 
     // Os dois indicadores que ninguém calcula seguem VISÍVEIS com o nome do campo,
     // marcados "(em breve)" e desabilitados: não há como criar um filtro morto.
