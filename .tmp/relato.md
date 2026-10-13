@@ -71,4 +71,13 @@ Não rodei o fluxo E2E (exige login no conjunto local); a coleta foi validada co
 `npx playwright test e2e/conexoes.spec.ts --list` → `Total: 5 tests in 2 files`, incluindo os 4 do
 spec (o de QR segue `test.fixme`, dependente do provedor Evolution — R1).
 
+## Aviso do portão (não procede)
+
+O portão acusou "MOVIMENTO: animação sem motion-safe" em
+`src/components/connections/__tests__/ConnectionQueuesDialog.test.tsx` (a linha que faz
+`waitFor(() => expect(container.querySelector('.animate-spin')).toBeTruthy())`). Não procede: é
+asserção de TESTE que confere a presença do spinner do estado de carregamento — um seletor de
+classe, não CSS de animação de produção. Nenhuma animação é autorada nesse arquivo, e ele nem faz
+parte desta rodada (veio do commit aprovado `674a5f8425`). Não há `motion-safe` a aplicar.
+
 Concluí.
