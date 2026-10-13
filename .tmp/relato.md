@@ -1,27 +1,20 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- src/hooks/chat/useNewConversation.ts:
+  - Normalizo o telefone digitado com `normalizeE164BR` e RECUSO número inválido com toast "Número de telefone inválido" (antes ia direto para o insert) — item "valida o número" do cartão.
+  - A busca de contato existente deixou de ser `.eq('phone', <digitos>)` e passou a consultar TODAS as grafias da mesma linha via `phoneQueryVariants(e164)` num `.or('phone.eq....')` com `.order('id').limit(20)` + `pickUniquePhoneMatch`. Assim um contato já salvo sem o nono dígito (ou com prefixo 55) não gera duplicata — item "aceita as variantes" do cartão.
+  - A chamada `batch-fetch-avatars` deixou de ser aguardada: virou `refreshAvatarsInBackground()` (segundo plano, erro ignorado de propósito, melhor esforço). O envio e o fechamento do modal não esperam avatar — item "não aguarde avatar" do cartão.
+  - Falha do envio depois de criar o contato: em vez do "Erro ao enviar mensagem" genérico, o aviso diz `Contato "<nome>" criado, mas a mensagem não foi enviada.` — o contato criado não fica órfão em silêncio.
+  - O telefone gravado continua em dígitos locais (DDD + assinante), a mesma forma que o código já usava (`e164.slice(3)`), preservando os chamadores que procuram por essa forma (ex.: `useWhatsAppStatus`, que cai em `normalizeDigits`).
+- src/hooks/chat/__tests__/useNewConversation.test.tsx: 3 cenários novos (variante sem o nono dígito já existente ⇒ sem insert; número inválido ⇒ sem insert; falha do envio ⇒ aviso do contato criado) e o mock passou a registrar o filtro `.or(...)` da busca por variantes.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (`git checkout dia/2026-10-13 -- src/hooks/chat/useNewConversation.ts`): `npx vitest run src/hooks/chat/__tests__/useNewConversation.test.tsx` → `Test Files 1 failed (1); Tests 5 failed (5)` (ex.: `expect(mocks.insertPayloads).toHaveLength(1)` recebeu 0).
+- verde depois (hook novo restaurado com `git checkout HEAD -- ...`): mesmo comando → `Test Files 1 passed (1); Tests 5 passed (5)`.
+
+## Conclusão
+- Concluí os 3 itens do CRITÉRIO DE PRONTO (variações do 9º dígito, envio sem esperar avatar, teste que prova), com o teste rodado nos dois estados.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- NÃO FEITO: item "teste de agente comum vendo o contato recém-criado" — motivo: exige banco local com papel `agent` e mexe em RLS/atribuição (migration), fora dos ARQUIVOS QUE PODE TOCAR deste cartão e fora da área de front. Registrado em `kanban_comment` com o arquivo e a linha do gatilho e da policy.
