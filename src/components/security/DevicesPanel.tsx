@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Monitor, Smartphone, LogOut, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,40 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useDeviceDetection } from '@/hooks/ui/useDeviceDetection';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { SessionCard, DeviceCard } from './DeviceCard';
 
+/**
+ * Lê o claim `session_id` do JWT da sessão Auth corrente (é o mesmo valor que o
+ * backend guarda em `user_sessions.auth_session_id`). Serve para marcar a SESSÃO
+ * atual — e não todas as sessões do mesmo dispositivo. Falha fechado: token
+ * ausente, malformado ou sem o claim devolve null.
+ */
+function sessionIdDaSessaoAtual(accessToken?: string | null): string | null {
+  const parte = accessToken?.split('.')[1];
+  if (!parte) return null;
+  try {
+    const base64 = parte.replace(/-/g, '+').replace(/_/g, '/');
+    const preenchido = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const payload: unknown = JSON.parse(atob(preenchido));
+    if (payload && typeof payload === 'object' && 'session_id' in payload) {
+      const valor = (payload as { session_id?: unknown }).session_id;
+      return typeof valor === 'string' ? valor : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function DevicesPanel() {
   const { devices, sessions, loading, currentDeviceId, trustDevice, removeDevice, endSession, endAllOtherSessions } = useDeviceDetection();
+  const { session: authSession } = useAuth();
+  const currentAuthSessionId = useMemo(
+    () => sessionIdDaSessaoAtual(authSession?.access_token),
+    [authSession?.access_token],
+  );
   const [processingDevice, setProcessingDevice] = useState<string | null>(null);
   const [processingSession, setProcessingSession] = useState<string | null>(null);
 
@@ -63,7 +92,7 @@ export function DevicesPanel() {
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => (
-                <SessionCard key={session.id} session={{ ...session, device_id: session.device_id ?? '', ip_address: session.ip_address ?? '' }} device={(() => { const d = devices.find(d => d.id === session.device_id); return d ? { ...d, device_name: d.device_name ?? '', browser: d.browser ?? '', os: d.os ?? '' } : undefined; })()} isCurrentSession={session.device_id === currentDeviceId} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
+                <SessionCard key={session.id} session={{ ...session, device_id: session.device_id ?? '', ip_address: session.ip_address ?? '' }} device={(() => { const d = devices.find(d => d.id === session.device_id); return d ? { ...d, device_name: d.device_name ?? '', browser: d.browser ?? '', os: d.os ?? '' } : undefined; })()} isCurrentSession={session.auth_session_id != null && session.auth_session_id === currentAuthSessionId} isProcessing={processingSession === session.id} onEndSession={handleEndSession} />
               ))}
             </div>
           )}

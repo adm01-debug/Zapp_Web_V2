@@ -194,3 +194,37 @@ describe('SettingsView — agrupamento em dois niveis', () => {
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual(['Global', 'Mídia']);
   });
 });
+
+// Cartão t_5cc4a897 — o supervisor enxerga a aba Global, mas só o admin escreve
+// em global_settings (RLS). Antes, o supervisor via os controles editáveis e o
+// salvamento falhava no banco. Agora a aba fica somente leitura, com aviso.
+describe('SettingsView — aba Global somente leitura para supervisor', () => {
+  beforeEach(() => {
+    roleState.isAdmin = false;
+    roleState.isSupervisor = false;
+  });
+
+  it('supervisor: aviso de somente leitura e painéis dentro de fieldset desabilitado', () => {
+    roleState.isSupervisor = true;
+    render(<SettingsView />);
+
+    expect(screen.getByText('Somente leitura')).toBeInTheDocument();
+
+    const fieldset = screen.getByTestId('stub-global').closest('fieldset');
+    expect(fieldset).not.toBeNull();
+    expect(fieldset).toBeDisabled();
+    // as chaves de integração ficam no mesmo bloco somente leitura
+    expect(screen.getByTestId('stub-integration-keys').closest('fieldset')).toBe(fieldset);
+  });
+
+  it('admin: sem aviso e painéis editáveis', () => {
+    roleState.isAdmin = true;
+    render(<SettingsView />);
+
+    expect(screen.queryByText('Somente leitura')).not.toBeInTheDocument();
+
+    const fieldset = screen.getByTestId('stub-global').closest('fieldset');
+    expect(fieldset).not.toBeNull();
+    expect(fieldset).not.toBeDisabled();
+  });
+});

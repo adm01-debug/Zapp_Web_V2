@@ -6,10 +6,11 @@ import { StickerManager } from '@/components/inbox/stickers/StickerManager';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Clock, MessageSquare, Bell, Palette, Save, RefreshCw, Loader2,
   Keyboard, Volume2, ArrowRight, Package, Globe, TrendingUp, Settings,
-  Tags, MessageSquareHeart, Bot, Brain, Users,
+  Tags, MessageSquareHeart, Bot, Brain, Users, Info,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AIAutoTagsConfig } from '@/components/settings/AIAutoTagsConfig';
@@ -248,10 +249,21 @@ export function SettingsView() {
 
         {isStaff && (
           <TabsContent value="global">
-            <div className="space-y-6">
+            {!isAdmin && (
+              <Alert role="status" className="mb-6 border-warning/30 bg-warning/10">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Somente leitura</AlertTitle>
+                <AlertDescription>
+                  As configurações globais e as chaves de integração só podem ser alteradas por
+                  administradores. Você está vendo os valores registrados.
+                </AlertDescription>
+              </Alert>
+            )}
+            <fieldset disabled={!isAdmin} className="space-y-6 min-w-0">
+              {!isAdmin && <legend className="sr-only">Configurações globais — somente leitura</legend>}
               <GlobalSettingsSection />
               <IntegrationKeysSection />
-            </div>
+            </fieldset>
           </TabsContent>
         )}
 

@@ -1,5 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -88,19 +92,50 @@ export function QuickReplyCardList({
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(template.updated_at).toLocaleDateString('pt-BR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onToggleFavorite(template.id); }}>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost" size="sm" className="h-8 w-8 p-0"
+                          aria-label={isFavorite(template.id) ? `Remover ${template.title} dos favoritos` : `Favoritar ${template.title}`}
+                          aria-pressed={isFavorite(template.id)}
+                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(template.id); }}
+                        >
                           <Star className={cn("w-4 h-4", isFavorite(template.id) && "fill-yellow-400 text-warning")} />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onCopy(template.content); }}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Copiar ${template.title}`} onClick={(e) => { e.stopPropagation(); onCopy(template.content); }}>
                           <Copy className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onEdit(template); }}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Editar ${template.title}`} onClick={(e) => { e.stopPropagation(); onEdit(template); }}>
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost" size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              aria-label={`Excluir ${template.title}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                A resposta "{template.title}" será excluída. Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => onDelete(template.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </motion.div>

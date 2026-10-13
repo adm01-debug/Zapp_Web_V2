@@ -26,7 +26,7 @@ interface AIProviderFormDialogProps {
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+    <p role="alert" className="text-xs text-destructive flex items-center gap-1 mt-1">
       <AlertCircle className="w-3 h-3 shrink-0" />
       {message}
     </p>
@@ -68,8 +68,9 @@ export function AIProviderFormDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>Nome *</Label>
+            <Label htmlFor="ai-provider-nome">Nome *</Label>
             <Input
+              id="ai-provider-nome"
               value={form.name}
               onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
               placeholder="Ex: Gemini Pro, Agente de Vendas"
@@ -79,8 +80,9 @@ export function AIProviderFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Descrição</Label>
+            <Label htmlFor="ai-provider-descricao">Descrição</Label>
             <Input
+              id="ai-provider-descricao"
               value={form.description || ''}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               placeholder="Descrição breve do provedor"
@@ -110,8 +112,9 @@ export function AIProviderFormDialog({
           {form.provider_type !== 'lovable_ai' && (
             <>
               <div className="space-y-1.5">
-                <Label>Endpoint da API *</Label>
+                <Label htmlFor="ai-provider-endpoint">Endpoint da API *</Label>
                 <Input
+                  id="ai-provider-endpoint"
                   value={form.api_endpoint || ''}
                   onChange={e => setForm(p => ({ ...p, api_endpoint: e.target.value }))}
                   placeholder="https://api.openai.com/v1/chat/completions"
@@ -126,8 +129,9 @@ export function AIProviderFormDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Nome do Secret da API Key</Label>
+                <Label htmlFor="ai-provider-secret">Nome do Secret da API Key</Label>
                 <Input
+                  id="ai-provider-secret"
                   value={form.api_key_secret_name || ''}
                   onChange={e => setForm(p => ({ ...p, api_key_secret_name: e.target.value }))}
                   placeholder="OPENAI_API_KEY"
@@ -141,8 +145,9 @@ export function AIProviderFormDialog({
           )}
 
           <div className="space-y-1.5">
-            <Label>Modelo</Label>
+            <Label htmlFor="ai-provider-modelo">Modelo</Label>
             <Input
+              id="ai-provider-modelo"
               value={form.model || ''}
               onChange={e => setForm(p => ({ ...p, model: e.target.value }))}
               placeholder={form.provider_type === 'lovable_ai' ? 'google/gemini-3-flash-preview' : 'gpt-4o'}
@@ -151,8 +156,9 @@ export function AIProviderFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Prompt de Sistema</Label>
+            <Label htmlFor="ai-provider-prompt">Prompt de Sistema</Label>
             <Textarea
+              id="ai-provider-prompt"
               value={form.system_prompt || ''}
               onChange={e => setForm(p => ({ ...p, system_prompt: e.target.value }))}
               placeholder="Instruções personalizadas para o modelo..."

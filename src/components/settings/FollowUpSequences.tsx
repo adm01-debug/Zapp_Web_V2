@@ -8,6 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/ui/use-toast';
 import { Plus, Trash2, Clock, ArrowRight, Zap, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -229,9 +233,30 @@ export function FollowUpSequences() {
                     <Badge variant={seq.is_active ? 'default' : 'secondary'}>
                       {seq.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Excluir sequência ${seq.name}`} onClick={() => deleteMutation.mutate(seq.id)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Excluir sequência ${seq.name}`}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir sequência?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            A sequência "{seq.name}" e os passos dela serão excluídos. Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteMutation.mutate(seq.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
 
