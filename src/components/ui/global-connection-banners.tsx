@@ -116,7 +116,10 @@ export function BackendStatusBanner() {
         disabled={checking}
         className="flex shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1 text-xs font-medium text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50"
       >
-        <RefreshCw className={cn('w-3 h-3', checking && 'animate-spin')} aria-hidden="true" />
+        <RefreshCw
+          className={cn('w-3 h-3', checking && 'motion-safe:animate-spin')}
+          aria-hidden="true"
+        />
         Tentar agora
       </button>
     </div>
