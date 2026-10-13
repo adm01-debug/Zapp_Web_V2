@@ -1,27 +1,89 @@
-Especialista: workertestes
+Especialista: worker (design) (design-system-zapp)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- src/styles/utilities.css: a regra `@media (pointer: coarse) .alvo-toque-44` deixou de inflar a
+  caixa (saiu `display/align-items/justify-content/min-width/min-height`) e passou a criar só um
+  `::after` centrado de 44x44 — área de toque sem mexer no desenho. Motivo: o `display: inline-flex`
+  sobrescrevia `hidden`/`sm:inline-flex` de quem consome (ex.: src/components/chat/EmailChatInbox.tsx:260
+  usa `hidden sm:inline-flex` num Button — no toque ele reaparecia) e inflar a caixa do checkbox/radio
+  (borda) e do X do sheet (`data-[state=open]:bg-secondary`) pintava um bloco de 44px.
+- src/components/ui/button.tsx e icon-button.tsx: os tamanhos pequenos (`default`, `sm`, `icon`,
+  `icon-sm`) ganharam a variante Tailwind exportada `ALVO_TOQUE_GROSSO`
+  (`[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]`), resolvida pelo
+  twMerge na camada de utilitários. `lg`/`xl`/`icon-lg` já têm 44px+ e não mudam.
+- src/components/ui/checkbox.tsx e radio-group.tsx: receberam `relative` (para o `::after` ancorar) e
+  mantêm `alvo-toque-44`; o desenho continua 16x16.
+- src/components/ui/dialog.tsx e sheet.tsx: o X mantém `alvo-toque-44` e o `z-10`; com o `::after` o
+  desenho (X de 16px; 24px com `p-1` no dialog) fica do tamanho de sempre.
+- src/components/ui/micro-interactions/buttons.tsx: comentário do ripple corrigido — o token
+  `hsl(var(--primary-foreground) / 0.3)` é branco em tokens.css (claro:110, escuro:446) e no alto
+  contraste CLARO (accessibility.css:12), mas no ALTO CONTRASTE ESCURO é `0 0% 0%`
+  (accessibility.css:35) porque o `--primary` de lá é o violeta claro 258 100% 65%; nesse modo o
+  ripple fica escuro sobre o violeta, que é o par de contraste do próprio botão. Está registrado no
+  comentário do arquivo.
+- e2e/a11y-toque-44px.spec.ts: a medição virou ÁREA DE TOQUE — `areaToque44()` lê os 4 cantos de um
+  quadrado de 44x44 centrado no controle com `document.elementFromPoint` (o `::after` pertence à
+  caixa de hit-test do próprio elemento). Somado a isso, o teste afirma que o DESENHO continua
+  pequeno no toque (checkbox ≤20px, X ≤32px) e que o botão pequeno cresce só no toque
+  (`size="icon"` + `w-8 h-8`: ≥44px e `min-height` computado `44px`), além da prova de ponteiro fino
+  (checkbox ≤24px, X ≤32px, botão de ações ≤32px) e do fechamento por clique.
+- src/components/ui/__tests__/alvos-toque-44px.test.tsx: contrato atualizado — X/checkbox/radio
+  carregam `alvo-toque-44` + `relative`; Button/IconButton carregam `ALVO_TOQUE_GROSSO` e NÃO a
+  classe; a regra coarse do CSS só declara `::after` (guarda contra a volta do `display`/`min-width`
+  no elemento) e não existe fora do media query. O teste lê o CSS sem comentários (os comentários
+  citam a classe e dariam falso positivo).
+- playwright.config.ts: mantido o ponto do refazer anterior — `a11y-toque-44px.spec.ts` entra no
+  `testIgnore` do `chromium-authenticated` para não ser coletado pelo catch-all autenticado (que
+  exigiria sessão real, proibida pela R1); o `chromium-a11y` já o coleta pelo `testMatch`.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (área de toque inflava o desenho — a versão recusada do CSS): editei
+  `src/styles/utilities.css` para repor `min-width/min-height/display` no `.alvo-toque-44` e rodei
+  `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5271 npx playwright test e2e/a11y-toque-44px.spec.ts
+  --project=chromium-a11y -g "celular"` → `Error: largura do checkbox: 44px` /
+  `expect(received).toBeLessThanOrEqual(expected) Expected: <= 20 Received: 44` → `1 failed`.
+- vermelho antes (variante de tamanho do botão ausente): tirei `ALVO_TOQUE_GROSSO` do `size: icon` e
+  rodei o mesmo teste → `Error: largura das ações: 32px` / `Expected: >= 44 Received: 32`
+  (`min-height computado das ações` na linha seguinte) → `1 failed`.
+- vermelho antes (contrato vitest): com `min-width`/`min-height`/`display` de volta no elemento,
+  `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` →
+  `AssertionError: expected '\n  .alvo-toque-44 {\n    display: in…' not to match /\.alvo-toque-44\s*\{/`
+  → `Tests 1 failed | 5 passed (6)`.
+- verde depois (e2e, pixel real, depois de reverter as 3 mutações):
+  `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5275 npx playwright test e2e/a11y-toque-44px.spec.ts
+  --project=chromium-a11y --timeout=180000` → `3 passed (59.1s)`.
+- verde depois (contrato): `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` →
+  `Test Files 1 passed (1)`; `Tests 6 passed (6)`.
+- Diagnóstico usado no meio (e revertido): medi no navegador `getComputedStyle(el, '::after')` e
+  `elementFromPoint` — `content: ""`, `width/height: 44px`, `position: absolute`, e os 4 cantos
+  devolvendo o próprio checkbox (`isEl: true`). Nada disso ficou no diff.
+
+## Pontos do revisor ([refazer t_9a266076])
+- Ponto 1: tirei `display`/`align-items`/`justify-content` (e `min-width`/`min-height`) da regra
+  coarse; os tamanhos de botão agora usam a variante Tailwind `ALVO_TOQUE_GROSSO`
+  (`[@media(pointer:coarse)]:min-h-[44px] min-w-[44px]`, mesma forma que `src/components/layout/Sidebar.tsx`
+  já usa) em src/components/ui/button.tsx e icon-button.tsx. Prova: vermelho `largura das ações: 32px`
+  × verde `3 passed`.
+- Ponto 2: checkbox e radio mantêm o desenho de 16x16 (`aspect-square h-4 w-4`) e ganharam `relative`
+  para o `::after` de 44x44 ancorar; a área de toque é medida por `elementFromPoint` nos 4 cantos.
+  Prova: `largura do checkbox: 44px` (vermelho) × checkbox ≤20px e cantos OK (verde).
+- Ponto 3: o X do sheet e do dialog usam o mesmo `::after` (nada de inflar a caixa), com o `z-10`
+  mantido; o `data-[state=open]:bg-secondary` do sheet agora pinta só os 16px do X. Prova: no toque o
+  X é ≤32px desenhado e os 4 cantos do alvo de 44 acertam o botão (3 passed).
+- Ponto 4: a medição deixou de ser `boundingBox` do desenho e passou a ser a área de toque
+  (`areaToque44()`, 4 cantos de 44x44 via `elementFromPoint`); a prova de desktop inalterado e o teste
+  de contrato vitest ficaram. Prova: `3 passed`; mutação do CSS derruba o teste (`... 44px` ≠ ≤20).
+- Ponto 5: registrei no comentário de src/components/ui/micro-interactions/buttons.tsx que
+  `--primary-foreground` vira `0 0% 0%` no alto contraste ESCURO (accessibility.css:35), então o ripple
+  fica escuro sobre o `--primary` violeta claro daquele modo — que é o par de contraste do botão. Não
+  troquei o token (nenhum token novo, `--primary-foreground` é o par de contraste do `--primary`).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não mexi no `display` de nenhum consumidor nem em `src/components/layout/Sidebar.tsx` (já tinha o
+  padrão da variante coarse) — fora do defeito do cartão.
+- `npm run typecheck` (`tsc -b --force`) e `npx tsc -p tsconfig.app.json --noEmit` foram MORTOS por
+  OOM nesta sessão do WSL (`Killed`, inclusive com `--max-old-space-size=4096`), com outros dev
+  servers da máquina no ar; a tipagem entra pela verificação do fechar. Não consegui rodar typecheck
+  local então não afirmo que ele passou aqui.
+- Não rodei a suíte vitest inteira (memória da fábrica: 1 suite por vez no WSL); rodei só o contrato
+  alterado e o e2e do cartão.
