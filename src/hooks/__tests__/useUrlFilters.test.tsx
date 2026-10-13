@@ -21,7 +21,6 @@ describe('useUrlFilters', () => {
   it('returns empty filters by default', () => {
     const { result } = renderHook(() => useUrlFilters());
     expect(result.current.filters.status).toEqual([]);
-    expect(result.current.filters.tags).toEqual([]);
     expect(result.current.filters.agentId).toBeNull();
     expect(result.current.filters.dateFrom).toBeNull();
     expect(result.current.filters.dateTo).toBeNull();
@@ -37,12 +36,6 @@ describe('useUrlFilters', () => {
     const { result } = renderHook(() => useUrlFilters());
     expect(result.current.filters.status).toEqual(['open', 'resolved']);
     expect(result.current.hasActiveFilters).toBe(true);
-  });
-
-  it('parses tags from URL', () => {
-    mockSearchParams.set('tags', 'vip,urgent');
-    const { result } = renderHook(() => useUrlFilters());
-    expect(result.current.filters.tags).toEqual(['vip', 'urgent']);
   });
 
   it('parses agentId from URL', () => {

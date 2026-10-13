@@ -49,7 +49,6 @@ const contato: Contact360Contact = {
   relationship_stage: null,
   relationship_score: 0,
   sentiment: null,
-  tags: [],
   behavior: null,
   notes: null,
   source: null,

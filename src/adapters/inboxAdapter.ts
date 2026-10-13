@@ -105,7 +105,6 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     unreadCount: rc.unreadCount,
     status: 'open',
     priority,
-    tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
     firstResponseAt: slaOpen

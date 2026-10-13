@@ -76,7 +76,6 @@ const conversation: Conversation = {
   unreadCount: 0,
   status: 'open',
   priority: 'low',
-  tags: [],
   createdAt: new Date('2026-10-01'),
   updatedAt: new Date('2026-10-05'),
 };
