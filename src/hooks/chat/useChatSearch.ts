@@ -69,6 +69,11 @@ export function useChatSearch({
   const onNavigateToMessageRef = useRef(onNavigateToMessage);
   onHighlightChangeRef.current = onHighlightChange;
   onNavigateToMessageRef.current = onNavigateToMessage;
+  // `onSearchQueryChange` também vira ref: o timer de debounce (200 ms) dispara
+  // depois do render, então sem o ref ele chamaria a versão capturada quando a
+  // query mudou — um callback antigo, se o pai tiver trocado o prop no meio.
+  const onSearchQueryChangeRef = useRef(onSearchQueryChange);
+  onSearchQueryChangeRef.current = onSearchQueryChange;
 
   // Compute effective date range
   const dateRange = useMemo(() => {
@@ -110,7 +115,7 @@ export function useChatSearch({
       setCustomDateFrom(null);
       setCustomDateTo(null);
       onHighlightChangeRef.current(new Set(), null);
-      onSearchQueryChange?.('');
+      onSearchQueryChangeRef.current?.('');
     }
   }, [isOpen]);
 
@@ -119,7 +124,7 @@ export function useChatSearch({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedQuery(query);
-      onSearchQueryChange?.(query);
+      onSearchQueryChangeRef.current?.(query);
     }, 200);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);

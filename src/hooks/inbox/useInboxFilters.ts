@@ -1,6 +1,8 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useDeferredValue } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
+import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
@@ -18,6 +20,15 @@ import {
   passesExtraFilters,
   countByChip,
 } from './chipCounts';
+
+// Tipos de contato conhecidos — a MESMA lista do seletor (ContactTypeFilter).
+// O `?type=` da URL só aceita esses valores; valor desconhecido é ignorado em
+// vez de virar um filtro que não casa com nenhuma conversa.
+const CONTACT_TYPE_VALUES = new Set(
+  FILTER_OPTIONS.map((o) => o.value).filter((v) => v !== 'all'),
+);
+const normalizeContactType = (raw: string | null | undefined): string | null =>
+  raw && raw !== 'all' && CONTACT_TYPE_VALUES.has(raw) ? raw : null;
 
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
@@ -41,23 +52,30 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   }, []);
   const [showAll, setShowAll] = useState(false);
   const [selectedQueueId, setSelectedQueueId] = useState<string | null>(null);
-  const [selectedContactType, setSelectedContactType] = useState<string | null>(() => {
-    const typeFromUrl = new URLSearchParams(window.location.search).get('type');
-    return typeFromUrl && typeFromUrl !== 'all' ? typeFromUrl : null;
-  });
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [selectedContactType, setSelectedContactType] = useState<string | null>(() =>
+    normalizeContactType(searchParams.get('type')),
+  );
 
   const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    setSelectedContactType(value);
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, []);
+    const next = normalizeContactType(value);
+    setSelectedContactType(next);
+    // Persistido pelo roteador (mesmo caminho dos outros filtros), mesclando com
+    // os params atuais: mudar status/tag/data não apaga o `type` e vice-versa.
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next) {
+        params.set('type', next);
+      } else {
+        params.delete('type');
+      }
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({
@@ -72,6 +90,10 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   // Busca só em memória: telefone/nome digitado não pode ir para a URL.
   const [search, setSearch] = useState('');
+  // `search` acompanha a tecla (input controlado); a varredura pesada (lista e
+  // contadores dos chips) usa o valor adiado — uma passada só quando a digitação
+  // pausa, em vez de uma por tecla.
+  const deferredSearch = useDeferredValue(search);
 
   const setFilters = useCallback((newFilters: InboxFiltersState) => {
     setUrlFilters({
@@ -86,8 +108,8 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // Contexto dos filtros extras (busca, tipo, painel) — o MESMO objeto alimenta
   // a lista e o countByChip, para os dois nunca usarem regras diferentes.
   const extraFilterContext = useMemo(
-    () => ({ search, selectedContactType, filters }),
-    [search, selectedContactType, filters],
+    () => ({ search: deferredSearch, selectedContactType, filters }),
+    [deferredSearch, selectedContactType, filters],
   );
 
   const filteredConversations = useMemo(() => {
