@@ -65,8 +65,9 @@ function blobEhJson(blob: Blob): boolean {
  * montagem a partir do Blob cacheado e revogada no desmontar, entao a remontagem dentro do
  * `staleTime` nao herda uma URL morta (defeito do refazer #62).
  *
- * Transporte (T73/T67, preservado nos refazeres anteriores): POST implicito do invoke com
- * `{ callId }` no corpo (nunca na URL) e bearer/apikey de `edgeAuthHeaders`; sem fallback proprio.
+ * Transporte (T73/T67, preservado nos refazeres anteriores): `invoke` autenticado com
+ * metodo POST explicito, `{ callId }` no corpo (nunca na URL) e bearer/apikey/Content-Type de
+ * `edgeAuthHeaders`; sem fallback proprio.
  * 403/404 sao resposta esperada da Edge e viram `{ disponivel: false }`; qualquer outra falha
  * (rede, 401, 5xx, erro ao montar auth) PROPAGA - nada aqui engole erro. Blob de tamanho 0 nao e
  * gravacao valida, e uma resposta JSON (o formato dos erros/controles da Edge) tambem nao: nao ha
@@ -82,8 +83,9 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<GravacaoDaChamada> => {
       const { data, error } = await supabase.functions.invoke('get-call-recording', {
+        method: 'POST',
+        headers: { ...(await edgeAuthHeaders()), 'Content-Type': 'application/json' },
         body: { callId },
-        headers: await edgeAuthHeaders(),
       });
 
       if (error) {

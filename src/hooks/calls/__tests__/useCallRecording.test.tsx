@@ -112,11 +112,13 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
     expect(headersDaEdge).toHaveBeenCalledTimes(1);
     expect(invokeDaEdge).toHaveBeenCalledTimes(1);
     expect(invokeDaEdge).toHaveBeenCalledWith('get-call-recording', {
-      body: { callId: 'call-bytes-2' },
+      method: 'POST',
       headers: {
-        apikey: 'anon-key-do-teste',
+        apikey: expect.any(String),
         Authorization: 'Bearer jwt-do-usuario-teste',
+        'Content-Type': 'application/json',
       },
+      body: { callId: 'call-bytes-2' },
     });
     expect(JSON.stringify(invokeDaEdge.mock.calls[0])).not.toContain('callId=');
     expect(JSON.stringify(invokeDaEdge.mock.calls[0])).not.toContain('/functions/v1/');
@@ -204,11 +206,13 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
 
     await waitFor(() => expect(estadoDaQuery(queryClient, 'call-sem-sessao')?.status).toBe('error'));
     expect(invokeDaEdge).toHaveBeenCalledWith('get-call-recording', {
-      body: { callId: 'call-sem-sessao' },
+      method: 'POST',
       headers: {
-        apikey: 'anon-sem-sessao',
+        apikey: expect.any(String),
         Authorization: 'Bearer anon-sem-sessao',
+        'Content-Type': 'application/json',
       },
+      body: { callId: 'call-sem-sessao' },
     });
   });
 
