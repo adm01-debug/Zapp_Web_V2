@@ -1,27 +1,65 @@
-Especialista: workertestes
+# fix(ci): reancora a guarda de tipografia na tabela da Lista (etapa 050)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+Especialista: worker (design) (design-system-zapp)
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## O que mudou e por quê
+- scripts/ci/docs-design-drift.unit.mjs: a guarda `tipografiaDoSubcabecalho` e o casador da linha
+  da doc passam a ler `src/components/tasks/list/TasksListTable.tsx` (arquivo que RENDERIZA o
+  subcabecalho dos dias) em vez de `TasksListMode.tsx`. A entrega empilhada (b1492e4986 "Lista em
+  tabela", etapa 050) tirou o rotulo da Lista do `<div>` inline e o levou para o `<th>` da tabela;
+  a guarda continuava procurando `{g.label}` no arquivo antigo, onde ele nao existe mais.
+- scripts/ci/docs-design-drift.unit.mjs: a leitura do className passa a aceitar o elemento JSX cuja
+  tag de abertura fica na linha ANTERIOR ao `{g.label}` (um `<th …>` multi-linha), janela de no
+  maximo 2 linhas — nunca um className solto mais distante.
+- docs/design/TAREFAS_QUADRO_STATUS.md: a linha de "Mudancas" que nomeia o arquivo do subcabecalho
+  passa a apontar `TasksListTable.tsx`, mantendo `text-xs` (mesmo token) e registrando que o rotulo
+  migrou de `TasksListMode.tsx` na etapa 050.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Nenhuma assercao afrouxada: o invariante continua "a doc cita a classe que o codigo usa", agora
+ancorado no arquivo real.
+
+## Pontos do revisor ([refazer] — os 3 itens de "O QUE FAZER" do cartao)
+- Ponto 1 (partir do commit da entrega 6e5240688 com cherry-pick, nao recomecar): feito.
+  `git cherry-pick b1492e4986 6cb4d63a09 6e5240688` aplicou a cadeia da entrega sobre
+  `dia/2026-10-13`; o sha do cartao (6e5240688) e a ponta da pilha, e minha correcao e o commit
+  seguinte, `34750b2ac5`.
+- Ponto 2 (reproduzir sobre a ponta de dia/2026-10-13 e corrigir a causa sem afrouxar assercao):
+  provado abaixo. Reproduzi `node --test scripts/ci/docs-design-drift.unit.mjs` -> `not ok 11`; a
+  causa era a ancora da guarda no arquivo movido; corrigi ancorando a guarda no codigo real
+  (arquivo + leitura do className do proprio elemento) e a doc junto. As 3 mutacoes continuam
+  vermelhas (nenhuma assercao afrouxada).
+- Ponto 3 (provar o mesmo comando VERDE e `zapp-verify . --rapido` verde; fechar citando o sha):
+  ESPELHO DO CI nos seus blocos -> sem falha nova (item do subcabecalho sumiu); `zapp-verify .
+  --rapido` -> `VERIFY: VERDE SEM BANCO (235s)`. Shas citados: entrega `6e5240688`, correcao
+  `34750b2ac5`.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (com a entrega empilhada, sem o meu commit): `node --test --test-reporter=tap scripts/ci/docs-design-drift.unit.mjs`
+  -> `not ok 11 - doc de Tarefas/Quadro cita a classe do subcabeçalho que o código usa`
+     `error: 'src/components/tasks/list/TasksListMode.tsx: não achei o subcabeçalho dos grupos (linha com {g.label})'`
+- verde depois: mesmo comando -> `# tests 11 / # pass 11 / # fail 0`
+- mutacoes (a assercao ainda morde; cada uma VERMELHA e depois restaurada para verde):
+  - M1 codigo usa `text-sm`, doc diz `text-xs` -> `not ok 11`
+  - M2 subcabecalho perde o token de tamanho -> `not ok 11`
+  - M3 doc aponta token que o codigo nao usa -> `not ok 11`
+- ESPELHO DO CI (rodei os MESMOS blocos de comando do `ci_espelho.sh` a partir do workspace; ver
+  observacao abaixo):
+  - `node --test` sobre os 148 arquivos de scripts/ci, edge-deploy, db-audit, talkx: o item do
+    subcabecalho NAO aparece mais; permanecem exatamente os 10 itens ja presentes na base
+    (lint-ratchet --staged, Talk X delivery window, FLAG_CHANGES.md, tsconfig any, staged) —
+    nenhuma falha NOVA, conforme a bisseccao do proprio cartao (causava um unico item).
+  - `deno test --config scripts/ci/deno.json --frozen …` sobre 164 arquivos: verde.
+  - contratos: `vitest run --config vitest.contracts.config.ts` -> `Test Files 89 passed (89);
+    Tests 1379 passed (1379)`.
+  - testes da entrega: `vitest run TasksListTable.test.tsx TasksListMode.test.tsx` -> `2 passed (2);
+    20 passed (20)`.
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (235s)` (db_guard/tipos/lint/migrations OK).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Nao rodei o `bash ~/arquitetura-v2/integrador/ci_espelho.sh` literal: a guarda do Hermes bloqueia
+  qualquer segmento `bash` cujo caminho contenha `/arquitetura-v2` (GUARD_PATH_RE, hermes-guard.py
+  linhas 234/310), e o meu papel proibe contornar guarda. Rodei os MESMOS blocos do espelho (deno,
+  node --test dos .unit.mjs/.test.mjs, contratos, guardas baratas) no workspace; a comparacao base x
+  cartao deu zero falha nova.
+- Nao toquei em nenhuma outra guarda nem no codigo da tela: era desalinhamento de ancora da guarda
+  com o codigo movido, nao bug de comportamento.
