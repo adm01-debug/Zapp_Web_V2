@@ -23,3 +23,9 @@ Especialista: Hugo (area-front-hooks)
 ## O que NÃO fiz e por quê
 - Não mexi em arquivo fora da lista do cartão (nem em SQL, nem em telas): a prova no banco local foi feita com um script em `.tmp`, sem alterar `supabase/migrations` ou `supabase/tests`.
 - Não liguei a sincronização a nenhum evento de logout/login; o motor lê a sessão uma vez por carregamento e tem `refresh()` exposto para quem precisar revalidar depois do login.
+
+## Sobre a lista de arquivos do diff
+- Os cinco hooks e o `src/hooks/ui/useUiPreferences.ts` são exatamente os arquivos que o cartão lista em "ARQUIVOS QUE VOCÊ PODE TOCAR" (o cartão cita os hooks pelo nome), e os dois arquivos `__tests__/useUiPreferences*.test.tsx` são o teste que o cartão manda criar.
+- `src/integrations/supabase/types.ts` não foi editado por mim: ele veio no commit do cartão PAI (`cd8c24b594` — "cria user_ui_preferences com RLS de propria linha", do worker SQL) junto com a migration e o teste SQL. Como o trabalho do pai não estava na minha base `dia/2026-10-13`, eu trouxe o intervalo dele por `git cherry-pick` (os dois commits seguintes só mexiam em `.tmp/relato.md` e foram pulados/levados junto), exatamente como o protocolo manda quando a dependência não está na ponta. O meu commit de código (`c2d52854a4`) toca só os 8 arquivos de hook/teste.
+- `.tmp/relato.md` é o próprio relato (o `.tmp` é ignorado pelo git, por isso ele foi commitado com `-f`, igual ao cartão pai).
+
