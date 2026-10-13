@@ -1,27 +1,22 @@
-Especialista: workertestes
+Especialista: workersql
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- supabase/migrations/20261013235906_quick_replies_uso_e_global.sql (novo) — corrige os dois defeitos vivos de public.message_templates (PH-10, paridade V3→V2 do doc 06-features-inbox-hooks):
+  (a) nova RPC public.increment_quick_reply_use(p_id uuid), SECURITY DEFINER, soma atomica (`use_count = coalesce(use_count,0)+1`) e so toca linhas VISIVEIS ao chamador (`user_id = auth.uid() or is_global = true`, a mesma regra do SELECT). Resolve o contador de resposta GLOBAL de outro usuario: o `update ... use_count = use_count + 1` do hook alcancava 0 linhas sem erro. `revoke all` de public/anon e `grant execute` so a authenticated; erro 42501 se nao autenticado, 22023 se id nulo, retorna false para id inexistente/nao visivel.
+  (b) policies de INSERT e UPDATE de message_templates passam a exigir admin/supervisor para `is_global = true` via public.is_admin_or_supervisor(auth.uid()), mantendo `user_id = auth.uid()`; a policy de UPDATE recebeu WITH CHECK com a mesma regra. NENHUM dado e migrado; respostas globais existentes ficam exatamente como estao.
+- gatilho zz_message_templates_preserve_updated_at + funcao public.message_templates_preserve_updated_at() — quando a unica coluna que muda e use_count, restaura old.updated_at, para contar uso nao reescrever o "atualizado em". Roda depois do carimbo (ordem alfabetica 'u' < 'z'). Edicao de verdade (titulo/conteudo/atalho/categoria/is_global) continua carimbando.
+- supabase/tests/quick_replies_uso_e_global.sql (novo) — prova por PAPEL REAL (authenticated/anon/service_role, via SET LOCAL ROLE + request.jwt.claims), em Postgres descartavel que aplica as migrations REAIS. O anon recebe os grants de tabela (iguais aos do schema-manifest.json) para que o "anon nao ve nenhuma resposta" meça a RLS, nao um permission denied de fixture.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## zapp-verify . --rapido (critério 2)
+- `zapp-verify . --rapido` → `OK db_guard`, `OK lint` (nenhum arquivo lintável alterado), `OK migrations` (831 arquivos válidos em supabase/migrations); `FALHOU tipos 762s` com `tc-rapido.sh: tsc saiu 137 em app (falha de execução, NÃO é aprovação)` e `ERRO no typecheck ratchet: tsc -b falhou com exit null` → `VERIFY: VERMELHO em tipos`.
+- Isso é OOM de infraestrutura, não defeito do cartão: a máquina está com 3 jobs "pesados" no pool e load ~46 (memória disponível ~3 GiB); o tsc foi morto por sinal 137 ("Killed"), sem nenhum erro de tipo apontado. O diff deste cartão é SÓ SQL (`supabase/migrations/**.sql` + `supabase/tests/**.sql`) — não há um único arquivo .ts/.tsx alterado, então o typecheck não depende desta entrega. Duas execuções seguidas deram o mesmo (596c76cd0119 e 290d7b193ca0).
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `docker exec -i <pg> psql -v ON_ERROR_STOP=1 -v sem_guarda=1 -v mig_dir=/repo/supabase/migrations < supabase/tests/quick_replies_uso_e_global.sql` → `EXIT_VERMELHO=3`; `ERROR: PH-10 FALHOU [B1 agente conta uso da GLOBAL de outro (retorno true)]: esperado true, obtido ERRO 42883 function public.increment_quick_reply_use(unknown) does not exist`.
+- verde depois: `docker exec -i <pg> psql -v ON_ERROR_STOP=1 -v mig_dir=/repo/supabase/migrations < supabase/tests/quick_replies_uso_e_global.sql` → `EXIT_VERDE=0`, `PASS: 32  FALHOU: 0`; ultimas: `PASS [B10b anon nao ve nenhuma resposta] -> 0`, `PASS [B11 contar uso preserva updated_at (antes = depois)] -> igual`, `PASS [B11b editar de verdade carimba updated_at (antes <> depois)] -> diferente`, `PASS [B13 id inexistente retorna false] -> false`, `ROLLBACK`.
+- rollback executavel: aplico a migration e rodo as linhas de `-- Rollback (SQL executavel, na ordem)` → `EXIT_ROLLBACK=0`; depois: `depois RPC=false`, `depois funcao_trg=false`, `depois gatilho_zz=false`, `depois policies=Users can create their own templates,Users can update their own templates` (de volta ao estado anterior, so dono).
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## O que NAO fiz e por que
+- Nao mudei nenhum GRANT/ACL existente alem dos explicitos da funcao nova; sem DROP/TRUNCATE/DELETE de dado.
+- Nao toquei o hook/tela (src/hooks/chat/useQuickReplies.ts): trocar o `update` pela RPC e a parte da tela/hook, outra area. Registrado aqui para o handoff.
+- Nao criei scripts/db-audit/*.test.sh: a prova e a suite .sql em supabase/tests/, que nao entra no inventario de .test.sh.
