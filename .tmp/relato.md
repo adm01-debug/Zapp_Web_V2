@@ -7,6 +7,8 @@ Ponto 1 — rebase do trabalho aprovado na ponta atual preservando o que já ent
 
 Ponto 2 — não acrescentar comportamento além da entrega aprovada
 - O que mudei: não alterei a lógica aprovada da migration nem do teste SQL depois do cherry-pick; não toquei CI, manifesto, docs, telas, Edge Functions, policies existentes nem arquivos fora da lista permitida.
+- Permissão/RLS: a migration cria uma tabela nova e, por segurança, revoga o ALL padrão de PUBLIC/anon/authenticated, devolve SELECT a authenticated filtrado pela policy instance_pauses_select_staff e concede escrita direta só ao service_role; isso faz parte do comportamento aprovado para histórico de pausas, porque clientes escrevem apenas via RPC SECURITY DEFINER.
+- Prova com papel real: supabase/tests/instance_pauses.sql T9 confere RLS/ACL — staff lê, agente não-staff lê zero linha, anon é barrado, INSERT/UPDATE/DELETE diretos não são concedidos a papel de cliente, anon sem EXECUTE nas funções e agente não-staff sem acesso a is_instance_paused (42501).
 - Prova: git diff --stat HEAD~1...HEAD mostra apenas a migration nova, o teste SQL, types gerado e este relato.
 
 Ponto 3 — teste do cartão e verificação completa
