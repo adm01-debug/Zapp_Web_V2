@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { CircleHelp, Loader2, Mail, Plus, RefreshCw, Search, Wifi } from 'lucide-react';
+import { AlertTriangle, CircleHelp, Loader2, Mail, Plus, RefreshCw, Search, Wifi } from 'lucide-react';
 import { useGmail } from '@/hooks/integrations/useGmail';
 import { useEmailThreadListQuery } from '@/hooks/email/useEmailThreadListQuery';
 import { useEmailThreadForContact } from '@/hooks/integrations/useEmailThreadForContact';
@@ -10,12 +10,13 @@ import { EmailContactPanel } from './EmailContactPanel';
 import { EmailComposer } from '@/components/gmail/EmailComposer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
 import { emailLoadErrorCopy } from '@/lib/emailErrorState';
+import { formatRelativeTime } from '@/lib/formatters';
+import { GmailAccountSelector } from '@/components/gmail/GmailAccountSelector';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 
 function matchesWideDetailsLayout(): boolean {
@@ -75,6 +76,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
     accounts, accountsLoading, accountsError, refetchAccounts, activeAccount,
     threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
     syncLabels, unreadCount, threadsTotalCount, threadsPageCount, subscribeToThreads, requestedThread, downloadAttachment,
+    lastError, lastSyncedAt, needsReconnect,
   } = useGmail(accountId, selectedThreadId, listQuery);
   // A página pedida nunca passa do intervalo conhecido: no clique ela já é
   // limitada a `Math.min(page, Math.max(1, threadsPageCount))` e, se o total
@@ -241,6 +243,44 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
 
   return (
     <section data-testid="email-workspace" aria-label="Email" className="email-workspace flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-foreground">
+      {(needsReconnect || lastError) && (
+        <div
+          data-testid="gmail-sync-banner"
+          role={needsReconnect ? 'alert' : 'status'}
+          className={cn(
+            'flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2.5 text-sm md:px-5',
+            needsReconnect
+              ? 'border-destructive/30 bg-destructive/10 text-destructive'
+              : 'border-warning/30 bg-warning/10 text-[hsl(var(--warning-text))]',
+          )}
+        >
+          {needsReconnect
+            ? <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
+            : <RefreshCw className="h-5 w-5 shrink-0 motion-safe:animate-spin" aria-hidden="true" />}
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">
+              {needsReconnect ? 'Sua conta Gmail precisa ser reconectada' : 'Falha ao sincronizar sua conta Gmail'}
+            </p>
+            <p className="text-xs">
+              {needsReconnect
+                ? 'O Google recusou a autorização desta conta; reconecte para voltar a receber e enviar e-mails.'
+                : lastError}
+              {lastSyncedAt ? ` Última sincronização ${formatRelativeTime(lastSyncedAt)}.` : ''}
+            </p>
+          </div>
+          {needsReconnect ? (
+            <Button size="sm" onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending}>
+              {connectGmail.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Reconectar
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}>
+              {syncInbox.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Tentar novamente
+            </Button>
+          )}
+        </div>
+      )}
       {!embedded && <header data-testid="email-header" className="shrink-0 border-b border-border bg-inbox-panel px-4 py-3 shadow-header md:px-5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -252,10 +292,11 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
             <Input aria-label="Busca global do Email" value={globalSearchQuery} onChange={event => setGlobalSearchQuery(event.target.value)} placeholder="Buscar e-mails, remetentes, assuntos, anexos…" className="h-10 border-input bg-input pl-10 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring" />
           </div>
           {accounts.length > 1 && (
-            <Select value={activeAccount.id} onValueChange={nextAccountId => { navigateToThread(null, true); setShowComposer(false); setComposerTo(''); setAccountId(nextAccountId); }}>
-              <SelectTrigger aria-label="Conta de email ativa" className="hidden h-9 w-[220px] border-input bg-input text-xs lg:flex"><SelectValue /></SelectTrigger>
-              <SelectContent>{accounts.filter(account => account.is_active).map(account => <SelectItem key={account.id} value={account.id}>{account.email_address}</SelectItem>)}</SelectContent>
-            </Select>
+            <GmailAccountSelector
+              accounts={accounts}
+              activeAccountId={activeAccount.id}
+              onSelectAccount={nextAccountId => { navigateToThread(null, true); setShowComposer(false); setComposerTo(''); setAccountId(nextAccountId); }}
+            />
           )}
           <Button ref={helpButtonRef} variant="outline" onClick={() => setShowHelp(true)} className="ml-auto hidden sm:inline-flex"><CircleHelp className="mr-2 h-4 w-4" />Ajuda</Button>
           <Button onClick={() => { setComposerTo(''); setShowComposer(true); }}><Plus className="mr-2 h-4 w-4" />Nova mensagem</Button>
