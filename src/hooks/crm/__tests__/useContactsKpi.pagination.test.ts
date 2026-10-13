@@ -1,30 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mocks = vi.hoisted(() => ({
-  total: 0,
-  ranges: [] as Array<[number, number]>,
-  orders: [] as string[],
+/**
+ * Regressão (CT-E/PB-30): a tela de Contatos calculava os 4 KPIs paginando a tabela
+ * `contacts` inteira no navegador (1000 linhas por resposta). O contrato agora é
+ * "0 chamadas de 1.000 linhas": os agregados vêm de RPC e as janelas do período
+ * anterior por `count: 'exact', head: true`.
+ */
+const h = vi.hoisted(() => ({
+  rangeCalls: 0,
+  rows: 0,
+  rpcFns: [] as string[],
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: async (fn: string) => {
+      h.rpcFns.push(fn);
+      return { data: {}, error: null };
+    },
     from: () => ({
       select: () => {
         const chain = {
           is: () => chain,
           eq: () => chain,
           filter: () => chain,
-          order: (column: string) => { mocks.orders.push(column); return chain; },
-          range: async (from: number, to: number) => {
-            mocks.ranges.push([from, to]);
-            const end = Math.min(to + 1, mocks.total);
-            const data = Array.from({ length: Math.max(end - from, 0) }, (_, i) => ({
-              created_at: '2026-01-01T00:00:00.000Z',
-              contact_type: 'cliente',
-              company: `Empresa ${from + i}`,
-            }));
-            return { data, error: null };
-          },
+          gte: () => chain,
+          lt: () => chain,
+          order: () => chain,
+          range: () => { h.rangeCalls++; return chain; },
+          then: (res: (v: unknown) => unknown) => res({ data: null, error: null, count: h.rows }),
         };
         return chain;
       },
@@ -32,31 +36,25 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-import { fetchKpiRows, KPI_PAGE_SIZE } from '../useContactsKpi';
+import { fetchContactsKpi } from '../useContactsKpi';
 
-describe('fetchKpiRows — PostgREST limita cada resposta a max_rows', () => {
-  beforeEach(() => {
-    mocks.ranges = [];
-    mocks.orders = [];
+beforeEach(() => {
+  h.rangeCalls = 0;
+  h.rows = 0;
+  h.rpcFns = [];
+});
+
+describe('fetchContactsKpi — base grande não é varrida linha a linha', () => {
+  it('com 2.498 contatos, nenhuma chamada paginada é feita', async () => {
+    h.rows = 2498;
+    await fetchContactsKpi(false);
+    expect(h.rangeCalls).toBe(0);
+    expect(h.rpcFns).toEqual(['contacts_stats', 'contacts_stats_series']);
   });
 
-  it('pagina até trazer todos os contatos (2.498 > 1.000)', async () => {
-    mocks.total = 2498;
-    const rows = await fetchKpiRows(false);
-    expect(rows).toHaveLength(2498);
-    expect(new Set(rows.map(r => r.company)).size).toBe(2498);
-    expect(mocks.ranges).toEqual([
-      [0, KPI_PAGE_SIZE - 1],
-      [KPI_PAGE_SIZE, 2 * KPI_PAGE_SIZE - 1],
-      [2 * KPI_PAGE_SIZE, 3 * KPI_PAGE_SIZE - 1],
-    ]);
-    expect(mocks.orders.every(c => c === 'id')).toBe(true);
-  });
-
-  it('múltiplo exato do tamanho da página faz uma consulta extra vazia e para', async () => {
-    mocks.total = 2 * KPI_PAGE_SIZE;
-    const rows = await fetchKpiRows(true);
-    expect(rows).toHaveLength(2 * KPI_PAGE_SIZE);
-    expect(mocks.ranges).toHaveLength(3);
+  it('base vazia também não pagina e não quebra', async () => {
+    h.rows = 0;
+    await fetchContactsKpi(true);
+    expect(h.rangeCalls).toBe(0);
   });
 });

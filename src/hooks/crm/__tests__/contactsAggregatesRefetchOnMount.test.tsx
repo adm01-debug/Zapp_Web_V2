@@ -18,13 +18,19 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
       select: () => {
-        mocks.kpiFetches++;
-        const result = Promise.resolve({ data: [], error: null });
-        const chain = Object.assign(result, { eq: () => chain, is: () => chain, filter: () => chain, order: () => chain, range: () => chain });
+        const chain = {
+          eq: () => chain, is: () => chain, filter: () => chain, order: () => chain,
+          gte: () => chain, lt: () => chain, range: () => chain,
+          then: (res: (v: unknown) => unknown) => res({ data: null, error: null, count: 0 }),
+        };
         return chain;
       },
     }),
-    rpc: vi.fn(async () => ({ data: [], error: null })),
+    rpc: vi.fn(async (fn: string) => {
+      // Cada busca do KPI bate nas RPCs agregadas (contacts_stats + contacts_stats_series).
+      if (fn === 'contacts_stats') mocks.kpiFetches++;
+      return { data: {}, error: null };
+    }),
   },
 }));
 

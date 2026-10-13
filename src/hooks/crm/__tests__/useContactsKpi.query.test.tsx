@@ -1,56 +1,64 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 /**
- * Regressão (soft-delete): `fetchKpiRows` precisa aplicar `.is('deleted_at', null)`
- * em toda página da consulta, senão o KPI conta contatos soft-deletados e o card
- * "Total" (3104, da RPC `contacts_count_by_type`) diverge do delta/séries do hook
- * (3106). O fix do filtro entrou no main (PR #1364); este teste trava o contrato,
- * porque o teste de paginação daquele PR mocka `.is()` sem registrar a chamada.
+ * Regressão (soft-delete + legado): as contagens de janela (`novosPrev30`,
+ * `fornecedores30`, `fornecedoresPrev30`) precisam do MESMO recorte das RPCs
+ * `contacts_stats`/`contacts_stats_series` — senão o delta do KPI diverge dos
+ * cards. Sem `deleted_at IS NULL` o KPI contaria contato soft-deletado; sem o
+ * recorte de legado, contaria o que a lista esconde.
  */
-
 const h = vi.hoisted(() => ({
-  isCalls: [] as unknown[][],
-  rows: [] as unknown[],
+  filters: [] as unknown[],
 }));
 
-vi.mock('@/integrations/supabase/client', () => {
-  const makeChain = () => {
-    const chain = {
-      is: (...args: unknown[]) => {
-        h.isCalls.push(args);
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    rpc: async () => ({ data: {}, error: null }),
+    from: () => ({
+      select: () => {
+        const chain = {
+          is: (...a: unknown[]) => { h.filters.push(['is', ...a]); return chain; },
+          eq: (...a: unknown[]) => { h.filters.push(['eq', ...a]); return chain; },
+          filter: (...a: unknown[]) => { h.filters.push(['filter', ...a]); return chain; },
+          gte: () => chain,
+          lt: () => chain,
+          order: () => chain,
+          range: () => chain,
+          then: (res: (v: unknown) => unknown) => res({ data: null, error: null, count: 0 }),
+        };
         return chain;
       },
-      eq: () => chain,
-      filter: () => chain,
-      order: () => chain,
-      range: async () => ({ data: h.rows, error: null }),
-    };
-    return chain;
-  };
-  return {
-    supabase: {
-      from: vi.fn(() => ({ select: vi.fn(() => makeChain()) })),
-    },
-  };
-});
+    }),
+  },
+}));
 
-import { fetchKpiRows } from '../useContactsKpi';
+import { fetchContactsKpi } from '../useContactsKpi';
+import { CONTACT_VISIBLE_PHONE_PATTERN } from '../contactsAggregates';
 
 beforeEach(() => {
-  h.isCalls = [];
-  h.rows = [];
+  h.filters = [];
 });
 
-describe('fetchKpiRows — filtro de soft-delete', () => {
-  it('aplica .is("deleted_at", null) em cada página da consulta', async () => {
-    await fetchKpiRows(false);
-    expect(h.isCalls.length).toBeGreaterThan(0);
-    expect(h.isCalls[0]).toEqual(['deleted_at', null]);
+describe('contagens de janela — recorte igual ao das RPCs', () => {
+  it('aplica .is("deleted_at", null) com legados desligados', async () => {
+    await fetchContactsKpi(false);
+    expect(h.filters).toContainEqual(['is', 'deleted_at', null]);
   });
 
-  it('mantém o filtro de deleted_at também quando includeLegacy=true', async () => {
-    await fetchKpiRows(true);
-    expect(h.isCalls.length).toBeGreaterThan(0);
-    expect(h.isCalls[0]).toEqual(['deleted_at', null]);
+  it('aplica .is("deleted_at", null) com legados ligados', async () => {
+    await fetchContactsKpi(true);
+    expect(h.filters).toContainEqual(['is', 'deleted_at', null]);
+  });
+
+  it('esconde legado (is_lid_legacy = false + telefone visível) quando includeLegacy é falso', async () => {
+    await fetchContactsKpi(false);
+    expect(h.filters).toContainEqual(['eq', 'is_lid_legacy', false]);
+    expect(h.filters).toContainEqual(['filter', 'phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN]);
+  });
+
+  it('não aplica o recorte de legado quando includeLegacy é verdadeiro', async () => {
+    await fetchContactsKpi(true);
+    expect(h.filters).not.toContainEqual(['eq', 'is_lid_legacy', false]);
+    expect(h.filters.some(f => Array.isArray(f) && f[0] === 'filter')).toBe(false);
   });
 });

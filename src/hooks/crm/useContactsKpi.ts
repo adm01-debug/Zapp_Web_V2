@@ -2,104 +2,157 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CONTACTS_AGGREGATE_QUERY_OPTIONS, CONTACT_VISIBLE_PHONE_PATTERN } from './contactsAggregates';
 
-type Row = { created_at: string; contact_type: string | null; company: string | null };
 const DAY = 86_400_000;
 
 /** Mínimo de registros no período anterior para exibir delta. Abaixo disso retorna null. */
 const MIN_PREV = 50;
 
-export function aggregateKpi(rows: Row[], now = new Date()) {
-  const t = now.getTime();
-  const inLast = (r: Row, days: number) => t - Date.parse(r.created_at) < days * DAY;
-  const between = (r: Row, from: number, to: number) => {
-    const d = t - Date.parse(r.created_at);
-    return d >= from * DAY && d < to * DAY;
-  };
+/**
+ * Contrato de `public.contacts_stats(boolean)` (migration 20261013010929_contacts_stats.sql).
+ * Os agregados são calculados no servidor — o navegador não recebe linhas de contato.
+ */
+type ContactsStats = {
+  total: number;
+  recent_30d: number;
+  base_30d: number;
+  growth_30d_pct: number | null;
+  duplicate_candidates: number;
+  /** NULL enquanto a fila de exclusão LGPD (LG1) não existir. */
+  lgpd_pending: number | null;
+};
 
-  const novos30 = rows.filter(r => inLast(r, 30)).length;
-  const novosPrev30 = rows.filter(r => between(r, 30, 60)).length;
+/**
+ * Contrato de `public.contacts_stats_series(boolean)`
+ * (migration 20261013235904_contacts_stats_series.sql).
+ */
+type ContactsStatsSeries = {
+  empresas_distinct: number;
+  series_novos_daily_30: number[];
+  series_total_cumulative_12w: number[];
+  series_empresas_cumulative_12w: number[];
+  series_fornecedores_weekly_12: number[];
+};
 
-  const pct = (cur: number, prev: number) =>
-    prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+export type ContactsKpi = {
+  novos30: number;
+  novosPrev30: number;
+  deltaNovosPct: number | null;
+  deltaTotalPct: number | null;
+  empresasDistinct: number;
+  fornecedores30: number;
+  deltaFornecedoresPct: number | null;
+  duplicateCandidates: number;
+  lgpdPending: number | null;
+  seriesTotalCumulative12w: number[];
+  seriesNovosDaily30: number[];
+  seriesEmpresasCumulative12w: number[];
+  seriesFornecedoresWeekly12: number[];
+};
 
-  /** Retorna null quando o período anterior tem dados insuficientes (< MIN_PREV) */
-  const pctOrNull = (cur: number, prev: number): number | null =>
-    prev < MIN_PREV ? null : pct(cur, prev);
+/** Arredonda como o `aggregateKpi` histórico; base vazia não vira divisão por zero. */
+function pct(cur: number, prev: number): number {
+  return prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+}
 
-  const daily30 = Array.from({ length: 30 }, (_, i) =>
-    rows.filter(r => between(r, 29 - i, 30 - i)).length
-  );
-  const bucket7 = Array.from({ length: 7 }, (_, i) =>
-    daily30.slice(i * 4, i * 4 + 4 + (i === 6 ? 2 : 0)).reduce((a, b) => a + b, 0)
-  );
-  const weekly = (f: (r: Row) => boolean, weeks = 12) =>
-    Array.from({ length: weeks }, (_, i) =>
-      rows.filter(r => f(r) && between(r, (weeks - 1 - i) * 7, (weeks - i) * 7)).length
-    );
-  const cumulative = (arr: number[], base: number) =>
-    arr.reduce<number[]>((acc, v) => [...acc, (acc.length ? acc[acc.length - 1] : base) + v], []);
+/** Delta só é exibido quando o período anterior tem amostra suficiente (piso MIN_PREV). */
+function pctOrNull(cur: number, prev: number): number | null {
+  return prev < MIN_PREV ? null : pct(cur, prev);
+}
 
-  const olderThan12w = rows.filter(r => !inLast(r, 84)).length;
-  const fornecedores = rows.filter(r => r.contact_type === 'fornecedor');
-  const fornecedores30 = fornecedores.filter(r => inLast(r, 30)).length;
-  const fornecedoresPrev30 = fornecedores.filter(r => between(r, 30, 60)).length;
-  const companyKey = (r: Row) => r.company?.toLowerCase().trim() || null;
-  const empresasDistinct = new Set(rows.map(companyKey).filter(Boolean)).size;
-
-  /** Empresas distintas acumuladas até o fim de cada semana — mesma grandeza do valor do card. */
-  const empresasCumulative12w = Array.from({ length: 12 }, (_, i) => {
-    const endDaysAgo = (11 - i) * 7;
-    return new Set(
-      rows
-        .filter(r => t - Date.parse(r.created_at) >= endDaysAgo * DAY)
-        .map(companyKey)
-        .filter(Boolean),
-    ).size;
-  });
-
-  /** Base real de 30 dias atrás: contatos que já existiam naquela data. */
-  const prevTotal = rows.filter(r => !inLast(r, 30)).length;
-
+/**
+ * Monta o KPI a partir das duas RPCs. `novosPrev30`, `fornecedores30` e `fornecedoresPrev30`
+ * são contagens exatas do período anterior calculadas no PostgREST (`count: 'exact',
+ * head: true`) — nenhuma linha de contato trafega para o cliente.
+ */
+export function kpiFromServer(
+  stats: ContactsStats,
+  series: ContactsStatsSeries,
+  windows: { novosPrev30: number; fornecedores30: number; fornecedoresPrev30: number },
+): ContactsKpi {
+  const novos30 = stats.recent_30d;
+  const prevTotal = stats.total - stats.recent_30d;
   return {
     novos30,
-    novosPrev30,
-    deltaNovosPct: pctOrNull(novos30, novosPrev30),
-    deltaTotalPct: pctOrNull(rows.length, prevTotal),
-    empresasDistinct,
-    fornecedoresTotal: fornecedores.length,
-    fornecedores30,
-    deltaFornecedoresPct: pctOrNull(fornecedores30, fornecedoresPrev30),
-    seriesTotalCumulative12w: cumulative(weekly(() => true), olderThan12w),
-    seriesNovosDaily30: bucket7,
-    seriesEmpresasCumulative12w: empresasCumulative12w,
-    seriesFornecedoresWeekly12: weekly(r => r.contact_type === 'fornecedor'),
+    novosPrev30: windows.novosPrev30,
+    deltaNovosPct: pctOrNull(novos30, windows.novosPrev30),
+    deltaTotalPct: pctOrNull(stats.total, prevTotal),
+    empresasDistinct: series.empresas_distinct,
+    fornecedores30: windows.fornecedores30,
+    deltaFornecedoresPct: pctOrNull(windows.fornecedores30, windows.fornecedoresPrev30),
+    duplicateCandidates: stats.duplicate_candidates,
+    lgpdPending: stats.lgpd_pending ?? null,
+    seriesTotalCumulative12w: series.series_total_cumulative_12w,
+    seriesNovosDaily30: series.series_novos_daily_30,
+    seriesEmpresasCumulative12w: series.series_empresas_cumulative_12w,
+    seriesFornecedoresWeekly12: series.series_fornecedores_weekly_12,
   };
 }
 
-export type ContactsKpi = ReturnType<typeof aggregateKpi>;
-
-/** Limite de linhas por resposta do PostgREST (`max_rows`). */
-export const KPI_PAGE_SIZE = 1000;
-
-export async function fetchKpiRows(includeLegacy: boolean): Promise<Row[]> {
-  const rows: Row[] = [];
-  for (let from = 0; ; from += KPI_PAGE_SIZE) {
-    let q = supabase.from('contacts').select('created_at, contact_type, company').is('deleted_at', null);
-    if (!includeLegacy) {
-      q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
-    }
-    const { data, error } = await q.order('id', { ascending: true }).range(from, from + KPI_PAGE_SIZE - 1);
-    if (error) throw error;
-    const page = (data ?? []) as Row[];
-    rows.push(...page);
-    if (page.length < KPI_PAGE_SIZE) return rows;
+/**
+ * Contagem exata de contatos numa janela `[fromDays, toDays)` de idade, com o MESMO recorte
+ * de `fetchKpiRows` (soft-delete + legado) e a visibilidade do RLS. `head: true` traz só o
+ * `count`, sem corpo.
+ */
+async function countContactsWindow(
+  includeLegacy: boolean,
+  fromDays: number,
+  toDays: number,
+  contactType?: string,
+): Promise<number> {
+  const now = Date.now();
+  let q = supabase
+    .from('contacts')
+    .select('id', { count: 'exact', head: true })
+    .is('deleted_at', null)
+    .gte('created_at', new Date(now - toDays * DAY).toISOString())
+    .lt('created_at', new Date(now - fromDays * DAY).toISOString());
+  if (contactType) q = q.eq('contact_type', contactType);
+  if (!includeLegacy) {
+    q = q.eq('is_lid_legacy', false).filter('phone', 'match', CONTACT_VISIBLE_PHONE_PATTERN);
   }
+  const { count, error } = await q;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * `types.ts` é gerado a partir do banco e ainda não traz `contacts_stats_series`
+ * (contrato entregue no cartão t_6fc22a23). Enquanto o gerador não roda, a chamada
+ * sai por este adaptador local, com o mesmo jsonb documentado no db-audit do pai.
+ */
+function rpcStatsSeries(includeLegacy: boolean) {
+  const call = supabase.rpc as unknown as (
+    fn: 'contacts_stats_series',
+    args: { p_include_legacy: boolean },
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
+  return call('contacts_stats_series', { p_include_legacy: includeLegacy });
+}
+
+/**
+ * Indicadores de Contatos (CT-E/PB-30) em 2 RPCs agregadas + 3 contagens exatas — em vez de
+ * paginar a tabela `contacts` inteira no navegador (`fetchKpiRows`, 1000 linhas por resposta).
+ */
+export async function fetchContactsKpi(includeLegacy: boolean): Promise<ContactsKpi> {
+  const [statsRes, seriesRes, novosPrev30, fornecedores30, fornecedoresPrev30] = await Promise.all([
+    supabase.rpc('contacts_stats', { p_include_legacy: includeLegacy }),
+    rpcStatsSeries(includeLegacy),
+    countContactsWindow(includeLegacy, 30, 60),
+    countContactsWindow(includeLegacy, 0, 30, 'fornecedor'),
+    countContactsWindow(includeLegacy, 30, 60, 'fornecedor'),
+  ]);
+  if (statsRes.error) throw statsRes.error;
+  if (seriesRes.error) throw seriesRes.error;
+  return kpiFromServer(
+    (statsRes.data ?? {}) as unknown as ContactsStats,
+    (seriesRes.data ?? {}) as unknown as ContactsStatsSeries,
+    { novosPrev30, fornecedores30, fornecedoresPrev30 },
+  );
 }
 
 export function useContactsKpi(includeLegacy: boolean) {
   return useQuery({
     queryKey: ['contacts-kpi', includeLegacy],
-    queryFn: async () => aggregateKpi(await fetchKpiRows(includeLegacy)),
+    queryFn: () => fetchContactsKpi(includeLegacy),
     staleTime: 60_000,
     ...CONTACTS_AGGREGATE_QUERY_OPTIONS,
   });
