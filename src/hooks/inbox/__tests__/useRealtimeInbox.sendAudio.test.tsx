@@ -14,12 +14,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-const { sendMessageMock, refetchMock, refetchSelectedMock, uploadAudioMock, toastErrorMock, uiState } = vi.hoisted(() => ({
+const { sendMessageMock, refetchMock, refetchSelectedMock, uploadAudioMock, toastErrorMock, toastMock, uiState } = vi.hoisted(() => ({
   sendMessageMock: vi.fn(),
   refetchMock: vi.fn(),
   refetchSelectedMock: vi.fn(),
   uploadAudioMock: vi.fn(),
   toastErrorMock: vi.fn(),
+  toastMock: vi.fn(),
   uiState: { selectedContactId: 'c1' as string | null },
 }));
 
@@ -80,8 +81,10 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { uploadAudio: uploadAudioMock },
 }));
 vi.mock('sonner', () => ({ toast: { error: toastErrorMock, success: vi.fn() } }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock, useToast: () => ({ toast: toastMock }) }));
 
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
+import { MAX_PTT_SIZE_BYTES } from '@/lib/audio/pttLimits';
 
 const blob = new Blob(['audio'], { type: 'audio/webm' });
 
@@ -151,6 +154,54 @@ describe('useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#35
 
     await expect(sendAudio()).rejects.toThrow('upload falhou');
 
+    expect(toastErrorMock).not.toHaveBeenCalled();
+  });
+});
+
+// PE-24 — o áudio fora dos limites do WhatsApp não pode subir. A recusa é ANTES do
+// `ChatService.uploadAudio` e o motivo é avisado aqui: é esta camada que conhece a
+// mensagem exata da validação (a de cima só tem o texto genérico).
+describe('useRealtimeInbox.handleSendAudio — limites de PTT antes do upload (PE-24)', () => {
+  async function sendAudioBlob(audio: Blob) {
+    const { result } = renderHook(() => useRealtimeInbox());
+    let outcome: Promise<boolean> | undefined;
+    await act(async () => {
+      outcome = result.current.handleSendAudio(audio);
+      outcome.catch(() => undefined);
+    });
+    return outcome!;
+  }
+
+  it('recusa áudio acima de 16 MB sem chamar o upload e explica o motivo', async () => {
+    const grande = { size: MAX_PTT_SIZE_BYTES + 1, type: 'audio/webm' } as Blob;
+
+    await expect(sendAudioBlob(grande)).rejects.toThrow(/muito grande/);
+
+    expect(uploadAudioMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith({
+      title: 'Áudio não enviado',
+      description: expect.stringContaining('muito grande'),
+      variant: 'destructive',
+    });
+  });
+
+  it('recusa áudio vazio sem chamar o upload', async () => {
+    await expect(sendAudioBlob(new Blob([]))).rejects.toThrow('Áudio vazio. Tente gravar novamente.');
+
+    expect(uploadAudioMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith({
+      title: 'Áudio não enviado',
+      description: 'Áudio vazio. Tente gravar novamente.',
+      variant: 'destructive',
+    });
+  });
+
+  it('segue enviando quando o áudio está dentro dos limites, sem avisar', async () => {
+    await expect(sendAudioBlob(blob)).resolves.toBe(true);
+
+    expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
+    expect(toastMock).not.toHaveBeenCalled();
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
 });
