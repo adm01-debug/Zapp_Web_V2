@@ -10,6 +10,9 @@ Especialista: Hugo (area-front-hooks)
 - src/hooks/sla/index.ts: exporta os três hooks novos pelo barrel.
 - src/hooks/sla/__tests__/sla-hooks-staletime-contract.test.ts (novo): contrato de fonte no espírito do `sla-rules-staletime-contract` da V3 (staleTime declarado, sem `staleTime: Infinity`; a RPC é chamada; UUID validado antes do filtro).
 
+## Aviso de diff (cherry-pick do cartão pai)
+- O diff contra `dia/2026-10-12` inclui o commit do cartão pai (`ac820d0d8`, cherry-pick `-x` para `5cfcd28c5`), que a branch do dia ainda não tinha: `supabase/migrations/20261013012747_sla_resolve_applicable.sql`, `supabase/tests/sla_resolve_applicable.sql`, `scripts/db-audit/sla-resolve-applicable-contract.test.mjs`, `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` e `src/integrations/supabase/types.ts` (tipos da RPC). Sem ele o meu hook não compila.
+
 ## Prova
 - vermelho antes: com o hook na versão da base (`git show dia/2026-10-12:src/hooks/sla/useApplicableSLA.ts`) e o teste NOVO: `npx vitest run src/hooks/sla/__tests__/useApplicableSLA.test.tsx` → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`.
 - verde depois: `npx vitest run src/hooks/sla/__tests__/` → `Test Files 6 passed (6); Tests 47 passed (47)`.
