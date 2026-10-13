@@ -22,19 +22,22 @@ Especialista: Íris (area-front-componentes)
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (tipos OK, lint OK, migrations OK, db_guard OK).
 
 ## Pontos do cartão (O QUE FAZER / 'corrigir' do achado)
-- Ponto 1 — partir do commit da entrega com cherry-pick, sem recomeçar: FEITO.
-  Parti de `fc6625f98` (t_1cd43b87) via `git cherry-pick -n fc6625f98`; o relato de origem consta no
-  corpo do commit de código (`3263909cd2`). Nenhum arquivo de produto foi escrito à mão.
-- Ponto 2 — reproduzir o item e corrigir a causa sem afrouxar asserção: FEITO.
-  A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` NÃO guarda fatos em si: ela recalcula as
-  views do `ViewRouter.tsx` e compara com o `FEATURE_REGISTRY.md`, que é o documento sob teste. A entrega
-  tirou `auto-export` do ViewRouter e deixou o registro desatualizado — por isso corrigi o FIXTURE
-  (`FEATURE_REGISTRY.md`), não a guarda. Vermelho 2 → verde 0 na seção Prova. Sha da correção de código:
-  `3263909cd2`.
-- Ponto 3 — provar e fechar citando o sha: FEITO.
-  Verde do comando do cartão (sem a linha acusada) e `zapp-verify . --rapido` VERDE, ver Prova.
-  Sha do commit de correção: `3263909cd2`. O relato não escreve à mão o resultado do `zapp-verify`:
-  ele sai no bloco FATOS MEDIDOS deste fechar.
+Ponto 1: parti do commit da entrega `fc6625f98` (t_1cd43b87) com `git cherry-pick -n fc6625f98`,
+sem recomeçar; nenhum arquivo de produto escrito à mão. O relato de origem consta no corpo do commit
+de código `3263909cd2` ("Refazer de fc6625f98 ... via cherry-pick").
+Ponto 2: reproduzi o item do cartão e corrigi a causa, sem afrouxar asserção. Causa: a entrega removeu
+`auto-export` do `ViewRouter.tsx` (VIEW_MAP) e deixou a linha dela no `FEATURE_REGISTRY.md`. O arquivo
+de teste do cartão, `scripts/ci/docs-estado-registry-convention.unit.mjs`, é uma guarda genérica: ela
+recalcula as views do ViewRouter e compara com o `FEATURE_REGISTRY.md` — o artefato que ela afirma é o
+próprio registro. Corrigi o registro (FEATURE_REGISTRY.md), arquivo `FEATURE_REGISTRY.md`: linha
+`auto-export` removida, cabeçalho 54→53 views, Totais Partial 12→11, total 54→53. A prova:
+`node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` falhava com
+`not ok 7 ...` e `not ok 9 - FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais`
+(`# fail 2`) e passou com `# tests 11 # pass 11 # fail 0`. Nenhum teste afrouxado, removido ou pulado.
+Ponto 3: prova e sha. `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (tipos OK, lint OK,
+migrations OK, db_guard OK). O comando do cartão (`ci_espelho.sh .`) não mostra mais a linha
+`node: FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais`. Sha do commit de correção
+de código: `3263909cd2`.
 
 ## Por que os pontos 2 e 3 não se corrigem por "commit novo"
 - Ponto 2 não procede como "alterar o arquivo de teste do cartão": o arquivo de teste do cartão é
