@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## O que mudou e por quê
 - src/components/wallet/ClientWalletView.tsx: a falha de leitura/gravacao das regras da carteira (o `error`/`isError`/`errorSource` que o cartao pai passou a expor no hook) agora aparece em aviso persistente `role="alert"` dentro do card "Regras de Atribuicao", com titulo por origem (`load`/`toggle`/`delete`) e o motivo vindo do banco. Antes o motivo so existia em toast (que some) e a tela seguia afirmando "Nenhuma regra configurada" quando a leitura tinha sido recusada — ou seja, afirmava o que nao leu.
