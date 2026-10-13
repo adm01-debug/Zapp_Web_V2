@@ -13,6 +13,10 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  /** Boot sem resposta do servidor: a sessão não pôde ser confirmada. */
+  bootstrapError: boolean;
+  /** Refaz a leitura inicial da sessão depois de um boot sem resposta. */
+  retryBootstrap: () => void;
   signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -26,6 +30,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState(false);
+  // Cada incremento refaz o boot (retryBootstrap): reexecuta o effect que lê a
+  // sessão inicial e re-registra o listener.
+  const [bootstrapTentativa, setBootstrapTentativa] = useState(0);
   const fetchingRef = useRef(false);
   /**
    * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor
@@ -83,6 +91,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
     const safetyTimeout = setTimeout(() => {
       if (mounted) {
         log.warn('[BOOT] Auth session check timed out, forcing loading to false');
+        // Sem resposta não dá para decidir a sessão: expõe o erro de boot para a
+        // rota oferecer 'Tentar de novo' em vez de cair no /auth.
+        setBootstrapError(true);
         setLoading(false);
       }
     }, 10000);
@@ -94,6 +105,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         if (!mounted) return;
 
         log.info('[BOOT] Initial session retrieved:', session ? 'User Found' : 'No User');
+        setBootstrapError(false);
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -104,7 +116,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
           definirIdentidade(null);
         }
       } catch (err) {
+        // Falha de rede/servidor na leitura da sessão: marca o erro de boot para
+        // a rota mostrar 'Tentar de novo' em vez de tratar como "sem sessão".
         log.error('[BOOT] Error fetching session:', err);
+        if (mounted) setBootstrapError(true);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -124,6 +139,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        // Um evento de sessão confirma que o servidor respondeu: limpa o erro de boot.
+        setBootstrapError(false);
         /**
          * BUG-7 FIX: Reset the guard when auth state changes so a new user
          * session always triggers a fresh profile fetch.
@@ -178,7 +195,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
     };
-  }, [definirIdentidade, fetchProfile, queryClient]);
+  }, [definirIdentidade, fetchProfile, queryClient, bootstrapTentativa]);
+
+  /**
+   * Refaz o boot depois de "servidor não respondeu": limpa o erro, volta ao
+   * loading e reexecuta o effect de sessão (novo getSession + novo listener).
+   */
+  const retryBootstrap = useCallback(() => {
+    setBootstrapError(false);
+    setLoading(true);
+    setBootstrapTentativa((tentativa) => tentativa + 1);
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -223,7 +250,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
    };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, bootstrapError, retryBootstrap, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
