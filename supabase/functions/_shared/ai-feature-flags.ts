@@ -70,6 +70,12 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, AiCapability>> =
   "elevenlabs-dialogue": "voice",
   "elevenlabs-voice-design": "voice",
   "voice-changer": "voice",
+  "elevenlabs-tts": "voice",
+  "elevenlabs-tts-stream": "voice",
+  "elevenlabs-sfx": "voice",
+  "elevenlabs-sts": "voice",
+  "elevenlabs-agent-token": "voice",
+  "elevenlabs-scribe-token": "voice",
   "chatbot-l1": "chatbot_l1",
 });
 
