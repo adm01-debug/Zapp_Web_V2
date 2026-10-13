@@ -45,7 +45,7 @@ function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onC
   );
 }
 
-function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingEmojiUpload; onConfirm: (p: PendingEmojiUpload) => void; onCancel: () => void }) {
+function UploadPreview({ pending, saving, onConfirm, onCancel }: { pending: PendingEmojiUpload; saving: boolean; onConfirm: (p: PendingEmojiUpload) => void; onCancel: () => void }) {
   const [category, setCategory] = useState(pending.selectedCategory);
   const [name, setName] = useState(pending.name);
   return (
@@ -64,8 +64,10 @@ function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingEmoji
         )}
       </div>
       <div className="flex items-center gap-2 justify-end">
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}><X className="w-3 h-3 mr-1" /> Cancelar</Button>
-        <Button size="sm" className="h-7 text-xs" onClick={() => onConfirm({ ...pending, selectedCategory: category, name })}><Check className="w-3 h-3 mr-1" /> Salvar</Button>
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel} disabled={saving}><X className="w-3 h-3 mr-1" /> Cancelar</Button>
+        <Button size="sm" className="h-7 text-xs" onClick={() => onConfirm({ ...pending, selectedCategory: category, name })} disabled={saving || !name.trim()} title={!name.trim() ? 'Dê um nome ao emoji' : undefined}>
+          {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />} Salvar
+        </Button>
       </div>
     </motion.div>
   );
@@ -80,7 +82,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
   const [nativeCategoryId, setNativeCategoryId] = useState<string>('smileys');
 
   const {
-    emojis, loading, uploading, pendingUpload, fileInputRef,
+    emojis, loading, uploading, saving, pendingUpload, fileInputRef,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
     handleSend, toggleFavorite, handleCategoryChange, handleDelete, setPendingUpload,
   } = useCustomEmojis(open);
@@ -98,7 +100,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
 
   return (
     <Tooltip>
-      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) setPendingUpload(null); }}>
+      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v && pendingUpload) handleCancelUpload(); }}>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" disabled={disabled} aria-label="Emojis Personalizados">
@@ -153,7 +155,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
             </>
           ) : (
             <>
-              <AnimatePresence>{pendingUpload && (<div className="px-3 py-2 border-b border-border/50"><UploadPreview pending={pendingUpload} onConfirm={handleConfirmUpload} onCancel={handleCancelUpload} /></div>)}</AnimatePresence>
+              <AnimatePresence>{pendingUpload && (<div className="px-3 py-2 border-b border-border/50"><UploadPreview pending={pendingUpload} saving={saving} onConfirm={handleConfirmUpload} onCancel={handleCancelUpload} /></div>)}</AnimatePresence>
               <div className="px-3 py-2 border-b border-border/50">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
