@@ -1,18 +1,27 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: edgar (area-edge-api)
+
+## Sensibilidade
+- O diff toca escrita em `contacts` a partir do webhook e uma migration aditiva. NÃO toca `rateLimit`, `service_role`, `requireRole`, `verifyHmac` nem `DELETE`.
+- Nenhuma proteção afrouxada: as 3 colunas novas são `nullable`, sem default, e herdam RLS/grants de `contacts` (não criei policy nem grant). Nenhuma referência ao banco/endpoint de produção — a migration foi aplicada só no banco local da tarefa.
+- Para quem chama (`presence.update` do Evolution GO): nada muda. O ramo de digitação (`contact_typing`) segue igual; o que entrou foi o ramo novo de online/offline.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `supabase/functions/_shared/evolution-webhook-handlers.ts`: em `handlePresenceUpdate`, além do broadcast de digitação (inalterado), passou a ler o estado de presença (`presence` → `status` no topo; `chatpresence` → `presences[].lastKnownPresence`) e, quando é online/available ou offline/unavailable, grava `presence_status` + `presence_updated_at` no contato. `last_seen_at` só é gravado na transição online → offline (uma leitura do estado atual decide), para "visto por último" não avançar sem transição. Grupo (`@g.us`), `composing` e `paused` seguem sem gravar presença.
+- `supabase/migrations/20261013002117_contacts_presence.sql`: adiciona `presence_status` (check online/offline), `presence_updated_at` e `last_seen_at` em `contacts`, todas nullable. Rollback no cabeçalho.
+- `supabase/functions/_shared/__tests__/evolution-presence-status.test.ts`: testa o handler REAL com o mesmo envelope do adaptador, com stub que espiona os `update` em `contacts` e o broadcast.
+- `src/integrations/supabase/types.ts` (gerado): colunas novas do `contacts` — só as 3 linhas novas em Row/Insert/Update, conferidas contra a saída do `supabase gen types` do banco local (nenhuma diferença sobrou para elas). Não regenerei o arquivo inteiro porque ele tem drift antigo de outros cartões (`ai_usage_outbox`, `effect_started_at`...) que não é deste título.
+- `src/adapters/evolutionAdapter.ts`: 3 linhas (`presence_status/presence_updated_at/last_seen_at: null`) no literal de contato derivado — consequência direta das colunas novas em `types.ts`; sem isso o typecheck ratchet acusa 1 erro novo. Contato derivado só do histórico não tem evento de presença, então o valor é ausência.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (handler sem a mudança): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/_shared/__tests__/evolution-presence-status.test.ts` → `FAILED | 3 passed | 4 failed` (online, available, offline-após-online, offline-já-offline).
+- verde depois (mesmo comando): `ok | 7 passed | 0 failed (10ms)`.
+- migration: `hermes-db-migrar supabase/migrations/20261013002117_contacts_presence.sql` → `APLICADA no banco LOCAL 'v2-26101221184e65' (produção não foi tocada).`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (passos OK: db_guard, tipos, lint, migrations).
+
+## Item 3 do cartão (presenceSubscribe na Evolution GO)
+Conferido no código: a V2 não faz `presenceSubscribe` (nem equivalente). `supabase/functions/evolution-api/index.ts` só tem `set-presence` e `send-chat-presence` (envio), e o adaptador `evolution-go-adapter.ts` já mapeia os eventos de ENTRADA `presence` e `chatpresence` para `presence.update` — ou seja, a GO já entrega online/offline ao webhook sem assinatura. Nenhuma chamada foi adicionada; não encontrei exigência de subscribe no que a V2 consome.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não regenerei `supabase/schema-manifest.json`/`schema-catalog.json`: são o retrato da PRODUÇÃO e o guard de drift explica as colunas novas pela migration pendente.
+- Não mexi em `evolution-api/index.ts`: não há subscribe a adicionar (item acima).
+- Não implementei o "timeout de inatividade": o cartão pediu gravar online/offline pelos eventos do Evolution GO; offline por evento já cobre, e um cron de timeout seria trilha nova (não pedida).
