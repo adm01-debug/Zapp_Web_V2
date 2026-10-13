@@ -40,6 +40,13 @@ Especialista: worker (sql) (area-sql-banco)
   `anon` não tem GRANT algum na tabela — a suíte prova o `permission denied`).
 - Sem `create or replace`/`drop`/`alter` de objeto existente; sem `\` meta-comando.
 
+## Teste novo deste cartão de banco
+- O cartão pede a prova como suíte SQL em `supabase/tests/` (`user_ui_preferences.sql`), não como
+  `.test.ts`/`.test.sh`. Ela é o teste novo vermelho→verde: sem a migration, o mesmo arquivo falha
+  (`relation does not exist`, exit=3) e, com ela aplicada, passa (exit=0). O único arquivo de código
+  tocado além da migration é `src/integrations/supabase/types.ts`, que é derivado do schema (não tem
+  comportamento para testar) — por isso não há teste vitest novo no commit.
+
 ## O que NÃO fiz e por quê
 - Não mexi em `scripts/db-audit/**` nem no workflow (fora dos ARQUIVOS do cartão). A prova do RLS
   ficou em `supabase/tests/user_ui_preferences.sql`, aplicada no banco local da tarefa, como o cartão
