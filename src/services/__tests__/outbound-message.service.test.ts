@@ -48,9 +48,14 @@ describe('sendOutboundMessage', () => {
       p_content: 'Olá', p_message_type: 'text', p_media_url: undefined,
       p_reply_to_id: undefined, p_whatsapp_connection_id: undefined, p_caption: undefined,
     });
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   it('does not dispatch when authorization or validation prevents enqueueing', async () => {
@@ -128,9 +133,14 @@ describe('sendOutboundMessage', () => {
       p_message_type: 'poll',
       p_delivery_payload: { name: 'Cor', values: ['Azul', 'Carvão'], selectableCount: 1 },
     }));
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: '56bb3f25-ad35-40b9-adcd-d10f4a98752d' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   it('com a rede caída a mensagem espera na fila local e sai sozinha na reconexão (SL-070/025)', async () => {
@@ -164,9 +174,14 @@ describe('sendOutboundMessage', () => {
       p_client_message_id: '0c5d8df5-430d-4f46-8c0a-764be035116a',
       p_content: 'composta offline',
     }));
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   it('aba que perde a disputa de dedupe não dispara enqueue nem despacho (SL-070/026)', async () => {
