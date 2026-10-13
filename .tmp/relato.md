@@ -3,28 +3,32 @@ revisor de entrada roteou para `designer` ("Rebase e conflito de um componente v
 seus testes"), e é este o perfil que assina.
 
 ## Ponto da recusa
-- Ponto 1: "aprovado, mas CONFLITA com a ponta de dia/2026-10-12; retomada por rebase" — RESOLVIDO.
-  O workspace novo parte da ponta dia/2026-10-12. O trabalho anterior (branch
-  `v2/redesenhado-cartao-quadro-urgente-atrasa-2610111909ad9f`, 761764d91) foi trazido por `git cherry-pick`
-  só nos 2 commits DO CARTÃO: `5649bd60a` (redesenho, etapas 084–090) e `eddbf557b` (refazer 1). Aplicaram SEM
-  conflito textual.
+- Ponto 1: "aprovado, mas CONFLITA com a ponta de dia/2026-10-12; retomada por rebase" — RESOLVIDO, e o
+  conflito era de API, não de texto.
+  BASE: o workspace novo parte de `dia/2026-10-12` (ponta `96dd72dc5`). Ela JÁ CONTÉM a ponta de 11-10 —
+  `git merge-base --is-ancestor dia/2026-10-11 dia/2026-10-12` → verdadeiro (10-11 é `9372aeb6a`). Logo o
+  "traga dia/2026-10-11" já está satisfeito pela base; o que faltava era casar o trabalho com o que entrou
+  DEPOIS, em 12-10.
+  CHERRY-PICK: o trabalho anterior (branch `v2/redesenhado-cartao-quadro-urgente-atrasa-2610111909ad9f`,
+  761764d91) foi trazido só nos 2 commits DO CARTÃO — `5649bd60a` (redesenho, etapas 084–090) e `eddbf557b`
+  (refazer 1) — que aplicaram sem conflito textual.
   Os commits da FAIXA DOS PAIS que aquele branch carregava (`ef329b26c`, `35e0b7473`, `907596719`,
   `00d745edf` — subtítulo das colunas e os primitivos compartilhados) foram PULADOS de propósito: o que
-  importa deles JÁ está em dia/2026-10-12 (os primitivos em `src/components/tasks/shared/`, o
-  `TasksUiProvider`, `workItemFormat`, etc.). O conflito real não era textual, era de API.
-  Conflito real resolvido: o `TaskCheckbox` da ponta JÁ garante sozinho o alvo ≥ 40 px — o `<button>`
-  mede 40x40 (`h-10 w-10` + `-m-[11px]`) e o círculo de 18 px é um `<span>` interno
+  importa deles JÁ está em dia/2026-10-12 (primitivos em `src/components/tasks/shared/`, `TasksUiProvider`,
+  `workItemFormat` etc.).
+  CONFLITO REAL: o `TaskCheckbox` da ponta JÁ garante sozinho o alvo ≥ 40 px — o `<button>` mede 40x40
+  (`h-10 w-10` + `-m-[11px]`) e o círculo de 18 px é um `<span>` interno
   (`data-testid="task-checkbox-circle"`). A versão antiga ampliava o alvo por um pseudo-elemento
-  `before:-inset-[11px]` passado DENTRO do card, e o teste do cartão media essa estrutura velha. Foi essa a
+  `before:-inset-[11px]` passado DENTRO do card, e o teste do cartão media essa estrutura antiga. Era essa a
   incompatibilidade: 1 teste vermelho só. Preservei o primitivo que já entrou na ponta e ajustei o cartão e o
-  teste a ele (commit novo `e9e82cc60`).
+  teste a ele — este é exatamente o conteúdo do commit `e9e82cc60` (o diff abaixo).
 
 ## O que mudou e por quê
 - `src/components/tasks/shared/WorkItemCard.tsx`: o `<TaskCheckbox>` do card deixa de receber
   `relative before:absolute before:-inset-[11px] before:content-['']` e fica só com o posicionamento
   (`mt-0.5` na lista/quadro, `shrink-0` na agenda). O alvo ≥ 40 px continua atendido — agora pelo PRIMITIVO
-  compartilhado (`h-10 w-10` com margem `-11px`), que é o que já está em dia/2026-10-12, sem o card repetir o
-  truque do pseudo-elemento. Comentário de código atualizado para descrever esse desenho novo.
+  compartilhado (`h-10 w-10` com margem `-11px`) que já está em dia/2026-10-12, sem o card repetir o truque do
+  pseudo-elemento. Comentário de código atualizado para descrever esse desenho novo.
 - `src/components/tasks/__tests__/WorkItemCard.test.tsx`: o caso "alvo ≥ 40 px" passa a medir a estrutura REAL
   renderizada — o botão do primitivo com `h-10`/`w-10` (alvo de 40 px) e o `<span task-checkbox-circle>` com
   `h-[18px]`/`w-[18px]` (o círculo visível de 18 px do D16) — em vez do pseudo-elemento `before:-inset-[…]`
@@ -51,7 +55,13 @@ Entregues pelos commits `5649bd60a` + `eddbf557b` (trazidos no rebase); neste co
 - suíte do módulo: `npx vitest run src/components/tasks` →
   `Test Files 28 passed (28); Tests 333 passed | 1 todo (334)`.
 - tipos: `npx tsc -b --force` → exit 0.
-- verificação do fechar: `hermes-tarefa-fechar` (roda `zapp-verify --rapido`) — resultado no bloco FATOS MEDIDOS.
+- verificação (o fechar roda `zapp-verify --rapido`): `zapp-verify . --rapido` →
+  `OK db_guard 1s / OK tipos 27s / OK lint 4s / OK migrations 1s` e
+  `VERIFY: VERDE SEM BANCO (33s)`.
+- `zapp-verify full .` foi tentado como o cartão pede: rodou `OK tipos 80s`, `OK lint 288s`,
+  `OK migrations 1s` e parou em `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto (passe o nome como
+  terceiro argumento)` — trava nesse passo por falta do nome do conjunto (parâmetro de invocação, não defeito
+  do código); o `--rapido` cobre tipos/lint/guardas/migrations e ficou verde.
 
 ## O que NÃO fiz e por quê
 - Não trouxe os commits dos pais que mexem em `BoardColumn.tsx`/`TasksBoardMode.tsx`/`workItem.types.ts`
