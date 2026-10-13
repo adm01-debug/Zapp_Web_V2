@@ -44,3 +44,16 @@ Título: fix(inbox): barra de acoes em lote so fecha o dialogo depois do resulta
   toast) e a rejeição são o trabalho do cartão pai t_2901d317, já feito. Aqui só
   garanto que o diálogo não desaparece antes do resultado.
 - Nada novo que exporte, baixe, copie ou imprima; nenhum log de telefone/token.
+
+## Sobre o aviso do juiz (arquivos do cartão pai no diff)
+
+O juiz aponta `src/hooks/inbox/useInboxBulkActions.ts` e o teste dele como fora
+de escopo. Eles NÃO são trabalho meu: são os commits do cartão pai t_2901d317,
+que o próprio cartão manda trazer antes de começar ("Pré-requisito ... cherry-pick
+a faixa dia/2026-10-12..94539ff04 (ou merge) ... Enquanto ele não estiver
+integrado, não dá para provar a espera/resultado"). Sem essa faixa no worktree,
+`onTransfer` ainda seria `() => void` e a espera/resultado não teria como ser
+provada. Reverter esses arquivos quebraria o pré-requisito e o teste da barra.
+Minha entrega é só o commit `fix(inbox): barra de acoes em lote so fecha o
+dialogo depois do resultado` (`git diff --stat`: BulkActionsToolbar.tsx 15+7-,
+mais o teste novo).
