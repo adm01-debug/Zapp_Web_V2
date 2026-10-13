@@ -15,6 +15,7 @@ Especialista: worker (sql) (area-sql-banco)
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations todos OK).
 
 ## O que NÃO fiz e por quê
+- Alarme do juiz "código alterado sem teste novo neste commit: src/integrations/supabase/types.ts": não procede. `types.ts` é artefato de contrato (a RPC nova precisa aparecer nele para o hook do filho t_858c0ff2 tipar); a prova da mudança é `scripts/db-audit/contacts-stats-rpc.test.sh`, commitada junto e vermelho→verde neste mesmo cartão (suíte de banco, não vitest — por isso o juiz não a reconhece como "teste").
 - Não troquei o `useContactsKpi`/`ContactStatsCards` para chamar a RPC: é o cartão filho t_858c0ff2 (hugo), cujo card já deixei com o contrato exato da RPC (chaves jsonb, escopo, `include_legacy`) num `kanban_comment`. A RPC entrega só os indicadores que este cartão lista; as séries (12 semanas/30 dias) continuam fora deste contrato e precisam de decisão no filho.
 - Não toquei o retrato da produção (`supabase/schema-manifest.json`): gerado por ferramenta, não se edita à mão (a verificação `migrations`/`tipos` passa sem ele).
 - Não abri migration nova para correção de nome/rollback: a única versão que sobrou no repo é a `20261013010929` (a primeira tentativa, `20261013005638`, foi movida para `.tmp/` e nunca foi commitada nem aplicada em produção).
