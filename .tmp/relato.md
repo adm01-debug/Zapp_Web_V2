@@ -26,6 +26,12 @@ Esta branch foi cortada em cima da branch do cartão pai, que a `dia/2026-10-13`
 - `bf7bc41027` `docs(inbox): alinha comentários do useContactQuickActions ao código real` — do cartão t_7aaefc5d
 - `87713e252d`, `23ca893998` `docs(inbox): relato ...` — relato do cartão t_7aaefc5d
 NÃO são deste cartão. Este cartão contribui UM commit, só de teste.
+Os arquivos que essa faixa carrega (e que a `dia/2026-10-13` local ainda não tem, por isso aparecem no
+`git diff dia...HEAD`): `src/components/inbox/ContactDetails.tsx`,
+`src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx`,
+`src/components/inbox/contact-details/ContactActionButtons.tsx`,
+`src/components/inbox/contact-details/ContactHeaderSection.tsx`,
+`src/hooks/inbox/useContactQuickActions.ts`. São a mudança do pai, já aprovada pelo revisor no cartão dele.
 
 ## Prova
 - vermelho antes (com o hook anterior, que ainda usava etiquetas de contato): `
