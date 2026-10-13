@@ -17,7 +17,9 @@
 --       de estado desfazem juntas (nada pela metade);
 --   T8  ACL: reopen_conversation só para authenticated/service_role; o núcleo e o
 --       gatilho sem EXECUTE para anon/authenticated/PUBLIC, e anon barrado de fato;
---   T9  entrada inválida: contact_id NULL -> 22023.
+--   T9  entrada inválida: contact_id NULL -> 22023;
+--   T10 updated_at: o gatilho update_contacts_updated_at bumpa SÓ a linha reaberta (antes/depois)
+--       e o MESMO bump acontece no caminho canônico set_conversation_status (não é efeito novo).
 --
 -- COMO RODAR (banco LOCAL da tarefa, nunca produção):
 --   zapp-db-local psql . <conjunto> -v ON_ERROR_STOP=1 < supabase/tests/reabre_conversa_nova_mensagem.sql
@@ -41,6 +43,9 @@ DECLARE
   v_msg_id    uuid;
   v_reopened  boolean;
   v_profile_in_event uuid;
+  v_upd_before timestamptz;
+  v_upd_after  timestamptz;
+  v_upd_other  timestamptz;
 
   v_msg_ok    uuid := '44444444-4444-4444-4444-444444444401';
   v_msg_arch  uuid := '44444444-4444-4444-4444-444444444402';
@@ -81,6 +86,11 @@ BEGIN
     ('33333333-3333-3333-3333-3333333333c9', 'C9 atomicidade',      '5511000000909', v_profile_a, 'resolved');
 
   UPDATE public.contacts SET deleted_at = now() WHERE id = '33333333-3333-3333-3333-3333333333c5';
+
+  -- C10 (updated_at antigo, para o antes/depois do T10) e C11 (caminho canônico de status).
+  INSERT INTO public.contacts (id, name, phone, assigned_to, conversation_status, updated_at) VALUES
+    ('33333333-3333-3333-3333-3333333333d0', 'C10 updated_at antigo', '5511000000910', v_profile_a, 'resolved', now() - interval '5 days'),
+    ('33333333-3333-3333-3333-3333333333d1', 'C11 status canonico',   '5511000000911', v_profile_a, 'open',     now() - interval '5 days');
 
   -- ---------------------------------------------------------------- T1/T2 (inbound do contato)
   PERFORM set_config('role', 'service_role', true);
@@ -330,7 +340,33 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  RAISE NOTICE 'reabre_conversa_nova_mensagem: suite OK (T1 resolved->open, T2 archived->waiting, T3 no-op idempotente, T4 agente/deletada, T5 soft-deleted, T6 RPC/papeis/sem oracle, T7 atomicidade, T8 ACL, T9 entrada invalida) — % grupo(s) verificado(s)', v_ok;
+  -- ------------------------------------------ T10 (updated_at: efeito conhecido, 1 linha só, igual ao caminho canônico)
+  -- O gatilho update_contacts_updated_at (BEFORE UPDATE) regrava updated_at em qualquer UPDATE
+  -- de contacts — inclusive no fechamento canônico (sync_contact_status_on_closure) e no
+  -- set_conversation_status. Aqui ele toca SÓ a linha reaberta (não "todas"), e é o mesmo
+  -- comportamento da mudança de status normal. Prova antes/depois e prova que o vizinho não muda.
+  SELECT updated_at INTO v_upd_before FROM public.contacts WHERE id = '33333333-3333-3333-3333-3333333333d0';
+  SELECT updated_at INTO v_upd_other  FROM public.contacts WHERE id = '33333333-3333-3333-3333-3333333333c9';
+
+  PERFORM set_config('role', 'service_role', true);
+  INSERT INTO public.messages (id, contact_id, sender, content, message_type)
+    VALUES ('44444444-4444-4444-4444-4444444444b1', '33333333-3333-3333-3333-3333333333d0', 'contact', 'cliente voltou (updated_at)', 'text');
+  PERFORM set_config('role', 'none', true);
+
+  SELECT updated_at INTO v_upd_after FROM public.contacts WHERE id = '33333333-3333-3333-3333-3333333333d0';
+  IF v_upd_after <= v_upd_before THEN
+    RAISE EXCEPTION 'T10 FALHOU: updated_at do contato reaberto nao avancou (% -> %)', v_upd_before, v_upd_after;
+  END IF;
+  IF (SELECT updated_at FROM public.contacts WHERE id = '33333333-3333-3333-3333-3333333333c9') IS DISTINCT FROM v_upd_other THEN
+    RAISE EXCEPTION 'T10 FALHOU: contato nao relacionado teve updated_at alterado';
+  END IF;
+  PERFORM public.set_conversation_status('33333333-3333-3333-3333-3333333333d1', 'archived');
+  IF (SELECT updated_at FROM public.contacts WHERE id = '33333333-3333-3333-3333-3333333333d1') <= now() - interval '1 day' THEN
+    RAISE EXCEPTION 'T10 FALHOU: set_conversation_status canonico nao bumpou updated_at';
+  END IF;
+  v_ok := v_ok + 1;
+
+  RAISE NOTICE 'reabre_conversa_nova_mensagem: suite OK (T1 resolved->open, T2 archived->waiting, T3 no-op idempotente, T4 agente/deletada, T5 soft-deleted, T6 RPC/papeis/sem oracle, T7 atomicidade, T8 ACL, T9 entrada invalida, T10 updated_at 1 linha vs caminho canonico) — % grupo(s) verificado(s)', v_ok;
 END $reabre$;
 
 ROLLBACK;
