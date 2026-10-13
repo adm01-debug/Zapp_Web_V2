@@ -59,3 +59,9 @@ Especialista: worker (sql)
   workflow é do worker de CI).
 - Não incluí a contagem de `audit_logs` action `sentiment_alert`: o cartão pede
   os totais/sentimento, não os alertas.
+- `src/integrations/supabase/types.ts` não tem teste próprio: é uma declaração
+  gerada (`Returns: Json`) que acompanha a RPC pela regra do repositório. Quem
+  prova o comportamento é a suíte `supabase/tests/ai_sentiment_summary.sql`, no
+  mesmo commit, que roda a RPC real como papel real (vermelho→verde). O juiz
+  barato não reconhece `.sql` como teste (mesmo padrão de
+  supabase/tests/audit_log_summary_por_periodo.sql); por isso a nota aqui.
