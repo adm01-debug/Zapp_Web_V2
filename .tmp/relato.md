@@ -1,27 +1,23 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- src/components/inbox/VirtualizedRealtimeList.tsx: o rodapé do balão de pré-visualização (quick peek) usava `text-muted-foreground/60` — alfa 0,6 sobre o texto secundário, que era exatamente a causa apontada pelo contrato de contraste AA. Trocado por `text-muted-foreground` puro (sem alfa); o próprio contrato (bloco E62) já mede esse par ≥ 4,5:1 sobre `--popover` nos 4 temas. Causa única da quebra do ESPELHO DO CI.
+- Os outros dois arquivos do diff (src/components/ui/quick-peek.tsx e o teste quickPeek) NÃO mudaram em relação à entrega original: vieram por `git cherry-pick` de a25a1f3ff, sem reescrever nada.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `npx vitest run --config vitest.contracts.config.ts tests/contracts/contraste-aa-componentes.contract.test.ts` → `Tests 1 failed | 24 passed (25)`, falha "nenhum texto secundário usa alfa /60 (dava 2,36:1 sobre branco)" apontando `src/components/inbox/VirtualizedRealtimeList.tsx`.
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 25 passed (25)`.
+- testes da entrega: `npx vitest run src/components/inbox/__tests__/VirtualizedRealtimeList.quickPeek.test.tsx` → `Test Files 1 passed (1); Tests 7 passed (7)`.
+- tipos isolados: `node --max-old-space-size=4096 node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit` → exit 0, 0 erros.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (326s)`, `OK tipos` e `OK lint`. A PRIMEIRA rodada desse mesmo comando deu `VERMELHO em tipos` porque o tsc foi morto por OOM (`Killed ... exit 137`) com outros agentes rodando junto; a rerodada e o tsc isolado acima mostram que o código está limpo — vermelho falso por carga.
+
+## Pontos do cartão ([refazer])
+- Ponto 1 (corrigir a causa, sem afrouxar asserção): o alfa `/60` entrou no rodapé do balão em VirtualizedRealtimeList.tsx; removido o alfa e passei a usar `text-muted-foreground`. A asserção do contrato continua `expect(achados).toEqual([])` — nenhum teste foi afrouxado nem alterado.
+- Ponto 2 (partir da entrega por cherry-pick, não recomeçar): trouxe a entrega de t_e39e5246 (a25a1f3ff, commit da branch v2/quick-peek-inbox-2610121703d70a) com `git cherry-pick -n` e recomposei os dois commits (feature + fix), preservando autoria e mensagem originais.
+- Ponto 3 (espelho do CI): o comando `bash ~/arquitetura-v2/integrador/ci_espelho.sh` foi BLOQUEADO pela guarda do Hermes (retorno `HERMES-GUARD: mexer nas guardas/ferramentas ... ~/.local/... node, bun, deno ... proibido`). Rodei então o item exato que falhava no espelho na mão — a suíte `test:contracts` (vitest.contracts.config.ts) — e ela está verde (25/25), junto com `zapp-verify . --rapido` verde.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Nada além do escopo do cartão. Não toquei em valor de token, escala nem cor de tema; a correção é só remover o alfa sobre o texto secundário do balão.
+
+Correção: `fix(inbox): remove alfa /60 do rodape do quick peek (contraste AA)` @ 2ca97e7ac2
+Entrega original (cherry-pick): a25a1f3ff / 4ffc75b68
