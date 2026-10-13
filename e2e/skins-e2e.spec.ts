@@ -173,6 +173,18 @@ async function montarApp(page: Page, registro: Registro): Promise<string[]> {
   await installFakeSession(page);
   await page.route(/\/rest\/v1\/contacts/, (route) => json(route, []));
   await page.route(/\/rest\/v1\/messages/, (route) => json(route, []));
+  // A casca do app conta os e-mails não lidos (`useUnreadEmailCount` → HEAD em
+  // `email_threads`). O catch-all do shell responde 403 a método != GET, então esta
+  // contagem precisa de rota própria: 200 com `content-range` de total 0, como o
+  // PostgREST devolveria — sem tocar a rede real e sem poluir o console com 403.
+  await page.route(/\/rest\/v1\/email_threads/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'content-range': '0-0/0' },
+      body: '[]',
+    }),
+  );
   await page.route(/\/rest\/v1\/agent_presence/, (route) =>
     route.request().method() === 'GET' ? json(route, []) : json(route, [], 201),
   );
@@ -654,9 +666,9 @@ test.describe('CP9 — checks funcionais', () => {
     await page.getByTestId('preset-card-sunset').click();
 
     await expect(page.getByText('Não foi possível salvar o tema')).toBeVisible({ timeout: 10_000 });
-    // A alteração ficou PENDENTE: o ponto vermelho do botão Salvar é o aviso de que o
-    // usuário perderia a escolha ao recarregar.
-    await expect(page.locator('[data-testid="theme-save"] .bg-destructive')).toBeVisible();
+    // A alteração ficou PENDENTE: o ponto do botão Salvar é o aviso de que o
+    // usuário perderia a escolha ao recarregar (âmbar — a cor de aviso do sistema).
+    await expect(page.locator('[data-testid="theme-save"] .bg-warning')).toBeVisible();
     // E o app não pode mentir dizendo que aplicou.
     await expect(page.getByText(/aplicado!/)).toHaveCount(0);
   });
