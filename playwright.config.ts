@@ -125,7 +125,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|team-chat\.spec\.ts|monitoring\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -162,6 +162,18 @@ export default defineConfig({
       // nenhuma sessão salva alimentar esta régua.
       name: 'chromium-tarefas-linha-de-base',
       testMatch: /tarefas-linha-de-base\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
+    },
+    {
+      // t_9de4f9f6 — chat interno (TeamChat) e painel de monitoramento por papel: sessão
+      // FALSA (`installFakeSession`) + backend mockado (`page.route`) + rede real barrada
+      // (`bloquearRedeReal`, conferida no `afterEach` das specs). MESMO padrão deslogado de
+      // `chromium-telefonia`/`chromium-tarefas-linha-de-base`, então roda sem `setup`
+      // autenticado e sem secrets. Projeto DEDICADO: a spec nova não pode entrar no projeto
+      // catch-all (`chromium-authenticated`), cujo `setup` faz login REAL com sessão salva
+      // (a guarda do agente bloqueia esse projeto). `storageState` VAZIO explícito.
+      name: 'chromium-chat-monitor',
+      testMatch: [/team-chat\.spec\.ts/, /monitoring\.spec\.ts/],
       use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
