@@ -7,7 +7,7 @@ Especialista: Íris (area-front-componentes)
 - src/components/inbox/stickers/StickerTypes.ts: "Despedida" ganhou emoji distinto (🫡) de "Cumprimento" (👋); eram os dois 👋.
 - src/components/inbox/stickers/PersonalStickers.tsx: o selo da pasta pessoal diz "figurinhas" em vez de "fotos".
 - src/components/inbox/stickers/StickerCategoryBar.tsx + src/hooks/sticker-picker/useStickerPicker.ts + src/components/inbox/StickerPicker.tsx: no Seletor, "Recentes" ordena por `created_at` (mais novas primeiro) e "Mais usadas" virou filtro próprio (por `use_count`), com a legenda do rodapé coerente ("· Recentes" / "· Mais usadas").
-- src/components/inbox/stickers/StickerManager.tsx: `aria-label` nos dois botões de tamanho da grade.
+- src/components/inbox/stickers/StickerManager.tsx: `aria-label` nos dois botões de tamanho da grade; o spinner do envio usa `motion-safe:animate-spin` (respeita reduzir movimento).
 
 ## Prova
 - vermelho antes: `npx vitest run src/components/inbox/stickers/__tests__/StickerManager.envio.test.tsx src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx` → `Test Files  2 failed (2)` / `Tests  9 failed (9)` (o "+" real não existia, o contador não era consumido, "Mais usadas" não existia).
