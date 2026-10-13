@@ -12,6 +12,15 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  /**
+   * `true` quando a última busca do perfil falhou por motivo transitório
+   * (rede/5xx). Fica disponível para a camada de tela avisar ("perfil não
+   * carregou") e oferecer "Tentar de novo" chamando `refreshProfile`; a própria
+   * tela continua utilizável porque o perfil não bloqueia a navegação. O estado
+   * é só do hook: o aviso renderizado é do componente (area-front-componentes).
+   * `false` com `profile === null` significa apenas que não há perfil, não erro.
+   */
+  profileUnavailable: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
@@ -25,6 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileUnavailable, setProfileUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
   /**
@@ -49,6 +59,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
     // Identidade diferente: o perfil anterior nao pode continuar na tela e so a
     // resposta da nova geracao pode repor um perfil.
     setProfile(null);
+    // A falha da identidade anterior tambem nao vale para a nova.
+    setProfileUnavailable(false);
   }, []);
 
   /**
@@ -68,9 +80,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
          geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
        if (!respostaVigente) return;
        if (data) setProfile(data);
-     } catch (err) {
+       setProfileUnavailable(false);
+       } catch (err) {
        log.error('[AuthProvider] Failed to fetch profile:', err);
-     } finally {
+       // Mesma regra da resposta bem-sucedida: um erro atrasado de identidade que
+       // ja saiu nao pode marcar o perfil do usuario atual como indisponivel.
+       const respostaVigente =
+         geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
+       if (respostaVigente) setProfileUnavailable(true);
+       } finally {
        fetchingRef.current = false;
      }
    }, []);
@@ -208,6 +226,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        // atrasada nao reponha a identidade que acabou de sair.
        definirIdentidade(null);
        setProfile(null);
+       setProfileUnavailable(false);
        setSession(null);
        setUser(null);
        // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
@@ -223,7 +242,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
    };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, profileUnavailable, loading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
