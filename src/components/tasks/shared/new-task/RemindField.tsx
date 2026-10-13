@@ -32,9 +32,9 @@ export interface RemindFieldProps {
 const HORA_PADRAO = '09:00';
 
 const ATALHOS: ReadonlyArray<{ preset: RemindPreset; label: string; testId: string }> = [
-  { preset: 'in1h', label: 'Em 1h', testId: 'new-task-lembrete-em-1h' },
-  { preset: 'tomorrow9', label: 'Amanhã, 9h', testId: 'new-task-lembrete-amanha-9h' },
-  { preset: 'nextMonday9', label: 'Próx. seg., 9h', testId: 'new-task-lembrete-prox-seg-9h' },
+  { preset: 'in1h', label: 'Em 1h', testId: 'nt-lembrete-em-1h' },
+  { preset: 'tomorrow9', label: 'Amanhã, 9h', testId: 'nt-lembrete-amanha-9h' },
+  { preset: 'nextMonday9', label: 'Próx. seg., 9h', testId: 'nt-lembrete-prox-seg-9h' },
 ];
 
 const CLASSE_ATALHO =
@@ -44,9 +44,9 @@ const CLASSE_ATALHO =
 
 export function RemindField({ value, onChange, now = new Date() }: RemindFieldProps) {
   return (
-    <div data-testid="new-task-lembrete" className="flex flex-col gap-2">
+    <div data-testid="nt-lembrete" className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor="new-task-lembrete-data" className="text-xs font-medium text-foreground">
+        <Label htmlFor="nt-lembrete-data" className="text-xs font-medium text-foreground">
           Lembrete
         </Label>
         <span className="text-2xs text-muted-foreground">Quando você quer ser avisado</span>
@@ -59,9 +59,9 @@ export function RemindField({ value, onChange, now = new Date() }: RemindFieldPr
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            id="new-task-lembrete-data"
+            id="nt-lembrete-data"
             type="date"
-            data-testid="new-task-lembrete-data"
+            data-testid="nt-lembrete-data"
             aria-label="Data do lembrete"
             value={value ? diaLocal(value) : ''}
             onChange={(e) =>
@@ -77,7 +77,7 @@ export function RemindField({ value, onChange, now = new Date() }: RemindFieldPr
 
         <Input
           type="time"
-          data-testid="new-task-lembrete-hora"
+          data-testid="nt-lembrete-hora"
           aria-label="Hora do lembrete"
           value={value ? horaLocal(value) : ''}
           onChange={(e) =>
@@ -90,7 +90,7 @@ export function RemindField({ value, onChange, now = new Date() }: RemindFieldPr
 
         <button
           type="button"
-          data-testid="new-task-lembrete-limpar"
+          data-testid="nt-lembrete-limpar"
           aria-label="Limpar lembrete"
           disabled={!value}
           onClick={() => onChange(null)}
