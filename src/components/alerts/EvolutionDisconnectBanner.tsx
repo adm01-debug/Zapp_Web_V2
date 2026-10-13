@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useConnectionAlertPreferences } from '@/hooks/system/useConnectionAlertPreferences';
 
 interface DisconnectedInstance {
   id: string;
@@ -17,6 +18,11 @@ export function EvolutionDisconnectBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [reconnecting, setReconnecting] = useState<string | null>(null);
   const reduceMotion = useReducedMotion() ?? false;
+  // PD-38: o aviso de conexao caida respeita a preferencia do usuario. O TIPO
+  // `alert_on_disconnected` e o interruptor mestre (os canais push/e-mail so escolhem
+  // por onde o aviso sai). Enquanto a leitura esta em voo o padrao e LIGADO, igual a
+  // coluna no banco — assim um aviso real nao e escondido por uma resposta pendente.
+  const { preferences } = useConnectionAlertPreferences();
 
   const fetchStatus = async () => {
     const { data } = await supabase
@@ -77,7 +83,8 @@ export function EvolutionDisconnectBanner() {
     }
   };
 
-  if (disconnected.length === 0 || dismissed) return null;
+  // PD-38: tipo desligado, a faixa nao aparece — independentemente do canal.
+  if (disconnected.length === 0 || dismissed || !preferences.alert_on_disconnected) return null;
 
   return (
     <AnimatePresence>
