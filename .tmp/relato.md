@@ -10,8 +10,9 @@ Especialista: worker
   que falam com a ElevenLabs (endpoint e `arquivo:linha`), o que cada uma registra no log (tamanho/metadados) e no
   ledger, a base legal, a retenção do produto × a do provedor (a confirmar), a transferência internacional, a
   auditoria do webhook (allowlist, sem corpo cru) e as limitações declaradas.
-- `docs/adr/README.md`: índice da ADR-009 (data 2026-10-13). Indispensável: o repo indexa toda ADR aqui
-  (`docs/adr/README.md` é o índice canônico) — sem a linha, a ADR-009 fica órfã do índice.
+- `docs/adr/README.md`: **não** entrou no diff — o portão de saída acusa arquivo modificado fora da lista do cartão
+  (`docs/ (o documento de LGPD indicado no item G11)`); revertei a linha do índice para o conteúdo da base. A
+  ADR-009 segue alcançável pela citação no §4.6 da política.
 
 Fonte de cada fato: código da cópia viva da V2 (13/10), endereços em `supabase/functions/**` citados `arquivo:linha`
 na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; metadados `provider`/`endpoint`/
