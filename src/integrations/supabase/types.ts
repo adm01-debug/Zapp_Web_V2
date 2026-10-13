@@ -10847,6 +10847,7 @@ export type Database = {
         Returns: string
       }
       current_profile_id: { Args: never; Returns: string }
+      crisis_room_snapshot: { Args: never; Returns: Json }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
