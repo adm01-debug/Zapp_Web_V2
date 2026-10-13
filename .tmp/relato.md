@@ -17,8 +17,8 @@ CONCLUÍ: os dois pontos do [refazer] estão implementados e provados com execu�
 - `git grep -n "Ver ranking completo" -- src e2e` → sem resultado (nada mais usava o botao).
 
 ## Pontos do revisor ([refazer], cartao t_d93f2bca)
-- Ponto 1 (aria no botao Atualizar): `Leaderboard.tsx`, `aria-label="Atualizar ranking"` e `aria-pressed={isRefreshing}` na mesma linha do `disabled={isRefreshing}`. Prova: teste vermelho→verde + ratchet do escopo 1 → 0.
-- Ponto 2 (botao morto): `Leaderboard.tsx`, bloco `motion.div`/`Button` de "Ver ranking completo" e import `ChevronRight` removidos. Prova: `git grep` sem resultado + teste do botao morto.
+Ponto 1: `aria-label="Atualizar ranking"` e `aria-pressed={isRefreshing}` no botao de atualizar — `src/components/leaderboard/Leaderboard.tsx`; prova: `src/components/leaderboard/__tests__/Leaderboard.test.tsx` (vermelho `Tests 4 failed (4)` → verde `Tests 4 passed (4)`) e `a11y button-name violations: 1 → 0` no escopo.
+Ponto 2: removido o bloco do botao morto "Ver ranking completo" (sem `onClick`) e o import `ChevronRight` — `src/components/leaderboard/Leaderboard.tsx`; prova: teste `nao existe o botao morto` (vermelho `AssertionError: expected <button …> to be null` → verde) e `git grep -n "Ver ranking completo" -- src e2e` sem resultado.
 
 ## Escopo do diff (o que o `git diff --stat dia/2026-10-13...HEAD` mostra)
 - `src/components/leaderboard/Leaderboard.tsx` — producao: 2 insercoes, 10 remocoes.
