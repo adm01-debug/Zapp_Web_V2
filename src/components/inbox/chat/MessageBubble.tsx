@@ -16,6 +16,7 @@ import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
 import { MessageBubbleUnsupported } from './MessageBubbleUnsupported';
+import { MessageBubbleMediaMissing } from './MessageBubbleMediaMissing';
 const LocationMessageDisplay = lazy(() =>
   import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
 );
@@ -119,6 +120,18 @@ function tentativasDeEnvio(message: Message): number | null {
   return typeof total === 'number' && total > 1 ? total : null;
 }
 
+/**
+ * Tipos de mensagem que SÓ fazem sentido com uma URL de mídia. Sem `mediaUrl` o balão não
+ * tinha ramo nenhum e saía vazio; o rótulo alimenta o fallback `MessageBubbleMediaMissing`.
+ */
+const MEDIA_TYPE_LABEL: Record<string, string> = {
+  image: 'Imagem',
+  video: 'Vídeo',
+  audio: 'Áudio',
+  document: 'Documento',
+  sticker: 'Figurinha',
+};
+
 interface MessageBubbleProps {
   message: Message;
   isFirstInGroup: boolean;
@@ -156,6 +169,12 @@ export const MessageBubble = memo(function MessageBubble({
   const { profile } = useAuth();
   const isSent = message.sender === 'agent';
   const tentativas = tentativasDeEnvio(message);
+  // Mídia sem URL: o tipo pede preview, mas nenhuma URL chegou — cai no fallback
+  // `MessageBubbleMediaMissing` em vez de deixar o balão vazio.
+  const mediaLabel = MEDIA_TYPE_LABEL[message.type];
+  const mediaSemUrl = Boolean(mediaLabel) && !message.mediaUrl;
+  // Preview de imagem/vídeo colado na borda (sem padding) só quando há mídia de verdade.
+  const midiaInline = (message.type === 'image' || message.type === 'video') && Boolean(message.mediaUrl);
   const senderName = isSent ? 'Você' : message.senderName || 'Contato';
   const agentInitials = profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'EU';
 
@@ -234,7 +253,7 @@ export const MessageBubble = memo(function MessageBubble({
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 className={cn(
                   'relative transition-all overflow-hidden',
-                  (message.type === 'image' || message.type === 'video') && !message.content ? 'p-0' : 'px-3.5 py-2',
+                  midiaInline && !message.content ? 'p-0' : 'px-3.5 py-2',
                   isSent
                     ? cn('bg-primary text-primary-foreground shadow-sm',
                         isFirstInGroup && isLastInGroup && 'rounded-2xl rounded-br-md',
@@ -251,6 +270,8 @@ export const MessageBubble = memo(function MessageBubble({
                 {message.replyTo && <QuotedMessage replyTo={message.replyTo} isSent={isSent} onClick={() => onScrollToMessage(message.replyTo!.messageId)} />}
                 {message.buttonResponse && <ButtonResponseBadge buttonTitle={message.buttonResponse.buttonTitle} isSent={isSent} />}
                 {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} />}
+
+                {mediaSemUrl && <MessageBubbleMediaMissing label={mediaLabel} isSent={isSent} />}
 
                 {message.type === 'image' && message.mediaUrl && (
                   <div className={cn("overflow-hidden relative", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>
@@ -370,10 +391,10 @@ export const MessageBubble = memo(function MessageBubble({
 
                 <div className={cn(
                   'flex items-center justify-end gap-1 mt-0.5 -mb-0.5',
-                  (message.type === 'image' || message.type === 'video') && !message.content
+                  midiaInline && !message.content
                     ? 'absolute bottom-2 right-3 text-white drop-shadow-md'
                     : isSent ? 'text-primary-foreground' : 'text-muted-foreground',
-                  (message.type === 'image' || message.type === 'video') && !message.content && 'px-3.5 pb-1'
+                  midiaInline && !message.content && 'px-3.5 pb-1'
                 )}>
                   {message.isEdited && <span className="text-[9px] italic mr-0.5">editada</span>}
                   <span className="text-2xs font-medium">{formatMessageTime(message.timestamp)}</span>
