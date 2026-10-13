@@ -11,8 +11,10 @@ Especialista: worker (testes) (area-testes-do-produto)
   nenhum (sucesso, Desfazer, sem-conexão resolvível, erro da edge e dois cliques concorrentes);
   (c) nenhum texto de etiqueta/marcador (`VIP`, `Bloqueado`, `etiqueta`) sai nos avisos — o aviso é
   "Maria Silva bloqueado" com Desfazer.
-- Nenhum teste foi removido, pulado nem teve timeout aumentado; a cobertura virou assertions mais fortes (de 6 para
-  7 casos), não menos.
+- Nenhum teste foi removido, pulado nem teve timeout aumentado pelo MEU commit; a cobertura do hook virou
+  assertions mais fortes (de 6 para 7 casos), não menos. O `git diff dia...HEAD` mostra casos antigos removidos:
+  são os testes acoplados a etiquetas de contato que o cartão PAI (t_7aaefc5d) apagou junto com a função de
+  etiquetas (ordem do Joaquim de 12/10) — a remoção é dele, está na FAIXA DO PAI abaixo.
 
 ## GAP registrado (passo 4 do cartão)
 O reconhecimento (card t_e71f3ba9) diz que `is_vip`/`blocked_at` NÃO existem no schema e este cartão proíbe
