@@ -29,8 +29,12 @@ export function useCustomEmojis(open: boolean) {
   const [emojis, setEmojis] = useState<CustomEmoji[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [pendingUpload, setPendingUpload] = useState<PendingEmojiUpload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Trava de reentrância do Salvar: o estado só reflete no próximo render, então dois
+  // cliques no mesmo tick veriam `saving === false` e criariam duas linhas.
+  const savingRef = useRef(false);
   // R2-API-053: caminhos de Storage cuja remoção foi recusada depois de a linha já ter
   // saído. Ficam registrados como etapa pendente e a limpeza é retomada na próxima leitura.
   const pendingStorageRemovals = useRef<string[]>([]);
@@ -76,8 +80,14 @@ export function useCustomEmojis(open: boolean) {
 
     setUploading(true);
     try {
+      // Item 226: a policy de INSERT do bucket exige admin/supervisor OU a pasta do
+      // PRÓPRIO usuário (`(storage.foldername(name))[1] = auth.uid()`). Subir na raiz
+      // funciona só para admin — o atendente comum recebia erro de permissão.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Sessão não identificada; entre novamente para enviar emojis'); return; }
+
       const ext = getFileExtensionWithDefault(file.name, 'png');
-      const storagePath = `emoji_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      const storagePath = `${user.id}/emoji_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('custom-emojis')
@@ -110,16 +120,29 @@ export function useCustomEmojis(open: boolean) {
   }, []);
 
   const handleConfirmUpload = useCallback(async (pending: PendingEmojiUpload) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('custom_emojis').insert({
-      name: pending.name, image_url: pending.imageUrl,
-      category: pending.selectedCategory, is_favorite: false,
-      use_count: 0, uploaded_by: user?.id || null,
-    });
-    if (error) { toast.error('Erro ao salvar emoji'); return; }
-    toast.success(`Emoji salvo como "${CATEGORY_LABELS[pending.selectedCategory]?.label || pending.selectedCategory}"!`);
-    setPendingUpload(null);
-    fetchEmojis();
+    // Duplo clique: a trava é síncrona (ref), então o segundo clique morre aqui mesmo
+    // antes do primeiro `await` — uma linha só.
+    if (savingRef.current) return;
+    const name = pending.name.trim();
+    if (!name) { toast.error('Dê um nome ao emoji'); return; }
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('custom_emojis').insert({
+        name, image_url: pending.imageUrl,
+        category: pending.selectedCategory, is_favorite: false,
+        use_count: 0, uploaded_by: user?.id || null,
+      });
+      if (error) { toast.error('Erro ao salvar emoji'); return; }
+      toast.success(`Emoji salvo como "${CATEGORY_LABELS[pending.selectedCategory]?.label || pending.selectedCategory}"!`);
+      setPendingUpload(null);
+      fetchEmojis();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }, [fetchEmojis]);
 
   const handleCancelUpload = useCallback(async () => {
@@ -132,7 +155,12 @@ export function useCustomEmojis(open: boolean) {
   const handleSend = useCallback(async (emoji: CustomEmoji, onSendEmoji: (url: string) => void, onClose: () => void) => {
     onSendEmoji(emoji.image_url);
     onClose();
-    await supabase.from('custom_emojis').update({ use_count: (emoji.use_count || 0) + 1 }).eq('id', emoji.id);
+    // PB-35: o UPDATE direto em `use_count` atinge 0 linhas quando o emoji é de OUTRO
+    // dono (a policy de UPDATE é do dono/admin) — sem erro e sem contador. A RPC
+    // `increment_custom_emoji_use` (SECURITY DEFINER) grava no lugar do atendente.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (PB-35), types.ts ainda não sincronizado
+    const { error } = await (supabase as any).rpc('increment_custom_emoji_use', { p_emoji_id: emoji.id });
+    if (error) toast.error('Não foi possível registrar o uso do emoji');
   }, []);
 
   const toggleFavorite = useCallback(async (e: React.MouseEvent, emoji: CustomEmoji) => {
@@ -190,7 +218,7 @@ export function useCustomEmojis(open: boolean) {
   }, [emojis]);
 
   return {
-    emojis, loading, uploading, pendingUpload, fileInputRef,
+    emojis, loading, uploading, saving, pendingUpload, fileInputRef,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
     handleSend, toggleFavorite, handleCategoryChange, handleDelete,
     setPendingUpload,
