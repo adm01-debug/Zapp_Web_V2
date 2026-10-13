@@ -1,5 +1,7 @@
 Especialista: Íris (area-front-componentes)
 
+Nota sobre o aviso do juiz (arquivos fora da lista do cartão): os arquivos `src/hooks/system/useUserSettings.ts`, `src/hooks/__tests__/useUserSettings*.test.tsx` e `src/i18n/index.ts` vêm do commit de dependência que o PRÓPRIO CARTÃO manda trazer para a base (`759126a11`, seção DEPENDÊNCIA), trazido por `git cherry-pick` como o cartão determina. Não é alteração minha; o meu diff é só `src/components/settings/**` (5 arquivos).
+
 ## O que mudou e por quê
 - `src/components/settings/AppearanceSettings.tsx`: os `<Select>` de Tema e Idioma agora mostram o valor EM VIGOR — tema normalizado para `light|dark|system` (valor legado/desconhecido cai em `system`, nunca num seletor vazio) e idioma normalizado com `normalizeLanguage` (o mesmo helper que o hook usa na leitura), para o código legado `pt-BR` do banco continuar exibindo "Português (Brasil)". O idioma passou a ter os valores `pt|en|es` com rótulos em pt-BR e grava na coluna o código que ela já usa (`pt-BR|en-US|es`), então o valor exibido e o salvo não divergem. O botão "Salvar preferências" veio para dentro da aba (antes era o "Salvar Alterações" global), com estados de salvando (spinner + botão desabilitado) e de erro na tela (`role="alert"`).
 - `src/components/settings/SettingsView.tsx`: removido o "Salvar Alterações" do cabeçalho global — ele prometia gravar as abas de operação, que gravam pelo próprio painel canônico (`useNotificationSettings`, `ScheduleSettings` etc.); as preferências desta aba passam a ser gravadas por um botão dentro dela, alimentado pelo mesmo hook (`isSaving`/`onSave`), um só dono da escrita.
@@ -22,5 +24,7 @@ Especialista: Íris (area-front-componentes)
 - Nada de token/classe nova: `text-destructive` e `border-border` já existem no projeto; o spinner usa `motion-safe:animate-spin` (respeita reduzir-movimento).
 
 ## O que NÃO fiz e por quê
-- Não toquei em `src/hooks/**` nem na migration: a persistência (`saveSettings`) e a normalização no hook são do PD-30 (commit 63f746e72, já na base). Os arquivos `src/hooks/system/useUserSettings.ts`, `src/hooks/__tests__/useUserSettings*.test.tsx` e `src/i18n/index.ts` que aparecem no diff vêm do commit de dependência que o PRÓPRIO CARTÃO manda trazer para a base (`759126a11`, seção DEPENDÊNCIA), trazido por `git cherry-pick` como o cartão manda — não são alteração minha; o meu diff é o dos 5 arquivos de `src/components/settings/**`.
+- Os arquivos de `src/hooks/**` e `src/i18n/index.ts` listados no aviso do juiz são do commit de dependência do cartão (nota no topo deste relato); não foram tocados por mim.
 - Não implementei captura de tela no navegador: não houve mudança de CSS/token (só props e handlers), então a prova é o teste do componente real nos dois temas.
+
+CONCLUÍ: a aba Aparência mostra e grava o Tema e o Idioma em vigor, e o botão de salvar vive dentro da aba, com estado de salvando e erro na tela.
