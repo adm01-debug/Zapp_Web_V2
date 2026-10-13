@@ -24,3 +24,7 @@ Especialista: worker (sql) (area-sql-banco)
 - Nao troquei o front (useDeviceDetection/DevicesPanel/SecurityOverview) para chamar a RPC: e' o cartao filho t_b4c0ae4e (worker de telas/hooks). Esta entrega so o contrato do banco; o hook precisa passar a chamar my_active_sessions() e usar is_current no lugar de device_id === currentDeviceId.
 
 NÃO CONCLUÍ: nada — cartao concluido.
+
+## Sobre o aviso do fechar ("codigo alterado sem teste neste commit")
+- Falso positivo conhecido de cartao de banco: o fechar olhou src/integrations/supabase/types.ts (src/**, unico arquivo "de aplicacao" no diff) e nao contou a suite de banco nova em supabase/tests/my_active_sessions.sql. O teste do defeito ESTA no commit 7a03b74be2 (supabase/tests/my_active_sessions.sql) e prova vermelho->verde por papel real; types.ts e apenas o espelho gerado da RPC (ciência do postgrest). Nao ha mudanca de comportamento em src/**. Repetindo o MESMO comando de fechar.
+
