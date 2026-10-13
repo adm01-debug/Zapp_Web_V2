@@ -12,7 +12,13 @@ Ponto 3 — [refazer 2] a edge nova quebrava o espelho de documentação/CI porq
 O que mudei: atualizei ESTADO.md para 82 edges, grupo D=7, total=82, e incluí webhook-hmac-selftest com âncora supabase/config.toml:90. Não alterei FEATURE_REGISTRY nem outras listas.
 Teste que prova: antes da correção rodei node --test scripts/ci/docs-estado-registry-convention.unit.mjs e ele saiu 1; depois da correção o mesmo comando ficou verde: 11 tests, 11 pass, 0 fail.
 
-Arquivos alterados (git diff --name-only dia/2026-10-13...HEAD após o commit):
+Fatos medidos do diff:
+- 6 arquivos alterados.
+- 1 arquivo de teste novo/alterado.
+- 6 casos de teste novos do selftest HMAC.
+- Arquivo fora de 'ARQUIVOS QUE PODE TOCAR': ESTADO.md. Mantive porque é exatamente o ponto da recusa do refazer 2: a guarda docs-estado-registry-convention exige que toda edge com index.ts exista no espelho ESTADO.md; sem este arquivo o gate fica vermelho.
+
+Arquivos alterados:
 .tmp/relato.md
 ESTADO.md
 supabase/config.toml
