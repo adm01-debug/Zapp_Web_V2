@@ -26,7 +26,7 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }));
 
-import { useQueueGoals } from '@/hooks/business/useQueueGoals';
+import { useQueueGoals, getQueueAlertBand } from '@/hooks/business/useQueueGoals';
 
 const mockGoals = [
   { id: 'g1', queue_id: 'q1', max_waiting_contacts: 10, max_avg_wait_minutes: 5, min_assignment_rate: 80, max_messages_pending: 50, alerts_enabled: true },
@@ -169,5 +169,29 @@ describe('useQueueGoals', () => {
 
     expect(saved).toBe(true);
     expect(toastSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Metas salvas' }));
+  });
+});
+
+describe('getQueueAlertBand (regra unica de faixa)', () => {
+  it('cruzou para cima devolve a maior faixa atingida', () => {
+    expect(getQueueAlertBand(49, 100)).toBeNull();
+    expect(getQueueAlertBand(50, 100)).toBe(50);
+    expect(getQueueAlertBand(74, 100)).toBe(50);
+    expect(getQueueAlertBand(75, 100)).toBe(75);
+    expect(getQueueAlertBand(100, 100)).toBe(100);
+    expect(getQueueAlertBand(150, 100)).toBe(100);
+  });
+
+  it('metrica invertida avisa ao CAIR (limite 80: faixa 50 = 40)', () => {
+    expect(getQueueAlertBand(79, 80, true)).toBeNull();
+    expect(getQueueAlertBand(60, 80, true)).toBe(25);
+    expect(getQueueAlertBand(40, 80, true)).toBe(50);
+    expect(getQueueAlertBand(20, 80, true)).toBe(75);
+  });
+
+  it('sem base (limite 0, NaN ou infinito) nao devolve faixa', () => {
+    expect(getQueueAlertBand(10, 0)).toBeNull();
+    expect(getQueueAlertBand(Number.NaN, 100)).toBeNull();
+    expect(getQueueAlertBand(10, Number.POSITIVE_INFINITY)).toBeNull();
   });
 });

@@ -128,3 +128,27 @@ export function useQueueGoals() {
     refetch: fetchGoals,
   };
 }
+
+/**
+ * Faixas de alerta da meta, em % do limite (paridade V3, desenho sim3 c.2).
+ * Nas metricas de TETO (valor alto = pior) o aviso sai ao CRUZAR para cima;
+ * nas metricas INVERTIDAS (ex.: `min_assignment_rate`, valor baixo = pior) ao CAIR.
+ */
+export const QUEUE_ALERT_BANDS = [50, 75, 100] as const;
+export const INVERTED_QUEUE_ALERT_BANDS = [25, 50, 75] as const;
+
+export type QueueAlertMetric = QueueAlert['type'];
+
+/**
+ * Regra UNICA de faixa, para o aviso global e para qualquer tela nao terem duas
+ * regras divergentes. Devolve a MAIOR faixa cruzada (ou `null` quando nenhuma foi
+ * cruzada). `limit <= 0` ou valor/limite nao finito devolvem `null` (sem base).
+ */
+export function getQueueAlertBand(value: number, limit: number, invert = false): number | null {
+  if (!Number.isFinite(value) || !Number.isFinite(limit) || limit <= 0) return null;
+  const bands: readonly number[] = invert ? INVERTED_QUEUE_ALERT_BANDS : QUEUE_ALERT_BANDS;
+  const crossed = bands.filter((faixa) =>
+    invert ? value <= limit * (1 - faixa / 100) : value >= limit * (faixa / 100)
+  );
+  return crossed.length > 0 ? crossed[crossed.length - 1] : null;
+}
