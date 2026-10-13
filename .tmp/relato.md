@@ -1,18 +1,35 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (geral)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/components/team-chat/useTeamChatPanel.ts: `fetchOlderMessages` deixa de ler
+  `team_messages` direto com embed `sender:profiles!team_messages_sender_id_fkey`
+  e passa a chamar a RPC achatada `get_team_messages_page` com o cursor em
+  `p_before_id` (página de 60, teto do `.limit(60)` antigo). Motivo: a RLS de
+  `profiles` é 'own + admin', então para o agente o embed voltava `sender: null`
+  e as mensagens ANTIGAS apareciam sem nome e sem foto. A RPC resolve o remetente
+  no servidor (`sender_name`/`sender_avatar`) — é o mesmo caminho já usado pelo
+  histórico novo (`useTeamMessages`, SL-016/F54).
+- src/components/team-chat/useTeamChatPanel.ts: tipo `TeamMessagePageRow` e
+  mapeador `pageRowToTeamMessage` (achata `sender_name`/`sender_avatar` em
+  `sender`, e `status` fica de fora como no `useTeamMessages`: coluna NOT NULL
+  sem UPDATE no cliente).
+- src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx:
+  reescrito. Antes provava o filtro `.or(created_at,id)` do select direto; agora
+  prova que a paginação chama `get_team_messages_page` com
+  `p_before_id: 'm-new'`, que NÃO há leitura direta de `team_messages`, e que as
+  antigas trazem `sender.name`/`sender.avatar_url` em ordem ASC.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx`
+  → `expected [ 'm-new' ] to deeply equal [ 'm-old-1', 'm-old-2', 'm-new' ]` e
+  `a paginação deve usar a RPC get_team_messages_page` (2 failed)
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 2 passed (2)`
+- regressão do módulo: `npx vitest run src/components/team-chat src/hooks/team-chat`
+  → `Test Files 35 passed (35); Tests 358 passed | 1 todo (359)`
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não mexi no SQL da RPC: o desempate por `id` para mensagens com o MESMO
+  `created_at` do cursor é do banco (N-072, "fora do HEAD, traga"); o SQL atual
+  compara só `created_at < v_before_at`. Está comentado no hook.
+- Não alterei `useTeamMessages.ts` (mapeamento equivalente, mas fora do escopo
+  deste cartão): o mapeador ficou local no hook da paginação.
