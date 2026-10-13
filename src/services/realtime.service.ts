@@ -18,6 +18,125 @@ import {
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('RealtimeService');
+// ── Marcação de leitura em lote ─────────────────────────────────────────────
+// Antes: 1 UPDATE por seleção de conversa, sem retry e sem agrupamento. Uma
+// rajada (deep-link, teclado, fila de notificação) fazia N requisições e uma
+// única falha de rede perdia a marcação em silêncio. Agora as chamadas entram
+// numa fila e saem em UM PATCH .in('contact_id', ids) depois da janela de
+// agrupamento; falha transitória devolve os ids à fila com backoff e falha
+// permanente (4xx/contrato) é descartada sem insistir.
+export const MARK_READ_FLUSH_MS = 250;
+const MARK_READ_RETRY_BASE_MS = 1_000;
+const MARK_READ_MAX_RETRIES = 3;
+const CONTACT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface MarkReadErrorLike {
+  name?: unknown;
+  message?: unknown;
+  status?: unknown;
+  statusCode?: unknown;
+  code?: unknown;
+}
+
+/**
+ * Só falhas comprovadamente transitórias voltam para a fila. Erro 4xx, de
+ * contrato/schema e de autorização exige correção humana: repetir só gasta
+ * requisição numa operação que nunca vai passar.
+ */
+export function isTransientMarkReadError(error: unknown): boolean {
+  if (error instanceof TypeError) return true;
+  if (!error || typeof error !== 'object') return false;
+
+  const candidate = error as MarkReadErrorLike;
+  if (typeof candidate.name === 'string' && /^(SupabaseQueueSaturated|SupabaseQueueTimeout)Error$/.test(candidate.name)) {
+    return true;
+  }
+
+  const rawStatus = candidate.status ?? candidate.statusCode;
+  const status = typeof rawStatus === 'number'
+    ? rawStatus
+    : typeof rawStatus === 'string' && /^\d{3}$/.test(rawStatus)
+      ? Number(rawStatus)
+      : null;
+  if (status === 429 || (status !== null && status >= 500)) return true;
+  if (status !== null && status >= 400 && status < 500) return false;
+
+  const message = typeof candidate.message === 'string' ? candidate.message.toLowerCase() : '';
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('network request failed') ||
+    message.includes('networkerror') ||
+    message.includes('load failed') ||
+    message.includes('queue saturated') ||
+    message.includes('queue wait timed out')
+  );
+}
+
+let pendingMarkRead = new Set<string>();
+let markReadTimer: ReturnType<typeof setTimeout> | null = null;
+let markReadRetryCount = 0;
+
+function scheduleMarkReadFlush(delayMs = MARK_READ_FLUSH_MS) {
+  if (markReadTimer !== null) clearTimeout(markReadTimer);
+  markReadTimer = setTimeout(() => {
+    markReadTimer = null;
+    void flushPendingMarkRead(true);
+  }, delayMs);
+}
+
+async function persistReadBatch(contactIds: string[]): Promise<{ error: unknown }> {
+  const { error } = await supabase
+    .from('messages')
+    .update({ is_read: true })
+    .in('contact_id', contactIds)
+    .eq('sender', 'contact')
+    .eq('is_read', false);
+  return { error };
+}
+
+/**
+ * Descarrega agora a fila de leitura (1 PATCH com todos os ids pendentes).
+ * `allowRetry=false` é o caminho de saída (unmount/pagehide): a requisição sai
+ * sem agendar retry, porque o componente que a pediu já não existe.
+ */
+export async function flushPendingMarkRead(allowRetry = true): Promise<void> {
+  if (markReadTimer !== null) {
+    clearTimeout(markReadTimer);
+    markReadTimer = null;
+  }
+  const ids = Array.from(pendingMarkRead);
+  pendingMarkRead = new Set();
+  if (ids.length === 0) return;
+
+  let error: unknown = null;
+  try {
+    ({ error } = await persistReadBatch(ids));
+  } catch (err) {
+    error = err;
+  }
+  if (!error) {
+    markReadRetryCount = 0;
+    return;
+  }
+
+  const transient = isTransientMarkReadError(error);
+  if (transient) {
+    for (const id of ids) pendingMarkRead.add(id);
+    markReadRetryCount += 1;
+  } else {
+    markReadRetryCount = 0;
+  }
+  log.error(
+    transient
+      ? 'Error marking messages as read (batch); ids kept for retry:'
+      : 'Error marking messages as read (batch) is permanent; retry dropped:',
+    error
+  );
+  if (transient && allowRetry && markReadRetryCount <= MARK_READ_MAX_RETRIES) {
+    scheduleMarkReadFlush(MARK_READ_RETRY_BASE_MS * 2 ** (markReadRetryCount - 1));
+  }
+}
+
 const SEEDED_CONTACT_LIMIT = 500;
 const RECENT_MESSAGES_LIMIT = 1000;
 const CONTACT_FETCH_CHUNK_SIZE = 200;
@@ -206,17 +325,30 @@ export class RealtimeService {
     return supabase.removeChannel(channel);
   }
 
+  /**
+   * Entra na fila de leitura (agrupa e sai em lote). Mantém a assinatura
+   * `Promise<void>` que o hook de mensagens espera: resolve assim que a
+   * seleção entra na fila, para o commit otimista da tela sair junto com o
+   * clique em vez de esperar a ida ao banco.
+   */
   static async markMessagesAsRead(contactId: string): Promise<void> {
-    const { error } = await supabase
-      .from('messages')
-      .update({ is_read: true })
-      .eq('contact_id', contactId)
-      .eq('sender', 'contact')
-      .eq('is_read', false);
-      
-    if (error) {
-      log.error('Error marking messages as read:', error);
-      throw error;
+    RealtimeService.markManyMessagesAsRead([contactId]);
+  }
+
+  /**
+   * Fila de leitura: descarta id que não é UUID de contato (deep-link e
+   * eventos de chat podem trazer JID) e agenda UM PATCH com todos os ids.
+   */
+  static markManyMessagesAsRead(contactIds: string[]): void {
+    const valid = contactIds.filter(
+      (id): id is string => typeof id === 'string' && CONTACT_UUID_RE.test(id)
+    );
+    if (valid.length !== contactIds.length) {
+      // Não loga o valor: pode ser telefone/JID de contato real.
+      log.warn('markMessagesAsRead: ids que não são UUID de contato foram descartados');
     }
+    if (valid.length === 0) return;
+    for (const id of valid) pendingMarkRead.add(id);
+    scheduleMarkReadFlush();
   }
 }

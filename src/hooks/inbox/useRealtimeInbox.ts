@@ -4,6 +4,7 @@
 import { useOfflineCache } from '@/hooks/system/useOfflineCache';
 import { useMessages } from '@/hooks/chat/useMessages';
 import { useRealtimeMessages, ConversationWithMessages, ConversationContact } from '@/hooks/chat/useRealtimeMessages';
+import { flushPendingMarkRead } from '@/services/realtime.service';
 import { useExternalConversations, useExternalMessages } from '@/hooks/integrations/useExternalEvolution';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,7 +50,9 @@ export function useRealtimeInbox() {
      contactId: string;
      contact: ConversationContact;
    } | null>(null);
-   const [isOnline, setIsOnline] = useState(true);
+   const [isOnline, setIsOnline] = useState(() =>
+     typeof navigator === 'undefined' ? true : navigator.onLine
+   );
   const { profile } = useAuth();
 
   const { conversations: cachedConversations, usingCache } = useOfflineCache(conversations, loading);
@@ -130,6 +133,21 @@ export function useRealtimeInbox() {
     window.addEventListener('offline', handleOffline);
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
   }, []);
+
+  // R2-INB-059: mensagem que chega com a conversa ABERTA precisa ser lida. Antes
+  // `markAsRead` só rodava na troca de conversa (e no deep-link), então o unread
+  // da conversa selecionada subia 1, 2, 3... e só zerava quando o agente saía e
+  // voltava. Aqui o unread da conversa selecionada reenfileira a marcação; como
+  // o hook zera o unread no commit otimista, o efeito converge no segundo passe.
+  useEffect(() => {
+    if (USE_EXTERNAL_DB || !selectedContactId) return;
+    const aberta = conversations.find((c) => c.contact.id === selectedContactId);
+    if (aberta && aberta.unreadCount > 0) void markAsRead(selectedContactId);
+  }, [conversations, selectedContactId, markAsRead]);
+
+  // Fila de leitura: se a Inbox desmonta com um lote pendente (janela de 250 ms),
+  // o PATCH sai agora em vez de morrer junto com o timer.
+  useEffect(() => () => { void flushPendingMarkRead(false); }, []);
 
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {

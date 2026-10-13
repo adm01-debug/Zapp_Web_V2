@@ -69,6 +69,48 @@ async function upsertSelf(status: PresenceStatus) {
   if (error) console.error('[agent-presence] upsert falhou', error);
 }
 
+// Aba oculta: o navegador limita os timers (um heartbeat de 25s chega tarde ou
+// nunca), e era esse atraso que fazia o agente "piscar" offline na tela dos
+// outros. Pausamos heartbeat e reavaliação periódica enquanto a aba está
+// oculta; ao voltar, republicamos na hora e recalculamos antes de retomar.
+function pauseForHiddenTab() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  if (staleTimer) { clearInterval(staleTimer); staleTimer = null; }
+}
+
+function resumeFromVisible() {
+  if (!activeUserId || heartbeatTimer) return;
+  void upsertSelf(myStatus);
+  heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
+  staleTimer = setInterval(recompute, HEARTBEAT_MS);
+  recompute();
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'hidden') pauseForHiddenTab();
+  else resumeFromVisible();
+}
+
+function handlePageHide() {
+  // Fechar/recarregar a aba publica 'offline' na hora. Antes a linha ficava
+  // 'online' no banco até o heartbeat expirar (75s) para quem via a lista.
+  if (activeUserId) void upsertSelf('offline');
+}
+
+let listening = false;
+function startListening() {
+  if (listening || typeof document === 'undefined') return;
+  listening = true;
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide);
+}
+function stopListening() {
+  if (!listening) return;
+  listening = false;
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('pagehide', handlePageHide);
+}
+
 function join(userId: string) {
   if (activeUserId === userId) return;
   leave();
@@ -114,14 +156,20 @@ function join(userId: string) {
     channel = ch;
   })();
 
-  heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
-  // Reavalia staleness periodicamente mesmo sem evento novo -- é assim que
-  // um colega que fechou a aba sem cleanup vira "offline" na tela dos outros.
-  staleTimer = setInterval(recompute, HEARTBEAT_MS);
+  startListening();
+  // Carregar já com a aba oculta não deixa timers pendurados: eles nascem ao
+  // voltar para `visible` (resumeFromVisible).
+  if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
+    heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
+    // Reavalia staleness periodicamente mesmo sem evento novo -- é assim que
+    // um colega que fechou a aba sem cleanup vira "offline" na tela dos outros.
+    staleTimer = setInterval(recompute, HEARTBEAT_MS);
+  }
   emit();
 }
 
 function leave() {
+  stopListening();
   // Publica 'offline' antes de soltar o usuário ativo -- antes o logout só
   // limpava timers/canal no cliente e deixava a linha do banco em 'online'
   // até o heartbeat expirar (até 75s depois de quem já saiu do app).
