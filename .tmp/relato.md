@@ -13,5 +13,5 @@ Especialista: Hugo (area-front-hooks)
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (162s)`.
 
 ## O que NÃO fiz e por quê
-- Não toquei na Edge `supabase/functions/webauthn/index.ts` (área do PH-01): trouxe os 3 commits do pai por cherry-pick (6c022a2e95, 90575dada9, 5c2362a934) porque `git merge-base --is-ancestor ce37605ea HEAD` era falso.
+- Não toquei na Edge `supabase/functions/webauthn/index.ts` (área do PH-01). Os arquivos `supabase/functions/webauthn/index.ts`, `supabase/functions/webauthn/index.test.ts` e `supabase/deployment-manifest.json` que aparecem no diff NÃO são edição minha: vieram dos 3 commits do PAI trazidos por cherry-pick (6c022a2e95, 90575dada9, 5c2362a934), exigidos pela DEPENDÊNCIA do cartão, porque `git merge-base --is-ancestor ce37605ea HEAD` era falso.
 - Sem migration e sem dependência nova (cartão de front).
