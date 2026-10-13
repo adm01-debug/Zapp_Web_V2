@@ -262,6 +262,15 @@ export default function TalkXView() {
     setHelpRoute(null);
   }, []);
 
+  // X192: quem sai da Ajuda (Esc, Voltar ao módulo ou voltar do navegador)
+  // volta para o gatilho, não para o começo da tela — o foco não se perde.
+  const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const wasHelpOpen = useRef(false);
+  useEffect(() => {
+    if (wasHelpOpen.current && !helpRoute) helpTriggerRef.current?.focus();
+    wasHelpOpen.current = Boolean(helpRoute);
+  }, [helpRoute]);
+
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
     for (const rawProfile of teamProfiles) {
@@ -422,7 +431,7 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              type="button" onClick={() => changeHelpRoute({})}
+              type="button" ref={helpTriggerRef} onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
               <HelpCircle className="w-4 h-4" />Ajuda
