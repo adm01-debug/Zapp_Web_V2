@@ -91,10 +91,15 @@ describe('whatsappFileTypes — validateFile', () => {
     expect(grande.error).toContain('100MB');
   });
 
-  it('reconhece pela extensão quando o MIME vem vazio', () => {
-    const result = validateFile(makeFile('contrato.pdf', '', 1 * MB));
-    expect(result.valid).toBe(true);
-    expect(result.category).toBe('document');
+  it('reconhece pela extensão quando o MIME vem vazio ou é estranho', () => {
+    const vazio = validateFile(makeFile('contrato.pdf', '', 1 * MB));
+    expect(vazio.valid).toBe(true);
+    expect(vazio.category).toBe('document');
+    // DEFEITO: a validação aceita por extensão sozinha, então um arquivo
+    // renomeado (.exe -> .pdf) passa com qualquer MIME.
+    const mimeEstranho = validateFile(makeFile('contrato.pdf', 'application/octet-stream', 1 * MB));
+    expect(mimeEstranho.valid).toBe(true);
+    expect(mimeEstranho.category).toBe('document');
   });
 
   it('recusa formato não suportado citando o tipo', () => {
