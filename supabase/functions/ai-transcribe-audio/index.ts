@@ -20,7 +20,10 @@ import {
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
 import { detectMediaKind } from "../_shared/messaging/media.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import {
+  createClient,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
 const APPROVED_AUDIO_BUCKETS = [
@@ -67,6 +70,90 @@ async function downloadAudio(
     return { error: "Audio file too large (max 25MB)" };
   }
   return { buffer, contentType: data.type || "audio/ogg" };
+}
+
+/** Estado da transcrição em `messages` — a fonte da verdade é o SERVIDOR. */
+export interface TranscriptionState {
+  transcription: string | null;
+  status: string | null;
+}
+
+/** Gravação do estado da transcrição (`processing` → `completed`/`failed`). */
+export type TranscriptionWrite = {
+  transcription?: string | null;
+  status: "processing" | "completed" | "failed";
+};
+
+/**
+ * Cliente service-role para LER/GRAVAR o estado da transcrição da mensagem.
+ * Só existe no servidor: o cliente de tela nunca grava `transcription` (fica só
+ * leitura + realtime). Sem env configurada não há cliente e o handler apenas não
+ * persiste (o texto ainda é devolvido na resposta).
+ */
+function transcriptionStoreClient(): SupabaseClient | null {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return null;
+  return createClient(supabaseUrl, serviceKey);
+}
+
+/**
+ * Lê o estado atual da mensagem. Serve à IDEMPOTÊNCIA: uma re-execução (retry do
+ * webhook, F5 do cliente) reusa o texto já gravado em vez de pagar o provedor de
+ * novo.
+ */
+async function loadTranscriptionState(
+  messageId: string,
+  log: Logger,
+): Promise<TranscriptionState | null> {
+  const sb = transcriptionStoreClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from("messages")
+    .select("id, transcription, transcription_status")
+    .eq("id", messageId)
+    .maybeSingle();
+  if (error) {
+    log.error("Transcription state read failed", { messageId, error: error.message });
+    return null;
+  }
+  if (!data) return null;
+  const row = data as {
+    transcription?: string | null;
+    transcription_status?: string | null;
+  };
+  return {
+    transcription: typeof row.transcription === "string" ? row.transcription : null,
+    status: typeof row.transcription_status === "string" ? row.transcription_status : null,
+  };
+}
+
+/** Grava o estado da transcrição com service_role (o servidor é a única fonte). */
+async function saveTranscriptionState(
+  messageId: string,
+  write: TranscriptionWrite,
+  log: Logger,
+): Promise<boolean> {
+  const sb = transcriptionStoreClient();
+  if (!sb) return false;
+  const { error } = write.transcription !== undefined
+    ? await sb
+      .from("messages")
+      .update({ transcription_status: write.status, transcription: write.transcription })
+      .eq("id", messageId)
+    : await sb
+      .from("messages")
+      .update({ transcription_status: write.status })
+      .eq("id", messageId);
+  if (error) {
+    log.error("Transcription state write failed", {
+      messageId,
+      status: write.status,
+      error: error.message,
+    });
+    return false;
+  }
+  return true;
 }
 
 /** Tipo de arquivo que será enviado ao provedor de transcrição. */
@@ -185,6 +272,17 @@ export interface TranscribeAudioDeps {
     req: Request,
     messageId?: string | null,
   ) => Promise<AudioObjectAuthzResult>;
+  /** Leitura do estado da transcrição (default: service-role em `messages`). */
+  loadTranscription?: (
+    messageId: string,
+    log: Logger,
+  ) => Promise<TranscriptionState | null>;
+  /** Gravação do estado da transcrição (default: service-role em `messages`). */
+  saveTranscription?: (
+    messageId: string,
+    write: TranscriptionWrite,
+    log: Logger,
+  ) => Promise<boolean>;
   /** `fetch` para o provedor de STT (default: o global). */
   fetch?: typeof fetch;
 }
@@ -210,6 +308,10 @@ export async function handleTranscribeAudio(
   if (identity instanceof Response) return identity;
 
   const log = new Logger("ai-transcribe-audio");
+  // Grava o estado com service_role. Fica fora do `try` para o `catch` também
+  // marcar `failed` (nunca deixar a mensagem presa em `processing`).
+  let persistState: (write: TranscriptionWrite) => Promise<boolean> = () =>
+    Promise.resolve(false);
 
   try {
     const rateLimit = deps.rateLimit ?? checkRateLimit;
@@ -259,6 +361,37 @@ export async function handleTranscribeAudio(
       audioUrl = authorized.url;
     }
 
+    const saveState = deps.saveTranscription ?? saveTranscriptionState;
+    const loadState = deps.loadTranscription ?? loadTranscriptionState;
+    persistState = (write: TranscriptionWrite) =>
+      messageId ? saveState(messageId, write, log) : Promise.resolve(false);
+
+    // Servidor é a ÚNICA fonte da transcrição: o handler grava o estado em
+    // `messages` (o cliente só lê/realtime). Uma re-execução (retry do webhook,
+    // F5 do cliente) NÃO paga o provedor de novo — reusa o texto já gravado.
+    if (messageId) {
+      const existing = await loadState(messageId, log);
+      const alreadyTranscribed = existing?.transcription?.trim();
+      if (alreadyTranscribed) {
+        log.info("Reusing stored transcription", {
+          messageId,
+          status: existing?.status,
+        });
+        return jsonResponse(
+          {
+            transcription: alreadyTranscribed,
+            messageId,
+            words: [],
+            audio_events: [],
+            speakers: [],
+            reused: true,
+          },
+          200,
+          req,
+        );
+      }
+    }
+
     log.info("Starting transcription", { messageId, languageCode });
     const readEnv = deps.env ?? requireEnv;
     const ELEVENLABS_API_KEY = readEnv("ELEVENLABS_API_KEY");
@@ -306,6 +439,9 @@ export async function handleTranscribeAudio(
     formData.append("tag_audio_events", String(tagAudioEvents));
     formData.append("diarize", String(enableDiarization));
 
+    // Estado observável pelo cliente (realtime) e guarda da idempotência.
+    await persistState({ status: "processing" });
+
     const doFetch = deps.fetch ?? fetch;
     const response = await doFetch(
       "https://api.elevenlabs.io/v1/speech-to-text",
@@ -323,13 +459,16 @@ export async function handleTranscribeAudio(
         detail: errorText.substring(0, 300),
       });
       if (response.status === 429) {
+        await persistState({ status: "failed" });
         return errorResponse("Rate limit exceeded.", 429, req);
       }
       if (response.status === 401) {
+        await persistState({ status: "failed" });
         return errorResponse("Invalid ElevenLabs API key.", 401, req);
       }
 
       if (response.status === 400) {
+        await persistState({ status: "failed" });
         return jsonResponse(
           {
             transcription: "",
@@ -346,15 +485,19 @@ export async function handleTranscribeAudio(
           req,
         );
       }
+      await persistState({ status: "failed" });
       return errorResponse("Failed to transcribe audio", 500, req);
     }
 
     const data = await response.json();
-    log.done(200, { transcriptionLength: data.text?.length || 0 });
+    const transcription = typeof data.text === "string" ? data.text : "";
+    // O SERVIDOR grava o texto: a re-execução reusa isto (não paga de novo).
+    await persistState({ transcription, status: "completed" });
+    log.done(200, { transcriptionLength: transcription.length });
 
     return jsonResponse(
       {
-        transcription: data.text || "",
+        transcription,
         messageId,
         words: data.words || [],
         audio_events: data.audio_events || [],
@@ -366,6 +509,7 @@ export async function handleTranscribeAudio(
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
+    await persistState({ status: "failed" });
     return errorResponse(msg, 500, req);
   }
 }

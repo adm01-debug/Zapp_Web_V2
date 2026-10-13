@@ -229,7 +229,132 @@ Deno.test(
   },
 );
 
-// ─── Caminho NEGADO: a ordem do contrato (visibilidade → download) ────────────
+// ─── Servidor é a única fonte: grava o ESTADO e reusa (idempotência) ─────────
+interface WriteCall {
+  messageId: string;
+  write: { transcription?: string | null; status: string };
+}
+
+interface StoreCapture {
+  writes: WriteCall[];
+  loads: string[];
+}
+
+/** Store injetado: captura as gravações e devolve o estado existente. */
+function stubStore(
+  capture: StoreCapture,
+  existing: { transcription: string | null; status: string | null } | null = null,
+): Pick<TranscribeAudioDeps, "loadTranscription" | "saveTranscription"> {
+  return {
+    loadTranscription: (messageId: string) => {
+      capture.loads.push(messageId);
+      return Promise.resolve(existing);
+    },
+    saveTranscription: (messageId: string, write) => {
+      capture.writes.push({ messageId, write });
+      return Promise.resolve(true);
+    },
+  };
+}
+
+Deno.test(
+  "SL-195b: o SERVIDOR grava o estado (processing → completed) com o texto devolvido",
+  async () => {
+    const capture: StoreCapture = { writes: [], loads: [] };
+    const deps = baseDeps({
+      ...stubStore(capture),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: capturingFetch({ form: null }, { text: "olá, tudo bem?" }),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    const body = await res.json() as { transcription?: string };
+    assertEquals(body.transcription, "olá, tudo bem?", "a resposta devolve o TEXTO");
+
+    assertEquals(capture.loads.length, 1, "o handler consulta o estado atual antes de pagar");
+    assertEquals(capture.writes.length, 2, "grava processing e completed");
+    assertEquals(capture.writes[0].write.status, "processing", "marca processing antes do provedor");
+    assertEquals(capture.writes[0].messageId, "msg-1", "grava na mensagem do pedido");
+    assertEquals(capture.writes[1].write.status, "completed", "marca completed no fim");
+    assertEquals(capture.writes[1].write.transcription, "olá, tudo bem?", "grava o texto do provedor");
+  },
+);
+
+Deno.test(
+  "SL-195b: re-execução reusa a transcrição gravada — NÃO chama o provedor de novo (não duplica custo)",
+  async () => {
+    const capture: StoreCapture = { writes: [], loads: [] };
+    let fetchCalled = false;
+    const deps = baseDeps({
+      ...stubStore(capture, { transcription: "já transcrito antes", status: "completed" }),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: ((_input: RequestInfo | URL) => {
+        fetchCalled = true;
+        return Promise.resolve(new Response("{}", { status: 200 }));
+      }) as typeof fetch,
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler reusa sem erro");
+
+    const body = await res.json() as { transcription?: string; reused?: boolean };
+    assertEquals(body.transcription, "já transcrito antes", "devolve o texto já gravado");
+    assertEquals(body.reused, true, "sinaliza que reusou");
+    assert(!fetchCalled, "o provedor de STT NÃO pode ser pago de novo");
+    assertEquals(capture.writes.length, 0, "reuso não reescreve o estado");
+  },
+);
+
+Deno.test(
+  "SL-195b: falha do provedor grava transcription_status = failed (não deixa preso em processing)",
+  async () => {
+    const capture: StoreCapture = { writes: [], loads: [] };
+    const deps = baseDeps({
+      ...stubStore(capture),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: (() =>
+        Promise.resolve(new Response("boom", { status: 500 }))) as typeof fetch,
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 500, "erro do provedor vira 500");
+
+    const statuses = capture.writes.map((w) => w.write.status);
+    assertEquals(statuses[statuses.length - 1], "failed", "o último estado gravado é failed");
+    assert(!statuses.includes("completed"), "não grava completed numa falha");
+  },
+);
+
+Deno.test(
+  "SL-195b: 400 do provedor (formato inválido) também grava failed",
+  async () => {
+    const capture: StoreCapture = { writes: [], loads: [] };
+    const deps = baseDeps({
+      ...stubStore(capture),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: (() =>
+        Promise.resolve(new Response("bad", { status: 400 }))) as typeof fetch,
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o fallback de formato responde 200 com aviso");
+
+    const body = await res.json() as { fallback?: boolean };
+    assertEquals(body.fallback, true, "devolve o fallback INVALID_AUDIO");
+    assertEquals(
+      capture.writes[capture.writes.length - 1].write.status,
+      "failed",
+      "formato inválido é um estado failed",
+    );
+  },
+);
+
 Deno.test(
   "IA-014: no caminho de usuário, mensagem não visível é NEGADA e o objeto NÃO é baixado",
   async () => {
