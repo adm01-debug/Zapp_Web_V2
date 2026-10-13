@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { PrazoField } from './new-task/PrazoField';
 import { RemindField } from './new-task/RemindField';
+import { CoerenciaLembrete } from './new-task/CoerenciaLembrete';
 
 export interface NewTaskDialogProps {
   open: boolean;
@@ -52,6 +53,12 @@ export function NewTaskDialog({
 
         <PrazoField value={dueDate} onChange={setDueDate} now={now} />
         <RemindField value={remindAt} onChange={setRemindAt} now={now} />
+        <CoerenciaLembrete
+          remindAt={remindAt}
+          dueDate={dueDate}
+          now={now}
+          onAjustar={setRemindAt}
+        />
       </DialogContent>
     </Dialog>
   );
