@@ -10,6 +10,14 @@ Especialista: hugo
 
 - `src/hooks/chat/useRealtimeMessages.ts` (18 linhas) e `src/components/inbox/ConversationListSidebar.tsx` (2 linhas) vêm do cherry-pick de `e863a7413` (commit `23108b061` no meu histórico), o cartão-pai "a lista de conversas não pisca mais (esqueleto) a cada refetch/reconexão", que não estava na base do dia. As 18 linhas do hook acrescentam `initialLoading` + `firstFetchSettledRef` e fazem só a PRIMEIRA carga resolvida encerrar o estado de esqueleto; o `return` passa a devolver `initialLoading` e o componente lê esse campo. Eu não abri nem editei esses dois arquivos — o único commit em que eles mudam é o trazido do pai. A minha mudança preservou o contrato que o hook consome (`markMessagesAsRead` continua `Promise<void>`), e é por isso que a fila de leitura entrou sem precisar tocar nele.
 
+## Arquivos de teste que o diff muda (todos citados aqui)
+
+- `src/services/__tests__/realtime.service.markReadFlush.test.ts` (222 linhas, novo — casos 1-7 e 10-12 no serviço).
+- `src/hooks/inbox/__tests__/useRealtimeInbox.leituraLote.test.tsx` (124 linhas, novo — contador da conversa aberta, flush no desmontar, `isOnline`).
+- `src/hooks/chat/__tests__/useRealtimeMessages.leituraLote.test.tsx` (116 linhas, novo — casos 8 e 9 do contrato no hook, onde mora o commit otimista).
+- `src/hooks/crm/__tests__/useAgentPresence.visibilidade.test.ts` (106 linhas, novo — `pagehide` publica offline, aba oculta pausa, `visible` retoma).
+- `src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx` (102 linhas) — vem do cherry-pick do cartão-pai `e863a7413` e prova que refetch/reconexão não devolvem a lista ao esqueleto.
+
 ## Prova
 
 - vermelho antes (os 4 arquivos de teste novos rodados sobre as fontes da base `dia/2026-10-13`): `npx vitest run <os 4 testes novos>` → `Test Files 3 failed | 1 passed (4); Tests 14 failed | 4 passed (18)` (10 de 10 do lote, 2 de 3 de visibilidade, 2 de 3 da conversa aberta).
