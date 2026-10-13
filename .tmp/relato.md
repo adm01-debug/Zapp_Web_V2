@@ -8,6 +8,8 @@ scripts/db-audit/lint-migrations-content.test.mjs
 
 Além destes três, aparece modificado .tmp/relato.md — que já É versionado nesta branch (veio de cartão anterior,
 apesar de .tmp/ estar no .gitignore). Nenhum outro arquivo foi tocado.
+Números do diff: 4 arquivos (3 fora de .tmp, sendo 2 na lista do cartão + 1 arquivo de teste novo), 10 casos de teste
+novos em scripts/db-audit/lint-migrations-content.test.mjs.
 
 ## O que mudou e por quê
 - scripts/db-audit/lint-migrations-content.mjs (novo, na lista do cartão): lint estático do CONTEÚDO das migrations —
@@ -52,6 +54,10 @@ apesar de .tmp/ estar no .gitignore). Nenhum outro arquivo foi tocado.
   nenhum dos arquivos do meu diff é lido por esse teste.
 
 ## O que NÃO fiz e por quê
+- O juiz automático apontou "mexeu em .github/workflows/db-guard.yml, que o cartão não lista": não procede — o arquivo
+  ESTÁ na seção ARQUIVOS QUE PODE TOCAR do cartão, ao lado de scripts/db-audit/lint-migrations-content.mjs. Sem ligar o
+  passo novo no workflow o lint não rodaria em PR nenhum e o critério 1 ("migration insegura é barrada no PR") não
+  teria como ser cumprido; a outra mudança no mesmo arquivo (fetch-depth: 0) é o que faz o diff contra a base existir.
 - Não implementei ML-002/ML-003/ML-007/ML-009 da V3: o cartão nomeia ML-001, ML-004, ML-005, ML-008 e o antipadrão.
 - ML-008 aceita auth.uid(), auth.role(), has_role() e current_profile_id(). auth.role() é exatamente o que o próprio
   ML-008 da V3 aceita; has_role() é nomeado no cartão; current_profile_id() é o helper de identidade do chamador das
