@@ -107,6 +107,14 @@ export function ConversationListSidebar({
     inboxFilters.setSearch(value);
   }, [inboxFilters]);
 
+  // t_a533b441 (PD-74): paginação da lista. O contrato vem do useRealtimeInbox
+  // (`hasMore`/`loadingMore`/`loadMore`, mesmos nomes de useRealtimeMessages).
+  // Enquanto o hook não expõe `loadMore`, o rodapé não aparece: não afirmamos
+  // "fim da lista" quando a paginação ainda não está ligada.
+  const canLoadMoreConversations = typeof inbox.loadMore === 'function';
+  const hasMoreConversations = canLoadMoreConversations && inbox.hasMore === true;
+  const loadingMoreConversations = canLoadMoreConversations && inbox.loadingMore === true;
+
   const clearContactSearch = useCallback(() => {
     setContactSearch('');
     inboxFilters.setSearch('');
@@ -317,6 +325,70 @@ export function ConversationListSidebar({
               onArchive={handleArchive}
             />
           </ErrorBoundary>
+        )}
+
+        {/* t_a533b441 (PD-74): paginação no fim da lista. A página nova entra por
+            um botão operável por teclado/leitor de tela; o esqueleto é só da
+            página que está chegando — a lista já carregada permanece. */}
+        {!inbox.initialLoading && inboxFilters.filteredConversations.length > 0 && (
+          <div className="px-3 pb-3" data-testid="conversas-paginacao">
+            <span
+              role="status"
+              aria-live="polite"
+              className="sr-only"
+              data-testid="conversas-paginacao-aviso"
+            >
+              {loadingMoreConversations ? 'Carregando mais conversas…' : ''}
+            </span>
+
+            {hasMoreConversations ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => { void inbox.loadMore?.(); }}
+                disabled={loadingMoreConversations}
+                aria-busy={loadingMoreConversations}
+                data-testid="conversas-carregar-mais"
+              >
+                {loadingMoreConversations ? (
+                  <>
+                    <RefreshCw className="motion-safe:animate-spin" aria-hidden="true" />
+                    Carregando…
+                  </>
+                ) : (
+                  'Carregar mais conversas'
+                )}
+              </Button>
+            ) : canLoadMoreConversations ? (
+              <p
+                role="status"
+                className="text-center text-[13px] text-muted-foreground"
+                data-testid="conversas-fim-lista"
+              >
+                Você chegou ao fim da lista.
+              </p>
+            ) : null}
+
+            {loadingMoreConversations && (
+              <div
+                className="pt-2 space-y-1"
+                data-testid="conversas-pagina-nova-skeleton"
+                aria-hidden="true"
+              >
+                {[0, 1].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl">
+                    <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3.5 rounded-md w-1/2" />
+                      <Skeleton className="h-3 rounded-md w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
