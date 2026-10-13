@@ -1,5 +1,10 @@
 Especialista: worker (design) (design-system-zapp)
 
+ESCOPO — playwright.config.ts (justificativa em 1 linha): o cartão pede o teste de medição no
+Playwright e um spec novo SÓ roda se estiver atribuído a um projeto; foram 2 linhas — o spec novo
+entra no `testMatch` do projeto sem sessao (chromium-a11y) e no `testIgnore` do projeto logado,
+para não ser tratado como teste logado. Sem isso o teste de medição que o cartão exige não roda.
+
 ## O que mudou e por quê
 - `src/styles/utilities.css`: nova regra `.alvo-toque-44` DENTRO de `@media (pointer: coarse)` — `min-width/min-height: 44px` + `inline-flex` centralizado. O alvo só cresce em toque; em ponteiro fino a página renderiza exatamente como antes.
 - `src/components/ui/dialog.tsx` e `src/components/ui/sheet.tsx`: o botão de fechar (o X) recebe `alvo-toque-44`. Ele também recebeu `z-10`: sem isso, o título (h2) ganhava o hit-test no ponto central do alvo maior e o X ficava SEM resposta ao toque — quem pegou isso foi o próprio teste (o clique do Playwright parou de fechar o dialog). O X continua fechando.
