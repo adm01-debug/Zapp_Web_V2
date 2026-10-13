@@ -56,6 +56,12 @@ vi.mock('@/hooks/agents/useAgentRecentSends', () => ({
   useAgentRecentSends: () => ({ recentSends: {}, isLoading: false, error: null, refetch: vi.fn() }),
 }));
 
+// t_227e36d1: o InviteAgentDialog passou a ler o papel do usuário (supervisor só
+// convida atendente). A tela real segue montada; só o hook de papel é mockado.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
+}));
+
 import { AgentsView } from '../AgentsView';
 
 // PageHeader usa useNavigate/useLocation: a tela precisa de um Router.
@@ -118,5 +124,7 @@ describe('AgentsView — controles sem efeito foram removidos (t_638c8a1a)', () 
     expect(screen.getByRole('button', { name: /Atualizar/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Adicionar Atendente/ })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Buscar atendentes/)).toBeInTheDocument();
+    // t_227e36d1: o campo de busca ganhou nome acessível (antes só o placeholder).
+    expect(screen.getByRole('textbox', { name: 'Buscar atendentes' })).toBeInTheDocument();
   });
 });
