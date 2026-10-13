@@ -113,6 +113,12 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // PE-108 / SL-231: prova a tabela web_vitals_samples, a RPC record_web_vital
+  // (validacao por amostra e rate limit por usuario) e a retencao de 30 dias
+  // com os PAPEIS reais (authenticated/anon/service_role) em Postgres 17
+  // descartavel (docker), inclusive que a linha `-- Rollback:` restaura.
+  // Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/web-vitals-samples-rpc.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
