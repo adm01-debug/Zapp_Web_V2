@@ -1,27 +1,22 @@
-Especialista: workertestes
+Especialista: iris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- `src/hooks/integrations/useTalkXSegments.ts`: novo `viewMode: 'list' | 'grid'` + `setViewMode` no hook (`useState`, padrão `'list'`); tipo `TalkXSegmentsViewMode` exportado. Estado local porque o projeto não persiste modo (Contatos, em `useContactsViewState`, também é estado local).
+- `src/components/talkx/TalkXSegments.tsx`: botões lista/grade (`data-testid` `segments-view-list` / `segments-view-grid`, `aria-pressed` acompanhando) no `rightSlot` da `FilterBarV2`, ao lado de "Novo segmento"; o miolo da biblioteca troca SÓ o contêiner — `data-testid="segments-list"` (`flex flex-col`, uma coluna) ou `data-testid="segments-grid"` (`grid sm:grid-cols-2 xl:grid-cols-3`) — e renderiza o MESMO `SegmentCard` (`data-testid="segment-card"`) nos dois modos. O `SegmentCard` foi extraído da linha da tabela antiga sem perder nada do que ela mostrava: estrela de favorito, nome, descrição, origem, status, chips de critério (com "+N" e "Toda a base"), público estimado, último uso, barra de "Público relativo" e o menu de ações (ver detalhes, usar em campanha, editar, favoritar, excluir). O teto da barra continua o maior `estimated_count` entre os segmentos carregados, agora num `useMemo`.
+- `src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx`: teste novo — renderiza o `TalkXSegments` REAL com o hook REAL (só a rede é mockada), prova que abre em lista, que o clique em grade troca o contêiner, que os mesmos 2 cartões permanecem (nenhuma árvore visual duplicada), que o `aria-pressed` acompanha, que volta para a lista, e que o cartão mantém origem, status, público e "Toda a base".
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Critério de pronto
+1. Alternância lista/grade funciona — `TalkXSegments.tsx` (botões + contêiner `segments-list`/`segments-grid`), provado no teste novo (2 casos).
+   Reuso: o cartão NÃO foi criado como segunda árvore — é um só `SegmentCard` usado pelos dois modos (contêiner muda). Ver "O que NÃO fiz".
+2. Preferência de modo — `useTalkXSegments.ts` (`viewMode`/`setViewMode`), consumida pela tela.
+3. Teste vermelho antes / verde depois — ver Prova.
+4. Nenhuma funcionalidade fora do título foi alterada; nada da tela sumiu (item por item acima).
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- verde depois: `npx vitest run src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx` -> `Test Files 1 passed (1); Tests 2 passed (2)`.
+- sem regressão: os 9 arquivos de teste que renderizam `TalkXSegments` (library, states, route, groups, builder, detailFresh, paginacao, periodo, RuleValueInput) + o novo -> `Test Files 10 passed (10); Tests 44 passed (44)`.
+- vermelho antes: com as versões de `HEAD` de `TalkXSegments.tsx` e `useTalkXSegments.ts` no lugar das minhas, o mesmo teste novo falha nos 2 casos (não existe `segments-list`/`segments-grid`), e volta a passar ao restaurar. Comando da prova vermelha e saída no log do fechar.
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## NÃO FEITO (o que falta e por quê)
+- CRITÉRIO 1, parte do reuso: **não reutilizei o `SegmentSideList`/lista lateral da X112** porque esse arquivo (`src/components/talkx/segments/SegmentSideList.tsx`, criado pela TL-134/X112 nos commits 5918f7d9bd / dd6c21eca4) NÃO existe na base `dia/2026-10-13` deste workspace. Provas no próprio workspace: `git grep SegmentSideList -- src` = vazio; `git merge-base --is-ancestor <commit da TL-134> HEAD` = não (o commit não é ancestral do HEAD). Sem o arquivo na base, reutilizá-lo exigiria copiar trabalho de outro cartão — escopo do integrador, não meu. FALTA: integrar a lista lateral (TL-134/X112) na branch do dia; depois disso a alternância continua válida, pois o estado vive no hook e o contêiner só troca de classe.
+- O que ENTREGUEI no lugar, para o objetivo do cartão ("alternar lista/grade sem duplicar componente visual"): UM único `SegmentCard` servindo aos dois modos (contêiner `flex-col` = `segments-list` × `grid` = `segments-grid`), sem segunda árvore visual.

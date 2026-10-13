@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -416,9 +417,15 @@ export function useSegmentLibraryStats() {
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Modo de visualização da biblioteca de segmentos: lista (uma coluna) ou grade. */
+export type TalkXSegmentsViewMode = 'list' | 'grid';
+
 export function useTalkXSegments() {
   const qc = useQueryClient();
   const { profile } = useAuth();
+  // Alternância lista/grade da biblioteca. O projeto não persiste preferência de
+  // modo (Contatos também guarda `viewMode` em estado local): fica na sessão.
+  const [viewMode, setViewMode] = useState<TalkXSegmentsViewMode>('list');
 
   const segmentsQuery = useQuery({
     queryKey: ['talkx-segments'],
@@ -504,5 +511,6 @@ export function useTalkXSegments() {
     libraryStatsError: libraryStatsQuery.error as Error | null,
     refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
+    viewMode, setViewMode,
   };
 }
