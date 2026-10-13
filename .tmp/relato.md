@@ -24,6 +24,12 @@ Na base, `StatusChips.tsx` ainda calculava com as regras antigas (`Resolvidas = 
 - verde depois (vizinhos): `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.test.tsx src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Test Files  4 passed (4)` / `Tests  25 passed (25)`.
 - `zapp-verify . --rapido`: verde (rodado pelo fechar).
 
+## Arquivo fora da lista: src/hooks/inbox/chipCounts.ts — por que foi indispensável
+- O cartão não lista `chipCounts.ts`, mas ele é o H1 que o próprio cartão manda usar ("confira a assinatura real criada pelo H1"), e a correção dos contadores depende do predicado dele.
+- A mudança é de 1 linha: `isAttending` passa a exigir `profileId != null` antes de comparar (`profileId != null && c.contact.assigned_to === profileId`). Sem esse guard, quando o `profile.id` é nulo/ausente e a conversa também não tem responsável, `undefined === undefined` faria a conversa sem dono entrar indevidamente em "Em atendimento" — exatamente o contador que este cartão corrige.
+- É coberto por `src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx` (casos `['profile nulo', null]` e `['profile sem id', {}]`, que exigem Aguardando 1 / Em atendimento 0). Sem a linha, esses dois casos ficam vermelhos.
+- Reverter a linha reintroduziria o defeito no contador; por isso ela fica.
+
 ## Ponto 3 do cartão (ContactDetails.tsx)
 O E2 NÃO está no código atual: `archiveContact` continua gravando `assigned_to: null` (src/hooks/chat/useConversationActions.ts:250). Por isso deixei o comentário da linha ~68 do ContactDetails.tsx como está, conforme a instrução "se não, deixe e cite no relato".
 
