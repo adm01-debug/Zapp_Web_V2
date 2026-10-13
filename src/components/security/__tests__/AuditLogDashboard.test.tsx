@@ -113,7 +113,7 @@ describe('AuditLogDashboard', () => {
 
   it('mostra skeletons enquanto carrega', () => {
     const { container } = render(<AuditLogDashboard />);
-    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('[data-testid="audit-skeleton"]').length).toBeGreaterThan(0);
   });
 
   // ===== ERRO EXPLÍCITO (antes engolido: erro virava 0) =====

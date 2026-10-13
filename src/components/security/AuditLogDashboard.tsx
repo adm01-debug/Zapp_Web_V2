@@ -244,7 +244,7 @@ export function AuditLogDashboard() {
       <div className="space-y-6 w-full min-w-0">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 bg-muted/50 animate-pulse rounded-lg" />
+            <div key={i} data-testid="audit-skeleton" className="h-20 bg-muted/50 motion-safe:animate-pulse rounded-lg" />
           ))}
         </div>
       </div>
@@ -418,7 +418,7 @@ export function AuditLogDashboard() {
             <div className="space-y-2">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
+                  <div key={i} data-testid="audit-skeleton" className="h-16 bg-muted/50 motion-safe:animate-pulse rounded-lg" />
                 ))
               ) : filteredLogs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
@@ -487,7 +487,7 @@ export function AuditLogDashboard() {
               {!loading && hasMore && filteredLogs.length > 0 && (
                 <div className="pt-2 text-center">
                   <Button variant="outline" onClick={carregarMais} disabled={loadingMore} className="gap-2">
-                    {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loadingMore && <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />}
                     Carregar mais
                   </Button>
                 </div>
