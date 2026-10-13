@@ -1,5 +1,7 @@
 Especialista: worker (sql) (area-sql-banco)
 
+Diff: 4 arquivos, 1 de teste.
+
 ## O que mudou e por quê
 - supabase/migrations/20261013051916_contact_change_log.sql (nova): cria a tabela append-only
   `public.contact_change_log` (contact_id, operation, campos text[], performed_by,
