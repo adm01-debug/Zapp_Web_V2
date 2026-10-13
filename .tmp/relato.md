@@ -1,18 +1,15 @@
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/hooks/crm/useContactChangeLog.ts` (novo): hook que lê a trilha de alteração de contato e a entrega pronta para a tela. Lê PAGINADO com `fetchAllRows` (ordem `performed_at desc` + `id desc`), traduz os NOMES das colunas alteradas para pt-BR (`phone`→`Telefone`, `assigned_to`→`Responsável`...) sem receber valor nenhum, traduz a operação (`insert`→`Criado`, `update`→`Alterado`, `soft_delete`→`Excluído`, `restore`→`Restaurado`), devolve `performed_at` exatamente como o banco guarda e resolve o ator em `profiles`. Leitura vazia devolve `[]`; erro sobe; leitura incompleta (erro no meio ou teto de páginas) vira erro em vez de lista parcial apresentada como trilha inteira. Ator com perfil excluído: o nome some (`hasActor=false`) mas a entrada CONTINUA na trilha.
+- `src/hooks/crm/__tests__/useContactChangeLog.test.tsx` (novo): 9 testes com o cliente Supabase mockado — pt-BR dos campos, vocabulário de exclusão/restauração, data intacta, vazio, erro, leitura de 1500 linhas (acima do teto de 1000 do PostgREST) sem repetir nem perder, ator resolvido e ator excluído.
+- `src/hooks/crm/index.ts`: exporta `useContactChangeLog`.
+- A faixa do pai (banco, t_ba716533) foi trazida por `git cherry-pick -x 6b029fb72` (migration + `types.ts` + teste SQL) — sem ela o hook não teria a tabela nem os tipos. Os commits de relato do pai não foram trazidos: são `.tmp/relato.md`, não código.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/hooks/crm/__tests__/useContactChangeLog.test.tsx` → `Cannot find module '../useContactChangeLog'` / `Test Files 1 failed (1); Tests no tests` (módulo ainda não existia)
+- verde depois: `npx vitest run src/hooks/crm/__tests__/useContactChangeLog.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não mexi em `supabase/**` nem reapliquei a migration: é do cartão de banco (pai) e já veio pelo cherry-pick.
+- Não criei tela/componente de histórico: é de outro especialista (telas). O hook já entrega `fieldLabels`, `operationLabel` e `performedAt` prontos.
