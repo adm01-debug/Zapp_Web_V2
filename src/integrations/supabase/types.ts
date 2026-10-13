@@ -9255,6 +9255,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ui_preferences: {
+        Row: {
+          prefs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          prefs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          prefs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_command_logs: {
         Row: {
           action: string
