@@ -10374,6 +10374,22 @@ export type Database = {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
       }
+      admin_inbox_silence: {
+        Args: never
+        Returns: {
+          connection_id: string
+          connection_name: string
+          connection_status: string
+          is_silent: boolean
+          last_inbound_at: string
+          last_outbound_at: string
+          received_24h: number
+          received_1h: number
+          received_5m: number
+          silence_minutes: number
+          top_conversations: Json
+        }[]
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
