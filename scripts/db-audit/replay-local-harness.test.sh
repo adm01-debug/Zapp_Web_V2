@@ -11,7 +11,8 @@
 #   3. a imagem sai fixada por DIGEST (o antigo usava so a tag);
 #   4. bootstrap com ON_ERROR_STOP e ABORTA (exit 2) sem aplicar migration (o antigo ignorava);
 #   5. o container DESTE run e removido no fim e tambem quando o script aborta (trap),
-#      inclusive sob sinal (SIGINT/SIGTERM).
+#      inclusive sob sinal (SIGINT/SIGTERM);
+#   6. falha fora do allowlist NOMEIA a migration culpada com o erro medido (exit 1).
 set -u
 DIR=$(cd "$(dirname "$0")" && pwd)
 SCRIPT="$DIR/replay-local.sh"
@@ -77,6 +78,11 @@ case "${1:-}" in
           exit 0 ;;
         *)
           printf "%s\n" "$sql" >> "$STUB_LOG/migrations.log"
+          if [ -n "${STUB_FALHA_MIGRACAO:-}" ]; then
+            case "$sql" in
+              *"$STUB_FALHA_MIGRACAO"*) echo "ERROR: falha simulada (stub)" >&2; exit 1 ;;
+            esac
+          fi
           exit 0 ;;
       esac
     fi
@@ -155,8 +161,24 @@ else
   echo "  FALHA: C: rm (linha '$LINHA_RM') nao veio depois do run (linha '$LINHA_RUN')"; falhou=1
 fi
 
+# ===========================================================================
+# Caso D: uma migration falha e NAO esta no allowlist -> exit 1 (drift novo) e
+# a culpada tem de ser NOMEADA com o erro medido, antes de sair. Sem isso o
+# revisor so ve "VERMELHO" e precisa cacar o arquivo a mao.
+# ===========================================================================
+CD="$TMP/d"; caso "$CD"
+( cd "$CD" && PATH="$CD/bin:$PATH" STUB_LOG="$CD/log" STUB_FALHA_MIGRACAO="select 2;" \
+    bash "$SCRIPT" </dev/null >"$TMP/d.out" 2>&1 )
+RC_D=$?
+checa "D: falha fora do allowlist -> exit 1 (drift novo)" "1" "$RC_D"
+contem "D: nomeia a migration culpada" "MIGRATION CULPADA: 20260101000001_b.sql" "$TMP/d.out"
+contem "D: traz o erro medido da culpada" "ERROR: falha simulada (stub)" "$TMP/d.out"
+contem "D: o classificador marca VERMELHO" "REPLAY=VERMELHO" "$TMP/d.out"
+# No run verde a secao de culpadas NAO pode aparecer (senao vira ruido em todo PR).
+nao_contem "A: run verde NAO imprime secao de culpadas" "--- MIGRATION(S) CULPADA(S): falha fora do allowlist ---" "$TMP/a.out"
+
 if [ "$falhou" -eq 0 ]; then
-  echo "PASSOU: replay-local.sh usa nome unico + rotulo, fixa digest, honra o bootstrap e so remove o proprio container (normal, erro e sinal)"
+  echo "PASSOU: replay-local.sh usa nome unico + rotulo, fixa digest, honra o bootstrap, so remove o proprio container (normal, erro e sinal) e NOMEIA a migration culpada"
 else
   echo "REPROVOU"
 fi

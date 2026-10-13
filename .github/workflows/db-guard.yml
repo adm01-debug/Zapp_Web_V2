@@ -1034,3 +1034,77 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+  # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
+  # existia e era provado so por harness offline; nenhum workflow o chamava, entao
+  # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
+  # roda de verdade, mas SO quando o PR toca supabase/migrations/**: aplicar as ~831
+  # migrations num PostgreSQL 17 descartavel leva minutos e nao interessa a um PR que
+  # nao mexeu em migration.
+  #
+  # Sem docker-shim: o shim do E47 FINGE o docker (roteia para o postgres do service)
+  # para acelerar ~48 contratos. O replay precisa de um docker DE VERDADE, porque o
+  # replay-local.sh sobe a imagem publica do Supabase e aplica arquivo por arquivo.
+  replay-migrations:
+    name: Replay local das migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # fetch-depth: 0 para o `git diff` achar o merge-base do PR.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detectar mudanca em supabase/migrations
+        id: mudou
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # So o PR olha o diff: push na main e merge_group ja passaram pelo gate na PR.
+          if [ "${{ github.event_name }}" != "pull_request" ] || [ -z "$BASE_SHA" ]; then
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$BASE_SHA" HEAD -- supabase/migrations | grep -q .; then
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # O ECR limita pull anonimo; sem este passo um 429 do registry apareceria como
+      # "exit 2" do replay e confundiria infraestrutura com drift de migration.
+      - name: Pre-baixar a imagem do replay
+        if: steps.mudou.outputs.mudou == 'true'
+        run: |
+          img=$(grep -m1 -oE 'public\.ecr\.aws/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
+          if [ -z "$img" ]; then
+            echo "nao achei a imagem fixada por digest em scripts/db-audit/replay-local.sh"
+            exit 2
+          fi
+          echo "imagem do replay: $img"
+          for tentativa in 1 2 3; do
+            if docker image inspect "$img" >/dev/null 2>&1 || docker pull "$img"; then break; fi
+            echo "pull falhou (tentativa $tentativa); aguardando antes de repetir"
+            sleep $((tentativa * 20))
+          done
+          docker image inspect "$img" >/dev/null
+
+      # 0 = verde, 1 = migration fora do allowlist (o script NOMEIA a culpada), 2 = setup.
+      - name: Aplicar as migrations em PostgreSQL 17 descartavel
+        if: steps.mudou.outputs.mudou == 'true'
+        run: bash scripts/db-audit/replay-local.sh
+
+      # Log e TSV existem no verde e no vermelho; e o que deixa o revisor ver a
+      # migration culpada sem baixar o repo (o upload so roda se o diff tocou migration).
+      - name: Publicar o log e os erros do replay
+        if: always() && steps.mudou.outputs.mudou == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: replay-migrations
+          path: |
+            replay.log
+            replay-erros.tsv
+          if-no-files-found: warn
+          retention-days: 7
