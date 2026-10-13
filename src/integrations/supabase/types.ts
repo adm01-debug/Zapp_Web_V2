@@ -12024,6 +12024,15 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_applicable_sla: {
+        Args: { p_contact_id: string }
+        Returns: {
+          first_response_minutes: number
+          matched_level: string
+          rule_id: string
+          rule_name: string
+        }[]
+      }
       resolve_contact_guard_actor: { Args: never; Returns: string }
       resolve_sla_alert: {
         Args: { p_event_id: string }
