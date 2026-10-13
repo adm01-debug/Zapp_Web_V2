@@ -864,8 +864,70 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
 
     // ─── 3. Webhook ───
-    if (action === 'set-webhook') return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: body.enabled ?? true, url: body.url, webhookByEvents: body.webhookByEvents ?? true, webhookBase64: body.webhookBase64 ?? false, events: body.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
-    if (action === 'get-webhook') return await proxy(`/webhook/find/${instance}`, 'GET');
+    if (action === 'set-webhook') {
+      // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
+      // webhook: { url, events, ... } }` (ANINHADO); o plano/legado manda os campos
+      // PLANOS no corpo. Antes só o plano era lido (`body.url`/`body.events`), então
+      // o aninhado chegava ao provedor com `url` undefined e a lista default de
+      // eventos — cada "Reconfigurar" sobrescrevia o webhook com URL vazia.
+      const nested = body.webhook;
+      const wh: Record<string, unknown> = (nested && typeof nested === 'object' && !Array.isArray(nested))
+        ? (nested as Record<string, unknown>)
+        : body;
+      const webhookByEvents = wh.webhookByEvents ?? true;
+      const webhookBase64 = wh.webhookBase64 ?? false;
+      if (isGoFlavor) {
+        // A GO configura o webhook da instância por `/instance/connect` (WebhookURL
+        // + subscribe); `/webhook/set/{instance}` é rota da v2 e responde 404 no GO.
+        // Mesmo corpo/credencial do fluxo de connect (R2-API-015): o token DA
+        // instância vem do Vault e, sem ele, NEGA — a GO seleciona a instância pela
+        // credencial, então a key global ou a da padrão parearia outra conexão.
+        const instToken = await resolveInstanceToken(supabase, instance);
+        if (!instToken) {
+          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const route = resolveSessionRoute('go', 'connect', instance);
+        const response = await fetch(`${evolutionApiUrl}${route.path}`, {
+          method: route.method,
+          headers: { 'apikey': resolveSessionApiKey(route, instToken, evolutionApiKey), 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            webhookUrl: wh.url,
+            webhookByEvents,
+            webhookBase64,
+            subscribe: ['ALL'],
+            immediate: true,
+          }),
+        });
+        let data: Record<string, unknown> = {};
+        try { data = JSON.parse(await response.text()); } catch { /* GO pode responder non-JSON */ }
+        return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: wh.enabled ?? true, url: wh.url, webhookByEvents, webhookBase64, events: wh.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
+    }
+    if (action === 'get-webhook') {
+      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do
+      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida
+      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o
+      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.
+      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');
+      try {
+        const allRes = await proxy('/instance/fetchInstances', 'GET');
+        const allData = await allRes.json().catch(() => null);
+        const records: Record<string, unknown>[] = Array.isArray(allData?.data) ? allData.data : Array.isArray(allData) ? allData : [];
+        const rec = records.find((r) => r?.name === instance || r?.Name === instance) ?? {};
+        const evRaw = rec.events ?? rec.Events;
+        const events = Array.isArray(evRaw)
+          ? evRaw
+          : typeof evRaw === 'string' && evRaw ? evRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+        const url = typeof rec.webhook === 'string' ? rec.webhook : typeof rec.Webhook === 'string' ? rec.Webhook : '';
+        return new Response(JSON.stringify({
+          webhook: { enabled: !!url, url, events, webhookByEvents: true, webhookBase64: false },
+          ...(url ? {} : { goEnvManaged: true }),
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      } catch (_err) {
+        return new Response(JSON.stringify({ error: true, message: 'Falha ao ler a configuração de webhook da instância no GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
 
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
