@@ -1,18 +1,26 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
+
+## Pontos da recusa
+
+- Ponto 1: rebasiar a entrega aprovada `fe098dcf2a95` sem desfazer o trabalho do dia 12/10. Verifiquei a branch aprovada `v2/atendentes-pendencias-ultimos-envios-2610111549ff40` contra a ponta atual `dia/2026-10-13` nos arquivos de código/teste do cartão e o diff veio vazio: o código aprovado já está presente na base atual, então não criei mudança de produção nem reescrevi os ajustes do dia 12/10. O `git cherry-pick -n 42e2fdf886` também ficou sem diff.
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+
+- `.tmp/relato.md`: relato desta retomada. Não houve alteração de código, porque a comparação dos arquivos do cartão contra a branch aprovada não mostrou diferença a reaplicar.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Comparação de escopo: `git diff --name-status HEAD..v2/atendentes-pendencias-ultimos-envios-2610111549ff40 -- src/components/agents/AgentsView.tsx src/components/agents/__tests__/AgentsView.actions.test.tsx src/components/agents/__tests__/AgentsView.capacidade.test.tsx src/components/agents/__tests__/AgentsView.pendencias.test.tsx src/hooks/agents/useAgentPendingCounts.ts src/hooks/agents/useAgentRecentSends.ts` → sem saída.
+- Diff contra a base do cartão antes deste relato: `git diff --name-only $(git merge-base HEAD dia/2026-10-13)...HEAD` → sem saída.
+- Teste direcionado: `npx vitest run src/components/agents/__tests__/AgentsView.pendencias.test.tsx` → `Test Files  1 passed (1)` e `Tests  7 passed (7)`.
+- Verificação ampla executada: `zapp-verify full .` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations` e `VERIFY: VERDE SEM BANCO (290s)` em `/home/joaquim_ataides/.local/state/zapp-verify/0d6184b4b014/resultado.txt`.
+
+## Arquivos no diff final
+
+```text
+.tmp/relato.md
+```
+
+## O que NÃO fiz
+
+- Não alterei `AgentsView`, hooks nem testes porque eles já estavam iguais ao código aprovado para este cartão na base atual. Alterar de novo aqui criaria diff sem necessidade e aumentaria o risco de desfazer outro trabalho do dia.
