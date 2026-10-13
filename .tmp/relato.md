@@ -2,11 +2,14 @@ Especialista: worker (geral)
 
 ## O que é este cartão (leia primeiro)
 Cartão SÓ RELATO/PROVA, por instrução do revisor ("Corrigir: SÓ O RELATO", "sem refatorar e sem
-ampliar diff"). O diff DESTE cartão é apenas `.tmp/relato.md`. O código (base + fix + teste) NÃO é
-deste cartão e NÃO foi cherry-pickado para cá de propósito, para não ampliar o diff: ele vive em
-t_24edcc38, branch `v2/restrigir-grant-window-open-261013-2610130851e642` @ 87ea75533, que o revisor
-já declarou "correto e no escopo". Decisão mantida: opção A — EXECUTE só para `service_role`, porque o
-único consumidor é a Edge `talkx-scheduler` (SERVICE_ROLE_KEY).
+ampliar diff"). O diff deste cartão contra `dia/2026-10-13` tem 2 arquivos: `.tmp/relato.md` (este
+relato corrigido) e `supabase/migrations/20261013085500_talkx_n102_window_fixes.sql` — a correção de
+acesso, byte a byte idêntica ao arquivo do pai em `87ea75533` (conferido com `diff` → "IDENTICOS").
+Não escrevi código novo nesta fatia: a migration já estava commitada neste branch. A base
+`20261009203548` e o teste versionado `talkx-n102-window-open-access.test.mjs` continuam com seus
+cartões de origem (base: cherry-pick do pai t_37e0dde7; teste: pai t_24edcc38). Decisão mantida:
+opção A — EXECUTE só para `service_role`, porque o único consumidor é a Edge `talkx-scheduler`
+(SERVICE_ROLE_KEY).
 
 ## Ponto 1: check-secdef-public-execute contra base+fix (saída literal)
 Comando exato (harness descartável, mesmo PRE_SQL/papéis do teste versionado do pai):
@@ -60,7 +63,8 @@ nova `20261013085500_talkx_n102_window_fixes.sql`. Não toquei em RLS/tabelas ne
   scripts/db-audit/talkx-n102-window-open-access.test.mjs` → 3 pass.
 
 ## O que NÃO fiz e por quê
-- Não cherry-piquei o código do pai para este workspace (instrução do cartão: sem ampliar diff).
+- Não escrevi/editei código nesta fatia: a migration `20261013085500` já estava commitada neste
+  branch e confere com a do pai `87ea75533`; não trouxe a base nem o teste do pai para não ampliar diff.
 - Não alterei contrato de acesso, RLS ou tabelas; não fiz push/merge/deploy nem toquei produção.
 
 ## Fechamento
