@@ -1,27 +1,61 @@
-Especialista: workertestes
+Especialista: worker (sql)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- supabase/migrations/20261013213816_ai_sentiment_summary.sql (nova): cria a RPC
+  `public.ai_sentiment_summary(p_days integer default 30)` — SECURITY DEFINER,
+  `search_path = public, pg_temp`, staff-only (admin/supervisor). Ela devolve
+  `jsonb` com total, baldes (positivos/neutros/negativos), média, transcrições,
+  a série diária e o mesmo agregado do bloco de dias imediatamente anterior.
+  Motivo (PROBLEMA do cartão): o resumo era montado no navegador por cima das
+  linhas cruas, então (a) o total parava no limite de linhas do PostgREST e
+  (b) "período anterior vazio" virava divisão por zero. Com o agregado no
+  servidor o total é o real e o período anterior vazio volta NULO, não zero.
+- supabase/tests/ai_sentiment_summary.sql (novo): a prova. A superfície mínima
+  (roles, `auth.uid`, tabelas de ambiente, PUBLICATION) é criada à mão — é
+  ambiente, não contrato — e a proteção vem VERBATIM das migrations reais
+  (`20251215025014` para user_roles/has_role/is_admin_or_supervisor e
+  `20251222170958` para conversation_analyses), no mesmo padrão de
+  supabase/tests/audit_log_summary_por_periodo.sql. As asserções rodam como
+  PAPEL REAL (`SET LOCAL ROLE authenticated` + JWT sintético), nunca como
+  postgres; o helper confere `current_user` e falha se o papel não pegar.
+- src/integrations/supabase/types.ts: adiciona a assinatura
+  `ai_sentiment_summary: { Args: { p_days?: number }; Returns: Json }`.
+  Regra do repositório: RPC com `RETURNS` novo entra junto com types.ts.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## Decisões de contrato (para o worker que ajustar o hook)
+- Janela = `p_days` DIAS DE CALENDÁRIO em America/Sao_Paulo, INCLUINDO hoje;
+  segue o mesmo fuso que o resto do Dashboard (ex.: crisis_room_snapshot).
+  `p_days` é normalizado para 1..366 (NULL/0/negativo não estoura).
+- `critico` conta como NEGATIVO (regra IA-SENTIMENT-001); `total` conta todas
+  as análises, inclusive as sem nota; `media` só existe com nota presente
+  (`avg` ignora ausentes) e volta NULL sem amostra — nunca 0/50 inventado.
+- `anterior` volta NULO (chave presente, valor null) quando o bloco anterior
+  não tem análise. O front lê "sem base de comparação", não queda de 100%.
+- Série diária: exatamente `p_days` baldes (um por dia, inclusive os vazios).
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
-
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+## Prova (banco descartável, PostgreSQL 17, aplica as migrations reais + as minhas)
+- verde depois: `docker exec -i <pg> psql -X -v ON_ERROR_STOP=1 ... -v mig_dir=/repo/supabase/migrations < supabase/tests/ai_sentiment_summary.sql`
+  → exit 0; todos os blocos PASS; última linha
+  `IA-DB-002 OK: staff le o agregado real (sem truncar), serie diaria de p_days baldes, anterior NULO quando vazio; agente/anon/service_role negados (42501); EXECUTE so para authenticated.`
+  Notas provadas: A) total/baldes/média/transcrições conferem com a contagem
+  direta (baseline do superusuário); B) série com o número exato de baldes e
+  soma igual ao total; C) anterior NULO quando vazio e, populado, com os
+  mesmos agregados; D) 1200+ análises no período → total NÃO trunca; E) agente,
+  anon e service_role negados com 42501 (mesma resposta para janela com e sem
+  dado — sem oráculo); F) EXECUTE só para authenticated.
+- vermelho antes: mesma execução com `-v sem_funcao=1` (não aplica a minha
+  migration) → `ERROR: IA-DB-002 FALHOU [A1 total == 5]: esperado 5, obtido ERRO 42883` (undefined_function), exit 3. Sem a correção o teste quebra.
+- aplicação no banco local da tarefa: `hermes-db-migrar supabase/migrations/20261013213816_ai_sentiment_summary.sql`
+  → `APLICADA no banco LOCAL 'v2-2610131830b360' (produção não foi tocada).`
+- rollback executável no topo da migration: `drop function if exists public.ai_sentiment_summary(integer);`
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei o hook `src/hooks/analytics/useAIStats.ts` (consumo do resumo):
+  está fora de ARQUIVOS QUE PODE TOCAR deste cartão. A RPC e o contrato acima
+  ficam prontos para o worker de hooks/telas trocar a agregação no cliente pela
+  chamada `supabase.rpc('ai_sentiment_summary', { p_days })`.
+- Não liguei o teste a workflow/CI: a suíte é supabase/tests/*.sql (mesmo lugar
+  das outras), fora do check-test-inventory, então não criei passo novo (o
+  workflow é do worker de CI).
+- Não incluí a contagem de `audit_logs` action `sentiment_alert`: o cartão pede
+  os totais/sentimento, não os alertas.
