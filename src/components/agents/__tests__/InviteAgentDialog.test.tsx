@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import React from 'react';
-import { InviteAgentDialog, describeInviteError } from '../InviteAgentDialog';
+import { InviteAgentDialog } from '../InviteAgentDialog';
+import { describeInviteError } from '../inviteErrors';
 
 // t_227e36d1: o diálogo deixa de usar o template local `send-email` (que só dizia
 // "acesse a plataforma e crie sua conta", sem link nem token) e passa a chamar a
