@@ -76,9 +76,12 @@ alter database postgres set app.settings.trusted_domains = 'localhost,127.0.0.1'
 SQL
 
 # TRAVAS CONTRA A PRODUÇÃO (as migrations gravam a URL canônica em jobs do pg_cron, funções e
-# segredos; sem travar, o container fica de pé chamando edge functions reais).
-docker exec -u 0 "$NOME" sh -c "echo '127.0.0.1 tnnnlkbymytvtqngbbqh.supabase.co tnnnlkbymytvtqngbbqh.functions.supabase.co db.tnnnlkbymytvtqngbbqh.supabase.co' >> /etc/hosts"
-docker exec "$NOME" grep -q 'tnnnlkbymytvtqngbbqh' /etc/hosts \
+# segredos; sem travar, o container fica de pé chamando edge functions reais). O ref de produção
+# NÃO é hardcoded aqui: é lido do próprio scripts/db-audit/replay-local.sh, que já o bloqueia.
+REF_PROD="$(grep -oE '[a-z]{20}\.supabase\.co' scripts/db-audit/replay-local.sh | head -n1 | sed 's/\.supabase\.co$//')"
+[[ -n "$REF_PROD" ]] || { echo "FAIL: não achei o ref de produção em replay-local.sh" >&2; exit 2; }
+docker exec -u 0 "$NOME" sh -c "echo '127.0.0.1 ${REF_PROD}.supabase.co ${REF_PROD}.functions.supabase.co db.${REF_PROD}.supabase.co' >> /etc/hosts"
+docker exec "$NOME" grep -q "$REF_PROD" /etc/hosts \
   || { echo "FAIL: trava de DNS não entrou; abortando antes das migrations" >&2; exit 2; }
 docker exec -i "$NOME" psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=1 \
   -c "alter system set cron.launch_active_jobs = off" -c "select pg_reload_conf()" >/dev/null \
