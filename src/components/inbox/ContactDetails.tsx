@@ -138,5 +138,3 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
     </motion.div>
   );
 }
-
-
