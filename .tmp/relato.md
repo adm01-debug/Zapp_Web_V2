@@ -1,18 +1,13 @@
 Especialista: iris
 
 ## Comando de verificação e resultado real
+- `zapp-verify . --rapido` (rodado nesta retomada, UMA vez) →
+  `OK db_guard 0s` / `OK tipos 254s` / `OK lint 15s` / `OK migrations 2s` /
+  `VERIFY: VERDE SEM BANCO (271s)`.
+  (Na tentativa anterior `tipos` saiu 137 = SIGKILL por memória com 22 `zapp-verify`
+  concorrentes; nesta rodada a máquina tinha folga e os MESMOS arquivos passaram em `tipos`.)
 - `npx vitest run src/components/team-chat src/hooks/team-chat` →
-  `Test Files  36 passed (36)` / `Tests  370 passed | 1 todo (371)`
-- `zapp-verify . --rapido` → `OK db_guard 0s` / `FALHOU tipos 152s` /
-  `tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)` /
-  `VERIFY: VERMELHO em tipos (152s)`.
-  O 137 é o kernel matando o tsc por falta de memória: `free -h` no momento →
-  `Mem: 47Gi total, 42Gi used, 840Mi free` e o pool `pesado` do zapp-sem esperando vaga
-  ("aguardando vaga no pool 'pesado' (3 em uso)"), ou seja, OUTROS agentes estavam rodando
-  verificação ao mesmo tempo. `git diff --stat` do meu commit não tem arquivo de tipo/tsconfig;
-  é falha de execução do ambiente, não erro de tipo do meu diff. Repeti o tsc do projeto `app`
-  isolado (`node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --incremental`)
-  e também saiu `RC=137`.
+  `Test Files  36 passed (36)` / `Tests  370 passed | 1 todo (371)` (27,20s).
 
 ## Arquivos que EU toquei (todos dentro de ARQUIVOS QUE PODE TOCAR)
 - `src/components/team-chat/TeamChatPanel.tsx` — liga digitação e presença da conversa
