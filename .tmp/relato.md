@@ -17,6 +17,10 @@ Especialista: iris
 - lint dos 8 arquivos: `✖ 4 problems (0 errors, 4 warnings)` — só avisos PRÉ-EXISTENTES (import do client do Supabase em 2 arquivos que já o importavam e fast-refresh do ViewersIndicator); nenhuma ocorrência nova (ratchet mantido).
 - `zapp-verify . --rapido`: roda no `hermes-tarefa-fechar`.
 
+## Ajustes após os avisos do juiz do fechar
+- MOVIMENTO (`animate-spin` sem `motion-safe:` no ícone de carregando do SummaryResult): trocado por `motion-safe:animate-spin`.
+- ERRO ENGOLIDO (select do perfil da presença sem `error`): passou a `const { data: profile, error: profileError }` + `if (profileError) throw profileError;` dentro do `try/catch`, e o teste do caminho de falha agora devolve `{ data: null, error }` para exercitar essa linha.
+
 ## O que NÃO fiz e por quê
 - "captura" (item 2 do O QUE FAZER): o harness de teste é jsdom e prova o DOM real (papéis, nomes acessíveis, alvo) — sem screenshot.
 - Canal de presença privado (PD-69) citado no cartão: mudança de banco/Edge, fora de `src/components/**`; não toquei (fica com worker (edge/sql)).

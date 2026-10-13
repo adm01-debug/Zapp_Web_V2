@@ -51,8 +51,8 @@ vi.mock('@/integrations/supabase/client', () => {
   profileQuery.select = vi.fn(() => profileQuery);
   profileQuery.eq = vi.fn(() => profileQuery);
   profileQuery.maybeSingle = vi.fn(async () => {
-    if (h.profileFails) throw new Error('select do perfil falhou');
-    return { data: { name: 'Íris', avatar_url: null } };
+    if (h.profileFails) return { data: null, error: { message: 'select do perfil falhou' } };
+    return { data: { name: 'Íris', avatar_url: null }, error: null };
   });
 
   return {
@@ -88,7 +88,7 @@ describe('useConversationViewers · presença', () => {
 
     await waitFor(() => expect(logWarn).toHaveBeenCalledWith(
       'Falha ao anunciar presença na conversa',
-      expect.any(Error),
+      expect.objectContaining({ message: 'select do perfil falhou' }),
     ));
     // O `track` nem chegou a ser chamado porque o select falhou antes.
     expect(h.eventOrder).not.toContain('track');

@@ -52,11 +52,12 @@ export function useConversationViewers(contactId: string) {
           // O canal de presença não pode derrubar a conversa: falha de rede aqui
           // (select do perfil ou track) vira aviso no log, não rejeição não tratada.
           try {
-            const { data: profile } = await supabase
+            const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('name, avatar_url')
               .eq('user_id', user.id)
               .maybeSingle();
+            if (profileError) throw profileError;
             await channel.track({
               name: profile?.name || 'Agente',
               avatar_url: profile?.avatar_url || null,

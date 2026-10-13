@@ -32,7 +32,7 @@ function TtsButton({ text, label, pauseLabel, isTtsPlaying, isTtsLoading, lastTt
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={accessibleName} onClick={() => onPlayTts(text)} disabled={isTtsLoading}>
             {isActive ? <VolumeX className="h-3.5 w-3.5 text-primary" />
-              : isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              : isBusy ? <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin text-primary" />
               : <Volume2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />}
           </Button>
         </TooltipTrigger>
