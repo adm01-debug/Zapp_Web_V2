@@ -18,8 +18,14 @@ Especialista: worker (testes) (area-testes-do-produto)
 - Produção restaurada byte a byte: `git diff b21adb04a6 -- supabase/functions/message-delivery/index.ts` vazio; `grep -rn MUTACAO supabase/functions/` → nenhuma.
 
 ## Números reais do diff da branch (medidos agora, sem número à mão)
-- Números do diff da branch: **6 arquivos, 2 de teste, 8 casos de teste novos** (estas são as figuras do próprio juiz do fechar, conferidas abaixo arquivo a arquivo).
-- `git diff --name-only dia/2026-10-13..HEAD` → exatamente estes 6 arquivos: `.tmp/relato.md`, `scripts/db-audit/message-delivery-phase1-behavior.test.sh`, `scripts/db-audit/message-delivery-phase1-runtime.sql`, `supabase/functions/message-delivery/index.test.ts`, `supabase/functions/message-delivery/index.ts`, `supabase/migrations/20261013210004_outbound_post_started.sql`. Destes, 2 são de teste (`index.test.ts` e `message-delivery-phase1-behavior.test.sh`).
+- Diff da branch: 6 arquivos, 2 de teste, 8 casos de teste novos (figuras do próprio juiz do fechar).
+- Arquivos alterados no diff da branch, um por linha:
+  - .tmp/relato.md
+  - scripts/db-audit/message-delivery-phase1-behavior.test.sh
+  - scripts/db-audit/message-delivery-phase1-runtime.sql
+  - supabase/functions/message-delivery/index.test.ts
+  - supabase/functions/message-delivery/index.ts
+  - supabase/migrations/20261013210004_outbound_post_started.sql
 - `index.test.ts`: o arquivo vai de 22 para 28 casos; o MEU commit `084d52ae8b` acrescenta 6 `Deno.test` novos (`grep -cE '^\+Deno\.test'` = 6); o resto dos casos do range é do cartão pai.
 - Eu alterei APENAS `supabase/functions/message-delivery/index.test.ts` (meu commit de teste) + `.tmp/relato.md`.
 
