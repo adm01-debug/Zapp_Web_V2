@@ -13,6 +13,7 @@ import { ContactCombobox, type ContactOption } from './ContactCombobox';
 import { TaskTitleField } from './new-task/TaskTitleField';
 import { PrioritySegment } from './new-task/PrioritySegment';
 import { PrazoField } from './new-task/PrazoField';
+import { RemindField } from './new-task/RemindField';
 import { DestinationBlock } from './new-task/DestinationBlock';
 
 interface Props {
@@ -22,7 +23,9 @@ interface Props {
   defaultContact?: ContactOption | null;
   /** Prazo inicial (ISO), quando o modal abre a partir de um dia/contexto (etapa 159). */
   defaultDueDate?: string | null;
-  /** Relógio dos atalhos de prazo; injetável nos testes. Padrão: agora. */
+  /** Lembrete inicial (ISO), quando o modal abre a partir de um contexto (etapa 160). */
+  defaultRemindAt?: string | null;
+  /** Relógio dos atalhos de prazo/lembrete; injetável nos testes. Padrão: agora. */
   now?: Date;
   /**
    * Controle externo do `Dialog` (etapas 159/160/163): os testes dessas etapas
@@ -52,6 +55,7 @@ export function NewTaskDialog({
   defaultContactId = null,
   defaultContact = null,
   defaultDueDate = null,
+  defaultRemindAt = null,
   now,
   open,
   onOpenChange,
@@ -64,6 +68,7 @@ export function NewTaskDialog({
   const [contactId, setContactId] = useState<string | null>(defaultContactId);
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
+  const [remindAt, setRemindAt] = useState<string | null>(defaultRemindAt);
 
   const titleError = touched && !title.trim() ? 'Informe o título da tarefa.' : null;
 
@@ -112,6 +117,7 @@ export function NewTaskDialog({
           </div>
 
           <PrazoField value={dueDate} onChange={setDueDate} now={now} />
+          <RemindField value={remindAt} onChange={setRemindAt} now={now} />
 
           <DestinationBlock />
         </div>
