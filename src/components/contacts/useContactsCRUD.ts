@@ -39,6 +39,8 @@ const EMPTY_CONTACT: ContactFormData = {
 export interface Contact {
   id: string;
   name: string;
+  /** Versão da linha no banco; usada como precondição de concorrência no salvamento. */
+  updated_at?: string | null;
   nickname: string | null;
   surname: string | null;
   job_title: string | null;
@@ -208,11 +210,12 @@ export function useContactsCRUD() {
         if ('latitude' in contact) payload.latitude = toCoordinate(contact.latitude);
         if ('longitude' in contact) payload.longitude = toCoordinate(contact.longitude);
 
-        const { data, error } = await supabase
-          .from('contacts')
-          .update(payload)
-          .eq('id', contact.id)
-          .select('id');
+        // Concorrência otimista: só grava a linha que ainda está na versão que o
+        // formulário abriu. Sem isso, quem salva por último sobrescreve em silêncio
+        // a edição de outra pessoa (o UPDATE mandava a linha inteira, "last write wins").
+        let update = supabase.from('contacts').update(payload).eq('id', contact.id);
+        if (contact.updated_at) update = update.eq('updated_at', contact.updated_at);
+        const { data, error } = await update.select('id');
         if (error) {
           if (error.code === '23505' && error.message?.includes('contacts_phone_unique')) {
             throw new Error('Já existe outro contato com este número de telefone.');
@@ -223,6 +226,19 @@ export function useContactsCRUD() {
         // linhas (contato fora do alcance) e o fluxo anunciava "atualizado com sucesso".
         // Agora 0 linhas afetadas é falha explícita.
         if (!data || data.length === 0) {
+          // 0 linhas com a precondição de `updated_at`: ou o RLS recusou, ou a linha
+          // mudou desde que o form abriu. Distingue pelo estado ATUAL da linha para
+          // não anunciar "sem permissão" quando o caso é conflito de edição.
+          if (contact.updated_at) {
+            const { data: current } = await supabase
+              .from('contacts')
+              .select('updated_at')
+              .eq('id', contact.id)
+              .maybeSingle();
+            if (current?.updated_at && current.updated_at !== contact.updated_at) {
+              throw new Error('Outra pessoa alterou este contato. Recarregue os dados e tente novamente.');
+            }
+          }
           throw new Error('Nenhum contato foi atualizado. Verifique se você tem permissão.');
         }
       },

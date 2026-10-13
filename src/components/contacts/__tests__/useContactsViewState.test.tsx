@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import type { FilterPreset } from '../FilterPresets';
 
@@ -118,5 +118,76 @@ describe('useContactsViewState — atalhos e sanitização (etapa 79)', () => {
 
     act(() => { result.current.handleApplyPreset(preset('fornecedor')); });
     expect(crud.setActiveTab).toHaveBeenLastCalledWith('fornecedor');
+  });
+});
+
+describe('useContactsViewState — modo lembrado e painel sem dado antigo', () => {
+  const BASE_CONTACTS = [{ id: 'a' }, { id: 'b' }, { id: 'c' }] as { id: string }[];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    crud.searchInput = '';
+    crud.selectedIds = [];
+    crud.contacts = [...BASE_CONTACTS];
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    crud.contacts = [...BASE_CONTACTS];
+  });
+
+  it('persiste o modo escolhido e o recupera na próxima visita (sem voltar para Cards)', () => {
+    const first = renderHook(() => useContactsViewState());
+    expect(first.result.current.viewMode).toBe('grid');
+
+    act(() => { first.result.current.setViewMode('table'); });
+    expect(first.result.current.viewMode).toBe('table');
+    expect(window.localStorage.getItem('contacts:view-mode')).toBe('table');
+    first.unmount();
+
+    const second = renderHook(() => useContactsViewState());
+    expect(second.result.current.viewMode).toBe('table');
+  });
+
+  it('valor guardado desconhecido/antigo não vira modo inválido: cai no padrão Cards', () => {
+    window.localStorage.setItem('contacts:view-mode', 'modo-que-nao-existe');
+    const { result } = renderHook(() => useContactsViewState());
+    expect(result.current.viewMode).toBe('grid');
+  });
+
+  it('localStorage indisponível não quebra a tela: usa o padrão e mantém a troca na sessão', () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('bloqueado'); });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('bloqueado'); });
+    try {
+      const { result } = renderHook(() => useContactsViewState());
+      expect(result.current.viewMode).toBe('grid');
+      act(() => { result.current.setViewMode('list'); });
+      expect(result.current.viewMode).toBe('list');
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
+  });
+
+  it('painel de detalhe acompanha a lista: salvar o contato atualiza o painel aberto', () => {
+    const { result, rerender } = renderHook(() => useContactsViewState());
+    act(() => { result.current.handleContactClick('b'); });
+    expect(result.current.detailContact).toEqual({ id: 'b' });
+
+    // refetch após salvar traz a linha nova; o painel derivado mostra o nome novo
+    crud.contacts = [{ id: 'a' }, { id: 'b', name: 'Nome Atualizado' }, { id: 'c' }] as { id: string }[];
+    rerender();
+    expect(result.current.detailContact).toEqual({ id: 'b', name: 'Nome Atualizado' });
+  });
+
+  it('contato que sai da lista (filtro/tipo mudou) fecha o painel em vez de mostrar cópia velha', () => {
+    const { result, rerender } = renderHook(() => useContactsViewState());
+    act(() => { result.current.handleContactClick('b'); });
+    expect(result.current.detailContact).toEqual({ id: 'b' });
+
+    crud.contacts = [{ id: 'a' }, { id: 'c' }] as { id: string }[];
+    rerender();
+    expect(result.current.detailContact).toBeNull();
   });
 });

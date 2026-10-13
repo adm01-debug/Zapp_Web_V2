@@ -9,10 +9,14 @@ import { renderHook, act } from '@testing-library/react';
  */
 const mocks = vi.hoisted(() => ({
   updatePayloads: [] as Record<string, unknown>[],
+  /** Filtros `.eq()` que o UPDATE recebeu (prova da precondição de `updated_at`). */
+  updateEqs: [] as [string, unknown][],
   insertPayloads: [] as Record<string, unknown>[],
   updateError: null as null | { code?: string; message?: string },
   /** Linhas que o UPDATE devolve em `.select('id')` (default: a linha editada). */
   updateRows: [{ id: 'c1' }] as { id: string }[],
+  /** Estado ATUAL da linha, lido quando o UPDATE afeta 0 linhas (RLS ou conflito). */
+  currentRow: null as null | { updated_at: string },
   getById: vi.fn(),
   refetch: vi.fn(),
   setShowLegacy: vi.fn(),
@@ -30,14 +34,24 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       update: (payload: Record<string, unknown>) => {
         mocks.updatePayloads.push(payload);
-        return {
+        const builder = {
+          // O UPDATE encadeia `.eq('id').eq('updated_at')` (precondição de versão).
+          eq: (column: string, value: unknown) => {
+            mocks.updateEqs.push([column, value]);
+            return builder;
+          },
           // R2-AUTH-013: o UPDATE agora pede `.select('id')` para saber quantas
           // linhas mudaram. 0 linhas = recusa do RLS (o defeito anunciava sucesso).
-          eq: () => ({
-            select: async () => ({ data: mocks.updateRows, error: mocks.updateError }),
-          }),
+          select: async () => ({ data: mocks.updateRows, error: mocks.updateError }),
         };
+        return builder;
       },
+      // Leitura do estado atual da linha, só usada quando o UPDATE afeta 0 linhas.
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: mocks.currentRow, error: null }),
+        }),
+      }),
       insert: (payload: Record<string, unknown>) => {
         mocks.insertPayloads.push(payload);
         return Promise.resolve({ error: null });
@@ -132,6 +146,8 @@ async function openAndEditName(contact: Record<string, unknown>, newName = 'Fula
 describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
   beforeEach(() => {
     mocks.updatePayloads = [];
+    mocks.updateEqs = [];
+    mocks.currentRow = null;
     mocks.insertPayloads = [];
     mocks.updateError = null;
     mocks.updateRows = [{ id: 'c1' }];
@@ -404,6 +420,8 @@ describe('useContactsCRUD — delete_contact devolvendo null (regressão P0 da e
 describe('useContactsCRUD — edição com 0 linhas afetadas é falha (R2-AUTH-013)', () => {
   beforeEach(() => {
     mocks.updatePayloads = [];
+    mocks.updateEqs = [];
+    mocks.currentRow = null;
     mocks.updateError = null;
     mocks.updateRows = [];
     mocks.getById.mockReset();
@@ -434,5 +452,81 @@ describe('useContactsCRUD — edição com 0 linhas afetadas é falha (R2-AUTH-0
     expect(caught).toBeInstanceOf(Error);
     expect((caught as Error).message).toBe('Nenhum contato foi atualizado. Verifique se você tem permissão.');
     expect(mocks.refetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('useContactsCRUD — edição concorrente avisa o conflito (updated_at)', () => {
+  const ROW_V1 = { ...FULL_ROW, updated_at: '2026-10-13T09:00:00.000Z' };
+  const ROW_V2 = { ...FULL_ROW, updated_at: '2026-10-13T10:00:00.000Z' };
+
+  beforeEach(() => {
+    mocks.updatePayloads = [];
+    mocks.updateEqs = [];
+    mocks.currentRow = null;
+    mocks.updateError = null;
+    mocks.updateRows = [{ id: 'c1' }];
+    mocks.getById.mockReset();
+    mocks.getById.mockResolvedValue({ data: ROW_V1, error: null });
+    mocks.refetch.mockReset();
+    mocks.invalidateQueries.mockReset();
+    mocks.callOnSuccess = true;
+  });
+
+  async function openEdit() {
+    const hook = mountHook();
+    await act(async () => {
+      await hook.result.current.openEditDialog(LIST_ROW as never);
+    });
+    await act(async () => {
+      hook.result.current.handleEditContactChange('name', 'Fulano Editado');
+    });
+    return hook;
+  }
+
+  it('o UPDATE leva a precondição `updated_at` da versão que o form abriu', async () => {
+    const { payload } = await openAndEditName(LIST_ROW);
+    expect(payload).toHaveProperty('name', 'Fulano Editado');
+    expect(mocks.updateEqs).toContainEqual(['id', 'c1']);
+    expect(mocks.updateEqs).toContainEqual(['updated_at', ROW_V1.updated_at]);
+  });
+
+  it('linha mudou depois de abrir (0 linhas + updated_at diferente) → aviso de conflito, sem anunciar sucesso', async () => {
+    mocks.updateRows = [];
+    mocks.currentRow = { updated_at: ROW_V2.updated_at };
+    const hook = await openEdit();
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await hook.result.current.handleEditContact();
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe(
+      'Outra pessoa alterou este contato. Recarregue os dados e tente novamente.',
+    );
+    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('0 linhas com a MESMA versão (RLS) continua sendo falha de permissão, não conflito', async () => {
+    mocks.updateRows = [];
+    mocks.currentRow = { updated_at: ROW_V1.updated_at };
+    const hook = await openEdit();
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await hook.result.current.handleEditContact();
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe('Nenhum contato foi atualizado. Verifique se você tem permissão.');
   });
 });

@@ -40,6 +40,7 @@ const EVENT_CONFIG: Record<string, { icon: React.ElementType; color: string; bg:
 export function ContactActivityTimeline({ contactId, contactCreatedAt, className }: ContactActivityTimelineProps) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const isMountedRef = useRef(true);
 
@@ -51,6 +52,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
   useEffect(() => {
     async function fetchTimeline() {
       setLoading(true);
+      setError(false);
       const timeline: TimelineEvent[] = [];
 
       // Add creation event
@@ -63,7 +65,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
       });
 
       // Fetch messages
-      const { data: messages } = await supabase
+      const { data: messages, error: messagesError } = await supabase
         .from('messages')
         .select('id, content, sender, created_at')
         .eq('contact_id', contactId)
@@ -83,7 +85,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
       }
 
       // Fetch notes
-      const { data: notes } = await supabase
+      const { data: notes, error: notesError } = await supabase
         .from('contact_notes')
         .select('id, content, created_at')
         .eq('contact_id', contactId)
@@ -103,7 +105,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
       }
 
       // Fetch assignment events
-      const { data: assignments } = await supabase
+      const { data: assignments, error: assignmentsError } = await supabase
         .from('conversation_events')
         .select('id, event_type, created_at, metadata')
         .eq('contact_id', contactId)
@@ -120,6 +122,15 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
             timestamp: evt.created_at,
           });
         });
+      }
+
+      // Consulta que falha NÃO pode virar timeline "completa" nem "0 eventos":
+      // mostra estado de erro explícito em vez de esconder o que não foi lido.
+      if (messagesError || notesError || assignmentsError) {
+        if (!isMountedRef.current) return;
+        setError(true);
+        setLoading(false);
+        return;
       }
 
       // Sort by timestamp descending
@@ -150,6 +161,23 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={cn("space-y-3", className)}>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <Clock className="w-3 h-3" />
+          Linha do Tempo
+        </h3>
+        <p
+          data-testid="timeline-error"
+          className="text-2xs text-destructive bg-destructive/10 rounded-md px-3 py-2"
+        >
+          Não foi possível carregar a linha do tempo deste contato. Tente novamente em instantes.
+        </p>
       </div>
     );
   }

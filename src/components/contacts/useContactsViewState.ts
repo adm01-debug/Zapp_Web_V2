@@ -1,9 +1,28 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useContactsCRUD } from './useContactsCRUD';
 import type { ContactViewMode } from './ContactViewSwitcher';
 import type { FilterPreset } from './FilterPresets';
 import { VALID_TAB_TYPES } from './contactTypeOrder';
+
+/** Chave do `localStorage` que lembra o modo de visualização entre visitas. */
+const VIEW_MODE_STORAGE_KEY = 'contacts:view-mode';
+/** Modos aceitos — um valor estranho/antigo guardado não vira modo inválido na tela. */
+const VALID_VIEW_MODES: readonly ContactViewMode[] = ['grid', 'list', 'table', 'map', 'kanban', 'analytics'];
+
+/**
+ * Lê o modo guardado. `localStorage` pode estar indisponível (modo privado,
+ * ambiente sem `window`): nesse caso o padrão é 'grid' e a tela não quebra.
+ */
+function readStoredViewMode(): ContactViewMode {
+  try {
+    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (stored && (VALID_VIEW_MODES as readonly string[]).includes(stored)) return stored as ContactViewMode;
+  } catch {
+    /* sem localStorage: a escolha vale só nesta visita */
+  }
+  return 'grid';
+}
 
 export function useContactsViewState() {
   const crud = useContactsCRUD();
@@ -13,13 +32,36 @@ export function useContactsViewState() {
     setFilterDateRange, selectedIds, setSelectedIds, setIsAddDialogOpen,
   } = crud;
 
-  const [viewMode, setViewMode] = useState<ContactViewMode>('grid');
+  const [viewMode, setViewModeState] = useState<ContactViewMode>(readStoredViewMode);
   const [gridColumns, setGridColumns] = useState(4);
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [groupByCompany, setGroupByCompany] = useState(false);
   const [isBulkTagOpen, setIsBulkTagOpen] = useState(false);
-  const [detailContact, setDetailContact] = useState<typeof filteredContacts[0] | null>(null);
+  const [detailContactId, setDetailContactId] = useState<string | null>(null);
+
+  /** Grava a escolha para a próxima visita; sem `localStorage` vale só nesta. */
+  const setViewMode = useCallback((mode: ContactViewMode) => {
+    setViewModeState(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      /* sem localStorage: a escolha vale só nesta visita */
+    }
+  }, []);
+
+  /**
+   * O contato do painel é DERIVADO da lista atual, não uma cópia do clique:
+   * a cópia continuava mostrando nome/telefone antigos depois de editar pelo
+   * próprio painel. Se o contato sair da lista (filtro/tipo mudou), o painel fecha.
+   */
+  const detailContact = useMemo(
+    () => (detailContactId === null ? null : filteredContacts.find(c => c.id === detailContactId) ?? null),
+    [filteredContacts, detailContactId],
+  );
+  const setDetailContact = useCallback((contact: typeof filteredContacts[0] | null) => {
+    setDetailContactId(contact ? contact.id : null);
+  }, []);
 
   const handleApplyPreset = useCallback((preset: FilterPreset) => {
     if (preset.filters.type) {
@@ -44,8 +86,8 @@ export function useContactsViewState() {
   }, [filteredContacts, setSelectedIds]);
 
   const handleContactClick = useCallback((id: string) => {
-    const contact = filteredContacts.find(c => c.id === id);
-    if (contact) setDetailContact(contact);
+    if (!filteredContacts.some(c => c.id === id)) return;
+    setDetailContactId(id);
   }, [filteredContacts]);
 
   // Keyboard shortcuts
@@ -65,7 +107,7 @@ export function useContactsViewState() {
     // Captura: roda antes do Esc do Radix fechar o diálogo, enquanto ele ainda está `data-state="open"`.
     window.addEventListener('keydown', handler, true);
     return () => window.removeEventListener('keydown', handler, true);
-  }, [selectedIds.length, searchInput, clearSearch, setIsAddDialogOpen, setSelectedIds, handleSelectAll, detailContact]);
+  }, [selectedIds.length, searchInput, clearSearch, setIsAddDialogOpen, setSelectedIds, handleSelectAll, detailContact, setDetailContact]);
 
   return {
     crud,
