@@ -49,7 +49,7 @@ export function ConnectionDisconnectDialog({
             className="bg-destructive hover:bg-destructive/90"
           >
             {pending
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Desconectando…</>
+              ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
               : 'Desconectar'}
           </AlertDialogAction>
         </AlertDialogFooter>

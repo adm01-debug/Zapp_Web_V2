@@ -68,7 +68,7 @@ describe('ConnectionCard — estado de espera e rótulos (t_53fc1ddb)', () => {
     const botao = screen.getByRole('button', { name: /Desconectando/ });
     expect(botao).toBeDisabled();
     expect(botao).toHaveAttribute('aria-busy', 'true');
-    expect(botao.className).toContain('animate-pulse');
+    expect(botao.className).toContain('motion-safe:animate-pulse');
 
     fireEvent.click(botao);
     expect(screen.queryByRole('alertdialog')).toBeNull();
