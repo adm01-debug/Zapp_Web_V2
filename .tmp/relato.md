@@ -13,6 +13,14 @@ Especialista: Hugo (area-front-hooks)
 ## Aviso de diff (cherry-pick do cartão pai)
 - O diff contra `dia/2026-10-12` inclui o commit do cartão pai (`ac820d0d8`, cherry-pick `-x` para `5cfcd28c5`), que a branch do dia ainda não tinha: `supabase/migrations/20261013012747_sla_resolve_applicable.sql`, `supabase/tests/sla_resolve_applicable.sql`, `scripts/db-audit/sla-resolve-applicable-contract.test.mjs`, `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` e `src/integrations/supabase/types.ts` (tipos da RPC). Sem ele o meu hook não compila.
 
+## Arquivos tocados que o cartão não lista literalmente (ponto 1 do juiz)
+- `src/components/settings/SLARulesManager.tsx`, `src/components/settings/sla/ScopeRulesList.tsx` e `src/components/settings/sla/SLARuleFormDialog.tsx` SÃO os "componentes que hoje têm essa lógica inline" citados no cartão (a contagem por escopo, os nomes por UUID e as cinco consultas de opção viviam neles). Sem ligá-los, os hooks novos nascem mortos e o critério 3 ("hooks de escopo reutilizáveis") não se cumpre.
+- `src/hooks/sla/index.ts` é o barrel do próprio diretório: 3 linhas `export *` para os hooks novos.
+- `scripts/db-audit/sla-first-response-delivery-contract.test.mjs`, `scripts/db-audit/sla-resolve-applicable-contract.test.mjs`, `supabase/migrations/20261013012747_sla_resolve_applicable.sql`, `supabase/tests/sla_resolve_applicable.sql` e `src/integrations/supabase/types.ts` vêm do **cherry-pick do cartão pai** (`ac820d0d8`) — não são edição minha.
+
+## Conferência do juiz sobre a migration do pai (ponto 2)
+- A `20261013012747_sla_resolve_applicable.sql` e o `UPDATE` em `conversation_sla` (gatilho de `updated_at`) são do cartão PAI (PB-39, worker sql), trazidos por cherry-pick porque a RPC precisa existir para o hook compilar. Não reescrevo SQL de outro especialista neste cartão; o ponto fica registrado em comentário para o cartão pai.
+
 ## Prova
 - vermelho antes: com o hook na versão da base (`git show dia/2026-10-12:src/hooks/sla/useApplicableSLA.ts`) e o teste NOVO: `npx vitest run src/hooks/sla/__tests__/useApplicableSLA.test.tsx` → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`.
 - verde depois: `npx vitest run src/hooks/sla/__tests__/` → `Test Files 6 passed (6); Tests 47 passed (47)`.
