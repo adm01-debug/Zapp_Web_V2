@@ -1,18 +1,52 @@
 Especialista: Hugo (area-front-hooks)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Premissa do cartão: DESATUALIZADA — a lacuna já está fechada na base
+O cartão pede: "Confira no código ATUAL que a lacuna ainda existe... Se já estiver resolvida,
+escreva a prova e feche SEM commit de código." Conferi e a lacuna NÃO existe mais na ponta de
+dia/2026-10-13. Não há correção a fazer; entrego a prova.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+## Prova de que a lacuna está fechada (2 metades do defeito)
+
+1) O acesso direto à tabela inexistente saiu — a gravação passou para a RPC canônica.
+- src/hooks/team-chat/useDepartmentManagement.ts:247-276 (useSaveDepartmentWhatsApp) chama
+  supabase.rpc('set_department_whatsapp_config', { p_department_id, p_whatsapp_mode, p_api_key })
+  e trata { ok:false, error } como recusa (linha 268-269).
+- `grep -n "\.from(" src/hooks/team-chat/useDepartmentManagement.ts` NÃO mostra nenhum
+  .from('department_whatsapp_configs'); os .from() restantes são department_audit_logs,
+  department_invites e profiles — todas no catálogo. O consumidor direto da tabela inexistente
+  não existe mais.
+- `git grep -n department_whatsapp_configs -- src scripts supabase` só acha ocorrências em
+  COMENTÁRIO de teste (useDepartmentManagement.test.tsx:74,97) e no _resolvido do baseline —
+  nenhuma chamada de acesso.
+
+2) A entrada saiu do baseline do supabase-usage-guard.
+- scripts/db-audit/known-violations.json:5-8 — o array `known` tem apenas 2 chaves
+  (rpc:set_default_whatsapp_connection e rpc:talkx_campaign_window_open). A chave
+  "from:department_whatsapp_configs" NÃO está no baseline; está só registrada em `_resolvido`
+  (linha 10) como resolvida em 2026-10-08.
+
+## Histórico (o trabalho já foi integrado; nada a cherry-pickar)
+- 7798905b7a "fix(ci/devops): entrada from:department_whatsapp_configs sai do baseline (SL-144)" —
+  a remoção do baseline já está em dia/2026-10-13.
+- 398b9d5e14 "fix(ci/devops): Entrada from:department_whatsapp_configs continua no ba (SL-144)"
+  (commit do cartão 2610091724d164) — a normalização do p_api_key para undefined (mesmo alvo do
+  commit e8bef0d86 citado no "trabalho anterior") já está na base, com a variante aceita pelo
+  revisor: `config.evolution_api_key || undefined` / `config.official_token || undefined`.
+  Portanto o commit e8bef0d86 não precisa ser trazido: o efeito dele já está integrado.
+
+## Prova (executado agora)
+- teste do hook (verde): `npx vitest run src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx`
+  → `Test Files 1 passed (1); Tests 7 passed (7)`
+- contrato de banco da RPC (verde): `bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh`
+  → termina com `PASS: TC-005 (F10)` (todos os blocos A/B/C PASS, incluindo o rollback)
+- baseline sem a entrada (grep acima): só as 2 chaves rpc; a chave from:department_whatsapp_configs
+  está em `_resolvido`.
+
+## Diferença (diff)
+Diff vazio por decisão do próprio cartão ("feche SEM commit de código"): a lacuna já estava
+fechada na base. Commit vazio para o fechar poder avaliar.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não cherry-pickei e8bef0d86: o cartão manda fechar sem commit quando já resolvido, e o efeito
+  desse commit (normalizar chave vazia) já está na base via 398b9d5e14.
+- Não toquei em nenhum arquivo de produção.
