@@ -39,13 +39,13 @@ function renderDialog() {
 }
 
 function dataInput() {
-  return screen.getByTestId('new-task-lembrete-data') as HTMLInputElement;
+  return screen.getByTestId('nt-lembrete-data') as HTMLInputElement;
 }
 function horaInput() {
-  return screen.getByTestId('new-task-lembrete-hora') as HTMLInputElement;
+  return screen.getByTestId('nt-lembrete-hora') as HTMLInputElement;
 }
 function limparBtn() {
-  return screen.getByTestId('new-task-lembrete-limpar') as HTMLButtonElement;
+  return screen.getByTestId('nt-lembrete-limpar') as HTMLButtonElement;
 }
 
 describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
@@ -54,9 +54,9 @@ describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
 
     expect(screen.getByText('Lembrete')).toBeInTheDocument();
     expect(screen.getByText('Quando você quer ser avisado')).toBeInTheDocument();
-    expect(screen.getByTestId('new-task-lembrete-em-1h')).toHaveTextContent('Em 1h');
-    expect(screen.getByTestId('new-task-lembrete-amanha-9h')).toHaveTextContent('Amanhã, 9h');
-    expect(screen.getByTestId('new-task-lembrete-prox-seg-9h')).toHaveTextContent('Próx. seg., 9h');
+    expect(screen.getByTestId('nt-lembrete-em-1h')).toHaveTextContent('Em 1h');
+    expect(screen.getByTestId('nt-lembrete-amanha-9h')).toHaveTextContent('Amanhã, 9h');
+    expect(screen.getByTestId('nt-lembrete-prox-seg-9h')).toHaveTextContent('Próx. seg., 9h');
   });
 
   it('nasce sem lembrete: data e hora vazias e o limpar desabilitado', () => {
@@ -69,7 +69,7 @@ describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
 
   it('atalho "Em 1h" grava agora + 1 h (remindPresetISO), no dia local 13/10', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-lembrete-em-1h'));
+    fireEvent.click(screen.getByTestId('nt-lembrete-em-1h'));
 
     expect(diaLocal(remindPresetISO('in1h', NOW))).toBe('2026-10-13');
     expect(dataInput().value).toBe('2026-10-13');
@@ -79,7 +79,7 @@ describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
 
   it('atalho "Amanhã, 9h" grava o dia seguinte às 09:00 (14/10 09:00)', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-lembrete-amanha-9h'));
+    fireEvent.click(screen.getByTestId('nt-lembrete-amanha-9h'));
 
     expect(diaLocal(remindPresetISO('tomorrow9', NOW))).toBe('2026-10-14');
     expect(dataInput().value).toBe('2026-10-14');
@@ -88,7 +88,7 @@ describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
 
   it('atalho "Próx. seg., 9h" grava a próxima segunda às 09:00 (19/10 09:00)', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-lembrete-prox-seg-9h'));
+    fireEvent.click(screen.getByTestId('nt-lembrete-prox-seg-9h'));
 
     expect(diaLocal(remindPresetISO('nextMonday9', NOW))).toBe('2026-10-19');
     expect(dataInput().value).toBe('2026-10-19');
@@ -111,7 +111,7 @@ describe('NewTaskDialog — campo Lembrete (etapa 160)', () => {
   it('limpar apaga o valor e volta a desabilitar o botão', () => {
     renderDialog();
 
-    fireEvent.click(screen.getByTestId('new-task-lembrete-em-1h'));
+    fireEvent.click(screen.getByTestId('nt-lembrete-em-1h'));
     expect(dataInput().value).not.toBe('');
 
     fireEvent.click(limparBtn());
