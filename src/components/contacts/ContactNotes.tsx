@@ -383,7 +383,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                           disabled={savingEdit || !editDraft.trim()}
                           onClick={() => void salvarEdicao(note)}
                         >
-                          {savingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                          {savingEdit ? <Loader2 className="w-3 h-3 motion-safe:animate-spin" /> : <Check className="w-3 h-3" />}
                           Salvar
                         </Button>
                       </div>
@@ -417,7 +417,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       onClick={() => void alternarFixar(note)}
                     >
                       {pinBusyId === note.id
-                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        ? <Loader2 className="w-3 h-3 motion-safe:animate-spin" />
                         : fixada ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
                     </Button>
                     <Button

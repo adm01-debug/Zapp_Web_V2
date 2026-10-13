@@ -13,7 +13,7 @@ Contexto: a FAIXA do pai (t_4092de45) foi trazida por cherry-pick para esta bran
 - regressão da área: `npx vitest run src/components/contacts src/hooks/crm/useContactNotes.pinned.test.tsx src/hooks/__tests__/useContactNotes.test.tsx src/hooks/crm/useContactNotes.error-pagination.test.tsx` → `Test Files 40 passed (40); Tests 292 passed (292)`.
 - `npx eslint` nos arquivos tocados: `0 errors` (o warning `@/integrations/supabase/client` já existia no arquivo — import pré-existente, não adicionei ocorrência nova).
 
-Estados da tela: carregando (esqueleto), vazio ("Nenhuma nota ainda"), salvando (spinner no botão Salvar / fixar) e erro (toast com "A nota é de outro autor ou já não existe", sem mexer na lista) — todos conferidos nos testes acima.
+Estados da tela: carregando (esqueleto), vazio ("Nenhuma nota ainda"), salvando (spinner no botão Salvar / fixar) e erro (toast com "A nota é de outro autor ou já não existe", sem mexer na lista) — todos conferidos nos testes acima. Movimento: os spinners novos usam `motion-safe:animate-spin` (respeita reduzir movimento).
 
 ## O que NÃO fiz e por quê
 - NotesTab.tsx (aba Notas do inbox): o cartão o cita como lugar sem editar/fixar, mas o título é "na ficha do contato" e a ficha é o ContactNotes.tsx. O NotesTab é outra superfície (notas por categoria: privadas/fatos/objeções/promessas) e o mecanismo de editar em linha + fixar dentro de cada categoria com uma ordem própria seria outra entrega; o hook já expõe `editNote`/`togglePin`, então a aba pode receber isso num cartão próprio.
