@@ -44,6 +44,11 @@ async function openCustomTab() {
   await screen.findByAltText('Coração');
 }
 
+/** Contador do rodapé da lista ("1/2 emojis ..."): determinístico, sem depender da animação de saída. */
+function contador(): string {
+  return screen.getByText(/\d+\/2 emojis/).textContent || '';
+}
+
 describe('CustomEmojiPicker — acessibilidade e busca sem acento', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,17 +73,19 @@ describe('CustomEmojiPicker — acessibilidade e busca sem acento', () => {
 
     fireEvent.change(busca, { target: { value: 'coracao' } });
     expect(await screen.findByAltText('Coração')).toBeTruthy();
-    expect(screen.queryByAltText('Foguete')).toBeNull();
+    expect(contador()).toContain('1/2');
 
     fireEvent.change(busca, { target: { value: 'CORACAO' } });
     expect(await screen.findByAltText('Coração')).toBeTruthy();
+    expect(contador()).toContain('1/2');
 
     // categoria também casa sem acento/caixa
     fireEvent.change(busca, { target: { value: 'AMOR' } });
     expect(await screen.findByAltText('Coração')).toBeTruthy();
+    expect(contador()).toContain('1/2');
 
     fireEvent.change(busca, { target: { value: 'inexistente' } });
-    expect(screen.queryByAltText('Coração')).toBeNull();
+    expect(contador()).toContain('0/2');
   });
 
   it('os controles de favoritar e excluir têm rótulo e aparecem no foco por teclado', async () => {
@@ -100,9 +107,10 @@ describe('CustomEmojiPicker — acessibilidade e busca sem acento', () => {
     await openCustomTab();
     const busca = screen.getByPlaceholderText('Buscar emojis...');
     fireEvent.change(busca, { target: { value: 'zzz' } });
-    expect(screen.queryByAltText('Coração')).toBeNull();
+    expect(contador()).toContain('0/2');
 
     fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }));
     expect(await screen.findByAltText('Coração')).toBeTruthy();
+    expect(contador()).toContain('2/2');
   });
 });

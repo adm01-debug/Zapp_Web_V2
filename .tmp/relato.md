@@ -9,7 +9,7 @@ CRITÉRIO DE PRONTO, item por item: nº 1 (controles acessíveis por teclado) = 
 - mesmo arquivo: `group-focus-within:opacity-100` no overlay + `focus-visible:ring-2` nos dois botões: com foco por teclado o overlay aparece e o foco fica visível (antes o overlay só aparecia no hover do mouse).
 - mesmo arquivo: `normalizeSearch()` (NFD + remoção de diacríticos + minúscula) aplicado a nome e categoria na busca — "coracao", "CORACAO" e "AMOR" passam a achar "Coração" (antes só acerto exato de acento/caixa).
 - mesmo arquivo: `aria-label="Limpar busca"` no botão X da busca (mesma auditoria de rótulos).
-- `src/components/inbox/__tests__/CustomEmojiPicker.acessibilidade.test.tsx` (novo): renderiza o componente REAL `CustomEmojiPicker` (não mock do componente).
+- `src/components/inbox/__tests__/CustomEmojiPicker.acessibilidade.test.tsx` (novo): renderiza o componente REAL `CustomEmojiPicker` (não mock do componente). A busca é conferida pelo contador do rodapé (`N/2 emojis`), que é determinístico — a lista usa `AnimatePresence`, então o nó em saída pode ficar no DOM durante a animação.
 
 ## Item 2 do cartão: Tooltip + Popover, verificado em execução (registro)
 O cartão pede para verificar o Tooltip envolvendo o Popover "e registrar". Verifiquei em execução: o teste "abre e fecha o popover com o Tooltip junto, sem loop de render" abre o popover, fecha com Esc e reabre — nenhum loop, nenhum estouro de render. NÃO removi o Tooltip: a V2 oferece o tooltip no hover e não há defeito a corrigir aqui.
