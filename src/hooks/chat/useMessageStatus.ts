@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 interface MessageStatusUpdate {
   id: string;
@@ -64,7 +65,7 @@ export const useMessageStatus = (contactId?: string) => {
     log.debug('Setting up realtime status subscription for contact:', contactId);
 
     const channel = supabase
-      .channel(`message-status-${contactId}`)
+      .channel(uniqueRealtimeTopic(`message-status-${contactId}`))
       .on(
         'postgres_changes',
         {

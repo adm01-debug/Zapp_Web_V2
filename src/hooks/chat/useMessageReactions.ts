@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReactionMutations } from '../reactions/useReactionMutations';
 import { messageReactionsQueryKey, useReactionsBatch } from '../reactions/useBatchReactions';
 import { MessageReaction, UseMessageReactionsOptions } from '../reactions/types';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 // Re-export types and batch hook for consumers
 export type { MessageReaction, UseMessageReactionsOptions };
@@ -32,7 +33,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
     if (!messageId || options?.disableRealtime) return;
 
     const channel = supabase
-      .channel(`reactions:${messageId}`)
+      .channel(uniqueRealtimeTopic(`reactions:${messageId}`))
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

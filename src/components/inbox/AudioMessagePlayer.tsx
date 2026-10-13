@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
@@ -42,7 +43,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   // Realtime subscription for transcription updates
   useEffect(() => {
     const channel = supabase
-      .channel(`transcription-${messageId}`)
+      .channel(uniqueRealtimeTopic(`transcription-${messageId}`))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
         (payload) => {
           const newData = payload.new as { transcription_status?: string; transcription?: string };
