@@ -62,6 +62,12 @@ interface AtomicQueueRpc {
 // idempotency key for that exact browser action so a user retry cannot create
 // a second WhatsApp send. It is deliberately memory-only: a fresh deliberate
 // composition after a reload remains a new action.
+//
+// Falha DEFINITIVA (`failed`) é o caso oposto e tem tratamento próprio: aquela
+// linha nunca volta para `sending`, então repetir o MESMO id devolveria a linha
+// falhada e o dispatch morreria em 409 para sempre — o "Enviar de novo" do chat
+// nunca saía. Ali a chave é trocada por um id novo: o reenvio é mensagem NOVA
+// (linha nova) e a falha anterior fica preservada no histórico.
 const pendingActionIds = new Map<string, string>();
 
 function createClientMessageId(): string {
@@ -91,8 +97,30 @@ function resolveClientMessageId(input: SendOutboundMessageInput | RichOutboundMe
   return { id, key };
 }
 
-function clearPendingAction(key: string | null, id: string) {
-  if (key && pendingActionIds.get(key) === id) pendingActionIds.delete(key);
+function clearPendingAction(key: string | null) {
+  if (key) pendingActionIds.delete(key);
+}
+
+type EnqueueResult = { data: QueuedMessage | null; error: Error | null };
+
+/**
+ * Falha definitiva não volta para a fila: o `claim` do dispatch só aceita
+ * `sending`, então reenfileirar a MESMA ação com o MESMO id devolve a linha
+ * `failed` e o envio morre em 409. Aqui o reenvio ganha um id novo (linha nova,
+ * falha anterior intacta no histórico) e a chave em memória passa a apontar
+ * para ele — uma resposta perdida do reenvio continua idempotente.
+ */
+async function enqueueOrResendAfterDefinitiveFailure(
+  enqueue: (clientMessageId: string) => Promise<EnqueueResult>,
+  clientMessageId: string,
+  key: string | null,
+): Promise<EnqueueResult> {
+  const first = await enqueue(clientMessageId);
+  if (first.error || !first.data?.id || first.data.status !== 'failed') return first;
+
+  const retryId = createClientMessageId();
+  if (key) pendingActionIds.set(key, retryId);
+  return enqueue(retryId);
 }
 
 /** Sem rede não há como enfileirar no servidor: a mensagem espera na fila local (item 025). */
@@ -103,21 +131,26 @@ function semRede(): boolean {
 async function enqueueAndDispatch(
   input: SendOutboundMessageInput,
   clientMessageId: string,
+  key: string | null,
 ): Promise<OutboundMessageDeliveryResult> {
   // Generated database types intentionally stay bound to the canonical
   // database until the controlled migration is applied. This narrow transport
   // shape is removed by the post-deploy type-sync workflow.
   const rpcClient = supabase as unknown as AtomicQueueRpc;
-  const { data: queued, error: enqueueError } = await rpcClient.rpc('enqueue_outbound_message', {
-    p_contact_id: input.contactId,
-    p_client_message_id: clientMessageId,
-    p_content: input.content,
-    p_message_type: input.messageType ?? 'text',
-    p_media_url: input.mediaUrl ?? undefined,
-    p_reply_to_id: input.replyToId ?? undefined,
-    p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-    p_caption: input.caption ?? undefined,
-  });
+  const { data: queued, error: enqueueError } = await enqueueOrResendAfterDefinitiveFailure(
+    (id) => rpcClient.rpc('enqueue_outbound_message', {
+      p_contact_id: input.contactId,
+      p_client_message_id: id,
+      p_content: input.content,
+      p_message_type: input.messageType ?? 'text',
+      p_media_url: input.mediaUrl ?? undefined,
+      p_reply_to_id: input.replyToId ?? undefined,
+      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+      p_caption: input.caption ?? undefined,
+    }),
+    clientMessageId,
+    key,
+  );
 
   if (enqueueError || !queued?.id) {
     throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem.');
@@ -142,6 +175,7 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
       whatsappConnectionId: message.whatsappConnectionId,
     },
     message.clientMessageId,
+    null,
   );
 }
 
@@ -205,8 +239,8 @@ export async function sendOutboundMessage(
 
   try {
     await sendThrottle.wait();
-    const result = await enqueueAndDispatch(input, clientMessageId);
-    clearPendingAction(key, clientMessageId);
+    const result = await enqueueAndDispatch(input, clientMessageId, key);
+    clearPendingAction(key);
     return result;
   } finally {
     // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
@@ -247,19 +281,23 @@ export async function sendRichOutboundMessage(
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);
   const rpcClient = supabase as unknown as AtomicQueueRpc;
-  const { data: queued, error: enqueueError } = await rpcClient.rpc('enqueue_rich_outbound_message', {
-    p_contact_id: input.contactId,
-    p_client_message_id: clientMessageId,
-    p_display_content: input.displayContent,
-    p_message_type: input.messageType,
-    p_delivery_payload: input.deliveryPayload,
-    p_reply_to_id: input.replyToId ?? undefined,
-    p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-  });
+  const { data: queued, error: enqueueError } = await enqueueOrResendAfterDefinitiveFailure(
+    (id) => rpcClient.rpc('enqueue_rich_outbound_message', {
+      p_contact_id: input.contactId,
+      p_client_message_id: id,
+      p_display_content: input.displayContent,
+      p_message_type: input.messageType,
+      p_delivery_payload: input.deliveryPayload,
+      p_reply_to_id: input.replyToId ?? undefined,
+      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+    }),
+    clientMessageId,
+    key,
+  );
   if (enqueueError || !queued?.id) {
     throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem estruturada.');
   }
   const result = await dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
-  clearPendingAction(key, clientMessageId);
+  clearPendingAction(key);
   return result;
 }
