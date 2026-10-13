@@ -150,11 +150,11 @@ export function ConnectionCard({
                     size="sm"
                     disabled={disconnecting}
                     aria-busy={disconnecting}
-                    className={cn(disconnecting && 'animate-pulse')}
+                    className={cn(disconnecting && 'motion-safe:animate-pulse')}
                     onClick={() => setConfirmDisconnect(true)}
                   >
                     {disconnecting
-                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Desconectando…</>
+                      ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
                       : <><WifiOff className="w-4 h-4 mr-2" />Desconectar</>}
                   </Button>
                 </motion.div>
