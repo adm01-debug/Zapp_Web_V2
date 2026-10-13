@@ -88,7 +88,7 @@ export function useGoalsDashboard() {
 
   const dateRange = useMemo(() => getDateRange(period), [period]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['my-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -210,7 +210,7 @@ export function useGoalsDashboard() {
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalysesTotal || loadingAnalysesResolved;
+  const isLoading = loadingProfile || loadingMessages || loadingContacts || loadingAnalysesTotal || loadingAnalysesResolved;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
