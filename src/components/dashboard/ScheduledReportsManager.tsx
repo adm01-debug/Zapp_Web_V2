@@ -7,16 +7,20 @@
  *  - Self-contained state: formName, formType, formFrequency, formRecipients
  *  - recipients como texto livre separado por vírgula (não chips)
  */
-import { useState } from 'react';
-import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X, Search, ArrowUpDown, ChevronRight, Clock, Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X, Search, ArrowUpDown, ChevronRight, Clock, Sparkles, Send, AlertTriangle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { DashboardCard, SectionHeader, PrimaryButton, Pill, VerTodasButton } from './overview/DashboardCard';
 import { useScheduledReportConfigs } from '@/hooks/dashboard/useScheduledReportConfigs';
+import { describeLastSend, type LastSendInfo } from '@/hooks/chat/useScheduledReports';
+import { invalidEmailTokens, parseEmailAddressList } from '@/lib/emailRecipients';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Diário', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal',
@@ -49,6 +53,63 @@ const FREQ_TILES = [
   { value: 'custom', label: 'Personalizada', sub: 'Sob demanda' },
 ];
 
+/**
+ * Limite do formulário: a Edge `send-scheduled-report` envia um e-mail por
+ * destinatário, então a tela barra a lista longa antes de gravar (limite de UI).
+ */
+export const MAX_DESTINATARIOS = 10;
+
+/**
+ * Domínios aceitos como destinatário. O sistema guarda essa lista em Postgres —
+ * `app.settings.trusted_domains` (migration 20260925100500_mask_team_profiles_pii_lock_trusted_domains.sql
+ * fixa `promobrindes.com.br`), a mesma usada para provisionar usuários. O front não lê GUC de
+ * banco (expor exige RPC — trilha de banco/Edge), então a tela repete a lista só para barrar
+ * o domínio errado no formulário; mudar a lista no banco exige mudar aqui também.
+ */
+export const DOMINIOS_DA_EMPRESA = ['promobrindes.com.br'];
+
+export interface DestinatariosAnalisados {
+  /** Endereços válidos, sem espaços, sem repetidos e na ordem digitada. */
+  destinatarios: string[];
+  /** Mensagem pt-BR do primeiro problema encontrado, ou `null` quando tudo passa. */
+  erro: string | null;
+}
+
+/**
+ * Valida o campo de destinatários (texto livre separado por vírgula) usando o MESMO
+ * parser de e-mail do resto do app (`src/lib/emailRecipients`): formato, domínio da
+ * empresa, limite e repetidos. Devolve os endereços prontos para gravar.
+ */
+export function validarDestinatarios(valor: string): DestinatariosAnalisados {
+  const invalidos = invalidEmailTokens(valor);
+  if (invalidos.length > 0) {
+    return { destinatarios: [], erro: `E-mail inválido: ${invalidos.join(', ')}` };
+  }
+
+  const destinatarios = parseEmailAddressList(valor);
+  const foraDaEmpresa = destinatarios.filter(
+    (email) => !DOMINIOS_DA_EMPRESA.includes(email.split('@')[1]?.toLowerCase() ?? ''),
+  );
+  if (foraDaEmpresa.length > 0) {
+    return {
+      destinatarios: [],
+      erro: `Use um e-mail ${DOMINIOS_DA_EMPRESA.map((d) => `@${d}`).join(' ou ')}: ${foraDaEmpresa.join(', ')}`,
+    };
+  }
+
+  if (destinatarios.length > MAX_DESTINATARIOS) {
+    return { destinatarios: [], erro: `Máximo de ${MAX_DESTINATARIOS} destinatários por relatório` };
+  }
+
+  return { destinatarios, erro: destinatarios.length === 0 ? 'Informe pelo menos um destinatário' : null };
+}
+
+/** "Último envio há 2 dias" / "Nunca enviado" — o status do último envio do relatório. */
+export function textoUltimoEnvio(info: LastSendInfo, agora: Date = new Date()): string {
+  if (info.status === 'never' || !info.at) return 'Nunca enviado';
+  return `Último envio há ${formatDistanceToNow(new Date(info.at), { locale: ptBR, baseDate: agora })}`;
+}
+
 export function ScheduledReportsManager() {
   const { configs, isLoading, createConfig, toggleActive, deleteConfig } = useScheduledReportConfigs();
   const [showCreate, setShowCreate] = useState(false);
@@ -56,11 +117,14 @@ export function ScheduledReportsManager() {
   const [formType, setFormType] = useState('performance');
   const [formFrequency, setFormFrequency] = useState('weekly');
   const [formRecipients, setFormRecipients] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
   const [tipDismissed, setTipDismissed] = useState(false);
   const [freqFilter, setFreqFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'name'>('recent');
   const [search, setSearch] = useState('');
+
+  const analiseDestinatarios = useMemo(() => validarDestinatarios(formRecipients), [formRecipients]);
 
   const openCreate = (presetType?: string) => {
     if (presetType) setFormType(presetType);
@@ -68,13 +132,18 @@ export function ScheduledReportsManager() {
   };
 
   const handleCreate = () => {
-    const recipients = formRecipients.split(',').map(r => r.trim()).filter(Boolean);
-    createConfig.mutate({ name: formName, report_type: formType, frequency: formFrequency, recipients }, {
+    if (analiseDestinatarios.erro) return;
+    createConfig.mutate({ name: formName, report_type: formType, frequency: formFrequency, recipients: analiseDestinatarios.destinatarios }, {
       onSuccess: () => {
         setShowCreate(false);
         setFormName(''); setFormType('performance'); setFormFrequency('weekly'); setFormRecipients('');
       },
     });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!confirmDelete) return;
+    deleteConfig.mutate(confirmDelete.id, { onSettled: () => setConfirmDelete(null) });
   };
 
   const filtered = configs
@@ -157,10 +226,11 @@ export function ScheduledReportsManager() {
                         <span>{REPORT_TYPE_LABELS[cfg.report_type] ?? cfg.report_type}</span>
                         <span>·</span><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{FREQUENCY_LABELS[cfg.frequency] ?? cfg.frequency}</span>
                         <span>·</span><span>{cfg.recipients?.length ?? 0} destinatário(s)</span>
+                        <span>·</span><span className={cn('flex items-center gap-1', cfg.last_sent_at && 'text-foreground/80')}><Send className="w-3 h-3" />{textoUltimoEnvio(describeLastSend(cfg))}</span>
                       </div>
                     </div>
                     <Switch aria-label={`Ativar relatório ${cfg.name}`} checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
-                    <button onClick={() => deleteConfig.mutate(cfg.id)} title="Excluir" className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">
+                    <button onClick={() => setConfirmDelete({ id: cfg.id, name: cfg.name })} aria-label={`Excluir relatório ${cfg.name}`} className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </button>
                   </div>
@@ -253,12 +323,49 @@ export function ScheduledReportsManager() {
                 <SelectContent>{Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-[13px] font-medium mb-1 block">Destinatários</label><Input value={formRecipients} onChange={e => setFormRecipients(e.target.value)} placeholder="email1@empresa.com, email2@empresa.com" className="bg-input border-border" /></div>
+            <div>
+              <label htmlFor="destinatarios-relatorio" className="text-[13px] font-medium mb-1 block">Destinatários</label>
+              <Input
+                id="destinatarios-relatorio"
+                value={formRecipients}
+                onChange={e => setFormRecipients(e.target.value)}
+                placeholder="email1@empresa.com, email2@empresa.com"
+                className="bg-input border-border"
+                aria-invalid={formRecipients.trim() !== '' && analiseDestinatarios.erro !== null}
+                aria-describedby={formRecipients.trim() !== '' && analiseDestinatarios.erro ? 'destinatarios-relatorio-erro' : undefined}
+              />
+              {formRecipients.trim() !== '' && analiseDestinatarios.erro && (
+                <p id="destinatarios-relatorio-erro" role="alert" className="flex items-center gap-1 text-xs text-destructive mt-1">
+                  <AlertTriangle className="w-3 h-3 shrink-0" />{analiseDestinatarios.erro}
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={!formName || !formRecipients || createConfig.isPending} className="bg-primary">
+            <Button onClick={handleCreate} disabled={!formName || !!analiseDestinatarios.erro || createConfig.isPending} className="bg-primary">
               {createConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}Criar relatório
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmDelete !== null} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir relatório agendado</DialogTitle>
+            <DialogDescription>
+              O relatório "{confirmDelete?.name ?? ''}" deixa de ser enviado e não pode ser recuperado. Os envios já feitos não são afetados.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(null)} disabled={deleteConfig.isPending}>Cancelar</Button>
+            <Button
+              onClick={handleConfirmDelete}
+              disabled={deleteConfig.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteConfig.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}Excluir
             </Button>
           </DialogFooter>
         </DialogContent>
