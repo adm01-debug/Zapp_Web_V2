@@ -14,6 +14,7 @@ import { TaskTitleField } from './new-task/TaskTitleField';
 import { PrioritySegment } from './new-task/PrioritySegment';
 import { PrazoField } from './new-task/PrazoField';
 import { RemindField } from './new-task/RemindField';
+import { CoerenciaLembrete } from './new-task/CoerenciaLembrete';
 import { DestinationBlock } from './new-task/DestinationBlock';
 
 interface Props {
@@ -118,6 +119,12 @@ export function NewTaskDialog({
 
           <PrazoField value={dueDate} onChange={setDueDate} now={now} />
           <RemindField value={remindAt} onChange={setRemindAt} now={now} />
+          <CoerenciaLembrete
+            remindAt={remindAt}
+            dueDate={dueDate}
+            now={now}
+            onAjustar={setRemindAt}
+          />
 
           <DestinationBlock />
         </div>
