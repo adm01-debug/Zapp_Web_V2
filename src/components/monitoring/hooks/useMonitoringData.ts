@@ -67,10 +67,6 @@ function addLocalDays(t: Date, days: number): Date {
   return day;
 }
 
-function localDayIndex(firstDay: Date, value: Date): number {
-  return Math.round((startOfLocalDay(value).getTime() - firstDay.getTime()) / DAY_MS);
-}
-
 // R2-INF-028: a mensagem é agrupada por índice temporal e só depois rotulada.
 // Em '7d' os baldes são dias civis locais (hoje-6 ... hoje), não uma janela
 // deslizante now-7d. Em '24h' os baldes começam em hora cheia, para que o rótulo
@@ -97,8 +93,9 @@ function bucketWindow(now: Date, period: TimePeriod, bucketCount: number) {
   return { startMs: now.getTime() - periodMs[period], bucketSize: periodMs[period] / bucketCount };
 }
 
-function computeSparklines(logs: HealthLog[], msgs: { sender: string; created_at: string }[], now: Date, period: TimePeriod): SparklineData {
-  const r: SparklineData = { messages: [], latency: [], uptime: [] };
+function computeSparklines(logs: HealthLog[], now: Date, period: TimePeriod): { latency: number[]; uptime: number[] } {
+  const latency: number[] = [];
+  const uptime: number[] = [];
   const ms = periodMs[period];
   const bucketSize = ms / 8;
 
@@ -107,12 +104,63 @@ function computeSparklines(logs: HealthLog[], msgs: { sender: string; created_at
     const e = new Date(now.getTime() - i * bucketSize);
     const hl = logs.filter(l => { const t = new Date(l.checked_at); return t >= s && t < e; });
     const hh = hl.filter(l => HEALTHY_STATUSES.includes(l.status));
-    r.uptime.push(hl.length > 0 ? Math.round((hh.length / hl.length) * 100) : 100);
+    uptime.push(hl.length > 0 ? Math.round((hh.length / hl.length) * 100) : 100);
     const ll = hl.filter(l => l.response_time_ms != null);
-    r.latency.push(ll.length > 0 ? Math.round(ll.reduce((a, l) => a + (l.response_time_ms || 0), 0) / ll.length) : 0);
-    r.messages.push(msgs.filter(m => { const t = new Date(m.created_at); return t >= s && t < e; }).length);
+    latency.push(ll.length > 0 ? Math.round(ll.reduce((a, l) => a + (l.response_time_ms || 0), 0) / ll.length) : 0);
   }
-  return r;
+  return { latency, uptime };
+}
+
+interface BucketRow { bucket_start: string; incoming: number | string; outgoing: number | string }
+
+// R2-INF-028: o gráfico e as somas vêm da agregação NO BANCO
+// (public.get_monitoring_message_buckets). Antes o hook trazia as mensagens cruas
+// (`from('messages')` sem limit) e o PostgREST cortava em 1.000 linhas: em 24h/7d
+// a curva e o total ficavam MENORES que o real. A RPC devolve uma linha por balde.
+// O balde é ancorado pelo servidor no início da hora cheia / dia civil em
+// America/Sao_Paulo — por isso o primeiro balde pode ser parcial e a janela pode
+// render uma linha a mais que a contagem nominal do período.
+async function fetchMessageBuckets(from: Date, to: Date, bucketMs: number): Promise<{ rows: BucketRow[] | null; error: string | null }> {
+  // O argumento da RPC é `interval`; o PostgREST o recebe como texto ('600 seconds').
+  const p_bucket = `${Math.round(bucketMs / 1000)} seconds`;
+  try {
+    const { data, error } = await supabase.rpc('get_monitoring_message_buckets', {
+      p_from: from.toISOString(),
+      p_to: to.toISOString(),
+      p_bucket,
+    });
+    if (error) return { rows: null, error: error.message };
+    return { rows: (data as BucketRow[] | null) ?? [], error: null };
+  } catch (err) {
+    // A RPC pode não existir no cliente mockado/antigo: a falha fica sinalizada,
+    // nunca zerada silenciosamente.
+    return { rows: null, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** Soma a agregação em 8 barras (janela de `periodMs[period]`), sem perder balde. */
+function sparklineFromBuckets(rows: BucketRow[], windowStartMs: number, period: TimePeriod): number[] {
+  const bars = new Array(8).fill(0) as number[];
+  const step = periodMs[period] / 8;
+  rows.forEach(r => {
+    const t = Date.parse(r.bucket_start);
+    if (Number.isNaN(t)) return;
+    const idx = Math.min(7, Math.max(0, Math.floor((t - windowStartMs) / step)));
+    bars[idx] += Number(r.incoming || 0) + Number(r.outgoing || 0);
+  });
+  return bars;
+}
+
+/**
+ * A soma do gráfico só é confiável se a agregação cobriu a janela pedida: marca
+ * quando a RPC falhou (`rows === null`) ou quando o primeiro balde devolvido
+ * começa DEPOIS do início da janela (buraco no começo da curva).
+ */
+function aggregationPartial(rows: BucketRow[] | null, windowStart: Date): boolean {
+  if (rows === null) return true;
+  if (rows.length === 0) return false;
+  const first = Date.parse(rows[0].bucket_start);
+  return Number.isNaN(first) || first > windowStart.getTime();
 }
 
 export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) => void) {
@@ -122,6 +170,10 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
   const [healthLogsTruncated, setHealthLogsTruncated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [messageStats, setMessageStats] = useState<MessageStats>({ incoming: 0, outgoing: 0, total: 0, hourlyData: [] });
+  // Sinaliza que a soma/curva de mensagens NÃO cobre a janela pedida (RPC falhou
+  // ou o primeiro balde começa depois do início) — a tela não deve exibir um
+  // número parcial como se fosse o período inteiro.
+  const [messageStatsPartial, setMessageStatsPartial] = useState(false);
   const [uptime, setUptime] = useState<UptimeInfo>({ percentage: null, totalChecks: 0, healthyChecks: 0, lastDowntime: null });
   const [sparklines, setSparklines] = useState<SparklineData>({ messages: [], latency: [], uptime: [] });
   const [instanceUptimes, setInstanceUptimes] = useState<InstanceUptime[]>([]);
@@ -136,10 +188,14 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
       // R2-INF-027: os health logs cobrem a maior janela anunciada (7 dias), para
       // alimentar o SLA de 24h e o heatmap de 7 dias mesmo com seleção menor.
       const logsSince = new Date(now.getTime() - AVAILABILITY_WINDOW_MS);
-      const [connRes, logsRes, msgRes] = await Promise.all([
+      const [connRes, logsRes, graphAgg, sparkAgg] = await Promise.all([
         supabase.from('whatsapp_connections').select('id, instance_id, phone_number, status, health_status, health_response_ms, last_health_check, updated_at'),
         supabase.from('connection_health_logs').select('*').gte('checked_at', logsSince.toISOString()).order('checked_at', { ascending: false }).limit(HEALTH_LOGS_LIMIT),
-        supabase.from('messages').select('sender, created_at').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
+        // R2-INF-028: gráfico (janela do período) e barras das sparklines (janela
+        // deslizante do período) vêm da agregação no banco — nenhuma das duas
+        // busca mensagem crua, então não há teto de 1.000 linhas para cortar.
+        fetchMessageBuckets(messageSince, now, messageWindow.bucketSize),
+        fetchMessageBuckets(since, now, periodMs[period] / 8),
       ]);
 
       if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
@@ -151,44 +207,34 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         setUptime(computeUptime(logs, now));
         setInstanceUptimes(computeInstanceUptimes(logs, now));
       }
-      if (msgRes.data) {
-        const bucketCount = bucketCountForPeriod;
-        const { startMs: windowStart, bucketSize } = messageWindow;
-        const messageSinceMs = messageSince.getTime();
-        const messagesInGraphWindow = msgRes.data.filter(m => {
-          const t = new Date(m.created_at).getTime();
-          return !Number.isNaN(t) && t >= messageSinceMs;
+      if (!graphAgg.rows) log.error('Monitoring message buckets error (grafico):', graphAgg.error);
+      if (!sparkAgg.rows) log.error('Monitoring message buckets error (sparklines):', sparkAgg.error);
+      if (graphAgg.rows) {
+        const { bucketSize } = messageWindow;
+        let incoming = 0;
+        let outgoing = 0;
+        const hourlyData = graphAgg.rows.map(r => {
+          const inCount = Number(r.incoming) || 0;
+          const outCount = Number(r.outgoing) || 0;
+          incoming += inCount;
+          outgoing += outCount;
+          return { hour: formatBucketLabel(Date.parse(r.bucket_start), period, bucketSize), incoming: inCount, outgoing: outCount };
         });
-        const incoming = messagesInGraphWindow.filter(m => m.sender === 'contact').length;
-        const outgoing = messagesInGraphWindow.filter(m => m.sender === 'agent').length;
-        const buckets = Array.from({ length: bucketCount }, () => ({ incoming: 0, outgoing: 0 }));
-        // R2-INF-028: agrupa por índice temporal e só depois formata o rótulo. A
-        // chave por hora civil colapsava os baldes de 10min (todos viravam a
-        // mesma "HH:00") e, em 7d, ignorava toda mensagem cuja hora fosse
-        // diferente da hora da âncora diária.
-        messagesInGraphWindow.forEach(m => {
-          const mTime = new Date(m.created_at);
-          const t = mTime.getTime();
-          if (Number.isNaN(t)) return;
-          let idx = period === '7d'
-            ? localDayIndex(new Date(windowStart), mTime)
-            : Math.floor((t - windowStart) / bucketSize);
-          if (idx < 0) return; // fora da janela do gráfico; a query busca desde `since` para as sparklines
-          if (idx >= bucketCount) idx = bucketCount - 1; // borda direita: exatamente em `now`
-          if (m.sender === 'contact') buckets[idx].incoming++; else buckets[idx].outgoing++;
-        });
-        const hourlyData = buckets.map((d, i) => {
-          const labelStartMs = period === '7d'
-            ? addLocalDays(new Date(windowStart), i).getTime()
-            : windowStart + i * bucketSize;
-          return {
-            hour: formatBucketLabel(labelStartMs, period, bucketSize),
-            ...d,
-          };
-        });
-        setMessageStats({ incoming, outgoing, total: messagesInGraphWindow.length, hourlyData });
+        setMessageStats({ incoming, outgoing, total: incoming + outgoing, hourlyData });
       }
-      if (logsRes.data && msgRes.data) setSparklines(computeSparklines(logsRes.data, msgRes.data, now, period));
+      setMessageStatsPartial(aggregationPartial(graphAgg.rows, messageSince));
+      if (logsRes.data || sparkAgg.rows) {
+        setSparklines(prev => {
+          const next: SparklineData = { ...prev };
+          if (logsRes.data) {
+            const sl = computeSparklines(logsRes.data as HealthLog[], now, period);
+            next.latency = sl.latency;
+            next.uptime = sl.uptime;
+          }
+          if (sparkAgg.rows) next.messages = sparklineFromBuckets(sparkAgg.rows, since.getTime(), period);
+          return next;
+        });
+      }
     } catch (err) {
       log.error('Monitoring fetch error:', err);
     } finally {
@@ -196,5 +242,5 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     }
   }, [onConnectionsUpdate]);
 
-  return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData };
+  return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, messageStatsPartial, uptime, sparklines, instanceUptimes, fetchData };
 }
