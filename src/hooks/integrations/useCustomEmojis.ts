@@ -7,6 +7,9 @@ import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 import { getLogger } from '@/lib/logger';
 const log = getLogger('useCustomEmojis');
 
+/** Tamanho de uma página da lista. A lista era cortada em 500 sem aviso nem "carregar mais". */
+export const CUSTOM_EMOJIS_PAGE_SIZE = 500;
+
 export interface CustomEmoji {
   id: string;
   name: string;
@@ -28,12 +31,25 @@ export interface PendingEmojiUpload {
 export function useCustomEmojis(open: boolean) {
   const [emojis, setEmojis] = useState<CustomEmoji[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Há mais páginas? A tela usa para mostrar "Carregar mais" e some quando acaba.
+  const [hasMore, setHasMore] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // A mensagem de falha do envio precisa viver no estado (não só no toast), porque
+  // quem exibe a mensagem com a ação "Tentar novamente" é a tela.
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [pendingUpload, setPendingUpload] = useState<PendingEmojiUpload | null>(null);
+  // Exclusão com confirmação: `handleDelete` marca o alvo e nada é removido antes
+  // de `confirmDelete`. Antes a linha sumia da tela e do banco no primeiro clique.
+  const [pendingDelete, setPendingDelete] = useState<CustomEmoji | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // R2-API-053: caminhos de Storage cuja remoção foi recusada depois de a linha já ter
   // saído. Ficam registrados como etapa pendente e a limpeza é retomada na próxima leitura.
   const pendingStorageRemovals = useRef<string[]>([]);
+  // Último arquivo que passou na validação: permite repetir o envio em "Tentar novamente".
+  const lastAttemptedFile = useRef<File | null>(null);
+  // Trava de reentrada do "carregar mais" (a tela pode disparar dois cliques).
+  const loadingMoreRef = useRef(false);
 
   const flushPendingStorageRemovals = useCallback(async () => {
     if (pendingStorageRemovals.current.length === 0) return;
@@ -50,30 +66,48 @@ export function useCustomEmojis(open: boolean) {
       .from('custom_emojis')
       .select('*')
       .order('use_count', { ascending: false })
-      .limit(500);
-    if (!error && data) setEmojis(data as unknown as CustomEmoji[]);
+      // Desempate determinístico: sem ele, emojis com o mesmo use_count trocam de
+      // lugar entre leituras e a paginação por `.range()` repete/pula linhas.
+      .order('id', { ascending: true })
+      .range(0, CUSTOM_EMOJIS_PAGE_SIZE - 1);
+    if (!error && data) {
+      const rows = data as unknown as CustomEmoji[];
+      setEmojis(rows);
+      setHasMore(rows.length === CUSTOM_EMOJIS_PAGE_SIZE);
+    }
     setLoading(false);
   }, [flushPendingStorageRemovals]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const from = emojis.length;
+    const { data, error } = await supabase
+      .from('custom_emojis')
+      .select('*')
+      .order('use_count', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, from + CUSTOM_EMOJIS_PAGE_SIZE - 1);
+    if (!error && data) {
+      const chunk = data as unknown as CustomEmoji[];
+      setEmojis((prev) => {
+        const known = new Set(prev.map((em) => em.id));
+        return [...prev, ...chunk.filter((em) => !known.has(em.id))];
+      });
+      setHasMore(chunk.length === CUSTOM_EMOJIS_PAGE_SIZE);
+    }
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+  }, [emojis.length, hasMore]);
 
   useEffect(() => {
     if (open) fetchEmojis();
   }, [open, fetchEmojis]);
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Arquivo não é uma imagem válida');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-    if (file.size > 512 * 1024) {
-      toast.error('Arquivo excede 512KB');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
+  const uploadFile = useCallback(async (file: File) => {
+    lastAttemptedFile.current = file;
+    setUploadError(null);
     setUploading(true);
     try {
       const ext = getFileExtensionWithDefault(file.name, 'png');
@@ -83,7 +117,11 @@ export function useCustomEmojis(open: boolean) {
         .from('custom-emojis')
         .upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
 
-      if (uploadError) { toast.error('Erro ao enviar arquivo'); return; }
+      if (uploadError) {
+        setUploadError('Não foi possível enviar o arquivo. Tente novamente.');
+        toast.error('Erro ao enviar arquivo');
+        return;
+      }
 
       const { data: urlData } = supabase.storage.from('custom-emojis').getPublicUrl(storagePath);
 
@@ -101,13 +139,40 @@ export function useCustomEmojis(open: boolean) {
         aiCategory, selectedCategory: aiCategory,
         name: file.name.replace(/\.[^.]+$/, ''),
       });
-    } catch {
+    } catch (err) {
+      log.error('Unexpected error in useCustomEmojis:', err);
+      setUploadError('Não foi possível processar o emoji. Tente novamente.');
       toast.error('Erro ao processar emoji');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, []);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Arquivo não é uma imagem válida');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      toast.error('Arquivo excede 512KB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    await uploadFile(file);
+  }, [uploadFile]);
+
+  /** Repete o envio do último arquivo validado — usado pelo botão "Tentar novamente". */
+  const retryUpload = useCallback(async () => {
+    const file = lastAttemptedFile.current;
+    if (!file) return;
+    await uploadFile(file);
+  }, [uploadFile]);
 
   const handleConfirmUpload = useCallback(async (pending: PendingEmojiUpload) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -119,6 +184,7 @@ export function useCustomEmojis(open: boolean) {
     if (error) { toast.error('Erro ao salvar emoji'); return; }
     toast.success(`Emoji salvo como "${CATEGORY_LABELS[pending.selectedCategory]?.label || pending.selectedCategory}"!`);
     setPendingUpload(null);
+    setUploadError(null);
     fetchEmojis();
   }, [fetchEmojis]);
 
@@ -159,9 +225,21 @@ export function useCustomEmojis(open: boolean) {
     toast.success(`Categoria alterada para "${CATEGORY_LABELS[newCategory]?.label || newCategory}"`);
   }, []);
 
-  const handleDelete = useCallback(async (e: React.MouseEvent, emoji: CustomEmoji) => {
+  /** Só marca o alvo: nada é removido antes de `confirmDelete`. */
+  const handleDelete = useCallback((e: React.MouseEvent, emoji: CustomEmoji) => {
     e.stopPropagation();
+    setPendingDelete(emoji);
+  }, []);
+
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    const emoji = pendingDelete;
+    if (!emoji) return;
     const snapshot = emojis;
+    setPendingDelete(null);
     setEmojis(prev => prev.filter(em => em.id !== emoji.id));
 
     // 1) A linha é a referência durável: sai primeiro e é ela que decide o resultado.
@@ -187,12 +265,15 @@ export function useCustomEmojis(open: boolean) {
     }
 
     toast.success('Emoji removido');
-  }, [emojis]);
+  }, [emojis, pendingDelete]);
 
   return {
-    emojis, loading, uploading, pendingUpload, fileInputRef,
+    emojis, loading, loadingMore, hasMore, loadMore,
+    uploading, uploadError, retryUpload, pendingUpload, pendingDelete,
+    fileInputRef,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
-    handleSend, toggleFavorite, handleCategoryChange, handleDelete,
+    handleSend, toggleFavorite, handleCategoryChange,
+    handleDelete, confirmDelete, cancelDelete,
     setPendingUpload,
   };
 }
