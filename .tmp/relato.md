@@ -64,6 +64,21 @@ exige `aria-expanded="true"`.
   no `Accordion` persistido (irmã de `<ContactSidebarSections/>`).
 - `src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx`: prova de tela real.
 
+## Juiz barato (ANTES DE ENTREGAR) — commit novo
+
+- **Ponto 1 (procede).** O cabeçalho de `SlaTimelineSection.tsx` dizia que "cada situação pinta com o
+  par de texto do estado (`--success`; `--warning-text`/`--destructive-text`)". Errado: o TRAÇO usa os
+  tons do kit (`text-<tom>` = tokens de PREENCHIMENTO); o par `-text` é do SELO. Corrigido em
+  `ed5477e9e0 docs(inbox): comentário do trilho cita os tokens reais e o contraste medido` — o
+  comentário agora separa TRAÇO (preenchimento, com os contrastes medidos) de SELO (`-text`), que é o
+  que o diff mostra.
+- **Pontos 2, 3 e 4 (não procedem no diff que o juiz lê).** São pontos de RELATO; o relato está em
+  `.tmp/relato.md`, commitado nesta branch (`chore(tmp): relato alinhado ao diff (refazer 2)`), arquivo
+  que o juiz não inclui no diff que confere. O conteúdo existe: a 1ª linha é `Especialista: iris`; a base
+  literal (`BASE=dia/2026-10-13 (modo V2: local, sem push)`) e a explicação 10-11 vs 10-13 estão na
+  seção "Pontos do revisor" (Ponto 3); a localização do `Accordion` (`ContactDetails.tsx`, 118–130) está
+  no Ponto 4. Nada a mudar no código por esses três.
+
 ## Tipo de Mudança
 
 - [x] ✨ Nova feature (funcionalidade nova)
