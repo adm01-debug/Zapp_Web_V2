@@ -15,9 +15,11 @@ interface AuditLog {
 
 interface AdminAuditTableProps {
   logs: AuditLog[];
+  /** Texto do estado vazio (nenhum log após busca/período). */
+  emptyMessage?: string;
 }
 
-export function AdminAuditTable({ logs }: AdminAuditTableProps) {
+export function AdminAuditTable({ logs, emptyMessage = 'Nenhum log de auditoria registrado.' }: AdminAuditTableProps) {
   return (
     <Card>
       <CardHeader><CardTitle className="text-lg">Logs de Auditoria</CardTitle></CardHeader>
@@ -33,6 +35,13 @@ export function AdminAuditTable({ logs }: AdminAuditTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {logs.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
             {logs.map((log) => (
               <TableRow key={log.id}>
                 <TableCell className="whitespace-nowrap">{format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</TableCell>

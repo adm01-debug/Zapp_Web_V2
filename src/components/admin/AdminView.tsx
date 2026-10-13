@@ -9,9 +9,11 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2, Brain,
+  UserPlus, Building, Eye, Loader2, Brain, AlertTriangle, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
@@ -19,7 +21,7 @@ import { PlaybooksManager } from './PlaybooksManager';
 import { SupervisorCopilot } from './SupervisorCopilot';
 import { TrainingMode } from './TrainingMode';
 import { CrisisRoom } from './CrisisRoom';
-import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
+import { useAdminData, accessLevelConfig, MIN_PASSWORD_LENGTH, AUDIT_PAGE_SIZE, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
@@ -55,10 +57,31 @@ export function AdminView() {
   const [newUserAvatarFile, setNewUserAvatarFile] = useState<File | null>(null);
   const [newUserGoogleServices, setNewUserGoogleServices] = useState({ google_sheets: false, google_docs: false, google_calendar: false, google_drive: false });
   const [creatingUser, setCreatingUser] = useState(false);
+  // Filtro de data e paginação da auditoria: o estado vive aqui e o hook
+  // `useAdminData` monta a consulta (ele não guarda estado de filtro).
+  const [auditFrom, setAuditFrom] = useState('');
+  const [auditTo, setAuditTo] = useState('');
+  const [auditPage, setAuditPage] = useState(1);
 
-  const { users, auditLogs, loading, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } = useAdminData(activeTab as 'users' | 'audit' | 'crm');
+  const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } =
+    useAdminData(activeTab as 'users' | 'audit' | 'crm', {
+      from: auditFrom || undefined,
+      to: auditTo || undefined,
+      page: auditPage,
+      pageSize: AUDIT_PAGE_SIZE,
+    });
 
   useEffect(() => { if (isSupervisor) fetchData(); }, [isSupervisor, activeTab, fetchData]);
+
+  // Trocar o período volta para a primeira página: sem isso a página 3 de um
+  // período novo poderia cair fora do intervalo e mostrar tabela vazia.
+  const onAuditFromChange = (value: string) => { setAuditFrom(value); setAuditPage(1); };
+  const onAuditToChange = (value: string) => { setAuditTo(value); setAuditPage(1); };
+  const limparFiltroAuditoria = () => { setAuditFrom(''); setAuditTo(''); setAuditPage(1); };
+
+  const auditTotalPages = Math.max(1, Math.ceil((auditTotal ?? 0) / AUDIT_PAGE_SIZE));
+  // A busca client-side só faz sentido nas abas que mostram lista filtrada.
+  const abaTemBusca = activeTab === 'users' || activeTab === 'audit';
 
   const onSaveUser = async () => {
     if (!editingUser) return;
@@ -138,10 +161,30 @@ export function AdminView() {
         ))}
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder={activeTab === 'users' ? 'Buscar usuários...' : 'Buscar logs...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-      </div>
+      {/* Busca: só nas abas em que o termo de fato filtra a lista carregada. */}
+      {abaTemBusca && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder={activeTab === 'users' ? 'Buscar usuários...' : 'Buscar logs...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        </div>
+      )}
+
+      {/* Filtro de data da auditoria: limites inclusivos no fuso local. */}
+      {activeTab === 'audit' && (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="audit_de">Data inicial</Label>
+            <Input id="audit_de" type="date" className="w-40" value={auditFrom} onChange={(e) => onAuditFromChange(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="audit_ate">Data final</Label>
+            <Input id="audit_ate" type="date" className="w-40" value={auditTo} onChange={(e) => onAuditToChange(e.target.value)} />
+          </div>
+          {(auditFrom || auditTo) && (
+            <Button variant="outline" size="sm" onClick={limparFiltroAuditoria}>Limpar filtro</Button>
+          )}
+        </div>
+      )}
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -230,7 +273,11 @@ export function AdminView() {
               {newUserAvatarFile && <p className="text-xs text-muted-foreground">{newUserAvatarFile.name}</p>}
             </div>
             <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
-            <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label htmlFor="add_senha">Senha *</Label>
+              <Input id="add_senha" type="password" placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`} value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} />
+              <PasswordStrengthMeter password={newUser.password} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
@@ -285,16 +332,49 @@ export function AdminView() {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-12"><RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+      ) : error ? (
+        <Card className="border-destructive/30">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+            <p role="alert" className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente</Button>
+          </CardContent>
+        </Card>
       ) : activeTab === 'users' ? (
         <AdminUsersTable
           users={filteredUsers}
+          emptyMessage={searchTerm ? `Nenhum usuário encontrado para "${searchTerm}".` : 'Nenhum usuário cadastrado.'}
           isAdmin={isAdmin}
           onRoleChange={handleRoleChange}
           onToggleActive={handleToggleActive}
           onEditUser={(user) => { setEditingUser(user); setIsEditDialogOpen(true); }}
         />
       ) : activeTab === 'audit' ? (
-        <AdminAuditTable logs={filteredLogs} />
+        <div className="space-y-4">
+          <AdminAuditTable
+            logs={filteredLogs}
+            emptyMessage={searchTerm
+              ? `Nenhum log de auditoria encontrado para "${searchTerm}".`
+              : (auditFrom || auditTo
+                ? 'Nenhum log de auditoria no período selecionado.'
+                : 'Nenhum log de auditoria registrado.')}
+          />
+          {auditTotal > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {auditTotal} registro(s) — página {auditPage} de {auditTotalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={auditPage <= 1} onClick={() => setAuditPage(p => Math.max(1, p - 1))}>
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                </Button>
+                <Button variant="outline" size="sm" disabled={auditPage >= auditTotalPages} onClick={() => setAuditPage(p => Math.min(auditTotalPages, p + 1))}>
+                  Próxima <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />

@@ -23,9 +23,11 @@ interface AdminUsersTableProps {
   onRoleChange: (userId: string, role: AppRole) => void;
   onToggleActive: (user: UserWithRole) => void;
   onEditUser: (user: UserWithRole) => void;
+  /** Texto do estado vazio (nenhum usuário após busca/consulta). */
+  emptyMessage?: string;
 }
 
-export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser }: AdminUsersTableProps) {
+export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser, emptyMessage = 'Nenhum usuário cadastrado.' }: AdminUsersTableProps) {
   return (
     <Card className="border border-secondary/20 bg-card">
       <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
@@ -42,6 +44,13 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
             </TableRow>
           </TableHeader>
           <TableBody>
+            {users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 6 : 5} className="py-8 text-center text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
             {users.map((user) => {
               const RoleIcon = roleIconMap[user.role];
               const accessInfo = accessLevelConfig[user.access_level || 'basic'];
