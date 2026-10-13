@@ -1,10 +1,15 @@
 Especialista: workertestes (area-testes-do-produto, armadilhas-workertestes, relato-que-passa)
 
+## Números do diff (conferidos)
+- 2 commits: `0055af9acb` (4 arquivos: 3 specs novos + `playwright.config.ts`) e `e8f0564c0b` (`​.tmp/relato.md`, que é versionado neste repo).
+- 18 casos de teste executados: 6 em `auth-a11y` (3 telas x 2 temas), 4 em `auth-teclado`, 8 em `auth-sessao-guard`.
+- Diff de PRODUÇÃO: zero (nenhum arquivo de `src/` mudou no commit).
+
 ## O que mudou e por quê
 - e2e/auth-a11y.spec.ts (novo): axe real no navegador nas 3 telas (/auth, /forgot-password, /reset-password) x 2 temas; ancora visivel + campos obrigatorios por tela (anti-vacuidade); mede so quando duas leituras seguidas concordam (a tela entra com fade e tem animacao continua, medir no meio reprovava contraste que nao existe); catraca `BLOQUEANTES_CONHECIDAS` por rota|tema.
 - e2e/auth-teclado.spec.ts (novo): ordem de TAB (e-mail -> senha -> "Esqueci minha senha" -> Entrar), foco visivel (compara com o estado SEM foco do mesmo campo), erro de validacao que nao rouba o foco e botao do olho operavel sem mouse.
 - e2e/auth-sessao-guard.spec.ts (novo): sessao ausente, EXPIRADA e CORROMPIDA caem em /auth UMA vez guardando `state.from`; sessao valida NAO cai no login (prova que a chave do storage e a certa).
-- playwright.config.ts: projeto `chromium-auth-deslogado` (testMatch `auth-(a11y|teclado|sessao-guard)`, `storageState` vazio explicito) e os 3 specs fora do `chromium-authenticated`, que faz login real no `setup`.
+- playwright.config.ts: projeto `chromium-auth-deslogado` (testMatch `auth-(a11y|teclado|sessao-guard)`, `storageState` vazio explicito) e os 3 specs fora do `chromium-authenticated`, que faz login real no `setup`. INDISPENSAVEL: sem o projeto dedicado, os 3 specs seriam absorvidos pelo `chromium-authenticated` e rodariam COM a sessao do `setup` — o oposto do que o cartao pede ("rode no projeto de testes sem login"); nao ha como cumprir o criterio so com os specs. A guarda do config continua verde (`node scripts/ci/playwright-config-e81.unit.mjs` -> `pass 6 / fail 0`).
 
 ## Prova
 - verde (rodada final dos 3 specs): `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5390 npx playwright test --project=chromium-auth-deslogado e2e/auth-a11y.spec.ts e2e/auth-teclado.spec.ts e2e/auth-sessao-guard.spec.ts --workers=1` -> `18 passed (3.1m)`; antes dela, duas rodadas seguidas `18 passed (2.4m)` e `18 passed (2.2m)`.
