@@ -75,6 +75,14 @@ describe('notifyNewDeviceOnLogin — aviso de dispositivo novo no login (R2-AUTH
     );
   });
 
+  it('chamadas simultâneas (SIGNED_IN + MFA_CHALLENGE_VERIFIED) geram um único envio', async () => {
+    // A guarda do sessionStorage é marcada no meio de awaits: sem o cadeado de
+    // "aviso em voo", as duas pontas do login disparariam duas vezes.
+    await Promise.all([notifyNewDeviceOnLogin(), notifyNewDeviceOnLogin()]);
+
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+  });
+
   it('sessão Auth nova (outro token) avisa de novo', async () => {
     await notifyNewDeviceOnLogin();
     mocks.getSession.mockResolvedValue(sessao('token-sessao-b'));

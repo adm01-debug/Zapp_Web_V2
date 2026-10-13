@@ -121,7 +121,20 @@ function getBrowserInfo(): { browser: string; os: string; deviceName: string } {
  * (rede, Edge indisponível, assurance ilegível) é silenciosa: nenhum token,
  * telefone ou texto de mensagem entra em log.
  */
-export async function notifyNewDeviceOnLogin(): Promise<void> {
+let avisoEmVoo: Promise<void> | null = null;
+
+export function notifyNewDeviceOnLogin(): Promise<void> {
+  // Chamadas simultâneas da mesma sessão (ex.: SIGNED_IN e
+  // MFA_CHALLENGE_VERIFIED no mesmo instante) compartilham um único envio: a
+  // guarda do sessionStorage é marcada no meio de awaits e sozinha não fecha a
+  // janela entre a leitura e a marcação.
+  avisoEmVoo ??= executarAvisoDeDispositivoNovo().finally(() => {
+    avisoEmVoo = null;
+  });
+  return avisoEmVoo;
+}
+
+async function executarAvisoDeDispositivoNovo(): Promise<void> {
   try {
     if (typeof sessionStorage === 'undefined') return;
 
