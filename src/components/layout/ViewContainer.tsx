@@ -45,6 +45,9 @@ export function ViewContainer({ children, fullScreen, viewId, ownScroll, compact
       <div className="flex flex-col h-full w-full min-w-0 flex-1">
         <div
           ref={scrollRef}
+          tabIndex={0}
+          role="region"
+          aria-label="Conteúdo da página"
           className={compactGutter ? 'flex-1 min-h-0 overflow-y-auto pt-2 px-4 pb-4' : 'flex-1 min-h-0 overflow-y-auto p-[var(--layout-gutter)]'}
         >
           {children}

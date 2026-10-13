@@ -34,14 +34,14 @@ export function RuleRow({ rule, onChange, onRemove }: {
     <div className={cn('flex items-center gap-2 flex-wrap rounded-lg', incomplete && 'border border-dash-amber p-2')}>
       <FieldIcon aria-hidden className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       <Select value={rule.field} onValueChange={(v) => onChange({ field: v as never, op: (RULE_OPS[RULE_FIELDS.find((f) => f.value === v)?.kind ?? 'text']?.[0]?.value ?? 'eq') as never, value: '' })}>
-        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label="Campo" className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
         <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value} disabled={f.comingSoon && f.value !== rule.field}>{f.label}{f.comingSoon ? ' (em breve)' : ''}</SelectItem>)}</SelectContent>
       </Select>
       {fieldDef?.comingSoon && (
         <span role="note" className="text-2xs text-foreground-secondary">Em breve: este indicador ainda não é calculado e fica fora da estimativa.</span>
       )}
       <Select value={rule.op} onValueChange={(v) => onChange({ op: v as never })}>
-        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label="Operador" className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
         <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
       </Select>
       {needsValue && (
