@@ -4,6 +4,12 @@ Especialista: iris
 - O comentário do componente foi reescrito: antes dizia "só os CANAIS moram aqui"; agora descreve TIPO + CANAL, que é o que o código faz.
 - `src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx`: agora prova os QUATRO interruptores — o estado vindo do hook, a chamada de `updatePreference` com o campo e o valor certos de cada um, e o `aria-label` de cada um.
 - Nota de caminho: o cartão citava `src/components/settings/...`; o trabalho (e o commit anterior deste mesmo trabalho) vive em `src/components/notifications/`, onde a tela monta o cartão (`NotificationSettingsPanel.tsx`). Mantive o caminho existente para não duplicar componente nem quebrar imports; nenhum arquivo de `settings/` foi tocado.
+## Faixa trazida dos cartões pai (cherry-pick da branch v2/notif-cartao-alertas-conexao-2610130232acbd)
+Estes arquivos estão no diff porque a dependência declarada no cartão foi trazida inteira por `git cherry-pick` (migration/RLS do banco + hook + faixa + testes + os testes do painel que mockam o hook). Não foram reescritos por mim neste refazer, exceto o que o "O que mudou" cita:
+- `supabase/migrations/20261013044440_connection_alert_preferences.sql`, `supabase/tests/connection_alert_preferences_rls.sql`, `src/integrations/supabase/types.ts` — tabela `connection_alert_preferences` com RLS por linha (cartão pai do banco).
+- `src/hooks/system/useConnectionAlertPreferences.ts`, `src/hooks/system/__tests__/useConnectionAlertPreferences.test.tsx` — hook de preferências (cartão pai do hook).
+- `src/components/alerts/EvolutionDisconnectBanner.tsx` e `src/components/alerts/__tests__/EvolutionDisconnectBanner.{a11y,behavior,janela-manutencao,preferencia}.test.tsx` — a faixa passa a obedecer `alert_on_disconnected` (cartão pai da faixa).
+- `src/components/notifications/NotificationSettingsPanel.tsx`, `src/components/notifications/__tests__/NotificationSettingsPanel.{a11y,restaurar,sons.a11y}.test.tsx` — a tela monta o cartão e os testes do painel mockam o hook com os quatro campos (commit anterior deste mesmo cartão).
 ## Prova
 - vermelho antes (componente antigo, só 2 interruptores): `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Tests  4 failed | 2 passed (6)`
 - verde depois: `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Test Files  1 passed (1)`, `Tests  6 passed (6)`
