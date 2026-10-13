@@ -1,18 +1,50 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/hooks/gamification/__tests__/levelUtils.test.ts (novo): prova o nível do cliente —
+  tabela canônica xp→nível (bordas 50/200/450), o cliente lendo a fórmula REAL do SQL
+  (supabase/migrations/20260927500000_gamification_bigint_and_daily_ratelimit.sql) e
+  exigindo o mesmo nível em toda a faixa 0..2000, além dos limites de levelProgress.
+- supabase/tests/gamification_nivel_paridade_rls.sql (novo): paridade do banco
+  (public.calculate_level contra a MESMA linha PARIDADE-NIVEL que o teste do cliente
+  lê — mexer num lado sem o outro fica vermelho) + RLS com o papel REAL
+  (SET LOCAL ROLE authenticated + request.jwt.claims): agente comum não altera
+  agent_stats nem insere em agent_achievements; o admin altera/insere na mesma linha
+  (a negação é policy, não tabela vazia/quebrada) + gatilhos de mensagem e de
+  encerramento incrementando, e a gamificação nunca derrubando o envio.
+  Roda em BEGIN…ROLLBACK: nenhuma fixture persiste.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (mutação no cliente, divisor 50 → 100 em levelUtils.ts, restaurado
+  depois): `npx vitest run src/hooks/gamification/__tests__/levelUtils.test.ts` →
+  `AssertionError: xp=50: expected 1 to be 2` ; `Tests  3 failed | 6 passed (9)`
+- verde depois: `npx vitest run src/hooks/gamification/__tests__/levelUtils.test.ts` →
+  `Test Files  1 passed (1)` ; `Tests  9 passed (9)`
+- vermelho no banco (mutação do divisor 50 → 100 dentro da transação, no próprio
+  calculate_level): `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < .tmp/mut_nivel_run.sql`
+  → `ERROR:  T1 FALHOU: tabela PARIDADE-NIVEL divergiu: 50->1(esperado 2), 51->1(esperado 2), 200->2(esperado 3), ...` (exit 3)
+- vermelho no banco (mutação da policy de UPDATE do agent_stats para USING (true)):
+  `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < .tmp/mut_rls2_run.sql`
+  → `ERROR:  T2 FALHOU: agente comum alterou agent_stats direto (1 linha(s))` (exit 3)
+- verde no banco: `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < supabase/tests/gamification_nivel_paridade_rls.sql`
+  → `NOTICE:  T1 OK` … `T2 OK` `T2b OK` `T2c OK` `T3 OK` `T3b OK` `T3c OK` `T4 OK`
+  `T5 OK` `T6 OK` `T6b OK` `T7 OK` e `ROLLBACK` (exit 0). O T2/T3 são o papel real:
+  `T2 OK: agente barrado em agent_stats (0 linhas afetadas)` e
+  `T3 OK: agente barrado em agent_achievements (42501 new row violates row-level security policy)`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- NÃO CONCLUÍ o marco 10 do encerramento (registrado em kanban_comment e com WARNING
+  explícito no teste): `handle_conversation_closure_gamification` chama
+  `grant_agent_achievement(uuid,text,text,text,integer)` com `LEAST(100, v_resolved)`
+  sendo v_resolved bigint → 42883; o EXCEPTION WHEN OTHERS engole e REVERTE o corpo, então
+  no marco `conversations_resolved` volta a 9 e nenhuma conquista entra (medido:
+  `WARNING: T6b PENDENCIA: marco 10 terminou com conversations_resolved=9 (esperado 10) e
+  conquista resolution_milestone=0`). É defeito real e PRÉ-EXISTENTE, fora do escopo de um
+  cartão de teste (não toco migration); o caminho não-marco do encerramento conta certo
+  (`T6 OK: 1 → 2`) e o "não derruba o encerramento" fica provado no T6b. Quem corrige é o
+  dono da função de banco (worker sql).
+- NÃO toquei produção além da mutação de prova, que foi revertida (mutação do cliente
+  restaurada no mesmo arquivo; as mutações de banco rodaram dentro de transação, sempre
+  com rollback).
+- Não rodei a suíte inteira (só o arquivo do cartão + o teste SQL no banco local da
+  tarefa), conforme o passo 5 do fluxo.
