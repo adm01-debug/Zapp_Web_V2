@@ -10117,6 +10117,16 @@ export type Database = {
         }
         Relationships: []
       }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
+        }
+        Relationships: []
+      }
       talkx_campaign_metrics: {
         Row: {
           campaign_id: string | null
