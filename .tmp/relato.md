@@ -1,18 +1,14 @@
-Especialista: Hugo (area-front-hooks)
-
+Especialista: iris
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
-
+- src/components/gamification/AchievementToast.tsx: o `AchievementToast` (cabeçalho por tipo, XP, ícone, fechar acessível, `aria-live`) passa a ser hospedado por `AchievementCelebrationToaster`, que lê o dado vivo pelo hook do PE-36 (`useAgentCelebrations`) e mostra UMA celebração por vez; movimento reduzido remove o confete (`useReducedMotion`); o toast não bloqueia a tela e o fechar só tira o item da frente da fila.
+- src/App.tsx: monta `<AchievementCelebrationToaster />` no mesmo bloco `lazy`/`Suspense` do Sonner (overlay, nada dele na primeira pintura).
+- src/components/gamification/__tests__/AchievementToast.test.tsx: 8 testes que chamam o componente real (aria-live desde o 1º render, conquista nova, conquista pré-existente não vira toast, subida de nível, uma por vez + fila, saída automática, confete presente/ausente).
+- src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts: neutraliza o overlay de gamificação como os outros overlays do App (o assunto do teste é o listener do Team Chat).
+- src/hooks/gamification/useAgentCelebrations.ts: hook trazido do cartão pai PE-36 (dependência do componente; arquivo ainda não integrado na base do dia).
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
-
+- verde depois: `npx vitest run src/components/gamification/__tests__/AchievementToast.test.tsx src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts` → `Test Files 2 passed (2); Tests 10 passed (10)`
+## Pontos do revisor ([refazer 1])
+- Ponto 1 (diff grande demais): resolvido; a entrega anterior trazia a faixa inteira do cartão pai (t_8e0d9185: DemoAchievements, remoção do GamificationProvider e das mutações de XP, useAgentGamification, testes) somada ao toast, dando 94.487 caracteres. Agora o commit traz só os arquivos deste cartão mais o hook `useAgentCelebrations.ts` de que o componente depende: 5 arquivos, 645 inserções, ~32 mil caracteres — abaixo do teto de 90 mil. A limpeza de mutações/XP e do provider fica no cartão dela (branches v2/gamificacao-conquistas-nivel-ao-vivo-2610130437ef89 e v2/gamificacao-remover-mutacoes-xp-cliente-2610122131af5e), fora deste título.
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei src/hooks/gamification/index.ts, DemoAchievements.tsx, GamificationProvider.tsx, mutations.ts nem useAgentGamification.ts: são a faixa do cartão pai; mantê-los intactos deixa a base do dia consistente e o diff restrito ao toast.
+- Sem migration, sem dependência nova, sem exportar/baixar/imprimir nada e sem cor fora dos tokens do design system.
