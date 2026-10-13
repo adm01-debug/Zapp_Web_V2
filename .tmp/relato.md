@@ -12,6 +12,7 @@ Especialista: workersql
      contato visível (carteira OU fila), a própria pasta e admin/supervisor; antes só contato atribuído.
 - `supabase/tests/paridade_visibilidade_fila.sql` (novo): prova com os papéis REAIS via `SET ROLE`
   (authenticated/anon/service_role), rodada no banco LOCAL da tarefa (`zapp-db-local psql . <id>`).
+- `.tmp/relato.md`: este relato (artefato do fechar).
 - `contact_custom_fields` NÃO foi tocado (é o cartão PB-26; não duplicar). A SELECT de
   `conversation_events` já estava alinhada (20260925150000 renomeou a policy para `is_contact_visible_to_user`)
   e não precisou de mudança.
