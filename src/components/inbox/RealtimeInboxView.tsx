@@ -411,7 +411,7 @@ export function RealtimeInboxView() {
             )}
             {inbox.selectedContactId && inbox.selectedContactFallbackStatus === 'loading' ? (
               <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                <Loader2 aria-hidden="true" className="w-6 h-6 text-primary motion-safe:animate-spin" />
               </div>
             ) : inbox.selectedContactId && (inbox.selectedContactFallbackStatus === 'not-found' || inbox.selectedContactFallbackStatus === 'error') ? (
               // Link/notificação/busca abriram um contato que não veio na lista e não
