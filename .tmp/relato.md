@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## O que mudou e por quê
 - src/hooks/ui/useDeviceDetection.ts: `fetchSessions` deixou de ler `user_sessions` e passou a chamar `supabase.rpc('my_active_sessions')` (a RPC do cartão pai, que só devolve sessões vivas do chamador e marca a atual pelo claim `session_id` do JWT); a interface `UserSession` passou a ter `is_current` (e a perder as colunas mortas `is_active`/`expires_at`/`ended_at`, que a RPC não devolve).
@@ -13,7 +13,7 @@ Nenhum mock entrega o resultado pronto: o hook é dublado, mas quem decide o sel
   `AssertionError: expected [ <div>, <div> ] to have a length of 1 but got 2` (dois selos "Sessão atual" no mesmo aparelho)
   `AssertionError: expected "vi.fn()" to be called with arguments: [ 'my_active_sessions' ]`
 - verde depois (`npx vitest run src/components/security src/hooks/__tests__/useDeviceDetection.test.tsx`): `Test Files 22 passed (22); Tests 111 passed (111)`
-- types: `npx tsc --noEmit -p tsconfig.app.json` → sem erro em DevicesPanel, SecurityOverview ou useDeviceDetection
+- types: `zapp-verify . --rapido` (passo `tipos`) é a prova de tipos; `tsc -p tsconfig.node.json` e `tsconfig.e2e.json` passaram sem erro; o `tsc` do app é o pesado e nas minhas tentativas isoladas ele foi morto por OOM do host (exit 137), não por erro de tipo — o diff não cria tipo novo (só lê `is_current`, que a RPC do cartão pai já tipa).
 
 ## Arquivos fora da lista do cartão (aviso do juiz)
 `supabase/migrations/20261013230007_my_active_sessions.sql`, `supabase/tests/my_active_sessions.sql`, `src/integrations/supabase/types.ts` e `scripts/db-audit/pg-cron-jobs-baseline.json` entraram no diff por CHERRY-PICK da faixa do cartão pai (`dia/2026-10-13..f8ba2455341ec102797139a76f2e25b50329f8b8`, branch `v2/sessoes-reais-do-usuario-2610130558f3a3`), como o próprio cartão manda: sem a RPC `my_active_sessions` (e o tipo gerado que a conhece) não há o que chamar. Nenhum deles foi editado por mim.
