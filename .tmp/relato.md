@@ -6,7 +6,7 @@ Especialista: workersql (area-sql-banco)
   - `public.admin_table_row_snapshots(p_drop_pct numeric DEFAULT 20)`: RPC do painel admin. Compara o ultimo dia com o dia anterior disponivel por tabela e marca `is_alert = true` quando a queda passa do limiar. Exige login e papel admin/supervisor (`is_admin_or_supervisor(auth.uid())`), recusa limiar fora de 0..100 e e somente leitura.
   - Primeira linha e `-- Rollback:` com o inverso executavel (drop das 2 funcoes pela assinatura exata + drop da tabela). A migration e idempotente (`CREATE TABLE IF NOT EXISTS` / `CREATE OR REPLACE`).
 - `supabase/tests/table_row_snapshots.sql` (NOVO): suite da prova, transacional (termina em ROLLBACK), roda no banco LOCAL com o papel real de cada ator.
-- Arquivos do diff (3, sendo 1 de teste): a migration acima, a suite acima e `.tmp/relato.md` (este relato, arquivo JA versionado na base — nao e entrega nova).
+- `.tmp/relato.md` (MODIFICADO): este relato. Arquivo JA versionado na base — nao e entrega nova, e o unico arquivo do diff que nao e codigo/teste. Total do diff: 3 arquivos (migration, suite, relato); 1 arquivo de teste (a suite).
 
 ## Prova
 - vermelho antes (a protecao derrubada dentro da transacao, `-v sem_migration=1`): `zapp-db-local psql . v2-26101307016179 -v sem_migration=1 < supabase/tests/table_row_snapshots.sql` → `ERROR: relation "public.table_row_snapshots" does not exist` (rc=3).
