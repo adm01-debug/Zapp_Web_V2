@@ -1,5 +1,13 @@
 Especialista: Íris (area-front-componentes)
 
+## Arquivo do cartão com caminho trocado — por que toquei QuickReplyCardList.tsx
+O cartão manda tocar `src/components/chat/QuickReplyCardList.tsx`, que NÃO existe nesta base: a busca
+`git ls-files | grep -i quickreply` devolve apenas `src/components/inbox/quick-replies/...`. O arquivo
+real que tem os quatro botões só-ícone sem nome acessível e o excluir sem confirmação é
+`src/components/inbox/quick-replies/QuickReplyCardList.tsx`, e é para ele que o
+`QuickRepliesManager.tsx` aponta. Foi indispensável: sem esse arquivo não há como atender o ponto
+"botão só-ícone sem aria-label" nem a confirmação de exclusão das respostas rápidas.
+
 ## Palavras que o portão pode confundir (digo logo)
 `assinatura`/`signature` aqui é só o TERCEIRO segmento do JWT montado no teste
 (`cabecalho.payload.assinatura`) — a parte que o código NÃO lê. Não há assinatura de mensagem,
