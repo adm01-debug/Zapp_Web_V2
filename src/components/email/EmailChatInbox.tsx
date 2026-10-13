@@ -270,12 +270,12 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
           </div>
           {needsReconnect ? (
             <Button size="sm" onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending}>
-              {connectGmail.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              {connectGmail.isPending ? <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
               Reconectar
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}>
-              {syncInbox.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              {syncInbox.isPending ? <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
               Tentar novamente
             </Button>
           )}
