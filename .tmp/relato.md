@@ -1,18 +1,20 @@
-Especialista: Hugo (area-front-hooks)
-
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/inbox/contact-details/WhatsAppStatusSection.tsx` (novo): seção "Status do WhatsApp" no painel de contato — aparece só quando o contato tem stories; miniaturas com anel token (`ring-whatsapp` para não visto, `ring-border` para visto); contador de não vistos; estados de carregando (ShimmerSkeleton, `aria-hidden`) e vazio (não renderiza). Sem selo de presença online.
+- `src/components/inbox/contact-details/StoryViewer.tsx` (novo): visualizador em Dialog — barras de progresso por story, avanço automático a cada 5 s, setas esquerda/direita no próprio elemento (`onKeyDown`, sem listener global) e Esc pelo Radix; mídia carregada SOB DEMANDA por `useEvolutionApi().getMediaBase64` (caminho privado da V2 — a URL da Evolution nunca vai ao `<img>`); vídeo com `controls`/`playsInline` e legenda textual; com movimento reduzido a troca de story só muda opacidade (sem deslocamento) e as barras não animam.
+- `src/components/inbox/contact-details/storyUtils.ts` (novo): `storyKeyOf`, `storyMediaKind`, `storyCaption` e `STORY_DURATION_MS` — extraídos para o StoryViewer exportar só componentes (regra `react-refresh/only-export-components`).
+- `src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx`: 1 linha — encaixe da seção no painel de contato.
+- `src/hooks/integrations/useWhatsAppStatus.ts`: passa a expor `instanceName` (instância resolvida), necessária ao carregamento privado da mídia. O hook não foi reescrito; só um campo aditivo.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `git cat-file -e dia/2026-10-12:src/components/inbox/contact-details/WhatsAppStatusSection.tsx` → `fatal: path ... exists on disk, but not in 'dia/2026-10-12'` (o módulo e a seção não existem na base; o teste que os prova é vermelho antes).
+- verde depois: `npx vitest run src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx` → `Test Files 1 passed (1); Tests 8 passed (8)`.
+- regressão do hook tocado + visinhos do painel: `npx vitest run src/hooks/__tests__/useWhatsAppStatus.test.ts src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx` → `Test Files 3 passed (3); Tests 72 passed (72)`.
+- tipos: `npx tsc -b --force` → saída vazia, exit 0 (zero erros).
+- lint dos arquivos do diff: `npx eslint <arquivos>` → sem saída (zero ocorrências novas).
+
+Os 8 testes renderizam os componentes REAIS (`WhatsAppStatusSection`/`StoryViewer`); só a fronteira de rede é mockada (`useWhatsAppStatus` e `getMediaBase64`). O que eles provam: (1) sem stories não renderiza a seção; (2) com stories renderiza miniaturas, a primeira com anel de não visto; (3) clicar abre o visualizador e `getMediaBase64` é chamado com `instanceName` + a mensagem (sob demanda); (4) seta direita/esquerda navega; (5) Esc fecha e a miniatura passa a "visto"; (6) avança sozinho após 5 s; (7) com movimento reduzido o story não carrega deslocamento (`initial` sem `x`); (8) com movimento normal o story entra deslizando (`initial.x = 24`).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei em banco, Edge Function ou migration: a mídia usa o caminho privado já existente (`getMediaBase64`); nada de URL da Evolution direto no `<img>`.
+- Não adicionei presença online nem exportação: a V2 não tem essa informação e o Zapp não exporta.
+- Nenhuma permissão/rota nova: a seção vive dentro do painel de contato já protegido.
