@@ -9,6 +9,14 @@ Especialista: Íris (area-front-componentes)
 ## Onde o cartão mora (o cartão citava outro caminho)
 O cartão pede "src/components/settings/NotificationTypeCards.tsx"; não existe arquivo nesse caminho — a tela Notificações é `src/components/notifications/*` (mesmo nome de arquivo). Alterei os arquivos reais do módulo do título.
 
+## Band anterior (vem do diff desta branch, não foi escrito aqui)
+Esta tarefa depende do cartão anterior da mesma trilha (t_e8b312e0 → t_6bf2d93f). Os dois commits dele foram trazidos para esta branch por cherry-pick (9edaf598f, f14c648cd) e por isso aparecem no diff contra a base `dia/2026-10-13`:
+- supabase/migrations/20261013044440_connection_alert_preferences.sql — tabela `connection_alert_preferences` com RLS por linha (feito no t_e8b312e0).
+- supabase/tests/connection_alert_preferences_rls.sql — prova de RLS da tabela (t_e8b312e0).
+- src/integrations/supabase/types.ts — tipos da tabela (t_e8b312e0).
+- src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx e .janela-manutencao.test.tsx — testes da faixa; a faixa passou a ler `alert_on_disconnected` (t_6bf2d93f).
+- src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx — este EU editei (bloco do mock citado acima). Obs.: ele também aparece no diff pelo cherry-pick se o pai o tiver tocado; o que está aqui é o acréscimo do mock.
+
 ## Prova
 - vermelho antes: `npx vitest run src/components/notifications/__tests__/ConnectionAlertPreferencesCard.test.tsx` → `Tests 4 failed (4)` e `Error: Element type is invalid: expected a string ... but got: undefined` (o componente ainda não existia).
 - verde depois: `npx vitest run src/components/notifications/__tests__/` → `Test Files 12 passed (12)` / `Tests 63 passed (63)` (0 falhas, 0 pulados). Inclui os 3 arquivos de painel que eu mockei.
