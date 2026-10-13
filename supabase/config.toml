@@ -68,6 +68,19 @@ verify_jwt = false
 [functions.searchbox-budget-alert]
 verify_jwt = false
 
+# PE-102: o agendador do pg_cron (net.http_post) chama estas tres edges com o
+# header `x-cron-secret` (segredo dedicado no Vault), sem JWT de sessao. Por isso
+# o gate de JWT do gateway fica desligado aqui; a propria funcao rejeita qualquer
+# requisicao sem cron-secret nem JWT admin/supervisor antes de tocar no banco.
+[functions.send-scheduled-report]
+verify_jwt = false
+
+[functions.auto-close-conversations]
+verify_jwt = false
+
+[functions.cleanup-rate-limit-logs]
+verify_jwt = false
+
 # T72: quem chama e o N8N, com a service_role no Authorization. A funcao confere o token
 # por conta propria, entao o gate de JWT do gateway fica desligado aqui de proposito.
 [functions.sync-call-records]

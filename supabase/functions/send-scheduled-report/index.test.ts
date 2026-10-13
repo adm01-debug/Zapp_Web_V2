@@ -56,9 +56,14 @@ function serviceMock(opts: {
   updateError?: unknown;
   updateRows?: unknown[];
   slaRows?: unknown[];
+  claimRows?: unknown[];
+  claimError?: unknown;
+  dueRows?: unknown[];
+  dueError?: unknown;
 } = {}) {
   const fromCalls: string[] = [];
   const updates: Array<{ table: string; payload: Record<string, unknown> }> = [];
+  const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
   let currentTable = "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qb: any = {
@@ -67,7 +72,10 @@ function serviceMock(opts: {
     // quando o teste as fornece (senão mantém o encadeamento antigo).
     gte: () => (opts.slaRows === undefined ? qb : Promise.resolve({ data: opts.slaRows, error: null })),
     eq: () => qb,
+    // PE-102 (lote): `.lte()` encadeia; `.limit()` é terminal do SELECT do dryRun.
+    lte: () => qb,
     order: () => qb,
+    limit: () => Promise.resolve({ data: opts.dueRows ?? [], error: opts.dueError ?? null }),
     single: () => Promise.resolve({ data: opts.report ?? null, error: opts.reportError ?? null }),
     update: (payload: Record<string, unknown>) => {
       updates.push({ table: currentTable, payload });
@@ -94,8 +102,15 @@ function serviceMock(opts: {
       fromCalls.push(table);
       return qb;
     },
+    rpc: (name: string, args: Record<string, unknown> = {}) => {
+      rpcCalls.push({ name, args });
+      if (name === "claim_due_scheduled_reports") {
+        return Promise.resolve({ data: opts.claimRows ?? [], error: opts.claimError ?? null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    },
   };
-  return { supabase, fromCalls, updates };
+  return { supabase, fromCalls, updates, rpcCalls };
 }
 
 Deno.test("auth: sem identidade → 401 e zero lookup/Resend/service-role", async () => {
@@ -599,4 +614,171 @@ Deno.test("pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local
   assert(isTrustedRecipient("a@sub.promobrindes.com.br", dominios) === false, "subdomínio não é o mesmo domínio");
   assert(isTrustedRecipient("a@gmail.com", dominios) === false, "domínio externo deve recusar");
   assert(isTrustedRecipient(42, dominios) === false, "valor não-string deve recusar");
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PE-102 — modo lote do agendador (pg_cron): reivindica vencidos pela RPC,
+// envia só ao domínio da empresa, registra por relatório e reagenda na falha.
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("lote: cron {} reivindica os vencidos e envia cada um só ao domínio da empresa", async () => {
+  const permitido = "financeiro@promobrindes.com.br";
+  const recusado = "cliente@gmail.com";
+  const mock = serviceMock({
+    claimRows: [
+      { id: "r1", name: "Resumo", report_type: "dashboard_summary", frequency: "daily", recipients: [permitido, recusado] },
+      { id: "r2", name: "SLA", report_type: "sla_compliance", frequency: "weekly", recipients: ["diretoria@promobrindes.com.br"] },
+    ],
+  });
+  const resend = withResendStub([200, 200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(body.mode === "batch" && body.dryRun === false, `modo inesperado: ${JSON.stringify(body)}`);
+      assert(body.claimed === 2 && body.sent === 2 && body.partial === 0 && body.failed === 0,
+        `contagens inesperadas: ${JSON.stringify(body)}`);
+      assert(mock.rpcCalls.length === 1 && mock.rpcCalls[0].name === "claim_due_scheduled_reports"
+        && mock.rpcCalls[0].args.p_limit === 50,
+        `RPC de reivindicação inesperada: ${JSON.stringify(mock.rpcCalls)}`);
+      assert(JSON.stringify(resend.recipients) === JSON.stringify([permitido, "diretoria@promobrindes.com.br"]),
+        `só o domínio da empresa deve sair: ${JSON.stringify(resend.recipients)}`);
+      // Confirma o ciclo com last_sent_at; next_send_at já foi avançado pela RPC.
+      assert(mock.updates.length === 2, `esperado 2 gravações, recebido ${mock.updates.length}`);
+      assert(mock.updates.every((u) => "last_sent_at" in u.payload && !("next_send_at" in u.payload)),
+        `gravação inesperada no lote: ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+      assert(!JSON.stringify(body).includes(recusado), "a resposta não pode expor endereço recusado");
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: provedor recusa tudo → status failed e next_send_at volta a vencer (sem last_sent_at)", async () => {
+  const mock = serviceMock({
+    claimRows: [{ id: "r1", name: "Resumo", report_type: "dashboard_summary", frequency: "daily", recipients: ["a@promobrindes.com.br"] }],
+  });
+  const resend = withResendStub([500]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(body.failed === 1 && body.sent === 0 && body.partial === 0, `contagens inesperadas: ${JSON.stringify(body)}`);
+      assert(body.results[0].status === "failed", `status inesperado: ${JSON.stringify(body.results[0])}`);
+      // Nada saiu: reagenda para a próxima rodada e NÃO confirma o ciclo.
+      assert(mock.updates.length === 1 && "next_send_at" in mock.updates[0].payload,
+        `deveria reagendar: ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+      assert(!("last_sent_at" in mock.updates[0].payload), "falha total não pode gravar last_sent_at");
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: envio parcial → partial e grava last_sent_at (não reescreve next_send_at)", async () => {
+  const mock = serviceMock({
+    claimRows: [{ id: "r1", name: "Resumo", report_type: "dashboard_summary", frequency: "daily", recipients: ["a@promobrindes.com.br", "b@promobrindes.com.br"] }],
+  });
+  const resend = withResendStub([200, 500]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(body.partial === 1 && body.sent === 0 && body.failed === 0, `contagens inesperadas: ${JSON.stringify(body)}`);
+      assert(body.results[0].delivered === 1 && body.results[0].failed === 1, `resultado inesperado: ${JSON.stringify(body.results[0])}`);
+      assert(mock.updates.length === 1 && "last_sent_at" in mock.updates[0].payload && !("next_send_at" in mock.updates[0].payload),
+        `parcial deve confirmar o ciclo: ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: sem vencidos → nada é enviado nem gravado e a resposta zera", async () => {
+  const mock = serviceMock({ claimRows: [] });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(body.success === true && body.claimed === 0 && body.sent === 0, `resposta inesperada: ${JSON.stringify(body)}`);
+      assert(resend.calls.length === 0, "sem vencidos não deve haver envio");
+      assert(mock.updates.length === 0, "sem vencidos não deve haver gravação");
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: dryRun só lista por SELECT — não reivindica, não envia e não grava", async () => {
+  const mock = serviceMock({
+    dueRows: [{ id: "r1", name: "Resumo", recipients: ["a@promobrindes.com.br", "cliente@gmail.com"] }],
+  });
+  const resend = withResendStub([200]);
+  try {
+    const res = await handleScheduledReport(
+      makePost({ headers: { "x-cron-secret": "segredo" }, body: { dryRun: true } }),
+      { supabase: mock.supabase, cronSecret: "segredo" },
+    );
+    const body = await res.json();
+    assert(res.status === 200 && body.dryRun === true, `resposta inesperada: ${JSON.stringify(body)}`);
+    assert(body.claimed === 1 && body.results[0].status === "would_send", `resultado inesperado: ${JSON.stringify(body.results)}`);
+    assert(body.results[0].total === 1 && body.results[0].rejected === 1, `contagem inesperada: ${JSON.stringify(body.results[0])}`);
+    assert(mock.rpcCalls.length === 0, "dryRun não pode reivindicar (é escrita)");
+    assert(resend.calls.length === 0, "dryRun não pode enviar");
+    assert(mock.updates.length === 0, "dryRun não pode gravar");
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: limit inválido → 422 sem reivindicar", async () => {
+  const mock = serviceMock({ claimRows: [] });
+  const res = await handleScheduledReport(
+    makePost({ headers: { "x-cron-secret": "segredo" }, body: { limit: 0 } }),
+    { supabase: mock.supabase, cronSecret: "segredo" },
+  );
+  assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+  assert(mock.rpcCalls.length === 0, "corpo inválido não pode chegar à RPC");
+});
+
+Deno.test("lote: erro da RPC de reivindicação → 500 e nenhum envio", async () => {
+  const mock = serviceMock({ claimError: { message: "boom" } });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      assert(res.status === 500, `esperado 500, recebido ${res.status}`);
+      assert(resend.calls.length === 0, "falha na reivindicação não pode enviar");
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: chamada manual sem reportId NÃO entra no lote (422, sem RPC)", async () => {
+  const mock = serviceMock();
+  const res = await handleScheduledReport(
+    makePost({ headers: { Authorization: "Bearer jwt-admin" }, body: {} }),
+    { supabase: mock.supabase, authClient: authClientMock({ user: { id: "user-admin" }, privileged: true }) },
+  );
+  assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+  assert(mock.rpcCalls.length === 0, "o lote é só do cron; manual não pode reivindicar");
 });

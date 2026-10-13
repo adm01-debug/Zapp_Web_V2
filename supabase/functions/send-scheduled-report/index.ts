@@ -147,8 +147,26 @@ export async function handleScheduledReport(
       requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const trustedDomains = deps.trustedDomains
+      ?? resolveTrustedDomains(Deno.env.get("TRUSTED_EMAIL_DOMAINS"));
 
-    const parsed = parseBody(ScheduledReportSchema, await req.json());
+    let rawBody: unknown = null;
+    try {
+      rawBody = await req.json();
+    } catch {
+      rawBody = null;
+    }
+
+    // PE-102 (modo lote): quem tem o `x-cron-secret` — o agendador do pg_cron —
+    // chama sem `reportId` e pede o lote dos vencidos (corpo `{}` ou
+    // `{ limit, dryRun }`). A chamada manual (front/admin) continua entrando pelo
+    // caminho de relatório único: qualquer corpo com `reportId` é single, e sem o
+    // segredo do cron o corpo é validado pelo schema de sempre (422 se inválido).
+    if (isCron && !hasReportId(rawBody)) {
+      return await handleBatch(req, supabase, rawBody, { resendApiKey, trustedDomains, log });
+    }
+
+    const parsed = parseBody(ScheduledReportSchema, rawBody);
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { reportId } = parsed.data;
@@ -165,69 +183,8 @@ export async function handleScheduledReport(
 
     let reportData: Record<string, unknown> = {};
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    switch (report.report_type) {
-      case "dashboard_summary": {
-        const { data: messages } = await supabase.from("messages").select("id, sender, created_at, is_read").gte("created_at", weekAgo.toISOString());
-        const { data: contacts } = await supabase.from("contacts").select("id").gte("created_at", weekAgo.toISOString());
-        reportData = {
-          title: "Resumo do Dashboard",
-          period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          totalMessages: messages?.length || 0,
-          messagesReceived: messages?.filter((m: { sender: string }) => m.sender === "contact").length || 0,
-          messagesSent: messages?.filter((m: { sender: string }) => m.sender === "agent").length || 0,
-          newContacts: contacts?.length || 0,
-        };
-        break;
-      }
-      case "agent_performance": {
-        const { data: agents } = await supabase.from("agent_stats").select("*, profiles(name, email)").order("xp", { ascending: false });
-        reportData = {
-          title: "Performance de Agentes",
-          period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          agents: (agents || []).map((a: Record<string, unknown>) => ({
-            name: (a.profiles as Record<string, unknown>)?.name || "N/A",
-            messagesHandled: (a.messages_sent as number) + (a.messages_received as number),
-            resolved: a.conversations_resolved, avgResponseTime: a.avg_response_time_seconds,
-            satisfaction: a.customer_satisfaction_score, level: a.level, xp: a.xp,
-          })),
-        };
-        break;
-      }
-      case "conversation_analytics": {
-        const { data: analyses } = await supabase.from("conversation_analyses").select("*").gte("created_at", weekAgo.toISOString());
-        reportData = {
-          title: "Análise de Conversas",
-          period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          totalAnalyses: analyses?.length || 0,
-          avgSentiment: analyses?.length ? Math.round(analyses.reduce((sum: number, a: Record<string, unknown>) => sum + ((a.sentiment_score as number) || 50), 0) / analyses.length) : 0,
-          avgSatisfaction: analyses?.length ? (analyses.reduce((sum: number, a: Record<string, unknown>) => sum + ((a.customer_satisfaction as number) || 3), 0) / analyses.length).toFixed(1) : "N/A",
-        };
-        break;
-      }
-      case "sla_compliance": {
-        const { data: sla } = await supabase.from("conversation_sla").select("*").gte("created_at", weekAgo.toISOString());
-        // Mesma regra de elegibilidade do SLA de 1ª resposta do painel
-        // (src/hooks/sla/slaFirstResponse.ts): AVALIADA = conversa com desfecho
-        // (violada ou respondida no prazo); PENDENTE = sem desfecho, fora do
-        // numerador E do denominador; a violação manda sobre o carimbo. Sem
-        // nenhuma avaliada NÃO existe taxa (nunca 100%).
-        const tally = tallyFirstResponse(sla || []);
-        reportData = {
-          title: "Cumprimento de SLA",
-          period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          evaluatedConversations: tally.evaluated,
-          onTimeResponses: tally.onTime,
-          responseBreaches: tally.breached,
-          pendingResponses: tally.pending,
-          responseComplianceRate: tally.evaluated > 0
-            ? `${Math.round((tally.onTime / tally.evaluated) * 100)}%`
-            : "N/A",
-        };
-        break;
-      }
-    }
+    reportData = await buildReportData(supabase, report);
 
     const emailHtml = buildReportEmail(reportData);
 
@@ -238,8 +195,7 @@ export async function handleScheduledReport(
     // PD-23 / DD5: antes de enviar, cada destinatário precisa ser e-mail válido
     // E de domínio confiável; os demais são RECUSADOS. A recusa é registrada só
     // em CONTAGEM (nunca o endereço, que é dado pessoal) no log e na resposta.
-    const trustedDomains = deps.trustedDomains
-      ?? resolveTrustedDomains(Deno.env.get("TRUSTED_EMAIL_DOMAINS"));
+    // (A lista confiável foi resolvida no topo do handler e vale para single/lote.)
     const declaredRecipients: string[] = Array.isArray(report.recipients) ? report.recipients : [];
 
     // Limite por relatório: acima dele NADA é enviado (falha fechada).
@@ -296,19 +252,13 @@ export async function handleScheduledReport(
       log.error("Resend not configured: report not sent", { reportId, recipients: recipients.length });
     } else {
       for (const recipient of recipients) {
-        const emailResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            from: "ZAPP Relatórios <relatorios@promobrindes.com.br>", to: recipient,
-            subject: `📊 ${reportData.title} - ${reportData.period}`, html: emailHtml,
-          }),
-        });
-        if (emailResponse.ok) {
+        // Sem log do endereço: destinatário é dado pessoal; o log diz só que houve falha.
+        const ok = await sendReportEmail(resendApiKey, recipient, reportData, emailHtml);
+        if (ok) {
           delivered.push(recipient);
         } else {
           failed.push(recipient);
-          log.error(`Failed to send to ${recipient}`, { error: await emailResponse.text() });
+          log.error("Falha no envio para destinatário do relatório agendado", { reportId });
         }
       }
     }
@@ -392,6 +342,369 @@ export async function handleScheduledReport(
     log.error("Error sending report", { error: (error as Error).message });
     return internalErrorResponse(error, req);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PE-102 — modo lote do agendador (chamado pelo pg_cron via x-cron-secret).
+//
+// O cron manda `{}` (ou `{ limit, dryRun }`) e a função reivindica os
+// `scheduled_reports` vencidos pela RPC `claim_due_scheduled_reports` (FOR UPDATE
+// SKIP LOCKED, que já avança `next_send_at` no mesmo passo, ancorado no próprio
+// vencimento — sem duplicar envio entre ticks). Cada relatório reivindicado é
+// enviado só aos destinatários de domínio confiável (PD-23) e o resultado é
+// registrado POR relatório:
+//   - enviado/parcial → grava `last_sent_at` (o `next_send_at` já foi avançado
+//     pela RPC; NÃO recalcula aqui para não pular um período inteiro);
+//   - falha total (provedor fora, acima do limite ou nenhum destinatário
+//     permitido) → devolve `next_send_at = now()` para a próxima rodada tentar de
+//     novo: nada saiu, então o ciclo não pode ser confirmado.
+// `dryRun: true` NÃO reivindica (reivindicar é escrita): lista os vencidos por
+// SELECT e diz o que sairia, sem enviar e sem gravar nada.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BATCH_DEFAULT_LIMIT = 50;
+
+interface BatchContext {
+  resendApiKey: string | undefined;
+  trustedDomains: readonly string[];
+  log: Logger;
+}
+
+interface BatchReportResult {
+  id: string;
+  name: string;
+  status: "sent" | "partial" | "failed";
+  delivered: number;
+  failed: number;
+  total: number;
+  rejected: number;
+  recorded?: boolean;
+  error?: string;
+}
+
+/** Corpo com `reportId` é a chamada manual de relatório único (não é lote). */
+function hasReportId(body: unknown): boolean {
+  return Boolean(body && typeof body === "object" && "reportId" in (body as Record<string, unknown>));
+}
+
+function asRecord(body: unknown): Record<string, unknown> {
+  return body && typeof body === "object" ? body as Record<string, unknown> : {};
+}
+
+async function handleBatch(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  rawBody: unknown,
+  ctx: BatchContext,
+): Promise<Response> {
+  const body = asRecord(rawBody);
+
+  let limit = BATCH_DEFAULT_LIMIT;
+  if (body.limit !== undefined) {
+    if (typeof body.limit !== "number" || !Number.isInteger(body.limit) || body.limit < 1 || body.limit > 200) {
+      return validationErrorResponse(
+        { issues: [{ path: "limit", message: "limit deve ser um inteiro entre 1 e 200", code: "custom" }] },
+        req,
+      );
+    }
+    limit = body.limit;
+  }
+
+  let dryRun = false;
+  if (body.dryRun !== undefined) {
+    if (typeof body.dryRun !== "boolean") {
+      return validationErrorResponse(
+        { issues: [{ path: "dryRun", message: "dryRun deve ser booleano", code: "custom" }] },
+        req,
+      );
+    }
+    dryRun = body.dryRun;
+  }
+
+  if (dryRun) return await runBatchDryRun(req, supabase, limit, ctx);
+
+  const { data: claimed, error: claimError } = await supabase.rpc("claim_due_scheduled_reports", { p_limit: limit });
+  if (claimError) {
+    ctx.log.error("Falha ao reivindicar relatórios vencidos", { error: claimError.message ?? String(claimError) });
+    return errorResponse("Falha ao reivindicar relatórios vencidos", 500, req);
+  }
+  const rows: Array<Record<string, unknown>> = Array.isArray(claimed) ? claimed : [];
+
+  const results: BatchReportResult[] = [];
+  for (const row of rows) {
+    results.push(await processClaimedReport(supabase, row, ctx));
+  }
+
+  const sent = results.filter((r) => r.status === "sent").length;
+  const partial = results.filter((r) => r.status === "partial").length;
+  const failed = results.filter((r) => r.status === "failed").length;
+
+  ctx.log.done(200, { mode: "batch", dryRun: false, claimed: rows.length, sent, partial, failed });
+  return jsonResponse({
+    success: failed === 0,
+    mode: "batch",
+    dryRun: false,
+    limit,
+    claimed: rows.length,
+    sent,
+    partial,
+    failed,
+    results,
+  }, 200, req);
+}
+
+/** dryRun: só leitura — lista o que a próxima rodada enviaria, sem efeito. */
+async function runBatchDryRun(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  limit: number,
+  ctx: BatchContext,
+): Promise<Response> {
+  const { data: due, error } = await supabase
+    .from("scheduled_reports")
+    .select("id, name, report_type, frequency, recipients, next_send_at")
+    .eq("is_active", true)
+    .lte("next_send_at", new Date().toISOString())
+    .order("next_send_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    ctx.log.error("Falha ao listar relatórios vencidos (dryRun)", { error: error.message ?? String(error) });
+    return errorResponse("Falha ao listar relatórios vencidos", 500, req);
+  }
+
+  const rows: Array<Record<string, unknown>> = Array.isArray(due) ? due : [];
+  const results = rows.map((row) => {
+    const declared: string[] = Array.isArray(row.recipients) ? row.recipients : [];
+    const allowed = declared.filter((recipient) => isTrustedRecipient(recipient, ctx.trustedDomains));
+    const wouldFail = declared.length > MAX_RECIPIENTS_PER_REPORT || (declared.length > 0 && allowed.length === 0);
+    return {
+      id: String(row.id),
+      name: typeof row.name === "string" ? row.name : "",
+      status: wouldFail ? "would_fail" : "would_send",
+      total: allowed.length,
+      rejected: declared.length - allowed.length,
+    };
+  });
+
+  ctx.log.done(200, { mode: "batch", dryRun: true, due: results.length });
+  return jsonResponse({ success: true, mode: "batch", dryRun: true, limit, claimed: results.length, results }, 200, req);
+}
+
+/** Processa um relatório reivindicado pela RPC: envia, registra e reagenda na falha. */
+async function processClaimedReport(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  row: Record<string, unknown>,
+  ctx: BatchContext,
+): Promise<BatchReportResult> {
+  const reportId = String(row.id);
+  const name = typeof row.name === "string" ? row.name : "";
+  const declared: string[] = Array.isArray(row.recipients) ? row.recipients : [];
+
+  // Acima do limite: NADA é enviado (falha fechada) e o ciclo volta a vencer.
+  if (declared.length > MAX_RECIPIENTS_PER_REPORT) {
+    ctx.log.error("Relatório acima do limite de destinatários", {
+      reportId,
+      total: declared.length,
+      limit: MAX_RECIPIENTS_PER_REPORT,
+    });
+    await rescheduleForRetry(supabase, reportId, ctx.log, "acima do limite de destinatários");
+    return {
+      id: reportId, name, status: "failed", delivered: 0, failed: 0, total: 0, rejected: 0,
+      error: "Relatório acima do limite de destinatários",
+    };
+  }
+
+  const allowed = declared.filter((recipient) => isTrustedRecipient(recipient, ctx.trustedDomains));
+  const rejected = declared.length - allowed.length;
+  if (rejected > 0) {
+    ctx.log.error("Destinatários recusados por domínio não confiável", { reportId, rejected, total: declared.length });
+  }
+
+  // Havia destinatários, mas nenhum é permitido: não há o que enviar; deixa o
+  // ciclo vencer de novo para a configuração ser corrigida.
+  if (declared.length > 0 && allowed.length === 0) {
+    await rescheduleForRetry(supabase, reportId, ctx.log, "nenhum destinatário permitido");
+    return {
+      id: reportId, name, status: "failed", delivered: 0, failed: 0, total: 0, rejected,
+      error: "Nenhum destinatário permitido (domínio não confiável)",
+    };
+  }
+
+  const reportData = await buildReportData(supabase, row);
+  const emailHtml = buildReportEmail(reportData);
+
+  let delivered = 0;
+  if (allowed.length > 0 && !ctx.resendApiKey) {
+    ctx.log.error("Resend not configured: report not sent", { reportId, recipients: allowed.length });
+  } else {
+    for (const recipient of allowed) {
+      const ok = await sendReportEmail(ctx.resendApiKey, recipient, reportData, emailHtml);
+      if (ok) delivered++;
+      else ctx.log.error("Falha no envio para destinatário do relatório agendado", { reportId });
+    }
+  }
+
+  const total = allowed.length;
+  const failedCount = total - delivered;
+  const status: BatchReportResult["status"] = delivered === total ? "sent" : delivered > 0 ? "partial" : "failed";
+
+  if (status === "failed") {
+    await rescheduleForRetry(supabase, reportId, ctx.log, "falha total de envio");
+    return {
+      id: reportId, name, status, delivered, failed: failedCount, total, rejected,
+      error: "Falha no envio para todos os destinatários",
+    };
+  }
+
+  // Enviado/parcial: o `next_send_at` já foi avançado pela RPC; aqui só se
+  // confirma o ciclo com `last_sent_at`.
+  const recorded = await recordSentAt(supabase, reportId, ctx.log);
+  return { id: reportId, name, status, delivered, failed: failedCount, total, rejected, recorded };
+}
+
+/**
+ * Falha total: nada saiu, então o ciclo não foi cumprido. Devolve `next_send_at`
+ * para agora para a próxima rodada do cron tentar de novo, em vez de esperar um
+ * período inteiro (daily/weekly/monthly).
+ */
+async function rescheduleForRetry(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  reportId: string,
+  log: Logger,
+  reason: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("scheduled_reports")
+    .update({ next_send_at: new Date().toISOString() })
+    .eq("id", reportId)
+    .select("id");
+  if (error || !Array.isArray(data) || data.length === 0) {
+    log.error("Falha ao reagendar o relatório para nova tentativa", {
+      reportId,
+      reason,
+      error: error ? (error as Error).message : "no rows updated",
+    });
+  }
+}
+
+/** Confirma o ciclo gravando `last_sent_at`; devolve false se o UPDATE não pegou. */
+async function recordSentAt(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  reportId: string,
+  log: Logger,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("scheduled_reports")
+    .update({ last_sent_at: new Date().toISOString() })
+    .eq("id", reportId)
+    .select("id");
+  if (error || !Array.isArray(data) || data.length === 0) {
+    log.error("Falha ao registrar o envio do relatório agendado", {
+      reportId,
+      error: error ? (error as Error).message : "no rows updated",
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Monta o `reportData` de um relatório por `report_type`. Fonte única usada tanto
+ * pela chamada manual de relatório único quanto pelo modo lote do cron.
+ */
+async function buildReportData(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  report: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const period = `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`;
+
+  switch (report.report_type) {
+    case "dashboard_summary": {
+      const { data: messages } = await supabase.from("messages").select("id, sender, created_at, is_read").gte("created_at", weekAgo.toISOString());
+      const { data: contacts } = await supabase.from("contacts").select("id").gte("created_at", weekAgo.toISOString());
+      return {
+        title: "Resumo do Dashboard",
+        period,
+        totalMessages: messages?.length || 0,
+        messagesReceived: messages?.filter((m: { sender: string }) => m.sender === "contact").length || 0,
+        messagesSent: messages?.filter((m: { sender: string }) => m.sender === "agent").length || 0,
+        newContacts: contacts?.length || 0,
+      };
+    }
+    case "agent_performance": {
+      const { data: agents } = await supabase.from("agent_stats").select("*, profiles(name, email)").order("xp", { ascending: false });
+      return {
+        title: "Performance de Agentes",
+        period,
+        agents: (agents || []).map((a: Record<string, unknown>) => ({
+          name: (a.profiles as Record<string, unknown>)?.name || "N/A",
+          messagesHandled: (a.messages_sent as number) + (a.messages_received as number),
+          resolved: a.conversations_resolved, avgResponseTime: a.avg_response_time_seconds,
+          satisfaction: a.customer_satisfaction_score, level: a.level, xp: a.xp,
+        })),
+      };
+    }
+    case "conversation_analytics": {
+      const { data: analyses } = await supabase.from("conversation_analyses").select("*").gte("created_at", weekAgo.toISOString());
+      return {
+        title: "Análise de Conversas",
+        period,
+        totalAnalyses: analyses?.length || 0,
+        avgSentiment: analyses?.length ? Math.round(analyses.reduce((sum: number, a: Record<string, unknown>) => sum + ((a.sentiment_score as number) || 50), 0) / analyses.length) : 0,
+        avgSatisfaction: analyses?.length ? (analyses.reduce((sum: number, a: Record<string, unknown>) => sum + ((a.customer_satisfaction as number) || 3), 0) / analyses.length).toFixed(1) : "N/A",
+      };
+    }
+    case "sla_compliance": {
+      const { data: sla } = await supabase.from("conversation_sla").select("*").gte("created_at", weekAgo.toISOString());
+      // Mesma regra de elegibilidade do SLA de 1ª resposta do painel
+      // (src/hooks/sla/slaFirstResponse.ts): AVALIADA = conversa com desfecho
+      // (violada ou respondida no prazo); PENDENTE = sem desfecho, fora do
+      // numerador E do denominador; a violação manda sobre o carimbo. Sem
+      // nenhuma avaliada NÃO existe taxa (nunca 100%).
+      const tally = tallyFirstResponse(sla || []);
+      return {
+        title: "Cumprimento de SLA",
+        period,
+        evaluatedConversations: tally.evaluated,
+        onTimeResponses: tally.onTime,
+        responseBreaches: tally.breached,
+        pendingResponses: tally.pending,
+        responseComplianceRate: tally.evaluated > 0
+          ? `${Math.round((tally.onTime / tally.evaluated) * 100)}%`
+          : "N/A",
+      };
+    }
+    default:
+      return {};
+  }
+}
+
+/** POST único ao Resend; devolve se o provedor aceitou. Sem chave, não envia. */
+async function sendReportEmail(
+  apiKey: string | undefined,
+  recipient: string,
+  reportData: Record<string, unknown>,
+  emailHtml: string,
+): Promise<boolean> {
+  if (!apiKey) return false;
+  const emailResponse = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "ZAPP Relatórios <relatorios@promobrindes.com.br>", to: recipient,
+      subject: `📊 ${reportData.title} - ${reportData.period}`, html: emailHtml,
+    }),
+  });
+  return emailResponse.ok;
 }
 
 if (import.meta.main) {

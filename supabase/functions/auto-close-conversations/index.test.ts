@@ -339,3 +339,35 @@ Deno.test("R2-API-028: conversa sem falha continua contando (guarda de regressã
   assert(body.closed === 1, `esperado closed:1, recebido ${JSON.stringify(body)}`);
   assert(body.failed === 0, `esperado failed:0, recebido ${JSON.stringify(body)}`);
 });
+
+// ------------------------------------------------------------------- PE-102
+// A idempotência do agendador do cron: a rodada seguinte não pode reencerrar a
+// mesma conversa. O scan só enxerga `assigned_to is not null` e o encerramento
+// desatribui; com o contato já desatribuído (simulado esvaziando o resultado do
+// scan), a 2ª rodada do mesmo cron não encerra nada nem reescreve.
+
+Deno.test("PE-102: auto-close é idempotente — a 2ª rodada do cron não reencerra a conversa", async () => {
+  const stale: unknown[] = [{ id: "c-1", name: "Contato", phone: "+55", assigned_to: "p-1" }];
+  const { client, ctx } = makeServiceClient({ config: CLOSABLE_CONFIG, staleContacts: stale });
+  const deps = makeDeps({ serviceClient: client, cronSecret: TEST_CRON_SECRET });
+
+  const first = await handleAutoCloseConversations(makeRequest({ cronSecret: TEST_CRON_SECRET }), deps);
+  const firstBody = await first.json();
+  assert(firstBody.closed === 1, `1ª rodada deveria encerrar 1, recebido ${JSON.stringify(firstBody)}`);
+  // O encerramento desatribui: é o que tira o contato do filtro do próximo scan.
+  assert(
+    ctx.updates.some((u) => u.table === "contacts" && (u.row as Record<string, unknown>).assigned_to === null),
+    "o encerramento precisa desatribuir o contato (assigned_to=null)",
+  );
+  const escritasNaPrimeira = ctx.inserts.length + ctx.updates.length;
+
+  // 2ª rodada: o contato já saiu do filtro `assigned_to is not null`.
+  stale.length = 0;
+  const second = await handleAutoCloseConversations(makeRequest({ cronSecret: TEST_CRON_SECRET }), deps);
+  const secondBody = await second.json();
+  assert(secondBody.closed === 0, `2ª rodada deveria encerrar 0, recebido ${JSON.stringify(secondBody)}`);
+  assert(
+    ctx.inserts.length + ctx.updates.length === escritasNaPrimeira,
+    "2ª rodada não pode reescrever (reencerrar/desatribuir de novo)",
+  );
+});
