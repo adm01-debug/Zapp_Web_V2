@@ -48,7 +48,6 @@ interface SearchResult {
   contactId?: string;
   contactName?: string;
   messageType?: string;
-  tags?: string[];
   action?: () => void;
   crmPhone?: string;
 }

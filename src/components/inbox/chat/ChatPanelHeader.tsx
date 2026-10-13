@@ -77,7 +77,6 @@ function ChatPanelHeaderBase({
   });
   const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
-  const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
   const showPinnedStack = !showDetails && !isMobile
     && !!pinnedConversations && pinnedConversations.length > 0 && !!onSelectPinned;
@@ -144,7 +143,6 @@ function ChatPanelHeaderBase({
                 <span className="text-muted-foreground">{typeConfig.label}</span>
               </>
             )}
-            {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
             {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
             <SLAIndicator
               firstMessageAt={conversation.createdAt}

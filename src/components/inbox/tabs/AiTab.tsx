@@ -17,6 +17,11 @@ import { ObjectionDetector } from '../ObjectionDetector';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Conversation, Message } from '@/types/chat';
 
+// Remoção da função de tags (2026-10-12): a recomendação de produtos não usa
+// mais as tags/interesses do contato. Array constante para manter estável a
+// queryKey de useRecommendedProducts (um [] novo a cada render refaria a busca).
+const NO_INTERESSES: string[] = [];
+
 const SENTIMENT_CONFIG: Record<Sentiment, { label: string; icon: typeof Smile; className: string }> = {
   positivo: { label: 'Positivo', icon: Smile, className: 'text-success bg-success/10' },
   neutro: { label: 'Neutro', icon: Meh, className: 'text-muted-foreground bg-muted/30' },
@@ -40,8 +45,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
   const { data: leadScoreData } = useContactLeadScore(contactId);
 
-  const interesses = useMemo(() => conversation.contact.tags ?? [], [conversation.contact.tags]);
-  const { data: products = [], isLoading: productsLoading } = useRecommendedProducts(contactId, interesses);
+  const { data: products = [], isLoading: productsLoading } = useRecommendedProducts(contactId, NO_INTERESSES);
 
   const summaryMessages = useMemo(
     () => messages

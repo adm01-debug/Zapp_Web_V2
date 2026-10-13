@@ -102,11 +102,6 @@ async function clickUndo() {
 const invokeCalls = () =>
   h.invoke.mock.calls.map((c) => (c[1] as { body: Record<string, unknown> }).body);
 
-/** O selo VIP do cabeçalho é o Badge com ícone Crown — o chip da seção Tags
- *  também mostra o texto "VIP", então o selo se distingue pelo lucide-crown. */
-const seloVip = () =>
-  screen.queryAllByText('VIP').find((el) => el.parentElement?.querySelector('svg.lucide-crown'));
-
 describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   beforeAll(() => {
     // jsdom não implementa Element.scrollTo — ContactDetails rola o painel no mount.
@@ -135,23 +130,13 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     await waitFor(() => expect(h.update).toHaveBeenLastCalledWith({ tags: [] }));
   });
 
-  it('o selo VIP do cabeçalho lê a mesma fonte que o botão grava (contacts.tags)', async () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    expect(seloVip()).toBeUndefined();
-    openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] }));
-    // O selo acompanha a escrita do botão sem recarregar a tela.
-    await waitFor(() => expect(seloVip()).toBeTruthy());
-  });
-
-  it('o selo VIP persiste após recarregar o detalhe (tag "vip" em outra caixa vem do banco)', async () => {
+  it('o detalhe não mostra selo VIP (a função de tags foi removida)', () => {
     const recarregada: Conversation = {
       ...conversation,
       contact: { ...conversation.contact, tags: ['vip'] },
     };
     render(<ContactDetails conversation={recarregada} onClose={() => {}} />);
-    expect(seloVip()).toBeTruthy();
+    expect(screen.queryByText('VIP')).not.toBeInTheDocument();
   });
 
   it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
@@ -214,8 +199,8 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     expect(h.toast).not.toHaveBeenCalled();
   });
 
-  it('a seção "Tags" voltou ao painel de detalhes', () => {
+  it('a seção "Tags" saiu do painel de detalhes', () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    expect(screen.getByText('Tags')).toBeInTheDocument();
+    expect(screen.queryByText('Tags')).not.toBeInTheDocument();
   });
 });

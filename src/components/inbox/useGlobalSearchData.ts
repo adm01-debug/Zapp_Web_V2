@@ -17,7 +17,6 @@ export interface SearchResult {
   contactId?: string;
   contactName?: string;
   messageType?: string;
-  tags?: string[];
   action?: () => void;
   crmPhone?: string;
 }
@@ -39,7 +38,7 @@ function getDateFilterStart(filter: DateFilter): Date | null {
   }
 }
 
-export function useGlobalSearchData(open: boolean) {
+export function useGlobalSearchData(_open: boolean) {
   const { isSupervisor } = useUserRole();
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const searchRequestId = useRef(0);
@@ -47,7 +46,10 @@ export function useGlobalSearchData(open: boolean) {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [allTags, setAllTags] = useState<TagSuggestion[]>([]);
+  // A busca global não carrega mais as tags de contato (função removida em
+  // 2026-10-12). O array fica vazio e estável só para manter a superfície que
+  // o popup (GlobalSearch) ainda consome; nenhuma tag chega a aparecer.
+  const allTags = useMemo<TagSuggestion[]>(() => [], []);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTypes, setActiveTypes] = useState<Set<ResultType>>(new Set(['message', 'transcription', 'contact', 'action', 'crm']));
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -55,18 +57,6 @@ export function useGlobalSearchData(open: boolean) {
   const [showFilters, setShowFilters] = useState(false);
 
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
-
-  useEffect(() => {
-    if (open) {
-      supabase.from('contacts').select('tags').not('tags', 'is', null).then(({ data }) => {
-        if (data) {
-          const tagSet = new Set<string>();
-          data.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
-          setAllTags([...tagSet].sort((a, b) => a.localeCompare(b)).map(name => ({ id: name, name, color: '#6366f1' })));
-        }
-      });
-    }
-  }, [open]);
 
   const tagSuggestions = useMemo(() => {
     if (search.startsWith('#') || search.includes(' #')) {
@@ -88,10 +78,10 @@ export function useGlobalSearchData(open: boolean) {
     });
   }, []);
 
-  const performSearch = useCallback(async (query: string, types: Set<ResultType>, dateRange: DateFilter, tags: string[], mediaType: MediaTypeFilter = 'all') => {
+  const performSearch = useCallback(async (query: string, types: Set<ResultType>, dateRange: DateFilter, mediaType: MediaTypeFilter = 'all') => {
     const requestId = ++searchRequestId.current;
     const cleanQuery = query.replace(/#\w*/g, '').trim();
-    if (cleanQuery.length < 2 && tags.length === 0 && mediaType === 'all') {
+    if (cleanQuery.length < 2 && mediaType === 'all') {
       setResults([]);
       setIsLoading(false);
       return;
@@ -106,9 +96,7 @@ export function useGlobalSearchData(open: boolean) {
       const addedMessageIds = new Set<string>();
 
       if (types.has('message') && (cleanQuery.length >= 2 || mediaType !== 'all')) {
-        const contactSelect = tags.length > 0
-          ? 'contacts!inner (id, name, surname, tags)'
-          : 'contacts:contact_id (id, name, surname)';
+        const contactSelect = 'contacts:contact_id (id, name, surname)';
         let textQuery = supabase.from('messages')
           .select(`id, content, message_type, created_at, contact_id, ${contactSelect}`)
           .order('created_at', { ascending: false }).limit(20);
@@ -126,7 +114,6 @@ export function useGlobalSearchData(open: boolean) {
 
         if (mediaType !== 'all' && mediaType !== 'link') textQuery = textQuery.eq('message_type', mediaType);
         if (dateStart) textQuery = textQuery.gte('created_at', dateStart.toISOString());
-        if (tags.length > 0) textQuery = textQuery.overlaps('contacts.tags', tags);
 
         const { data: textMessages, error: textError } = await textQuery;
         if (textError) {
@@ -148,15 +135,12 @@ export function useGlobalSearchData(open: boolean) {
       }
 
       if (types.has('transcription') && cleanQuery.length >= 2) {
-        const contactSelect = tags.length > 0
-          ? 'contacts!inner (id, name, surname, tags)'
-          : 'contacts:contact_id (id, name, surname)';
+        const contactSelect = 'contacts:contact_id (id, name, surname)';
         let audioQuery = supabase.from('messages')
           .select(`id, content, transcription, message_type, created_at, contact_id, ${contactSelect}`)
           .not('transcription', 'is', null).ilike('transcription', `%${cleanQuery}%`)
           .order('created_at', { ascending: false }).limit(15);
         if (dateStart) audioQuery = audioQuery.gte('created_at', dateStart.toISOString());
-        if (tags.length > 0) audioQuery = audioQuery.overlaps('contacts.tags', tags);
 
         const { data: audioMessages, error: audioError } = await audioQuery;
         if (audioError) {
@@ -179,14 +163,11 @@ export function useGlobalSearchData(open: boolean) {
       }
 
       if (types.has('contact')) {
-        let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
+        let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at').eq('is_lid_legacy', false);
         if (cleanQuery.length >= 2) {
           const q = escapeOrFilterValue(`%${cleanQuery}%`);
           contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
         }
-        // A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do
-        // LIMIT devolvia zero quando o contato marcado era o 11º da ordem.
-        if (tags.length > 0) contactQuery = contactQuery.overlaps('tags', tags);
 
         const { data: contacts, error: contactError } = await contactQuery.order('name', { ascending: true }).limit(10);
         if (contactError) {
@@ -197,7 +178,7 @@ export function useGlobalSearchData(open: boolean) {
               id: contact.id, type: 'contact',
               title: `${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`,
               preview: contact.phone ?? contact.email ?? '',
-              timestamp: new Date(contact.created_at), contactId: contact.id, tags: contact.tags ?? undefined,
+              timestamp: new Date(contact.created_at), contactId: contact.id,
             });
           });
         }
@@ -260,7 +241,7 @@ export function useGlobalSearchData(open: boolean) {
     if (search.length >= 2 || selectedTags.length > 0 || mediaTypeFilter !== 'all') {
       searchRequestId.current += 1;
       const timer = window.setTimeout(() => {
-        void performSearch(search, activeTypes, dateFilter, selectedTags, mediaTypeFilter);
+        void performSearch(search, activeTypes, dateFilter, mediaTypeFilter);
       }, 300);
       return () => window.clearTimeout(timer);
     } else {

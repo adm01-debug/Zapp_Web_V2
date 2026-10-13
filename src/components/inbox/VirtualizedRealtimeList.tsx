@@ -23,7 +23,7 @@ import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
 
 // Alturas calibradas para o conteudo real da linha (nome + linha de cargo
-// opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
+// opcional + previa + cluster de badges com SLA, que pode quebrar em 2
 // linhas por causa do flex-wrap) — nao so pro avatar de 48px. Pior caso
 // (cargo preenchido + badges em 2 linhas, ambos opcionais e independentes)
 // soma ~90-100px de conteudo real; o buffer abaixo da area util (slot menos
@@ -352,7 +352,6 @@ const ConversationRow = memo(({
 }: ConversationRowProps) => {
   const contactId = conversation.contact.id;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
-  const isVip = (conversation.contact.tags ?? []).some(t => t.toLowerCase() === 'vip');
   // Prioridade operacional canônica (EN) ou legado pt-BR ('alta'→'high');
   // ausente/desconhecido devolve `value: null` e nunca vira prioridade alta.
   const priority = normalizeOperationalPriority(conversation.contact.ai_priority);
@@ -375,7 +374,6 @@ const ConversationRow = memo(({
   }).conversation_sla;
   const openSlaRow = slaRows?.find((r) => r.first_response_at === null);
   const firstMessageAt = openSlaRow?.first_message_at ?? (!slaRows?.length ? conversation.contact.created_at : undefined);
-  const tags = conversation.contact.tags ?? [];
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
 
@@ -405,7 +403,7 @@ const ConversationRow = memo(({
       }}
       // overflow-clip (não overflow-hidden): a altura da linha e uma
       // estimativa fixa (ITEM_HEIGHT_BY_DENSITY, sem measureElement no
-      // virtualizer). Cargo preenchido + varias tags/badges quebrando em 2+
+      // virtualizer). Cargo preenchido + varios badges quebrando em 2+
       // linhas (flex-wrap) pode superar essa estimativa (auditoria
       // 2026-09-26 mediu ate +68px no pior caso) — sem isso o excesso
       // vazava visualmente por cima da linha seguinte em vez de só cortar
@@ -555,15 +553,12 @@ const ConversationRow = memo(({
                 </span>
               )}
             </div>
-            {(typeConfig || isVip || isHighPriority || firstMessageAt || tags.length > 0) && (
+            {(typeConfig || isHighPriority || firstMessageAt) && (
               <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                 {typeConfig && (
                   <Badge variant="outline" className={cn('text-2xs px-1.5 py-0 h-4 border', typeConfig.badgeClass)}>
                     {typeConfig.label}
                   </Badge>
-                )}
-                {isVip && (
-                  <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-warning/15 text-warning border-warning/40">VIP</Badge>
                 )}
                 {isHighPriority && (
                   <Badge variant="outline" className="text-2xs px-1.5 py-0 h-4 bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>
@@ -581,12 +576,6 @@ const ConversationRow = memo(({
                     compact
                   />
                 ))}
-                {tags.slice(0, 2).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-2xs px-1.5 py-0 h-4 bg-muted/50 border-border/20">{tag}</Badge>
-                ))}
-                {tags.length > 2 && (
-                  <span className="text-2xs text-muted-foreground">+{tags.length - 2}</span>
-                )}
               </div>
             )}
           </div>

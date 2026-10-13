@@ -135,13 +135,14 @@ export default function ChatPopup() {
           phone: contact.phone,
           avatar: contact.avatar_url || undefined,
           email: contact.email || undefined,
-          tags: contact.tags || [],
           createdAt: new Date(contact.created_at),
         },
         status: 'open',
         lastMessage: undefined,
         unreadCount: 0,
-        tags: contact.tags || [],
+        // Campo obrigatório do tipo compartilhado Conversation (fora do escopo
+        // deste cartão): vazio, nunca lido de contacts.tags.
+        tags: [],
         priority: popupPriority,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
