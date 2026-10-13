@@ -1,27 +1,22 @@
-Especialista: workertestes
+Especialista: iris
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Ponto da recusa (refazer 1)
+Ponto 1: a entrega movia o `supabase.functions.invoke('evolution-sync')` em ConnectionsView.tsx da linha 69 para a linha 81, mas ESTADO.md mantinha a âncora `src/components/connections/ConnectionsView.tsx:69`. A guarda do espelho do CI (`scripts/ci/docs-estado-registry-convention.unit.mjs`, teste "ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge") lê a linha ancorada e exige que ela contenha o nome da edge — por isso o empilhamento acusava ESTADO.md quebrado. Corrigi realinhando a âncora em ESTADO.md para `src/components/connections/ConnectionsView.tsx:81` (linha exata do invoke). Não toquei na guarda nem afrouxei nenhuma asserção.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- ESTADO.md: linha do `evolution-sync` — âncora `ConnectionsView.tsx:69` → `ConnectionsView.tsx:81`. O cherry-pick dos commits da entrega (531d15e59c, 3a754b1983) deslocou o invoke ao adicionar o estado `disconnecting` (handleDisconnectWithState); a âncora do inventário de edges precisa apontar para a linha real que cita a edge.
+- Reparo executado pelo worker (design); o trabalho de tela veio por cherry-pick dos commits da entrega original (t_53fc1ddb), sem recomeçar.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `node scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/connections/ConnectionsView.tsx:69 não cita 'evolution-sync'`
+- verde depois: mesmo comando → `ℹ pass 11 / ℹ fail 0` (11 testes da convenção de docs)
+- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (114s)`
+- verificação completa: `zapp-verify full .` (step `testes`, `bun run test`) → `Test Files 1349 passed | 3 skipped (1352); Tests 12002 passed | 25 expected fail | 37 todo (12064)`; o `build` foi confirmado à parte com `bun run build` → `✓ built in 22.43s`
+- regressão de conexões: `npx vitest run src/components/connections` → `Test Files 11 passed (11); Tests 46 passed (46)`
+
+## Sobre o "mesmo comando" pedido na recusa
+O espelho do CI (`bash ~/arquitetura-v2/integrador/ci_espelho.sh .`) não executa neste ambiente: a guarda do Hermes bloqueia o script (ele exporta PATH com node/bun/deno de `~/.local` e o classificador trata como mexer no ferramental da fábrica). Rodei o trecho equivalente direto — `node --test` sobre os mesmos alvos de `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/db-audit/*.test.mjs`, `scripts/talkx/*.unit.mjs` (148 arquivos): resultado `# tests 1370 / # pass 1359 / # fail 10`, com o teste antes vermelho agora verde. As 10 falhas restantes não leem nenhum arquivo tocado por este cartão (o diff contra dia/2026-10-13 altera só ESTADO.md e src/components/connections/**) — são o `--staged` do lint-ratchet (6, falha local por `git init`), `tsconfig.app.json`/TS7006, `FLAG_CHANGES.md` e 2 do Talk X de janela de entrega por timezone.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não editei o ferramental da fábrica (~/arquitetura-v2, ~/.local) nem a guarda de docs; a causa era a âncora desatualizada no documento do repositório.
+- Nada fora de ESTADO.md e src/components/connections/** — `git diff --stat dia/2026-10-13..HEAD` confirma 7 arquivos (o documento + 3 componentes + 3 testes do cartão).
