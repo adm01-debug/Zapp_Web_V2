@@ -168,6 +168,7 @@ const conversaMatriz = (
     queue?: string | null;
     groupCategory?: string | null;
     lastMessageAt?: string | null;
+    lastMessageContent?: string;
     createdAt?: string;
   } = {},
 ) => {
@@ -177,7 +178,7 @@ const conversaMatriz = (
     id,
     unreadCount: opts.unread ?? 0,
     messages: Array.from({ length: mensagens }, (_, i) => ({ id: `m-${id}-${i}` })),
-    lastMessage: iso ? { id: `m-${id}-0`, created_at: iso } : null,
+    lastMessage: iso ? { id: `m-${id}-0`, created_at: iso, content: opts.lastMessageContent ?? '' } : null,
     contact: {
       id,
       name: opts.nome ?? `Contato ${id}`,
@@ -203,6 +204,9 @@ const CONVERSAS_MATRIZ = [
   conversaMatriz('sem-msg', { nome: 'Sem Mensagem', assigned: PROFILE_ID, mensagens: 0, lastMessageAt: null, createdAt: '2026-10-03T12:00:00.000Z' }),
   conversaMatriz('aguardando-2', { nome: 'Aguardando Dois', status: 'waiting', assigned: 'p2', lastMessageAt: '2026-10-07T12:00:00.000Z' }),
   conversaMatriz('iris', { nome: 'Iris Duarte', email: 'iris@promo.com', assigned: PROFILE_ID, lastMessageAt: '2026-10-08T18:00:00.000Z' }),
+  // t_8e895114: a única com texto na última mensagem — é o que a busca da lista
+  // passou a indexar junto com nome/telefone/e-mail.
+  conversaMatriz('promo', { nome: 'Cliente Promo', lastMessageAt: '2026-10-09T12:00:00.000Z', lastMessageContent: 'Quero o brinde do catálogo' }),
 ] as never;
 
 const estadoFiltros = (combo: Combo) => ({
@@ -323,6 +327,27 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
     aplicarCombo(result, { nome: 'telefone', search: '1203630-555' });
     act(() => result.current.setChipTab('all'));
     expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['grupo']);
+    expect(result.current.chipCounts.all).toBe(1);
+  });
+
+  it('busca por telefone FORMATADO também acha (t_8e895114)', () => {
+    // Antes: `phone.includes(rawSearch)` comparava "(11) 99999-9999" com
+    // "5511999999999" e não achava NADA — o usuário digita como lê no WhatsApp.
+    const { result } = montarMatriz();
+    aplicarCombo(result, { nome: 'telefone formatado', search: '(11) 99999-9999' });
+    act(() => result.current.setChipTab('all'));
+
+    const ids = result.current.filteredConversations.map((c) => c.contact.id);
+    expect(ids).toContain('silvestre');
+    expect(ids).not.toContain('grupo'); // telefone diferente
+    expect(result.current.chipCounts.all).toBe(ids.length);
+  });
+
+  it('busca acha o trecho da última mensagem (t_8e895114)', () => {
+    const { result } = montarMatriz();
+    aplicarCombo(result, { nome: 'última mensagem', search: 'brinde do catálogo' });
+    act(() => result.current.setChipTab('all'));
+    expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['promo']);
     expect(result.current.chipCounts.all).toBe(1);
   });
 

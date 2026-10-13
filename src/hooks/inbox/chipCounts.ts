@@ -99,15 +99,27 @@ export function passesExtraFilters(
 
   // Busca — trim só decide se há busca; a comparação usa o texto bruto,
   // igual à lista original ("resolvida " fica diferente de "Resolvida").
+  //
+  // t_8e895114: telefone passou a casar por DÍGITOS (quem digita
+  // "(11) 99999-8888" achava nada porque o contato guarda "5511999998888"), e o
+  // trecho da última mensagem entrou na busca — era o único campo que o usuário
+  // vê na lista e não conseguia procurar.
   const rawSearch = ctx.search ?? '';
   if (rawSearch.trim()) {
     const searchLower = rawSearch.toLowerCase();
+    const searchDigits = rawSearch.replace(/\D/g, '');
     const nome = c.contact.name?.toLowerCase() ?? '';
     const email = c.contact.email?.toLowerCase() ?? '';
+    const phone = c.contact.phone ?? '';
+    const phoneOk =
+      phone.includes(rawSearch) ||
+      (searchDigits.length > 0 && phone.replace(/\D/g, '').includes(searchDigits));
+    const lastMessage = (c.lastMessage?.content ?? '').toLowerCase();
     if (
       !nome.includes(searchLower) &&
-      !c.contact.phone.includes(rawSearch) &&
-      !email.includes(searchLower)
+      !phoneOk &&
+      !email.includes(searchLower) &&
+      !lastMessage.includes(searchLower)
     ) {
       return false;
     }
