@@ -16,6 +16,40 @@ import {
   sessionStateFromV2,
 } from "../_shared/evolution-session-routes.ts";
 
+/**
+ * Campos de configuração de instância que a tela lê (InstanceSettingsDialog lê no
+ * TOPO do objeto). São os mesmos campos que o v2 devolve em /settings/find.
+ */
+const INSTANCE_SETTINGS_FIELDS = [
+  'rejectCall', 'msgCall', 'groupsIgnore', 'alwaysOnline',
+  'readMessages', 'readStatus', 'syncFullHistory',
+] as const;
+
+/**
+ * Normaliza a leitura de /instance/advanced-settings (GO): a GO pode devolver os
+ * campos no topo ou aninhados em `data` (mesma forma de /user/privacy). Devolve
+ * só os campos conhecidos — e null quando NÃO vem nenhum deles. Um 2xx sem
+ * payload conhecido é FALHA, não um objeto vazio: objeto vazio desligaria todos
+ * os interruptores na tela (o defeito da V3). Espelha o fail-closed de
+ * R2-API-014 (update-privacy).
+ */
+export function settingsFromGoPayload(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const candidates: Record<string, unknown>[] = [raw as Record<string, unknown>];
+  const nested = (raw as Record<string, unknown>).data;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    candidates.push(nested as Record<string, unknown>);
+  }
+  for (const candidate of candidates) {
+    const picked: Record<string, unknown> = {};
+    for (const field of INSTANCE_SETTINGS_FIELDS) {
+      if (field in candidate) picked[field] = candidate[field];
+    }
+    if (Object.keys(picked).length > 0) return picked;
+  }
+  return null;
+}
+
 /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
 export interface EvolutionApiDeps {
   /** client service-role (grava/atualiza whatsapp_connections etc.). */
@@ -841,8 +875,70 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
     // ─── 2. Settings ───
-    if (action === 'set-settings') return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
-    if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
+    // GO_GAPS §Sem equivalente: a GO não tem /settings/set|find; o equivalente é
+    // /instance/advanced-settings (exclusivo GO), rota de INSTÂNCIA — a GO resolve
+    // a instância pelo próprio token (GO_GAPS §Auth). O v2 mantém as rotas
+    // clássicas (instância no path, chave global). O contrato campo-a-campo que a
+    // GO expõe não está documentado (o swagger público do GO não lista a rota);
+    // por isso a LEITURA é fail-closed: só conta como sucesso se vier ao menos um
+    // campo conhecido — um corpo vazio desligaria todos os interruptores na tela.
+    if (action === 'set-settings' || action === 'get-settings') {
+      const isWrite = action === 'set-settings';
+      const settings = {
+        rejectCall: body.rejectCall,
+        msgCall: body.msgCall,
+        groupsIgnore: body.groupsIgnore,
+        alwaysOnline: body.alwaysOnline,
+        readMessages: body.readMessages,
+        readStatus: body.readStatus,
+        syncFullHistory: body.syncFullHistory,
+      };
+      const json = (payload: unknown) =>
+        new Response(JSON.stringify(payload), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+      if (!isGoFlavor) {
+        return isWrite
+          ? await proxy(`/settings/set/${instance}`, 'POST', settings)
+          : await proxy(`/settings/find/${instance}`, 'GET');
+      }
+
+      // GO: token DA conexão — sem ele, nega em vez de consultar outra conexão
+      // com a credencial da padrão (TRA-002/#18).
+      const settingsToken = await resolveInstanceToken(supabase, instance);
+      if (!settingsToken) {
+        return json({ error: true, status: 403, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` });
+      }
+      let goResponse: Response;
+      try {
+        goResponse = await fetch(`${evolutionApiUrl}/instance/advanced-settings`, {
+          method: isWrite ? 'POST' : 'GET',
+          headers: { 'apikey': settingsToken, 'Content-Type': 'application/json' },
+          ...(isWrite ? { body: JSON.stringify(settings) } : {}),
+        });
+      } catch {
+        return json({ error: true, status: 504, message: 'Não foi possível falar com a Evolution GO para ler/gravar as configurações da instância.' });
+      }
+      let goData: unknown = null;
+      try { goData = JSON.parse(await goResponse.text()); } catch { /* corpo não-JSON da GO */ }
+      if (!goResponse.ok) {
+        const detail = goData && typeof goData === 'object'
+          ? (goData as Record<string, unknown>).message ?? (goData as Record<string, unknown>).error
+          : undefined;
+        return json({
+          error: true,
+          status: goResponse.status,
+          message: typeof detail === 'string' && detail
+            ? `Evolution GO: ${detail}`
+            : 'A Evolution GO recusou a operação de configurações da instância.',
+        });
+      }
+      if (isWrite) return json(goData ?? { status: 'success' });
+      const readPayload = settingsFromGoPayload(goData);
+      if (!readPayload) {
+        return json({ error: true, status: 502, message: 'A Evolution GO não devolveu as configurações da instância — não é possível assumir valores desligados. Tente novamente.' });
+      }
+      return json(readPayload);
+    }
 
     // ─── 3. Webhook ───
     if (action === 'set-webhook') return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: body.enabled ?? true, url: body.url, webhookByEvents: body.webhookByEvents ?? true, webhookBase64: body.webhookBase64 ?? false, events: body.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
