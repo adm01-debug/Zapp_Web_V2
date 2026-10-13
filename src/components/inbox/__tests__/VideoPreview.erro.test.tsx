@@ -30,11 +30,11 @@ describe('erro de carregamento no preview de vídeo', () => {
 
     const video = container.querySelector('video');
     expect(video).not.toBeNull();
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    expect(container.querySelector('svg.lucide-loader-circle')).not.toBeNull();
 
     fireEvent.error(video!);
 
-    expect(container.querySelector('.animate-spin')).toBeNull();
+    expect(container.querySelector('svg.lucide-loader-circle')).toBeNull();
     expect(screen.getByRole('alert').textContent).toContain('Não foi possível carregar o vídeo');
     expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeTruthy();
   });
@@ -49,7 +49,7 @@ describe('erro de carregamento no preview de vídeo', () => {
 
     expect(screen.queryByRole('alert')).toBeNull();
     expect(container.querySelector('video')).not.toBeNull();
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    expect(container.querySelector('svg.lucide-loader-circle')).not.toBeNull();
   });
 
   it('vídeo que carrega normalmente não mostra aviso nenhum', () => {
@@ -58,6 +58,6 @@ describe('erro de carregamento no preview de vídeo', () => {
     fireEvent.loadedData(container.querySelector('video')!);
 
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(container.querySelector('.animate-spin')).toBeNull();
+    expect(container.querySelector('svg.lucide-loader-circle')).toBeNull();
   });
 });
