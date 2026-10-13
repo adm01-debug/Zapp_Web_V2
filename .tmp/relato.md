@@ -26,6 +26,11 @@ A entrega `29b1671c0` acrescentou 3 linhas a `_shared/evolution-control-authz.ts
 - Não toquei no código da entrega (`_shared/evolution-control-authz.ts`, `evolution-api/index.ts`, `session-flavor-routes.test.ts`): eles estão certos e passam nas próprias provas; o problema era só documento derivado.
 - Não mexi nas 6 falhas de `lint-ratchet` (staged) nem nas 2 de `Talk X`: são anteriores à base e de outros arquivos (fora do meu escopo). Ficam registradas aqui para o integrador comparar com a mesma lista na base.
 
+## Pontos do "O QUE FAZER" do cartão ([refazer])
+- Ponto 1: parti do commit da entrega `29b1671c0` com `git cherry-pick` (commit `819005597` no meu branch), sem recomeçar — o diff traz exatamente os mesmos arquivos da entrega (`_shared/evolution-control-authz.ts`, `evolution-api/index.ts`, `session-flavor-routes.test.ts`), sem nenhum commit de outro cartão.
+- Ponto 2: reproduzi sobre a ponta da dia (`dia/2026-10-12` = `dia/2026-10-13` = `96dd72dc5`, base do meu branch) com `ci_espelho.sh .`, que listou `node: N217: docs bate com medição fresca e segunda execução é idêntica`; a causa era a própria entrega ter mexido em documento derivado e não o ter regenerado (`docs/audits/edge-functions-authz-coverage.md`) — e também deslocado as âncoras do `ESTADO.md` para `evolution-api/index.ts`. Corrigi a causa nos dois documentos, sem afrouxar asserção nenhuma (não toquei nas guardas).
+- Ponto 3: prova — o MESMO comando não traz mais nem `node: N217 ...` nem `node: ESTADO.md cita só âncoras reais` (a lista restante é pré-existente na base, provado no relato), e a régua/guarda passam a `# fail 0`. Fecho citando o sha `29b1671c0`.
+
 ## Commits (citando a entrega)
 - `819005597` — cherry-pick da entrega `29b1671c0` (feat(evolution-api): ação pairing-code para parear por código).
 - `ec38d7a0` — `chore(ci): regenera o espelho de cobertura de authz apos a acao pairing-code`.
