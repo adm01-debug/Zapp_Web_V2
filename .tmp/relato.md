@@ -18,6 +18,10 @@ Especialista: Íris (area-front-componentes)
 - contrato: `npx vitest run --config vitest.contracts.config.ts tests/contracts/etiquetas-remocao-residuos.contract.test.ts` → `Test Files 1 passed (1); Tests 6 passed (6)`
 - grep do critério de pronto: `git grep -nE 'ai-tags|Tags IA' -- src` → 0 resultados.
 
+## Explicação dos avisos do juiz
+- Teste existente removido: `AIAutoTagsConfig.recentesErro.test.tsx` saiu JUNTO com `AIAutoTagsConfig.tsx` porque o cartão manda remover o componente — não há teste possível de um componente que deixa de existir. O git guarda o histórico dos dois.
+- Arquivo fora da lista `tests/contracts/etiquetas-remocao-residuos.contract.test.ts`: foi **indispensável**, não conveniência. Ele AFIRMAVA o estado antigo (exigia `contacts.tags` e `ai_conversation_tags` no inventário de docs) e falharia por construção depois da remoção pedida pelo cartão. Não afrouxei nada: troquei a exigência de PRESENÇA das tabelas removidas por exigência de AUSÊNCIA (mantendo a presença só do contrato externo `contact_tags_ext`). Sem essa troca, a própria verificação/CI ficaria vermelha por causa deste cartão.
+
 ## O que NÃO fiz e por quê (fora da lista de arquivos do cartão; comentado no cartão)
 - `src/components/ai/AutoTicketClassifier.tsx:141-145` lê `ai_conversation_tags` (tabela que o cartão de banco vai derrubar) — não é meu arquivo.
 - `src/services/contact.service.ts:216` lê `ai_conversation_tags` — área do worker (hooks).
