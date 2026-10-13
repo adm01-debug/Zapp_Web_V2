@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search, List, LayoutGrid,
+  Archive, AlertTriangle, PowerOff, Tag,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentsViewMode } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentsViewMode, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
+import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -28,7 +29,12 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     viewMode = 'list', setViewMode = () => {},
+    // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
+    // injetam um hook mínimo: o hook real sempre devolve os seis.
+    selectedIds = [], toggleSelect = () => {}, selectAll = () => {}, clearSelection = () => {}, runBulkAction = async () => [], isBulkRunning = false,
   } = useTalkXSegments();
+  const [bulkResult, setBulkResult] = useState<TalkXSegmentBulkResult[] | null>(null);
+  const [bulkTag, setBulkTag] = useState('');
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -103,6 +109,34 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     () => Math.max(...segments.map((s) => s.estimated_count), 1),
     [segments],
   );
+
+  /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
+     do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
+  const pageIds = paged.map((s) => s.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const nameOfSegment = (id: string) => segments.find((s) => s.id === id)?.name ?? id;
+
+  // "Selecionar todos" é o que está VISÍVEL (filtro + página), e mexe só nele:
+  // o que já estava escolhido em outra página continua escolhido.
+  const toggleAllOnPage = () => {
+    if (allPageSelected) pageIds.forEach((id) => toggleSelect(id));
+    else pageIds.filter((id) => !selectedIds.includes(id)).forEach((id) => toggleSelect(id));
+  };
+
+  const runBulk = async (action: TalkXSegmentBulkAction, tag?: string) => {
+    if (isBulkRunning || selectedIds.length === 0) return;
+    try {
+      const results = await runBulkAction({ action, ids: selectedIds, tag });
+      setBulkResult(results);
+      // Só o que NÃO foi aplicado segue selecionado: item barrado pela guarda
+      // fica à mão para conferir e refazer, sem reselecionar o lote inteiro.
+      const falhos = results.filter((r) => !r.succeeded).map((r) => r.segment_id);
+      clearSelection();
+      if (falhos.length > 0) selectAll(falhos);
+    } catch (e) {
+      toast.error(`Não foi possível aplicar a ação: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
 
   /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
   const existingNames = useMemo(
@@ -242,6 +276,26 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           )}
         />
 
+        <TalkXBulkBar
+          count={selectedIds.length}
+          onClear={clearSelection}
+          actions={
+            <>
+              <GhostButton size="sm" icon={Check} onClick={() => void runBulk('activate')}>Ativar</GhostButton>
+              <GhostButton size="sm" icon={PowerOff} onClick={() => void runBulk('deactivate')}>Desativar</GhostButton>
+              <GhostButton size="sm" icon={Archive} onClick={() => void runBulk('archive')}>Arquivar</GhostButton>
+              <input
+                type="text" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)}
+                aria-label="Tag para aplicar em massa" placeholder="tag…"
+                className="h-8 w-28 rounded-lg border border-border/70 bg-input/40 px-2 text-xs text-foreground"
+              />
+              <GhostButton size="sm" icon={Tag} onClick={() => void runBulk('tag', bulkTag)}>Aplicar tag</GhostButton>
+            </>
+          }
+        />
+
+        {bulkResult && <BulkResultPanel results={bulkResult} nameOf={nameOfSegment} onClose={() => setBulkResult(null)} />}
+
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           <TalkXQueryBoundary
             query={{ isLoading, isError, error }}
@@ -252,7 +306,11 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             empty={<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>}
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
-           : (
+           : (<>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+              <input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" />
+              <span className="text-2xs text-foreground-secondary">Selecionar todos os segmentos da página</span>
+            </div>
             <div
               data-testid={viewMode === 'grid' ? 'segments-grid' : 'segments-list'}
               className={cn('p-4', viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3' : 'flex flex-col gap-2')}
@@ -264,6 +322,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                   mode={viewMode}
                   maxCount={maxEstimatedCount}
                   selected={selected?.id === s.id}
+                  checked={selectedIds.includes(s.id)}
+                  onToggleCheck={() => toggleSelect(s.id)}
                   onSelect={() => setSelected(s)}
                   onToggleFav={() => void toggleFav(s)}
                   onEdit={() => openEdit(s)}
@@ -271,8 +331,9 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                   onDelete={() => setDeleting(s)}
                 />
               ))}
+
             </div>
-          )}
+          </>)}
           </TalkXQueryBoundary>
           {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
         </section>
@@ -385,6 +446,68 @@ function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* X114 — feedback do lote (itens aplicados × itens não aplicados)     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Motivo do item não aplicado, lido do veredito do servidor. A guarda de uso
+ * (P0001: segmento em campanha scheduled/sending/paused) é BLOQUEIO — o item é
+ * "não aplicável", nunca sucesso; os demais códigos são falha de aplicação.
+ */
+function motivoFalha(r: TalkXSegmentBulkResult): string {
+  const detalhe = r.error_message?.trim();
+  return r.error_code === 'P0001'
+    ? `Não aplicável — ${detalhe || 'bloqueado pela guarda de uso (segmento em campanha ativa).'}`
+    : `Falhou — ${detalhe || 'o servidor não aplicou este item.'}`;
+}
+
+/**
+ * Resumo do lote POR SEGMENTO: quantos entraram, quantos não, e o detalhamento
+ * item a item do que ficou de fora. Só o que falhou aparece na lista — item
+ * aplicado não é listado, e item bloqueado nunca conta como aplicado.
+ */
+function BulkResultPanel({ results, nameOf, onClose }: { results: TalkXSegmentBulkResult[]; nameOf: (id: string) => string; onClose: () => void }) {
+  const aplicados = results.filter((r) => r.succeeded);
+  const falhos = results.filter((r) => !r.succeeded);
+  return (
+    <section
+      data-testid="talkx-bulk-resultado" role="status" aria-live="polite" aria-label="Resultado da ação em massa"
+      className="rounded-xl border border-border/70 bg-card px-3.5 py-3 space-y-2"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-foreground">Resultado da ação em massa</span>
+        <Pill label={`${aplicados.length} aplicado${aplicados.length === 1 ? '' : 's'}`} tone={aplicados.length > 0 ? 'success' : 'muted'} />
+        {falhos.length > 0 && <Pill label={`${falhos.length} não aplicado${falhos.length === 1 ? '' : 's'}`} tone="danger" />}
+        <button
+          type="button" onClick={onClose} aria-label="Fechar resultado"
+          className="ml-auto h-7 w-7 rounded-md border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {falhos.length === 0 ? (
+        <p className="text-2xs text-foreground-secondary">Todos os itens selecionados foram aplicados.</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-2xs text-foreground-secondary">Confira item a item o que não foi aplicado:</p>
+          <ul className="space-y-1">
+            {falhos.map((r) => (
+              <li key={r.segment_id} data-testid="talkx-bulk-item-falho" className="flex items-start gap-2 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-dash-amber mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-foreground">{nameOf(r.segment_id)}</span>
+                  <span className="text-foreground-secondary"> · {motivoFalha(r)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
   const { data: est } = useAudienceEstimate(s.rules, true);
   return (
@@ -427,6 +550,8 @@ interface SegmentCardProps {
   mode: TalkXSegmentsViewMode;
   maxCount: number;
   selected: boolean;
+  checked: boolean;
+  onToggleCheck: () => void;
   onSelect: () => void;
   onToggleFav: () => void;
   onEdit: () => void;
@@ -438,7 +563,7 @@ interface SegmentCardProps {
  * O mesmo cartão serve à lista e à grade: a alternância só troca o contêiner
  * (`flex-col` x `grid`). Nada de segunda árvore visual para o mesmo segmento.
  */
-function SegmentCard({ s, mode, maxCount, selected, onSelect, onToggleFav, onEdit, onCampaign, onDelete }: SegmentCardProps) {
+function SegmentCard({ s, mode, maxCount, selected, checked, onToggleCheck, onSelect, onToggleFav, onEdit, onCampaign, onDelete }: SegmentCardProps) {
   const isGrid = mode === 'grid';
   const rules = (s.rules?.groups ?? []).flatMap((g) => g.rules);
   return (
@@ -452,6 +577,13 @@ function SegmentCard({ s, mode, maxCount, selected, onSelect, onToggleFav, onEdi
       )}
     >
       <div className="flex items-start gap-2 min-w-0 sm:flex-1">
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0 mt-0.5">
+          <input
+            type="checkbox" checked={checked} onChange={onToggleCheck}
+            aria-label={`Selecionar ${s.name}`}
+            className="w-3.5 h-3.5 accent-primary cursor-pointer"
+          />
+        </div>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
