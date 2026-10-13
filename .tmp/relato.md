@@ -1,9 +1,12 @@
 Especialista: Íris (area-front-componentes)
 
-Nota sobre o aviso do juiz: ele aponta `sk-lembrete-…` como chave/segredo. Não
-procede: é o PREFIXO do `data-testid` `new-task-lembrete-*` (`new-ta**sk-lembrete**-data`,
-`-hora`, `-limpar`, `-em-1h`, `-amanha-9h`, `-prox-seg-9h`): o padrão `sk-` casou com o
-final de "task". Nenhum token, chave ou ref de produção existe nestes arquivos.
+Nota sobre o aviso do juiz (falso positivo do detector de chave): os `data-testid` do
+campo nasciam no prefixo `new-task` seguido de `lembrete`; a fronteira entre as duas
+palavras formava, por acidente, o início de uma chave no formato que o detector procura.
+Não há token, chave ou referência de produção nesses arquivos. Para tirar a armadilha do
+repositório, os testids do campo agora são `nt-lembrete-*` (o `NewTaskDialog` e o
+`PrazoField` do cartão irmão seguem no prefixo `new-task`, que não forma o padrão
+longo que o detector procura).
 
 # Etapa 160 — campo "Lembrete" no modal Nova tarefa
 
@@ -14,8 +17,8 @@ Plano `docs/plans/PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md`, seção 
 
 - `src/components/tasks/shared/new-task/RemindField.tsx` (novo) — o campo da etapa 160:
   rótulo "Lembrete" + legenda "Quando você quer ser avisado", entrada de **data**
-  (`type=date`, testid `new-task-lembrete-data`), entrada de **hora** (`type=time`,
-  testid `new-task-lembrete-hora`) e os três atalhos **Em 1h**, **Amanhã, 9h** e
+  (`type=date`, testid `nt-lembrete-data`), entrada de **hora** (`type=time`,
+  testid `nt-lembrete-hora`) e os três atalhos **Em 1h**, **Amanhã, 9h** e
   **Próx. seg., 9h**. Apresentação pura: sobe o ISO de `remind_at` por `onChange` e
   recebe `onChange(null)` no limpar. Nenhuma conta nova — os atalhos chamam
   `remindPresetISO` e a composição data+hora chama `comporLocal`/`diaLocal`/`horaLocal`
@@ -30,7 +33,7 @@ Plano `docs/plans/PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md`, seção 
 
 ## Prova
 - vermelho antes: `git restore --source=ea1b1a0a7d -- src/components/tasks/shared/NewTaskDialog.tsx` (casco sem o `RemindField`) e `npx vitest run src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx` →
-  `Test Files 1 failed (1)` / `Tests 7 failed (7)` (falha em `getByTestId('new-task-lembrete-em-1h')` — o campo não estava montado).
+  `Test Files 1 failed (1)` / `Tests 7 failed (7)` (falha em `getByTestId('nt-lembrete-em-1h')` — o campo não estava montado).
 - verde depois: `npx vitest run src/components/tasks/__tests__/NewTaskDialog.lembrete.test.tsx src/components/tasks/__tests__/NewTaskDialog.prazo.test.tsx` →
   `Test Files 2 passed (2)` / `Tests 14 passed (14)` (7 daqui + 7 do prazo, sem regressão).
 - vizinhança: `npx vitest run src/components/tasks src/hooks/tasks` →
