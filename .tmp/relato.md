@@ -18,5 +18,7 @@ Contrato com a tela (cartão filho): a lista a exibir é `connections` (com `is_
 ## Dependência do cartão pai
 A RPC `admin_inbox_silence` e a migration vieram do cartão pai (t_38ab6fff, sha f24f5c486b) por `git cherry-pick -x`: esse commit não estava na ponta `dia/2026-10-13` desta área de trabalho (a faixa trazida foi bf887427b0, 5009af7fdd, f24f5c486b).
 
+Por isso o diff traz `src/integrations/supabase/types.ts`, `supabase/migrations/20261013230009_admin_inbox_silence.sql` e `supabase/tests/admin_inbox_silence.sql`: são o trabalho do cartão PAI, que este cartão manda usar (`Depende de t_38ab6fff (RPC admin_inbox_silence)`) e define como ler a RPC. Não são implementação minha: os únicos arquivos que escrevi neste cartão são `src/components/monitoring/hooks/useInboxSilence.ts` e `src/components/monitoring/__tests__/useInboxSilence.behavior.test.ts`.
+
 ## O que NÃO fiz e por quê
 - Não li `global_settings` no front: o limiar chega pela RPC, que já o lê no servidor; uma segunda leitura no front poderia divergir da usada para decidir `is_silent`. A chave continua editável pela tela do cartão filho e o `refresh()` relê.
