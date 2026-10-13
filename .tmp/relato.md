@@ -1,18 +1,20 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/lib/__tests__/retry.politica.test.ts` (novo): cobre a POLÍTICA do `withRetry`/`withNetworkRetry` que os testes já existentes não cobrem — número de tentativas (`maxRetries=3` → 4 tentativas) e esgotamento, teto do backoff (`maxDelayMs`), `onRetry` recebendo a tentativa 1..N, e a CLASSIFICAÇÃO do `withNetworkRetry` (TypeError `Failed to fetch`, `status >= 500`, network/timeout, 4xx NÃO repete, fronteira de palavra `502`×`5024`, erro que não é `Error`, `AbortError`). Chama o módulo real (`../retry`); só a fonte do jitter é mockada.
+- `src/lib/__tests__/safeStorage.test.ts` (novo): caminhos de EXCEÇÃO (`getItem`/`setItem`/`removeItem` lançam, cota/modo privado) e round-trip JSON. O Storage do jsdom é um Proxy e `vi.spyOn` não chega ao módulo; por isso os testes de falha trocam o global `localStorage` inteiro (`vi.stubGlobal`) por um que lança.
+- `src/lib/__tests__/popupManager.test.ts` (novo): abre/reaproveita/foca popup por contato, listener de `load` (título) com guarda cross-origin, `closePopup` só do alvo, `closeAllPopups`, `isPopupOpen` com popup fechado por fora e com popup bloqueado (`window.open` → null).
+- `src/lib/__tests__/webauthnUtils.test.ts` (novo): `base64URLToBuffer`/`bufferToBase64URL` (padding, `-`/`_`), saída sem `+`, `/` e `=`, e round-trip de todos os 256 bytes.
+- `src/lib/__tests__/supabaseHelpers.test.ts` (novo): `fromTable` delega a `supabase.from` com o nome recebido e devolve o builder; reexport do cliente. O módulo do cliente é mockado (guarda de rede).
+- `src/lib/__tests__/avatar-colors.test.ts` (novo): `getAvatarColor` determinístico e no formato da paleta; `getInitials` (2 iniciais, maiúsculas, 1 nome, espaços extras).
+- `src/lib/__tests__/phoneNormalization.test.ts` (removido): testava uma CÓPIA inline de normalização, sem módulo de produção por trás. O dono real é `src/lib/calls/phone.ts`, JÁ coberto por `src/lib/calls/__tests__/phone.test.ts` — o cartão manda trocar, e o teste do código real já existe.
+- Dependência: trouxe o commit do cartão pai t_753811b3 (`fix(lib): normalizeMediaUrl robusto e withRetry sem repetir cancelamento`, sha 8ff7f83658) por cherry-pick, como o cartão manda — sem ele o `withRetry` não teria o padrão seguro/aborto que meus testes exercitam. O commit de relato do pai (`.tmp/relato.md`) não foi trazido: é relato, não produto.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (mutação injetada nos 6 módulos e DEPOIS revertida): `npx vitest run src/lib/__tests__/retry.politica.test.ts src/lib/__tests__/safeStorage.test.ts src/lib/__tests__/popupManager.test.ts src/lib/__tests__/webauthnUtils.test.ts src/lib/__tests__/supabaseHelpers.test.ts src/lib/__tests__/avatar-colors.test.ts` → `Test Files 6 failed (6); Tests 13 failed | 90 passed (103)` (saída crua em `.tmp/mutacao-vermelho.txt`)
+- verde depois (produção restaurada, `git diff` dos módulos vazio): mesmo comando → `Test Files 6 passed (6); Tests 103 passed (103)`
+- suíte da área: `npx vitest run src/lib` → `Test Files 118 passed (118); Tests 1645 passed | 5 expected fail (1650)` (saída crua em `.tmp/lib-verde.txt`; os 5 expected fail são pré-existentes, nenhum meu)
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- `src/lib/lazyWithRetry.ts`: o cartão diz que depende do SH3 e manda esperar — não toquei.
+- Nenhum módulo de PRODUÇÃO foi alterado: o `git diff` dos 6 módulos está vazio; o único commit de produção no meu ramo é o cherry-pick do pai.
