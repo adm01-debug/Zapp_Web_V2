@@ -7,6 +7,8 @@ Especialista: Íris (area-front-componentes)
 
 O contrato consumido vem do cartão pai (t_e2e71096): `deleteFile(id): Promise<boolean>` e `reprocessFile(id): Promise<boolean>`. A faixa do pai não estava no meu workspace; trouxe por `git cherry-pick 8be436a39` (só o commit de código; o commit de relato do pai não traz nada para esta tela).
 
+Arquivos do pai que aparecem no diff e que o meu cartão não lista — explicação do aviso do juiz: `src/hooks/integrations/useKnowledgeBase.ts`, `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` e `src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` NÃO foram tocados por mim; vêm inteiros do commit cf346403b (cherry-pick de 8be436a39, cartão pai). Foram indispensáveis porque a tela chama `deleteFile`/`reprocessFile`, que só existem nesse commit; sem a faixa, o meu teste nem compila. Meus commits são d3a1cc700 (tela + teste) e o de relato; `git show --stat d3a1cc700` mostra só arquivos de `src/components/knowledge/**`.
+
 Observação (registrada em comentário, fora da minha área): a tela não decide permissão nem o que vai ao Storage — isso é do hook/Edge. O parecer do revisor sobre o cartão pai (URL assinada com validade de 1 dia gravada em `file_url`) é do pai, não desta tela.
 
 ## Prova
