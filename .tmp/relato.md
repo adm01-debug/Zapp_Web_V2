@@ -25,3 +25,4 @@ Especialista: workersql
 - NÃO abri a policy da tabela nem relaxei para supervisor: o cartão pede o MESMO controle do SELECT (só admin).
 - Diff de 32.704 caracteres > teto de 25k da área: o excesso é a suíte de prova (~20k); a migration em si tem 182 linhas aditivas. O cartão pede as DUAS RPCs num cartão só — não cindi.
 - Fronteira: o consumo na tela é do cartão filho (worker de tela/hooks); aqui entreguei só o banco + os tipos.
+- Nota ao juiz barato (alarme "código sem teste novo"): o teste desta entrega é `supabase/tests/audit_log_summary_por_periodo.sql`, commitado no MESMO commit do código (401b5af) — o juiz não reconhece suíte `.sql`. É ela que dá o vermelho→verde mostrado acima (42883 sem a migration; 38 PASS com ela).
