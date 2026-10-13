@@ -250,7 +250,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
           className={cn(
             'flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2.5 text-sm md:px-5',
             needsReconnect
-              ? 'border-destructive/30 bg-destructive/10 text-destructive'
+              ? 'border-destructive/30 bg-destructive/10 text-[hsl(var(--destructive-text))]'
               : 'border-warning/30 bg-warning/10 text-[hsl(var(--warning-text))]',
           )}
         >
