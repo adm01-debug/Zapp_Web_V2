@@ -43,6 +43,10 @@
       "schedule": "12 3 * * *"
     },
     {
+      "jobname": "expire-orphan-user-sessions",
+      "schedule": "23 3 * * *"
+    },
+    {
       "jobname": "vacuum-contacts-daily",
       "schedule": "42 3 * * *"
     },
