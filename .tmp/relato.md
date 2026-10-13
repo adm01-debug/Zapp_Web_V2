@@ -14,6 +14,10 @@ Especialista: hugo
 - tipos: `npx tsc -b --force` → exit 0.
 - verification do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (58s)` (`OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`).
 
+## Sobre os avisos do juiz automático
+- "teste existente removido/afrouxado": o único teste removido foi `src/hooks/gamification/__tests__/mutations.test.tsx`, que testava exatamente as RPCs de escrita que o cartão mandou apagar (`add_agent_xp`/`grant_agent_achievement`/`update_agent_streak`) e por isso não compila sem o módulo. Ele é SUBSTITUÍDO por `gamificacaoSemEscritaNoCliente.test.ts`, que é mais forte: exige que nenhum arquivo de produção em `src/` volte a citar essas RPCs e que o módulo e o provider apagados não reapareçam. O outro ajuste foi a remoção, em `src/hooks/__tests__/useAgentGamification.test.tsx`, do caso `exposes addXp function`, que afirmava a existência de uma API removida — os 8 casos restantes seguem verdes (`npx vitest run src/hooks/gamification src/hooks/__tests__/useAgentGamification.test.tsx`).
+- "arquivos fora da lista": `src/components/gamification/GamificationProvider.tsx` é o "provider de cliente morto" que o cartão manda apagar (ele mora em `components/`, não em `hooks/`); `src/components/gamification/DemoAchievements.tsx` é o ÚNICO arquivo que importava esse provider — apagá-lo sem reescrever o widget deixaria `zapp-verify` vermelho no typecheck, então a reescrita só de leitura entrou no mesmo commit. Nada mais de `components/` foi tocado.
+
 ## O que NÃO fiz e por quê
 - Não montei o `AchievementToast` em tela: isso é `src/components/**` (worker/telas). O hook entrega a fila `celebrations` + `dismiss`/`clear` e o callback `onCelebration` exatamente para esse consumo; o componente continua sem consumidor na V2 e a ligação dele é de outro cartão.
 - Não criei migration: o cartão é de front; a revogação de EXECUTE das RPCs no banco é trilha do worker de banco.
