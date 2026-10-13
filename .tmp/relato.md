@@ -32,3 +32,13 @@ Especialista: workertestes
 - Não toquei em `useCustomEmojis.persistencia.test.tsx` nem em `useCustomEmojis.uploadUid.test.tsx`:
   o cartão lista só o arquivo novo em ARQUIVOS QUE PODE TOCAR.
 - Não alterei código de produção (item 2 do "O QUE FAZER").
+
+## Arquivos herdados da dependência (não são desta entrega)
+O diff da branch até a base do dia inclui, além do meu teste, arquivos trazidos pelo cherry-pick
+da FAIXA do cartão pai `t_25ece6dc`, exigido pela seção DEPENDÊNCIA deste cartão (o pai não estava
+integrado): `src/components/inbox/CustomEmojiPicker.tsx` (spinner do Salvar respeita reduzir
+movimento) e os dois arquivos de `supabase/` do avô `t_1d123124`
+(`supabase/migrations/20261013012531_custom_emoji_use_rpc.sql` e
+`supabase/tests/custom_emoji_use_rpc_increment.sql`). Eu NÃO os editei: são a base sobre a qual o
+teste novo roda. Meu commit desta entrega tem só `src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx`.
+
