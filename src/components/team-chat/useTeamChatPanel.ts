@@ -9,10 +9,43 @@ import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploadTeamMedia';
 import { toast } from 'sonner';
 
 const log = getLogger('TeamChatPanel');
+
+// Mesmo teto de página do histórico novo (`useTeamMessages`): era o `.limit(60)`
+// do select direto que a paginação fazia.
+const OLDER_MESSAGES_PAGE_SIZE = 60;
+
+/**
+ * SL-016 (F54) — linha da RPC `get_team_messages_page`: vem achatada
+ * (`sender_name`/`sender_avatar`) porque o servidor resolve o remetente sem
+ * depender da RLS de `profiles`.
+ */
+type TeamMessagePageRow = Database['public']['Functions']['get_team_messages_page']['Returns'][number];
+
+function pageRowToTeamMessage(row: TeamMessagePageRow): TeamMessage {
+  return {
+    id: row.id,
+    conversation_id: row.conversation_id,
+    sender_id: row.sender_id,
+    content: row.content ?? '',
+    message_type: row.message_type ?? 'text',
+    media_url: row.media_url ?? null,
+    media_type: row.media_type ?? null,
+    media_bucket: row.media_bucket ?? null,
+    media_path: row.media_path ?? null,
+    reply_to_id: row.reply_to_id ?? null,
+    is_edited: row.is_edited ?? false,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    sender: row.sender_id
+      ? { id: row.sender_id, name: row.sender_name ?? '', avatar_url: row.sender_avatar ?? null }
+      : undefined,
+  };
+}
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
@@ -184,25 +217,22 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
     try {
-      // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
-      // mensagens que empatam no mesmo instante: o lote seguinte trazia
-      // `created_at < cursor` e as empatadas com o instante do cursor ficavam
-      // de fora. O `id` desempata de forma estável e casa com o
-      // `order by created_at desc, id desc` das consultas. As aspas no
-      // timestamptz são obrigatórias (o valor serializado traz ':' e '+', que o
-      // parser de filtro do PostgREST leria como separadores) — mesmo padrão de
-      // `useCSAT`.
-      const ts = `"${oldestCursor.createdAt}"`;
-      const { data, error } = await supabase
-        .from('team_messages')
-        .select('*, sender:profiles!team_messages_sender_id_fkey(id, name, avatar_url), media_bucket, media_path, status')
-        .eq('conversation_id', conversation.id)
-        .or(`created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${oldestCursor.id})`)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(60);
+      // TC-006 / SL-016 (F54) — a página anterior usa a mesma RPC achatada do
+      // histórico novo: `get_team_messages_page`. O `select` direto com embed de
+      // `profiles` voltava `sender: null` para o agente (a RLS de `profiles` é
+      // 'own + admin'), então as antigas apareciam sem nome nem foto. O keyset
+      // composto `(created_at, id)` vai no `p_before_id` e é resolvido no
+      // servidor. O desempate por `id` para mensagens com o MESMO `created_at`
+      // do cursor é do banco (N-072) — o SQL desta RPC ainda compara só
+      // `created_at < v_before_at`.
+      const { data, error } = await supabase.rpc('get_team_messages_page', {
+        p_conversation_id: conversation.id,
+        p_before_id: oldestCursor.id,
+        p_limit: OLDER_MESSAGES_PAGE_SIZE,
+      });
       if (error) throw error;
-      const older = ((data || []) as TeamMessage[]).reverse();
+      // A RPC devolve DESC (mais novas primeiro); o painel trabalha ASC.
+      const older = ((data ?? []) as TeamMessagePageRow[]).map(pageRowToTeamMessage).reverse();
       if (older.length === 0) {
         setHasOlderMessages(false);
       } else {
