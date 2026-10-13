@@ -4,6 +4,10 @@
  * Renderiza o componente REAL dentro do acordeão real: o único mock é a rede do
  * Supabase, então a leitura paginada, a montagem dos marcos (`buildSlaMilestones`)
  * e o filtro de período/tipo (`filterSlaMilestones`) são os de produção.
+ *
+ * A persistência do estado do acordeão NÃO é provada por teste literal: um teste
+ * próprio renderiza o `ContactDetails` de verdade — abrir a seção grava
+ * `sla-timeline` no `localStorage` e remontar reabre a seção.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
@@ -12,6 +16,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const h = vi.hoisted(() => ({
   tables: {} as Record<string, { data: unknown; error: unknown }>,
+  pendente: {} as Record<string, boolean>,
 }));
 const fm = vi.hoisted(() => ({ reduce: false }));
 
@@ -31,16 +36,31 @@ vi.mock('@/integrations/supabase/client', () => ({
       builder.order = () => mesmo();
       builder.range = () => mesmo();
       builder.limit = () => mesmo();
-      builder.then = (ok?: (v: unknown) => unknown, falhou?: (e: unknown) => unknown) =>
-        Promise.resolve(h.tables[table] ?? { data: [], error: null }).then(ok, falhou);
+      builder.then = (ok?: (v: unknown) => unknown, falhou?: (e: unknown) => unknown) => {
+        if (h.pendente[table]) return new Promise<never>(() => {});
+        return Promise.resolve(h.tables[table] ?? { data: [], error: null }).then(ok, falhou);
+      };
       return builder;
     },
   },
 }));
 
+// Dependências do ContactDetails que não fazem parte desta tela: stub simples, para
+// o teste de persistência exercitar o acordeão e a seção de SLA de verdade.
+vi.mock('@/hooks/crm/useContactEnrichedData', () => ({ useContactEnrichedData: () => ({ enrichedData: null }) }));
+vi.mock('@/hooks/chat/useConversationActions', () => ({ useConversationActions: () => ({ archiveContact: vi.fn() }) }));
+vi.mock('@/hooks/inbox/useContactQuickActions', () => ({
+  useContactQuickActions: () => ({ tags: [], addTag: vi.fn(), removeTag: vi.fn(), markVip: vi.fn(), block: vi.fn() }),
+}));
+vi.mock('@/components/inbox/contact-details/ContactHeaderSection', () => ({ ContactHeaderSection: () => null }));
+vi.mock('@/components/inbox/contact-details/sidebar/ContactSidebarSections', () => ({ ContactSidebarSections: () => null }));
+vi.mock('@/components/inbox/contact-details/EditContactDialog', () => ({ EditContactDialog: () => null }));
+
 import { Accordion } from '@/components/ui/accordion';
 import { SIDEBAR_SECTIONS, getStoredSidebarState, saveSidebarState } from '../sidebar/sidebarSections';
 import { SlaTimelineSection } from '../SlaTimelineSection';
+import { ContactDetails } from '../../ContactDetails';
+import type { Conversation } from '@/types/chat';
 
 const MIN = 60_000;
 const NOW = Date.now();
@@ -96,9 +116,21 @@ function renderSection() {
   );
 }
 
+/** Classes do traço (`path`) do trecho da linha pedido. */
+function railPathClass(testId: string): string {
+  const svg = screen.getByTestId(testId).querySelector('[data-testid="draw-line"]');
+  const path = svg?.querySelector('[data-testid="draw-line-path"]');
+  return `${svg?.getAttribute('class') ?? ''} ${path?.getAttribute('class') ?? ''}`;
+}
+
 beforeEach(() => {
   fm.reduce = false;
   localStorage.clear();
+  // jsdom não implementa scrollTo; o painel o chama ao montar.
+  if (!Element.prototype.scrollTo) {
+    Object.defineProperty(Element.prototype, 'scrollTo', { value: () => {}, writable: true, configurable: true });
+  }
+  h.pendente = {};
   h.tables = {
     sla_rules: { data: [REGRA_CONTATO], error: null },
     sla_configurations: { data: [], error: null },
@@ -126,8 +158,32 @@ describe('SlaTimelineSection — a linha do tempo no painel do contato', () => {
     // marco sem prazo (abertura de conversa) não ganha selo
     expect(screen.queryByTestId('sla-status-r1-opened')).toBeNull();
 
-    // a linha vertical que liga os marcos é o DrawLine do kit
-    expect(screen.getByTestId('draw-line')).toBeInTheDocument();
+    // a linha vertical que liga os marcos é o DrawLine do kit (um por trecho)
+    expect(screen.getAllByTestId('draw-line').length).toBeGreaterThan(0);
+  });
+
+  it('cada trecho da linha pinta pela situação do marco acima dele', async () => {
+    renderSection();
+    await screen.findByTestId('sla-timeline-list');
+
+    // ordem: transfer (mais recente), resolução, 1ª resposta e abertura de r1, resolução e 1ª resposta de r2
+    for (const [id, status] of [
+      ['sla-rail-transfer-e1', 'na'],
+      ['sla-rail-r1-resolution', 'ok'],
+      ['sla-rail-r1-first_response', 'warning'],
+      ['sla-rail-r1-opened', 'na'],
+      ['sla-rail-r2-resolution', 'breached'],
+      ['sla-rail-r2-first_response', 'breached'],
+    ] as const) {
+      expect(screen.getByTestId(id)).toHaveAttribute('data-status', status);
+    }
+
+    expect(railPathClass('sla-rail-r1-resolution')).toContain('text-success');
+    expect(railPathClass('sla-rail-r1-first_response')).toContain('text-warning');
+    expect(railPathClass('sla-rail-r2-resolution')).toContain('text-destructive');
+    // marco sem prazo: trecho neutro por `--muted-foreground` (não o azul padrão do kit)
+    expect(screen.getByTestId('sla-rail-transfer-e1')).toHaveAttribute('data-status', 'na');
+    expect(railPathClass('sla-rail-transfer-e1')).toContain('text-muted-foreground');
   });
 
   it('o filtro de período esconde o que ficou fora da janela', async () => {
@@ -158,6 +214,45 @@ describe('SlaTimelineSection — a linha do tempo no painel do contato', () => {
     fireEvent.click(chip);
     await waitFor(() => expect(screen.getByTestId('sla-milestone-r1-opened')).toBeInTheDocument());
     expect(chip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('o grupo de tipos navega por setas (roving tabindex) e Enter alterna o chip focado', async () => {
+    renderSection();
+    await screen.findByTestId('sla-timeline-list');
+
+    const tudo = screen.getByTestId('sla-kind-all');
+    // roving tabindex: só o chip corrente entra na ordem do Tab
+    expect(tudo).toHaveAttribute('tabindex', '0');
+    expect(screen.getByTestId('sla-kind-resolution')).toHaveAttribute('tabindex', '-1');
+
+    tudo.focus();
+    fireEvent.keyDown(tudo, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(screen.getByTestId('sla-kind-opened'));
+    expect(screen.getByTestId('sla-kind-opened')).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(screen.getByTestId('sla-kind-opened'), { key: 'End' });
+    expect(document.activeElement).toBe(screen.getByTestId('sla-kind-transfer'));
+
+    // Enter alterna o chip focado
+    fireEvent.keyDown(screen.getByTestId('sla-kind-transfer'), { key: 'Enter' });
+    await waitFor(() => expect(screen.queryByTestId('sla-milestone-r1-opened')).toBeNull());
+    expect(screen.getByTestId('sla-kind-transfer')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('Esc limpa os filtros ativos sem fechar o painel', async () => {
+    renderSection();
+    await screen.findByTestId('sla-timeline-list');
+
+    fireEvent.click(screen.getByTestId('segmented-item-24h'));
+    fireEvent.click(screen.getByTestId('sla-kind-resolution'));
+    await waitFor(() => expect(screen.queryByTestId('sla-milestone-r2-resolution')).toBeNull());
+
+    fireEvent.keyDown(screen.getByTestId('sla-kind-resolution'), { key: 'Escape' });
+
+    await waitFor(() => expect(screen.getByTestId('sla-milestone-r2-resolution')).toBeInTheDocument());
+    expect(screen.getByTestId('sla-kind-all')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('sla-kind-resolution')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('segmented-item-all')).toHaveAttribute('aria-checked', 'true');
   });
 
   it('estado vazio ensina o que fazer, sem esconder os filtros', async () => {
@@ -192,18 +287,73 @@ describe('SlaTimelineSection — a linha do tempo no painel do contato', () => {
     expect(screen.queryByTestId('sla-timeline-list')).toBeNull();
   });
 
+  it('enquanto o prazo carrega mostra o skeleton, não uma lista vazia', async () => {
+    h.pendente.sla_rules = true;
+    renderSection();
+
+    const carregando = await screen.findByTestId('sla-timeline-loading');
+    expect(carregando.querySelectorAll('[data-testid="shimmer-skeleton"]').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('sla-timeline-list')).toBeNull();
+  });
+
   it('com movimento reduzido o traço nasce pronto e nada se desloca', async () => {
     fm.reduce = true;
     renderSection();
 
-    const rail = await screen.findByTestId('draw-line');
-    expect(rail).toHaveAttribute('data-motion', 'reduced');
-    expect(screen.getByTestId('sliding-segmented')).toHaveAttribute('data-motion', 'reduced');
+    const rails = await screen.findAllByTestId('draw-line');
+    expect(rails.length).toBeGreaterThan(0);
+    for (const id of ['transfer-e1', 'r1-resolution', 'r1-first_response']) {
+      expect(screen.getByTestId(`sla-rail-${id}`)).toHaveAttribute('data-motion', 'reduced');
+    }
+
+    // os itens da lista não se deslocam: sem deslocamento inicial (initial={false})
+    for (const id of ['r1-opened', 'r1-first_response', 'r1-resolution']) {
+      const item = screen.getByTestId(`sla-milestone-${id}`);
+      expect(item).toHaveAttribute('data-motion', 'reduced');
+      const transform = item.style.transform;
+      expect(transform === '' || transform === 'none' || /translate[XY]\(0px\)/.test(transform)).toBe(true);
+      expect(item.style.opacity === '' || item.style.opacity === '1').toBe(true);
+    }
   });
 
-  it('o estado da seção persiste no acordeão como o das outras', () => {
+  it('o estado da seção persiste no mesmo acordeão do painel', () => {
     expect(SIDEBAR_SECTIONS).toContain('sla-timeline');
     saveSidebarState(['professional', 'sla-timeline']);
     expect(getStoredSidebarState()).toEqual(['professional', 'sla-timeline']);
+  });
+});
+
+describe('ContactDetails — a seção vive no acordeão persistido', () => {
+  const CONVERSA = {
+    id: 'conv-1',
+    contact: { id: 'c1', name: 'Contato de teste', phone: '+5511900000000' },
+  } as unknown as Conversation;
+
+  it('abrir a seção grava "sla-timeline" no localStorage e remontar reabre', async () => {
+    const primeiro = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } })}>
+        <ContactDetails conversation={CONVERSA} onClose={vi.fn()} />
+      </QueryClientProvider>,
+    );
+
+    // nasce recolhida (DEFAULT_OPEN_SECTIONS não inclui sla-timeline)
+    expect(screen.getByTestId('sidebar-section-sla-timeline')).toBeInTheDocument();
+    const gatilho = screen.getByRole('button', { name: /Linha do tempo de SLA/i });
+    expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(gatilho);
+
+    await waitFor(() => expect(gatilho).toHaveAttribute('aria-expanded', 'true'));
+    const salvo = JSON.parse(localStorage.getItem('contact-sidebar-accordion-state@v2') ?? '[]') as string[];
+    expect(salvo).toContain('sla-timeline');
+
+    // remontar o painel reabre a seção a partir do estado salvo
+    primeiro.unmount();
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } })}>
+        <ContactDetails conversation={CONVERSA} onClose={vi.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole('button', { name: /Linha do tempo de SLA/i })).toHaveAttribute('aria-expanded', 'true');
   });
 });
