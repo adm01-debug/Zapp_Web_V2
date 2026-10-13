@@ -16,6 +16,10 @@ Especialista: iris
 - hook do áudio (novo + os dois existentes): `npx vitest run src/hooks/__tests__/useAudioRecorder.pausa-recuperacao.test.ts src/hooks/__tests__/useAudioRecorder.test.ts src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts` → `Test Files 3 passed (3); Tests 34 passed (34)`
 - regressão nos consumidores do gravador: `npx vitest run src/components/inbox/chat/__tests__ src/components/team-chat/__tests__` → `Test Files 54 passed (54); Tests 504 passed (504)`
 
+## Dependência (faixa do pai, trazida por cherry-pick)
+
+O que o diff da branch mostra além do meu commit vem dos dois commits do cartão pai `t_65b3779c` (`ae44f0705` + `e732c507e`), que ainda não estavam integrados e por isso foram trazidos inteiros para o workspace: `src/lib/audio/pttLimits.ts`, `src/lib/audio/__tests__/pttLimits.test.ts`, `src/hooks/inbox/useRealtimeInbox.ts` e `src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx` (limites de PTT — PE-24). Não os alterei.
+
 ## Decisões e limites
 
 - **PD-63:** a janela do rascunho órfão não está no repositório da V2 nem nos assets da paridade; fixei `DRAFT_TTL_MS = 24 h` como constante exportada, com o dono do rascunho sendo o usuário da sessão (mesma convenção `zapp.<area>:<userId>` do `inboxDraftSession.ts`).
