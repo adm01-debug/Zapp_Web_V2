@@ -52,11 +52,14 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
     "send-text", "send-media", "send-audio", "send-template", "send-ptv",
     "send-reaction", "send-status", "send-chat-presence", "offer-call",
     "mark-read", "mark-unread", "archive-chat",
+    // PH-03: status/stories de um contato — escopo de contato, não JWT puro.
+    "find-status-messages",
   ]) {
     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
   }
   assert(SEND_ACTIONS.has("send-text"));
   assert(SEND_ACTIONS.has("offer-call"));
+  assert(!READ_ACTIONS.has("find-status-messages"), "status de contato não pode voltar para o gate de JWT");
 });
 
 Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", () => {
