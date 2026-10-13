@@ -1,18 +1,61 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (design) — trabalho visual (componente de tela). O pedido original pedia `iris`; o
+revisor de entrada roteou para `designer` ("Rebase e conflito de um componente visual (WorkItemCard.tsx) e
+seus testes"), e é este o perfil que assina.
+
+## Ponto da recusa
+- Ponto 1: "aprovado, mas CONFLITA com a ponta de dia/2026-10-12; retomada por rebase" — RESOLVIDO.
+  O workspace novo parte da ponta dia/2026-10-12. O trabalho anterior (branch
+  `v2/redesenhado-cartao-quadro-urgente-atrasa-2610111909ad9f`, 761764d91) foi trazido por `git cherry-pick`
+  só nos 2 commits DO CARTÃO: `5649bd60a` (redesenho, etapas 084–090) e `eddbf557b` (refazer 1). Aplicaram SEM
+  conflito textual.
+  Os commits da FAIXA DOS PAIS que aquele branch carregava (`ef329b26c`, `35e0b7473`, `907596719`,
+  `00d745edf` — subtítulo das colunas e os primitivos compartilhados) foram PULADOS de propósito: o que
+  importa deles JÁ está em dia/2026-10-12 (os primitivos em `src/components/tasks/shared/`, o
+  `TasksUiProvider`, `workItemFormat`, etc.). O conflito real não era textual, era de API.
+  Conflito real resolvido: o `TaskCheckbox` da ponta JÁ garante sozinho o alvo ≥ 40 px — o `<button>`
+  mede 40x40 (`h-10 w-10` + `-m-[11px]`) e o círculo de 18 px é um `<span>` interno
+  (`data-testid="task-checkbox-circle"`). A versão antiga ampliava o alvo por um pseudo-elemento
+  `before:-inset-[11px]` passado DENTRO do card, e o teste do cartão media essa estrutura velha. Foi essa a
+  incompatibilidade: 1 teste vermelho só. Preservei o primitivo que já entrou na ponta e ajustei o cartão e o
+  teste a ele (commit novo `e9e82cc60`).
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/tasks/shared/WorkItemCard.tsx`: o `<TaskCheckbox>` do card deixa de receber
+  `relative before:absolute before:-inset-[11px] before:content-['']` e fica só com o posicionamento
+  (`mt-0.5` na lista/quadro, `shrink-0` na agenda). O alvo ≥ 40 px continua atendido — agora pelo PRIMITIVO
+  compartilhado (`h-10 w-10` com margem `-11px`), que é o que já está em dia/2026-10-12, sem o card repetir o
+  truque do pseudo-elemento. Comentário de código atualizado para descrever esse desenho novo.
+- `src/components/tasks/__tests__/WorkItemCard.test.tsx`: o caso "alvo ≥ 40 px" passa a medir a estrutura REAL
+  renderizada — o botão do primitivo com `h-10`/`w-10` (alvo de 40 px) e o `<span task-checkbox-circle>` com
+  `h-[18px]`/`w-[18px]` (o círculo visível de 18 px do D16) — em vez do pseudo-elemento `before:-inset-[…]`
+  que só existia na versão antiga.
+
+## Etapas do plano (linhas 343–349 de PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md)
+Entregues pelos commits `5649bd60a` + `eddbf557b` (trazidos no rebase); neste commit só alinhei o checkbox.
+- 084 (linha 343): card redesenhado com TaskCheckbox CIRCULAR, título em 2 linhas (`line-clamp-2`), kebab ⋮,
+  PriorityPill e a linha de contexto (contato/avatar + prazo), altura adaptativa.
+- 085 (linha 344): Urgente junto ao título; prioridade padrão na linha de contexto.
+- 086 (linha 345): tag "Atrasada" (`data-testid="overdue-tag"`, ícone AlertCircle) ao lado do prazo vencido.
+- 087 (linha 346): DateLabel ("Hoje, 14:00") e RemindChip com sino âmbar; rótulos "Prazo"/"Lembrete" em duas
+  colunas no card em Fazendo/selecionado.
+- 088 (linha 347): descrição curta em 2 linhas no card em Fazendo/selecionado.
+- 089 (linha 348): chip de espera (`data-testid="waiting-chip"`) com ponto âmbar, motivo truncado + tooltip.
+- 090 (linha 349): card selecionado com borda primary, fundo `primary/10`, alça ⠿ e foco sincronizado com o
+  painel de detalhes (`data-selected`, `isSelected`/`selectedId`).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/tasks/__tests__/WorkItemCard.test.tsx` com a versão da base
+  em `WorkItemCard.tsx` (card antigo, sem o redesenho) → `Tests 15 failed | 10 passed (25)`.
+- verde depois: `npx vitest run src/components/tasks/__tests__/WorkItemCard.test.tsx` →
+  `Test Files 1 passed (1); Tests 25 passed (25)`.
+- suíte do módulo: `npx vitest run src/components/tasks` →
+  `Test Files 28 passed (28); Tests 333 passed | 1 todo (334)`.
+- tipos: `npx tsc -b --force` → exit 0.
+- verificação do fechar: `hermes-tarefa-fechar` (roda `zapp-verify --rapido`) — resultado no bloco FATOS MEDIDOS.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não trouxe os commits dos pais que mexem em `BoardColumn.tsx`/`TasksBoardMode.tsx`/`workItem.types.ts`
+  (subtítulo das colunas): pertencem a outros cartões e não são necessários a este — `tsc` e a suíte ficaram
+  verdes sem eles, e tocar nesses arquivos sairia da lista de arquivos deste cartão.
+- Não alterei `TaskCheckbox.tsx` nem `src/components/ui/*`: preservei o primitivo que já entrou na ponta.
+- Sem migration, Edge Function, dependência nova, produção ou qualquer saída de informação do sistema.
