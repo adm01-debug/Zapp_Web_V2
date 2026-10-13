@@ -191,7 +191,4 @@ $instance_auth_event_series$;
 REVOKE ALL ON FUNCTION public.instance_auth_event_series(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.instance_auth_event_series(text) TO authenticated;
 
-COMMENT ON FUNCTION public.instance_auth_event_series(text) IS
-  'Serie de eventos de autenticacao/falha da instancia (24h por hora, 7d por dia) a partir do watchdog connection_health_logs. Somente contagens, somente admin/supervisor.';
-COMMENT ON FUNCTION public.mark_pause_investigated(uuid, text) IS
-  'Registra a investigacao de uma pausa de instancia (ator + data + notas), somente admin/supervisor, com trilha em audit_logs.';
+-- ============================================================ fim da migration IP2
