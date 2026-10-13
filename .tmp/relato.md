@@ -12,7 +12,7 @@ Especialista: iris
 - verificação do cartão: `zapp-verify . --rapido` (linha de resultado no bloco FATOS MEDIDOS abaixo).
 
 ## Capturas (o cartão pediu)
-- .tmp/captura-chip-claro.png e .tmp/captura-chip-escuro.png — geradas por `.tmp/captura-chip.mjs` (Playwright chromium), com a MESMA marcação/classes do chip copiadas de GreetingBanner.tsx e os tokens reais de `src/styles/tokens.css` (--dash-red, --dash-amber, --primary-glow). Não é a tela do app (sem Tailwind compilado) e não entra no commit: é o recorte do cluster nos estados streak=0, 1 e 7, no claro e no escuro. Anexadas ao cartão.
+- .tmp/captura-chip-claro.png e .tmp/captura-chip-escuro.png — geradas por `.tmp/captura-chip.mjs` (Playwright chromium), com a MESMA marcação/classes do chip copiadas de GreetingBanner.tsx e os tokens reais de `src/styles/tokens.css` (--dash-red, --dash-amber, --primary-glow). Não é a tela do app (sem Tailwind compilado) e não entra no commit: é o recorte do cluster nos estados streak=0, 1 e 7, no claro e no escuro. Ficam em .tmp/ (não versionadas); o comando para refazer é `node .tmp/captura-chip.mjs`.
 
 ## CRITÉRIO DE PRONTO
 1. Chip fiel ao dado — GreetingBanner.tsx (bloco `streakText`/`streakLabel` + o `<span data-testid="gami-chip">`) provado pelo teste de 0/1/N e pelo nome acessível.
