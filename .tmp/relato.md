@@ -1,5 +1,9 @@
 Especialista: Íris (area-front-componentes)
 
+## Arquivos fora da lista do cartão e por que foram indispensáveis
+- `src/adapters/inboxAdapter.ts` NÃO está "fora": o cartão lista `src/components/inbox/inboxAdapter.ts`, caminho que não existe no repositório. O arquivo real do módulo é `src/adapters/inboxAdapter.ts` (`git ls-files | grep inboxAdapter`) — é o mesmo arquivo lógico citado no cartão, só mudou de pasta. Sem ele não existe a correção.
+- `src/components/inbox/chat/ChatPanelHeader.tsx` é consumidor direto do valor que o cartão manda corrigir: ele renderiza o `SLAIndicator` com `firstMessageAt={conversation.createdAt}` e `firstResponseAt={conversation.firstResponseAt}` — os dois vindos do adapter alterado. Deixar como estava faria o cabeçalho mostrar o timer começando na criação do contato (o "ciclo antigo" que o cartão manda eliminar) exatamente para a conversa aberta, que é a tela mais visível. A mudança nele são 3 linhas + import, com 2 testes no componente real (melhor e pior caso).
+
 ## O que mudou e por quê
 - src/adapters/inboxAdapter.ts: novo resolvedor `resolveFirstResponseCycleStart` (início do ciclo ABERTO do cronômetro de 1ª resposta) e `mapRealtimeConversationToConversation` passa a usá-lo, em vez de olhar só a linha aberta do banco — a linha do `conversation_sla` nasce quando alguém responde, então o cliente que escrevia DEPOIS de ser respondido ficava sem timer (`firstResponseAt` continuava na última resposta).
 - src/components/inbox/VirtualizedRealtimeList.tsx: a base do timer da linha deixa de ser a linha histórica fechada / `created_at` do contato e passa a ser o ciclo aberto; sem ciclo aberto a linha não mostra timer (antes o `created_at` do contato prendia o timer num atendimento antigo).
