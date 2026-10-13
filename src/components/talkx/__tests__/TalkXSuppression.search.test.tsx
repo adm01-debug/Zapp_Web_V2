@@ -26,6 +26,7 @@ const h = vi.hoisted(() => ({
   blacklist: [] as Record<string, unknown>[],
   events: [] as Record<string, unknown>[],
   blacklistCalls: [] as { method: string; args: unknown[] }[],
+  queries: [] as Array<{ select: string; or: string[]; orTable: (string | undefined)[] }>,
 }));
 
 function sortBy(rows: Row[], orders: { col: string; asc: boolean }[]): Row[] {
@@ -39,20 +40,74 @@ function sortBy(rows: Row[], orders: { col: string; asc: boolean }[]): Row[] {
   });
 }
 
+/** Extrai os pares (coluna, termo) de um filtro `.or()` do PostgREST. */
+function parseOrFilter(filter: string): Array<{ col: string; term: string }> {
+  const out: Array<{ col: string; term: string }> = [];
+  const re = /(\w+)\.ilike\."((?:[^"\\]|\\.)*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(filter)) !== null) {
+    const term = m[2]
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+      .replace(/^%+|%+$/g, '')
+      .toLowerCase();
+    out.push({ col: m[1], term });
+  }
+  return out;
+}
+
+/** Aplica um grupo `.or()` sobre a linha (semântica OU entre as condições). */
+function rowMatchesOr(
+  row: Row,
+  conds: Array<{ col: string; term: string }>,
+  referencedTable?: string,
+): boolean {
+  const contacts = (row.contacts ?? null) as { name?: unknown; phone?: unknown } | null;
+  return conds.some(({ col, term }) => {
+    if (!term) return false;
+    if (referencedTable === 'contacts') {
+      if (col === 'name') return String(contacts?.name ?? '').toLowerCase().includes(term);
+      if (col === 'phone') return String(contacts?.phone ?? '').includes(term);
+      return false;
+    }
+    if (col === 'reason') return String(row.reason ?? '').toLowerCase().includes(term);
+    if (col === 'phone') return String(row.phone ?? '').includes(term);
+    return false;
+  });
+}
+
 vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
+    const isBlacklist = table === 'talkx_blacklist';
+    const rec = { select: '', or: [] as string[], orTable: [] as (string | undefined)[] };
+    if (isBlacklist) h.queries.push(rec);
     const filters: ((r: Row) => boolean)[] = [];
+    const ors: Array<{ conds: Array<{ col: string; term: string }>; table?: string }> = [];
     const orders: { col: string; asc: boolean }[] = [];
-    const record = (method: string, args: unknown[]) => { if (table === 'talkx_blacklist') h.blacklistCalls.push({ method, args }); };
+    const record = (method: string, args: unknown[]) => { if (isBlacklist) h.blacklistCalls.push({ method, args }); };
     const run = () => {
-      if (table !== 'talkx_blacklist') return { data: [], error: null };
-      return { data: sortBy(h.blacklist.filter((r) => filters.every((f) => f(r))), orders), error: null };
+      if (!isBlacklist) return { data: [], error: null };
+      let rows = h.blacklist.filter((r) => filters.every((f) => f(r)));
+      // Join interno: exclui supressões por telefone avulso (sem contato).
+      if (rec.select.includes('!inner')) rows = rows.filter((r) => (r as Row).contacts);
+      for (const o of ors) rows = rows.filter((r) => rowMatchesOr(r, o.conds, o.table));
+      return { data: sortBy(rows, orders), error: null };
     };
     const self: Record<string, unknown> = {};
-    self.select = (...a: unknown[]) => { record('select', a); return self; };
+    self.select = (...a: unknown[]) => {
+      record('select', a);
+      if (typeof a[0] === 'string') rec.select = a[0];
+      return self;
+    };
     self.not = () => self;
     self.eq = () => self;
-    self.or = () => self;
+    self.or = (filter: string, opts?: { referencedTable?: string }) => {
+      record('or', [filter, opts]);
+      rec.or.push(filter);
+      rec.orTable.push(opts?.referencedTable);
+      ors.push({ conds: parseOrFilter(filter), table: opts?.referencedTable });
+      return self;
+    };
     self.limit = () => Promise.resolve({ data: [], error: null });
     self.is = (col: string, val: unknown) => { record('is', [col, val]); filters.push((r) => r[col] === val); return self; };
     self.order = (col: string, opts?: { ascending?: boolean }) => {
@@ -130,8 +185,11 @@ function seedFilters(values: { origin?: string; motivo?: string }) {
 
 describe('TalkXSuppression · busca, filtros e ordenação (TL-165)', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    // O termo de busca persiste em storage (useTalkXFilterState): sem limpar, vaza entre testes.
+    window.localStorage.clear();
+    window.sessionStorage.clear();
     h.blacklistCalls.length = 0;
+    h.queries.length = 0;
     h.events = [];
     h.blacklist = [
       row('bl-a', 'Ana Souza', '+5511999990001', 'manual', 'Bloqueio manual', '2026-09-01T10:00:00.000Z'),
@@ -148,6 +206,13 @@ describe('TalkXSuppression · busca, filtros e ordenação (TL-165)', () => {
 
     expect(h.blacklistCalls).toContainEqual({ method: 'is', args: ['removed_at', null] });
     expect(screen.queryByText('Davi Removido')).toBeNull();
+  });
+
+  it('lista vazia sem busca mostra o vazio da lista (não "Nenhum resultado")', async () => {
+    h.blacklist = [];
+    renderView();
+    expect(await screen.findByText('Nenhum contato na lista de supressão')).toBeTruthy();
+    expect(screen.queryByText('Nenhum resultado')).toBeNull();
   });
 
   it('ordena por created_at desc: o servidor decide e a tela mantém a ordem recebida', async () => {
@@ -236,6 +301,47 @@ describe('TalkXSuppression · busca, filtros e ordenação (TL-165)', () => {
     seedFilters({ origin: 'optout', motivo: 'bloqueio' });
     renderView();
     expect(await screen.findByText('Nenhum resultado')).toBeTruthy();
+  });
+
+  it('busca server-side: a consulta do contato usa contacts!inner (join interno)', async () => {
+    renderView();
+    await loaded();
+    h.queries.length = 0;
+
+    fireEvent.change(screen.getByPlaceholderText(SEARCH), { target: { value: 'Ana' } });
+    await waitFor(() => expect(h.queries.some((q) => q.select.includes('contacts!inner'))).toBe(true));
+  });
+
+  it('busca server-side: dois .or() separados — colunas próprias e contacts (referencedTable)', async () => {
+    renderView();
+    await loaded();
+    h.queries.length = 0;
+
+    fireEvent.change(screen.getByPlaceholderText(SEARCH), { target: { value: 'spam' } });
+
+    await waitFor(() => {
+      const ors = h.queries.filter((q) => q.or.length > 0);
+      expect(ors).toHaveLength(2);
+      const contactQuery = ors.find((q) => q.select.includes('contacts!inner'));
+      const ownQuery = ors.find((q) => !q.select.includes('!inner'));
+      expect(contactQuery?.orTable).toEqual(['contacts']);
+      expect(contactQuery?.or[0]).toContain('name.ilike');
+      expect(contactQuery?.or[0]).toContain('phone.ilike');
+      expect(contactQuery?.or[0]).not.toContain('reason');
+      expect(ownQuery?.or[0]).toContain('reason.ilike');
+      expect(ownQuery?.or[0]).not.toContain('contacts.');
+    });
+  });
+
+  it('busca server-side: limpar a busca restaura todas as linhas', async () => {
+    renderView();
+    await loaded();
+
+    fireEvent.change(screen.getByPlaceholderText(SEARCH), { target: { value: 'Bruno' } });
+    await waitFor(() => expect(names()).toEqual(['Bruno Lima']));
+
+    fireEvent.change(screen.getByPlaceholderText(SEARCH), { target: { value: '' } });
+    await waitFor(() => expect(names().sort()).toEqual(['Ana Souza', 'Bruno Lima', 'Carla Dias', 'Elisa Telefone']));
   });
 
   it('trilha de atividade: eventos no mesmo instante saem por id decrescente', async () => {

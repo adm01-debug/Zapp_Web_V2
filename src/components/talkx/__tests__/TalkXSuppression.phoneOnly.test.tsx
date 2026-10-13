@@ -46,14 +46,61 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   ];
 
-  const chain = (data: unknown[]) => {
+  /** Extrai os pares (coluna, termo) de um filtro `.or()` do PostgREST. */
+  function parseOrFilter(filter: string): Array<{ col: string; term: string }> {
+    const out: Array<{ col: string; term: string }> = [];
+    const re = /(\w+)\.ilike\."((?:[^"\\]|\\.)*)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(filter)) !== null) {
+      out.push({
+        col: m[1],
+        term: m[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/^%+|%+$/g, '').toLowerCase(),
+      });
+    }
+    return out;
+  }
+
+  /** Aplica um grupo `.or()` com a semântica do servidor (OU entre as condições). */
+  function matchRow(row: (typeof rows)[number], conds: Array<{ col: string; term: string }>, table?: string): boolean {
+    return conds.some(({ col, term }) => {
+      if (!term) return false;
+      if (table === 'contacts') {
+        if (col === 'name') return String(row.contacts?.name ?? '').toLowerCase().includes(term);
+        if (col === 'phone') return String(row.contacts?.phone ?? '').includes(term);
+        return false;
+      }
+      if (col === 'reason') return String(row.reason ?? '').toLowerCase().includes(term);
+      if (col === 'phone') return String(row.phone ?? '').includes(term);
+      return false;
+    });
+  }
+
+  const chain = (data: typeof rows) => {
     const self: Record<string, unknown> = {};
-    self.select = () => self;
+    let select = '';
+    const ors: Array<{ conds: Array<{ col: string; term: string }>; table?: string }> = [];
+    // A busca TL-165 filtra no servidor: o mock aplica o `.or()` e o join
+    // interno (`contacts!inner`) como o PostgREST faria.
+    const applyAll = () => {
+      let out = [...data];
+      if (select.includes('!inner')) out = out.filter((r) => r.contacts);
+      for (const o of ors) out = out.filter((r) => matchRow(r, o.conds, o.table));
+      return out;
+    };
+    self.select = (s: string) => { select = String(s ?? ''); return self; };
     self.is = () => self;
     self.not = () => self;
     self.eq = () => self;
-    self.order = () => Promise.resolve({ data, error: null });
-    self.limit = () => Promise.resolve({ data, error: null });
+    self.or = (filter: string, opts?: { referencedTable?: string }) => {
+      ors.push({ conds: parseOrFilter(String(filter)), table: opts?.referencedTable });
+      return self;
+    };
+    // A cadeia termina em `await` (a consulta chama `.order()` antes do
+    // `.or()`): `order`/`limit` seguem encadeáveis e o `then` resolve filtrado.
+    self.order = () => self;
+    self.limit = () => self;
+    self.then = (resolve: (v: unknown) => unknown) =>
+      Promise.resolve({ data: applyAll(), error: null }).then(resolve);
     return self;
   };
 
