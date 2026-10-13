@@ -2,10 +2,11 @@ Especialista: workersql (area-sql-banco)
 
 ## O que mudou e por quê
 - `supabase/migrations/20261013230012_table_row_snapshots.sql` (NOVO): cria o retrato diario de linhas (SL-051). A tabela `public.table_row_snapshots(snapshot_date, table_name, estimated_rows, exact_rows, captured_at)` guarda, por dia UTC e por tabela, as linhas estimadas (pg_class.reltuples) e exatas (count(*)) das 15 tabelas criticas de negocio (contacts, messages, profiles, user_roles, conversation_sla, audit_logs, whatsapp_connections, departments, campaigns, talkx_campaigns, team_conversations, team_conversation_members, notifications, message_reactions, user_settings). Tem RLS ligada, `REVOKE` de anon/authenticated e UNIQUE(snapshot_date, table_name) para o job ser idempotente.
-  - `public.capture_table_row_snapshots()`: e a funcao do job diario. Percorre a lista fixa de tabelas (sem SQL montado com dado externo), grava com `ON CONFLICT ... DO UPDATE` (rodar duas vezes no mesmo dia nao duplica) e aplica a retencao de 90 dias (`DELETE ... WHERE snapshot_date < dia - 90`). `SECURITY DEFINER`, `search_path` fixo, EXECUTE so para service_role.
+  - `public.capture_table_row_snapshots()`: e a funcao do job diario. Percorre a lista fixa de tabelas (sem SQL montado com dado externo), grava com `ON CONFLICT ... DO UPDATE` (rodar duas vezes no mesmo dia nao duplica) e aplica a retencao de 90 dias. A retencao e LIMITADA por chamada (teto de 5000 exclusoes, numa CTE com `LIMIT`) e o loop tem teto explicito de 64 voltas que levanta erro se excedido — nunca uma drenagem sem teto numa transacao so. `SECURITY DEFINER`, `search_path` fixo, EXECUTE so para service_role.
   - `public.admin_table_row_snapshots(p_drop_pct numeric DEFAULT 20)`: RPC do painel admin. Compara o ultimo dia com o dia anterior disponivel por tabela e marca `is_alert = true` quando a queda passa do limiar. Exige login e papel admin/supervisor (`is_admin_or_supervisor(auth.uid())`), recusa limiar fora de 0..100 e e somente leitura.
   - Primeira linha e `-- Rollback:` com o inverso executavel (drop das 2 funcoes pela assinatura exata + drop da tabela). A migration e idempotente (`CREATE TABLE IF NOT EXISTS` / `CREATE OR REPLACE`).
 - `supabase/tests/table_row_snapshots.sql` (NOVO): suite da prova, transacional (termina em ROLLBACK), roda no banco LOCAL com o papel real de cada ator.
+- Arquivos do diff (3, sendo 1 de teste): a migration acima, a suite acima e `.tmp/relato.md` (este relato, arquivo JA versionado na base — nao e entrega nova).
 
 ## Prova
 - vermelho antes (a protecao derrubada dentro da transacao, `-v sem_migration=1`): `zapp-db-local psql . v2-26101307016179 -v sem_migration=1 < supabase/tests/table_row_snapshots.sql` → `ERROR: relation "public.table_row_snapshots" does not exist` (rc=3).
@@ -18,3 +19,7 @@ Especialista: workersql (area-sql-banco)
 - Nao agendei o job cron: o cartao reserva o agendamento ao PE-102 ("Agendamento no PE-102"). A funcao do job (`capture_table_row_snapshots`) ja esta pronta para o PE-102 chamar.
 - Nao toquei `src/integrations/supabase/types.ts` nem a tela do painel: fora da minha area (front). A tela que consumir a RPC precisara dos tipos; aviso para o especialista de telas trata-lo no cartao de front do SL-051.
 - Nao uso o banco de producao: toda a prova rodou no banco local descartavel da tarefa (`v2-26101307016179`).
+
+## Avisos do juiz barato (corrigidos com commit novo)
+- Aviso 1 (numeros do relato x diff): o diff tem 3 arquivos — a migration (NOVO), a suite (NOVO) e `.tmp/relato.md` (arquivo ja versionado na base; e este relato, nao entrega nova). So a suite e arquivo de teste. Ajustado no relato.
+- Aviso 2 (loop que apaga/altera sem teto): procede. A funcao do job agora tem teto explicito de 64 voltas (`v_teto_tabelas`, levanta 54000 se exceder) e a retencao virou `DELETE` com CTE + `LIMIT v_teto_retencao` (5000 exclusoes por chamada) — nao ha drenagem sem teto numa transacao so. O loop percorre uma lista FIXA de 15 nomes (nao ha fonte externa de voltas).
