@@ -1,5 +1,9 @@
 -- contacts_presence
--- Rollback: alter table public.contacts drop column if exists last_seen_at; alter table public.contacts drop column if exists presence_updated_at; alter table public.contacts drop column if exists presence_status;
+-- Rollback: remove as 3 colunas aditivas de presenca em public.contacts (nao ha policy, grant nem dado novo).
+-- Rollback (SQL executavel, na ordem):
+--   alter table public.contacts drop column if exists last_seen_at;
+--   alter table public.contacts drop column if exists presence_updated_at;
+--   alter table public.contacts drop column if exists presence_status;
 --
 -- Presenca REAL do contato (R2-INB-030 removeu o "Online" FIXO e falso; mostrar o
 -- sinal verdadeiro vindo do WhatsApp e permitido). O webhook da Evolution GO ja
