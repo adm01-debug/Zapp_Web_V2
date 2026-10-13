@@ -1,5 +1,7 @@
 Especialista: workersql
 
+Arquivos no diff: supabase/migrations/20261013210001_storage_buckets_publicos_sem_listagem.sql (a migration), supabase/tests/storage_buckets_publicos_sem_listagem.sql (o teste de enforcement) e .tmp/relato.md (este relato).
+
 ## O que mudou e por quê
 - supabase/migrations/20261013210001_storage_buckets_publicos_sem_listagem.sql (novo): remove as 4 policies de SELECT de storage.objects dos buckets PÚBLICOS avatars, stickers e custom-emojis — "Anyone can view avatars", "Avatar images are publicly accessible", "Anyone can view stickers" e "Public read for custom emojis". As quatro tinham predicado só `bucket_id = '<bucket>'` TO authenticated, então qualquer autenticado ENUMERAVA o bucket inteiro. Confirmei o estado atual antes de editar (a migration REAL 20260511233306, última a mexer nesses buckets). Os buckets seguem public=true, então a leitura por URL direta (getPublicUrl — o app não usa createSignedUrl nem list() nesses buckets, só em PRIVATE_MEDIA_BUCKETS) continua.
 - supabase/tests/storage_buckets_publicos_sem_listagem.sql (novo): prova de enforcement em PG 17 descartável, com o papel real (authenticated/anon/service_role), aplicando a migration REAL do estado atual e a migration nova. Tudo numa transação que termina em ROLLBACK (zero efeito colateral).
