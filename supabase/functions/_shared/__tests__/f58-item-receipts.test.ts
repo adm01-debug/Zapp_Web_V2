@@ -121,3 +121,21 @@ Deno.test("F58: o item e resolvido mesmo quando o destinatario ja confirmou", as
     "o item nao pode depender de o destinatario ter falhado",
   );
 });
+
+Deno.test("R2-API-016: status não-string em um receipt não derruba o resto do lote", async () => {
+  const chamadas: Chamada[] = [];
+  await handleMessagesUpdate(
+    fakeSupabase(chamadas),
+    "inst-1",
+    { messages: [
+      { key: { id: "3EB0INVALID", fromMe: true }, status: 3 },
+      { key: { id: "3EB0VALID", fromMe: true }, status: " READ " },
+    ] },
+    {},
+  );
+
+  const itens = chamadasDe(chamadas, "record_multiplix_item_delivered");
+  assertEquals(itens.length, 1, "o receipt inválido deve ser ignorado sem abortar o receipt válido");
+  assertEquals(itens[0].args.p_external_id, "3EB0VALID");
+  assertEquals(itens[0].args.p_event, "read");
+});
