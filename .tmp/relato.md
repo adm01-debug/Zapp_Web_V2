@@ -1,18 +1,28 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (geral)
+Especialista: Íris (area-front-componentes)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Motivo do cartão (retomar em conflito) e como resolvi
+O cartão pede: trazer os commits da branch `v2/sl-192-2610090059e54f` (commit `d33737fcf`, mais o `0eb887c8a`) para a ponta de `dia/2026-10-12` PRESERVANDO o que já entrou nela; OU, se no código ATUAL o defeito já estiver corrigido, provar no relato e fechar SEM commit de código.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+Conferi no código ATUAL: a entrega anterior (etapa de SKILLS do item 077-078 — a tela de Roteamento usando o RPC `skill_based_assign` e entregando ao agente o contato que aguarda há mais tempo, com a guarda repetida no UPDATE) JÁ ESTÁ na ponta de `dia/2026-10-12`, integrada por outro cartão. Portanto não há o que trazer: o cherry-pick duplicaria uma correção que já entrou. Fechei SEM commit de código, como o cartão manda nesse caso.
+
+## Prova de que o defeito do pedido já está resolvido no código ATUAL
+- A correção equivalente está em HEAD pelo commit `cca1ed150` (`fix(filas/skills): UPDATE de contato repete guarda de aguardando e confirma escrita (SL-192)`): `git merge-base --is-ancestor cca1ed150 HEAD` → JA-EM-HEAD.
+- Os commits da branch anterior NÃO são ancestrais (`0eb887c8a` e `d33737fcf` → FALTA), mas `git diff HEAD d33737fcf -- src/components/settings/SkillBasedRoutingSettings.tsx src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx` mostra só diferenças de forma/refatoração: HEAD mantém (e reforça) TODOS os comportamentos da entrega anterior —
+  - leitura do contato que aguarda pela fila (`queue_id`, `assigned_to` nulo, `deleted_at` nulo, status de conversa aberto, mais antigo primeiro, limite 1);
+  - UPDATE que REPETE a guarda de "aguardando" e confirma a escrita com `.select('id')`;
+  - toast próprio quando a linha não foi alterada (contato pego por outro fluxo), em vez de sucesso falso;
+  - invalidação das queries de contatos/agregados no sucesso.
+  Nada de comportamento da entrega anterior falta na ponta atual; o teste de HEAD é mais forte (afirma a cadeia de filtros do select e do update).
+- O consumidor do RPC existe no código atual: `src/components/settings/SkillBasedRoutingSettings.tsx:129` chama `supabase.rpc('skill_based_assign', { p_queue_id })` (`git grep -n skill_based_assign -- src`).
+- Os dois arquivos da entrega anterior existem na ponta: `SkillBasedRoutingSettings.tsx` (367 linhas) e `__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx` (325 linhas).
+
+## Prova (teste rodado agora, no código ATUAL sem nenhuma alteração minha)
+- verde: `npx vitest run src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx src/components/settings/__tests__/SkillBasedRoutingSettings.test.tsx` →
+  `Test Files  2 passed (2)` / `Tests  9 passed (9)`
+- diff de código: `git diff --stat` → vazio (nenhum arquivo tocado); `git status --short` → vazio.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- NÃO FEITO: escalonamento de SLA — depende de migration (DDL) e/ou Edge/cron, proibidos no cartão; fora do que cabe em 1 defeito/1 camada. (É o mesmo residual já registrado na entrega anterior `0eb887c8a`.)
+- NÃO FEITO: sticky por contato e regras por fila/peso com dry-run de rebalanceamento — também dependem de migration/Edge; ficam para trilha de banco.
+- Não fiz `git cherry-pick` dos commits antigos: a correção já está na ponta por `cca1ed150`; trazer de novo criaria duplicata e conflito sem ganho de comportamento.
