@@ -51,3 +51,9 @@ Especialista: workersql (area-sql-banco)
   como órfão até esse passo existir.
 - Não criei teste tautológico: a suíte constrói o schema/RLS reais mínimos e aplica a MIGRATION REAL
   do meu arquivo (não recria o corpo da função no teste), roda como authenticated/anon/service_role.
+- Sobre o aviso do juiz ("código alterado sem teste neste commit: src/integrations/supabase/types.ts"):
+  a única mudança de TS é a assinatura tipada da RPC (Args/Returns) espelhando a função do banco — é a
+  superfície gerada que o pré-filtro consome, não lógica. A prova do defeito é a suíte de banco
+  scripts/db-audit/search-email-threads.test.sh (33 cenários vermelho→verde), que aplica a migration
+  real e roda como os papéis reais; não há teste de vitest cabível para um type-only. Repito o mesmo
+  comando de fechar sem mudar nada.
