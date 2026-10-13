@@ -1,18 +1,46 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013051916_contact_change_log.sql (nova): cria a tabela append-only
+  `public.contact_change_log` (contact_id, operation, campos text[], performed_by,
+  performed_by_profile, performed_by_db_role, performed_at), o gatilho `trg_contact_change_log`
+  (AFTER INSERT OR UPDATE em `contacts`) e a funcao SECURITY DEFINER `public.log_contact_change()`,
+  que grava UMA linha por alteracao com SO OS NOMES dos campos em `campos` — nunca os valores
+  (sem PII: nome, telefone, e-mail, endereco e nota nao entram). UPDATE que nao mexe em nenhum
+  campo de negocio nao gera linha; soft-delete/restore viram `operation` propria.
+- supabase/migrations/...: RLS ligada; policy de SELECT igual a visibilidade do contato
+  (`public.is_contact_visible_to_user(contact_id, auth.uid())`); INSERT/UPDATE/DELETE bloqueados
+  (policy `... using(false)` + REVOKE); `anon` sem policy e sem ACL; `authenticated`/`service_role`
+  so com SELECT. Gatilho escreve como definer (owner), entao o cliente nao precisa de INSERT.
+- supabase/tests/contact_change_log.sql (nova): suite em Postgres 17 descartavel que aplica a
+  migration REAL e prova, com papeis reais (authenticated com JWT sintetico, anon), escrita,
+  nao-vazamento de PII, soft-delete/restore, isolamento por visibilidade e o rollback.
+- src/integrations/supabase/types.ts: adiciona `contact_change_log` (Row/Insert/Update) para o
+  tipo nao ficar defasado da tabela nova — o proprio cartao pede (o painel/hook le essa tabela).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (`-v sem_guarda=1`, derruba o gatilho dentro da transacao):
+  `docker exec -i pg-ccl psql ... -v sem_guarda=1 -f - < supabase/tests/contact_change_log.sql`
+  -> `ERROR: FALHOU [E.12 gatilho e AFTER INSERT OR UPDATE (...)]: esperado [true], obtido [<NULL>]`
+- verde depois: mesmo comando sem `sem_guarda` ->
+  `PASS: contact_change_log — 1 linha por edicao com ator certo, SO os nomes dos campos (sem PII),
+   UPDATE irrelevante nao grava, soft-delete/restore proprios, leitura sob a visibilidade do
+   contato, append-only, e rollback provado.` (exit 0; 6 blocos: E.1-E.16 estrutura, W.1-W.14
+  escrita/ator/PII, L.1-L.5 isolamento por papel, F.1-F.8 ACL/append-only, R.1-R.6 rollback+reaplicacao)
+- migration aplicada no banco local da tarefa pela ferramenta do modo V2
+  (`hermes-db-migrar supabase/migrations/20261013051916_contact_change_log.sql`).
 
-## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+## Efeitos colaterais revisados (recusas anteriores)
+- Gatilho e AFTER: nao altera NEW nem o curso da escrita em `contacts`.
+- Nao dispara em UPDATE sem mudanca real na lista branca (sai antes de gravar) — evita ruido do
+  gatilho de `updated_at`/`ai_projection_updated_at`.
+- Backfill nao existe aqui (tabela nova vazia): logo, sem INSERT em massa sob UNIQUE.
+- Nenhum GRANT/papel existente mudou; nao toquei `contacts` nem policy de outra tabela.
+- Sem oraculo: a trilha nao revela valor algum, so o nome do campo.
+
+## O que NAO fiz e por que
+- Nao toquei no hook/painel (t_a364a46c, perfil de hooks): fora da minha area. Deixei o contrato
+  exato da tabela em comentario no cartao do hook.
+- Nao liguei a suite a um passo de workflow (`scripts/db-audit`/db-guard) porque o cartao limita os
+  arquivos a supabase/migrations, supabase/tests e types.ts; a suite roda no Postgres descartavel.
+- Nao editei nenhuma migration existente; a correcao e aditiva.
