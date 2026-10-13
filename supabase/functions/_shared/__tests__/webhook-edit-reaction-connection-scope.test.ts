@@ -225,3 +225,81 @@ Deno.test("#187: remoção de reação da conexão A apaga só a reação da men
     "a remoção deve apagar a reação da mensagem de A e preservar a de B",
   );
 });
+
+/** Reação por autor: EXT-C veio do CLIENTE; EXT-M foi enviada pela EMPRESA. */
+function cenarioReacao(agentIdDoAlvo: string | null = "prof-a") {
+  const tables: Record<string, Row[]> = {
+    whatsapp_connections: [{ id: "conn-a", instance_id: "inst-a" }],
+    messages: [
+      { id: "msg-c", external_id: "EXT-C", whatsapp_connection_id: "conn-a", contact_id: "ctt-a", agent_id: "prof-a", sender: "contact", created_at: "2026-10-06T11:00:00.000Z" },
+      { id: "msg-m", external_id: "EXT-M", whatsapp_connection_id: "conn-a", contact_id: "ctt-a", agent_id: agentIdDoAlvo, sender: "agent", created_at: "2026-10-06T12:00:00.000Z" },
+    ],
+    message_reactions: [],
+  };
+  return { tables, db: fakeDb(tables) };
+}
+
+const evt = (emoji: string, ext: string, fromMe: boolean) => ({ text: emoji, key: { id: ext, fromMe } });
+const doCliente = (t: Record<string, Row[]>) => t.message_reactions.filter((r) => r.user_id == null);
+const daEmpresa = (t: Record<string, Row[]>) => t.message_reactions.filter((r) => r.user_id != null);
+
+Deno.test("uma reação por autor: trocar 👍 por ❤️ SUBSTITUI a anterior", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao();
+  await reaction(db, "inst-a", evt("👍", "EXT-C", false), false);
+  await reaction(db, "inst-a", evt("❤️", "EXT-C", false), false);
+  const rows = doCliente(tables);
+  assertEquals(rows.length, 1, "UMA reação por (mensagem, autor)");
+  assertEquals(rows[0].emoji, "❤️");
+  assertEquals(rows[0].contact_id, "ctt-a");
+});
+
+Deno.test("reação do celular da empresa é REGISTRADA (user_id do agente)", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao();
+  await reaction(db, "inst-a", evt("👏", "EXT-M", true), true);
+  const rows = daEmpresa(tables);
+  assertEquals(rows.length, 1, "a reação da empresa deixa de ser descartada");
+  assertEquals(rows[0].user_id, "prof-a");
+  assertEquals(rows[0].emoji, "👏");
+  assertEquals(rows[0].contact_id ?? null, null, "sem contact_id: não colide com a do cliente");
+});
+
+Deno.test("reação da empresa: trocar substitui e emoji vazio remove", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao();
+  await reaction(db, "inst-a", evt("👏", "EXT-M", true), true);
+  await reaction(db, "inst-a", evt("🎉", "EXT-M", true), true);
+  assertEquals(daEmpresa(tables).length, 1, "trocar não acumula");
+  assertEquals(daEmpresa(tables)[0].emoji, "🎉");
+  await reaction(db, "inst-a", evt("", "EXT-M", true), true);
+  assertEquals(daEmpresa(tables).length, 0, "emoji vazio apaga");
+});
+
+Deno.test("cliente e empresa usam o MESMO emoji sem colidir", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao();
+  await reaction(db, "inst-a", evt("👍", "EXT-C", false), false);
+  await reaction(db, "inst-a", evt("👍", "EXT-M", true), true);
+  assertEquals(tables.message_reactions.length, 2, "uma do cliente e uma da empresa");
+  assertEquals(doCliente(tables).length, 1);
+  assertEquals(daEmpresa(tables).length, 1);
+});
+
+Deno.test("remoção do cliente preserva a reação do agente (limpeza por autor)", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao();
+  tables.message_reactions.push(
+    { id: "rx-cli", message_id: "msg-c", contact_id: "ctt-a", user_id: null, emoji: "👍" },
+    { id: "rx-agt", message_id: "msg-c", contact_id: "ctt-a", user_id: "prof-a", emoji: "❤️" },
+  );
+  await reaction(db, "inst-a", evt("", "EXT-C", false), false);
+  assertEquals(tables.message_reactions.map((r) => r.id), ["rx-agt"], "só a do cliente sai");
+});
+
+Deno.test("empresa sem agente no alvo não grava linha órfã (fail-closed)", async () => {
+  invalidateConnectionCache();
+  const { tables, db } = cenarioReacao(null);
+  await reaction(db, "inst-a", evt("👏", "EXT-M", true), true);
+  assertEquals(tables.message_reactions.length, 0, "sem autor não há linha inventada");
+});

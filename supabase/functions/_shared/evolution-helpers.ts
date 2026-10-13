@@ -431,7 +431,7 @@ export async function handleReactionEvent(supabase: EvolutionDbClient, instance:
   // order+limit(1): mesmo escopo do indice unico ux_messages_dedup
   // (connection + external_id + sender quando key.fromMe vem no evento);
   // o limit evita o maybeSingle estourar com duplicata concorrente.
-  let targetQuery = supabase.from('messages').select('id, contact_id')
+  let targetQuery = supabase.from('messages').select('id, contact_id, agent_id')
     .eq('external_id', targetExternalId).eq('whatsapp_connection_id', connection.id);
   if (typeof reactKey.fromMe === 'boolean') {
     targetQuery = targetQuery.eq('sender', reactKey.fromMe ? 'agent' : 'contact');
@@ -439,26 +439,33 @@ export async function handleReactionEvent(supabase: EvolutionDbClient, instance:
   const { data: targetMessage } = await targetQuery
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (!targetMessage) { console.log(`Reaction target not found: ${targetExternalId}`); return; }
-  // Stub sem contact_id (linha criada por recibo adiantado): o CHECK
-  // reaction_author_check exige autor — reagir aqui só geraria 23514.
-  if (!targetMessage.contact_id) { console.log(`Reaction target ${targetExternalId} has no contact — skipping`); return; }
+
+  // Uma reação por (mensagem, autor): cliente = contact_id (user_id nulo),
+  // empresa = user_id do agente. A empresa não grava contact_id — senão o
+  // UNIQUE(message_id, contact_id, emoji) colidiria com a reação do cliente.
+  const authorColumn = actorFromMe ? 'user_id' : 'contact_id';
+  const otherColumn = actorFromMe ? 'contact_id' : 'user_id';
+  const authorId = (actorFromMe ? targetMessage.agent_id : targetMessage.contact_id) as string | null;
+  // reaction_author_check exige autor: sem autor resolvido, nada de dono inventado.
+  if (!authorId) { console.log(`Reaction target ${targetExternalId} has no ${authorColumn} — skipping`); return; }
+
+  // Limpa SÓ a reação anterior do MESMO autor: é a troca de emoji substituindo
+  // (o onConflict por (.., emoji) deixava as duas) sem tocar a do outro autor.
+  const { error: clearErr } = await supabase.from('message_reactions').delete()
+    .eq('message_id', targetMessage.id).eq(authorColumn, authorId).is(otherColumn, null);
+  if (clearErr) { console.error('Error clearing previous reaction:', clearErr); return; }
 
   if (emoji === '') {
-    if (!actorFromMe) {
-      await supabase.from('message_reactions').delete()
-        .eq('message_id', targetMessage.id).eq('contact_id', targetMessage.contact_id);
-      await supabase.from('messages').update({ updated_at: new Date().toISOString() }).eq('id', targetMessage.id);
-      console.log(`Reaction removed on message ${targetExternalId}`);
-    }
-  } else if (!actorFromMe) {
-    const { error: upsertErr } = await supabase.from('message_reactions').upsert(
-      { message_id: targetMessage.id, contact_id: targetMessage.contact_id, emoji },
-      { onConflict: 'message_id,contact_id,emoji' }
-    );
-    if (upsertErr) { console.error('Error upserting reaction:', upsertErr); }
-    else {
-      await supabase.from('messages').update({ updated_at: new Date().toISOString() }).eq('id', targetMessage.id);
-      console.log(`Reaction synced: ${emoji} on message ${targetExternalId}`);
-    }
+    await supabase.from('messages').update({ updated_at: new Date().toISOString() }).eq('id', targetMessage.id);
+    console.log(`Reaction removed on message ${targetExternalId}`);
+    return;
   }
+
+  const { error: upsertErr } = await supabase.from('message_reactions').upsert(
+    { message_id: targetMessage.id, [authorColumn]: authorId, emoji },
+    { onConflict: `message_id,${authorColumn},emoji` }
+  );
+  if (upsertErr) { console.error('Error upserting reaction:', upsertErr); return; }
+  await supabase.from('messages').update({ updated_at: new Date().toISOString() }).eq('id', targetMessage.id);
+  console.log(`Reaction synced: ${emoji} on message ${targetExternalId}`);
 }
