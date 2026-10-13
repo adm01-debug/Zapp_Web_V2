@@ -38,6 +38,24 @@ Nenhuma linha de produção mudou; o diff é exclusivamente o teste do contrato.
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (142s)`.
 - sha da correção: `dbd630b84` (cherry-pick da entrega: `a1fc5fe75` `4ec8af77a` `41782aaca`).
 
+## Arquivos do diff (contra BASE_DIA=dia/2026-10-13)
+
+Do cherry-pick da entrega (obrigatório pelo cartão, commits `a1fc5fe75` `4ec8af77a`):
+
+- `supabase/functions/auth-login/index.ts` e `.../auth-login/index.test.ts` (login nega perfil inativo/ausente);
+- `supabase/functions/_shared/validation.ts` e `supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts` (leitura de `profiles.is_active` no `requireAuth`);
+- 12 testes de Edges cujo stub de `fetch` passou a responder `profiles?select=is_active`:
+  `ai-kb-ingest/index.test.ts`, `ai-proxy/index.test.ts`, `classify-audio-meme/index.test.ts`,
+  `classify-emoji/index.test.ts`, `classify-sticker/index.test.ts`, `crm-integration/index.test.ts`,
+  `elevenlabs-dialogue/index.test.ts`, `elevenlabs-sts/index.test.ts`, `elevenlabs-voice-design/index.test.ts`,
+  `fetch-link-preview/index.test.ts`, `multiplix-audience/index.test.ts`, `multiplix-voices/index.test.ts`;
+- `.tmp/relato.md`.
+
+Da correção deste refazer (commit `dbd630b84`):
+
+- `tests/contracts/requireauth-network-policy.contract.test.ts` — única mudança de código/comportamento
+  deste cartão; o resto do diff veio do cherry-pick da entrega.
+
 ## Pontos do revisor
 
 - Ponto 1: parti do commit da entrega por cherry-pick (`a1fc5fe75`, `4ec8af77a`, `41782aaca`) — não recomecei.
