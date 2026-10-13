@@ -1,4 +1,4 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
 
@@ -68,6 +68,8 @@ servidor e já entregues pelo especialista de banco:
 - os 3 testes que já existiam para este módulo continuam passando (coleta de
   CLS/INP/FCP/TTI e contrato de orçamento) — o diff só ADICIONA (nenhuma linha
   removida em `web-vitals.ts`).
+- verificação do cartão (`zapp-verify . --rapido`) → `VERIFY: VERDE (897s)`
+  (`OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`).
 
 ## O que NÃO fiz e por quê
 
