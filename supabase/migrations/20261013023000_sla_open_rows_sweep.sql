@@ -260,3 +260,97 @@ EXCEPTION WHEN others THEN
   RAISE WARNING 'sla_first_response_sweep_cron_skipped: %', sqlerrm;
 END;
 $$;
+
+-- ============================================================================
+-- 4) A resposta do atendente passa a CONSUMIR a linha ABERTA (fecha o ciclo)
+-- ============================================================================
+-- Sem isto os dois lados nao conversam: a varredura cria a linha ABERTA do ciclo, mas
+-- register_first_response_internal (cartao PB-39) fazia
+--   INSERT ... VALUES (..., p_responded_at, ...)
+--   ON CONFLICT (contact_id) WHERE first_response_at IS NULL DO UPDATE ...
+-- O arbitro do ON CONFLICT e o indice PARCIAL ux_conversation_sla_open_per_contact
+-- (predicado first_response_at IS NULL). Como a linha que ele insere ja nasce com
+-- first_response_at preenchido, ela NAO cai no indice parcial, nunca colide e o
+-- DO UPDATE e codigo morto: a linha ABERTA ficava presa e uma linha FECHADA nova
+-- era criada ao lado (o ciclo entrava duas vezes nos paineis).
+-- Correcao minima e cirurgica: se existe linha ABERTA do contato, a resposta a fecha
+-- usando o prazo do PROPRIO registro (mesma regra de mark_first_response); se nao
+-- existe, mantem-se o INSERT historico intacto. CREATE OR REPLACE preserva as ACLs
+-- que o PB-39 ja tinha fixado (REVOKE de PUBLIC/anon/authenticated), entao nenhum
+-- GRANT muda aqui.
+CREATE OR REPLACE FUNCTION public.register_first_response_internal(
+  p_contact_id uuid,
+  p_responded_at timestamptz,
+  p_before_created_at timestamptz DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_first_message_at timestamptz;
+  v_first_response_minutes integer := 5;
+  v_open_id uuid;
+BEGIN
+  -- serializa por contato (mesma trava da varredura)
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_contact_id::text, 42));
+
+  BEGIN
+    SELECT r.first_response_minutes
+      INTO v_first_response_minutes
+      FROM public.resolve_applicable_sla(p_contact_id) r;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      v_first_response_minutes := 5;  -- contato fora do escopo: padrao do sistema
+  END;
+
+  -- a resposta fecha a linha ABERTA do contato, se houver (consumo do ciclo)
+  SELECT s.id
+    INTO v_open_id
+    FROM public.conversation_sla s
+   WHERE s.contact_id = p_contact_id
+     AND s.first_response_at IS NULL
+   ORDER BY s.created_at DESC
+   LIMIT 1;
+
+  IF v_open_id IS NOT NULL THEN
+    UPDATE public.conversation_sla
+       SET first_response_at = p_responded_at,
+           first_response_breached =
+             p_responded_at > first_message_at + make_interval(mins => v_first_response_minutes)
+     WHERE id = v_open_id;
+    RETURN;
+  END IF;
+
+  -- base: primeira mensagem do cliente ainda sem resposta EFETIVA do atendente
+  -- (mensagens sending/failed nao contam como resposta anterior)
+  SELECT min(m.created_at)
+  INTO v_first_message_at
+  FROM public.messages m
+  WHERE m.contact_id = p_contact_id
+    AND m.sender = 'contact'
+    AND m.created_at <= p_responded_at
+    AND m.created_at > coalesce(
+      (SELECT max(r.created_at)
+       FROM public.messages r
+       WHERE r.contact_id = p_contact_id
+         AND r.sender = 'agent'
+         AND r.status IN ('sent','delivered','read')
+         AND r.created_at < coalesce(p_before_created_at, p_responded_at)),
+      timestamptz '-infinity'
+    );
+
+  IF v_first_message_at IS NULL THEN
+    RETURN;
+  END IF;
+
+  INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
+  VALUES (
+    p_contact_id,
+    v_first_message_at,
+    p_responded_at,
+    p_responded_at > v_first_message_at + make_interval(mins => v_first_response_minutes)
+  );
+END;
+$$;

@@ -27,7 +27,8 @@ INSERT INTO public.contacts (id, name, phone, company, job_title, contact_type, 
   ('c0000000-0000-0000-0000-000000000004', 'Varre D', '+550****0004', NULL, NULL, 'cliente', NULL, NULL),
   ('c0000000-0000-0000-0000-000000000005', 'Varre E', '+550****0005', NULL, NULL, 'cliente', NULL, NULL),
   ('c0000000-0000-0000-0000-000000000006', 'Varre F', '+550****0006', NULL, NULL, 'cliente', NULL, NULL),
-  ('c0000000-0000-0000-0000-000000000007', 'Varre G', '+550****0007', NULL, NULL, 'cliente', NULL, NULL);
+  ('c0000000-0000-0000-0000-000000000007', 'Varre G', '+550****0007', NULL, NULL, 'cliente', NULL, NULL),
+  ('c0000000-0000-0000-0000-000000000008', 'Varre H', '+550****0008', NULL, NULL, 'cliente', NULL, NULL);
 
 -- Prazo de 1a resposta fixo em 5 min por CONTATO (previsivel, independente do seed).
 INSERT INTO public.sla_rules (name, first_response_minutes, resolution_minutes, priority, contact_id, is_active) VALUES
@@ -37,7 +38,8 @@ INSERT INTO public.sla_rules (name, first_response_minutes, resolution_minutes, 
   ('varre-5-c4', 5, 60, 0, 'c0000000-0000-0000-0000-000000000004', true),
   ('varre-5-c5', 5, 60, 0, 'c0000000-0000-0000-0000-000000000005', true),
   ('varre-5-c6', 5, 60, 0, 'c0000000-0000-0000-0000-000000000006', true),
-  ('varre-5-c7', 5, 60, 0, 'c0000000-0000-0000-0000-000000000007', true);
+  ('varre-5-c7', 5, 60, 0, 'c0000000-0000-0000-0000-000000000007', true),
+  ('varre-5-c8', 5, 60, 0, 'c0000000-0000-0000-0000-000000000008', true);
 
 -- (a) C1: linha ABERTA vencida, 1a mensagem no DIA ANTERIOR (23h58) e ainda sem resposta.
 INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
@@ -72,6 +74,11 @@ INSERT INTO public.messages (contact_id, sender, content, status, created_at, st
 INSERT INTO public.messages (contact_id, sender, content, status, created_at, status_updated_at) VALUES
   ('c0000000-0000-0000-0000-000000000007', 'contact', 'oi', 'delivered', now() - interval '9 minutes', now() - interval '9 minutes'),
   ('c0000000-0000-0000-0000-000000000007', 'agent',   'ola', 'sending',  now() - interval '8 minutes', NULL);
+
+-- (B) C8: cliente escreveu -2min (DENTRO do prazo de 5min) e sera respondido a tempo -> a linha
+-- fecha sem estouro e sem alerta.
+INSERT INTO public.messages (contact_id, sender, content, status, created_at, status_updated_at) VALUES
+  ('c0000000-0000-0000-0000-000000000008', 'contact', 'oi', 'delivered', now() - interval '2 minutes', now() - interval '2 minutes');
 
 SET LOCAL session_replication_role = origin;
 
@@ -169,6 +176,34 @@ BEGIN
   RAISE NOTICE 'OK C5/C6/C7: ciclo novo unico, atendido fora, resposta sending nao efetiva';
 END $$;
 
+-- (B) C8: a varredura abriu a linha no prazo; a resposta a tempo fecha a linha SEM estouro e SEM
+-- alerta (prova que o caminho 'resposta no prazo' continua limpo).
+DO $$
+DECLARE n integer; b boolean; r timestamptz;
+BEGIN
+  SELECT count(*) INTO n FROM public.conversation_sla
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000008' AND first_response_at IS NULL;
+  IF n <> 1 THEN RAISE EXCEPTION 'C8 deveria ter linha aberta no prazo antes da resposta, veio %', n; END IF;
+
+  -- Resposta REAL no prazo: mensagem do atendente 'sent' dispara o gatilho que fecha a linha.
+  INSERT INTO public.messages (contact_id, sender, content, status, created_at, status_updated_at)
+    VALUES ('c0000000-0000-0000-0000-000000000008', 'agent', 'ola', 'sent', now(), now());
+
+  SELECT count(*) INTO n FROM public.conversation_sla
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000008' AND first_response_at IS NULL;
+  IF n <> 0 THEN RAISE EXCEPTION 'C8 respondido a tempo deveria FECHAR a linha aberta, ainda ha %', n; END IF;
+
+  SELECT first_response_breached, first_response_at INTO b, r FROM public.conversation_sla
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000008' ORDER BY created_at DESC LIMIT 1;
+  IF r IS NULL THEN RAISE EXCEPTION 'C8 deveria ter first_response_at preenchido'; END IF;
+  IF b IS DISTINCT FROM false THEN RAISE EXCEPTION 'C8 respondido a tempo nao deveria estourar'; END IF;
+
+  SELECT count(*) INTO n FROM public.sla_alert_events
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000008' AND resolved_at IS NULL;
+  IF n <> 0 THEN RAISE EXCEPTION 'C8 respondido a tempo nao deveria gerar alerta, veio %', n; END IF;
+  RAISE NOTICE 'OK cenario B: resposta no prazo fecha a linha sem estouro e sem alerta';
+END $$;
+
 -- (4) Idempotencia: rodar a varredura de novo nao cria linha nem alerta a mais.
 SELECT public.sla_first_response_sweep() AS acted_2;
 DO $$
@@ -216,6 +251,17 @@ BEGIN
     RAISE NOTICE 'OK anon sem EXECUTE (42501)';
   END;
   RESET ROLE;
+
+  -- service_role PODE (grant explicito): e o dono do disparo manual, alem do job do pg_cron.
+  BEGIN
+    SET LOCAL ROLE service_role;
+    PERFORM public.sla_first_response_sweep();
+  EXCEPTION WHEN others THEN
+    RESET ROLE;
+    RAISE EXCEPTION 'service_role DEVERIA poder chamar a varredura: %', sqlerrm;
+  END;
+  RESET ROLE;
+  RAISE NOTICE 'OK service_role com EXECUTE';
 END $$;
 
 SELECT 'TODOS OS CASOS OK' AS resultado;
