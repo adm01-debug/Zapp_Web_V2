@@ -51,10 +51,10 @@ Especialista: worker (sql) (area-sql-banco)
   criar away_messages no mesmo fluxo — isso é do worker (hooks), registro via kanban_comment.
 - Não atualizei `supabase/schema-manifest.json` (não está na lista de arquivos; é gerado).
 - Não alterei nenhum GRANT/papel existente além do pedido (só a ACL da função nova).
-- O loop do juiz ("LOOP que apaga/altera sem LIMIT nem teto"): o `FOR ... jsonb_array_elements`
-  da RPC é só VALIDAÇÃO — não apaga/altera nada antes das checagens; a única escrita é o
-  `INSERT ... ON CONFLICT` depois do loop, e o lote é limitado a 7 dias
-  (`jsonb_array_length(p_days) > 7` → erro 22023, testado em T17). Loop com teto duro.
+- O loop do juiz ("LOOP que apaga/altera sem LIMIT nem teto"): o `FOR` da RPC é só VALIDAÇÃO —
+  não apaga/altera nada antes das checagens; a única escrita é o `INSERT ... ON CONFLICT` depois
+  do loop. Ainda assim o lote tem teto duro de 7 dias (`jsonb_array_length(p_days) > 7` → 22023,
+  T17) E o próprio `FOR` usa `LIMIT 7`. Loop com número fixo e auditável de voltas.
 
 ## Ressalva
 - O juiz barato acusa "código alterado sem teste novo/alterado" apontando só

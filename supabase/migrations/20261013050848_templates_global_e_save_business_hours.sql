@@ -74,7 +74,8 @@ BEGIN
   END IF;
 
   -- ── VALIDACAO COMPLETA ANTES DE ESCREVER (tudo-ou-nada) ───────────────────
-  FOR v_day IN SELECT * FROM jsonb_array_elements(p_days) LOOP
+  -- LIMIT 7 alem do teto acima: loop com numero de voltas fixo e auditavel.
+  FOR v_day IN SELECT * FROM jsonb_array_elements(p_days) LIMIT 7 LOOP
     IF jsonb_typeof(v_day) <> 'object' THEN
       RAISE EXCEPTION 'dia_deve_ser_objeto' USING ERRCODE = '22023';
     END IF;
