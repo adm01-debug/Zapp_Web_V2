@@ -9,7 +9,12 @@ import { TransferDialog } from './TransferDialog';
 interface BulkActionsToolbarProps {
   selectedCount: number;
   onMarkAsRead: () => void;
-  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
+  /**
+   * Pode devolver promise: o lote transfere contato por contato via RPC e
+   * REJEITA quando algum falha (`useInboxBulkActions.bulkTransfer`). O diálogo
+   * precisa esperar essa promise para só fechar no sucesso.
+   */
+  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
   onArchive: () => void;
   onClearSelection: () => void;
   isLoading?: boolean;
@@ -26,11 +31,6 @@ export function BulkActionsToolbar({
   const [showTransferDialog, setShowTransferDialog] = useState(false);
 
   if (selectedCount === 0) return null;
-
-  const handleTransfer = (type: 'agent' | 'queue', targetId: string, message?: string) => {
-    onTransfer(type, targetId, message);
-    setShowTransferDialog(false);
-  };
 
   return (
     <>
@@ -124,10 +124,18 @@ export function BulkActionsToolbar({
         </motion.div>
       </AnimatePresence>
 
+      {/*
+        `onTransfer` vai direto para a TransferDialog: ela mantém o diálogo
+        ABERTO enquanto o resultado não volta (mostra "Transferindo…") e só
+        fecha no sucesso. Antes, a barra fechava o diálogo na hora — com o lote
+        rejeitando em falha, isso escondia o resumo e deixava a rejeição sem
+        tratamento. O resumo do lote (quantos transferiram / quantos falharam)
+        sai no toast do hook.
+      */}
       <TransferDialog
         open={showTransferDialog}
         onOpenChange={setShowTransferDialog}
-        onTransfer={handleTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void}
+        onTransfer={onTransfer}
       />
     </>
   );
