@@ -11712,10 +11712,10 @@ export type Database = {
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
-        Args: { inactive_minutes?: number }
+        Args: { inactive_minutes?: number; p_dry_run?: boolean }
         Returns: number
       }
-      reassign_overloaded_agents: { Args: never; Returns: number }
+      reassign_overloaded_agents: { Args: { p_dry_run?: boolean }; Returns: number }
       record_failed_login: {
         Args: { p_email: string; p_ip_address?: string; p_user_agent?: string }
         Returns: {
