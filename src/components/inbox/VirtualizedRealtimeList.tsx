@@ -11,10 +11,12 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, ArchiveRestore, RotateCcw, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+import { ConversationReopenDialog } from './conversation-list/ConversationReopenDialog';
+import { isArchived, isResolved } from '@/hooks/inbox/chipCounts';
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -75,6 +77,9 @@ interface VirtualizedRealtimeListProps {
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
   onSnooze?: (contactId: string, duration: string) => void;
+  /** Reabre/desarquiva a conversa (RPC reopen_conversation) — só aparece quando
+   *  o contato está resolvido/arquivado. Rejeita quando a RPC falha. */
+  onReopen?: (contactId: string) => void | Promise<void>;
 }
 
 const HEADER_HEIGHT = 32;
@@ -104,6 +109,7 @@ export function VirtualizedRealtimeList({
   onFavorite,
   favoriteIds = EMPTY_SET,
   onSnooze,
+  onReopen,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   // R2-INB-056 (#349): o "sou eu?" da linha compara com public.profiles.id
@@ -250,6 +256,7 @@ export function VirtualizedRealtimeList({
               onFavorite={onFavorite}
               onSnooze={onSnooze}
               onArchive={onArchive}
+              onReopen={onReopen}
               currentProfileId={currentProfileId}
               agentsMap={agentsMap}
               density={density}
@@ -289,6 +296,7 @@ interface ConversationRowProps {
   onFavorite?: (contactId: string) => void;
   onSnooze?: (contactId: string, duration: string) => void;
   onArchive?: (contactId: string) => void;
+  onReopen?: (contactId: string) => void | Promise<void>;
   /** profiles.id do usuário logado (não o auth id) — ver R2-INB-056. */
   currentProfileId: string | null;
   agentsMap: Map<string, AgentLite>;
@@ -346,6 +354,7 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
+  onReopen,
   currentProfileId,
   agentsMap,
   density,
@@ -378,6 +387,32 @@ const ConversationRow = memo(({
   const tags = conversation.contact.tags ?? [];
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  // Estado persistido do contato (ADR-005): a linha só oferece Reabrir/Desarquivar
+  // quando o contato está de fato resolvido/arquivado — os MESMOS predicados que a
+  // lista e os chips usam (chipCounts), para ação e filtro não divergirem.
+  const conversaArquivada = isArchived(conversation);
+  const conversaResolvida = isResolved(conversation);
+  const podeReabrir = !!onReopen && (conversaArquivada || conversaResolvida);
+  const rotuloReabrir = conversaArquivada ? 'Desarquivar conversa' : 'Reabrir conversa';
+
+  const confirmarReabertura = async () => {
+    if (!onReopen) return;
+    setReopening(true);
+    setReopenError(null);
+    try {
+      await onReopen(contactId);
+      setReopenOpen(false);
+    } catch {
+      // A RPC falhou: o diálogo fica aberto com o motivo (nada de fechar em silêncio).
+      setReopenError('Não foi possível reabrir a conversa. Tente novamente.');
+    } finally {
+      setReopening(false);
+    }
+  };
 
   // ConversationSLABadge chama useApplicableSLA (react-query) — sem um
   // QueryClient no contexto o useQuery lanca "No QueryClient set" e derruba
@@ -673,9 +708,37 @@ const ConversationRow = memo(({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs font-medium">Arquivar</TooltipContent>
             </Tooltip>
+            {/* Reabrir/Desarquivar só existe para conversa RESOLVIDA/ARQUIVADA
+                (chip Resolvidas/Arquivadas) — a ação usa a RPC reopen_conversation
+                com confirmação, e o estado de espera bloqueia o segundo clique. */}
+            {podeReabrir && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label={rotuloReabrir}
+                    onClick={(e) => { e.stopPropagation(); setReopenError(null); setReopenOpen(true); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-success hover:bg-success/10 active:scale-90 transition-all duration-150"
+                  >
+                    {conversaArquivada ? <ArchiveRestore className="w-3.5 h-3.5" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  {conversaArquivada ? 'Desarquivar' : 'Reabrir'}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </TooltipProvider>
         </div>
       </div>
+      <ConversationReopenDialog
+        open={reopenOpen}
+        onOpenChange={(open) => { if (!reopening) { setReopenOpen(open); if (!open) setReopenError(null); } }}
+        action={conversaArquivada ? 'unarchive' : 'reopen'}
+        contactName={conversation.contact.name ?? undefined}
+        isPending={reopening}
+        error={reopenError}
+        onConfirm={confirmarReabertura}
+      />
     </div>
   );
 });

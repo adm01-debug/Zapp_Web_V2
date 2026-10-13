@@ -60,6 +60,8 @@ interface ChatPanelProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onArchiveConversation?: () => void;
+  /** Reabre (resolvida) / desarquiva (arquivada) a conversa atual (RPC reopen_conversation). */
+  onReopenConversation?: (contactId: string) => void | Promise<void>;
   pinnedConversations?: PinnedChatItem[];
   onSelectPinned?: (contactId: string) => void;
   /** Contrato de paginacao do historico antigo (opcional: ausente = consumidor antigo, sem controle). */
@@ -193,7 +195,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onReopenConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -432,6 +434,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}
             onCloseConversation={() => openDialog('closeDialog')}
             onArchive={onArchiveConversation}
+            onReopenConversation={onReopenConversation}
             isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}

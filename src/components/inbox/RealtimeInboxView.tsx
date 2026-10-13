@@ -7,6 +7,7 @@ import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { ConversationListSidebar } from './ConversationListSidebar';
+import { chipDoStatusReaberto } from './conversation-list/reopenChip';
 import { useGlobalSearchShortcut } from '@/hooks/ui/useGlobalSearchShortcut';
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
@@ -369,6 +370,15 @@ export function RealtimeInboxView() {
                       onArchiveConversation={() => {
                         if (!inbox.legacyConversation) return;
                         conversationActions.archiveContact(inbox.legacyConversation.contact.id);
+                      }}
+                      onReopenConversation={async () => {
+                        if (!inbox.legacyConversation) return;
+                        const resultado = await conversationActions.reopenConversation(inbox.legacyConversation.contact.id);
+                        if (!resultado) throw new Error('Falha ao reabrir conversa');
+                        // Mesmo retorno de filtro da lista: a conversa sai do chip
+                        // Resolvidas/Arquivadas e vai para onde ela agora aparece.
+                        inboxFilters.setChipTab(chipDoStatusReaberto(resultado.status));
+                        inbox.refetch();
                       }}
                       pinnedConversations={pinnedConversations}
                       onSelectPinned={inbox.handleSelectConversation}

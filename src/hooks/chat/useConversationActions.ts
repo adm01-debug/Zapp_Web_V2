@@ -258,6 +258,33 @@ export function useConversationActions() {
     });
   }, []);
 
+  /**
+   * Reabre conversa RESOLVIDA/ARQUIVADA pela RPC `reopen_conversation`
+   * (migration 20261013210003) — a MESMA que o gatilho usa quando o contato
+   * escreve, então o estado e o evento ficam iguais pelos dois caminhos.
+   * Devolve o estado novo para quem chamou levar a lista ao chip certo (a
+   * conversa sai de Resolvidas/Arquivadas) e `null` quando falhou.
+   */
+  const reopenConversation = useCallback(async (
+    contactId: string,
+  ): Promise<{ status: string | null; reopened: boolean } | null> => {
+    // RPC nova (t_0d2e2dec), types.ts ainda não sincronizado.
+    const { data, error } = await (supabase as any).rpc('reopen_conversation', { p_contact_id: contactId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (t_0d2e2dec), types.ts ainda não sincronizado
+    const linha = Array.isArray(data) ? data[0] : data;
+    if (error || !linha) {
+      toast.error('Erro ao reabrir conversa. Tente novamente.');
+      return null;
+    }
+    // `reopened=false`: o contato já estava ativo (outra pessoa reabriu antes) e
+    // nenhum evento foi gravado — avisa em vez de dar sucesso por algo que não mudou.
+    if (linha.reopened === false) {
+      toast.info('A conversa já está ativa');
+    } else {
+      toast.success('Conversa reaberta');
+    }
+    return { status: linha.conversation_status ?? null, reopened: linha.reopened === true };
+  }, []);
+
   const transferContact = useCallback(async (
     contactId: string,
     type: 'agent' | 'queue' | 'connection',
@@ -308,6 +335,7 @@ export function useConversationActions() {
     unfavoriteContact,
     snoozeConversation,
     archiveContact,
+    reopenConversation,
     transferContact,
     profileId,
   };
