@@ -38,9 +38,14 @@ Especialista: hugo
 - verificação do cartão: `zapp-verify . --rapido` (bloco FATOS MEDIDOS deste fechar)
 
 ## Dependência (cartão pai t_1d123124, não integrado)
-`git merge-base --is-ancestor 9e0ee270d HEAD` era falso; a faixa do pai (1 commit)
-foi trazida com `git cherry-pick -x 9e0ee270d` → novo sha `0cbeb8f17` (migration
-`increment_custom_emoji_use` + seu teste no banco local). Sem conflito.
+`git merge-base --is-ancestor 9e0ee270d HEAD` era falso; a faixa do pai (1 commit,
+autor worker (sql)) foi trazida com `git cherry-pick -x 9e0ee270d` → novo sha
+`0cbeb8f17`. Sem conflito. Os dois arquivos de `supabase/` que o diff mostra
+(`supabase/migrations/20261013012531_custom_emoji_use_rpc.sql` e
+`supabase/tests/custom_emoji_use_rpc_increment.sql`) vêm SÓ desse cherry-pick: são
+o pré-requisito que o próprio cartão manda trazer (item 3 depende da RPC do pai).
+Não escrevi nem alterei SQL — se o portão preferir, eles podem ser descartados e
+deixados para a integração da faixa do pai.
 
 ## O que NÃO fiz e por quê
 - Não mexi em handleDelete nem na migration/policy do bucket `custom-emojis`: nada
