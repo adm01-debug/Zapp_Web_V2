@@ -113,6 +113,12 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // Contato excluido nao volta pela Inbox: em Postgres 17 descartavel (docker) prova que o
+  // inbound reativa o contato soft-deleted com trilha e que contacts_select_policy esconde o
+  // excluido de quem nao e admin/supervisor -- sem quebrar purge nem contato vivo -- e que a
+  // linha `-- Rollback:` da migration restaura. O estado anterior vem dos arquivos reais.
+  // Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/contacts-deleted-inbox-ingest.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
