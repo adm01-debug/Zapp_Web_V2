@@ -1,11 +1,12 @@
 /**
  * Modal "Nova tarefa" (seção 3.4 do plano, imagem 04) — casco mínimo.
  *
- * Aqui vivem as etapas 159 (campo Prazo) e 160 (campo Lembrete): o casco existe
- * para os campos serem montados no modal real, aberto pelo botão do cabeçalho e
- * pelo atalho `N`. As demais seções (título, contato, prioridade, coerência,
- * destino, prévia) entram por cima sem reescrever isto — o estado de cada campo é
- * local e sobe pelo `onChange` respectivo.
+ * Aqui vivem as etapas 159 (campo Prazo), 160 (campo Lembrete), 163 (coerência
+ * prazo x lembrete) e 164 (bloco "Destino da tarefa"): o casco existe para os
+ * campos serem montados no modal real, aberto pelo botão do cabeçalho e pelo
+ * atalho `N`. As demais seções (título, contato, prioridade, prévia) entram por
+ * cima sem reescrever isto — o estado de cada campo é local e sobe pelo
+ * `onChange` respectivo.
  */
 import { useState } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
 import { PrazoField } from './new-task/PrazoField';
 import { RemindField } from './new-task/RemindField';
 import { CoerenciaLembrete } from './new-task/CoerenciaLembrete';
+import { DestinationBlock } from './new-task/DestinationBlock';
 
 export interface NewTaskDialogProps {
   open: boolean;
@@ -59,6 +61,7 @@ export function NewTaskDialog({
           now={now}
           onAjustar={setRemindAt}
         />
+        <DestinationBlock />
       </DialogContent>
     </Dialog>
   );
