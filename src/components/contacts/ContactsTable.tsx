@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Briefcase, Calendar, Tag, ArrowUp, ArrowDown, ArrowUpDown,
+  Briefcase, Calendar, ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -116,7 +116,6 @@ export function ContactsTable({
             <SortableHeader label="Email" field="email" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Empresa" field="company" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
             <SortableHeader label="Cargo" field="job_title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <th className="text-left p-3 text-xs font-semibold tracking-normal text-muted-foreground">Etiquetas</th>
             <th className="text-right p-3 text-xs font-semibold tracking-normal text-muted-foreground">Ações</th>
           </tr>
         </thead>
@@ -210,16 +209,6 @@ export function ContactsTable({
                     </div>
                   ) : <span className="text-muted-foreground/30">—</span>}
                 </td>
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-1">
-                    {contact.tags?.slice(0, 2).map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
-                    ))}
-                    {(contact.tags?.length || 0) > 2 && (
-                      <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{(contact.tags?.length || 0) - 2}</Badge>
-                    )}
-                  </div>
-                </td>
                 <td className="p-3 text-right">
                   <div
                     className={cn(
@@ -239,7 +228,6 @@ export function ContactsTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onEdit(contact)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
-                        <DropdownMenuItem><Tag className="w-4 h-4 mr-2" />Gerenciar etiquetas</DropdownMenuItem>
                         {/* Mesmo gate da lista e do card: o item só aparece quando o banco
                             diz que este contato pode ser excluído (`contact.can_delete`).
                             A visão Tabela era o único ponto de exclusão sem gate. */}

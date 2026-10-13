@@ -8,7 +8,6 @@ export interface Contact {
   avatar_url: string | null;
   company: string | null;
   job_title: string | null;
-  tags: string[] | null;
   contact_type: string | null;
   created_at: string;
   /** Data do último contato via mensagem — populado por useContactsSearch. Null = sem mensagens. */

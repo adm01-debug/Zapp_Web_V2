@@ -101,7 +101,7 @@ describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)',
     render(
       <>
         <ContactListItem {...itemProps(baseContact({ id: 'c-1', name: 'Ana' }))} />
-        <ContactListItem {...itemProps(baseContact({ id: 'c-2', name: 'Bruno', tags: ['vip'] }))} index={1} />
+        <ContactListItem {...itemProps(baseContact({ id: 'c-2', name: 'Bruno' }))} index={1} />
       </>,
     );
     const rows = Array.from(document.querySelectorAll('[data-testid="contact-list-item"]'));

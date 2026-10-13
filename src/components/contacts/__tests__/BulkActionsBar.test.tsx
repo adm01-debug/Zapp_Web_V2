@@ -61,7 +61,6 @@ function setup(extra: Partial<React.ComponentProps<typeof BulkActionsBar>> = {})
     onClearSelection: vi.fn(),
     onActionComplete: vi.fn(),
     onCountersChanged: vi.fn(),
-    availableTags: ['vip'],
     availableAgents: [{ id: 'ag-1', name: 'Bia' }],
     ...extra,
   };
@@ -87,15 +86,6 @@ describe('BulkActionsBar — ações em lote (etapa 81)', () => {
   it('não renderiza sem seleção', () => {
     setup({ selectedIds: [] });
     expect(screen.queryByText(/selecionado/)).not.toBeInTheDocument();
-  });
-
-  it('Tag acrescenta a tag só em quem ainda não tem', async () => {
-    db.tagsById = { a: ['antiga'], b: ['vip'] };
-    const props = setup();
-    pick(/^Tag$/, 'vip');
-
-    await waitFor(() => expect(props.onActionComplete).toHaveBeenCalled());
-    expect(db.updates).toEqual([{ payload: { tags: ['antiga', 'vip'] }, filter: ['id', 'a'] }]);
   });
 
   it('Atribuir grava assigned_to em todos os selecionados', async () => {
@@ -197,37 +187,5 @@ describe('BulkActionsBar — feedback fiel em erro e lote parcial (R2-AUTH-013)'
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('1 de 2 contatos atualizados para "fornecedor"', expect.anything()));
     expect(toast.success).not.toHaveBeenCalled();
     expect(props.onCountersChanged).toHaveBeenCalled();
-  });
-
-  it('Tag com falha de leitura: reporta erro e NÃO sobrescreve as tags com lista vazia', async () => {
-    db.selectError = { message: 'permission denied' };
-    setup();
-    pick(/^Tag$/, 'vip');
-
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar tags. Nenhum contato foi alterado.'));
-    expect(db.updates).toEqual([]);
-    expect(toast.success).not.toHaveBeenCalled();
-  });
-
-  it('Tag parcial: avisa quantos receberam a tag e mantém os recusados selecionados', async () => {
-    db.tagsById = { a: [], b: [] };
-    db.affectedIds = ['a'];
-    const onPartialComplete = vi.fn();
-    setup({ onPartialComplete });
-    pick(/^Tag$/, 'vip');
-
-    await waitFor(() => expect(onPartialComplete).toHaveBeenCalledWith(['b']));
-    expect(toast.warning).toHaveBeenCalledWith('1 de 2 contatos receberam a tag "vip"', expect.anything());
-    expect(toast.success).not.toHaveBeenCalled();
-  });
-
-  it('Tag com 0 linhas afetadas é falha: não anuncia sucesso', async () => {
-    db.tagsById = { a: [], b: [] };
-    db.affectedIds = [];
-    setup();
-    pick(/^Tag$/, 'vip');
-
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar tags. Nenhum contato foi alterado.'));
-    expect(toast.success).not.toHaveBeenCalled();
   });
 });

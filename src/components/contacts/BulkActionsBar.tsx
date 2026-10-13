@@ -12,12 +12,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tag, Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
+import { Trash2, UserCheck, Star, X, CheckSquare, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
-import { isWhatsAppTag, filterCustomTags, getTagDisplayName } from '@/lib/tags';
-import { applyContactFieldUpdate, applyContactTagChange, pendingIds } from '@/services/contact-bulk.service';
+import { applyContactFieldUpdate, pendingIds } from '@/services/contact-bulk.service';
 
 interface BulkActionsBarProps {
   selectedIds: string[];
@@ -30,7 +29,6 @@ interface BulkActionsBarProps {
   onPartialComplete?: (refusedIds: string[]) => void;
   /** Chamado após operações em lote que mudam a quantidade ou o tipo dos contatos. */
   onCountersChanged?: () => void;
-  availableTags?: string[];
   availableAgents?: { id: string; name: string }[];
   /**
    * Se ao menos um dos contatos selecionados pode ser excluído (`can_delete` do
@@ -62,7 +60,6 @@ export function BulkActionsBar({
   onActionComplete,
   onPartialComplete,
   onCountersChanged,
-  availableTags = [],
   availableAgents = [],
   canDeleteSelection = true,
   canChangeType = false,
@@ -81,41 +78,6 @@ export function BulkActionsBar({
   const typePermission =
     canChangeTypeSelection !== undefined ? canChangeTypeSelection : canChangeType;
   const showTypeAction = canChangeType || canChangeTypeSelection !== undefined;
-
-  const handleBulkTag = useCallback(async (tag: string) => {
-    if (isWhatsAppTag(tag)) return;
-    setIsProcessing(true);
-    try {
-      // R2-AUTH-013: antes, `Promise.all` sobre SELECTs que devolvem `{error}` (nunca
-      // rejeitam) escondia a falha de leitura, `tags=[]` era fabricado e o UPDATE
-      // sobrescrevia as tags reais. Agora quem mudou/foi recusado/falhou é explícito.
-      const outcome = await applyContactTagChange(selectedIds, { add: [tag] });
-      const refused = pendingIds(outcome);
-
-      if (outcome.succeeded.length === 0 && refused.length === 0) {
-        toast.success(`Tag "${tag}" já estava nos ${count} contatos selecionados`);
-        onActionComplete();
-        return;
-      }
-      if (outcome.succeeded.length === 0) {
-        toast.error('Erro ao adicionar tags. Nenhum contato foi alterado.');
-        return;
-      }
-      if (refused.length > 0) {
-        toast.warning(`${outcome.succeeded.length} de ${count} contatos receberam a tag "${tag}"`, {
-          description: 'Os demais não puderam ser atualizados (sem permissão ou sem alteração).',
-        });
-        onPartialComplete?.(refused);
-      } else {
-        toast.success(`Tag "${tag}" adicionada a ${outcome.succeeded.length} contatos`);
-        onActionComplete();
-      }
-    } catch {
-      toast.error('Erro ao adicionar tags');
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [selectedIds, count, onActionComplete, onPartialComplete]);
 
   const handleBulkAssign = useCallback(async (agentId: string, agentName: string) => {
     setIsProcessing(true);
@@ -223,27 +185,6 @@ export function BulkActionsBar({
       >
         <CheckSquare className="w-4 h-4" />
         <span className="text-sm font-medium">{count} selecionado{count > 1 ? 's' : ''}</span>
-
-        {/* Tag */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="secondary" disabled={isProcessing}>
-              <Tag className="w-3.5 h-3.5 mr-1" />
-              Tag
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {availableTags.length > 0 ? (
-              filterCustomTags(availableTags).slice(0, 10).map(tag => (
-                <DropdownMenuItem key={tag} onClick={() => handleBulkTag(tag)}>
-                  {getTagDisplayName(tag)}
-                </DropdownMenuItem>
-              ))
-            ) : (
-              <DropdownMenuItem disabled>Sem tags disponíveis</DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         {/* Assign */}
         <DropdownMenu>

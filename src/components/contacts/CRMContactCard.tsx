@@ -78,12 +78,6 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
         {contact.email_primary && <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{contact.email_primary}</span></span>}
       </div>
 
-      {contact.tags && contact.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5">
-          {contact.tags.slice(0, 4).map(tag => <Badge key={tag} variant="secondary" className="text-3xs py-0 px-1.5">{tag}</Badge>)}
-          {contact.tags.length > 4 && <Badge variant="secondary" className="text-3xs py-0 px-1.5">+{contact.tags.length - 4}</Badge>}
-        </div>
-      )}
     </motion.div>
   );
 }

@@ -26,7 +26,6 @@ interface KanbanContact {
   company?: string | null;
   avatar_url?: string | null;
   contact_type?: string | null;
-  tags?: string[] | null;
 }
 
 interface ContactKanbanViewProps {
@@ -244,15 +243,6 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                       </div>
                                       <MessageSquare className="w-3.5 h-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
-                                    {contact.tags && contact.tags.length > 0 && (
-                                      <div className="flex flex-wrap gap-1 mt-2 ml-6">
-                                        {contact.tags.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1">
-                                            {tag}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    )}
                                   </div>
                                 )}
                               </Draggable>
