@@ -1,18 +1,21 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (geral)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `docs/plans/PLANO_PARIDADE_V3_DOC_07_SEGUNDA_PASSADA_2026-10-13.md`: copiado de `.assets/paridade-07/` inteiro; a única edição (linha 9) trocou o glob `..._SEGUNDA_PASSADA_*` pelos 4 nomes finais dos relatórios. Sem isso o plano apontava para arquivos que não existem com esse nome — o cartão pede que ele aponte para os nomes finais.
+- `docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE1_MENSAGENS_PRESENCA.md`: relatório 1 (leitura de mensagens, status do WhatsApp, presença, identidade de contato) copiado byte a byte de `achados_1_mensagens_presenca.md`.
+- `..._PARTE2_VOZ_SIP_MIDIA.md`: relatório 2 (voz, SIP, cache de mídia, métricas), de `achados_2_voz_sip_midia.md`, sem alteração.
+- `..._PARTE3_REACOES_TEAMCHAT.md`: relatório 3 (reações e Team Chat), de `achados_3_reacoes_teamchat.md`, sem alteração.
+- `..._PARTE4_INVENTARIO.md`: relatório 4 (inventário de tabelas, RPCs, exports, utils e arquivos fora do documento), de `achados_4_inventario.md`, sem alteração.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- `diff -q` dos 4 relatórios do workspace contra os fontes em `.assets/paridade-07/` → sem saída (arquivos idênticos, byte a byte).
+- `grep -n "SEGUNDA_PASSADA_\*" docs/plans/PLANO_PARIDADE_V3_DOC_07_SEGUNDA_PASSADA_2026-10-13.md` → exit 1 (nenhuma referência à glob antiga sobrou); `grep -n "AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE"` → as 4 linhas 10-13 com os nomes finais.
+- Nomes finais conferidos contra os nomes pedidos no cartão (PARTE1_MENSAGENS_PRESENCA, PARTE2_VOZ_SIP_MIDIA, PARTE3_REACOES_TEAMCHAT, PARTE4_INVENTARIO) com prefixo `AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_`.
+- Busca anti-segredo nos 5 arquivos: `grep -nEi '(bearer |sk-[A-Za-z0-9]{10,}|eyJ[A-Za-z0-9_-]{20,}|api[_-]?key|secret|senha|password|\([0-9]{2}\)[0-9]{4,5}-[0-9]{4}|\+55[0-9]{10,})'` → só um casamento, e é descrição de código (`apikey` + `Bearer supabaseKey` (anon) em `playTtsAudio.ts:145-154`), não valor real. Busca por e-mail/CPF/11 dígitos → nenhum dado de cliente; os números longos são timestamps de migration (ex.: `20260924225551`). Nenhum telefone, token ou chave real.
+- Os 5 arquivos entraram como `create` no commit — confirma que ainda não existiam na branch (o PH-00 não os havia gravado).
+- `git log --oneline -1` → `679a55480d docs(paridade): guarda plano doc 07 2a passada e 4 relatorios`; `git show --stat HEAD` → 5 files changed, 597 insertions(+).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não alterei o conteúdo técnico de nenhum relatório nem do plano: o cartão manda copiar; editei só a linha 9 do plano (referência aos nomes finais).
+- Não toquei em `.assets/` nem em nenhum arquivo fora do workspace; origem preservada.
+- Sem teste de software: os produtos são documentos, não código executável — a verificação é identidade de conteúdo (diff -q) e coerência das referências (grep).
