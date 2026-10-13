@@ -77,7 +77,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
-function note(over: Partial<ContactNote> & Pick<ContactNote, 'id' | 'created_at'>): ContactNote {
+function note(over: Partial<ContactNote> & Pick<ContactNote, 'id' | 'created_at'>): Record<string, unknown> {
   return {
     contact_id: 'c1',
     author_id: 'user-1',
@@ -87,7 +87,7 @@ function note(over: Partial<ContactNote> & Pick<ContactNote, 'id' | 'created_at'
     due_date: null,
     updated_at: over.created_at,
     ...over,
-  } as ContactNote;
+  } as unknown as Record<string, unknown>;
 }
 
 beforeEach(() => {
