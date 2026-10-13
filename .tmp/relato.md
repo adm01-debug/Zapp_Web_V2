@@ -22,6 +22,11 @@ Especialista: worker (ci) (area-verificacao-ci)
 - Guardas da área `edge` (nenhum vermelho): `node scripts/edge-deploy/generate-manifest.mjs --check` → `Edge manifest OK: 81 functions, 161 source files, sha256=0919802d68ee...` (rc=0); `node --test scripts/edge-deploy/*.unit.mjs` → `tests 116 / pass 116 / fail 0`.
 - Escopo: `git status --short` do workspace só acusa este relato; sem `.skip`/`.only`; manifesto em paridade.
 
+## Diff da correção (e manifesto)
+- Não há diff de correção MINHA: o cartão diz "se a causa estiver fora da área edge, apenas relate e pare", e ela está fora. O diff do meu commit é só o relato (`git show --stat HEAD` → `.tmp/relato.md`).
+- A correção do defeito determinístico está fora da minha área e já na branch do dia: `git show --stat 9ec2c74b36` → `src/components/talkx/__tests__/RuleValueInput.test.tsx | 33 +++++----` (front/Talk X). Trecho: `+ afterEach(() => { window.history.replaceState(null, '', '/'); });` + `+ vi.setConfig({ testTimeout: 20000 });` e `ESPERA_MOUNT = { timeout: 15000 }` nos `findBy*`, com as asserções inalteradas.
+- Manifesto NÃO editado à mão: `git status --short` não acusa `supabase/deployment-manifest.json`; a paridade é só conferida com o script do repo (`generate-manifest.mjs --check` → rc=0).
+
 ## O que NÃO fiz e por quê
 - Não corrigi o defeito: a causa é front/Talk X, fora de `scripts/edge-deploy/**`, `supabase/deployment-manifest.json` e `supabase/functions/**` (limite do cartão).
 - Não rodei o `zapp-verify full`/noturno (passo `testes` de ~1543s) — a prova é a reprodução do teste culpado isolado (verde) somada ao registro do noturno; não afirmo que o noturno já esteja verde.
