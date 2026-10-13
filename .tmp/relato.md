@@ -1,44 +1,46 @@
-Especialista: hugo
-Área: area-front-hooks (cartão entregue ao worker (geral) como reserva)
-
-Concluí. Um defeito, com prova vermelho→verde sobre os arquivos do cartão.
+Especialista: iris
 
 ## O que mudou e por quê
 
-Título: fix(inbox): lote marca so mensagens recebidas e transfere via RPC por contato
+Título: fix(inbox): barra de acoes em lote so fecha o dialogo depois do resultado
 
-- `src/hooks/inbox/useInboxBulkActions.ts`:
-  - `bulkMarkAsRead`: o update em `messages` ganhou `.eq('sender', 'contact')`. Antes o lote
-    fazia `update({ is_read: true }).in('contact_id', ids).eq('is_read', false)`, o que zerava
-    também o `is_read` das mensagens ENVIADAS pelo agente (mesma tabela, mesmo `contact_id`).
-    O caminho individual já filtrava por remetente; o lote não.
-  - `bulkTransfer`: parou de fazer `from('contacts').update({assigned_to|queue_id}).in('id', ids)`
-    e passou a chamar `supabase.rpc('transfer_conversation', { p_contact_id, p_to_agent_id,
-    p_to_queue_id, p_note: null })` uma vez por contato, em laço `for...of` sequencial. A RPC é
-    atômica POR CONVERSA (UPDATE em `contacts` + INSERT do evento na mesma transação), por isso
-    o laço é serial em vez de concorrente.
-  - Falha em qualquer contato: conta quantos transferiram e quantos falharam, emite toast de
-    erro com as contagens, mantém a seleção e propaga a rejeição (a `TransferDialog` usa a
-    rejeição para permanecer aberta). Só quando todos transferem limpa a seleção e recarrega.
-    Exceção crua de rede também emite o toast de erro de sempre e propaga.
-- `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`: mock de `supabase.rpc` (+ estado
-  `rpcFailures`/`rpcCalls`), casos novos de contrato e reescrita dos testes que travavam o
-  comportamento antigo (update em `contacts`) para o novo contrato via RPC.
+- `src/components/inbox/BulkActionsToolbar.tsx`:
+  - removido o `handleTransfer` local, que chamava `onTransfer(...)` sem `await` e
+    fazia `setShowTransferDialog(false)` na hora. Com o lote do cartão pai
+    (t_2901d317) REJEITANDO em falha (`useInboxBulkActions.bulkTransfer`), isso
+    fechava o diálogo antes do resultado: o usuário não via o resumo
+    (quantas conversas transferiram / quantas falharam) e a promise rejeitada
+    ficava sem tratamento.
+  - `onTransfer` agora vai direto para a `TransferDialog`, que é quem espera a
+    promise: mostra "Transferindo…" enquanto o lote roda em série e só fecha no
+    sucesso (`onOpenChange(false)`); na falha ela permanece aberta (o `catch`
+    dela é o tratamento da rejeição). O resumo vem do toast do hook.
+  - removido o cast `as (type: "agent" | "connection" | "queue", …)` que escondia
+    a incompatibilidade: o contrato público da `TransferDialog` é `agent | queue`
+    (item 88 / R2-INB-009) e o `onTransfer` da barra é o mesmo. O tipo da prop
+    ficou `void | Promise<void>` para documentar que a promise pode rejeitar.
+- `src/components/inbox/__tests__/BulkActionsToolbar.resultado.test.tsx` (novo):
+  renderiza o componente REAL (`BulkActionsToolbar` + `TransferDialog`) com
+  `TooltipProvider`/`QueryClientProvider`; a fronteira dublada é só auth,
+  agentes, filas, Supabase e o `onTransfer`. Dois casos: (1) transferência que
+  FALHA → o diálogo continua aberto com "Transferir Chat" e o botão destrava;
+  (2) transferência em voo → diálogo aberto com o botão "Transferindo…"
+  desabilitado, e só desaparece depois que a promise resolve.
 
 ## Prova
 
-- vermelho antes (hook original, com os testes novos aplicados) — comando
-  `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`, saída:
-  `Tests 7 failed | 20 passed | 1 expected fail (28)`. As 7 falhas são exatamente os casos
-  novos (filtro sender=contact, RPC por contato agente/fila, p_note nulo, falha em parte dos
-  contatos, todos falham, rejeição crua de rede).
-- verde depois — comando `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`,
-  saída: `Test Files 1 passed (1), Tests 27 passed`. Nenhum teste falhou e nenhum ficou
-  pulado; o total de 28 no arquivo vem de 27 passed + 1 `it.fails` que já existia na base.
-- caminho de falha exercitado de verdade no verde: `bulkTransfer` rejeita, a seleção permanece
-  (`result.current.selectedIds` mantém os contatos) e `refetch` NÃO é chamado.
-- verificação do cartão — comando `zapp-verify . --rapido`, saída:
-  `VERIFY: VERDE SEM BANCO (95s)` com `OK tipos`, `OK lint`, `OK migrations`, `OK db_guard`.
+- vermelho antes (código antigo da barra, com o teste novo aplicado) — comando
+  `npx vitest run src/components/inbox/__tests__/BulkActionsToolbar.resultado.test.tsx`,
+  saída: `Test Files 1 failed (1); Tests 2 failed (2)` — nos dois casos a barra
+  fechava o diálogo na hora e `screen.getByRole('dialog')` não achava nada
+  (`Unable to find role="dialog"`).
+- verde depois — mesmo comando, saída:
+  `Test Files 1 passed (1); Tests 2 passed (2)`.
+- verificação do cartão — comando `zapp-verify . --rapido`.
 
-Juiz barato: o alerta de risco alto foi reexaminado e não procede — o relato conclui, cita
-o comando e a linha de resultado, e não deixa item aberto.
+## O que NÃO fiz e por quê
+
+- Não mexi no hook `useInboxBulkActions`: o resumo por conversa (contagens no
+  toast) e a rejeição são o trabalho do cartão pai t_2901d317, já feito. Aqui só
+  garanto que o diálogo não desaparece antes do resultado.
+- Nada novo que exporte, baixe, copie ou imprima; nenhum log de telefone/token.
