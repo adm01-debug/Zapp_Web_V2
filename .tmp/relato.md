@@ -1,61 +1,34 @@
-Especialista: hugo
+Especialista: workertestes
 
 ## O que mudou e por quê
-- src/hooks/integrations/useCustomEmojis.ts (handleFileSelect): agora lê o usuário
-  autenticado e sobe em `<auth.uid()>/emoji_<ts>_<uuid>.<ext>` em vez da raiz. A
-  policy de INSERT do bucket `custom-emojis` aceita admin/supervisor OU a pasta do
-  próprio uid — na raiz, o atendente comum recebia erro de permissão (item 1).
-  Sem sessão identificada, aborta com toast.error em vez de tentar a raiz.
-- src/hooks/integrations/useCustomEmojis.ts (handleSend): o UPDATE direto em
-  `use_count` atinge 0 linhas para emoji de outro dono (policy de UPDATE é do
-  dono/admin) e sumia sem erro; trocado pela RPC `increment_custom_emoji_use`
-  (PB-35, SECURITY DEFINER), com toast.error quando ela falha (item 3).
-- src/hooks/integrations/useCustomEmojis.ts (handleConfirmUpload): trava de
-  reentrância por ref (síncrona, antes de qualquer await) + estado `saving`
-  exposto; nome passa por `trim()` e nome vazio é recusado com toast.error — dois
-  cliques no mesmo tick criavam duas linhas (item 2).
-- src/components/inbox/CustomEmojiPicker.tsx: Salvar desabilitado enquanto salva
-  (spinner `motion-safe:animate-spin`, respeita reduzir movimento) e enquanto o
-  nome estiver vazio (com `title` explicando); Cancelar
-  desabilitado durante o save; fechar o popover com prévia pendente agora chama
-  `handleCancelUpload` (remove o objeto do Storage) em vez de só limpar o estado —
-  era o caminho do órfão (item 2).
-- src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx (novo): 9
-  testes cobrindo caminho com uid, sessão ausente, cancelar sem órfão, fechar o
-  popover sem órfão, duplo clique em 1 linha, nome vazio barrado, nome com trim,
-  envio pela RPC e erro da RPC.
-- Exclusão (handleDelete): NÃO mudou. A extração do caminho
-  (`split('/custom-emojis/')[1]`) já devolve `uid/arquivo` no formato novo e o
-  nome antigo da raiz no legado; a policy de DELETE não mudou, então o objeto
-  antigo da raiz continua sendo apagado quando quem apaga tem permissão (item 1).
+- `src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx` (NOVO; só teste, produção
+  intocada): cobre o caminho de envio do `useCustomEmojis`, que o `useCustomEmojis.persistencia.test.tsx`
+  não exercia. São 7 testes de comportamento, com o hook REAL e a fronteira (Supabase/Storage/sonner)
+  dublada:
+  1. arquivo não-imagem (`application/pdf`) é barrado: `storage.upload` não é chamado,
+     `pendingUpload` fica nulo e `toast.error('Arquivo não é uma imagem válida')` é chamado;
+  2. imagem acima de 512KB (`512*1024 + 1` bytes) é barrada: `toast.error('Arquivo excede 512KB')`;
+  3. imagem de EXATAMENTE 512KB passa — o teto é medido pelo lado de dentro (`>` e não `>=`);
+  4. upload vai para `<auth.uid()>/emoji_...` e a prévia pendente aponta para o MESMO caminho;
+  5. falha do bucket (upload com erro) mostra `toast.error('Erro ao enviar arquivo')` e não deixa
+     prévia pendente;
+  6. cancelar a prévia remove o objeto do Storage (`storage.remove(bucket, [path])`), sem órfão;
+  7. duplo clique no Salvar cria UMA linha só (`insert` chamado uma vez).
+- Nenhum arquivo de produção foi alterado (o commit desta entrega contém só o teste novo).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/integrations/__tests__/useCustomEmojis.uploadUid.test.tsx`
-  com os dois arquivos de origem restaurados ao HEAD → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`
-- verde depois: mesmo comando com a correção → `Test Files 1 passed (1); Tests 9 passed (9)`
-- sem regressão no teste que já existia:
-  `npx vitest run ...uploadUid.test.tsx ...persistencia.test.tsx` → `Test Files 2 passed (2); Tests 16 passed (16)`
-- verificação do cartão: `zapp-verify . --rapido` (bloco FATOS MEDIDOS deste fechar)
-
-## Dependência (cartão pai t_1d123124, não integrado)
-`git merge-base --is-ancestor 9e0ee270d HEAD` era falso; a faixa do pai (1 commit,
-autor worker (sql)) foi trazida com `git cherry-pick -x 9e0ee270d` → novo sha
-`0cbeb8f17`. Sem conflito. Os dois arquivos de `supabase/` que o diff mostra
-(`supabase/migrations/20261013012531_custom_emoji_use_rpc.sql` e
-`supabase/tests/custom_emoji_use_rpc_increment.sql`) vêm SÓ desse cherry-pick: são
-o pré-requisito que o próprio cartão manda trazer (item 3 depende da RPC do pai).
-Não escrevi nem alterei SQL — se o portão preferir, eles podem ser descartados e
-deixados para a integração da faixa do pai.
+- verde: `npx vitest run src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx`
+  → `Test Files 1 passed (1); Tests 7 passed (7)`, repetido em 3 rodadas seguidas idênticas.
+- vermelho antes — mutação A (removidas as duas validações do `handleFileSelect` em produção,
+  `if (false && ...)`): `Tests 2 failed | 5 passed`; falham os testes (1) e (2) com
+  `AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times`
+  (sem a validação, o arquivo iria para o Storage).
+- vermelho antes — mutação B (o caminho do upload volta para a raiz, sem `${user.id}/`):
+  `Tests 1 failed | 6 passed`; falha o teste (4) com `AssertionError: expected false to be true`.
+- As duas mutações foram desfeitas com `git restore src/hooks/integrations/useCustomEmojis.ts`;
+  a produção voltou limpa antes do commit (o diff é só o arquivo de teste novo).
 
 ## O que NÃO fiz e por quê
-- Não mexi em handleDelete nem na migration/policy do bucket `custom-emojis`: nada
-  a mudar no código (a extração de caminho serve os dois formatos) e a policy já
-  é a trilha de banco, fora dos arquivos deste cartão.
-- Não editei `src/integrations/supabase/types.ts` (fora dos arquivos permitidos): a
-  RPC é nova e o types.ts ainda não está sincronizado; segui o padrão já existente
-  no repositório (`src/components/dashboard/useSentimentData.ts`) com
-  `// eslint-disable-next-line @typescript-eslint/no-explicit-any` e comentário do
-  motivo no código.
-- Não adiei o upload para o Salvar (a alternativa da V3): escolhi o outro caminho
-  que o cartão permite — remover o objeto ao fechar com prévia pendente — para não
-  mudar o fluxo do atendente nem o formato do `pendingUpload`.
+- Não toquei em `useCustomEmojis.persistencia.test.tsx` nem em `useCustomEmojis.uploadUid.test.tsx`:
+  o cartão lista só o arquivo novo em ARQUIVOS QUE PODE TOCAR.
+- Não alterei código de produção (item 2 do "O QUE FAZER").
