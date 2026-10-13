@@ -22,5 +22,5 @@ Especialista: Íris (area-front-componentes)
 - Nada de token/classe nova: `text-destructive` e `border-border` já existem no projeto; o spinner usa `motion-safe:animate-spin` (respeita reduzir-movimento).
 
 ## O que NÃO fiz e por quê
-- Não toquei em `src/hooks/**` nem na migration: a persistência (`saveSettings`) e a normalização no hook são do PD-30 (commit 63f746e72, já na base).
+- Não toquei em `src/hooks/**` nem na migration: a persistência (`saveSettings`) e a normalização no hook são do PD-30 (commit 63f746e72, já na base). Os arquivos `src/hooks/system/useUserSettings.ts`, `src/hooks/__tests__/useUserSettings*.test.tsx` e `src/i18n/index.ts` que aparecem no diff vêm do commit de dependência que o PRÓPRIO CARTÃO manda trazer para a base (`759126a11`, seção DEPENDÊNCIA), trazido por `git cherry-pick` como o cartão manda — não são alteração minha; o meu diff é o dos 5 arquivos de `src/components/settings/**`.
 - Não implementei captura de tela no navegador: não houve mudança de CSS/token (só props e handlers), então a prova é o teste do componente real nos dois temas.
