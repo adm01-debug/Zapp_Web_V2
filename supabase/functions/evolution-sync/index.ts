@@ -7,7 +7,10 @@ import {
 } from "../_shared/evolution-sync-actions.ts";
 import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
-serve(async (req) => {
+// Extração mínima só para tornar o handler testável (mesma convenção dos
+// outros index.ts deste diretório: send-email, chatbot-l1, connection-health-check).
+// O comportamento interno não muda — só o `serve` deixa de rodar no import.
+export async function handleEvolutionSync(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -103,4 +106,8 @@ serve(async (req) => {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+}
+
+if (import.meta.main) {
+  serve(handleEvolutionSync);
+}
