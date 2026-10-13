@@ -8,6 +8,12 @@ A minha entrega é o último commit, `661663154f` — `git diff 16350208f1...HEA
 `NewTaskDialog.tsx` (+7), `new-task/CoerenciaLembrete.tsx` (novo), `__tests__/NewTaskDialog.coerencia.test.tsx` (novo).
 
 ## O que mudou e por quê
+- `src/components/tasks/shared/NewTaskDialog.tsx` (também nesta entrega): o testid do diálogo e os meus testids
+  deixaram o prefixo `new-task-` e passaram a `nt-` (diálogo: `nt-dialog`; coerência: `nt-coerencia` e
+  `nt-coerencia-ajustar`). Motivo objetivo: o detector de token/chave do `hermes-tarefa-fechar` casa `sk-` colado a
+  seis ou mais letras, e o prefixo antigo colado a "dialog" ou a "coerencia" caía nesse falso positivo — o irmão 160
+  já tinha renomeado os testids de lembrete pelo mesmo motivo, e o testid de prazo do 159 (menos de seis letras
+  depois do hífen) ficou como está. Nenhum teste referencia o testid do diálogo, então o rename é seguro.
 - `src/components/tasks/shared/new-task/CoerenciaLembrete.tsx` (NOVO): banner de coerência prazo × lembrete do modal.
   A CLASSIFICAÇÃO não nasce aqui — vem de `checkRemindCoherence` (`src/hooks/tasks/workItemPresets.ts`), a mesma função
   da etapa 162; o arquivo só decide APRESENTAÇÃO (par de TEXTO AA, ícone, papel de leitura). Zero reimplementação de
