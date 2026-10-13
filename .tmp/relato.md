@@ -1,43 +1,17 @@
-Especialista: worker (geral)
-
-Concluí: a paginação de mensagens antigas do Team Chat passa a usar a RPC
-`get_team_messages_page` e o remetente (nome + foto) chega às mensagens antigas.
+Especialista: hugo
 
 ## O que mudou e por quê
-- src/components/team-chat/useTeamChatPanel.ts: `fetchOlderMessages` deixa de ler
-  `team_messages` direto com embed `sender:profiles!team_messages_sender_id_fkey`
-  e passa a chamar a RPC achatada `get_team_messages_page` com o cursor em
-  `p_before_id` (página de 60, teto do `.limit(60)` antigo). Motivo: a RLS de
-  `profiles` é 'own + admin', então para o agente o embed voltava `sender: null`
-  e as mensagens ANTIGAS apareciam sem nome e sem foto. A RPC resolve o remetente
-  no servidor (`sender_name`/`sender_avatar`) — mesmo caminho já usado pelo
-  histórico novo (`useTeamMessages`, SL-016/F54).
-- src/components/team-chat/useTeamChatPanel.ts: tipo `TeamMessagePageRow` e
-  mapeador `pageRowToTeamMessage` (achata `sender_name`/`sender_avatar` em
-  `sender`; `status` fica de fora como no `useTeamMessages`: coluna NOT NULL sem
-  UPDATE no cliente).
-- src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx: o
-  teste antigo afirmava o filtro `.or(created_at,id)` do `select` direto; ele NÃO
-  foi pulado nem apagado — foi reescrito para o caminho novo, com 3 testes que
-  chamam o hook real (`renderHook(useTeamChatPanel)` + `fetchOlderMessages`):
-  (1) a paginação chama `get_team_messages_page` com o cursor composto
-  (`p_before_id: 'm-new'`, `p_limit: 60`) e não há leitura direta de
-  `team_messages`; (2) as antigas trazem `sender.name`/`sender.avatar_url` em
-  ordem ASC; (3) o cursor avança (`m-new` → `m-old-1`) e `hasOlderMessages` vira
-  `false` quando a página volta vazia.
+- `src/components/team-chat/useTeamChatPanel.ts`: a página ANTERIOR deixou de ler `team_messages` direto com embed `sender:profiles!team_messages_sender_id_fkey` (que voltava `sender: null` para o agente, porque `profiles` ficou 'own + admin') e passou a chamar a RPC achatada `get_team_messages_page(p_conversation_id, p_before_id, p_limit)` — a mesma do histórico novo (SL-016). O `id` da mensagem mais antiga já carregada vai como `p_before_id`; `sender_name`/`sender_avatar` vêm do servidor e são montados em `sender`. Teto de página 60 mantido. Critério de pronto 1 (remetente aparece em todas as mensagens) cumprido: o nome/foto não dependem mais da RLS de `profiles`.
+- Caminho do arquivo: o cartão cita `src/hooks/team-chat/useTeamChatPanel.ts`, que NÃO existe. O arquivo real é `src/components/team-chat/useTeamChatPanel.ts` (confirmei com `git ls-files | grep useTeamChatPanel` → `src/components/team-chat/useTeamChatPanel.ts`). Usei o caminho real.
+- N-072 trazido do que estava fora do HEAD (commit `d3f9b0db1`, aplicado com `git cherry-pick -n`): `supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql` (aditiva, com `-- Rollback:` completo no topo, `SET search_path = public, pg_temp` e grants explícitos), `scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh` e o passo do teste em `.github/workflows/db-guard.yml`. A migration corrige o desempate do cursor para `(created_at, id)` (`m.created_at < b OR (m.created_at = b AND m.id < b_id)`, ORDER BY `created_at DESC, id DESC`) e recusa `p_limit <= 0`/NULL com `invalid_limit`; assinatura, colunas e teto de 200 inalterados.
+- Teste do hook reescrito: `src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` agora prova o caminho novo (RPC com `p_before_id` e sem leitura direta de `team_messages`, nome/foto do remetente nas antigas, cursor por página e fim do histórico). As asserções removidas (`.or()` composto no cliente, `select` direto) foram substituídas por asserção de força igual no mesmo contrato, agora pelo servidor: `expect(f.tabelasLidas).toEqual([])` e `expect(chamada.args).toEqual({ p_conversation_id, p_before_id, p_limit: 60 })`.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx`
-  → `AssertionError: expected [ 'm-new' ] to deeply equal [ 'm-old-1', 'm-old-2', 'm-new' ]`
-  e `a paginação deve usar a RPC get_team_messages_page` (2 failed)
-- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 3 passed (3)`
-- regressão do módulo: `npx vitest run src/components/team-chat src/hooks/team-chat`
-  → `Test Files 35 passed (35); Tests 358 passed | 1 todo (359)`
+- hook, verde depois: `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)`.
+- migration N-072, vermelho antes (BLOCO A reproduz o defeito na migration base): `bash scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh` → `[PASS] A1 (defeito) paginacao de 2 em 2 perde mensagens de mesmo created_at: 3 de 6 ids` e `[PASS] A2 (defeito) p_limit=0 devolve vazio sem erro`.
+- migration N-072, verde depois (BLOCO B, migration aplicada em PostgreSQL 17 descartável, papel `authenticated` real): B1 (páginas 1/2/3/4/50 sem duplicata nem lacuna), B2, B3, B4–B6 (`invalid_limit` em 0/negativo/NULL), B7, B8 (`not_member`), B9 (`not_authenticated`), B10 (teto 200), B11 (ACL anon sem EXECUTE, authenticated com), B12 (SECURITY DEFINER com search_path fixo) → `[OK] desempate (created_at, id) e limite minimo de get_team_messages_page verificados`.
+- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (154s)` (tipos OK, lint OK, migrations OK, db_guard OK).
 
-## Arquivo tocado
-O cartão lista `src/hooks/team-chat/useTeamChatPanel.ts`, caminho que não existe
-no repositório. O hook `useTeamChatPanel` é exportado de
-`src/components/team-chat/useTeamChatPanel.ts` — o mesmo arquivo que tem o
-`.select(...)` com o embed de `profiles` descrito em PROBLEMA. É esse, portanto,
-o arquivo do defeito; `git grep -n useTeamChatPanel` lista esse caminho e nada
-em `src/hooks/team-chat/`.
+## O que NÃO fiz e por quê
+- Nada foi para produção; a migration só foi aplicada no PostgreSQL descartável do teste (quem aplica é o Joaquim).
+- Não toquei em `profiles` nem em RLS; não adicionei dependência.
