@@ -66,4 +66,13 @@ Especialista: iris
   `src/hooks/team-chat/useTeamPresence.ts` e `src/hooks/team-chat/__tests__/useTeamTyping.test.tsx`.
   Chegaram prontos pelo cherry-pick ordenado pelo cartão; não editei nenhum deles.
 - Nenhuma "assinatura"/HMAC/segredo entra aqui; não há palavra dessas no diff novo.
+- CONFERÊNCIA (RLS/realtime.messages): quem mexe em permissão é a migration **do PAI**
+  `supabase/migrations/20261013210002_realtime_canais_privados.sql` — ela cria as policies
+  `realtime_topic_select_autorizado` e `realtime_topic_insert_autorizado` em `realtime.messages`,
+  que são o que autoriza os tópicos privados `team-typing-<conversa>` / `team-presence-<conversa>`
+  (`supabase.channel(..., { config: { private: true } })` em `useTeamTyping.ts`/`useTeamPresence.ts`).
+  Ela veio pelo `git cherry-pick` da faixa do pai, exatamente como o cartão manda ("fechar JUNTA a
+  faixa do pai"); a prova do pai é `src/hooks/__tests__/canais-realtime-privados.test.tsx` e
+  `supabase/tests/realtime_canais_privados.sql`. Eu não alterei uma linha de SQL — o meu diff de
+  verdade é só tela + teste (4 componentes e 4 testes).
 - Nenhum arquivo de produção, migration ou Edge nova no que escrevi; só tela/teste.
