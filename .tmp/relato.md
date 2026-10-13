@@ -1,108 +1,26 @@
-Especialista: designer (worker (design), skill `design-system-zapp`) — retomada do cartão aberto por iris (telas) por rebase.
+Especialista: worker (design) (design-system-zapp)
 
-# [refazer 1] colunas do Quadro: subtítulo curto + limite de Fazendo (080, 082, 083)
+## O que mudou e por quê
+- `src/styles/utilities.css`: nova regra `.alvo-toque-44` DENTRO de `@media (pointer: coarse)` — `min-width/min-height: 44px` + `inline-flex` centralizado. O alvo só cresce em toque; em ponteiro fino a página renderiza exatamente como antes.
+- `src/components/ui/dialog.tsx` e `src/components/ui/sheet.tsx`: o botão de fechar (o X) recebe `alvo-toque-44`. Ele também recebeu `z-10`: sem isso, o título (h2) ganhava o hit-test no ponto central do alvo maior e o X ficava SEM resposta ao toque — quem pegou isso foi o próprio teste (o clique do Playwright parou de fechar o dialog). O X continua fechando.
+- `src/components/ui/checkbox.tsx` e `src/components/ui/radio-group.tsx`: `alvo-toque-44` nos primitivos (h-4 w-4 = 16px).
+- `src/components/ui/button.tsx` e `src/components/ui/icon-button.tsx`: `alvo-toque-44` nos tamanhos abaixo de 44px (default/sm/icon/icon-sm, e sm/default do icon-button). Os tamanhos que já medem ≥44px (lg/xl/icon-lg) NÃO receberam a classe.
+- `src/components/ui/micro-interactions/buttons.tsx`: o branco do ripple deixou de ser cor literal e virou `hsl(var(--primary-foreground) / 0.3)`; `--primary-foreground` é `0 0% 100%` no claro e no escuro, então o pixel renderizado é o mesmo.
+- `src/components/ui/micro-interactions/feedback.tsx`: o verde literal do check virou `hsl(var(--success))` (token que já existe em tokens.css, com valor no claro e no escuro).
+- `src/components/ui/__tests__/alvos-toque-44px.test.tsx`: trava o contrato — cada primitivo carrega a classe, e a regra CSS existe dentro de `@media (pointer: coarse)` com 44px.
+- `e2e/a11y-toque-44px.spec.ts` (+ o registro dele em `playwright.config.ts`): mede o PIXEL no Chromium emulado como celular (Pixel 5: `isMobile` + `hasTouch`) e prova que o centro do alvo 44x44 recebe o toque (`elementFromPoint`); e mede o desktop para provar que nada mudou lá.
 
-## Ponto 1 (o único item do "corrigir"): conflito com a ponta de dia/2026-10-12
-O workspace já nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12), então não houve rebase de
-branch: trouxe a FAIXA do trabalho anterior por `git cherry-pick 9c01d7ed6 113bf61f0 2f6cf568e`
-(SHA anterior = 2f6cf568e, fila `v2/colunas-quadro-subtitulo-limite-fazendo-2610111753c50b`).
-Conflitos em `BoardColumn.tsx` (5 hunks) e `TasksBoardMode.tsx` (2 hunks) — resolvidos preservando o
-que já entrou na base:
-- `BoardColumn.tsx`: mantive o lado da ponta — `pressaoArrasto` (etapa 094), `realceEspera`/
-  `ring-warning` (etapa 096), `colapsada`/`flex-none` (etapa 093) e o rodapé do Concluído (etapa 092);
-  descartei a versão antiga que reescrevia essas mesmas linhas.
-- `TasksBoardMode.tsx`: mantive o lado da ponta inteiro (`alvoTranco` + `tremerColuna` + deps
-  `[onMove, onRequestWaitingReason, onReorder, tremerColuna]` e `pressaoArrasto={pressaoArrasto}`),
-  porque a ponta já tinha toast de limite cheio (`toast.error('Fazendo está cheio (máx. 3)…')`) e o
-  tranco por coluna de destino. Resultado: `TasksBoardMode.tsx` ficou IDÊNTICO à base (0 linhas no
-  diff) — o arquivo não entra no meu diff.
-- Só a parte que a base ainda NÃO tinha foi mantida do trabalho anterior: o subtítulo vem do dado
-  canônico `KANBAN_COLUMNS.subtitle` (`col.subtitle`), acrescentado em `workItem.types.ts`
-  (etapa 081, dado do pai t_15507eb6). Removi o mapa local `SUBTITULOS_COLUNA` que a ponta havia
-  criado no cabeçalho, porque os 5 textos dele (`Capture primeiro`/`Próximo passo`/`Até 3 agora`/
-  `Com motivo`/`7 dias à vista`) CONTRADIZEM a seção 3 do plano e o destino do guarda-chuva do
-  cartão. Deixei comentário no cartão para o revisor conferir essa escolha.
-
-## Ponto 2: rodar o teste do cartão e a verificação
-- Teste do cartão: `npx vitest run src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx`
-  → `Test Files 1 passed (1)` / `Tests 8 passed (8)`.
-- Regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files 29 passed (29)` /
-  `Tests 329 passed | 1 todo (330)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (o banco local não foi verificado: não
-  há nome de conjunto neste cartão). Antes disso o typecheck ficou vermelho por dependência ausente
-  (`TypeScript local nao encontrado`) — resolvido com `bun install` (651 packages), não era código.
-
-## O que mudou e por quê (contra a seção 3 do plano)
-- `src/components/tasks/board/BoardColumn.tsx`: o cabeçalho imprime `col.subtitle`, o subtítulo curto
-  do dado canônico, no lugar do mapa local. Linha da tabela da seção 3: "Colunas Caixa de entrada
-  (A organizar), A fazer (Próximas ações), Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando
-  (Dependências externas), Concluído (Últimos 7 dias)" → etapas 080–081 (tabela de etapas, linhas
-  339 e 340). A política longa continua só no tooltip do ⓘ (não duplica texto).
-- `src/hooks/tasks/workItem.types.ts`: `KANBAN_COLUMNS` ganha `subtitle` (5 textos da linha 138 da
-  seção 3), mantendo a `policy` longa — etapa 081.
-- `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (novo): trava as
-  etapas 080, 082 e 083 medindo o DOM renderizado (não texto solto): os 5 subtítulos presentes, o
-  primeiro `<span>` da coluna sendo o rótulo, contador "3/3", `role="progressbar"` com
-  `aria-valuenow`/`aria-valuemax` = 3 e 3 segmentos `bg-destructive` quando cheio (1 primário + 2
-  `bg-muted` com 1/3), rodapé `col-limit-footer-doing` com svg, tranco
-  `motion-safe:animate-wiggle` + `border-destructive` na coluna de destino, toast
-  `Fazendo está cheio (máx. 3). Conclua um item antes.`, `onMove` não chamado, volta ao normal aos
-  700 ms e reorder interno da coluna cheia sem tranco.
-
-## Prova (vermelho antes, verde depois)
-- verde (teste do cartão): `npx vitest run …/BoardColumn.subtitulo-limite.test.tsx` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- vermelho por mutação (o teste mede a classe/texto REAL): trocando `{col.subtitle}` por
-  `{'Capture primeiro'}` → `Test Files 1 failed (1)` / `Tests 2 failed | 6 passed (8)`; trocando
-  `shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70'` pelo ramo neutro →
-  `Tests 2 failed | 6 passed (8)`. Em ambos, a árvore foi restaurada e o teste voltou a
-  `Tests 8 passed (8)`; `git status --short` limpo depois das duas.
-- As etapas 082 e 083 já existiam na ponta (barra, rodapé, toast e tranco entraram por outro cartão);
-  o que este cartão acrescenta na ponta é o subtítulo canônico. O teste novo passa a TRAVAR 082/083.
+## Prova
+- vermelho antes: `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` → `Tests  5 failed | 1 passed (6)`
+- vermelho antes: `npx playwright test e2e/a11y-toque-44px.spec.ts --project=chromium-a11y` → `largura do checkbox: 16px` (o alvo era 16px em toque)
+- verde depois: `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` → `Test Files  1 passed (1); Tests  6 passed (6)`
+- verde depois: `npx playwright test e2e/a11y-toque-44px.spec.ts --project=chromium-a11y` → `3 passed` (celular: checkbox e fechar medem 44x44 e o dialog fecha; desktop: alvos seguem compactos e o clique do mouse ainda fecha)
+- regressão: `npx vitest run src/components/ui` → `Test Files  18 passed (18); Tests  124 passed (124)`
+- estático: `npx tsc --noEmit` sem saída (limpo); `npx eslint` nos arquivos tocados → `0 errors, 3 warnings` (os 3 warnings de react-refresh são pré-existentes nesses arquivos)
+- literal de cor em `src/components/ui`: `grep -rnE "rgba?\(|hsla?\(" src/components/ui --include=*.tsx --include=*.ts | grep -v "var(--"` → `0` linhas
 
 ## O que NÃO fiz e por quê
-- Não mexi em `TasksBoardMode.tsx` (ficou igual à base) nem em `src/components/ui/*`.
-- Não reimplementei nada de 082/083 já presente na ponta (o cartão manda provar e não reescrever).
-- Sem migration, Edge Function ou dependência nova; nenhuma informação sai do sistema.
-
-
-## Aviso do juiz sobre o Ponto 1 — NÃO procede (o diff não tem como mostrar rebase)
-O `jev-juiz` pede prova de merge/rebase dentro do diff; aqui não existe merge para mostrar: o workspace
-JÁ nasceu na ponta `dia/2026-10-12` (BASE=dia/2026-10-12) e a resolução foi trazer só a faixa que
-faltava. `git log --oneline dia/2026-10-12..HEAD` devolve exatamente os 3 commits do trabalho anterior
-(`e25134fcd`, `6c0171b68`, `a2aadd1e7`) e nenhum outro. A prova VISÍVEL de que o conflito foi resolvido
-preservando a ponta é o OPOSTO de um arquivo alterado: `TasksBoardMode.tsx` ficou com ZERO linhas no
-diff (o lado da ponta inteiro permaneceu) e `BoardColumn.tsx` conserva `pressaoArrasto` (094),
-`realceEspera` (096) e `colapsada` (093). Um merge commit aqui só acrescentaria ruído ao diff.
-
-## Aviso do juiz sobre escopo — por que `src/hooks/tasks/workItem.types.ts` entrou
-O cartão manda trazer a faixa do trabalho anterior e este arquivo carrega a etapa 081 (dado do pai
-t_15507eb6): sem `KANBAN_COLUMNS.subtitle` não há de onde tirar os 5 subtítulos que a etapa 080 exige no
-cabeçalho. São 1 campo no tipo e 5 strings; o componente apenas lê. Sem ele eu teria de inventar um mapa
-local dentro do componente — exatamente o que removi por contrariar a seção 3 do plano.
-
-## `zapp-verify full`
-`zapp-verify full .` foi tentado e estourou o teto de 420 s da ferramenta (não devolveu VERDE nem
-VERMELHO). A verificação que vale como prova, e que é a pedida no critério de pronto 3, é
-`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)`.
-
-## Linhas da tabela do plano (critério de pronto 1)
-- Etapa 080 — seção 3, linha 138: "Colunas Caixa de entrada (A organizar), A fazer (Próximas ações),
-  Fazendo 3/3 (Conclua uma para iniciar outra), Aguardando (Dependências externas), Concluído
-  (Últimos 7 dias)"; tabela de etapas, linha 339.
-- Etapa 081 — tabela de etapas, linha 340 ("Acrescentar `subtitle` curto mantendo a `policy` longa em
-  `workItem.types.ts`") — dono declarado no plano: hugo; quem trouxe foi o ramo do cartão pai.
-- Etapa 082 — seção 3, linha 139 ("Fazendo com barra de progresso azul e rodapé 'Seu limite é de 3
-  tarefas em execução.'"); tabela de etapas, linha 341.
-- Etapa 083 — tabela de etapas, linha 342 ("Soltar em Fazendo cheio faz a coluna tremer curto
-  (em movimento reduzido só a borda muda), mostra toast explicativo e devolve o cartão").
-
-## Casos de teste do cartão (critério de pronto 2), 8 no total
-1. Etapa 080 · "cada coluna mostra o próprio subtítulo e o rótulo continua o primeiro span do cabeçalho"
-2. Etapa 080 · "a política longa NÃO vira texto do cabeçalho — ela fica no tooltip do botão ⓘ"
-3. Etapa 082 · "cheio (3/3): contador, 3 segmentos destrutivos e o rodapé do limite"
-4. Etapa 082 · "parcial (1/3): um segmento primário e dois vazios — a barra segue azul, não destrutiva"
-5. Etapa 082 · "coluna SEM limite duro não ganha barra nem rodapé"
-6. Etapa 083 · "treme (só a borda garante o aviso em movimento reduzido), avisa e NÃO move o card"
-7. Etapa 083 · "o tranco é curto: depois do tempo a coluna volta ao normal"
-8. Etapa 083 · "reorganizar por dentro da coluna cheia NÃO treme nem avisa (B8 segue valendo)"
+- `playwright.config.ts` não está na lista de arquivos do cartão: eu o incluí porque o cartão pede "teste de medição" no Playwright e um spec novo só roda se estiver atribuído a um projeto. Mudei duas linhas: `a11y-toque-44px` entrou no `testMatch` do projeto `chromium-a11y` e no `testIgnore` do `chromium-authenticated` (para não ser pego como teste logado).
+- Não mexi em `scripts/ci/a11y-button-name-baseline.json`: o guard `a11y-button-name-ratchet` roda verde e sugere apertar a baseline (236 → 94), mas apertar baseline é do worker (ci), não deste cartão.
+- Um checkbox decorativo (`w-[18px] h-[18px]`, com `pointer-events-none`) dentro de um rótulo de filtro com `h-9` (36px) também passou a medir 44px em toque — é efeito direto de mexer no primitivo, que o cartão pede. O rótulo que o contém continua com 36px, então nesse uso específico há um estouro sutil de 4px; se o rótulo também deve crescer, é do worker (telas), não deste cartão.
+- No celular emulado o Playwright não consegue clicar no X (o viewport visual não coincide com o de layout e o ponto do clique cai no overlay), então nesse teste o fechamento é por teclado (`Enter`); a recepção do toque no alvo é provada por `elementFromPoint` no centro do 44x44, e o fechamento por clique de mouse é provado no teste de desktop. Não é falha da correção: é limite da emulação de toque do Chromium.
