@@ -20,6 +20,8 @@ import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
+import { TalkXServerResumePrecheck } from './tracking/TalkXServerResumePrecheck';
+import { useTalkXServerResumePrecheck } from '@/hooks/integrations/useTalkXServerResumePrecheck';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
@@ -134,6 +136,9 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   // consulta não é o mesmo que campanha parada. Ele mostra o estado pelo status e "—" na taxa.
   const healthMeasured = !healthLoading && !healthError;
 
+  // N-097: pré-checagem de retomada no servidor, só com a campanha pausada (antes do return antecipado).
+  const { precheck: serverPrecheck } = useTalkXServerResumePrecheck(campaign ?? null);
+
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
   // botão que refaz ESTA consulta — nunca esqueleto infinito nem "campanha não encontrada".
@@ -191,6 +196,8 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
       {/* X146: faixa de KPIs ao vivo — o mesmo componente da tela 12 (Em andamento).
           A fonte de opt-out por campanha (CAP-026) ainda não existe no front: sem o
           número, o cartão Opt-outs não entra na faixa. */}
+      {isPaused && <TalkXServerResumePrecheck precheck={serverPrecheck} />}
+
       <TalkXLiveKpiRow
         variant="tela11"
         panel={{
