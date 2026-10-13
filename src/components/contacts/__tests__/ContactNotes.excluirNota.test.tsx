@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { toast } from 'sonner';
 import { ContactNotes } from '../ContactNotes';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * R2-AUTH-026 (item 251) — "Excluir nota de colega some da UI mesmo quando o RLS
@@ -53,6 +54,7 @@ vi.mock('@/integrations/supabase/client', () => {
     });
     q.order = vi.fn(() => q);
     q.limit = vi.fn(() => q);
+    q.range = vi.fn(() => q);
     q.in = vi.fn(() => q);
     q.insert = vi.fn(() => q);
     // A consulta é "thenable": o componente faz `await supabase.from(...)....`.
@@ -102,7 +104,7 @@ function cartao(texto: string): HTMLElement {
 }
 
 async function abrir() {
-  render(<ContactNotes contactId="contato-1" />);
+  render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
   await screen.findByText('Minha nota');
 }
 

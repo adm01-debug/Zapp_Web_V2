@@ -8,6 +8,7 @@ import { Eye, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { log } from '@/lib/logger';
 
 interface Viewer {
   id: string;
@@ -48,21 +49,31 @@ export function useConversationViewers(contactId: string) {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, avatar_url')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          await channel.track({
-            name: profile?.name || 'Agente',
-            avatar_url: profile?.avatar_url || null,
-            is_typing: false,
-            online_at: new Date().toISOString(),
-          });
+          // O canal de presença não pode derrubar a conversa: falha de rede aqui
+          // (select do perfil ou track) vira aviso no log, não rejeição não tratada.
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name, avatar_url')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            await channel.track({
+              name: profile?.name || 'Agente',
+              avatar_url: profile?.avatar_url || null,
+              is_typing: false,
+              online_at: new Date().toISOString(),
+            });
+          } catch (error) {
+            log.warn('Falha ao anunciar presença na conversa', error);
+          }
         }
       });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      // Sai do canal antes de removê-lo, para não deixar a presença do usuário presa.
+      void channel.unsubscribe();
+      void supabase.removeChannel(channel);
+    };
   }, [contactId, user?.id]);
 
   return viewers;
