@@ -1,18 +1,21 @@
-Especialista: Hugo (area-front-hooks)
+# RD-001 — linha de base visual e de medida do módulo Contatos (ANTES do redesign)
+
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `scripts/qa/contatos-redesign-baseline.cjs` (novo): roteiro Playwright do projeto (sem dependência nova — `tsx` já é devDependency) que sobe o dev do Vite na primeira porta livre a partir de 5500, abre `/?view=contacts` em 4 larguras (390/768/1280/1672 px) e 2 temas, e grava captura + números. Reusa as fixtures de `e2e/`: `contacts-page.ts` (`gotoContacts`, `contactCards`), `talkx-demo.ts` (`installFakeSession`) e `mapa-mocks.ts` (`bloquearRedeReal`, `mockAppShell`) — a MESMA receita de `e2e/contacts-snapshots.spec.ts`; não reimplementa login nem espera de carga.
+- `docs/audits/contatos-redesign-baseline/*.png` (8, novo): capturas de ANTES, todas ≤ 300 KB.
+- `docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md` (novo): números de ANTES nas 4 larguras e 2 temas, com o método de cada número e as notas de honestidade.
+
+## Como rodar (1 comando)
+`npx tsx scripts/qa/contatos-redesign-baseline.cjs`
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `BASELINE_SO=1280xdark npx tsx scripts/qa/contatos-redesign-baseline.cjs` com a asserção do KPI mutada para `'999'` → `EXIT=1` e `[rd-001] erro: Error: 1280px dark: 3 tentativas sem rodada limpa (expect(locator).toHaveText(expected) failed)` — o roteiro FALHA quando a tela não é a esperada.
+- verde depois: `npx tsx scripts/qa/contatos-redesign-baseline.cjs` → `EXIT=0` e 8/8 combinações com `0 falhas` e `relatório escrito em docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md`. Nessa rodada `1280px light` veio instável e foi REFEITA (`rodada 1 instável (expect(locator).toBeAttached() failed) — refazendo`), provando o guarda de retry.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não usei o Supabase de produção nem dado real de cliente: sessão falsa (`installFakeSession`) + backend 100% mockado + `bloquearRedeReal` (redeBarrada = 0 nas 8 rodadas).
+- Não toquei em código de produção do produto: só os 3 arquivos/diretório do cartão.
+- Não gravei "peso do chunk" de build: `ContactsView` não é code-split; registrei a soma dos módulos do diretório de Contatos servidos pelo Vite (`request.sizes()`), método idêntico a ser usado no "depois".
+- Achado FORA do escopo: o console acusa HTML inválido (`<li>` dentro de `<li>`) no breadcrumb do `PageHeader` do módulo Contatos. É pré-existente, ficou registrado no relatório, e eu não corrigi (não é o meu cartão).
