@@ -83,7 +83,6 @@ function montar(inicial: ConversationWithMessages[]) {
     },
   );
   const hydrate = vi.fn(async (_message: RealtimeMessage) => {});
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { result } = renderHook(() => useMessageUpdateBatcher(ref, commit, hydrate));
   return { result, commit, hydrate, atual: () => conversas };
 }
