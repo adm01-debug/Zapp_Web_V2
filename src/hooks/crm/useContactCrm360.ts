@@ -80,13 +80,12 @@ export function aggregateCrm360(
     purchases: Crm360Purchase[];
     deals: Crm360Deal[];
     stages: Crm360Stage[];
-    tagNames: string[];
     activities: Crm360Activity[];
     events: Crm360Event[];
   },
   now: Date = new Date(),
 ): Crm360Result {
-  const { purchases, deals, stages, tagNames, activities, events } = input;
+  const { purchases, deals, stages, activities, events } = input;
 
   const openDeals = deals.filter((d) => d.status === 'open');
   const currentDeal = [...openDeals].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))[0] ?? null;
@@ -108,7 +107,9 @@ export function aggregateCrm360(
     ticketDeltaPct = priorAvg > 0 ? ((recentAvg - priorAvg) / priorAvg) * 100 : null;
   }
 
-  const interesses = [...new Set(tagNames)].slice(0, 3);
+  // Tags de contato saíram do produto: `interesses` não tem mais fonte. Fica
+  // vazio porque Crm360Tab (telas) ainda lê o campo.
+  const interesses: string[] = [];
 
   const propostasStages = new Set(sortedStages.filter((s) => s.name.toLowerCase().includes('propost')).map((s) => s.id));
   const propostas = openDeals.filter((d) => d.stage_id && propostasStages.has(d.stage_id));
@@ -177,16 +178,14 @@ export function useContactCrm360(contactId: string | null | undefined) {
     queryKey: contactCrm360Key(contactId),
     queryFn: async (): Promise<Crm360Result> => {
       const cid = contactId as string;
-      const [purchasesRes, dealsRes, stagesRes, tagsRes] = await Promise.all([
+      const [purchasesRes, dealsRes, stagesRes] = await Promise.all([
         supabase.from('contact_purchases').select('id, title, amount, purchased_at, status').eq('contact_id', cid),
         supabase.from('sales_deals').select('id, title, value, status, stage_id, expected_close_date, updated_at').eq('contact_id', cid),
         supabase.from('sales_pipeline_stages').select('id, name, position, is_active').order('position'),
-        supabase.from('contacts').select('tags').eq('id', cid).maybeSingle(),
       ]);
       if (purchasesRes.error) throw purchasesRes.error;
       if (dealsRes.error) throw dealsRes.error;
       if (stagesRes.error) throw stagesRes.error;
-      if (tagsRes.error) throw tagsRes.error;
 
       const deals = (dealsRes.data ?? []) as Crm360Deal[];
       const dealIds = deals.map((d) => d.id);
@@ -204,13 +203,10 @@ export function useContactCrm360(contactId: string | null | undefined) {
         .limit(20);
       if (eventsRes.error) throw eventsRes.error;
 
-      const tagNames = ((tagsRes.data?.tags || []) as string[]).filter(Boolean);
-
       return aggregateCrm360({
         purchases: (purchasesRes.data ?? []) as Crm360Purchase[],
         deals,
         stages: (stagesRes.data ?? []) as Crm360Stage[],
-        tagNames,
         activities: (activitiesRes.data ?? []) as Crm360Activity[],
         events: (eventsRes.data ?? []) as Crm360Event[],
       });

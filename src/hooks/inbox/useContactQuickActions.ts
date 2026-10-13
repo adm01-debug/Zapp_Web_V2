@@ -27,7 +27,6 @@ const withoutTag = (tags: string[], tag: string) =>
  *   de MessageContextActions) + tag 'Bloqueado' como marcador visual. Sem
  *   instância resolvível não há escrita nenhuma; se a escrita da tag falhar
  *   depois do bloqueio, o bloqueio é revertido para não ficar invisível;
- * - Tags do painel → add/remove em `contacts.tags` preservando as existentes;
  * - Arquivar NÃO fica aqui: a semântica única é `archiveContact` de
  *   useConversationActions (zera `assigned_to`; o Desfazer restaura o valor
  *   anterior real), delegada por ContactDetails.
@@ -82,41 +81,6 @@ export function useContactQuickActions(contact: ConversationContact) {
     tagsRef.current = next;
     setLocal((prev) => ({ ...prev, tags: next }));
     return true;
-  };
-
-  const addTag = async (raw: string) => {
-    const tag = raw.trim();
-    if (!tag) return;
-    if (tag.toLowerCase() === BLOCKED_TAG.toLowerCase()) {
-      await block();
-      return;
-    }
-    if (hasTag(tagsRef.current, tag)) {
-      toast.info(`Tag "${tag}" já está no contato`);
-      return;
-    }
-    await writeTags([...tagsRef.current, tag], `Erro ao adicionar a tag "${tag}"`);
-  };
-
-  const removeTag = async (tag: string) => {
-    if (tag.toLowerCase() === BLOCKED_TAG.toLowerCase()) {
-      if (blockBusyRef.current) return;
-      blockBusyRef.current = true;
-      try {
-        const target = await resolveBlockTarget();
-        if (!target) return;
-        try {
-          await updateBlockStatus(target.instance, target.jid, 'unblock');
-        } catch {
-          return; // o withToast já mostrou o erro; a tag fica marcando o bloqueio ativo
-        }
-        await writeTags(withoutTag(tagsRef.current, BLOCKED_TAG), `Erro ao remover a tag "${tag}"`);
-      } finally {
-        blockBusyRef.current = false;
-      }
-      return;
-    }
-    await writeTags(tagsRef.current.filter((t) => t !== tag), `Erro ao remover a tag "${tag}"`);
   };
 
   const markVip = async () => {
@@ -180,7 +144,5 @@ export function useContactQuickActions(contact: ConversationContact) {
     tags,
     markVip,
     block,
-    addTag,
-    removeTag,
   };
 }

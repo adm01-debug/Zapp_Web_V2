@@ -270,8 +270,8 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     }
     adicionarCondicao(0);
 
-    // Ícone por tipo de campo (text, date, uuid, enum, array); o number só existe em campos "em breve".
-    for (const icone of ['type', 'calendar-days', 'user', 'list-filter', 'tags']) {
+    // Ícone por tipo de campo (text, date, uuid, enum); o number só existe em campos "em breve".
+    for (const icone of ['type', 'calendar-days', 'user', 'list-filter']) {
       expect(container.querySelector(`svg.lucide-${icone}`), `ícone ${icone}`).not.toBeNull();
     }
 

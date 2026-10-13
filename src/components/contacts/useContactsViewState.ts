@@ -9,7 +9,7 @@ export function useContactsViewState() {
   const crud = useContactsCRUD();
   const {
     contacts: filteredContacts, searchInput, clearSearch,
-    setActiveTab, setFilterCompany, setFilterJobTitle, setFilterTag,
+    setActiveTab, setFilterCompany, setFilterJobTitle,
     setFilterDateRange, selectedIds, setSelectedIds, setIsAddDialogOpen,
   } = crud;
 
@@ -18,7 +18,6 @@ export function useContactsViewState() {
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [groupByCompany, setGroupByCompany] = useState(false);
-  const [isBulkTagOpen, setIsBulkTagOpen] = useState(false);
   const [detailContact, setDetailContact] = useState<typeof filteredContacts[0] | null>(null);
 
   const handleApplyPreset = useCallback((preset: FilterPreset) => {
@@ -28,10 +27,9 @@ export function useContactsViewState() {
     }
     if (preset.filters.company) setFilterCompany(preset.filters.company);
     if (preset.filters.jobTitle) setFilterJobTitle(preset.filters.jobTitle);
-    if (preset.filters.tag) setFilterTag(preset.filters.tag);
     if (preset.filters.dateRange) setFilterDateRange(preset.filters.dateRange);
     toast.success(`Filtro "${preset.name}" aplicado`);
-  }, [setActiveTab, setFilterCompany, setFilterJobTitle, setFilterTag, setFilterDateRange]);
+  }, [setActiveTab, setFilterCompany, setFilterJobTitle, setFilterDateRange]);
 
   const handleToggleSelect = useCallback((id: string, selected: boolean) => {
     setSelectedIds(prev => selected ? [...prev, id] : prev.filter(i => i !== id));
@@ -74,7 +72,6 @@ export function useContactsViewState() {
     isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen,
     groupByCompany, setGroupByCompany,
-    isBulkTagOpen, setIsBulkTagOpen,
     detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
     handleContactClick,

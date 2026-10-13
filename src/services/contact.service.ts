@@ -24,7 +24,6 @@ export interface SearchContactsParams {
   contact_type_filter?: string | null;
   company_filter?: string | null;
   job_title_filter?: string | null;
-  tag_filter?: string | null;
   date_from?: string | null;
   sort_field?: string;
   sort_direction?: string;
@@ -40,7 +39,6 @@ export class ContactService {
       contact_type_filter: params.contact_type_filter || undefined,
       company_filter: params.company_filter || undefined,
       job_title_filter: params.job_title_filter || undefined,
-      tag_filter: params.tag_filter || undefined,
       date_from: params.date_from || undefined,
       sort_field: params.sort_field || 'name',
       sort_direction: params.sort_direction || 'asc',
@@ -209,14 +207,6 @@ export class ContactService {
       .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state, latitude, longitude')
        .eq('id', contactId)
        .single();
-   }
- 
-   static async fetchAITags(contactId: string) {
-     return supabase
-       .from('ai_conversation_tags')
-       .select('id, tag_name, confidence, source')
-       .eq('contact_id', contactId)
-       .order('confidence', { ascending: false });
    }
  
    static async fetchSLA(contactId: string) {

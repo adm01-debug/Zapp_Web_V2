@@ -126,12 +126,6 @@ export function passesExtraFilters(
       if (!ok) return false;
     }
 
-    // Etiquetas — basta uma em comum.
-    if (filters.tags?.length > 0) {
-      const ctags = (c.contact as { tags?: string[] }).tags || [];
-      if (!filters.tags.some((name) => ctags.includes(name))) return false;
-    }
-
     // Atendente.
     if (filters.agentId && c.contact.assigned_to !== filters.agentId) return false;
 

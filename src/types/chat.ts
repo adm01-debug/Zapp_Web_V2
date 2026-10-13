@@ -69,7 +69,6 @@ export interface ConversationContact {
   email?: string | null;
   avatar_url?: string | null;
   avatar?: string | null;
-  tags?: string[] | null;
   company?: string | null;
   job_title?: string | null;
   assigned_to?: string | null;
@@ -104,7 +103,6 @@ export interface Conversation {
   unreadCount: number;
   status: 'open' | 'closed' | 'pending' | 'waiting' | 'resolved';
   priority: 'low' | 'medium' | 'high';
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
   firstResponseAt?: Date | null;
