@@ -11,6 +11,10 @@ Especialista: hugo
 - vermelho antes (hook da base, sem a mudança): `npx vitest run src/hooks/crm/__tests__/useContactsKpi.test.ts src/hooks/crm/__tests__/useContactsKpi.pagination.test.ts` → `Test Files 2 failed (2)` / `Tests 13 failed (13)` — `TypeError: kpiFromServer is not a function` (a base paginava a tabela).
 - verde depois: `npx vitest run src/hooks/crm src/components/contacts src/hooks/contacts` → `Test Files 53 passed (53); Tests 362 passed | 1 expected fail (363)`.
 
+## Avisos do juiz automático (não procedem como desvio)
+- teste existente alterado: `fetchKpiRows`/`aggregateKpi` saíram junto com a paginação que o cartão mandou trocar; os 3 testes que os travavam foram reescritos para o contrato novo (mapeamento das RPCs, 0 chamadas de `range`, recorte soft-delete/legado nas contagens). Nenhum teste foi pulado; a semântica dos deltas e do piso de amostra vive agora nas RPCs, provada nas suítes db-audit dos pais.
+- arquivos fora da lista: são a faixa dos cartões pais (migrations + db-audit + allowlist do `check-test-inventory`) e o `types.ts` do pai t_2e6929a6 — dependência declarada no cartão. Neste cartão eu não editei `types.ts`.
+
 ## O que NÃO fiz e por quê
 - indicador clicável de duplicados que filtra a lista: exige `ContactStatsCards` + a lista (`ContactsView`/`useContactsSearch`), fora da lista de arquivos do cartão. O número já está exposto no hook (`kpi.duplicateCandidates`) para quem for ligar o indicador.
 - contadores da janela 30–60 d como campo de RPC: as RPCs dos pais não as expõem (`growth_30d_pct` é outra grandeza). Mantive o delta exato com as contagens head, para o componente não perder o "vs. período anterior".
