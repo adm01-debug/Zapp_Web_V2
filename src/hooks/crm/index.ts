@@ -5,6 +5,7 @@ export * from './useAdvancedContactSearch';
 export * from './useAgentReassignment';
 export * from './useAgents';
 export * from './useContactAssignment';
+export * from './useContactChangeLog';
 export * from './useContactCustomFields';
 export * from './useContactEnrichedData';
 export * from './useContactIntelligence';
