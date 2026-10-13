@@ -6,6 +6,12 @@ Especialista: worker (sql) (area-sql-banco)
 - .tmp/relato.md: este relato.
 - Só toquei em supabase/migrations/** e supabase/tests/** (arquivos do cartão); nada em src/**, Edge ou outro.
 
+## Arquivos no diff (3 arquivos, 1 de teste)
+- 1 migration: supabase/migrations/20261013044500_gamification_streak_dias_seguidos.sql
+- 1 teste (o único de teste): supabase/tests/gamification_streak_dias_seguidos.sql
+- 1 relato: .tmp/relato.md
+Nenhuma suíte JS/TS foi criada ou alterada; a prova é o .sql rodado no banco local.
+
 ## Prova (banco local descartável, migrations reais aplicadas)
 - vermelho antes (sem a migration): `zapp-db-local psql … < supabase/tests/gamification_streak_dias_seguidos.sql` → `ERROR: column "last_active_date" does not exist` (red_rc=3)
 - vermelho antes (comportamental, corpo ANTIGO do gatilho de mensagem): 2 mensagens no MESMO dia → `current_streak = 7` partindo de 5 (somava +1 por mensagem).
