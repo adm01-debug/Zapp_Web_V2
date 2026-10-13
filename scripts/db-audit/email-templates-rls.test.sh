@@ -8,17 +8,17 @@
 #           staff (is_admin_or_supervisor); anon sem acesso; INSERT nao permite forjar
 #           autoria. Depois: ROLLBACK extraido do proprio arquivo desfaz tudo; reaplicar
 #           e idempotente.
-# BLOCO C — hardening da autoria (20261013005351): o defeito e REPRODUZIDO antes da
-#           correcao (staff troca created_by de linha compartilhada de outro; com a RLS
-#           do ET1 isso PASSA) e provado fechado depois; prova que o dono anterior perde
-#           acesso quando staff reatribui; staff edita outras colunas normalmente; dono
-#           tambem nao troca a propria autoria; service_role segue livre (back-office).
+# BLOCO C — hardening (20261013010747): o defeito e REPRODUZIDO antes da correcao (staff
+#           troca created_by de linha compartilhada de outro; com a RLS do ET1 isso PASSA)
+#           e provado fechado depois: autoria imutavel no UPDATE; is_shared=true so staff
+#           (INSERT e UPDATE); corpo vazio e nome em branco barrados por CHECK; o staff
+#           ainda edita outras colunas; service_role segue livre (back-office).
 # BLOCO D — ROLLBACK do hardening executado no teste e reaplicacao idempotente.
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261012112503_email_templates_rls.sql"
-hardening="$repo_root/supabase/migrations/20261013005351_email_templates_author_immutable.sql"
+hardening="$repo_root/supabase/migrations/20261013010747_email_templates_hardening.sql"
 postgres_image="${EMAIL_TEMPLATES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-email-templates-test-$$"
 
@@ -284,20 +284,41 @@ svc_out="$(psql_sql "SET ROLE service_role; UPDATE public.email_templates SET cr
 printf '[PASS] %s\n' 'C7 service_role segue livre para back-office'
 psql_sql "UPDATE public.email_templates SET created_by = '$OWNER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000005';" >/dev/null
 
+# C8: is_shared = true so staff — agente comum nao compartilha o proprio modelo (UPDATE).
+expect_error_as 'C8 agente comum nao marca is_shared no proprio modelo' \
+  'email_templates_share_requires_staff' "$JWT_OWNER" \
+  "UPDATE public.email_templates SET is_shared = true WHERE id = 'aaaaaaaa-0000-0000-0000-000000000001';"
+# C9: idem no INSERT — nao adianta nascer compartilhado sem ser staff.
+expect_error_as 'C9 agente comum nao INSERE modelo ja compartilhado' \
+  'email_templates_share_requires_staff' "$JWT_OWNER" \
+  "INSERT INTO public.email_templates(name, body, is_shared) VALUES ('Do agente','corpo', true);"
+# C10: staff (admin/supervisor) PODE compartilhar — a permissao existe para quem e staff.
+expect_ok_as 'C10 staff marca is_shared no proprio modelo' "$JWT_STAFF" \
+  "INSERT INTO public.email_templates(name, body, is_shared) VALUES ('Do staff','corpo', true);"
+# C11/C12: corpo vazio e nome em branco barrados por CHECK (nome ja era barrado pela ET1).
+expect_error_as 'C11 corpo vazio barrado por CHECK' \
+  'email_templates_body_not_blank' "$JWT_OWNER" \
+  "INSERT INTO public.email_templates(name, body) VALUES ('Modelo','   ');"
+expect_error_as 'C12 nome em branco barrado por CHECK' \
+  'email_templates_name_not_blank' "$JWT_OWNER" \
+  "INSERT INTO public.email_templates(name, body) VALUES ('   ','corpo');"
+
 # ================= BLOCO D: rollback do hardening + idempotencia =================
 sed -n '/^-- Rollback (SQL executável, na ordem):/,/^--$/p' "$hardening" | grep '^--   ' | sed 's/^--   //' > "$tmp_dir/hardening_rollback.sql"
 [[ -s "$tmp_dir/hardening_rollback.sql" ]] || fail 'rollback do hardening nao extraido do arquivo da migration'
 psql_file "$tmp_dir/hardening_rollback.sql" >/dev/null
 expect_value 'D1 rollback do hardening removeu o gatilho' '0' \
-  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates_author_mutability';"
+  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates';"
 expect_value 'D2 rollback do hardening removeu a funcao' '0' \
-  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates_author_mutability';"
+  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates';"
 expect_value 'D3 rollback do hardening nao derrubou a tabela (base intacta)' '1' \
   "SELECT count(*) FROM pg_class WHERE oid = to_regclass('public.email_templates');"
 psql_file "$hardening" >/dev/null
 expect_value 'D4 reaplicar o hardening recria a funcao' '1' \
-  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates_author_mutability';"
+  "SELECT count(*) FROM pg_proc WHERE proname = 'guard_email_templates';"
 expect_value 'D5 reaplicar o hardening recria o gatilho (idempotente)' '1' \
-  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates_author_mutability';"
+  "SELECT count(*) FROM pg_trigger WHERE tgname = 'guard_email_templates';"
+expect_value 'D6 reaplicar o hardening recria o CHECK de corpo' '1' \
+  "SELECT count(*) FROM pg_constraint WHERE conname = 'email_templates_body_not_blank';"
 
 printf '== TODOS OS PASSOS PASSARAM ==\n'
