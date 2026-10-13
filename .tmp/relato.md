@@ -1,18 +1,61 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+Cartão t_a631f82f. As duas RPCs que recebem `send_weekdays` convertiam o campo com
+`(p_payload -> 'send_weekdays')::smallint[]` e `(p_limits -> 'send_weekdays')::smallint[]`
+(linhas 106 e 345 da base 20261009203548). Não existe cast `jsonb -> smallint[]` no
+Postgres: o cast estoura **42846** ("cannot cast type jsonb to smallint[]") tanto para um
+valor VÁLIDO (`[1,2,3]`) quanto para um inválido — a coluna era inutilizável pela API e o
+contrato de erro 22023 nunca saía.
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- `supabase/migrations/20261013230014_talkx_n102_window_fixes.sql` (novo): `CREATE OR
+  REPLACE` de **public.save_talkx_campaign_draft(uuid,bigint,uuid,jsonb)** e
+  **public.update_talkx_campaign_limits(uuid,bigint,jsonb)** trocando só o cast por uma
+  conversão elemento a elemento (`jsonb_array_elements_text` + `WITH ORDINALITY`), que
+  exige que todo elemento seja número JSON inteiro que caiba em smallint. Qualquer outro
+  valor (texto, booleano, objeto, `null`, fração, expoente, overflow) vira **22023**
+  (`invalid_talkx_campaign_draft` / `invalid_talkx_limits_values`). O intervalo 0..6 segue
+  no corpo original de cada função. NÃO editei 20261009203548.
+- Assinatura, LANGUAGE, SECURITY DEFINER, `search_path` e os REVOKE/GRANT são idênticos aos
+  da base — nenhuma ACL mudou (conferido com `has_function_privilege`).
+- `-- Rollback:` executável (recria as duas funções com o corpo ANTERIOR, uma linha cada),
+  no formato que os `.test.sh` de `scripts/db-audit/*` leem.
+
+## Prova (Postgres 17 descartável, papéis reais)
+Frente de RED aplicando SÓ a base 20261009203548 e, depois, a migration nova:
+
+- vermelho antes (base): `set role authenticated; perform save_talkx_campaign_draft(..., '{"send_weekdays":[1,2,3]}')`
+  → `sqlstate=42846 msg=cannot cast type jsonb to smallint[]` (idem para `["abc"]` e para
+  `update_talkx_campaign_limits(..., '{"send_weekdays":[1,2,3]}')`).
+- verde depois (com a migration nova), 10 casos como `authenticated`:
+  `GREEN save valido [1,2,3] -> OK send_weekdays={1,2,3}`
+  `GREEN save ["abc"] -> sqlstate=22023 msg=invalid_talkx_campaign_draft`
+  `GREEN save [7] -> sqlstate=22023`
+  `GREEN save [1.5] -> sqlstate=22023`
+  `GREEN save "x" (nao-array) -> sqlstate=22023`
+  `GREEN save [null] -> sqlstate=22023`
+  `GREEN update valido [1,2,3] -> OK send_weekdays={1,2,3}`
+  `GREEN update [9] -> sqlstate=22023 msg=invalid_talkx_limits_values`
+  `GREEN update "nope" -> sqlstate=22023`
+  `GREEN update [null] -> sqlstate=22023`
+- ACL: `acl save auth=true anon=false upd auth=true upd anon=false`.
+- Rollback: extraí as 2 linhas `--   ...` do cabeçalho, apliquei e o 42846 voltou — prova
+  que ele restaura o estado anterior. `rollback stmts: 2`.
+- `hermes-db-migrar supabase/migrations/20261013230014_talkx_n102_window_fixes.sql`
+  → `BEGIN / CREATE FUNCTION / REVOKE / GRANT / CREATE FUNCTION / REVOKE / GRANT / COMMIT`
+  e `APLICADA no banco LOCAL 'v2-2610130850d1a4' (produção não foi tocada)` (transação única).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- O critério cita `talkx_campaign_window_open`, mas o cast `jsonb -> smallint[]` NÃO mora
+  nela: ela lê `v_campaign.send_weekdays`, já `smallint[]`. As linhas ~106 e ~345 (citadas
+  no cartão) são destas duas RPCs. Então o `CREATE OR REPLACE apropriado` do critério são
+  essas duas funções — não toquei em `talkx_campaign_window_open` (é dos cartões-irmãos
+  t_59210b33 / t_24edcc38). Scheduler, hook e teste Deno também não foram tocados.
+- `REGISTRO PENDENTE: scripts/db-audit/talkx-n102-window.test.sh` + passo em
+  `.github/workflows/db-guard.yml` — é o cartão-irmão t_5d0f8628 (não crio teste novo).
+- hotspot: `supabase/migrations/2026101*_talkx_n102_window_fixes.sql` — os cartões-irmãos
+  t_59210b33, t_7fa3929d e t_24edcc38 pedem o MESMO nome de arquivo; o integrador precisa
+  combinar as 4 contribuições (aqui vão só as duas RPCs do cast).
+- Achado fora do escopo (não corrigido): `talkx_campaign_window_open` tem o mesmo tipo de
+  cast inválido em `(v_dnd_hours -> 'holidays')::date[]` (linha ~511 da base) — `jsonb ->
+  date[]` também não existe. Fica para um cartão próprio.
