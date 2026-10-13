@@ -19,6 +19,13 @@ Especialista: workertestes
   ("admin aprova: e-mail sai pelo GoTrue e a resposta NÃO traz link"), mais 401/429/origem canônica. Reescrever seria
   devolver o que a V2 já faz.
 
+## Dependência (faixa do cartão pai, t_7055f245)
+- O diff contra a base do dia traz também `src/integrations/supabase/types.ts`,
+  `supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql` e `supabase/tests/user_roles_add_remove_role.sql`:
+  são do cartão PAI (commit `0b764774c` e a faixa `94b81c2e5` + `7d9004a3e`), que estava `done` mas NÃO integrado —
+  trouxe por cherry-pick porque sem as RPCs `admin_add_role`/`admin_remove_role` o meu teste 7 não teria o que provar.
+  Não editei nenhum desses três; os commits meus são só o spec novo e o `playwright.config.ts`.
+
 ## Prova
 - Vermelho antes (mutação 1 — revertida SÓ a produção do cartão pai):
   `git checkout 0b764774c^ -- src/pages/admin/useRolesPageState.ts` (volta o INSERT/DELETE direto em `user_roles`) →
