@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { useContactFormValidation } from '../useContactFormValidation';
+import { useContactFormValidation, normalizeContactPhone, validatePhone } from '../useContactFormValidation';
 
 // vi.hoisted() ensures these are defined before vi.mock factory is evaluated
 const { mockFrom, mockSelect, mockIlike, mockNeq, mockLimit, mockOr } = vi.hoisted(() => ({
@@ -344,5 +344,53 @@ describe('useContactFormValidation — checkDuplicate (phone)', () => {
     });
 
     expect(result.current.duplicateWarning).toBeNull();
+  });
+});
+
+describe('normalizeContactPhone — padrão de gravação do contato (DDI 55)', () => {
+  it.each([
+    ['+55 (11) 99999-9999', '5511999999999'],
+    ['5511999999999', '5511999999999'],
+    ['11999999999', '5511999999999'],
+    ['(11) 99999-9999', '5511999999999'],
+    ['1199999999', '5511999999999'], // celular sem o nono dígito
+    ['011 99999-9999', '5511999999999'], // tronco 0
+    ['(11) 3333-4444', '551133334444'], // fixo
+    ['+55 (11) 3333-4444', '551133334444'],
+  ])('entrada %s → %s', (entrada, esperado) => {
+    expect(normalizeContactPhone(entrada)).toEqual({ phone: esperado, error: null });
+  });
+
+  it('normaliza o que o webhook grava (JID 5511999999999@s.whatsapp.net → 5511999999999)', () => {
+    expect(normalizeContactPhone('5511999999999@s.whatsapp.net').phone).toBe('5511999999999');
+    expect(normalizeContactPhone('+55 (11) 99999-9999').phone).toBe('5511999999999');
+  });
+
+  it.each([
+    ['', 'Telefone é obrigatório'],
+    ['   ', 'Telefone é obrigatório'],
+    ['123', 'Telefone inválido — informe DDD + número (ex.: (11) 99999-9999)'],
+    ['+1 415 555 2671', 'Apenas números do Brasil (DDI +55)'],
+    ['+34 600 123 456', 'Apenas números do Brasil (DDI +55)'],
+  ])('entrada %s → erro "%s"', (entrada, erro) => {
+    expect(normalizeContactPhone(entrada)).toEqual({ phone: null, error: erro });
+  });
+
+  it('validatePhone aceita só o que dá para gravar', () => {
+    expect(validatePhone('11987654321')).toBe(true);
+    expect(validatePhone('+55 (11) 99999-9999')).toBe(true);
+    expect(validatePhone('123')).toBe(false);
+    expect(validatePhone('+1 415 555 2671')).toBe(false);
+  });
+
+  it('o formulário mostra a razão do telefone inválido', () => {
+    const { result } = renderHook(() =>
+      useContactFormValidation({ name: 'Test', phone: '', email: '' }, noop, noop),
+    );
+    act(() => { result.current.handleBlur('phone', '+1 415 555 2671'); });
+    expect(result.current.errors.phone).toBe('Apenas números do Brasil (DDI +55)');
+
+    act(() => { result.current.handleBlur('phone', '11987654321'); });
+    expect(result.current.errors.phone).toBeNull();
   });
 });

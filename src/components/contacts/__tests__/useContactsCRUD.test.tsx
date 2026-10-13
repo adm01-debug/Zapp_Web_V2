@@ -80,6 +80,7 @@ vi.mock('@/services/contact.service', () => ({
 }));
 
 import { useContactsCRUD } from '../useContactsCRUD';
+import { jidToPhone } from '@/adapters/evolutionAdapter';
 
 /** Linha como a lista devolve HOJE (RPC sem as colunas de endereço). */
 const LIST_ROW = {
@@ -434,5 +435,87 @@ describe('useContactsCRUD — edição com 0 linhas afetadas é falha (R2-AUTH-0
     expect(caught).toBeInstanceOf(Error);
     expect((caught as Error).message).toBe('Nenhum contato foi atualizado. Verifique se você tem permissão.');
     expect(mocks.refetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('useContactsCRUD — telefone gravado no padrão do webhook (DDI 55)', () => {
+  beforeEach(() => {
+    mocks.updatePayloads = [];
+    mocks.insertPayloads = [];
+    mocks.updateError = null;
+    mocks.updateRows = [{ id: 'c1' }];
+    mocks.getById.mockReset();
+    mocks.getById.mockResolvedValue({ data: FULL_ROW, error: null });
+    mocks.warning.mockReset();
+    mocks.refetch.mockReset();
+    mocks.invalidateQueries.mockReset();
+    mocks.callOnSuccess = false;
+  });
+
+  async function addContactWithPhone(phone: string) {
+    const hook = mountHook();
+    act(() => {
+      hook.result.current.handleNewContactChange('name', 'Beltrano');
+      hook.result.current.handleNewContactChange('phone', phone);
+    });
+    await act(async () => {
+      await hook.result.current.handleAddContact();
+    });
+    return hook;
+  }
+
+  it.each([
+    ['+55 (11) 99999-9999', '5511999999999'],
+    ['11999999999', '5511999999999'],
+    ['(11) 99999-9999', '5511999999999'],
+    ['1199999999', '5511999999999'],
+    ['011 99999-9999', '5511999999999'],
+    ['(11) 3333-4444', '551133334444'],
+  ])('cadastro manual %s → grava %s', async (entrada, esperado) => {
+    await addContactWithPhone(entrada);
+    expect(last(mocks.insertPayloads)).toMatchObject({ phone: esperado });
+  });
+
+  it('cadastro manual e webhook geram o MESMO número', async () => {
+    await addContactWithPhone('(11) 99999-9999');
+    const stored = (last(mocks.insertPayloads) as { phone: string }).phone;
+    expect(stored).toBe(jidToPhone('5511999999999@s.whatsapp.net'));
+    expect(stored).toBe('5511999999999');
+  });
+
+  it('edição normaliza o telefone digitado à mão', async () => {
+    mocks.getById.mockResolvedValue({ data: { ...FULL_ROW, phone: '1188887777' }, error: null });
+
+    const { payload } = await openAndEditName(LIST_ROW);
+
+    expect(payload).toHaveProperty('phone', '5511988887777');
+  });
+
+  it('edição de contato já no padrão não muda o número', async () => {
+    mocks.getById.mockResolvedValue({ data: FULL_ROW, error: null });
+
+    const { payload } = await openAndEditName(LIST_ROW);
+
+    expect(payload).toHaveProperty('phone', '5511999999999');
+  });
+
+  it.each([
+    ['+1 415 555 2671'],
+    ['+34 600 123 456'],
+    ['123'],
+  ])('cadastro com número inválido (%s) não grava e avisa a razão', async (entrada) => {
+    await addContactWithPhone(entrada);
+    expect(mocks.insertPayloads).toHaveLength(0);
+    expect(mocks.warning).toHaveBeenCalled();
+  });
+
+  it('edição com número inválido não grava e avisa a razão', async () => {
+    mocks.getById.mockResolvedValue({ data: { ...FULL_ROW, phone: '+1 415 555 2671' }, error: null });
+
+    const { payload } = await openAndEditName(LIST_ROW);
+
+    expect(payload).toEqual({});
+    expect(mocks.updatePayloads).toHaveLength(0);
+    expect(mocks.warning).toHaveBeenCalled();
   });
 });

@@ -9,6 +9,7 @@ import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { secureRandomChars, BASE36_MAIUSCULO } from '@/lib/secureRandom';
+import { normalizeContactPhone } from './useContactFormValidation';
 
 interface ContactFormData {
   name: string;
@@ -137,6 +138,12 @@ export function useContactsCRUD() {
       feedback.warning('Preencha os campos obrigatórios');
       return;
     }
+    // Cadastro manual grava o MESMO formato do webhook (dígitos com DDI 55).
+    const phone = normalizeContactPhone(newContact.phone);
+    if (phone.phone === null) {
+      feedback.warning(phone.error);
+      return;
+    }
     setIsSubmitting(true);
     await feedback.withFeedback(
       async () => {
@@ -146,7 +153,7 @@ export function useContactsCRUD() {
           surname: newContact.surname || null,
           job_title: newContact.job_title || null,
           company: newContact.company || null,
-          phone: newContact.phone.replace(/\D/g, ''),
+          phone: phone.phone,
           email: newContact.email || null,
           contact_type: newContact.contact_type,
           postal_code: newContact.postal_code || null,
@@ -187,6 +194,12 @@ export function useContactsCRUD() {
   const handleEditContact = async () => {
     if (!editingContact) return;
     const contact = editingContact;
+    // Mesmo formato do cadastro/webhook: dígitos com DDI 55.
+    const phone = normalizeContactPhone(contact.phone);
+    if (phone.phone === null) {
+      feedback.warning(phone.error);
+      return;
+    }
     setIsSubmitting(true);
     await feedback.withFeedback(
       async () => {
@@ -196,7 +209,7 @@ export function useContactsCRUD() {
           surname: contact.surname,
           job_title: contact.job_title,
           company: contact.company,
-          phone: contact.phone.replace(/\D/g, ''),
+          phone: phone.phone,
           email: contact.email?.trim() || null,
           contact_type: contact.contact_type,
         };

@@ -1,14 +1,50 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeE164BR } from '@/lib/calls/phone';
 
 export const validateEmail = (email: string): boolean => {
   if (!email) return true;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
+/**
+ * Formato canônico de gravação em `contacts.phone`: só dígitos, com DDI 55 —
+ * exatamente o que o webhook grava (`jidToPhone` sobre o JID do WhatsApp,
+ * ex.: `5511999999999@s.whatsapp.net` → `5511999999999`). Sem o DDI, o cadastro
+ * manual criava um segundo contato para o mesmo número (a UNIQUE não casava).
+ *
+ * Devolve `phone` preenchido quando normalizável, ou `error` com a razão
+ * (pt-BR) para a tela avisar o operador.
+ */
+export function normalizeContactPhone(
+  raw: string,
+): { phone: string; error: null } | { phone: null; error: string } {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed) return { phone: null, error: 'Telefone é obrigatório' };
+
+  const digits = trimmed.replace(/\D/g, '');
+  // DDI explícito que não seja o +55 (ex.: +1 …) fica fora do escopo do sistema.
+  const hasExplicitDdi = trimmed.startsWith('+') || /^00/.test(trimmed);
+  if (hasExplicitDdi && !digits.startsWith('55')) {
+    return { phone: null, error: 'Apenas números do Brasil (DDI +55)' };
+  }
+
+  const e164 = normalizeE164BR(trimmed);
+  if (e164 === null) {
+    return { phone: null, error: 'Telefone inválido — informe DDD + número (ex.: (11) 99999-9999)' };
+  }
+
+  const local = e164.slice(3); // DDD + assinante (10 ou 11 dígitos)
+  const ddd = Number(local.slice(0, 2));
+  if (!(ddd >= 11 && ddd <= 99)) {
+    return { phone: null, error: `Telefone inválido — DDD ${local.slice(0, 2)} não existe` };
+  }
+
+  return { phone: e164.slice(1), error: null };
+}
+
 export const validatePhone = (phone: string): boolean => {
-  const cleaned = phone.replace(/\D/g, '');
-  return cleaned.length >= 10 && cleaned.length <= 15;
+  return normalizeContactPhone(phone).phone !== null;
 };
 
 export const formatPhone = (value: string): string => {
@@ -98,10 +134,10 @@ export function useContactFormValidation(
         if (value.trim().length < 2) return 'Nome deve ter pelo menos 2 caracteres';
         if (value.length > 100) return 'Nome deve ter no máximo 100 caracteres';
         return null;
-      case 'phone':
-        if (!value.trim()) return 'Telefone é obrigatório';
-        if (!validatePhone(value)) return 'Formato inválido (mín. 10 dígitos)';
-        return null;
+      case 'phone': {
+        const normalized = normalizeContactPhone(value);
+        return normalized.phone === null ? normalized.error : null;
+      }
       case 'email':
         if (value && !validateEmail(value)) return 'Email inválido';
         return null;
