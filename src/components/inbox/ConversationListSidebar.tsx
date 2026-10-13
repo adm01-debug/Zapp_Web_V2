@@ -401,7 +401,7 @@ export function ConversationListSidebar({
         // eslint-disable-next-line react-hooks/refs
         {...(isMobile ? pullToRefresh.handlers : {})}
       >
-        {inbox.loading ? (
+        {inbox.initialLoading ? (
           <div className="p-3 space-y-1">
             {SKELETON_WIDTHS.map(({ name, msg }, i) => (
               <motion.div
