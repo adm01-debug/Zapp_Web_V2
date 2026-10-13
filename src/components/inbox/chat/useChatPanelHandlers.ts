@@ -339,6 +339,19 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
     try {
       await onSendMessage(messageContent, wasReply?.id ?? null);
+      // t_fa2f8515 / PD-63: sem rede o envio NÃO saiu — o serviço o deixou na fila local
+      // (`navigator.onLine === false` é a mesma condição que enfileira). Anunciar "Mensagem
+      // enviada" aqui seria falso: a bolha mostra "Aguardando rede" e o texto só sai quando a
+      // conexão voltar. Sem o Desfazer, porque não há envio para desfazer — o cancelamento é
+      // na própria bolha (tira o item da fila).
+      const semRede = typeof navigator !== 'undefined' && navigator.onLine === false;
+      if (semRede) {
+        toast({
+          title: '📶 Aguardando rede',
+          description: 'A mensagem será enviada quando a conexão voltar.',
+        });
+        return;
+      }
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {

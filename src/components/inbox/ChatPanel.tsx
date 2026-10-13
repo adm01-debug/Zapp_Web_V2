@@ -30,7 +30,11 @@ import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary'
 import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
 import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
+import { paraMensagemAguardandoRede } from './chat/MessageBubbleAguardandoRede';
+import { offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
 import type { TransferTargetType } from './TransferDialog';
+import { cn } from '@/lib/utils';
+import { Clock } from 'lucide-react';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -193,6 +197,52 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
+/**
+ * t_fa2f8515 / PD-63 — item da fila offline visível na conversa.
+ *
+ * A fila local guarda o item enquanto o envio não sai; nenhuma linha do servidor o
+ * representa, então o painel precisa LÊ-LA para mostrar o que está pendente. O
+ * `subscribe` da própria fila avisa enqueue/remoção/drenagem: a bolha aparece ao
+ * enfileirar e some sozinha quando o envio sai (item removido da fila).
+ */
+function useFilaOfflineDoContato(contactId: string): OfflineQueuedMessage[] {
+  const [itens, setItens] = useState<OfflineQueuedMessage[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    const ler = () => {
+      offlineSendQueue
+        .list()
+        .then((todos) => {
+          if (!vivo) return;
+          setItens(todos.filter((item) => item.contactId === contactId && item.status === 'pending'));
+        })
+        .catch(() => {
+          if (vivo) setItens([]);
+        });
+    };
+    ler();
+    const pararInscricao = offlineSendQueue.subscribe(ler);
+    return () => {
+      vivo = false;
+      pararInscricao();
+    };
+  }, [contactId]);
+  return itens;
+}
+
+/**
+ * Mescla os itens da fila no fim da conversa, sem duplicar o que já virou linha no
+ * servidor: a linha real carrega o MESMO `client_message_id` (item 024), então o
+ * item some da fila e a bolha sintética some junto — sem fantasma duplicado.
+ */
+function mesclarFilaOffline(messages: Message[], itens: OfflineQueuedMessage[]): Message[] {
+  if (itens.length === 0) return messages;
+  const jaNoServidor = new Set(messages.map((m) => m.client_message_id).filter(Boolean));
+  const pendentes = itens.filter((item) => !jaNoServidor.has(item.clientMessageId));
+  if (pendentes.length === 0) return messages;
+  return [...messages, ...pendentes.map(paraMensagemAguardandoRede)];
+}
+
 export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
@@ -211,6 +261,14 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const fileUploaderRef = useRef<FileUploaderRef>(null);
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
+
+  // t_fa2f8515 / PD-63: o que está na fila offline aparece na conversa como "Aguardando rede".
+  const itensNaFilaOffline = useFilaOfflineDoContato(conversation.contact.id);
+  const mensagensComFila = useMemo(
+    () => mesclarFilaOffline(messages, itensNaFilaOffline),
+    [messages, itensNaFilaOffline],
+  );
+  const pendentesNaFila = mensagensComFila.length - messages.length;
 
   // Paridade V3: quando a mensagem e do proprio agente, a lista vai ao fim
   // mesmo que ele esteja lendo o historico acima — quem envia precisa ver o que
@@ -457,7 +515,28 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
         <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
 
-        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
+        {/* t_fa2f8515 / PD-63: contador acessível dos itens na fila offline. Vive sempre no DOM
+            (aria-live só anuncia mudanças de quem já existe); fica visível quando há pendentes. */}
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="anuncio-fila-offline"
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1 text-2xs text-muted-foreground',
+            pendentesNaFila === 0 && 'sr-only',
+          )}
+        >
+          {pendentesNaFila > 0 ? (
+            <>
+              <Clock className="w-3 h-3 motion-safe:animate-pulse" aria-hidden="true" />
+              {pendentesNaFila} mensagem(ns) aguardando rede para envio.
+            </>
+          ) : (
+            ''
+          )}
+        </div>
+
+        <ChatMessagesArea ref={messagesAreaRef} messages={mensagensComFila} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}

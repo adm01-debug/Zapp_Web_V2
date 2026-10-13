@@ -19,6 +19,7 @@ import type { Message } from '@/types/chat';
 
 const db = vi.hoisted(() => ({
   toast: vi.fn(),
+  undoToast: vi.fn(),
   snoozeConversation: vi.fn(),
   favoriteContact: vi.fn(),
   unfavoriteContact: vi.fn(),
@@ -52,7 +53,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: db.toast }));
 vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
-vi.mock('@/lib/undoToast', () => ({ undoToast: vi.fn() }));
+vi.mock('@/lib/undoToast', () => ({ undoToast: db.undoToast }));
 vi.mock('@/lib/ai-vocabulary', () => ({ normalizeOperationalPriority: () => ({ value: null }) }));
 vi.mock('@/services/outbound-message.service', () => ({ sendOutboundMessage: vi.fn() }));
 vi.mock('@/hooks/chat/useConversationActions', () => ({
@@ -296,5 +297,47 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
     expect(archive?.payload).toMatchObject({ conversation_status: 'archived' });
     expect(archive?.payload.assigned_to).toBeUndefined();
     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(true);
+  });
+});
+
+/**
+ * t_fa2f8515 / PD-63 — envio sem rede. O serviço enfileira local quando
+ * `navigator.onLine === false`; o painel anunciar "Mensagem enviada" seria falso.
+ */
+function definirRede(online: boolean) {
+  Object.defineProperty(navigator, 'onLine', { value: online, configurable: true });
+}
+
+async function enviar(online: boolean) {
+  definirRede(online);
+  const utils = montar();
+  act(() => {
+    utils.result.current.setInputValue('mensagem redigida sem rede');
+  });
+  await act(async () => {
+    await utils.result.current.handleSend();
+  });
+  return utils;
+}
+
+describe('envio sem rede — nada de falso "enviado"', () => {
+  afterEach(() => definirRede(true));
+
+  it('sem rede avisa "Aguardando rede" e não anuncia envio (nem Desfazer)', async () => {
+    await enviar(false);
+
+    expect(db.undoToast).not.toHaveBeenCalled();
+    const aviso = toasts().find((t) => (t.title ?? '').includes('Aguardando rede')) as
+      | { description?: string }
+      | undefined;
+    expect(aviso).toBeTruthy();
+    expect(aviso?.description ?? '').toContain('quando a conexão voltar');
+  });
+
+  it('com rede o caminho feliz segue anunciando "Mensagem enviada" com Desfazer', async () => {
+    await enviar(true);
+
+    expect(db.undoToast).toHaveBeenCalledTimes(1);
+    expect(toasts().some((t) => (t.title ?? '').includes('Aguardando rede'))).toBe(false);
   });
 });

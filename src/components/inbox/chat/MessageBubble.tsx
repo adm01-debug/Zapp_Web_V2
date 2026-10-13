@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatMessageTime, MessageStatusIcon } from './messageUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
+import { MessageBubbleAguardandoRede, STATUS_AGUARDANDO_REDE } from './MessageBubbleAguardandoRede';
 import { QuarantineBadge } from '@/components/security/QuarantineBadge';
 import { LinkPreviewCard } from './LinkPreviewCard';
 import {
@@ -154,6 +155,12 @@ export const MessageBubble = memo(function MessageBubble({
 }: MessageBubbleProps) {
   const { toast } = useToast();
   const { profile } = useAuth();
+  // t_fa2f8515 / PD-63: a bolha de uma mensagem parada na fila offline não é uma bolha de
+  // envio — é um item aguardando rede. Delega para o balão dedicado (com "Aguardando rede" e
+  // "Cancelar") antes de montar o resto, que afirmaria entrega.
+  if (message.status === STATUS_AGUARDANDO_REDE) {
+    return <MessageBubbleAguardandoRede message={message} />;
+  }
   const isSent = message.sender === 'agent';
   const tentativas = tentativasDeEnvio(message);
   const senderName = isSent ? 'Você' : message.senderName || 'Contato';

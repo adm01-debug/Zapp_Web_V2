@@ -7,7 +7,7 @@
  * são os componentes REAIS.
  */
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Conversation, Message } from '@/types/chat';
 
@@ -143,7 +143,7 @@ const areaCtrl = vi.hoisted(() => ({
 vi.mock('@/components/inbox/chat/ChatMessagesArea', async () => {
   const React = await import('react');
   type Props = {
-    messages: Array<{ id: string }>;
+    messages: Array<{ id: string; status?: string | null }>;
     highlightedMessageIds?: Set<string>;
     activeHighlightId?: string | null;
   };
@@ -157,6 +157,7 @@ vi.mock('@/components/inbox/chat/ChatMessagesArea', async () => {
               key={m.id}
               data-testid="bubble"
               data-message-id={m.id}
+              data-status={m.status ?? undefined}
               data-realce={
                 activeHighlightId === m.id
                   ? 'ativo'
@@ -183,6 +184,7 @@ vi.mock('@/services/chat.service', () => ({
 }));
 
 import { ChatPanel } from '../../ChatPanel';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 const conversation = {
   id: 'conv-1',
@@ -304,5 +306,72 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
     await waitFor(() => expect(screen.queryByTestId('send-error-banner')).toBeNull());
     expect(screen.getByTestId('conversation-delivery-summary')).toBeInTheDocument();
+  });
+});
+
+/**
+ * t_fa2f8515 / PD-63 — o que está na fila offline aparece na conversa.
+ * A fila local não tem linha no servidor; o painel precisa lê-la para MOSTRAR o pendente.
+ */
+function itemDaFila(over: Partial<Record<string, unknown>> = {}) {
+  return {
+    clientMessageId: 'cm-fila-1',
+    userId: 'user-1',
+    contactId: 'contato-1',
+    content: 'redigida sem rede',
+    messageType: 'text',
+    mediaUrl: null,
+    caption: null,
+    replyToId: null,
+    whatsappConnectionId: null,
+    ...over,
+  };
+}
+
+describe('ChatPanel — fila offline visível como "Aguardando rede"', () => {
+  beforeEach(async () => {
+    await offlineSendQueue.clear();
+  });
+  afterEach(async () => {
+    await offlineSendQueue.clear();
+  });
+
+  it('mostra a bolha do item na fila e o anúncio acessível', async () => {
+    await offlineSendQueue.enqueue(itemDaFila());
+    renderPanel([msg({ id: 'ok', status: 'delivered' })]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('1 mensagem(ns) aguardando rede'),
+    );
+    const bolha = screen
+      .getAllByTestId('bubble')
+      .find((b) => b.getAttribute('data-message-id') === 'cm-fila-1');
+    expect(bolha).toBeDefined();
+    expect(bolha?.getAttribute('data-status')).toBe('aguardando-rede');
+  });
+
+  it('não duplica quando o envio já virou linha no servidor (mesmo client_message_id)', async () => {
+    await offlineSendQueue.enqueue(itemDaFila());
+    renderPanel([msg({ id: 'linha-real', status: 'sending', client_message_id: 'cm-fila-1' })]);
+
+    // Sem bolha sintética: a linha real já representa a mensagem.
+    await waitFor(() =>
+      expect(
+        screen.getAllByTestId('bubble').some((b) => b.getAttribute('data-message-id') === 'cm-fila-1'),
+      ).toBe(false),
+    );
+    expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('');
+  });
+
+  it('item de OUTRO contato não aparece nesta conversa', async () => {
+    await offlineSendQueue.enqueue(itemDaFila({ clientMessageId: 'cm-outro', contactId: 'contato-2' }));
+    renderPanel([msg({ id: 'ok', status: 'delivered' })]);
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByTestId('bubble').some((b) => b.getAttribute('data-message-id') === 'cm-outro'),
+      ).toBe(false);
+    });
+    expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('');
   });
 });
