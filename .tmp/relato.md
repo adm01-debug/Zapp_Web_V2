@@ -20,6 +20,12 @@ Especialista: Íris (area-front-componentes)
 - com `lastSyncedAt`: a faixa mostra "Última sincronização há cerca de 2 horas".
 - seletor: extraído, lista as contas ativas com o estado de cada uma.
 
+## Arquivos da faixa do pai (cherry-pick, NÃO são desta entrega)
+O cartão manda trazer a faixa do pai inteira. Estes arquivos vêm dos dois commits do pai e eu não os alterei:
+- `src/hooks/gmail/gmailTypes.ts`, `src/hooks/integrations/useGmail.ts`, `src/hooks/integrations/__tests__/useGmail.syncStatus.test.tsx` — commit do pai "hook de contas Gmail expõe estado de sincronização e reauth" (é daqui que leio `needsReconnect`/`lastError`/`lastSyncedAt`/`sync_status`).
+- `supabase/functions/_shared/gmail-helpers.ts`, `supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts`, `supabase/functions/gmail-sync/index.ts`, `supabase/functions/gmail-cron-sync/index.ts`, `supabase/functions/gmail-oauth/index.ts`, `supabase/functions/gmail-oauth/index.test.ts` — commit do pai "refresh do Gmail recusado vira reauth_required" (Edge Function).
+Minha mudança está em 3 arquivos: `src/components/email/EmailChatInbox.tsx`, `src/components/gmail/GmailAccountSelector.tsx` (novo) e `src/components/email/__tests__/EmailChatInbox.reconectar.test.tsx` (novo).
+
 ## O que NÃO fiz e por quê
 - Captura em `e2e/email-navy-visual.spec.ts`: NÃO FEITO — motivo: o projeto visual compara baselines versionados e o fixture `e2e/fixtures/email-navy.ts` (233 linhas, fora dos arquivos que o cartão cita) precisaria ganhar uma conta em `reauth_required`. Preferi não ampliar o diff. A faixa usa só tokens já existentes (`--warning-text`/`--destructive-text`, `bg-warning/10`, `bg-destructive/10`), `flex-wrap` para 360–1280px, sem alterar escala; o contraste dos pares de token é coberto pelo teste WCAG do design system.
 - Os dois commits abaixo vieram por cherry-pick da faixa do cartão pai (o cartão manda trazer): `fix(edge): refresh do Gmail recusado vira reauth_required` e `feat(email): hook de contas Gmail expõe estado de sincronização e reauth`. As Edge Functions e o hook `useGmail` que aparecem no diff não são desta entrega.
