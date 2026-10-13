@@ -46,7 +46,7 @@ describe('errorReporter', () => {
 
   describe('reportClientError', () => {
     it('envia client_error com contexto e campos truncados', () => {
-      const err = new Error('x'.repeat(5_000));
+      const err = new Error('falhou '.repeat(800));
       reportClientError(err, { source: 'window.onerror' }, { force: true });
       expect(mockedLogAudit).toHaveBeenCalledTimes(1);
       const arg = mockedLogAudit.mock.calls[0][0];
@@ -69,6 +69,32 @@ describe('errorReporter', () => {
       reportClientError(new Error('dup'), { source: 'a' }, { force: true });
       reportClientError(new Error('dup'), { source: 'a' }, { force: true });
       expect(mockedLogAudit).toHaveBeenCalledTimes(1);
+    });
+
+    it('redige e-mail, telefone e segredo de message/stack/context antes de gravar', () => {
+      const err = new Error(
+        'falha para maria.souza@example.com tel (11) 91234-5678 Bearer ' +
+          'eyJ' + 'hbGciOiJIUzI1NiJ9.cG9zdGxlc3Mtc2VncmVkbw.SflKxwRJSMeKKF2QT4fwpM'
+      );
+      err.stack = 'Error: maria.souza@example.com\n  at x (src/hooks/x.ts:1:1)';
+      reportClientError(err, { source: 'edge', extra: 'joao@example.org' }, { force: true });
+
+      const details = mockedLogAudit.mock.calls[0][0].details as Record<string, unknown>;
+      const flat = JSON.stringify(details);
+      expect(flat).not.toContain('maria.souza@example.com');
+      expect(flat).not.toContain('joao@example.org');
+      expect(flat).not.toContain('91234-5678');
+      expect(flat).not.toContain('eyJ' + 'hbGciOiJIUzI1NiJ9.cG9zdGxlc3Mtc2VncmVkbw.SflKxwRJSMeKKF2QT4fwpM');
+      expect(details.message).toContain('[EMAIL_REDACTED]');
+      expect(details.message).toContain('[TELEFONE_REDACTED]');
+      expect(details.extra).toBe('[EMAIL_REDACTED]');
+      expect(details.stack).toContain('src/hooks/x.ts:1:1');
+    });
+
+    it('mascara o valor de chave sensível no contexto', () => {
+      reportClientError(new Error('boom'), { source: 'a', apikey: 'segredo-123' }, { force: true });
+      const details = mockedLogAudit.mock.calls[0][0].details as Record<string, unknown>;
+      expect(details.apikey).toBe('[SEGREDO_REDACTED]');
     });
   });
 });
