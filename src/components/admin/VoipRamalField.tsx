@@ -101,7 +101,7 @@ export function VoipRamalField({ onSave }: VoipRamalFieldProps) {
           onClick={handleSalvar}
           disabled={!podeSalvar}
         >
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Salvar ramal
+          {saving && <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />} Salvar ramal
         </Button>
         <p
           role="status"
