@@ -6,10 +6,15 @@
  * marco é inferido de mensagem. O filtro de período/tipo é do cliente: trocar
  * de filtro não refaz a leitura.
  *
- * Só tokens do sistema: cada situação pinta com o par de texto do estado
- * (`--success`; `--warning-text`/`--destructive-text`, que a etapa 80/E.3
- * publicou justamente porque o âmbar/vermelho de preenchimento não fecha
- * 4,5:1 como texto). Marco sem prazo fica neutro.
+ * Só tokens do sistema. O TRAÇO do trilho pinta com os tons do kit
+ * (`RAIL_TONE` -> `toneClasses` -> `text-success`/`text-warning`/
+ * `text-destructive`, isto é `hsl(var(--success|--warning|--destructive))`, os
+ * tokens de PREENCHIMENTO) sobre `--card`: contraste `5,66:1`/`7,70:1` (ok),
+ * `2,14:1`/`9,96:1` (warning) e `3,78:1`/`5,89:1` (breached), claro/escuro. O
+ * par de TEXTO (`--warning-text` `4,82:1`, `--destructive-text` `5,63:1` no
+ * claro), publicado na etapa 80/E.3 porque o âmbar/vermelho de preenchimento
+ * não fecha 4,5:1 como texto, fica no SELO (`STATUS_BADGE`), não no traço.
+ * Marco sem prazo fica neutro.
  *
  * A linha vertical que liga os marcos é um `DrawLine` por TRECHO: a cor de
  * cada trecho é a SITUAÇÃO do marco logo acima dele (`ok`→`success`,
