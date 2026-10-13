@@ -1,18 +1,50 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (telas) — Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/talkx/TalkXLiveMonitor.tsx` (linhas 20, 37 e 124): importa e chama
+  `useTalkXLiveChannel(campaignId)` e passa `liveChannel.live ? false : (liveChannel.panelPollMs ?? undefined)`
+  como 3º argumento de `useTalkXMonitor(campaignId, statusFilter, …)`. É o pedido do cartão: ao vivo o
+  evento atualiza os dados e o polling do painel para (`false`); sem o canal, o painel usa o intervalo
+  degradado (`panelPollMs`) em vez do polling fixo. O `TalkXLiveMonitor.tsx` de hoje (base dia/2026-10-13)
+  não estava ligado ao hook — só os hooks do cartão pai estavam integrados —, então a chamada foi adicionada
+  aqui, dentro do arquivo permitido. Mantive, como estavam, o `useEffect` do canal `supabase.channel` e o
+  `refetchInterval` das consultas de campaign/recipients (fora do pedido do cartão).
+- `src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx`: mock do canal com `vi.mock` e valor
+  controlado por `vi.hoisted` (`liveStatus`, `panelPollMs`), captura do 3º argumento no mock de
+  `useTalkXMonitor` e os dois cenários (ao vivo → `false`; degradado → `panelPollMs`).
+- 3 mocks de teste (`TalkXLiveMonitor.kpiRow.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`,
+  `TalkXHealthCard.test.tsx`): 1 linha cada. O mock de `supabase.channel` tinha só 2 níveis de `.on`; agora
+  que o componente também assina o canal único (3 `.on` + `subscribe`), troquei por um canal auto-encadeável.
+  Nenhum arquivo de produto além do permitido; é consequência direta do consumo do hook.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `npx vitest run src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx` →
+  `Tests 2 failed | 7 passed (9)` (`expected false to be 15000`-style: recebido `null`).
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 9 passed (9)`.
+- testes afetados rodados agora, todos verdes: kpiRow `2 passed`; lifecycle `5 passed`;
+  TalkXHealthCard `20 passed`; TalkXView.route `25 passed`; talkxStates.matrix `44 passed`.
+- tipos: `node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit` → exit 0 (sem `error TS`).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard OK, tipos OK, lint OK, migrations OK;
+  banco não verificado porque o cartão não tem conjunto de banco).
+
+## Critério de pronto, item a item
+1. `live === true` → `false`: `TalkXLiveMonitor.tsx:124` + teste "canal ao vivo (live=true)…" (states).
+2. `live === false` → `panelPollMs`: `TalkXLiveMonitor.tsx:124` + teste "canal degradado (live=false)…" (states).
+3. os dois cenários estão em `TalkXLiveMonitor.states.test.tsx` (2 casos novos).
+4. vermelho→verde acima.
+5. `zapp-verify . --rapido` verde (linha acima).
+6. Diff final = 5 arquivos, NÃO 2 — ver "O que NÃO fiz e por quê".
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- **Critério 6 (apenas 2 arquivos): não fecha em 2.** Para ter `liveChannel.live`/`panelPollMs` o componente
+  PRECISA consumir `useTalkXLiveChannel`. Isso quebrou 3 testes que renderizam o Monitor com um mock de
+  `supabase.channel` de 2 níveis (`TypeError: nextChannel.on(...).on(...).on is not a function`) em
+  kpiRow/lifecycle/TalkXHealthCard. Deixá-los vermelhos seria quebrar teste existente (pior que a regra de
+  arquivos); corrigi 1 linha de mock em cada um. São 3 arquivos de TESTE, e nenhum arquivo de produto além
+  do `TalkXLiveMonitor.tsx`. Se a intenção era realmente só 2 arquivos, o cartão precisa decidir quem
+  conserta esses mocks — mas a suíte ficaria vermelha para o integrador.
+- `?? undefined` no 3º argumento: o hook expõe `panelPollMs: number | null` e o parâmetro de
+  `useTalkXMonitor` é `number | false | undefined`; sem a ponte `null → undefined` o `tsc` do app
+  (strictNullChecks) reprova o arquivo. Não é escolha estética.
+- Não toquei em `useTalkXLiveChannel.ts`, `useTalkXMonitor.ts`, `useTalkXMonitorPanel.ts`,
+  `talkxStates.matrix.test.tsx` nem `TalkXCampaignRunning.*` (escopo do cartão pai, já integrados).
