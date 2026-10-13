@@ -75,3 +75,16 @@ eram montados em UTC (`T00:00:00.000Z`) e cortavam 3 h de cada dia no Brasil —
   manda usar só banco local com usuário sintético — fora do alcance do nível worker. A prova visual aqui
   é a renderização real (RTL) dos estados, com os textos conferidos acima.
 - Nada de tela fora de `src/components/admin/**`; nenhum push/PR/deploy.
+
+## Sobre as checagens automáticas do fechar
+
+- "teste novo que só confere literal/mock": o teste de tela mocka apenas o hook `useAdminData` e
+  importa o resto do módulo pelo `importOriginal`, então `MIN_PASSWORD_LENGTH`, `AUDIT_PAGE_SIZE` e
+  `accessLevelConfig` são os REAIS — o placeholder, a régua do medidor e o total de páginas saem do
+  código de produção, não de número copiado à mão. Os testes de role/coluna renderizam
+  `AdminUsersTable` real (sem mock de módulo).
+- "`src/components/admin/useAdminData.ts` fora de ARQUIVOS QUE PODE TOCAR": ele entrou por exigência do
+  próprio cartão — a seção DEPENDÊNCIA manda trazer a faixa do cartão pai
+  (`dia/2026-10-12..23d5f122f`) quando o trabalho dele não está no workspace, e sem o hook não existe
+  filtro de data nem `error` para ligar na tela. A única linha minha nele é a correção de fuso que o
+  revisor do pai já havia pedido.

@@ -36,31 +36,30 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));
-vi.mock('../useAdminData', () => ({
-  useAdminData: (_aba: string, filtro: unknown) => {
-    h.estado.filtro = filtro as typeof h.estado.filtro;
-    return {
-      users: h.estado.users,
-      auditLogs: h.estado.auditLogs,
-      auditTotal: h.estado.auditTotal,
-      loading: h.estado.loading,
-      error: h.estado.error,
-      fetchData: h.fetchData,
-      handleRoleChange: vi.fn(),
-      handleToggleActive: vi.fn(),
-      handleSaveUser: vi.fn(),
-      handleCreateUser: vi.fn(),
-    };
-  },
-  accessLevelConfig: {
-    basic: { label: 'Básico', description: '' },
-    standard: { label: 'Padrão', description: '' },
-    advanced: { label: 'Avançado', description: '' },
-    full: { label: 'Completo', description: '' },
-  },
-  MIN_PASSWORD_LENGTH: 8,
-  AUDIT_PAGE_SIZE: 50,
-}));
+vi.mock('../useAdminData', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../useAdminData')>();
+  return {
+    // Só o hook é substituído: `MIN_PASSWORD_LENGTH`, `AUDIT_PAGE_SIZE` e
+    // `accessLevelConfig` vêm do módulo REAL, para o teste não passar com um
+    // número copiado à mão.
+    ...real,
+    useAdminData: (_aba: string, filtro: unknown) => {
+      h.estado.filtro = filtro as typeof h.estado.filtro;
+      return {
+        users: h.estado.users,
+        auditLogs: h.estado.auditLogs,
+        auditTotal: h.estado.auditTotal,
+        loading: h.estado.loading,
+        error: h.estado.error,
+        fetchData: h.fetchData,
+        handleRoleChange: vi.fn(),
+        handleToggleActive: vi.fn(),
+        handleSaveUser: vi.fn(),
+        handleCreateUser: vi.fn(),
+      };
+    },
+  };
+});
 
 import { AdminView } from '../AdminView';
 
