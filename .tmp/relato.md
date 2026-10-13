@@ -1,63 +1,51 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+# Fixture do talkx-monitor-panel.test.sh (bloco motor N-117)
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## O que mudou e por quê
+- `scripts/db-audit/talkx-monitor-panel.test.sh` (unico arquivo do escopo): o schema minimo do
+  teste criava `talkx_recipients` sem o trigger `update_talkx_recipients_updated_at`; a migration
+  X140 faz `ALTER TABLE ... DISABLE TRIGGER update_talkx_recipients_updated_at` e, sem o trigger,
+  abortava — o teste morria em "(0) migration do monitor aplicada". Passei a criar no fixture a
+  funcao real `public.update_updated_at_column()` e o trigger, como na base (migrations
+  20251215024517 e 20260409000457).
+- `scripts/db-audit/talkx-monitor-panel.test.sh`: o caso (10) ("migration replayavel") reaplicava
+  SOMENTE a migration do monitor (X140), que nao tem o bloco motor; isso derrubava a funcao do
+  N-117 vinda da migration do engine health e `health.motor` deixava de existir — era a causa real
+  do `FAIL: motor.stalled_campaign [esperado: true | obtido: ]`. Passei a reaplicar tambem a
+  migration do engine health logo depois, para o estado final ficar igual ao da base.
+- `scripts/db-audit/talkx-monitor-panel.test.sh`: a view de fixture passa a espelhar as colunas e
+  tipos da view real `talkx_engine_health` (migration 20261003242707): kind text, observed_at
+  timestamptz, metric_count bigint, metric_rate numeric, status text, return_message text.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
+Comando: `bash scripts/db-audit/talkx-monitor-panel.test.sh`
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+- vermelho antes (fixture sem o trigger, medido na 1a rodada): `FAIL: migration do monitor nao aplicou`
+  (`ERROR: trigger "update_talkx_recipients_updated_at" for table "talkx_recipients" does not exist`).
+- vermelho antes (caso 10 reaplicando so o X140): `FAIL: motor.stalled_campaign [esperado: true | obtido: ]`
+  — 13 PASS antes dele, inclusive `PASS: (10)`.
+- verde depois: `PASS: todos os 20 casos medidos`, com
+  `PASS: (11) bloco motor presente em health com stalled_campaign=true, stale_lease=true,
+  outcome_unknown_24h=3, failure_rate_15m=0.12, cron_status=ok` — os 5 criterios de aceite do cartao.
+- mutacao do terceiro item: voltei `metric_rate` para `double precision` (o tipo do fixture anterior)
+  mantendo as outras duas correcoes -> `PASS: todos os 20 casos medidos`. Ou seja, o tipo sozinho NAO
+  era a causa da falha (a causa eram os dois itens acima); manter `numeric` e fidelidade a view real.
+  Logs: `.tmp/run1.txt`, `.tmp/run2.txt`, `.tmp/run3-mut-tipo.txt`, `.tmp/run4-final.txt`.
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
-
-## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## O que NAO fiz e por que
+- NAO commitei as duas migrations que o teste exercita (`20261010060000_talkx_monitor_panel.sql` e
+  `20261010085230_talkx_monitor_panel_engine_health.sql`) nem `scripts/ci/check-test-inventory.mjs`:
+  o cartao permite so o arquivo de teste (reorientacao do supervisor, 13/10). Para rodar as duas
+  provas acima restaurei as migrations apenas no worktree, executei e as retirei antes do commit;
+  o diff da branch contra a base `63e3556d76` e de UM arquivo (`A scripts/db-audit/talkx-monitor-panel.test.sh`).
+- `depende de t_e295a21f` (N-117 motor health) e da migration X140 do monitor panel: nenhuma das duas
+  esta na branch do dia, entao na base o teste para em
+  `FAIL: migration ausente: supabase/migrations/20261010060000_talkx_monitor_panel.sql`
+  (log `.tmp/run5-base-sem-migration.txt`). Os 5 criterios de aceite ficam verdes assim que as duas
+  migrations entrarem; nao os medi contra a base porque a base nao tem o codigo que o teste mede.
+- `REGISTRO PENDENTE: scripts/db-audit/talkx-monitor-panel.test.sh` — a entrada em `db-guard.yml`
+  (ou na ALLOWLIST de `check-test-inventory.mjs`) e do dono do workflow; `node scripts/ci/check-test-inventory.mjs`
+  acusa o arquivo como orfao (5 orfaos hoje, 4 deles ja na base: department-invite-contract-audit-vocabulary,
+  talkx-conversion-defaults, team-chat-media-contract, team-direct-conversation-race). Nao editei o
+  inventario: fora do escopo do cartao.
