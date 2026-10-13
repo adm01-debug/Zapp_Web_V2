@@ -230,11 +230,16 @@ export function useContactsCRUD() {
           // mudou desde que o form abriu. Distingue pelo estado ATUAL da linha para
           // não anunciar "sem permissão" quando o caso é conflito de edição.
           if (contact.updated_at) {
-            const { data: current } = await supabase
+            const { data: current, error: currentError } = await supabase
               .from('contacts')
               .select('updated_at')
               .eq('id', contact.id)
               .maybeSingle();
+            if (currentError) {
+              throw new Error(
+                'Não foi possível confirmar o estado atual do contato. Recarregue os dados e tente novamente.',
+              );
+            }
             if (current?.updated_at && current.updated_at !== contact.updated_at) {
               throw new Error('Outra pessoa alterou este contato. Recarregue os dados e tente novamente.');
             }

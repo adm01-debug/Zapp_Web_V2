@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   updateRows: [{ id: 'c1' }] as { id: string }[],
   /** Estado ATUAL da linha, lido quando o UPDATE afeta 0 linhas (RLS ou conflito). */
   currentRow: null as null | { updated_at: string },
+  /** Erro da leitura acima (não pode virar silenciosamente "sem permissão"). */
+  currentRowError: null as null | { message: string },
   getById: vi.fn(),
   refetch: vi.fn(),
   setShowLegacy: vi.fn(),
@@ -49,7 +51,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       // Leitura do estado atual da linha, só usada quando o UPDATE afeta 0 linhas.
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => ({ data: mocks.currentRow, error: null }),
+          maybeSingle: async () => ({ data: mocks.currentRow, error: mocks.currentRowError }),
         }),
       }),
       insert: (payload: Record<string, unknown>) => {
@@ -463,6 +465,7 @@ describe('useContactsCRUD — edição concorrente avisa o conflito (updated_at)
     mocks.updatePayloads = [];
     mocks.updateEqs = [];
     mocks.currentRow = null;
+    mocks.currentRowError = null;
     mocks.updateError = null;
     mocks.updateRows = [{ id: 'c1' }];
     mocks.getById.mockReset();
@@ -528,5 +531,26 @@ describe('useContactsCRUD — edição concorrente avisa o conflito (updated_at)
 
     expect(caught).toBeInstanceOf(Error);
     expect((caught as Error).message).toBe('Nenhum contato foi atualizado. Verifique se você tem permissão.');
+  });
+
+  it('leitura do estado atual com erro não vira "sem permissão": falha explícita e específica', async () => {
+    mocks.updateRows = [];
+    mocks.currentRowError = { message: 'network error' };
+    const hook = await openEdit();
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await hook.result.current.handleEditContact();
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe(
+      'Não foi possível confirmar o estado atual do contato. Recarregue os dados e tente novamente.',
+    );
+    expect(mocks.refetch).not.toHaveBeenCalled();
   });
 });
