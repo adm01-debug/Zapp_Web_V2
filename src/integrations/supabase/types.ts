@@ -10884,9 +10884,27 @@ export type Database = {
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       delete_contact: { Args: { p_id: string }; Returns: string }
       delete_contacts: { Args: { p_ids: string[] }; Returns: number }
+      delete_department: {
+        Args: {
+          p_department_id: string
+          p_move_to?: string
+        }
+        Returns: Json
+      }
       delete_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: string
+      }
+      departments_overview: {
+        Args: never
+        Returns: {
+          conversation_count: number
+          department_id: string
+          is_active: boolean
+          member_count: number
+          name: string
+          queue_count: number
+        }[]
       }
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
