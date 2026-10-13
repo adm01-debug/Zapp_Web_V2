@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ interface ContactResult {
   name: string;
   phone: string;
   avatar_url: string | null;
+  whatsapp_connection_id: string | null;
 }
 
 export function useNewConversation(
@@ -28,19 +29,23 @@ export function useNewConversation(
   const [isSending, setIsSending] = useState(false);
   const [mode, setMode] = useState<'search' | 'new'>('search');
   const [connections, setConnections] = useState<{ id: string; name: string }[]>([]);
+  const [connectionsLoaded, setConnectionsLoaded] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState('');
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setConnectionsLoaded(false);
     supabase.from('whatsapp_connections').select('id, name').eq('status', 'connected')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
-        if (data && data.length > 0) {
-          setConnections(data);
-          setSelectedConnection(data[0].id);
-        }
+        // Sem a lista de conexões conectadas não dá para afirmar que a conexão do
+        // contato caiu — por isso `connectionsLoaded` só vira true com resposta boa.
+        if (error) return;
+        setConnections(data ?? []);
+        if (data && data.length > 0) setSelectedConnection(data[0].id);
+        setConnectionsLoaded(true);
       });
     return () => {
       cancelled = true;
@@ -64,7 +69,7 @@ export function useNewConversation(
     const timeout = setTimeout(async () => {
       setIsLoading(true);
       const { data } = await supabase.from('contacts')
-        .select('id, name, phone, avatar_url')
+        .select('id, name, phone, avatar_url, whatsapp_connection_id')
         .or(`name.ilike.${escapeOrFilterValue(`%${searchQuery}%`)},phone.ilike.${escapeOrFilterValue(`%${searchQuery}%`)}`)
         .limit(10);
       if (!cancelled) {
@@ -83,11 +88,36 @@ export function useNewConversation(
     setMessageText(''); setMode('search');
   };
 
+  // O modal mostra o seletor "Conexão WhatsApp"; ao escolher um contato existente ele
+  // precisa refletir de qual número a mensagem sai — a conexão do contato (o seletor
+  // da tela não troca o número de um contato que já tem o dele).
+  const selectContact = useCallback((contact: ContactResult | null) => {
+    setSelectedContact(contact);
+    setSelectedConnection(contact?.whatsapp_connection_id ?? connections[0]?.id ?? '');
+  }, [connections]);
+
   const handleSend = async () => {
     if (!messageText.trim()) { toast.error('Digite uma mensagem'); return; }
     setIsSending(true);
     try {
       let contactId = selectedContact?.id;
+      // Um contato existente já tem a própria conexão — a que recebeu a conversa.
+      // Mandar por outra conexão faz o WhatsApp recusar o envio (erro 463), então
+      // a conexão do contato vence o seletor da tela; só cai no seletor quando o
+      // contato não tem conexão (ou no modo "novo contato", que acabou de nascer).
+      const contactConnectionId = selectedContact?.whatsapp_connection_id ?? null;
+      const connectionId = contactConnectionId ?? (selectedConnection || null);
+      // A conexão do contato caiu: avisa e NÃO troca de número sozinho (o cliente
+      // não pode receber de um número diferente do habitual sem saber).
+      if (
+        contactConnectionId
+        && connectionsLoaded
+        && !connections.some((c) => c.id === contactConnectionId)
+      ) {
+        toast.error('A conexão deste contato está desconectada. Reconecte o número para enviar por ele.');
+        setIsSending(false);
+        return;
+      }
       if (mode === 'new' && !contactId) {
         if (!newPhone.trim()) { toast.error('Informe o número do telefone'); setIsSending(false); return; }
         const cleanedNewPhone = newPhone.trim().replace(/\D/g, '');
@@ -95,7 +125,7 @@ export function useNewConversation(
         if (existing) { toast.error(`Já existe um contato com este número: ${existing.name}`); setIsSending(false); return; }
         const { data: newContact, error } = await supabase.from('contacts').insert({
           name: newName.trim() || cleanedNewPhone, phone: cleanedNewPhone,
-          whatsapp_connection_id: selectedConnection || null,
+          whatsapp_connection_id: connectionId,
         }).select('id').single();
         if (error) {
           if (error.code === '23505') { toast.error('Já existe um contato com este número de telefone.'); setIsSending(false); return; }
@@ -109,7 +139,7 @@ export function useNewConversation(
       if (!contactId) { toast.error('Selecione um contato'); setIsSending(false); return; }
       await sendOutboundMessage({
         contactId, content: messageText.trim(), messageType: 'text',
-        whatsappConnectionId: selectedConnection || null,
+        whatsappConnectionId: connectionId,
       });
       toast.success('Mensagem enviada!');
       await supabase.functions.invoke('batch-fetch-avatars');
@@ -121,7 +151,7 @@ export function useNewConversation(
   };
 
   return {
-    searchQuery, setSearchQuery, contacts, selectedContact, setSelectedContact,
+    searchQuery, setSearchQuery, contacts, selectedContact, setSelectedContact: selectContact,
     newPhone, setNewPhone, newName, setNewName, messageText, setMessageText,
     isLoading, isSending, mode, setMode, connections, selectedConnection,
     setSelectedConnection, handleSend, resetForm,
