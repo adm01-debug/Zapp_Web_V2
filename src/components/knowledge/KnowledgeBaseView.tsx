@@ -6,18 +6,26 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BookOpen, FileText, Search, Upload, Trash2, Edit, Brain, CheckCircle, AlertCircle, Clock, File, RefreshCw } from 'lucide-react';
 import { useKnowledgeBase, CATEGORIES, CATEGORY_LABELS } from '@/hooks/integrations/useKnowledgeBase';
+import type { KBFile } from '@/hooks/integrations/useKnowledgeBase';
 
 const statusIcon = (status: string) => {
   if (status === 'completed') return <CheckCircle className="w-3.5 h-3.5 text-success" />;
   if (status === 'processing') return <Clock className="w-3.5 h-3.5 text-warning animate-spin" />;
   return <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />;
 };
+
+/** Motivo legível da falha de processamento — texto fixo, sem expor o conteúdo do arquivo. */
+const MOTIVO_FALHA = 'Falha no processamento: não foi possível extrair o texto deste arquivo. Reprocesse ou exclua o arquivo.';
 
 export function KnowledgeBaseView() {
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
@@ -30,6 +38,10 @@ export function KnowledgeBaseView() {
   const reprocessingRef = useRef<Set<string>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
+  // Excluir é destrutivo e sem volta: o clique na linha só abre o diálogo; a
+  // exclusão só sai na confirmação. Guardamos o botão de origem para devolver o foco.
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
+  const deleteOriginRef = useRef<HTMLButtonElement | null>(null);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showEditor, setShowEditor] = useState(false);
@@ -50,6 +62,12 @@ export function KnowledgeBaseView() {
     if (!formTitle.trim() || !formContent.trim()) return;
     const ok = await saveArticle({ title: formTitle, content: formContent, category: formCategory, tags: formTags.split(',').map(t => t.trim()).filter(Boolean), is_published: formPublished }, editingId || undefined);
     if (ok) setShowEditor(false);
+  };
+
+  const openDeleteDialog = (file: KBFile, origin: HTMLButtonElement | null) => {
+    if (deletingRef.current.has(file.id)) return;
+    deleteOriginRef.current = origin;
+    setFileToDelete({ id: file.id, name: file.file_name });
   };
 
   const handleDeleteFile = async (id: string) => {
@@ -74,6 +92,10 @@ export function KnowledgeBaseView() {
       reprocessingRef.current.delete(id);
       setReprocessingIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
+  };
+
+  const confirmDeleteFile = () => {
+    if (fileToDelete) void handleDeleteFile(fileToDelete.id);
   };
 
   const filteredArticles = articles.filter(a => {
@@ -138,7 +160,13 @@ export function KnowledgeBaseView() {
             {files.map(file => (
               <Card key={file.id} className="bg-card/50 border-border/30"><CardContent className="p-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center"><FileText className="w-5 h-5 text-muted-foreground" /></div>
-                <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{file.file_name}</p><p className="text-xs text-muted-foreground">{file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} • {new Date(file.created_at).toLocaleDateString('pt-BR')}</p></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.file_name}</p>
+                  <p className="text-xs text-muted-foreground">{file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} • {new Date(file.created_at).toLocaleDateString('pt-BR')}</p>
+                  {file.processing_status === 'failed' && (
+                    <p role="status" className="text-xs text-destructive mt-0.5">{MOTIVO_FALHA}</p>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {statusIcon(file.processing_status)}
                   <Badge variant="outline" className="text-3xs">{file.processing_status}</Badge>
@@ -160,7 +188,7 @@ export function KnowledgeBaseView() {
                     aria-label={`Excluir arquivo: ${file.file_name}`}
                     aria-busy={deletingIds.has(file.id) ? 'true' : undefined}
                     disabled={deletingIds.has(file.id)}
-                    onClick={() => handleDeleteFile(file.id)}
+                    onClick={(e) => openDeleteDialog(file, e.currentTarget)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -186,6 +214,32 @@ export function KnowledgeBaseView() {
           <DialogFooter><Button variant="outline" onClick={() => setShowEditor(false)}>Cancelar</Button><Button onClick={save}>{editingId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Excluir arquivo é destrutivo: o clique na linha só abre este diálogo. */}
+      <AlertDialog open={fileToDelete !== null} onOpenChange={(next) => { if (!next) setFileToDelete(null); }}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            // Devolve o foco ao botão de origem (Radix desmonta o conteúdo e, sem
+            // isso, o foco cairia no `body`).
+            event.preventDefault();
+            const origem = deleteOriginRef.current;
+            if (origem && origem.isConnected) origem.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir arquivo da base?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O arquivo <strong>{fileToDelete?.name}</strong> sai da base de conhecimento e o objeto correspondente é removido do armazenamento. Não pode ser desfeito.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmDeleteFile}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
