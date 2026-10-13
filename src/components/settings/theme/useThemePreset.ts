@@ -77,8 +77,9 @@ export function useThemePreset() {
   useEffect(() => {
     if (!prefsProntas || temaTocadoRef.current || !temaDoServidor) return;
     if (JSON.stringify(temaDoServidor) === JSON.stringify(configRef.current)) return;
+    const persistiu = saveThemeConfig(temaDoServidor);
     commitConfig(temaDoServidor);
-    if (saveThemeConfig(temaDoServidor)) setSavedConfig(temaDoServidor);
+    setSavedConfig(prev => (!persistiu || JSON.stringify(prev) === JSON.stringify(temaDoServidor) ? prev : temaDoServidor));
   }, [prefsProntas, temaDoServidor, commitConfig]);
 
   const hasUnsavedChanges = useMemo(
