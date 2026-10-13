@@ -2,10 +2,9 @@ import { motion } from 'framer-motion';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Phone, Mail, Building, Briefcase, Tag, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Phone, Mail, Building, Briefcase, Layers, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -23,7 +22,7 @@ const FIELDS: { key: keyof Contact; label: string; icon: React.ReactNode }[] = [
   { key: 'email', label: 'Email', icon: <Mail className="w-3.5 h-3.5" /> },
   { key: 'company', label: 'Empresa', icon: <Building className="w-3.5 h-3.5" /> },
   { key: 'job_title', label: 'Cargo', icon: <Briefcase className="w-3.5 h-3.5" /> },
-  { key: 'contact_type', label: 'Tipo', icon: <Tag className="w-3.5 h-3.5" /> },
+  { key: 'contact_type', label: 'Tipo', icon: <Layers className="w-3.5 h-3.5" /> },
 ];
 
 export function ContactCompareDialog({ open, onOpenChange, contacts }: ContactCompareDialogProps) {
@@ -97,31 +96,6 @@ export function ContactCompareDialog({ open, onOpenChange, contacts }: ContactCo
                     </motion.tr>
                   );
                 })}
-
-                {/* Tags row */}
-                <motion.tr
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: FIELDS.length * 0.03 }}
-                  className="border-b"
-                >
-                  <td className="p-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <Tag className="w-3.5 h-3.5" />
-                      Tags
-                    </div>
-                  </td>
-                  {contacts.map(c => (
-                    <td key={c.id} className="p-3 text-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {(c.tags || []).length > 0
-                          ? c.tags!.map(t => <Badge key={t} variant="secondary" className="text-3xs h-4">{t}</Badge>)
-                          : <span className="text-xs text-muted-foreground/40 italic">—</span>
-                        }
-                      </div>
-                    </td>
-                  ))}
-                </motion.tr>
 
                 {/* Created at */}
                 <motion.tr

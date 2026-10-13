@@ -6,7 +6,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Tag, Filter, ArrowUpDown, X,
+  Filter, ArrowUpDown, X,
   GitCompareArrows, Merge, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,8 +40,6 @@ interface ContactToolbarProps {
   setFilterCompany: (val: string) => void;
   filterJobTitle: string;
   setFilterJobTitle: (val: string) => void;
-  filterTag: string;
-  setFilterTag: (val: string) => void;
   filterDateRange: string;
   setFilterDateRange: (val: string) => void;
   uniqueCompanies: string[];
@@ -51,7 +49,6 @@ interface ContactToolbarProps {
   groupByCompany: boolean;
   setGroupByCompany: (val: boolean) => void;
   selectedIds: string[];
-  onBulkTag: () => void;
   onCompare: () => void;
   onMerge: () => void;
   /**
@@ -73,10 +70,10 @@ export function ContactToolbar({
   searchInput, onSearchChange, sortBy, setSortBy, showLegacy, setShowLegacy,
   showFilters, setShowFilters, activeFiltersCount, clearFilters,
   activeTab, filterCompany, setFilterCompany, filterJobTitle, setFilterJobTitle,
-  filterTag, setFilterTag, filterDateRange, setFilterDateRange,
+  filterDateRange, setFilterDateRange,
   uniqueCompanies, uniqueJobTitles, uniqueTags,
   onApplyPreset, groupByCompany, setGroupByCompany,
-  selectedIds, onBulkTag, onCompare, onMerge, canMerge,
+  selectedIds, onCompare, onMerge, canMerge,
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
   crmIntegrationEnabled, onOpenCRM,
 }: ContactToolbarProps) {
@@ -138,16 +135,12 @@ export function ContactToolbar({
         </div>
 
         <FilterPresets
-          currentFilters={{ type: activeTab, company: filterCompany, jobTitle: filterJobTitle, tag: filterTag, dateRange: filterDateRange }}
+          currentFilters={{ type: activeTab, company: filterCompany, jobTitle: filterJobTitle, dateRange: filterDateRange }}
           onApplyPreset={onApplyPreset}
         />
 
         {selectedIds.length >= 1 && (
           <>
-            <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onBulkTag}>
-              <Tag className="w-[18px] h-[18px]" />
-              Tags ({selectedIds.length})
-            </Button>
             {selectedIds.length >= 2 && (
               <>
                 <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onCompare}>
@@ -193,9 +186,8 @@ export function ContactToolbar({
           <ContactAdvancedFilters
             filterCompany={filterCompany} setFilterCompany={setFilterCompany}
             filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
-            filterTag={filterTag} setFilterTag={setFilterTag}
             filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
-            uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
+            uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles}
             onClearFilters={clearFilters} activeFiltersCount={activeFiltersCount}
           />
         </div>

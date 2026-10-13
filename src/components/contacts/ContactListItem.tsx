@@ -42,8 +42,8 @@ export function ContactListItem({
         "group grid items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
         "grid-cols-[auto_auto_minmax(0,1fr)_auto]",                                          // < md: checkbox, avatar, nome, ações
         "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]",                                  // md: + data
-        "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",       // lg: + telefone, tags
-        "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]", // xl: + email
+        "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_auto_auto]",                          // lg: + telefone
+        "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",             // xl: + email
         "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
@@ -136,20 +136,6 @@ export function ContactListItem({
               {contact.email}
             </a>
           </>
-        )}
-      </div>
-
-      {/* Tags */}
-      <div className="hidden lg:flex items-center gap-1 min-w-0">
-        {contact.tags?.slice(0, 2).map(tag => (
-          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5">
-            {tag}
-          </Badge>
-        ))}
-        {(contact.tags?.length || 0) > 2 && (
-          <Badge variant="secondary" className="text-3xs h-4 px-1.5">
-            +{(contact.tags?.length || 0) - 2}
-          </Badge>
         )}
       </div>
 

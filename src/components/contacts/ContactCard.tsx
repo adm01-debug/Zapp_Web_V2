@@ -123,21 +123,6 @@ export function ContactCard({
             {contact.nickname && (
               <span className="text-xs text-muted-foreground truncate">({contact.nickname})</span>
             )}
-            {/* Tags — mesmo padrão do ContactListItem: até 2 + contador do resto */}
-            {contact.tags && contact.tags.length > 0 && (
-              <>
-                {contact.tags.slice(0, 2).map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">
-                    {tag}
-                  </Badge>
-                ))}
-                {contact.tags.length > 2 && (
-                  <Badge variant="secondary" className="text-3xs h-5 px-1.5">
-                    +{contact.tags.length - 2}
-                  </Badge>
-                )}
-              </>
-            )}
           </div>
           {company && (
             <p className="text-sm text-muted-foreground truncate mt-1">{company}</p>

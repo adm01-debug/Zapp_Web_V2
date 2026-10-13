@@ -12,7 +12,7 @@ import { mergeContactsAtomic } from '@/services/contact-merge.service';
 interface Contact {
   id: string; name: string; surname?: string | null; phone: string;
   email?: string | null; company?: string | null; job_title?: string | null;
-  contact_type?: string | null; tags?: string[] | null; created_at: string;
+  contact_type?: string | null; created_at: string;
 }
 
 interface ContactMergeDialogProps {
@@ -52,8 +52,6 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
         const val = src[f.key as keyof Contact];
         if (val) merged[f.key] = val;
       });
-      merged.tags = [...new Set(contacts.flatMap(c => c.tags || []))];
-
       await mergeContactsAtomic(primary.id, contacts.slice(1).map((contact) => contact.id), merged);
       toast.success(`Contatos mesclados em "${merged.name}"`);
       onMergeComplete(); onOpenChange(false);

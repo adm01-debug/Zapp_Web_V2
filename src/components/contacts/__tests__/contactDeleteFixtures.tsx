@@ -32,7 +32,6 @@ export function baseContact(overrides: Partial<Contact> = {}): Contact {
     avatar_url: null,
     company: null,
     job_title: null,
-    tags: null,
     contact_type: 'cliente',
     created_at: '2026-09-01T10:00:00.000Z',
     ...overrides,

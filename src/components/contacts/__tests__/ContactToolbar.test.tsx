@@ -42,7 +42,6 @@ describe('ContactToolbar (etapa 82)', () => {
 
   it('Comparar só aparece com 2 ou mais selecionados', () => {
     const { rerender } = render(<ContactToolbar {...toolbarProps({ selectedIds: ['a'] })} />);
-    expect(screen.getByRole('button', { name: /Tags \(1\)/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Comparar/ })).not.toBeInTheDocument();
 
     const props = toolbarProps({ selectedIds: ['a', 'b'] });

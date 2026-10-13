@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  BarChart3, Users, TrendingUp, Building, Tag,
+  BarChart3, Users, TrendingUp, Building,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -17,7 +17,6 @@ interface ContactAnalyticsDashboardProps {
     name: string;
     contact_type?: string | null;
     company?: string | null;
-    tags?: string[] | null;
     created_at: string;
   }>;
   className?: string;
@@ -49,15 +48,6 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
-    // Top tags
-    const tagMap = new Map<string, number>();
-    contacts.forEach(c => {
-      c.tags?.forEach(tag => tagMap.set(tag, (tagMap.get(tag) || 0) + 1));
-    });
-    const topTags = [...tagMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-
     // Daily growth (last 14 days)
     const dailyGrowth: { date: string; count: number }[] = [];
     for (let i = 13; i >= 0; i--) {
@@ -71,7 +61,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
     const semanaAtras = appDayStart(6);
     const newThisWeek = contacts.filter(c => new Date(c.created_at) >= semanaAtras).length;
 
-    return { typeDistribution, topCompanies, topTags, dailyGrowth, newThisWeek };
+    return { typeDistribution, topCompanies, dailyGrowth, newThisWeek };
   }, [contacts]);
 
   const maxDaily = Math.max(...analytics.dailyGrowth.map(d => d.count), 1);
@@ -84,7 +74,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
         <Badge variant="secondary" className="text-xs">{contacts.length} nesta página</Badge>
       </div>
       <p role="note" className="text-2xs text-muted-foreground mb-2">
-        Contagem e agregados (tipos, empresas, tags e novos) consideram somente os contatos da página atual.
+        Contagem e agregados (tipos, empresas e novos) consideram somente os contatos da página atual.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -157,7 +147,7 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
           </CardContent>
         </Card>
 
-        {/* Top Companies & Tags */}
+        {/* Top Companies */}
         <Card className="border-border/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -183,23 +173,6 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
                   </motion.div>
                 ))}
               </div>
-            )}
-
-            {analytics.topTags.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <Tag className="w-3 h-3" />
-                  Tags populares
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {analytics.topTags.map(([tag, count]) => (
-                    <Badge key={tag} variant="outline" className="text-3xs gap-1">
-                      {tag}
-                      <span className="text-muted-foreground">{count}</span>
-                    </Badge>
-                  ))}
-                </div>
-              </>
             )}
           </CardContent>
         </Card>
