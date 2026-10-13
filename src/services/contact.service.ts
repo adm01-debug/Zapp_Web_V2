@@ -12,13 +12,6 @@ type ContactNoteRow = Database['public']['Tables']['contact_notes']['Row'];
  */
 export const CONTACT_NOTES_PAGE_SIZE = 1000;
 
-function windowChangePercent(current: number | null, previous: number | null): number | null {
-  const curr = current ?? 0;
-  const prev = previous ?? 0;
-  if (prev === 0) return null;
-  return Math.round(((curr - prev) / prev) * 100);
-}
-
 export interface SearchContactsParams {
   search_term?: string;
   contact_type_filter?: string | null;
@@ -229,71 +222,59 @@ export class ContactService {
        .maybeSingle();
    }
 
+  /**
+   * Painel de Estatísticas do contato: UMA chamada à RPC `contact_response_stats`
+   * (migration 20261013230002), que já devolve, do banco, as contagens, a variação
+   * por janela, o tempo de resposta do agente e o CSAT.
+   *
+   * ANTES eram 4 consultas e o tempo de resposta saía de `messages` com
+   * `.order('created_at',{ascending:true}).limit(200)` — ou seja, das 200
+   * mensagens MAIS ANTIGAS do contato, enviesando a média e ignorando o resto
+   * do histórico. A RPC mede os pares contato→agente sobre TODO o histórico
+   * (window function).
+   *
+   * NOTA: o subtítulo da tira de estatísticas ainda diz "200 primeiras msgs"
+   * (ContactStatsStrip.tsx) — atualizar esse texto é de outro cartão; aqui o
+   * serviço deixou de impor o corte.
+   *
+   * Contrato do retorno é o mesmo de antes. A RPC devolve CONJUNTO VAZIO quando
+   * o contato não é visível para o usuário (RLS explícita dentro da função);
+   * esse caso responde zeros, como a versão anterior já respondia para um
+   * contato sem dados.
+   */
   static async fetchStats(contactId: string) {
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    const windowStart = new Date(Date.now() - 30 * DAY_MS).toISOString();
-    const prevWindowStart = new Date(Date.now() - 60 * DAY_MS).toISOString();
+    const { data, error } = await supabase.rpc('contact_response_stats', {
+      p_contact_id: contactId,
+    });
 
-    const headCount = async (
-      table: 'messages' | 'conversation_sla',
-      dateColumn: 'created_at' | 'first_message_at',
-      gte?: string,
-      lt?: string,
-    ) => {
-      let q = supabase.from(table).select('id', { count: 'exact', head: true }).eq('contact_id', contactId);
-      if (gte) q = q.gte(dateColumn, gte);
-      if (lt) q = q.lt(dateColumn, lt);
-      const { count, error } = await q;
-      if (error) throw error;
-      return count ?? 0;
-    };
+    if (error) throw error;
 
-    const [
-      messageCount,
-      recentMessageCount,
-      prevMessageCount,
-      conversationCount,
-      recentConversationCount,
-      prevConversationCount,
-    ] = await Promise.all([
-      headCount('messages', 'created_at'),
-      headCount('messages', 'created_at', windowStart),
-      headCount('messages', 'created_at', prevWindowStart, windowStart),
-      headCount('conversation_sla', 'first_message_at'),
-      headCount('conversation_sla', 'first_message_at', windowStart),
-      headCount('conversation_sla', 'first_message_at', prevWindowStart, windowStart),
-    ]);
+    const row = Array.isArray(data) ? data[0] : data;
 
-    const { data: csatData } = await supabase.from('csat_surveys').select('rating').eq('contact_id', contactId);
-    const csatAvg = csatData && csatData.length > 0 ? csatData.reduce((sum, s) => sum + s.rating, 0) / csatData.length : null;
-
-    const { data: agentMessages } = await supabase
-      .from('messages')
-      .select('created_at, sender')
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: true })
-      .limit(200);
-
-    let totalResponseTime = 0;
-    let responseCount = 0;
-    if (agentMessages) {
-      for (let i = 1; i < agentMessages.length; i++) {
-        if (agentMessages[i].sender === 'agent' && agentMessages[i - 1].sender === 'contact') {
-          const diff = new Date(agentMessages[i].created_at).getTime() - new Date(agentMessages[i - 1].created_at).getTime();
-          totalResponseTime += diff;
-          responseCount++;
-        }
-      }
+    if (!row) {
+      return {
+        totalMessages: 0,
+        avgResponseTimeMinutes: 0,
+        totalConversations: 0,
+        messagesChangePercent: null as number | null,
+        conversationsChangePercent: null as number | null,
+        csatAverage: null,
+        csatCount: 0,
+      };
     }
 
     return {
-      totalMessages: messageCount || 0,
-      avgResponseTimeMinutes: responseCount > 0 ? Math.round(totalResponseTime / (responseCount * 60000)) : 0,
-      totalConversations: conversationCount || 0,
-      messagesChangePercent: windowChangePercent(recentMessageCount, prevMessageCount),
-      conversationsChangePercent: windowChangePercent(recentConversationCount, prevConversationCount),
-      csatAverage: csatAvg,
-      csatCount: csatData?.length || 0,
+      totalMessages: row.total_messages ?? 0,
+      // A média já vem calculada e arredondada pela RPC (numeric). Sem amostra
+      // (nenhum par contato→agente) o SQL devolve NULL: cai em 0, como antes.
+      avgResponseTimeMinutes: row.avg_response_minutes ?? 0,
+      totalConversations: row.total_conversations ?? 0,
+      // A RPC mantém o mesmo contrato do windowChangePercent do cliente:
+      // NULL quando a janela anterior é 0, em vez de dividir por zero.
+      messagesChangePercent: row.messages_change_percent ?? null,
+      conversationsChangePercent: row.conversations_change_percent ?? null,
+      csatAverage: row.csat_average ?? null,
+      csatCount: row.csat_count ?? 0,
     };
   }
 }
