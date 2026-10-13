@@ -1,58 +1,50 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- `src/lib/emailThreadQuery.ts`: `emailThreadSearchOr(term, contactIds, threadIds)` ganha um
-  terceiro parâmetro opcional que acrescenta `id.in.(...)` ao `.or` — a lista de `thread_id` que
-  a RPC de busca casou. Como o parâmetro é opcional (default `[]`), o contrato antigo da função
-  continua idêntico e a cláusula é só somada. Somam-se também `EMAIL_THREAD_SEARCH_PAGE_SIZE`,
-  `EMAIL_THREAD_SEARCH_MAX_PAGES`, o tipo `EmailThreadSearchMatch` e o coletor de cursor
-  `collectEmailSearchThreadIds`, que percorre a RPC por `p_after` (cursor = `last_message_at` da
-  última linha) até a página vir incompleta ou o teto de páginas cair.
-- `src/hooks/integrations/useGmail.ts`: quando há termo, além do `.or` de colunas que já existia
-  (assunto/trecho/remetente + contatos), o hook chama a RPC `search_email_threads` (SECURITY
-  INVOKER, respeita a RLS) e junta os `thread_id` que ela achou — é o que faz o termo aparecer no
-  CORPO (`email_messages.body_text`) e no NOME DO ANEXO (`email_attachments.filename`), que a
-  consulta PostgREST da lista não alcançava. Os `id.in.(...)` entram no MESMO `.or`, então os
-  filtros estruturais (pasta, estado, período, anexos) continuam valendo para a busca, como o
-  cartão pede. Erro da RPC é propagado (`if (error) throw error`), vira `threadsError` da lista.
-- Sem termo: nada muda — a RPC e a consulta de contatos nem rodam; a consulta da lista é byte a
-  byte a de antes.
-
-Por que ADITIVO e não substituindo o `.or` antigo: assunto/remetente/trecho já eram encontrados e
-precisam continuar sendo mesmo se a RPC truncar no teto de páginas ou se o cursor empatar um
-`last_message_at`. Assim o diff é puramente soma de alcance (corpo/anexo) e não troca um canal por
-outro — evita a regressão clássica desta área.
-
-`p_after` é o cursor de `last_message_at`; a paginação por cursor fica toda dentro de
-`collectEmailSearchThreadIds`. O cancelamento de resposta antiga continua por conta da React Query:
-a chave é `['gmail-threads', activeAccount?.id, effectiveListQuery]` e `effectiveListQuery` inclui o
-termo, então a resposta de um termo velho é descartada e não mexe no `loading` do termo novo.
+- `src/components/email/EmailChatInbox.tsx`: a busca do cabeçalho ganha estado visível, ligado à MESMA
+  consulta da lista (o termo digitado entra em `listQuery` pela espera curta de 300 ms):
+  `busca-global-buscando` («Buscando por "termo"…», `role=status` e `aria-busy` no campo),
+  `busca-global-erro` (título de `emailLoadErrorCopy` + botão "Tentar novamente" que chama
+  `refetchThreads`, a consulta exata da lista) e `busca-global-vazia` («Nenhum resultado para "termo"»).
+  Antes a área do campo ficava muda: nada dizia se a consulta estava em curso, falhou ou não achou
+  nada. Os três estados são exclusivos entre si (o vazio só aparece sem erro e sem carregamento) e só
+  aparecem com termo digitado — campo vazio não inventa estado nem rótulo.
+- Teclado, no próprio campo (sem escuta global): `Escape` limpa o termo e devolve a consulta sem busca;
+  `Enter` antecipa a espera curta (envia o termo digitado agora); o botão "Limpar busca do Email"
+  (ícone X) limpa e devolve o foco ao campo. O placeholder é mantido — «Buscar e-mails, remetentes,
+  assuntos, anexos…» — porque agora é verdade: a RPC do cartão pai (`search_email_threads`) acha termo
+  no corpo e no nome do anexo.
+- `src/components/email/EmailChatInbox.tsx` (1 linha): o "Limpar" que a lista recebe passa a usar o
+  mesmo `clearGlobalSearch`, tirando o termo da consulta de uma vez em vez de só esvaziar o campo
+  digitado (o termo velho ficava até a espera curta vencer). Não removi nenhum comportamento do
+  componente: só somei estado, teclado e o botão de limpar.
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx`
-  (com `src/hooks/integrations/useGmail.ts` na versão da base) →
-  `Test Files 1 failed (1); Tests 3 failed | 7 passed (10)` — as 3 falhas são exatamente as que
-  dependem da RPC (`records.rpc` com 2 chamadas de cursor, casamento por `id.in.`, erro da RPC).
-- verde depois: `npx vitest run src/lib/__tests__/emailThreadQuery.test.ts src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx`
-  → `Test Files 2 passed (2); Tests 25 passed (25)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (122s)` (tipos OK, lint OK).
-- testes que proveem o comportamento novo (arquivos tocados): `useGmail.threadListQuery.test.tsx`
-  (RPC chamada com `p_account`/`p_q`; `id.in.(t9)` somado ao `.or`; sem casamento na RPC o `.or`
-  mantém `subject.ilike` e NÃO ganha `id.in.`; erro da RPC vira `threadsError`; cursor percorre 2
-  páginas com `p_after` correto) e `emailThreadQuery.test.ts` (o `or` soma `id.in.`; o coletor para
-  no fim e no teto de páginas). Testes existentes de busca/contatos ficaram intactos — não afrouxei
-  nenhum.
+- vermelho antes: `npx vitest run src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx`
+  com `src/components/email/EmailChatInbox.tsx` restaurado da base
+  (`git show HEAD~1:src/components/email/EmailChatInbox.tsx > src/components/email/EmailChatInbox.tsx`)
+  → `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` — as 6 falhas são exatamente as que
+  dependem dos estados novos, do Escape, do Enter e do Limpar imediato.
+- verde depois: `npx vitest run src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx
+  src/components/email/__tests__/EmailChatInbox.test.tsx
+  src/components/email/__tests__/EmailChatInbox.contato.test.tsx
+  src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx` →
+  `Test Files 4 passed (4); Tests 28 passed (28)`. Testes existentes intactos — não afrouxei nenhum.
+- o teste novo monta a tela REAL (`EmailChatInbox`), com `useGmail` mockado devolvendo o mesmo
+  `listQuery` que o hook recebe; cada asserção confere também a consulta que foi ao servidor, e o
+  teste do erro usa um erro de verdade (`new Error('offline')`) pela copy `emailLoadErrorCopy`.
 
 ## Dependência (handoff)
-Este cartão depende do `t_59d66c7a`. Os commits do pai não estavam no meu workspace; puxei-os por
-`git cherry-pick -x` (`dia/2026-10-13..8a7d5fd6c`, 5 commits — a migration
-`20261013230000_search_email_threads.sql`, os types e o teste de banco). O integrador precisa
-considerar essa base ao integrar.
+Este cartão depende do `t_493e3851`. Os commits do pai não estavam no meu workspace; puxei-os por
+`git cherry-pick -x` (`dia/2026-10-13..v2/busca-email-rpc-termo-261013041884c7`, 8 commits — migration
+`search_email_threads`, types, testes de banco/front e relatos). O integrador precisa considerar essa
+base ao integrar.
 
 ## O que NÃO fiz e por quê
-- A busca por corpo/anexo é limitada (2 páginas × 50 = 100 casamentos) de propósito: um termo de
-  uma letra não pode virar varredura ilimitada (mesmo espírito do OTH-005).
-- A RPC ordena por `last_message_at DESC` e só aceita esse cursor; se dois casamentos empatarem o
-  `last_message_at` na borda de página, o `<` estrito pode pular linhas. É limitação do contrato da
-  RPC definido pelo pai; por isso o `.or` de colunas ficou junto, cobrindo assunto/remetente/trecho.
-- Não mexi na RPC, na migration nem nos types (fora da minha área/handoff do pai).
+- Escopo selecionável (tudo / assunto / remetente / anexo): o cartão o marca como opcional e ele não é
+  implementável só nesta área — nem a RPC `search_email_threads` nem `emailThreadSearchOr` têm
+  parâmetro de escopo (`src/hooks/integrations/useGmail.ts`, `src/lib/emailThreadQuery.ts`, worker
+  (hooks)). Um seletor que não muda a consulta seria exatamente o rótulo desonesto que o cartão
+  combate; deixei fora e registrei em `kanban_comment`.
+- Captura (e2e visual): a fixture visual mora em `e2e/`, fora dos ARQUIVOS QUE PODE TOCAR do cartão.
+  A prova de tela aqui são os testes que montam a tela real e capturam os três estados.
