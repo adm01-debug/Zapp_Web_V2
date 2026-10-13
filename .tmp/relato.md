@@ -1,18 +1,50 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workersql
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `supabase/migrations/20261012235745_dashboard_daily_series.sql` (NOVO): cria a RPC
+  `public.dashboard_daily_series(p_days int default 7)` — série diária de atividade no fuso
+  `America/Sao_Paulo`, uma linha por dia do período, com: `messages_received`, `messages_sent`,
+  `new_contacts`, `conversations_opened`, `conversations_resolved`, `active_contacts` e
+  `median_response_time_seconds` (NULL sem amostra). Só ADITIVA: não cria tabela, coluna nem policy;
+  `SECURITY DEFINER` com `SET search_path = public, pg_temp`; `REVOKE ALL ... FROM PUBLIC, anon` e
+  `GRANT EXECUTE ... TO authenticated, service_role`. Trava de papel: `is_admin_or_supervisor(auth.uid())`
+  ou `auth.role() = 'service_role'`; qualquer outro leva `42501 dashboard_daily_series_requires_staff`.
+  `p_days` é limitado a 90 (piso 1) com `greatest(least(coalesce(p_days,7),90),1)`. Rollback no topo com
+  SQL executável: `drop function if exists public.dashboard_daily_series(integer);`.
+- `scripts/db-audit/dashboard-daily-series.test.sh` (NOVO): harness descartável (postgres:17-alpine próprio),
+  aplica a migration REAL e prova, com papéis reais `anon`/`authenticated`/`service_role` (nunca como postgres):
+  números batem com a contagem manual, admin e supervisor leem, agente comum é barrado (42501), `anon`/`PUBLIC`
+  sem EXECUTE, `service_role` lê, `p_days` limitado a 90 (com piso 1), dia sem movimento com contadores 0 e
+  mediana NULL, reaplicação idempotente e o Rollback remove a função (volta ao RED).
+- `.github/workflows/db-guard.yml`: registra o harness como passo (obrigatório — `check-test-inventory.mjs`
+  reprova `.test.sh` órfão; por isso este arquivo entrou no diff além da lista do cartão, ver abaixo).
+- `src/integrations/supabase/types.ts`: acrescenta o tipo da RPC na seção `Functions` (Args/Returns), em ordem
+  alfabética, para o consumidor TS compilar (o cartão cita este arquivo e o filho de front depende dele).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- banco local (papel real, banco descartável próprio): `bash scripts/db-audit/dashboard-daily-series.test.sh` →
+  `[OK] DASHBOARD-03: dashboard_daily_series devolve a serie diaria correta (fuso de Sao Paulo), exige admin/supervisor ou service_role, mantem anon/PUBLIC sem EXECUTE, limita p_days a 90 e o Rollback remove a funcao.`
+  (todas as linhas `[PASS]`, nenhuma falha).
+- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261012235745_dashboard_daily_series.sql` →
+  `BEGIN / CREATE FUNCTION / COMMENT / REVOKE / REVOKE / GRANT / GRANT / COMMIT` e
+  `APLICADA no banco LOCAL 'v2-26101220422aee' (produção não foi tocada).`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+
+## Definições das métricas (documentadas no cabeçalho da migration)
+- recebidas/enviadas: `messages` por `sender` ('contact'/'agent'), `is_deleted IS NOT TRUE`, no dia de SP.
+- contatos novos: `contacts.created_at` no dia, `deleted_at IS NULL`.
+- contatos ativos: contatos distintos com alguma mensagem (não deletada) no dia.
+- conversas abertas: contatos cuja PRIMEIRA mensagem (mais antiga, não deletada) caiu no dia — "conversa iniciada
+  no dia"; usa anti-join para o histórico anterior ao período (bounded ao período).
+- conversas resolvidas: `count(DISTINCT contact_id)` em `conversation_closures` no dia (mesma convenção do
+  `dashboard_kpi`, que conta contatos distintos por causa da reabertura no mesmo dia).
+- mediana de resposta: `percentile_cont(0.5)` de `first_response_at - first_message_at` em `conversation_sla`,
+  como o `dashboard_kpi` já faz; NULL quando o dia não tem amostra respondida.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não recriei a view `evolution_daily_metrics` (o cartão veda): a série é calculada na RPC.
+- Não mexi em fila/hook/tela: a trilha de banco vai separada; o consumo fica no filho de front (t_8f12e328).
+- Toquei `scripts/db-audit/**` e `.github/workflows/db-guard.yml`, fora da lista de arquivos do cartão, porque a
+  PROVA exigida ("banco local com o papel real, mostrando o que passa e o que é negado") só existe nesse harness
+  — as suítes `supabase/tests/*.sql` rodam como service_role e não provam negação — e todo `.test.sh` novo precisa
+  do passo no `db-guard.yml`. Nenhum outro arquivo foi tocado.
