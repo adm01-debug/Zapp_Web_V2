@@ -34,7 +34,7 @@ function contact(o: Overrides) {
     id: o.id,
     name: o.name,
     surname: o.surname ?? null,
-    phone: o.phone ?? null,
+    phone: o.phone ?? '',
     email: o.email ?? null,
     company: o.company ?? null,
     job_title: o.job_title ?? null,
