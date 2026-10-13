@@ -9,12 +9,12 @@ const h = vi.hoisted(() => {
   const order = vi.fn(() => ({ limit }));
   const eq = vi.fn(() => ({ order }));
   const select = vi.fn(() => ({ eq }));
-  const from = vi.fn(() => ({ select }));
+  const from = vi.fn((_table: string) => ({ select }));
   return { from, select, eq, order, limit, maybeSingle };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: (...args: unknown[]) => h.from(...args) },
+  supabase: { from: (table: string) => h.from(table) },
 }));
 
 import { useLatestAnalysis } from '@/hooks/chat/useLatestAnalysis';
