@@ -10,46 +10,28 @@
 --   ALTER TABLE public.instance_pauses DROP COLUMN IF EXISTS investigated_by;
 --   ALTER TABLE public.instance_pauses DROP COLUMN IF EXISTS investigated_at;
 --
--- IP2 — investigacao de incidentes de pausa de instancia (filho do IP1, cartao t_8215f5f9,
+-- IP2 — investigacao de incidentes de pausa de instancia (filho do IP1, t_8215f5f9,
 -- migration 20261011183812_instance_pauses.sql). Duas partes, ambas ADITIVAS:
---
---   1. Investigacao com ator. A pausa do IP1 dizia SE e POR QUE a instancia foi pausada,
---      mas nao dizia se alguem olhou o incidente. Acrescenta investigated_at /
---      investigated_by / investigation_notes e a RPC mark_pause_investigated(id, notes),
---      restrita a admin/supervisor. NAO ha re-escrita de auditoria: quem investigou primeiro
---      e quando ficam congelados (COALESCE); uma segunda chamada so acrescenta/atualiza as
---      notas. Alem das colunas, grava UMA linha em public.audit_logs (acao
---      'instance_pause_investigated') — e a auditoria consultavel do ato administrativo.
---      As notas NAO sao copiadas para o audit_logs (nao duplicar texto livre).
---
---   2. Serie de eventos de autenticacao da instancia. FONTE REAL no V2: o watchdog
---      `connection-health-check` ja grava UMA linha por conexao a cada verificacao em
---      public.connection_health_logs, com status 'no_credentials' quando a Evolution
---      devolve 401/403 (credencial da instancia recusada) e 'error'/'timeout'/'disconnected'
---      para as demais falhas. A RPC instance_auth_event_series('24h'|'7d') agrega essa
---      tabela em baldes (1 hora em 24h, 1 dia em 7d) por instancia, devolvendo SOMENTE
---      contagens — nada de error_message, IP, telefone ou identificacao de pessoa.
---      O V3 mostrava a mesma serie a partir de uma tabela propria de eventos de auth; o V2
---      nao precisa de tabela nova (nem de appender novo) porque o watchdog ja registra o
---      fato. Diferente do V3, que separava 'invalid_signature'/'auth_401'/'auth_403', aqui a
---      origem so distingue 401/403 das demais falhas: a coluna se chama auth_failures e nao
---      inventa um motivo que a fonte nao guarda.
---
--- ETAPA: IP2 (paridade com o outro sistema). Nada aqui toca DADOS existentes: as colunas
--- nascem NULL e as funcoes sao novas.
+--   1. Investigacao com ator: 3 colunas na tabela de pausas + RPC mark_pause_investigated,
+--      restrita a admin/supervisor, com notas <= 1000 caracteres sem HTML validadas ANTES
+--      de qualquer efeito, e UMA linha em public.audit_logs por chamada. A auditoria NAO e
+--      reescrita (COALESCE): o primeiro ator e a primeira data ficam congelados e o texto
+--      das notas nao e copiado para o audit_logs.
+--   2. Serie de eventos de autenticacao: FONTE REAL = public.connection_health_logs, onde o
+--      watchdog connection-health-check ja grava uma linha por conexao a cada verificacao
+--      ('no_credentials' quando a Evolution devolve 401/403; 'error'/'timeout'/'disconnected'
+--      nas demais falhas). instance_auth_event_series('24h'|'7d') agrega por instancia em
+--      baldes de 1 hora (24h) ou 1 dia (7d) e devolve SOMENTE contagens: nada de
+--      error_message, IP, telefone ou identificacao de pessoa. Sem tabela nova e sem
+--      appender novo (o watchdog ja registra o fato). A coluna se chama auth_failures
+--      porque a origem separa 401/403 do resto, mas nao um do outro.
+-- Nada aqui toca dado existente: as colunas nascem NULL e as funcoes sao novas.
 
 -- ============================================================ 1. colunas de investigacao
 ALTER TABLE public.instance_pauses
   ADD COLUMN IF NOT EXISTS investigated_at     timestamptz,
   ADD COLUMN IF NOT EXISTS investigated_by     uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS investigation_notes text;
-
-COMMENT ON COLUMN public.instance_pauses.investigated_at IS
-  'Quando o incidente foi investigado (congelado na primeira investigacao).';
-COMMENT ON COLUMN public.instance_pauses.investigated_by IS
-  'Perfil de quem investigou (congelado na primeira investigacao).';
-COMMENT ON COLUMN public.instance_pauses.investigation_notes IS
-  'Notas da investigacao: texto puro, ate 1000 caracteres, sem HTML.';
 
 -- a investigacao e um ato completo: ou tem autor e data, ou nao aconteceu
 ALTER TABLE public.instance_pauses

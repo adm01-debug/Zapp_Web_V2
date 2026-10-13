@@ -1,45 +1,18 @@
 -- Teste SQL da INVESTIGACAO dos incidentes de pausa de instancia (cartao t_be6539cc).
---
--- O que prova (sempre com dados SINTETICOS, no banco LOCAL da tarefa):
---   T1  mark_pause_investigated (admin) marca a pausa: investigated_at preenchido,
---       investigated_by = perfil de quem investigou, investigation_notes gravadas,
---       ja_investigada=false, e a linha de auditoria nasce em public.audit_logs
---       (action/entity/user_id) SEM copiar o texto livre das notas;
---   T2  autorizacao ANTES de qualquer efeito: agente nao-staff, anon e service_role
---       recebem 42501 e a pausa segue investigated_at NULL, sem auditoria;
---       service_role NAO substitui o ator humano (exige admin/supervisor);
---   T3  validacao de entrada: notas com mais de 1000 caracteres ou com HTML
---       levantam 22023 e nada e aplicado; notas em branco viram NULL e ainda
---       marcam; e o mesmo limite e o mesmo "sem HTML" valem como CHECK na tabela
---       (23514), junto com a consistencia ator+data na mesma linha;
---   T4  pausa inexistente -> P0002 'pausa_nao_encontrada' (sem efeito colateral);
---   T5  idempotencia sem reescrever auditoria: reinvestigar preserva o PRIMEIRO
---       investigated_at/investigated_by, atualiza as notas quando vierem novas e
---       devolve ja_investigada=true; cada chamada gera 1 linha de auditoria;
---   T5b supervisor investiga com o perfil DELE (nao do admin);
---   T6  instance_auth_event_series('24h'): baldes de 1 HORA alinhados, contagem
---       por instancia (falha de auth = 'no_credentials' da tabela real
---       connection_health_logs), janela de 24 h respeitada, ordenado;
---   T7  instance_auth_event_series('7d'): baldes de 1 DIA, a janela pega o evento
---       de 30 h atras (fora das 24 h) e deixa de fora o de 9 dias;
---       instance_auth_event_series() sem argumento = '24h';
---   T8  a serie so devolve AGREGADO sem dado pessoal: as chaves devolvidas sao
---       exatamente balde/instancia/contagens (nada de error_message, IP, agente,
---       telefone) e os papeis errados nao acessam (42501) nem pedem janela invalida (22023);
---   T9  RLS/ACL: a migration nao concede leitura/escrita direta nova a papel de
---       cliente (INSERT/UPDATE/DELETE diretos seguem 42501; SELECT pelo staff
---       segue liberado pela policy existente, que continua sendo UMA), anon sem
---       EXECUTE, authenticated com EXECUTE, as 3 colunas existem e sao anulaveis.
---
--- COMO RODAR (banco LOCAL da tarefa, nunca producao):
+-- Dados SINTETICOS, no banco LOCAL da tarefa. Grupos:
+--   T1 admin investiga: colunas + UMA linha em public.audit_logs, SEM copiar o texto das notas;
+--   T2 agente/anon/service_role -> 42501 SEM efeito (service_role nao substitui ator humano);
+--   T3 validacao: limite/HTML/nota em branco na funcao e os CHECKs na tabela (23514);
+--   T4 pausa inexistente -> P0002; T5 reinvestigar preserva o PRIMEIRO ator e ja_investigada=true;
+--   T5b supervisor investiga com o perfil dele; T6 serie '24h' em baldes de 1 hora;
+--   T7 serie '7d' em baldes de 1 dia (pega o evento de 30 h, deixa o de 9 dias; sem arg = '24h');
+--   T8 a serie devolve so agregado (chaves exatas) e janela invalida -> 22023; T9 RLS/ACL;
+--   T10 rollback executado e estado restaurado.
+-- RODAR (banco LOCAL, nunca producao):
 --   zapp-db-local psql . v2-26101315358410 -v ON_ERROR_STOP=1 < supabase/tests/instance_pause_investigation.sql
---
--- VERMELHO antes da migration: as colunas e as duas funcoes nao existem, entao a
--- suite quebra no primeiro uso de public.mark_pause_investigated (T1).
---
--- Enforcamento como PAPEL REAL: claims sinteticos em request.jwt.claims
--- (sub + role) + set_config('role', <papel>) — o caminho do PostgREST —, nunca
--- como postgres dentro das assercoes. Tudo desfeito no ROLLBACK final.
+-- Vermelho antes da migration: quebra em T1 (funcoes e colunas nao existem).
+-- PAPEL REAL: request.jwt.claims (sub + role) + set_config('role', <papel>) — o caminho do
+-- PostgREST —, nunca como postgres dentro das assercoes. Tudo desfeito no ROLLBACK final.
 BEGIN;
 
 DO $pause_investigation$
@@ -613,10 +586,8 @@ END
 $pause_investigation$;
 
 -- ===================================================================== T10 (rollback)
--- Executa o bloco "-- Rollback" da migration (copiado linha a linha do proprio
--- arquivo) contra o schema REAL, confere que tudo o que a migration criou some e
--- desfaz com ROLLBACK TO SAVEPOINT. As linhas DROP vivem neste arquivo (nunca
--- digitadas na linha de comando): a guarda bloqueia SQL DROP em modo sem humano.
+-- Executa o bloco "-- Rollback" da migration (copiado do proprio arquivo) contra o schema
+-- REAL, confere que tudo o que a migration criou some e desfaz com ROLLBACK TO SAVEPOINT.
 SAVEPOINT investigation_rollback;
 
 DROP FUNCTION IF EXISTS public.instance_auth_event_series(text);
@@ -656,7 +627,7 @@ BEGIN
                        AND column_name = 'investigated_at') THEN
     RAISE EXCEPTION 'T10 FALHOU: ROLLBACK TO SAVEPOINT nao restaurou a migration';
   END IF;
-  RAISE NOTICE 'instance_pause_investigation: suite OK (T1 admin investiga com auditoria, T2 negado sem efeito, T3 validacao, T4 pausa inexistente, T5 idempotente sem reescrever ator, T5b supervisor, T6 serie 24h por hora, T7 serie 7d por dia, T8 agregado sem dado pessoal, T9 RLS/ACL, T10 rollback executado e estado restaurado)';
+  RAISE NOTICE 'instance_pause_investigation: suite OK — T1..T10 (investigacao com ator, negado sem efeito, validacao, pausa inexistente, idempotencia, supervisor, serie 24h, serie 7d, so agregado, RLS/ACL, rollback)';
 END
 $confirma_restaurado$;
 
