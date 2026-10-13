@@ -35,3 +35,11 @@ Especialista: worker (sql) (area-sql-banco)
 
 ## Aviso do fechar "SEM DDL/migration" — não procede
 - O rodapé do cartão traz a cláusula "sem DDL/Edge/dependência nova SALVO SE o pedido original exigia", e o PEDIDO ORIGINAL exige explicitamente: item 1 "Campo de recorrência no tipo/tabela da campanha (migration nova...)"; item 3 estende supabase/functions/talkx-scheduler/index.ts (Edge). Logo a migration e a alteração da Edge SÃO o pedido, não violação. O aviso do juiz barato veio do rodapé de regras copiado no cartão; rodo o mesmo fechar sem mudar nada.
+
+## Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" — indispensáveis
+- scripts/db-audit/talkx-campaign-recurrence.test.sh: é a PROVA do CRITÉRIO 2 ("PROVADO por teste: um contato que já recebeu NUNCA aparece na ocorrência seguinte"), rodando em Postgres descartável com a migration REAL. É a prova exigida pelo próprio cartão; sem ela o critério não é provado. Vem da entrega anterior (não escrevi de novo).
+- .github/workflows/db-guard.yml: passo que registra o .test.sh acima no CI. Um .test.sh sem passo no workflow é reprovado pelo scripts/ci/check-test-inventory (teste órfão), então o passo é obrigatório para o db_guard seguir verde. Vem da entrega anterior.
+- supabase/deployment-manifest.json: gerado por scripts/edge-deploy/generate-manifest.mjs. A base já tinha o manifesto regenerado e o cherry-pick alterou supabase/functions/talkx-scheduler/index.ts, então o `--check` acusava manifesto velho. Regenerei (4 linhas: hash/estatística) para o check voltar a verde. Nada de função mudou além do já commitado.
+
+## Conferência "updated_at" (gatilho BEFORE UPDATE) — não procede
+- A migration é SÓ DDL: ALTER TABLE ADD COLUMN IF NOT EXISTS, CHECK, CREATE INDEX, CREATE FUNCTION, CREATE/DROP TRIGGER, REVOKE/GRANT. NÃO há UPDATE nem backfill em nenhuma linha de talkx_campaigns. Não existe, portanto, UPDATE em massa que possa regravar updated_at de várias linhas. Os UPDATEs existem apenas dentro da RPC schedule_next_talkx_recurrence, em runtime, sobre UMA linha por vez (recorrência encerrada/sucessora/total), onde atualizar updated_at é o comportamento desejado. A prova do teste SQL cobre o comportamento (dedup/reentrada/idempotência).
