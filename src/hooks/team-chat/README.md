@@ -33,6 +33,8 @@ Storage.
 | `useTeamMessages`                  | `useTeamMessages.ts`         | rpc     | `get_team_messages_page`               |
 | `useTeamMessages`                  | `useTeamMessages.ts`         | rpc     | `mark_team_conversation_read`          |
 | `useTeamMessages`                  | `useTeamMessages.ts`         | canal   | `team-messages-<conversationId>`       |
+| `useTeamReadState`                 | `useTeamReadState.ts`        | tabela  | `team_message_read_state`              |
+| `useTeamReadState`                 | `useTeamReadState.ts`        | canal   | `team-read-state-<conversationId>`     |
 | `useTeamMessageReactions`          | `useTeamMessageReactions.ts` | tabela  | `team_message_reactions`               |
 | `useTeamMessageReactions`          | `useTeamMessageReactions.ts` | rpc     | `toggle_team_reaction`                 |
 | `useTeamMessageReactions`          | `useTeamMessageReactions.ts` | canal   | `team-reactions-<conversationId>`      |
@@ -66,7 +68,10 @@ Eventos assinados nos canais de dados: `useTeamConversations` escuta `*` em
 `team_messages` e em `team_conversation_members` e `UPDATE` em
 `team_message_receipts` — o desenho é "qualquer coisa muda o inbox";
 `useTeamMessages` escuta `*` em `team_messages` com
-`filter: conversation_id=eq.<conversationId>`; `useTeamMessageReactions` escuta
+`filter: conversation_id=eq.<conversationId>`; `useTeamReadState` escuta `*` em
+`team_message_receipts` (sem filtro, como `useTeamConversations`) e revalida só a
+chave da conversa aberta — é o que faz o tick de "entregue/lido" mudar ao vivo;
+`useTeamMessageReactions` escuta
 `*` em `team_message_reactions` com o mesmo filtro. O badge de não lidas do
 módulo (`useTeamUnreadTotal`) não abre canal nem dispara consulta: lê o
 `unread_count` do inbox que já está em cache na chave de `useTeamConversations`.
@@ -81,6 +86,9 @@ a fábrica sem argumento devolve a raiz (não um `undefined` no lugar do id):
 - `queryKeys.inbox()` — raiz `['team-conversations']`, alcança o inbox de
   qualquer perfil; `queryKeys.inbox(profileId)` é a chave da query.
 - `queryKeys.messages(conversationId)`
+- `queryKeys.readState(conversationId, idsKey)` — estado de leitura das mensagens
+  próprias (view `team_message_read_state`); a raiz (sem `idsKey`) é o prefixo
+  que a revalidação do realtime usa.
 - `queryKeys.reactions(conversationId)`
 - `queryKeys.members(conversationId, memberIds)` — o último elemento é
   `memberIds.join(',')`, como na chave histórica.
