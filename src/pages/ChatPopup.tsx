@@ -140,9 +140,6 @@ export default function ChatPopup() {
         status: 'open',
         lastMessage: undefined,
         unreadCount: 0,
-        // Campo obrigatório do tipo compartilhado Conversation (fora do escopo
-        // deste cartão): vazio, nunca lido de contacts.tags.
-        tags: [],
         priority: popupPriority,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),

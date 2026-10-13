@@ -69,6 +69,9 @@ export interface ConversationContact {
   email?: string | null;
   avatar_url?: string | null;
   avatar?: string | null;
+  /** Marcador de VIP/bloqueio (contacts.tags) — o hook de ações rápidas lê daqui.
+   *  Transitório: os cartões de VIP e bloqueio migram para is_vip/blocked_at. */
+  tags?: string[] | null;
   company?: string | null;
   job_title?: string | null;
   assigned_to?: string | null;
