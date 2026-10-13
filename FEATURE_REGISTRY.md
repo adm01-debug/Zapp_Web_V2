@@ -19,6 +19,10 @@ A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula as trê
 a partir do código: componente, arquivo e classificação. View nova, componente trocado
 ou rota vazia derrubam o teste até este arquivo ser atualizado.
 
+O quadro `## Totais` e a contagem do cabeçalho são um **retrato manual** da ponta do dia e a guarda
+**não** os recalcula — eles mudam a cada entrega e dois cartões empilhados não podem brigar por um
+número global. A guarda prova a tabela (conjunto de views + componente/arquivo/estado de cada linha).
+
 ## Totais
 
 | Estado | Views |

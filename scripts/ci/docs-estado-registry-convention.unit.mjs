@@ -109,19 +109,6 @@ function grupoPublicadoEsperado(c) {
   return 'E';
 }
 
-function totaisPorColunaMarkdown(doc, titulo) {
-  const inicio = doc.indexOf(`## ${titulo}`);
-  assert.notEqual(inicio, -1, `${titulo} não encontrado`);
-  const resto = doc.slice(inicio);
-  const fimRel = resto.slice(1).search(/\n## /);
-  const bloco = fimRel >= 0 ? resto.slice(0, fimRel + 1) : resto;
-  const totais = new Map();
-  for (const m of bloco.matchAll(/^\| (\*\*)?([A-Za-z]+|[A-E]|total)\1? \| (\*\*)?(\d+)\3? \|$/gm)) {
-    totais.set(m[2], Number(m[4]));
-  }
-  return totais;
-}
-
 const LACUNA_ORFA = 'sem chamador no repositório';
 
 /** Lê um dos três documentos; sem ele o teste falha nomeando a lacuna 009-010 do plano. */
@@ -199,30 +186,16 @@ test('ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D
   }
 });
 
-test('ESTADO.md mantém totais e lista de órfãs sincronizados com a tabela publicada', () => {
+test('ESTADO.md mantém a lista de órfãs sincronizada com a tabela publicada', () => {
   const doc = lerDoc('ESTADO.md');
   assert.ok(doc.includes('existe em `supabase/functions/`'), 'ESTADO.md precisa limitar órfã ao que o repo comprova');
   assert.ok(!doc.includes('existe e é deployada'), 'ESTADO.md não pode afirmar deploy sem prova no repositório');
+  // A lista de órfãs é comparada como CONJUNTO (linhas grupo E), nunca por contagem global:
+  // assim duas entregas empilhadas não se invalidam só porque uma mexeu no resumo da outra.
   const tabela = tabelaDoEstado();
-  const contagem = new Map(['A', 'B', 'C', 'D', 'E'].map((g) => [g, tabela.filter((l) => l.grupo === g).length]));
-  const totais = totaisPorColunaMarkdown(doc, 'Totais');
-  for (const grupo of ['A', 'B', 'C', 'D', 'E']) {
-    assert.equal(totais.get(grupo), contagem.get(grupo), `total do grupo ${grupo} em ESTADO.md divergiu da tabela`);
-  }
-  assert.equal(totais.get('total'), tabela.length, 'total geral de ESTADO.md divergiu da tabela');
-
-  const cabecalhoOrfas = doc.match(/## Órfãs \((\d+)\)/);
-  assert.ok(cabecalhoOrfas, 'ESTADO.md não tem cabeçalho de órfãs com contagem');
-  assert.equal(Number(cabecalhoOrfas[1]), contagem.get('E'), 'contagem do cabeçalho de órfãs divergiu da tabela');
-
   const listaOrfas = [...doc.matchAll(/^- `([\w-]+)`$/gm)].map((m) => m[1]).sort();
   const orfasDaTabela = tabela.filter((l) => l.grupo === 'E').map((l) => l.edge).sort();
   assert.deepEqual(listaOrfas, orfasDaTabela, 'lista Órfãs de ESTADO.md divergiu das linhas grupo E');
-});
-
-test('total de edges do cabeçalho do ESTADO.md bate com a tabela', () => {
-  const total = Number((lerDoc('ESTADO.md').match(/Base: .*?\.\s*(\d+) edges/) || [])[1]);
-  assert.equal(total, edgesReais.length, 'o cabeçalho do ESTADO.md ficou para trás do número de edges');
 });
 
 // ------------------------------------------------------- views (FEATURE_REGISTRY.md)
@@ -299,26 +272,10 @@ function tabelaDoRegistro() {
 test('FEATURE_REGISTRY.md lista exatamente as views do ViewRouter', () => {
   const linhasRegistro = tabelaDoRegistro();
   assert.ok(viewsReais.length > 0, 'nenhuma view encontrada — o teste perdeu o alvo');
-  const totalCabecalho = Number((lerDoc('FEATURE_REGISTRY.md').match(/Base: .*?\.\s*(\d+) views/) || [])[1]);
-  assert.equal(totalCabecalho, viewsReais.length, 'o cabeçalho de FEATURE_REGISTRY.md ficou para trás do número de views');
   const noDoc = linhasRegistro.map((l) => l.view);
   assert.equal(new Set(noDoc).size, noDoc.length, 'FEATURE_REGISTRY.md repete uma view');
   const esperadas = viewsReais.map((v) => v.view).sort();
   assert.deepEqual(noDoc.slice().sort(), esperadas);
-});
-
-test('FEATURE_REGISTRY.md mantém totais sincronizados com a tabela publicada', () => {
-  const doc = lerDoc('FEATURE_REGISTRY.md');
-  const tabela = tabelaDoRegistro();
-  const totais = totaisPorColunaMarkdown(doc, 'Totais');
-  for (const classe of ['Full', 'Partial', 'Suggested']) {
-    assert.equal(
-      totais.get(classe),
-      tabela.filter((l) => l.classe === classe).length,
-      `total ${classe} de FEATURE_REGISTRY.md divergiu da tabela`,
-    );
-  }
-  assert.equal(totais.get('total'), tabela.length, 'total geral de FEATURE_REGISTRY.md divergiu da tabela');
 });
 
 test('FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais', () => {
