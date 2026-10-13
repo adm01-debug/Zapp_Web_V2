@@ -174,13 +174,13 @@ export function ConnectionCard({
                   )}
                   {connection.instance_id && !historyNotSupported && (
                     <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
-                      {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <History className="w-4 h-4 mr-2" />}
+                      {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <History className="w-4 h-4 mr-2" />}
                       Sincronizar Histórico
                     </DropdownMenuItem>
                   )}
                   {isSupervisor && onHealthCheck && (
                     <DropdownMenuItem disabled={checkingHealth === connection.id} onClick={() => onHealthCheck(connection)}>
-                      {checkingHealth === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <HeartPulse className="w-4 h-4 mr-2" />}
+                      {checkingHealth === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <HeartPulse className="w-4 h-4 mr-2" />}
                       Checar agora
                     </DropdownMenuItem>
                   )}

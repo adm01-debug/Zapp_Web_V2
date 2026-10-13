@@ -2,7 +2,7 @@ Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
 - `src/components/connections/ConnectionsView.tsx`: `handleSyncHistory` passou a tratar a recusa do provedor — quando a ação `evolution-sync` responde `notSupported` (ou `success === false`) mostra o toast "Histórico não suportado" com a `message` e marca `historyNotSupported`; antes caía no toast de sucesso "Sincronização concluída! 0 mensagens". Novo `handleHealthCheck` usa a ação JÁ existente `connection-health-check` (staff) e mantém `checkingHealth` por id. Os dois estados são repassados ao cartão.
-- `src/components/connections/ConnectionCard.tsx`: mostra "Último check há X" (`formatDistanceToNow` com locale ptBR) quando `last_health_check` existe; novo item "Checar agora" no menu (só `isSupervisor`, desabilitado com spinner enquanto `checkingHealth === id`) que chama `onHealthCheck`; "Sincronizar Histórico" some quando `historyNotSupported`.
+- `src/components/connections/ConnectionCard.tsx`: mostra "Último check há X" (`formatDistanceToNow` com locale ptBR) quando `last_health_check` existe; novo item "Checar agora" no menu (só `isSupervisor`, desabilitado com spinner enquanto `checkingHealth === id`) que chama `onHealthCheck`; "Sincronizar Histórico" some quando `historyNotSupported`. Os dois spinners (`Loader2`) usam `motion-safe:animate-spin`.
 - `src/components/monitoring/MonitoringHealthLogs.tsx`: `statusCfg` ganhou `timeout` (Tempo esgotado) e `no_credentials` (Sem credencial), com rótulo pt-BR no badge no lugar do status cru; o filtro "Erro" e o contador `✗` passam a agrupar os dois; as cores do mapa e do tempo de resposta migraram para tokens do sistema (`success`/`warning`/`destructive`), sem `emerald-*`/`amber-*`.
 
 ## Prova
