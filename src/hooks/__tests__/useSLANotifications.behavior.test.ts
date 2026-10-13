@@ -15,9 +15,24 @@ import {
 
 import { useSLANotifications } from '@/hooks/sla/useSLANotifications';
 
+const SLA_1 = '11111111-1111-4111-8111-111111111111';
+const SLA_2 = '33333333-3333-4333-8333-333333333333';
+const SLA_3 = '44444444-4444-4444-8444-444444444444';
+const CONTATO_ID = '22222222-2222-4222-8222-222222222222';
+
+/** Deixa as promessas do handler assentarem (o canal entrega `void`). */
+const assentar = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 function violacao(id: string, jaMarcado: boolean) {
   return {
-    new: { id, contact_id: 'c1', first_response_breached: true },
+    new: {
+      id,
+      contact_id: CONTATO_ID,
+      first_message_at: '2026-10-12T12:00:00.000Z',
+      first_response_at: null,
+      first_response_breached: true,
+      sla_configuration_id: null,
+    },
     old: { first_response_breached: jaMarcado },
   };
 }
@@ -33,7 +48,7 @@ describe('useSLANotifications — efeito do alerta', () => {
     renderHook(() => useSLANotifications());
 
     expect(callbacks.length).toBeGreaterThan(0);
-    await callbacks[0](violacao('s1', false));
+    await callbacks[0](violacao(SLA_1, false));
 
     await waitFor(() => {
       expect(playNotificationSound).toHaveBeenCalledWith('sla_breach', 'alert', 60);
@@ -44,7 +59,8 @@ describe('useSLANotifications — efeito do alerta', () => {
     settingsCfg.slaBreachSound = false;
     renderHook(() => useSLANotifications());
 
-    await callbacks[0](violacao('s2', false));
+    await callbacks[0](violacao(SLA_2, false));
+    await assentar();
 
     expect(playNotificationSound).not.toHaveBeenCalled();
   });
@@ -52,7 +68,8 @@ describe('useSLANotifications — efeito do alerta', () => {
   it('não toca quando o estouro já vinha marcado (não é novidade)', async () => {
     renderHook(() => useSLANotifications());
 
-    await callbacks[0](violacao('s3', true));
+    await callbacks[0](violacao(SLA_3, true));
+    await assentar();
 
     expect(playNotificationSound).not.toHaveBeenCalled();
   });

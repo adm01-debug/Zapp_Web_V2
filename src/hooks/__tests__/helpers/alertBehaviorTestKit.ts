@@ -11,11 +11,14 @@ export const playNotificationSound = vi.fn();
 export const showBrowserNotification = vi.fn();
 export const requestNotificationPermission = vi.fn();
 export const toast = vi.fn();
-export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn() };
+export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() };
 export const invoke = vi.fn();
 
 /** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
 export const dedupeResult = { valor: true };
+
+/** Chamadas do dedupe, com a chave e o TTL — é o que prova a janela de 24h. */
+export const dedupeCalls: Array<{ key: string; ttlMs?: number }> = [];
 
 /** Callbacks entregues pelos canais do Realtime, na ordem em que foram registrados. */
 export const callbacks: Array<(payload: unknown) => unknown> = [];
@@ -102,7 +105,12 @@ export function toastMock() {
 }
 
 export function dedupeMock() {
-  return { claimNotificationEvent: () => dedupeResult.valor };
+  return {
+    claimNotificationEvent: (key: string, ttlMs?: number) => {
+      dedupeCalls.push({ key, ttlMs });
+      return dedupeResult.valor;
+    },
+  };
 }
 
 export function sonnerMock() {
@@ -115,7 +123,9 @@ export function resetAlertKit() {
   invoke.mockClear();
   sonnerToast.error.mockClear();
   sonnerToast.info.mockClear();
+  sonnerToast.warning.mockClear();
   dedupeResult.valor = true;
+  dedupeCalls.length = 0;
   callbacks.length = 0;
   settingsCfg.soundEnabled = true;
   settingsCfg.newMessageSound = true;
