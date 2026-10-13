@@ -1,26 +1,28 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: workertestes
 
-## O que mudou e por quê
-- `src/hooks/voice/__tests__/retry.test.ts` (novo): 28 testes das funções REAIS de `src/hooks/voice/retry.ts` — o que PODE ser repetido (network/timeout/aborted/fetch/429/5xx) × o que nunca deve (permissão negada, 401, payload inválido, valor que não é Error), o teto de tentativas (maxRetries+1), o backoff exponencial medido em relógio falso (100ms e depois 200ms, não intervalo fixo) e as 6 mensagens amigáveis + o texto de fallback.
-- `src/hooks/realtime/__tests__/realtimeUtils.conversas.test.ts` (novo): 11 testes de `dedupeContacts` (colisão de id mantém a ÚLTIMA versão e a ordem da 1ª aparição), `chunkArray` (blocos de 200 sem perder item/ordem), `buildConversation` (ordem por created_at, não lidas só de `sender==='contact' && !is_read`, agregado por contato cobrindo a amostra global vazia — R2-INB-005 — sem sobrescrever quem está na amostra) e `buildConversations` (agrupa por contato, deduplica, ignora mensagem sem contact_id, ordena pela última mensagem).
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): 6 testes do hook REAL — N eventos rápidos viram 1 único commit, o último evento do mesmo id vence, contato fora da lista delega a `hydrateConversationForMessage` sem commit, evento sem contact_id é descartado, o normalizador real é aplicado (`poll` cru vira `unsupported`) e mensagem inexistente na conversa devolve o MESMO array (sem re-render).
-- `src/services/__tests__/realtime.service.mark-as-read.test.ts` (novo): 2 testes de `RealtimeService.markMessagesAsRead` — o UPDATE vai para `messages` com `{is_read:true}` e os TRÊS filtros (`contact_id`, `sender='contact'`, `is_read=false`), e o erro do banco é registrado no log e propagado (não vira sucesso silencioso).
+## O que mudou e por quê (3 arquivos NOVOS, nenhum código de produção)
+- `src/hooks/voice/__tests__/retry.test.ts`: 28 testes das funções REAIS de `src/hooks/voice/retry.ts` (o fixo do cartão "33 casos na V3"): o que PODE ser repetido (network/timeout/aborted/fetch/429/5xx) × o que nunca deve (permissão negada, 401, payload inválido, valor que não é Error), o teto (maxRetries+1 tentativas, propaga o ÚLTIMO erro), o backoff exponencial medido em relógio falso (100ms e depois 200ms — não intervalo fixo) e as mensagens amigáveis + o fallback.
+- `src/hooks/realtime/__tests__/realtimeUtils.conversas.test.ts`: 11 testes de `dedupeContacts` (colisão de id mantém a ÚLTIMA versão e a ordem da 1ª aparição), `chunkArray` (blocos sem perder item nem ordem), `buildConversation` (ordem por created_at; não lidas só de `sender==='contact' && !is_read`; agregado POR CONTATO cobrindo a amostra global vazia — R2-INB-005 — sem sobrescrever quem está na amostra) e `buildConversations` (agrupa por contato, deduplica, ignora mensagem sem contact_id, ordena pela última mensagem).
+- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx`: 6 testes do hook REAL (`useMessageUpdateBatcher` = o "batcher no realtime" do cartão): N eventos rápidos viram 1 único commit; o último evento do mesmo id vence; contato fora da lista delega a `hydrateConversationForMessage` sem commit; evento sem contact_id é descartado; o normalizador real é aplicado (`poll` cru vira `unsupported`); mensagem inexistente devolve o MESMO array (sem re-render). Aqui há a metade "hidratação" dos recibos/hidratação do cartão.
 
-Nenhum arquivo de produção foi alterado (ver o diff: só testes novos).
+`git diff --stat` dos arquivos de produção contra a base do dia: vazio — só os 3 arquivos de teste entraram.
 
 ## Prova
-- vermelho antes (mutação de produção, cada arquivo de teste falha pela razão certa):
-  `npx vitest run <4 arquivos>` com `isRetryableError` fora da condição do retry + `dedupeContacts` sem Map + `setTimeout` do batcher trocado por flush imediato + `.eq('is_read', false)` removido →
-  `Test Files 4 failed (4) | Tests 6 failed | 41 passed (47)`
+- vermelho antes (mutação de produção nos 3 alvos: `isRetryableError` fora da condição do retry; `dedupeContacts` sem Map; `setTimeout` do batcher trocado por flush imediato):
+  `npx vitest run src/hooks/voice/__tests__/retry.test.ts src/hooks/realtime/__tests__/realtimeUtils.conversas.test.ts src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` →
+  `Test Files 3 failed (3)` | `Tests 5 failed | 40 passed (45)`
 - vermelho antes da regra do agregado (R2-INB-005): `semAmostra` forçado a `false` em `realtimeUtils.buildConversation` →
-  `Test Files 1 failed (1) | Tests 2 failed | 9 passed (11)`
-- verde depois (3 rodadas seguidas, produção restaurada):
-  `npx vitest run src/hooks/voice/__tests__/retry.test.ts src/hooks/realtime/__tests__/realtimeUtils.conversas.test.ts src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx src/services/__tests__/realtime.service.mark-as-read.test.ts` →
-  rodada 1: `Test Files 4 passed (4) | Tests 47 passed (47)`; rodada 2: `4 passed | 47 passed`; rodada 3: `4 passed | 47 passed`
-- `git diff --stat` antes do commit: vazio nos arquivos de produção (git status só com os 4 arquivos `??` novos).
+  `Test Files 1 failed (1)` | `Tests 2 failed | 9 passed (11)`
+- verde depois (produção restaurada, 3 rodadas seguidas como o CRITÉRIO pede):
+  mesmo comando → `Test Files 3 passed (3)` | `Tests 45 passed (45)` nas rodadas 1, 2 e 3.
+
+## Sobre o aviso do juiz (ARQUIVOS QUE PODE TOCAR)
+O aviso não procede para os 3 arquivos que entrego: o cartão permite `src/hooks/**/__tests__/ (novos)` e os três caminhos são exatamente `src/hooks/voice/__tests__/retry.test.ts`, `src/hooks/realtime/__tests__/realtimeUtils.conversas.test.ts` e `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx`. O 4º arquivo citado no aviso (`src/services/__tests__/realtime.service.mark-as-read.test.ts`) EU REMOVI no commit `chore(inbox): retira teste de services fora dos arquivos permitidos do cartao` — ele caía fora da lista permitida; o item `markMessagesAsRead` vai como NÃO FEITO abaixo.
 
 ## O que NÃO fiz e por quê
-- RLS de `reactions`, templates globais e `storage` por fila (`scripts/db-tests/*.sql`): não é minha área — prova de banco é do worker (sql). Deixei `kanban_comment` no cartão.
-- E2E de voz (vídeo SIP, retomada de áudio): não escrevi E2E novo. A prova de E2E desta máquina depende de boot de Chromium sob carga alta e o cartão não fixa uma falha concreta de produto a reproduzir; teste E2E sem defeito alvo é o que o revisor recusa. Os itens de unidade dos mesmos módulos foram cobertos onde é determinístico.
-- `useAgentPresence` com `pagehide`/aba oculta: a produção NÃO tem esse listener (grep em `src/hooks/crm/useAgentPresence.ts`), então o teste só passaria fingindo o comportamento. O que existe (heartbeat/leave) já está coberto em `useAgentPresence.test.ts`. Registrar em `kanban_comment` como lacuna de produto (worker hooks), não de teste.
-- Itens já cobertos por testes existentes e por isso não reescritos: `normalizeMessage`/`classifyMessageType` (`messageTypeClassification.test.ts`) e `useBatchReactions` (`useBatchReactions.uma-consulta.test.tsx`).
+- `markMessagesAsRead` (`src/services/realtime.service.ts`): não entrego teste porque o único destino permitido é `src/hooks/**/__tests__/`, e um teste de `services` ali seria arquivo de outro módulo no lugar errado. A prova é de 2 casos simples (UPDATE com os 3 filtros + erro propagado) e cabe ao worker (hooks) num cartão que permita `src/services/**/__tests__/`.
+- RLS (`scripts/db-tests/*.sql`: reação, templates globais, storage por fila): prova de BANCO é do worker (sql) — não escrevo SQL/papel real. Registrado em `kanban_comment` no cartão.
+- `useAgentPresence` com pagehide/aba oculta: a produção NÃO tem esse listener (conferido em `src/hooks/crm/useAgentPresence.ts`), então um teste verde só passaria fingindo o comportamento; é lacuna de PRODUTO (worker hooks), registrada no `kanban_comment`.
+- E2E de voz (vídeo SIP, retomada de áudio): o cartão não fixa uma falha de produto reproduzível e E2E novo sem defeito alvo é o tipo de entrega que o revisor recusa; o que é determinístico desses módulos foi coberto pelos testes de unidade acima.
+- Itens do cartão já cobertos por testes existentes, por isso não reescritos: `normalizeMessage`/`classifyMessageType` (`src/hooks/realtime/__tests__/messageTypeClassification.test.ts`) e `useBatchReactions` (`src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx`).
+- Faixa do cartão pai (`9a5ed42b1`, migration/RLS de `message_reactions`): NÃO trouxe. Não é base de nenhum destes testes e seus arquivos (`supabase/**`) estão fora do permitido neste cartão; se o integrador precisar, a faixa está no commit citado.
