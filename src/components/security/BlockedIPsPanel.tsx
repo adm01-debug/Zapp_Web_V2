@@ -73,7 +73,7 @@ export function BlockedIPsPanel() {
                         {ip.request_count > 0 && <p className="text-xs text-muted-foreground">{ip.request_count} tentativas desde o bloqueio</p>}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setIpToRemove(ip)} className="text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="sm" aria-label={`Desbloquear IP ${ip.ip_address}`} onClick={() => setIpToRemove(ip)} className="text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button>
                   </motion.div>
                 ))}
               </AnimatePresence>

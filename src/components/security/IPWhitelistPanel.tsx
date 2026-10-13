@@ -203,6 +203,7 @@ export function IPWhitelistPanel() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Remover IP ${ip.ip_address} da whitelist`}
                       onClick={() => setIpToRemove(ip)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >

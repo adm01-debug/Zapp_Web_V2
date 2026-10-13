@@ -88,7 +88,7 @@ export function DeviceCard({ device, isCurrentDevice, isProcessing, onTrust, onR
           {!isCurrentDevice && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="sm" aria-label={`Remover dispositivo ${device.device_name || 'desconhecido'}`} className="text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
