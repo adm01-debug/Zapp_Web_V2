@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useGamificationMutations } from './mutations';
 import type { AgentStats, Achievement } from './types';
 
 // Re-export types and utilities for external consumers
@@ -61,8 +60,8 @@ export const useAgentGamification = () => {
     enabled: !!profileId,
   });
 
-  const mutations = useGamificationMutations(profileId, statsQuery.data);
-
+  // Só LEITURA: XP, conquistas e sequência são creditados pelos gatilhos do
+  // servidor. O cliente não chama RPC de escrita de gamificação.
   return {
     stats: statsQuery.data,
     achievements: achievementsQuery.data || [],
@@ -73,6 +72,5 @@ export const useAgentGamification = () => {
     isError: profileQuery.isError || statsQuery.isError || achievementsQuery.isError,
     error: profileQuery.error ?? statsQuery.error ?? achievementsQuery.error,
     profileId,
-    ...mutations,
   };
 };
