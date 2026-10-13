@@ -331,6 +331,16 @@ jobs:
           AI_USAGE_COST_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-usage-cost-window-open.test.sh
 
+      # N-102: a janela de envio das campanhas TalkX (send_weekdays + "nao perturbe") era
+      # avaliada no fuso da sessao (UTC) em vez do fuso da campanha, qualquer `authenticated`
+      # executava a RPC de campanha alheia, send_weekdays invalido vazava o cast cru
+      # jsonb->smallint[] (42846) e o upsert de dnd_hours sobrescrevia a linha de outro dono.
+      # A prova roda sob papeis reais (anon/authenticated/service_role) em Postgres descartavel.
+      - name: Simular janela de envio e ACL do TalkX sob papeis reais (N-102)
+        env:
+          TALKX_N102_WINDOW_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102-window.test.sh
+
       # DASH-ACCEPTANCE-001: as suítes supabase/tests/*.sql rodam como
       # service_role (BYPASSRLS) — nunca provam enforcement. Aqui as RPCs do
       # Dashboard rodam sob roles reais anon/authenticated (sem BYPASSRLS) com
