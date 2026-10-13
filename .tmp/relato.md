@@ -20,6 +20,12 @@ Especialista: Íris (area-front-componentes)
 ## Juiz barato (ANTES DE ENTREGAR)
 - "MOVIMENTO: animação sem 'motion-safe:'" apontou as quatro linhas do meu teste do vídeo que citavam `.animate-spin` num seletor. Não é classe aplicada na tela — era string de `querySelector`. Corrigi o teste para selecionar o spinner pela classe do lucide (`svg.lucide-loader-circle`), e re-rodei vermelho e verde. As animações do spinner (`animate-pulse`/`animate-spin`) são da base, não deste cartão.
 
+## Arquivos fora de "ARQUIVOS QUE PODE TOCAR" (por que foram indispensáveis)
+- src/hooks/communication/useVoiceAgent.ts: é o hook do agente de voz que chama o `playTtsAudio`. O critério 1 ("se `play()` for recusado ou o TTS falhar, mostre mensagem pt-BR e uma ação") só existe se ALGUÉM escutar o `onAutoplayBlocked`/o fim falho do playback e expor isso à tela. O cartão manda a tela avisar; sem esta alteração o aviso não teria origem. Ajuste mínimo: um estado (`ttsIssue`) + uma ação (`replayResponse`) + passar `onAutoplayBlocked` na chamada que já existia.
+- src/hooks/voice/types.ts: o tipo `VoiceTtsIssue` e os dois campos no retorno do hook — sem eles o TypeScript não deixa a tela ler `ttsIssue`/`replayResponse` (o hook é tipado por `UseVoiceAgentReturn`).
+- src/hooks/communication/__tests__/useVoiceAgent.ttsAviso.test.ts: é o teste que prova o critério 1 no nível do hook REAL com o `playTtsAudio` REAL (autoplay recusado, TTS+fallback falhando, replay limpando o aviso). Sem ele o aviso seria provado só por um mock da tela.
+- Nada mais fora das telas/componentes do cartão foi tocado: `playTtsAudio.ts` não mudou; nenhum outro hook foi aberto.
+
 ## O que NÃO fiz e por quê
 - Mexi em src/hooks/communication/useVoiceAgent.ts e src/hooks/voice/types.ts, que são da área de hooks (Hugo): sem eles a tela não teria de onde ler o motivo da falha de áudio. É o ajuste mínimo (um estado + uma ação), nomeado aqui para o revisor; o resto dos arquivos é das telas/componentes do cartão.
 - Não toquei em `playTtsAudio.ts`: o `onAutoplayBlocked`/`onError` dele já existiam; o que faltava era o consumidor escutá-los.
