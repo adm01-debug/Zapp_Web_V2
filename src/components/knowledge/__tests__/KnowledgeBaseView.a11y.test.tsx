@@ -18,6 +18,8 @@ vi.mock('@/hooks/integrations/useKnowledgeBase', () => {
       saveArticle: vi.fn().mockResolvedValue(true),
       deleteArticle: vi.fn().mockResolvedValue(true),
       uploadFile: vi.fn(),
+      deleteFile: vi.fn().mockResolvedValue(true),
+      reprocessFile: vi.fn().mockResolvedValue(true),
     }),
     CATEGORIES: ['general', 'product', 'support', 'sales', 'onboarding', 'technical', 'faq'],
     CATEGORY_LABELS: { general: 'Geral', product: 'Produto', support: 'Suporte', sales: 'Vendas', onboarding: 'Onboarding', technical: 'Técnico', faq: 'FAQ' },
