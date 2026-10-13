@@ -12089,6 +12089,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_voip_profile_credentials: {
+        Args: { p_profile_id: string; p_ramal: string; p_sip_password: string }
+        Returns: string
+      }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       snapshot_talkx_campaign_audience: {
         Args: { p_campaign_id: string; p_expected_revision: number }
