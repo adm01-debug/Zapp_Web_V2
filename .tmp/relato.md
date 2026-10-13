@@ -48,6 +48,16 @@ Especialista: worker (sql) (area-sql-banco)
 - `node scripts/ci/check-test-inventory.mjs`: o .test.sh novo não aparece entre os órfãos (a
   ALLOWLIST o cobre); os órfãos listados são pré-existentes de outros cartões.
 
+## Arquivos fora da lista do cartão (indispensável)
+O cartão pede "supabase/migrations/<ts>_...sql (novo) + supabase/tests/". A prova de RLS/ACL do
+projeto NÃO pode viver em supabase/tests/: os scripts/*.sql de lá rodam como service_role
+(BYPASSRLS) e não exercitam policy nenhuma — a própria skill da área manda provar com os papéis
+reais (authenticated/service_role) em Postgres descartável. Por isso a prova ficou em
+scripts/db-audit/contacts-deleted-inbox-ingest.test.sh. E todo .test.sh novo no disco é reprovado
+por scripts/ci/check-test-inventory.mjs como órfão até ser registrado: a ALLOWLIST desse script é
+o registro (a promoção ao passo do db-guard.yml é do dono do workflow — agente não edita workflow).
+Os dois arquivos foram indispensáveis para a prova existir e ser aceita pela verificação.
+
 ## O que NÃO fiz e por que
 - Não toquei src/**: o filtro explícito de deleted_at na consulta da Inbox é do cartão filho
   t_d0f7873a (perfil de telas/hooks). A migration entrega a defesa no banco (RLS), que é a minha área.
@@ -56,3 +66,15 @@ Especialista: worker (sql) (area-sql-banco)
 - Não alterei migrations existentes: correção é migration nova, como manda a regra da área.
 - O rodapé de regras do cartão traz a linha genérica "não edite este arquivo com DDL/migration" —
   é do template do plano; o próprio cartão pede migration nova em supabase/migrations/**.
+
+## Conferência do juiz (updated_at) — NÃO PROCEDE
+- O aviso fala de UPDATE em `messages`. Esta migration NÃO altera nenhum UPDATE em messages: o
+  único UPDATE novo é `UPDATE public.contacts SET deleted_at = NULL WHERE id = v_contact.id`
+  (uma linha, a do contato reativado). O gatilho `update_contacts_updated_at` (BEFORE UPDATE em
+  contacts) regrava updated_at SÓ nessa linha — efeito desejado (a conversa reativada sobe na
+  Inbox, que ordena por updated_at). Nada é tocado em massa.
+- O UPDATE em `messages` do ingest (`WHERE id = v_existing.id`) é pré-existente e não foi alterado.
+- Provado no teste: `R.7 estado anterior: o contato excluido nao teve updated_at reescrito` PASS
+  (antes), e depois `G.14 a reativacao reescreve updated_at SO da linha reativada` PASS com a
+  contraponta `G.15 contraponta: nenhum outro contato teve updated_at reescrito` PASS.
+

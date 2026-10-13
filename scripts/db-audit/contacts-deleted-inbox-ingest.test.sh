@@ -245,6 +245,12 @@ UPDATE public.contacts SET deleted_at = now() WHERE id IN (
 SQL
 psql_file "$tmp_dir/fixture.sql" >/dev/null
 
+# Marca o updated_at de um contato que sera reativado e de um controle (nao tocado) para
+# provar que a reativacao escreve SO na linha do contato reativado (nao em massa).
+psql_sql "CREATE TABLE public._probe_updated_at AS
+            SELECT id, updated_at FROM public.contacts
+            WHERE id IN ('cccccccc-0000-0000-0000-000000000001','cccccccc-0000-0000-0000-000000000006')" >/dev/null
+
 printf '\n============ RED — o defeito, ANTES da migration do cartao ============\n'
 expect_value 'R.0 a trilha real registrou a exclusao do contato' '1' \
   "SELECT count(*) FROM public.contact_deletion_audit WHERE contact_id='cccccccc-0000-0000-0000-000000000001' AND operation='delete'"
@@ -265,6 +271,8 @@ expect_value 'R.5 estado anterior: o inbound escolheu a VARIANTE EXCLUIDA mais a
   "SELECT count(*) FROM public.messages WHERE external_id='red-ext-2' AND contact_id='cccccccc-0000-0000-0000-000000000005'"
 expect_value 'R.6 estado anterior: o contato VIVO nao recebeu a mensagem' '0' \
   "SELECT count(*) FROM public.messages WHERE external_id='red-ext-2' AND contact_id='cccccccc-0000-0000-0000-000000000006'"
+expect_value 'R.7 estado anterior: o contato excluido nao teve updated_at reescrito' '1' \
+  "SELECT (c.updated_at = p.updated_at)::int FROM public.contacts c JOIN public._probe_updated_at p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000001'"
 
 printf '\n============ aplica a migration do cartao ============\n'
 psql_file "$migration" >/dev/null
@@ -307,6 +315,10 @@ expect_value 'G.12 o contato vivo foi religado a conexao que recebeu a mensagem'
 sql_as service_role '' "DELETE FROM public.contacts WHERE id='cccccccc-0000-0000-0000-000000000003'" >/dev/null
 expect_value 'G.13 o purge fisico continua funcionando e deixa rastro (purge)' '0|1' \
   "SELECT (SELECT count(*) FROM public.contacts WHERE id='cccccccc-0000-0000-0000-000000000003')::text || '|' || (SELECT count(*) FROM public.contact_deletion_audit WHERE contact_id='cccccccc-0000-0000-0000-000000000003' AND operation='purge')::text"
+expect_value 'G.14 a reativacao reescreve updated_at SO da linha reativada' '1' \
+  "SELECT (c.updated_at > p.updated_at)::int FROM public.contacts c JOIN public._probe_updated_at p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000001'"
+expect_value 'G.15 contraponta: nenhum outro contato teve updated_at reescrito' '1' \
+  "SELECT (c.updated_at = p.updated_at)::int FROM public.contacts c JOIN public._probe_updated_at p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000006'"
 
 printf '\n============ BLOCO C — o rollback do proprio arquivo ============\n'
 sed -n '1,5p' "$migration" | sed -n 's/^-- Rollback: //p' > "$tmp_dir/rollback.sql"
