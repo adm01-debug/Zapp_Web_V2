@@ -1,18 +1,27 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (ci) (area-verificacao-ci)
 
-## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+## Objetivo
+Verificação independente do vermelho do noturno em dia/2026-10-13 @ sha 96dd72dc5: confirmar por conta própria o teste vermelho, se a "correção" existe/passa e se o escopo foi respeitado. Meu workspace tem HEAD = 96dd72dc5 (o próprio sha vermelho).
 
-## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+## Prova executada agora (sem confiar no relato de terceiros)
+- Vermelho original (fonte: log do noturno que gerou o alerta): `~/.local/state/zapp-verify/bb4df1254046/testes.log` linhas 15267-15268:
+  `FAIL  src/components/talkx/__tests__/RuleValueInput.test.tsx > TalkXSegments · campo de valor por tipo (X106) > "em breve": Lead score e Risco de churn ficam desabilitados no catálogo`
+  `TestingLibraryElementError: Unable to find role="button" and name "Novo segmento"` (quebra em `RuleValueInput.test.tsx:207`).
+  `~/arquitetura-v2/integrador/noturno.json`: estado=vermelho, rc=1, sha=96dd72dc5.
+- Re-executado por conta própria (MESMO arquivo, MESMO nome de teste):
+  `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx`
+  → `Test Files  1 failed (1)` / `Tests  1 failed | 4 passed (5)` / `rc=1`. Reproduz a falha exata na linha 207.
+- Escopo auditado: `git diff --name-only 96dd72dc5..a88218baa` → `.tmp/relato.md` (único arquivo). Nada em `scripts/edge-deploy/**`, `supabase/functions/**` nem no manifesto.
+- Manifesto: `node scripts/edge-deploy/generate-manifest.mjs --check` → `Edge manifest OK: 81 functions, 161 source files, sha256=eb0db458...` rc=0. Não editado à mão; em paridade. O commit 96dd72dc5 reescreveu somente o derivado (1 file, 88/88).
+- Sem mascaramento: `grep -nE "\.(skip|only|todo)\(" src/components/talkx/__tests__/RuleValueInput.test.tsx` → nenhum resultado; o teste continua ativo e falhando.
+
+## Veredito: REJEITADO — a premissa não se sustenta
+A "correção da tarefa 2" (t_9071c21d) NÃO existe: o pai declarou `changed_files: [.tmp/relato.md]` e não tocou produção/teste. Não há correção a validar e o guarda continua VERMELHO — reproduzido por mim agora, MESMO teste (rc=1). Logo o critério de pronto "log do guarda PASSANDO (exit code 0)" é inatendível.
+
+Defeito remanescente (evidência): o it de `RuleValueInput.test.tsx:194` abre o construtor e não reseta a URL (`pushState ?view=talkx&tab=segments&mode=new`), contaminando o it da linha 205/207 que monta com o construtor aberto. A correção é front/Talk X (worker (mensageria)), FORA da área edge do cartão-raiz.
+
+Escopo: respeitado — nenhum arquivo de produção/teste tocado, manifesto não regenerado nem editado à mão. O diagnóstico do pai está correto, mas o cartão-raiz não pode encerrar como resolvido: o vermelho do noturno persiste em 96dd72dc5.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não alterei código corretivo (a tarefa manda apenas verificar e julgar).
+- Não corrigi o defeito de talkx (fora da área edge; o cartão-raiz manda não corrigir fora da área). Cabe ao worker (mensageria) o reset do `window.history`/URL no beforeEach do teste.
