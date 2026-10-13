@@ -1034,3 +1034,19 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # PE-09 (cartao t_59d66c7a): a busca de e-mail so alcancava email_threads
+      # (subject/snippet/last_from_*); o corpo (email_messages.body_text) e o nome
+      # do anexo (email_attachments.filename) ficavam de fora. O harness aplica a
+      # migration REAL no PostgreSQL 17 descartavel e roda como os papeis reais
+      # (anon/authenticated/service_role): acha o termo no corpo e no anexo, diz
+      # em que campo casou (match_field) e o trecho (match_snippet), nao vaza para
+      # outro dono nem para quem nao tem conta, nao devolve a caixa inteira em
+      # termo vazio/curinga literal, pagina por p_after e o plano usa o indice de
+      # trigrama. Inicia container proprio (docker run/exec) -> SKIP_DOCKER_SHIM=1,
+      # como os passos vizinhos que sobem container proprio.
+      - name: Provar a busca de e-mail por corpo e anexo (PE-09)
+        env:
+          SEARCH_EMAIL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search-email-threads.test.sh
