@@ -39,11 +39,17 @@ Especialista: worker (sql) (area-sql-banco)
 - Sem oraculo: a trilha nao revela valor algum, so o nome do campo.
 
 ## Sobre o alerta do juiz barato (types.ts sem teste no mesmo commit)
-- O teste que prova o defeito e `supabase/tests/contact_change_log.sql` (suite .sql, vermelho→verde
-  na secao Prova), commitado junto. `src/integrations/supabase/types.ts` NAO e codigo sob teste:
-  e o espelho de tipos que o cartao mandou atualizar para nao ficar defasado da tabela nova —
-  nao ha como testar um tipo em runtime; a prova de que a forma bate com o banco e a propria suite
-  (mesmas colunas.
+- Arquivos do diff (4): supabase/migrations/20261013051916_contact_change_log.sql,
+  supabase/tests/contact_change_log.sql (o unico de teste), src/integrations/supabase/types.ts e
+  este .tmp/relato.md. O teste que prova o defeito e a suite .sql (vermelho→verde na secao Prova),
+  commitada junto; `types.ts` NAO e codigo sob teste (e o espelho de tipos que o cartao mandou
+  atualizar para nao ficar defasado da tabela nova — nao ha como testar tipo em runtime; a prova de
+  que a forma bate com o banco e a propria suite, que confere as mesmas colunas).
+- Segundo alerta ("funcao SECURITY DEFINER sem SET search_path"): NAO PROCEDE. A funcao
+  `public.log_contact_change()` esta declarada com `security definer` seguido de
+  `set search_path = public, pg_temp` (linhas 128-129 da migration) e a suite prova na estrutura
+  (E.7 -> `search_path=public, pg_temp`). O aviso nao conseguiu ler o nome da funcao ("a funcao ?"),
+  e falso positivo do conferidor.
 
 ## O que NAO fiz e por que
 - Nao toquei no hook/painel (t_a364a46c, perfil de hooks): fora da minha area. Deixei o contrato
