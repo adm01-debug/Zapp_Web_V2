@@ -13,18 +13,19 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   invoke: vi.fn(),
   upload: vi.fn(),
-  getPublicUrl: vi.fn(),
+  createSignedUrl: vi.fn(),
   remove: vi.fn(),
   toast: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
+  SUPABASE_URL: 'https://projeto.supabase.co',
   supabase: {
     from: mocks.from,
     storage: {
       from: vi.fn(() => ({
         upload: mocks.upload,
-        getPublicUrl: mocks.getPublicUrl,
+        createSignedUrl: mocks.createSignedUrl,
         remove: mocks.remove,
       })),
     },
@@ -49,13 +50,35 @@ beforeEach(() => {
     }),
   }));
   mocks.upload.mockResolvedValue({ error: null });
-  mocks.getPublicUrl.mockReturnValue({
-    data: { publicUrl: 'https://projeto.supabase.co/storage/v1/object/public/whatsapp-media/kb/1_manual.md' },
+  mocks.createSignedUrl.mockResolvedValue({
+    data: { signedUrl: 'https://projeto.supabase.co/storage/v1/object/sign/whatsapp-media/kb/1_manual.md?token=abc' },
+    error: null,
   });
   mocks.remove.mockResolvedValue({ error: null });
 });
 
 describe('useKnowledgeBase.uploadFile — o documento precisa chegar à IA', () => {
+  it('grava a URL assinada do bucket privado e não um locator público que não abre', async () => {
+    mocks.invoke.mockResolvedValue({ data: { status: 'completed' }, error: null });
+    const inserir = vi.fn(() => ({
+      select: () => ({ single: () => Promise.resolve({ data: { id: 'arquivo-1' }, error: null }) }),
+    }));
+    mocks.from.mockImplementation(() => ({
+      select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }),
+      insert: inserir,
+    }));
+
+    const { result } = renderHook(() => useKnowledgeBase());
+    await act(async () => {
+      await result.current.uploadFile(arquivo());
+    });
+
+    expect(mocks.createSignedUrl).toHaveBeenCalledWith(expect.stringMatching(/^kb\/\d+_manual\.md$/), 86400);
+    expect(inserir).toHaveBeenCalledWith(
+      expect.objectContaining({ file_url: expect.stringContaining('/storage/v1/object/sign/whatsapp-media/kb/') })
+    );
+  });
+
   it('dispara o pipeline de ingestão com o id do arquivo recém-criado', async () => {
     mocks.invoke.mockResolvedValue({ data: { status: 'completed', articleId: 'artigo-1' }, error: null });
 
