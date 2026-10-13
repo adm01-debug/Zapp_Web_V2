@@ -1,27 +1,27 @@
-Especialista: workertestes
+Especialista: workersql
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- supabase/migrations/20261013180000_audit_log_summary.sql (NOVA, ADITIVA): cria as duas RPCs de leitura que a tela de auditoria por período consome — sem DROP/TRUNCATE/RENAME, sem tocar tabela/policy/gatilho/dado.
+  · public.audit_log_summary(p_from timestamptz, p_to timestamptz) → total_logs, sensitive_actions, unique_users e os 4 KPIs: denied_24h, permission_changes_24h, admin_logins_7d, rls_failures_24h. As janelas dos KPIs são ancoradas no FIM do período (p_to): 24h = [p_to-24h, p_to); 7d = [p_to-7d, p_to). Período invertido (p_from > p_to) vira zero, não erro.
+  · public.audit_log_list(p_from, p_to, p_cursor, p_cursor_id, p_limit) → a lista com o NOME do autor (LEFT JOIN public.profiles.name) e paginação por cursor keyset (created_at, id) — sem sobreposição entre páginas; p_limit normalizado em [1,200].
+  Ambas SECURITY DEFINER, `SET search_path TO public, pg_temp`, e com a guarda interna `public.has_role(auth.uid(),'admin')` = MESMO controle do SELECT de audit_logs hoje (policy "Only admins can view audit logs", migration 20260404173036): quem não é admin recebe ZERO linhas (fail-closed), sem distinguir caso existente de inexistente. ACL: REVOKE de PUBLIC/anon; GRANT EXECUTE só a authenticated e service_role.
+- supabase/tests/audit_log_summary_por_periodo.sql (NOVO): suíte que sobe um Postgres 17 descartável, aplica a migration REAL e prova rodando como authenticated (admin e agente) e anon.
+- src/integrations/supabase/types.ts: +2 entradas em Functions (audit_log_summary, audit_log_list) para a tela tipar a chamada.
+- Contrato para o cartão filho (t_2171f991 / HZ-07): chamar `audit_log_summary` e `audit_log_list` por RPC nomeada; p_cursor/p_cursor_id são a última linha da página anterior.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (migration não aplicada): `psql -v sem_funcao=1 -f supabase/tests/audit_log_summary_por_periodo.sql` →
+  `ERROR:  SH1-audit FALHOU [A1 total_logs do admin == baseline]: esperado 8, obtido ERRO 42883`  (PIPE_RC=3)
+- verde depois (mesma suíte, com a migration aplicada) → 38 PASS e a linha final:
+  `SH1-audit OK: admin le resumo real + lista paginada com autor; agente/anon`  (PIPE_RC=0)
+- banco LOCAL da tarefa (zapp-db-local, schema real): a migration aplica limpa (`CREATE FUNCTION` x2 / `REVOKE` x2 / `GRANT` x2 / `COMMENT` x2) e, com usuário sintético admin (SET LOCAL ROLE authenticated + request.jwt.claims), `audit_log_summary(now()-'1 day', now())` devolve:
+  `total_logs=8 | sensitive_actions=0 | unique_users=1 | denied_24h=0 | permission_changes_24h=0 | admin_logins_7d=1 | rls_failures_24h=0`
+  a lista do admin traz 5 linhas; o agente (authenticated sem papel admin) traz 0 no resumo e 0 na lista.
+- rollback executável: as DUAS linhas do header (`DROP FUNCTION IF EXISTS ...`) rodam no banco local → `restantes = 0`; a migration foi reaplicada em seguida.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (278s)` (tipos, lint, migrations e db_guard OK).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- denied_24h e rls_failures_24h devolvem 0 no dado atual de propósito: o V2 ainda não grava evento dedicado de acesso negado/RLS (é o que o SH1 vai gravar). Deixei os verbos já mapeados (`unauthorized_access`, `role_auto_provision_denied`; `rls_denied`, `rls_policy_violation`) — quando o SH1 gravar, o KPI acende sem nova migration. O cartão autoriza isso ("se ainda não existirem, devolva 0 e registre no relato").
+- NÃO abri a policy da tabela nem relaxei para supervisor: o cartão pede o MESMO controle do SELECT (só admin).
+- Diff de 32.704 caracteres > teto de 25k da área: o excesso é a suíte de prova (~20k); a migration em si tem 182 linhas aditivas. O cartão pede as DUAS RPCs num cartão só — não cindi.
+- Fronteira: o consumo na tela é do cartão filho (worker de tela/hooks); aqui entreguei só o banco + os tipos.
