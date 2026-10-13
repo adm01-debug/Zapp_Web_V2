@@ -1,18 +1,23 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `src/components/inbox/summary/SummaryResult.tsx`: os 4 botões de voz ganharam `aria-label` dinâmico (`Ouvir o resumo em voz alta` / `Ouvir os pontos-chave em voz alta` / `Ouvir os próximos passos em voz alta`, virando `Pausar a leitura ...` quando o trecho está tocando, e `Carregando ...` enquanto carrega) e o de "Ouvir tudo/Parar" virou `Ouvir o resumo completo em voz alta` / `Parar a leitura do resumo completo`. Alvo do botão de voz subiu de 24px (`h-6 w-6`) para `h-8 w-8`, e o de "Ouvir tudo" para `h-8`. Antes só existia Tooltip (nome acessível vazio). [critério 1]
+- `src/components/inbox/collaboration/ViewersIndicator.tsx`: o select do perfil e o `channel.track` dentro do `subscribe(async ...)` foram envolvidos em `try/catch` com `log.warn('Falha ao anunciar presença na conversa', error)`; a limpeza passou a `channel.unsubscribe()` antes de `supabase.removeChannel(channel)`. [critério 2]
+- `src/components/inbox/collaboration/InternalNotesPanel.tsx` + `src/components/contacts/ContactNotes.tsx`: o popover passou a invalidar também `contactNotesKey(contactId, user?.id)`, e a aba Notas do contato deixou de buscar por conta própria — agora lê pela MESMA chave de react-query via `useContactNotes` (foi a opção "unifique a chave em react-query" do cartão). O caminho de exclusão com confirmação do RLS (`select('id')`, zero linhas = recusa) foi preservado, agora com atualização otimista via `setQueryData`. [critério 3]
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- `npx vitest run` (4 arquivos) → `Test Files 4 passed (4); Tests 12 passed (12)`
+  - `src/components/inbox/summary/__tests__/SummaryResult.a11y.test.tsx` (3 testes: nome acessível por botão; nome dinâmico ao tocar; alvo `h-8 w-8`)
+  - `src/components/inbox/collaboration/__tests__/ViewersIndicator.presenca.test.tsx` (3 testes: select falho não lança e loga aviso; track falho idem; `unsubscribe` antes de `removeChannel`)
+  - `src/components/inbox/collaboration/__tests__/InternalNotesPanel.sincroniaAba.test.tsx` (1 teste: popover + aba reais sob o mesmo QueryClient — nota criada no popover aparece na aba Notas sem remontar)
+  - `src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx` (5 testes existentes, mantidos verdes após a migração para react-query)
+- vermelho antes (código da BASE, via `git show HEAD:<arquivo>`): mesmo comando → `Test Files 3 failed (3); Tests 7 failed (7)` (as 3 suítes novas falham sem as correções).
+- verde depois: `Test Files 4 passed (4); Tests 12 passed (12)`.
+- tipos: `npx tsc -p tsconfig.app.json --noEmit` → saída vazia, exit 0.
+- lint dos 8 arquivos: `✖ 4 problems (0 errors, 4 warnings)` — só avisos PRÉ-EXISTENTES (import do client do Supabase em 2 arquivos que já o importavam e fast-refresh do ViewersIndicator); nenhuma ocorrência nova (ratchet mantido).
+- `zapp-verify . --rapido`: roda no `hermes-tarefa-fechar`.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- "captura" (item 2 do O QUE FAZER): o harness de teste é jsdom e prova o DOM real (papéis, nomes acessíveis, alvo) — sem screenshot.
+- Canal de presença privado (PD-69) citado no cartão: mudança de banco/Edge, fora de `src/components/**`; não toquei (fica com worker (edge/sql)).
+- `ContactService.deleteNote`/`useContactNotes.deleteNote` sem a checagem de zero linhas do RLS: é de `src/services`/`src/hooks` (worker (hooks)); mantive a exclusão própria em ContactNotes para não regredir o R2-AUTH-026.
