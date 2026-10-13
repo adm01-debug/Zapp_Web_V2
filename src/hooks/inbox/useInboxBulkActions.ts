@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUndoableAction } from '@/hooks/system/useUndoableAction';
@@ -15,6 +15,36 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
   const [bulkLoading, setBulkLoading] = useState(false);
   const [fetchingAvatars, setFetchingAvatars] = useState(false);
   const { execute: executeUndoable } = useUndoableAction();
+
+  // Fronteira da seleção: os ids que o operador VÊ agora. O lote só pode agir
+  // sobre conversa visível, então `selectedIds` é podado por interseção sempre
+  // que esta lista muda (troca de chip/fila/tipo/busca).
+  const visibleIds = useMemo(
+    () => new Set(filteredConversations.map(c => c.contact.id)),
+    [filteredConversations],
+  );
+  // Lista observada na renderização anterior; `null` na primeira vez. Na
+  // montagem (ou no carregamento, com lista vazia) não há filtro a comparar, e a
+  // seleção já nasce vazia — então nada é podado.
+  const prevVisibleIdsRef = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    const previous = prevVisibleIdsRef.current;
+    prevVisibleIdsRef.current = visibleIds;
+    if (previous === null) return; // primeira lista: nada a comparar
+    setSelectedIds(prev => {
+      if (prev.size === 0) return prev;
+      let mudou = false;
+      const next = new Set<string>();
+      prev.forEach(id => {
+        if (visibleIds.has(id)) next.add(id);
+        else mudou = true;
+      });
+      // Mesmo Set quando nada saiu: evita re-render quando o pai troca a
+      // identidade do array a cada render.
+      return mudou ? next : prev;
+    });
+  }, [visibleIds]);
 
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => {
@@ -42,6 +72,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
   const selectAll = useCallback(() => {
     if (!selectionMode) setSelectionMode(true);
+    // Só o que está FILTRADO (visível): nunca contatos escondidos pelo filtro.
     const allIds = new Set(filteredConversations.map(c => c.contact.id));
     setSelectedIds(allIds);
     toast.success(`${allIds.size} conversa(s) selecionada(s)`);
