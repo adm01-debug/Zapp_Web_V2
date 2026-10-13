@@ -4,8 +4,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  collectEmailSearchThreadIds,
   EMAIL_THREAD_DEFAULT_FILTERS,
   EMAIL_THREAD_PAGE_SIZE,
+  EMAIL_THREAD_SEARCH_PAGE_SIZE,
   emailThreadPageCount,
   emailThreadPageRange,
   emailThreadPeriodStart,
@@ -84,6 +86,40 @@ describe('emailThreadQuery (OTH-005)', () => {
     // das pontas continuam curingas intencionais.
     const clause = emailThreadSearchOr('50%_x');
     expect(clause).toContain('subject.ilike."%50\\\\%\\\\_x%"');
+  });
+
+  it('o OR da busca soma os thread_id da RPC (corpo/anexo) ao lado das colunas da thread', () => {
+    const clause = emailThreadSearchOr('maria', [], ['t1', 't2']);
+    expect(clause).toContain('subject.ilike."%maria%"');
+    expect(clause).toContain('id.in.(t1,t2)');
+    // Sem ids da RPC o OR sai como sempre saiu — nada de cláusula `id.in` vazia.
+    expect(emailThreadSearchOr('maria')).not.toContain('id.in.');
+    expect(emailThreadSearchOr('maria', ['c1'])).toBe('subject.ilike."%maria%",snippet.ilike."%maria%",last_from_name.ilike."%maria%",last_from_address.ilike."%maria%",contact_id.in.(c1)');
+  });
+
+  it('percorre a RPC de busca por cursor até o fim do resultado', async () => {
+    const calls: Array<string | null> = [];
+    const firstPage = Array.from({ length: EMAIL_THREAD_SEARCH_PAGE_SIZE }, (_, index) => (
+      { thread_id: `a${index}`, last_message_at: '2026-10-01T10:00:00Z' }
+    ));
+    const pages = [firstPage, [{ thread_id: 'b1', last_message_at: '2026-09-30T10:00:00Z' }]];
+    const matches = await collectEmailSearchThreadIds(async (after) => {
+      calls.push(after);
+      return pages[calls.length - 1] ?? [];
+    });
+    // O `p_after` da 2ª chamada é o last_message_at da última linha da 1ª página.
+    expect(calls).toEqual([null, firstPage[firstPage.length - 1].last_message_at]);
+    expect(matches).toHaveLength(EMAIL_THREAD_SEARCH_PAGE_SIZE + 1);
+  });
+
+  it('respeita o teto de páginas de uma busca muito ampla', async () => {
+    const calls: Array<string | null> = [];
+    const full = () => Array.from({ length: EMAIL_THREAD_SEARCH_PAGE_SIZE }, (_, index) => (
+      { thread_id: `x${index}`, last_message_at: '2026-10-01T10:00:00Z' }
+    ));
+    const matches = await collectEmailSearchThreadIds(async (after) => { calls.push(after); return full(); }, EMAIL_THREAD_SEARCH_PAGE_SIZE, 2);
+    expect(calls).toHaveLength(2);
+    expect(matches).toHaveLength(EMAIL_THREAD_SEARCH_PAGE_SIZE * 2);
   });
 
   it('o join de mensagens só entra no select quando o filtro de anexo está ligado', () => {

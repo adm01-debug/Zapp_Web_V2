@@ -31,7 +31,7 @@ vi.mock('@/lib/gmailOAuth', () => ({ createGmailOAuthState: vi.fn(() => 'state')
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ RESERVED_HASHES: new Set(['main-content']) }));
 
 import { useGmail } from '../useGmail';
-import { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE } from '@/lib/emailThreadQuery';
+import { EMAIL_THREAD_DEFAULT_FILTERS, EMAIL_THREAD_PAGE_SIZE, EMAIL_THREAD_SEARCH_PAGE_SIZE } from '@/lib/emailThreadQuery';
 
 const MOCK_ACCOUNT = {
   id: 'acc1', email_address: 'user@example.com', is_active: true, sync_status: 'synced' as const,
@@ -48,7 +48,7 @@ function makeThread(id: string) {
   };
 }
 
-type Records = { list: string[]; count: string[]; other: string[] };
+type Records = { list: string[]; count: string[]; other: string[]; rpc: Array<{ fn: string; args: Record<string, unknown> }> };
 
 /**
  * Builder falso que registra cada chamada. A chamada de `select` decide o balde: as
@@ -98,10 +98,14 @@ interface SetupOptions {
   attachmentThreadIds?: string[];
   /** ids dos contatos que casam a busca (`contacts` com `or`+`limit`). */
   contactIds?: string[];
+  /** linhas que a RPC `search_email_threads` devolve (casam corpo/anexo/assunto/etc). */
+  searchMatches?: Array<{ thread_id: string; last_message_at: string }>;
+  /** erro devolvido pela RPC de busca, para exercitar o caminho de falha. */
+  rpcError?: Error;
 }
 
 function setup(threads: unknown[], options: SetupOptions = {}): Records {
-  const records: Records = { list: [], count: [], other: [] };
+  const records: Records = { list: [], count: [], other: [], rpc: [] };
   vi.mocked(callGmailFunction).mockResolvedValue({ accounts: [MOCK_ACCOUNT] });
   vi.mocked(supabase.from).mockImplementation((table: string) => {
     const rows = table === 'email_threads' ? threads
@@ -110,6 +114,16 @@ function setup(threads: unknown[], options: SetupOptions = {}): Records {
       : [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return makeRecordingChain(records, table, rows, threads.length) as any;
+  });
+  // A RPC de busca pagina por cursor (p_after) e corta em p_limit, como o servidor.
+  const rpcMock = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+  rpcMock.mockImplementation((fn: string, args?: Record<string, unknown>) => {
+    records.rpc.push({ fn, args: args ?? {} });
+    if (options.rpcError) return Promise.resolve({ data: null, error: options.rpcError });
+    const limit = (args?.p_limit as number | undefined) ?? Number.MAX_SAFE_INTEGER;
+    const after = args?.p_after as string | undefined;
+    const matches = (options.searchMatches ?? []).filter(match => !after || match.last_message_at < after);
+    return Promise.resolve({ data: matches.slice(0, limit), error: null });
   });
   return records;
 }
@@ -210,5 +224,55 @@ describe('useGmail — consulta da lista de threads (OTH-005)', () => {
     const orDaLista = records.list.find(entry => entry.startsWith('or(') && entry.includes('subject.ilike'));
     expect(orDaLista).toBeDefined();
     expect(orDaLista).not.toContain('contact_id');
+  });
+
+  it('a busca soma os thread_id da RPC (corpo/anexo) ao OR de colunas, sem perdê-lo', async () => {
+    const records = setup([makeThread('t1')], {
+      searchMatches: [{ thread_id: 't9', last_message_at: '2026-09-06T10:00:00Z' }],
+      contactIds: ['c1', 'c2'],
+    });
+    await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    // O termo foi ao servidor pela RPC — e a RPC respeita a conta do chamador.
+    expect(records.rpc).toHaveLength(1);
+    expect(records.rpc[0].fn).toBe('search_email_threads');
+    expect(records.rpc[0].args).toMatchObject({ p_account: 'acc1', p_q: 'maria' });
+
+    // O OR é aditivo: colunas da thread + contatos casados + ids da RPC (corpo/anexo).
+    const orDaLista = records.list.find(entry => entry.startsWith('or(')) ?? '';
+    expect(orDaLista).toContain('subject.ilike');
+    expect(orDaLista).toContain('contact_id.in.(c1,c2)');
+    expect(orDaLista).toContain('id.in.(t9)');
+  });
+
+  it('sem casamento na RPC, o OR preserva as colunas da thread (nada de regressão)', async () => {
+    const records = setup([makeThread('t1')], { searchMatches: [], contactIds: [] });
+    await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    const orDaLista = records.list.find(entry => entry.startsWith('or(')) ?? '';
+    expect(orDaLista).toContain('subject.ilike."%maria%"');
+    expect(orDaLista).not.toContain('id.in.(');
+  });
+
+  it('erro da RPC de busca vira erro da lista, sem página fantasma', async () => {
+    const records = setup([makeThread('t1')], { rpcError: new Error('falha na RPC') });
+    const { result } = await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    expect(result.current.threadsError).toBeTruthy();
+    expect(records.list.some(entry => entry.startsWith('range('))).toBe(false);
+  });
+
+  it('a RPC de busca é percorrida por cursor, não numa varredura só', async () => {
+    // Uma página cheia de casamentos força o cursor a buscar a 2ª página.
+    const matches = Array.from({ length: EMAIL_THREAD_SEARCH_PAGE_SIZE + 1 }, (_, index) => ({
+      thread_id: `s${index}`,
+      last_message_at: new Date(Date.UTC(2026, 9, 1, 12, 0, 0) - index * 1000).toISOString(),
+    }));
+    const records = setup([makeThread('t1')], { searchMatches: matches });
+    await renderList({ ...EMAIL_THREAD_DEFAULT_FILTERS, search: 'maria', page: 1 });
+
+    expect(records.rpc).toHaveLength(2);
+    expect(records.rpc[0].args.p_after).toBeUndefined();
+    expect(records.rpc[1].args.p_after).toBe(matches[EMAIL_THREAD_SEARCH_PAGE_SIZE - 1].last_message_at);
   });
 });
