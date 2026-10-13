@@ -42,10 +42,19 @@ INSERT INTO public.sla_rules (name, first_response_minutes, resolution_minutes, 
   ('varre-5-c8', 5, 60, 0, 'c0000000-0000-0000-0000-000000000008', true);
 
 -- (a) C1: linha ABERTA vencida, 1a mensagem no DIA ANTERIOR (23h58) e ainda sem resposta.
-INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
+-- updated_at ANTIGO de proposito: prova que o gatilho BEFORE UPDATE so regrava a linha que a
+-- varredura muda de verdade (nada de reescrever todas).
+INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached, created_at, updated_at)
   VALUES ('c0000000-0000-0000-0000-000000000001',
           date_trunc('day', now()) - interval '2 minutes',
-          NULL, false);
+          NULL, false, now() - interval '1 hour', now() - interval '1 hour');
+
+-- (c-bis) C4: linha ABERTA DENTRO DO PRAZO (30s), updated_at ANTIGO. A varredura NAO pode
+-- tocar nesta linha (nao esta vencida) -> updated_at fica como estava.
+INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached, created_at, updated_at)
+  VALUES ('c0000000-0000-0000-0000-000000000004',
+          now() - interval '30 seconds',
+          NULL, false, now() - interval '30 seconds', now() - interval '1 hour');
 
 -- (b) C2: ciclo novo vencido (cliente escreveu 2h atras, ninguem respondeu, sem linha aberta).
 INSERT INTO public.messages (contact_id, sender, content, status, created_at, status_updated_at) VALUES
@@ -91,7 +100,8 @@ BEGIN
     FROM public.conversation_sla
    WHERE first_response_at IS NULL
      AND first_response_breached = false
-     AND first_message_at >= date_trunc('day', now());
+     AND first_message_at >= date_trunc('day', now())
+     AND first_message_at < now() - interval '5 minutes';
   IF n <> 0 THEN
     RAISE EXCEPTION 'injuria nao reproduzida: o recorte por dia ja enxergaria % linha(s) vencida(s)', n;
   END IF;
@@ -174,6 +184,20 @@ BEGIN
      AND first_response_breached IS TRUE;
   IF n <> 1 THEN RAISE EXCEPTION 'C7 (resposta sending) deveria seguir pendente/estourado'; END IF;
   RAISE NOTICE 'OK C5/C6/C7: ciclo novo unico, atendido fora, resposta sending nao efetiva';
+END $$;
+
+-- (1-bis) Gatilho de updated_at: so a linha que a varredura MUDOU (C1, estourada) ganhou
+-- updated_at novo; a linha intocada (C4, dentro do prazo) manteve o updated_at antigo.
+DO $$
+DECLARE u1 timestamptz; u4 timestamptz; velho timestamptz := now() - interval '1 hour';
+BEGIN
+  SELECT updated_at INTO u1 FROM public.conversation_sla
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000001' AND first_response_at IS NULL;
+  SELECT updated_at INTO u4 FROM public.conversation_sla
+   WHERE contact_id = 'c0000000-0000-0000-0000-000000000004' AND first_response_at IS NULL;
+  IF u1 = velho THEN RAISE EXCEPTION 'C1 (mudada) ficou com updated_at antigo - gatilho nao rodou'; END IF;
+  IF u4 <> velho THEN RAISE EXCEPTION 'C4 (intocada) teve updated_at regravado: %', u4; END IF;
+  RAISE NOTICE 'OK updated_at: reescrito so na linha mudada (C1), a intocada (C4) preservada';
 END $$;
 
 -- (B) C8: a varredura abriu a linha no prazo; a resposta a tempo fecha a linha SEM estouro e SEM
