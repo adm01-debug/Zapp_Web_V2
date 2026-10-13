@@ -6,6 +6,7 @@ import type { Conversation } from '@/types/chat';
 const h = vi.hoisted(() => {
   const state = {
     error: null as { message: string } | null,
+    rpcError: null as { message: string } | null,
     rows: {} as Record<string, unknown>,
     invokeError: null as { message: string } | null,
   };
@@ -24,6 +25,14 @@ const h = vi.hoisted(() => {
     currentTable = table;
     return { update, select };
   });
+  // supabase.rpc — fronteira real de set_contact_vip / set_contact_blocked
+  const rpc = vi.fn(async (fn: string, args: Record<string, unknown>) => {
+    if (state.rpcError) return { data: null, error: state.rpcError };
+    const data = fn === 'set_contact_blocked'
+      ? (args.p_blocked ? '2026-01-01T00:00:00.000Z' : null)
+      : true;
+    return { data, error: null };
+  });
   const invoke = vi.fn(async (_fn: string, _opts?: unknown) =>
     state.invokeError
       ? { data: null, error: state.invokeError }
@@ -34,13 +43,14 @@ const h = vi.hoisted(() => {
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, select, from, invoke, toast };
+  return { state, eq, update, select, from, rpc, invoke, toast };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: h.from,
     functions: { invoke: h.invoke },
+    rpc: h.rpc,
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
   },
 }));
@@ -76,6 +86,7 @@ const conversation: Conversation = {
   unreadCount: 0,
   status: 'open',
   priority: 'low',
+  tags: [],
   createdAt: new Date('2026-10-01'),
   updatedAt: new Date('2026-10-05'),
 };
@@ -101,6 +112,11 @@ async function clickUndo() {
 const invokeCalls = () =>
   h.invoke.mock.calls.map((c) => (c[1] as { body: Record<string, unknown> }).body);
 
+/** O selo VIP do cabeçalho é o Badge com ícone Crown — o chip da seção Tags
+ *  também mostra o texto "VIP", então o selo se distingue pelo lucide-crown. */
+const seloVip = () =>
+  screen.queryAllByText('VIP').find((el) => el.parentElement?.querySelector('svg.lucide-crown'));
+
 describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   beforeAll(() => {
     // jsdom não implementa Element.scrollTo — ContactDetails rola o painel no mount.
@@ -110,6 +126,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h.state.error = null;
+    h.state.rpcError = null;
     h.state.invokeError = null;
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
@@ -117,25 +134,29 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     };
   });
 
-  it('"Marcar VIP" grava a tag VIP em contacts.tags; Desfazer remove de verdade', async () => {
+  it('"Marcar VIP" grava contacts.is_vip pela RPC set_contact_vip; Desfazer reverte', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] }));
-    expect(h.from).toHaveBeenCalledWith('contacts');
-    expect(h.eq).toHaveBeenCalledWith('id', 'c1');
+    await waitFor(() =>
+      expect(h.rpc).toHaveBeenCalledWith('set_contact_vip', { p_contact_id: 'c1', p_is_vip: true }),
+    );
+    // VIP não é mais etiqueta: nenhuma escrita direta em contacts.
+    expect(h.update).not.toHaveBeenCalled();
 
     await clickUndo();
-    await waitFor(() => expect(h.update).toHaveBeenLastCalledWith({ tags: [] }));
+    await waitFor(() =>
+      expect(h.rpc).toHaveBeenLastCalledWith('set_contact_vip', { p_contact_id: 'c1', p_is_vip: false }),
+    );
   });
 
-  it('o detalhe não mostra selo VIP (a função de tags foi removida)', () => {
+  it('o selo VIP persiste após recarregar o detalhe (tag "vip" em outra caixa vem do banco)', async () => {
     const recarregada: Conversation = {
       ...conversation,
       contact: { ...conversation.contact, tags: ['vip'] },
     };
     render(<ContactDetails conversation={recarregada} onClose={() => {}} />);
-    expect(screen.queryByText('VIP')).not.toBeInTheDocument();
+    expect(seloVip()).toBeTruthy();
   });
 
   it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
@@ -158,7 +179,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     );
   });
 
-  it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e grava a tag', async () => {
+  it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e marca blocked_at pela RPC', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Bloquear'));
@@ -172,11 +193,12 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
       ),
     );
     await waitFor(() =>
-      expect(h.update).toHaveBeenCalledWith({ tags: ['Bloqueado'] }),
+      expect(h.rpc).toHaveBeenCalledWith('set_contact_blocked', { p_contact_id: 'c1', p_blocked: true }),
     );
+    expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('"Bloquear" sem conexão resolvível não escreve tag nem chama a edge', async () => {
+  it('"Bloquear" sem conexão resolvível não escreve nem chama a edge', async () => {
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: null },
       whatsapp_connections: null,
@@ -186,11 +208,12 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     fireEvent.click(screen.getByText('Bloquear'));
     await waitFor(() => expect(h.toast.error).toHaveBeenCalled());
     expect(h.invoke).not.toHaveBeenCalled();
+    expect(h.rpc).not.toHaveBeenCalled();
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('erro do banco vira toast.error e nenhum Desfazer é oferecido', async () => {
-    h.state.error = { message: 'row-level security' };
+  it('erro da RPC vira toast.error e nenhum Desfazer é oferecido', async () => {
+    h.state.rpcError = { message: 'row-level security' };
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Marcar VIP'));
@@ -198,8 +221,8 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     expect(h.toast).not.toHaveBeenCalled();
   });
 
-  it('a seção "Tags" saiu do painel de detalhes', () => {
+  it('a seção "Tags" saiu do painel de detalhes (função removida do produto)', () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
-    expect(screen.queryByText('Tags')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-section-tags')).toBeNull();
   });
 });

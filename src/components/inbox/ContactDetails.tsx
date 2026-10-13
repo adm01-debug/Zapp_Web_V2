@@ -62,7 +62,8 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   const quickActions = useContactQuickActions(contact);
 
-  // Bloquear/VIP gravam via useContactQuickActions; Arquivar delega ao
+  // VIP/bloquear gravam via useContactQuickActions (RPCs `set_contact_vip` e
+  // `set_contact_blocked`; sem tags de contato); Arquivar delega ao
   // archiveContact (semântica única: zera assigned_to e o Desfazer restaura o
   // valor anterior real — decisão do dono em 06/10, cartão #241).
   const handleQuickAction = (action: string) => {
@@ -128,3 +129,5 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
     </motion.div>
   );
 }
+
+
