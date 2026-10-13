@@ -145,10 +145,13 @@ export function useContactChangeLog(contactId: string, options?: { enabled?: boo
       ];
       let nameById = new Map<string, string | null>();
       if (profileIds.length > 0) {
-        const { data: profiles } = await supabase
+        const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name')
           .in('id', profileIds);
+        // Falha ao resolver os nomes: sobe. Engolir o erro faria todo ator parecer "excluído"
+        // (nome nulo) em vez de a leitura falhar de verdade.
+        if (profilesError) throw new Error(profilesError.message);
         nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
       }
 
