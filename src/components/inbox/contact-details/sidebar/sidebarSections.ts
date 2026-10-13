@@ -4,10 +4,14 @@
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova
- * `contact-sidebar-accordion-state@v2`: só os valores que existem nas 3
- * seções novas sobrevivem; sobra vazia → default (as 3 abertas).
+ * `contact-sidebar-accordion-state@v2`: só os valores que existem nas seções
+ * conhecidas sobrevivem; sobra vazia → default (as 3 seções originais abertas).
+ *
+ * `sla-timeline` entra em `SIDEBAR_SECTIONS` para o estado salvo da seção
+ * "Linha do tempo de SLA" persistir como o das outras — ela nasce recolhida
+ * (`DEFAULT_OPEN_SECTIONS` não muda, para não alterar o painel de quem já usa).
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'sla-timeline'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu'];
