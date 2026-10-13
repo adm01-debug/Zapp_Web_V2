@@ -1,21 +1,24 @@
 /**
- * Config das 3 seções do novo sidebar "Detalhes do Contato" (plano
- * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44).
+ * Config das seções do sidebar "Detalhes do Contato" (plano
+ * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44; a seção
+ * `memoria` entrou depois, somente leitura).
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova
  * `contact-sidebar-accordion-state@v2`: só os valores que existem nas seções
- * atuais sobrevivem; sobra vazia → default (todas abertas).
+ * atuais sobrevivem; sobra vazia → default.
  *
- * `intelligence` (Inteligência comercial/CRM) entrou em 2026-10-12. Ela é
- * apenas mais um valor conhecido: a chave de storage NÃO muda, então a
- * preferência já salva do usuário é preservada intacta (nenhuma seção é
- * aberta ou fechada à força) — quem nunca gravou preferência recebe o default
- * com as 4 seções abertas, e quem abrir a nova seção tem a escolha persistida.
+ * `intelligence` (Inteligência comercial/CRM) entrou em 2026-10-12 e `memoria`
+ * (Memória da conversa) depois: cada uma é apenas mais um valor conhecido — a
+ * chave de storage NÃO muda, então a preferência já salva do usuário é
+ * preservada intacta (nenhuma seção é aberta ou fechada à força).
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'memoria'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
+// `memoria` fica FORA do default: entra colapsada (o cabeçalho é visível e o
+// atendente abre quando precisa), sem mudar a preferência já gravada de quem
+// usa o painel.
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence'];
 
 const STORAGE_KEY = 'contact-sidebar-accordion-state@v2';
