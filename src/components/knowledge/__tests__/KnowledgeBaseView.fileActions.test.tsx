@@ -68,6 +68,18 @@ function abrirArquivos() {
   fireEvent.click(tab);
 }
 
+function botaoExcluir(nome: string) {
+  return screen.getByRole('button', { name: `Excluir arquivo: ${nome}` });
+}
+
+/** Abre o diálogo pelo clique na linha e confirma a exclusão. */
+async function excluirPeloDialogo(nome: string) {
+  fireEvent.click(botaoExcluir(nome));
+  await screen.findByRole('alertdialog');
+  fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+}
+
 beforeEach(() => {
   deleteFile.mockReset().mockResolvedValue(true);
   reprocessFile.mockReset().mockResolvedValue(true);
@@ -98,6 +110,18 @@ describe('KnowledgeBaseView — ações de arquivo da Base de Conhecimento', () 
     }
   });
 
+  it('a linha com processing_status failed mostra o motivo legível em pt-BR', () => {
+    render(<KnowledgeBaseView />, { wrapper: Wrapper });
+    abrirArquivos();
+
+    const motivo = screen.getByRole('status');
+    expect(motivo).toHaveTextContent('Falha no processamento: não foi possível extrair o texto deste arquivo.');
+    // O motivo é da linha que falhou: o nome do arquivo fica no mesmo bloco.
+    expect(motivo.closest('div')).toHaveTextContent('planilha.xlsx');
+    // Só a linha com falha tem motivo — as outras duas não.
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+  });
+
   it('Reprocessar fica bloqueado enquanto o arquivo está em processamento', () => {
     render(<KnowledgeBaseView />, { wrapper: Wrapper });
     abrirArquivos();
@@ -120,42 +144,127 @@ describe('KnowledgeBaseView — ações de arquivo da Base de Conhecimento', () 
     expect(reprocessFile).toHaveBeenCalledWith('file-failed');
   });
 
-  it('Excluir dispara a ação com o id da linha e não duplica o clique', async () => {
+  it('Reprocessar marca aria-busy enquanto corre e reabilita a linha quando a ação falha', async () => {
+    let resolver: (v: boolean) => void = () => {};
+    reprocessFile.mockReturnValue(new Promise<boolean>((resolve) => { resolver = resolve; }));
+
+    render(<KnowledgeBaseView />, { wrapper: Wrapper });
+    abrirArquivos();
+
+    const botao = screen.getByRole('button', { name: 'Reprocessar arquivo: planilha.xlsx' });
+    fireEvent.click(botao);
+
+    await waitFor(() => expect(reprocessFile).toHaveBeenCalledWith('file-failed'));
+    expect(botao).toHaveAttribute('aria-busy', 'true');
+    expect(botao).toBeDisabled();
+
+    resolver(false);
+    await waitFor(() => expect(botao).not.toHaveAttribute('aria-busy', 'true'));
+    expect(botao).toBeEnabled();
+  });
+
+  it('Excluir abre o diálogo de confirmação e só chama a ação depois de confirmar', async () => {
+    render(<KnowledgeBaseView />, { wrapper: Wrapper });
+    abrirArquivos();
+
+    fireEvent.click(botaoExcluir('manual.pdf'));
+
+    const dialogo = await screen.findByRole('alertdialog');
+    expect(dialogo).toHaveTextContent('manual.pdf');
+    expect(dialogo).toHaveTextContent('Cancelar');
+    expect(dialogo).toHaveTextContent('Excluir');
+    // Sem confirmação, nada é excluído.
+    expect(deleteFile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    await waitFor(() => expect(deleteFile).toHaveBeenCalledTimes(1));
+    expect(deleteFile).toHaveBeenCalledWith('file-completed');
+  });
+
+  it('Excluir confirma uma única vez, marca aria-busy e reabilita a linha quando devolve false', async () => {
     let resolver: (v: boolean) => void = () => {};
     deleteFile.mockReturnValue(new Promise<boolean>((resolve) => { resolver = resolve; }));
 
     render(<KnowledgeBaseView />, { wrapper: Wrapper });
     abrirArquivos();
 
-    const botao = screen.getByRole('button', { name: 'Excluir arquivo: manual.pdf' });
-    fireEvent.click(botao);
-    fireEvent.click(botao);
+    fireEvent.click(botaoExcluir('manual.pdf'));
+    await screen.findByRole('alertdialog');
+    const acao = screen.getByRole('button', { name: 'Excluir' });
+    fireEvent.click(acao);
+    fireEvent.click(acao);
 
     expect(deleteFile).toHaveBeenCalledTimes(1);
     expect(deleteFile).toHaveBeenCalledWith('file-completed');
-    // Enquanto a ação corre, o botão está marcado como ocupado e desabilitado.
+
+    const botao = botaoExcluir('manual.pdf');
     expect(botao).toHaveAttribute('aria-busy', 'true');
     expect(botao).toBeDisabled();
 
-    resolver(true);
+    resolver(false);
     await waitFor(() => expect(botao).not.toHaveAttribute('aria-busy', 'true'));
     expect(botao).toBeEnabled();
   });
 
   it('Excluir de um arquivo não bloqueia a ação em outra linha', async () => {
-    let resolver: (v: boolean) => void = () => {};
-    deleteFile.mockReturnValue(new Promise<boolean>((resolve) => { resolver = resolve; }));
-
     render(<KnowledgeBaseView />, { wrapper: Wrapper });
     abrirArquivos();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Excluir arquivo: manual.pdf' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Excluir arquivo: planilha.xlsx' }));
+    await excluirPeloDialogo('manual.pdf');
+    await excluirPeloDialogo('planilha.xlsx');
 
     expect(deleteFile).toHaveBeenCalledTimes(2);
     expect(deleteFile).toHaveBeenNthCalledWith(1, 'file-completed');
     expect(deleteFile).toHaveBeenNthCalledWith(2, 'file-failed');
-    resolver(true);
-    await waitFor(() => expect(deleteFile).toHaveBeenCalledTimes(2));
+  });
+
+  it('Cancelar fecha o diálogo sem excluir e devolve o foco ao botão de origem', async () => {
+    render(<KnowledgeBaseView />, { wrapper: Wrapper });
+    abrirArquivos();
+
+    const origem = botaoExcluir('manual.pdf');
+    origem.focus();
+    fireEvent.click(origem);
+    await screen.findByRole('alertdialog');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(botaoExcluir('manual.pdf')).toHaveFocus();
+  });
+
+  it('abre o diálogo pelo teclado (Enter e Espaço) e confirma com Enter', async () => {
+    render(<KnowledgeBaseView />, { wrapper: Wrapper });
+    abrirArquivos();
+
+    // O <button> nativo dispara o clique ao receber Enter/Espaço; o jsdom não
+    // emite esse clique sozinho, então simulamos os dois eventos que o navegador
+    // emite (keydown e, em seguida, o clique de ativação).
+    const origem = botaoExcluir('manual.pdf');
+    origem.focus();
+    fireEvent.keyDown(origem, { key: 'Enter' });
+    fireEvent.click(origem);
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+    expect(deleteFile).not.toHaveBeenCalled();
+
+    // Esc fecha sem excluir.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(deleteFile).not.toHaveBeenCalled();
+
+    // Espaço na linha também abre o diálogo.
+    const origemEspaco = botaoExcluir('planilha.xlsx');
+    origemEspaco.focus();
+    fireEvent.keyDown(origemEspaco, { key: ' ' });
+    fireEvent.click(origemEspaco);
+    await screen.findByRole('alertdialog');
+
+    // Enter no botão Excluir do diálogo confirma a ação.
+    const acao = screen.getByRole('button', { name: 'Excluir' });
+    acao.focus();
+    fireEvent.keyDown(acao, { key: 'Enter' });
+    fireEvent.click(acao);
+    await waitFor(() => expect(deleteFile).toHaveBeenCalledWith('file-failed'));
   });
 });
