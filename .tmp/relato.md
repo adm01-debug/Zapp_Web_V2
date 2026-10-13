@@ -36,6 +36,18 @@ Especialista: Íris (area-front-componentes)
   Sha do commit de correção: `3263909cd2`. O relato não escreve à mão o resultado do `zapp-verify`:
   ele sai no bloco FATOS MEDIDOS deste fechar.
 
+## Por que os pontos 2 e 3 não se corrigem por "commit novo"
+- Ponto 2 não procede como "alterar o arquivo de teste do cartão": o arquivo de teste do cartão é
+  `scripts/ci/docs-estado-registry-convention.unit.mjs`, uma guarda GENÉRICA — ela não carrega o fato,
+  recalcula as views do `ViewRouter.tsx` e compara com o `FEATURE_REGISTRY.md`. O artefato que ela AFIRMA
+  é o `FEATURE_REGISTRY.md`, e é exatamente esse dado que o diff corrige. Editar a guarda para tolerar a
+  view sobrando seria afrouxar asserção — proibido pelo cartão. O vermelho→verde do próprio arquivo de
+  teste do cartão está na seção Prova (`# fail 2` → `# fail 0`).
+- Ponto 3 não procede: a prova verde está na seção Prova — comando do cartão sem a linha acusada e
+  `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`. O sha do commit de código (`3263909cd2`) está no
+  corpo do commit e citado aqui. O evento/heartbeat antigo que registra `tipos` por OOM é ANTERIOR ao
+  verde final (a rodada final de `zapp-verify` passou: `OK tipos 101s`).
+
 ## O que NÃO fiz e por quê
 O espelho ainda mostra linhas que são PRÉ-EXISTENTES no meu base e não são deste cartão:
 - `guarda: scripts/ci/implicit-any-ratchet.mjs` + 6 subtests `--staged`/`stagedLintableFiles`;
