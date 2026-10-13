@@ -35,7 +35,7 @@ const T = '2026-10-06 12:00:00+00';
 
 // funcoes cujo contrato este teste prova (a ultima definicao de cada uma nas
 // migrations e a que vai para o banco); a ordem de aplicacao importa.
-const RESOLVER_FN = 'resolve_applicable_sla';
+const RESOLVER_FN = 'resolve_applicable_first_response_minutes';
 const REGISTER_FN = 'register_first_response_internal';
 const TRIGGER_FN = 'messages_sla_first_response_trigger';
 
@@ -161,18 +161,6 @@ before(() => {
 
   // Fixture minima: so o que as funcoes, o trigger e o indice unico parcial tocam.
   psql(`
-CREATE SCHEMA IF NOT EXISTS auth;
--- R2-SLA-004: auth.uid() nulo = sem JWT (postgres/service_role no teste);
--- resolve_applicable_sla so checa visibilidade quando ha usuario de sessao.
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;
--- Stub do predicado canonico de visibilidade (definido de verdade na cadeia de
--- migrations; aqui so para o corpo de resolve_applicable_sla poder ser planejado).
-CREATE FUNCTION public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)
-RETURNS boolean LANGUAGE plpgsql STABLE AS $$
-BEGIN
-  RETURN _user_id = auth.uid() AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = _contact_id);
-END;
-$$;
 CREATE TABLE public.contacts (
   id uuid PRIMARY KEY,
   company text,
@@ -211,8 +199,7 @@ CREATE TABLE public.sla_configurations (
   first_response_minutes integer NOT NULL DEFAULT 5,
   resolution_minutes integer NOT NULL DEFAULT 60,
   is_default boolean DEFAULT false,
-  is_active boolean DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
+  is_active boolean DEFAULT true
 );
 CREATE TABLE public.conversation_sla (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
