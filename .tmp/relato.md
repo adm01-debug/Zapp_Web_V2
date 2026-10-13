@@ -1,18 +1,24 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- src/components/contacts/useContactsViewState.ts: o modo de visualização deixou de ser `useState('grid')` e passou a ser lido/gravado no `localStorage` (chave `contacts:view-mode`, dentro de `try/catch`, só aceitando modos válidos) — reabrir a tela volta no modo escolhido. O contato do painel passou a ser DERIVADO da lista atual por id (`useMemo` sobre `filteredContacts`) em vez de uma cópia do clique: o painel não mostra mais nome/telefone antigos depois de editar pelo próprio painel e fecha quando o contato sai do filtro/tipo.
+- src/components/contacts/useContactsCRUD.ts: o UPDATE da edição passou a levar a precondição `.eq('updated_at', <versão que o formulário abriu>)`. Quando o UPDATE afeta 0 linhas E a versão atual da linha é diferente, lança `Outra pessoa alterou este contato. Recarregue os dados e tente novamente.` — 0 linhas com a MESMA versão continua sendo a falha de permissão (R2-AUTH-013), que não foi afrouxada.
+- src/components/contacts/ContactActivityTimeline.tsx: as 3 consultas (messages, contact_notes, conversation_events) agora usam o `error` que vinha sendo descartado. Consulta que falha vira estado de erro explícito (`data-testid="timeline-error"`) em vez de uma timeline anunciada como completa ou "0 eventos".
+- src/components/contacts/__tests__/useContactsViewState.test.tsx: +3 testes (persistência do modo, valor guardado inválido, `localStorage` indisponível) e +2 do painel derivado. __tests__/useContactsCRUD.test.tsx: mock de supabase passou a aceitar `.eq()` encadeado e a leitura do estado atual da linha; +3 testes (precondição no UPDATE, conflito, RLS segue permissão). __tests__/ContactActivityTimeline.test.tsx: novo, 6 casos (sucesso, erro por cada uma das 3 consultas, ordem decrescente).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes (fontes originais recolocadas com `git show HEAD:<arquivo> > <arquivo>`, `npx vitest run` nos 3 arquivos de teste):
+  `AssertionError: expected [ [ 'id', 'c1' ] ] to deep equally contain [ 'updated_at', …(1) ]`
+  `AssertionError: expected 'Nenhum contato foi atualizado. Verifi…' to be 'Outra pessoa alterou este contato. Re…'`
+  `AssertionError: expected null to be 'table'`
+  `AssertionError: expected { id: 'b' } to deeply equal { id: 'b', name: 'Nome Atualizado' }`
+  `AssertionError: expected { id: 'b' } to be null`
+  e os 3 casos de erro da timeline ficaram em timeout esperando `timeline-error`
+  → resumo: `Test Files 3 failed (3)` / `Tests 8 failed | 29 passed (37)`
+- verde depois (mesmos 3 arquivos, fontes minhas recolocadas): `Test Files 3 passed (3)` / `Tests 37 passed (37)`
+- suíte da área: `npx vitest run src/components/contacts` → `Test Files 37 passed (37)` / `Tests 277 passed (277)`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (188s)` (db_guard, tipos, lint, migrations OK; commit 83c4e9a58 passou o ratchet de lint sem dívida nova)
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não toquei em ContactDetailPanel.tsx nem ContactsView.tsx (não estão nos arquivos do cartão): a assinatura que o hook devolve ficou a mesma (`detailContact`/`setDetailContact`), então nenhum consumidor precisou mudar.
+- `banco_local` aparece como NÃO VERIFICADO no zapp-verify (sem nome de conjunto); este cartão não tem migration nem SQL.
