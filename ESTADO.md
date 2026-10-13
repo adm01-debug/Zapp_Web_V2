@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -40,9 +40,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | A | 54 |
 | B | 1 |
 | C | 3 |
-| D | 6 |
+| D | 7 |
 | E | 17 |
-| **total** | **81** |
+| **total** | **82** |
 
 ## Tabela
 
@@ -128,6 +128,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
+| `webhook-hmac-selftest` | D | `supabase/config.toml:90` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
 ## Órfãs (17) — GATE B
