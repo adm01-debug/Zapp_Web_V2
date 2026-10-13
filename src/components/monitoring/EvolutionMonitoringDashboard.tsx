@@ -18,6 +18,7 @@ import { MonitoringDiagnosticPanel } from './MonitoringDiagnosticPanel';
 import { MonitoringEventTimeline } from './MonitoringEventTimeline';
 import { MonitoringAvailabilityHeatmap } from './MonitoringAvailabilityHeatmap';
 import { MonitoringSLAPanel } from './MonitoringSLAPanel';
+import { MonitoringInboxSilence } from './MonitoringInboxSilence';
 import { DashboardSkeleton } from './MonitoringSkeletons';
 
 const PERIODS: { value: TimePeriod; label: string }[] = [
@@ -250,6 +251,9 @@ export function EvolutionMonitoringDashboard() {
           <TabsTrigger value="heatmap" className="gap-1.5">
             <CalendarDays className="w-4 h-4" />Heatmap
           </TabsTrigger>
+          <TabsTrigger value="inbox-silence" className="gap-1.5">
+            <BellOff className="w-4 h-4" />Entrada muda
+          </TabsTrigger>
           <TabsTrigger value="health-logs" className="gap-1.5">
             <Activity className="w-4 h-4" />Logs
             {errLogs > 0 && (
@@ -330,6 +334,19 @@ export function EvolutionMonitoringDashboard() {
               transition={{ duration: 0.2 }}
             >
               <MonitoringAvailabilityHeatmap healthLogs={availabilityLogs} truncated={healthLogsTruncated} />
+            </motion.div>
+          </TabsContent>
+
+          {/* Só monta com a aba aberta: a leitura do silêncio (RPC de 60 em 60 s)
+              não roda enquanto o admin está em outra aba. */}
+          <TabsContent value="inbox-silence" key="inbox-silence">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MonitoringInboxSilence />
             </motion.div>
           </TabsContent>
 
