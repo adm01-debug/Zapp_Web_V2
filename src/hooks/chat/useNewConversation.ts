@@ -36,7 +36,6 @@ export function useNewConversation(
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setConnectionsLoaded(false);
     supabase.from('whatsapp_connections').select('id, name').eq('status', 'connected')
       .then(({ data, error }) => {
         if (cancelled) return;
