@@ -1,12 +1,24 @@
-Especialista: worker (geral) — o roteador do quadro reencaminhou o cartão ao worker; assino como worker.
+Especialista: hugo
+(refazer executado pelo semisenior na área de hooks do hugo — cartão reencaminhado de senior para semisenior no piloto de 13/10; escopo de código inalterado.)
 
-## O que mudou
-- `src/components/admin/useAdminData.ts`: `fetchData` agora lê o `error` de cada consulta. Aba Usuários: `profiles` ou `user_roles` com erro → estado `error` + `toast.error`, sem lista vazia silenciosa. Aba Auditoria: `audit_logs` com erro → `error` + toast; se só os nomes dos autores falharem, os registros continuam e um toast avisa. A aba Auditoria ganhou filtro de data (`from`/`to` `YYYY-MM-DD` inclusivos → `gte ${from}T00:00:00.000Z` / `lte ${to}T23:59:59.999Z`) e paginação (`page`/`pageSize` 1-based → `range`, `count: 'exact'` → `auditTotal`), com `AuditLogFilter` e `AUDIT_PAGE_SIZE = 50` exportados e dependências primitivas no `useCallback`. `handleCreateUser` passou a exigir senha de 8 caracteres, igual à Edge `create-user` (`z.string().min(8)`), via `MIN_PASSWORD_LENGTH = 8` exportado e a mensagem `A senha deve ter pelo menos 8 caracteres`.
-- `src/components/admin/__tests__/useAdminDataColumns.test.ts`: só o mock da cadeia Supabase ganhou `range`, `gte` e `lte`; as asserções de colunas explícitas ficaram iguais.
-- `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` (novo): hook real + mock controlável cobrindo erro em `profiles`, `user_roles` e `audit_logs`, sucesso sem erro, intervalo e página da auditoria, o `range` padrão e a régua de senha (constante 8, 7 recusados antes da Edge, 8 chamando a Edge).
-- Escopo: os 3 arquivos acima. `PasswordStrengthMeter` é componente de `AdminView.tsx`, fora da lista de ARQUIVOS QUE PODE TOCAR deste cartão; a régua compartilhada ficou em `MIN_PASSWORD_LENGTH`, que a tela usa.
+Ponto 1 — filtro de data em UTC em vez do fuso local. Troquei em `src/components/admin/useAdminData.ts` o `gte` por `new Date(`${auditFrom}T00:00:00`).toISOString()` e o `lte` por `new Date(`${auditTo}T23:59:59.999`).toISOString()`, e ajustei o comentário de "em UTC" para fuso local. Teste: `aplica gte/lte com o dia inteiro no fuso local e range 1-based` em `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts`, que calcula o esperado com `new Date(...)` e confere a ida-e-volta no horário local (gte à 00:00 do dia pedido, lte às 23:59). Vermelho antes (TZ=America/Sao_Paulo, hook antigo): `Tests 1 failed | 8 passed (9)` — esperado `2026-10-01T03:00:00.000Z`, recebido `2026-10-01T00:00:00.000Z`. Verde depois: `Tests 9 passed (9)`.
 
-## Prova
-- vermelho antes: com `useAdminData.ts` na versão da base, `npx vitest run src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` → `Test Files 1 failed (1); Tests 8 failed | 1 passed (9)`.
-- verde depois: `npx vitest run src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts src/components/admin/__tests__/useAdminDataColumns.test.ts src/components/admin/__tests__/adminDownloadPermission.test.ts` → `Test Files 3 passed (3); Tests 16 passed (16)`.
-- módulo: `npx vitest run src/components/admin/__tests__` → `Test Files 17 passed (17); Tests 60 passed (60)`.
+Ponto 2 — comentário do AuditLogFilter. Reescrito em `src/components/admin/useAdminData.ts`: o parâmetro é opcional e a tela (AdminView) ainda vai ligar o filtro; o hook só monta a consulta. Sem mudança de comportamento; coberto pelos mesmos testes do ponto 1 (filtro continua opcional — `usa o range padrão`, 9 passed).
+
+Ponto 3 — relato dizia que a tela usa a régua. Corrijo aqui: `MIN_PASSWORD_LENGTH = 8` é exportado pelo hook para a tela usar depois; o `PasswordStrengthMeter` continua fora do escopo deste cartão (só `AdminView.tsx`, que este cartão não pode tocar). Pendência registrada fora deste diff: ligar no `AdminView.tsx` o `PasswordStrengthMeter`, o filtro de data, a paginação e a exibição do `error` — nenhum desses fios existe ainda na tela. Teste: `expõe a régua de 8 caracteres da Edge` (9 passed).
+
+Ponto 4 — primeira linha do relato. Agora é exatamente `Especialista: hugo`; a explicação do roteamento está na linha 2 acima. Sem mudança de código.
+
+Ponto 5 — `vi.unstubAllGlobals()` no fim de cada teste. Removidos os dois `vi.unstubAllGlobals()` do fim dos testes de senha e adicionado `afterEach(() => { vi.unstubAllGlobals(); })` no describe de senha em `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts`; o `fetch` falso é restaurado mesmo se uma asserção falhar no meio do teste. Teste: os dois testes de senha (`recusa 7 caracteres sem chamar a Edge`, `aceita 8 caracteres e chama a Edge`) passam com o `afterEach` (9 passed); o `afterEach` executa em todo teste do describe por construção do vitest.
+
+Arquivos (git diff --name-only 96dd72dc5f...HEAD):
+src/components/admin/useAdminData.ts
+src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts
+src/components/admin/__tests__/useAdminDataColumns.test.ts
+.tmp/relato.md
+
+Prova:
+- vermelho: `TZ=America/Sao_Paulo npx vitest run src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` → `Test Files 1 failed (1); Tests 1 failed | 8 passed (9)`
+- verde: mesmo comando → `Test Files 1 passed (1); Tests 9 passed (9)`
+- módulo: `npx vitest run src/components/admin/__tests__` → `Test Files 17 passed (17); Tests 60 passed (60)`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (9s)` (sem migration neste cartão; banco não aplicável)
