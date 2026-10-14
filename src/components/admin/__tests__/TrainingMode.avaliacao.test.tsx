@@ -35,6 +35,11 @@ vi.mock('@/integrations/supabase/client', () => {
       Promise.resolve(
         tabela === 'profiles' ? { data: { id: 'perfil-1' }, error: null } : { data: { id: 'sessao-1' }, error: null },
       );
+    // `loadProfile` lê com `maybeSingle` (perfil ausente não pode ser erro fatal).
+    chain.maybeSingle = () =>
+      Promise.resolve(
+        tabela === 'profiles' ? { data: { id: 'perfil-1' }, error: null } : { data: { id: 'sessao-1' }, error: null },
+      );
     chain.then = (onOk: (r: Resultado) => unknown, onErr?: (e: unknown) => unknown) =>
       Promise.resolve<Resultado>(
         tabela === 'profiles'
@@ -50,6 +55,11 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   };
 });
+
+// A aba "Resultados da equipe" depende do papel; aqui o usuário é atendente comum.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, loading: false, roles: [], hasRole: () => false }),
+}));
 
 const SESSAO_ANTERIOR = {
   id: 'anterior-1',

@@ -9,6 +9,8 @@ import { GraduationCap, Play, MessageSquare, Send, Bot, User, CheckCircle2, XCir
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Json } from '@/integrations/supabase/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface SimMessage {
   role: 'customer' | 'agent';
@@ -20,7 +22,15 @@ interface TrainingSession {
   scenario_name: string;
   status: string;
   score: number | null;
+  created_at?: string;
 }
+
+/** Rótulos dos estados usados em `training_sessions.status` (coluna TEXT, sem CHECK). */
+const STATUS_SESSAO: Record<string, string> = {
+  in_progress: 'Em andamento',
+  completed: 'Concluído',
+  abandoned: 'Abandonada',
+};
 
 const SCENARIOS = [
   { name: 'Reclamação sobre entrega', type: 'support', customerScript: [
@@ -107,6 +117,7 @@ function avaliarTreinamento(respostasDoAtendente: string[]): { score: number; fe
 }
 
 export function TrainingMode() {
+  const { isSupervisor } = useUserRole();
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [scenario, setScenario] = useState<typeof SCENARIOS[0] | null>(null);
   const [messages, setMessages] = useState<SimMessage[]>([]);
@@ -116,24 +127,68 @@ export function TrainingMode() {
   const [feedback, setFeedback] = useState('');
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [profileId, setProfileId] = useState<string | null>(null);
+  // Falhas visíveis: perfil, início da sessão e leitura das sessões anteriores.
+  // Antes o `return` silencioso deixava o atendente digitando no vazio.
+  const [erroPerfil, setErroPerfil] = useState<string | null>(null);
+  const [erroSessao, setErroSessao] = useState<string | null>(null);
+  const [erroLista, setErroLista] = useState<string | null>(null);
+  // Resultados da equipe (admin/supervisor): lê o que a RLS já libera para esses papéis.
+  const [aba, setAba] = useState('meus');
+  const [sessoesEquipe, setSessoesEquipe] = useState<TrainingSession[]>([]);
+  const [erroEquipe, setErroEquipe] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
-    if (data) setProfileId(data.id);
+    if (!user) {
+      setErroPerfil('Sua sessão expirou. Entre novamente para usar o Modo Treinamento.');
+      return;
+    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) {
+      setErroPerfil('Não foi possível carregar o seu perfil. Recarregue a página e tente de novo.');
+      return;
+    }
+    if (!data) {
+      setErroPerfil('Seu usuário não tem perfil cadastrado, por isso o treinamento não pode ser iniciado.');
+      return;
+    }
+    setErroPerfil(null);
+    setProfileId(data.id);
   }, []);
 
   const loadSessions = useCallback(async () => {
     if (!profileId) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('training_sessions')
       .select('*')
       .eq('profile_id', profileId)
       .order('created_at', { ascending: false })
       .limit(10);
-    if (data) setSessions(data as TrainingSession[]);
+    if (error) {
+      setErroLista('Não foi possível carregar as suas sessões de treinamento.');
+      return;
+    }
+    setErroLista(null);
+    setSessions((data ?? []) as TrainingSession[]);
   }, [profileId]);
+
+  /** Sessões de todos os atendentes — só chega aqui para admin/supervisor (RLS + aba). */
+  const loadTeamSessions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('training_sessions')
+      .select('id, scenario_name, status, score, created_at')
+      .order('created_at', { ascending: false });
+    if (error) {
+      setErroEquipe('Não foi possível carregar os resultados da equipe.');
+      return;
+    }
+    setErroEquipe(null);
+    setSessoesEquipe((data ?? []) as TrainingSession[]);
+  }, []);
 
   useEffect(() => {
     loadProfile();
@@ -146,7 +201,11 @@ export function TrainingMode() {
   }, [profileId, loadSessions]);
 
   const startScenario = async (s: typeof SCENARIOS[0]) => {
-    if (!profileId) return;
+    if (!profileId) {
+      setErroSessao('O seu perfil ainda não carregou. Aguarde um instante e tente de novo.');
+      return;
+    }
+    setErroSessao(null);
     setScenario(s);
     setCustomerStep(0);
     setScore(null);
@@ -155,18 +214,49 @@ export function TrainingMode() {
     setMessages([firstMsg]);
     setCustomerStep(1);
 
-    const { data } = await supabase.from('training_sessions').insert({
+    const { data, error } = await supabase.from('training_sessions').insert({
       profile_id: profileId,
       scenario_name: s.name,
       scenario_type: s.type,
       messages: [firstMsg] as unknown as Json,
       status: 'in_progress',
     }).select('id').single();
-    if (data) setActiveSession(data.id);
+    if (error || !data) {
+      // Sem id de sessão não há onde gravar as respostas: avisa e deixa o botão
+      // Enviar desabilitado, em vez de aceitar texto que seria perdido.
+      setActiveSession(null);
+      setErroSessao('Não foi possível iniciar o treinamento. Tente novamente em instantes.');
+      return;
+    }
+    setActiveSession(data.id);
+  };
+
+  /** Sai do cenário: sessão em andamento vira `abandoned` para não ficar presa. */
+  const encerrarSessao = async () => {
+    const sessao = activeSession;
+    setScenario(null);
+    setMessages([]);
+    setInput('');
+    setActiveSession(null);
+    setErroSessao(null);
+    if (!sessao) return;
+    const { error } = await supabase
+      .from('training_sessions')
+      .update({ status: 'abandoned' })
+      .eq('id', sessao);
+    if (error) {
+      setErroSessao('Não foi possível registrar o encerramento da sessão de treinamento.');
+      return;
+    }
+    loadSessions();
   };
 
   const sendResponse = async () => {
-    if (!input.trim() || !scenario || !activeSession) return;
+    if (!input.trim() || !scenario) return;
+    if (!activeSession) {
+      setErroSessao('A sessão de treinamento não está ativa. Saia e inicie o cenário novamente.');
+      return;
+    }
     const agentMsg: SimMessage = { role: 'agent', content: input.trim() };
     const newMessages = [...messages, agentMsg];
     setInput('');
@@ -215,7 +305,22 @@ export function TrainingMode() {
       </div>
 
       {!scenario ? (
-        <>
+        <Tabs
+          value={aba}
+          onValueChange={(valor) => {
+            setAba(valor);
+            if (valor === 'equipe') loadTeamSessions();
+          }}
+          className="space-y-3"
+        >
+          <TabsList aria-label="Resultados do treinamento">
+            <TabsTrigger value="meus">Meus resultados</TabsTrigger>
+            {isSupervisor && <TabsTrigger value="equipe">Resultados da equipe</TabsTrigger>}
+          </TabsList>
+          <TabsContent value="meus" className="space-y-3">
+          {erroPerfil && <p role="alert" className="text-xs text-destructive">{erroPerfil}</p>}
+          {erroLista && <p role="alert" className="text-xs text-destructive">{erroLista}</p>}
+          {erroSessao && <p role="alert" className="text-xs text-destructive">{erroSessao}</p>}
           {/* Scenario selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {SCENARIOS.map((s, idx) => (
@@ -244,7 +349,7 @@ export function TrainingMode() {
                 <div key={s.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
                   <div>
                     <p className="text-xs font-medium">{s.scenario_name}</p>
-                    <p className="text-3xs text-muted-foreground">{s.status === 'completed' ? 'Concluído' : 'Em andamento'}</p>
+                    <p className="text-3xs text-muted-foreground">{STATUS_SESSAO[s.status] ?? s.status}</p>
                   </div>
                   {s.score && (
                     <Badge variant={s.score >= 80 ? 'default' : 'outline'} className="text-xs">
@@ -255,21 +360,47 @@ export function TrainingMode() {
               ))}
             </div>
           )}
-        </>
+          </TabsContent>
+          {isSupervisor && (
+            <TabsContent value="equipe" className="space-y-2">
+              {erroEquipe && <p role="alert" className="text-xs text-destructive">{erroEquipe}</p>}
+              {sessoesEquipe.length === 0 ? (
+                !erroEquipe && <p className="text-xs text-muted-foreground">Nenhuma sessão de treinamento registrada.</p>
+              ) : (
+                sessoesEquipe.map(s => (
+                  <div key={s.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
+                    <div>
+                      <p className="text-xs font-medium">{s.scenario_name}</p>
+                      <p className="text-3xs text-muted-foreground">
+                        {STATUS_SESSAO[s.status] ?? s.status}
+                        {s.created_at ? ` · ${new Date(s.created_at).toLocaleDateString('pt-BR')}` : ''}
+                      </p>
+                    </div>
+                    {typeof s.score === 'number' && (
+                      <Badge variant={s.score >= 80 ? 'default' : 'outline'} className="text-xs">
+                        <Award className="w-3 h-3 mr-1" /> {s.score}/100
+                      </Badge>
+                    )}
+                  </div>
+                ))
+              )}
+            </TabsContent>
+          )}
+        </Tabs>
       ) : (
         /* Active simulation */
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm">{scenario.name}</CardTitle>
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setScenario(null); setMessages([]); setActiveSession(null); }}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={encerrarSessao}>
                 Sair
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Messages */}
-            <div className="space-y-2 max-h-80 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto" role="log" aria-label="Conversa do treinamento" aria-live="polite">
               <AnimatePresence>
                 {messages.map((msg, idx) => (
                   <motion.div
@@ -303,7 +434,9 @@ export function TrainingMode() {
               </motion.div>
             ) : (
               /* Input */
-              <div className="flex gap-2">
+              <div className="space-y-2">
+                {erroSessao && <p role="alert" className="text-xs text-destructive">{erroSessao}</p>}
+                <div className="flex gap-2">
                 <Input
                   value={input}
                   onChange={e => setInput(e.target.value)}
@@ -311,9 +444,10 @@ export function TrainingMode() {
                   className="text-sm"
                   onKeyDown={e => e.key === 'Enter' && sendResponse()}
                 />
-                <Button size="icon" onClick={sendResponse} disabled={!input.trim()}>
+                <Button size="icon" onClick={sendResponse} disabled={!input.trim() || !activeSession} aria-label="Enviar resposta">
                   <Send className="w-4 h-4" />
                 </Button>
+                </div>
               </div>
             )}
           </CardContent>
