@@ -1,69 +1,30 @@
-Especialista: Edgar (area-edge-api)
+Especialista: edgar
 
-## O que mudou e por quê
-- `supabase/functions/_shared/evolution-control-authz.ts`: `find-chats`, `find-contacts`, `find-messages`,
-  `find-status-messages`, `get-media-base64`, `get-settings`/`get-webhook`, `fetch-profile`,
-  `fetch-profile-picture`, `fetch-business-profile`, `find-labels`/`find-templates`, os `get-*` das integrações
-  (chatwoot/typebot/openai/dify/flowise/evolution-bot/rabbitmq/sqs/proxy/evoai/n8n/kafka/nats/pusher) e
-  `get-catalog`/`get-collections` saíram de `READ_ACTIONS` e entraram em `CONTROL_ACTIONS`. Eram chamadas por
-  qualquer agente e devolvem dado instance-wide (fora da visibilidade dele) ou configuração/credencial do
-  provedor. `READ_ACTIONS` ficou com `status`, `list-instances`, `instance-info`, `check-numbers` e as leituras
-  de grupo.
-- `supabase/functions/evolution-api/index.ts`: `TOKEN_KEYS` ganhou `hash` e `stripInstanceToken` passou a
-  percorrer arrays; nova `sanitizeInstanceResponse` aplicada a `list-instances` e `instance-info`. Antes o token
-  só era removido na rota GO `/instance/all` (dentro do proxy), então a variante v2 e a rota `/instance/info`
-  devolviam `token`/`apikey`/`hash` ao chamador — com o token e a URL pública da GO, opera-se a instância fora
-  do app.
+## Ponto 1 — sanitizeInstanceResponse lia o corpo duas vezes (recusa: `response.json()` consome; `return response` devolve corpo já lido)
+Mudei `supabase/functions/evolution-api/index.ts`: `TOKEN_KEYS`, `TOKEN_CONTAINER_KEYS`, `stripInstanceToken` e `sanitizeInstanceResponse` saíram de dentro do `handleEvolutionApi` para escopo de módulo (`sanitizeInstanceResponse` agora exportada). A função lê o corpo UMA vez com `const raw = await response.text()`, tenta `JSON.parse(raw)` e, se falhar, devolve `new Response(raw, { status: response.status, headers: response.headers })` — status e corpo não-JSON chegam intactos. Os 3 call sites (`list-instances`, `instance-info` GO e v2) passam `corsHeaders` explicitly. Os demais chamadores de `stripInstanceToken` (`create-connection`, linhas ~469/~512) resolvem para a mesma função em escopo de módulo, código idêntico movido — comportamento deles inalterado (Deno type-check + suite verde prova).
+Teste: `R2EXT-AGENDA: sanitizeInstanceResponse devolve resposta não-JSON intacta (status e corpo)` — chama a função real com `Response` 502 HTML e confere status 502 e corpo byte a byte.
 
-## Sensibilidade
-- (a) o diff toca o caminho de autorização (classificação de ação + `decideControlAuthz`, deny-by-default) e a
-  higienização da credencial da conexão. O cliente `service`/`service_role` só é usado onde já era; o gate roda
-  ANTES de qualquer chamada ao provedor.
-- (b) nenhuma proteção afrouxada, com o caso NEGADO provado: agente → 403 e ZERO I/O no provedor (o fake não
-  registra requisição); corpo de leitura de instância NUNCA contém `token`/`apikey`/`hash` (nem aninhado, nem
-  em item de lista).
-- (c) nenhuma referência a banco ou endpoint de produção — os testes usam servidor falso local em `127.0.0.1`.
-- (d) o que muda para quem chama: as ações movidas passam a exigir admin/supervisor; o corpo de
-  `instance-info`/`list-instances` deixa de trazer a credencial (o resto do payload, ex. `status`, permanece).
+## Ponto 2 — faltava teste do caminho de erro do provedor (502 HTML em `instance-info`)
+Acrescentei em `supabase/functions/evolution-api/index.test.ts` o teste `R2EXT-AGENDA: instance-info (v2) com erro não-JSON do provedor não vira 500`: servidor falso local responde 502 HTML, o handler `instance-info` é chamado de verdade e a prova confere `status !== 500`, envelope `{ error: true }` e `status: 502` preservado no corpo. Nota técnica (verificado no código, `evolution-api-proxy.ts`): o proxy converte erro do provedor no envelope JSON `{ error: true, status }` ANTES do sanitize — por isso o ponta a ponta prova envelope+status, e a preservação byte a byte do corpo não-JSON é provada pelo teste direto do Ponto 1.
+Vermelho antes: com o `index.ts` antigo (via `git stash` só dele), a suite nem compila — `sanitizeInstanceResponse` não era exportada (`error: Type checking failed` no import do teste). Verde depois: `ok | 37 passed | 0 failed`.
 
-## Prova
-- Diff deste commit: 4 arquivos de código/teste mais `.tmp/relato.md`; 2 arquivos de teste; 9 casos de teste novos
-  (3 de gate negado + 1 de passagem com papel + 2 de `instance-info` + 2 de `list-instances` no handler, e 1 na
-  matriz de classificação).
-- vermelho antes (matriz antiga via `git stash` só do arquivo de authz): `deno test --allow-read --allow-env
-  --allow-net --filter "R2EXT-AGENDA" supabase/functions/evolution-api/index.test.ts` → os três testes de gate
-  (`find-chats`, `find-contacts`, `get-media-base64`) FALHARAM porque o agente passava.
-- vermelho antes (handler antigo via `git stash` só do `index.ts`): `--filter "não devolve token"` → os quatro
-  testes de credencial FALHARAM (o corpo trazia o token).
-- verde depois: `deno test --allow-read --allow-env --allow-net supabase/functions/evolution-api/index.test.ts
-  supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → `ok | 45 passed | 0 failed`.
-- ausência de consumidor no front das ações que viraram control restrito:
-  `git grep -n "'find-chats'\|'find-contacts'\|'find-messages'\|'find-status-messages'\|'get-media-base64'\|'get-catalog'\|'get-collections'" -- src/`
-  só encontra o próprio hook exportador e testes de payload — nenhuma tela as invoca.
+## Ponto 3 — teste de 403 só conferia POST (`fake.posts`); relato dizia "ZERO I/O"
+Troquei nos 3 testes `R2EXT-AGENDA: <ação> sem papel devolve 403` o fake `createFakeEvolution` (só registra POST em `posts`) pelo `createInstanceReadFake` local, que registra TODA requisição (GET e POST) em `fake.requests`, e a asserção virou `fake.requests.length === 0`. Um GET ao provedor agora falharia o teste; antes passaria despercebido. Vale para as 3 ações (`find-chats`, `find-contacts`, `get-media-base64`). Também restaurei no teste `list-instances (v2)` a asserção de rota (`fake.gets.includes("/instance/fetchInstances")`) e o `assertSemCredencial` (cobre token aninhado), para não afrouxar o teste ao reescrevê-lo.
 
-## Classes finais (critério 4)
-- **control:** find-chats, find-contacts, find-messages, find-status-messages, get-media-base64, get-settings,
-  get-webhook, fetch-profile, fetch-profile-picture, fetch-business-profile, find-labels, find-templates,
-  get-chatwoot, get-typebot, typebot-sessions, get-openai, get-dify, get-flowise, get-evolution-bot,
-  get-rabbitmq, get-sqs, get-proxy, get-evoai, get-n8n, get-kafka, get-nats, get-pusher, get-catalog,
-  get-collections.
-- **read:** list-instances, status, instance-info, check-numbers, list-groups, group-info, group-participants,
-  group-invite-code, invite-info.
+## Ponto 4 — SÓ O RELATO: primeira linha e `fetch-profile-picture` em tela de agente
+Primeira linha agora exatamente `Especialista: edgar`. Sobre `fetch-profile-picture`: `git grep -n "fetch-profile-picture\|fetchProfilePicture" -- src/ tests/ e2e/` encontra SÓ o exportador `src/hooks/integrations/useEvolutionApi.ts:35` e testes de payload/hook; `git grep -- 'src/components/**' 'src/pages/**' 'src/features/**'` mostra que nenhuma tela chama `fetchProfilePicture` (a `InstanceSettingsDialog` usa `getSettings/setSettings/fetchProfile/updateProfile*`, sem `fetchProfilePicture`/`fetchBusinessProfile`). Mantido em control sem quebrar UI. `stripInstanceToken` não tem chamador em `_shared/` (só no próprio `index.ts`, acima) — a mudança hash+arrays não afeta outro módulo.
+
+## Arquivos (`git diff --name-only`)
+supabase/functions/evolution-api/index.test.ts
+supabase/functions/evolution-api/index.ts
+
+## Verificação
+- `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/evolution-api/index.test.ts` → `ok | 37 passed | 0 failed`
+- `--filter "R2EXT-AGENDA"` → `ok | 10 passed | 0 failed | 27 filtered out`
+- `deno test ... supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → `ok | 10 passed | 0 failed`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (22s)` (OK db_guard/tipos/lint/migrations; `banco_local` AVISO = sem nome de conjunto — o cartão não tem migration)
+
+## Classes finais (pedido original, item 4)
+- **control:** find-chats, find-contacts, find-messages, find-status-messages, get-media-base64, get-settings, get-webhook, fetch-profile, fetch-profile-picture, fetch-business-profile, find-labels, find-templates, get-chatwoot, get-typebot, typebot-sessions, get-openai, get-dify, get-flowise, get-evolution-bot, get-rabbitmq, get-sqs, get-proxy, get-evoai, get-n8n, get-kafka, get-nats, get-pusher, get-catalog, get-collections (movidos neste trabalho sobre a base).
+- **read:** list-instances, status, instance-info, check-numbers, list-groups, group-info, group-participants, group-invite-code, invite-info.
 - **send:** inalterado.
-
-## O que NÃO fiz e por quê
-- `get-media-base64`: nenhuma tela a chama, então segui a primeira opção do cartão e movi para control, em vez
-  de resolver visibilidade dentro do gate de envio (`decideSendAuthz`). A resolução de alvo do `send` é por `remoteJid` de
-  `body.key`, e a mídia aponta `body.message.key.remoteJid` — misturar as duas chaves de alvo seria mudança de
-  contrato além do cartão.
-- leituras de grupo (`list-groups`, `group-info`, `group-participants`, `group-invite-code`, `invite-info`):
-  mantidas em `read` porque TÊM consumidor no front (`src/hooks/groups/actions.ts`,
-  `src/hooks/evolution/useEvolutionGroups.ts`); movê-las quebraria as telas de grupo e o cartão não as pediu.
-- `fetch-profile`/`get-settings`/`get-webhook`/`find-labels`: movidos a control (configuração de conexão); o
-  único consumidor é `InstanceSettingsDialog`, tela de configuração de conexão restrita a admin/supervisor
-  (IA-004 §6.5).
-- Não rodei `zapp-verify` à mão: o `hermes-tarefa-fechar` roda o verificador rápido.
-- Os testes que provam este cartão são Deno e estão NESTE commit (`supabase/functions/evolution-api/index.test.ts`
-  e `supabase/functions/_shared/__tests__/evolution-control-authz.test.ts`). O aviso "sem teste novo" do fechar
-  vem do glob dele, que só conta teste sob `src/`/`tests/` — ele não enxerga teste de Edge em
-  `supabase/functions/`. Rodado de novo como o próprio aviso autoriza.

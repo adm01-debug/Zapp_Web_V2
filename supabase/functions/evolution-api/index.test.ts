@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi } from "./index.ts";
+import { handleEvolutionApi, sanitizeInstanceResponse } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
@@ -687,7 +687,10 @@ function assertSemCredencial(texto: string, contexto: string) {
 
 for (const action of ["find-chats", "find-contacts", "get-media-base64"]) {
   Deno.test(`R2EXT-AGENDA: ${action} sem papel devolve 403 e não produz I/O no provedor`, async () => {
-    const fake = createFakeEvolution();
+    // ZERO I/O de verdade: createInstanceReadFake registra TODA requisição
+    // (GET e POST) em `fake.requests`. O fake antigo (createFakeEvolution) só
+    // registrava POST em `posts` — um GET ao provedor passaria despercebido.
+    const fake = createInstanceReadFake(() => ({}));
     Deno.env.set("EVOLUTION_API_URL", fake.url);
     Deno.env.set("EVOLUTION_API_FLAVOR", "go");
     try {
@@ -701,7 +704,11 @@ for (const action of ["find-chats", "find-contacts", "get-media-base64"]) {
       assertEquals(res.status, 403, `${action} deve ser 403 para agente`);
       const json = await res.json();
       assert(json?.error === true, "resposta deve ser { error: true }");
-      assertEquals(fake.posts.length, 0, `${action} não pode chegar ao provedor`);
+      assertEquals(
+        fake.requests.length,
+        0,
+        `${action} não pode produzir I/O no provedor (GET ou POST)`,
+      );
     } finally {
       await fake.stop();
     }
@@ -787,21 +794,64 @@ Deno.test("R2EXT-AGENDA: list-instances (GO) não devolve token/apikey/hash", as
 });
 
 Deno.test("R2EXT-AGENDA: list-instances (v2) não devolve token/apikey/hash", async () => {
-  // v2 devolve o array direto em /instance/fetchInstances: o strip precisa
-  // percorrer a lista (senão o token do item escaparia).
+  resetInstanceTokenCache();
   const fake = createInstanceReadFake(() => [INSTANCIA_COM_CREDENCIAL]);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   try {
-    const res = await handleEvolutionApi(
-      controlRequest("list-instances", {}),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const texto = await res.text();
-    assertSemCredencial(texto, "list-instances v2");
+    const res = await handleEvolutionApi(controlRequest("list-instances", { instanceName: "PRINCIPAL" }), {
+      callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+      supabase: makeServiceClient(),
+    });
+    assertEquals(res.status, 200, "lista de instâncias deve responder 200 ao admin/supervisor");
+    const text = await res.text();
+    assertSemCredencial(text, "list-instances v2");
     assert(fake.gets.includes("/instance/fetchInstances"), "v2 deve listar em /instance/fetchInstances");
   } finally {
     await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: sanitizeInstanceResponse devolve resposta não-JSON intacta (status e corpo)", async () => {
+  // O provedor pode falhar com página de erro (ex.: 502 HTML). A higienização
+  // lê o corpo UMA vez via text(): com a implementação antiga
+  // (response.json() e depois `return response`) o corpo já estaria consumido
+  // e o chamador receberia 500 ao tentar lê-lo.
+  const html = "<html><body><h1>502 Bad Gateway</h1></body></html>";
+  const out = await sanitizeInstanceResponse(
+    new Response(html, { status: 502, headers: { "Content-Type": "text/html" } }),
+    {},
+  );
+  assertEquals(out.status, 502, "status do provedor deve chegar intacto");
+  assertEquals(await out.text(), html, "corpo não-JSON deve chegar intacto");
+});
+
+Deno.test("R2EXT-AGENDA: instance-info (v2) com erro não-JSON do provedor não vira 500", async () => {
+  // Ponta a ponta: o proxy converte o erro do provedor no envelope JSON
+  // { error: true, status: <status do provedor> } — o caminho de erro completa
+  // sem 500 e preserva o status do provedor no corpo.
+  const html = "<html><body><h1>502 Bad Gateway</h1></body></html>";
+  const server = Deno.serve(
+    { hostname: "127.0.0.1", port: 0, onListen() {} },
+    () => new Response(html, { status: 502, headers: { "Content-Type": "text/html" } }),
+  );
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("fake 502: listener não é TCP");
+  Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("instance-info", { instanceName: "PRINCIPAL" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assert(res.status !== 500, "erro do provedor não pode virar 500");
+    const json = await res.json();
+    assertEquals(json?.error, true, "erro do provedor vira envelope { error: true }");
+    assertEquals(json?.status, 502, "status do provedor é preservado no envelope");
+  } finally {
+    await server.shutdown();
   }
 });
