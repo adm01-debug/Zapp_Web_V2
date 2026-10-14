@@ -21,7 +21,7 @@ import { createElement, type ReactNode } from 'react';
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
 
 import { useInboxFilters } from '../useInboxFilters';
-import { countByChip } from '../chipCounts';
+import { countByChip, passesExtraFilters } from '../chipCounts';
 import type { ChipTab } from '@/components/inbox/TicketTabs';
 
 const PROFILE_ID = 'p1';
@@ -203,6 +203,8 @@ const CONVERSAS_MATRIZ = [
   conversaMatriz('sem-msg', { nome: 'Sem Mensagem', assigned: PROFILE_ID, mensagens: 0, lastMessageAt: null, createdAt: '2026-10-03T12:00:00.000Z' }),
   conversaMatriz('aguardando-2', { nome: 'Aguardando Dois', status: 'waiting', assigned: 'p2', lastMessageAt: '2026-10-07T12:00:00.000Z' }),
   conversaMatriz('iris', { nome: 'Iris Duarte', email: 'iris@promo.com', assigned: PROFILE_ID, lastMessageAt: '2026-10-08T18:00:00.000Z' }),
+  // Nome com acento e telefone formatado: a busca tem de casar 'joao' e os dígitos.
+  conversaMatriz('joao', { nome: 'João Batista', phone: '(11) 98888-7777', assigned: PROFILE_ID, lastMessageAt: '2026-10-04T12:00:00.000Z' }),
 ] as never;
 
 const estadoFiltros = (combo: Combo) => ({
@@ -240,6 +242,8 @@ const COMBOS: Combo[] = [
   { nome: 'sem filtro' },
   { nome: 'busca por nome', search: 'silvestre' },
   { nome: 'busca maiúscula com acento', search: 'JOSÉ' },
+  { nome: 'busca sem acento acha nome com acento', search: 'joao' },
+  { nome: 'busca por telefone sem formatação', search: '11988887777' },
   { nome: 'busca por e-mail', search: 'iris@promo.com' },
   { nome: 'busca sem resultado', search: 'zzz-inexistente' },
   { nome: 'tipo individual', contactType: 'individual' },
@@ -351,6 +355,56 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
     for (const chip of CHIPS) {
       act(() => result.current.setChipTab(chip));
       expect(counts[chip]).toBe(result.current.filteredConversations.length);
+    }
+  });
+});
+
+// ---------- busca: acento e telefone formatado (PD-92) ----------
+describe('busca da lista — acento e telefone', () => {
+  const joao = conversaMatriz('joao', {
+    nome: 'João Batista',
+    phone: '(11) 98888-7777',
+    email: 'joao@promo.com',
+  }) as never;
+
+  it("'joao' acha 'João' (nome sem acento na busca acha nome com acento)", () => {
+    expect(passesExtraFilters(joao, { search: 'joao' })).toBe(true);
+    expect(passesExtraFilters(joao, { search: 'JOÃO' })).toBe(true);
+    expect(passesExtraFilters(joao, { search: 'batista' })).toBe(true);
+  });
+
+  it('telefone digitado com ou sem formatação acha o contato formatado', () => {
+    expect(passesExtraFilters(joao, { search: '11988887777' })).toBe(true);
+    expect(passesExtraFilters(joao, { search: '(11) 98888-7777' })).toBe(true);
+    expect(passesExtraFilters(joao, { search: '9888' })).toBe(true);
+  });
+
+  it('busca por e-mail continua sem acento e sem caixa', () => {
+    expect(passesExtraFilters(joao, { search: 'JOAO@PROMO.COM' })).toBe(true);
+  });
+
+  it('busca com letra junto de dígito é busca por nome — não casa o telefone', () => {
+    expect(passesExtraFilters(joao, { search: 'joao1' })).toBe(false);
+    expect(passesExtraFilters(joao, { search: 'batista9' })).toBe(false);
+  });
+
+  it('a lista e o contador concordam na busca sem acento e na busca por dígitos', () => {
+    for (const combo of [
+      { nome: 'sem acento', search: 'joao' },
+      { nome: 'telefone', search: '11988887777' },
+    ] as Combo[]) {
+      const { result } = montarMatriz();
+      aplicarCombo(result, combo);
+      const counts = countByChip(CONVERSAS_MATRIZ, PROFILE_ID, optsDoCombo(combo));
+      for (const chip of CHIPS) {
+        act(() => result.current.setChipTab(chip));
+        expect(counts[chip], `chip ${chip} em "${combo.nome}"`).toBe(
+          result.current.filteredConversations.length,
+        );
+      }
+      // e o recorte é o contato certo (só o 'joao')
+      act(() => result.current.setChipTab('all'));
+      expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['joao']);
     }
   });
 });
