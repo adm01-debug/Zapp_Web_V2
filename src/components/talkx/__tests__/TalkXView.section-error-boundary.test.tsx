@@ -75,7 +75,9 @@ describe('TalkXView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
 
     expect(await screen.findByText(/Erro em "Analytics de campanhas"/)).toBeInTheDocument();
     // A tela não foi derrubada: o cabeçalho e as abas continuam de pé.
-    expect(screen.getByText('Campanhas')).toBeInTheDocument();
+    // (X053: o título "Campanhas" agora aparece também na trilha, por isso a
+    // busca é pelo cabeçalho — a intenção do teste não mudou.)
+    expect(screen.getByRole('heading', { name: 'Campanhas' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Nova campanha/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Visão geral/ })).toBeInTheDocument();
   });
