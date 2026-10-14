@@ -15,6 +15,8 @@ import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import type { Conversation } from '@/types/chat';
 import { CompactContactHeader } from './CompactContactHeader';
+import { ContactPresenceIndicator } from '../chat/ContactPresenceIndicator';
+import type { ContactPresenceFields } from '../chat/contactPresence';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 
@@ -191,6 +193,18 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                   <TooltipContent>Último contato</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            )}
+
+            {/* Presença REAL do contato. Mesma fonte e mesmo limiar do cabeçalho
+                do chat (ContactPresenceIndicator: "Online" só com online recente
+                até 2 min; "Visto por último há X" com last_seen_at). Sem sinal,
+                não desenha linha nenhuma — nunca afirma o que não sabe. */}
+            {conversation?.contact && (
+              <ContactPresenceIndicator
+                contact={conversation.contact as ContactPresenceFields}
+                hideWhenUnknown
+                className="text-[13px] text-muted-foreground mt-1 w-fit"
+              />
             )}
           </div>
         </div>
