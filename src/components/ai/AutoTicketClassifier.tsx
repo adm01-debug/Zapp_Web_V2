@@ -19,7 +19,6 @@ interface ClassifiedTicket {
   priority: string;
   /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
   confidence: number | null;
-  lastMessage: string;
 }
 
 const CATEGORIES = [
