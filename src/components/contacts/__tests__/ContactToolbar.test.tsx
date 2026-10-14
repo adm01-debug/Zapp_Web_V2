@@ -24,7 +24,7 @@ function toolbarProps(overrides: Partial<React.ComponentProps<typeof ContactTool
     activeFiltersCount: 0, clearFilters: noop, activeTab: 'all',
     filterCompany: '', setFilterCompany: noop, filterJobTitle: '', setFilterJobTitle: noop,
     filterTag: '', setFilterTag: noop, filterDateRange: '', setFilterDateRange: noop,
-    uniqueCompanies: [], uniqueJobTitles: [], uniqueTags: [], onApplyPreset: noop,
+    uniqueCompanies: [], uniqueJobTitles: [], onApplyPreset: noop,
     groupByCompany: false, setGroupByCompany: noop, selectedIds: [] as string[],
     onBulkTag: noop, onCompare: vi.fn(), onMerge: noop, canMerge: true,
     viewMode: 'grid' as ContactViewMode, setViewMode: noop, gridColumns: 4, setGridColumns: noop,
@@ -43,9 +43,13 @@ describe('ContactToolbar (etapa 82)', () => {
   it('Comparar só aparece com 2 ou mais selecionados', () => {
     const { rerender } = render(<ContactToolbar {...toolbarProps({ selectedIds: ['a'] })} />);
     expect(screen.queryByRole('button', { name: /Comparar/ })).not.toBeInTheDocument();
+    // Função de tags removida: nenhum botão de etiqueta pode existir na barra.
+    expect(screen.queryByRole('button', { name: /Tags/ })).not.toBeInTheDocument();
 
     const props = toolbarProps({ selectedIds: ['a', 'b'] });
     rerender(<ContactToolbar {...props} />);
+    // Função de tags removida: o botão de etiqueta não existe mais com 2 selecionados.
+    expect(screen.queryByRole('button', { name: /Tags/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Comparar/ }));
     expect(props.onCompare).toHaveBeenCalled();
   });

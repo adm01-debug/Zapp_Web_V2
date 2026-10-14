@@ -122,15 +122,14 @@ describe('tipografia do card de Contatos — piso da escala (text-3xs)', () => {
         value="emp"
         onChange={() => {}}
         uniqueCompanies={['Empresa Teste']}
-        uniqueTags={['emp-tag']}
         totalCount={3}
       />
     );
-    // O foco abre o dropdown de sugestões com os badges Empresa/Tag.
+    // O foco abre o dropdown de sugestões com o badge Empresa (sugestões de
+    // tag foram removidas do conceito de contatos junto com a prop uniqueTags).
     fireEvent.focus(getByPlaceholderText(/Buscar por nome/));
 
     expect(menorTextoPx(getByText('Empresa').className, escala)).toBe(10);
-    expect(menorTextoPx(getByText('Tag').className, escala)).toBe(10);
   });
 
   it.each(['ContactDetailPanel.tsx', 'ContactKanbanView.tsx'])('%s não tem mais text-[9px]', (nome) => {

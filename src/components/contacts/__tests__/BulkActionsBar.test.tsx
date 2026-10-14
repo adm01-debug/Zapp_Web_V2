@@ -88,6 +88,11 @@ describe('BulkActionsBar — ações em lote (etapa 81)', () => {
     expect(screen.queryByText(/selecionado/)).not.toBeInTheDocument();
   });
 
+  it('não oferece mais a ação de Tag (função removida)', () => {
+    setup();
+    expect(screen.queryByRole('button', { name: 'Tag' })).not.toBeInTheDocument();
+  });
+
   it('Atribuir grava assigned_to em todos os selecionados', async () => {
     const props = setup();
     pick(/Atribuir/, 'Bia');

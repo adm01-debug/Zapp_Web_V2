@@ -53,7 +53,7 @@ export function ContactsView() {
 
   const {
     contacts: filteredContacts, totalCount, loading, hasMore,
-    contactCountByType, uniqueCompanies, uniqueJobTitles, uniqueTags,
+    contactCountByType, uniqueCompanies, uniqueJobTitles,
     searchInput, debouncedSearch: search, handleSearchChange, clearSearch,
     activeTab, setActiveTab, filterCompany, setFilterCompany,
     filterJobTitle, setFilterJobTitle,
@@ -176,7 +176,7 @@ export function ContactsView() {
         filterCompany={filterCompany} setFilterCompany={setFilterCompany}
         filterJobTitle={filterJobTitle} setFilterJobTitle={setFilterJobTitle}
         filterDateRange={filterDateRange} setFilterDateRange={setFilterDateRange}
-        uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles} uniqueTags={uniqueTags}
+        uniqueCompanies={uniqueCompanies} uniqueJobTitles={uniqueJobTitles}
         onApplyPreset={handleApplyPreset}
         groupByCompany={groupByCompany} setGroupByCompany={setGroupByCompany}
         selectedIds={selectedIds}
