@@ -1035,6 +1035,18 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
+      # Relatorios de demanda (2026-10-14, refazer 1): as RPCs public.dashboard_heatmap e
+      # public.demand_forecast agregam as mensagens recebidas por dia da semana x hora
+      # no fuso do negocio (a leitura crua no navegador usava o fuso do browser).
+      # Inicia container proprio e roda CREATE ROLE
+      # anon/authenticated/service_role — roles globais ao cluster, entao o
+      # docker-shim do E47 colidiria com as do shim (SKIP_DOCKER_SHIM=1).
+      - name: Provar o contrato das RPCs de demanda (heatmap + previsao)
+        env:
+          DEMAND_FORECAST_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/demand-forecast-heatmap-contract.test.sh
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
