@@ -1,3 +1,4 @@
+Especialista: workersql
 Especialista: worker (sql) (area-sql-banco)
 
 # fix(db-auth): update_own_profile nao aceita mais e-mail e volta a funcionar no schema real
