@@ -11,6 +11,8 @@
 --   T1  5ª falha trava por 1 min; as 4 primeiras não travam (attempts 1..4);
 --   T2  bloqueio vencido NÃO zera o contador: escalada 2, 4, 8, 15, 15 min
 --       (attempts 6..10) — a regressão que zerava ao vencer está morta;
+--   T2b contador alto (40) NÃO estoura o INTEGER de POWER(2,n)::integer;
+--       trava no teto de 15 min;
 --   T3  >= 60 min sem tentativa zera; 59 min NÃO zera (fronteira);
 --   T4  clear_login_attempts (sucesso) zera; a próxima falha volta a 1;
 --   T5  contrato: a função final NÃO tem o ramo "bloqueio vencido -> 1"
@@ -82,6 +84,35 @@ begin
     end if;
   end loop;
   raise notice 'T2 OK: bloqueio vencido NÃO zera o contador; escalada 2,4,8,15,15 min';
+end $$;
+
+-- ===== T2b: contador alto não estoura o INTEGER; teto de 15 min ==============
+do $$
+declare
+  r record;
+  n integer;
+begin
+  -- attempts bem acima de 36 (POWER(2,35) já estouraria ::integer) com bloqueio vencido:
+  -- antes do ajuste do expoente isto levantava "integer out of range".
+  update public.login_attempts
+     set attempt_count   = 40,
+         locked_until    = now() - interval '1 second',
+         last_attempt_at = now() - interval '1 minute'
+   where email = 'escalada@test.local';
+
+  select * into r from public.record_failed_login('escalada@test.local', '127.0.0.1', 'ops');
+
+  if r.attempts <> 41 then
+    raise exception 'T2b FALHOU: attempts=% (esperado 41)', r.attempts;
+  end if;
+  if not r.is_locked then
+    raise exception 'T2b FALHOU: não travou com contador alto';
+  end if;
+  n := round(extract(epoch from (r.locked_until - now())) / 60);
+  if n <> 15 then
+    raise exception 'T2b FALHOU: contador alto travou % min (esperado 15)', n;
+  end if;
+  raise notice 'T2b OK: contador alto (40) não estoura INTEGER; trava no teto de 15 min';
 end $$;
 
 -- ===== T3: >= 60 min sem tentativa zera; 59 min não zera =====================

@@ -12,11 +12,14 @@ Especialista: workersql
   travava só 1 min. No ramo do `ON CONFLICT` o `CASE` agora: (1) bloqueio vigente NÃO conta nem estende
   (mantém a defesa anti-DoS de `20260905010000`); (2) zera SÓ quando `last_attempt_at < now() - 60 min`;
   (3) senão CONTINUA contando (bloqueio vencido ou tentativa recente). A escalada usa
-  `LEAST(POWER(2, n-5)::int, 15) * interval '1 minute'`, com TETO de 15 min.
+  `LEAST(POWER(2, LEAST(n-5, 4))::int, 15) * interval '1 minute'` — o expoente é travado em 4 (2^4=16 ≥ teto)
+  ANTES do cast, para `POWER(2, n)::integer` não estourar (`integer out of range` a partir de n=36), com TETO
+  de 15 min.
   Grants reafirmados EXPLICITAMENTE no fim (idempotente): `REVOKE ... FROM public/anon/authenticated` e
   `GRANT EXECUTE ... TO service_role` — reafirma a ACL atual, nada novo.
 - `supabase/tests/record_failed_login_escalation.sql` (novo): suíte da RPC. T1 = 5ª falha trava por 1 min;
-  T2 = vencido o bloqueio, a falha seguinte NÃO zera e escala 2, 4, 8, 15, 15 min; T3 = ≥60 min zera e
+  T2 = vencido o bloqueio, a falha seguinte NÃO zera e escala 2, 4, 8, 15, 15 min; T2b = contador alto (40)
+  trava no teto de 15 min SEM estourar o INTEGER; T3 = ≥60 min zera e
   59 min continua contando; T4 = `clear_login_attempts` zera (próxima falha volta a 1); T5 = contrato
   (`pg_get_functiondef` sem o ramo `locked_until <= now() -> 1`, com teto 15 min e janela 60 min);
   T6 = ACL (`has_function_privilege`/`aclexplode`: EXECUTE só service_role+dono, sem anon/authenticated/PUBLIC);
@@ -27,8 +30,12 @@ Especialista: workersql
   `zapp-db-local psql . v2-26101320292033 < supabase/tests/record_failed_login_escalation.sql` →
   `ERROR:  T2 FALHOU: contador ZEROU ao vencer (falha 1 -> attempts=1, esperado 6)`
   (T1 ainda passa; é o T2 que morde). Reapliquei o corpo novo em seguida.
+- vermelho do expoente (juiz adversarial da 2ª rodada: `POWER(2,n)::int` estoura): apliquei o corpo SEM o
+  teto do expoente e rodei a suíte → `ERROR:  integer out of range` no T2b (attempts=40). Com o expoente
+  travado em 4, o mesmo T2b passa. Reapliquei o corpo corrigido.
 - verde depois: `zapp-db-local psql . v2-26101320292033 < supabase/tests/record_failed_login_escalation.sql` →
-  `NOTICE:  T1 OK ... T2 OK ... T3 OK ... T4 OK ... T5 OK ... T6 OK ... T7a OK ... T7b OK` (0 ERROR).
+  `NOTICE:  T1 OK ... T2 OK ... T2b OK ... T3 OK ... T4 OK ... T5 OK ... T6 OK ... T7a OK ... T7b OK`
+  (9 NOTICEs, 0 ERROR).
 - papéis reais no banco LOCAL: execução como `postgres` (dono) e os chamadores `anon` e `authenticated`
   negados com `permission denied` (T7); `service_role` é o único papel não-dono com EXECUTE (T6).
 - rollback real: as linhas executáveis do cabeçalho foram aplicadas (`CREATE FUNCTION`, rc=0), provando o

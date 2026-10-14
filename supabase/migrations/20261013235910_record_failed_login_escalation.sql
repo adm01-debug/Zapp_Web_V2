@@ -65,8 +65,9 @@ begin
   into v_new_count, v_locked_until;
 
   if v_locked_until is null and v_new_count >= v_max_attempts then
+    -- expoente travado em 4 (2^4 = 16 >= teto 15): evita POWER(2, n)::integer estourar (n >= 36)
     v_locked_until := now() + (
-      least(power(2, v_new_count - v_max_attempts)::integer, v_max_lock_min) * interval '1 minute'
+      least(power(2, least(v_new_count - v_max_attempts, 4))::integer, v_max_lock_min) * interval '1 minute'
     );
     update public.login_attempts
     set locked_until = v_locked_until,
