@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, MotionButton } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -146,9 +146,7 @@ export function ConnectionCard({
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <Button variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></Button>
-                  </motion.div>
+                  <MotionButton variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></MotionButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onSetDefault(connection.id)}><Star className="w-4 h-4 mr-2" />Definir como padrão</DropdownMenuItem>
