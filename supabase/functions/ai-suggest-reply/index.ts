@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
@@ -43,9 +43,9 @@ export async function handleAiSuggestReply(
   const userId = extractUserIdFromRequest(req);
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`suggest:${ip}`, 15, 60_000);
-    if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
+    // Limite POR USUÁRIO (contador compartilhado + cota diária, IA-043) via
+    // `enforceAiGuards`. O contador em memória por IP saiu: era por isolate,
+    // zerava no cold start e fazia colegas atrás do mesmo NAT dividirem a cota.
 
     const parsed = parseBody(AiSuggestReplySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -195,8 +195,8 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       : await generateWithRouting({ ...generateParams, requestId });
 
     if (!response.ok || !data) {
-      if (response.status === 429) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
-      if (response.status === 402) return errorResponse("Payment required. Please add credits.", 402, req);
+      if (response.status === 429) return errorResponse("Limite de requisicoes excedido. Tente novamente.", 429, req);
+      if (response.status === 402) return errorResponse("Creditos insuficientes. Adicione creditos.", 402, req);
       throw new Error(`AI gateway error [${response.status}]`);
     }
 
