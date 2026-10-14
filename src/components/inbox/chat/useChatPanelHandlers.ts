@@ -648,29 +648,33 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, [contactId]);
 
   // Impede duas respostas concorrentes do mesmo clique (trava enquanto o envio está em
-  // andamento) e o reenvio repetido do MESMO botão dentro de `INTERACTIVE_BUTTON_DEDUP_MS`.
-  // A chave é o id do botão (o handler só recebe o botão; a mensagem interativa não faz
-  // parte do contrato atual do callback).
+  // andamento) e o reenvio repetido do MESMO botão NA MESMA MENSAGEM dentro de
+  // `INTERACTIVE_BUTTON_DEDUP_MS`. A chave inclui o id da mensagem interativa quando o
+  // chamador o informa (`messageId`); sem ele, a chave fica só por botão (a propagação
+  // do id pelos componentes — ChatPanel → ChatMessagesArea → MessageBubble — fica para
+  // um cartão próprio).
   const interactiveButtonLockRef = useRef(false);
   const lastInteractiveButtonRef = useRef<{ key: string; at: number } | null>(null);
 
   // Clique no botão da mensagem interativa responde AO CLIENTE: o título do botão sai como
   // texto pelo caminho de envio canônico do compositor (`onSendMessage`, que enfileira por
   // `enqueue_outbound_message` com `client_message_id` estável), nunca por um atalho. O
-  // vínculo de resposta (reply_to) usa o alvo de resposta atual do compositor quando houver.
-  const handleInteractiveButtonClick = useCallback(async (button: InteractiveButton) => {
+  // vínculo de resposta (reply_to) é o id da mensagem interativa clicada (`messageId`),
+  // nunca o alvo de resposta do compositor (`replyToMessageRef`), que não tem relação
+  // com o botão clicado; sem o id no escopo, envia `null`.
+  const handleInteractiveButtonClick = useCallback(async (button: InteractiveButton, messageId?: string) => {
     const titulo = (button.title ?? button.text ?? button.id ?? '').trim();
     if (!titulo) return;
 
     const agora = Date.now();
-    const chave = button.id ?? titulo;
+    const chave = `${messageId ?? ''}:${button.id ?? titulo}`;
     const ultimo = lastInteractiveButtonRef.current;
     if (ultimo && ultimo.key === chave && agora - ultimo.at < INTERACTIVE_BUTTON_DEDUP_MS) return;
 
     if (interactiveButtonLockRef.current) return;
     interactiveButtonLockRef.current = true;
     try {
-      await onSendMessage(titulo, replyToMessageRef.current?.id ?? null);
+      await onSendMessage(titulo, messageId ?? null);
       // Só o aceite do transporte marca a janela de deduplicação: na falha o clique pode
       // ser repetido imediatamente (a trava é liberada no `finally`).
       lastInteractiveButtonRef.current = { key: chave, at: Date.now() };
@@ -684,7 +688,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     } finally {
       interactiveButtonLockRef.current = false;
     }
-  }, [onSendMessage, replyToMessageRef]);
+  }, [onSendMessage]);
 
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {

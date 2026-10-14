@@ -90,7 +90,7 @@ describe('useChatPanelHandlers — botão interativo responde ao cliente (IB1)',
     expect(onSendMessage).toHaveBeenCalledWith('b1', null);
   });
 
-  it('referencia a resposta do compositor como reply_to quando houver', async () => {
+  it('resposta pendente do compositor NÃO é usada como reply_to do botão', async () => {
     const onSendMessage = vi.fn();
     const { result } = montar(onSendMessage);
 
@@ -101,7 +101,48 @@ describe('useChatPanelHandlers — botão interativo responde ao cliente (IB1)',
       await result.current.handleInteractiveButtonClick(BOTAO);
     });
 
-    expect(onSendMessage).toHaveBeenCalledWith('Sim, quero!', 'msg-reply-1');
+    // O alvo de resposta do compositor não tem relação com o botão clicado: citar a
+    // mensagem errada ao cliente é o defeito apontado na recusa. Sem o id da mensagem
+    // interativa no escopo, o reply_to é null.
+    expect(onSendMessage).toHaveBeenCalledWith('Sim, quero!', null);
+  });
+
+  it('messageId é repassado como reply_to da mensagem interativa clicada', async () => {
+    const onSendMessage = vi.fn();
+    const { result } = montar(onSendMessage);
+
+    await act(async () => {
+      await result.current.handleInteractiveButtonClick(BOTAO, 'msg-interativa-9');
+    });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
+    expect(onSendMessage).toHaveBeenCalledWith('Sim, quero!', 'msg-interativa-9');
+  });
+
+  it('mesmo botão em mensagens diferentes não se bloqueia (dedup é por mensagem)', async () => {
+    const onSendMessage = vi.fn();
+    const { result } = montar(onSendMessage);
+
+    await act(async () => {
+      await result.current.handleInteractiveButtonClick(BOTAO, 'msg-interativa-9');
+      await result.current.handleInteractiveButtonClick(BOTAO, 'msg-interativa-10');
+    });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(2);
+    expect(onSendMessage).toHaveBeenNthCalledWith(1, 'Sim, quero!', 'msg-interativa-9');
+    expect(onSendMessage).toHaveBeenNthCalledWith(2, 'Sim, quero!', 'msg-interativa-10');
+  });
+
+  it('repetir o mesmo botão na mesma mensagem continua bloqueado (janela de 5 s)', async () => {
+    const onSendMessage = vi.fn();
+    const { result } = montar(onSendMessage);
+
+    await act(async () => {
+      await result.current.handleInteractiveButtonClick(BOTAO, 'msg-interativa-9');
+      await result.current.handleInteractiveButtonClick(BOTAO, 'msg-interativa-9');
+    });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
   });
 
   it('duplo clique no mesmo botão envia uma única vez (janela de 5 s)', async () => {
