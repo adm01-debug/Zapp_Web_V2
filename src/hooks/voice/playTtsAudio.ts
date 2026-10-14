@@ -8,6 +8,10 @@ export interface TtsPlayback {
 }
 
 export interface PlayTtsOptions {
+  /** Voz do catálogo da interface (`tts_voice_id`) — a mesma do seletor do cabeçalho. */
+  voiceId?: string;
+  /** Velocidade da fala (`tts_speed`), aplicada no `playbackRate` do elemento. */
+  speed?: number;
   onLoadingChange?: (loading: boolean) => void;
   onError?: (error: Error) => void;
   onAutoplayBlocked?: () => void;
@@ -15,6 +19,16 @@ export interface PlayTtsOptions {
 
 const TTS_REQUEST_TIMEOUT_MS = 60000;
 const TTS_CHUNK_MAX_LENGTH = 220;
+// Mesma faixa do seletor do cabeçalho (useTextToSpeech.setSpeed): fora disso o áudio
+// sai acelerado demais ou arrastado, e o atendente não consegue comparar com o preview.
+const TTS_SPEED_MIN = 0.5;
+const TTS_SPEED_MAX = 2;
+
+/** Velocidade pedida, limitada à faixa do seletor; ausente ou inválida vira 1x. */
+function resolveTtsSpeed(speed?: number): number {
+  if (typeof speed !== 'number' || !Number.isFinite(speed)) return 1;
+  return Math.max(TTS_SPEED_MIN, Math.min(TTS_SPEED_MAX, speed));
+}
 
 function splitLongTtsSegment(segment: string, maxLength: number): string[] {
   if (segment.length <= maxLength) return [segment];
@@ -95,6 +109,7 @@ export function playTtsAudio(
   const objectUrls = new Set<string>();
   const chunkPromises = new Map<number, Promise<string>>();
   const textChunks = splitTextIntoTtsChunks(text);
+  const playbackRate = resolveTtsSpeed(options?.speed);
 
   // #341 (R2-INB-047) — interromper a fala tem de ENCERRAR a Promise devolvida aqui.
   // `stop()` chama `cleanup()`, que desliga `onended`/`onerror` do elemento, e o
@@ -119,6 +134,8 @@ export function playTtsAudio(
   // This is critical for browser autoplay policy compliance
   const audioElement = new Audio();
   audioElement.preload = 'auto';
+  // 'Ouvir resumo' / 'Ouvir tudo' seguem a velocidade escolhida no cabeçalho.
+  audioElement.playbackRate = playbackRate;
   // E36 — fala do TTS é mídia de conversa: toca no volume global do atendente.
   const detachMediaVolume = attachMediaVolume(audioElement);
 
@@ -150,6 +167,8 @@ export function playTtsAudio(
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(remainingText);
         utterance.lang = 'pt-BR';
+        // Queda para o navegador: a velocidade escolhida vale aqui também (`rate`).
+        utterance.rate = playbackRate;
         utterance.onend = () => resolve();
         utterance.onerror = () => reject(new Error('Browser speech failed'));
         window.speechSynthesis.speak(utterance);
@@ -169,7 +188,12 @@ export function playTtsAudio(
         ...auth,
         apikey: auth.apikey || supabaseKey,
       },
-      body: JSON.stringify({ text: chunkText }),
+      // A voz vai no corpo: sem `voiceId` a edge fala na voz padrão dela, ignorando o
+      // seletor do cabeçalho.
+      body: JSON.stringify({
+        text: chunkText,
+        ...(options?.voiceId ? { voiceId: options.voiceId } : {}),
+      }),
       signal: controller.signal,
     }))
       .then(async (response) => {
