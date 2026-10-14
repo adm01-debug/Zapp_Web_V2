@@ -1,225 +1,178 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 /**
- * R2-AUTH-036 (item 260, P2) — Sala de Crise.
+ * Sala de Crise — a TELA (PF-02 / R2-AUTH-036).
  *
- * Antes: `loadMetrics` tratava TODA mensagem `sender=contact` da última hora como
- * "sem resposta" (inclusive as já respondidas) e usava `profiles.is_active`
- * (conta habilitada) como se fosse presença de agente — tanto no cartão
- * "Agentes ativos" ("online") quanto no denominador da "Carga por agente"
- * (rotulada conv/agente). O payload abaixo tem mensagens todas respondidas e
- * contas habilitadas offline: nenhum desses proxies pode mexer no diagnóstico.
+ * A medição (RPC `crisis_room_snapshot`, regras de pendência/presença no banco)
+ * vive no hook `useCrisisRoomMetrics` e é provada em
+ * `src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx` e no
+ * `scripts/db-audit/crisis-room-snapshot.test.sh`. Este arquivo substitui a prova
+ * antiga que olhava as consultas `supabase.from(...)` DENTRO do componente: o
+ * componente não fala mais com o banco e só renderiza o que o hook entrega.
  *
- * A prova aqui é o que a tela MOSTRA (valor de cada cartão e banner de crise),
- * renderizando o componente real e deixando o efeito de montagem rodar.
+ * Aqui se prova o que a tela MOSTRA: erro nunca vira "Operação normal", o selo
+ * anuncia severidade, os DOIS limiares aparecem e o esqueleto é só da 1ª carga.
  */
 
-const { mockFrom, PRESENCE, FIXTURE } = vi.hoisted(() => ({
-  mockFrom: vi.fn(),
-  PRESENCE: {} as Record<string, string>,
-  FIXTURE: {
-    inbound: [] as unknown[],
-    replies: [] as unknown[],
-    profiles: [] as unknown[],
-    slaCount: 0,
-  },
-}));
+const h = vi.hoisted(() => {
+  const estado: { resultado: Record<string, unknown> } = {
+    resultado: {
+      metrics: undefined,
+      isCrisis: null,
+      isError: false,
+      error: null,
+      isFirstLoad: false,
+      isRefreshing: false,
+      dataUpdatedAt: 0,
+      refetch: () => {},
+    },
+  };
+  return { estado };
+});
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
-}));
-
-// Mesma origem de presença do Dashboard/War Room (`agent_presence`), não o cadastro.
-vi.mock('@/hooks/crm/useAgentPresence', () => ({
-  useAgentPresenceMap: () => PRESENCE,
-}));
+// O hook é stubado; o resto do módulo (limiares, labels, builder) é o REAL —
+// assim os cartões montados no teste saem do código de produção, não de um mock.
+vi.mock('@/hooks/business/useCrisisRoomMetrics', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/hooks/business/useCrisisRoomMetrics')>();
+  return { ...real, useCrisisRoomMetrics: () => h.estado.resultado };
+});
 
 import { CrisisRoom } from '@/components/admin/CrisisRoom';
+import { buildCrisisMetricReadouts, parseCrisisRoomSnapshot } from '@/hooks/business/useCrisisRoomMetrics';
 
-const MINUTE = 60_000;
-const NOW = Date.now();
+const SNAPSHOT = {
+  unanswered_messages: 42,
+  unanswered_conversations: 12,
+  online_agents: 3,
+  total_agents: 9,
+  sla_breached: 7,
+  queue_ratio: 4,
+  window_minutes: 60,
+  sla_window_hours: 24,
+  generated_at: '2026-10-13T19:00:00.000Z',
+};
 
-/** Mensagem recebida `minAgo` minutos atrás, já com `contact_id`. */
-const inbound = (contactId: string, minAgo: number) => ({
-  id: `in-${contactId}-${minAgo}`,
-  contact_id: contactId,
-  created_at: new Date(NOW - minAgo * MINUTE).toISOString(),
-});
-
-/** Resposta do atendimento — precisa ser POSTERIOR à recebida para tirá-la da pendência. */
-const reply = (contactId: string, minAgo: number) => ({
-  contact_id: contactId,
-  created_at: new Date(NOW - minAgo * MINUTE).toISOString(),
-});
-
-const enabledAccount = (userId: string) => ({ user_id: userId });
-
-function setPresence(map: Record<string, string>) {
-  for (const key of Object.keys(PRESENCE)) delete PRESENCE[key];
-  Object.assign(PRESENCE, map);
+function metricas(snapshot: Record<string, unknown>) {
+  return buildCrisisMetricReadouts(parseCrisisRoomSnapshot(snapshot));
 }
 
-function setupFixture(input: {
-  inbound: unknown[];
-  replies?: unknown[];
-  profiles: unknown[];
-  online?: string[];
-  awayOffline?: string[];
-  slaCount?: number;
-}) {
-  FIXTURE.inbound = input.inbound;
-  FIXTURE.replies = input.replies ?? [];
-  FIXTURE.profiles = input.profiles;
-  FIXTURE.slaCount = input.slaCount ?? 0;
-  setPresence({
-    ...Object.fromEntries((input.online ?? []).map(id => [id, 'online'])),
-    ...Object.fromEntries((input.awayOffline ?? []).map(id => [id, 'offline'])),
-  });
-}
-
-function chainable(finalResponse: unknown) {
-  const node: Record<string, unknown> = {};
-  node.eq = () => node;
-  node.in = () => node;
-  node.gte = () => node;
-  node.then = (resolve: (value: unknown) => unknown) =>
-    Promise.resolve(finalResponse).then(resolve);
-  return node;
+function setResultado(parcial: Record<string, unknown>) {
+  h.estado.resultado = { ...h.estado.resultado, ...parcial };
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  mockFrom.mockImplementation((table: string) => {
-    if (table === 'messages') {
-      let sender: string | null = null;
-      return {
-        select: (_columns?: unknown, options?: { count?: string; head?: boolean }) => {
-          const node: Record<string, unknown> = {};
-          node.eq = (column: string, value: string) => {
-            if (column === 'sender') sender = value;
-            return node;
-          };
-          node.gte = () => node;
-          node.then = (resolve: (value: unknown) => unknown) => {
-            // A consulta antiga era `select('id',{count:'exact',head:true})`: o
-            // servidor devolve `count`, não linhas. Entregar o count real mantém
-            // a versão antiga com o valor DEFEITUOSO (todo sender=contact da hora).
-            if (options?.head) {
-              return Promise.resolve({
-                data: null,
-                count: FIXTURE.inbound.length,
-                error: null,
-              }).then(resolve);
-            }
-            return Promise.resolve({
-              data: sender === 'agent' ? FIXTURE.replies : FIXTURE.inbound,
-              error: null,
-            }).then(resolve);
-          };
-          return node;
-        },
-      };
-    }
-    if (table === 'profiles') {
-      // A consulta antiga era `select('id',{count:'exact',head:true})` e usava `count`
-      // (contas habilitadas). Devolver o count real mantém a versão antiga com o
-      // valor DEFEITUOSO em vez de zero por formato de mock.
-      return {
-        select: (_columns?: unknown, options?: { count?: string; head?: boolean }) =>
-          chainable(options?.head
-            ? { data: null, count: FIXTURE.profiles.length, error: null }
-            : { data: FIXTURE.profiles, error: null }),
-      };
-    }
-    if (table === 'conversation_sla') {
-      return { select: () => chainable({ data: null, count: FIXTURE.slaCount, error: null }) };
-    }
-    return { select: () => chainable({ data: [], error: null }) };
-  });
+  h.estado.resultado = {
+    metrics: metricas(SNAPSHOT),
+    isCrisis: true,
+    isError: false,
+    error: null,
+    isFirstLoad: false,
+    isRefreshing: false,
+    dataUpdatedAt: Date.now(),
+    refetch: vi.fn(),
+  };
 });
 
-/** Valor exibido no cartão cujo rótulo é `label` (o <p> do número precede o do rótulo). */
-async function metricValue(label: string) {
-  await waitFor(() => expect(screen.getByText(label)).toBeInTheDocument());
-  const labelEl = screen.getByText(label);
-  return labelEl.previousElementSibling?.textContent ?? null;
-}
-
-describe('CrisisRoom — pendência e presença reais, não proxies (R2-AUTH-036)', () => {
-  it('mensagem já respondida na última hora não conta como "sem resposta"', async () => {
-    // 40 mensagens recebidas em 8 conversas, TODAS com resposta posterior.
-    const contacts = Array.from({ length: 8 }, (_, i) => `c-${i}`);
-    const unansweredBox: unknown[] = [];
-    const repliesBox: unknown[] = [];
-    contacts.forEach((contactId, i) => {
-      for (let n = 0; n < 5; n += 1) {
-        unansweredBox.push(inbound(contactId, 50 - n));
-        repliesBox.push(reply(contactId, 49 - n));
-      }
-    });
-    setupFixture({
-      inbound: unansweredBox,
-      replies: repliesBox,
-      profiles: ['u-1', 'u-2', 'u-3', 'u-4'].map(enabledAccount),
-      online: ['u-1', 'u-2', 'u-3', 'u-4'],
-    });
+describe('CrisisRoom — erro não vira "Operação normal"', () => {
+  it('falha mostra aviso com "Tentar de novo", "—" nos cartões e selo sem medição', async () => {
+    setResultado({ metrics: undefined, isCrisis: null, isError: true, error: new Error('permission denied'), dataUpdatedAt: 0 });
 
     render(<CrisisRoom />);
 
-    // Antes do conserto: 40 (todo sender=contact da hora) -> "Crítico" -> banner de crise.
-    expect(await metricValue('Msgs sem resposta (1h)')).toBe('0');
-    expect(await metricValue('Agentes ativos')).toBe('4');
-    expect(screen.getByText('🟢 Operação normal')).toBeInTheDocument();
+    // O texto exato que nunca pode aparecer é o verde de operação normal.
+    expect(screen.queryByText('🟢 Operação normal')).not.toBeInTheDocument();
+    expect(screen.getByText('⚠️ Sem medição')).toBeInTheDocument();
+    expect(screen.getByText('Não foi possível medir a operação')).toBeInTheDocument();
+    expect(screen.getByText('permission denied')).toBeInTheDocument();
+
+    // Os 4 cartões continuam na tela, com "—" (não zero).
+    const tracos = screen.getAllByText('—');
+    expect(tracos).toHaveLength(4);
+    expect(screen.getByText('Msgs sem resposta (1h)')).toBeInTheDocument();
+    expect(screen.queryByText('42')).not.toBeInTheDocument();
+
+    // Nem banner de crise nem valor inventado.
     expect(screen.queryByText('Operação em estado crítico!')).not.toBeInTheDocument();
   });
 
-  it('conta habilitada sem presença online não é agente ativo', async () => {
-    setupFixture({
-      inbound: [],
-      profiles: ['u-1', 'u-2', 'u-3'].map(enabledAccount),
-      online: ['u-1'],
-      awayOffline: ['u-2', 'u-3'],
-    });
+  it('"Tentar de novo" chama o refetch do hook', async () => {
+    const refetch = vi.fn();
+    setResultado({ metrics: undefined, isCrisis: null, isError: true, error: new Error('x'), refetch, dataUpdatedAt: 0 });
 
     render(<CrisisRoom />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-    // Antes do conserto: 3 (profiles.is_active) e a operação aparecia como normal.
-    expect(await metricValue('Agentes ativos')).toBe('1');
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CrisisRoom — severidade anunciada e dois limiares', () => {
+  it('banner de crise tem role="alert" e o cabeçalho é uma região viva', async () => {
+    render(<CrisisRoom />);
+
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent('Operação em estado crítico!');
     expect(screen.getByText('🔴 MODO CRISE ATIVO')).toBeInTheDocument();
-    expect(screen.getByText('Operação em estado crítico!')).toBeInTheDocument();
+
+    // A troca de selo é anunciada: o selo vive dentro de um contêiner aria-live.
+    const selo = screen.getByText('🔴 MODO CRISE ATIVO');
+    expect(selo.closest('[aria-live]')).not.toBeNull();
   });
 
-  it('conta só a pendência real e divide a carga por agente online', async () => {
-    setupFixture({
-      inbound: [
-        inbound('c-a', 40), inbound('c-a', 30), // respondidas
-        inbound('c-b', 25), inbound('c-b', 20), // pendentes (mesma conversa)
-        inbound('c-c', 10),                     // pendente
-      ],
-      replies: [reply('c-a', 35), reply('c-a', 28)],
-      profiles: ['u-1', 'u-2'].map(enabledAccount),
-      online: ['u-1', 'u-2'],
-    });
+  it('não anuncia crise quando nada estourou', async () => {
+    setResultado({ metrics: metricas({ ...SNAPSHOT, unanswered_messages: 0, sla_breached: 0, online_agents: 9 }), isCrisis: false });
 
     render(<CrisisRoom />);
 
-    // 3 mensagens pendentes (2 já respondidas ficam de fora) / 2 agentes online -> 1
-    expect(await metricValue('Msgs sem resposta (1h)')).toBe('3');
-    expect(await metricValue('Carga por agente')).toBe('1');
+    expect(screen.getByText('🟢 Operação normal')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('sem agente online a carga não é medida — sai "—", não zero', async () => {
-    setupFixture({
-      inbound: [inbound('c-a', 10)],
-      profiles: ['u-1', 'u-2'].map(enabledAccount),
-      awayOffline: ['u-1', 'u-2'],
-    });
-
+  it('cada cartão mostra os DOIS limiares (atenção e crítico)', async () => {
     render(<CrisisRoom />);
 
-    // Antes do conserto: round(1 / 2 contas habilitadas) = 1 no cartão "conv/agente".
-    expect(await metricValue('Carga por agente')).toBe('—');
-    expect(await metricValue('Agentes ativos')).toBe('0');
+    expect(screen.getByText('Atenção: > 20 msgs')).toBeInTheDocument();
+    expect(screen.getByText('Crítico: > 30 msgs')).toBeInTheDocument();
+    expect(screen.getByText('Atenção: > 5 conversas')).toBeInTheDocument();
+    expect(screen.getByText('Crítico: > 10 conversas')).toBeInTheDocument();
+    // Métrica de piso (agentes): MENOR é pior — o sinal inverte.
+    expect(screen.getByText('Atenção: < 4 online')).toBeInTheDocument();
+    expect(screen.getByText('Crítico: < 2 online')).toBeInTheDocument();
+  });
+});
+
+describe('CrisisRoom — carga, recarga e carimbo', () => {
+  it('esqueleto só na primeira carga; recarga mantém os valores e marca aria-busy', async () => {
+    setResultado({ metrics: undefined, isFirstLoad: true, isCrisis: null, dataUpdatedAt: 0 });
+    const { unmount } = render(<CrisisRoom />);
+    // 1ª carga: cartões ainda não renderizados (esqueleto), rótulo ausente.
+    expect(screen.queryByText('Msgs sem resposta (1h)')).not.toBeInTheDocument();
+    unmount();
+
+    // Recarga de fundo: valores continuam na tela (não pisca esqueleto).
+    setResultado({ metrics: metricas(SNAPSHOT), isFirstLoad: false, isRefreshing: true });
+    render(<CrisisRoom />);
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Msgs sem resposta (1h)')).toBeInTheDocument();
+
+    const botao = screen.getByRole('button', { name: /Atualizar métricas/ });
+    expect(botao).toHaveAttribute('aria-busy', 'true');
+    expect(botao).toBeDisabled();
+  });
+
+  it('"Atualizado há X" reflete o carimbo da última leitura boa', async () => {
+    const primeira = render(<CrisisRoom />);
+    await waitFor(() => expect(screen.getByText('Atualizado agora')).toBeInTheDocument());
+    primeira.unmount();
+
+    setResultado({ dataUpdatedAt: Date.now() - 5 * 60_000 });
+    const { unmount } = render(<CrisisRoom />);
+    expect(screen.getByText('Atualizado há 5 min')).toBeInTheDocument();
+    unmount();
+
+    setResultado({ metrics: undefined, isError: true, error: new Error('x'), dataUpdatedAt: 0 });
+    render(<CrisisRoom />);
+    expect(screen.getByText('Ainda sem medição')).toBeInTheDocument();
   });
 });
