@@ -8,6 +8,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAutomations, type AutomationRow } from './useAutomations';
+import { isObsoleteAutomation } from './automationConstants';
 import { AutomationCard } from './AutomationCard';
 import { AutomationEditorDialog } from './AutomationEditorDialog';
 
@@ -18,15 +19,21 @@ export function AutomationsManager() {
   const [editingAutomation, setEditingAutomation] = useState<AutomationRow | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
+  // Registro obsoleto (tipo que a tela não oferece mais) conta como inativo nos
+  // filtros e não pode ser ligado — o card já desabilita o controle, e esta
+  // guarda repete a checagem ANTES de gravar, para nenhum caminho reativar uma
+  // ação que não existe mais.
   const filteredAutomations = useMemo(() => {
     return automations.filter(a => {
-      if (filter === 'active') return a.is_active;
-      if (filter === 'inactive') return !a.is_active;
+      const isActive = a.is_active && !isObsoleteAutomation(a);
+      if (filter === 'active') return isActive;
+      if (filter === 'inactive') return !isActive;
       return true;
     });
   }, [automations, filter]);
 
   const handleToggle = (automation: AutomationRow) => {
+    if (isObsoleteAutomation(automation)) return;
     updateMutation.mutate({ id: automation.id, is_active: !automation.is_active } as Partial<AutomationRow> & { id: string });
   };
 

@@ -156,7 +156,7 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
       trigger_config: { keywords: ['oi', 'olá'], match: 'any' },
       actions: [
         { type: 'send_message', config: { message: 'Olá!', delay_seconds: 3 } },
-        { type: 'add_tag', config: { tag_id: 'tag-1' } },
+        { type: 'close_conversation', config: { delay_seconds: 3 } },
       ],
     });
 
@@ -174,7 +174,7 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     // lista inteira de ações preservada, com os campos que a UI não edita (delay_seconds)
     expect(payload.actions).toEqual([
       { type: 'send_message', config: { message: 'Olá!', delay_seconds: 3 } },
-      { type: 'add_tag', config: { tag_id: 'tag-1' } },
+      { type: 'close_conversation', config: { delay_seconds: 3 } },
     ]);
   });
 
@@ -242,12 +242,12 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     ]);
   });
 
-  it('#99: troca add_tag → assign_agent chega ao onSave, remove tag_id e preserva chaves desconhecidas', async () => {
+  it('#99: troca send_message → assign_agent chega ao onSave, remove message e preserva chaves desconhecidas', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     const automation = buildAutomation({
       actions: [{
-        type: 'add_tag',
-        config: { tag_id: 'tag-1', delay_seconds: 5, team_id: 'team-2', strategy: 'round_robin' },
+        type: 'send_message',
+        config: { message: 'texto antigo', delay_seconds: 5, team_id: 'team-2', strategy: 'round_robin' },
       }],
     });
 
@@ -259,6 +259,9 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
 
+    // `message` é dono conhecido de send_message/send_notification: sai do novo tipo.
+    // `delay_seconds`, `team_id` e `strategy` são desconhecidos (executor fora deste
+    // repositório): continuam, como sempre continuaram.
     expect(payload.actions).toEqual([
       {
         type: 'assign_agent',
