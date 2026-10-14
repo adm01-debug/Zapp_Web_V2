@@ -12,6 +12,7 @@ import {
   formatSlaDuration,
   slaStatusForDuration,
   slaWindowStartMs,
+  type SlaMilestone,
   type SlaTimelineEvent,
   type SlaTimelineRow,
 } from '../slaTimeline';
@@ -280,5 +281,56 @@ describe('filterSlaMilestones', () => {
       T0,
     );
     expect(filterSlaMilestones(seteDias, { period: '7d' }, T0)).toEqual([]);
+  });
+});
+
+describe('filterSlaMilestones — situação (atalho "só em risco/estourado")', () => {
+  const porSituacao: SlaMilestone[] = [
+    { id: 'ok', kind: 'first_response', at: iso(T0), deadlineAt: null, durationMs: 30_000, status: 'ok', limitMinutes: 5 },
+    { id: 'risco', kind: 'first_response', at: iso(T0), deadlineAt: null, durationMs: 240_000, status: 'warning', limitMinutes: 5 },
+    { id: 'estourado', kind: 'first_response', at: iso(T0), deadlineAt: null, durationMs: 400_000, status: 'breached', limitMinutes: 5 },
+    { id: 'sem-prazo', kind: 'transfer', at: iso(T0), deadlineAt: null, durationMs: null, status: 'na', limitMinutes: null },
+  ];
+
+  it('uma situação só', () => {
+    expect(filterSlaMilestones(porSituacao, { statuses: ['breached'] }, T0).map((m) => m.id)).toEqual(['estourado']);
+  });
+
+  it('o atalho "em risco/estourado" mantém as duas situações de risco', () => {
+    expect(filterSlaMilestones(porSituacao, { statuses: ['warning', 'breached'] }, T0).map((m) => m.id)).toEqual([
+      'risco',
+      'estourado',
+    ]);
+  });
+
+  it('"all" ou ausente não corta por situação', () => {
+    expect(filterSlaMilestones(porSituacao, { statuses: 'all' }, T0)).toHaveLength(4);
+    expect(filterSlaMilestones(porSituacao, {}, T0)).toHaveLength(4);
+  });
+
+  it('lista vazia de situação não é "todas": espelha o `kinds: []` (nada selecionado, nada casa)', () => {
+    expect(filterSlaMilestones(porSituacao, { statuses: [] }, T0)).toEqual([]);
+  });
+
+  it('situação combina com tipo (E, não OU)', () => {
+    expect(filterSlaMilestones(porSituacao, { kinds: ['transfer'], statuses: ['na'] }, T0).map((m) => m.id)).toEqual([
+      'sem-prazo',
+    ]);
+    expect(filterSlaMilestones(porSituacao, { kinds: ['transfer'], statuses: ['breached'] }, T0)).toEqual([]);
+  });
+
+  it('situação combina com período', () => {
+    const antigo: SlaMilestone = {
+      id: 'risco-antigo',
+      kind: 'first_response',
+      at: iso(T0 - 10 * 24 * 3_600_000),
+      deadlineAt: null,
+      durationMs: 240_000,
+      status: 'warning',
+      limitMinutes: 5,
+    };
+    expect(filterSlaMilestones([...porSituacao, antigo], { statuses: ['warning'], period: '24h' }, T0).map((m) => m.id)).toEqual([
+      'risco',
+    ]);
   });
 });

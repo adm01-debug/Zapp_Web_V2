@@ -236,6 +236,8 @@ export type SlaTimelinePeriod = '24h' | '7d' | '30d' | 'all';
 export interface SlaTimelineFilters {
   period?: SlaTimelinePeriod;
   kinds?: SlaMilestoneKind[] | 'all';
+  /** Situações aceitas. Lista vazia ou ausente = todas (nenhum corte por situação). */
+  statuses?: SlaTimelineStatus[] | 'all';
 }
 
 /** Janela em ms para o período. `24h` é corrido; `7d`/`30d` contam dias de calendário. */
@@ -246,7 +248,7 @@ export function slaWindowStartMs(period: SlaTimelinePeriod, nowMs: number): numb
   return startOfDay(subDays(new Date(nowMs), days - 1)).getTime();
 }
 
-/** Filtra por período e tipo sem tocar a rede (o dado já está em cache). */
+/** Filtra por período, tipo e situação sem tocar a rede (o dado já está em cache). */
 export function filterSlaMilestones(
   milestones: SlaMilestone[],
   filters: SlaTimelineFilters = {},
@@ -255,9 +257,12 @@ export function filterSlaMilestones(
   const fromMs = slaWindowStartMs(filters.period ?? 'all', nowMs);
   const kinds = filters.kinds ?? 'all';
   const kindSet = kinds === 'all' ? null : new Set(kinds);
+  const statuses = filters.statuses ?? 'all';
+  const statusSet = statuses === 'all' ? null : new Set(statuses);
 
   return milestones.filter((milestone) => {
     if (kindSet && !kindSet.has(milestone.kind)) return false;
+    if (statusSet && !statusSet.has(milestone.status)) return false;
     if (fromMs === null) return true;
     const atMs = new Date(milestone.at).getTime();
     return Number.isFinite(atMs) && atMs >= fromMs && atMs <= nowMs;

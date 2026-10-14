@@ -12,8 +12,13 @@
  * preferência já salva do usuário é preservada intacta (nenhuma seção é
  * aberta ou fechada à força) — quem nunca gravou preferência recebe o default
  * com as 4 seções abertas, e quem abrir a nova seção tem a escolha persistida.
+ *
+ * `sla-timeline` (Linha do tempo de SLA) entrou em 2026-10-14 pelo mesmo
+ * caminho: mais um valor conhecido, chave de storage intacta. Ela NÃO entra no
+ * default — nasce recolhida para não empilhar painel; quem abrir tem a escolha
+ * persistida.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'sla-timeline'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence'];

@@ -25,6 +25,13 @@ vi.mock('@/services/contact.service', () => ({
   ContactService: { getById: vi.fn(async () => ({ data: null })) },
 }));
 
+// A seção "Linha do tempo de SLA" mora aqui; o hook de dados é o único mock
+// (lista vazia) — o filtro e a memória da seção têm prova própria.
+vi.mock('@/hooks/sla/useContactSlaTimeline', () => ({
+  contactSlaTimelineKey: (contactId: string | null | undefined) => ['contact-sla-timeline', contactId],
+  useContactSlaTimeline: () => ({ milestones: [], incomplete: false, limitsReady: true, loading: false }),
+}));
+
 const contact = { id: 'contact-1', name: 'João Silva', phone: '+55 11 99999-0000' } as Contact;
 
 beforeEach(() => {
@@ -50,6 +57,14 @@ describe('ContactSidebarSections (etapa 48)', () => {
     expect(screen.getByTestId('sidebar-section-professional')).toBeInTheDocument();
     expect(screen.getByTestId('sidebar-section-personal')).toBeInTheDocument();
     expect(screen.getByTestId('sidebar-section-singu')).toBeInTheDocument();
+  });
+
+  it('a seção "Linha do tempo de SLA" aparece no painel (nasce recolhida)', () => {
+    renderSections();
+    const secao = screen.getByTestId('sidebar-section-sla-timeline');
+    expect(secao).toBeInTheDocument();
+    expect(secao).toHaveAttribute('data-state', 'closed');
+    expect(screen.getByText('Linha do tempo de SLA')).toBeInTheDocument();
   });
 
   it('status disabled renderiza as 3 seções em estado desligado', () => {
