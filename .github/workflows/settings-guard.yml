@@ -45,8 +45,19 @@ jobs:
         # Política esperada: strict=true, allow_auto_merge=true.
         # Se houver regressão: restaura via PATCH e abre/atualiza issue [settings-guard].
         # Se OK: fecha a issue [settings-guard] se estiver aberta.
+        # W17: grava /tmp/perimeter-snapshot.json para o passo de upload abaixo.
         run: node scripts/ci/github-settings-guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
+
+      - name: 📤 Publicar snapshot do perímetro
+        # W17: artefato de rastreabilidade; roda mesmo se o guard falhar (regressão).
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: perimeter-snapshot-${{ github.run_id }}
+          path: /tmp/perimeter-snapshot.json
+          retention-days: 14
+          if-no-files-found: warn

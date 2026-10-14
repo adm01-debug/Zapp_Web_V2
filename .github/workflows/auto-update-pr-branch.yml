@@ -38,6 +38,16 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          # W19: se allow_auto_merge estiver desligado no repositório, não há
+          # PRs que precisem de atualização de base — encerra cedo.
+          if auto_merge=$(gh api "repos/$REPO" --jq '.allow_auto_merge' 2>/dev/null); then
+            if [ "$auto_merge" != "true" ]; then
+              echo "allow_auto_merge desligado no repositório — nenhum PR precisa ser atualizado"
+              exit 0
+            fi
+          else
+            echo "Falha ao consultar repositório; prosseguindo por precaução"
+          fi
           # Mesma protecao das leituras abaixo: sem o "if !", uma falha transitoria
           # aqui (rede/rate-limit) mata o job antes de processar qualquer PR do lote.
           if ! prs=$(gh pr list --repo "$REPO" --state open \

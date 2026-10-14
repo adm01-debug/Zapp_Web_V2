@@ -21,9 +21,13 @@
  * Agora: campo que não dá para ler vira **não verificável** (com o motivo e o
  * que fazer), nunca falha silenciosa — e a issue é aberta de qualquer forma,
  * porque "não consegui olhar" é justamente o que precisa de gente.
+ *
+ * W17: ao final de cada run, o script grava /tmp/perimeter-snapshot.json (ou
+ * $PERIMETER_SNAPSHOT_PATH) com o resultado completo; o workflow faz upload
+ * desse arquivo como artefato para rastreabilidade histórica (14 dias).
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -36,6 +40,8 @@ const BRANCH = 'main';
 const baseline = JSON.parse(
   readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),
 );
+
+const SNAPSHOT_PATH = process.env.PERIMETER_SNAPSHOT_PATH ?? '/tmp/perimeter-snapshot.json';
 
 // jssecurity:S5145 — valores vindos da API do GitHub entram no log em #92/#115/#127.
 // Quebras de linha / caracteres de controle são neutralizados para impedir que
@@ -173,6 +179,33 @@ async function restaurar(campo) {
   return null;
 }
 
+// ---------------------------------------------------------------- snapshot
+
+/** Grava o resultado da verificação em JSON para upload como artefato (W17). */
+function gravarSnapshot(divergencias, naoVerificaveis, restaurados = []) {
+  const status =
+    divergencias.length === 0 && naoVerificaveis.length === 0
+      ? 'ok'
+      : divergencias.length > 0
+        ? 'regressao'
+        : 'pontos_cegos';
+  const snapshot = {
+    timestamp: new Date().toISOString(),
+    run_id: process.env.GITHUB_RUN_ID ?? 'manual',
+    repository: REPO,
+    status,
+    divergencias,
+    naoVerificaveis,
+    restaurados,
+  };
+  try {
+    writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2));
+    console.log(`Snapshot do perímetro gravado em ${SNAPSHOT_PATH}`);
+  } catch (e) {
+    console.log(`::warning::Falha ao gravar snapshot: ${e.message}`);
+  }
+}
+
 // ---------------------------------------------------------------- issue
 
 async function findIssue() {
@@ -250,6 +283,7 @@ async function main() {
   if (divergencias.length === 0 && naoVerificaveis.length === 0) {
     console.log('✅ Perimetro OK — nenhuma regressao detectada.');
     await fecharIssue();
+    gravarSnapshot(divergencias, naoVerificaveis);
     return;
   }
 
@@ -311,6 +345,7 @@ async function main() {
     `Timestamp: ${new Date().toISOString()}`,
   );
 
+  gravarSnapshot(divergencias, naoVerificaveis, restaurados);
   await abrirOuAtualizarIssue(linhas.join('\n'));
   process.exit(1);
 }
