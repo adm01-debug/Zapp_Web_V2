@@ -16,8 +16,19 @@ import {
 import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
+import type { ExtCompany, ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
 import { callCRMIntegration } from '@/lib/crmIntegration';
+
+/**
+ * A Edge `crm-integration` devolve `meta.unavailable` quando a origem externa não
+ * responde (mesmo contrato da V3). O tipo publicado de `ExternalDBQueryResult`
+ * ainda não declara o campo, por isso a leitura é estreitada aqui em vez de
+ * afrouxar o tipo compartilhado.
+ */
+function dadosIndisponiveis(resultado?: { meta?: unknown }): boolean {
+  const meta = resultado?.meta as unknown as { unavailable?: boolean } | undefined;
+  return meta?.unavailable === true;
+}
 
 interface CRMQueueHealth {
   pending: number;
@@ -82,7 +93,7 @@ function IntegrationHealth() {
 function MetricCard({ label, table, icon: Icon, color }: {
   label: string; table: string; icon: React.ElementType; color: string;
 }) {
-  const { data, isLoading } = useExternalSelect({
+  const { data, isLoading, isError } = useExternalSelect({
     table,
     select: 'id',
     limit: 1,
@@ -90,6 +101,7 @@ function MetricCard({ label, table, icon: Icon, color }: {
     staleTime: 15 * 60 * 1000,
   });
   const count = data?.meta?.record_count ?? 0;
+  const indisponivel = isError || dadosIndisponiveis(data);
   return (
     <Card className="border-border/50">
       <CardContent className="p-4 flex items-center gap-3">
@@ -98,11 +110,14 @@ function MetricCard({ label, table, icon: Icon, color }: {
         </div>
         <div>
           {isLoading ? <Skeleton className="h-6 w-14" /> : (
-            <p className="text-xl font-bold">
-              {count > 1000 ? `${(count / 1000).toFixed(1)}k` : count.toLocaleString('pt-BR')}
-            </p>
+            <>
+              <p className="text-xl font-bold">
+                {indisponivel ? '—' : (count > 1000 ? `${(count / 1000).toFixed(1)}k` : count.toLocaleString('pt-BR'))}
+              </p>
+              <p className="text-xs text-muted-foreground">{label}</p>
+              {indisponivel && <p className="text-[10px] text-muted-foreground/80">Dados não disponíveis</p>}
+            </>
           )}
-          <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
     </Card>
@@ -110,14 +125,36 @@ function MetricCard({ label, table, icon: Icon, color }: {
 }
 
 // ─── Top Customers ───────────────────────────────────────────
+/**
+ * `customers.vendedor_nome` é o VENDEDOR, não o cliente. O nome do cliente mora
+ * em `companies` (`razao_social`/`nome_fantasia`), alcançado por `company_id`.
+ * A Edge aceita um `select` cru, mas o embed depende da relação PostgREST da
+ * origem externa — por isso a busca é feita em duas consultas explícitas.
+ */
 function TopCustomers() {
-  const { data, isLoading } = useExternalSelect<ExtCustomer>({
+  const { data, isLoading, isError } = useExternalSelect<ExtCustomer>({
     table: 'customers',
-    select: 'id,vendedor_nome,valor_total_compras,total_pedidos,ticket_medio,cliente_ativado',
+    select: 'id,company_id,valor_total_compras,total_pedidos,cliente_ativado',
     order: { column: 'valor_total_compras', ascending: false },
     limit: 5,
     staleTime: 10 * 60 * 1000,
   });
+  const clientes = data?.data ?? [];
+  const companyIds = Array.from(new Set(clientes.map((c) => c.company_id).filter(Boolean)));
+  const empresasQuery = useExternalSelect<ExtCompany>({
+    table: 'companies',
+    select: 'id,razao_social,nome_fantasia,nome_crm',
+    filters: companyIds.length > 0 ? [{ column: 'id', operator: 'in', value: companyIds }] : undefined,
+    limit: companyIds.length || 1,
+    enabled: companyIds.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+  const empresasPorId = new Map((empresasQuery.data?.data ?? []).map((e) => [e.id, e]));
+  const nomeCliente = (c: ExtCustomer) => {
+    const empresa = c.company_id ? empresasPorId.get(c.company_id) : undefined;
+    return empresa?.razao_social || empresa?.nome_fantasia || empresa?.nome_crm || '—';
+  };
+  const indisponivel = isError || dadosIndisponiveis(data);
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
   return (
     <Card>
@@ -129,13 +166,15 @@ function TopCustomers() {
       <CardContent className="pb-3">
         {isLoading ? (
           <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+        ) : indisponivel ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Dados não disponíveis</p>
         ) : (
           <div className="space-y-1.5">
-            {(data?.data || []).map((c, i) => (
+            {clientes.map((c, i) => (
               <div key={c.id || i} className="flex items-center justify-between text-xs bg-muted/15 rounded-md px-2 py-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground font-mono w-4">#{i + 1}</span>
-                  <span className="font-medium truncate max-w-[120px]">{c.vendedor_nome || '—'}</span>
+                  <span className="font-medium truncate max-w-[120px]">{nomeCliente(c)}</span>
                   <Badge variant="outline" className={`text-[9px] ${c.cliente_ativado ? 'text-primary' : 'text-muted-foreground'}`}>
                     {c.cliente_ativado ? 'Ativo' : 'Inativo'}
                   </Badge>
@@ -155,12 +194,13 @@ function TopCustomers() {
 
 // ─── RFM Distribution ────────────────────────────────────────
 function RFMDistribution() {
-  const { data, isLoading } = useExternalSelect<ExtCompanyRFMScore>({
+  const { data, isLoading, isError } = useExternalSelect<ExtCompanyRFMScore>({
     table: 'company_rfm_scores',
     select: 'id,segment_code,combined_score',
     limit: 200,
     staleTime: 15 * 60 * 1000,
   });
+  const indisponivel = isError || dadosIndisponiveis(data);
 
   const segments = (data?.data || []).reduce<Record<string, number>>((acc, r) => {
     const seg = r.segment_code || 'Sem segmento';
@@ -186,7 +226,9 @@ function RFMDistribution() {
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-3">
-        {isLoading ? <Skeleton className="h-32" /> : (
+        {isLoading ? <Skeleton className="h-32" /> : indisponivel ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Dados não disponíveis</p>
+        ) : (
           <div className="space-y-1.5">
             {sorted.slice(0, 8).map(([seg, count]) => (
               <div key={seg} className="flex items-center gap-2 text-xs">
@@ -208,13 +250,14 @@ function RFMDistribution() {
 
 // ─── Recent Sales ────────────────────────────────────────────
 function RecentSales() {
-  const { data, isLoading } = useExternalSelect<ExtSale>({
+  const { data, isLoading, isError } = useExternalSelect<ExtSale>({
     table: 'sales',
     select: 'id,client_name,product_name,amount,status,created_at',
     order: { column: 'created_at', ascending: false },
     limit: 5,
     staleTime: 5 * 60 * 1000,
   });
+  const indisponivel = isError || dadosIndisponiveis(data);
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
   return (
@@ -227,6 +270,8 @@ function RecentSales() {
       <CardContent className="pb-3">
         {isLoading ? (
           <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+        ) : indisponivel ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Dados não disponíveis</p>
         ) : (
           <div className="space-y-1.5">
             {(data?.data || []).map((s, i) => (
