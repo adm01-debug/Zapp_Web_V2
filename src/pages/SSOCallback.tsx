@@ -12,17 +12,47 @@ type CallbackStatus = 'loading' | 'success' | 'error';
 
 const MAX_ERROR_LENGTH = 200;
 const GENERIC_ERROR = 'Ocorreu um erro durante a autenticação';
+const CONTA_NAO_LIBERADA = 'Sua conta não está liberada. Peça ao administrador.';
+const CONTA_DESATIVADA = 'Sua conta está desativada. Peça ao administrador.';
+const ACESSO_NEGADO = 'Acesso não autorizado. Tente novamente ou peça ajuda ao administrador.';
+const SERVIDOR_FALHOU = 'O servidor de autenticação falhou. Tente novamente em instantes.';
 
-// PKCE flow returns error params in the query string, not the hash fragment
+// Códigos e textos em inglês que o provedor devolve no retorno do login social.
+const ERROR_TRANSLATIONS: Record<string, string> = {
+  signup_disabled: CONTA_NAO_LIBERADA,
+  signups_not_allowed: CONTA_NAO_LIBERADA,
+  user_banned: CONTA_DESATIVADA,
+  access_denied: ACESSO_NEGADO,
+  server_error: SERVIDOR_FALHOU,
+};
+
+// PKCE flow returns error params in the query string, not the hash fragment.
+// `error_code` vem primeiro: é o identificador estável que o provedor usa.
 function getUrlError(): string | null {
   const p = new URLSearchParams(window.location.search);
-  return p.get('error_description') || p.get('error');
+  return p.get('error_code') || p.get('error_description') || p.get('error');
 }
 
-// A mensagem vem da URL (quem monta o link controla o texto): corta no tamanho
-// máximo, remove caracteres de marcação e cai num texto genérico quando sobra vazio.
+// Mensagem conhecida do provedor vira pt-BR; desconhecida segue para sanitização.
+function traduzirErroAuth(raw: string): string | null {
+  const chave = raw.trim().toLowerCase();
+  if (ERROR_TRANSLATIONS[chave]) return ERROR_TRANSLATIONS[chave];
+  if (chave.includes('signup_disabled') || chave.includes('signups not allowed')) {
+    return CONTA_NAO_LIBERADA;
+  }
+  if (chave.includes('user_banned') || chave.includes('banned')) return CONTA_DESATIVADA;
+  if (chave.includes('access_denied')) return ACESSO_NEGADO;
+  if (chave.includes('server_error')) return SERVIDOR_FALHOU;
+  return null;
+}
+
+// A mensagem vem da URL (quem monta o link controla o texto): textos conhecidos
+// viram pt-BR; o resto é cortado no tamanho máximo, perde caracteres de marcação
+// e cai no texto genérico quando não sobra nada.
 function sanitizeAuthError(raw: string | null | undefined): string {
   if (!raw) return GENERIC_ERROR;
+  const traduzido = traduzirErroAuth(raw);
+  if (traduzido) return traduzido;
   const text = raw.slice(0, MAX_ERROR_LENGTH).replace(/[<>"'&`]/g, '').trim();
   return text || GENERIC_ERROR;
 }
@@ -38,6 +68,10 @@ export default function SSOCallback() {
   const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   // ref tracks live status to avoid stale closure in the timeout callback
   const statusRef = useRef<CallbackStatus>(initialError ? 'error' : 'loading');
+  // Garante um único toast de sucesso e um único redirecionamento, mesmo que a
+  // sessão chegue pelos dois caminhos (getSession e onAuthStateChange SIGNED_IN).
+  const loginConcluidoRef = useRef(false);
+  const redirecionamentoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // If Google returned an error in the redirect URL, show it and stop
@@ -47,62 +81,79 @@ export default function SSOCallback() {
       return;
     }
 
+    let ativo = true;
+
+    const concluirLogin = () => {
+      if (loginConcluidoRef.current) return;
+      loginConcluidoRef.current = true;
+      statusRef.current = 'success';
+      setStatus('success');
+      toast.success('Login realizado com sucesso!');
+      redirecionamentoRef.current = setTimeout(() => navigate(destinoPosLogin), 1500);
+    };
+
+    const falharLogin = (mensagem: string) => {
+      // Um login que falha depois do sucesso cancela o redirecionamento pendente.
+      if (redirecionamentoRef.current) {
+        clearTimeout(redirecionamentoRef.current);
+        redirecionamentoRef.current = null;
+      }
+      loginConcluidoRef.current = false;
+      statusRef.current = 'error';
+      setStatus('error');
+      setErrorMessage(mensagem);
+    };
+
     // Subscribe to auth state changes — cleanup returned directly to React (not inside async fn)
     const { data: authData } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        statusRef.current = 'success';
-        setStatus('success');
-        toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate(destinoPosLogin), 1500);
+        concluirLogin();
       } else if (event === 'SIGNED_OUT') {
-        statusRef.current = 'error';
-        setStatus('error');
-        setErrorMessage('Sessão não encontrada');
+        falharLogin('Sessão não encontrada');
       }
     });
 
     // Check if a session already exists (fast redirect case)
     supabase.auth.getSession().then(({ data, error }) => {
+      if (!ativo) return;
       if (error) {
-        statusRef.current = 'error';
-        setStatus('error');
-        setErrorMessage(sanitizeAuthError(error.message));
+        falharLogin(sanitizeAuthError(error.message));
         toast.error('Erro no login SSO');
         return;
       }
       if (data.session) {
-        statusRef.current = 'success';
-        setStatus('success');
-        toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate(destinoPosLogin), 1500);
+        concluirLogin();
       }
     });
 
     // Timeout fallback — use ref to avoid stale closure on `status` state
     const timer = setTimeout(() => {
       if (statusRef.current === 'loading') {
-        statusRef.current = 'error';
-        setStatus('error');
-        setErrorMessage('Tempo esgotado. Tente novamente.');
+        falharLogin('Tempo esgotado. Tente novamente.');
         toast.error('Erro no login SSO');
       }
     }, 10000);
 
     return () => {
+      ativo = false;
       clearTimeout(timer);
+      if (redirecionamentoRef.current) {
+        clearTimeout(redirecionamentoRef.current);
+        redirecionamentoRef.current = null;
+      }
       authData.subscription.unsubscribe();
     };
   }, [navigate, destinoPosLogin]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md"
       >
         {status === 'loading' && (
-          <Card>
+          <Card role="status" aria-live="polite">
             <CardHeader className="text-center">
               <motion.div
                 animate={{ rotate: 360 }}
@@ -120,7 +171,7 @@ export default function SSOCallback() {
         )}
 
         {status === 'success' && (
-          <Card>
+          <Card role="status" aria-live="polite">
             <CardHeader className="text-center">
               <motion.div
                 initial={{ scale: 0 }}
@@ -139,7 +190,7 @@ export default function SSOCallback() {
         )}
 
         {status === 'error' && (
-          <Card>
+          <Card role="alert" aria-live="assertive">
             <CardHeader className="text-center">
               <motion.div
                 initial={{ scale: 0 }}
@@ -161,6 +212,6 @@ export default function SSOCallback() {
           </Card>
         )}
       </motion.div>
-    </div>
+    </main>
   );
 }
