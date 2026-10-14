@@ -1,34 +1,24 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
-## O que mudou e por quê
-- `supabase/migrations/20261012231400_notifications_goal_dedupe.sql` (nova, aditiva): trigger BEFORE INSERT `notifications_goal_dedupe` que, quando o escritor não informa `notifications.dedupe_key`, calcula a chave estável do aviso de meta (`goal:v1:<goal_id>:<period>:<dia em America/Sao_Paulo>`) e PULA a inserção quando o mesmo aviso já existe. Duas gravações iguais do mesmo usuário/meta/período/dia → 1 linha, sem erro; o índice parcial `ux_notifications_user_dedupe_key` (IA-047) segue como backstop da corrida (23505). Não toca GRANT, policy nem tabela; o rollback (drop trigger + drop function) fica no cabeçalho.
-- `supabase/tests/notifications_goal_dedupe.sql` (novo): suíte que cria à mão a superfície real de `public.notifications` (roles anon/authenticated/service_role, `auth.uid()/auth.role()`, dedupe_key, o índice IA-047, RLS e as policies reais, inclusive "Block authenticated notification inserts" WITH CHECK false) e aplica o ARQUIVO REAL da migration.
+Refazer 1 do dedupe do aviso de meta: a recusa apontou oráculo de RLS na trigger DEFINER (duplicado do cliente voltava INSERT 0 0 em vez de 42501). Conferi que procede, troquei a função para INVOKER com pulo silencioso só para papel servidor e adicionei o teste do duplicado negado (T6b).
 
-Motivo: o aviso de meta era gravado sem trava nenhuma no banco (o hook só deduplica no useRef — recarregar/2ª aba reenvia). A coluna `dedupe_key` e o índice já existiam, mas nenhum escritor preenchia a chave, então o índice nunca pegava nada.
+Ponto 1 — oráculo: conferi no Postgres descartável com a migration antiga que o diagnóstico procede (duplicado de authenticated do próprio aviso voltou INSERT 0 0, sem erro, segue 1 linha). Mudança em `supabase/migrations/20261012231400_notifications_goal_dedupe.sql`: função agora SECURITY INVOKER (o EXISTS respeita a RLS do chamador; mantido `set search_path = public, pg_temp` e o REVOKE) e o RETURN NULL só acontece com `current_user IN ('service_role','postgres')`; anon/authenticated seguem para a RLS, que nega com 42501 — o mesmo erro de um aviso novo. Teste: T6b falha na migration antiga e passa na nova (linhas abaixo).
+Ponto 2 — T6b: adicionado em `supabase/tests/notifications_goal_dedupe.sql` após o T6; authenticated e anon repetem o aviso que JÁ EXISTE (g-abc/daily de hoje, do T1), ambos têm de receber insufficient_privilege e a contagem de linhas não pode mudar. Vermelha: migration antiga + teste novo → `ERROR: T6b FALHOU: duplicado de authenticated passou (INSERT 0 0 = oraculo)`; verde: migration nova → `NOTICE: T6b OK: duplicado de authenticated e anon negado (42501), nada gravado`.
+Ponto 3 — assinatura: a primeira linha deste relato é exatamente `Especialista: workersql`.
+Ponto 4 — afirmação corrigida: INSERT do navegador (novo ou duplicado) é negado pela RLS com 42501 (T6 para o novo, T6b para o duplicado); só service_role deduplica em silêncio (T1, 2 INSERTs iguais = 1 linha). A seção "O que NÃO fiz" abaixo já reflete esse contrato.
+Ponto 5 — vermelho→verde refeito no banco descartável com papéis reais: sem migration (`-v sem_migration=1`) falha em T1; com a migration corrigida passam T1–T7+T6b (saída abaixo). Rollback do cabeçalho executado no banco descartável: trigger 1→0, função 1→0, índice IA-047 intacto.
 
-## Prova
-- vermelho antes: `docker exec -i … psql -v sem_migration=1 < supabase/tests/notifications_goal_dedupe.sql` → `ERROR: T1 FALHOU: 2 insercoes iguais gravaram 2 linha(s), esperado 1` (EXIT=3).
-- verde depois: mesmo comando com `-v mig=/repo/supabase/migrations/20261012231400_notifications_goal_dedupe.sql` →
-  `T1 OK: 2 insercoes iguais = 1 linha; dedupe_key=goal:v1:g-abc:daily:2026-10-12`
-  `T2 OK: meta/período diferentes = linhas diferentes (3 no total)`
-  `T3 OK: dia diferente => chave diferente (goal:v1:g-abc:daily:2026-10-11); 4 no total`
-  `T4 OK: type<>goal sem dedupe_key nao e deduplicado (2 linhas)`
-  `T5 OK: dedupe_key explicita repetida recusada pelo indice (23505)`
-  `T6 OK: authenticated segue recusado na escrita (42501 / WITH CHECK false)`
-  `T7 OK: funcao da trigger fechada para anon/authenticated`
-  `notifications_goal_dedupe: TODAS as assercoes passaram (T1-T7)`
-- banco LOCAL real (migration aplicada por `hermes-db-migrar`, todas as migrations reais): `zapp-db-local psql . v2-26101220090beb` com 2 INSERTs de meta idênticos como `service_role` → `INSERT 0 1` / `INSERT 0 0` e `linhas=1 | chave=goal:v1:g-probe:daily:2026-10-12` (transação com ROLLBACK) — confirmado.
-- rollback executável: probe roda as 2 linhas do cabeçalho → `ROLLBACK OK: trigger e funcao removidas, indice IA-047 intacto`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (110s)` (sem nome de conjunto o banco é pulado — é assim que o fechar chama).
-- Gatilhos da tabela no banco real: só `notifications_goal_dedupe` (`pg_trigger`), nenhum outro — não há `updated_at` a reescrever.
+Arquivos (`git diff --name-only`, só estes 3):
+supabase/migrations/20261012231400_notifications_goal_dedupe.sql
+supabase/tests/notifications_goal_dedupe.sql
+.tmp/relato.md
 
-## Passada de efeito colateral
-1. Gatilhos: nenhum outro em `notifications`; a trigger só muta `NEW`/faz SELECT, sem gravar evento.
-2. Tudo ou nada: é um INSERT de uma linha; não há UPDATE/backfill. Nada fica pela metade.
-3. Permissão: diff sem GRANT/policy; o único ACL é `REVOKE ALL ON FUNCTION public.notifications_goal_dedupe_key() FROM public, anon, authenticated` (endurecimento do objeto NOVO). T6 prova que a policy de escrita herdada não foi afrouxada.
-4. Entrada inválida: metadata sem `goal_id`/`period` → não inventa chave e grava como antes (fail-open, T4); `dedupe_key` explícita é respeitada (T5).
-5. Teste provado por comportamento com papel real, sem depender de deparse.
+Verificação (Postgres 17 descartável; o teste cria roles anon/authenticated/service_role, auth.uid()/auth.role(), RLS + policies reais e aplica o ARQUIVO REAL da migration):
+- verde: `T1 OK: 2 insercoes iguais = 1 linha` / `T2 OK: 3 no total` / `T3 OK: dia diferente` / `T4 OK: type<>goal nao e deduplicado` / `T5 OK: 23505` / `T6 OK: 42501` / `T6b OK: duplicado de authenticated e anon negado (42501), nada gravado` / `T7 OK: funcao fechada` / `TODAS as assercoes passaram (T1-T7+T6b)`
+- vermelho sem migration: `ERROR: T1 FALHOU: 2 insercoes iguais gravaram 2 linha(s), esperado 1`
+- migration antiga + teste novo: T1–T6 OK, `ERROR: T6b FALHOU: duplicado de authenticated passou (INSERT 0 0 = oraculo)`
+- rollback: `ANTES_trigger=1 ANTES_funcao=1 DEPOIS_trigger=0 DEPOIS_funcao=0 DEPOIS_indice_intacto=1`
 
-## O que NÃO fiz e por quê
-- Não mexi no hook `src/hooks/analytics/useGoalNotifications.ts` (área de telas/hooks). O contrato de banco fica pronto para o escritor do servidor: a policy "Block authenticated notification inserts" (WITH CHECK false, desde 20260404174629) torna a escrita server-only, então o INSERT do navegador continua negado — inclusive o mesmo aviso duplicado. Quem for ligar o aviso (RPC/Edge/service_role) já tem dedupe e `23505` como sucesso.
-- A suíte de prova é `supabase/tests/*.sql` (arquivo permitido pelo cartão, mesmo molde de `supabase/tests/r2_db_022_provenance_trigger.sql`), que não precisa de passo no `db-guard.yml`. Não criei `.test.sh` novo para não reprovar em `check-test-inventory.mjs`.
+Passada de efeito colateral: 1. gatilhos: único trigger em notifications é este (IA-047 só criou coluna+índice); só atua em INSERT, sem UPDATE/backfill/evento. 2. tudo ou nada: sem escrita parcial; fail-closed do índice mantido. 3. sem oráculo: T6b prova 42501 igual para duplicado de authenticated e anon. 4. permissão: sem GRANT/policy novos; único ACL é o REVOKE preexistente da função. 5. entrada inválida: sem contrato (goal_id/period ausentes) segue fail-open como antes, sem inventar chave. 6. teste por comportamento com papel real, sem deparse.
+
+O que NÃO fiz e por quê: não mexi no hook `src/hooks/analytics/useGoalNotifications.ts` (fora do escopo: a escrita segue server-only pela policy WITH CHECK false; quem ligar o aviso via service_role já tem dedupe e 23505 como sucesso). Não apliquei no banco da tarefa nem rodei `zapp-verify`: `hermes-tarefa-iniciar`, `hermes-db-migrar` e `hermes-tarefa-fechar` estão CONGELADOS neste ambiente (modo V1 suspenso); a prova foi no Postgres descartável com a migration real, no molde da suíte. Não criei `.test.sh` novo (inventário do CI reprova arquivo novo; a suíte fica em `supabase/tests/`, arquivo permitido pelo cartão).
