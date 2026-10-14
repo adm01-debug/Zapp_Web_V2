@@ -16,7 +16,9 @@ Especialista: Íris (area-front-componentes)
   PRESETS_DO_PRODUTO/deleteTemplate na lista, cuja exclusão agora é do menu ⋮).
 - Testes ajustados à ponta (o pai foi escrito antes dessas mudanças do dia): provider de react-query em
   TalkXTemplateActions.test.tsx; mock de `useUserRole`/`useAuth` em TalkXTemplateKpis.test.tsx e
-  TalkXTemplateEditor.painelMenor.test.tsx (o menu ⋮ lê papel/dono); `containerDe` usa `.cursor-pointer` em vez de
+  TalkXTemplateEditor.painelMenor.test.tsx (o menu ⋮ lê papel/dono); mock de `@/integrations/supabase/client` e de
+  `useTalkX` em TalkXTemplateActions.test.tsx (sem eles o cliente real do Supabase abria WebSocket de realtime e o
+  arquivo saía com exceção fora dos casos); `containerDe` usa `.cursor-pointer` em vez de
   `[role="button"]` (a ponta tirou o role do cartão/linha por nested-interactive, TL-175D); a asserção de status
   passou a exigir que o `<Select>` de status (`id=talkx-template-status`) sumiu, sem travar a contagem de combobox
   (a ponta ganhou o combo do período, X086).
@@ -40,3 +42,33 @@ e o pai onde ele é a entrega (menu ⋮, controle de status por papel, janela de
 - Não toquei em arquivo fora de src/components/talkx/** e src/hooks/integrations/.
 - Não devolvi o `role="button"` ao cartão/linha do template: a ponta removeu de propósito (nested-interactive,
   TL-175D) e foi o teste do pai que estava desatualizado — adaptei o teste, não o markup.
+
+## Arquivos que o diff desta branch muda
+- .tmp/relato.md
+- src/components/talkx/TalkXTemplateActionsMenu.tsx (novo — menu ⋮)
+- src/components/talkx/TalkXTemplateEditor.tsx
+- src/components/talkx/TalkXTemplateStatusControl.tsx (novo — status por papel)
+- src/components/talkx/TalkXTemplateTestDialog.tsx (novo — janela de teste compartilhada; o override pela presença)
+- src/components/talkx/TalkXTemplates.tsx
+- src/components/talkx/__tests__/TalkXTemplateActions.test.tsx (novo — prova X090 + a correção do editor vazio)
+- src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx (mock de papel/dono)
+- src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx (mock de papel/dono — veio do pai)
+- src/components/talkx/__tests__/TalkXTemplateKpis.test.tsx (mock de papel/dono)
+- src/components/talkx/__tests__/TalkXTemplates.duplicarAtalho.test.tsx (veio do pai: duplicar abre a cópia)
+- src/components/talkx/__tests__/TalkXTemplates.gallery.test.tsx (veio do pai: gatilho do menu no cartão)
+- src/components/talkx/__tests__/TalkXTemplates.states.test.tsx (veio do pai)
+- src/components/talkx/__tests__/TalkXView.templates.test.tsx (veio do pai)
+- src/components/talkx/__tests__/useCampaignEditor.test.tsx (veio do pai)
+- src/hooks/integrations/__tests__/useTalkXTemplates.test.ts (veio do pai)
+- src/hooks/integrations/__tests__/useTalkXTemplates.testSendError.test.ts (novo — veio do pai)
+- src/hooks/integrations/useTalkXTemplateActions.ts (novo — duplicar/testar/excluir num só lugar)
+- src/hooks/integrations/useTalkXTemplates.ts (veio do pai: testTemplate/erro de envio)
+
+## Sobre os arquivos fora da lista antiga do cartão
+O cartão (rodada anterior) listava só 2 arquivos (a janela de teste e o seu teste), porque supunha que o resto da
+entrega TL-122 já estivesse na ponta de dia. Não está: `TalkXTemplateActionsMenu.tsx`,
+`TalkXTemplateStatusControl.tsx`, `TalkXTemplateTestDialog.tsx` e `useTalkXTemplateActions.ts` não existiam no
+`dia/2026-10-13`, e o editor/lista seguiam com a versão inline. Por isso a retomada por rebase precisou trazer os
+16 arquivos da branch do pai (os 3 commits acima) — sem isso não existe a janela de teste a corrigir. As duas
+adições minhas fora do pai são os mocks (papel/dono, supabase/useTalkX) e o provider nos testes que a ponta ganhou
+depois (X086/X091).

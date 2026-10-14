@@ -82,6 +82,20 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   }),
 }));
 
+/**
+ * A biblioteca (tela real) consulta as RPCs de métricas (X086) por `supabase.rpc`;
+ * sem este mock o cliente REAL do Supabase é criado e abre um WebSocket de
+ * realtime, que derruba o teste com uma exceção fora dos casos.
+ */
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
+
+// O editor/lista reais leem as campanhas e o widget "Em andamento" (X091) por aqui.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, isLive: false, refetchCampaigns: vi.fn() }),
+}));
+
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'p-hugo', phone: '5541999001234' } }),
 }));
