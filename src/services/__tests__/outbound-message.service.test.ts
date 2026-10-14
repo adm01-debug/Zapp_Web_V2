@@ -288,4 +288,119 @@ describe('sendOutboundMessage', () => {
     ]);
     expect(waitSpy).toHaveBeenCalledTimes(2);
   });
+
+  // SL-070/025 — o MESMO texto de uma ação offline não pode ser engolido depois.
+  // A fila já guarda o próprio id no item, então a chave da ação morre quando o
+  // envio vai para a fila (e quando a drenagem conclui). Sem isso, o segundo
+  // envio — já online — reaproveitava o id da linha entregue, a Edge respondia
+  // `idempotent: true` e NENHUM WhatsApp saía, com o chat dizendo "enviada".
+  it('offline "ok" -> drena -> online "ok" gera DUAS mensagens: id novo e um despacho por envio', async () => {
+    await offlineSendQueue.clear();
+    sendThrottle.reset();
+    let seq = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `acao-${++seq}` });
+
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await expect(sendOutboundMessage({ contactId: 'contato-repetido', content: 'ok' }))
+        .resolves.toMatchObject({ id: 'acao-1', status: 'pending' });
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+
+    rpc.mockResolvedValue({ data: { id: 'srv-fila', status: 'sending', external_id: null }, error: null });
+    invoke.mockResolvedValue({
+      data: { messageId: 'srv-fila', status: 'sent', externalId: 'provider-fila', idempotent: false }, error: null,
+    });
+
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(async () => expect(await offlineSendQueue.list()).toEqual([]));
+    // A drenagem sai com o id que o item da fila guardou.
+    expect(rpc).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({
+      p_client_message_id: 'acao-1', p_content: 'ok',
+    }));
+
+    rpc.mockClear();
+    invoke.mockClear();
+    rpc.mockResolvedValue({ data: { id: 'srv-online', status: 'sending', external_id: null }, error: null });
+    invoke.mockResolvedValue({
+      data: { messageId: 'srv-online', status: 'sent', externalId: 'provider-online', idempotent: false }, error: null,
+    });
+
+    await expect(sendOutboundMessage({ contactId: 'contato-repetido', content: 'ok' }))
+      .resolves.toMatchObject({ id: 'srv-online', status: 'sent' });
+
+    // Ação NOVA: id novo no enqueue e um despacho de verdade (nada de idempotent).
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['acao-2']);
+    expect(invoke).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'srv-online' } });
+  });
+
+  // Critério de pronto 2 — o duplo clique online continua sendo UMA ação: as
+  // duas chamadas carregam o MESMO `client_message_id`, então o servidor grava
+  // uma linha só (`ON CONFLICT (contact_id, client_message_id)`).
+  it('duplo clique online usa o MESMO id da ação: o servidor vê uma linha só', async () => {
+    sendThrottle.reset();
+    let seq = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `duplo-${++seq}` });
+    rpc.mockResolvedValue({ data: { id: 'srv-duplo', status: 'sending', external_id: null }, error: null });
+    invoke.mockResolvedValue({
+      data: { messageId: 'srv-duplo', status: 'sent', externalId: null, idempotent: false }, error: null,
+    });
+
+    const input = { contactId: 'contato-duplo', content: 'clique duplo' };
+    await Promise.all([sendOutboundMessage(input), sendOutboundMessage(input)]);
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['duplo-1', 'duplo-1']);
+  });
+
+  // Critério de pronto 2 (cenário PD-77) — depois de uma falha a chave continua
+  // viva, então o reenvio da MESMA ação segue idempotente: mesmo id, uma linha.
+  it('retry depois de falha do despacho continua idempotente (mesmo id da ação)', async () => {
+    sendThrottle.reset();
+    let seq = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `retry-${++seq}` });
+    rpc.mockResolvedValue({ data: { id: 'srv-retry', status: 'sending', external_id: null }, error: null });
+    invoke
+      .mockRejectedValueOnce(new Error('gateway fora do ar'))
+      .mockResolvedValueOnce({
+        data: { messageId: 'srv-retry', status: 'sent', externalId: 'provider-retry', idempotent: true }, error: null,
+      });
+
+    const input = { contactId: 'contato-retry', content: 'tenta de novo' };
+    await expect(sendOutboundMessage(input)).rejects.toThrow('gateway fora do ar');
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({ id: 'srv-retry', idempotent: true });
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['retry-1', 'retry-1']);
+  });
+
+  // A chave tem vida CURTA de verdade: passado o prazo, o mesmo texto é mensagem nova.
+  it('a chave da ação expira sozinha: depois do prazo o mesmo texto vira id novo', async () => {
+    sendThrottle.reset();
+    let seq = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `ttl-${++seq}` });
+    const base = Date.now();
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(base);
+    // Mesmo prazo de PENDING_ACTION_TTL_MS no serviço (2 min).
+    const ttl = 2 * 60 * 1000;
+    rpc.mockResolvedValue({ data: { id: 'srv-ttl', status: 'sending', external_id: null }, error: null });
+    invoke.mockRejectedValue(new Error('gateway indisponível'));
+
+    const input = { contactId: 'contato-ttl', content: 'bom dia' };
+    await expect(sendOutboundMessage(input)).rejects.toThrow('gateway indisponível');
+    // Ainda dentro do prazo: a falha mantém a chave e o id é reaproveitado.
+    nowSpy.mockReturnValue(base + ttl - 1);
+    await expect(sendOutboundMessage(input)).rejects.toThrow('gateway indisponível');
+    // Passado o prazo: a chave expirou e a mesma ação virou mensagem nova.
+    nowSpy.mockReturnValue(base + ttl + 1);
+    invoke.mockResolvedValue({
+      data: { messageId: 'srv-ttl', status: 'sent', externalId: null, idempotent: false }, error: null,
+    });
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({ id: 'srv-ttl' });
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['ttl-1', 'ttl-1', 'ttl-2']);
+  });
 });
