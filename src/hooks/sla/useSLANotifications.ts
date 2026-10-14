@@ -122,11 +122,20 @@ export function useSLANotifications(): void {
       const prefix = severity === 'breach' ? 'sla-breach' : 'sla-warning';
       if (!claimNotificationEvent(`${prefix}:${slaId}`, SLA_ALERT_DEDUPE_TTL_MS)) return;
 
-      const { data: contact } = await supabase
+      // Contato desconhecido quando a consulta falha: o alerta sai com a descrição genérica em
+      // vez de sumir por 24h com a chave do dedupe já tomada. O log não carrega dado pessoal.
+      const contact = await supabase
         .from('contacts')
         .select('name, phone')
         .eq('id', contactId)
-        .maybeSingle();
+        .maybeSingle()
+        .then(
+          ({ data }) => data,
+          (error) => {
+            log.error('falha ao carregar contato do alerta de SLA', { error });
+            return null;
+          },
+        );
       if (cancelled) return;
       // Nome (ou telefone) só aparece na tela do agente; nada disso vai para log.
       const quem = contact?.name || contact?.phone || null;
@@ -175,7 +184,11 @@ export function useSLANotifications(): void {
           timers.delete(row.id);
           if (cancelled) return;
           if (slaStatusForDuration(Date.now() - startedAt, limitMinutes) === 'ok') return;
-          void presentAlert('warning', row.id, row.contact_id);
+          // O callback do timer está fora do try/catch do handler: qualquer falha aqui
+          // precisa de tratamento próprio em vez de virar rejeição solta.
+          void presentAlert('warning', row.id, row.contact_id).catch((error) => {
+            log.error('falha no aviso de risco agendado', { error });
+          });
         },
         Math.max(0, riskAt - Date.now() + 1),
       );

@@ -8,8 +8,10 @@ import { renderHook } from '@testing-library/react';
  *
  * O hook é alimentado pelo banco (payload não tipado): o teste prova que linha fora do contrato é
  * ignorada sem derrubar o handler, que `contact_id` nulo ou id que não é UUID não geram alerta, que
- * a falha ao carregar o contato não escapa do handler, que o aviso sai com a ação "Abrir conversa"
- * levando o CONTATO_ID e que o canal do Realtime é único por montagem (não recriado no re-render).
+ * a falha ao carregar o contato vira contato desconhecido (o alerta sai com a descrição genérica
+ * em vez de sumir por 24h com a chave do dedupe tomada), que o aviso sai com a ação
+ * "Abrir conversa" levando o CONTATO_ID e que o canal do Realtime é único por montagem
+ * (não recriado no re-render).
  */
 import {
   callbacks,
@@ -133,28 +135,23 @@ describe('useSLANotifications — contrato do payload', () => {
     expect(sonnerToast.error).not.toHaveBeenCalled();
   });
 
-  it('falha ao carregar o contato não escapa do handler: loga sem dado pessoal e o próximo evento válido avisa', async () => {
+  it('falha ao carregar o contato vira contato desconhecido: o alerta sai com a descrição genérica', async () => {
     renderHook(() => useSLANotifications());
 
     contactsQuery.erro = new Error('falha simulada na consulta de contatos');
     await entregarUpdate({ ...LINHA, first_response_breached: true }, { first_response_breached: false });
     await assentar();
 
-    // A exceção foi contida: nada foi apresentado e o erro ficou registrado.
-    expect(sonnerToast.error).not.toHaveBeenCalled();
+    // A chave do dedupe foi tomada COM o alerta apresentado: nada some por 24h.
+    expect(sonnerToast.error).toHaveBeenCalledTimes(1);
+    const [, opcoes] = sonnerToast.error.mock.calls[0];
+    expect(opcoes.description).toBe('Um contato não recebeu resposta dentro do prazo de SLA.');
+    // A falha ficou registrada, sem dado pessoal no log.
     expect(loggerSpies.error).toHaveBeenCalledTimes(1);
-    // O log do erro não leva dado pessoal (id do contato, nome ou telefone).
     const registrado = JSON.stringify(loggerSpies.error.mock.calls[0]);
     expect(registrado).not.toContain(CONTATO_ID);
     expect(registrado).not.toContain('Fulano');
     expect(registrado).not.toContain('1199');
-
-    // A borda se recupera: o handler continua vivo e o evento seguinte válido avisa.
-    contactsQuery.erro = null;
-    await entregarInsert({ ...LINHA, first_response_breached: true });
-    await assentar();
-
-    expect(sonnerToast.error).toHaveBeenCalledTimes(1);
   });
 
   it('remapear a linha (resolvida) não avisa nada', async () => {
@@ -214,6 +211,37 @@ describe('useSLANotifications — aviso de risco', () => {
 
     expect(sonnerToast.warning).not.toHaveBeenCalled();
     expect(sonnerToast.error).not.toHaveBeenCalled();
+  });
+
+  it('falha da consulta no aviso de risco agendado não gera rejeição solta: loga e avisa genérico', async () => {
+    vi.useFakeTimers();
+    // Prova que o callback do timer não deixa promessa rejeitada sem tratamento.
+    const rejeicoes: unknown[] = [];
+    const aoRejeitar = (motivo: unknown) => rejeicoes.push(motivo);
+    process.on('unhandledRejection', aoRejeitar);
+    try {
+      renderHook(() => useSLANotifications());
+
+      await entregarInsert({ ...LINHA, first_message_at: new Date().toISOString() });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(sonnerToast.warning).not.toHaveBeenCalled();
+
+      contactsQuery.erro = new Error('falha simulada na consulta de contatos');
+      await vi.advanceTimersByTimeAsync(4 * 60_000);
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(rejeicoes).toEqual([]);
+      expect(loggerSpies.error).toHaveBeenCalledTimes(1);
+      const registrado = JSON.stringify(loggerSpies.error.mock.calls[0]);
+      expect(registrado).not.toContain(CONTATO_ID);
+      expect(registrado).not.toContain('Fulano');
+      expect(registrado).not.toContain('1199');
+      expect(sonnerToast.warning).toHaveBeenCalledTimes(1);
+      const [, opcoes] = sonnerToast.warning.mock.calls[0];
+      expect(opcoes.description).toBe('Um contato está perto de estourar o prazo de primeira resposta.');
+    } finally {
+      process.off('unhandledRejection', aoRejeitar);
+    }
   });
 });
 
