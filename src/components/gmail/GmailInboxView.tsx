@@ -95,7 +95,7 @@ export default function GmailInboxView() {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" /><Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar emails..." className="h-8 pl-8 text-sm" /></div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="open">Aberto</SelectItem><SelectItem value="pending">Pendente</SelectItem><SelectItem value="resolved">Resolvido</SelectItem><SelectItem value="archived">Arquivado</SelectItem></SelectContent></Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[120px] h-8 text-xs" aria-label="Filtro de status"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="open">Aberto</SelectItem><SelectItem value="pending">Pendente</SelectItem><SelectItem value="resolved">Resolvido</SelectItem><SelectItem value="archived">Arquivado</SelectItem></SelectContent></Select>
         </div>
       </div>
 
