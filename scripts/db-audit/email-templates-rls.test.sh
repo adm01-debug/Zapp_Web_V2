@@ -8,9 +8,9 @@
 #           staff (is_admin_or_supervisor); anon sem acesso; INSERT nao permite forjar
 #           autoria. Depois: ROLLBACK extraido do proprio arquivo desfaz tudo; reaplicar
 #           e idempotente.
-# BLOCO C — hardening (20261013010747): o defeito e REPRODUZIDO antes da correcao (staff
-#           troca created_by de linha compartilhada de outro; com a RLS do ET1 isso PASSA)
-#           e provado fechado depois: autoria imutavel no UPDATE; is_shared=true so staff
+# BLOCO C — hardening (20261013010747): o defeito e REPRODUZIDO em C0 antes da correcao
+#           (staff troca created_by de linha compartilhada de outro; com a RLS da ET1 isso
+#           PASSA) e provado fechado depois: autoria imutavel no UPDATE; is_shared=true so staff
 #           (INSERT e UPDATE); corpo vazio e nome em branco barrados por CHECK; o staff
 #           ainda edita outras colunas; service_role segue livre (back-office).
 # BLOCO D — ROLLBACK do hardening executado no teste e reaplicacao idempotente.
@@ -248,19 +248,34 @@ expect_value 'B32 reaplicar recria a tabela' '1' \
   "SELECT count(*) FROM pg_class WHERE oid = to_regclass('public.email_templates');"
 
 # ================= BLOCO C: hardening da autoria (created_by imutavel) =================
-# Aplica a segunda migration (a correcao). Antes dela, o defeito e REPRODUZIDO em C1.
-psql_file "$hardening" >/dev/null
-
+# C0 reproduz o defeito ANTES da correcao: com so a RLS da ET1, o staff troca created_by
+# da linha compartilhada do OWNER e o UPDATE PASSA (1 linha). Depois a autoria e
+# restaurada como postgres e so entao a segunda migration (a correcao) e aplicada.
 # alvo: linha COMPARTILHADA do OWNER — a policy de UPDATE deixa o staff chegar nela.
 psql_sql "INSERT INTO public.email_templates(id, name, subject, body, is_shared, created_by) VALUES
   ('aaaaaaaa-0000-0000-0000-000000000003','Compartilhado p/ hardening','s3','b3',true,'$OWNER');" >/dev/null
+expect_value_as 'C0 staff troca a autoria da linha de outro (defeito: PASSA com a RLS da ET1)' '1' "$JWT_STAFF" \
+  "WITH u AS (UPDATE public.email_templates SET created_by = '$STAFF' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003' RETURNING 1) SELECT count(*) FROM u;"
+psql_sql "UPDATE public.email_templates SET created_by = '$OWNER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';" >/dev/null
+expect_value 'C0 autoria restaurada como postgres antes do hardening' "$OWNER" \
+  "SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
+
+# Aplica a segunda migration (a correcao).
+psql_file "$hardening" >/dev/null
 
 # C1: staff tenta trocar a autoria da linha de outro -> a guarda REJEITA.
 expect_error_as 'C1 staff nao reatribui a autoria da linha de outro (guardado)' \
   'email_templates_author_immutable' "$JWT_STAFF" \
   "UPDATE public.email_templates SET created_by = '$STAFF' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
-# C2: a autoria continua do OWNER (nada foi trocado — a migration e atomica: o UPDATE falhou inteiro).
+# C2: a autoria continua do OWNER (nada foi trocado — o UPDATE rejeitado pelo gatilho e
+#     atomico: falhou inteiro, nao a migration).
 expect_value 'C2 autoria preservada apos a tentativa' "$OWNER" \
+  "SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
+# C2b: outro agente (nao-staff, nao-dono) tenta trocar a autoria -> 0 linhas (a RLS filtra).
+expect_value_as 'C2b outro nao reatribui a autoria da linha de outro (0 linhas)' '0' "$JWT_OTHER" \
+  "WITH u AS (UPDATE public.email_templates SET created_by = '$OTHER' WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003' RETURNING 1) SELECT count(*) FROM u;"
+# C2c: a autoria segue do OWNER apos a tentativa do outro.
+expect_value 'C2c autoria preservada apos a tentativa do outro' "$OWNER" \
   "SELECT created_by FROM public.email_templates WHERE id = 'aaaaaaaa-0000-0000-0000-000000000003';"
 # C3: o dono segue dono: consegue editar o proprio modelo compartilhado.
 expect_ok_as 'C3 dono continua editando o proprio modelo' "$JWT_OWNER" \
