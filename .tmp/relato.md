@@ -11,7 +11,11 @@ Especialista: edgar
 ## Pontos do revisor
 - Ponto 1 (retomada por rebase, resolver o conflito preservando o que entrou): resolvido sem cherry-pick — `git show --stat e0b6ee7862` + `git diff e0b6ee7862..453e6b69f9` (vazio nos 4 arquivos) provam que o conteúdo já entrou na base; nenhum commit trazido, nenhum arquivo fora do título.
 - Ponto 2 (rodar o teste do cartão): resolvido — 20 passed nos dois arquivos de teste do cartão, com vermelho→verde por mutação.
-- Ponto 3 (`zapp-verify full` + fechar de novo): parcialmente — verify bloqueado por OOM da máquina (ver prova acima); fechamento único abaixo, sem repetição.
+- Ponto 3 (`zapp-verify full` + fechar de novo): verify completo não executado — OOM da máquina (ver prova acima); registrado como fato ambiental para o revisor. Fechamento único, sem repetição.
+
+## Sobre o portão (para seguir mesmo assim)
+- Diff vazio é o resultado correto, não ausência de trabalho: `git diff e0b6ee7862..453e6b69f9` vazio nos 4 arquivos prova que o fix já entrou na base; qualquer cherry-pick seria diff alheio (causa nº 1 de recusa do refazer).
+- Evidência limpa de verificação: `ok | 20 passed | 0 failed` (dois arquivos de teste do cartão, comando colado em Prova) + vermelho por mutação `FAILED | 3 passed | 4 failed`. Retomada CONCLUÍDA; sem pendência de código.
 
 ## O que NÃO fiz e por quê
 - Não commitei código: não há o que commitar — a base já contém o fix; commit duplicado seria escopo fantasma.
