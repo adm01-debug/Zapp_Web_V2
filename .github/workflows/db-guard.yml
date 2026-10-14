@@ -269,6 +269,16 @@ jobs:
           SECD_CALLER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/secd-caller-check.test.sh
 
+      # Guarda geral dos invariantes do banco vivo (nao vacua, nao frouxa): RLS em toda
+      # tabela de public, security_invoker em toda view, matview exposta a anon/authenticated,
+      # search_path em SECURITY DEFINER, policy de escrita aberta e referencia pendurada em
+      # funcao/RPC e em comando de cron. A prova monta cada violacao, exige o bloqueio,
+      # desfaz e exige verde.
+      - name: Simular violações dos invariantes gerais do banco vivo
+        env:
+          LIVE_INVARIANTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-live-invariants.test.sh
+
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
