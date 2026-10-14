@@ -43,7 +43,11 @@ const definir = (id: string, valor: string) =>
 
 describe(`ScheduleMessageDialog — dia local (TZ=${TZ})`, () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    // Só o relógio é falso aqui: fingir o rAF (padrão do useFakeTimers) congela
+    // as transições do kit e o motor de animação não se recupera nos describes
+    // seguintes (fechamento do sucesso nunca dispara). Estes testes só precisam
+    // da data fixa.
+    vi.useFakeTimers({ toFake: ['Date'] });
     // 30/09/2026 22:30 no fuso do processo (22:30 em São Paulo quando TZ=America/Sao_Paulo)
     vi.setSystemTime(new Date(2026, 8, 30, 22, 30, 0));
   });
@@ -249,7 +253,7 @@ describe(`ScheduleMessageDialog — estados de envio (TZ=${TZ})`, () => {
     expect(texto.value).toBe('Enviar proposta');
     expect(screen.getByText('contrato.pdf')).toBeTruthy();
     expect(toastMock).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
-    expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeTruthy();
+    expect(screen.getByTestId('tentar-de-novo')).toBeTruthy();
   });
 
   it('falha genérica: mensagem recuperável e botão "Tentar de novo"', async () => {
@@ -273,7 +277,7 @@ describe(`ScheduleMessageDialog — estados de envio (TZ=${TZ})`, () => {
     await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /tentar de novo/i }));
+      fireEvent.click(screen.getByTestId('tentar-de-novo'));
     });
 
     await waitFor(() => expect(onSchedule).toHaveBeenCalledTimes(2));
@@ -293,6 +297,60 @@ describe(`ScheduleMessageDialog — estados de envio (TZ=${TZ})`, () => {
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(texto.value).toBe('');
+  });
+
+  it('falha: botão Agendar reflete o erro ("Tentar de novo") e o reenvio conclui', async () => {
+    const onSchedule = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Failed to fetch'))
+      .mockResolvedValueOnce(undefined);
+    const { onOpenChange } = preencher(onSchedule);
+
+    await clicarAgendar();
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+
+    // Ponto 2 da recusa: o botão Agendar vai a `error` com "Tentar de novo"...
+    const botao = screen.getByTestId('agendar-mensagem');
+    expect(botao).toHaveAttribute('data-state', 'error');
+    expect(screen.getByTestId('morph-button-label-error')).toHaveTextContent('Tentar de novo');
+
+    // ...e o clique nele reenvia o mesmo rascunho até concluir.
+    await act(async () => {
+      fireEvent.click(botao);
+    });
+    await waitFor(() => expect(onSchedule).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false), { timeout: 5000 });
+  });
+
+  it('falha: foco vai ao "Tentar de novo" da faixa (não ao Agendar)', async () => {
+    const onSchedule = vi.fn(() => Promise.reject(new Error('Failed to fetch')));
+    preencher(onSchedule);
+
+    await clicarAgendar();
+    await waitFor(() => expect(screen.getByTestId('falha-agendamento')).toBeTruthy());
+
+    // Ponto 1 da recusa: o foco pertence ao botão de recuperação da faixa.
+    expect(document.activeElement).toBe(screen.getByTestId('tentar-de-novo'));
+  });
+
+  it('sucesso: fecha UMA única vez, só depois de o selo de sucesso sair', async () => {
+    const onSchedule = vi.fn(() => Promise.resolve());
+    const { onOpenChange } = preencher(onSchedule);
+
+    await clicarAgendar();
+
+    // O check aparece primeiro; o diálogo ainda não fechou.
+    await waitFor(() =>
+      expect(screen.getByTestId('agendar-mensagem')).toHaveAttribute('data-state', 'success'),
+    );
+    expect(screen.getByTestId('selo-sucesso')).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+
+    // Pontos 3 e 4 da recusa: a saída do selo (onExitComplete) fecha exatamente
+    // uma vez — sem temporizador e sem segundo fechador no produtor.
+    await waitFor(() => expect(screen.queryByTestId('selo-sucesso')).toBeNull(), { timeout: 5000 });
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('com movimento reduzido: faixa e selo entregam o estado sem deslocamento', async () => {

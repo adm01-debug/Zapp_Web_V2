@@ -395,7 +395,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         messageType = attachment.type.startsWith('audio') ? 'audio' : attachment.type.startsWith('image') ? 'image' : attachment.type.startsWith('video') ? 'video' : 'document';
       }
       await scheduleMessage({ contactId: conversation.contact.id, content: message, scheduledAt, messageType, mediaUrl });
-      closeDialog('scheduleDialog');
+      // Sucesso: NÃO fecha aqui — o diálogo fecha sozinho (e limpa o rascunho)
+      // quando o selo de sucesso termina de sair (onExitComplete). Fechar aqui
+      // seria o segundo fechador e duplicaria o fechamento/limpeza.
     } catch (err) {
       // Falha de upload, de locator ou de persistência: remove o objeto órfão
       // best-effort, não anuncia sucesso (nenhum closeDialog no caminho de erro)

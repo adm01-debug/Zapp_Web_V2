@@ -10,14 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Calendar, Clock, Paperclip, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Calendar, Check, Clock, Paperclip, RefreshCw } from 'lucide-react';
 import { format, addDays, setHours, setMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { localInstantFromDayAndTime } from '@/lib/localDay';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { MorphButton, toneClasses, type MorphState } from '@/components/inbox/chat/motion';
-import { zappMotion, zappSpring } from '@/lib/motion';
+import { zappMotion, zappSpring, zappTransition } from '@/lib/motion';
 
 interface ScheduleMessageDialogProps {
   open: boolean;
@@ -54,12 +54,6 @@ function mensagemDeErroAoAgendar(erro: unknown): string {
     : 'Não foi possível agendar. Tente de novo.';
 }
 
-/**
- * Quanto o check de sucesso fica na tela antes de o diálogo fechar: uma passada
- * de mola lenta do token de movimento — nenhum tempo solto aqui.
- */
-const SUCESSO_MS = zappMotion.duration.slow * 1000;
-
 export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: ScheduleMessageDialogProps) {
   const [message, setMessage] = useState('');
   const [date, setDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
@@ -67,24 +61,19 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
   const [attachment, setAttachment] = useState<File | null>(null);
   const [submitState, setSubmitState] = useState<MorphState>('idle');
   const [erro, setErro] = useState<string | null>(null);
+  // Selo de sucesso: entra com a transição do kit e SAI com ela — é a saída
+  // (onExitComplete) que fecha o diálogo e limpa o rascunho, sem temporizador.
+  const [sucesso, setSucesso] = useState(false);
+  const sucessoVisivelRef = useRef(false);
 
-  const agendarRef = useRef<HTMLDivElement>(null);
-  const fecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tentarRef = useRef<HTMLButtonElement>(null);
   const reduce = useReducedMotion() ?? false;
 
-  // Estado próprio do agendamento: o check de sucesso e a faixa de falha não
-  // reaproveitam estado de outro recurso e não há prazo sem limpeza.
-  useEffect(
-    () => () => {
-      if (fecharTimerRef.current) clearTimeout(fecharTimerRef.current);
-    },
-    [],
-  );
-
-  // Foco devolvido ao botão principal quando a falha aparece (teclado).
+  // Foco no "Tentar de novo" da faixa quando a falha aparece (teclado e leitor
+  // de tela: a faixa já tem role="alert" e o botão de erro anuncia o estado).
   useEffect(() => {
     if (!erro) return;
-    agendarRef.current?.querySelector('button')?.focus();
+    tentarRef.current?.focus();
   }, [erro]);
 
   const quickSchedules = [
@@ -93,6 +82,22 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
     { label: 'Em 2 dias', getDate: () => setMinutes(setHours(addDays(new Date(), 2), 9), 0) },
     { label: 'Em 1 semana', getDate: () => setMinutes(setHours(addDays(new Date(), 7), 9), 0) },
   ];
+
+  /**
+   * O check de sucesso já foi visto (o selo entrou e saiu com a transição do
+   * kit): aqui o diálogo fecha e o rascunho apaga. Chamado pelo onExitComplete
+   * do AnimatePresence — nenhum temporizador, nenhuma limpeza de desmonte.
+   * É também o ÚNICO fechador no sucesso: o produtor (ChatPanel) não fecha.
+   */
+  const finalizarSucesso = () => {
+    onOpenChange(false);
+    setMessage('');
+    setAttachment(null);
+    setErro(null);
+    setSucesso(false);
+    sucessoVisivelRef.current = false;
+    setSubmitState('idle');
+  };
 
   const handleSchedule = async () => {
     if (!message.trim()) {
@@ -111,26 +116,23 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
     setSubmitState('loading');
 
     try {
-      // Só anuncia sucesso, fecha e apaga o rascunho depois que a persistência confirmar.
+      // Só anuncia sucesso, mostra o check e o selo DEPOIS que a persistência
+      // confirmar. O selo sai com a transição do kit e o onExitComplete fecha o
+      // diálogo e apaga o rascunho (finalizarSucesso) — sem temporizador.
       await onSchedule(message, scheduledDate, attachment || undefined);
       setSubmitState('success');
       toast({
         title: 'Mensagem agendada!',
         description: `Será enviada em ${format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
       });
-
-      // O check fica visível por um instante antes de o diálogo sair.
-      fecharTimerRef.current = setTimeout(() => {
-        fecharTimerRef.current = null;
-        onOpenChange(false);
-        setMessage('');
-        setAttachment(null);
-        setSubmitState('idle');
-      }, SUCESSO_MS);
+      sucessoVisivelRef.current = true;
+      setSucesso(true);
     } catch (err) {
       // Falha ao persistir: mantém o diálogo aberto e o rascunho intacto para nova
-      // tentativa (o produtor já reporta a causa; aqui nada é apagado).
-      setSubmitState('idle');
+      // tentativa (o produtor já reporta a causa; aqui nada é apagado). O botão
+      // Agendar vai para o estado de erro ("Tentar de novo", anunciado pelo
+      // role="status") e o foco vai ao "Tentar de novo" da faixa.
+      setSubmitState('error');
       const texto = mensagemDeErroAoAgendar(err);
       setErro(texto);
       toast({
@@ -316,15 +318,53 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
                 <AlertTriangle className={cn('w-4 h-4 shrink-0', falha.text)} aria-hidden="true" />
                 <p className="flex-1 text-sm text-foreground">{erro}</p>
                 <Button
+                  ref={tentarRef}
                   type="button"
                   variant="outline"
                   size="sm"
                   className="min-h-10"
+                  data-testid="tentar-de-novo"
                   onClick={handleRetry}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
                   Tentar de novo
                 </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Selo de sucesso: entra com a transição do kit e sai com ela. É a
+              saída (onExitComplete → finalizarSucesso) que fecha o diálogo e
+              limpa o rascunho — o check fica visível por um instante, sem
+              temporizador. Com movimento reduzido só a opacidade muda. */}
+          <AnimatePresence initial={false} onExitComplete={finalizarSucesso}>
+            {sucesso && (
+              <motion.div
+                key="selo-sucesso"
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: zappMotion.distance.small }}
+                animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, y: zappMotion.distance.small }}
+                transition={reduce ? { duration: 0 } : zappTransition.fast}
+                onAnimationComplete={() => {
+                  // Entrada concluída: o check foi visto, o selo pode sair (a
+                  // saída dispara o fechamento). A guarda ignora o término da
+                  // própria saída, que também passa por aqui.
+                  if (sucessoVisivelRef.current) {
+                    sucessoVisivelRef.current = false;
+                    setSucesso(false);
+                  }
+                }}
+                data-testid="selo-sucesso"
+                data-motion={reduce ? 'reduced' : 'full'}
+                role="status"
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border px-3 py-2',
+                  toneClasses('success').border,
+                  toneClasses('success').soft,
+                )}
+              >
+                <Check className={cn('w-4 h-4 shrink-0', toneClasses('success').text)} aria-hidden="true" />
+                <p className="text-sm font-medium text-foreground">Mensagem agendada!</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -340,7 +380,6 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
               Cancelar
             </Button>
             <motion.div
-              ref={agendarRef}
               whileHover={reduce ? undefined : { scale: 1.02 }}
               whileTap={reduce ? undefined : { scale: 0.98 }}
             >
@@ -350,7 +389,7 @@ export function ScheduleMessageDialog({ open, onOpenChange, onSchedule }: Schedu
                 disabled={!message.trim()}
                 loadingLabel="Agendando…"
                 successLabel="Agendada!"
-                errorLabel="Falhou"
+                errorLabel="Tentar de novo"
                 data-testid="agendar-mensagem"
                 className="min-h-10 bg-whatsapp text-primary-foreground hover:bg-whatsapp-dark"
               >

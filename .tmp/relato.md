@@ -1,24 +1,38 @@
-Especialista: Íris (area-front-componentes)
+Especialista: senior (area-front-componentes)
 
-## O que mudou e por quê
-- `src/components/inbox/ChatPanel.tsx` (`handleScheduleMessage`, só essa função): depois de limpar o objeto órfão best-effort, agora **relança** o erro. Era exatamente o que faltava para a regra de falha: o `catch` engolia upload/referência/gravação e o diálogo nunca sabia que nada foi persistido — anunciava sucesso e fechava.
-- `src/components/inbox/ScheduleMessageDialog.tsx`:
-  - a função interna `mensagemDeErroAoAgendar` (no próprio arquivo do diálogo, **não** exportada — o arquivo precisa continuar só componente para o `react-refresh`) traduz o erro: permissão (`status`/`statusCode` 403, RLS `42501`, recusa de escrita do Storage) → `Sem permissão para agendar nesta conversa`; qualquer outra causa → `Não foi possível agendar. Tente de novo.`
-  - estado próprio de envio (`idle | loading | success`): o botão principal virou o `MorphButton` do kit de microinterações (spinner `Agendando…` → check `Agendada!`), com largura estável (os estados ficam na mesma célula do grid);
-  - falha fica **inline**: faixa `destructive` com `role="alert"`, o texto traduzido e um botão **Tentar de novo** que reenvia sem pedir para redigitar; o diálogo permanece aberto e o rascunho (texto + anexo) intacto; o **foco volta ao botão principal**;
-  - selo `info` de data/hora que se atualiza ao escolher data/hora (ou atalho);
-  - movimento: selo e faixa com mola curta e deslocamento de `zappMotion.distance`/`zappSpring` (nenhum tempo solto no componente); com **movimento reduzido** nada se desloca — só opacidade;
-  - alvos ≥ 40px e sem selo de canal/origem.
-- testes: `src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx` (estados de envio, 403, falha genérica, Tentar de novo, check antes de fechar, movimento reduzido e a grade de causas de erro — 403 no `status`, 403 como texto, RLS `42501`, recusa de RLS do Postgres, rede e `check constraint` — exercitada pelo componente real) e `src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx` (o produtor relança em falha de upload/referência/gravação). Os testes renderizam o diálogo REAL (nenhum mock devolve a resposta).
+Refazer 1 do cartão "agendar mensagem: sucesso e falha" — os 5 pontos da recusa, na ordem dela.
 
-## Prova
-- vermelho antes (ChatPanel sem o relance, resto igual): `npx vitest run src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx` → `Tests  3 failed | 9 passed (12)` — `AssertionError: expected undefined to be an instance of Error`.
-- vermelho antes (diálogo sem o estado de erro): `npx vitest run src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx` → `Tests  4 failed | 14 passed (18)`.
-- verde depois: `npx vitest run src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx` → `Test Files  2 passed (2); Tests  30 passed (30)`.
-- regressão da área: `npx vitest run src/components/inbox` → `Test Files  199 passed (199); Tests  1654 passed | 1 todo (1655)`. O bloco `Errors 1` dessa execução é um erro de websocket do undici dentro de `RealtimeInboxView.selectedMessagesError.test.tsx` (pré-existente; o arquivo passa 3/3 — não toca em agendamento).
-- estados cobertos na tela alterada: vazio (botão desabilitado sem texto), carregando (spinner), sucesso (check + toast) e erro (faixa + toast).
-- Observe que o portão confunde a palavra "permissão": aqui ela é só o 403/RLS da conversa, não assinatura/HMAC.
+## Ponto 1 — foco ia ao botão errado na falha
+O que mudei (`src/components/inbox/ScheduleMessageDialog.tsx`): o efeito de foco agora mira `tentarRef` (o "Tentar de novo" da faixa, `data-testid="tentar-de-novo"`) em vez de `agendarRef.querySelector('button')` (o Agendar). Removi `agendarRef`.
+Teste que prova (`ScheduleMessageDialog.test.tsx`, "falha: foco vai ao \"Tentar de novo\" da faixa"): vermelho sem a correção (foco ficava no Agendar — falha por `data-testid` inexistente/asserção de foco), verde com ela. Cobertura: `bun x vitest run src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx` → 21 passed.
 
-## O que NÃO fiz e por quê
-- A **referência do anexo** (`media_url`) é uma URL pública de bucket privado (`whatsapp-media`): quem persiste/usa o caminho do envio agendado é o worker (edge) — registrei em `kanban_comment` em vez de mexer fora da minha área.
-- Não alterei o CHECK do banco nem a rota de envio agendada: fora da minha área e dos arquivos do cartão.
+## Ponto 2 — botão Agendar não refletia a falha
+O que mudei (`src/components/inbox/ScheduleMessageDialog.tsx`): no `catch`, `setSubmitState('error')` (antes `'idle'`) e `errorLabel="Tentar de novo"` (antes `"Falhou"`). O botão em erro continua clicável (só `loading` desabilita) e o `role="status"` do MorphButton anuncia o estado; clicar nele reenvia o mesmo rascunho.
+Teste que prova ("falha: botão Agendar reflete o erro..."): vermelho sem a correção (`data-state` era `idle`, sem `morph-button-label-error`), verde com ela — inclui clique no botão em erro, 2ª chamada ao `onSchedule` e fechamento.
+
+## Ponto 3 — duplo fechamento no sucesso
+O que mudei (`src/components/inbox/ChatPanel.tsx`, `handleScheduleMessage`): removida a linha `closeDialog('scheduleDialog')` do caminho de sucesso. O ÚNICO fechador agora é o diálogo (onExitComplete → `finalizarSucesso`); o `closeDialog` restante no arquivo é de outros diálogos (quickReplies, slashCommands), intocado.
+Teste que prova ("sucesso: fecha UMA única vez..."): `onOpenChange` chamado exatamente 1x com `false`, só após o selo sair. Regressão do produtor: `ChatPanel.scheduled-media.test.tsx` → 12 passed (o relance de erro continua lá).
+
+## Ponto 4 — fechar/limpar dirigido pela animação, sem `setTimeout`
+O que mudei (`src/components/inbox/ScheduleMessageDialog.tsx`): removidos `SUCESSO_MS` e `fecharTimerRef` (grep confirma: nenhum `setTimeout` restante no arquivo). Novo selo de sucesso (`data-testid="selo-sucesso"`, transição `zappTransition.fast` do kit, opacidade só com movimento reduzido): a entrada completa (`onAnimationComplete` + guarda `sucessoVisivelRef`) dispara a saída, e o `onExitComplete` do `AnimatePresence` chama `finalizarSucesso` (fecha + limpa texto/anexo/erro/sucesso + volta a `idle`). Sem temporizador, sem limpeza de desmonte.
+Teste que prova: o teste do ponto 3 (selo monta → sai → 1 fechamento). Vermelho sem a correção (5 failed: sem selo, sem `data-state error`, sem foco, sem testids), verde com ela.
+
+## Ponto 5 — cobertura dos outros fluxos do ChatPanel inalterada
+Não mudei regra nenhuma do produtor além do ponto 3; `ChatPanel.scheduled-media.test.tsx` passa 12/12 sem alteração, provando que upload/referência/gravação (sucesso e as 3 falhas com relance) continuam iguais.
+
+## Adaptações em testes existentes (exigidas pelo ponto 2, sem afrouxar)
+- 2 buscas `getByRole('button', /tentar de novo/i)` → `getByTestId('tentar-de-novo')` (teste do 403 e teste do reenvio): com o botão em erro rotulado "Tentar de novo" há DOIS botões com esse nome; a asserção continua a mesma (faixa visível; reenvio conclui).
+- `describe` do dia local: `vi.useFakeTimers()` → `vi.useFakeTimers({ toFake: ['Date'] })`. Motivo medido: o fake padrão congela o `requestAnimationFrame`, o motor do framer-motion trava e o fechamento do sucesso nunca dispara nos describes seguintes (4 failed no arquivo cheio, 0 isolados). Comprovado por sonda: `advanceTimersByTime` dispara rAF fake; sem fingir o rAF, o arquivo inteiro passa. Nenhuma asserção desse describe mudou (só precisam da data fixa).
+
+## Arquivos (`git diff --name-only HEAD`)
+- src/components/inbox/ScheduleMessageDialog.tsx
+- src/components/inbox/ChatPanel.tsx
+- src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx
+
+## Verificação (resultado real)
+- `bun x vitest run src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx` → Test Files 2 passed (2); Tests 33 passed (33).
+- Vermelho sem a correção (só testes novos/adaptados, código no HEAD): Tests 5 failed | 16 passed (21) no arquivo do diálogo.
+- `bun x tsc --noEmit -p tsconfig.json` → sem erros nos arquivos tocados (saída vazia no filtro).
+- `bun x eslint` nos 3 arquivos → 0 errors (2 warnings pré-existentes no ChatPanel, linhas não tocadas).
+- Não toquei banco, Edge, produção, credenciais, `.github/` nem guarda/manifesto/CI. Sem project-ref de produção no diff nem no relato.
