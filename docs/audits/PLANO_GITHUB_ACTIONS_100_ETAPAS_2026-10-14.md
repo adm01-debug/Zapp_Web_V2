@@ -12,7 +12,10 @@ check-runs do HEAD, runs de 07/10 a 14/10, falhas individuais com log) e via API
 **Método:** cada afirmação abaixo tem a evidência ao lado (arquivo:linha, run id, issue, resposta da API).
 Nada foi inferido do texto dos planos anteriores: o plano de 01/10 foi lido para saber o que ficou pendente,
 mas todo achado desta versão foi **re-medido hoje**.
-**Status:** PLANO. **Nada foi executado nesta sessão.** Nenhum arquivo além deste foi alterado.
+**Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01** e **W02**
+(perímetro restaurado; evidência em `docs/audits/evidence/branch-protection-2026-10-14.json`); PRs abertas
+**#1920** (W04/W05), **#1921** (W07), **#1922** (W10), **#1923** (W09). Tudo o mais continua plano. A tabela da
+seção 0 descreve o estado **medido às 18:30 UTC**, antes da execução.
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
@@ -25,8 +28,8 @@ mas todo achado desta versão foi **re-medido hoje**.
 | Sinal | Medido em 14/10 18:30 UTC | Leitura |
 |---|---|---|
 | Runs criados de 07/10 00:00 a 14/10 18:30 | **303** (ci 64 · db-guard 64 · codeql 44 · settings-guard 30 · e2e-talkx 25 · db-live-guard 18 · e2e-logado 13 · auto-update 13 · placar 13 · types-sync 10 · deploy 5) | ~1.650 min de runner na semana (KPI #1889: 1.819 min na semana anterior) |
-| Branch protection `main` | **`strict: false`** · 6 contexts · `enforce_admins: true` · `required_linear_history: false` | **Diverge da política canônica** (`CLAUDE.md` "Perímetro": `strict=true`) — 4ª regressão, **não detectada por ninguém** |
-| Repo | **`allow_auto_merge: false`** · squash-only · `delete_branch_on_merge: true` | Diverge do baseline (`true`). Com isso, `auto-update-pr-branch.yml` **nunca** encontra PR elegível: 13 runs/semana em no-op |
+| Branch protection `main` | **`strict: false`** · 6 contexts · `enforce_admins: true` · `required_linear_history: false` | **Divergia da política canônica** (`CLAUDE.md` "Perímetro": `strict=true`) — 4ª regressão, **não detectada por ninguém**. **Restaurado para `true` às 20:54 UTC (W01)** |
+| Repo | **`allow_auto_merge: false`** · squash-only · `delete_branch_on_merge: true` | Divergia do baseline (`true`). Com isso, `auto-update-pr-branch.yml` **nunca** encontrava PR elegível: 13 runs/semana em no-op. **Restaurado para `true` às 20:54 UTC (W01)** |
 | `Settings Guard` | **30 ❌ / 30** em 7 dias (KPI anterior: 24/24, 100 %) · issue #1854 com **39 comentários** de bot | O guard que deveria pegar a regressão acima está cego (403 em branch protection e actions) **e** inventa 7 divergências falsas (`GET /repos` com `GITHUB_TOKEN` devolve `null` nos campos de merge) — run 38615982485 |
 | `E2E logado` | **39 cancelados / 40** últimos runs (KPI: 94,1 % de cancelamento) · único run executado (12/10) ❌ em `auth.setup` → issue #1915 aberta há 2 dias sem reação | A suíte logada **não roda** na prática: a `main` recebe ~2 pushes/h e o GitHub cancela o pendente antes de ele começar. Quando rodou, o **login quebrou** |
 | `DB Live Guard` | 5 ❌ / 18 em 7 dias; nos últimos 30 runs, **12 ❌** (10 de push, 2 agendados), todos no push de um lote (#1890, #1897, #1902, #1905, #1908, #1911) | Quebra **por desenho** do fluxo diário: o lote mergeia, o DDL só vai à produção depois (seção 0 do `CLAUDE.md`), e o guard compara prod ≠ main no mesmo minuto |
@@ -260,37 +263,37 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 0 — Destravar hoje (W01–W10)
 
-- [ ] **W01** · A ⚠️ · N-01 · Decidir **uma** vez e aplicar: (a) restaurar a política vigente (`strict=true` via PATCH de
+- [x] **W01** · A ⚠️ · N-01 · **FEITO 14/10 20:54 UTC, opção (a)** (PATCH parcial de `required_status_checks` com os 6 contexts inalterados + PATCH `allow_auto_merge`). Decidir **uma** vez e aplicar: (a) restaurar a política vigente (`strict=true` via PATCH de
   `required_status_checks`, `allow_auto_merge=true` via PATCH do repo) — recomendado, porque `auto-update-pr-branch`,
   `CLAUDE.md` e o baseline já assumem isso; ou (b) mudar baseline + `CLAUDE.md` para o estado vivo e apagar
   `auto-update-pr-branch.yml`. Verificação: `GET` devolve o estado decidido; `auto-update` deixa de ser no-op (a) ou
   deixa de existir (b).
-- [ ] **W02** · A · N-01 · Gravar snapshot **antes e depois** de W01 em `docs/audits/evidence/branch-protection-2026-10-14.json`
+- [x] **W02** · A · N-01 · **FEITO** (`docs/audits/evidence/branch-protection-2026-10-14.json`). Gravar snapshot **antes e depois** de W01 em `docs/audits/evidence/branch-protection-2026-10-14.json`
   (branch protection + `GET /repos` + `GET /environments`), no padrão de `branch-protection-2026-10-02.json`.
   Verificação: arquivo commitado com os dois estados e timestamps.
 - [ ] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
   issue de cada guard só nasce quando ele voltar a emitir sinal verdadeiro (W04/W05/W23). Verificação: 0 issues abertas
   com labels `settings-guard`/`types-sync`.
-- [ ] **W04** · C · N-02 · `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
+- [~] **W04** · C · N-02 · **PR #1920 aberta.** `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
   VERIFICÁVEL), nunca divergência; restaurar só o que foi efetivamente lido. Verificação: unit test com a resposta real
   do `GET /repos` sem campos de merge → 0 divergências, 1 ponto cego; `node --test scripts/ci/github-settings-guard.unit.mjs`.
-- [ ] **W05** · B+C · N-02 · `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
+- [~] **W05** · B+C · N-02 · **PR #1920 aberta.** `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
   **uma** issue "ponto cego do perímetro" com dedupe pela assinatura dos campos não verificáveis (comenta só se o conjunto
   mudar ou a cada 7 dias). Verificação: 4 runs seguidos → 1 comentário; run deixa de ser ❌ sem divergência real.
 - [ ] **W06** · A · N-03 · Investigar o `auth.setup` do run 38239077346: usuário E2E no Auth de produção (lockout, senha,
   MFA, e-mail), app respondendo em `PLAYWRIGHT_BASE_URL`; disparar `e2e-logado` manual até ✅ (#1915 fecha sozinha).
   Verificação: run manual ✅ com os 10 projetos.
-- [ ] **W07** · B · N-13 · `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85.
+- [~] **W07** · B · N-13 · **PR #1921 aberta.** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85.
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
 - [ ] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
   no branch, CI verde, e o dono decide merge; após o merge, `deploy-functions` dispara sozinho (push em `supabase/functions/**`).
   Verificação: 6 checks ✅ no head; Deployment registrado.
-- [ ] **W09** · C · N-05b · `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
+- [~] **W09** · C · N-05b · **PR #1923 aberta** (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
   `bun.lock`/workflows; o que se afirma passa a ser "versão dos workflows == `toolchain.json` == `bun.lock`", lendo os
   três. Verificação: PR #1918 do Dependabot passa no job `Lint & TypeCheck` sem edição manual (ou falha só por motivo de
   código).
-- [ ] **W10** · B · N-10 · `ci.yml` `mutation-mapa`: `if: github.event_name == 'pull_request'` no job (em push não há base
+- [~] **W10** · B · N-10 · **PR #1922 aberta.** `ci.yml` `mutation-mapa`: `if: github.event_name == 'pull_request'` no job (em push não há base
   para filtrar). Verificação: check-runs do próximo HEAD da `main` sem `🧬 Mutação do mapa` ❌.
 
 ### Fase 1 — Perímetro verificável de verdade (W11–W20)
@@ -355,8 +358,12 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W27** · B · N-08 · `db-migrate.yml`: novo input `apply_all_missing` (bool) — aplica **todas** as versions locais
   ausentes do ledger em ordem (`comm -23`), com `confirm_bundle_sha256 = sha256(lista ordenada ‖ sha256 de cada arquivo ‖
   github.sha)` impresso no dry-run e exigido no apply; substitui os 3 bundles hardcoded para lotes futuros (os antigos
-  ficam até W31). Verificação: fixture com 8 versions; editar um arquivo entre dry-run e apply → recusa; `remote-only`
-  continua bloqueando.
+  ficam até W31). **Dividir o workflow em 2 jobs**: `preflight` (identidade, TLS, ledger, contrato de runtime, `--dry-run`,
+  hash) **sem** `environment`, e `apply` (`needs: preflight`, `environment: producao-ddl`) que só recebe o hash por
+  `outputs` — hoje o job único (`db-migrate.yml:66-75`) para no environment **antes de qualquer passo**, então o
+  dry-run não roda sem aprovação e o aprovador decide às cegas. Verificação: fixture com 8 versions; editar um arquivo
+  entre dry-run e apply → recusa; `remote-only` continua bloqueando; dispatch com `apply=false` termina sem pedir
+  aprovação.
 - [ ] **W28** · B+C · N-08 · Mover as ~640 linhas de asserções inline por versão (`db-migrate.yml:264-900`) para
   `scripts/db-audit/contracts/<versão>.expect.json`, lidas por `run-runtime-contract.mjs` (comparação `antes`/`depois`
   por `NEEDS_APPLY`). Verificação: `db-migrate-contratos.unit.mjs` prova equivalência por fixture para as 12 versions;
@@ -376,9 +383,12 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
   apply_all_missing` dry-run → aprovação `producao-ddl` → apply → `types-sync` → PR de sync → merge) e os estados dos
   guards (`PENDENTE DE APPLY` × drift). Verificação: `check-talkx-docs`-style unit test cobrindo os termos.
-- [ ] **W33** · B · N-04 · `types-sync.yml` ganha gatilho `workflow_run` (workflows: `DB Migrate (production)`, `types:
-  completed`, `conclusion == success`, `apply == true`) para fechar o lote no mesmo dia sem esperar push/schedule.
-  Verificação: apply ✅ → run de types-sync em < 5 min → PR de sync.
+- [ ] **W33** · B · N-04 · Fechar o lote no mesmo dia sem esperar push/schedule: o **último passo do job `apply`** do
+  `db-migrate.yml` (só quando `inputs.apply == true` e o apply terminou ✅) dispara o `types-sync` por
+  `workflow_dispatch` (`gh workflow run types-sync.yml --ref main`, `actions: write` só nesse job). Não usar
+  `workflow_run` no `types-sync`: esse gatilho **não expõe os inputs** do dispatch de origem, então o sync não
+  conseguiria distinguir dry-run de apply sem consultar a API do run. Verificação: apply ✅ → run de types-sync em < 5
+  min → PR de sync; dry-run ✅ → nenhum run de types-sync.
 - [ ] **W34** · B · N-04 · PRs `automation/types-sync` e `automation/talkx-status` habilitam auto-merge (`gh pr merge
   --auto --squash`) logo após criados — só funciona com W01(a). Verificação: PR de sync mergeia sozinho quando os 6
   checks ficam verdes; `auto-update-pr-branch` passa a ter trabalho real.
@@ -469,9 +479,12 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W62** · A+B · N-23 · Secrets de deploy (`SUPABASE_ACCESS_TOKEN`, `CRON_SECRET`, `PROMOGIFTS_*`, `EXTERNAL_*`,
   `PREVIEW_EGRESS_*`) criados no environment `producao-edge-functions` e apagados do nível repo; `crm-sync-worker` passa
   a usar o mesmo environment para `CRON_SECRET`. Verificação: `GET /actions/secrets` sem eles; deploy e worker verdes.
-- [ ] **W63** · A+B · N-23 · `DESTINO_URL` movido para `producao-ddl` (db-migrate, supabase-sync) e para um environment
-  novo `banco-leitura` (db-live-guard, types-sync, targeted-ledger-evidence) — mesmo valor por enquanto, blast radius por
-  environment. Verificação: 0 secrets `DESTINO_URL` no repo; os 5 workflows verdes.
+- [ ] **W63** · A+B · N-23 · `DESTINO_URL` movido para os environments que cada consumidor **já declara**:
+  `producao-ddl` (db-migrate), `legacy-import-destrutivo` (supabase-sync, que roda nesse environment — não em
+  `producao-ddl`), `db-ledger-evidence` (targeted-ledger-evidence) e um environment novo `banco-leitura` (db-live-guard,
+  types-sync, que hoje não têm environment) — mesmo valor por enquanto, blast radius por environment. Verificação: 0
+  secrets `DESTINO_URL` no repo; os 5 workflows verdes (o `supabase-sync` continua falhando fechado por
+  `LEGACY_IMPORT_UNLOCK` ausente, que é o desarme deliberado, não por falta de `DESTINO_URL`).
 - [ ] **W64** · D ⚠️ · N-23 · Role Postgres `ci_readonly` + `DESTINO_URL_RO` em `banco-leitura` (E26 original; envolve
   DDL de role, só o Joaquim). Verificação: `supabase db push` com a role RO → `permission denied`; guards verdes.
 - [ ] **W65** · B+C · N-31 · Pós-deploy de saúde: 5 min após o deploy, consultar logs/erros das funções do escopo pela

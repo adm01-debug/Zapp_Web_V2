@@ -125,11 +125,15 @@ quebrar, um bot abre o revert e avisa. Isso é possível porque a Camada 1 já p
 - **Edge functions:** já é automática no push (desde 07/10). Falta: saúde pós-deploy (5xx nos 5 min seguintes) e
   rollback automático para o último Deployment `success`. Secrets no environment, não no repo. Reescrita de secrets
   fail-closed.
-- **Banco:** `db-migrate` disparado automaticamente por `workflow_run` quando o push na `main` traz migration; o dry-run
-  roda sozinho e o job **para no environment `producao-ddl` esperando o Joaquim** (um clique no celular). Modo
-  `apply_all_missing` substitui bundles hardcoded. Após o apply, o baseline de schema é regenerado e o guard vivo
-  confirma paridade. **Este é o único portão humano de rotina na arquitetura inteira**, e é o certo: DDL em produção é
-  irreversível.
+- **Banco:** `db-migrate` disparado automaticamente por `workflow_run` quando o push na `main` traz migration. O que
+  isso exige do workflow atual: hoje ele é **um job só** com `environment: producao-ddl`, e o GitHub pausa o job
+  **antes do primeiro passo** — o dry-run nunca roda sem aprovação e o aprovador decide às cegas. O alvo é **dois
+  jobs**: `preflight` (identidade, TLS, ledger, contrato de runtime, `--dry-run`, hash) sem environment, e `apply`
+  (`needs: preflight`, `environment: producao-ddl`) que recebe o hash por `outputs` e **para esperando o Joaquim**
+  (um clique no celular, já com o resultado do dry-run na tela). Modo `apply_all_missing` substitui bundles
+  hardcoded (W27). Após o apply, o próprio job dispara o `types-sync` (W33), o baseline de schema é regenerado e o
+  guard vivo confirma paridade. **Este é o único portão humano de rotina na arquitetura inteira**, e é o certo: DDL em
+  produção é irreversível.
 - **E2E logado:** roda após CI da `main` verde e a cada 2 h, com cancelamento do pendente antigo, não do novo. Falha
   abre issue com causa e avisa por WhatsApp.
 - **Vercel:** 1 projeto, 1 domínio canônico, preview por PR nativo da Vercel. Dois projetos deployando o mesmo repo é
