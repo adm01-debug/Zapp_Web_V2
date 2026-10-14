@@ -32,6 +32,14 @@ const APPROVED_AUDIO_BUCKETS = [
   "audio-memes",
 ] as const;
 
+// Teto por usuário por minuto no caminho de UI (memória do isolate).
+const USER_PER_MINUTE = 10;
+// Teto por IP no caminho de SERVIÇO (worker de entrada). O webhook manda TODA a
+// auto-transcrição da MESMA origem, então o teto de usuário (10/min) estrangulava
+// a 11ª transcrição do minuto. O teto de serviço é 60/min — configurável pelo
+// `servicePerMinute` de `_shared/ai-auth.ts` — e vive lá, não aqui.
+const SERVICE_PER_MINUTE = 60;
+
 type DownloadAudioResult =
   | { buffer: ArrayBuffer; contentType: string }
   | { error: string };
@@ -297,7 +305,8 @@ export async function handleTranscribeAudio(
   const authorize = deps.authorize ??
     ((r: Request) =>
       requireAiIdentityOrService(r, "ai-transcribe-audio", {
-        perUserPerMinute: 10,
+        perUserPerMinute: USER_PER_MINUTE,
+        servicePerMinute: SERVICE_PER_MINUTE,
       }));
 
   // IA-011/IA-012: caminho de usuário com identidade verificada + cota; caminho de
@@ -314,15 +323,22 @@ export async function handleTranscribeAudio(
     Promise.resolve(false);
 
   try {
-    const rateLimit = deps.rateLimit ?? checkRateLimit;
-    const ip = deps.clientIp ?? getClientIP(req);
-    const { allowed } = rateLimit(`transcribe:${ip}`, 10, 60_000);
-    if (!allowed) {
-      return errorResponse(
-        "Limite de transcrições excedido. Tente novamente em 1 minuto.",
-        429,
-        req,
-      );
+    // Teto por IP SÓ no caminho de USUÁRIO (painel). O caminho de SERVIÇO
+    // (evolution-webhook) chega todo da MESMA origem e era estrangulado aqui a
+    // cada 11ª transcrição do minuto — cada recusa ainda marcava a mensagem como
+    // `failed`. Quem limita o serviço é o `servicePerMinute` (60/min) aplicado
+    // dentro de `requireAiIdentityOrService`, que já passou acima.
+    if (identity.kind === "user") {
+      const rateLimit = deps.rateLimit ?? checkRateLimit;
+      const ip = deps.clientIp ?? getClientIP(req);
+      const { allowed } = rateLimit(`transcribe:${ip}`, USER_PER_MINUTE, 60_000);
+      if (!allowed) {
+        return errorResponse(
+          "Limite de transcrições excedido. Tente novamente em 1 minuto.",
+          429,
+          req,
+        );
+      }
     }
 
     const parsed = parseBody(TranscribeAudioSchema, await req.json());

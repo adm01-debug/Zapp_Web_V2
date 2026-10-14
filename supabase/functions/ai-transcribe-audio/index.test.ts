@@ -386,3 +386,63 @@ Deno.test(
     assert(!fetchCalled, "nada pode ir ao provedor quando a autorização nega");
   },
 );
+
+// ─── G1: o teto por IP do painel não pode estrangular o caminho de SERVIÇO ─────
+// O webhook do WhatsApp chama esta Edge com a service role key e TODAS as
+// chamadas chegam do MESMO IP (o do worker). O teto de 10/min por IP era
+// aplicado ao serviço também: a partir da 11ª transcrição do minuto o webhook
+// recebia 429 e a mensagem ficava `failed` — com o áudio já pago no provedor.
+// Quem limita o serviço é o `servicePerMinute` (60/min) de `requireAiIdentityOrService`.
+
+Deno.test(
+  "G1: 15 transcrições de SERVIÇO no mesmo minuto concluem 200 (sem teto por IP no serviço)",
+  async () => {
+    let rateLimitCalls = 0;
+    const statuses: number[] = [];
+
+    for (let i = 0; i < 15; i++) {
+      const capture: StoreCapture = { writes: [], loads: [] };
+      const deps = baseDeps({
+        ...stubStore(capture),
+        // Se o caminho de serviço ainda passasse por aqui, a PRIMEIRA chamada
+        // receberia 429 (o falso nega sempre) — é o que prova a remoção.
+        rateLimit: () => {
+          rateLimitCalls += 1;
+          return { allowed: false };
+        },
+        downloadAudio: () =>
+          Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+        fetch: capturingFetch({ form: null }, { text: `transcricao-${i}` }),
+      });
+
+      const res = await handleTranscribeAudio(makeRequest(), deps);
+      statuses.push(res.status);
+    }
+
+    assertEquals(
+      statuses.every((s) => s === 200),
+      true,
+      `as 15 chamadas de serviço deveriam concluir 200; vieram ${statuses.join(",")}`,
+    );
+    assertEquals(rateLimitCalls, 0, "o teto por IP do painel não é consultado no caminho de serviço");
+  },
+);
+
+Deno.test(
+  "G1: o caminho de USUÁRIO continua recebendo 429 acima do teto por IP",
+  async () => {
+    let rateLimitCalls = 0;
+    const deps = baseDeps({
+      authorize: () => Promise.resolve({ kind: "user", userId: "u-1" }),
+      rateLimit: () => {
+        rateLimitCalls += 1;
+        return { allowed: false };
+      },
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 429, "usuário acima do teto por IP recebe 429");
+    assertEquals(rateLimitCalls, 1, "o teto por IP do painel continua valendo para o usuário");
+  },
+);

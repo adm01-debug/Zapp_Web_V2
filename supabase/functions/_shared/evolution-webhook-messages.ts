@@ -986,8 +986,19 @@ export async function handleAudioTranscription(supabase: EvolutionDbClient, _con
     });
 
     if (response.ok) {
-      const result = await response.json();
-      await supabase.from('messages').update({ transcription: result.text, transcription_status: 'completed' }).eq('id', messageId);
+      // A Edge responde `{ transcription }` (NÃO `text`): ler `result.text`
+      // gravava `undefined` como `completed` — o selo "Transcrito" não aparecia e
+      // a transcrição paga era perdida. O texto só vira `completed` se existir;
+      // resposta vazia (fallback de formato) é `failed`, nunca "completed vazio".
+      const result = await response.json() as { transcription?: unknown };
+      const text = typeof result?.transcription === "string"
+        ? result.transcription.trim()
+        : "";
+      if (text) {
+        await supabase.from('messages').update({ transcription: text, transcription_status: 'completed' }).eq('id', messageId);
+      } else {
+        await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
+      }
     } else {
       await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
     }
