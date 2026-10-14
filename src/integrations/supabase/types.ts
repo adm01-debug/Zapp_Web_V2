@@ -10688,6 +10688,7 @@ export type Database = {
         }[]
       }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
+      clear_old_telemetry: { Args: { p_days: number }; Returns: number }
       close_conversation_atomic: {
         Args: {
           p_classification?: string

@@ -115,6 +115,11 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // item t_2f61bbd8: prova, em PG 17 descartável (docker), que a limpeza de public.query_telemetry
+  // é só de ADMIN (RLS + RPC clear_old_telemetry auditada em audit_logs com quem+contagem),
+  // que a retenção automática de 30 d roda pelo pg_cron e que o rollback do cabeçalho devolve a
+  // policy antiga. Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/query-telemetry-retention.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
