@@ -29,9 +29,11 @@ Especialista: worker (geral)
   `src/hooks/inbox/useInboxBulkActions.ts:143` → `:165`), sem afrouxar asserção: o teste de âncora
   (`scripts/ci/docs-estado-registry-convention.unit.mjs`) ficou intacto e verde.
 - Ponto 3: provei com o mesmo comando do cartão (`ci_espelho.sh .`) — o item
-  `node: ESTADO.md cita só âncoras reais...` sumiu da lista — e com
+  `node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` sumiu da lista — e com
   `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `# pass 11` / `# fail 0`
-  e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+  e `zapp-verify . --rapido` → saída completa: `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`,
+  `VERIFY: VERDE SEM BANCO (1003s)`. SHA do diff próprio (a correção, que não é da faixa do pai):
+  `93216be6e3`.
 
 ## FAIXA DO PAI
 FAIXA DO PAI: commits `647c2890fd` (`fix(inbox): lote marca so mensagens recebidas e transfere via RPC por contato`)
