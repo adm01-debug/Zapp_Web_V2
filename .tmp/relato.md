@@ -22,6 +22,8 @@ FAIXA DO PAI (herdada por dependência, não escrita neste cartão):
   supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql
   supabase/tests/alerta_falha_envio_por_conexao.sql
   supabase/tests/outbound_sweeper_e_claim_por_papel.sql
+Números do diff, conferidos no `git diff --stat` acima: 5 arquivos alterados, 2 de teste
+(as duas migrations são do meu cartão + da faixa do pai; os dois testes idem).
 
 Riscos preservados: nada de DDL sobre dado existente; GRANT/REVOKE e `search_path` intactos; sem PII no texto do alerta (T5 confere); dedupe_key por conexão+hora mantém a idempotência (T5: 2ª execução não insere, total segue 6).
 
