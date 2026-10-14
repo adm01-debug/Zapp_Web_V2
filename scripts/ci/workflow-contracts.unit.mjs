@@ -210,6 +210,27 @@ test('E98: workflow disparado por pull_request não recebe segredo de banco', ()
   assert.deepEqual(infratores, [], `pull_request com DESTINO_URL: ${infratores.join(', ')}`);
 });
 
+// W07 (plano de 14/10/2026, achado N-13): no guarda vivo, todo sub-check que entra
+// no veredito (tem `id:` e `continue-on-error: true`) depende da credencial do
+// banco. Sem `if: steps.credencial.outcome == 'success'` o passo roda sem
+// credencial, falha por motivo alheio ao contrato e vira "causa" no alerta. Em
+// 14/10 o passo E85 (fixtures de E2E) era o unico dos 11 sem a guarda.
+test('W07: todo sub-check do guarda vivo exige a credencial do banco', () => {
+  const texto = wf['db-live-guard.yml'];
+  assert.ok(texto, 'db-live-guard.yml sumiu');
+  const semGuarda = [];
+  let subChecks = 0;
+  for (const p of passos(texto)) {
+    if (!/^ {8}continue-on-error:\s*true/m.test(p)) continue;
+    const id = /^ {8}id:\s*(\S+)/m.exec(p)?.[1];
+    if (!id || id === 'credencial') continue; // sem id nao entra no veredito (login/pre-pull)
+    subChecks += 1;
+    if (!/^ {8}if:\s*steps\.credencial\.outcome == 'success'/m.test(p)) semGuarda.push(id);
+  }
+  assert.ok(subChecks >= 10, `esperava >= 10 sub-checks com id, achei ${subChecks}`);
+  assert.deepEqual(semGuarda, [], `sub-check do guarda vivo sem a guarda de credencial: ${semGuarda.join(', ')}`);
+});
+
 // E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers do
 // Playwright (centenas de MB) volta a acontecer em todo job se o cache não
 // existir OU se a instalação rodar mesmo com cache quente. As duas metades
