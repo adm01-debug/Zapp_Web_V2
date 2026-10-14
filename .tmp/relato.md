@@ -1,27 +1,52 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- `src/hooks/communication/useAudioPlayer.ts`: registra o elemento no store de exclusividade por
+  `messageId` (tocar este áudio assume a exclusividade e pausa quem tocava; um áudio de outro cartão
+  pausa este), escuta `play`/`pause` do próprio elemento para o botão acompanhar pausa externa
+  (store, controles do sistema) e reaplica `playbackRate` depois de `audio.load()`. Preserva posição
+  e velocidade no store em `timeupdate`, `ratechange` e no desmonte, e restaura na montagem.
+- `src/lib/audioPlayerState.ts` (novo): estado por `messageId` fora do React
+  (`currentTime`/`playbackRate`/`paused`), TTL de 30 min e teto de 200 entradas com descarte do mais
+  antigo — é o que faz a lista virtualizada do chat (que monta e desmonta balões ao rolar) devolver o
+  ponto onde o atendente parou em vez de zero em 1x.
+- `src/hooks/communication/__tests__/audioExclusivo.players.test.tsx` (novo): dois players (B pausa A
+  e o botão de A volta a "tocar"), pausa externa pelo evento `pause` do elemento, desmonte/remontagem
+  do mesmo `messageId` devolvendo posição e velocidade, e `load()` reaplicando a velocidade sem
+  rebobinar a posição.
+- `src/lib/__tests__/audioPlayerState.test.ts` (novo): cópia na leitura, fusão de campos sem apagar o
+  que existe, expiração em 30 min e teto de 200 com rejuvenescimento de quem tocou de novo.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Decisões (o que o diff mostra, e por quê)
+- `ratechange` NÃO adota a velocidade do elemento: reafirma a escolha do atendente. O `load()` da
+  renovação da URL assinada reinicia o elemento em 1x e dispara `ratechange`; adotar esse valor
+  apagaria a velocidade escolhida — o teste `load() reaplica a velocidade` cobre isso.
+- O store guarda SESSÃO DE ESCUTA: a entrada nasce quando há posição (`currentTime > 0`), não quando o
+  balão só foi renderizado. Sem isso a virtualização do chat gastaria o teto de 200 entradas com
+  áudios que ninguém ouviu, expulsando justamente os que estavam sendo ouvidos.
+- O elemento é guardado em `elementRef` porque o `ref` do JSX já está `null` quando as limpezas de
+  efeito rodam: sem isso o desmonte não pausava o som nem gravava o ponto (o teste do desmonte pegou
+  exatamente isso).
+- Nada de autoplay na remontagem: restaura posição e velocidade, e o botão continua em "tocar".
+- `src/hooks/chat/useExclusiveAudio.ts` está nos arquivos que o cartão permite e NÃO precisou mudar:
+  o store já expõe `playExclusiveAudio`/`pauseExclusiveAudio`/`registerExclusiveAudio` e a limpeza do
+  registro já pausa e libera o dono do áudio.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `npx vitest run src/hooks/communication/__tests__/audioExclusivo.players.test.tsx`
+  (com o registro de exclusividade e a restauração desligados no hook) →
+  `AssertionError: o elemento de A foi pausado: expected "vi.fn()" to be called at least once` e
+  `AssertionError: desmontar pausou o som (sem som fantasma): expected "vi.fn()" to be called at least once`;
+  `Tests  2 failed | 2 passed (4)`
+- verde depois: `npx vitest run src/lib/__tests__/audioPlayerState.test.ts src/hooks/communication/__tests__/ src/components/inbox/__tests__/PlaybackSpeed.test.tsx src/hooks/__tests__/useAudioPlayer.test.tsx src/hooks/chat/__tests__/useExclusiveAudio.test.tsx`
+  → `Test Files  12 passed (12)` / `Tests  103 passed (103)`
+- suíte larga das áreas afetadas: `npx vitest run src/components/inbox src/hooks src/lib` →
+  `Test Files  686 passed | 3 skipped (689)` / `Tests  6517 passed | 24 expected fail | 29 todo (6570)`
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei em teste existente: `src/components/inbox/__tests__/PlaybackSpeed.test.tsx` (28 casos)
+  continua passando sem alteração de expectativa — os casos que clicam velocidade/play sem ouvir
+  áudio não criam entrada no store (regra da sessão de escuta) e por isso seguem vendo 1x na montagem.
+- Não guardei a velocidade escolhida antes de o áudio começar (posição 0): a entrada nasce com a
+  sessão de escuta, pelo motivo do teto de 200 entradas.
+- Não mexi no lado servidor nem em Edge Function: nenhuma chamada nova.
