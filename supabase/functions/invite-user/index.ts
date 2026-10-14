@@ -10,12 +10,23 @@ import { handleCors, errorResponse, internalErrorResponse, jsonResponse, require
  *   - Quem chama precisa ser admin OU supervisor (lido de user_roles com o
  *     cliente de escopo do usuário, nunca com a service role).
  *   - Supervisor só convida papel 'agent'; qualquer outro papel exige admin.
- *   - O papel do convidado é garantido pelo caminho de serviço (update/insert
- *     em user_roles com service_role): handle_new_user_role só cria 'agent'
- *     para dominio confiavel, entao o convite NAO depende dele.
+ *   - Domínio da empresa (handle_new_user_role, fail-closed): e-mail fora do
+ *     domínio confiável só pode ser convidado por admin, e a auditoria marca
+ *     domain_trusted=false. Supervisor convidando domínio fora recebe 403 e
+ *     nenhuma conta é criada. Admin convidando domínio fora é concessão manual
+ *     (a migration 20260925140000 permite explicitamente ao admin conceder
+ *     papel a conta de outro domínio — parceiro, freelancer).
+ *   - O papel do convidado é gravado pela RPC public.admin_set_role (caminho
+ *     que a V2 já usa) quando quem convida é admin, via cliente com o JWT do
+ *     chamador (a RPC exige sessão JWT e is_admin). Supervisor só convida
+ *     'agent' e a RPC levanta admin_required para não-admin, por isso esse
+ *     caso restrito usa insert direto com service_role.
  *   - Se a atribuicao de papel falhar, a conta recem-convidada é desfeita.
- *   - O e-mail vai pelo proprio GoTrue (inviteUserByEmail); a resposta NAO
- *     carrega link de convite.
+ *   - O e-mail vai pelo proprio GoTrue (inviteUserByEmail, sem user_metadata:
+ *     papel mora em user_roles); a resposta NAO carrega link de convite.
+ *   - Auditoria do convite é best-effort: se falhar, só é registrada em log
+ *     (o convite já se concretizou; desfazer uma conta válida por causa da
+ *     auditoria seria pior — e no caminho admin a RPC já auditou via trigger).
  */
 
 export interface InviteUserCallerClient {
@@ -25,6 +36,14 @@ export interface InviteUserCallerClient {
   // deno-lint-ignore no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
+  // RPC public.admin_set_role, chamada com o JWT do chamador (a RPC exige
+  // sessão JWT e is_admin; service_role sem JWT cai em jwt_session_required).
+  rpc: (
+    fn: string,
+    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: Record<string, any>,
+  ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
 }
 
 export interface InviteUserAdminClient {
@@ -55,6 +74,27 @@ export interface InviteUserDeps {
 }
 
 const INVITABLE_ROLES = ["admin", "supervisor", "agent", "special_agent"] as const;
+
+// Domínio confiável da empresa (mesma semântica de handle_new_user_role,
+// migration 20260925140000): default fail-closed para o domínio da empresa,
+// sobrescrevível por TRUSTED_DOMAINS (lista separada por vírgula).
+const DEFAULT_TRUSTED_DOMAINS = ["promobrindes.com.br"];
+
+function getTrustedDomains(env: (name: string) => string): string[] {
+  let raw: string | null = null;
+  try {
+    raw = env("TRUSTED_DOMAINS");
+  } catch {
+    raw = null;
+  }
+  if (!raw || !raw.trim()) return DEFAULT_TRUSTED_DOMAINS;
+  const list = raw.split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
+  return list.length > 0 ? list : DEFAULT_TRUSTED_DOMAINS;
+}
+
+function emailDomain(email: string): string {
+  return (email.split("@")[1] ?? "").trim().toLowerCase();
+}
 
 const bodySchema = z.object({
   email: z.string().email("Email inválido").max(255),
@@ -123,14 +163,24 @@ export async function handleInviteUserRequest(req: Request, deps: InviteUserDeps
       return errorResponse("Supervisor só pode convidar usuários com o papel agent", 403, req);
     }
 
+    // Domínio da empresa (handle_new_user_role, fail-closed): fora do domínio
+    // confiável, só admin convida — e nenhuma conta é criada antes dessa
+    // checagem. Supervisor recebe 403 aqui.
+    const domainTrusted = getTrustedDomains(env).includes(emailDomain(email));
+    if (!domainTrusted && !isAdmin) {
+      log.warn("Supervisor tentou convidar domínio fora da empresa", { callerId: caller.id, email });
+      return errorResponse("Convites para domínios fora da empresa exigem um administrador", 403, req);
+    }
+
     const adminClient: InviteUserAdminClient = deps.admin ?? createClient(
       env("SUPABASE_URL"),
       env("SUPABASE_SERVICE_ROLE_KEY"),
     );
 
+    // Sem user_metadata: papel não é fonte de verdade em user_metadata, ele é
+    // gravado em user_roles logo abaixo (admin_set_role ou insert restrito).
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email,
-      { data: { role } },
     );
     if (inviteError) {
       log.error("Falha ao convidar", { error: inviteError.message });
@@ -143,17 +193,21 @@ export async function handleInviteUserRequest(req: Request, deps: InviteUserDeps
       return internalErrorResponse(new Error("invite_failed"), req);
     }
 
-    // Papel garantido pelo caminho de serviço: atualiza a linha existente
-    // (auto-provisionada por handle_new_user_role) ou insere quando ela nao
-    // existe (dominio diferente do da empresa). Falha aqui desfaz a conta.
+    // Papel pelo caminho que a V2 já usa: quando quem convida é admin, a RPC
+    // public.admin_set_role (migration 20260925100657) via cliente com o JWT
+    // do chamador — a RPC exige sessão JWT (jwt_session_required) e is_admin,
+    // e audita via trigger com changed_by = auth.uid(). Supervisor só convida
+    // 'agent' e a RPC levanta admin_required para não-admin, por isso esse
+    // caso restrito usa insert direto com service_role. Falha aqui desfaz a
+    // conta recém-convidada.
     try {
-      const { data: updated, error: updateError } = await adminClient
-        .from("user_roles")
-        .update({ role })
-        .eq("user_id", invitedId)
-        .select("id");
-      if (updateError) throw updateError;
-      if (!updated || updated.length === 0) {
+      if (isAdmin) {
+        const { error: rpcError } = await callerClient.rpc("admin_set_role", {
+          _user_id: invitedId,
+          _role: role,
+        });
+        if (rpcError) throw rpcError;
+      } else {
         const { error: insertError } = await adminClient
           .from("user_roles")
           .insert({ user_id: invitedId, role });
@@ -170,15 +224,19 @@ export async function handleInviteUserRequest(req: Request, deps: InviteUserDeps
     }
 
     // Auditoria: registra quem convidou (service_role nao carrega auth.uid()).
+    // Auditoria best-effort e intencional: o convite já se concretizou
+    // (conta + papel); se a auditoria falhar, só registra em log em vez de
+    // desfazer uma conta válida. No caminho admin, a RPC admin_set_role já
+    // auditou a troca de papel via trigger com changed_by = auth.uid().
     const { error: auditError } = await adminClient.from("audit_logs").insert({
       user_id: caller.id,
       action: "user_invited",
-      entity_type: "user_invitation",
-      entity_id: invitedId,
-      details: { invited_by: caller.id, email, role },
+      table_name: "auth.users",
+      record_id: invitedId,
+      details: { invited_email: email, invited_role: role, domain_trusted: domainTrusted },
     });
     if (auditError) {
-      log.error("Falha ao registrar auditoria do convite", { error: auditError.message });
+      log.warn("Auditoria do convite falhou (convite mantido)", { error: auditError.message });
     }
 
     log.done(200, { userId: invitedId, role });

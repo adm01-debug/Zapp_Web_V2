@@ -18,16 +18,26 @@ function makeCaller(opts: {
   user?: { id: string } | null;
   roles?: string[];
   roleError?: boolean;
+  rpcError?: boolean;
   // deno-lint-ignore no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } = {}): any {
+  // Chamadas a public.admin_set_role via cliente com o JWT do chamador.
+  const rpcCalls: Array<{ fn: string; args: unknown }> = [];
   return {
+    __rpcCalls: rpcCalls,
     auth: {
       getUser: () =>
         Promise.resolve({
           data: { user: opts.user ?? null },
           error: opts.user ? null : new Error("no user"),
         }),
+    },
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ fn, args });
+      return Promise.resolve(
+        opts.rpcError ? { data: null, error: { message: "rpc_failed" } } : { data: null, error: null },
+      );
     },
     from(_table: string) {
       // deno-lint-ignore no-explicit-any
@@ -61,7 +71,7 @@ function makeAdmin(opts: {
   const invites: Array<{ email: string; options: Record<string, unknown> | undefined }> = [];
   // deno-lint-ignore no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state: { roleWrite: any } = { roleWrite: null };
+  const state: { roleWrite: any; auditWrite: any } = { roleWrite: null, auditWrite: null };
 
   // deno-lint-ignore no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,6 +117,7 @@ function makeAdmin(opts: {
         ) => {
           calls.push(`${table}:${op}`);
           if (table === "user_roles") state.roleWrite = payload;
+          if (table === "audit_logs") state.auditWrite = payload;
           // deno-lint-ignore no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let res: any = { data: null, error: null };
@@ -194,45 +205,81 @@ Deno.test("invite-user: supervisor pedindo papel privilegiado → 403 e nenhum c
 });
 
 Deno.test("invite-user: supervisor convidando agent → 200 e papel agent atribuido", async () => {
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["supervisor"] });
   const { admin, calls, state } = makeAdmin();
-  const res = await handleInviteUserRequest(makeRequest({ email: "novo@empresa.com", role: "agent" }), OK_DEPS({
-    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["supervisor"] }),
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller,
     admin,
   }));
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
   assert(state.roleWrite?.role === "agent", `papel gravado veio ${JSON.stringify(state.roleWrite)}`);
   assert(calls.includes("audit_logs:insert"), `auditoria deveria registrar o convite: ${JSON.stringify(calls)}`);
+  assert(state.auditWrite?.details?.domain_trusted === true, `auditoria deveria marcar dominio confiavel: ${JSON.stringify(state.auditWrite)}`);
+  // Supervisor nao passa pela RPC de admin: escrita direta com service_role.
+  assert(caller.__rpcCalls.length === 0, `supervisor nao deveria chamar rpc: ${JSON.stringify(caller.__rpcCalls)}`);
 });
 
-Deno.test("invite-user: admin convidando supervisor → 200 e papel supervisor atribuido", async () => {
+Deno.test("invite-user: admin convidando supervisor → 200 e papel pela RPC admin_set_role", async () => {
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] });
   const { admin, state } = makeAdmin({ roleUpdateRows: [{ id: "r1" }] });
-  const res = await handleInviteUserRequest(makeRequest({ email: "chefe@empresa.com", role: "supervisor" }), OK_DEPS({
-    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
+  const res = await handleInviteUserRequest(makeRequest({ email: "chefe@promobrindes.com.br", role: "supervisor" }), OK_DEPS({
+    caller,
     admin,
   }));
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
-  assert(state.roleWrite?.role === "supervisor", `papel gravado veio ${JSON.stringify(state.roleWrite)}`);
+  // Caminho V2: papel concedido pela RPC publica com o JWT do chamador...
+  assert(
+    JSON.stringify(caller.__rpcCalls) === JSON.stringify([{ fn: "admin_set_role", args: { _user_id: NEW_USER_ID, _role: "supervisor" } }]),
+    `RPC admin_set_role nao chamada como esperado: ${JSON.stringify(caller.__rpcCalls)}`,
+  );
+  // ...e sem escrita direta em user_roles nesse caminho.
+  assert(state.roleWrite === null, `nao deveria escrever direto em user_roles: ${JSON.stringify(state.roleWrite)}`);
 });
 
-Deno.test("invite-user: admin convidando dominio fora da empresa → papel ainda garantido", async () => {
-  // handle_new_user_role so cria 'agent' para promobrindes.com.br; o convite
-  // NAO pode depender dele. Este caminho grava o papel com service_role.
+Deno.test("invite-user: supervisor convidando dominio fora → 403 e nenhum convite", async () => {
+  const { admin, calls } = makeAdmin();
+  const res = await handleInviteUserRequest(makeRequest({ email: "parceiro@parceiro.com", role: "agent" }), OK_DEPS({
+    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["supervisor"] }),
+    admin,
+  }));
+  assert(res.status === 403, `esperado 403, veio ${res.status}`);
+  assert(!calls.includes("inviteUserByEmail"), `nao deveria criar conta: ${JSON.stringify(calls)}`);
+});
+
+Deno.test("invite-user: admin convidando dominio fora → 200 com auditoria marcando o dominio", async () => {
+  // handle_new_user_role (migration 20260925140000) so auto-provisiona 'agent'
+  // para promobrindes.com.br, mas permite que um admin conceda papel a conta
+  // de outro dominio (parceiro, freelancer). O convite segue essa regra:
+  // dominio fora exige admin e fica registrado na auditoria.
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] });
   const { admin, calls, state } = makeAdmin();
   const res = await handleInviteUserRequest(makeRequest({ email: "parceiro@parceiro.com", role: "agent" }), OK_DEPS({
-    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
+    caller,
     admin,
   }));
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
-  assert(state.roleWrite?.role === "agent", `papel gravado veio ${JSON.stringify(state.roleWrite)}`);
   assert(
-    calls.some((c) => c === "user_roles:update" || c === "user_roles:insert"),
-    `papel deveria ser gravado em user_roles: ${JSON.stringify(calls)}`,
+    JSON.stringify(caller.__rpcCalls) === JSON.stringify([{ fn: "admin_set_role", args: { _user_id: NEW_USER_ID, _role: "agent" } }]),
+    `RPC admin_set_role nao chamada como esperado: ${JSON.stringify(caller.__rpcCalls)}`,
   );
+  assert(calls.includes("audit_logs:insert"), `auditoria deveria registrar o convite: ${JSON.stringify(calls)}`);
+  assert(state.auditWrite?.details?.domain_trusted === false, `auditoria deveria marcar dominio fora: ${JSON.stringify(state.auditWrite)}`);
+});
+
+Deno.test("invite-user: TRUSTED_DOMAINS via env libera dominio parceiro para supervisor", async () => {
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["supervisor"] });
+  const { admin } = makeAdmin();
+  const res = await handleInviteUserRequest(makeRequest({ email: "apoio@parceiro.com", role: "agent" }), OK_DEPS({
+    caller,
+    admin,
+    env: (_name: string) => "parceiro.com",
+  }));
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
 });
 
 Deno.test("invite-user: resposta NAO carrega link de convite", async () => {
   const { admin } = makeAdmin();
-  const res = await handleInviteUserRequest(makeRequest({ email: "novo@empresa.com", role: "agent" }), OK_DEPS({
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
     caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
     admin,
   }));
@@ -243,20 +290,45 @@ Deno.test("invite-user: resposta NAO carrega link de convite", async () => {
   }
 });
 
-Deno.test("invite-user: falha do GoTrue → 400 e nenhuma escrita de papel", async () => {
-  const { admin, calls } = makeAdmin({ inviteError: true });
-  const res = await handleInviteUserRequest(makeRequest({ email: "novo@empresa.com", role: "agent" }), OK_DEPS({
+Deno.test("invite-user: convite ao GoTrue vai sem papel no user_metadata", async () => {
+  const { admin, invites } = makeAdmin();
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
+    admin,
+  }));
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(invites.length === 1, `esperado 1 convite, veio ${JSON.stringify(invites)}`);
+  assert(invites[0].email === "novo@promobrindes.com.br", `email errado: ${JSON.stringify(invites)}`);
+  assert(invites[0].options === undefined, `papel nao pode ir no user_metadata: ${JSON.stringify(invites)}`);
+});
+
+Deno.test("invite-user: email invalido → 400 e nenhum convite", async () => {
+  const { admin, calls } = makeAdmin();
+  const res = await handleInviteUserRequest(makeRequest({ email: "nao-email", role: "agent" }), OK_DEPS({
     caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
     admin,
   }));
   assert(res.status === 400, `esperado 400, veio ${res.status}`);
+  assert(!calls.includes("inviteUserByEmail"), `nao deveria convidar: ${JSON.stringify(calls)}`);
+});
+
+Deno.test("invite-user: falha do GoTrue → 400, sem papel e sem desfazer", async () => {
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] });
+  const { admin, calls } = makeAdmin({ inviteError: true });
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller,
+    admin,
+  }));
+  assert(res.status === 400, `esperado 400, veio ${res.status}`);
   assert(!calls.some((c) => c.startsWith("user_roles:")), `nao deveria gravar papel: ${JSON.stringify(calls)}`);
+  assert(caller.__rpcCalls.length === 0, `RPC nao deveria ser chamada: ${JSON.stringify(caller.__rpcCalls)}`);
+  assert(!calls.some((c) => c.startsWith("deleteUser")), `sem conta criada, nada a desfazer: ${JSON.stringify(calls)}`);
 });
 
 Deno.test("invite-user: falha ao atribuir papel → desfaz a conta e erra", async () => {
   const { admin, calls } = makeAdmin({ roleAssignError: true });
-  const res = await handleInviteUserRequest(makeRequest({ email: "novo@empresa.com", role: "agent" }), OK_DEPS({
-    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"], rpcError: true }),
     admin,
   }));
   assert(res.status === 500, `esperado 500, veio ${res.status}`);
@@ -264,6 +336,31 @@ Deno.test("invite-user: falha ao atribuir papel → desfaz a conta e erra", asyn
     calls.includes(`deleteUser:${NEW_USER_ID}`),
     `conta deveria ser desfeita: ${JSON.stringify(calls)}`,
   );
+});
+
+Deno.test("invite-user: supervisor com falha ao atribuir papel → desfaz a conta e erra", async () => {
+  const caller = makeCaller({ user: { id: CALLER_ID }, roles: ["supervisor"] });
+  const { admin, calls } = makeAdmin({ roleAssignError: true });
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller,
+    admin,
+  }));
+  assert(res.status === 500, `esperado 500, veio ${res.status}`);
+  assert(
+    calls.includes(`deleteUser:${NEW_USER_ID}`),
+    `conta deveria ser desfeita: ${JSON.stringify(calls)}`,
+  );
+  assert(caller.__rpcCalls.length === 0, `supervisor nao deveria chamar rpc: ${JSON.stringify(caller.__rpcCalls)}`);
+});
+
+Deno.test("invite-user: falha de auditoria nao derruba o convite (best-effort)", async () => {
+  const { admin, calls } = makeAdmin({ auditError: true });
+  const res = await handleInviteUserRequest(makeRequest({ email: "novo@promobrindes.com.br", role: "agent" }), OK_DEPS({
+    caller: makeCaller({ user: { id: CALLER_ID }, roles: ["admin"] }),
+    admin,
+  }));
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(calls.includes("audit_logs:insert"), `auditoria deveria ter sido tentada: ${JSON.stringify(calls)}`);
 });
 
 Deno.test("invite-user: campo extra no corpo → 400 (schema estrito) e nenhum convite", async () => {
