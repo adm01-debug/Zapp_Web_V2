@@ -97,10 +97,10 @@ jobs:
     # + smokes) somados ao teto de espera do passo de serializacao (MAX_WAIT_MINUTES=40
     # em scripts/edge-deploy/serialize-scope.mjs). Pinado em deploy-functions-workflow.unit.mjs.
     timeout-minutes: 100
-    # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
-    # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
+    # W60: contents:write removido — a tag de rastreabilidade foi substituída pelo
+    # Deployment do GitHub (E60, 2026-10-01). O job só precisa de deployments:write
+    # (aba Deployments) e actions:read (serialização de escopo `all`).
     permissions:
-      contents: write
       # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
       actions: read
       # E60: registrar o Deployment de rastreabilidade (aba Deployments).
