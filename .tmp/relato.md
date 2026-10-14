@@ -1,5 +1,13 @@
 Especialista: workersql
 
+## Diff real (git diff --stat dia/2026-10-13...HEAD → 3 files changed, 567 insertions(+), 21 deletions(-); 1 arquivo de teste)
+- `.tmp/relato.md` (este relato)
+- `supabase/migrations/20261013235906_quick_replies_uso_e_global.sql` (novo, migration)
+- `supabase/tests/quick_replies_uso_e_global.sql` (novo, teste)
+- Nenhum `.ts`/`.tsx` tocado.
+
+RESULTADO: `EXIT_VERDE=0` — `PASS 32  FALHOU 0` (prova de banco por papel real) e `VERIFY: VERDE SEM BANCO`.
+
 ## O que mudou e por quê
 - Diff do cartão: 3 arquivos — 1 migration (`supabase/migrations/20261013235906_quick_replies_uso_e_global.sql`, novo), 1 arquivo de teste (`supabase/tests/quick_replies_uso_e_global.sql`, novo) e `.tmp/relato.md`. Nenhum `.ts`/`.tsx` tocado.
 - `supabase/migrations/20261013235906_quick_replies_uso_e_global.sql` (novo) — corrige dois defeitos vivos de `public.message_templates` (PH-10, paridade V3→V2 do doc 06-features-inbox-hooks):
@@ -16,6 +24,10 @@ Especialista: workersql
 - vermelho antes (migration NÃO aplicada, `-v sem_guarda=1`): `EXIT_VERMELHO=3`; `ERROR: PH-10 FALHOU [B1 agente conta uso da GLOBAL de outro (retorno true)]: esperado true, obtido ERRO 42883 function public.increment_quick_reply_use(unknown) does not exist`.
 - verde depois (nesta retentativa, 13/10, com `postgres:17-alpine` descartável, `-v mig_dir=/repo/supabase/migrations`): `EXIT_VERDE=0`; últimas linhas `PASS [B11 contar uso preserva updated_at (antes = depois)] -> igual`, `PASS [B11b editar de verdade carimba updated_at (antes <> depois)] -> diferente`, `PASS [B12 id nulo recusado] -> ERRO 22023 invalid_quick_reply_id`, `PASS [B13 id inexistente retorna false] -> false`, `PH-10: provas por papel concluidas`, `ROLLBACK`.
 - rollback executável: aplico a migration e rodo as linhas de `-- Rollback (SQL executável, na ordem)` → `EXIT_ROLLBACK=0`; depois: `depois RPC=false`, `depois funcao_trg=false`, `depois gatilho_zz=false`, `depois policies=Users can create their own templates,Users can update their own templates` (de volta ao estado anterior, só dono).
+
+## Pontos do juiz
+1. Números do relato x diff: confere — `git diff --stat dia/2026-10-13...HEAD` dá 3 arquivos alterados, sendo 1 de teste (listados acima). Os números batem.
+2. Gatilho `update_message_templates_updated_at` regravando `updated_at`: PROCEDE e é o efeito tratado de propósito. A migration cria o gatilho `zz_message_templates_preserve_updated_at` (BEFORE UPDATE, que roda depois do carimbo — ordem alfabética 'u' < 'z') que restaura `old.updated_at` quando a única coluna que muda é `use_count`; edição de verdade continua carimbando. Provado com uma linha antes/depois: `PASS [B11 contar uso preserva updated_at (antes = depois)] -> igual` e `PASS [B11b editar de verdade carimba updated_at (antes <> depois)] -> diferente`. Não desligo o gatilho de carimbo (ele é do sistema e auditoria) nem anulo a coluna por GUC; preservo o valor de forma cirúrgica e provada.
 
 ## O que NÃO fiz e por quê
 - Não mudei nenhum GRANT/ACL existente além dos explícitos da função nova; sem DROP/TRUNCATE/DELETE de dado.
