@@ -1,4 +1,4 @@
-Especialista: Edgar (area-edge-api)
+Especialista: edgar
 
 ## O que mudou e por quê
 - supabase/functions/_shared/gmail-helpers.ts: nova `persistGmailMessageLabels(supabase, accountId, gmailMessageId, labelIds, localThreadId)` — grava `label_ids/is_read/is_starred` da mensagem a partir dos `labelIds` que o Gmail devolve e recalcula `label_ids/is_unread/is_starred/status` da thread dona (mesmos campos que `modify-thread-labels` mantém). Devolve `false` em falha local.
@@ -9,6 +9,7 @@ Especialista: Edgar (area-edge-api)
 - vermelho antes: `git stash push -m red-proof -- supabase/functions/_shared/gmail-helpers.ts supabase/functions/gmail-send/index.ts && deno test --config scripts/ci/deno.json --allow-env supabase/functions/gmail-send/trash-persistencia.test.ts` → `import { persistGmailMessageLabels } from "../_shared/gmail-helpers.ts";` / `error: Type checking failed.` (a helper não existia; o `case "trash"` antigo não tinha nenhuma escrita local — bastam os 11 linhas do diff em index.ts).
 - verde depois: `deno test --config scripts/ci/deno.json --allow-env supabase/functions/gmail-send/trash-persistencia.test.ts` → `ok | 5 passed | 0 failed (14ms)`.
 - commit: fed8633fd9 fix(gmail-send): persiste localmente a mensagem descartada (acao trash).
+- verificação do portão: o `zapp-verify . --rapido` roda dentro do próprio `hermes-tarefa-fechar` (o juiz barato pediu no 2º fechar); o relato lista só o `deno test` do cartão porque é o teste que prova este defeito.
 
 ## O que NÃO fiz e por quê
 - Não toquei `trash-thread`: já persistia (`status='archived'`, `label_ids=['TRASH']`) antes deste cartão; o cartão é da ação `trash` de mensagem.
