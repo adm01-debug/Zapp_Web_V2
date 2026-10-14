@@ -18,7 +18,82 @@ import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
 import { canDeleteContact } from './contactPermissions';
+import { calculateContactHealth, type ContactHealth, type ContactHealthInput } from '@/lib/contactHealth';
 import type { ContactItemProps } from './types';
+
+/**
+ * Cores por nível da completude. Só tokens do sistema (`--primary`, `--warning`,
+ * `--warning-text`, `--destructive`, `--destructive-text` — src/styles/tokens.css).
+ * O número e o rótulo ao lado da barra são o sinal principal: a cor nunca é o
+ * único indicador (requisito de acessibilidade do cartão).
+ */
+const HEALTH_TONE: Record<ContactHealth['level'], { text: string; bar: string }> = {
+  completo: { text: 'text-primary', bar: 'bg-primary' },
+  bom: { text: 'text-primary', bar: 'bg-primary' },
+  incompleto: { text: 'text-[hsl(var(--warning-text))]', bar: 'bg-warning' },
+  critico: { text: 'text-[hsl(var(--destructive-text))]', bar: 'bg-destructive' },
+  indefinido: { text: 'text-muted-foreground', bar: 'bg-muted-foreground/40' },
+};
+
+/**
+ * Completude do cadastro — indicador discreto: barra + número + nível em texto,
+ * com os campos que faltam. `size="md"` (a ficha do contato) mostra a lista de
+ * faltas visível; no cartão (`sm`) ela fica no `title` para não competir com os
+ * dados do contato.
+ */
+export function ContactHealthIndicator({
+  input,
+  size = 'sm',
+  className,
+}: {
+  input: ContactHealthInput | null | undefined;
+  size?: 'sm' | 'md';
+  className?: string;
+}) {
+  const health = calculateContactHealth(input);
+  const tone = HEALTH_TONE[health.level];
+  const faltas = health.missing.map((field) => field.label);
+  const descricao =
+    health.evaluatedCount === 0
+      ? 'Sem campos para avaliar'
+      : faltas.length === 0
+        ? 'Cadastro completo'
+        : `Faltam: ${faltas.join(', ')}`;
+
+  return (
+    <div
+      data-testid="contact-health"
+      data-level={health.level}
+      title={size === 'sm' ? `Completude do cadastro: ${health.score}% — ${descricao}` : undefined}
+      className={cn('flex flex-col gap-1', className)}
+    >
+      <div className="flex items-center gap-1.5">
+        <span className="text-3xs text-muted-foreground">Completude</span>
+        <span className={cn('text-xs font-semibold tabular-nums', tone.text)} data-testid="contact-health-score">
+          {health.score}%
+        </span>
+        <span className="text-3xs text-muted-foreground" data-testid="contact-health-level">
+          {health.label}
+        </span>
+      </div>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={health.score}
+        aria-label={`Completude do cadastro: ${health.score} de 100 — ${health.label}`}
+        className="h-1 w-full max-w-[120px] rounded-full bg-muted overflow-hidden"
+      >
+        <div className={cn('h-full rounded-full', tone.bar)} style={{ width: `${health.score}%` }} />
+      </div>
+      {size === 'md' && (
+        <p className="text-3xs text-muted-foreground" data-testid="contact-health-missing">
+          {descricao}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function ContactCard({
   contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
@@ -178,6 +253,9 @@ export function ContactCard({
           </div>
         )}
       </div>
+
+      {/* Completude do cadastro — logo abaixo dos dados de contato, discreta. */}
+      <ContactHealthIndicator input={contact} className="mt-3" />
 
       {/* Footer — pt-2 fecha o gap final */}
       <div className="mt-auto pt-2 flex items-center justify-between">
