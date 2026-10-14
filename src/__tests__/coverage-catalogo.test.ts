@@ -14,7 +14,7 @@
  *   3. o Catálogo tem piso próprio, cobrindo o módulo inteiro, de 80% em lines e branches.
  */
 import { readdirSync } from "node:fs";
-import { join, matchesGlob, relative, resolve, sep } from "node:path";
+import { join, matchesGlob, relative, resolve } from "node:path";
 import { cwd } from "node:process";
 import { loadConfigFromFile } from "vite";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -32,16 +32,15 @@ const FORA_DO_MODULO = "src/components/contacts/ContactForm.tsx";
 let include: string[] = [];
 let thresholds: Record<string, number | Piso> = {};
 
-/**
- * Arquivos de produção do módulo (sem os testes, que o `coverage.exclude` tira do gate),
- * no formato que o coverage casa: caminho relativo à raiz do repo, com `/`.
- * `e.parentPath` já é absoluto: o caminho sai de `relative(raiz, join(parentPath, name))`.
- */
+/** Arquivos de produção do módulo (sem os testes, que o `coverage.exclude` tira do gate). */
 function arquivosDoModulo(): string[] {
   const raiz = resolve(cwd());
   return readdirSync(resolve(raiz, MODULO), { recursive: true, withFileTypes: true })
     .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
-    .map((e) => relative(raiz, join(e.parentPath, e.name)).split(sep).join("/"))
+    // `e.parentPath` já é ABSOLUTO (Node >= 20.12 com withFileTypes): usa-se relative(raiz, ...)
+    // e NÃO se prefixa MODULO de novo — o prefixo duplicado gerava
+    // "src/components/catalog/src/components/catalog/X.tsx".
+    .map((e) => relative(raiz, join(e.parentPath ?? raiz, e.name)).replace(/\\/g, "/"))
     .filter((f) => !f.includes("__tests__") && !/\.(test|spec)\./.test(f));
 }
 
@@ -68,10 +67,12 @@ describe("gate de cobertura do módulo do Catálogo (SL-154 · DEC-1)", () => {
   it("um mesmo glob do gate mede todos os arquivos do módulo e nenhum de fora", () => {
     const arquivos = arquivosDoModulo();
     expect(arquivos.length).toBeGreaterThanOrEqual(20);
-    // Formato do caminho montado: relativo à raiz do repo, sem repetir o prefixo do módulo.
-    // Sem isto, um caminho duplicado (`src/components/catalog/src/components/catalog/X.tsx`)
-    // ainda casaria com o glob e o teste passaria por acaso.
+    // Formato do caminho: a lista tem de conter um arquivo REAL do módulo. Sem esta asserção um
+    // caminho duplicado ("src/components/catalog/src/components/catalog/X.tsx") ainda casaria
+    // com o glob e o teste passaria com o glob errado.
     expect(arquivos).toContain(AMOSTRA_DO_MODULO);
+    // Todo caminho tem de sair com o prefixo do módulo uma única vez: cobre o caso em que
+    // só alguns arquivos (não a amostra) viessem duplicados e o toContain acima não pegasse.
     expect(arquivos.every((arquivo) => arquivo.startsWith(`${MODULO}/`) && !arquivo.includes(`${MODULO}/src/`))).toBe(true);
 
     const globDoModulo = include.find((glob) => arquivos.every((arquivo) => matchesGlob(arquivo, glob)));
