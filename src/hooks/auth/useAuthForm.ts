@@ -115,8 +115,9 @@ export function useAuthForm() {
     let error: { message: string } | null = null;
     let via: 'edge' | 'direct' = 'direct';
     let lock: LockStatus | null = null;
+    let networkBlocked = false;
     try {
-      ({ error, via, lock } = await signIn(credentials.email, credentials.password));
+      ({ error, via, lock, networkBlocked = false } = await signIn(credentials.email, credentials.password));
     } finally {
       setLoading(false);
     }
@@ -132,7 +133,11 @@ export function useAuthForm() {
       setFormData((prev) => ({ ...prev, password: '' }));
       const campoSenha = formEl.querySelector<HTMLInputElement>('input[name="password"]');
       if (campoSenha) campoSenha.value = '';
-      if (lock?.isLocked) {
+      if (networkBlocked) {
+        // Barrado pela politica de rede (IP/pais, R2-AUTH-022): mensagem propria,
+        // para nao ser confundido com senha errada nem com lockout de conta.
+        toast({ title: 'Acesso bloqueado', description: error.message, variant: 'destructive' });
+      } else if (lock?.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
         toast({
