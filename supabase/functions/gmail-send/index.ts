@@ -2,7 +2,14 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildGmailMimeMessage, encodeBase64Url } from "../_shared/gmail-mime.ts";
-import { persistGmailMessageLabels } from "../_shared/gmail-helpers.ts";
+import {
+  ensureValidToken,
+  GMAIL_REAUTH_HTTP_STATUS,
+  gmailReauthErrorPayload,
+  isGmailReauthError,
+  persistGmailMessageLabels,
+  recordGmailAccountFailure,
+} from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -21,56 +28,15 @@ function getMetadataHeader(message: GmailMetadataResponse, headerName: string): 
   return value && !/[\r\n]/.test(value) ? value : undefined;
 }
 
-async function getTokens(supabase: SupabaseClient, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
-  const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
-  if (error || !data?.length) throw new Error("Failed to retrieve tokens");
-  return data[0];
-}
-
-async function storeTokens(supabase: SupabaseClient, accountId: string, accessToken: string, refreshToken?: string | null) {
-  await supabase.rpc("store_gmail_tokens", {
-    p_account_id: accountId,
-    p_access_token: accessToken,
-    p_refresh_token: refreshToken ?? null,
-  });
-}
-
-async function ensureValidToken(supabase: SupabaseClient, account: GmailAccount): Promise<string> {
-  const now = new Date();
-  const expiresAt = new Date(account.token_expires_at);
-  
-  const storedTokens = await getTokens(supabase, account.id);
-  
-  if (now < new Date(expiresAt.getTime() - 5 * 60 * 1000)) return storedTokens.access_token;
-
-  const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
-  const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
-
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: storedTokens.refresh_token, client_id: GOOGLE_CLIENT_ID,
-      client_secret: GOOGLE_CLIENT_SECRET, grant_type: "refresh_token",
-    }),
-  });
-  if (!response.ok) throw new Error("Failed to refresh token");
-  const tokens = await response.json();
-
-  await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
-  await supabase.from("gmail_accounts").update({
-    token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-  }).eq("id", account.id);
-
-  return tokens.access_token;
-}
-
 async function threadBelongsToAccount(supabase: SupabaseClient, accountId: string, gmailThreadId: string): Promise<boolean> {
   const result = await supabase.from("email_threads").select("id").eq("gmail_account_id", accountId).eq("gmail_thread_id", gmailThreadId).maybeSingle();
   return Boolean(result.data?.id);
 }
 
-Deno.serve(async (req) => {
+// Handler exportado (padrão de gmail-webhook/gmail-cron-sync): permite testar a
+// rota real — em especial a recusa de token revogado, que tem de virar 409
+// `reauth_required` e não um 500 genérico de envio.
+export async function handleGmailSend(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -101,7 +67,18 @@ Deno.serve(async (req) => {
 
     if (!account) return errorResponse("Gmail account not found or inactive", 404, req);
 
-    const accessToken = await ensureValidToken(supabase, account);
+    let accessToken: string;
+    try {
+      accessToken = await ensureValidToken(supabase, account, log);
+    } catch (tokenError) {
+      if (!isGmailReauthError(tokenError)) throw tokenError;
+      // Token revogado/expirado: marca a conta (sync_status='reauth_required')
+      // e devolve 409 com code reauth_required — o app abre a reconexão em vez
+      // de mostrar um erro genérico de envio.
+      await recordGmailAccountFailure(supabase, account.id, tokenError, 1);
+      log.done(GMAIL_REAUTH_HTTP_STATUS, { action });
+      return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+    }
 
     switch (action) {
       case "send": {
@@ -344,8 +321,16 @@ Deno.serve(async (req) => {
         return errorResponse(`Unknown action: ${action}`, 400, req);
     }
   } catch (error) {
+    if (isGmailReauthError(error)) {
+      log.done(GMAIL_REAUTH_HTTP_STATUS);
+      return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+    }
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleGmailSend);
+}
