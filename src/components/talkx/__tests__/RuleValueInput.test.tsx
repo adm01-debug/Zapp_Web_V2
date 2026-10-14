@@ -84,6 +84,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
 import { RuleRow } from '@/components/talkx/segments/RuleRow';
 import type { SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 
 // Sob pico de carga da fábrica (load >2× CPUs) a montagem da árvore TalkX inteira pode
@@ -245,5 +246,91 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     // E clicar num deles não adiciona condição nenhuma.
     fireEvent.click(leadScore);
     expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+  });
+});
+
+/**
+ * TL-131 — a VALIDAÇÃO POR TIPO dos dois campos que se resolvem só com front
+ * (data/período e número), retomada sobre a ponta atual: o X106 já tinha posto os
+ * atalhos de período e a caixa numérica, mas o campo continuava aceitando TEXTO no
+ * número e `0`/zero à esquerda no período. Aqui a prova é do que a TELA aceita
+ * digitar (o que sobra no campo) e do que o `isRuleComplete` existente decide.
+ */
+function Harness({ inicial }: { inicial: SegmentRule }) {
+  const [rule, setRule] = React.useState<SegmentRule>(inicial);
+  return (
+    <div>
+      <RuleRow rule={rule} onChange={(patch) => setRule((r) => ({ ...r, ...patch }))} onRemove={() => {}} />
+      <span data-testid="completa">{isRuleComplete(rule) ? 'sim' : 'nao'}</span>
+    </div>
+  );
+}
+
+const regraPeriodo = (): SegmentRule => ({ id: 'r1', field: 'updated_at', op: 'in_last_days', value: '' });
+const regraNumero = (): SegmentRule => ({ id: 'r2', field: 'lead_score', op: 'eq', value: '' });
+
+describe('RuleValueInput · período em dias (TL-131)', () => {
+  it('só aceita dígitos: texto some, o dígito extra entra e o zero à esquerda não fica', () => {
+    render(<Harness inicial={regraPeriodo()} />);
+    const dias = screen.getByLabelText('Período em dias') as HTMLInputElement;
+
+    fireEvent.change(dias, { target: { value: '3x7' } });
+    expect(dias.value).toBe('37');
+
+    fireEvent.change(dias, { target: { value: '00' } });
+    expect(dias.value).toBe('');
+
+    fireEvent.change(dias, { target: { value: '30' } });
+    expect(dias.value).toBe('30');
+  });
+
+  it('texto ou dia <= 0 não ficam no campo e a condição fica incompleta', () => {
+    render(<Harness inicial={regraPeriodo()} />);
+    const dias = screen.getByLabelText('Período em dias') as HTMLInputElement;
+
+    fireEvent.change(dias, { target: { value: 'abc' } });
+    expect(dias.value).toBe('');
+
+    fireEvent.change(dias, { target: { value: '0' } });
+    expect(dias.value).toBe('');
+    expect(screen.getByTestId('completa')).toHaveTextContent('nao');
+  });
+
+  it('dias válidos deixam a condição utilizável', () => {
+    render(<Harness inicial={regraPeriodo()} />);
+    const dias = screen.getByLabelText('Período em dias') as HTMLInputElement;
+
+    fireEvent.change(dias, { target: { value: '45' } });
+    expect(dias.value).toBe('45');
+    expect(screen.getByTestId('completa')).toHaveTextContent('sim');
+  });
+});
+
+describe('RuleValueInput · número (TL-131)', () => {
+  it('descarta texto e mantém um decimal só, sem máscara', () => {
+    render(<Harness inicial={regraNumero()} />);
+    const valor = screen.getByLabelText('Valor da condição') as HTMLInputElement;
+
+    fireEvent.change(valor, { target: { value: '8a0' } });
+    expect(valor.value).toBe('80');
+
+    fireEvent.change(valor, { target: { value: '3.5' } });
+    expect(valor.value).toBe('3.5');
+
+    fireEvent.change(valor, { target: { value: '1.2.3' } });
+    expect(valor.value).toBe('1.23');
+  });
+
+  it('texto não numérico não entra e a regra segue incompleta', () => {
+    render(<Harness inicial={regraNumero()} />);
+    const valor = screen.getByLabelText('Valor da condição') as HTMLInputElement;
+
+    fireEvent.change(valor, { target: { value: 'abc' } });
+    expect(valor.value).toBe('');
+    expect(screen.getByTestId('completa')).toHaveTextContent('nao');
+
+    fireEvent.change(valor, { target: { value: '80' } });
+    expect(valor.value).toBe('80');
+    expect(screen.getByTestId('completa')).toHaveTextContent('sim');
   });
 });

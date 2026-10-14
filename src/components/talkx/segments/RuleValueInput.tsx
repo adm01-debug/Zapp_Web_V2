@@ -24,6 +24,31 @@ import { RULE_FIELDS, type RuleField, type RuleOp } from '@/hooks/integrations/u
 const PERIOD_SHORTCUTS = [7, 30, 60, 90, 180];
 
 /**
+ * TL-131 — dias: só dígito, e o zero à esquerda cai. Assim `0`, `00` e `-3` não
+ * ficam no campo (o pedido exige inteiro > 0) e `3x7` vira `37`, sem aceitar
+ * texto. Quem decide se a condição está utilizável continua sendo o
+ * `isRuleComplete` existente (data com dias finitos > 0), que o `RuleRow` já usa.
+ */
+function sanitizeDays(raw: string): string {
+  return raw.replace(/\D/g, '').replace(/^0+/, '');
+}
+
+/**
+ * TL-131 — número: mantém dígito, no máximo um ponto decimal e o sinal no começo;
+ * letra e qualquer outro caractere do texto livre são descartados (`8a0` -> `80`,
+ * `1.2.3` -> `1.23`). Texto puro fica vazio e a regra segue incompleta
+ * (`isRuleComplete`: número não-NaN).
+ */
+function sanitizeNumber(raw: string): string {
+  const semSinalExtra = raw.replace(/[^\d.-]/g, '');
+  const negativo = semSinalExtra.startsWith('-');
+  const [inteiro, ...resto] = semSinalExtra.replace(/-/g, '').split('.');
+  const decimal = resto.join('');
+  const corpo = inteiro + (resto.length ? `.${decimal}` : '');
+  return (negativo ? '-' : '') + corpo;
+}
+
+/**
  * Rótulo legível de cada valor canônico, para EXIBIÇÃO. O que é gravado na regra
  * continua sendo o valor cru do campo (o PostgREST compara com a coluna). Onde já
  * existe fonte canônica com rótulo (grupos, tipos de contato) ela é usada; nos
@@ -89,7 +114,7 @@ export function RuleValueInput({ field, op, value, onChange }: RuleValueInputPro
           inputMode="numeric"
           aria-label="Período em dias"
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => onChange(sanitizeDays(e.target.value))}
           placeholder="30"
           className="h-9 bg-input/40 border-border/70 text-xs w-[70px]"
         />
@@ -104,7 +129,7 @@ export function RuleValueInput({ field, op, value, onChange }: RuleValueInputPro
         inputMode="decimal"
         aria-label="Valor da condição"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(sanitizeNumber(e.target.value))}
         placeholder="0"
         className="h-9 bg-input/40 border-border/70 text-xs w-[130px]"
       />
