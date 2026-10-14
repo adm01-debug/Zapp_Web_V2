@@ -107,8 +107,11 @@ function add(filePath, line, rule, message) {
 
 // ANTIPADRAO: handler que engole a falha. Mesma definicao do
 // check-migration-gates.mjs da V3 (achado A) — regex tolerante a quebra de
-// linha, janela de 120 chars para o RAISE NOTICE.
+// linha, janela de 120 chars para o RAISE NOTICE. Versao global para o
+// matchAll abaixo: CADA handler e avaliado (o primeiro com re-raise nao
+// esconde um segundo que engole a falha).
 const SWALLOW_RE = /EXCEPTION\s+WHEN\s+OTHERS\s+THEN[\s\S]{0,120}?RAISE\s+NOTICE\b/i;
+const SWALLOW_RE_ALL = new RegExp(SWALLOW_RE.source, 'gi');
 const RE_RAISE_RE = /RAISE\s*;|RAISE\s+EXCEPTION\b/i;
 
 // Mascara, DENTRO de cada linha, o comentario `-- ...` e o conteudo de string
@@ -173,7 +176,17 @@ for (const filePath of files) {
     if (!/SECURITY\s+DEFINER/i.test(line)) continue;
     // "SECURITY DEFINER" dentro de mensagem de RAISE nao e definicao de funcao.
     if (/\bRAISE\b/i.test(lines[i])) continue;
-    const window = codeLines.slice(i, Math.min(i + 20, codeLines.length)).join('\n');
+    // A janela termina no fim da PROPRIA definicao (proximo CREATE FUNCTION)
+    // ou em 20 linhas: o SET search_path da funcao SEGUINTE nao pode esconder
+    // um SECURITY DEFINER sem search_path.
+    let end = Math.min(i + 20, codeLines.length);
+    for (let j = i + 1; j < end; j++) {
+      if (/^\s*CREATE\s+(OR\s+REPLACE\s+)?FUNCTION\b/i.test(codeLines[j])) {
+        end = j;
+        break;
+      }
+    }
+    const window = codeLines.slice(i, end).join('\n');
     if (/SET\s+search_path\s*=/i.test(window) || /SET\s+search_path\s+TO/i.test(window)) continue;
     const priorContext = lines.slice(Math.max(0, i - 5), i).join('\n');
     const isStub = /--\s*(stub|mock|dummy|ci[.-]only)/i.test(priorContext)
@@ -221,47 +234,65 @@ for (const filePath of files) {
   }
 
   // ── ML-008: SECURITY DEFINER + GRANT TO authenticated sem checagem ───────
+  // Avaliacao POR FUNCAO: cada GRANT e confrontado com o corpo da funcao que
+  // ele libera (a definicao CREATE FUNCTION de mesmo nome no arquivo). Uma
+  // funcao guardada nao libera outra sem guarda. Se a funcao outorgada nao e
+  // definida neste arquivo (outra migration), nao ha como avaliar aqui.
   {
-    const hasSecDefiner = /SECURITY\s+DEFINER/i.test(codeText);
-    const grantAuthenticated = /GRANT\s+EXECUTE\s+ON\s+FUNCTION\b[^;]*\bTO\s+authenticated\b/i;
-    if (hasSecDefiner && grantAuthenticated.test(codeText)) {
-      const dollarBlocks = [...src.matchAll(/\$(\w*)\$([\s\S]*?)\$\1\$/g)].map((m) => m[2]);
-      const bodyText = dollarBlocks.length > 0 ? dollarBlocks.join('\n') : codeText;
-      // O cartao nomeia auth.uid()/has_role(); entram tambem os padroes
-      // canonicos equivalentes da V2 — auth.role() (e o que o proprio ML-008 da
-      // V3 aceita) e current_profile_id() (helper de identidade do chamador das
-      // RPCs da V2). Sem os dois, 4 RPCs legitimas do merge dia/2026-10-12
-      // seriam falso positivo.
-      const temGuarda = /auth\.uid\s*\(\)/i.test(bodyText)
-        || /auth\.role\s*\(\)/i.test(bodyText)
-        || /has_role\s*\(/i.test(bodyText)
-        || /current_profile_id\s*\(/i.test(bodyText);
-      if (!temGuarda) {
-        // O GRANT pode estar quebrado em varias linhas: localiza pelo indice
-        // real no texto mascarado (findIndex por linha reportava a linha 1).
-        const grantMatch2 = codeText.match(grantAuthenticated);
-        const grantIdx = grantMatch2
-          ? codeText.slice(0, grantMatch2.index).split('\n').length - 1
-          : 0;
-        const grantLineNum = grantIdx + 1;
-        const isExempt = /--\s*ignore-lint-ml008/i.test(lines[grantIdx] ?? '');
-        if (!isExempt) {
-          add(
-            filePath, grantLineNum, 'ML-008',
-            'Funcao SECURITY DEFINER com GRANT TO authenticated sem checagem do chamador no corpo '
-            + '(auth.uid(), auth.role(), has_role() ou current_profile_id()) — qualquer authenticated '
-            + "chama em nome de outro usuario. Adicione IF auth.uid() IS NULL THEN RAISE EXCEPTION "
-            + "'unauthenticated'; END IF; ou -- ignore-lint-ml008.",
-          );
-        }
+    const DEF_RE = /^[ \t]*CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+((?:"[^"]+"|[A-Za-z_]\w*)(?:\s*\.\s*(?:"[^"]+"|[A-Za-z_]\w*))?)/gim;
+    const baseName = (qualified) => qualified.replace(/"/g, '').split('.').pop().toLowerCase();
+    const defs = [];
+    let dm;
+    while ((dm = DEF_RE.exec(codeText)) !== null) {
+      defs.push({ index: dm.index, name: baseName(dm[1]) });
+    }
+    const defEnd = (k) => (k + 1 < defs.length ? defs[k + 1].index : codeText.length);
+
+    // O cartao nomeia auth.uid()/has_role(); entram tambem os padroes
+    // canonicos equivalentes da V2 — auth.role() (e o que o proprio ML-008 da
+    // V3 aceita) e current_profile_id() (helper de identidade do chamador das
+    // RPCs da V2). Sem os dois, 4 RPCs legitimas do merge dia/2026-10-12
+    // seriam falso positivo.
+    const temGuarda = (bodyText) => /auth\.uid\s*\(\)/i.test(bodyText)
+      || /auth\.role\s*\(\)/i.test(bodyText)
+      || /has_role\s*\(/i.test(bodyText)
+      || /current_profile_id\s*\(/i.test(bodyText);
+
+    const GRANT_AUTH_RE = /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+((?:"[^"]+"|[A-Za-z_]\w*)(?:\s*\.\s*(?:"[^"]+"|[A-Za-z_]\w*))?)[^;]*?\bTO\s+authenticated\b/gi;
+    let gm;
+    while ((gm = GRANT_AUTH_RE.exec(codeText)) !== null) {
+      const grantIdx = gm.index;
+      const grantLineNum = codeText.slice(0, grantIdx).split('\n').length;
+      if (/--\s*ignore-lint-ml008/i.test(lines[grantLineNum - 1] ?? '')) continue;
+      // A funcao outorgada: a ultima definicao de mesmo nome ANTES do GRANT
+      // (convencao das migrations: define, depois outorga).
+      const granted = baseName(gm[1]);
+      let alvo = -1;
+      for (let k = 0; k < defs.length; k++) {
+        if (defs[k].name === granted && defs[k].index < grantIdx) alvo = k;
       }
+      if (alvo === -1) continue;
+      const span = codeText.slice(defs[alvo].index, defEnd(alvo));
+      const header = span.split(/\bAS\b/i)[0] ?? span;
+      if (!/SECURITY\s+DEFINER/i.test(header)) continue;
+      const bodies = [...span.matchAll(/\$(\w*)\$([\s\S]*?)\$\1\$/g)].map((m) => m[2]);
+      const bodyText = bodies.length > 0 ? bodies.join('\n') : span;
+      if (temGuarda(bodyText)) continue;
+      add(
+        filePath, grantLineNum, 'ML-008',
+        'Funcao SECURITY DEFINER com GRANT TO authenticated sem checagem do chamador no corpo '
+        + '(auth.uid(), auth.role(), has_role() ou current_profile_id()) — qualquer authenticated '
+        + "chama em nome de outro usuario. Adicione IF auth.uid() IS NULL THEN RAISE EXCEPTION "
+        + "'unauthenticated'; END IF; ou -- ignore-lint-ml008.",
+      );
     }
   }
 
   // ── ANTIPADRAO: EXCEPTION WHEN OTHERS THEN ... RAISE NOTICE ──────────────
+  // Todos os handlers do arquivo sao avaliados, um a um.
   {
-    const mAnti = codeText.match(SWALLOW_RE);
-    if (mAnti && !hasImmediateReRaise(codeText, mAnti.index + mAnti[0].length)) {
+    for (const mAnti of codeText.matchAll(SWALLOW_RE_ALL)) {
+      if (hasImmediateReRaise(codeText, mAnti.index + mAnti[0].length)) continue;
       const line = codeText.slice(0, mAnti.index).split('\n').length;
       add(
         filePath, line, 'ANTIPADRAO',

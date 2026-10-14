@@ -234,6 +234,91 @@ test('arquivo listado no manifesto de excecoes e dispensado', () => {
   assert.equal(semExcecao.status, 1, semExcecao.output);
 });
 
+// ── Ponto 3 da recusa: cada handler WHEN OTHERS e avaliado ─────────────────
+test('ANTIPADRAO avalia cada handler: re-raise no primeiro nao esconde o segundo', () => {
+  const doisHandlers = [
+    'DO $$ BEGIN',
+    '  PERFORM 1;',
+    'EXCEPTION WHEN OTHERS THEN',
+    "  RAISE NOTICE 'falhou: %', SQLERRM;",
+    '  RAISE;',
+    'END $$;',
+    'DO $$ BEGIN',
+    '  PERFORM 2;',
+    'EXCEPTION WHEN OTHERS THEN',
+    "  RAISE NOTICE 'falhou mas segue: %', SQLERRM;",
+    'END $$;',
+    '',
+  ].join('\n');
+  const red = runLint({ files: { [`${V}_antipadrao_dois.sql`]: doisHandlers } });
+  assert.equal(red.status, 1, red.output);
+  assert.equal((red.output.match(/\[ANTIPADRAO\]/g) || []).length, 1, red.output);
+  assert.match(red.output, new RegExp(`\\[ANTIPADRAO\\] ${V}_antipadrao_dois.sql:9\\b`));
+
+  // Dois handlers engolindo: duas violacoes, uma por handler.
+  const doisEngolem = doisHandlers.replace(
+    "  RAISE NOTICE 'falhou: %', SQLERRM;\n  RAISE;\n",
+    "  RAISE NOTICE 'falhou tambem: %', SQLERRM;\n",
+  );
+  const red2 = runLint({ files: { [`${V}_antipadrao_dois_engolem.sql`]: doisEngolem } });
+  assert.equal(red2.status, 1, red2.output);
+  assert.equal((red2.output.match(/\[ANTIPADRAO\]/g) || []).length, 2, red2.output);
+});
+
+// ── Ponto 4 da recusa: ML-001 limitado a propria definicao ──────────────────
+test('ML-001 nao herda SET search_path da funcao seguinte', () => {
+  const duasFuncoes = [
+    'CREATE FUNCTION public.f_aberta() RETURNS void',
+    'LANGUAGE plpgsql SECURITY DEFINER',
+    'AS $$ BEGIN PERFORM 1; END $$;',
+    'CREATE FUNCTION public.f_fechada() RETURNS void',
+    'LANGUAGE plpgsql SET search_path = public SECURITY DEFINER',
+    'AS $$ BEGIN PERFORM 1; END $$;',
+    '',
+  ].join('\n');
+  const red = runLint({ files: { [`${V}_ml001_dois.sql`]: duasFuncoes } });
+  assert.equal(red.status, 1, red.output);
+  assert.equal((red.output.match(/\[ML-001\]/g) || []).length, 1, red.output);
+  assert.match(red.output, new RegExp(`\\[ML-001\\] ${V}_ml001_dois.sql:2\\b`));
+
+  // Ordem inversa: a insegura continua barrada sozinha, na propria linha.
+  const invertidas = [
+    'CREATE FUNCTION public.f_fechada() RETURNS void',
+    'LANGUAGE plpgsql SET search_path = public SECURITY DEFINER',
+    'AS $$ BEGIN PERFORM 1; END $$;',
+    'CREATE FUNCTION public.f_aberta() RETURNS void',
+    'LANGUAGE plpgsql SECURITY DEFINER',
+    'AS $$ BEGIN PERFORM 1; END $$;',
+    '',
+  ].join('\n');
+  const red2 = runLint({ files: { [`${V}_ml001_dois_inv.sql`]: invertidas } });
+  assert.equal(red2.status, 1, red2.output);
+  assert.equal((red2.output.match(/\[ML-001\]/g) || []).length, 1, red2.output);
+  assert.match(red2.output, new RegExp(`\\[ML-001\\] ${V}_ml001_dois_inv.sql:5\\b`));
+});
+
+// ── Ponto 5 da recusa: ML-008 avaliado por funcao ───────────────────────────
+test('ML-008 avalia por funcao: guardada nao libera a aberta', () => {
+  const guardada = 'CREATE FUNCTION public.f_guardada() RETURNS void\n'
+    + 'LANGUAGE plpgsql SECURITY DEFINER SET search_path = public\n'
+    + "AS $$ BEGIN IF auth.uid() IS NULL THEN RAISE EXCEPTION 'unauthenticated'; END IF; PERFORM 1; END $$;\n"
+    + 'GRANT EXECUTE ON FUNCTION public.f_guardada() TO authenticated;\n';
+  const aberta = 'CREATE FUNCTION public.f_aberta() RETURNS void\n'
+    + 'LANGUAGE plpgsql SECURITY DEFINER SET search_path = public\n'
+    + 'AS $$ BEGIN PERFORM 1; END $$;\n'
+    + 'GRANT EXECUTE ON FUNCTION public.f_aberta() TO authenticated;\n';
+  const mista = guardada + aberta;
+  const red = runLint({ files: { [`${V}_ml008_mista.sql`]: mista } });
+  assert.equal(red.status, 1, red.output);
+  assert.equal((red.output.match(/\[ML-008\]/g) || []).length, 1, red.output);
+  assert.match(red.output, new RegExp(`\\[ML-008\\] ${V}_ml008_mista.sql:8\\b`));
+
+  // As duas guardadas: passa.
+  const ambasGuardadas = guardada + guardada.replaceAll('f_guardada', 'f_guardada2');
+  const green = runLint({ files: { [`${V}_ml008_ambas.sql`]: ambasGuardadas } });
+  assert.equal(green.status, 0, green.output);
+});
+
 // ── Caso limpo ──────────────────────────────────────────────────────────────
 test('migration limpa passa com mensagem de sucesso', () => {
   const limpa = '-- Rollback: DROP TABLE public.tabela_nova;\n'

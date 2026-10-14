@@ -1,70 +1,23 @@
 Especialista: vera
 
-## Arquivos no diff (contra a branch do dia)
-git diff --name-only (contra a base do dia):
-.github/workflows/db-guard.yml
-scripts/db-audit/lint-migrations-content.mjs
-scripts/db-audit/lint-migrations-content.test.mjs
-
-Além destes três, aparece modificado .tmp/relato.md — que já É versionado nesta branch (veio de cartão anterior,
-apesar de .tmp/ estar no .gitignore). Nenhum outro arquivo foi tocado.
-Números do diff: 4 arquivos (3 fora de .tmp, sendo 2 na lista do cartão + 1 arquivo de teste novo), 10 casos de teste
-novos em scripts/db-audit/lint-migrations-content.test.mjs.
-
 ## O que mudou e por quê
-- scripts/db-audit/lint-migrations-content.mjs (novo, na lista do cartão): lint estático do CONTEÚDO das migrations —
-  porte do scripts/lint-migrations.mjs + do antipadrão (a) do check-migration-gates.mjs da V3. Regras: ML-001 (SECURITY
-  DEFINER sem SET search_path), ML-004 (CREATE TABLE de app em public./zapp. sem ENABLE ROW LEVEL SECURITY), ML-005
-  (GRANT EXECUTE a PUBLIC/anon, inclusive grant quebrado em várias linhas), ML-008 (SECURITY DEFINER + GRANT TO
-  authenticated sem checagem do chamador no corpo) e ANTIPADRAO (EXCEPTION WHEN OTHERS ... RAISE NOTICE sem re-raise;
-  `RAISE NOTICE ...; RAISE;` passa). Com CHANGED_FILES linta só o diff; sem ele varre o diretório. Exceções ficam
-  documentadas no manifesto: arquivo listado em exceptions[] do scripts/db-audit/migration-evidence.json (o mesmo
-  "manifesto de exceções" do check-migration-drift.mjs) é dispensado — seu conteúdo já é fixado por sha256 ali e
-  qualquer edição é recusada pelo drift checker no mesmo job. MIGRATION_LINT_MANIFEST e MIGRATIONS_DIR sobrescrevem
-  caminhos para teste.
-- .github/workflows/db-guard.yml (na lista do cartão): passo "Lint de conteudo das migrations alteradas", que roda em
-  pull_request e merge_group com CHANGED_FILES = a lista de arquivos alterados contra `origin/<base>` filtrada a
-  `supabase/migrations/*.sql` (o mesmo padrão de paths-filter do ci.yml), mais `fetch-depth: 0` no checkout — sem
-  histórico o merge-base não existe e o diff sairia vazio. Sem ligar no workflow a guarda existiria e não rodaria em
-  PR nenhum, e o critério 1 do cartão ("migration insegura é barrada no PR") não teria como ser cumprido.
-- scripts/db-audit/lint-migrations-content.test.mjs (novo): 10 casos de teste do lint — autorizado pelas REGRAS do
-  cartão ("atualize ou crie testes dos arquivos que tocar e liste-os no relato").
+- .github/workflows/db-guard.yml (passo Lint de conteudo das migrations alteradas): sem `|| true` no `git diff` (falha fecha o passo) e base do merge_group resolvida via `github.event.merge_group.base_ref` (sem `refs/heads/`).
+- scripts/db-audit/lint-migrations-content.mjs: ANTIPADRAO avalia cada handler com matchAll; ML-001 limita a janela ao fim da propria definicao (proximo CREATE FUNCTION); ML-008 avalia por funcao (corpo da funcao que recebe o GRANT).
+- scripts/db-audit/lint-migrations-content.test.mjs: 3 testes novos, um para cada ponto de 3 a 5 da recusa.
 
 ## Prova
-- vermelho antes (guarda desligada): fixture com SECURITY DEFINER sem search_path + GRANT a anon →
-  `MIGRATIONS_DIR=.tmp/demo-migrations node scripts/db-audit/lint-migrations-content.mjs` →
-  "lint-migrations-content: 2 violacao(oes) em 1 migration(s)" com [ML-001] e [ML-005], EXIT=1. A V2 não tinha
-  nenhuma guarda de conteúdo (nem check-migration-drift.mjs, nem os testes anteriores do glob), então a suíte nova
-  falha sem este arquivo.
-- verde depois: `node --test scripts/db-audit/lint-migrations-content.test.mjs` → "ℹ tests 10 / ℹ pass 10 / ℹ fail 0".
-- cadeia inteira (shell do workflow exercitado com o componente real): `BASE_REF=main bash --noprofile --norc -euo
-  pipefail .tmp/step.sh` imprime "Lintando migrations alteradas:" e roda o lint; com BASE_REF vazio imprime "Sem
-  base_ref ... pulado." e sai 0; `bash -n` do mesmo bloco: OK.
-- guarda contra a árvore de hoje: rodei o lint com o conjunto das 50 migrations alteradas do diff contra origin/main →
-  1 violação, e é achado REAL (abaixo).
-- verificação do cartão: `zapp-verify . --rapido` — resultado no bloco FATOS MEDIDOS abaixo, posto pelo fechar.
+- verde depois: `node --test scripts/db-audit/lint-migrations-content.test.mjs` → `tests 13, pass 13, fail 0`
+- vermelho antes: mesmos 13 testes contra o script da entrega anterior (`git show HEAD:...lint-migrations-content.mjs`) → `pass 10, fail 3` (caem exatamente os 3 testes novos)
+- pontos 1 e 2 (workflow): bloco antigo extraido do YAML com base inexistente → `Nenhuma migration alterada neste diff — lint de conteudo pulado`, EXIT=0; bloco novo → EXIT=128. Bloco antigo com `BASE_REF` vazio em merge_group → `Sem base_ref — lint de conteudo pulado`, EXIT=0; bloco novo com `MERGE_GROUP_BASE_REF=refs/heads/main` → `Lintando migrations alteradas:` (50 arquivos, lint real executado)
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (8s)` (sem migration no escopo: nada de banco a verificar)
 
-## Achado (é do lint, não do escopo deste cartão)
-- ML-008 aponta supabase/migrations/20261007004252_talkx_engine_window_contract.sql:263 —
-  public.talkx_engine_window_open é SECURITY DEFINER, tem GRANT EXECUTE TO authenticated e nenhuma checagem do
-  chamador no corpo (nem auth.uid()/auth.role(), nem has_role(), nem current_profile_id()): qualquer autenticado
-  lê a janela de qualquer campanha. Correção = migration nova redefinindo a função com a guarda (arquivo fora da
-  lista deste cartão). Registrei em kanban_comment.
-- No mesmo glob, talkx-schedule-timezone-contract.test.mjs tem 2 falhas PRÉ-EXISTENTES (411 testes, 409 passam);
-  nenhum dos arquivos do meu diff é lido por esse teste.
+## Pontos do revisor
+- Ponto 1: resolvido — .github/workflows/db-guard.yml: `changed="$(git diff ...)"` sem `|| true`; sob `bash -euo pipefail` o diff quebrado falha o passo (prova: bloco novo com base inexistente → EXIT=128; bloco antigo → EXIT=0 com "pulado").
+- Ponto 2: resolvido pela via (a) — .github/workflows/db-guard.yml: novo env `MERGE_GROUP_BASE_REF: ${{ github.event.merge_group.base_ref }}` e resolucao `base_ref="${MERGE_GROUP_BASE_REF#refs/heads/}"` quando `BASE_REF` vem vazio; o `if:` com merge_group foi mantido porque agora ha cobertura real (prova: bloco novo em modo merge_group lista e linta as 50 migrations do diff `origin/main...HEAD`).
+- Ponto 3: resolvido — lint-migrations-content.mjs (`SWALLOW_RE_ALL` + `matchAll`, cada handler confrontado com `hasImmediateReRaise`); teste `ANTIPADRAO avalia cada handler: re-raise no primeiro nao esconde o segundo` (2 handlers, 1 violacao na linha do segundo + variante com 2 que engolem → 2 violacoes).
+- Ponto 4: resolvido — lint-migrations-content.mjs (ML-001: janela termina no proximo `CREATE FUNCTION`, teto de 20 linhas mantido); teste `ML-001 nao herda SET search_path da funcao seguinte` (insegura antes da segura e ordem inversa: 1 violacao so na insegura).
+- Ponto 5: resolvido — lint-migrations-content.mjs (ML-008: cada `GRANT ... TO authenticated` e confrontado com a definicao `CREATE FUNCTION` de mesmo nome no arquivo — cabecalho ate o `AS` para SECURITY DEFINER, corpo dolar-quotado para a guarda; funcao outorgada definida noutra migration nao e avaliada aqui); teste `ML-008 avalia por funcao: guardada nao libera a aberta` (mista → 1 violacao na linha do grant da aberta; ambas guardadas → 0). O achado anterior (`talkx_engine_window_open`, :263) continua barrado.
 
 ## O que NÃO fiz e por quê
-- O juiz automático apontou "mexeu em .github/workflows/db-guard.yml, que o cartão não lista": não procede — o arquivo
-  ESTÁ na seção ARQUIVOS QUE PODE TOCAR do cartão, ao lado de scripts/db-audit/lint-migrations-content.mjs. Sem ligar o
-  passo novo no workflow o lint não rodaria em PR nenhum e o critério 1 ("migration insegura é barrada no PR") não
-  teria como ser cumprido; a outra mudança no mesmo arquivo (fetch-depth: 0) é o que faz o diff contra a base existir.
-- Não implementei ML-002/ML-003/ML-007/ML-009 da V3: o cartão nomeia ML-001, ML-004, ML-005, ML-008 e o antipadrão.
-- ML-008 aceita auth.uid(), auth.role(), has_role() e current_profile_id(). auth.role() é exatamente o que o próprio
-  ML-008 da V3 aceita; has_role() é nomeado no cartão; current_profile_id() é o helper de identidade do chamador das
-  RPCs da V2. Sem os dois últimos, 4 RPCs legítimas do merge de hoje (talkx_engine_window_contract,
-  p1_department_whatsapp_mode, team_chat_direct_conversation_race_guard, scope_wa_label_rpc_by_connection) eram
-  falso positivo e a guarda barraria um merge sem relação com elas. Se o revisor preferir o par literal do cartão, é
-  trocar uma linha; os 4 arquivos viram pendência de banco (cartão próprio). Isso é alinhamento de detecção, não
-  exceção nova: continua exigindo checagem de identificação do chamador no corpo.
-- Corrigi um falso positivo de regex no porte: "SECURITY DEFINER" citado no texto de `comment on function ... is '...'`
-  casava ML-001; agora comentário e string de linha são mascarados na detecção (com teste próprio).
+- Nao corrigi as 2 falhas pre-existentes em `scripts/db-audit/talkx-*.test.mjs` (outro cartao, outra area; nao referenciam o lint) — registradas em comentario no cartao.
+- Nao corrigi as 2 ML-008 novas que o lint por-funcao revela no historico (`20261004185228_team_membership_bootstrap_owner_grants.sql`: grants sobre `is_team_conversation_creator` e `is_last_team_conversation_owner`, predicados SECDEF sem amarra ao chamador) — divida ja aplicada, fora do titulo; registradas em comentario no cartao para cartao futuro.
