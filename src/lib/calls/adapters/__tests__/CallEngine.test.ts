@@ -16,6 +16,17 @@ import type { Invitation, Inviter, Session, UserAgent } from 'sip.js';
 import { CallEngine } from '../CallEngine';
 import type { CallEngineSink, EngineStatus } from '../CallEngine';
 import { SipCallAdapter } from '../SipCallAdapter';
+import { registrarFimNaSaidaDaPagina } from '@/lib/calls/persistence';
+
+// A saída da página grava por um `fetch` cru: o cliente de auth vira dublê (o
+// bearer precisa existir para a RPC `security invoker` aceitar) e o teste
+// observa o `fetch` global. Nada mais deste arquivo usa o cliente do Supabase.
+const { mockGetSession } = vi.hoisted(() => ({ mockGetSession: vi.fn() }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { auth: { getSession: mockGetSession } },
+  SUPABASE_URL: 'https://projeto.supabase.co',
+  SUPABASE_ANON_KEY: 'anon-key-de-teste',
+}));
 
 function fakeAudioTrack(enabled = true) {
   return { kind: 'audio', enabled } as unknown as MediaStreamTrack;
@@ -1043,5 +1054,159 @@ describe('CallEngine — SRTP obrigatório (SL-002)', () => {
     expect(sink.onEstablished).not.toHaveBeenCalled();
     expect(sink.onError).toHaveBeenCalledWith(expect.stringContaining('SRTP'));
     expect((convite as unknown as { bye: ReturnType<typeof vi.fn> }).bye).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── Saída da página: a aba fecha e a linha não pode ficar pendurada ────────
+
+describe('CallEngine — dispose encerra e pagehide grava o fim', () => {
+  const BEARER = 'Bearer jwt-de-teste';
+
+  async function escoar(voltas = 6): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  /** Sessão dublê com os métodos de encerramento que o adapter real chama. */
+  function sessaoEncerravel(state = 'Established') {
+    return {
+      ...sessionWithTrack(fakeAudioTrack(true), state),
+      id: 'call-1',
+      bye: vi.fn().mockResolvedValue(undefined),
+      cancel: vi.fn().mockResolvedValue(undefined),
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+    };
+  }
+
+  function conviteTocando(): Invitation {
+    return {
+      id: 'convite-1',
+      state: 'Initial',
+      stateChange: { addListener: vi.fn() },
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+      reject: vi.fn().mockResolvedValue(undefined),
+      bye: vi.fn().mockResolvedValue(undefined),
+      sessionDescriptionHandler: {
+        peerConnection: { getSenders: () => [], getReceivers: () => [] },
+      },
+    } as unknown as Invitation;
+  }
+
+  it('dispose() com chamada ativa ENCERRA a sessão no provedor antes de soltar', async () => {
+    const adapter = new TestAdapter();
+    const sessao = sessaoEncerravel();
+    adapter.inviter = sessao;
+    const hangup = vi.spyOn(adapter, 'hangup');
+    const engine = new CallEngine(adapter, fakeSink());
+
+    await engine.makeCall('11999992048', fakeUa(), true);
+    engine.dispose();
+
+    expect(hangup).toHaveBeenCalledWith(sessao, 'outbound');
+    expect(sessao.bye).toHaveBeenCalledTimes(1); // o encerramento saiu de verdade
+  });
+
+  it('dispose() com convite ainda tocando RECUSA (a chamada de entrada não fica pendurada)', () => {
+    const adapter = new TestAdapter();
+    const convite = conviteTocando();
+    const reject = vi.spyOn(adapter, 'reject');
+    const engine = new CallEngine(adapter, fakeSink());
+
+    engine.handleInvitation(convite);
+    engine.dispose();
+
+    expect(reject).toHaveBeenCalledWith(convite);
+  });
+
+  it('pagehide com chamada ativa grava o fim pela RPC, com keepalive, no mesmo p_id', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'jwt-de-teste' } } });
+    const fetchDuble = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchDuble);
+    const adapter = new TestAdapter();
+    adapter.inviter = sessaoEncerravel('Initial');
+    const engine = new CallEngine(adapter, fakeSink());
+    await engine.makeCall('11999992048', fakeUa(), true);
+    const descartar = registrarFimNaSaidaDaPagina(() => {
+      const desfecho = engine.desfechoParaSaida();
+      if (!desfecho) return null;
+      return {
+        callId: 'call-1',
+        direction: desfecho.direction,
+        talkSeconds: desfecho.talkSeconds,
+        outcome: desfecho.outcome,
+      };
+    });
+    try {
+      window.dispatchEvent(new Event('pagehide'));
+      await escoar();
+
+      expect(fetchDuble).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchDuble.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+      expect(url).toBe('https://projeto.supabase.co/rest/v1/rpc/upsert_my_call');
+      expect(init.method).toBe('POST');
+      expect(init.keepalive).toBe(true); // sem `keepalive` a aba morta cancela o POST
+      expect(init.headers.Authorization).toBe(BEARER);
+      const corpo = JSON.parse(String(init.body)) as Record<string, unknown>;
+      expect(corpo).toMatchObject({
+        p_id: 'call-1',
+        p_direction: 'outbound',
+        p_status: 'cancelled',
+        p_end_reason: 'cancelled',
+      });
+
+      // O descarte tira o listener: um segundo `pagehide` não grava de novo.
+      descartar();
+      window.dispatchEvent(new Event('pagehide'));
+      await escoar();
+      expect(fetchDuble).toHaveBeenCalledTimes(1);
+    } finally {
+      descartar();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('sem chamada em curso, pagehide não grava nada', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'jwt-de-teste' } } });
+    const fetchDuble = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchDuble);
+    const engine = new CallEngine(new TestAdapter(), fakeSink());
+    const descartar = registrarFimNaSaidaDaPagina(() => {
+      const desfecho = engine.desfechoParaSaida();
+      if (!desfecho) return null;
+      return { callId: 'call-1', direction: desfecho.direction, talkSeconds: desfecho.talkSeconds, outcome: desfecho.outcome };
+    });
+    try {
+      window.dispatchEvent(new Event('pagehide'));
+      await escoar();
+
+      expect(engine.desfechoParaSaida()).toBeNull();
+      expect(fetchDuble).not.toHaveBeenCalled();
+    } finally {
+      descartar();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('sem sessão válida o pagehide não grava (sem JWT a RPC recusaria o POST)', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null }, error: new Error('sem sessão') });
+    const fetchDuble = vi.fn();
+    vi.stubGlobal('fetch', fetchDuble);
+    const adapter = new TestAdapter();
+    adapter.inviter = sessaoEncerravel('Initial');
+    const engine = new CallEngine(adapter, fakeSink());
+    await engine.makeCall('11999992048', fakeUa(), true);
+    const descartar = registrarFimNaSaidaDaPagina(() => {
+      const desfecho = engine.desfechoParaSaida();
+      if (!desfecho) return null;
+      return { callId: 'call-1', direction: desfecho.direction, talkSeconds: desfecho.talkSeconds, outcome: desfecho.outcome };
+    });
+    try {
+      window.dispatchEvent(new Event('pagehide'));
+      await escoar();
+
+      expect(fetchDuble).not.toHaveBeenCalled();
+    } finally {
+      descartar();
+      vi.unstubAllGlobals();
+    }
   });
 });

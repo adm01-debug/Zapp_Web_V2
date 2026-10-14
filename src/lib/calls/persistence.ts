@@ -17,7 +17,7 @@
  *   e o `coalesce` do banco preserva o valor já gravado.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
 
 import { sipCodeToEndReason } from './callStatus';
 import { persistedStatusForEndReason } from './session';
@@ -210,6 +210,120 @@ export async function upsertMyCall(input: UpsertMyCallInput): Promise<UpsertMyCa
     }
   }
   return { ok: false, error: erro };
+}
+
+/**
+ * Desfecho da chamada visto da SAÍDA DA PÁGINA (`pagehide`) — o instantâneo que
+ * o `useSipClient` colhe antes de a aba morrer.
+ */
+export interface SaidaDaPagina {
+  /** `p_id` da linha já criada (sem ele não há o que atualizar). */
+  callId: string | null;
+  direction: CallDirection | null;
+  talkSeconds: number | null;
+  outcome: CallEndOutcome;
+}
+
+/**
+ * Entrada da RPC para o fim da saída da página — `null` quando não há chamada
+ * em curso (sem `callId`).
+ *
+ * Status e motivo saem do MESMO `desfechoDaChamada` das outras gravações: o
+ * caminho da aba fechada não inventa regra paralela. `p_status` continua
+ * explícito e o `p_id` é o mesmo da linha, então a gravação é update, não uma
+ * segunda linha.
+ */
+export function entradaDaSaidaDaPagina(saida: SaidaDaPagina): UpsertMyCallInput | null {
+  if (!saida.callId) return null;
+  const direction = saida.direction ?? 'outbound';
+  return {
+    id: saida.callId,
+    direction,
+    channel: 'voip',
+    endedAt: new Date().toISOString(),
+    talkSeconds: saida.talkSeconds,
+    ...desfechoDaChamada(saida.talkSeconds, direction, saida.outcome),
+  };
+}
+
+/**
+ * Bearer da sessão para o POST cru. `null` (sem sessão, storage bloqueado ou
+ * cliente sem auth) é resposta honesta: sem JWT a RPC é `security invoker` e
+ * recusa — não há o que gravar.
+ */
+async function bearerDaSessao(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    // `error` aqui é "não sei quem é você" (storage bloqueado/sessão inválida), não
+    // "nada encontrado": sem JWT a RPC `security invoker` recusaria o POST, então
+    // o fim não é gravado e não há para quem avisar (a página está saindo).
+    if (error) return null;
+    return data.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Grava o fim por um `fetch` CRU com `keepalive: true`.
+ *
+ * O `supabase.rpc()` do cliente usa `fetch` SEM `keepalive`: quando a aba é
+ * descartada o pedido em voo é cancelado e a linha fica em `ringing`/`answered`
+ * para sempre (é o defeito que este caminho existe para fechar). Aqui o MESMO
+ * payload `p_*` da RPC (mesmo `p_id`, `p_status` explícito) sai por um `fetch`
+ * que o navegador entrega mesmo com a página morrendo.
+ *
+ * Sem retry, sem toast e sem erro que suba: na saída não há consumidor vivo
+ * para reagir — a falha é engolida DE PROPÓSITO (o toast do T11 continua sendo
+ * o caminho das gravações normais). Devolve `true` quando o pedido foi
+ * DISPARADO, não quando o banco confirmou.
+ */
+export function gravarFimComKeepalive(input: UpsertMyCallInput, bearer: string): boolean {
+  if (typeof fetch !== 'function') return false;
+  try {
+    void fetch(`${SUPABASE_URL}/rest/v1/rpc/${UPSERT_MY_CALL_RPC}`, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${bearer}`,
+      },
+      body: JSON.stringify(parametros(input)),
+    }).catch(() => undefined);
+    return true;
+  } catch {
+    // `fetch` pode lançar de forma síncrona (URL inválida/ambiente sem rede).
+    return false;
+  }
+}
+
+/**
+ * Registra a gravação do fim na SAÍDA DA PÁGINA e devolve o descarte do
+ * listener.
+ *
+ * O par registro/remoção sai daqui, e quem chama usa o descarte no cleanup do
+ * MESMO efeito (ver `useSipClient`): não sobra listener global duplicado —
+ * `pagehide` sai na JANELA (não borbulha do `document`) e é o evento que o
+ * navegador dispara ao fechar ou descartar a aba.
+ *
+ * `colher` roda só na saída e devolve o instantâneo da chamada, ou `null`
+ * quando não há o que gravar. O bearer é colhido no PRÓPRIO evento (o handler
+ * roda no mesmo turno, antes de a página ser descartada) — guardá-lo antes
+ * valeria por uma sessão inteira e um JWT vencido seria recusado pela RPC.
+ */
+export function registrarFimNaSaidaDaPagina(colher: () => SaidaDaPagina | null): () => void {
+  const aoSairDaPagina = () => {
+    const saida = colher();
+    if (!saida) return;
+    const entrada = entradaDaSaidaDaPagina(saida);
+    if (!entrada) return;
+    void bearerDaSessao().then((bearer) => {
+      if (bearer) gravarFimComKeepalive(entrada, bearer);
+    });
+  };
+  window.addEventListener('pagehide', aoSairDaPagina);
+  return () => window.removeEventListener('pagehide', aoSairDaPagina);
 }
 
 /** Contrato da fila: quem chama na ordem, chega na ordem. */

@@ -319,8 +319,45 @@ export class CallEngine {
     this.adapter.sendDTMF(this.session, digit);
   }
 
-  /** Descarta timers, referências e o áudio remoto (unmount). */
+  /**
+   * Instantâneo do fim para a SAÍDA DA PÁGINA (`pagehide`): `null` quando não há
+   * chamada em curso. NÃO espera o registro no banco (a aba pode morrer no meio)
+   * — o `p_id` é o que o consumidor já tem em mãos.
+   *
+   * O desfecho espelha o do `hangUp()`: sessão viva é desligamento local,
+   * convite ainda tocando é recusa, e sem sessão nem convite é `failure` (não
+   * havia o que encerrar no provedor). `ended` também devolve `null`: a linha já
+   * recebeu o desfecho no `Terminated` e regravá-la aqui perderia o motivo real.
+   */
+  desfechoParaSaida(): { direction: AdapterDirection | null; talkSeconds: number | null; outcome: CallEndOutcome } | null {
+    if (this.status === 'idle' || this.status === 'ended') return null;
+    const answeredAt = this.answeredAt;
+    return {
+      direction: this.direction,
+      talkSeconds: answeredAt ? Math.max(0, Math.round((Date.now() - answeredAt.getTime()) / 1000)) : null,
+      outcome: {
+        endedBy: this.session ? 'hangup_local' : this.invitation ? 'reject' : 'failure',
+        sipCode: this.sipCode,
+      },
+    };
+  }
+
+  /**
+   * Descarta timers, referências e o áudio remoto (unmount) — encerrando ANTES
+   * a sessão no provedor.
+   *
+   * Sem o encerramento, soltar a referência deixava a perna SIP viva: a tela
+   * saía e a ligação seguia no ar (o `bye`/`cancel` nunca era enviado). O
+   * `hangUp()` é reusado porque é ele quem marca `localHangup`/`localReject`
+   * antes de chamar o adapter — sem a bandeira, um `Terminated` que chegasse
+   * durante o encerramento seria lido como remoto.
+   *
+   * Zerar a sessão DEPOIS do `hangUp()` também é o que fecha a porta para o
+   * `Terminated` tardio do provedor (cerca do R2-CALL-001): o fim de uma sessão
+   * já descartada não pode virar o encerramento da chamada seguinte.
+   */
   dispose(): void {
+    this.hangUp();
     this.clearIdleReset();
     this.clearWatchdog();
     this.adapter.disposeRemoteAudio();

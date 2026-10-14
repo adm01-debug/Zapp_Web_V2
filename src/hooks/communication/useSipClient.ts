@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useSipConnection } from '../sip/useSipConnection';
-import { criarFilaDePersistencia, type CallEndOutcome } from '@/lib/calls/persistence';
+import { criarFilaDePersistencia, registrarFimNaSaidaDaPagina, type CallEndOutcome } from '@/lib/calls/persistence';
 import { phoneQueryVariants, pickUniquePhoneMatch } from '@/lib/calls/phone';
 import { SipCallAdapter } from '@/lib/calls/adapters/SipCallAdapter';
 import { provisionarSip } from '@/lib/calls/sipProvisioning';
@@ -34,6 +34,9 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   const [currentCallId, setCurrentCallId] = useState<string | null>(null);
   const [filaDePersistencia] = useState(() => criarFilaDePersistencia()); // D3: ordem de chamada = ordem de gravação
   const directionRef = useRef<CallDirection | null>(null);
+  // Espelho do estado: o handler do `pagehide` lê o id sem closure velha.
+  const currentCallIdRef = useRef<string | null>(null);
+  useEffect(() => { currentCallIdRef.current = currentCallId; }, [currentCallId]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stopTimer = useCallback(() => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } }, []);
   // Idempotente de propósito: um `Established` reemitido (re-INVITE/reconexão) não pode somar um
@@ -91,6 +94,22 @@ export function useSipClient(onEnd?: (outcome: CallEndOutcome) => void) {
   });
 
   useEffect(() => () => { stopTimer(); engine.dispose(); }, [stopTimer, engine]);
+
+  // Saída da página (`pagehide`): o unmount de SPA NÃO roda no fechamento da aba
+  // e o `fetch` sem `keepalive` do cliente é cancelado junto com a página — a
+  // linha da chamada ficaria em `ringing`/`answered` para sempre. O par
+  // registro/remoção do listener sai num efeito só (`registrarFimNaSaidaDaPagina`),
+  // então não sobra listener global duplicado.
+  useEffect(() => registrarFimNaSaidaDaPagina(() => {
+    const desfecho = engine.desfechoParaSaida();
+    if (!desfecho) return null;
+    return {
+      callId: currentCallIdRef.current,
+      direction: desfecho.direction,
+      talkSeconds: desfecho.talkSeconds,
+      outcome: desfecho.outcome,
+    };
+  }), [engine]);
 
   return {
     sipStatus, sipReason, micReason, callStatus, callDuration, isMuted, currentNumber, callDirection, currentCallId,
