@@ -82,6 +82,7 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 | `campaign_contacts` | Operacional | 2 anos | Legítimo interesse | Excluir |
 | `scheduled_messages` | Operacional | 90 dias | Legítimo interesse | Excluir |
 | `chatbot_executions` | Operacional | 90 dias | Legítimo interesse | Excluir |
+| `voice_command_logs` | Log de comando de voz (transcrição) | 90 dias | Legítimo interesse | Excluir |
 
 ### 4.4 Dados de Segurança
 
@@ -175,6 +176,11 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 -- 6. Limpar password_reset_requests > 30 dias
 DELETE FROM password_reset_requests 
 WHERE created_at < NOW() - INTERVAL '30 days';
+
+-- 7. Limpar voice_command_logs > 90 dias (log de comando de voz)
+--    Função de expurgo em lote, repetível: cada chamada apaga no máximo p_limit linhas
+--    vencidas; chamar de novo até retornar deleted = 0. Só service_role executa.
+SELECT public.purge_voice_command_logs(p_retention_days => 90, p_limit => 1000);
 ```
 
 ---
