@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SUPABASE_URL } from '@/config/supabase';
 import { getMediaType, getFilename } from '@/components/inbox/media-gallery/mediaUtils';
 import { parseSupabaseStorageObjectUrl, PRIVATE_MEDIA_BUCKETS } from '@/lib/storage_object_reference';
+import { CONTACT_MEDIA_QUERY_ROOT } from '@/services/mediaRecovery';
 
 export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document' | 'sticker';
 
@@ -76,7 +77,8 @@ export interface ContactMediaState {
   refetch: () => void;
 }
 
-export const contactMediaKey = (contactId: string | null | undefined) => ['media-gallery', contactId] as const;
+export const contactMediaKey = (contactId: string | null | undefined) =>
+  [CONTACT_MEDIA_QUERY_ROOT, contactId] as const;
 
 const SIGNED_URL_TTL_SECONDS = 3600;
 /**
