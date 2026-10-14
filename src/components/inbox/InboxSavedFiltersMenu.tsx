@@ -12,7 +12,7 @@
  * O texto digitado na busca NUNCA entra no preset (pode conter dado pessoal):
  * o conteúdo é montado pelo dono da tela, não aqui.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Bookmark, Pencil, Plus, Trash2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +51,16 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
   const [error, setError] = useState<string | null>(null);
   const [removed, setRemoved] = useState<InboxFilterPreset | null>(null);
 
+  // Quem abriu o diálogo (o botão de dentro do popover). O Radix só devolve o foco ao
+  // fechar quando existe um `DialogTrigger`; aqui o diálogo abre por estado, então o
+  // foco voltaria para o <body> — o usuário de teclado se perde. Guardamos o botão que
+  // abriu e devolvemos o foco a ele no fechamento.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const lembrarQuemAbriu = useCallback(() => {
+    openerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }, []);
+
   const closeDialog = useCallback(() => {
     setDialogMode(null);
     setRenameTarget(null);
@@ -59,18 +69,20 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
   }, []);
 
   const openSave = useCallback(() => {
+    lembrarQuemAbriu();
     setName('');
     setError(null);
     setRenameTarget(null);
     setDialogMode('save');
-  }, []);
+  }, [lembrarQuemAbriu]);
 
   const openRename = useCallback((preset: InboxFilterPreset) => {
+    lembrarQuemAbriu();
     setName(preset.name);
     setError(null);
     setRenameTarget(preset);
     setDialogMode('rename');
-  }, []);
+  }, [lembrarQuemAbriu]);
 
   const submit = useCallback(async () => {
     // Valida aqui para o erro sair ao lado do campo (o hook valida de novo antes
@@ -130,7 +142,7 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
     <>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2" aria-label="Filtros salvos">
+          <Button variant="outline" size="sm" className="min-h-10 gap-2" aria-label="Filtros salvos">
             <Bookmark className="h-4 w-4" aria-hidden="true" />
             Filtros salvos
             {presets.length > 0 && (
@@ -138,7 +150,20 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-3" align="end" aria-label="Filtros salvos do inbox">
+        <PopoverContent
+          className="w-80 p-3"
+          align="end"
+          aria-label="Filtros salvos do inbox"
+          // O diálogo é um portal IRMÃO do popover: quando ele abre e o foco/tab entra
+          // nele, o Radix leria isso como "foco fora" e fecharia o menu por baixo. Com o
+          // diálogo aberto, o clique/foco de fora não derruba o popover.
+          onFocusOutside={(event) => {
+            if (dialogOpen) event.preventDefault();
+          }}
+          onInteractOutside={(event) => {
+            if (dialogOpen) event.preventDefault();
+          }}
+        >
           <div className="space-y-3">
             <Button
               type="button"
@@ -241,7 +266,15 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
           if (!open) closeDialog();
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onCloseAutoFocus={(event) => {
+            // Devolve o foco ao botão do popover que abriu o diálogo (ver openerRef).
+            event.preventDefault();
+            const opener = openerRef.current;
+            if (opener && opener.isConnected) opener.focus();
+          }}
+        >
           <form
             onSubmit={(e) => {
               e.preventDefault();

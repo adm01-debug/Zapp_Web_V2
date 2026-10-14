@@ -11,7 +11,7 @@
  * regra real) — nome duplicado tem de ser bloqueado pela mesma função do hook.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { InboxSavedFiltersMenu } from '../InboxSavedFiltersMenu';
 import { InboxFilters } from '../InboxFilters';
@@ -83,6 +83,45 @@ const renderMenu = (onApply = vi.fn(), current = CURRENT) =>
 
 const abrirMenu = () => fireEvent.click(screen.getByRole('button', { name: 'Filtros salvos' }));
 const nome = () => screen.getByLabelText('Nome do filtro') as HTMLInputElement;
+
+/**
+ * Teclado. O jsdom nao implementa o comportamento PADRAO do teclado: `Tab` nao move o
+ * foco e Enter/Espaco num <button> nao gera o `click` nativo. O
+ * `@testing-library/user-event` cobriria justamente isso, mas NAO e dependencia deste
+ * projeto (e o cartao proibe dependencia nova). Os dois dubles abaixo fazem SO a parte
+ * que falta no ambiente: quem reage a tecla e sempre o componente/Radix, e o foco
+ * resultante e ASSERTADO a cada passo — um handler que quebre o teclado reprova o teste.
+ */
+const focaveisDe = (raiz: HTMLElement) =>
+  Array.from(
+    raiz.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  );
+
+function tab(shift = false) {
+  const atual = document.activeElement as HTMLElement | null;
+  if (!atual) return;
+  const tecla = new KeyboardEvent('keydown', {
+    key: 'Tab',
+    shiftKey: shift,
+    bubbles: true,
+    cancelable: true,
+  });
+  fireEvent(atual, tecla);
+  if (tecla.defaultPrevented) return; // o Radix tratou (loop do FocusScope)
+  const lista = focaveisDe(document.body);
+  const i = lista.indexOf(atual);
+  act(() => lista[i + (shift ? -1 : 1)]?.focus());
+}
+
+function enter(el: HTMLElement) {
+  fireEvent.keyDown(el, { key: 'Enter' });
+  fireEvent.keyUp(el, { key: 'Enter' });
+  if (el instanceof HTMLButtonElement && !el.disabled) act(() => el.click());
+}
+
+const focar = (el: HTMLElement) => act(() => el.focus());
 
 beforeEach(() => {
   hook.presets = [];
@@ -227,19 +266,116 @@ describe('InboxSavedFiltersMenu — filtros salvos do inbox', () => {
     expect(screen.getByRole('button', { name: 'Aplicar filtro Feriado' })).toBeInTheDocument();
   });
 
-  it('os controles do menu são botões nativos (Enter/Espaço acionam)', () => {
+  it('abre pelo teclado: o foco entra no painel e o Tab circula entre as pontas', async () => {
     hook.presets = [preset()];
     renderMenu();
-    abrirMenu();
 
-    for (const nomeBotao of [
-      'Salvar filtro atual',
-      'Aplicar filtro Feriado',
-      'Renomear filtro Feriado',
-      'Excluir filtro Feriado',
-    ]) {
-      expect(screen.getByRole('button', { name: nomeBotao }).tagName).toBe('BUTTON');
-    }
+    const gatilho = screen.getByRole('button', { name: 'Filtros salvos' });
+    focar(gatilho);
+    expect(gatilho).toHaveFocus();
+
+    enter(gatilho);
+    expect(gatilho).toHaveAttribute('aria-expanded', 'true');
+
+    const painel = await screen.findByRole('dialog', { name: 'Filtros salvos do inbox' });
+    await waitFor(() => expect(painel.contains(document.activeElement)).toBe(true));
+
+    const primeiro = screen.getByRole('button', { name: 'Salvar filtro atual' });
+    const ultimo = screen.getByRole('button', { name: 'Excluir filtro Feriado' });
+
+    // Tab do ultimo focavel volta ao primeiro (e Shift+Tab faz o caminho inverso):
+    // prova que o Tab e tratado e que o foco nao escapa do popover.
+    focar(ultimo);
+    tab();
+    expect(primeiro).toHaveFocus();
+
+    tab(true);
+    expect(ultimo).toHaveFocus();
+  });
+
+  it('aplicar pelo teclado: Enter aplica o filtro e o foco volta ao gatilho', async () => {
+    const onApply = vi.fn();
+    hook.presets = [preset()];
+    renderMenu(onApply);
+
+    const gatilho = screen.getByRole('button', { name: 'Filtros salvos' });
+    focar(gatilho);
+    enter(gatilho);
+
+    const aplicar = screen.getByRole('button', { name: 'Aplicar filtro Feriado' });
+    focar(aplicar);
+    enter(aplicar);
+
+    expect(onApply).toHaveBeenCalledWith(preset().filters);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Aplicar filtro Feriado' })).not.toBeInTheDocument()
+    );
+    await waitFor(() => expect(gatilho).toHaveFocus());
+  });
+
+  it('renomear pelo teclado: o foco vai ao campo ao abrir e volta ao botao ao fechar', async () => {
+    hook.presets = [preset()];
+    renderMenu();
+
+    const gatilho = screen.getByRole('button', { name: 'Filtros salvos' });
+    focar(gatilho);
+    enter(gatilho);
+
+    const renomear = screen.getByRole('button', { name: 'Renomear filtro Feriado' });
+    focar(renomear);
+    enter(renomear);
+
+    const campo = nome();
+    await waitFor(() => expect(campo).toHaveFocus());
+    expect(campo.value).toBe('Feriado');
+
+    fireEvent.change(campo, { target: { value: 'Feriados' } });
+    fireEvent.keyDown(campo, { key: 'Enter' }); // o handler do campo salva (nao o mouse)
+    expect(hook.savePreset).toHaveBeenCalledWith({
+      id: 'p1',
+      name: 'Feriados',
+      filters: preset().filters,
+    });
+
+    await waitFor(() => expect(screen.queryByLabelText('Nome do filtro')).not.toBeInTheDocument());
+    await waitFor(() => expect(renomear).toHaveFocus());
+  });
+
+  it('excluir pelo teclado: Enter no botao de excluir chama o servidor', async () => {
+    hook.presets = [preset()];
+    renderMenu();
+
+    const gatilho = screen.getByRole('button', { name: 'Filtros salvos' });
+    focar(gatilho);
+    enter(gatilho);
+
+    const excluir = screen.getByRole('button', { name: 'Excluir filtro Feriado' });
+    focar(excluir);
+    expect(excluir).toHaveFocus();
+    enter(excluir);
+
+    expect(hook.deletePreset).toHaveBeenCalledWith('p1');
+  });
+
+  it('Escape fecha o dialogo aberto de dentro do popover e devolve o foco ao popover', async () => {
+    hook.presets = [preset()];
+    renderMenu();
+
+    const gatilho = screen.getByRole('button', { name: 'Filtros salvos' });
+    focar(gatilho);
+    enter(gatilho);
+
+    const salvar = screen.getByRole('button', { name: 'Salvar filtro atual' });
+    focar(salvar);
+    enter(salvar);
+    await waitFor(() => expect(nome()).toHaveFocus());
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByLabelText('Nome do filtro')).not.toBeInTheDocument());
+    // o popover continua aberto, com o foco de volta no botao que abriu o dialogo
+    expect(screen.getByRole('button', { name: 'Salvar filtro atual' })).toBeInTheDocument();
+    await waitFor(() => expect(salvar).toHaveFocus());
   });
 
   it('o axe não acusa botão sem nome no menu aberto', async () => {
