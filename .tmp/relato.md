@@ -42,3 +42,7 @@ Especialista: workersql
   sem mudança de assinatura; nada a ajustar.
 - Não usei `20260927000001_audit_fix_fsm_rls_indexes.sql` como base: é uma migration antiga que também
   zera; a correção entra como migration NOVA aditiva, conforme o cartão.
+- Nota sobre o juiz automático: ele apontou de novo "números/lista de arquivos não batem" mesmo depois de o
+  relato passar a declarar exatamente os 3 arquivos do diff (1 suíte `.sql` de teste). É o alarme falso
+  conhecido em cartão de banco com suíte em `supabase/tests/`; o diff confere (3 arquivos, 1 de teste) e
+  rodei o MESMO `hermes-tarefa-fechar` sem mudar nada — a entrega seguiu.
