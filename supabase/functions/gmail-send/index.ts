@@ -260,16 +260,37 @@ export async function handleGmailSend(req: Request): Promise<Response> {
         const ownedIds = new Set((ownedMessages.data || []).map((message: { gmail_message_id: string }) => message.gmail_message_id));
         if (message_ids.some(messageId => !ownedIds.has(messageId))) return errorResponse("One or more messages were not found for this account", 404, req);
 
-        const updatedIds: string[] = [];
-        const failedIds: string[] = [];
-        for (const msgId of message_ids) {
-          const response = await fetch(`${GMAIL_API}/messages/${msgId}/modify`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
-          });
-          if (response.ok) updatedIds.push(msgId);
-          else failedIds.push(msgId);
+        // Uma única chamada para a thread inteira: o Gmail aceita
+        // messages/batchModify (até 1.000 ids) e remove o label UNREAD de todas
+        // de uma vez, em vez de uma chamada por mensagem em série. A resposta
+        // 204 não traz labelIds; o estado local vira is_read = true para os ids
+        // que o Gmail aceitou.
+        const batchResponse = await fetch(`${GMAIL_API}/messages/batchModify`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: message_ids, removeLabelIds: ["UNREAD"] }),
+        });
+
+        let updatedIds: string[];
+        let failedIds: string[];
+        if (batchResponse.ok) {
+          updatedIds = message_ids;
+          failedIds = [];
+        } else {
+          // batchModify é tudo-ou-nada: um id recusado derruba o lote inteiro.
+          // Neste ramo de erro, mantém o tratamento POR mensagem de antes, para
+          // as que o Gmail aceita não se perderem e `failed_ids` seguir fiel.
+          updatedIds = [];
+          failedIds = [];
+          for (const msgId of message_ids) {
+            const response = await fetch(`${GMAIL_API}/messages/${msgId}/modify`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
+            });
+            if (response.ok) updatedIds.push(msgId);
+            else failedIds.push(msgId);
+          }
         }
         if (updatedIds.length > 0) {
           await supabase.from("email_messages").update({ is_read: true }).eq("gmail_account_id", account.id).in("gmail_message_id", updatedIds);
