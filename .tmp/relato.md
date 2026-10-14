@@ -1,24 +1,53 @@
-Especialista: workersql
+Especialista: Hugo (area-front-hooks)
+
+# Presets de filtro salvos no Inbox — sincronizados pelo servidor
+
+## FAIXA DO PAI
+FAIXA DO PAI: commits 87c9e53c49, 23e5eca7f3 do cartão t_66f0765c — não são deste cartão.
+(f69e325d9d "limites dos filtros salvos do inbox" + o relato dele; trouxe por cherry-pick porque a
+usa a migration/índice que a entrega do pai criou. O diff DESTE cartão começa em 9358fb2716.)
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013235907_saved_filters_inbox_limites.sql` (NOVO, aditivo): três limites dos presets de filtro do inbox, cada um com o defeito do cartão:
-  1. **Nome único sem curinga.** Índice único `saved_filters_user_entity_lower_name_key` em `(user_id, entity_type, lower(name))`. Resolve a dependência de `.ilike` (em que `%` e `_` viram curinga): o `lower(name)` compara o nome como texto, não como padrão.
-  2. **Teto de 20 por usuário.** Função `public.enforce_saved_filters_inbox_limite()` (SECURITY INVOKER, `search_path` fixo) + gatilho `BEFORE INSERT OR UPDATE`. Conta as linhas do mesmo `(user_id, entity_type)` **excluindo `id <> new.id`** — por isso editar uma linha no teto continua permitido, e só a 21ª entrada é recusada, com erro claro (`Limite de 20 filtros salvos do inbox por usuário atingido.`, `ERRCODE check_violation`). Usa `pg_advisory_xact_lock` por `(user_id, 'inbox_filters')` para que duas gravações simultâneas não passem juntas pelo `count(*)`.
-  3. **RLS.** A policy de compartilhamento `"Users can view shared filters"` passa a ter `USING (is_shared = true AND entity_type <> 'inbox_filters')`: um preset de inbox nunca aparece para outro usuário, nem com `is_shared = true`. As policies de "own" ficam intactas.
-- **Escopo do teto:** só vale para `entity_type = 'inbox_filters'` (tipo novo, sem dado legado). Os demais tipos de filtro salvo seguem sem teto, de propósito, para não quebrar dado existente no `BEFORE UPDATE`. O `${...}` do gatilho é agnóstico ao tipo.
-- `supabase/tests/saved_filters_inbox_limites.sql` (NOVO): a prova. Roda os papéis REAIS: `set local role authenticated` + claims de JWT (nunca como postgres/superusuário). Escreve dentro de uma transação e dá `ROLLBACK` no fim (não deixa dado). `\set ON_ERROR_STOP on`: vermelho vira código de saída ≠ 0.
+- `src/hooks/inbox/useInboxFilterPresets.ts` (novo): hook dos presets de filtro do Inbox lendo e
+  gravando SÓ em `saved_filters` (`entity_type = 'inbox_filters'`, `user_id` do dono) via React Query.
+  Não toca `localStorage` como fonte da verdade — a lista vem do servidor a cada leitura/invalidação.
+  Expõe `savePreset` (cria ou atualiza por `id` — upsert), `deletePreset` e `presets`.
+  Conteúdo do preset = aba + sub-aba + tipo de contato + fila; busca digitada NÃO é salva.
+  - Teto de 20 por usuário checado no cliente antes do insert (a migration do pai é a rede no banco).
+  - Nome validado antes de gravar: vazio, tamanho 1–40, caracteres de controle e duplicidade
+    case-insensitive contra a lista atual. `ignoreId` deixa o próprio preset manter o nome na edição.
+    A comparação é por IGUALDADE (`===` sobre trim+lower): caractere de curinga (`%`, `_`) é literal —
+    "Promo 50%" não conflita com "Promo 50x".
+  - Escrita e exclusão otimistas: `onMutate` põe/remove no cache e guarda o snapshot; `onError`
+    RESTAURA o snapshot e avisa (`toast.error`); `onSuccess` invalida e relê do servidor, então exclusão
+    não ressuscita de estado local.
+- `src/hooks/chat/useSavedFilters.ts`: (a) a leitura ganhou `.limit(SAVED_FILTERS_FETCH_LIMIT)` e
+  ordem determinística (`.order('created_at', desc)` + `.order('id')` como desempate) — antes vinha
+  o conjunto inteiro, sem teto; (b) para `entity_type = 'inbox_filters'` a consulta NÃO pede
+  compartilhado (`.eq('user_id')` em vez do `.or(user_id … , is_shared)`) — preset de Inbox é só do
+  dono; (c) efeito de `onAuthStateChange`: em `SIGNED_OUT` remove as queries `['saved-filters', …]`.
 
 ## Prova
-Comandos no banco LOCAL descartável (`zapp-db-local psql <cópia> v2-261013161910b7 < arquivo`); produção não foi tocada.
-- vermelho antes (estado pré-correção no banco local: gatilho e índice removidos e policy antiga restaurada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=3` · `ERROR: saved_filters_inbox_limites T1 FALHOU: nome repetido em caixa diferente foi aceito`
-- verde depois (migration aplicada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=0` · `saved_filters_inbox_limites: OK (nome unico case-insensitive; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario)`
-- rollback executável (`-- Rollback:` da migration rodado dentro de transação e revertido): `RC=0` · `rollback: OK (desfaz gatilho, funcao, indice e restaura a policy antiga)`; conferido depois que gatilho e índice seguem aplicados.
-- `hermes-db-migrar <arquivo>` → `APLICADA no banco LOCAL 'v2-261013161910b7'`.
+Prova vermelho→verde na base `dia/2026-10-13` (sem os arquivos deste cartão, cópia em `.tmp/base-dia`,
+já removida): `npx vitest run --root .tmp/base-dia src/hooks/__tests__/useSavedFilters.test.tsx
+src/hooks/inbox/__tests__/useInboxFilterPresets.test.tsx` → `Test Files 2 failed (2); Tests 5 failed | 8 passed (13)`
+(o módulo novo não existe e as 3 garantias novas de `useSavedFilters` — teto, escopo do dono e limpeza no
+logout — não passam).
 
-O verde cobre as quatro provas do CRITÉRIO DE PRONTO: 20 presets aceitos, 21ª recusada com erro claro, nome repetido em caixa diferente recusado (`pRESET 1` vs `Preset 1`), e o usuário B não lê o preset de inbox de A (só enxerga o compartilhado de outro `entity_type`). O teste chama o índice e o gatilho REAIS; some a correção e ele fica vermelho (acima).
+Verde nesta árvore:
+- `npx vitest run src/hooks/__tests__/useSavedFilters.test.tsx src/hooks/inbox/__tests__/useInboxFilterPresets.test.tsx`
+  → `Test Files 2 passed (2); Tests 21 passed (21)`
+- regressão da área: `npx vitest run src/hooks/inbox/__tests__ src/hooks/__tests__`
+  → `Test Files 146 passed | 1 skipped (147); Tests 1322 passed | 1 expected fail | 10 todo (1333)`
+
+Cobre o critério: sincroniza pelo servidor, teto de 20, nome duplicado (case-insensitive), caractere de
+curinga tratado como literal, exclusão não ressuscita, erro de gravação/exclusão reverte o otimista e
+avisa, e o cache cai no `SIGNED_OUT`.
 
 ## O que NÃO fiz e por quê
-- Não toquei `src/hooks/chat/useSavedFilters.ts` (o `.or('user_id.eq...,is_shared.eq.true')` e o aviso de UI são do cartão filho do hugo). A migration é compatível com a leitura atual.
-- Não criei `scripts/db-audit/*.test.sh` novo: isso exigiria passo em `.github/workflows/db-guard.yml` (fora dos arquivos que o cartão permite) e viraria órfão no inventário. A prova ficou em `supabase/tests/`, que é o local de suíte SQL do repositório.
-- Não revoguei o `SELECT` de `anon` em `saved_filters` (aparece em `scripts/db-audit/grants-baseline.json`): é anterior a este cartão, a RLS já bloqueia as linhas para `anon`, e mexer em GRANT muda o baseline. Registro como achado fora do escopo.
-- Não impus a regra de "nome 1-40 caracteres" como CHECK de tabela: o O QUE FAZER pede índice único, teto de 20 e ajuste de RLS (é o que a migration faz). Um CHECK largo atingiria todos os `entity_type` e poderia falhar sobre dado legado de outro tipo; se a paridade exigir, a validação de tamanho é da camada do hook de filtros (cartão do hugo), não de uma trava de tabela.
+- Também ajustei `src/hooks/__tests__/useSavedFilters.test.tsx` (fora da lista do cartão): é o teste do
+  arquivo que eu toquei e o mock da consulta encadeada/`onAuthStateChange` precisava acompanhar a leitura
+  nova — sem isso a verificação ficaria vermelha. Não enfraqueci expectativa nenhuma; só estendi o mock.
+- `localStorage`: nenhuma leitura/escrita de preset por lá (é o defeito que o cartão manda corrigir).
+- O `queryClient.clear()` que o `AuthProvider` já faz no `SIGNED_OUT` cobre o cache todo; o efeito no
+  `useSavedFilters` existe para a camada de filtros não depender disso (e é o que o teste prova).
