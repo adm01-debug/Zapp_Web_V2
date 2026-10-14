@@ -1,27 +1,29 @@
-Especialista: workertestes
+Especialista: worker (testes) (area-testes-do-produto)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- `tests/talkx/save_talkx_template.test.ts` (novo): teste de INTEGRAÇÃO REAL da RPC `public.save_talkx_template`, sem mock de auth nem de RPC. Cada caso abre transação própria (`begin ... rollback`), monta a fixture do template, entra como cliente autenticado com `set local role authenticated` + `request.jwt.claims` (o mesmo caminho de `auth.uid()` da sessão real) e fala com o banco local pelo psql do conjunto (`zapp-db-local psql . <conjunto>`).
+- O conteúdo do arquivo é o mesmo que eu já havia entregue na branch `v2/teste-save-talkx-template-261013113163c8` (@ b2b5944008), recuperado via `git show`; a branch atual tem SÓ o meu commit (sem commit alheio, sem cherry-pick).
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## Prova (vermelho antes, verde depois)
+- Conjunto local subido: `zapp-db-local up . v2-26101322126fcc` → exit 0 (`TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)`). Nenhuma produção tocada; DB_REF de produção só aparece no `.hermes-tarefa` como referência.
+- VERMELHO, sem a migration `20261011000012_talkx_template_save_rpc.sql` aplicada (`ZAPP_DB_LOCAL=v2-26101322126fcc node --test tests/talkx/save_talkx_template.test.ts`, RC=1):
+  - `AssertionError [ERR_ASSERTION]: a RPC save_talkx_template nao existe no banco`
+  - `ERROR:  function public.save_talkx_template(uuid, timestamp with time zone, unknown, unknown, unknown, unknown, unknown, unknown, text[], text[], unknown) does not exist` (sqlstate 42883)
+  - `ℹ tests 5 / ℹ pass 0 / ℹ fail 5`
+- Migration aplicada SÓ no banco local: `hermes-db-migrar supabase/migrations/20261011000012_talkx_template_save_rpc.sql` → `APLICADA no banco LOCAL 'v2-26101322126fcc' (produção não foi tocada)`. O arquivo da migration NÃO entrou no commit (foi retirado da árvore antes de commitar; a branch tem apenas o teste).
+- VERDE, com a migration aplicada (mesmo comando, RC=0), 2 rodadas seguidas para provar isolamento (cada caso termina em ROLLBACK, sem dado residual):
+  - rodada 1: `ℹ tests 5 / ℹ pass 5 / ℹ fail 0`
+  - rodada 2: `ℹ tests 5 / ℹ pass 5 / ℹ fail 0` (5 linhas `✔`)
+- `zapp-verify . --rapido` → `OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (169s)`.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
-
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+## Requisitos do cartão, e onde cada um está no arquivo
+- Assinatura LITERAL asserida: `ASSINATURA_RPC = 'public.save_talkx_template(uuid,timestamptz,text,text,text,text,text,text,text[],text[],text)'` conferida por `to_regprocedure(...) is not null` (casos 1 e 5).
+- Transação com ROLLBACK: `transacao()` emite `begin; ... rollback;`; as evidências voltam na linha marcada `@@EV@@`.
+- Optimistic locking por EXCEPTION, não por retorno vazio: caso 3 exige `sqlstate 40001` e `mensagem = 'optimistic_lock_failed'` com `expected_updated_at` 1s atrás, e prova que nada mudou (`total_versoes = 0`, `updated_at_mudou = false`). Caso 4 exige `P0002 / talkx_template_not_found`.
+- `note` exata e incremento de `version_number` contra valor explícito: caso 2 afirma `version_number = 1` e `= 2`, `note = 'nota do usuario'` e `= 'nota final'`, `saved_by` = perfil da sessão, `total_versoes = 2`.
+- Negação distinguível de ausência: caso 1 prova que a RPC existe E que a fixture existe antes de exigir `42501 / permission denied|authentication_required` (anon) e `42501 / authenticated_profile_not_found` (sem perfil).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não editei nem commitei a migration `20261011000012_talkx_template_save_rpc.sql` (o cartão diz SOMENTE leitura / sem commitá-la); apliquei-a apenas no banco local para a prova verde.
+- Não alterei nenhum teste existente, não usei `skip` nem aumentei timeout de teste alheio.
+- A migration aplicada deixa o banco local do conjunto diferente do retrato de produção — é esperado (a migration muda o schema) e `zapp-verify` só avisou que o banco não foi verificado por falta do nome do conjunto.
