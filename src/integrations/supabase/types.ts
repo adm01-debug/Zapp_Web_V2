@@ -1933,6 +1933,45 @@ export type Database = {
           },
         ]
       }
+      contact_audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changed_by_db_role: string
+          changed_by_profile: string | null
+          changed_fields: string[]
+          contact_id: string
+          id: number
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_db_role?: string
+          changed_by_profile?: string | null
+          changed_fields: string[]
+          contact_id: string
+          id?: never
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_db_role?: string
+          changed_by_profile?: string | null
+          changed_fields?: string[]
+          contact_id?: string
+          id?: never
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: []
+      }
       contact_custom_fields: {
         Row: {
           contact_id: string

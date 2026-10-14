@@ -37,6 +37,9 @@ migration_single_predicate="$repo_root/supabase/migrations/20260929780000_contac
 migration_guards="$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql"
 migration_hoisted="$repo_root/supabase/migrations/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
 migration_can_delete_hoisted="$repo_root/supabase/migrations/20260929820000_contacts_can_delete_contacts_hoisted_params.sql"
+migration_audit_log="$repo_root/supabase/migrations/20261014011104_contact_audit_log.sql"
+# Fonte da dependencia da policy de leitura da trilha (extraida byte a byte, ver bloco GREEN).
+migration_visible_contact="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -732,6 +735,97 @@ expect_failure 'mover contato para fila alheia continua proibido' \
   "$claims_agente UPDATE public.contacts SET queue_id='50000000-0000-0000-0000-000000000002' WHERE id='30000000-0000-0000-0000-000000000004'" \
   'Sem permissao para mover contato para esta fila'
 
+# ── GREEN: trilha de auditoria do contato (public.contact_audit_log) ──────────────────────
+# LGPD art. 37: antes desta migration NINGUEM (nem o admin) sabia quem mudou nome, e-mail ou
+# telefone de um contato, nem quando. A trilha e append-only (escrita SO pelo trigger SECURITY
+# DEFINER), o UPDATE grava so quando um campo AUDITADO muda de fato e telefone/e-mail/
+# observacoes entram como CAMPO ALTERADO + marcador '[redigido]' -- nunca com valor.
+# A dependencia da policy de leitura (public.is_contact_visible_to_user) e extraida BYTE A BYTE
+# do arquivo REAL da migration que a criou (mesmo mecanismo do bloco de Rollback): nada de
+# contrato recriado a mao.
+{
+  awk '/^CREATE OR REPLACE FUNCTION public\.is_contact_visible_to_user\(/,/^\$\$;$/' "$migration_visible_contact"
+  sed -n '/^REVOKE ALL ON FUNCTION public\.is_contact_visible_to_user(uuid, uuid)/,/TO authenticated, service_role;$/p' "$migration_visible_contact"
+} > "$tmp_dir/contact_audit_log_deps.sql"
+grep -q 'public.is_contact_visible_to_user' "$tmp_dir/contact_audit_log_deps.sql" \
+  || fail 'a dependencia is_contact_visible_to_user nao foi extraida da migration real'
+psql_file "$tmp_dir/contact_audit_log_deps.sql" >/dev/null
+psql_file "$migration_audit_log" >/dev/null
+
+expect_value 'auditoria: RLS ligada na trilha' 't' \
+  "SELECT relrowsecurity FROM pg_class WHERE oid='public.contact_audit_log'::regclass"
+expect_value 'auditoria: trigger AFTER INSERT/UPDATE/DELETE por linha (tgtype 29)' '29' \
+  "SELECT tgtype::int FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='trg_audit_contact_change'"
+expect_value 'auditoria: ACL do authenticated e SELECT puro (sem INSERT/UPDATE/DELETE)' 'true|false|false|false' \
+  "SELECT has_table_privilege('authenticated','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','INSERT')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','UPDATE')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','DELETE')::text"
+expect_value 'auditoria: anon sem nada; service_role sem UPDATE/DELETE' 'false|true|true|false|false' \
+  "SELECT has_table_privilege('anon','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','INSERT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','UPDATE')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','DELETE')::text"
+expect_value 'auditoria: PUBLIC nao recebe privilegio nenhum na tabela' '0' \
+  "SELECT count(*) FROM pg_class c, aclexplode(c.relacl) a WHERE c.oid='public.contact_audit_log'::regclass AND a.grantee=0"
+expect_value 'auditoria: EXECUTE das duas funcoes negado a authenticated/anon/service_role' '0' \
+  "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('audit_contact_change','contact_audit_snapshot') AND (has_function_privilege('authenticated',p.oid,'EXECUTE') OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('service_role',p.oid,'EXECUTE'))"
+
+# INSERT: os 12 campos comuns, old_values NULL e -- sem sessao -- autor NULL.
+expect_value 'auditoria INSERT: action=insert, 12 campos comuns, old_values NULL, autor NULL sem sessao' 'insert|12|true|true' \
+  "INSERT INTO public.contacts (id,name,phone,contact_type) VALUES ('30000000-0000-0000-0000-0000000000a1','Trilha INSERT','5511990000001','cliente'); SELECT action||'|'||cardinality(changed_fields)||'|'||(old_values IS NULL)::text||'|'||(changed_by IS NULL)::text FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'"
+expect_value 'auditoria PII: telefone do INSERT so aparece como marcador, nunca o valor' '[redigido]|[redigido]|0' \
+  "SELECT coalesce(new_values->>'phone','-')||'|'||coalesce(new_values->>'email','-')||'|'||position('5511990000001' in new_values::text) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'"
+
+# UPDATE de campo comum: de/para guardado e SO o campo que mudou na lista.
+expect_value 'auditoria UPDATE: so o campo alterado, com de/para' 'update|company|vazio>Auditoria' \
+  "UPDATE public.contacts SET company='Auditoria' WHERE id='30000000-0000-0000-0000-0000000000a1'; SELECT action||'|'||array_to_string(changed_fields,',')||'|'||coalesce(old_values->>'company','vazio')||'>'||(new_values->>'company') FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1' ORDER BY id DESC LIMIT 1"
+linhas_auditoria_antes="$(psql_sql "SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'")"
+expect_value 'auditoria: reescrever a mesma linha (valor igual; updated_at nao conta) nao polui a trilha' "$linhas_auditoria_antes" \
+  "UPDATE public.contacts SET company='Auditoria', updated_at=now() WHERE id='30000000-0000-0000-0000-0000000000a1'; SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'"
+expect_value 'auditoria PII: troca de telefone aparece como campo alterado e o numero nunca e gravado' 'phone|[redigido]>[redigido]|0' \
+  "UPDATE public.contacts SET phone='5511990000002' WHERE id='30000000-0000-0000-0000-0000000000a1'; SELECT array_to_string(changed_fields,',')||'|'||(old_values->>'phone')||'>'||(new_values->>'phone')||'|'||position('5511990000002' in (coalesce(old_values,'{}')||coalesce(new_values,'{}'))::text) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1' ORDER BY id DESC LIMIT 1"
+linhas_antes_soft_delete="$(psql_sql "SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'")"
+expect_value 'auditoria: soft-delete (deleted_at) NAO entra nesta trilha (tem trilha propria)' "$linhas_antes_soft_delete" \
+  "UPDATE public.contacts SET deleted_at=now() WHERE id='30000000-0000-0000-0000-0000000000a1'; SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'"
+
+# DELETE fisico (purga): grava delete com old_values e new_values NULL, e a trilha SOBREVIVE.
+expect_value 'auditoria DELETE: action=delete, new_values NULL e o de/para do contato purgado' 'delete|true|Trilha INSERT' \
+  "DELETE FROM public.contacts WHERE id='30000000-0000-0000-0000-0000000000a1'; SELECT action||'|'||(new_values IS NULL)::text||'|'||coalesce(old_values->>'name','-') FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1' ORDER BY id DESC LIMIT 1"
+expect_value 'auditoria: a trilha do contato purgado continua legivel (contact_id sem FK)' 'true' \
+  "SELECT (count(*) > 0)::text FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1'"
+
+# AUTOR: com claims reais, changed_by = auth.uid() e changed_by_profile = profiles.id.
+expect_value 'auditoria AUTOR: quem mudou fica gravado (auth.uid + profile); session_user e o papel da conexao' '20000000-0000-0000-0000-000000000001|10000000-0000-0000-0000-000000000001|postgres' \
+  "$claims_agente UPDATE public.contacts SET company='Auditoria autor' WHERE id='30000000-0000-0000-0000-000000000001'; SELECT changed_by::text||'|'||coalesce(changed_by_profile::text,'-')||'|'||changed_by_db_role FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-000000000001' ORDER BY id DESC LIMIT 1"
+
+# LEITURA sob RLS com papel real.
+expect_value 'auditoria RLS: agente le a trilha do contato dele e nenhuma do contato alheio' 'true|0' \
+  "$claims_agente SELECT ((SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-000000000001') > 0)::text||'|'||(SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1')::text"
+expect_value 'auditoria RLS: admin ve a trilha de qualquer contato, inclusive a do contato ja purgado' 'true|true' \
+  "$claims_admin SELECT ((SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-000000000001') > 0)::text||'|'||((SELECT count(*) FROM public.contact_audit_log WHERE contact_id='30000000-0000-0000-0000-0000000000a1') > 0)::text"
+expect_value 'auditoria RLS: usuario sem vinculo (nem admin, nem dono, nem fila) ve 0 linhas' '0' \
+  "$claims_sem_vinculo SELECT count(*) FROM public.contact_audit_log"
+expect_failure 'auditoria: anon nao le a trilha (RLS + REVOKE)' \
+  "SET ROLE anon; SELECT count(*) FROM public.contact_audit_log" \
+  'permission denied for table contact_audit_log'
+expect_value 'auditoria: service_role (BYPASSRLS) le a trilha inteira' 'true' \
+  "SET ROLE service_role; SELECT (count(*) > 0)::text FROM public.contact_audit_log"
+expect_failure 'auditoria: authenticated NAO escreve direto na trilha (nao forja linha)' \
+  "SET ROLE authenticated; INSERT INTO public.contact_audit_log (contact_id, action, new_values, changed_fields) VALUES ('30000000-0000-0000-0000-000000000001','insert','{}'::jsonb,ARRAY['name'])" \
+  'permission denied for table contact_audit_log'
+expect_failure 'auditoria: authenticated nao reescreve a trilha' \
+  "SET ROLE authenticated; UPDATE public.contact_audit_log SET changed_by=NULL" \
+  'permission denied for table contact_audit_log'
+expect_failure 'auditoria: authenticated nao apaga a trilha' \
+  "SET ROLE authenticated; DELETE FROM public.contact_audit_log" \
+  'permission denied for table contact_audit_log'
+
+# INVARIANTES da tabela (defesa em profundidade, vale tambem para escrita futura).
+expect_failure 'auditoria: CHECK recusa telefone com valor (PII nunca gravada)' \
+  "INSERT INTO public.contact_audit_log (contact_id, action, old_values, new_values, changed_fields) VALUES ('30000000-0000-0000-0000-000000000001','update','{\"phone\":\"5511990000001\"}'::jsonb,'{\"phone\":\"5511990000002\"}'::jsonb,ARRAY['phone'])" \
+  'contact_audit_log_pii_redigido_check'
+expect_failure 'auditoria: CHECK recusa forma incoerente (insert com old_values)' \
+  "INSERT INTO public.contact_audit_log (contact_id, action, old_values, new_values, changed_fields) VALUES ('30000000-0000-0000-0000-000000000001','insert','{}'::jsonb,'{}'::jsonb,ARRAY['name'])" \
+  'contact_audit_log_shape_check'
+expect_failure 'auditoria: CHECK recusa linha sem nenhum campo alterado' \
+  "INSERT INTO public.contact_audit_log (contact_id, action, new_values, changed_fields) VALUES ('30000000-0000-0000-0000-000000000001','insert','{}'::jsonb,'{}'::text[])" \
+  'contact_audit_log_fields_check'
+
 # ── Idempotencia (as migrations sao reaplicaveis) ─────────────────────────────────────────
 # `migration_soft_delete` fica FORA deste bloco de proposito: o arquivo de 20260929370000
 # declara search_contacts com 17 colunas enquanto o SQL aplicado em producao tem 23 (o par
@@ -746,9 +840,23 @@ psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
 psql_file "$migration_can_delete_hoisted" >/dev/null
+psql_file "$migration_audit_log" >/dev/null
+expect_value 'reaplicacao nao duplica a trilha nem o trigger' '1|1' \
+  "SELECT (SELECT count(*) FROM pg_class WHERE relname='contact_audit_log' AND relnamespace='public'::regnamespace)::text||'|'||(SELECT count(*) FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='trg_audit_contact_change')::text"
+expect_value 'reaplicacao mantem um unico CHECK de PII' '1' \
+  "SELECT count(*) FROM pg_constraint WHERE conrelid='public.contact_audit_log'::regclass AND conname='contact_audit_log_pii_redigido_check'"
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \
   "SELECT count(*) FROM pg_constraint WHERE conrelid='public.contacts'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%conversation_status%'"
+
+# ── BLOCO C — o Rollback do cabecalho da migration roda de verdade ────────────────────────
+rollback_auditoria="$(awk '/^-- Rollback \(SQL executável, na ordem\):/{f=1;next} f && /^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration_audit_log")"
+[[ -n "$rollback_auditoria" ]] || fail 'o bloco Rollback executavel da migration de auditoria nao foi extraido'
+psql_sql "$rollback_auditoria" >/dev/null
+expect_value 'rollback derruba o trigger, as duas funcoes e a tabela da trilha' '0|0|0' \
+  "SELECT (SELECT count(*) FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='trg_audit_contact_change')::text||'|'||(SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('audit_contact_change','contact_audit_snapshot'))::text||'|'||(SELECT count(*) FROM pg_class WHERE relname='contact_audit_log' AND relnamespace='public'::regnamespace)::text"
+expect_value 'apos o rollback o UPDATE de contato volta a passar (sem trigger orfao)' '1' \
+  "UPDATE public.contacts SET company='pos-rollback' WHERE id='30000000-0000-0000-0000-000000000001' RETURNING 1"
 
 printf 'Contacts F1 (soft-delete, Sicoob, status, grants) PostgreSQL 17 behavioral contract: PASS\n'
