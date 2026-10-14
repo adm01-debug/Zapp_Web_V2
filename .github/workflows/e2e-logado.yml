@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: workflow_run apos CI/CD Pipeline na main, schedule 2h e dispatch
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -23,8 +23,17 @@
 name: E2E logado
 
 on:
-  push:
+  # W71: workflow_run garante que os secrets de producao so chegam apos o
+  # CI verde na main — exatamente o gate que o antigo `push` tinha, mas
+  # sem expor as credenciais ao runner antes do merge.
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
     branches: [main]
+  # Cobertura continua: roda a cada 2h mesmo sem push (detecta regressao
+  # de infra entre deploys).
+  schedule:
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -39,8 +48,10 @@ permissions:
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
-  cancel-in-progress: false
+  # W71: cancel-in-progress:true — no workflow_run so o commit mais novo
+  # importa. No schedule/dispatch a SHA e a da main no momento do disparo.
+  group: e2e-logado-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   e2e-logado:
@@ -55,9 +66,14 @@ jobs:
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        # W71: workflow_run so dispara apos CI verde em branches: [main], mas
+        # schedule e dispatch podem ser acionados em qualquer ref. A guarda
+        # cobre o caso de dispatch manual a partir de branch nao-main.
+        if: |
+          github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success' ||
+          github.event_name != 'workflow_run' && github.ref != 'refs/heads/main'
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow so executa apos CI verde na main."
           exit 1
 
       - name: 📥 Checkout confiavel da main
