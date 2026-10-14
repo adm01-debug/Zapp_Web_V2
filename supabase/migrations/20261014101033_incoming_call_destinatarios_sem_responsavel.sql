@@ -23,7 +23,8 @@
 -- Uma notificacao por destinatario, com id deterministico por
 -- (conexao, evento, usuario) — hoje o md5 nao inclui o usuario e dois
 -- destinatarios colidiriam no ON CONFLICT. `ON CONFLICT (id) DO NOTHING` mantido:
--- reentrega do mesmo evento nao duplica.
+-- reentrega do mesmo evento nao duplica. O fan-out tem teto de 25 destinatarios
+-- por chamada (lista ordenada por user_id, corte estavel).
 --
 -- Nada mais muda: validacoes, a linha em `calls` (inclusive o `agent_id`
 -- historico), o ON CONFLICT do evento, `talk_seconds`, os textos e o metadata
@@ -54,6 +55,7 @@ DECLARE
   v_queue_id uuid;
   v_target_user_ids uuid[];
   v_target_user_id uuid;
+  v_max_destinatarios constant integer := 25;
   v_contact_name text;
   v_contact_phone text;
   v_contact_connection_id uuid;
@@ -194,6 +196,13 @@ BEGIN
     END IF;
 
     IF v_target_user_ids IS NOT NULL THEN
+      -- Teto determinístico por chamada: a lista vem ordenada por user_id (a montagem
+      -- acima usa ORDER BY user_id), então o corte é estável. Evita fan-out sem limite
+      -- dentro de uma transação só (recusa real de 06/10).
+      IF array_length(v_target_user_ids, 1) > v_max_destinatarios THEN
+        v_target_user_ids := v_target_user_ids[1:v_max_destinatarios];
+      END IF;
+
       FOREACH v_target_user_id IN ARRAY v_target_user_ids LOOP
         v_notification_candidate := CASE
           WHEN v_event_id IS NULL THEN gen_random_uuid()

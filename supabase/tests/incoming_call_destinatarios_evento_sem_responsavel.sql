@@ -17,7 +17,8 @@
 --   T6  reentrega do MESMO evento não duplica (nem com 2 destinatários) — duplicate=true;
 --   T7  id da notificação determinístico por (conexão, evento, usuário): ids distintos por
 --       destinatário e iguais à fórmula md5;
---   T8  ACL: EXECUTE negado a anon e authenticated, concedido a service_role.
+--   T8  ACL: EXECUTE negado a anon e authenticated, concedido a service_role;
+--   T9  teto de fan-out: fila com 30 membros ONLINE gera 25 notificações (corte estável).
 
 begin;
 
@@ -229,6 +230,56 @@ begin
   select count(*) into n from public.calls
    where provider_event_id = 'ev-t5' and status = 'ringing' and agent_id is null;
   if n <> 1 then raise exception 'T5 FALHOU: a linha em calls nao foi gravada'; end if;
+end $$;
+
+-- ===== T9: teto de fan-out por chamada (25 destinatários) ====================
+insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+select ('00000000-0000-4000-d000-' || lpad(i::text, 12, '0'))::uuid,
+       'authenticated', 'authenticated', 'cap' || i || '@test.local', '', now(), now(), now()
+from generate_series(1, 30) i;
+
+insert into public.agent_presence (user_id, status)
+select id, 'online' from auth.users where email like 'cap%@test.local';
+
+insert into public.queues (id, name)
+values ('00000000-0000-4000-9000-000000000002', 'Fila T-d33b fanout');
+
+insert into public.queue_members (queue_id, profile_id, is_active)
+select '00000000-0000-4000-9000-000000000002', p.id, true
+from public.profiles p
+join auth.users u on u.id = p.user_id
+where u.email like 'cap%@test.local';
+
+insert into public.contacts (id, name, phone, whatsapp_connection_id, assigned_to, queue_id)
+values ('00000000-0000-4000-b000-000000000006', 'Contato T9', '+5511000000006',
+        '00000000-0000-4000-a000-000000000001', null, '00000000-0000-4000-9000-000000000002');
+
+do $$
+declare r record; n integer;
+begin
+  select * into r from public.record_incoming_call_event(
+    '00000000-0000-4000-b000-000000000006', '00000000-0000-4000-a000-000000000001',
+    'ringing', false, 'ev-t9', true, 'inbound');
+
+  if r.notification_created is not true then raise exception 'T9 FALHOU: ninguem foi notificado'; end if;
+
+  select count(*) into n from public.notifications where metadata->>'event_id' = 'ev-t9';
+  if n <> 25 then raise exception 'T9 FALHOU: esperava o teto de 25 destinatarios, veio %', n; end if;
+
+  select count(*) into n from public.notifications
+   where metadata->>'event_id' = 'ev-t9'
+     and user_id in (
+       select id from auth.users where email like 'cap%@test.local' order by id limit 25
+     );
+  if n <> 25 then raise exception 'T9 FALHOU: os 25 primeiros (por user_id) nao foram os escolhidos'; end if;
+
+  if exists (
+       select 1 from public.notifications
+        where metadata->>'event_id' = 'ev-t9'
+          and user_id = ('00000000-0000-4000-d000-' || lpad('26', 12, '0'))::uuid
+     ) then
+    raise exception 'T9 FALHOU: o 26o destinatario (acima do teto) recebeu';
+  end if;
 end $$;
 
 -- ===== T8: ACL — quem pode executar a RPC ====================================
