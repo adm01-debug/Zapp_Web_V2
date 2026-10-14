@@ -27,6 +27,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
