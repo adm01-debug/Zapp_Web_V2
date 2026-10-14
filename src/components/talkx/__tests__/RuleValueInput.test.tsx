@@ -83,7 +83,8 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
 import { RuleRow } from '@/components/talkx/segments/RuleRow';
-import type { SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { RuleValueInput } from '@/components/talkx/segments/RuleValueInput';
+import { isRuleComplete, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 
 // Sob pico de carga da fábrica (load >2× CPUs) a montagem da árvore TalkX inteira pode
@@ -181,6 +182,30 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     });
   });
 
+  it('período: descarta texto e zero antes de validar com isRuleComplete', () => {
+    function Periodo() {
+      const [value, setValue] = React.useState('');
+      const rule: SegmentRule = { id: 'r1', field: 'updated_at', op: 'in_last_days', value };
+      return (
+        <>
+          <RuleValueInput field={rule.field} op={rule.op} value={rule.value} onChange={setValue} />
+          <output aria-label="estado da regra">{isRuleComplete(rule) ? 'completa' : 'incompleta'}</output>
+        </>
+      );
+    }
+
+    render(<Periodo />);
+
+    const dias = screen.getByLabelText('Período em dias') as HTMLInputElement;
+    fireEvent.change(dias, { target: { value: '0abc7' } });
+    expect(dias.value).toBe('7');
+    expect(screen.getByLabelText('estado da regra')).toHaveTextContent('completa');
+
+    fireEvent.change(dias, { target: { value: '0' } });
+    expect(dias.value).toBe('');
+    expect(screen.getByLabelText('estado da regra')).toHaveTextContent('incompleta');
+  });
+
   it('número: grava o número sem máscara (X106, via regra já salva de lead_score)', async () => {
     // lead_score/risk_score saíram do catálogo porque são "em breve"; a cobertura
     // do tipo number continua pelo caminho de compatibilidade de segmento JÁ
@@ -208,6 +233,30 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     fireEvent.change(valor, { target: { value: '80' } });
     expect(valor.value).toBe('80');
     expect(f.update).toHaveBeenLastCalledWith({ value: '80' });
+  });
+
+  it('número: rejeita texto antes de validar com isRuleComplete', () => {
+    function Numero() {
+      const [value, setValue] = React.useState('');
+      const rule: SegmentRule = { id: 'r1', field: 'lead_score', op: 'gt', value };
+      return (
+        <>
+          <RuleValueInput field={rule.field} op={rule.op} value={rule.value} onChange={setValue} />
+          <output aria-label="estado da regra">{isRuleComplete(rule) ? 'completa' : 'incompleta'}</output>
+        </>
+      );
+    }
+
+    render(<Numero />);
+
+    const valor = screen.getByLabelText('Valor da condição') as HTMLInputElement;
+    fireEvent.change(valor, { target: { value: '8a0.5b' } });
+    expect(valor.value).toBe('80.5');
+    expect(screen.getByLabelText('estado da regra')).toHaveTextContent('completa');
+
+    fireEvent.change(valor, { target: { value: 'abc' } });
+    expect(valor.value).toBe('');
+    expect(screen.getByLabelText('estado da regra')).toHaveTextContent('incompleta');
   });
 
   it('número "em breve" (lead_score): botão desabilitado e sem condição adicionada', async () => {

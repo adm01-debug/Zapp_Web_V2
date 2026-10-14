@@ -23,6 +23,21 @@ import { RULE_FIELDS, type RuleField, type RuleOp } from '@/hooks/integrations/u
 /** Atalhos de período em dias (`in_last_days` / `not_in_last_days`). */
 const PERIOD_SHORTCUTS = [7, 30, 60, 90, 180];
 
+/** Período: só inteiro positivo; texto e zero não chegam ao estado da regra. */
+function sanitizeDays(raw: string): string {
+  return raw.replace(/\D/g, '').replace(/^0+/, '');
+}
+
+/** Número: mantém dígitos, sinal inicial e no máximo um ponto decimal. */
+function sanitizeNumber(raw: string): string {
+  const onlyNumberParts = raw.replace(/[^\d.-]/g, '');
+  const negative = onlyNumberParts.startsWith('-');
+  const [integer, ...rest] = onlyNumberParts.replace(/-/g, '').split('.');
+  const decimal = rest.join('');
+  const body = integer + (rest.length ? `.${decimal}` : '');
+  return (negative ? '-' : '') + body;
+}
+
 /**
  * Rótulo legível de cada valor canônico, para EXIBIÇÃO. O que é gravado na regra
  * continua sendo o valor cru do campo (o PostgREST compara com a coluna). Onde já
@@ -89,7 +104,7 @@ export function RuleValueInput({ field, op, value, onChange }: RuleValueInputPro
           inputMode="numeric"
           aria-label="Período em dias"
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => onChange(sanitizeDays(e.target.value))}
           placeholder="30"
           className="h-9 bg-input/40 border-border/70 text-xs w-[70px]"
         />
@@ -104,7 +119,7 @@ export function RuleValueInput({ field, op, value, onChange }: RuleValueInputPro
         inputMode="decimal"
         aria-label="Valor da condição"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(sanitizeNumber(e.target.value))}
         placeholder="0"
         className="h-9 bg-input/40 border-border/70 text-xs w-[130px]"
       />
