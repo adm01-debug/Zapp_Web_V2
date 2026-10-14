@@ -5,9 +5,10 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 
 /**
  * Busca de produtos por voz: reusa a MESMA edge que o CmdK já chama
- * (`useCatalogQuickSearch` -> promogifts-catalog), em vez de ler o catálogo
- * externo de dentro daqui. Assim RLS, limite por ação e cota continuam num
- * único lugar (lá), o serviço de voz só repassa o JWT do chamador.
+ * (`useCatalogQuickSearch` -> promogifts-catalog), em vez de reescrever a
+ * busca aqui. Assim RLS, limite por ação e cota continuam num único lugar
+ * (lá); o serviço de voz só repassa o JWT do chamador como Authorization e
+ * usa a anon key como `apikey` do gateway (nunca a service_role).
  */
 const CATALOG_FUNCTION_NAME = "promogifts-catalog";
 /** Mesmo tamanho de página do CmdK (useCatalogQuickSearch: limit 8). */
@@ -16,7 +17,7 @@ const CATALOG_SEARCH_MAX_QUERY = 200;
 
 export interface CatalogSearchOptions {
   supabaseUrl: string;
-  /** service_role key — vai só como `apikey`, nunca como Authorization. */
+  /** anon key — vai só como `apikey` do gateway, nunca como Authorization. */
   apikey: string;
   /** JWT do chamador já validado por requireAuth. */
   authHeader: string;
@@ -98,6 +99,7 @@ export async function voiceCopilotActionHandler(
     const { action, params } = await req.json();
 
     const supabaseUrl = requireEnv('SUPABASE_URL');
+    const supabaseAnonKey = requireEnv('SUPABASE_ANON_KEY');
     const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
     // Client autenticado como o caller: usado nas leituras abaixo para que a
@@ -134,10 +136,17 @@ export async function voiceCopilotActionHandler(
         const { query } = params;
         // Mesma edge e mesmos parâmetros do CmdK; a resposta tem o conteúdo
         // de produto (id, nome, sku, preço, imagem principal) que a voz lê.
+        // A authz real do catálogo continua sendo o JWT do chamador: sem ele,
+        // 401 sem nem chamar o catálogo (nada de fallback para '').
+        const authHeader =
+          req.headers.get('Authorization') ?? req.headers.get('authorization');
+        if (!authHeader) {
+          return errorResponse('Missing Authorization bearer token', 401, req);
+        }
         result = await searchCatalogProducts(query, {
           supabaseUrl,
-          apikey: supabaseKey,
-          authHeader: req.headers.get('Authorization') ?? req.headers.get('authorization') ?? '',
+          apikey: supabaseAnonKey,
+          authHeader,
           fetchImpl: deps.catalogFetch,
         });
         break;

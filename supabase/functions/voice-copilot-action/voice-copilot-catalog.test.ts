@@ -42,8 +42,8 @@ const ENV_KEYS = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KE
 async function comAmbiente<T>(fn: () => Promise<T>): Promise<T> {
   const anteriores = ENV_KEYS.map((k) => [k, Deno.env.get(k)] as const);
   Deno.env.set("SUPABASE_URL", "https://projeto-teste.supabase.co");
-  Deno.env.set("SUPABASE_ANON_KEY", "chave-de-teste");
-  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "chave-de-teste");
+  Deno.env.set("SUPABASE_ANON_KEY", "anon-de-teste");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-de-teste");
   try {
     return await fn();
   } finally {
@@ -125,7 +125,11 @@ Deno.test("search_catalog_products envia à edge do catálogo os mesmos parâmet
 
     const headers = calls[0].init.headers as Record<string, string>;
     assertEquals(headers.Authorization, "Bearer jwt-do-chamador", "JWT do chamador repassado");
-    assertEquals(headers.apikey, "chave-de-teste", "service role só como apikey");
+    assertEquals(headers.apikey, "anon-de-teste", "anon como apikey do gateway (nunca a service role)");
+    assert(
+      headers.apikey !== "service-role-de-teste" && !JSON.stringify(headers).includes("service-role-de-teste"),
+      "a service role não pode aparecer em nenhum cabeçalho enviado ao catálogo",
+    );
 
     assertEquals(response.status, 200, "status");
     const body = await response.json() as { result: { products: unknown[]; total: number } };
@@ -165,6 +169,23 @@ Deno.test("search_catalog_products: catálogo indisponível vira failed, não 's
     assertEquals(response.status, 200, "a ação responde 200 com o erro sinalizado");
     const body = await response.json() as { result: { products: unknown[]; failed?: boolean } };
     assertEqualsJson(body.result, { products: [], total: 0, failed: true }, "degradação sinalizada");
+  });
+});
+
+Deno.test("search_catalog_products: sem Authorization devolve 401 sem chamar o catálogo", async () => {
+  await comAmbiente(async () => {
+    const calls: CapturedCall[] = [];
+    const semAuth = new Request("https://projeto-teste.supabase.co/functions/v1/voice-copilot-action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "search_catalog_products", params: { query: "caneta" } }),
+    });
+    const response = await voiceCopilotActionHandler(
+      semAuth,
+      depsBase(fakeFetch(calls, jsonResponse({ data: PRODUTOS, meta: { total: 2 } }))),
+    );
+    assertEquals(response.status, 401, "sem JWT -> 401");
+    assertEquals(calls.length, 0, "não deve chamar o catálogo sem Authorization");
   });
 });
 
