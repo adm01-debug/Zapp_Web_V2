@@ -1,8 +1,6 @@
-import { motion, useReducedMotion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { zappTransition } from '@/lib/motion';
 import { resetChunkReloadGuard } from '@/lib/chunkReload';
 
 interface StaleBundleNoticeProps {
@@ -17,12 +15,18 @@ interface StaleBundleNoticeProps {
  * destaque. "Atualizar agora" zera a guarda (orcamento/cooldown/flag antiga) e
  * recarrega, para a proxima sessao comecar limpa.
  *
- * Com movimento reduzido (`useReducedMotion`) nao ha giro nem deslocamento: o
- * card ja nasce no lugar final e a transicao tem duracao 0.
+ * A animacao e CSS do tema (`motion-safe:` + `animate-*`), nao mais o runtime de
+ * animacao por JS: o import de framer-motion daqui arrastava o chunk `vendor-motion`
+ * (~43 KB gzip) para o pacote inicial, que e alcancado pelo `ErrorBoundary`. A entrada
+ * usa `motion-safe:animate-slide-up` (mesmo "sobe com fade" de antes) e o icone faz um
+ * giro unico com `motion-safe:animate-[spin_1.2s_ease-out_1]`.
+ *
+ * Com movimento reduzido nao ha giro nem deslocamento: o `motion-safe:` nao entrega a
+ * classe quando o sistema pede `prefers-reduced-motion: reduce` (o card nasce no estado
+ * final) e a classe `reduced-motion` no <html>, do painel de Acessibilidade, zera a
+ * duracao por `accessibility.css`. Os dois caminhos continuam valendo.
  */
 export function StaleBundleNotice({ onAtualizar }: StaleBundleNoticeProps) {
-  const reduzirMovimento = useReducedMotion();
-
   const atualizar = () => {
     resetChunkReloadGuard();
     if (onAtualizar) {
@@ -38,26 +42,13 @@ export function StaleBundleNotice({ onAtualizar }: StaleBundleNoticeProps) {
       role="alert"
       aria-live="assertive"
     >
-      <motion.div
-        className="w-full max-w-lg"
-        initial={reduzirMovimento ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={reduzirMovimento ? { duration: 0 } : zappTransition.normal}
-      >
+      <div className="w-full max-w-lg motion-safe:animate-slide-up">
         <Card className="shadow-2xl border-primary/20">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4">
-              <motion.div
-                className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center"
-                animate={reduzirMovimento ? { rotate: 0 } : { rotate: 360 }}
-                transition={
-                  reduzirMovimento
-                    ? { duration: 0 }
-                    : { duration: 1.2, ease: zappTransition.panel.ease }
-                }
-              >
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center motion-safe:animate-[spin_1.2s_ease-out_1]">
                 <RefreshCw className="w-10 h-10 text-primary" />
-              </motion.div>
+              </div>
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">
               Nova versão disponível
@@ -74,7 +65,7 @@ export function StaleBundleNotice({ onAtualizar }: StaleBundleNoticeProps) {
             </Button>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }
