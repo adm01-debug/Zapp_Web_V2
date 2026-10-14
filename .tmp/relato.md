@@ -1,3 +1,4 @@
+Especialista: iris
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
@@ -33,6 +34,7 @@ Especialista: Íris (area-front-componentes)
 - vermelho antes (componente em `HEAD`, com o teste novo): `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx` → `Tests 9 failed | 1 passed (10)`
 - verde depois: `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`
 - pre-commit (git add + commit): `Lint ratchet (staged, 3 arquivo(s)): baseline=3, atual=3, novas=0 / OK: nenhuma nova divida de lint foi introduzida.`
+- verificação do repositório: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations` e a linha final `VERIFY: VERDE SEM BANCO (196s)` (no modo rápido o banco local não é verificado — aviso esperado).
 
 ## O que NÃO fiz e por quê
 
