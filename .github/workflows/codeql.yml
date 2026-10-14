@@ -18,6 +18,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
+  # W50: permite reexecutar a varredura completa apos triagem sem precisar de PR novo.
+  workflow_dispatch:
 
 
 defaults:
