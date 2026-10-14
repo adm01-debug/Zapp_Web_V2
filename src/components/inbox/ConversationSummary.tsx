@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSummaryTts } from './summary/useSummaryTts';
-import { limitAnalysisContext } from './ai-tools/analysisConfigs';
+import { isPeriodCoveredByWindow, limitAnalysisContext } from './ai-tools/analysisConfigs';
 import { SummaryResult } from './summary/SummaryResult';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
@@ -46,9 +46,12 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
   const contextWindow = limitAnalysisContext(filteredMessages);
   const analyzedCount = contextWindow.messages.length;
   const hasWindowCut = contextWindow.omitted > 0;
-  // Histórico mais antigo não carregado = o período escolhido não está coberto;
-  // gravar `periodDays` faria o servidor registrar um recorte que não foi analisado.
-  const periodDays = hasOlderMessages ? null : getPeriodDays(analysisPeriod);
+  // `period_days` só é gravado quando o período pedido está INTEIRO dentro da
+  // janela carregada — senão o servidor registraria um recorte que não foi analisado.
+  const requestedPeriodDays = getPeriodDays(analysisPeriod);
+  const periodDays = isPeriodCoveredByWindow(contextWindow.messages, requestedPeriodDays, hasOlderMessages)
+    ? requestedPeriodDays
+    : null;
 
   // IA-048 — identidade da requisição: contato + período ESCOLHIDO. As mensagens
   // vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo.

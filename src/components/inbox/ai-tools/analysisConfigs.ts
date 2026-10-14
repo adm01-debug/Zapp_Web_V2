@@ -173,6 +173,30 @@ export function limitAiTexts(texts: string[], maxChars: number = AI_PROXY_CONTEN
   return { texts: window, omitted, total: texts.length };
 }
 
+/**
+ * O período pedido está INTEIRO dentro da janela carregada? Decide se
+ * `period_days` pode ser gravado: com histórico mais antigo não carregado, a
+ * janela pode começar DEPOIS do início do período, e gravar os dias afirmaria
+ * um recorte que não foi analisado. Quando a janela já alcança o início do
+ * período, o que falta de mais antigo não interfere.
+ */
+export function isPeriodCoveredByWindow(
+  messages: { created_at?: string }[],
+  days: number | null,
+  hasOlderMessages = false,
+  now = Date.now(),
+): boolean {
+  if (days === null) return false;
+  if (!hasOlderMessages) return true;
+  let oldest = Number.POSITIVE_INFINITY;
+  for (const message of messages) {
+    const timestamp = message.created_at ? Date.parse(message.created_at) : Number.NaN;
+    if (!Number.isNaN(timestamp) && timestamp < oldest) oldest = timestamp;
+  }
+  if (!Number.isFinite(oldest)) return false;
+  return oldest <= now - days * 86_400_000;
+}
+
 export const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   resolvido: { label: 'Resolvido', icon: CheckCircle2, className: 'bg-success/20 text-success border-success/30' },
   pendente: { label: 'Pendente', icon: Clock, className: 'bg-warning/20 text-warning border-warning/30' },
