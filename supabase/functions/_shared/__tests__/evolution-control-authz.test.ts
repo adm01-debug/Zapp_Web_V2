@@ -93,6 +93,16 @@ Deno.test("classifyEvolutionAction - leituras SEM tela consumidora viram control
   }
 });
 
+Deno.test("classifyEvolutionAction - reconcile-instances é control (admin 200, agent 403)", () => {
+  // A tela de Conexões só oferece a reconciliação ao admin; a ação enxerga a
+  // topologia de todas as conexões, então entra em CONTROL_ACTIONS.
+  assertEquals(classifyEvolutionAction("reconcile-instances"), "control");
+  assert(CONTROL_ACTIONS.has("reconcile-instances"));
+  assert(!READ_ACTIONS.has("reconcile-instances"));
+  assertEquals(decideControlAuthz(false).status, 403);
+  assert(decideControlAuthz(true).allowed);
+});
+
 Deno.test("decideControlAuthz - admin/supervisor conserva a operação", () => {
   const d = decideControlAuthz(true);
   assert(d.allowed, "admin/supervisor deve passar");

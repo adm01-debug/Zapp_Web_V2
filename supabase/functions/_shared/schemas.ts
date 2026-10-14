@@ -755,11 +755,13 @@ export const EvolutionApiRequestSchema = z.object({
 /**
  * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).
  * `list-instances` lista todas as instâncias da GO; `bootstrap-instance-token`
- * migra o token legado para o Vault. Todas as demais exigem o alvo.
+ * migra o token legado para o Vault; `reconcile-instances` compara o provedor
+ * com whatsapp_connections (só leitura, só nomes). Todas as demais exigem o alvo.
  */
 export const EVOLUTION_API_INSTANCE_FREE_ACTIONS: readonly string[] = [
   'list-instances',
   'bootstrap-instance-token',
+  'reconcile-instances',
 ];
 
 /** `instance` (instanceName) é obrigatória para a ação? */
