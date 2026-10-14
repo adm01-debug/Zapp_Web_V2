@@ -18,6 +18,7 @@ import { ConversationGroupHeader } from './conversation-list/ConversationGroupHe
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
@@ -273,6 +274,16 @@ const SENTIMENT_LABEL: Record<Sentiment, string> = {
 };
 const SEM_ANALISE = 'sem análise';
 
+// Estado da conversa (contacts.conversation_status) em pt-BR, para a
+// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
+// do sentimento acima): a pré-visualização só omite o estado.
+const CONVERSATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Aberto',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
+  archived: 'Arquivado',
+};
+
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
   virtualRow: VirtualItem;
@@ -393,8 +404,29 @@ const ConversationRow = memo(({
     else toast.info(`${label}: em breve`);
   };
 
+  // Pré-visualização por hover (QuickPeek): só dados JÁ carregados na linha
+  // (nome, última mensagem, não lidas e estado) — nenhuma consulta nova e
+  // nenhum campo fora do que a própria linha já recebe.
+  const conversationStatusLabel = CONVERSATION_STATUS_LABEL[conversation.contact.conversation_status];
+  const peekPreview = (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-foreground">
+        {conversation.contact.nickname?.trim() || conversation.contact.name || 'Contato'}
+      </p>
+      {conversation.lastMessage?.content && (
+        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-4">
+          {conversation.lastMessage.content}
+        </p>
+      )}
+      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground">
+        <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
+        {conversationStatusLabel && <span>• {conversationStatusLabel}</span>}
+      </div>
+    </div>
+  );
+
   return (
-    <div
+    <QuickPeek
       style={{
         position: 'absolute',
         top: 0,
@@ -416,6 +448,11 @@ const ConversationRow = memo(({
       // container.
       className="px-3 overflow-clip"
       data-testid="conversation-item"
+      preview={peekPreview}
+      // Desligado na conversa ABERTA (o balão repetiria a tela que o usuário
+      // já está vendo) e, dentro do QuickPeek, em telas de toque.
+      enabled={selectedContactId !== contactId}
+      delay={500}
     >
       <div
         className={cn(
@@ -676,6 +713,6 @@ const ConversationRow = memo(({
           </TooltipProvider>
         </div>
       </div>
-    </div>
+    </QuickPeek>
   );
 });
