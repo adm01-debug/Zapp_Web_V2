@@ -1,32 +1,32 @@
 /**
- * Etapa 047 do plano (seção 8-bis) — navegação por TECLADO da barra de
- * ferramentas de Tarefas.
+ * Etapa 047 do plano — testes de TECLADO da barra de ferramentas de Tarefas.
  *
- * Etapa 047 do plano (linha 292): "Testes de teclado da barra. `/`, 1/2/3, Enter
- * e ordem de foco." Os atalhos são os do registry global (Etapa 77 /
- * `defaultShortcuts`), com escopo `view === 'tasks'`: aqui o registry de VERDADE
- * é montado junto do módulo (`Registry`), então a tecla entra pelo `keydown` de
- * janela e o teste percorre tecla → registry → evento `tasks-shortcut` → módulo,
- * como na app. O que cada caso protege está citado no `it`.
+ * Linhas do plano que sustentam os casos (conferível com `grep -n` em
+ * `PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md`):
+ *  - linha 292: "| 047 | ... **Testes de teclado da barra.** `/`, 1/2/3,
+ *    Enter e ordem de foco." — os 4 grupos de `describe` abaixo;
+ *  - linha 516 (8-bis, G-5): "Etapa 041 mantém só os atalhos 1/2 e `!`" — os
+ *    1/2/3 aqui são os do MODO (registry, escopo tasks), não os do campo de
+ *    captura; nenhum parser de linguagem natural foi criado ou testado aqui;
+ *  - linha 520 (8-bis, B13): "Uma query só para os três modos" — trocar o
+ *    modo pela tecla não dispara consulta nova (contado no `select` falso);
+ *  - linha 524 (8-bis, Fase F): "Filtro é recorte de TELA" — trocar o modo
+ *    pela tecla não descarta o recorte nem o texto da busca.
  *
- * Seção 8-bis do plano (linha 512–524) que sustenta os casos:
- *  - G-5 (linha 516) "Etapa 041 mantém só os atalhos 1/2 e `!`": os atalhos
- *    1/2/3 cobertos aqui são do MODO (Etapa 77, escopo `tasks`) e não os do
- *    campo de captura (Etapa 41, `ctrl+1/2/3` dentro do QuickAdd) — nenhum
- *    parser de linguagem natural foi criado ou testado aqui;
- *  - B13 (linha 520) "Uma query só para os três modos": trocar o modo pela tecla
- *    não pode disparar consulta nova — contado na fronteira (o `select` do
- *    cliente Supabase falso);
- *  - Fase F (linha 524) "Filtro é recorte de TELA": a busca segue sendo recorte
- *    de tela, então trocar o modo pela tecla não descarta o recorte nem o texto.
+ * As TECLAS (`/`, `1` com alternativas `2`/`3`, escopo só em `?view=tasks`)
+ * vêm do código real: `src/hooks/shortcuts/defaultShortcuts.ts` (linhas 9,
+ * 53–54) e a guarda de input do registry
+ * (`src/hooks/ui/useGlobalKeyboardShortcuts.ts`, linhas 113–137). A tecla
+ * entra pelo `keydown` de janela e o teste percorre tecla → registry → evento
+ * `tasks-shortcut` → módulo, como na app. (O rótulo "Etapa 77" aparece nos
+ * comentários desse código; no plano desta etapa a linha 077 é outra coisa —
+ * por isso a origem das teclas é citada pelo ARQUIVO, não pelo plano.)
  *
- * O harness de render (o `TasksModule` montado, com a barra, o `useTasksFilters`
- * e a URL de verdade) e os mocks (`@/test/mocks/tarefas`) são os da família da
- * Etapa 046. O arquivo de teste daquela etapa (`TasksFilterBar.test.tsx`) NÃO
- * está no meu tronco (dia/2026-10-12) — a entrega dela segue a fila do
- * integrador —, então o harness foi ESCRITO aqui no mesmo padrão, em vez de o
- * arquivo alheio ser trazido por cherry-pick (armadilha 1 da skill
- * `armadilhas-workertestes`). Nada de produção foi alterado: só este arquivo.
+ * Harness (o `TasksModule` montado, com a barra, o `useTasksFilters` e a URL
+ * de verdade) e os mocks (`@/test/mocks/tarefas`) escritos aqui no padrão da
+ * família da Etapa 046: o arquivo dela (`TasksFilterBar.test.tsx`) NÃO está
+ * no tronco `dia/2026-10-12`, então nada alheio foi trazido. Nada de produção
+ * foi alterado: só este arquivo.
  *
  * Radix (Select/Popover) exige os métodos de captura de ponteiro, ausentes no
  * jsdom — o polyfill é o mesmo de `cardAcoes.test.tsx`/`WorkItemSheet.test.tsx`.
