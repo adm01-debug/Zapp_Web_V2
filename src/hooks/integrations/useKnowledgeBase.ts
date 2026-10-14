@@ -51,6 +51,19 @@ function kbStorageAllowedOrigins(): string[] {
   }
 }
 
+/**
+ * Só URL assinada (`/object/sign/`) autoriza remover o objeto no `deleteFile`.
+ * Este hook é novo e privado: linha legada com locator público (`/object/public/`)
+ * tem a linha excluída, mas o objeto fica — locator antigo não vira remoção.
+ */
+function isSignedStorageObjectUrl(value: string): boolean {
+  try {
+    return new URL(value).pathname.includes('/storage/v1/object/sign/');
+  } catch {
+    return false;
+  }
+}
+
 export function useKnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [files, setFiles] = useState<KBFile[]>([]);
@@ -135,38 +148,28 @@ export function useKnowledgeBase() {
   }, [fetchData]);
 
   const deleteFile = useCallback(async (id: string): Promise<boolean> => {
-    // A linha guarda o objeto no Storage (`file_url`); sem ela não há o que remover.
-    const { data: row, error: readError } = await supabase
-      .from('knowledge_base_files')
-      .select('id, file_url')
-      .eq('id', id)
-      .maybeSingle();
-    if (readError || !row) {
-      toast({ title: 'Erro ao excluir arquivo', description: readError?.message ?? 'Arquivo não encontrado.', variant: 'destructive' });
-      return false;
-    }
-
-    // A RLS de `knowledge_base_files` decide quem pode excluir (admin/supervisor).
-    // `.select('id')` confere as linhas atingidas: DELETE barrado pela RLS não dá
-    // erro, devolve zero linhas — e zero linhas não é sucesso (senão o objeto
-    // seria removido de um arquivo que continua na base).
+    // Ida única: o DELETE devolve a linha atingida (`id, file_url`) — sem
+    // leitura prévia. A RLS de `knowledge_base_files` decide quem pode excluir
+    // (admin/supervisor): DELETE barrado pela RLS não dá erro, devolve zero
+    // linhas — e zero linhas não é sucesso (senão o objeto seria removido de
+    // um arquivo que continua na base). Id inexistente e sem permissão têm o
+    // MESMO retorno genérico, sem denunciar qual dos dois aconteceu.
     const { data: removidas, error: deleteError } = await supabase
       .from('knowledge_base_files')
       .delete()
       .eq('id', id)
-      .select('id');
+      .select('id, file_url');
     if (deleteError || !removidas || removidas.length === 0) {
       toast({ title: 'Erro ao excluir arquivo', description: deleteError?.message ?? 'Nada foi excluído — verifique a permissão.', variant: 'destructive' });
       return false;
     }
 
-    // Lista de PERMITIDOS: só o bucket/origem desta base. Referência estranha não
-    // vira remoção de objeto.
-    const reference = parseSupabaseStorageObjectUrl(
-      row.file_url ?? '',
-      [KB_STORAGE_BUCKET],
-      kbStorageAllowedOrigins()
-    );
+    // Lista de PERMITIDOS: só o bucket/origem desta base, e só URL assinada.
+    // Referência estranha ou locator público legado não vira remoção de objeto.
+    const fileUrl = removidas[0]?.file_url ?? '';
+    const reference = isSignedStorageObjectUrl(fileUrl)
+      ? parseSupabaseStorageObjectUrl(fileUrl, [KB_STORAGE_BUCKET], kbStorageAllowedOrigins())
+      : null;
     if (!reference) {
       fetchData();
       toast({

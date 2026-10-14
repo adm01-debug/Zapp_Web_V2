@@ -1,21 +1,18 @@
-Especialista: hugo
-(cartão da área de hooks reencaminhado a workeria — executado pela skill `area-front-hooks`, conforme a 1ª linha exigida pelo cartão.)
-
+Especialista: senior (area-front-hooks)
 ## O que mudou e por quê
-- `src/hooks/integrations/useKnowledgeBase.ts`
-  - `deleteFile(id)` (NOVO): carrega a linha (`id, file_url`), exclui a linha com `.delete().eq('id', id).select('id')` — **zero linhas não é sucesso** (DELETE barrado pela RLS não dá erro: sem essa checagem o objeto seria apagado de um arquivo que continua na base) — e só então remove o objeto no Storage. A referência do objeto sai de `parseSupabaseStorageObjectUrl(file_url, ['whatsapp-media'], [origem do projeto])`: **lista de permitidos** por bucket e origem, então URL de outro projeto não vira remoção de objeto. Devolve `boolean`.
-  - `reprocessFile(id)` (NOVO): reinvoca `ai-kb-ingest` com `{ fileId }`. A idempotência é do pipeline (ele reivindica o arquivo por UPDATE condicional e devolve `idempotent` quando já concluído) — o hook não reenvia nem cria segundo artigo; mapeia `completed` (novo × já processado), `unsupported` e falha/409 para mensagens distintas, atualizando a lista (`fetchData`).
-  - `uploadFile`: o `getPublicUrl` do bucket privado saiu; a referência gravada em `file_url` passa a ser a **URL assinada** (`createSignedUrl(objeto, 1 dia)`), que é o que abre o objeto. Se a assinatura falha, o objeto recém-enviado é removido e nenhuma linha quebrada é gravada. O pipeline reextrai bucket+caminho do objeto antes de baixar com `service_role`, então o processamento não depende do token.
-  - `KB_STORAGE_BUCKET` exportado e usos de `'whatsapp-media'` trocados por ele (uma fonte só).
-- `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` (NOVO): prova `deleteFile` (sucesso; erro do DELETE; **zero linhas**; referência de outro projeto sem remoção; falha ao remover o objeto) e `reprocessFile` (invoca com `{ fileId }`; já concluído não é anunciado como novo; 409 em processamento; falha do pipeline; formato sem extração).
-- `src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx`: o mock do Storage passou de `getPublicUrl` para `createSignedUrl` e o teste novo confere que o INSERT grava a URL assinada de `/storage/v1/object/sign/whatsapp-media/kb/...` (não um locator público que não abre).
-
+- src/hooks/integrations/useKnowledgeBase.ts: `deleteFile` em ida única (`DELETE ... .select('id, file_url')`, sem `SELECT` prévio); remoção do objeto só com URL assinada (`/object/sign/`) via `isSignedStorageObjectUrl`; erro genérico único para id inexistente ou sem permissão.
+- src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx: mocks no formato novo (retorno do DELETE) + 3 testes novos (sem leitura prévia, erro genérico, locator público legado).
+- src/hooks/integrations/__tests__/useKnowledgeBase.deleteFile.integration.test.tsx (novo): fluxo inteiro contra o stack local (PostgREST + RLS + Storage reais); pula sem `KB_INT_*`.
 ## Prova
-- vermelho antes: `git stash push -- src/hooks/integrations/useKnowledgeBase.ts; npx vitest run src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` → `Test Files 1 failed (1); Tests 10 failed (10)`
-- verde depois: `npx vitest run src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx src/hooks/integrations/__tests__/useKnowledgeBase.deleteArticle.test.tsx` → `Test Files 3 passed (3); Tests 16 passed (16)`
-- `npx vitest run src/components/knowledge` (a tela que consome o hook) → `Test Files 1 passed (1); Tests 5 passed (5)`
-
+- vermelho antes (código antigo x testes novos): `bunx vitest run src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` → `Tests 6 failed | 7 passed (13)`
+- verde depois: `bunx vitest run src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` → `Test Files 2 passed (2); Tests 17 passed (17)`
+- integração com stack local: `KB_INT_API_URL=... KB_INT_ANON_KEY=... KB_INT_SERVICE_KEY=... bunx vitest run src/hooks/integrations/__tests__/useKnowledgeBase.deleteFile.integration.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)`
+- sem stack o arquivo de integração pula sem falhar: `Test Files 1 skipped (1); Tests 3 skipped (3)`
+- vizinhas (sem regressão): `bunx vitest run src/lib/__tests__/storage_object_reference.test.ts src/hooks/integrations/__tests__/` → `Test Files 44 passed | 1 skipped (45)` (o skipped é a integração sem stack); `src/components/knowledge/__tests__/KnowledgeBaseView.a11y.test.tsx` → `Tests 5 passed (5)`
+## Pontos do revisor
+- Ponto 1: resolvido — removida a leitura prévia (`select().eq().maybeSingle()`); o DELETE retorna `id, file_url` na mesma ida e zero linhas (RLS ou id inexistente) cai no erro genérico `Nada foi excluído — verifique a permissão.` (useKnowledgeBase.ts, `deleteFile`). Prova: `não faz leitura prévia` + `o erro não denuncia se o id existe` (unit, vermelhos antes) e `sem permissão (RLS)` (integração: linha e objeto preservados).
+- Ponto 2: resolvido — só URL assinada autoriza remover o objeto (`isSignedStorageObjectUrl` + allowlist de bucket/origem); locator público legado tem a linha excluída e o objeto preservado com aviso (useKnowledgeBase.ts, `deleteFile`). Prova: `locator público legado não apaga o objeto` (unit) e `locator público legado: a linha sai, o objeto fica` (integração, objeto listado antes e depois).
+- Ponto 3: resolvido — `useKnowledgeBase.deleteFile.integration.test.tsx` prova o fluxo inteiro no banco/Storage LOCAL com cliente real (admin exclui linha+objeto; anônimo negado preserva ambos; legado preserva o objeto); só o toast é mockado. Achado da prova: o cliente anônimo herdava a sessão do admin via localStorage e o caso RLS mentia — corrigido com `persistSession: false` por cliente.
 ## O que NÃO fiz e por quê
-- **Botões de "Excluir" (com diálogo de confirmação) e "Reprocessar" na tela**: são do cartão filho `t_ed574498` (componente/tela). A confirmação explícita pedida no cartão mora nesse diálogo; aqui o hook só executa e devolve o resultado.
-- **Exclusão do artigo publicado pelo arquivo**: `deleteFile` faz exatamente "linha + objeto" como o cartão define; o artigo derivado (`article_id`) fica. Registrado em `kanban_comment`.
-- Nada em Supabase/migrations, Edge Functions ou outro arquivo.
+- Não alterei `src/lib/storage_object_reference.ts`: outros 3 chamadores (team-chat, stickers, resolved-url) usam o parse com pública+assinada; a restrição a `/sign/` é local do `deleteFile` (escopo do título).
+- Não mexi em migration, tela nem CI: fora dos 3 pontos e do pedido original.
