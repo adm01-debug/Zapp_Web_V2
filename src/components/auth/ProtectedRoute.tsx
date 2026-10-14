@@ -27,38 +27,52 @@
    const [mfaGate, setMfaGate] = useState<{ userId: string; status: 'required' | 'ok' | 'error' } | null>(null);
 
     const [safetyForced, setSafetyForced] = useState(false);
+    // Paridade V3: o primeiro instante da tela é da verificação. Os atalhos de
+    // saída só aparecem depois de alguns segundos, para não empurrar o usuário
+    // para fora antes de a sessão ter chance de resolver.
+    const [saidaLiberada, setSaidaLiberada] = useState(false);
     const loading = (authLoading || rolesLoading) && !safetyForced;
     // O gate vale só para o usuário que o gerou — sessão trocada cai em 'checking'
     // até a decisão nova sair, sem depender de reset em effect.
     const gate = user && mfaGate?.userId === user.id ? mfaGate.status : 'checking';
 
+    // Passo visível da verificação: diz o que ainda está pendente em vez de um
+    // "Verificando acesso" genérico (paridade V3).
+    const passoVerificacao = authLoading
+      ? 'Carregando sessão...'
+      : rolesLoading
+        ? 'Verificando permissões...'
+        : 'Preparando aplicação...';
+
     const verificandoAcesso = (
-      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-busy="true" aria-label="Verificando acesso">
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-busy="true" aria-live="polite" aria-label="Verificando acesso">
         <div className="flex flex-col items-center gap-4 max-w-xs text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden="true" />
-          <p className="text-foreground font-medium">Verificando acesso...</p>
+          <p className="text-foreground font-medium">{passoVerificacao}</p>
 
-          {/* Escape hatch for infinite loading */}
-          <div className="mt-8 pt-8 border-t border-border w-full">
-            <p className="text-xs text-muted-foreground mb-4 italic">Se o carregamento demorar muito, tente:</p>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"
-              >
-                Recarregar Página
-              </button>
-              <button
-                onClick={() => {
-                  void AuthService.signOut();
-                  window.location.href = '/auth';
-                }}
-                className="text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-              >
-                Sair e Entrar Novamente
-              </button>
+          {/* Escape hatch for infinite loading — só depois dos primeiros segundos */}
+          {saidaLiberada && (
+            <div className="mt-8 pt-8 border-t border-border w-full">
+              <p className="text-xs text-muted-foreground mb-4 italic">Se o carregamento demorar muito, tente:</p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"
+                >
+                  Recarregar Página
+                </button>
+                <button
+                  onClick={() => {
+                    void AuthService.signOut();
+                    window.location.href = '/auth';
+                  }}
+                  className="text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                >
+                  Sair e Entrar Novamente
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -73,6 +87,13 @@
       }, 7000);
       return () => clearTimeout(timer);
     }, [authLoading, rolesLoading]);
+
+    // Libera os atalhos de saída depois de 5 s de verificação (uma vez por
+    // montagem da rota).
+    useEffect(() => {
+      const timer = setTimeout(() => setSaidaLiberada(true), 5000);
+      return () => clearTimeout(timer);
+    }, []);
 
    /**
     * BUG-8 FIX: reset hasPermission whenever the user identity or the required
