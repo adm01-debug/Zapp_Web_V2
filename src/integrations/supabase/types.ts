@@ -6395,6 +6395,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_alert_settings: {
+        Row: {
+          blocked_threshold: number
+          id: boolean
+          is_active: boolean
+          min_severity: string
+          updated_at: string
+          updated_by: string | null
+          window_minutes: number
+        }
+        Insert: {
+          blocked_threshold?: number
+          id?: boolean
+          is_active?: boolean
+          min_severity?: string
+          updated_at?: string
+          updated_by?: string | null
+          window_minutes?: number
+        }
+        Update: {
+          blocked_threshold?: number
+          id?: boolean
+          is_active?: boolean
+          min_severity?: string
+          updated_at?: string
+          updated_by?: string | null
+          window_minutes?: number
+        }
+        Relationships: []
+      }
       rate_limit_configs: {
         Row: {
           block_duration_minutes: number
