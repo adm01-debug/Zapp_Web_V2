@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
+import { queryClient } from '@/lib/queryClient';
 
 /**
  * R2-API-042 (BACKLOG_VERIFICADO #216): a Edge Function `evolution-api` usa HTTP 200
@@ -38,6 +39,9 @@ async function clicarReconectar() {
 
 describe('EvolutionDisconnectBanner — reconexão distingue erro lógico de sucesso', () => {
   beforeEach(() => {
+    // A lista de conexões agora vive num cache compartilhado (`['connections']`):
+    // limpa entre casos para cada um ler as SUAS linhas (h.rows).
+    queryClient.clear();
     h.rows = [desconectada];
     h.invoke.mockReset();
     h.toastSuccess.mockReset();
@@ -85,6 +89,8 @@ describe('EvolutionDisconnectBanner — reconexão distingue erro lógico de suc
  */
 describe('EvolutionDisconnectBanner — não cobre nem intercepta a barra de abas (SL-076)', () => {
   beforeEach(() => {
+    // Mesmo cache compartilhado (`['connections']`): limpa entre casos.
+    queryClient.clear();
     h.rows = [desconectada];
   });
 

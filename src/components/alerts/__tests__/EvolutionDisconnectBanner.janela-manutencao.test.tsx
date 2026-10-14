@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { queryClient } from '@/lib/queryClient';
 
 /**
  * Banner honesto (F0/E02 do plano multi-conexão — docs/runbooks/bloqueio-meta.md).
@@ -43,6 +44,9 @@ const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, s
 
 describe('faixa de conexões: o motivo da edge chega ao operador', () => {
   beforeEach(() => {
+    // A lista de conexões agora vive num cache compartilhado (`['connections']`):
+    // limpa entre casos para cada um ler as SUAS linhas (h.rows).
+    queryClient.clear();
     h.rows = [desconectada];
     h.invoke.mockReset();
     h.toastSuccess.mockReset();
