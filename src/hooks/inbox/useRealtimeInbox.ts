@@ -129,12 +129,27 @@ export function useRealtimeInbox() {
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
   }, []);
 
+  // R2-INB-059: o contato "aberto" — aquele que suprime som/toast em
+  // `notifyAboutIncomingMessage` — tem UMA fonte: `selectedContactId`. Antes, só
+  // `handleSelectConversation` atualizava esse ref; os demais caminhos que trocam
+  // a seleção (nova conversa criada pelo modal, "Voltar" no celular e expandir o
+  // PiP, que só chamam `setSelectedContactId`) ficavam de fora. Efeito: no
+  // celular, o contato recém-fechado continuava MUDO (sem som, toast nem
+  // notificação) até uma nova seleção; a conversa criada pelo modal não suprimia
+  // o aviso dela nem marcava como lida. Aqui o id governa o ref e a leitura em
+  // TODOS os caminhos.
+  useEffect(() => {
+    setSelectedContact(selectedContactId ?? null);
+    if (selectedContactId) void markAsRead(selectedContactId);
+    // `markAsRead` não é memoizado (lê `conversationsRef` por dentro); listá-lo
+    // faria o efeito disparar a cada render. Só a TROCA do id deve agir.
+  }, [selectedContactId, setSelectedContact]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {
+    // `setSelectedContact`/`markAsRead` vivem no efeito acima: não duplicar aqui.
     setSelectedContactId(contactId);
-    setSelectedContact(contactId);
-    void markAsRead(contactId);
-  }, [setSelectedContactId, setSelectedContact, markAsRead]);
+  }, [setSelectedContactId]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
