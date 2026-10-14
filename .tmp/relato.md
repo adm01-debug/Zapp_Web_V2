@@ -1,4 +1,10 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
+
+## Refazer 1 — pontos da recusa
+- Ponto 1: primeira linha agora é exatamente `Especialista: workersql` (antes estava
+  `Especialista: worker (sql) (area-sql-banco)`). Migration e teste intocados.
+- Ponto 2: teste listado como `supabase/tests/gamification_revoke_client_rpcs.sql` (novo);
+  verificação `zapp-verify . --rapido` rodada, com comando e linha de resultado abaixo.
 
 ## O que mudou e por quê
 - supabase/migrations/20261012233536_gamification_revoke_client_rpcs.sql (novo): REVOKE EXECUTE de
@@ -18,7 +24,7 @@ Especialista: worker (sql) (area-sql-banco)
   `NOTICE: RED T2: chamada direta como authenticated -> P0001 / p_xp exceeds single-call maximum of 500, got 9999`
   Ou seja: sem a migration a barreira era só a guarda de entrada (P0001), não a ACL — a asserção T2
   do teste (exige 42501 + 'permission denied for function') FALHA. A prova não é vacuosa.
-- verde depois: `zapp-db-local psql . <copia> < supabase/tests/gamification_revoke_client_rpcs.sql`
+- verde depois (re-rodado no refazer 1): `zapp-db-local psql . v2-gamirefazer1 < supabase/tests/gamification_revoke_client_rpcs.sql`
   →
   `NOTICE: T1 OK: public.add_agent_xp(uuid,integer) -> anon=false authenticated=false PUBLIC=false service_role=true`
   `NOTICE: T1 OK: public.grant_agent_achievement(uuid,text,text,text,integer) -> anon=false authenticated=false PUBLIC=false service_role=true`
@@ -30,6 +36,12 @@ Especialista: worker (sql) (area-sql-banco)
   `NOTICE: T2 OK increment_agent_messages: 42501 - permission denied for function increment_agent_messages`
   `NOTICE: T2 OK update_agent_streak: 42501 - permission denied for function update_agent_streak`
   `GAMIFICATION REVOKE CLIENT RPCS: OK`  (exit=0)
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (9s)` (exit=0; db_guard,
+  tipos, lint e migrations OK). A variante estrita (`zapp-verify . v2-gamirefazer1 --rapido`)
+  compara com o retrato da produção e lista 186 diferenças: 4 são a própria correção (o retrato
+  ainda concede EXECUTE a authenticated nas RPCs = o defeito; o local revogou) e o resto é deriva
+  pré-existente alheia ao cartão (whatsapp_connections, ai_usage_outbox). O critério do cartão pede
+  só `zapp-verify . --rapido`, que está verde.
 - ACL conferida direto no banco local após aplicar a migration (has_function_privilege):
   anon=f authenticated=f service_role=t nas 4 funções.
 - T3 prova que a pontuação de verdade não quebrou: INSERT de uma mensagem do agente no marco de 10
