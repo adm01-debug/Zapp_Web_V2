@@ -23,6 +23,7 @@ import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
@@ -288,6 +289,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
                     </div>
                     <Pill label={sm.label} tone={sm.tone}/>
                     {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }); }} />
                   </motion.div>
                 );
               })}
