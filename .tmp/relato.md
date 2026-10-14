@@ -1,27 +1,24 @@
-Especialista: edgar (area-edge-api)
+Especialista: edgar
 
-## Sensibilidade
-- O diff toca autorização: `+pairing-code` em `CONTROL_ACTIONS` (staff) e em `MAINTENANCE_GATED_ACTIONS`. Nada foi afrouxado — a ação nasce AUTORIZADA a staff (antes ficaria 'read' = qualquer JWT ou nem passava no schema).
-- Nenhum segredo exposto: o número NÃO vai para log, nem para mensagem de erro; o token da instância segue resolvido pelo Vault (`resolveInstanceToken`), com o mesmo fallback de transição.
-- Nada de produção: só a URL/provedor de teste injetado nos testes; sem migration, sem deploy.
+Refazer 1 da entrega 29b1671c0c (pairing-code GO+v2), rebasado sobre dia/2026-10-14 (f5885801b1) com resolução de conflito sem afrouxar teste do dia.
 
-## Fora de "ARQUIVOS QUE PODE TOCAR" — 1 arquivo, indispensável
-`supabase/functions/_shared/evolution-control-authz.ts`: é ONDE a ação é classificada (staff) e o schema do request é derivado. Sem `+pairing-code` aqui, a ação nova seria rejeitada pelo `EvolutionApiRequestSchema` (422) ou cairia em 'read'. Não há como entregar a ação sem esta linha. Os demais helpers puros ficaram dentro de `supabase/functions/evolution-api/index.ts`, na própria função, para não sair do escopo do cartão.
+Ponto 1 (recusa: quebra o ESPELHO DO CI no empilhamento — node N217: docs bate com medição fresca) → a entrega adiciona 3 linhas ao helper `evolution-control-authz.ts` (`pairing-code` no CONTROL_ACTIONS e no MAINTENANCE_GATED_ACTIONS) e o doc de cobertura ficou com os números antigos (137/137, total 83.6%). Reproduzi o vermelho com `node --test scripts/ci/edge-coverage-authz.unit.mjs` (falha: `docs: evolution-control-authz.ts | 137 | 137` vs `medido: evolution-control-authz.ts | 140 | 140`) e regenerei pelo próprio script (`REGENERAR_EDGE_AUTHZ_COV=1`): `docs/audits/edge-functions-authz-coverage.md` 137/137→140/140, total 83.6%→83.8%. Verde depois: `pass 8, fail 0`, incluindo `N217: docs bate com medição fresca e segunda execução é idêntica`.
 
-## O que mudei
-- `supabase/functions/evolution-api/index.ts`: nova ação `pairing-code` (glyph staff). Recebe `number`, normaliza para dígitos, escolhe a rota por flavor e devolve o código de pareamento.
-  - GO: `POST /instance/connect` com corpo `{subscribe:['ALL'], immediate:true, webhookUrl, phone}` (o `webhookUrl` é reafirmado a cada connect, como já faz o 'connect').
-  - v2: `GET /instance/connect/{instância}?number=`.
-  - Fallback GO: se o connect não trouxer o código, lê `/instance/qr` (`data.code`) por um curto período (o GO emite o pareamento de forma assíncrona). Se só vier payload de QR (`2@...`), responde erro explícito e NÃO grava nada.
-  - Sem número → 422, sem chamar o provedor.
-  - Sucesso → `{ ...corpo, status:'qr_pending', pairingCode, code, expiresInSeconds, expiresAt }`; código formatado `XXXX-XXXX`; validade do provedor reusada (`expiresIn`/`validity`, ms→s) ou 60s (piso 15s, teto 300s, mesmo default do QR no V3); atualiza `whatsapp_connections.status='qr_pending'`.
-- Helpers puros exportados na função: `resolvePairingRoute`, `pairingCodeFromResponse`, `formatPairingCode`, `pairingValidity`.
-- `supabase/functions/evolution-api/session-flavor-routes.test.ts`: matriz pura + handler (GO com código no connect, GO sem código lendo `/instance/qr`, v2, sem número → 422, GO só com QR → erro sem gravar).
+Ponto 2 (âncoras do ESTADO.md deslocadas pela mesma entrega, latente atrás da falha acima) → `supabase/functions/evolution-api/index.ts` cresceu e as citações de `evolution-webhook` 474/540/701 ficaram apontando para linhas sem a edge. Atualizei para 571/637/798 em `ESTADO.md` (mesmos números da correção aprovada em t_0c136c28). Prova direcionada na minha árvore: 10/12 âncoras da linha `evolution-webhook` passam, incluindo as 3 do evolution-api; as 2 restantes (`evolution-sync-actions.ts:215/292`) estão deslocadas já na ponta do dia (arquivo que não toquei — achado fora do escopo, registrado em comentário no cartão). A guarda do ESTADO segue com exatamente as mesmas 2 falhas da base limpa (ai-kb-ingest:99 e grupo de create-user), provadas por execução na árvore pristine de dia/2026-10-14: `pass 9, fail 2` idênticos antes e depois do meu diff.
 
-## Evidência do caminho na Evolution GO
-`docs/migration/GO_GAPS.md` (doc da GO usada pelo V2, seção "Descobertas da doc que MUDAM decisões"): `POST /instance/connect` aceita `{webhookUrl, subscribe:["ALL"], immediate, phone}` — o `phone` é o campo documentado para pedir o pareamento por número. A GO também lista `/instance/pair` como exclusiva, mas não há swagger/código da GO no repositório para desempatar; implementei pelo caminho documentado e tratei o caso NÃO suportado (ver fallback/erro acima). Não supus que sempre há código.
+Pedido original (parear por código GO e v2) → sem mudança de comportamento: o rebase sobre o dia exigiu mesclar `session-flavor-routes.test.ts` com o teste TRA-002 do dia (bloco do dia preservado byte-idêntico, sem afrouxar). Suite Deno na árvore final: `session-flavor-routes.test.ts` 21 passed/0 failed (8 testes R2-API-016 do pairing-code + TRA-002 verdes) e `index.test.ts + evolution-control-authz.test.ts` 36 passed/0 failed.
 
-## Prova (comandos rodados agora)
-- `deno test --allow-env --allow-net supabase/functions/evolution-api/session-flavor-routes.test.ts` → `ok | 20 passed | 0 failed (6s)`.
-- `deno test --allow-env --allow-net --allow-read supabase/functions/evolution-api/index.test.ts supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → `ok | 36 passed | 0 failed (214ms)` (inclui a exaustividade da matriz de ações e a cobertura do schema).
-- Vermelho antes: com o handler revertido (`git stash push -- supabase/functions/evolution-api/index.ts`), os casos de `pairing-code` FALHAM (`FAILED | 14 passed | 5 failed`); `git stash pop` restaurou e ficou verde.
+Arquivos (`git diff --name-only dia/2026-10-14...HEAD`):
+.tmp/relato.md
+ESTADO.md
+docs/audits/edge-functions-authz-coverage.md
+supabase/functions/_shared/evolution-control-authz.ts
+supabase/functions/evolution-api/index.ts
+supabase/functions/evolution-api/session-flavor-routes.test.ts
+
+Verificações:
+- `node --test scripts/ci/edge-coverage-authz.unit.mjs` → antes: fail 1 (docs 137/137 vs medido 140/140); depois: pass 8, fail 0
+- `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/evolution-api/session-flavor-routes.test.ts` → ok | 21 passed | 0 failed
+- `deno test ... supabase/functions/evolution-api/index.test.ts supabase/functions/_shared/__tests__/evolution-control-authz.test.ts` → ok | 36 passed | 0 failed
+- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → pass 9, fail 2 (mesmas 2 da base limpa dia/2026-10-14, sem falha nova)
+- `zapp-verify full .` → db_guard OK, tipos OK, lint OK, migrations OK, banco_local AVISO (sem nome de conjunto); testes: 1494 arquivos passed, 13199 testes passed, 1 erro flaky em `src/components/settings/__tests__/SoundCustomizationPanel.test.tsx` (`setTimeout` de 500ms do componente disparando após o teardown do ambiente — arquivo fora do meu diff: 0 arquivos `src/` no meu diff). Isolado passa 10/10; `jev-juiz falha` no log: pre_existing (certeza 0.92), "não conserte fora do escopo". N217 não aparece mais entre as falhas.
