@@ -71,19 +71,106 @@ export function aiEnvelopeErrorMessage(error: unknown, fallback: string): string
  * Lê o envelope de um `functions.invoke` que falhou (HTTP não-2xx). O corpo da
  * resposta fica em `error.context` (Response) — sem lê-lo o usuário só veria
  * "Edge Function returned a non-2xx status code".
+ *
+ * Dois corpos são entendidos: (1) o envelope de execução das IA-025
+ * (`capability` + `status`); (2) a resposta canônica de validação
+ * (`{ error: { code, message, fields } }`, supabase/functions/_shared/schemas.ts
+ * :626-651) que a edge devolve com 422 quando o contexto estoura o teto — o
+ * `message` do servidor é o que explica o motivo ao usuário.
  */
 export async function readAiErrorEnvelope<T>(error: unknown): Promise<AiEnvelope<T> | null> {
   const context = (error as { context?: Response } | null)?.context;
   if (!context || typeof context.clone !== 'function') return null;
   try {
     const body = (await context.clone().json()) as unknown;
-    if (body && typeof body === 'object' && 'capability' in body && 'status' in body) {
-      return body as AiEnvelope<T>;
+    if (body && typeof body === 'object') {
+      if ('capability' in body && 'status' in body) {
+        return body as AiEnvelope<T>;
+      }
+      const validationError = (body as { error?: unknown }).error;
+      if (validationError && typeof validationError === 'object') {
+        const message = (validationError as { message?: unknown }).message;
+        if (typeof message === 'string' && message.trim() !== '') {
+          return { status: 'error', error: message };
+        }
+      }
     }
   } catch {
     // corpo sem JSON (timeout/proxy): sem envelope a mostrar
   }
   return null;
+}
+
+// ── Janela de contexto enviada à IA ──────────────────────────────────────────
+// Tetos do servidor, ESPELHADOS de supabase/functions/_shared/schemas.ts
+// (CONTEXT_LIMITS): acima deles a edge responde 422 e NUNCA trunca em silêncio.
+// O cliente recorta antes de enviar — e diz o que recortou.
+export const AI_CONTEXT_LIMITS = {
+  maxMessages: 200,
+  maxSingleMessageChars: 5000,
+  maxTotalChars: 120000,
+} as const;
+
+/** Teto do `content` de UMA mensagem no `ai-proxy` (supabase/functions/ai-proxy/index.ts:54). */
+export const AI_PROXY_CONTENT_LIMIT = 50000;
+
+export interface AiContextWindow<T> {
+  /** Recorte enviável, na ordem original (mais antigas antes das mais recentes). */
+  messages: T[];
+  /** Quantas mensagens ficaram de fora do recorte. */
+  omitted: number;
+  /** Total disponível ANTES do recorte. */
+  total: number;
+}
+
+/**
+ * Recorta o contexto de conversa para o que a edge aceita: as últimas
+ * `maxMessages` mensagens, cada texto cortado em `maxSingleMessageChars` e o
+ * conjunto reduzido até caber no teto agregado de caracteres. Sem isso o 422
+ * derruba a análise inteira; com isso a janela enviada é sempre aceita.
+ */
+export function limitAnalysisContext<T extends { content?: string }>(messages: T[]): AiContextWindow<T> {
+  const capped = messages.map((message) =>
+    typeof message.content === 'string' && message.content.length > AI_CONTEXT_LIMITS.maxSingleMessageChars
+      ? { ...message, content: message.content.slice(0, AI_CONTEXT_LIMITS.maxSingleMessageChars) }
+      : message,
+  );
+  const window = capped.slice(-AI_CONTEXT_LIMITS.maxMessages);
+  let omitted = capped.length - window.length;
+  let totalChars = window.reduce((sum, message) => sum + (message.content?.length ?? 0), 0);
+  while (window.length > 1 && totalChars > AI_CONTEXT_LIMITS.maxTotalChars) {
+    totalChars -= window[0].content?.length ?? 0;
+    window.shift();
+    omitted += 1;
+  }
+  return { messages: window, omitted, total: messages.length };
+}
+
+export interface AiTextWindow {
+  /** Recorte enviável, na ordem original. */
+  texts: string[];
+  /** Quantos textos ficaram de fora do recorte. */
+  omitted: number;
+  /** Total disponível ANTES do recorte. */
+  total: number;
+}
+
+/**
+ * Mesmo recorte, para listas de TEXTO já montadas (objeções e universitários
+ * enviam as mensagens concatenadas numa única mensagem do `ai-proxy`, cujo teto
+ * é `AI_PROXY_CONTENT_LIMIT`). Descarta os itens mais antigos até o texto
+ * concatenado caber — o separador `\n` conta no orçamento.
+ */
+export function limitAiTexts(texts: string[], maxChars: number = AI_PROXY_CONTENT_LIMIT): AiTextWindow {
+  const window = [...texts];
+  let omitted = 0;
+  let totalChars = window.reduce((sum, text) => sum + text.length, Math.max(0, window.length - 1));
+  while (window.length > 1 && totalChars > maxChars) {
+    totalChars -= window[0].length + 1;
+    window.shift();
+    omitted += 1;
+  }
+  return { texts: window, omitted, total: texts.length };
 }
 
 export const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {

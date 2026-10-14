@@ -506,6 +506,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         activeTool={activeTool} onSetActiveTool={handleSetActiveTool}
         messages={messages} contactId={conversation.contact.id}
         contactName={conversation.contact.name} onSelectSuggestion={(text) => handlers.setInputValue(text)}
+        // O painel carrega só a página mais recente de mensagens: o que não
+        // coube fica a cargo dos recortes (a IA não pode afirmar o período todo).
+        hasOlderMessages={hasOlderMessages}
       />
     </div>
   );

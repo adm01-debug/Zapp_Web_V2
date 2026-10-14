@@ -18,9 +18,11 @@ interface ChatToolPanelsProps {
   contactId: string;
   contactName: string;
   onSelectSuggestion: (text: string) => void;
+  /** Repasse puro: ver `AIConversationAssistantProps.hasOlderMessages`. */
+  hasOlderMessages?: boolean;
 }
 
-export function ChatToolPanels({ activeTool, onSetActiveTool, messages, contactId, contactName, onSelectSuggestion }: ChatToolPanelsProps) {
+export function ChatToolPanels({ activeTool, onSetActiveTool, messages, contactId, contactName, onSelectSuggestion, hasOlderMessages = false }: ChatToolPanelsProps) {
   const mappedMessages = messages.map(m => ({ id: m.id, content: m.content, sender: m.sender, timestamp: m.timestamp.toISOString() }));
 
   return (
@@ -31,6 +33,7 @@ export function ChatToolPanels({ activeTool, onSetActiveTool, messages, contactI
             <AIConversationAssistant
               messages={messages.map(m => ({ id: m.id, sender: m.sender, content: m.content, type: m.type, mediaUrl: m.mediaUrl, created_at: m.timestamp.toISOString() }))}
               contactId={contactId} contactName={contactName} isOpen={activeTool === 'aiAssistant'} onClose={() => onSetActiveTool('aiAssistant')}
+              hasOlderMessages={hasOlderMessages}
             />
           </ToolPanel>
         </Suspense>
@@ -61,6 +64,7 @@ export function ChatToolPanels({ activeTool, onSetActiveTool, messages, contactI
             <ConversationSummary
               messages={messages.map(m => ({ id: m.id, sender: m.sender, content: m.content, created_at: m.timestamp.toISOString() }))}
               contactName={contactName} contactId={contactId}
+              hasOlderMessages={hasOlderMessages}
             />
           </ToolPanel>
         </Suspense>
