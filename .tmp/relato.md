@@ -38,6 +38,23 @@ FAIXA DO PAI: commits 67ffa98586, be958f52af, 59bb4f8aa4, e5f6219be7 do cartão 
     sobre um mock seria provar o mock, não a tela. Nenhuma asserção de acessibilidade/estado foi afrouxada — foram
     adicionadas (erro, limiares, aria-live, aria-busy, "—", skeleton só no 1º load, "Atualizado há").
 
+## Justificativas (pontos do juiz automático)
+
+- **Ponto 1 — teste que já existia:** o cartão manda trocar a fonte de dados da tela pelo hook do cartão pai, e a tela
+  parou de fazer as consultas `supabase.from(...)`. As asserções antigas deste arquivo mediam ESSAS consultas (contagem
+  de mensagens do banco). O código que elas provavam não existe mais na tela: a mesma regra foi migrada para o hook
+  (`src/hooks/business/useCrisisRoomMetrics.ts` + `src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx`) e para
+  o SQL (`scripts/db-audit/crisis-room-snapshot.test.sh`), provada no cartão pai. Por isso o arquivo foi reescrito:
+  nenhuma asserção foi afrouxada — saíram as que olhavam para o banco e entraram as do comportamento novo
+  (erro explícito, limiares duplos, `aria-live`, `aria-busy`, "—", skeleton só na 1ª carga, "Atualizado há").
+- **Ponto 2 — arquivos fora de "ARQUIVOS QUE PODE TOCAR":** `supabase/migrations/20261013140359_crisis_room_snapshot.sql`,
+  `src/integrations/supabase/types.ts`, `scripts/db-audit/crisis-room-snapshot.test.sh`,
+  `scripts/ci/check-test-inventory.mjs`, `src/hooks/business/useCrisisRoomMetrics.ts` e o teste do hook vêm por
+  **cherry-pick** da faixa do cartão pai (t_ac0acb5c / t_7d403167) — o critério 1 deste cartão pede justamente *usar o
+  hook da Sala de Crise*, que só existe nessa faixa. Não são edições minhas: o `git diff` deste cartão (meus commits)
+  toca apenas `src/components/admin/CrisisRoom.tsx` e `src/components/admin/__tests__/CrisisRoom.metricas.test.tsx`.
+  Sem a faixa, o hook não existiria no workspace e o componente não compilaria.
+
 ## Prova
 
 - verificação rápida do repositório: `zapp-verify . --rapido`
