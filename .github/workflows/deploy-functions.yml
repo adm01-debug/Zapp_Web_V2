@@ -36,6 +36,13 @@ on:
     paths:
       - 'supabase/functions/**'
       - 'supabase/config.toml'
+      # W70: excluir arquivos que nao mudam o bundle publicado — testes,
+      # documentacao e fixtures so existem para CI local, nao para producao.
+      - '!supabase/functions/**/*.test.ts'
+      - '!supabase/functions/**/*.md'
+      - '!supabase/functions/**/fixtures/**'
+      - '!supabase/functions/**/__tests__/**'
+      - '!supabase/functions/**/*.snap'
   workflow_dispatch:
     inputs:
       function_name:
