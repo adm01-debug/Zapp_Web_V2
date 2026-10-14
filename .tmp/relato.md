@@ -9,6 +9,14 @@ Especialista: iris
 - `src/components/automations/__tests__/automationConstants.test.ts` (novo): asserção sobre a LISTA EXATA de gatilhos e ações (não sobre "não contém X") + a detecção de registro obsoleto + o rótulo.
 - `src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx` (novo): renderiza o `AutomationsManager` + `AutomationCard` REAIS, com a persistência do Supabase controlada pelo teste.
 
+## Prova
+
+- vermelho antes (com os 3 arquivos de origem na base `dia/2026-10-14`): `npx vitest run src/components/automations/__tests__` → `Test Files 2 failed | 2 passed (4); Tests 10 failed | 15 passed (25)` — `TypeError: isObsoleteAutomation is not a function` e `expected [ 'new_message', 'keyword', 'time_inactive', 'tag_added', 'business_hours' ] to equal [...]`.
+- verde depois: `npx vitest run src/components/automations/__tests__ src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx` → `Test Files 5 passed (5); Tests 39 passed (39)`.
+- eslint nos 6 arquivos: sem saída (0 problemas).
+- verificação do repositório: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos` (134s), `OK lint`, `OK migrations`; `VERIFY: VERDE SEM BANCO (138s)`.
+- busca do critério 3: `grep -rn -E "tag_added|add_tag|tag_id" src/components/automations` → rc=1 (nenhum acerto).
+
 ## Critério de pronto — item por item
 
 1. Editor não oferece mais gatilho/ação de tag, e `tag_id` fora da constante: `automationConstants.ts:3-15` (listas) e `:20-24` (dono de chave); provado por `automationConstants.test.ts` (2 primeiros casos, lista exata).
