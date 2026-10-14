@@ -13,3 +13,6 @@ Ponto 3: prova verde neste commit — `node --test scripts/ci/docs-estado-regist
 
 ## FAIXA DO PAI
 FAIXA DO PAI: commits `647c2890fd` e `845f146ccf` de t_8016679b, cherry-pickados do commit de entrega `1400d7071`, conforme o cartão manda.
+
+## Nota ao portão
+O ponto "relato sem evidência limpa de verificação" não procede: a prova do Ponto 3 roda zero falhas e zero pulados (`fail 0`; `Test Files 1 passed (1); Tests 2 passed (2)`). O `1 expected fail` do bloco FATOS MEDIDOS é o `it.fails` declarado em `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:545`, que já existe na base `453e6b69f9:477` — é marcador do pai, não falha desta entrega.
