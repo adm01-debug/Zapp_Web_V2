@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { enforceAiCapability } from "../_shared/ai-feature-flags.ts";
 
 const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   // Masculinas
@@ -30,7 +31,7 @@ const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   'reindeer':   { voiceId: 'h6u4tPKmcPlxUdZOaVpH', label: 'Rena' },
 };
 
-Deno.serve(async (req) => {
+export async function handleVoiceChanger(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -40,6 +41,15 @@ Deno.serve(async (req) => {
   // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
   const auth = await requireAuth(req);
   if (auth instanceof Response) return auth;
+
+  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR e ANTES de
+  // reservar limite e de tocar o provedor pago. A família de voz/áudio da
+  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
+  // Capacidade desligada → 503 e NÃO consome rate limit; leitura não confiável
+  // fecha (fail-closed) — mesmo mecanismo já usado pelos outros caminhos de IA.
+  const capability = await enforceAiCapability({ functionName: "voice-changer", req });
+  if (capability) return capability;
+
   const rl = await enforceRateLimit(`voice-changer:${auth.userId}`, 10, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
@@ -108,4 +118,10 @@ Deno.serve(async (req) => {
     log.error("Voice changer error", { error: err instanceof Error ? err.message : String(err) });
     return errorResponse('Internal error processing voice change', 500, req);
   }
-});
+}
+
+// Só sobe o servidor quando executada como Edge Function (permite importar o
+// handler no teste, como nas demais funções desta família).
+if (import.meta.main) {
+  Deno.serve(handleVoiceChanger);
+}
