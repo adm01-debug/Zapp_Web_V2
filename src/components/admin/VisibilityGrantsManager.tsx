@@ -356,7 +356,7 @@ export function VisibilityGrantsManager() {
               disabled={removing}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {removing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Remover
+              {removing ? <Loader2 className="w-4 h-4 motion-safe:animate-spin mr-2" /> : null}Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
