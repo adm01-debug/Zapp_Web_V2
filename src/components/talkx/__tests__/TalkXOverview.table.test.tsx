@@ -22,10 +22,28 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 
 const f = vi.hoisted(() => ({
   insights: [] as Array<Record<string, unknown>>,
+  statsArgs: [] as unknown[][],
 }));
 
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: f.insights, isLoading: false, isError: false, error: null }),
+}));
+
+// X077 — os KPIs da Visão geral vêm da RPC `talkx_overview_stats`: a tabela não
+// calcula número nenhum, então o hook é isolado aqui (o período que a barra
+// entrega a ele é coberto pelo teste de filtros da ponta).
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: (...args: unknown[]) => {
+    f.statsArgs.push(args);
+    return {
+      data: {
+        current: { campaignsSent: 5, completed: 1, contactsReached: 1250, sent: 950, deliveryRatePct: 96.6 },
+        previous: null,
+        active: 1,
+        dailySent: [],
+      },
+    };
+  },
 }));
 
 // Radix (DropdownMenu do ⋮ por linha) mede o gatilho com ResizeObserver, API ausente no jsdom.
@@ -278,28 +296,26 @@ describe('X079 — a tabela da Visão geral usa as colunas e células do mock', 
     expect(props.onView.mock.calls[0][0]).toMatchObject({ id: 'c-delta' });
   });
 
-  it('N35: os blocos que o mock não tem ficam ABAIXO da tabela e recolhidos por padrão', () => {
+  // E68/E94 (ponta dia/2026-10-14): os blocos que o mock 01 não desenha ficam
+  // EXPANDIDOS na tela (a N35 dos recolhidos caiu na ponta quando os rascunhos
+  // ganharam o bloco E68 e os insights a seção E94 — e a ponta os posiciona
+  // ACIMA da tabela, ordem que este refazer preserva byte a byte). O título e a
+  // contagem ficam à vista, o Retomar mantém o contraste AA de TL-175A e o
+  // conteúdo já vem aberto.
+  it('E68/E94: rascunhos e insights expandidos, com Retomar AA', () => {
     f.insights = [{ id: 'i1', type: 'timing', title: 'Melhor horário', description: 'Envie às 10h.', priority: 'high' }];
     renderOverview();
 
-    const rascunhos = screen.getByRole('button', { name: /Rascunhos pendentes/ });
-    const insights = screen.getByRole('button', { name: /Insights/ });
-    expect(rascunhos).toHaveAttribute('aria-expanded', 'false');
-    expect(insights).toHaveAttribute('aria-expanded', 'false');
-    expect(tabela().compareDocumentPosition(rascunhos) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(tabela().compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-
-    // Recolhido não é apagado: o título e a contagem ficam à vista e o conteúdo abre no clique.
-    expect(rascunhos.textContent).toContain('(1)');
-    expect(insights.textContent).toContain('(1)');
-    expect(screen.queryByText('Retomar')).toBeNull();
-    expect(screen.queryByText('Melhor horário')).toBeNull();
-
-    fireEvent.click(rascunhos);
-    fireEvent.click(insights);
-    expect(rascunhos).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Retomar')).toBeTruthy();
+    // Título e contagem à vista, conteúdo já aberto...
+    const rascunhos = screen.getByText('Rascunhos pendentes');
+    expect(rascunhos.parentElement?.textContent).toContain('(1)');
+    expect(screen.getByText('Insights').parentElement?.textContent).toContain('(1)');
+    // ...com o Retomar no contraste AA (TL-175A) e o insight visível.
+    const retomar = screen.getByRole('button', { name: 'Retomar' });
+    expect(retomar.className).toContain('text-[hsl(var(--warning-text))]');
     expect(screen.getByText('Melhor horário')).toBeTruthy();
+    // A tabela do mock segue existindo, com as 5 linhas.
+    expect(tabela().querySelectorAll('tbody tr')).toHaveLength(5);
   });
 
   // Recusa do revisor: `selectionKey` não incluía `channel` nem o período, então
