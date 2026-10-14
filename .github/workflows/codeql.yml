@@ -23,6 +23,9 @@ on:
   # NOTA: merge_group e inerte neste repo (conta User, nao Organization) —
   # ver CLAUDE.md:230-241. Os gatilhos merge_group ja existentes em ci.yml,
   # db-guard.yml e codeql.yml ficam presentes mas nao disparam (sem custo).
+  # W50: dispatch manual para reexecutar varredura completa apos triagem de alertas.
+  workflow_dispatch:
+
   pull_request:
     branches: [main]
     # E78 (auditoria de 01/10/2026): 354 runs em 37 h, boa parte de PR que so mexe em
@@ -69,6 +72,8 @@ jobs:
         with:
           languages: javascript-typescript
           build-mode: none
+          # W82: ignora caminhos de teste para nao poluir alertas de codigo de producao.
+          config-file: .github/codeql/codeql-config.yml
 
       - name: 🔬 Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
