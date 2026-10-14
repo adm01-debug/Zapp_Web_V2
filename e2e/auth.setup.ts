@@ -3,6 +3,10 @@ import path from 'node:path';
 
 const AUTH_FILE = path.join(import.meta.dirname, '.auth', 'user.json');
 
+// W72: teto de 90 s para o setup — senha errada → ❌ em < 2 min sem esperar o
+// timeout de 15 min do job; login bem-sucedido costuma levar 10–20 s.
+setup.setTimeout(90_000);
+
 // Projeto Playwright "setup" (ver playwright.config.ts): roda antes de
 // "chromium-authenticated" via dependsOn, nunca antes de "chromium"
 // (auth.spec.ts), que testa a tela de login deslogada e nao pode depender
@@ -22,9 +26,20 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
+  // W72: timeout curto na navegação — distingue "app fora do ar / DNS falhou"
+  // de "credencial recusada" logo no primeiro passo.
+  try {
+    await page.goto('/auth', { timeout: 15_000 });
+  } catch (err) {
+    throw new Error(
+      '[E2E setup] O app nao respondeu em 15 s ao navegar para /auth. ' +
+        'Verifique se o servidor esta rodando (VITE_ZAPP_LOCAL_SUPABASE_URL, ' +
+        'ou o app de producao esta acessivel). Detalhe: ' + String(err),
+    );
+  }
+
   // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: tab "Entrar",
   // campo de e-mail, campo de senha, botao "Entrar".
-  await page.goto('/auth');
   await page.getByRole('tab', { name: /^entrar$/i }).click();
   await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
   await page.locator('input[type="password"]').fill(password);
@@ -44,10 +59,13 @@ setup('authenticate', async ({ page }) => {
   const entrou = await shell.isVisible().catch(() => false);
   if (!entrou) {
     const resposta = ((await erroLogin.first().textContent().catch(() => null)) ?? '').trim();
-    throw new Error(
-      'Login nao concluiu (o app nao montou a sidebar). O app respondeu: ' +
-        (resposta || '(nenhuma mensagem visivel na tela)'),
-    );
+    // W72: distingue "credencial recusada" (mensagem visível) de "app não respondeu"
+    const causa = resposta
+      ? `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
+        'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.'
+      : '[E2E setup] Login nao concluiu e nao ha mensagem visivel — ' +
+        'o app pode estar sem resposta apos o POST de autenticacao.';
+    throw new Error(causa);
   }
   await shell.waitFor({ state: 'visible', timeout: 10_000 });
 
