@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -21,8 +21,34 @@ import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
+import { TasksHeaderMenu }  from './shared/TasksHeaderMenu';
+import { useTasksUi }       from './shared/tasksUi';
 
 const STORAGE_KEY = 'tasks-mode';
+
+/**
+ * Etapa 154 (plano, linha 434) — o modal "Nova tarefa" entra no bundle só
+ * quando abre (`import()` dinâmico): a Lista/Quadro/Agenda não pagam por um
+ * diálogo que quase nunca está na tela. Enquanto o pedaço chega, o fallback é
+ * `null` — o clique já mudou o estado e a superfície de trás continua viva.
+ */
+const NewTaskDialog = lazy(() =>
+  import('./shared/NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+);
+
+/**
+ * O modal lê o `TasksUiContext` (mesma fonte do botão do cabeçalho e da tecla
+ * `N`) e só existe montado com `modalOpen` — abrir de novo reabre limpo.
+ */
+function NewTaskModal() {
+  const { modalOpen } = useTasksUi();
+  if (!modalOpen) return null;
+  return (
+    <Suspense fallback={null}>
+      <NewTaskDialog />
+    </Suspense>
+  );
+}
 
 export function TasksModule() {
   const savedMode = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) as TaskMode) || 'list';
@@ -97,9 +123,12 @@ export function TasksModule() {
   // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
   // de milhar) e com singular correto — "1 aberta", não "1 abertas".
   // Fase F (auditoria): "reais" é literal — o filtro não muda o cabeçalho.
+  // Etapa 013 (plano, linha 251; imagem 05, linha 133): o subtítulo ganha a
+  // chamada "Seu espaço de execução" na frente das duas contagens.
   const openCount = byStatusReal.backlog.length + byStatusReal.todo.length + byStatusReal.doing.length + byStatusReal.waiting.length;
   const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
   const subtitleHoje = `${kpiReal.dueToday.toLocaleString('pt-BR')} para hoje`;
+  const subtitulo = `Seu espaço de execução · ${subtitleAbertas} · ${subtitleHoje}`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
@@ -199,7 +228,10 @@ export function TasksModule() {
   // `view === 'tasks'` e guarda de input. Aqui só chega o comando,
   // pelo evento `tasks-shortcut` — o módulo não instala listener de teclado.
   const aplicarAtalho = useCallback((id: string, key?: string) => {
-    if (id === 'tasks-focus-quickadd') { quickAddRef.current?.focus(); return; }
+    // `tasks-focus-quickadd` (tecla `N`) NÃO é tratado aqui: desde a etapa 014
+    // o comando abre o modal de criação pelo `TasksUiContext`, e quem está
+    // dentro do provedor é o `TasksHeaderMenu` (este módulo monta o provedor,
+    // então não lê o próprio contexto).
     if (id === 'tasks-mode') {
       setMode(key === '2' ? 'board' : key === '3' ? 'agenda' : 'list');
       return;
@@ -265,7 +297,8 @@ export function TasksModule() {
       <PageHeader
         variant="plain"
         title="Tarefas"
-        subtitle={`${subtitleAbertas} · ${subtitleHoje}`}
+        subtitle={subtitulo}
+        actions={<TasksHeaderMenu />}
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
@@ -397,6 +430,11 @@ export function TasksModule() {
         doingCount={doingReal}
         focusField={focusField}
       />
+
+      {/* Etapa 154: modal "Nova tarefa" — montado sob demanda quando
+          `modalOpen`, aberto pelo botão do cabeçalho, pela tecla N e (adiante)
+          pelo menu das colunas. */}
+      <NewTaskModal />
     </div>
     </TasksUiProvider>
   );
