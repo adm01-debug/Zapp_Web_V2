@@ -47,17 +47,19 @@ type EdgeLog = {
  * `known=true` e `ownerJid=null` → phantom_session.
  */
 export function parseOwnerJid(data: unknown): OwnerLookup {
-  // deno-lint-ignore no-explicit-any
-  const entry = (Array.isArray(data) ? data[0] : data) as any;
-  if (!entry || typeof entry !== 'object') return { known: false, ownerJid: null };
-  const inst = entry.instance ?? {};
-  const identFields = [
+  const raw = Array.isArray(data) ? data[0] : data;
+  if (!raw || typeof raw !== 'object') return { known: false, ownerJid: null };
+  const entry = raw as Record<string, unknown>;
+  const inst = (entry.instance && typeof entry.instance === 'object')
+    ? entry.instance as Record<string, unknown>
+    : {};
+  const pick = (...vals: unknown[]): unknown => vals.find((v) => v !== undefined && v !== null);
+  const ident = pick(
     inst.ownerJid, inst.owner, entry.ownerJid, entry.owner,
     inst.connectionStatus, entry.connectionStatus,
-  ];
-  const known = identFields.some((f) => f !== undefined && f !== null);
-  if (!known) return { known: false, ownerJid: null };
-  const owner = inst.ownerJid ?? inst.owner ?? entry.ownerJid ?? entry.owner ?? null;
+  );
+  if (ident === undefined) return { known: false, ownerJid: null };
+  const owner = pick(inst.ownerJid, inst.owner, entry.ownerJid, entry.owner);
   const ownerJid = typeof owner === 'string' && owner.length > 0 ? owner : null;
   return { known: true, ownerJid };
 }
@@ -472,8 +474,7 @@ export async function handleConnectionHealthCheck(
           dedupe_key: dedupeKey,
         });
         if (error) {
-          // deno-lint-ignore no-explicit-any
-          const code = (error as any)?.code;
+          const code = (error as { code?: string })?.code;
           if (code === '23505') alreadyAlerted = true;
           else log.warn("Failed to create warroom alert", { error: error.message });
         }
