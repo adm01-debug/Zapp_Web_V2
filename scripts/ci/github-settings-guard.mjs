@@ -143,15 +143,37 @@ async function checarEnvironments() {
   const dados = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
   const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();
   const esperados = [...baseline.environments].sort();
-  // Environment a mais é pendência da E94, não regressão de agora: só avisa.
+  const prefixosVercel = (baseline.environments_vercel_managed?.prefixos ?? []);
+
   const faltando = esperados.filter((e) => !encontrados.includes(e));
-  if (faltando.length === 0) return [];
-  return [{
-    campo: 'environments',
-    esperado: esperados.join(', '),
-    encontrado: encontrados.join(', ') || '(nenhum)',
-    restauravel: false,
-  }];
+  // W13: environments extras — podem ser gerenciados pela Vercel ou inesperados.
+  const extras = encontrados.filter((e) => !esperados.includes(e));
+  const extrasVercel = extras.filter((e) => prefixosVercel.some((p) => e.startsWith(p)));
+  const extrasInesperados = extras.filter((e) => !extrasVercel.includes(e));
+
+  const divergencias = [];
+  if (faltando.length > 0) {
+    divergencias.push({
+      campo: 'environments.faltando',
+      esperado: faltando.join(', '),
+      encontrado: '(ausente)',
+      restauravel: false,
+    });
+  }
+  if (extrasVercel.length > 0) {
+    // Aviso não bloqueante: Vercel cria/apaga automaticamente, não é regressão do perímetro.
+    // Emite annotation do Actions e também avisa no stderr.
+    console.error(`::warning::W13: environments gerenciados pela Vercel presentes (não é regressão): ${extrasVercel.join(', ')}`);
+  }
+  if (extrasInesperados.length > 0) {
+    divergencias.push({
+      campo: 'environments.extras_inesperados',
+      esperado: '(nenhum além dos do baseline)',
+      encontrado: extrasInesperados.join(', '),
+      restauravel: false,
+    });
+  }
+  return divergencias;
 }
 
 // ---------------------------------------------------------------- restauração

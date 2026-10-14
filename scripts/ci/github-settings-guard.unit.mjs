@@ -155,3 +155,43 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
     );
   });
 });
+
+// W13: environments extras (Vercel-managed vs inesperados)
+function rodarComEnvsExtra(extras) {
+  // Injeta o stub de environments com os itens do baseline + os extras recebidos.
+  const todos = [
+    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
+    'producao-ddl', 'producao-edge-functions', 'Production',
+    ...extras,
+  ];
+  const envsStub =
+    'send({ environments: [' +
+    todos.map((n) => `{ name: ${JSON.stringify(n)} }`).join(',') +
+    '] })';
+  const stb = stub('ok').replace(
+    /if \(p\.indexOf\('\/environments'\).*?return .*?;/,
+    `if (p.indexOf('/environments') !== -1) return ${envsStub};`,
+  );
+  const arq = 'data:text/javascript,' + encodeURIComponent(stb);
+  const res = spawnSync(process.execPath, ['--import', arq, SCRIPT], {
+    encoding: 'utf8',
+    env: { ...process.env, GITHUB_TOKEN: 'x', GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1' },
+  });
+  return { code: res.status, out: `${res.stdout}${res.stderr}` };
+}
+
+describe('settings-guard: W13 — environments extras', () => {
+  it('extras Vercel-managed (Preview –/Production –) emitem ::warning::, nao divergencia', () => {
+    const r = rodarComEnvsExtra(['Preview – zapp_web_v2', 'Production – zapp_web_v2']);
+    assert.equal(r.code, 0, `esperava exit 0 (vercel-managed nao e regressao):\n${r.out}`);
+    assert.ok(r.out.includes('::warning::'), `warning W13 nao emitido:\n${r.out}`);
+    assert.ok(!r.out.includes('extras_inesperados'), `classific. incorreta como inesperado:\n${r.out}`);
+  });
+
+  it('extras inesperados (nao-Vercel) sao reportados como divergencia', () => {
+    const r = rodarComEnvsExtra(['meu-ambiente-desconhecido']);
+    assert.equal(r.code, 1, `esperava exit 1 (extra inesperado e regressao):\n${r.out}`);
+    assert.ok(r.out.includes('extras_inesperados'), `divergencia nao apontada:\n${r.out}`);
+    assert.ok(r.out.includes('meu-ambiente-desconhecido'), `nome do ambiente ausente:\n${r.out}`);
+  });
+});
