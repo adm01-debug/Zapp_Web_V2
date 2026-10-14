@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Switch } from '@/components/ui/switch';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import { openContactChat }  from '@/components/catalog/useSendProduct';
 import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
@@ -52,7 +53,7 @@ export function TasksModule() {
   // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
-  const { isLoading, isError, create, move, reorder, complete, reopen, snooze, setReminder, deleteItem } = hook;
+  const { isLoading, isError, createAndGetId, move, reorder, complete, reopen, snooze, setReminder, deleteItem } = hook;
 
   // Etapa 45/46: a barra de filtros (estado no reducer, espelhado na URL) e o
   // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
@@ -108,6 +109,28 @@ export function TasksModule() {
   // Etapa 79: com movimento reduzido a troca de modo nao anima — o AnimatePresence
   // continua montando/desmontando (o conteudo nao pode piscar), mas com 0s.
   const reduceMotion = useReducedMotion() ?? false;
+
+  // Etapa 044 (refazer 2): tela estreita — o MESMO sinal que manda Prioridade e
+  // Contato para o popover "Filtros". O setup dos testes responde `matches:false`,
+  // então na suíte a barra larga é o padrão e o Quadro é o caso determinístico.
+  const [estreito, setEstreito] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    const sync = () => setEstreito(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+  /** No Quadro (faixa compacta) e em tela estreita os dois ocupam o popover. */
+  const filtrosAgrupados = mode === 'board' || estreito;
+
+  // Etapa 043 (refazer 2): id criado na captura que entra na lista com realce de
+  // 1,2 s. O foco de volta ao campo é do próprio QuickAdd.
+  const [destaqueId, setDestaqueId] = useState<string | null>(null);
+  const destaqueTimer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (destaqueTimer.current !== null) window.clearTimeout(destaqueTimer.current);
+  }, []);
 
   const handleToggleDone = useCallback(async (item: WorkItem) => {
     if (item.status === 'done') {
@@ -167,9 +190,18 @@ export function TasksModule() {
   // Etapa 78: "Tarefa criada" cobre as três portas de captura (QuickAdd do
   // cabeçalho, da coluna e da Agenda).
   const criarComAviso = useCallback(async (input: WorkItemInput) => {
-    await create(input);
+    // `createAndGetId` é o mesmo caminho do `create` (dedupe por `clientTaskId`),
+    // só devolve o id — sem ele não há item novo para realçar.
+    const novoId = await createAndGetId(input);
     anunciar('Tarefa criada');
-  }, [create, anunciar]);
+    // Idempotência (IA-047): repetir um pedido em voo devolve `null`; aí não há
+    // item NOVO entrando na Caixa de entrada e nada deve piscar.
+    if (novoId) {
+      setDestaqueId(novoId);
+      if (destaqueTimer.current !== null) window.clearTimeout(destaqueTimer.current);
+      destaqueTimer.current = window.setTimeout(() => setDestaqueId(null), 1200);
+    }
+  }, [createAndGetId, anunciar]);
 
   // Etapa 28: o DnD cai no mesmo portão quando solta em Aguardando sem motivo.
   const handleRequestWaitingReason = useCallback((item: WorkItem) => {
@@ -285,10 +317,24 @@ export function TasksModule() {
       )}
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
-      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}
+      {mode !== 'agenda' && (
+        <div data-testid="tasks-capture-row" className="flex flex-col gap-2 xl:flex-row xl:items-start">
+          <div className="min-w-0 flex-1">
+            <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />
+          </div>
+          <label className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-border bg-input px-3 text-[13px]">
+            <Switch checked={filtros.filters.done} onCheckedChange={filtros.toggleDone} aria-label="Mostrar concluídas" />
+            Mostrar concluídas
+          </label>
+        </div>
+      )}
 
-      {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
+      {/* Toolbar (etapa 044, refazer 2): modos à esquerda; busca, Prioridade,
+          Contato e Filtros à direita (`ml-auto`). No Quadro e em tela estreita,
+          Prioridade e Contato entram no popover "Filtros" (imagem 05). */}
       <div className="flex items-center gap-3 flex-wrap">
+        <ModeSwitcher mode={mode} onChange={setMode} />
+        <div data-testid="tasks-filter-bar-slot" className="ml-auto flex min-w-0 items-center">
         <TasksFilterBar
           filters={filtros.filters}
           searchText={filtros.textoDaBusca}
@@ -300,9 +346,9 @@ export function TasksModule() {
           onToggleDone={filtros.toggleDone}
           onClear={filtros.clear}
           isActive={filtros.isActive}
+          showDoneToggle={mode === 'agenda'}
+          agruparPrioContato={filtrosAgrupados}
         />
-        <div className="ml-auto">
-          <ModeSwitcher mode={mode} onChange={setMode} />
         </div>
       </div>
 
@@ -336,6 +382,7 @@ export function TasksModule() {
               onSnooze={handleSnooze}
               onClearReminder={handleClearReminder}
               onOpenReminder={handleOpenReminder}
+              destaqueId={destaqueId}
             />
           )}
           {mode === 'board' && (

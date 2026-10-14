@@ -18,6 +18,7 @@ import {
   makeWrapper,
   resetSupabaseMock,
   setSelectResult,
+  setWriteResult,
 } from '@/test/mocks/tarefas';
 
 import { TasksModule } from '@/components/tasks/TasksModule';
@@ -103,17 +104,108 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     });
   });
 
-  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
+  it('traz o toggle de concluídas na linha de captura e deixa a barra sem duplicar', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
 
+    const captura = await screen.findByTestId('tasks-capture-row');
+    expect(within(captura).getByTestId('quick-add')).toBeTruthy();
+    expect(within(captura).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
-    expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
-    expect(within(barra).getByLabelText('Contato')).toBeTruthy();
+    // Etapa 044 (refazer 2): no QUADRO os dois controles entram no popover
+    // "Filtros" (imagem 05) — a barra fica com busca, Filtros, alarme e Limpar.
+    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+    expect(within(barra).queryByLabelText('Contato')).toBeNull();
+    expect(within(barra).getByTestId('tasks-filter-popover')).toBeTruthy();
     expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
-    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+    expect(within(barra).queryByRole('switch', { name: 'Mostrar concluídas' })).toBeNull();
     expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
+  });
+
+  it('Etapa 044 (refazer 2): modos à esquerda e barra de filtros à direita, na mesma linha', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+    renderModule();
+
+    const modos = await screen.findByTestId('tasks-mode');
+    const slot  = await screen.findByTestId('tasks-filter-bar-slot');
+
+    // A ORDEM no DOM: os modos vêm antes, e o slot da barra fecha a linha.
+    expect(modos.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(slot.parentElement?.lastElementChild).toBe(slot);
+    expect(slot.parentElement).toBe(modos.parentElement);
+    // Quem empurra o grupo para a direita é o `ml-auto` (jsdom não tem layout,
+    // então o contrato provado aqui é a classe — a mesma convenção do teste de KPI).
+    expect(slot.className.split(/\s+/)).toContain('ml-auto');
+    expect(within(slot).getByTestId('tasks-filter-bar')).toBeTruthy();
+  });
+
+  it('Etapa 044 (refazer 2): no Quadro, Prioridade e Contato abrem dentro do popover "Filtros"', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
+
+    const barra   = await screen.findByTestId('tasks-filter-bar');
+    const filtros = within(barra).getByTestId('tasks-filter-popover');
+
+    // fechado: os dois controles não existem soltos na barra
+    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+    expect(within(barra).queryByLabelText('Contato')).toBeNull();
+    expect(filtros.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(filtros.getAttribute('aria-expanded')).toBe('false');
+
+    // aberto: os dois aparecem DENTRO do popover
+    fireEvent.pointerDown(filtros, { button: 0 });
+    fireEvent.click(filtros);
+    const dentro = await screen.findByTestId('tasks-filter-popover-content');
+    expect(within(dentro).getByLabelText('Prioridade')).toBeTruthy();
+    expect(within(dentro).getByLabelText('Contato')).toBeTruthy();
+  });
+
+  it('Etapa 044 (refazer 2): em tela estreita (até 1024 px) os dois também vão para o "Filtros"', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('1024px'), media: query, onchange: null,
+      addListener: () => {}, removeListener: () => {},
+      addEventListener: () => {}, removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, 'list');
+      renderModule();
+
+      const barra = await screen.findByTestId('tasks-filter-bar');
+      expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+      expect(within(barra).queryByLabelText('Contato')).toBeNull();
+      expect(within(barra).getByTestId('tasks-filter-popover')).toBeTruthy();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
+  it('Etapa 043 (refazer 2): o item criado na captura entra com realce e o realce sai por volta de 1,2 s', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+    // O INSERT devolve o id da tarefa nova (é o que o realce usa para saber QUAL
+    // cartão pintar) e a leitura já traz essa linha, como acontece depois da
+    // invalidação da query no app.
+    setWriteResult({ data: { id: 'a' }, error: null });
+    renderModule();
+
+    const campo = await screen.findByTestId('quick-add-input');
+    fireEvent.change(campo, { target: { value: 'Recém-criada' } });
+
+    const t0 = Date.now();
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    expect(await screen.findByTestId('work-item-realce')).toBeTruthy();
+    expect(h.insert).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(screen.queryByTestId('work-item-realce')).toBeNull(), { timeout: 3000 });
+    const durou = Date.now() - t0;
+
+    // some sozinho, e a janela é a contratada (1,2 s) — não "na hora" nem preso
+    expect(durou).toBeGreaterThanOrEqual(1000);
+    expect(durou).toBeLessThan(2500);
   });
 
   it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
@@ -141,7 +233,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(await screen.findByText('Nenhum resultado')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 
