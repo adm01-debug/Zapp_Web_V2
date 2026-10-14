@@ -14,7 +14,7 @@
  *  - carregando = esqueleto; erro de leitura não mente sobre o estado.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, cleanup, waitFor, act } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { axe } from 'vitest-axe';
@@ -367,5 +367,103 @@ describe('ações', () => {
     await openPopover();
 
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('[refazer] Enter com foco no gatilho abre o popover', async () => {
+    setHealth([conn()]);
+    renderIndicator();
+
+    // O gatilho é um <button> nativo: a ativação por Enter/Espaço é do
+    // navegador, sem handler JS no caminho (a regra 2 do cartão proíbe
+    // listener global de teclado). O teste confere o que o código possui.
+    const btn = trigger();
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn).toHaveAttribute('type', 'button');
+    expect(btn).not.toBeDisabled();
+
+    btn.focus();
+    expect(btn).toHaveFocus();
+    // jsdom não implementa a ativação nativa por teclado (sem user-event no
+    // projeto e dependência nova proibida pela regra (d)): despacha-se a tecla
+    // como o usuário faria — nada a intercepta — e em seguida o clique que o
+    // navegador despacharia como ação padrão do Enter no botão.
+    expect(
+      btn.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    ).toBe(true);
+    fireEvent.click(btn);
+
+    expect(await screen.findByText('WhatsApp — Conexões')).toBeInTheDocument();
+  });
+
+  it('[refazer] Esc fecha o popover e devolve o foco ao gatilho', async () => {
+    setHealth([conn()]);
+    renderIndicator();
+    await openPopover();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
+
+    await waitFor(() =>
+      expect(screen.queryByText('WhatsApp — Conexões')).toBeNull(),
+    );
+    expect(trigger()).toHaveFocus();
+  });
+
+  it('[refazer] com movimento reduzido, o popover abre sem deslocamento', async () => {
+    reduceMotion.value = true;
+    setHealth([conn(), conn({ id: 'c2', name: 'Suporte', healthy: false })]);
+    renderIndicator();
+
+    fireEvent.click(trigger());
+    const item = await within(screen.getByRole('list')).findByText('Comercial');
+    const linha = item.closest('li') as HTMLElement;
+    expect(['', 'none']).toContain(linha.style.transform);
+  });
+
+  it('[refazer] desmonta com reconexão pendente sem atualizar estado depois', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      let resolve!: (value: ReconnectResult) => void;
+      reconnectMock.mockImplementation(
+        () => new Promise<ReconnectResult>((r) => { resolve = r; }),
+      );
+      setHealth([conn(), conn({ id: 'c2', name: 'Suporte', healthy: false })]);
+      const { unmount } = renderIndicator();
+      await openPopover();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Reconectar Suporte' }));
+      expect(reconnectMock).toHaveBeenCalledWith('c2');
+
+      unmount();
+      resolve({ ok: true });
+      await act(async () => {});
+
+      expect(screen.queryByTestId('conexoes-aviso')).toBeNull();
+      const errosReact = errSpy.mock.calls.filter(
+        (args) =>
+          typeof args[0] === 'string' &&
+          (/not wrapped in act/i.test(args[0]) || /unmounted/i.test(args[0])),
+      );
+      expect(errosReact).toEqual([]);
+    } finally {
+      errSpy.mockRestore();
+    }
+
+    // Contrato da guarda (mesmo padrão do "contrato de fonte" deste arquivo):
+    // o React 19 trata setState pós-desmontagem como no-op silencioso, então a
+    // parte comportamental acima é verde por construção — a prova da correção é
+    // a limpeza real da guarda no desmontar.
+    const src = readFileSync(
+      path.resolve(__dirname, '..', 'ConnectionsHealthIndicator.tsx'),
+      'utf8',
+    );
+    expect(src).toMatch(/mountedRef\.current\s*=\s*false/);
   });
 });

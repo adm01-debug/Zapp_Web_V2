@@ -19,7 +19,7 @@
  * estado degradado/desconectado — com `prefers-reduced-motion: reduce` não há
  * pulso nem deslocamento, só opacidade e cor.
  */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { History, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -129,8 +129,16 @@ export function ConnectionsHealthIndicator({
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const mountedRef = useRef(true);
 
-  // Sem canal/intervalo aqui: nada de timer para limpar. A guarda cobre só o
-  // `setNotice` de uma ação assíncrona que resolver depois de desmontar.
+  // Sem canal/intervalo aqui: nada de timer para limpar. A guarda cobre o
+  // `setNotice` de uma ação assíncrona que resolver depois de desmontar — e a
+  // limpeza abaixo a zera de verdade no desmontar.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const setNoticeIfMounted = useCallback((value: string | null) => {
     if (mountedRef.current) setNotice(value);
   }, []);
