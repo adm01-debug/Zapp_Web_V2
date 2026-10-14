@@ -21,3 +21,6 @@ Refazer 1 do cartao de previsao de demanda e heatmap (skill de area usada: area-
 
 ## O que NAO fiz e por quê
 - Nao mexi em front (o consumo das RPCs nos componentes do Dashboard e outro trabalho, PD-24/PD-25), nao afrouxei guarda/CI/manifesto, nao registrei os 6 orfaos de outros cartoes no inventario (pre-existentes na base), e nao inclui identificador de producao em nada.
+
+## Escopo (resposta ao aviso do juiz)
+- `scripts/db-audit/demand-forecast-heatmap-contract.test.sh` e `.github/workflows/db-guard.yml` sao indispensaveis e ordenados: o item 2 do cartao manda reescrever as assercoes naquele caminho exato, e a rodada anterior do fechar exigiu o registro no db-guard (o check-test-inventory reprova PR com suite orfa); as REGRAS DE BANCO do cartao citam o fluxo db:guard.
