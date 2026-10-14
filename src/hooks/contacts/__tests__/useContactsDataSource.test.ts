@@ -28,6 +28,10 @@ import { useContactsDataSource } from '../useContactsDataSource';
 
 const CONTATOS = [{ id: 'contato-1', phone: '+5511999999999' }];
 
+/** Duas listas distintas = duas chaves distintas do lote do Singu. */
+const LISTA_A = [{ id: 'contato-a', phone: '+5511999990001' }];
+const LISTA_B = [{ id: 'contato-b', phone: '+5511999990002' }];
+
 /** Cliente por teste (já com o cliente em mãos para provocar um refetch). */
 function criarAmbiente() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -106,6 +110,29 @@ describe('useContactsDataSource', () => {
 
     await waitFor(() => expect(result.current.estado.fonte).toBe('singu'));
     expect(result.current.estado.carregando).toBe(false);
+  });
+
+  it('erro velho de outra lista não prende o aviso quando o lote atual responde', async () => {
+    getContact360Batch
+      .mockRejectedValueOnce(new Error('Singu fora do ar'))
+      .mockResolvedValue(new Map());
+    const { wrapper } = criarAmbiente();
+    const { result, rerender } = renderHook(
+      ({ contatos }: { contatos: Array<{ id: string; phone: string }> }) => ({
+        estado: useContactsDataSource(),
+        lote: useExternalContact360Batch(contatos),
+      }),
+      { wrapper, initialProps: { contatos: LISTA_A } },
+    );
+
+    await waitFor(() => expect(result.current.estado.fonte).toBe('indisponivel'));
+
+    rerender({ contatos: LISTA_B });
+
+    await waitFor(() =>
+      expect(result.current.estado).toEqual({ fonte: 'singu', carregando: false }),
+    );
+    expect(getContact360Batch).toHaveBeenCalledTimes(2);
   });
 
   it('não faz requisição nova: sozinho, não chama o lote de CRM', async () => {
