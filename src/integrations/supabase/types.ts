@@ -9961,6 +9961,41 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_consents_current: {
+        Row: {
+          base_legal: string | null
+          canal: string | null
+          concedido: boolean | null
+          contact_id: string | null
+          finalidade: string | null
+          id: string | null
+          registrado_em: string | null
+          registrado_por: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_consents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_connections_safe: {
         Row: {
           channel_type: Database["public"]["Enums"]["channel_type"] | null
@@ -10422,42 +10457,6 @@ export type Database = {
         ]
       }
     }
-
-      contact_consents_current: {
-        Row: {
-          base_legal: string | null
-          canal: string | null
-          concedido: boolean | null
-          contact_id: string | null
-          finalidade: string | null
-          id: string | null
-          registrado_em: string | null
-          registrado_por: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contact_consents_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_consents_registrado_por_fkey"
-            columns: ["registrado_por"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contact_consents_registrado_por_fkey"
-            columns: ["registrado_por"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
 
     Functions: {
       accept_department_invite: { Args: { p_code: string }; Returns: Json }
@@ -11515,10 +11514,6 @@ export type Database = {
         }
         Returns: string
       }
-      revoke_contact_consent: {
-        Args: { p_canal: string; p_contact_id: string; p_finalidade: string }
-        Returns: string
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -12053,6 +12048,10 @@ export type Database = {
       retry_talkx_recipients: {
         Args: { p_campaign_id: string; p_recipient_ids: string[] }
         Returns: Json
+      }
+      revoke_contact_consent: {
+        Args: { p_canal: string; p_contact_id: string; p_finalidade: string }
+        Returns: string
       }
       save_talkx_campaign_draft: {
         Args: {

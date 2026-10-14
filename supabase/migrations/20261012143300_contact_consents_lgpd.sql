@@ -107,7 +107,7 @@ CREATE OR REPLACE FUNCTION public.grant_contact_consent(
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = pg_catalog, public
 AS $fn$
 DECLARE
   v_contact public.contacts;
@@ -177,7 +177,7 @@ CREATE OR REPLACE FUNCTION public.revoke_contact_consent(
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = pg_catalog, public
 AS $fn$
 DECLARE
   v_contact public.contacts;

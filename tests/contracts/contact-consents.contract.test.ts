@@ -55,11 +55,14 @@ describe('contact_consents — trilha append-only com RLS', () => {
 describe('contact_consents — RPCs de concessão/revogação', () => {
   it('as duas RPCs existem, são SECURITY DEFINER e fixam search_path', () => {
     for (const nome of ['grant_contact_consent', 'revoke_contact_consent']) {
-      expect(sql).toContain(`FUNCTION public.${nome}(`);
-      expect(sql).toContain(`FUNCTION public.${nome}(`);
+      const ini = sql.indexOf(`FUNCTION public.${nome}(`);
+      expect(ini).toBeGreaterThan(-1);
+      // SECURITY DEFINER vem no próprio CREATE (poucas linhas após o nome)
+      expect(sql.slice(ini, ini + 500)).toMatch(/SECURITY DEFINER/);
     }
     expect(sql).toMatch(/SECURITY DEFINER/);
-    expect(sql).toMatch(/SET search_path = public, pg_temp/);
+    // as duas RPCs com o search_path exigido pelo cartão (uma ocorrência por RPC)
+    expect((sql.match(/SET search_path = pg_catalog, public/g) ?? []).length).toBe(2);
   });
 
   it('nega o default PUBLIC/anon e libera só authenticated/service_role', () => {
@@ -95,10 +98,22 @@ describe('contact_consents — rollback e tipos', () => {
     expect(cabeca).toMatch(/^--\s+drop (view|function|table)/m);
   });
 
-  it('o schema TypeScript expõe a tabela e as funções', () => {
-    expect(tipos).toContain('contact_consents');
-    expect(tipos).toContain('contact_consents_current');
-    expect(tipos).toContain('grant_contact_consent');
-    expect(tipos).toContain('revoke_contact_consent');
+  it('a view contact_consents_current está DENTRO de Views (cliente tipado enxerga)', () => {
+    const iniViews = tipos.indexOf('Views: {');
+    const fimViews = tipos.indexOf('\n    }\n\n    Functions: {');
+    expect(iniViews).toBeGreaterThan(-1);
+    expect(fimViews).toBeGreaterThan(iniViews);
+    const blocoViews = tipos.slice(iniViews, fimViews);
+    expect(blocoViews).toMatch(/^\s{6}contact_consents_current: \{$/m);
+    // o defeito recusado: bloco solto entre o fim de Views e Functions
+    expect(tipos.slice(fimViews)).not.toContain('contact_consents_current');
+  });
+
+  it('as RPCs seguem a ordem alfabética do gerador dentro de Functions', () => {
+    const iniFuncs = tipos.indexOf('Functions: {');
+    const blocoFuncs = tipos.slice(iniFuncs);
+    expect(blocoFuncs.indexOf('grant_contact_consent')).toBeGreaterThan(-1);
+    expect(blocoFuncs.indexOf('grant_contact_consent')).toBeLessThan(blocoFuncs.indexOf('has_role'));
+    expect(blocoFuncs.indexOf('has_role')).toBeLessThan(blocoFuncs.indexOf('revoke_contact_consent'));
   });
 });
