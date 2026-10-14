@@ -1,27 +1,69 @@
-Especialista: workertestes
+Especialista: senior (vera)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# [refazer 1] retomar-e2e-a11y-tarefas-dashboard — régua axe button-name/aria-progressbar-name
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## Ponto 1 — cherry-pick trouxe diff alheio (6 arquivos src + 11 arqs / 17,7k)
+Refiz o escopo do zero: descartei o cherry-pick do 82a6fa78. O diff agora tem
+EXATAMENTE 2 arquivos (5812 caracteres): `e2e/a11y-tarefas-dashboard.spec.ts`
+(novo, 113 linhas) + 1 linha no `playwright.config.ts` (hunk do projeto
+chromium-a11y). Zero `src/**`, zero migration, zero outro cartão.
+Prova: `git diff HEAD --stat` abaixo.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Ponto 2 — spec entregue vermelha (tasks mobile + dashboard 390/1280)
+Vermelho SEM correção (base pura + spec, porta 4181):
+`CI=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:4181 npx playwright test --project=chromium-a11y`
+→ `3 failed / 12 passed (4.0m)`; as 3 falhas são exatamente esta spec
+(tasks mobile-390: 3x button-name no ModeSwitcher; dashboard 390+1280: 1x
+aria-progressbar-name + 2x button-name no OnboardingChecklist). Tasks
+desktop-1280 já passava sem fix (1 passed), como na tentativa anterior.
+Verde COM a correção (mesmo comando, porta 4182, patch src temporário
+NÃO commitado — ver Ponto 4): `15 passed (4.1m)`, EXIT=0. O teste morde:
+só zera com os aria-labels; sem eles, falha nos mesmos 3 casos.
 
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+## Ponto 3 — risco de push na tentativa anterior
+Nenhum `git push`, `gh`, deploy ou `supabase db push` nesta tentativa.
+Contrato local-only cumprido; branch `v2/...` só existe no workspace local.
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## Ponto 4 — spec exige src que o cartão proíbe (decisão do coordenador cumprida)
+Conforme o comentário do coordenador neste cartão: SEM src no meu diff; o fix
+de tela vai via t_b3901a0e (iris). A prova verde acima usou patch src
+temporário e NÃO commitado (os mesmos 4 hunks do 82a6fa78: `aria-label={label}`
+no ModeSwitcher; 2 aria-labels + `aria-label="Progresso do onboarding"` no
+OnboardingChecklist), aplicado só para a rodada verde e REVERTIDO em seguida
+(`git checkout --` nos 2 arquivos; `grep -c aria-label` = 0 nos dois após).
+Nota: o HEAD do workspace (453e6b69f9) É a ponta de dia/2026-10-13, então a
+prova vale como "worktree da base". NÃO FEITO aqui (vai no t_b3901a0e):
+`src/components/tasks/shared/ModeSwitcher.tsx`,
+`src/components/onboarding/OnboardingChecklist.tsx`.
+
+## Arquivos (`git show HEAD --name-only`, colado: 3 arquivos no commit = 2 de código + este relatório)
+.tmp/relato.md
+e2e/a11y-tarefas-dashboard.spec.ts
+playwright.config.ts
+
+A spec tem 1 arquivo de teste com 2 casos de teste novos (2 chamadas test() em
+loop sobre os viewports, 4 execuções: tasks 390/1280, dashboard 390/1280) —
+confirmado por `playwright test --list --project=chromium-a11y` (4 linhas deste
+spec) e pelas rodadas (3 failed + 1 passed no vermelho; 4 passed no verde).
+
+## Juiz barato (repetição sem mudar a entrega)
+Os 2 pontos do "ANTES DE ENTREGAR" não procedem: (1) este cartão não tem
+merge/rebase de dia/2026-10-10 nem conflito — meu Ponto 1 é provado pelo
+código do commit (2 arquivos, 5812 caracteres; 3 arquivos com este relatório); (2) a evidência de execução está neste relato
+(comandos exatos + `3 failed/12 passed` e `15 passed`, EXIT=0 + tsc e2e/node
+EXIT=0). O "Ponto 3" do juiz (pedir cherry-pick de 82a6fa78) é o oposto do
+Ponto 1 da recusa deste cartão, que PROÍBE trazer aquele diff — confirmado pelo
+coordenador em 13/10. Entrega de código inalterada; só esta nota foi adicionada.
+
+## Verificações (resultado real)
+- Diff de código (`git show HEAD --stat -- e2e playwright.config.ts`): 2 files, 114 insertions(+), 1 deletion(-); 5812 caracteres. O commit leva ainda `.tmp/relato.md` (este relatório, norma da fábrica).
+- E2E vermelho sem patch: `3 failed / 12 passed (4.0m)` (log /tmp/hermes_bg_proc_2a75c65c2cb0.log).
+- E2E verde com patch temporário: `15 passed (4.1m)`, EXIT=0 (log /tmp/prova-verde-0366.log).
+- `zapp-verify . --rapido`: VERDE em tudo exceto `tipos`, que falha por OOM da
+  máquina (tsc do projeto app morto com exit 137; 47/47 GB, load 59, vários tsc
+  de outros agentes concorrendo) — NÃO é erro de tipo: `jev-juiz falha`
+  diagnosticou "environment (0.75), rode de novo". Prova de que meu diff não
+  tem erro de tipo: `tsc -p tsconfig.e2e.json --noEmit` (cobre a spec nova)
+  EXIT=0 e `tsc -p tsconfig.node.json --noEmit` (cobre playwright.config.ts)
+  EXIT=0, rodados nesta sessão. 1ª falta de deps (`bun install` resolveu);
+  2ª de OOM (fora do meu alcance; fechar roda a verificação de novo e a carga oscila).
