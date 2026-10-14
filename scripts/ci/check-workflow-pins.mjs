@@ -11,7 +11,7 @@ const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 // string EXATA usada no YAML (por exemplo "24", "1.24.x"), para a comparação ser de
 // igualdade e não de faixa.
 export const TOOLCHAIN_PATH = ".github/toolchain.json";
-export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "playwright", "postgres-image"];
+export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "playwright", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
 
 const SCALAR = /^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u;
 const TOOLCHAIN_VERSION_INPUT = /^\s*(?:-\s*)?["']?(bun|deno|node|go)-version["']?\s*:\s*(.*)$/u;
@@ -19,6 +19,10 @@ const SUPABASE_CLI_ENV = /^\s*["']?SUPABASE_CLI_VERSION["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_VERSION_INPUT = /^\s*["']?version["']?\s*:\s*(.*)$/u;
 const IMAGE_LINE = /^\s*(?:-\s*)?(?:["']?image["']?|["']?[A-Za-z][A-Za-z0-9_]*_IMAGE["']?)\s*:\s*(.*)$/u;
 const PLAYWRIGHT_PIN = /playwright@([0-9][0-9A-Za-z.-]*)/gu;
+// W88: padrões para binários baixados via curl e pip em scripts de workflow
+const ACTIONLINT_VERSION_LINE = /^\s*actionlint_version=["']?([0-9][^\s"']*)["']?/u;
+const ACTIONLINT_SHA256_LINE = /^\s*actionlint_sha256=["']?([0-9a-f]{64})["']?/u;
+const ZIZMOR_PIP_LINE = /\bzizmor==([0-9][^\s"']*)/u;
 
 /** Valor literal de um escalar YAML; `null` quando é expressão do Actions ou valor multilinha. */
 function scalarValue(raw) {
@@ -147,6 +151,16 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
     if (image && image[1].trim().startsWith("postgres")) { report("postgres-image", scalarValue(image[1])); continue; }
 
     for (const pin of line.matchAll(PLAYWRIGHT_PIN)) { report("playwright", pin[1]); }
+
+    // W88: binários baixados via curl (actionlint) e pip (zizmor)
+    const actionlintVer = line.match(ACTIONLINT_VERSION_LINE);
+    if (actionlintVer) { report("actionlint", actionlintVer[1]); continue; }
+
+    const actionlintHash = line.match(ACTIONLINT_SHA256_LINE);
+    if (actionlintHash) { report("actionlint-sha256-linux-amd64", actionlintHash[1]); continue; }
+
+    const zizmorVer = line.match(ZIZMOR_PIP_LINE);
+    if (zizmorVer) { report("zizmor", zizmorVer[1]); }
   }
   return violations;
 }
