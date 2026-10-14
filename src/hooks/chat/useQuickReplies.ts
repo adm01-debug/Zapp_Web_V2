@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -32,10 +32,47 @@ export interface CreateTemplateInput {
   is_global?: boolean;
 }
 
-const FAVORITES_STORAGE_KEY = 'quick-reply-favorites';
+/** Chave legada, sem escopo de usuário: a lista vazava entre contas no mesmo navegador. */
+const LEGACY_FAVORITES_KEY = 'quick-reply-favorites';
+
+/** Convenção da casa: `zapp.<area>:<userId>` — o favorito é do usuário, não do navegador. */
+export function quickReplyFavoritesKey(userId: string): string {
+  return `zapp.quickreplies.favorites:${userId}`;
+}
+
+function readFavorites(key: string | null): QuickReplyFavorite[] {
+  if (!key) return [];
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as QuickReplyFavorite[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Favoritos gravados antes do escopo por usuário não são lidos; o legado é removido sem leitura. */
+function purgeLegacyFavorites(): void {
+  try {
+    const doomed: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key === LEGACY_FAVORITES_KEY) doomed.push(key);
+    }
+    doomed.forEach((key) => localStorage.removeItem(key));
+  } catch { /* storage unavailable */ }
+}
+
+/** Normalize text for accent-insensitive search (mesma regra da `normalizeText` do chat). */
+function normalizeText(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 export function useQuickReplies() {
   const { user } = useAuth();
+  const userId = user?.id;
+  const favoritesKey = userId ? quickReplyFavoritesKey(userId) : null;
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -57,21 +94,25 @@ export function useQuickReplies() {
     enabled: !!user?.id,
   });
 
-  // Local favorites storage (synced with localStorage for persistence)
-  const [favorites, setFavorites] = useState<QuickReplyFavorite[]>(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Save favorites to localStorage
-  const saveFavorites = useCallback((newFavorites: QuickReplyFavorite[]) => {
-    setFavorites(newFavorites);
-    try { localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites)); } catch { /* storage unavailable */ }
+  useEffect(() => {
+    purgeLegacyFavorites();
   }, []);
+
+  // Favoritos por usuário: a lista guardada diz de quem é (`key`); se a conta trocou,
+  // ela é relida do storage do novo dono em vez de vazar a do dono anterior.
+  const [favoritesState, setFavoritesState] = useState<{ key: string | null; list: QuickReplyFavorite[] }>(
+    () => ({ key: favoritesKey, list: readFavorites(favoritesKey) }),
+  );
+  const favorites = favoritesState.key === favoritesKey
+    ? favoritesState.list
+    : readFavorites(favoritesKey);
+
+  // Save favorites to localStorage (só do usuário atual)
+  const saveFavorites = useCallback((newFavorites: QuickReplyFavorite[]) => {
+    setFavoritesState({ key: favoritesKey, list: newFavorites });
+    if (!favoritesKey) return;
+    try { localStorage.setItem(favoritesKey, JSON.stringify(newFavorites)); } catch { /* storage unavailable */ }
+  }, [favoritesKey]);
 
   // Toggle favorite
   const toggleFavorite = useCallback((templateId: string) => {
@@ -192,37 +233,40 @@ export function useQuickReplies() {
     },
   });
 
-  // Increment use count
+  // Increment use count — contagem atômica no servidor (RPC do PH-10)
   const incrementUseCount = useCallback(async (templateId: string) => {
     const template = templates?.find((t) => t.id === templateId);
     if (!template) return;
 
-    await supabase
-      .from('message_templates')
-      .update({ use_count: (template.use_count || 0) + 1 })
-      .eq('id', templateId);
+    // A RPC soma no banco e só toca linha visível ao chamador (dono ou global).
+    const { error } = await supabase.rpc('increment_quick_reply_use', { p_id: templateId });
+    if (error) {
+      toast.error('Erro ao registrar o uso da resposta rápida');
+      log.error('Error incrementing quick reply use:', error);
+      return;
+    }
 
     queryClient.invalidateQueries({ queryKey: ['quick-replies'] });
   }, [templates, queryClient]);
 
-  // Smart search with fuzzy matching
+  // Smart search with fuzzy matching (sem acento: 'saudacao' acha 'Saudação')
   const searchTemplates = useCallback((query: string) => {
     if (!templates) return [];
     if (!query.trim()) return templates;
 
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = normalizeText(query);
     
     return templates.filter(t => {
-      const titleMatch = t.title.toLowerCase().includes(lowerQuery);
-      const contentMatch = t.content.toLowerCase().includes(lowerQuery);
-      const shortcutMatch = t.shortcut?.toLowerCase().includes(lowerQuery);
-      const categoryMatch = t.category?.toLowerCase().includes(lowerQuery);
+      const titleMatch = normalizeText(t.title).includes(lowerQuery);
+      const contentMatch = normalizeText(t.content).includes(lowerQuery);
+      const shortcutMatch = t.shortcut ? normalizeText(t.shortcut).includes(lowerQuery) : false;
+      const categoryMatch = t.category ? normalizeText(t.category).includes(lowerQuery) : false;
       
       return titleMatch || contentMatch || shortcutMatch || categoryMatch;
     }).sort((a, b) => {
       // Prioritize title matches
-      const aTitle = a.title.toLowerCase().includes(lowerQuery);
-      const bTitle = b.title.toLowerCase().includes(lowerQuery);
+      const aTitle = normalizeText(a.title).includes(lowerQuery);
+      const bTitle = normalizeText(b.title).includes(lowerQuery);
       if (aTitle && !bTitle) return -1;
       if (!aTitle && bTitle) return 1;
       
