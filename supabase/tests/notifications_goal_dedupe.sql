@@ -1,4 +1,4 @@
--- notifications_goal_dedupe — T1–T7 sobre a trigger REAL de public.notifications
+-- notifications_goal_dedupe — T1–T7 + T6b sobre a trigger REAL de public.notifications
 -- (cartão t_0b065192; migration 20261012231400_notifications_goal_dedupe.sql).
 --
 -- O QUE PROVA. A superfície mínima do Supabase é criada à mão aqui (roles
@@ -16,8 +16,12 @@
 --   T4 type <> 'goal' sem dedupe_key => NÃO regride (2 iguais = 2 linhas);
 --   T5 escritor com dedupe_key explícita: a repetição cai no índice único
 --      (unique_violation/23505) — backstop da corrida que o escritor trata;
---   T6 authenticated continua NEGADO (42501 / policy WITH CHECK false) — a
---      correção não afrouxou proteção nenhuma;
+--   T6 authenticated com goal_id NOVO continua NEGADO (42501 / policy WITH
+--      CHECK false) — a correção não afrouxou proteção nenhuma;
+--   T6b authenticated e anon repetindo o aviso que JÁ EXISTE (g-abc/daily de
+--      hoje, do T1) recebem 42501 e nada é gravado — sem oráculo existe/
+--      não-existe (na migration com DEFINER sem porta de papel este teste
+--      FALHA: o duplicado voltava INSERT 0 0);
 --   T7 a função da trigger não é executável por public/anon/authenticated.
 --
 -- COMO RODA. Em Postgres descartável; fixtures e asserções numa transação que
@@ -30,7 +34,9 @@
 -- O arquivo cria roles, schema auth e public.notifications À MÃO: só roda em
 -- Postgres descartável (no banco da tarefa as roles e a tabela já existem).
 -- VERMELHO esperado sem a migration: o mesmo comando com -v sem_migration=1
--- falha já em T1 (2 inserções iguais gravam 2 linhas).
+-- falha já em T1 (2 inserções iguais gravam 2 linhas). T6b passa sem a
+-- migration (a RLS já nega) e FALHA na migration com DEFINER sem porta de
+-- papel (o duplicado do cliente voltava INSERT 0 0): é o teste do oráculo.
 
 \set ON_ERROR_STOP on
 
@@ -270,6 +276,53 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
+-- T6b — duplicado do cliente é NEGADO (oráculo fechado, recusa ponto 2)
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE v_antes integer;
+BEGIN
+  SELECT count(*) INTO v_antes
+    FROM public.notifications
+   WHERE user_id = '11111111-1111-1111-1111-111111111111' AND type = 'goal';
+
+  -- authenticated repete o aviso que JÁ EXISTE (g-abc/daily de hoje, do T1).
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub','11111111-1111-1111-1111-111111111111','role','authenticated')::text, true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.notifications (user_id, title, message, type, metadata)
+    VALUES ('11111111-1111-1111-1111-111111111111','Meta batida','Voce bateu a meta','goal',
+            jsonb_build_object('goal_id','g-abc','period','daily'));
+    RAISE EXCEPTION 'T6b FALHOU: duplicado de authenticated passou (INSERT 0 0 = oraculo)';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  RESET ROLE;
+
+  -- anon repete o mesmo aviso já existente.
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub','11111111-1111-1111-1111-111111111111','role','anon')::text, true);
+  SET LOCAL ROLE anon;
+  BEGIN
+    INSERT INTO public.notifications (user_id, title, message, type, metadata)
+    VALUES ('11111111-1111-1111-1111-111111111111','Meta batida','Voce bateu a meta','goal',
+            jsonb_build_object('goal_id','g-abc','period','daily'));
+    RAISE EXCEPTION 'T6b FALHOU: duplicado de anon passou (INSERT 0 0 = oraculo)';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  RESET ROLE;
+
+  -- Nada foi gravado pelo cliente.
+  IF (SELECT count(*) FROM public.notifications
+       WHERE user_id = '11111111-1111-1111-1111-111111111111' AND type = 'goal') <> v_antes THEN
+    RAISE EXCEPTION 'T6b FALHOU: linha de cliente foi gravada';
+  END IF;
+
+  RAISE NOTICE 'T6b OK: duplicado de authenticated e anon negado (42501), nada gravado';
+END $$;
+
+-- ---------------------------------------------------------------------------
 -- T7 — a função da trigger não é executável pelo cliente
 -- ---------------------------------------------------------------------------
 DO $$
@@ -283,7 +336,7 @@ END $$;
 
 DO $$
 BEGIN
-  RAISE NOTICE 'notifications_goal_dedupe: TODAS as assercoes passaram (T1-T7)';
+  RAISE NOTICE 'notifications_goal_dedupe: TODAS as assercoes passaram (T1-T7+T6b)';
 END $$;
 
 ROLLBACK;

@@ -13,10 +13,19 @@
 -- Correção (aditiva, sem tocar GRANT, policy ou tabela): uma trigger BEFORE
 -- INSERT calcula a chave estável do aviso de meta
 -- ('goal:v1:<goal_id>:<period>:<dia em America/Sao_Paulo>') quando o escritor
--- não a informa, e PULA a inserção quando o mesmo aviso já existe. Duas
--- gravações iguais do mesmo usuário/meta/período/dia => 1 linha, sem erro. O
--- índice único continua sendo o backstop da corrida entre duas inserções
+-- não a informa, e PULA a inserção quando o mesmo aviso já existe — mas SÓ
+-- para o escritor servidor. Duas gravações iguais do mesmo
+-- usuário/meta/período/dia via service_role => 1 linha, sem erro. O índice
+-- único continua sendo o backstop da corrida entre duas inserções
 -- simultâneas (o escritor trata 23505 como sucesso).
+--
+-- Oráculo fechado (recusa 1 do revisor): a função é SECURITY INVOKER, então o
+-- EXISTS respeita a RLS do chamador, e o pulo silencioso (RETURN NULL) só
+-- acontece quando current_user é papel servidor ('service_role'/'postgres',
+-- que têm BYPASSRLS). Duplicado vindo de anon/authenticated NÃO é pulado:
+-- cai na RLS, que nega com 42501 — o MESMO erro de um aviso novo — sem
+-- distinguir existe/não-existe. BEFORE trigger que retornasse NULL antes da
+-- RLS, sob DEFINER, transformava o duplicado do cliente em INSERT 0 0.
 --
 -- Só o tipo 'goal' com o contrato metadata.goal_id + metadata.period entra no
 -- contrato; qualquer outro aviso ou um dedupe_key já informado passam intactos.
@@ -40,7 +49,7 @@ $$;
 create or replace function public.notifications_goal_dedupe_key()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public, pg_temp
 as $fn$
 declare
@@ -72,14 +81,19 @@ begin
            to_char((coalesce(new.created_at, now()) at time zone 'America/Sao_Paulo')::date, 'YYYY-MM-DD');
   new.dedupe_key := v_key;
 
-  -- O mesmo aviso já existe? Não grava de novo (nenhum erro chega ao cliente).
+  -- O mesmo aviso já existe? Só o escritor servidor pula em silêncio
+  -- (service_role/postgres têm BYPASSRLS e o dedupe é contrato do servidor).
+  -- anon/authenticated seguem para a RLS, que nega com 42501 — sem oráculo.
   if exists (
     select 1
       from public.notifications as n
      where n.user_id = new.user_id
        and n.dedupe_key = v_key
   ) then
-    return null;
+    if current_user in ('service_role', 'postgres') then
+      return null;
+    end if;
+    return new;
   end if;
 
   return new;
@@ -87,7 +101,7 @@ end;
 $fn$;
 
 comment on function public.notifications_goal_dedupe_key() is
-  'Preenche notifications.dedupe_key do aviso de meta (goal_id+period+dia America/Sao_Paulo) e pula a insercao repetida do mesmo aviso (1 por usuario/meta/periodo/dia).';
+  'Preenche notifications.dedupe_key do aviso de meta (goal_id+period+dia America/Sao_Paulo); o pulo silencioso do repetido é só do escritor servidor (service_role/postgres) — duplicado de anon/authenticated cai na RLS (42501).';
 
 drop trigger if exists notifications_goal_dedupe on public.notifications;
 create trigger notifications_goal_dedupe
@@ -95,5 +109,6 @@ create trigger notifications_goal_dedupe
   for each row
   execute function public.notifications_goal_dedupe_key();
 
--- A trigger roda sob o dono (SECURITY DEFINER); o cliente não chama a função.
+-- A trigger roda com o privilégio do chamador (SECURITY INVOKER); o REVOKE
+-- abaixo impede chamada direta da função pelo cliente (defesa em profundidade).
 revoke all on function public.notifications_goal_dedupe_key() from public, anon, authenticated;
