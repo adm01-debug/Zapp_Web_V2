@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildGmailMimeMessage, encodeBase64Url } from "../_shared/gmail-mime.ts";
+import { persistGmailMessageLabels } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -307,13 +308,21 @@ Deno.serve(async (req) => {
       case "trash": {
         const { message_id: trashMsgId } = body;
         if (!trashMsgId) return errorResponse("Missing message_id", 400, req);
-        const ownedMessage = await supabase.from("email_messages").select("id").eq("gmail_message_id", trashMsgId).eq("gmail_account_id", account.id).maybeSingle();
+        const ownedMessage = await supabase.from("email_messages").select("id, thread_id").eq("gmail_message_id", trashMsgId).eq("gmail_account_id", account.id).maybeSingle();
         if (!ownedMessage.data) return errorResponse("Message not found for this account", 404, req);
 
         const response = await fetch(`${GMAIL_API}/messages/${trashMsgId}/trash`, {
           method: "POST", headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!response.ok) throw new Error("Failed to trash message");
+        // O Gmail devolve a mensagem já com os labelIds novos (sem INBOX, com
+        // TRASH). Persiste no banco local e recalcula a thread dona, senão a
+        // mensagem continua aparecendo na caixa de entrada após o descarte.
+        const trashed = await response.json().catch(() => null) as { labelIds?: unknown } | null;
+        const trashedLabels = Array.isArray(trashed?.labelIds) ? trashed.labelIds as string[] : null;
+        if (!trashedLabels) return jsonResponse({ success: true, warning: "local_persistence_failed" }, 200, req);
+        const persisted = await persistGmailMessageLabels(supabase, account.id, trashMsgId, trashedLabels, ownedMessage.data.thread_id ?? null);
+        if (!persisted) return jsonResponse({ success: true, warning: "local_persistence_failed" }, 200, req);
         log.done(200, { action });
         return jsonResponse({ success: true }, 200, req);
       }
