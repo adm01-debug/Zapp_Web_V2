@@ -1,51 +1,35 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
-## Diff da branch (5 arquivos: 2 do meu cartão + 2 da faixa do pai + o relato)
-- Este cartão (t_106a978a) entrega 2 arquivos:
-  supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql (nova) e
-  supabase/tests/alerta_falha_envio_por_conexao.sql (nova).
-- A faixa do pai (t_bc890f8a, ainda não integrada à base) foi trazida por cherry-pick do commit
-  a03db8ad0 e é parte do diff desta branch: supabase/migrations/20261013210005_outbound_sweeper_e_claim_por_papel.sql
-  e supabase/tests/outbound_sweeper_e_claim_por_papel.sql (2 arquivos, não escritos por mim).
-- `.tmp/relato.md` é o próprio relato (rastreado no repo; o fechar exige árvore limpa).
-  Total do diff: 5 arquivos, sendo 2 de teste (.sql).
+[refazer 1] — 4 pontos do revisor (todos no monitor `public.alert_outbound_failure_rate()`, migration 20261013235909; a migration é NOVA e não integrada, por isso corrigi no lugar em vez de criar outra).
 
-## O que mudou e por quê
-- supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql (nova): cria a função de
-  manutenção `public.alert_outbound_failure_rate()` e agenda no pg_cron (`*/5 * * * *`, job
-  `alerta-falha-envio-por-conexao`). Ela calcula POR CONEXÃO, na última hora, os envios com desfecho
-  terminal (`sent`/`delivered`/`read`/`failed`/`outcome_unknown`), a taxa de falha, as mensagens
-  presas em `sending` (último toque > 15 min E sem lease vivo — o mesmo critério do varredor da
-  migration 20261013210005) e as `outcome_unknown`. Dispara com amostra >= 20 envios e taxa >= 20%,
-  OU mais de 10 presas. Grava UM alerta `critical` em `warroom_alerts` com `dedupe_key` estável
-  `envio-falha:<conexao>:<hora>` (ON CONFLICT sobre o índice único parcial `ux_warroom_alerts_dedupe_key`),
-  então rodar de novo na mesma hora não duplica. O limiar é fixo na função (sem parâmetro/edição
-  por tela). O alerta NÃO carrega telefone nem conteúdo de mensagem: só o NOME da conexão e as
-  contagens. Som/push existentes reagem ao INSERT na tabela (nada novo no front). ACL: REVOKE de
-  PUBLIC/anon/authenticated/service_role — só o dono/cron executa.
-- supabase/tests/alerta_falha_envio_por_conexao.sql (nova): suíte T1..T6 em Postgres 17 descartável
-  (mesmo padrão do cartão pai t_bc890f8a), aplicando a migration VERBATIM, terminando em ROLLBACK.
+O que mudou (só o monitor e o teste do monitor):
+1) Contagem de "presas" furada pelo varredor. O varredor (`sweep_stale_outbound_sending`, 20261013210005) roda no MESMO `*/5` e converte as presas em `failed` antes de o monitor contá-las. Agora a CTE `presas` soma duas fontes: (a) linhas ainda em `sending`, sem lease vivo e último toque `coalesce(delivery_claim_expires_at, updated_at)` há mais de 15 min — mesmo critério do varredor; (b) linhas JÁ varridas na janela: `status='failed'` e `delivery_failure_reason='nao_despachada'` com `updated_at` na última hora.
+2) Conexão resolvida com o mesmo coalesce do claim. `presas` e `janela` passaram a `left join public.contacts` e usam `coalesce(message.whatsapp_connection_id, contact.whatsapp_connection_id)` (como o `claim_outbound_message`), então a linha sem conexão no próprio `messages` é atribuída à conexão do contato.
+3) Texto do alerta disparado só por presas. O ramo "sem taxa estourada" deixou de dizer "amostra insuficiente (N envios terminais…)"; agora diz `N de M envios terminais da última hora falharam (não bateu o limiar de taxa)` seguido de `Presas em envio (mais de 15 min): X.` e `Sem confirmação: Y.`.
+4) Comentário do T6 reescrito: não afirma mais ser "extraído do arquivo" (o SQL do rollback é mantido em sincronia à mão com o bloco `-- Rollback:` da migration).
 
-## Prova
-- vermelho antes (sem a migration): `docker exec -i ... psql -v sem_migration=1 ...` →
-  `ERROR: function "public.alert_outbound_failure_rate()" does not exist` (aborta em T1, RC=3).
-- verde depois: `docker exec -i ... psql -v mig=/repo/supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql ...`
-  → `OK: alerta_falha_envio_por_conexao — T1..T6 verdes` (RC=0).
-- T1 ACL (authenticated/anon/service_role sem EXECUTE; job agendado 1x, authenticated negado em execução).
-- T2/T3 taxa: Canal A 24% (amostra 25) alerta, Canal B 50% com amostra 10 não, Canal F 20% exatos
-  (amostra 20) alerta, Canal G 15% não — 3 alertas no total, exatamente os esperados.
-- T4 presas: Canal C 11 alerta; Canal D 10 não; Canal E 12 com lease vivo não; Canal H 12 recentes não.
-- T5 conteúdo/PII: `critical`/`envio-falha`, `dedupe_key` estável, texto com conexão/taxa/sem confirmação;
-  nenhum alerta contém `5511999999999` nem o texto das mensagens; 2ª passada na mesma hora insere 0.
-- T6 rollback (extraído do arquivo): dropa a função e desagenda o job; reaplicar volta ao estado.
+Prova (vermelho antes, verde depois; Postgres 17 descartável, docker):
+- VERMELHO (`-v sem_migration=1`): `ERROR: function "public.alert_outbound_failure_rate()" does not exist` em T1, RC=3.
+- VERDE (`-v mig=/repo/supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql`): `OK: alerta_falha_envio_por_conexao — T1..T6 verdes`, RC=0.
+- `zapp-verify . --rapido`: `VERIFY: VERDE SEM BANCO`, RC=0 (db_guard OK, tipos OK, lint OK, migrations OK).
+- Cobertura nova no teste T2–T5: Canal J (11 varridas na janela, nenhuma em `sending`) alerta; Canal L (10 varridas) não; Canal K (6 presas + 5 varridas) alerta; Canal I (11 presas com `whatsapp_connection_id` nulo, contato d2 aponta p/ c9) alerta e o `dedupe_key` sai com o id c9 — prova a atribuição via contato. T5 confere que o alerta do Canal J traz `Presas em envio (mais de 15 min): 11` e NÃO contém "insuficiente". Alerta esperado subiu de 3 para 6.
 
-## O que NÃO fiz e por quê
-- `src/integrations/supabase/types.ts` não mudou: nenhuma tabela/coluna/RPC nova exposta ao cliente
-  (`warroom_alerts.dedupe_key` já existe desde 20261006155408 e a função é só do cron). O cartão cita
-  o arquivo como "só se o schema exposto mudar".
-- Nada de retry configurável por tela (fora de escopo); limiar fixo na função.
-- `supabase/schema-manifest.json` não foi tocado à mão (gerado por scripts/db-audit/manifest.sql);
-  uma função nova entra nele na regeneração do pipeline.
-- Não criei script em scripts/db-audit/: a prova é a suíte .sql em supabase/tests/, que não entra no
-  inventário de scripts do CI (check-test-inventory cobre scripts/db-audit/*.test.sh e
-  supabase/functions/*.test.ts). Registrar a suíte num passo do db-guard.yml fica para worker (ci).
+FAIXA DO PAI (herdada por dependência, não escrita neste cartão):
+`453e6b69f9` (merge-base com `dia/2026-10-13`) → `a03db8ad0` = varredor/claim 20261013210005 + teste.
+`git diff --name-only 453e6b69f9...HEAD`:
+  .tmp/relato.md
+  supabase/migrations/20261013210005_outbound_sweeper_e_claim_por_papel.sql
+  supabase/migrations/20261013235909_alerta_falha_envio_por_conexao.sql
+  supabase/tests/alerta_falha_envio_por_conexao.sql
+  supabase/tests/outbound_sweeper_e_claim_por_papel.sql
+
+Riscos preservados: nada de DDL sobre dado existente; GRANT/REVOKE e `search_path` intactos; sem PII no texto do alerta (T5 confere); dedupe_key por conexão+hora mantém a idempotência (T5: 2ª execução não insere, total segue 6).
+
+Rodapé do cartão (regras permanentes) copiado no template: este é cartão de banco, então o rodapé "não traz DDL/migration" não se aplica.
+
+PROVA
+```
+VERMELHO: ERROR: function "public.alert_outbound_failure_rate()" does not exist  (RC=3)
+VERDE: OK: alerta_falha_envio_por_conexao — T1..T6 verdes  (RC=0)
+zapp-verify: VERIFY: VERDE SEM BANCO (21s)  (RC=0)
+```
