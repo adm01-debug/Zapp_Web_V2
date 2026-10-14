@@ -10,7 +10,7 @@ Especialista: complexo (area-front-hooks)
   - run 1: `Test Files 1 passed (1); Tests 5 passed (5)` — `Duration 4.39s (transform 515ms, setup 361ms, import 1.70s, tests 1.11s, environment 1.07s)` (Start at 06:43:56)
   - run 2: `Test Files 1 passed (1); Tests 5 passed (5)` — `Duration 3.01s (transform 491ms, setup 175ms, import 972ms, tests 1.03s, environment 690ms)` (Start at 06:44:05)
   - run 3: `Test Files 1 passed (1); Tests 5 passed (5)` — `Duration 3.03s (transform 504ms, setup 163ms, import 935ms, tests 1.24s, environment 566ms)` (Start at 06:44:09)
-  - isolado (`-t "em breve"`, 2 passed | 3 skipped): `Duration 1.98s (transform 398ms, setup 131ms, import 793ms, tests 418ms, environment 517ms)` (Start at 06:44:24) — mostra que o custo está no mount+import da árvore inteira, não nas asserções.
+  - isolado (filtro `-t "em breve"`, só os 2 testes de "em breve"): `Duration 1.98s (transform 398ms, setup 131ms, import 793ms, tests 418ms, environment 517ms)` (Start at 06:44:24) — mostra que o custo está no mount+import da árvore inteira, não nas asserções.
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (111s)` — `OK db_guard 0s; OK tipos 107s; OK lint 4s; OK migrations 0s; AVISO banco_local NÃO VERIFICADO` (sem conjunto; esperado pois o cartão só mexe em teste de front, sem migration).
 - Tempos antes/depois: antes = falha determinística no teto de 5 s (`asyncUtilTimeout: 5000`) quando o teste roda após o que vaza `mode=new`; depois = arquivo verde em 3,01-4,39 s (tests 1,03-1,24 s) — perto do teto de 5 s, o que justifica a folga de 15 s só no mount; isolado (`-t`) = 1,98 s (tests 418 ms).
 ## Varredura (mesmo risco em outros testes do módulo)
