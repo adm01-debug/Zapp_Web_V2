@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isAccessDeniedError } from '@/lib/rlsError';
 
 export interface ConnectionStatus {
   id: string;
@@ -59,8 +60,10 @@ interface ProbeError {
 function isAuthorizationError(error: ProbeError | null): boolean {
   if (!error) return false;
   const code = String(error.code ?? error.statusCode ?? error.status ?? '');
-  if (code === '401' || code === '403' || code === '42501' || code === 'PGRST301') return true;
-  return /permission denied|unauthorized|not authorized|invalid jwt|insufficient privilege/i.test(String(error.message ?? ''));
+  if (code === '401') return true;
+  // 403, 42501, PGRST301 e a mensagem do RLS vêm do helper central.
+  if (isAccessDeniedError(error)) return true;
+  return /unauthorized|not authorized|invalid jwt/i.test(String(error.message ?? ''));
 }
 
 /** Só a latência de uma coleta BEM-SUCEDIDA vira status: erro que volta rápido não é
