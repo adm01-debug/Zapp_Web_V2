@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { fetchCatalogContactResults, logCatalogSendEvent, CONTACT_SEARCH_MIN_CHARS, type CatalogSendTemplate } from '@/hooks/integrations/useCatalogContactSearch';
+import { fetchCatalogContactResults, logCatalogSendEvent, CONTACT_SEARCH_MIN_CHARS, type CatalogSendTemplate } from '@/hooks/integrations/catalogContactSearch';
 import { CATALOG_SEND_EVENTS_KEY } from '@/hooks/integrations/useCatalogRecentSends';
 
 const log = getLogger('useSendProduct');

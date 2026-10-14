@@ -27,7 +27,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { formatPrice, ProductThumb, CATALOG_FOCUS_VISIBLE, isSnapshotProduct, UNKNOWN_PRICE_LABEL } from './catalogShared';
 import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
-import { logCatalogSendEvent } from '@/hooks/integrations/useCatalogContactSearch';
+import { logCatalogSendEvent } from '@/hooks/integrations/catalogContactSearch';
 import { useCatalogSendReadiness } from '@/hooks/integrations/useCatalogSendReadiness';
 import { cn } from '@/lib/utils';
 

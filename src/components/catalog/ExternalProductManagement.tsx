@@ -72,7 +72,7 @@ import {
   sendHistoryFilename,
   type CatalogSendHistoryRow,
 } from '@/hooks/integrations/useCatalogSendHistory';
-import { fetchCatalogContactPreset } from '@/hooks/integrations/useCatalogContactPreset';
+import { fetchCatalogContactPreset } from '@/hooks/integrations/catalogContactPreset';
 import type { ContactResult } from './useSendProduct';
 // Guarda de WhatsApp do deep link: mesmo critério do painel do contato
 // (src/lib/calls/phone.ts), telefone inutilizável → null.

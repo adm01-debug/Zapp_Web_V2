@@ -8,7 +8,7 @@ import { AlertCard, IconTile, MetaRow, RailCard } from '@/components/talkx/talkx
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { formatPhoneBR } from '@/lib/calls/phone';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { CONTACT_SEARCH_ERROR_MESSAGE, CONTACT_SEARCH_MIN_CHARS } from '@/hooks/integrations/useCatalogContactSearch';
+import { CONTACT_SEARCH_ERROR_MESSAGE, CONTACT_SEARCH_MIN_CHARS } from '@/hooks/integrations/catalogContactSearch';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { cn } from '@/lib/utils';
 import type { ContactResult, SendProgress } from './useSendProduct';

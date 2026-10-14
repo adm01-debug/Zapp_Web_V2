@@ -4,7 +4,7 @@ import { log } from '@/lib/logger';
 /**
  * Helpers de objeto no Supabase Storage extraidos de `useFileUploadLogic` para serem
  * reutilizados sem duplicacao pelo upload (aba Arquivos / chat) e pelo encaminhamento
- * de midia (`useForwardMedia`).
+ * de midia (`forwardMedia`).
  *
  * O upload grava em `whatsapp-media/<contactId>/...`; o encaminhamento copia o objeto
  * para a pasta do contato de destino (`<destinoId>/...`). As duas trilhas precisam do

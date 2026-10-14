@@ -15,7 +15,7 @@ import {
   type ForwardPairOutcome,
   type ForwardResult,
   type ForwardRunState,
-} from '@/hooks/chat/useForwardMedia';
+} from '@/hooks/chat/forwardMedia';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/chat/useWhisperMessagesMutation';

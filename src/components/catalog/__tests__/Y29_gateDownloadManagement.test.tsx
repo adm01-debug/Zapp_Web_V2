@@ -62,7 +62,7 @@ vi.mock('@/hooks/integrations/useCatalogSendHistory', async (importOriginal) => 
   };
 });
 
-vi.mock('@/hooks/integrations/useCatalogContactPreset', () => ({ fetchCatalogContactPreset: vi.fn().mockResolvedValue(null) }));
+vi.mock('@/hooks/integrations/catalogContactPreset', () => ({ fetchCatalogContactPreset: vi.fn().mockResolvedValue(null) }));
 vi.mock('../SendProductDialog', () => ({ SendProductDialog: () => <div data-testid="send-dialog" /> }));
 vi.mock('../ExternalProductCard', () => ({ ExternalProductCard: () => <div data-testid="product-card" /> }));
 

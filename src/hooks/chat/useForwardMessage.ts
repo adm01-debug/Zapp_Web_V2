@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
 import { forwardLimitError } from '@/lib/forward-limits';
-import type { ForwardResult } from './useForwardMedia';
+import type { ForwardResult } from './forwardMedia';
 
 interface Contact {
   id: string;

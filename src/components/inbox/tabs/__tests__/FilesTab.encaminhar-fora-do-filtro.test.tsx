@@ -42,7 +42,7 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
 
 // Mock da ação de encaminhar (etapa 38): captura o array de arquivos que chega ao envio.
-vi.mock('@/hooks/chat/useForwardMedia', () => ({
+vi.mock('@/hooks/chat/forwardMedia', () => ({
   createForwardRunState: () => ({
     completedKeys: new Set<string>(),
     copiedPaths: new Map<string, string>(),

@@ -38,7 +38,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 // Captura o payload real do encaminhamento (módulo é a fronteira de rede, não o sujeito).
-vi.mock('@/hooks/chat/useForwardMedia', () => ({
+vi.mock('@/hooks/chat/forwardMedia', () => ({
   createForwardRunState: () => ({
     completedKeys: new Set<string>(),
     copiedPaths: new Map<string, string>(),
