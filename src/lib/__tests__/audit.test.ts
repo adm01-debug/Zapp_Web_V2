@@ -67,7 +67,7 @@ describe('audit logging', () => {
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
       p_action: 'logout',
       p_entity_type: undefined,
-      p_entity_id: null,
+      p_entity_id: undefined,
       p_details: null,
     }));
   });
@@ -86,7 +86,7 @@ describe('audit logging', () => {
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
       p_action: 'unauthorized_access',
       p_entity_type: 'route',
-      p_entity_id: null,
+      p_entity_id: undefined,
       p_details: {
         required: ['admin'],
         method: 'NAVIGATE',
@@ -99,7 +99,7 @@ describe('audit logging', () => {
     await logAudit({ action: 'unauthorized_access', entityType: 'route', entityId: '/config' });
 
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-      p_entity_id: null,
+      p_entity_id: undefined,
       p_details: { entity_id_text: '/config' },
     }));
   });
@@ -116,7 +116,7 @@ describe('audit logging', () => {
     await logAudit({ action: 'login', entityId: '   ' });
 
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
-      p_entity_id: null,
+      p_entity_id: undefined,
       p_details: null,
     }));
   });

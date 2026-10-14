@@ -61,7 +61,7 @@ describe('ProtectedRoute — a rota negada chega na auditoria', () => {
       expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
         p_action: 'unauthorized_access',
         p_entity_type: 'route',
-        p_entity_id: null,
+        p_entity_id: undefined,
         p_details: expect.objectContaining({
           required: ['admin'],
           method: 'NAVIGATE',

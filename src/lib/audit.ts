@@ -68,7 +68,9 @@ export async function logAudit({ action, entityType, entityId, details }: AuditL
       // args opcionais com DEFAULT NULL no SQL: passar undefined omite a chave
       // no body e o Postgres aplica o default. 'null' nao tipa contra 'string?'.
       p_entity_type: entityType,
-      p_entity_id: norm.entityId,
+      // tipo gerado do RPC so aceita string: null vira chave omitida e o Postgres
+      // aplica DEFAULT NULL — a coluna uuid fica NULL (mesmo efeito).
+      p_entity_id: norm.entityId ?? undefined,
       p_details: norm.details ? JSON.parse(JSON.stringify(norm.details)) : null,
       p_user_agent: navigator.userAgent,
     });
