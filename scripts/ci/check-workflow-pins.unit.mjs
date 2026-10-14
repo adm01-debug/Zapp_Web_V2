@@ -178,6 +178,13 @@ test("W09: rejeita qualquer seletor playwright@… (a versão vem do bun.lock)",
       `playwright@${seletor} passou`,
     );
   }
+  // O pacote com escopo expoe o mesmo binario `playwright` (Codex, PR #1923).
+  assert.deepEqual(
+    findToolchainDrift("        run: bunx @playwright/test@latest test\n", "ci.yml", FONTE),
+    [{ file: "ci.yml", line: 1, tool: "playwright", value: "latest", expected: PLAYWRIGHT_ESPERADO }],
+  );
+  // Sem seletor nao e pin: o import normal do pacote continua permitido.
+  assert.deepEqual(findToolchainDrift("        run: bun test @playwright/test\n", "ci.yml", FONTE), []);
 });
 
 test("rejeita imagem do serviço postgres divergente da fonte única", () => {
