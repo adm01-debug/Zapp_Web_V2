@@ -15,10 +15,11 @@
 #     6. reaplicar a migration nao quebra (idempotencia);
 #     7. o Rollback do cabecalho roda e remove a funcao (volta ao RED).
 #
-# A migration REAL e encontrada pelo marcador interno
-# 'dashboard_daily_series_requires_staff' (sobrevive ao rename do hermes-db-migrar
-# --nova). O objeto sob teste e aplicado do arquivo real de supabase/migrations,
-# nunca recriado aqui.
+# A migration REAL e referenciada pelo NOME DO ARQUIVO (pinado), nunca por busca
+# por marcador: a busca por marcador (`grep -rlF ... | tail -1`) passaria a
+# devolver uma migration futura (ex.: _v2) depois que ela existir, e o passo 7
+# (Rollback) reaplicaria a migration errada. O objeto sob teste e aplicado do
+# arquivo real de supabase/migrations, nunca recriado aqui.
 #
 # Fixtures: apenas o ambiente minimo (schema auth, roles, IS_ADMIN_OR_SUPERVISOR e
 # as 4 tabelas que a RPC le) que a migration real toca. As tabelas sao stubs com
@@ -28,13 +29,8 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-find_migration() {
-  local marker="$1"
-  grep -rlF "$marker" "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true
-}
-
-migration="$(find_migration 'dashboard_daily_series_requires_staff')"
-[[ -n "$migration" && -f "$migration" ]] || { printf '[FALHA] migration de dashboard_daily_series nao encontrada (marcador dashboard_daily_series_requires_staff)\n' >&2; exit 1; }
+migration="$repo_root/supabase/migrations/20261012235745_dashboard_daily_series.sql"
+[[ -f "$migration" ]] || { printf '[FALHA] migration 20261012235745_dashboard_daily_series.sql nao encontrada\n' >&2; exit 1; }
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
