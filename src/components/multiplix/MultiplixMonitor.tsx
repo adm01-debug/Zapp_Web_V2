@@ -135,7 +135,7 @@ function ReturnsRoom({ dispatchId }: { dispatchId: string }) {
         <p className="text-center py-8 text-muted-foreground text-xs">Nenhum retorno neste disparo ainda</p>
       )}
       {status === 'ready' && (
-        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
+        <div role="region" aria-label="Lista de retornos" tabIndex={0} className="max-h-[30rem] overflow-auto divide-y divide-border/40">
           {replies.map((r) => (
             <div key={r.recipient_id} data-testid="reply-row" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
               <div className="flex-1 min-w-0">
@@ -255,6 +255,16 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
 
   const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // F86 (TL-045): a lista de disparos e desmontada quando o monitor abre; sem
+  // mover o foco, quem navega por teclado volta para o <body> e perde o lugar
+  // na troca lista<->monitor. O titulo (tabIndex -1) recebe o foco quando o
+  // disparo chega -- o efeito roda de novo por id, nao a cada re-render do
+  // realtime.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [dispatch?.id]);
 
   useEffect(() => {
     // Debounce 500ms nos dois handlers: durante envio ativo cada destinatario
@@ -378,7 +388,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           <div className="flex items-center gap-3 min-w-0">
             <IconTile icon={isRunning ? Send : isPaused ? Pause : XCircle} color={isRunning ? 'blue' : isPaused ? 'amber' : dispatch.status === 'completed' ? 'green' : 'red'} size={48} />
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
+              <h2 ref={headingRef} tabIndex={-1} className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
               <p className="text-xs text-foreground-secondary line-clamp-1">{dispatch.message_template}</p>
             </div>
           </div>
@@ -391,7 +401,19 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5" />
+        <Progress value={progress} aria-label="Progresso do disparo" className="h-3 mb-1.5" />
+        {/* F86 (TL-045): os contadores e a barra mudam sozinhos (realtime) sem
+            ninguem tocar na tela -- este texto e o que a regiao aria-live
+            anuncia; sai dos mesmos numeros que a tela mostra. */}
+        <span
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          data-testid="multiplix-progresso-live"
+        >
+          {`${progress}% concluído · ${fmtInt(processed)} de ${fmtInt(dispatch.total_recipients)} processados · ${fmtInt(dispatch.failed_count)} falha(s) · ${fmtInt(remaining)} restantes`}
+        </span>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(dispatch.total_recipients)}</span>
           {isRunning && <span className="text-primary-glow font-medium motion-safe:animate-pulse">Enviando agora…</span>}
@@ -485,7 +507,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             )}
           </p>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[8.125rem]"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar destinatários por status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[8.125rem]"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -504,7 +526,15 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             Mostrando os primeiros {fmtInt(recipients.length)} destinatários (amostra do total, veja o filtro de status).
           </p>
         )}
-        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
+        {/* F86 (TL-045): a lista rola em `overflow-auto`; sem foco proprio o
+            teclado nao alcanca a rolagem (os itens nao sao focaveis) e quem
+            nao usa mouse fica sem ver os destinatarios alem do corte. */}
+        <div
+          role="region"
+          aria-label="Lista de destinatários"
+          tabIndex={0}
+          className="max-h-[30rem] overflow-auto divide-y divide-border/40"
+        >
           {recipients.map((r) => <RecipientRow key={r.id} r={r} />)}
           {/* F80: CARREGANDO nao e VAZIO — a primeira pagina em andamento espera em
               vez de confirmar "nenhum destinatario". */}
