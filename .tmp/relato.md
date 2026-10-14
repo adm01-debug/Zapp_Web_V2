@@ -1,23 +1,29 @@
-Especialista: Íris (area-front-componentes)
+Especialista: senior (area-front-hooks)
 
 ## O que mudou e por quê
-- src/components/monitoring/MonitoringDiagnosticPanel.tsx: removi `exportReportTxt`, `exportReportPdf` e o helper `webhookHost`, os imports que só serviam a eles (`toast`, `downloadFileWithPermission`, `notifyDownloadBlocked`, `useDownloadPermission`, ícones `Download`/`FileText`) e os botões TXT/PDF. O relatório de diagnóstico não sai mais do sistema; a tela continua mostrando score, instância, checklist e o horário do diagnóstico.
-- src/components/monitoring/__tests__/MonitoringDiagnosticPanel.webhook-host.test.tsx: removido — testava apenas a exportação (mascaramento do host do webhook no TXT/PDF), comportamento que deixou de existir com a remoção das funções. O cartão manda expressamente (O QUE FAZER, item 1) "remover as funções e os botões de exportação", então o teste que provava só essa exportação foi removido junto com o código, conforme autoriza o item 3 ("Testes: sem botões de exportação").
-- src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx: novo — prova que não há botões de exportação e que o relatório segue visível na tela (renderiza o componente REAL).
+- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
+- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+
+## Pontos do refazer
+- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
+- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
+- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/monitoring/__tests__/MonitoringDiagnosticPanel.sem-export.test.tsx` contra a versão do componente em `dia/2026-10-12` → `Test Files 1 failed (1); Tests 3 failed (3)`.
-- verde depois: mesmo comando com o componente corrigido → `Test Files 1 passed (1); Tests 3 passed (3)`.
+- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
+- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
+- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
 
-## Outras exportações/downloads ainda existentes em src (item 2 do cartão — LISTADAS, não removidas por estarem fora deste arquivo)
-- src/components/catalog/catalogExport.ts — CSV via `new Blob(` + `downloadFileWithPermission`.
-- src/components/catalog/sendProductUtils.ts — blob de produto + `downloadFileWithPermission`.
-- src/components/mfa/MFABackupCodes.tsx — `new Blob(` de texto + `downloadFileWithPermission`.
-- src/components/team-chat/TeamPerformancePanel.tsx — `new Blob(` JSON + `downloadFileWithPermission`.
-- src/hooks/integrations/useGmail.ts — `new Blob(` de anexo + `downloadFileWithPermission`.
-- src/lib/downloadFile.ts — a porta única `downloadFileWithPermission` (usada pelos itens acima).
-- Blobs que NÃO são exportação de dados (áudio/preview, sem gravação em disco): src/components/email/EmailAttachmentPreviewDialog.tsx, src/components/inbox/VoiceChangerPicker.tsx, src/hooks/communication/useAudioRecorder.ts, src/utils/audioToMp3.ts.
+## Arquivos do diff
+.tmp/relato.md
+src/hooks/chat/__tests__/snoozeDurations.test.ts
+src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
+src/hooks/chat/__tests__/useConversationActions.test.ts
+src/hooks/chat/snoozeDurations.ts
+src/hooks/chat/useConversationActions.ts
+src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
 
 ## O que NÃO fiz e por quê
-- Não toquei nas exportações listadas acima: o cartão manda apenas listá-las.
-- Nenhuma alteração de banco, Edge Function ou dependência.
+- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
+- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.

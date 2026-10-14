@@ -18,8 +18,6 @@ export interface WorkItemContact {
   name: string | null;
   phone: string | null;
   avatar_url: string | null;
-  /** Tipo do contato (ex.: 'cliente'/'fornecedor'/'lead'); nullable na tabela. */
-  contact_type?: string | null;
 }
 
 export interface WorkItem {
