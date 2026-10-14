@@ -107,7 +107,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
   const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(160 70% 28%)' : s >= 50 ? 'hsl(38 90% 32%)' : 'hsl(0 84% 48%)';
 
   if (isCompact) {
-    return <CompactContactHeader contact={contact} isVip={false} companyName={companyName ?? undefined} firstName={displayName} />;
+    return <CompactContactHeader contact={contact} companyName={companyName ?? undefined} firstName={displayName} />;
   }
 
   return (

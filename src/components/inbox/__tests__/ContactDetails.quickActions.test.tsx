@@ -118,16 +118,14 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     };
   });
 
-  it('"Marcar VIP" grava a tag VIP em contacts.tags; Desfazer remove de verdade', async () => {
+  it('o menu "Mais" nao oferece "Marcar VIP" (a funcao de tags foi removida do inbox)', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ tags: ['VIP'] }));
-    expect(h.from).toHaveBeenCalledWith('contacts');
-    expect(h.eq).toHaveBeenCalledWith('id', 'c1');
-
-    await clickUndo();
-    await waitFor(() => expect(h.update).toHaveBeenLastCalledWith({ tags: [] }));
+    // A opcao sumiu do menu: nenhuma escrita de tags pode partir daqui.
+    expect(screen.queryByText('Marcar VIP')).not.toBeInTheDocument();
+    expect(h.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ tags: expect.anything() }),
+    );
   });
 
   it('o detalhe não mostra selo VIP (a função de tags foi removida)', () => {
@@ -194,7 +192,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     h.state.error = { message: 'row-level security' };
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
-    fireEvent.click(screen.getByText('Marcar VIP'));
+    fireEvent.click(screen.getByText('Arquivar'));
     await waitFor(() => expect(h.toast.error).toHaveBeenCalled());
     expect(h.toast).not.toHaveBeenCalled();
   });

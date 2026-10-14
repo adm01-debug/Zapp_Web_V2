@@ -62,13 +62,12 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
 
   const quickActions = useContactQuickActions(contact);
 
-  // Bloquear/VIP gravam via useContactQuickActions; Arquivar delega ao
+  // Bloquear grava via useContactQuickActions; Arquivar delega ao
   // archiveContact (semântica única: zera assigned_to e o Desfazer restaura o
   // valor anterior real — decisão do dono em 06/10, cartão #241).
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'edit': setEditDialogOpen(true); break;
-      case 'vip': void quickActions.markVip(); break;
       case 'archive': void archiveContact(contact.id); break;
       case 'block': void quickActions.block(); break;
     }
