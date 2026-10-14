@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -27,6 +27,12 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [hasSession, setHasSession] = useState(false);
+  // A troca do link (PKCE + detectSessionInUrl) é assíncrona: enquanto ela não
+  // termina não dá para afirmar que o link é inválido. Só depois de a sessão
+  // ser conferida é que o estado 'Link Inválido' pode aparecer.
+  const [checkingSession, setCheckingSession] = useState(true);
+  // Veredito do medidor (requisitos + HIBP): senha vazada barra o envio.
+  const [isValid, setIsValid] = useState(false);
   // Contagem visível até o redirecionamento; o usuário pode cancelá-la.
   const [countdown, setCountdown] = useState(5);
   const [redirectCancelled, setRedirectCancelled] = useState(false);
@@ -36,15 +42,23 @@ export default function ResetPassword() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setHasSession(true);
+        setCheckingSession(false);
       }
     });
 
     // Also check current session
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setHasSession(true);
-      }
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (data.session) {
+          setHasSession(true);
+        }
+        setCheckingSession(false);
+      })
+      .catch(() => {
+        // Não dá para confirmar a sessão: cai em 'Link Inválido' em vez de
+        // deixar a tela presa no estado 'Verificando'.
+        setCheckingSession(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -61,9 +75,20 @@ export default function ResetPassword() {
     return () => clearTimeout(timer);
   }, [success, redirectCancelled, countdown, navigate]);
 
+  const handleStrengthChange = useCallback((_strength: number, valid: boolean) => {
+    setIsValid(valid);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Senha vazada (HIBP) ou requisito não atendido: não envia. O medidor
+    // mostra o motivo na tela.
+    if (password.length > 0 && !isValid) {
+      setError('A senha precisa atender aos requisitos e não pode estar em vazamentos conhecidos.');
+      return;
+    }
 
     try {
       passwordSchema.parse(password);
@@ -95,15 +120,32 @@ export default function ResetPassword() {
     }
   };
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 text-muted-foreground"
+        >
+          <Loader2 className="w-5 h-5 motion-safe:animate-spin" />
+          <span>Verificando link de recuperação…</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Link Inválido</CardTitle>
-            <CardDescription>
-              Este link de recuperação é inválido ou expirou. Solicite um novo link.
-            </CardDescription>
+            <div role="status" aria-live="polite">
+              <CardTitle>Link Inválido</CardTitle>
+              <CardDescription>
+                Este link de recuperação é inválido ou expirou. Solicite um novo link.
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <Button className="w-full" onClick={() => navigate('/forgot-password')}>
@@ -187,6 +229,8 @@ export default function ResetPassword() {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
+                    autoComplete="new-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -196,24 +240,35 @@ export default function ResetPassword() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-pressed={showPassword}
+                    aria-controls="password"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
-                <PasswordStrengthMeter password={password} />
+                <PasswordStrengthMeter password={password} onStrengthChange={handleStrengthChange} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
+                  autoComplete="new-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
                 />
               </div>
+
+              {password.length > 0 && !isValid && (
+                <p className="text-xs text-muted-foreground">
+                  A senha precisa atender aos requisitos e não pode estar em vazamentos conhecidos.
+                </p>
+              )}
 
               {error && (
                 <motion.p
@@ -225,7 +280,7 @@ export default function ResetPassword() {
                 </motion.p>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !isValid}>
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
