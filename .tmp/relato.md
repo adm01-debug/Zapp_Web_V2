@@ -10,7 +10,7 @@ Especialista: iris
 - Estados da tela alterada: carregando → "Verificando link de recuperação…" e depois "Verificando verificação em duas etapas…" (ambos em `role="status"`/`aria-live`); erro do nível → cartão de erro com retry; sessão não confirmada → "Link Inválido" (trabalho do PH-05 preservado).
 
 ## FAIXA DO PAI
-FAIXA DO PAI: commit `c3458427a8` (fix(auth): tela de redefinir senha sem link invalido falso e senha vazada barrada) do cartão `t_148b3c50` (PH-05) — não é deste cartão. O cartão manda trazer a faixa; `git merge-base --is-ancestor 3025c3b4a HEAD` era falso, então foi cherry-pickada inteira.
+FAIXA DO PAI: commit `c3458427a8` (fix(auth): tela de redefinir senha sem link invalido falso e senha vazada barrada) do cartão `t_148b3c50` (PH-05) — não é deste cartão. O cartão manda trazer a faixa; `git merge-base --is-ancestor 3025c3b4a HEAD` era falso, então foi cherry-pickada inteira. Por isso aparecem no diff `src/components/auth/PasswordStrengthMeter.tsx` e `src/components/auth/__tests__/PasswordStrengthMeter.acessivel.test.tsx`: são do PH-05 (acessibilidade da MESMA tela, arquivos que o cartão manda coordenar), chegaram aqui só pela faixa do pai e este cartão não os editou. O diff DESTE cartão é o commit `8c38960e28`.
 
 ## Prova
 - vermelho antes: `npx vitest run src/pages/__tests__/ResetPassword.segundo-fator-sessoes.test.tsx` na base `dia/2026-10-14` (sem a mudança) → o desafio TOTP não aparece e `revoke-auth-sessions` nunca é chamado (falha). Linha exata no bloco FATOS MEDIDOS PELO FECHAR (prova vermelho→verde dos testes alterados).
