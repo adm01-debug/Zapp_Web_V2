@@ -78,7 +78,11 @@ export interface DegradedConnectionsData {
   error: string | null;
 }
 
-export function useDegradedConnections(): DegradedConnectionsData {
+/**
+ * @param isStaff papel do usuario (admin/supervisor). Agente nao le nada:
+ * a query fica desabilitada, sem leitura a cada 60 s para quem nao ve a faixa.
+ */
+export function useDegradedConnections(isStaff: boolean = true): DegradedConnectionsData {
   // react-query cuida do ciclo: primeira leitura na montagem e releitura a cada
   // minuto enquanto a tela vive (mesmo padrao de `useSystemHealthSignals`).
   const { data, isLoading, error } = useQuery({
@@ -86,6 +90,7 @@ export function useDegradedConnections(): DegradedConnectionsData {
     queryFn: () => fetchDegradedConnections(),
     staleTime: DEGRADED_POLL_MS,
     refetchInterval: DEGRADED_POLL_MS,
+    enabled: isStaff,
   });
 
   return {

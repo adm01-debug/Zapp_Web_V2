@@ -16,13 +16,27 @@ const h = vi.hoisted(() => ({
     checking: false,
     checkNow: vi.fn(),
   },
+  useDegraded: vi.fn((_staff: boolean) => ({})),
 }));
 
 vi.mock('@/hooks/connections/useDegradedConnections', () => ({
-  useDegradedConnections: () => ({ degraded: h.degraded, loading: false, error: null }),
+  useDegradedConnections: (isStaff?: boolean) =>
+    h.useDegraded(isStaff ?? true) as unknown as {
+      degraded: typeof h.degraded;
+      loading: boolean;
+      error: null;
+    },
 }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => h.role }));
 vi.mock('@/hooks/system/useBackendHealth', () => ({ useBackendHealth: () => h.backend }));
+
+beforeEach(() => {
+  h.useDegraded.mockImplementation(() => ({
+    degraded: h.degraded,
+    loading: false,
+    error: null,
+  }));
+});
 
 describe('DegradedConnectionsBanner (numero instavel)', () => {
   beforeEach(() => {
@@ -80,6 +94,19 @@ describe('DegradedConnectionsBanner (numero instavel)', () => {
 
     expect(screen.queryByTestId('degraded-connections-open')).not.toBeInTheDocument();
   });
+
+  it('passa o papel ao hook: staff lê, agente nao dispara leitura', () => {
+    h.degraded = [{ id: 'c1', label: 'VENDAS-01', lastHealthCheck: Date.now() }];
+    h.role = { isSupervisor: true };
+    render(<DegradedConnectionsBanner />);
+    expect(h.useDegraded).toHaveBeenCalledWith(true);
+
+    h.useDegraded.mockClear();
+    h.role = { isSupervisor: false };
+    render(<DegradedConnectionsBanner />);
+    expect(h.useDegraded).toHaveBeenCalledWith(false);
+    h.role = { isSupervisor: true };
+  });
 });
 
 describe('BackendStatusBanner (servidor)', () => {
@@ -127,6 +154,19 @@ describe('BackendStatusBanner (servidor)', () => {
     render(<BackendStatusBanner />);
 
     expect(screen.queryByTestId('backend-status-banner')).not.toBeInTheDocument();
+  });
+
+  it('navegador offline: a faixa de servidor nao aparece (o aviso de rede e o dono da tela)', () => {
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false });
+    try {
+      h.backend = { status: 'down', restored: false, checking: false, checkNow: vi.fn() };
+      render(<BackendStatusBanner />);
+
+      expect(screen.queryByTestId('backend-status-banner')).not.toBeInTheDocument();
+      expect(screen.queryByText('Servidor indisponível, tentando reconectar…')).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true });
+    }
   });
 });
 

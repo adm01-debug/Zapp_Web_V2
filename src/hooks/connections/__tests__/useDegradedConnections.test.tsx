@@ -153,4 +153,18 @@ describe('useDegradedConnections (wiring do react-query)', () => {
     await waitFor(() => expect(result.current.error).toBe('offline'));
     expect(result.current.degraded).toEqual([]);
   });
+
+  it('nao-staff nao dispara leitura nenhuma (query desabilitada)', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(AGORA);
+
+    const { result } = renderHook(() => useDegradedConnections(false), { wrapper: createWrapper() });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DEGRADED_POLL_MS + 1);
+    });
+    expect(h.calls).toBe(0);
+    expect(result.current.degraded).toEqual([]);
+    expect(result.current.error).toBeNull();
+  });
 });

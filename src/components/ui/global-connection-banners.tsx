@@ -18,7 +18,18 @@
  *      (`whatsapp_connections.status = 'disconnected'`). Assim "instavel" e
  *      saude degradada, sem aviso duplicado. So para staff (`admin`/`supervisor`,
  *      o mesmo gate da entrada Conexoes da Sidebar) e com atalho para Conexoes.
- */
++ *
+* Exclusividade mutua (criterio de pronto 1: o usuario sempre sabe se o
+* problema e a rede, o servidor ou o numero):
+* - Navegador offline (`navigator.onLine === false`) => so o `OfflineIndicator`
+*   ("Voce esta offline") aparece; a faixa de SERVIDOR se cala (o problema e a
+*   rede, nao o servidor). Quando o navegador volta, o monitor ja reage.
+* - "Conexao restaurada" do SERVIDOR (`backend-restored`: o Supabase voltou a
+*   responder) nao e o "Conexao restaurada" do NAVEGADOR (`ConnectionToast` em
+*   offline-indicator.tsx: o browser voltou a ter internet). Fontes diferentes,
+*   `data-testid` diferentes, textos de apoio diferentes.
+*/
+import { useSyncExternalStore } from 'react';
 import { AlertTriangle, RefreshCw, ServerCrash, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDegradedConnections } from '@/hooks/connections/useDegradedConnections';
@@ -31,8 +42,10 @@ interface DegradedConnectionsBannerProps {
 }
 
 export function DegradedConnectionsBanner({ onOpenConnections }: DegradedConnectionsBannerProps) {
-  const { degraded } = useDegradedConnections();
   const { isSupervisor } = useUserRole();
+  // O papel entra no hook: agente nao dispara leitura nenhuma (query
+  // desabilitada), em vez de ler a cada 60 s para esconder o resultado.
+  const { degraded } = useDegradedConnections(isSupervisor);
 
   if (!isSupervisor || degraded.length === 0) return null;
 
@@ -43,8 +56,12 @@ export function DegradedConnectionsBanner({ onOpenConnections }: DegradedConnect
 
   return (
     <div
+      // So staff (admin/supervisor, o mesmo gate da entrada Conexoes): o hook
+      // ja nao le nada para agente, e aqui o gate visual garante de novo.
       data-testid="degraded-connections-banner"
       role="region"
+      // Janela de 10 min (DEGRADED_WINDOW_MS): saude 'degraded' com
+      // last_health_check recente. Fora da janela nao entra (sem relogio).
       aria-label="Conexões instáveis do WhatsApp"
       aria-live="polite"
       // Contraste: `bg-amber-500` + `text-amber-950` da 6.96:1 (WCAG AA para
@@ -70,8 +87,29 @@ export function DegradedConnectionsBanner({ onOpenConnections }: DegradedConnect
   );
 }
 
+/** Rede do NAVEGADOR (distinta da saude do servidor): offline => o dono da tela e o `OfflineIndicator`. */
+function useBrowserOnline(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      window.addEventListener('online', notify);
+      window.addEventListener('offline', notify);
+      return () => {
+        window.removeEventListener('online', notify);
+        window.removeEventListener('offline', notify);
+      };
+    },
+    () => navigator.onLine,
+    () => navigator.onLine,
+  );
+}
+
 export function BackendStatusBanner() {
   const { status, restored, checking, checkNow } = useBackendHealth();
+  const browserOnline = useBrowserOnline();
+
+  // Mutuamente exclusivo com o aviso de rede: sem internet no navegador, o
+  // problema e a rede (faixa do OfflineIndicator), nao o servidor.
+  if (!browserOnline) return null;
 
   if (status === 'up' && restored) {
     return (
