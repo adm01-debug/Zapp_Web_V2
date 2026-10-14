@@ -1,18 +1,42 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
-import { Mail, Search, RefreshCw, Pencil, Inbox, Star, Send as SendIcon, MailOpen, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Mail, Search, RefreshCw, Pencil, Inbox, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
 import { EmailThreadView } from './EmailThreadView';
 import { EmailComposer } from './EmailComposer';
 import { ThreadListItem } from './ThreadListItem';
+import { GmailLabelSidebar } from './GmailLabelSidebar';
+
+const FOLDER_URL_PARAM = 'pasta';
+
+/** Pasta selecionada na URL (`?pasta=`); sem parâmetro, Inbox. */
+function readFolderFromUrl(): string {
+  return new URLSearchParams(window.location.search).get(FOLDER_URL_PARAM) || 'INBOX';
+}
+
+/**
+ * A thread pertence à pasta? `UNREAD`/`STARRED`/`IMPORTANT` têm flag própria na
+ * linha; as demais (system e marcadores) valem pelo `gmail_label_id` em `label_ids`.
+ */
+function threadMatchesFolder(thread: EmailThread, folderId: string): boolean {
+  switch (folderId) {
+    case 'UNREAD':
+      return Boolean(thread.is_unread);
+    case 'STARRED':
+      return Boolean(thread.is_starred);
+    case 'IMPORTANT':
+      return Boolean(thread.is_important);
+    default:
+      return Boolean(thread.label_ids?.includes(folderId));
+  }
+}
 
 export default function GmailInboxView() {
   // OTH-005: esta tela legada ainda filtra o conjunto completo em memoria (abas e busca
@@ -20,28 +44,42 @@ export default function GmailInboxView() {
   const {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts,
     threads, threadsLoading, threadsError, refetchThreads,
-    labels, syncInbox, unreadCount, starredCount, subscribeToThreads,
+    labels, syncInbox, unreadCount, subscribeToThreads,
   } = useGmail(undefined, null, { ...EMAIL_THREAD_DEFAULT_FILTERS, page: 1, full: true });
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showComposer, setShowComposer] = useState(false);
-  const [activeTab, setActiveTab] = useState('inbox');
+  const [activeLabel, setActiveLabel] = useState<string>(readFolderFromUrl);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => { const unsub = subscribeToThreads(); return unsub; }, [subscribeToThreads]);
 
+  // Voltar/avançar do navegador restaura a pasta da URL.
+  useEffect(() => {
+    const syncFolderFromUrl = () => setActiveLabel(readFolderFromUrl());
+    window.addEventListener('popstate', syncFolderFromUrl);
+    return () => window.removeEventListener('popstate', syncFolderFromUrl);
+  }, []);
+
+  const selectFolder = useCallback((folderId: string) => {
+    setActiveLabel(folderId);
+    const url = new URL(window.location.href);
+    if (folderId === 'INBOX') url.searchParams.delete(FOLDER_URL_PARAM);
+    else url.searchParams.set(FOLDER_URL_PARAM, folderId);
+    window.history.pushState({}, '', url);
+  }, []);
+
   const filteredThreads = useMemo(() => {
-    let result = threads;
-    if (activeTab === 'starred') result = result.filter(t => t.is_starred);
-    else if (activeTab === 'sent') result = result.filter(t => t.label_ids?.includes('SENT'));
-    else if (activeTab === 'unread') result = result.filter(t => t.is_unread);
+    let result = threads.filter((t) => threadMatchesFolder(t, activeLabel));
     if (statusFilter !== 'all') result = result.filter(t => t.status === statusFilter);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t => t.subject?.toLowerCase().includes(q) || t.snippet?.toLowerCase().includes(q) || t.contact?.name?.toLowerCase().includes(q) || t.contact?.email?.toLowerCase().includes(q));
     }
     return result;
-  }, [threads, activeTab, statusFilter, searchQuery]);
+  }, [threads, activeLabel, statusFilter, searchQuery]);
+
+  // Contagem por pasta vem dos rótulos do hook (`email_labels.message_count`).
 
   // R2-API-059: falha de consulta nao e ausencia de dado. So afirma "nao ha
   // thread" quando a consulta terminou bem com lista vazia; com erro e sem
@@ -99,14 +137,14 @@ export default function GmailInboxView() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="w-full justify-start rounded-none border-b px-3 h-9 bg-transparent">
-          <TabsTrigger value="inbox" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><Inbox className="w-3.5 h-3.5" />Inbox{unreadCount > 0 && <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">{unreadCount}</Badge>}</TabsTrigger>
-          <TabsTrigger value="unread" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><MailOpen className="w-3.5 h-3.5" />Não lidos</TabsTrigger>
-          <TabsTrigger value="starred" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><Star className="w-3.5 h-3.5" />Favoritos{starredCount > 0 && <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">{starredCount}</Badge>}</TabsTrigger>
-          <TabsTrigger value="sent" className="text-xs gap-1 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"><SendIcon className="w-3.5 h-3.5" />Enviados</TabsTrigger>
-        </TabsList>
-        <TabsContent value={activeTab} className="flex-1 mt-0 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+        <GmailLabelSidebar
+          labels={labels}
+          activeLabel={activeLabel}
+          onSelectLabel={selectFolder}
+          className="shrink-0 border-b md:w-56 md:border-b-0 md:border-r"
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
           {threadsStaleWithData && (
             <div role="alert" className="flex items-center gap-2 px-3 py-2 text-xs bg-destructive/10 text-destructive border-b">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
@@ -114,7 +152,7 @@ export default function GmailInboxView() {
               <Button variant="link" size="sm" className="h-6 px-1 text-xs text-destructive" onClick={() => { void refetchThreads?.(); }}>Tentar de novo</Button>
             </div>
           )}
-          <ScrollArea className="h-full">
+          <ScrollArea className="flex-1 min-h-0">
             {threadsLoading ? <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             : threadsFailedWithoutData ? (
               <GenericEmptyState
@@ -127,13 +165,13 @@ export default function GmailInboxView() {
               />
             ) : filteredThreads.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Inbox className="w-12 h-12 mb-3 opacity-20" /><p className="text-sm">{searchQuery ? 'Nenhum email encontrado' : 'Inbox vazio'}</p>
+                <Inbox className="w-12 h-12 mb-3 opacity-20" /><p className="text-sm">{searchQuery ? 'Nenhum email encontrado' : 'Nenhum email nesta pasta'}</p>
                 {!searchQuery && <Button variant="link" size="sm" className="mt-2" onClick={() => syncInbox.mutate({})}>Sincronizar emails</Button>}
               </div>
             ) : <div>{filteredThreads.map((thread) => <ThreadListItem key={thread.id} thread={thread} isSelected={false} onClick={() => setSelectedThread(thread)} />)}</div>}
           </ScrollArea>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       <div className="p-2 border-t flex items-center justify-between text-3xs text-muted-foreground">
         <span className="flex items-center gap-1 min-w-0"><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{activeAccount?.email_address}</span></span>

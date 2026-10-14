@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GmailInboxView from '../GmailInboxView';
-import type { EmailThread, GmailAccount } from '@/hooks/integrations/useGmail';
+import type { EmailThread, GmailAccount, EmailLabel } from '@/hooks/integrations/useGmail';
 
 // framer-motion: AnimatePresence passes through children, motion stubs strip animation props
 const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
@@ -35,30 +35,6 @@ vi.mock('@/components/ui/select', () => ({
 vi.mock('@/components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
-
-// Tabs: Radix portal event system doesn't work in jsdom — use context-based async stub
-vi.mock('@/components/ui/tabs', async () => {
-  const { createContext, useContext, createElement: ce } = await import('react');
-  type TabsCtxType = { value: string; onChange: (v: string) => void };
-  const TabsCtx = createContext<TabsCtxType>({ value: '', onChange: () => {} });
-  return {
-    Tabs: ({ value, onValueChange, children }: { value?: string; onValueChange?: (v: string) => void; children: ReactNode }) =>
-      ce(TabsCtx.Provider, { value: { value: value ?? '', onChange: onValueChange ?? (() => {}) } },
-        ce('div', {}, children)),
-    TabsList: ({ children }: { children: ReactNode }) =>
-      ce('div', { role: 'tablist' }, children),
-    TabsTrigger: ({ value: tabValue, children }: { value: string; children: ReactNode }) => {
-      const ctx = useContext(TabsCtx);
-      return ce('button', {
-        role: 'tab',
-        'aria-selected': ctx.value === tabValue,
-        onClick: () => ctx.onChange(tabValue),
-      }, children);
-    },
-    TabsContent: ({ children }: { children: ReactNode }) =>
-      ce('div', {}, children),
-  };
-});
 
 // Mock EmailThreadView, EmailComposer, ThreadListItem
 vi.mock('@/components/gmail/EmailThreadView', () => ({
@@ -93,6 +69,7 @@ const config: {
   threads: EmailThread[];
   threadsLoading: boolean;
   threadsError: Error | null;
+  labels: EmailLabel[];
   unreadCount: number;
   starredCount: number;
   syncInboxPending: boolean;
@@ -111,6 +88,7 @@ const config: {
   threads: [],
   threadsLoading: false,
   threadsError: null,
+  labels: [],
   unreadCount: 0,
   starredCount: 0,
   syncInboxPending: false,
@@ -132,7 +110,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     threadsLoading: config.threadsLoading,
     threadsError: config.threadsError,
     refetchThreads,
-    labels: [],
+    labels: config.labels,
     unreadCount: config.unreadCount,
     starredCount: config.starredCount,
     syncInbox: { mutate: syncInboxMutate, isPending: config.syncInboxPending },
@@ -147,7 +125,7 @@ function makeThread(overrides: Partial<EmailThread> = {}): EmailThread {
     gmail_account_id: 'a1',
     subject: 'Thread de teste',
     snippet: '',
-    label_ids: [],
+    label_ids: ['INBOX'],
     is_unread: false,
     is_starred: false,
     is_important: false,
@@ -178,9 +156,11 @@ describe('GmailInboxView', () => {
     config.threads = [];
     config.threadsLoading = false;
     config.threadsError = null;
+    config.labels = [];
     config.unreadCount = 0;
     config.starredCount = 0;
     config.syncInboxPending = false;
+    window.history.replaceState({}, '', '/');
     syncInboxMutate.mockClear();
     refetchAccounts.mockClear();
     refetchThreads.mockClear();
@@ -203,30 +183,82 @@ describe('GmailInboxView', () => {
     expect(screen.getByText('Orçamento solicitado')).toBeInTheDocument();
   });
 
-  it('aba Favoritos exibe apenas threads com is_starred=true', async () => {
+  it('pasta Favoritos exibe apenas threads com is_starred=true', async () => {
     config.threads = [
       makeThread({ subject: 'Email normal', is_starred: false }),
       makeThread({ subject: 'Email favorito', is_starred: true }),
     ];
     render(<GmailInboxView />);
-    fireEvent.click(screen.getByRole('tab', { name: /favoritos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /favoritos/i }));
     await waitFor(() => {
       expect(screen.queryByText('Email normal')).not.toBeInTheDocument();
       expect(screen.getByText('Email favorito')).toBeInTheDocument();
     });
   });
 
-  it('aba Não lidos exibe apenas threads com is_unread=true', async () => {
+  it('pasta Não lidos exibe apenas threads com is_unread=true', async () => {
     config.threads = [
       makeThread({ subject: 'Email lido', is_unread: false }),
       makeThread({ subject: 'Email nao lido', is_unread: true }),
     ];
     render(<GmailInboxView />);
-    fireEvent.click(screen.getByRole('tab', { name: /não lidos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /não lidos/i }));
     await waitFor(() => {
       expect(screen.queryByText('Email lido')).not.toBeInTheDocument();
       expect(screen.getByText('Email nao lido')).toBeInTheDocument();
     });
+  });
+
+  it('pasta Spam exibe só threads com o rótulo SPAM em label_ids', async () => {
+    config.threads = [
+      makeThread({ subject: 'Email da caixa' }),
+      makeThread({ subject: 'Oferta suspeita', label_ids: ['SPAM'] }),
+    ];
+    render(<GmailInboxView />);
+    expect(screen.queryByText('Oferta suspeita')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /spam/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Oferta suspeita')).toBeInTheDocument();
+      expect(screen.queryByText('Email da caixa')).not.toBeInTheDocument();
+    });
+  });
+
+  it('marcador personalizado do hook aparece na barra e filtra a lista', async () => {
+    config.labels = [
+      { id: 'l1', gmail_label_id: 'Label_9', name: 'Clientes VIP', label_type: 'user', color: '#7c3aed', message_count: 0, unread_count: 0 },
+    ];
+    config.threads = [
+      makeThread({ subject: 'Thread comum' }),
+      makeThread({ subject: 'Thread marcada', label_ids: ['INBOX', 'Label_9'] }),
+    ];
+    render(<GmailInboxView />);
+    fireEvent.click(screen.getByRole('button', { name: /clientes vip/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Thread marcada')).toBeInTheDocument();
+      expect(screen.queryByText('Thread comum')).not.toBeInTheDocument();
+    });
+  });
+
+  it('a pasta selecionada vai para a URL e carrega aria-current', async () => {
+    config.threads = [makeThread({ subject: 'Thread antiga', label_ids: ['TRASH'] })];
+    render(<GmailInboxView />);
+    fireEvent.click(screen.getByRole('button', { name: /lixeira/i }));
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).get('pasta')).toBe('TRASH');
+      expect(screen.getByRole('button', { name: /lixeira/i })).toHaveAttribute('aria-current', 'page');
+    });
+  });
+
+  it('abre já na pasta indicada pela URL', () => {
+    window.history.replaceState({}, '', '/?pasta=IMPORTANT');
+    config.threads = [
+      makeThread({ subject: 'Importante', is_important: true }),
+      makeThread({ subject: 'Comum', is_important: false }),
+    ];
+    render(<GmailInboxView />);
+    expect(screen.getByText('Importante')).toBeInTheDocument();
+    expect(screen.queryByText('Comum')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /importantes/i })).toHaveAttribute('aria-current', 'page');
   });
 
   it('busca filtra threads pelo assunto', async () => {
