@@ -205,7 +205,7 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
             exit 0
           fi
-          curl -sf -X DELETE \
+          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
             -H "apikey: $SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
@@ -222,13 +222,17 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
+          # W77: link para o run e para o artifact redigido, sem imprimir secrets
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
-            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+            const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
               `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
             );
-            const titulo = process.env.TITULO;
-            const nomes = nomesDeTestResults('test-results');
+            const nomesDeTitulo = nomesDeTestResults('test-results');
+            // W80: título varia por causa — "login E2E falhou" vs "Suíte logada quebrada"
+            const titulo = tituloDe(nomesDeTitulo);
+            const nomes = nomesDeTitulo;
             const marcador = marcadorDe(nomes);
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -238,9 +242,11 @@ jobs:
             });
             const issue = abertas.find((i) => i.title === titulo);
 
+            const runUrl = process.env.RUN_URL;
+            const rodape = `\n\n---\n[Log do run](${runUrl}) · [Artifact](${runUrl}#artifacts)`;
             if (!issue) {
               await github.rest.issues.create({
-                owner, repo, title: titulo, body: `${corpoDe(nomes)}\n\n${marcador}`,
+                owner, repo, title: titulo, body: `${corpoDe(nomes)}${rodape}\n\n${marcador}`,
               });
               core.info(`issue aberta com ${nomes.length} teste(s) quebrado(s)`);
               return;
@@ -258,7 +264,7 @@ jobs:
             }
             await github.rest.issues.createComment({
               owner, repo, issue_number: issue.number,
-              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}\n\n${marcador}`,
+              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}${rodape}\n\n${marcador}`,
             });
             core.info('comentario novo: a causa mudou');
 

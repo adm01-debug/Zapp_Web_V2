@@ -180,6 +180,10 @@ jobs:
       - name: 📋 Check test inventory (todo .test.ts/.test.sh tem passo no CI YAML)
         run: node scripts/ci/check-test-inventory.mjs
 
+      # W78: verifica prazos da quarentena da suíte E2E -- item vencido derruba o CI
+      - name: 🔒 Check E2E quarantine expiry
+        run: node scripts/ci/check-quarantine.mjs
+
       - name: 🧾 Verify Talk X V4 placar freshness (aviso)
         # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
         # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o
