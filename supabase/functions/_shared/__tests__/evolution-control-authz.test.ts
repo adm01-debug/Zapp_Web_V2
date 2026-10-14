@@ -59,14 +59,37 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
   assert(SEND_ACTIONS.has("offer-call"));
 });
 
-Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", () => {
+Deno.test("classifyEvolutionAction - leituras com consumidor no front seguem liberadas a autenticados", () => {
   for (const action of [
-    "status", "get-settings", "get-webhook", "find-chats", "list-instances",
-    "fetch-profile", "instance-info", "list-groups", "invite-info",
-    "check-numbers", "get-catalog", "find-templates", "typebot-sessions",
+    "status", "get-settings", "get-webhook", "find-status-messages",
+    "list-instances", "fetch-profile", "instance-info", "list-groups",
+    "group-info", "invite-info", "fetch-business-profile", "find-labels",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
+  }
+});
+
+Deno.test("classifyEvolutionAction - leituras SEM tela consumidora viram control (agent 403, admin 200)", () => {
+  // get-* de integração devolvem credenciais configuradas (apiKey/secret) e as
+  // consultas abaixo não têm nenhuma tela de atendente consumidora (prova por
+  // `git grep` em src/). Antes eram 'read' — qualquer autenticado as disparava.
+  for (const action of [
+    "get-chatwoot", "get-typebot", "typebot-sessions", "get-openai",
+    "get-dify", "get-flowise", "get-evolution-bot", "get-rabbitmq", "get-sqs",
+    "get-proxy", "get-evoai", "get-n8n", "get-kafka", "get-nats", "get-pusher",
+    "find-chats", "find-messages", "find-templates", "find-contacts",
+    "get-catalog", "get-collections", "get-media-base64", "check-numbers",
+    "group-participants",
+  ]) {
+    assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
+    assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
+    assert(!READ_ACTIONS.has(action), `${action} não pode estar em READ_ACTIONS`);
+    // Agente sem papel: 403. Admin/supervisor: conserva a operação.
+    const denied = decideControlAuthz(false);
+    assertEquals(denied.status, 403);
+    assert(!denied.allowed, `${action}: agent deve ser negado`);
+    assert(decideControlAuthz(true).allowed, `${action}: admin deve passar`);
   }
 });
 
