@@ -1,27 +1,23 @@
-Especialista: workertestes
+Especialista: iris
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+- `src/services/navigation.service.ts`: nova visão `supervisao` (STAFF_ROLES = admin, supervisor), rótulo "Supervisão", no grupo `Sistema`, logo antes de `admin` — as ferramentas do supervisor estavam presas atrás de `admin`, que é ADMIN_ONLY, e a própria navegação negava a entrada ao supervisor (`canAccess('admin', ['supervisor']) === false`).
+- `src/pages/lazyViews.ts` + `src/pages/ViewRouter.tsx`: `SupervisaoView` preguiçosa e a rota `?view=supervisao` no `VIEW_MAP` (mesmo padrão das demais telas; não há rota nem item de menu duplicado).
+- `src/components/admin/SupervisaoView.tsx` (novo): a tela da visão, com as abas **Filas** (a fila de atendimento do produto, `QueuesView` — o mesmo item `queues` do menu, que já é STAFF), **Copiloto IA**, **Sala de Crise**, **Playbooks** e **Treinamento**. Cada aba vai dentro de `SectionErrorBoundary`, como no `AdminView`. Porta fechada para quem não é supervisor/admin (tela "Acesso Restrito") e espera o papel carregar antes de decidir.
+- `src/components/admin/AdminView.tsx`: saíram as abas Copiloto IA, Sala de Crise, Playbooks e Treinamento (com os imports e o tipo de `activeTab`); o painel `admin` ficou com Usuários, Auditoria e CRM 360°.
+- Testes: `navigation.service.test.ts` (supervisor acessa `supervisao`, admin acessa, atendente não, `admin` continua só do admin, item único no menu), `SupervisaoView.test.tsx` (novo: as cinco abas e cada ferramenta entregue; atendente barrado; papel carregando não libera), `ViewRouter.supervisao-gate.test.tsx` (novo: a rota entrega a visão a supervisor e admin, bloqueia o atendente e mantém `admin` fechada ao supervisor) e `AdminView.section-error-boundary.test.tsx` (o isolamento de bloco agora é provado na Auditoria, e o teste novo afirma que as abas do supervisor não existem mais no Admin).
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+
+- vermelho antes (os 3 arquivos de teste rodados contra a base do dia, sem a mudança): `npx vitest run src/services/__tests__/navigation.service.test.ts src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx src/pages/__tests__/ViewRouter.supervisao-gate.test.tsx` → `Test Files  3 failed (3); Tests  8 failed | 19 passed (27)` (ex.: `expect(screen.queryByRole('button', { name: /Playbooks/ })).toBeNull()` devolvendo o botão Playbooks do AdminView; `getViewLabel('supervisao')` sem item na base — `grep -c supervisao` na `navigation.service.ts` do HEAD = 0; `SupervisaoView.tsx` não existia no HEAD, `git show HEAD:src/components/admin/SupervisaoView.tsx` = "exists on disk, but not in 'HEAD'").
+- verde depois: `npx vitest run src/services/__tests__/navigation.service.test.ts src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx src/components/admin/__tests__/SupervisaoView.test.tsx src/pages/__tests__/ViewRouter.supervisao-gate.test.tsx` → `Test Files  4 passed (4); Tests  32 passed (32)`.
+- regressão da área vizinha: `npx vitest run src/components/admin/__tests__ src/components/layout src/__tests__/pwa-manifest-shortcuts.test.ts src/hooks/system/__tests__/useCurrentModule.test.ts` → `Test Files  28 passed (28); Tests  127 passed (127)`.
+- Treinamento (conferido antes de mexer): `grep -rn "TrainingMode" src` só aparecia no `AdminView` (e no teste dele) — ou seja, o atendente **não** tinha aba própria de Treinamento hoje (a única porta era `AdminView`, atrás de ADMIN_ONLY), logo não havia acesso de atendente a preservar; agora ele é alcançável por supervisor e admin pela visão `supervisao`.
+- commit: `feat(nav): visao supervisao para as ferramentas do supervisor` (9 arquivos, 376 inserções / 37 remoções); lint ratchet do pre-commit: `baseline=0, atual=0, novas=0`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+
+- **"Fila" da visão = o item `queues` ("Filas") que o sistema já tem**: o `AdminView` nunca teve aba de fila. Encaixei a tela de filas existente (`QueuesView`) como aba "Filas"; não criei rota nem item de menu novo (o cartão proíbe item duplicado).
+- **CRM 360° ficou no `admin`**: o cartão não deu destino a essa aba e ela não está na lista de ferramentas de supervisão (Copiloto, Sala de Crise, Playbooks, Treinamento). Tirá-la do `admin` reduziria o que o admin vê hoje (critério 2, "permissões de `admin` intactos") e deixaria o `AdminCRMDashboard` sem nenhuma tela que o monte. Se a intenção era tirá-la também, é um ajuste de uma linha — digam no cartão.
+- Nada fora dos arquivos citados foi tocado; nenhuma dependência, migration ou banco (não há DDL neste cartão).
