@@ -30,7 +30,12 @@ export function useSendTeamMessage() {
         media_path: mediaPath || null,
       }).select().single();
       if (error) throw error;
-      await supabase.from('team_conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId);
+      // Sem `update team_conversations.updated_at` aqui: o trigger
+      // `after_team_message_insert_bump_conversation` (migration
+      // 20260927270001) já copia `NEW.created_at` para `updated_at` no próprio
+      // INSERT. A escrita anterior era redundante e, para quem não criou a
+      // conversa, um no-op silencioso — a policy de UPDATE filtra a linha sem
+      // erro (o inbox é ordenado por `updated_at`, e é o trigger que o move).
       return data;
     },
     onSuccess: (_, vars) => {

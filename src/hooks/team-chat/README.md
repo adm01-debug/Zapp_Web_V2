@@ -16,7 +16,9 @@ a partir do payload. `useTeamTyping` fala por `broadcast` (`typing`) e
 `useTeamPresence` por `presence` (chave = id do usuário).
 A publicação realtime do banco tem `team_messages`, `team_message_reactions`,
 `team_message_receipts` e `team_conversation_members`; `team_conversations` fica
-fora (o `updated_at` é atualizado pelas mutações do próprio módulo).
+fora (o `updated_at` é atualizado pelo trigger
+`after_team_message_insert_bump_conversation` no INSERT de `team_messages`; nenhuma
+mutação do módulo escreve nessa coluna).
 
 ## Fonte de dados por hook
 
@@ -37,7 +39,6 @@ Storage.
 | `useTeamMessageReactions`          | `useTeamMessageReactions.ts` | rpc     | `toggle_team_reaction`                 |
 | `useTeamMessageReactions`          | `useTeamMessageReactions.ts` | canal   | `team-reactions-<conversationId>`      |
 | `useSendTeamMessage`               | `useTeamChatMutations.ts`    | tabela  | `team_messages`                        |
-| `useSendTeamMessage`               | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
 | `useDeleteTeamMessage`             | `useTeamChatMutations.ts`    | tabela  | `team_messages`                        |
 | `useEditTeamMessage`               | `useTeamChatMutations.ts`    | tabela  | `team_messages`                        |
 | `useCreateTeamConversation`        | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
