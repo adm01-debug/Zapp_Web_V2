@@ -1,10 +1,5 @@
 -- lgpd_requests
--- Rollback: a migration so cria objetos novos; derruba a tabela data_deletion_requests (leva junto
--- Rollback (policies, trigger, indices e GRANTs) e as duas funcoes. audit_logs e intocado.
--- Rollback (SQL executável, na ordem):
---   drop function if exists public.register_privacy_policy_viewed();
---   drop function if exists public.my_privacy_history(integer);
---   drop table if exists public.data_deletion_requests;
+-- Rollback: drop function if exists public.register_privacy_policy_viewed(); drop function if exists public.my_privacy_history(integer); drop table if exists public.data_deletion_requests;
 --
 -- LGPD (paridade V3 -> V2, doc 01-frontend da V3):
 --   O pedido de exclusao da V2 so chamava log_audit_event: nao havia fila, entao o
@@ -13,9 +8,15 @@
 --   Esta migration e ADITIVA e cria:
 --     1. public.data_deletion_requests — a fila de pedidos de exclusao. O titular ve e
 --        cria os seus; admin e supervisor (is_admin_or_supervisor -> user_roles) veem e
---        tratam todos. Status identico ao da V3: pending/processing/completed/failed.
---        DELETE nao e concedido a ninguem pela API (default deny): o pedido e trilha de
---        compliance e nao se apaga.
+--        tratam todos. Status DO CARTAO: aberto/em_analise/concluido/recusado
+--        (default aberto). DELETE nao e concedido a ninguem pela API (default deny):
+--        o pedido e trilha de compliance e nao se apaga.
+--        INSERT do titular travado em duas camadas: a policy exige user_id proprio,
+--        status aberto e tratado_por/tratado_em/resposta nulos; o GRANT de INSERT do
+--        papel authenticated cobre so (user_id, motivo, status), entao prazo (sai do
+--        default criado + 30 dias) e campos de tratamento nao podem ser forjados.
+--        UPDATE do papel authenticated cobre so (status, tratado_por, tratado_em,
+--        resposta): user_id e motivo sao imutaveis depois de criados.
 --     2. public.my_privacy_history(p_pagina) — historico do PROPRIO usuario (SECURITY
 --        DEFINER porque audit_logs e admin-only), devolvendo so acao e data, paginado
 --        de 20 em 20. Nunca devolve details/entity de terceiros.
@@ -23,6 +24,9 @@
 --        'privacy_policy_viewed' para o usuario logado (audit_logs so aceita INSERT de
 --        service_role, por isso a funcao DEFINER). Sem dado pessoal no evento.
 --   Nenhuma tabela existente e tocada; nenhum GRANT existente e alterado.
+--   O bloco C do teste extrai a linha 2 acima e a executa: ela derruba so o que esta
+--   migration criou (tabela com policies, triggers, indices e GRANTs, mais as duas
+--   funcoes); audit_logs fica intacto.
 
 -- ============================================================================
 -- 1. Fila de pedidos de exclusao
@@ -32,7 +36,7 @@ create table if not exists public.data_deletion_requests (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
   motivo      text not null,
-  status      text not null default 'pending',
+  status      text not null default 'aberto',
   prazo       timestamptz not null default (now() + interval '30 days'),
   tratado_por uuid references auth.users (id) on delete set null,
   tratado_em  timestamptz,
@@ -42,11 +46,11 @@ create table if not exists public.data_deletion_requests (
   constraint data_deletion_requests_motivo_check
     check (char_length(btrim(motivo)) between 1 and 1000),
   constraint data_deletion_requests_status_check
-    check (status in ('pending', 'processing', 'completed', 'failed'))
+    check (status in ('aberto', 'em_analise', 'concluido', 'recusado'))
 );
 
 comment on table public.data_deletion_requests is
-  'LGPD: fila de pedidos de exclusao de dados. Titular cria/ve os proprios; admin e supervisor tratam. Status: pending/processing/completed/failed.';
+  'LGPD: fila de pedidos de exclusao de dados. Titular cria/ve os proprios; admin e supervisor tratam. Status: aberto/em_analise/concluido/recusado.';
 comment on column public.data_deletion_requests.prazo is
   'Prazo de tratamento: criado + 30 dias.';
 comment on column public.data_deletion_requests.tratado_por is
@@ -75,7 +79,13 @@ create policy data_deletion_requests_select on public.data_deletion_requests
 drop policy if exists data_deletion_requests_insert on public.data_deletion_requests;
 create policy data_deletion_requests_insert on public.data_deletion_requests
   for insert to authenticated
-  with check (user_id = (select auth.uid()));
+  with check (
+    user_id = (select auth.uid())
+    and status = 'aberto'
+    and tratado_por is null
+    and tratado_em is null
+    and resposta is null
+  );
 
 drop policy if exists data_deletion_requests_update on public.data_deletion_requests;
 create policy data_deletion_requests_update on public.data_deletion_requests
@@ -84,7 +94,9 @@ create policy data_deletion_requests_update on public.data_deletion_requests
   with check (public.is_admin_or_supervisor((select auth.uid())));
 
 revoke all on table public.data_deletion_requests from public, anon;
-grant select, insert, update on table public.data_deletion_requests to authenticated;
+grant select on table public.data_deletion_requests to authenticated;
+grant insert (user_id, motivo, status) on table public.data_deletion_requests to authenticated;
+grant update (status, tratado_por, tratado_em, resposta) on table public.data_deletion_requests to authenticated;
 grant select, insert, update, delete on table public.data_deletion_requests to service_role;
 
 -- ============================================================================

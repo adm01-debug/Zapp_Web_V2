@@ -8,9 +8,10 @@
 #   BLOCO A — estado ANTERIOR (defeito): nao existe fila (o pedido so vira log) e
 #             audit_logs continua admin-only (o titular nao ve o proprio historico).
 #   BLOCO B — migration aplicada: titular cria/ve os seus pedidos (nao os de terceiros,
-#             nao atualiza nem apaga), admin e supervisor veem e tratam todos, status
-#             preso ao CHECK da V3, historico paginado sem dado de terceiros e evento
-#             privacy_policy_viewed gravado.
+#             nao atualiza nem apaga, nao forja status nem campos de tratamento),
+#             admin e supervisor veem e tratam todos, status preso ao CHECK do cartao
+#             ('aberto'|'em_analise'|'concluido'|'recusado'), historico paginado sem
+#             dado de terceiros e evento privacy_policy_viewed gravado.
 #   BLOCO C — rollback extraido do cabecalho da migration roda e derruba so o que ela criou.
 
 set -Eeuo pipefail
@@ -45,6 +46,11 @@ as_anon() {
   docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
     -c "SET ROLE anon; $sql"
 }
+as_service() {
+  local sql="$1"
+  docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET ROLE service_role; $sql"
+}
 expect_value() {
   local l="$1" e="$2" s="$3" a
   a="$(psql_sql "$s" | tail -n1)"
@@ -68,6 +74,13 @@ expect_error_as() {
 expect_error_anon() {
   local l="$1" needle="$2" s="$3" out st
   set +e; out="$(as_anon "$s" 2>&1)"; st=$?; set -e
+  (( st == 0 )) && { printf '%s\n' "$out" >&2; fail "$l: deveria falhar, mas passou"; }
+  [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
+  printf '[PASS] %s\n' "$l"
+}
+expect_error_service() {
+  local l="$1" needle="$2" s="$3" out st
+  set +e; out="$(as_service "$s" 2>&1)"; st=$?; set -e
   (( st == 0 )) && { printf '%s\n' "$out" >&2; fail "$l: deveria falhar, mas passou"; }
   [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$l"
@@ -208,7 +221,18 @@ psql_file "$tmp_dir/seed.sql" >/dev/null
 # --- fila: titular cria e ve o que e seu ---
 expect_ok_as 'B.1 titular cria o proprio pedido de exclusao' "$ANA" \
   "INSERT INTO public.data_deletion_requests (user_id, motivo) VALUES ('11111111-1111-1111-1111-111111111111', 'quero excluir minha conta e meus dados');"
-expect_value 'B.2 pedido nasceu pending (default da V3)' 'pending' \
+# --- fila: titular nao forja o proprio pedido (recusa rodada 1) ---
+expect_error_as 'B.2a titular NAO cria pedido ja concluido (status forjado)' 'row-level security' "$ANA" \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, status) VALUES ('11111111-1111-1111-1111-111111111111', 'forjando status', 'completed');"
+expect_error_as 'B.2b titular NAO cria pedido com tratado_por preenchido' 'permission denied' "$ANA" \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, tratado_por) VALUES ('11111111-1111-1111-1111-111111111111', 'forjando tratamento', '33333333-3333-3333-3333-333333333333');"
+expect_error_as 'B.2c titular NAO cria pedido com prazo forjado' 'permission denied' "$ANA" \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, prazo) VALUES ('11111111-1111-1111-1111-111111111111', 'forjando prazo', now() + interval '1 day');"
+expect_error_as 'B.2d titular NAO cria pedido com resposta preenchida' 'permission denied' "$ANA" \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, resposta) VALUES ('11111111-1111-1111-1111-111111111111', 'forjando resposta', 'ok');"
+expect_error_as 'B.2e titular NAO cria pedido com tratado_em preenchido' 'permission denied' "$ANA" \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, tratado_em) VALUES ('11111111-1111-1111-1111-111111111111', 'forjando data', now());"
+expect_value 'B.2 pedido nasceu aberto (default do cartao)' 'aberto' \
   "SELECT status FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
 expect_value 'B.3 prazo = criado + 30 dias' 't' \
   "SELECT (prazo - created_at) BETWEEN interval '29 days 23 hours' AND interval '30 days 1 hour' FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
@@ -227,18 +251,24 @@ expect_value_as 'B.8 supervisor tambem ve a fila (pedido da auditoria 12/10)' '1
   "SELECT count(*) FROM public.data_deletion_requests;"
 
 expect_ok_as 'B.9 titular tenta concluir o proprio pedido (UPDATE invisivel, nao autorizado)' "$ANA" \
-  "UPDATE public.data_deletion_requests SET status='completed', tratado_em=now() WHERE user_id='11111111-1111-1111-1111-111111111111';"
-expect_value_as 'B.10 ...e o pedido segue pending: o titular nao trata a fila' 'pending' "$CHEFE" \
+  "UPDATE public.data_deletion_requests SET status='concluido', tratado_em=now() WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_value_as 'B.10 ...e o pedido segue aberto: o titular nao trata a fila' 'aberto' "$CHEFE" \
   "SELECT status FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
 
 expect_ok_as 'B.11 agente comum tenta tratar pedido alheio (UPDATE invisivel, sem policy)' "$BRUNO" \
-  "UPDATE public.data_deletion_requests SET status='completed' WHERE user_id='11111111-1111-1111-1111-111111111111';"
-expect_value_as 'B.12 ...e o pedido alheio segue pending: so admin/supervisor tratam' 'pending' "$CHEFE" \
+  "UPDATE public.data_deletion_requests SET status='concluido' WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_value_as 'B.12 ...e o pedido alheio segue aberto: so admin/supervisor tratam' 'aberto' "$CHEFE" \
   "SELECT status FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
 
 expect_ok_as 'B.13 admin trata o pedido (status + tratado_por + resposta)' "$CHEFE" \
-  "UPDATE public.data_deletion_requests SET status='completed', tratado_por='33333333-3333-3333-3333-333333333333', tratado_em=now(), resposta='dados removidos' WHERE user_id='11111111-1111-1111-1111-111111111111';"
-expect_value 'B.14 status concluido gravado' 'completed' \
+  "UPDATE public.data_deletion_requests SET status='concluido', tratado_por='33333333-3333-3333-3333-333333333333', tratado_em=now(), resposta='dados removidos' WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_error_as 'B.13b admin NAO troca o dono do pedido (user_id imutavel)' 'permission denied' "$CHEFE" \
+  "UPDATE public.data_deletion_requests SET user_id='22222222-2222-2222-2222-222222222222' WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_error_as 'B.13c admin NAO reescreve o motivo do pedido (motivo imutavel)' 'permission denied' "$CHEFE" \
+  "UPDATE public.data_deletion_requests SET motivo='motivo reescrito' WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_value 'B.13d pedido intacto apos as tentativas (dono e motivo originais, status concluido)' '11111111-1111-1111-1111-111111111111|quero excluir minha conta e meus dados|concluido' \
+  "SELECT user_id::text || '|' || motivo || '|' || status FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
+expect_value 'B.14 status concluido gravado' 'concluido' \
   "SELECT status FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
 expect_value 'B.15 tratado_por gravado' '33333333-3333-3333-3333-333333333333' \
   "SELECT tratado_por FROM public.data_deletion_requests WHERE user_id='11111111-1111-1111-1111-111111111111';"
@@ -248,13 +278,13 @@ expect_value 'B.16 updated_at foi reescrito pelo gatilho' 't' \
 expect_ok_as 'B.17 o BRUNO cria o proprio pedido' "$BRUNO" \
   "INSERT INTO public.data_deletion_requests (user_id, motivo) VALUES ('22222222-2222-2222-2222-222222222222', 'LGPD: remover meus dados');"
 expect_ok_as 'B.18 supervisor trata o pedido do BRUNO (em_analise)' "$SOFIA" \
-  "UPDATE public.data_deletion_requests SET status='processing' WHERE user_id='22222222-2222-2222-2222-222222222222';"
-expect_value_as 'B.19 ...e o status em_analise fica gravado' 'processing' "$BRUNO" \
+  "UPDATE public.data_deletion_requests SET status='em_analise' WHERE user_id='22222222-2222-2222-2222-222222222222';"
+expect_value_as 'B.19 ...e o status em_analise fica gravado' 'em_analise' "$BRUNO" \
   "SELECT status FROM public.data_deletion_requests;"
 
-# --- CHECKs de forma (status da V3 e motivo 1..1000) ---
-expect_error_as 'B.20 status fora do CHECK da V3 e recusado' 'data_deletion_requests_status_check' "$CHEFE" \
-  "INSERT INTO public.data_deletion_requests (user_id, motivo, status) VALUES ('33333333-3333-3333-3333-333333333333', 'x', 'aberto');"
+# --- CHECKs de forma (status do cartao e motivo 1..1000) ---
+expect_error_service 'B.20 status fora do CHECK do cartao e recusado' 'data_deletion_requests_status_check' \
+  "INSERT INTO public.data_deletion_requests (user_id, motivo, status) VALUES ('33333333-3333-3333-3333-333333333333', 'x', 'pending');"
 expect_error_as 'B.21 motivo acima de 1000 caracteres e recusado' 'data_deletion_requests_motivo_check' "$CHEFE" \
   "INSERT INTO public.data_deletion_requests (user_id, motivo) VALUES ('33333333-3333-3333-3333-333333333333', repeat('x', 1001));"
 expect_error_as 'B.22 motivo vazio (so espacos) e recusado' 'data_deletion_requests_motivo_check' "$CHEFE" \
@@ -267,6 +297,8 @@ expect_error_anon 'B.24 anon nao le a fila' 'permission denied' \
   "SELECT count(*) FROM public.data_deletion_requests;"
 expect_value 'B.25 ACL: authenticated sem DELETE, anon sem SELECT, service_role com DELETE' 'false|false|true' \
   "SELECT has_table_privilege('authenticated','public.data_deletion_requests','DELETE') || '|' || has_table_privilege('anon','public.data_deletion_requests','SELECT') || '|' || has_table_privilege('service_role','public.data_deletion_requests','DELETE');"
+expect_value 'B.25b titular so insere (user_id, motivo, status) e so atualiza tratamento; prazo/user_id/motivo travados' 'true|true|false|true|false|false' \
+  "SELECT has_column_privilege('authenticated','public.data_deletion_requests','motivo','INSERT') || '|' || has_column_privilege('authenticated','public.data_deletion_requests','status','INSERT') || '|' || has_column_privilege('authenticated','public.data_deletion_requests','prazo','INSERT') || '|' || has_column_privilege('authenticated','public.data_deletion_requests','status','UPDATE') || '|' || has_column_privilege('authenticated','public.data_deletion_requests','user_id','UPDATE') || '|' || has_column_privilege('authenticated','public.data_deletion_requests','motivo','UPDATE');"
 
 # --- historico do proprio usuario ---
 expect_value_as 'B.26 historico do titular nesta pagina = 20 (paginacao), so os eventos dele' '20' "$ANA" \
@@ -295,7 +327,8 @@ expect_error_anon 'B.36 anon nao registra visualizacao de politica' 'permission 
   "SELECT public.register_privacy_policy_viewed();"
 
 printf '\n============ BLOCO C — rollback do cabecalho roda ============\n'
-sed -n '/^-- Rollback (SQL execut/,/^--$/p' "$migration" | sed -n 's/^--   \(.*\)$/\1/p' > "$tmp_dir/rollback.sql"
+[[ "$(grep -c '^-- Rollback' "$migration")" == '1' ]] || fail 'C.0 cabecalho tem mais de uma linha -- Rollback (recusa rodada 1)'
+grep '^-- Rollback: ' "$migration" | sed 's/^-- Rollback: //' > "$tmp_dir/rollback.sql"
 grep -q 'drop table if exists public.data_deletion_requests;' "$tmp_dir/rollback.sql" || fail 'C.1 rollback sem DROP da tabela'
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 printf '[PASS] %s\n' 'C.1 rollback extraido do cabecalho executou sem erro'
