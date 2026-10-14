@@ -1,6 +1,11 @@
 // Message-specific handlers for evolution-webhook: incoming, outgoing, sticker, transcription
-import { evoFetch, extractBase64Media } from './evolution-send.ts';
+import { evoFetch, extractBase64Media, extractMessageId } from './evolution-send.ts';
 import { attributeMultiplixReply, attributeTalkXReply } from "./talkx-reply.ts";
+import { resolveInstanceToken } from "./evolution-instance-token.ts";
+import {
+  EFFECT_MESSAGE_SEND,
+  enqueueEffectReconcile,
+} from "./effect-reconcile.ts";
 
 import {
   isRecord, normalizePhone, resolveEventJid,
@@ -9,29 +14,7 @@ import {
 } from "./evolution-helpers.ts";
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
-import type { EvolutionDbClient } from "./evolution-types.ts";
-import {
-  buildDeadLetterSnapshot,
-  classifyIngestFailure,
-  recordWebhookFailure,
-  type ReplayArgs,
-} from "./webhook-dead-letter.ts";
-
-/**
- * Desfecho do processamento de uma mensagem recebida.
- *
- * `ok: true`  — gravada ou ignorada de propósito (nada se perdeu).
- * `ok: false, retryable: true`  — falha TRANSITÓRIA: o evento já está na
- *   dead-letter e o roteador responde 5xx para o provedor reenviar.
- * `ok: false, retryable: false` — falha PERMANENTE (payload inválido): fica só
- *   na dead-letter e a resposta é 200 — reenviar repetiria o mesmo erro.
- */
-export interface InboundResult {
-  ok: boolean;
-  retryable: boolean;
-}
-
-const INBOUND_OK: InboundResult = { ok: true, retryable: false };
+import type { EvolutionDbClient, EvolutionRow } from "./evolution-types.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // X030 — opt-out por palavra configurável + autoresposta pelo token da instância
@@ -308,6 +291,236 @@ async function enrichIncomingLinkPreview(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Mensagem de ausência (fora do horário comercial) — pipeline OFICIAL
+//
+// Quando chega uma mensagem NOVA do contato, a conexão está FORA do horário
+// comercial (`is_within_business_hours`), a conexão tem `away_messages` ativa e
+// a conversa NÃO tem atendente atribuído, o webhook envia a mensagem de
+// ausência pela MESMA rota que o app usa:
+//   INSERT idempotente em `messages` (client_message_id + status 'sending')
+//   → `claim_outbound_message` (service_role) → provedor → `complete_outbound_message`.
+// Nada de fetch solto: o envio usa `evoFetch` e o token da instância
+// (`resolveInstanceToken`), exatamente como a edge `message-delivery`.
+//
+// Idempotência: o `client_message_id` é DETERMINÍSTICO por (contato, janela de
+// cooldown) e quem deduplica é o UNIQUE `ux_messages_contact_client_message_id`
+// — reprocessar o mesmo evento não reenvia. Cooldown: além da janela atual, a
+// janela ANTERIOR também é conferida; assim o intervalo entre duas ausências
+// nunca fica menor que o cooldown (a borda da janela não fura o limite).
+//
+// `agent_id` = dono da conexão (`whatsapp_connections.created_by`): o pipeline
+// exige um perfil ATIVO (igual a `enqueue_outbound_message`) e uma mensagem de
+// sistema não tem atendente humano. Sem dono/perfil ativo a ausência NÃO sai
+// (fail-closed) — nunca se empresta o perfil de outra pessoa.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Intervalo mínimo entre duas mensagens de ausência para o MESMO contato. */
+export const AWAY_MESSAGE_COOLDOWN_HOURS = 12;
+/** `delivery_claimed_by` — identifica o produtor no claim oficial. */
+export const AWAY_MESSAGE_WORKER = "edge:evolution-webhook:away";
+
+/** Índice da janela de cooldown (tamanho = cooldown) no relógio absoluto. */
+export function awayWindowIndex(nowMs: number): number {
+  return Math.floor(nowMs / (AWAY_MESSAGE_COOLDOWN_HOURS * 3_600_000));
+}
+
+/**
+ * `client_message_id` determinístico (UUID) para (contato, janela). FNV-1a de
+ * 32 bits em 4 pistas → 128 bits; dois isolates produzem o MESMO id para o
+ * mesmo par, então o UNIQUE do banco — e não uma consulta prévia — é quem
+ * deduplica o enfileiramento.
+ */
+export function awayClientMessageId(contactId: string, windowIndex: number): string {
+  const semente = `${contactId}|away|${windowIndex}`;
+  const hex: string[] = [];
+  for (let pista = 0; pista < 4; pista++) {
+    let h = (0x811c9dc5 ^ Math.imul(pista + 1, 0x9e3779b1)) >>> 0;
+    for (let i = 0; i < semente.length; i++) {
+      h ^= semente.charCodeAt(i) + pista;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    hex.push(h.toString(16).padStart(8, "0"));
+  }
+  const raw = hex.join("");
+  // UUID de 128 bits com as marcas de versão/variante (id não-secreto).
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-a${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
+}
+
+/** Terminal sem reenvio para a linha claimada (igual à edge oficial). */
+async function failAwayClaim(supabase: EvolutionDbClient, messageId: string, claimToken: string): Promise<void> {
+  const { error } = await supabase.rpc("fail_outbound_message", {
+    p_message_id: messageId,
+    p_claim_token: claimToken,
+    p_retryable: false,
+  });
+  if (error) console.error("[AWAY] fail_outbound_message:", error.code, error.message);
+}
+
+/** Efeito incerto (5xx/tempo/id ausente): reconciliação SOMENTE-LEITURA, sem reenvio. */
+async function enqueueAwayReconcile(
+  supabase: EvolutionDbClient,
+  messageId: string,
+  externalId: string | null,
+): Promise<void> {
+  try {
+    await enqueueEffectReconcile({
+      supabase,
+      effect: EFFECT_MESSAGE_SEND,
+      sourceTable: "messages",
+      sourceId: messageId,
+      externalId,
+    });
+  } catch (err) {
+    console.error("[AWAY] reconcile enqueue failed:", err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Envia a mensagem de ausência da conexão ao contato, no máximo uma vez por
+ * janela de cooldown. NUNCA lança: falha aqui é registrada e o processamento da
+ * mensagem recebida segue (a ausência não pode derrubar o webhook).
+ */
+export async function sendAwayMessageIfNeeded(
+  supabase: EvolutionDbClient,
+  connectionId: string,
+  contactId: string,
+  assignedTo: string | null,
+  nowMs: number = Date.now(),
+): Promise<void> {
+  try {
+    // Conversa com atendente ativo: a ausência é exatamente o oposto disso.
+    if (assignedTo) return;
+
+    const { data: cfg, error: cfgErr } = await supabase.from("away_messages")
+      .select("content, is_enabled").eq("whatsapp_connection_id", connectionId).maybeSingle();
+    if (cfgErr) { console.warn("[AWAY] away_messages read failed:", cfgErr.message); return; }
+    const content = typeof cfg?.content === "string" ? cfg.content.trim() : "";
+    if (!cfg || cfg.is_enabled !== true || content.length === 0) return;
+
+    const { data: aberto, error: bhErr } = await supabase.rpc("is_within_business_hours", {
+      connection_id: connectionId,
+    });
+    if (bhErr) { console.warn("[AWAY] is_within_business_hours failed (fail-closed):", bhErr.message); return; }
+    if (aberto === true) return; // dentro do horário comercial: não envia
+
+    const janela = awayWindowIndex(nowMs);
+    const clientMessageId = awayClientMessageId(contactId, janela);
+    const { data: anteriores, error: priorErr } = await supabase.from("messages")
+      .select("id").eq("contact_id", contactId)
+      .in("client_message_id", [clientMessageId, awayClientMessageId(contactId, janela - 1)]).limit(1);
+    if (priorErr) { console.warn("[AWAY] cooldown read failed (fail-closed):", priorErr.message); return; }
+    if (Array.isArray(anteriores) && anteriores.length > 0) return; // cooldown ativo
+
+    // Dono da conexão = agente responsável (o pipeline exige perfil ativo).
+    const { data: conexao, error: conexaoErr } = await supabase.from("whatsapp_connections")
+      .select("created_by").eq("id", connectionId).maybeSingle();
+    if (conexaoErr) { console.warn("[AWAY] connection owner read failed:", conexaoErr.message); return; }
+    const ownerId = typeof conexao?.created_by === "string" ? conexao.created_by : null;
+    if (!ownerId) { console.warn("[AWAY] conexão sem dono — ausência não enviada (fail-closed)"); return; }
+    const { data: dono, error: donoErr } = await supabase.from("profiles")
+      .select("id").eq("id", ownerId).eq("is_active", true).maybeSingle();
+    if (donoErr) { console.warn("[AWAY] owner profile read failed:", donoErr.message); return; }
+    if (typeof dono?.id !== "string") { console.warn("[AWAY] dono sem perfil ativo — ausência não enviada"); return; }
+
+    // 1) Enfileira no contrato oficial. O UNIQUE deduplica (sem consulta prévia).
+    const { data: enfileirada, error: enqueueErr } = await supabase.from("messages").insert({
+      contact_id: contactId,
+      whatsapp_connection_id: connectionId,
+      agent_id: ownerId,
+      sender: "agent",
+      content,
+      message_type: "text",
+      is_read: true,
+      status: "sending",
+      status_updated_at: new Date(nowMs).toISOString(),
+      client_message_id: clientMessageId,
+    }).select("id").maybeSingle();
+    if (enqueueErr) {
+      if (enqueueErr.code === "23505") return; // já enfileirada nesta janela (idempotente)
+      console.warn("[AWAY] enqueue failed:", enqueueErr.code, enqueueErr.message);
+      return;
+    }
+    const messageId = typeof enfileirada?.id === "string" ? enfileirada.id : null;
+    if (!messageId) { console.warn("[AWAY] enqueue returned no id"); return; }
+
+    // 2) Claim oficial: o webhook roda com a service key (auth.role() = service_role).
+    const { data: claimedRows, error: claimErr } = await supabase.rpc("claim_outbound_message", {
+      p_message_id: messageId,
+      p_agent_id: ownerId,
+      p_worker: AWAY_MESSAGE_WORKER,
+      p_lease_seconds: 90,
+    });
+    const claim = (Array.isArray(claimedRows) ? claimedRows[0] : claimedRows) as EvolutionRow | null;
+    const claimToken = typeof claim?.claim_token === "string" ? claim.claim_token : null;
+    const instancia = typeof claim?.whatsapp_instance_name === "string" ? claim.whatsapp_instance_name : null;
+    const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
+    const texto = typeof claim?.content === "string" ? claim.content : null;
+    if (claimErr || !claimToken || !instancia || !telefone || !texto) {
+      console.warn("[AWAY] claim failed:", claimErr?.message ?? "sem linha claimável");
+      return;
+    }
+
+    // 3) Provedor — mesmo sender e mesmo token da edge `message-delivery`.
+    const evolutionUrl = Deno.env.get("EVOLUTION_API_URL")?.replace(/\/+$/, "");
+    const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") ?? "";
+    if (!evolutionUrl || !evolutionKey) {
+      console.error("[AWAY] EVOLUTION_API_URL/KEY ausentes — ausência não enviada");
+      await failAwayClaim(supabase, messageId, claimToken);
+      return;
+    }
+
+    let providerPostAttempted = false;
+    let externalId: string | null = null;
+    try {
+      const instanceToken = await resolveInstanceToken(supabase, instancia);
+      providerPostAttempted = true;
+      const resp = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${instancia}`, {
+        number: telefone,
+        text: texto,
+      }, undefined, undefined, undefined, instanceToken ?? undefined);
+      const raw = await resp.text();
+      let providerData: unknown = null;
+      try { providerData = raw ? JSON.parse(raw) : null; } catch { /* corpo do provedor inválido */ }
+
+      if (!resp.ok) {
+        await failAwayClaim(supabase, messageId, claimToken);
+        if (resp.status >= 500) await enqueueAwayReconcile(supabase, messageId, null);
+        console.warn("[AWAY] provedor recusou a ausência:", resp.status, messageId);
+        return;
+      }
+      externalId = extractMessageId(providerData) ?? null;
+      if (!externalId || externalId.length > 512) {
+        await failAwayClaim(supabase, messageId, claimToken);
+        await enqueueAwayReconcile(supabase, messageId, null);
+        console.warn("[AWAY] provedor aceitou sem id — efeito incerto:", messageId);
+        return;
+      }
+      const { data: concluida, error: completeErr } = await supabase.rpc("complete_outbound_message", {
+        p_message_id: messageId,
+        p_claim_token: claimToken,
+        p_external_id: externalId,
+        p_delivery_status: "sent",
+      });
+      const linha = (Array.isArray(concluida) ? concluida[0] : concluida) as EvolutionRow | null;
+      if (completeErr || typeof linha?.id !== "string") {
+        await failAwayClaim(supabase, messageId, claimToken);
+        await enqueueAwayReconcile(supabase, messageId, externalId);
+        console.warn("[AWAY] recibo não persistido:", completeErr?.code ?? "sem retorno");
+        return;
+      }
+      console.log("[AWAY] mensagem de ausência enviada:", messageId, contactId);
+    } catch (err) {
+      await failAwayClaim(supabase, messageId, claimToken);
+      if (providerPostAttempted) await enqueueAwayReconcile(supabase, messageId, externalId);
+      console.warn("[AWAY] envio da ausência falhou:", err instanceof Error ? err.message : String(err));
+    }
+  } catch (err) {
+    // A ausência NUNCA pode derrubar o processamento da mensagem recebida.
+    console.error("[AWAY] erro inesperado:", err instanceof Error ? err.message : String(err));
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handleOutgoingWhatsAppMessage(
   supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
@@ -419,7 +632,7 @@ export async function handleIncomingMessage(
   supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
-): Promise<InboundResult> {
+) {
   const payloadKey = isRecord(data.key) ? data.key : null;
   const bestJid = resolveEventJid(key, payloadKey, data);
 
@@ -446,11 +659,11 @@ export async function handleIncomingMessage(
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
     console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid });
-    return INBOUND_OK;
+    return;
   }
   const message = data.message as Record<string, unknown> | undefined;
   const parsed = parseMessageContent(message, data);
-  if (parsed.messageType === 'reaction') return INBOUND_OK;
+  if (parsed.messageType === 'reaction') return;
 
   let { mediaUrl } = parsed;
   let { content } = parsed;
@@ -466,11 +679,11 @@ export async function handleIncomingMessage(
   // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
   if (!content && messageType === 'text' && !mediaUrl) {
     console.log(`[INCOMING] Ignored empty message ${key.id}`);
-    return INBOUND_OK;
+    return;
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return INBOUND_OK;
+  if (!connection) return;
 
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
@@ -491,7 +704,7 @@ export async function handleIncomingMessage(
   // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
   // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
   // sem mensagem ou relink parcial.
-  const replayArgs: ReplayArgs = {
+  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
     p_connection_id: connection.id,
     p_phone: phone,
     p_push_name: (data.pushName as string) || null,
@@ -500,55 +713,18 @@ export async function handleIncomingMessage(
     p_media_url: mediaUrl,
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
-  };
-  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', replayArgs);
+  });
   if (txError) {
-    // Sem telefone/bestJid no log: o identificador fica no hash da dead-letter.
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, externalId: key.id, messageType });
-    const kind = classifyIngestFailure(txError.code);
-    await recordWebhookFailure(supabase, {
-      externalId: key.id,
-      eventType: 'messages.upsert',
-      instance,
-      errorMessage: txError.message,
-      errorCode: txError.code ?? null,
-      snapshot: buildDeadLetterSnapshot({
-        event: 'messages.upsert',
-        instance,
-        messageId: key.id,
-        fromMe: key.fromMe,
-        messageType,
-        messageTimestamp: data.messageTimestamp,
-      }),
-      replayArgs,
-    });
-    return { ok: false, retryable: kind === 'transient' };
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
+    return;
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
     contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
     contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
   } | null;
   if (!tx?.contact_id) {
-    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, messageType });
-    // A RPC respondeu sem contato: nao da para dizer que e permanente — pode ser
-    // corrida de conexao. Registra a evidencia e deixa o provedor reenviar.
-    await recordWebhookFailure(supabase, {
-      externalId: key.id,
-      eventType: 'messages.upsert',
-      instance,
-      errorMessage: 'ingest_inbound_message nao retornou contato',
-      errorCode: null,
-      snapshot: buildDeadLetterSnapshot({
-        event: 'messages.upsert',
-        instance,
-        messageId: key.id,
-        fromMe: key.fromMe,
-        messageType,
-        messageTimestamp: data.messageTimestamp,
-      }),
-      replayArgs,
-    });
-    return { ok: false, retryable: true };
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone });
+    return;
   }
 
   // Avatar fica fora da transacao: chamada externa a Evolution GO.
@@ -562,7 +738,7 @@ export async function handleIncomingMessage(
 
   if (tx.outcome === 'duplicate' || !tx.message_id) {
     console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
-    return INBOUND_OK;
+    return;
   }
   if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
@@ -681,8 +857,21 @@ export async function handleIncomingMessage(
         );
       }
     }
+
+    // Mensagem de ausência (fora do horário comercial): sai pela mesma rota do
+    // app (pipeline oficial). Não dispara para mensagem de opt-out — o contato
+    // acabou de pedir para sair — nem quando há atendente atribuído (checado
+    // dentro do próprio helper).
+    if (!optOutKeyword) {
+      await sendAwayMessageIfNeeded(
+        supabase,
+        connection.id,
+        tx.contact_id,
+        tx.assigned_to ?? null,
+        Date.now(),
+      );
+    }
   }
-  return INBOUND_OK;
 }
 
 /**
@@ -809,8 +998,19 @@ export async function handleAudioTranscription(supabase: EvolutionDbClient, _con
     });
 
     if (response.ok) {
-      const result = await response.json();
-      await supabase.from('messages').update({ transcription: result.text, transcription_status: 'completed' }).eq('id', messageId);
+      // A Edge responde `{ transcription }` (NÃO `text`): ler `result.text`
+      // gravava `undefined` como `completed` — o selo "Transcrito" não aparecia e
+      // a transcrição paga era perdida. O texto só vira `completed` se existir;
+      // resposta vazia (fallback de formato) é `failed`, nunca "completed vazio".
+      const result = await response.json() as { transcription?: unknown };
+      const text = typeof result?.transcription === "string"
+        ? result.transcription.trim()
+        : "";
+      if (text) {
+        await supabase.from('messages').update({ transcription: text, transcription_status: 'completed' }).eq('id', messageId);
+      } else {
+        await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
+      }
     } else {
       await supabase.from('messages').update({ transcription_status: 'failed' }).eq('id', messageId);
     }

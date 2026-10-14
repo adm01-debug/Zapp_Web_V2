@@ -93,12 +93,7 @@ async function resolveInstanceToken(instanceName: string): Promise<string | null
   }
 }
 
-export interface EvolutionWebhookDeps {
-  /** Injeção para teste: substitui o client do banco (produção usa getDb()). */
-  supabase?: SupabaseClient;
-}
-
-export async function handleEvolutionWebhook(req: Request, _injected?: EvolutionWebhookDeps): Promise<Response> {
+export async function handleEvolutionWebhook(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
   const corsHeaders = getCorsHeaders(req);
@@ -199,7 +194,7 @@ export async function handleEvolutionWebhook(req: Request, _injected?: Evolution
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     // Cast unico (ver evolution-types.ts): comparar o client real com EvolutionDbClient
     // a cada chamada de handler estoura o TS2589 do Deno. Uma vez so, aqui, sai barato.
-    const supabase = _injected?.supabase ?? getDb();
+    const supabase = getDb();
     const db = supabase as unknown as EvolutionDbClient;
 
     let payload: WebhookPayload = rawBody as WebhookPayload;
@@ -216,10 +211,6 @@ export async function handleEvolutionWebhook(req: Request, _injected?: Evolution
     const baseData = isRecord(data) ? data : {};
 
     console.log('Evolution webhook received:', payload.event, '->', event, instance);
-
-    // Uma mensagem que falhou de forma TRANSITÓRIA no ingest pede reenvio do
-    // provedor (5xx). O flag atravessa os handlers e é lido no fim do try.
-    let inboundRetryable = false;
 
     if (event === 'connection.update') await handleConnectionUpdate(db, instance, baseData);
 
@@ -289,8 +280,7 @@ export async function handleEvolutionWebhook(req: Request, _injected?: Evolution
 
         if (!key.fromMe) {
           console.log(`[MSG_UPSERT] -> handleIncomingMessage for ${externalId}`);
-          const inbound = await handleIncomingMessage(db, instance, { ...baseData, ...entry }, key, supabaseUrl, supabaseServiceKey);
-          if (!inbound.ok && inbound.retryable) inboundRetryable = true;
+          await handleIncomingMessage(db, instance, { ...baseData, ...entry }, key, supabaseUrl, supabaseServiceKey);
         } else {
           console.log(`[MSG_UPSERT] -> handleOutgoingWhatsAppMessage for ${externalId}`);
           await handleOutgoingWhatsAppMessage(db, instance, { ...baseData, ...entry }, key);
@@ -332,17 +322,6 @@ export async function handleEvolutionWebhook(req: Request, _injected?: Evolution
     if (event === 'chats.set') await handleChatsSet(db, instance, data);
     if (event === 'messages.edited' || event === 'messages.edit') await handleMessagesEdited(db, instance, data, baseData);
 
-    if (inboundRetryable) {
-      // Falha TRANSITÓRIA ao gravar a mensagem recebida: o evento já está na
-      // dead-letter (webhook_failures) e o 503 pede o reenvio do provedor —
-      // responder 200 aqui perderia a mensagem em silêncio. Falha PERMANENTE
-      // (payload inválido) fica só na dead-letter e responde 200: reenviar não
-      // muda o resultado.
-      return new Response(JSON.stringify({ error: 'Falha temporaria ao gravar a mensagem recebida; reenvie o evento.' }), {
-        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -356,5 +335,5 @@ export async function handleEvolutionWebhook(req: Request, _injected?: Evolution
 }
 
 if (import.meta.main) {
-  serve((req: Request) => handleEvolutionWebhook(req));
+  serve(handleEvolutionWebhook);
 }
