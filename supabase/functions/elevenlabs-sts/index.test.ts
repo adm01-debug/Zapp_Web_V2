@@ -421,3 +421,35 @@ Deno.test("SL-008 (B4): sem bearer continua 401 e não toca o provedor (caminho 
     }
   });
 });
+
+// G3: o teto e a fronteira de `content-length` do STS passaram a vir do `_shared/`
+// (`_shared/sts-upload.ts`) — o MESMO código que o `voice-changer` usa. A prova aqui é
+// que a fronteira do CABEÇALHO recusa o corpo anunciado acima dos 25 MiB sem tocar o
+// provedor, e que o teto segue sendo o do caminho de STT.
+Deno.test("G3: content-length acima de MAX_STS_AUDIO_BYTES -> 413 sem POST ao provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsSts(
+        stsRequest(
+          formFor(new File([oggBytes()], "audio.ogg", { type: "audio/ogg" })),
+          true,
+          { "content-length": String(MAX_STS_AUDIO_BYTES + 1) },
+        ),
+      );
+
+      assert(res.status === 413, `esperado 413, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "corpo acima do teto não pode chegar ao provedor pago",
+      );
+      const body = await res.json() as { error?: string };
+      assert(
+        typeof body.error === "string" && body.error.includes(String(MAX_STS_AUDIO_BYTES)),
+        `esperado erro citando o teto de 25 MiB, veio: ${JSON.stringify(body)}`,
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
