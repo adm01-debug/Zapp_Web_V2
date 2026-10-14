@@ -64,4 +64,12 @@ describe('derivedToConversationContact', () => {
 
     expect(conversation.contact.deleted_at).toBeNull();
   });
+
+  // t_bbe423a7 — o contato derivado nasce de mensagem do WhatsApp, então o canal de entrada é o
+  // próprio WhatsApp: a origem não é uma ausência (era `null`, igual a "não sei a origem").
+  it('carrega a origem do canal de entrada (WhatsApp) em vez de null', () => {
+    const [conversation] = buildExternalConversations([externalMessage]);
+
+    expect(conversation.contact.lead_origin).toBe('whatsapp');
+  });
 });

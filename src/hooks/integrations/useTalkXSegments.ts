@@ -81,7 +81,11 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  // Nenhum fluxo de criação do Zapp grava public.contacts.lead_origin: o contato derivado do
+  // WhatsApp carrega a origem só na projeção em memória (evolutionAdapter), não na linha do banco,
+  // e o Zapp não edita contatos em massa. Enquanto houver contato sem valor, um filtro por origem
+  // devolveria sempre vazio — fica "em breve" (não selecionável) até existir gravação real.
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
