@@ -1,17 +1,20 @@
-Especialista: hugo
+Especialista: semisenior (area-front-hooks)
+Troquei o comentário contraditório acima da chamada get_team_messages_page por uma frase única e verdadeira: a RPC recebe p_before_id e desempata (created_at, id) no servidor.
 
-## O que mudou e por quê
-- `src/components/team-chat/useTeamChatPanel.ts`: a página ANTERIOR deixou de ler `team_messages` direto com embed `sender:profiles!team_messages_sender_id_fkey` (que voltava `sender: null` para o agente, porque `profiles` ficou 'own + admin') e passou a chamar a RPC achatada `get_team_messages_page(p_conversation_id, p_before_id, p_limit)` — a mesma do histórico novo (SL-016). O `id` da mensagem mais antiga já carregada vai como `p_before_id`; `sender_name`/`sender_avatar` vêm do servidor e são montados em `sender`. Teto de página 60 mantido. Critério de pronto 1 (remetente aparece em todas as mensagens) cumprido: o nome/foto não dependem mais da RLS de `profiles`.
-- Caminho do arquivo: o cartão cita `src/hooks/team-chat/useTeamChatPanel.ts`, que NÃO existe. O arquivo real é `src/components/team-chat/useTeamChatPanel.ts` (confirmei com `git ls-files | grep useTeamChatPanel` → `src/components/team-chat/useTeamChatPanel.ts`). Usei o caminho real.
-- N-072 trazido do que estava fora do HEAD (commit `d3f9b0db1`, aplicado com `git cherry-pick -n`): `supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql` (aditiva, com `-- Rollback:` completo no topo, `SET search_path = public, pg_temp` e grants explícitos), `scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh` e o passo do teste em `.github/workflows/db-guard.yml`. A migration corrige o desempate do cursor para `(created_at, id)` (`m.created_at < b OR (m.created_at = b AND m.id < b_id)`, ORDER BY `created_at DESC, id DESC`) e recusa `p_limit <= 0`/NULL com `invalid_limit`; assinatura, colunas e teto de 200 inalterados.
-- Teste do hook reescrito: `src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` agora prova o caminho novo (RPC com `p_before_id` e sem leitura direta de `team_messages`, nome/foto do remetente nas antigas, cursor por página e fim do histórico). As asserções removidas (`.or()` composto no cliente, `select` direto) foram substituídas por asserção de força igual no mesmo contrato, agora pelo servidor: `expect(f.tabelasLidas).toEqual([])` e `expect(chamada.args).toEqual({ p_conversation_id, p_before_id, p_limit: 60 })`.
+## Pontos do revisor
+- Ponto 1: resolvido — `src/components/team-chat/useTeamChatPanel.ts:224-227`. Removi as duas frases contraditórias ("keyset resolvido no servidor" + "o SQL ainda compara só created_at < v_before_at"). O comentário agora afirma uma situação coerente: a RPC lê `(v_before_at, v_before_id)` do `p_before_id` e filtra `created_at < v_before_at OR (created_at = v_before_at AND id < v_before_id)`. Prova no código: `supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql:42-62` (busca `tm.created_at, tm.id INTO v_before_at, v_before_id` e filtra `m.created_at < v_before_at OR (m.created_at = v_before_at AND m.id < v_before_id)` com `ORDER BY m.created_at DESC, m.id DESC`). Nenhum comportamento mudou — só comentário.
 
 ## Prova
-- hook, verde depois: `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)`.
-- migration N-072, vermelho antes (BLOCO A reproduz o defeito na migration base): `bash scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh` → `[PASS] A1 (defeito) paginacao de 2 em 2 perde mensagens de mesmo created_at: 3 de 6 ids` e `[PASS] A2 (defeito) p_limit=0 devolve vazio sem erro`.
-- migration N-072, verde depois (BLOCO B, migration aplicada em PostgreSQL 17 descartável, papel `authenticated` real): B1 (páginas 1/2/3/4/50 sem duplicata nem lacuna), B2, B3, B4–B6 (`invalid_limit` em 0/negativo/NULL), B7, B8 (`not_member`), B9 (`not_authenticated`), B10 (teto 200), B11 (ACL anon sem EXECUTE, authenticated com), B12 (SECURITY DEFINER com search_path fixo) → `[OK] desempate (created_at, id) e limite minimo de get_team_messages_page verificados`.
-- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (154s)` (tipos OK, lint OK, migrations OK, db_guard OK).
+- `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)` (só comentário alterado; suite do hook continua verde).
+- Segunda passada (defeito novo): `grep -rn get_team_messages_page src supabase` — chamadores são `src/components/team-chat/useTeamChatPanel.ts` (comentário corrigido, chamada inalterada) e `src/hooks/team-chat/useTeamMessages.ts` (não tocado); nenhuma lógica de chamada mudou, nenhum toast/efeito duplicado, nenhum arquivo de guarda/manifesto/CI alterado neste commit.
+
+## Arquivos (git diff --name-only base...HEAD)
+.github/workflows/db-guard.yml
+.tmp/relato.md
+scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh
+src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx
+src/components/team-chat/useTeamChatPanel.ts
+supabase/migrations/20261010064729_team_messages_page_cursor_tiebreak_and_min_limit.sql
 
 ## O que NÃO fiz e por quê
-- Nada foi para produção; a migration só foi aplicada no PostgreSQL descartável do teste (quem aplica é o Joaquim).
-- Não toquei em `profiles` nem em RLS; não adicionei dependência.
+- Não mudei lógica, migration, testes ou workflow neste refazer: o cartão manda mexer SÓ no comentário, e SÓ esse arquivo tem alteração não-commitada/commits novos meus (1 commit de comentário).
