@@ -21,6 +21,7 @@ Banco LOCAL descartável `v2-26101322425bea` (`zapp-db-local up . v2-26101322425
 - rollback de verdade: executei as 4 linhas do `-- Rollback:` no banco local → `fn_pos_rollback` vazio e `policies = 2` (só as de INSERT/SELECT restaram); reapliquei a migration (`REAPPLY_RC=0`) e o verde voltou a passar.
 - papéis reais: o teste faz `SET LOCAL ROLE authenticated/anon/service_role` + `request.jwt.claims` e prova o que passa (gravar/apagar o próprio) e o que é negado (apagar/ler de outro, anon gravar/ler/apagar, authenticated executar o expurgo). Fixture dos titulares em `auth.users` com `session_replication_role=replica`.
 - efeitos colaterais conferidos: `voice_command_logs` não tem gatilho (`pg_trigger` = 0 linhas), RLS ligado, `force_rls = false`; a migration só mexe em CONSTRAINT/policy da própria tabela e no GRANT da função nova — nenhum ACL/papel de objeto existente mudou.
+- `zapp-verify . --rapido` → `OK dependencias / OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (163s)` (`VERIFY_RC=0`). "SEM BANCO" é esperado: o `--rapido` só compara com o banco quando recebe o nome do conjunto; a prova de banco é a suíte SQL acima, no banco LOCAL da tarefa.
 
 ## O que NÃO fiz e por quê
 - Não toquei no front: `src/hooks/voice/logVoiceCommand.ts` só faz INSERT (fire-and-forget), não precisa mudar.
