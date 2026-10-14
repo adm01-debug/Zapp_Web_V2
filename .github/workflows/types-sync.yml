@@ -638,6 +638,14 @@ jobs:
               core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
             }
 
+      - name: Habilitar auto-merge no PR de sincronizacao
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
+
       - name: Job summary
         if: always()
         run: |
