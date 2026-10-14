@@ -72,8 +72,9 @@ export const MIN_PASSWORD_LENGTH = 8;
 export const AUDIT_PAGE_SIZE = 50;
 
 // Filtros da aba de auditoria (item 1): intervalo de datas inclusivo (dias
-// inteiros, em UTC) e paginação 1-based. Quem chama (AdminView) monta o estado
-// e passa adiante; o hook só monta a consulta.
+// inteiros no fuso local do operador) e paginação 1-based. O parâmetro é
+// opcional — a tela (AdminView) ainda vai ligar o filtro; o hook só monta
+// a consulta.
 export interface AuditLogFilter {
   /** Data inicial inclusiva, 'YYYY-MM-DD'. */
   from?: string;
@@ -149,8 +150,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
         .order('created_at', { ascending: false })
         .range(start, start + auditPageSize - 1);
 
-      if (auditFrom) query = query.gte('created_at', `${auditFrom}T00:00:00.000Z`);
-      if (auditTo) query = query.lte('created_at', `${auditTo}T23:59:59.999Z`);
+      if (auditFrom) query = query.gte('created_at', new Date(`${auditFrom}T00:00:00`).toISOString());
+      if (auditTo) query = query.lte('created_at', new Date(`${auditTo}T23:59:59.999`).toISOString());
 
       const { data: logs, error: logsError, count } = await query;
 
