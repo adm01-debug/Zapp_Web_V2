@@ -146,13 +146,15 @@ describe('useKnowledgeBase.deleteFile — ida única, objeto só com URL assinad
     await act(async () => {
       await result.current.deleteFile('id-inexistente');
     });
-    const chamadaZeroLinhas = mocks.toast.mock.calls.at(-1)?.[0] as { description?: string };
+    const chamadasZero = mocks.toast.mock.calls;
+    const chamadaZeroLinhas = chamadasZero[chamadasZero.length - 1]?.[0] as { description?: string };
 
     montarTabelas({ excluidas: null, erroExcluir: { message: 'rls denied' } });
     await act(async () => {
       await result.current.deleteFile('arquivo-1');
     });
-    const chamadaErro = mocks.toast.mock.calls.at(-1)?.[0] as { description?: string };
+    const chamadasErro = mocks.toast.mock.calls;
+    const chamadaErro = chamadasErro[chamadasErro.length - 1]?.[0] as { description?: string };
 
     expect(chamadaZeroLinhas?.description).not.toMatch(/não encontrado/i);
     expect(chamadaErro?.description).not.toMatch(/não encontrado/i);
