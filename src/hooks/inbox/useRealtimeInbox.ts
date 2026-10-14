@@ -110,13 +110,12 @@ export function useRealtimeInbox() {
   useEffect(() => {
     if (!selectedContactId || selectedConversation) return;
     // Guarda de UUID antes da consulta: id de link/notificação malformado nunca vai
-    // ao banco e é tratado como "não encontrado" (não como lista vazia silenciosa).
-    if (!isValidUuid(selectedContactId)) {
-      setSelectedContactLookup({ contactId: selectedContactId, status: 'not-found', error: null });
-      return;
-    }
+    // ao banco (o PostgREST estouraria o cast). O "não encontrado" desse caso é
+    // DERIVADO abaixo (`isMalformedSelectedContactId`), não gravado aqui: gravar
+    // estado direto no corpo do efeito provoca render em cascata (lint
+    // react-hooks/set-state-in-effect). O "carregando" também é derivado (padrão).
+    if (!isValidUuid(selectedContactId)) return;
     let cancelled = false;
-    setSelectedContactLookup({ contactId: selectedContactId, status: 'loading', error: null });
     const loadSelectedContact = async () => {
       const { data, error } = await supabase
         .from('contacts')
@@ -152,12 +151,17 @@ export function useRealtimeInbox() {
   // Estado da consulta do contato fora da lista, para o consumidor mostrar
   // carregando / erro / não encontrado em vez de uma tela vazia e muda.
   // Só vale para o contato selecionado agora (resultado antigo não vaza).
+  const isMalformedSelectedContactId =
+    Boolean(selectedContactId) && !selectedConversation && !isValidUuid(selectedContactId);
+
   const selectedContactFallbackStatus: 'idle' | 'loading' | 'error' | 'not-found' =
     !selectedContactId || selectedConversation || fallbackContact
       ? 'idle'
-      : selectedContactLookup && selectedContactLookup.contactId === selectedContactId
-        ? selectedContactLookup.status
-        : 'loading';
+      : isMalformedSelectedContactId
+        ? 'not-found'
+        : selectedContactLookup && selectedContactLookup.contactId === selectedContactId
+          ? selectedContactLookup.status
+          : 'loading';
   const selectedContactFallbackError =
     selectedContactLookup && selectedContactLookup.contactId === selectedContactId
       ? selectedContactLookup.error
