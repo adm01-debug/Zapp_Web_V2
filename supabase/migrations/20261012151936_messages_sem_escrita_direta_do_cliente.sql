@@ -1,5 +1,8 @@
 -- messages_sem_escrita_direta_do_cliente
 -- Rollback: devolve INSERT/UPDATE de tabela a authenticated, derruba a trigger nova e recria a policy de INSERT original (20260925120000).
+-- NOTA (ponto 4 do [refazer 1]): anon e PUBLIC nunca tiveram GRANT em messages
+-- (nenhuma migration anterior concedeu; catalogo pos-migration confirma zero
+-- grants para anon/PUBLIC) — por isso o rollback NAO os devolve, de proposito.
 -- Rollback (SQL executável, na ordem):
 --   GRANT INSERT ON public.messages TO authenticated;
 --   GRANT UPDATE ON public.messages TO authenticated;
