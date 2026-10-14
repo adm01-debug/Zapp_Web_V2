@@ -51,36 +51,44 @@ const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const DAYS_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-// Generate heatmap data from real messages
+// Bucket agregado pela RPC dashboard_heatmap (DF1): 1 linha por (dia da semana, hora)
+// com a contagem de mensagens RECEBIDAS ja somada no servidor, no fuso do APP
+// (America/Sao_Paulo). Substitui a leitura de linhas cruas de `messages` (o corte
+// silencioso de 1000 do PostgREST transformava a contagem numa amostra) e o
+// getDay()/getHours() do NAVEGADOR (uma conversa as 23h30 de segunda em SP caia no
+// bucket errado quando o operador abria o painel em outro fuso).
+interface HeatmapBucket {
+  dow: number; // 0=domingo .. 6=sabado (extract(dow), == getDay())
+  hour: number; // 0-23 no fuso do app
+  value: number;
+}
+
+/** Monta a grade 7x24 a partir do agregado do servidor; celula sem bucket vem zerada. */
+function buildHeatmapGrid(buckets: HeatmapBucket[]): HeatmapData[] {
+  const counts = new Map<string, number>();
+  for (const b of buckets) {
+    if (b.dow < 0 || b.dow > 6 || b.hour < 0 || b.hour > 23) continue;
+    const key = `${b.dow}-${b.hour}`;
+    counts.set(key, (counts.get(key) ?? 0) + Number(b.value ?? 0));
+  }
+
+  const heatmap: HeatmapData[] = [];
+  for (let day = 0; day < 7; day++) {
+    for (let hour = 0; hour < 24; hour++) {
+      const value = counts.get(`${day}-${hour}`) ?? 0;
+      heatmap.push({ day, hour, value, count: value });
+    }
+  }
+  return heatmap;
+}
+
 function useHeatmapData() {
   return useQuery({
     queryKey: ['conversation-heatmap'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('created_at')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-      
+      const { data, error } = await supabase.rpc('dashboard_heatmap', { dias: 30 });
       if (error) throw error;
-      
-      const heatmap: HeatmapData[] = [];
-      const counts = new Map<string, number>();
-      
-      (data || []).forEach(m => {
-        const d = new Date(m.created_at);
-        const key = `${d.getDay()}-${d.getHours()}`;
-        counts.set(key, (counts.get(key) || 0) + 1);
-      });
-      
-      for (let day = 0; day < 7; day++) {
-        for (let hour = 0; hour < 24; hour++) {
-          const key = `${day}-${hour}`;
-          const value = counts.get(key) || 0;
-          heatmap.push({ day, hour, value, count: value });
-        }
-      }
-      
-      return heatmap;
+      return buildHeatmapGrid((data ?? []) as HeatmapBucket[]);
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -115,23 +123,36 @@ export default function ConversationHeatmap({
   onCellClick,
 }: ConversationHeatmapProps) {
   const { data: realData } = useHeatmapData();
-  const data = externalData || realData || [];
+  const data = useMemo(() => externalData ?? realData ?? [], [externalData, realData]);
   const [selectedMetric, setSelectedMetric] = useState(metric);
   const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number } | null>(null);
 
   const config = METRIC_CONFIG[selectedMetric];
 
-  // Calculate min/max for color scaling
-  const { min, max, hotspots } = useMemo(() => {
+  // Calculate min/max for color scaling + pico por hora e por dia (do dado real,
+  // nunca texto fixo). Vazio devolve 0/0 e "sem dados" em vez de Infinity/NaN.
+  const { min, max, hotspots, peakHour, bestDay } = useMemo(() => {
     const values = data.map(d => d.value);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    
-    // Find hotspots (top 5 busiest periods)
-    const sorted = [...data].sort((a, b) => b.value - a.value);
+    const min = values.length ? Math.min(...values) : 0;
+    const max = values.length ? Math.max(...values) : 0;
+
+    const byHour = new Array<number>(24).fill(0);
+    const byDay = new Array<number>(7).fill(0);
+    for (const d of data) {
+      if (d.hour >= 0 && d.hour < 24 && d.day >= 0 && d.day < 7) {
+        byHour[d.hour] += d.value;
+        byDay[d.day] += d.value;
+      }
+    }
+
+    // Find hotspots (top 5 busiest periods) — celula zerada nao e "periodo movimentado"
+    const sorted = [...data].filter(d => d.value > 0).sort((a, b) => b.value - a.value);
     const hotspots = sorted.slice(0, 5);
-    
-    return { min, max, hotspots };
+
+    const peakHour = byHour.some(v => v > 0) ? byHour.indexOf(Math.max(...byHour)) : null;
+    const bestDay = byDay.some(v => v > 0) ? byDay.indexOf(Math.max(...byDay)) : null;
+
+    return { min, max, hotspots, peakHour, bestDay };
   }, [data]);
 
   const getColor = (value: number) => {
@@ -277,19 +298,19 @@ export default function ConversationHeatmap({
             icon={TrendingUp}
             label="Pico Semanal"
             value={`${max} ${config.unit}`}
-            description={`${DAYS_FULL[hotspots[0]?.day ?? 0]} às ${formatHour(hotspots[0]?.hour ?? 0)}`}
+            description={hotspots[0] ? `${DAYS_FULL[hotspots[0].day]} às ${formatHour(hotspots[0].hour)}` : 'Sem dados no período'}
           />
           <StatCard
             icon={Clock}
             label="Horário Nobre"
-            value="10h - 16h"
+            value={peakHour === null ? 'Sem dados' : formatHour(peakHour)}
             description="Maior concentração"
           />
           <StatCard
             icon={Calendar}
             label="Melhor Dia"
-            value={DAYS_FULL[2]}
-            description="Menor tempo de espera"
+            value={bestDay === null ? 'Sem dados' : DAYS_FULL[bestDay]}
+            description="Mais mensagens"
           />
         </div>
       </CardContent>
