@@ -11,8 +11,10 @@
  *   recortadas pelo intervalo (bordas inclusivas) e paginadas por rolagem (S096 — sem o teto de
  *   500/200 do hook antigo). Ordem determinística (`created_at` decrescente + desempate por `id`)
  *   porque `.range()` sem `.order()` estável repete ou pula linha.
- * - Ligações e e-mails vêm dos hooks do J06 (`useJourneyCalls`/`useJourneyEmails`), que já resolvem
- *   escopo, ordem e paginação das duas fontes.
+ * - Ligações e e-mails da LISTA vêm dos hooks do J06 (`useJourneyCalls`/`useJourneyEmails`),
+ *   que já resolvem escopo, ordem e paginação das duas fontes. A ESTATÍSTICA busca as mesmas
+ *   duas fontes direto (mesmo recorte, mesmos mapeadores, sem teto de página), para o retrato
+ *   do hero cobrir o período inteiro independente da rolagem.
  *
  * Só a lista de colunas usada é pedida ao banco; nenhum campo de gravação/corpo sai por este
  * caminho. As consultas usam o cliente RLS do usuário (nunca service role).
@@ -39,6 +41,8 @@
 import { useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { mapCallRow, JOURNEY_CALLS_PAGE_SIZE } from './useJourneyCalls';
+import { mapEmailRow, JOURNEY_EMAILS_PAGE_SIZE } from './useJourneyEmails';
 import { localDayKey } from '@/lib/localDay';
 import { CATEGORY_META } from '@/lib/journey/model';
 import type { JourneyActor, JourneyCategory, JourneyDay, JourneyEvent } from '@/lib/journey/model';
@@ -258,14 +262,36 @@ interface TimelinePage {
 }
 
 /**
- * Uma página das seis fontes que este hook lê direto. As consultas rodam em paralelo; cada uma
- * carrega o próprio `error`, para que a falha de uma não apague as outras. As atividades vêm
- * depois, presas às propostas desta página (é o único caminho até elas pelo contato).
+ * Ids de TODAS as propostas do contato, sem recorte de período. As atividades de uma proposta
+ * pertencem ao período pela data DA ATIVIDADE (`deal_activities.created_at`), não pela data de
+ * criação da proposta: proposta criada antes do período ainda gera atividade dentro dele
+ * (S040/S041). Sem `range` o PostgREST devolve até o limite padrão (1000) — folga de sobra para
+ * as propostas de um único contato; se um dia estourar, esta função passa a paginar.
  */
-export async function fetchTimelinePage(
+export async function fetchContactDealIds(
+  contactId: string,
+): Promise<{ ids: string[]; falhou: boolean }> {
+  const { data, error } = await supabase.from('sales_deals').select('id').eq('contact_id', contactId);
+  if (error) return { ids: [], falhou: true };
+  const ids = ((data ?? []) as Array<{ id: string | null }>)
+    .map((linha) => String(linha.id ?? ''))
+    .filter(Boolean);
+  return { ids, falhou: false };
+}
+
+/**
+ * Uma página da timeline. As atividades usam os ids de TODAS as propostas do contato (não só as
+ * da página) e a SUA PRÓPRIA janela `range(from, to)` — paginação independente da paginação das
+ * propostas: página de propostas vazia (ou proposta criada fora do período) não apaga as
+ * atividades do período.
+ *
+ * `propostas === null` = a busca dos ids falhou (a página marca `falhou`, sem engolir o erro).
+ */
+async function buscarPaginaComPropostas(
   contactId: string,
   range: JourneyRangeIso,
   page: number,
+  propostas: string[] | null,
 ): Promise<TimelinePage> {
   const from = page * JOURNEY_TIMELINE_PAGE_SIZE;
   const to = from + JOURNEY_TIMELINE_PAGE_SIZE - 1;
@@ -287,24 +313,25 @@ export async function fetchTimelinePage(
   if (sinceIso) tarefas = tarefas.gte('created_at', sinceIso);
   if (untilIso) tarefas = tarefas.lte('created_at', untilIso);
 
-  let propostas = supabase.from('sales_deals').select(DEAL_COLUMNS).eq('contact_id', contactId);
-  if (sinceIso) propostas = propostas.gte('created_at', sinceIso);
-  if (untilIso) propostas = propostas.lte('created_at', untilIso);
+  let propostasQuery = supabase.from('sales_deals').select(DEAL_COLUMNS).eq('contact_id', contactId);
+  if (sinceIso) propostasQuery = propostasQuery.gte('created_at', sinceIso);
+  if (untilIso) propostasQuery = propostasQuery.lte('created_at', untilIso);
 
   const [mensagensRes, eventosRes, notasRes, tarefasRes, propostasRes] = await Promise.all([
     mensagens.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
     eventos.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
     notas.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
     tarefas.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
-    propostas.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
+    propostasQuery.order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
   ]);
 
   const propostasLinhas = propostasRes.error ? [] : ((propostasRes.data ?? []) as DealRow[]);
-  const dealIds = propostasLinhas.map((d) => d.id);
 
+  // Janela PRÓPRIA das atividades: recorte de período + ordem + range independentes da página
+  // das propostas. `propostas` (todas as do contato) só alimenta o `in` — nunca o recorte.
   let atividadesRes: { data: unknown[] | null; error: unknown } = { data: [], error: null };
-  if (dealIds.length) {
-    let atividades = supabase.from('deal_activities').select(ACTIVITY_COLUMNS).in('deal_id', dealIds);
+  if (propostas && propostas.length) {
+    let atividades = supabase.from('deal_activities').select(ACTIVITY_COLUMNS).in('deal_id', propostas);
     if (sinceIso) atividades = atividades.gte('created_at', sinceIso);
     if (untilIso) atividades = atividades.lte('created_at', untilIso);
     atividadesRes = await atividades
@@ -331,6 +358,7 @@ export async function fetchTimelinePage(
       activities: atividadesLinhas.map(mapActivityRow),
     },
     falhou:
+      propostas === null ||
       !!mensagensRes.error ||
       !!eventosRes.error ||
       !!notasRes.error ||
@@ -344,6 +372,150 @@ export async function fetchTimelinePage(
       cheia(tarefasLinhas.length) ||
       cheia(propostasLinhas.length) ||
       cheia(atividadesLinhas.length),
+  };
+}
+
+/**
+ * Uma página das fontes que este hook lê direto (rolagem da lista). Busca os ids das propostas
+ * uma vez por página e delega a `buscarPaginaComPropostas`.
+ */
+export async function fetchTimelinePage(
+  contactId: string,
+  range: JourneyRangeIso,
+  page: number,
+): Promise<TimelinePage> {
+  const { ids, falhou } = await fetchContactDealIds(contactId);
+  return buscarPaginaComPropostas(contactId, range, page, falhou ? null : ids);
+}
+
+/** Teto de segurança dos laços de exaustão (100 páginas × 200–300 linhas). */
+const MAX_PAGINAS_ESTATISTICA = 100;
+
+/**
+ * TODAS as páginas das seis fontes diretas, sem teto de 200. O retrato da estatística precisa do
+ * período inteiro, independente de quantas páginas a rolagem da lista já carregou.
+ */
+async function buscarTodasPaginasFontes(
+  contactId: string,
+  range: JourneyRangeIso,
+  propostas: string[] | null,
+): Promise<{ fontes: Omit<JourneySources, 'calls' | 'emails'>; falhou: boolean }> {
+  const messages: RawMessage[] = [];
+  const events: RawConversationEvent[] = [];
+  const notes: RawNote[] = [];
+  const tasks: RawTask[] = [];
+  const deals: RawDeal[] = [];
+  const activities: RawActivity[] = [];
+  let falhou = false;
+  for (let page = 0; page < MAX_PAGINAS_ESTATISTICA; page++) {
+    const pagina = await buscarPaginaComPropostas(contactId, range, page, propostas);
+    if (pagina.falhou) falhou = true;
+    messages.push(...(pagina.sources.messages ?? []));
+    events.push(...(pagina.sources.events ?? []));
+    notes.push(...(pagina.sources.notes ?? []));
+    tasks.push(...(pagina.sources.tasks ?? []));
+    deals.push(...(pagina.sources.deals ?? []));
+    activities.push(...(pagina.sources.activities ?? []));
+    if (!pagina.paginou) break;
+  }
+  return { fontes: { messages, events, notes, tasks, deals, activities }, falhou };
+}
+
+/**
+ * Colunas das chamadas para a estatística — o MESMO conjunto que `useJourneyCalls` pede (sem
+ * `recording_url`), para o `mapCallRow` continuar valendo aqui. Mesma regra vale para os
+ * e-mails abaixo com `mapEmailRow` (sem corpo, sem endereço).
+ */
+const CALL_STATS_COLUMNS =
+  'id, direction, status, started_at, answered_at, ended_at, duration_seconds, talk_seconds, agent_id, answered_by, end_reason, recording_status';
+const EMAIL_STATS_COLUMNS =
+  'id, thread_id, direction, subject, snippet, internal_date, from_name, email_threads!inner(assigned_to)';
+
+/** TODAS as ligações do contato no período, sem teto de 200 (mesmo recorte do J06). */
+async function buscarTodasChamadas(
+  contactId: string,
+  range: JourneyRangeIso,
+): Promise<{ calls: RawCall[]; falhou: boolean }> {
+  const { sinceIso, untilIso } = range;
+  const calls: RawCall[] = [];
+  let falhou = false;
+  for (let page = 0; page < MAX_PAGINAS_ESTATISTICA; page++) {
+    const from = page * JOURNEY_CALLS_PAGE_SIZE;
+    const to = from + JOURNEY_CALLS_PAGE_SIZE - 1;
+    let consulta = supabase.from('calls').select(CALL_STATS_COLUMNS).eq('contact_id', contactId);
+    if (sinceIso) consulta = consulta.gte('started_at', sinceIso);
+    if (untilIso) consulta = consulta.lte('started_at', untilIso);
+    const { data, error } = await consulta
+      .order('started_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
+    if (error) {
+      falhou = true;
+      break;
+    }
+    const linhas = (data ?? []) as Array<Parameters<typeof mapCallRow>[0]>;
+    calls.push(...linhas.map(mapCallRow));
+    if (linhas.length < JOURNEY_CALLS_PAGE_SIZE) break;
+  }
+  return { calls, falhou };
+}
+
+/** TODOS os e-mails do contato no período, sem teto de 300 (mesmo recorte do J06). */
+async function buscarTodosEmails(
+  contactId: string,
+  range: JourneyRangeIso,
+): Promise<{ emails: RawEmail[]; falhou: boolean }> {
+  const { sinceIso, untilIso } = range;
+  const emails: RawEmail[] = [];
+  let falhou = false;
+  for (let page = 0; page < MAX_PAGINAS_ESTATISTICA; page++) {
+    const from = page * JOURNEY_EMAILS_PAGE_SIZE;
+    const to = from + JOURNEY_EMAILS_PAGE_SIZE - 1;
+    let consulta = supabase
+      .from('email_messages')
+      .select(EMAIL_STATS_COLUMNS)
+      .eq('email_threads.contact_id', contactId);
+    if (sinceIso) consulta = consulta.gte('email_threads.last_message_at', sinceIso);
+    if (untilIso) consulta = consulta.lte('email_threads.last_message_at', untilIso);
+    const { data, error } = await consulta
+      .order('internal_date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
+    if (error) {
+      falhou = true;
+      break;
+    }
+    const linhas = (data ?? []) as Array<Parameters<typeof mapEmailRow>[0]>;
+    emails.push(...linhas.map(mapEmailRow));
+    if (linhas.length < JOURNEY_EMAILS_PAGE_SIZE) break;
+  }
+  return { emails, falhou };
+}
+
+/**
+ * Retrato COMPLETO de um período para a estatística: todas as páginas das fontes diretas mais
+ * todas as ligações e e-mails, sem teto. `falhou` junta a falha de qualquer consulta — o
+ * chamador marca o erro parcial em vez de engolir.
+ */
+export interface FullStatsResult {
+  sources: JourneySources;
+  falhou: boolean;
+}
+
+export async function fetchFullStatsSources(
+  contactId: string,
+  range: JourneyRangeIso,
+): Promise<FullStatsResult> {
+  const { ids, falhou: falhouIds } = await fetchContactDealIds(contactId);
+  const propostas = falhouIds ? null : ids;
+  const [diretas, chamadas, emails] = await Promise.all([
+    buscarTodasPaginasFontes(contactId, range, propostas),
+    buscarTodasChamadas(contactId, range),
+    buscarTodosEmails(contactId, range),
+  ]);
+  return {
+    sources: { ...diretas.fontes, calls: chamadas.calls, emails: emails.emails },
+    falhou: falhouIds || diretas.falhou || chamadas.falhou || emails.falhou,
   };
 }
 
@@ -471,6 +643,18 @@ export interface JourneyTimelineState {
   loadMore: () => void;
 }
 
+/** Bloco de fontes cruas vazio (retrato ainda não carregado). */
+const FONTES_ZERADAS: JourneySources = {
+  messages: [],
+  events: [],
+  calls: [],
+  emails: [],
+  notes: [],
+  tasks: [],
+  deals: [],
+  activities: [],
+};
+
 /** Junta as páginas já carregadas num único bloco de fontes cruas. */
 function combinarFontes(pages: TimelinePage[] | undefined, calls: RawCall[], emails: RawEmail[]): JourneySources {
   const paginas = pages ?? [];
@@ -513,31 +697,33 @@ export function useJourneyTimeline(
   const chamadas = useJourneyCalls({ contactId, range: rangeIso });
   const emails = useJourneyEmails({ contactId, range: rangeIso });
 
-  // Período anterior: só para a estatística da tendência. Sem período anterior (intervalo aberto),
-  // os hooks do J06 ficam desligados (contato nulo) e a consulta própria nem parte.
-  const previousQuery = useQuery({
-    queryKey: journeyTimelinePreviousKey(contactId, previousIso ?? RANGE_ABERTO),
+  // Período anterior: retrato COMPLETO só para a estatística da tendência (sem teto de página).
+  // Sem período anterior (intervalo aberto), a consulta nem parte.
+  const previousStatsQuery = useQuery({
+    queryKey: [...journeyTimelinePreviousKey(contactId, previousIso ?? RANGE_ABERTO), 'retrato-completo'],
     enabled: !!contactId && !!previousIso,
-    queryFn: () => fetchTimelinePage(contactId as string, previousIso as JourneyRangeIso, 0),
+    queryFn: () => fetchFullStatsSources(contactId as string, previousIso as JourneyRangeIso),
     staleTime: 30_000,
   });
-  const chamadasAnteriores = useJourneyCalls({
-    contactId: previousIso ? contactId : null,
-    range: previousIso ?? RANGE_ABERTO,
-  });
-  const emailsAnteriores = useJourneyEmails({
-    contactId: previousIso ? contactId : null,
-    range: previousIso ?? RANGE_ABERTO,
+
+  // Retrato COMPLETO do período atual para o hero: todas as páginas das fontes diretas mais
+  // todas as ligações e e-mails — independente de quantas páginas a rolagem já carregou.
+  const statsQuery = useQuery({
+    queryKey: [...journeyTimelineKey(contactId, rangeIso), 'retrato-completo'],
+    enabled: !!contactId,
+    queryFn: () => fetchFullStatsSources(contactId as string, rangeIso),
+    staleTime: 30_000,
   });
 
   const fontes = useMemo(
     () => combinarFontes(timeline.data?.pages, chamadas.calls, emails.emails),
     [timeline.data, chamadas.calls, emails.emails],
   );
-  const fontesAnteriores = useMemo(
-    () => combinarFontes(previousQuery.data ? [previousQuery.data] : [], chamadasAnteriores.calls, emailsAnteriores.emails),
-    [previousQuery.data, chamadasAnteriores.calls, emailsAnteriores.emails],
-  );
+
+  // A lista usa as páginas carregadas pela rolagem; o hero e a tendência usam os retratos
+  // completos (período inteiro, sem teto).
+  const fontesStats = statsQuery.data?.sources ?? FONTES_ZERADAS;
+  const fontesAnteriores: JourneySources = previousStatsQuery.data?.sources ?? FONTES_ZERADAS;
 
   const eventos = useMemo(() => mapJourneyEvents(fontes, { now: referencia }), [fontes, referencia]);
 
@@ -592,7 +778,7 @@ export function useJourneyTimeline(
     return Array.from(porDia.entries()).map(([date, dayEvents]) => ({ date, events: dayEvents }));
   }, [eventosPorUsuario, category]);
 
-  const statsInput = useMemo(() => buildStatsInput(fontes), [fontes]);
+  const statsInput = useMemo(() => buildStatsInput(fontesStats), [fontesStats]);
   const previousStatsInput = useMemo(() => buildStatsInput(fontesAnteriores), [fontesAnteriores]);
 
   const loadMore = useCallback(() => {
@@ -601,6 +787,11 @@ export function useJourneyTimeline(
     if (emails.hasMore) emails.fetchNextPage();
   }, [timeline, chamadas, emails]);
 
+  // Erro PARCIAL: a falha de QUALQUER consulta marca, sem apagar a lista do que carregou —
+  // inclusive as do período anterior (retrato da tendência) e a de ids das propostas.
+  const retratoAtualFalhou = statsQuery.data?.falhou ?? false;
+  const retratoAnteriorFalhou = previousStatsQuery.data?.falhou ?? false;
+
   return {
     days,
     counts,
@@ -608,12 +799,20 @@ export function useJourneyTimeline(
     actorIds,
     statsInput,
     previousStatsInput,
-    isLoading: timeline.isLoading || chamadas.isLoading || emails.isLoading,
+    isLoading:
+      timeline.isLoading ||
+      chamadas.isLoading ||
+      emails.isLoading ||
+      statsQuery.isLoading ||
+      (previousIso ? previousStatsQuery.isLoading : false),
     isError:
       timeline.isError ||
       chamadas.isError ||
       emails.isError ||
-      (timeline.data?.pages ?? []).some((pagina) => pagina.falhou),
+      (timeline.data?.pages ?? []).some((pagina) => pagina.falhou) ||
+      statsQuery.isError ||
+      retratoAtualFalhou ||
+      (previousIso ? previousStatsQuery.isError || retratoAnteriorFalhou : false),
     hasMore: !!timeline.hasNextPage || chamadas.hasMore || emails.hasMore,
     loadMore,
   };

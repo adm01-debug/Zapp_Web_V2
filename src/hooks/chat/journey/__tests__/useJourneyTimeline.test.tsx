@@ -13,6 +13,9 @@ const estado = vi.hoisted(() => ({
   registros: [] as Array<{ tabela: string; metodo: string; args: unknown[] }>,
   linhas: {} as Record<string, unknown[]>,
   erro: {} as Record<string, string>,
+  // Escopo opcional do erro: falha SÓ a consulta cuja cláusula `gte` usa este limite
+  // (permite simular "falhou só no período anterior", já que o atual usa outro `since`).
+  erroApenasSeGte: {} as Record<string, string>,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -46,7 +49,11 @@ vi.mock('@/integrations/supabase/client', () => {
       });
 
     const responder = () => {
-      if (estado.erro[tabela]) return { data: null, error: { message: estado.erro[tabela] } };
+      if (estado.erro[tabela]) {
+        const escopo = estado.erroApenasSeGte[tabela];
+        const noEscopo = !escopo || maiores.some(([, limite]) => limite === escopo);
+        if (noEscopo) return { data: null, error: { message: estado.erro[tabela] } };
+      }
       const linhas = ((estado.linhas[tabela] ?? []) as Record<string, unknown>[]).filter(combinam);
       return { data: faixa ? linhas.slice(faixa[0], faixa[1] + 1) : linhas, error: null };
     };
@@ -69,7 +76,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 import { JOURNEY_TIMELINE_PAGE_SIZE, useJourneyTimeline } from '@/hooks/chat/journey/useJourneyTimeline';
-import { resolveRange, toIsoRange } from '@/lib/journey/periodRange';
+import { previousRange, resolveRange, toIsoRange } from '@/lib/journey/periodRange';
 
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(
@@ -206,6 +213,7 @@ beforeEach(() => {
   estado.registros.length = 0;
   estado.linhas = {};
   estado.erro = {};
+  estado.erroApenasSeGte = {};
 });
 
 describe('useJourneyTimeline — timeline completa da aba Histórico', () => {
@@ -355,5 +363,136 @@ describe('useJourneyTimeline — timeline completa da aba Histórico', () => {
 
     // O período anterior vai para a tendência.
     expect(result.current.previousStatsInput.messages.map((m) => m.id)).toEqual(['anterior']);
+  });
+});
+
+describe('useJourneyTimeline — refazer 1 (recusa do revisor)', () => {
+  it('atividade do período aparece mesmo quando a proposta foi criada antes dele', async () => {
+    estado.linhas.sales_deals = [
+      linhaProposta({ id: 'dl-antiga', created_at: '2026-08-01T10:00:00.000Z' }),
+    ];
+    estado.linhas.deal_activities = [
+      linhaAtividade({ id: 'at-1', deal_id: 'dl-antiga', created_at: '2026-10-05T17:00:00.000Z' }),
+    ];
+
+    const { result } = renderHook(() => useJourneyTimeline(CONTATO, { period: PERIODO, now: NOW }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // A proposta antiga NÃO vira evento (fora do período), mas a atividade dela, sim.
+    const lancados = result.current.days.flatMap((dia) => dia.events);
+    expect(lancados.map((evento) => evento.category)).toEqual(['deal']);
+    expect(alvos(result.current.days)).toEqual(['dl-antiga']);
+
+    // Os ids usados no `in` vêm de TODAS as propostas do contato, sem recorte de período.
+    const usosIn = filtrosDe('deal_activities').filter((r) => r.metodo === 'in');
+    expect(usosIn).toContainEqual({ tabela: 'deal_activities', metodo: 'in', args: ['deal_id', ['dl-antiga']] });
+  });
+
+  it('mapeia notas, tarefas e propostas do período e recorta as de fora', async () => {
+    estado.linhas.contact_notes = [
+      linhaNota({ id: 'nt-1' }),
+      linhaNota({ id: 'nt-velha', created_at: '2026-01-05T10:00:00.000Z' }),
+    ];
+    estado.linhas.conversation_tasks = [
+      linhaTarefa({ id: 'tf-1' }),
+      linhaTarefa({ id: 'tf-velha', created_at: '2026-01-05T10:00:00.000Z', created_by: null }),
+    ];
+    estado.linhas.sales_deals = [
+      linhaProposta({ id: 'dl-1' }),
+      linhaProposta({ id: 'dl-velha', created_at: '2026-01-05T10:00:00.000Z' }),
+    ];
+
+    const { result } = renderHook(() => useJourneyTimeline(CONTATO, { period: PERIODO, now: NOW }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const lancados = result.current.days.flatMap((dia) => dia.events);
+    const categorias = lancados.map((evento) => evento.category);
+    expect(categorias).toContain('note');
+    expect(categorias).toContain('task');
+    expect(categorias).toContain('deal');
+    const ids = alvos(result.current.days);
+    expect(ids).toEqual(expect.arrayContaining(['nt-1', 'tf-1', 'dl-1']));
+    expect(ids).not.toContain('nt-velha');
+    expect(ids).not.toContain('tf-velha');
+    expect(ids).not.toContain('dl-velha');
+  });
+
+  it('actorCounts conta só os atores da categoria ativa', async () => {
+    estado.linhas.messages = [
+      linhaMensagem({ id: 'm1', sender: 'agent', agent_id: 'ag-maria', created_at: '2026-10-05T10:00:00.000Z' }),
+      linhaMensagem({ id: 'm2', sender: 'agent', agent_id: 'ag-joao', created_at: '2026-10-05T11:00:00.000Z' }),
+      linhaMensagem({ id: 'm3', created_at: '2026-10-05T12:00:00.000Z' }),
+    ];
+    estado.linhas.contact_notes = [linhaNota({ id: 'nt-maria', author_id: 'ag-maria' })];
+
+    const { result } = renderHook(
+      () => useJourneyTimeline(CONTATO, { period: PERIODO, category: 'message', now: NOW }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // A nota da maria não entra: a categoria ativa é mensagem.
+    expect(result.current.actorCounts).toEqual({ 'ag-maria': 1, 'ag-joao': 1, contact: 1 });
+  });
+
+  it('statsInput cobre o período inteiro independente da rolagem', async () => {
+    const base = Date.parse('2026-10-06T00:00:00.000Z');
+    estado.linhas.messages = Array.from({ length: 250 }, (_, i) =>
+      linhaMensagem({
+        id: `m-${String(i).padStart(3, '0')}`,
+        // Remetente alternado como no teste de paginação: sem agrupamento D06 no meio.
+        sender: i % 2 === 0 ? 'agent' : 'contact',
+        agent_id: i % 2 === 0 ? 'maria' : null,
+        created_at: new Date(base - i * 60 * 1000).toISOString(),
+      }),
+    );
+
+    const { result } = renderHook(() => useJourneyTimeline(CONTATO, { period: PERIODO, now: NOW }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Sem nenhum loadMore: a lista mostra a 1ª página, mas o retrato já cobre tudo.
+    expect(eventos(result.current.days)).toHaveLength(JOURNEY_TIMELINE_PAGE_SIZE);
+    expect(result.current.statsInput.messages).toHaveLength(250);
+  });
+
+  it('período anterior com mais de 200 linhas não trunca o previousStatsInput', async () => {
+    const anterior = toIsoRange(previousRange(resolveRange(PERIODO, NOW)));
+    const inicio = Date.parse(anterior.sinceIso as string);
+    const fim = Date.parse((anterior.untilIso ?? anterior.sinceIso) as string);
+    estado.linhas.messages = Array.from({ length: 250 }, (_, i) =>
+      linhaMensagem({
+        id: `ant-${String(i).padStart(3, '0')}`,
+        created_at: new Date(inicio + 3_600_000 + Math.floor(((fim - inicio - 7_200_000) * i) / 250)).toISOString(),
+      }),
+    );
+
+    const { result } = renderHook(() => useJourneyTimeline(CONTATO, { period: PERIODO, now: NOW }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.previousStatsInput.messages).toHaveLength(250));
+  });
+
+  it('falha só no período anterior marca isError parcial e mantém a lista', async () => {
+    const anterior = toIsoRange(previousRange(resolveRange(PERIODO, NOW)));
+    estado.linhas.messages = [linhaMensagem({ id: 'dentro' })];
+    estado.erro.messages = 'boom-anterior';
+    estado.erroApenasSeGte.messages = anterior.sinceIso as string;
+
+    const { result } = renderHook(() => useJourneyTimeline(CONTATO, { period: PERIODO, now: NOW }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    // A lista do período atual continua de pé; só o retrato anterior zera.
+    expect(alvos(result.current.days)).toEqual(['dentro']);
+    expect(result.current.previousStatsInput.messages).toHaveLength(0);
   });
 });
