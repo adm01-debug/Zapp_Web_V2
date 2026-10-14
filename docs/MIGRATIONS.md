@@ -485,6 +485,35 @@ e falha se houver divergencia. Ele nao executa codigo de pull request nem expoe
 
 ---
 
+## 8. Fluxo diário (lote) — como migrations chegam à produção
+
+O desenvolvimento acontece em banco **local** (ver seção 0 do `CLAUDE.md`). A produção recebe
+o lote uma vez por dia, na seguinte ordem:
+
+1. **Merge do PR na `main`** — o código e o arquivo `.sql` entram juntos na `main`.
+2. **dry-run**: disparar `db-migrate.yml` com `apply_all_missing=true` e `apply=false`.
+   O job exibe o SHA-256 estrutural do que seria aplicado e sai limpo sem escrever nada.
+3. **Aprovação humana no environment `producao-ddl`** — Joaquim aprova na aba Actions.
+4. **apply**: re-disparar com `apply=true` e o `confirm_runtime_sha256` do dry-run anterior.
+   O job verifica se o schema não mudou desde o dry-run antes de escrever.
+5. **types-sync** — após o apply, `types-sync.yml` regenera `types.ts`, `schema-catalog.json`
+   e `schema-manifest.json` contra o banco recém-atualizado.
+6. **PR de sync** — o `types-sync` abre ou atualiza `automation/types-sync`.
+7. **Merge do PR de sync** — depois de verde, o lote do dia está fechado.
+
+### Estados que o `db-live-guard` reporta
+
+| Estado | Significado |
+|---|---|
+| `PENDENTE DE APPLY` | Arquivo mergeado em `supabase/migrations/` ainda não aplicado em produção. Normal entre o passo 1 (merge) e o passo 4 (apply). Não é drift — é a janela esperada do lote diário. |
+| drift real | A version está no ledger mas o objeto no banco diverge do que a migration declara. Requer investigação; causa comum é DDL aplicado fora do fluxo (ver `CLAUDE.md`, seção 1, regra 6). |
+
+> **Atenção:** o estado `PENDENTE DE APPLY` só se distingue de drift quando o arquivo existe em
+> `supabase/migrations/` e a version correspondente ainda não está no ledger do banco. Se a
+> version já está no ledger mas o objeto diverge, é drift real.
+
+---
+
 ## 7. Auditoria de arquivos que nao aplicam (replay local, 03/10/2026)
 
 O replay local das 768 migrations (`scripts/db-audit/replay-local.sh`, relatorio em
