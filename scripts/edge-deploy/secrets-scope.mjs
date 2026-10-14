@@ -9,8 +9,10 @@ import { appendFileSync, readFileSync } from 'node:fs';
 //
 // Decisao desta etapa: reescrever APENAS quando
 //   (a) o operador pediu (`rotate_secrets=true`), ou
-//   (b) o `secrets list` do projeto divergir do que o escopo espera, ou
-//   (c) a leitura do remoto falhar (cai no comportamento antigo, de proposito).
+//   (b) o `secrets list` do projeto divergir do que o escopo espera.
+// W59: a leitura do remoto falhando NAO mais cai no comportamento anterior --
+// agora e' fail-closed: recusa a reescrita e emite ::error:: pedindo o flag
+// explicito. O operador usa `rotate_secrets=true` para forcar quando necessario.
 // Em rollback (`source_ref` preenchido) NUNCA reescrever: o objetivo e' voltar ao
 // estado anterior, nao mexer em configuracao.
 //
@@ -54,6 +56,8 @@ export function nomesDeSecretsParaEscopo(fn) {
 /**
  * Decisao de reescrever. `nomesRemotos` pode ser `null` = leitura falhou.
  * Devolve `{ reescrever, motivo }` -- o motivo vai para o log, sempre.
+ * W59: leitura falhada e' fail-closed (reescrever=false); o CLI emite ::error::
+ * pedindo rotate_secrets=true explicito para quem precisar forcar a reescrita.
  */
 export function decidirReescrita({ rotateSecrets = false, emRollback = false, emEnsaio = false, nomesRemotos = null, nomesEsperados = [] } = {}) {
   if (emEnsaio) {
@@ -67,8 +71,8 @@ export function decidirReescrita({ rotateSecrets = false, emRollback = false, em
   }
   if (nomesRemotos === null) {
     return {
-      reescrever: true,
-      motivo: 'nao foi possivel ler os secrets do projeto: mantendo o comportamento anterior (reescrever)',
+      reescrever: false,
+      motivo: 'leitura do inventario de secrets falhou: secrets nao reescritos (fail-closed); use rotate_secrets=true para forcar',
     };
   }
   const remotos = new Set(nomesRemotos);
@@ -83,7 +87,7 @@ export function decidirReescrita({ rotateSecrets = false, emRollback = false, em
  * Extrai APENAS os nomes do `secrets list`. Tolerante a forma (array de objetos,
  * objeto com `secrets`, ou a tabela NAME/DIGEST do modo texto) porque a forma exata
  * do JSON nao foi medida -- mas nao adivinha: o que nao casar devolve `null`, que a
- * decisao trata como leitura falhada (comportamento anterior preservado).
+ * decisao trata como leitura falhada (fail-closed: nao reescreve, emite ::error::).
  */
 export function extrairNomesDeSecrets(entrada) {
   const texto = String(entrada ?? '').trim();
@@ -134,6 +138,11 @@ if (process.argv[1]?.endsWith('secrets-scope.mjs')) {
   });
   console.log(`escopo="${fn || '(total)'}" esperados=${nomesEsperados.length} [${nomesEsperados.join(', ')}]`);
   console.log(`decisao=${decisao.reescrever ? 'REESCREVER' : 'MANTER'} -- ${decisao.motivo}`);
+  // W59: leitura falhada → ::error:: explicito para que o log do CI mostre o motivo
+  // antes de qualquer passo de escrita. Secrets nao sao tocados (reescrever=false).
+  if (nomesRemotos === null && !bandeira('--dry-run') && !bandeira('--rollback')) {
+    console.log(`::error::secrets-scope: ${decisao.motivo}`);
+  }
   // A saida consumida pelo workflow e' uma linha so', sem log junto.
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, `reescrever=${decisao.reescrever}\nmotivo=${decisao.motivo}\n`);

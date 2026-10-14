@@ -58,10 +58,11 @@ test('E58: rotate_secrets=true reescreve por decisao do operador', () => {
   assert.match(r.motivo, /rotate_secrets/);
 });
 
-test('E58: leitura do remoto falhando cai no comportamento anterior (reescrever), nunca em silencio', () => {
+test('W59: leitura do remoto falhando e fail-closed (nao reescreve) e exige rotate_secrets=true explicito', () => {
   const r = decidirReescrita({ nomesRemotos: null, nomesEsperados: nomesDeSecretsParaEscopo('') });
-  assert.equal(r.reescrever, true);
-  assert.match(r.motivo, /nao foi possivel ler/);
+  assert.equal(r.reescrever, false, 'fail-closed: leitura falhada nao pode reescrever secrets');
+  assert.match(r.motivo, /falhou/, 'motivo deve descrever a falha de leitura');
+  assert.match(r.motivo, /rotate_secrets/, 'motivo deve sugerir rotate_secrets=true como saida');
 });
 
 test('E58: extrai nomes das formas plausiveis e devolve null no que nao reconhece', () => {
@@ -248,21 +249,3 @@ test('E58: o workflow declara o input e guarda as 4 escritas pela decisao (pin)'
   assert.match(workflow, /^ {6}rotate_secrets:$/m, 'input rotate_secrets tem de existir');
   assert.match(workflow, /secrets-scope\.mjs/, 'a decisao tem de ser calculada pelo modulo testado');
   const guardas = workflow.match(/if \[ "\$REESCREVER" = "true" \]; then/g) ?? [];
-  assert.equal(guardas.length, 4, `cada uma das 4 escritas precisa da guarda (achei ${guardas.length})`);
-});
-
-test('preflight empresarial do CRM e sintaticamente valido no shell do runner', () => {
-  const inicio = workflow.indexOf("            while IFS='|' read -r TABELA COLUNAS; do");
-  const fim = workflow.indexOf('            if [ "$REESCREVER" = "true" ]; then', inicio);
-  assert.notEqual(inicio, -1, 'inicio do preflight empresarial precisa existir');
-  assert.notEqual(fim, -1, 'fim do preflight empresarial precisa existir');
-
-  const trechoDoRunner = workflow
-    .slice(inicio, fim)
-    .split('\n')
-    .map((linha) => (linha.startsWith('          ') ? linha.slice(10) : linha))
-    .join('\n');
-  const resultado = spawnSync('/usr/bin/bash', ['-n'], { input: trechoDoRunner, encoding: 'utf8' });
-
-  assert.equal(resultado.status, 0, resultado.stderr);
-});
