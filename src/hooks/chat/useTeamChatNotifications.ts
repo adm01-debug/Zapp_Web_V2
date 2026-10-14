@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
@@ -195,15 +196,19 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
         // Show browser notification if enabled
         if (permission === 'granted' && isSubscribed && notifSettings.browserNotifications && !isQuietHours()) {
-          // Fetch sender name
+          // Nome do remetente por RPC segura: para o agente a leitura direta de
+          // `profiles` é barrada pela RLS (o título virava 'Colega').
+          // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
           let senderName = 'Colega';
           try {
-            const { data } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', msg.sender_id)
-              .single();
-            if (data) senderName = data.name;
+            const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
+            if (erroPerfis) {
+              log.error('Failed to resolve team chat sender name:', erroPerfis);
+            } else {
+              const perfis = (data ?? []) as Array<{ id: string; name: string | null }>;
+              const perfil = perfis.find((p) => p.id === msg.sender_id);
+              if (perfil?.name) senderName = perfil.name;
+            }
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
@@ -229,4 +234,31 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
       supabase.removeChannel(channel);
     };
   }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isSubscribed, isQuietHours, showNotification]);
+
+  /**
+   * Clique na notificação do chat interno: o service worker repassa o clique da
+   * notificação como `NOTIFICATION_CLICK` carregando o `data` dela (aqui,
+   * `type: 'team_chat'` e o `conversationId`). Foca a janela e abre o módulo de
+   * Chat Interno. A seleção da conversa específica é estado local da
+   * `TeamChatView`, fora deste hook.
+   */
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const aoReceberMensagem = (event: MessageEvent) => {
+      const mensagem = event.data as
+        | { type?: string; data?: { type?: string; conversationId?: string } }
+        | null;
+      if (mensagem?.type !== 'NOTIFICATION_CLICK') return;
+      if (mensagem.data?.type !== 'team_chat') return;
+      if (typeof mensagem.data.conversationId !== 'string') return;
+      window.focus();
+      navigateToView('team-chat');
+    };
+
+    navigator.serviceWorker.addEventListener('message', aoReceberMensagem);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', aoReceberMensagem);
+    };
+  }, []);
 }
