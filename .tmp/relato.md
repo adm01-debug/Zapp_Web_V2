@@ -1,27 +1,71 @@
-Especialista: workertestes
+Especialista: worker (geral)
+Especialista da área: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# [retomar] TL-072 / X118 — item já entregue por retomada IRMÃ na fila do integrador; fecho SEM commit de código
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Estado: CONCLUÍDO — nada pendente. Não há arquivo de produção, teste ou config a
+tocar neste cartão.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Evidência limpa (comandos rodados agora, neste workspace; saída literal)
+- `git status --short` → vazio (árvore limpa; nada não commitado).
+- `git diff --stat dia/2026-10-13...HEAD` → `.tmp/relato.md | 91 +++...` — o único
+  arquivo do diff é o próprio relato; ZERO arquivo de produção/teste.
+- `npx vitest run src/components/talkx/__tests__/TalkX.test.tsx` →
+  `Test Files 1 passed (1); Tests 34 passed (34)` — a ponta do Talk X segue verde.
+- `jev-juiz pronto .tmp/relato.md` →
+  `nada a apontar no diff (1 arquivos) nem no relato. Pode fechar.`
+- Entrega irmã já na fila, conferida por máquina: `zapp-verify --rapido` →
+  `OK db_guard 0s; OK tipos 34s; OK lint 11s; OK migrations 1s` (ver fila abaixo).
 
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+## Por que NÃO commitei código
+O cartão manda: "confira no código ATUAL se o defeito do pedido ainda existe; se
+já foi corrigido, escreva isso em .tmp/relato.md com a prova e feche sem commit de
+código". Este item (TL-072 / X118 — gerenciador de links rastreáveis no editor de
+mensagem do Talk X) JÁ está ENTREGUE e na fila do integrador por uma retomada IRMÃ
+do MESMO item, entregue 7 min antes desta: cartão `t_2a6ca7c2`, branch
+`v2/tl-072-links-rastreaveis-retomar-26101322385167`, sha `786685855f`, base
+`dia/2026-10-13`, estado `pronto`. Reentregar aqui criaria colisão add/add nos
+MESMOS arquivos novos (e reabriria defeito já corrigido na versão irmã).
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## Prova de que a lacuna ainda NÃO está na ponta (nada foi integrado)
+- `git log --oneline -1 dia/2026-10-13` → `338a420d1e fix(auth-login): retoma login gate rpc na ponta viva (conflito resolvido)`
+- `ls src/components/talkx/links` → `No such file or directory`
+- `git grep -n "TalkXLinksManager" dia/2026-10-13 -- src/` → rc=1 (nenhuma ocorrência)
+
+## Prova de que o item JÁ está entregue e na fila do integrador
+- Fila: `/home/joaquim_ataides/hermes-workspaces/.v2-fila/26101322385167.json`
+  → `"cartao": "t_2a6ca7c2"`, `"branch": "v2/tl-072-links-rastreaveis-retomar-26101322385167"`,
+  `"sha": "786685855f"`, `"base_dia": "dia/2026-10-13"`, `"estado": "pronto"`,
+  `"titulo": "fix(talk-x): Criar o gerenciador de links rastreáveis no editor de m (TL-072)"`.
+- `git log --oneline -4 v2/tl-072-links-rastreaveis-retomar-26101322385167` →
+  `786685855f docs(... relato da retomada ...)`,
+  `19cfa1817d test(talk-x): remove o ramo morto 'in:' do mock de links rastreaveis (TL-072)`,
+  `75e9e18c1f fix(talk-x): wizard do Talk X volta a montar sem AuthProvider no teste (TL-072)`,
+  `7eb40b8aad fix(talk-x): corrige gerenciador de links rastreaveis (TL-072)`.
+- `git show --stat 7eb40b8aad` → `src/components/talkx/links/TalkXLinksManager.tsx` (271 linhas),
+  `src/hooks/integrations/useTalkXLinks.ts` (210),
+  `src/components/talkx/TalkXCampaignWizard.tsx` (25 ±).
+
+## O que eu fiz e desfiz neste workspace (transparência do cherry-pick)
+1. `git cherry-pick d394c08992` (ponta de `v2/t-a5dee842-261010071144fe`, como o
+   cartão pede): aplicou os 3 arquivos novos e conflitou SÓ em
+   `TalkXCampaignWizard.tsx` (4 blocos).
+2. Resolvi os 4 blocos PRESERVANDO a ponta: import de `./talkxShared` com `fmtAgo`;
+   um único `editorRef` (o do X128) servindo os chips de variável E o "Inserir na
+   mensagem" do gerenciador; `limit={MESSAGE_LIMIT}`; `knownVariables` com os
+   rótulos de link.
+3. NO COMMIT DO CHERRY-PICK (depois revertido) o teste do item passou:
+   `npx vitest run src/components/talkx/__tests__/TalkXLinksManager.test.tsx` →
+   `Test Files 1 passed (1); Tests 8 passed (8)`.
+4. Ao conferir o cartão irmão, constatei que `d394c08992` é a versão ANTIGA do
+   MESMO item (teste de 232 linhas, com o ramo morto `in:` do mock, sem o mock de
+   AuthProvider) e que a retomada irmã já entregou a versão CORRIGIDA e ampliada
+   (teste de 240 linhas + `TalkXCampaignWizard.layout.test.tsx`, sem o ramo morto).
+5. `git reset --hard dia/2026-10-13` → voltei à ponta. O único commit deste cartão
+   é o do arquivo de relato (`.tmp/relato.md`), que já era rastreado na ponta
+   desde 7e55b88aa9; nenhum arquivo de produção ou de teste foi alterado.
+
+## Regras permanentes
+Sem exportar / baixar / copiar / imprimir / compartilhar; sem DDL, Edge Function,
+migration ou dependência nova; nenhum arquivo de produção, teste, `.github/`,
+`scripts/ci/`, baseline (tsconfig/eslint/vitest/package.json) ou config foi tocado.
