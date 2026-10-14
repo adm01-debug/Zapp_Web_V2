@@ -217,20 +217,73 @@ describe('X097 — exclusão de variante', () => {
     expect(onRemoveVariant).toHaveBeenCalledWith(expect.objectContaining({ id: 'var-B', label: 'B' }));
   });
 
-  it('a confirmação do componente não chama window.confirm de novo no editor', async () => {
+  it('no editor, excluir com envios abre o modal do kit (X050) e só apaga depois do "Excluir"', async () => {
     fetchVariants.mockResolvedValue([variant('B', 50)]);
-    countVariantRecipients.mockResolvedValue(3);
+    countVariantRecipients.mockResolvedValue(7);
 
     renderEditor();
     await openVariants();
 
     fireEvent.click(screen.getByRole('button', { name: 'Excluir variante B' }));
     await flush();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
+
+    // A confirmação é o modal do kit com a contagem — nada some antes do "Excluir".
+    expect(deleteVariant).not.toHaveBeenCalled();
+    expect(window.confirm).not.toHaveBeenCalled();
+    const modal = await screen.findByRole('alertdialog');
+    expect(within(modal).getByText('Excluir Variante')).toBeTruthy();
+    expect(within(modal).getByText('Envios')).toBeTruthy();
+    expect(within(modal).getByText('7')).toBeTruthy();
+
+    fireEvent.click(within(modal).getByRole('button', { name: 'Excluir' }));
     await flush();
 
-    expect(window.confirm).not.toHaveBeenCalled();
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-B');
     expect(deleteVariant).toHaveBeenCalledWith('var-B');
+  });
+
+  it('trocar de template zera confirmação, vencedora e "sem base" junto com os rascunhos', async () => {
+    const countRecipients = vi.fn().mockResolvedValue(3);
+    const view = render(
+      <TalkXTemplateVariants
+        templateId="tpl-A"
+        baseContent="texto base do template"
+        variants={[variant('B', 50)]}
+        countRecipients={countRecipients}
+        results={[result('B', 40, 5)]}
+        onRemoveVariant={vi.fn()}
+        onSaveVariants={vi.fn()}
+        onDeclareWinner={vi.fn()}
+      />,
+    );
+
+    // Abre a faixa de confirmação de exclusão da variante antiga.
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir variante B' }));
+    await flush();
+    expect(screen.getByRole('button', { name: 'Confirmar exclusão' })).toBeTruthy();
+
+    // Marca "sem base" e abre a confirmação de vencedora.
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: 'Declarar vencedora' }));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    // Troca de template: nada do template antigo pode continuar na tela.
+    view.rerender(
+      <TalkXTemplateVariants
+        templateId="tpl-B"
+        baseContent="texto base do template"
+        variants={[]}
+        countRecipients={countRecipients}
+        onRemoveVariant={vi.fn()}
+        onSaveVariants={vi.fn()}
+        onDeclareWinner={vi.fn()}
+      />,
+    );
+    await flush();
+
+    expect(screen.queryByRole('button', { name: 'Confirmar exclusão' })).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 
   it('falha ao gravar o conjunto aparece na tela', async () => {

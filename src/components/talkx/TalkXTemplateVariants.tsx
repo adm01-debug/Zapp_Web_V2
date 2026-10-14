@@ -96,6 +96,9 @@ export function TalkXTemplateVariants({
     lastKeyRef.current = draftsKey;
     setDrafts(variants);
     setError(null);
+    setRemovePrompt(null);
+    setWinnerFor(null);
+    setNoBase({});
   }, [draftsKey, variants]);
 
   const weights = variantWeights(drafts);

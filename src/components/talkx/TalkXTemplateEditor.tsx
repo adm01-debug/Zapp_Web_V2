@@ -275,6 +275,17 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     const variantId = variant.id;
     if (!variantId || !isActiveOrigin(templateId)) return;
 
+    const recipientCount = await countVariantRecipients(variantId);
+    if (!isActiveOrigin(templateId)) return;
+    if (recipientCount > 0) {
+      const confirmado = await confirmar({
+        ...PRESETS_DO_PRODUTO.excluirVariante,
+        details: [{ label: 'Envios', value: fmtInt(recipientCount) }],
+      });
+      if (!confirmado) return;
+      if (!isActiveOrigin(templateId)) return;
+    }
+
     await deleteVariant(variantId);
     if (!isActiveOrigin(templateId)) return;
     setVariants((current) => current.filter((item) => item.id !== variantId));
@@ -311,6 +322,15 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
       }
       await loadVariants(templateId);
     } catch (e) {
+      if (!isActiveOrigin(templateId)) return;
+      // Falha no meio do conjunto: parte das variantes ficou gravada. Recarrega
+      // da origem ativa para a tela voltar a espelhar o banco (tolerante a falha
+      // na própria recuperação, como a ponta fazia).
+      try {
+        await loadVariants(templateId);
+      } catch {
+        // Mantém a lista local quando nem a recuperação responde.
+      }
       if (!isActiveOrigin(templateId)) return;
       toast.error(e instanceof Error ? e.message : 'Não foi possível salvar as variações.');
     } finally {
@@ -680,7 +700,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                 variants={variants}
                 saving={savingVariant}
                 knownVariables={knownTemplateVariables}
-                countRecipients={countVariantRecipients}
                 onRemoveVariant={removeVariant}
                 onSaveVariants={saveVariantSet}
                 onDeclareWinner={declareVariantWinner}

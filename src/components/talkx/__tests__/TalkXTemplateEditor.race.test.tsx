@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, act, cleanup, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -355,9 +355,9 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });
 
-  // X050 — excluir variante com envios: nada é apagado antes da confirmação e a
-  // contagem aparece na própria tela (no X097 a confirmação vive no componente).
-  it('excluir variante com envios pede confirmação com a contagem e só apaga depois', async () => {
+  // X050 — excluir variante com envios: a caixinha do navegador virou o preset
+  // `excluirVariante` do kit e a contagem aparece no próprio modal.
+  it('excluir variante com envios abre o modal do kit com a contagem e só apaga depois do "Excluir"', async () => {
     fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do ativo')]);
     countVariantRecipients.mockResolvedValue(7);
 
@@ -368,15 +368,41 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     fireEvent.click(screen.getAllByRole('button', { name: 'Excluir variante A' })[0]);
     await flush();
 
-    // Nada é apagado antes da confirmação, e a contagem aparece na própria tela.
+    // Nada é apagado antes da confirmação, e a caixinha cinza do navegador não existe.
     expect(deleteVariant).not.toHaveBeenCalled();
-    expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
-    expect(screen.getByText(/usada em 7 envio\(s\)/)).toBeTruthy();
+    expect(window.confirm).not.toHaveBeenCalled();
+    const modal = await screen.findByRole('alertdialog');
+    expect(within(modal).getByText('Excluir Variante')).toBeTruthy();
+    expect(within(modal).getByText('Envios')).toBeTruthy();
+    expect(within(modal).getByText('7')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
+    fireEvent.click(within(modal).getByRole('button', { name: 'Excluir' }));
     await flush();
 
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
+  });
+
+  it('falha no meio do conjunto recarrega as variantes da origem ativa', async () => {
+    fetchVariants.mockResolvedValue([
+      variant('var-A', 'tpl-A', 'variante do ativo', 'B', 60),
+      variant('var-B', 'tpl-A', 'segunda variante do ativo', 'C', 40),
+    ]);
+    // A primeira gravação passa; a segunda falha no meio do conjunto.
+    saveVariant.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('falha no meio'));
+
+    renderEditor();
+    fireEvent.click(variantsToggle());
+    await flush();
+    const loadsAntes = fetchVariants.mock.calls.length;
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar variações' }));
+    await flush();
+
+    expect(saveVariant).toHaveBeenCalledTimes(2);
+    // A recuperação recarrega da origem ativa: a tela volta a espelhar o banco.
+    expect(fetchVariants.mock.calls.length).toBeGreaterThan(loadsAntes);
+    expect(fetchVariants).toHaveBeenLastCalledWith('tpl-A');
   });
 
   it('interrompe o save do conjunto ao trocar para B durante a primeira gravação', async () => {
