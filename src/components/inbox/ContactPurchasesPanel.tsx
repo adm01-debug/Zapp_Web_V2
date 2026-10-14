@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, DollarSign, Package, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { log } from '@/lib/logger';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -50,6 +51,10 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
       setDialogOpen(false);
       setTitle('');
       setAmount('');
+    } else {
+      // Sem isso a falha do insert era silenciosa: o diálogo fechava como se tivesse salvado.
+      log.error('Falha ao registrar compra/proposta:', error);
+      toast.error('Não foi possível registrar. Tente novamente.');
     }
   };
 

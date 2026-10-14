@@ -16,6 +16,8 @@ import { EmailChatInbox } from '@/components/email/EmailChatInbox';
 import { RealtimeService } from '@/services/realtime.service';
 import { buildConversations, normalizeMessage } from '@/hooks/realtime/realtimeUtils';
 import { cn } from '@/lib/utils';
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { escapeLikeWildcards } from '@/lib/emailThreadQuery';
 import { OmnichannelChatPanel } from './OmnichannelChatPanel';
 import type {
   ConversationContact,
@@ -99,17 +101,21 @@ async function searchConversations(term: string): Promise<{
   conversations: ConversationWithMessages[];
   messagesTruncated: boolean;
 }> {
-  // `,` `(` `)` `%` `\` quebram a sintaxe do filtro `or=` do PostgREST.
-  const sanitized = term.replace(/[%,()\\]/g, ' ').trim();
-  if (sanitized.length < SEARCH_MIN_LENGTH) {
+  // O termo digitado é literal no `ilike`: `%` e `_` viram curinga sem o escape e a
+  // busca casaria tudo. `,` `(` `)` `"` `\` também quebram a gramática do `or=`, então
+  // o valor sai entre aspas por `escapeOrFilterValue` (os `%` das pontas continuam
+  // curingas intencionais do padrão).
+  const trimmed = term.trim();
+  if (trimmed.length < SEARCH_MIN_LENGTH) {
     return { conversations: [], messagesTruncated: false };
   }
+  const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(trimmed)}%`);
 
   const { data: contacts, error } = await supabase
     .from('contacts')
     .select('*')
     .eq('is_lid_legacy', false)
-    .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
+    .or(`name.ilike.${pattern},phone.ilike.${pattern}`)
     .order('updated_at', { ascending: false })
     .limit(SEARCH_RESULT_LIMIT);
 

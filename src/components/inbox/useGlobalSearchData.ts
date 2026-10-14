@@ -6,6 +6,7 @@ import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { escapeLikeWildcards } from '@/lib/emailThreadQuery';
 import { subDays, subMonths, startOfDay } from 'date-fns';
 
 export interface SearchResult {
@@ -116,9 +117,9 @@ export function useGlobalSearchData(open: boolean) {
         if (cleanQuery.length >= 2) {
           if (isLinkSearch) {
             textQuery = textQuery.or(`content.ilike.%http://%,content.ilike.%https://%,content.ilike.%www.%`);
-            textQuery = textQuery.ilike('content', `%${cleanQuery}%`);
+            textQuery = textQuery.ilike('content', `%${escapeLikeWildcards(cleanQuery)}%`);
           } else {
-            textQuery = textQuery.ilike('content', `%${cleanQuery}%`);
+            textQuery = textQuery.ilike('content', `%${escapeLikeWildcards(cleanQuery)}%`);
           }
         } else if (isLinkSearch) {
           textQuery = textQuery.or(`content.ilike.%http://%,content.ilike.%https://%,content.ilike.%www.%`);
@@ -153,7 +154,7 @@ export function useGlobalSearchData(open: boolean) {
           : 'contacts:contact_id (id, name, surname)';
         let audioQuery = supabase.from('messages')
           .select(`id, content, transcription, message_type, created_at, contact_id, ${contactSelect}`)
-          .not('transcription', 'is', null).ilike('transcription', `%${cleanQuery}%`)
+          .not('transcription', 'is', null).ilike('transcription', `%${escapeLikeWildcards(cleanQuery)}%`)
           .order('created_at', { ascending: false }).limit(15);
         if (dateStart) audioQuery = audioQuery.gte('created_at', dateStart.toISOString());
         if (tags.length > 0) audioQuery = audioQuery.overlaps('contacts.tags', tags);
@@ -181,7 +182,7 @@ export function useGlobalSearchData(open: boolean) {
       if (types.has('contact')) {
         let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
         if (cleanQuery.length >= 2) {
-          const q = escapeOrFilterValue(`%${cleanQuery}%`);
+          const q = escapeOrFilterValue(`%${escapeLikeWildcards(cleanQuery)}%`);
           contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
         }
         // A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do
