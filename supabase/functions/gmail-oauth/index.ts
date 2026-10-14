@@ -25,6 +25,16 @@ interface TokenResponse {
   scope: string;
 }
 
+/**
+ * Máscara de e-mail para a trilha de auditoria: guarda só a 1ª letra da caixa
+ * local e o domínio. O e-mail completo nunca entra em log nem em `details`.
+ */
+function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) return "***";
+  return `${email.slice(0, 1)}***${email.slice(at)}`;
+}
+
 async function getAuthUrl(clientId: string, redirectUri: string, state?: string): Promise<string> {
   const params = new URLSearchParams({
     client_id: clientId,
@@ -159,15 +169,45 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         const gmailProfile = await deps.google.fetchProfile(tokens.access_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-        // Guard against account takeover: reject if this Gmail address is already linked to another user
+        // Guarda de account takeover: um e-mail JÁ VINCULADO E ATIVO de outro
+        // usuário é recusado. A linha INATIVA (conexão desfeita pelo dono, ou
+        // dono que saiu da empresa) é reaproveitada — ninguém fica preso a um
+        // vínculo morto —, mas a assunção deixa trilha em `audit_logs`.
         const { data: existingAccount } = await supabase
           .from("gmail_accounts")
-          .select("user_id")
+          .select("id, user_id, is_active")
           .eq("email_address", gmailProfile.emailAddress)
           .maybeSingle();
 
         if (existingAccount && existingAccount.user_id !== user.id) {
-          return errorResponse("This Gmail address is already linked to another account", 409, req);
+          if (existingAccount.is_active) {
+            return errorResponse("This Gmail address is already linked to another account", 409, req);
+          }
+
+          const emailMasked = maskEmail(gmailProfile.emailAddress);
+          // A trilha é gravada ANTES do upsert e com a service_role: sem rastro
+          // não há assunção (fail-closed). `action` nomeada, e o e-mail entra
+          // só mascarado em `details`.
+          const { error: auditError } = await supabase.from("audit_logs").insert({
+            user_id: user.id,
+            action: "gmail_account_taken_over",
+            entity_type: "gmail_account",
+            entity_id: existingAccount.id,
+            details: { previous_user_id: existingAccount.user_id, email_masked: emailMasked },
+          });
+          if (auditError) {
+            log.error("Falha ao registrar auditoria da assuncao da conta Gmail", {
+              error: auditError.message ?? "erro desconhecido",
+              accountId: existingAccount.id,
+            });
+            return errorResponse("Nao foi possivel registrar a reconexao desta conta Gmail", 500, req);
+          }
+
+          log.warn("Conta Gmail inativa de outro usuario assumida na reconexao", {
+            emailMasked,
+            previousUserId: existingAccount.user_id,
+            accountId: existingAccount.id,
+          });
         }
 
         const { data: account, error: upsertError } = await supabase
@@ -184,6 +224,9 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             last_error: null,
             error_count: 0,
             next_attempt_at: null,
+            // cursor de sync antigo é descartado: 'pending' refaz o sync do zero
+            // e um historyId velho só renderia 404 de histórico no próximo ciclo
+            history_id: null,
           }, { onConflict: "email_address" })
           .select()
           .single();
