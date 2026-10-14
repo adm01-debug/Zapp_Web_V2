@@ -1,27 +1,55 @@
-Especialista: workertestes
+Especialista: worker (testes) (area-testes-do-produto)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# Verificação independente do teste `tests/talkx/save_talkx_template.test.ts` (auditoria)
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Entrega auditada: cartão **t_c745d776**, branch `v2/teste-save-talkx-template-261013113163c8` @ **b2b5944008**.
+Este cartão é auditoria: o meu diff de código é VAZIO de propósito (a entrega vive no commit acima). Rodei tudo de novo aqui, não confiei no relato anterior.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Comandos exatos (nesta cópia, 13/10)
 
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- Subida do banco local da cópia: `zapp-db-local up . v2-2610132231117b`
+  → `migrations: 808 ok, 21 falha(s) de 831 (1 reaplicadas como supabase_admin) | seed: ok | 588s`
+- Estado da base ANTES da migration (conferido no banco):
+  `select to_regprocedure('public.save_talkx_template(uuid,timestamptz,text,text,text,text,text,text,text[],text[],text)')` → vazio;
+  `information_schema.columns ... column_name='note'` → `f` (ausente); tabelas `talkx_templates`/`talkx_template_versions` → presentes.
+- RED: `ZAPP_DB_LOCAL=v2-2610132231117b node --test tests/talkx/save_talkx_template.test.ts` → **RC=1**
+  `ℹ tests 5 / ℹ pass 0 / ℹ fail 5` (5 × ✖). 1ª falha: `AssertionError: a RPC save_talkx_template nao existe no banco` (`rpc_existe=false`);
+  caso 2: `ERROR: function public.save_talkx_template(uuid, timestamptz, unknown, ...) does not exist` (SQLSTATE **42883**).
+- Aplicação da migration SÓ no banco local (arquivo lido do commit, sem editar):
+  `git show 34ee3b9485:supabase/migrations/20261011000012_talkx_template_save_rpc.sql | zapp-db-local psql . v2-2610132231117b`
+  → `ALTER TABLE / COMMENT / CREATE FUNCTION / REVOKE / GRANT` (sem erro).
+- GREEN: mesmo comando → **RC=0** `ℹ tests 5 / ℹ pass 5 / ℹ fail 0` (5 × ✔).
+- 2ª rodada (isolamento): RC=0, `tests 5 / pass 5 / fail 0`; linhas residuais: `talkx_templates` 0 → 0, `talkx_template_versions` 0 → 0.
+- 3ª rodada SEM a variável (`node --test tests/talkx/save_talkx_template.test.ts`, conjunto derivado do `.hermes-tarefa`): RC=0, 5/5.
+- `zapp-verify . --rapido`: 4 rodadas morreram em `FALHOU tipos` por OOM do host (`tc-rapido: tsc saiu 137`, 81s/146s/114s/308s, "falha de execução, NÃO é aprovação"); a 5ª rodada (com cache incremental quente) → **`VERIFY: VERDE SEM BANCO (326s)`**:
+  `OK db_guard 0s / OK tipos 324s / OK lint 0s / OK migrations 2s`, `RCv5=0`.
+
+## Critérios (PASS/FAIL com a saída bruta)
+
+1. **PASS — red→green real, não falso-verde.** Sem a migration: RC=1, 5/5 vermelhos, falha citando `42883 function ... does not exist` e o teste declarando que a RPC não existe. Com a migration aplicada no banco local: RC=0, 5/5 verdes. O vermelho é da AUSÊNCIA do objeto (o teste primeiro prova que ele não existe), não de ambiente.
+2. **PASS — sem mocks.** `grep -Ei "mock|spy|stub|sinon|jest|vitest|fake"` → **0 ocorrências**. Imports: `node:test`, `node:assert`, `node:child_process`, `node:fs`, `node:os`, `node:path`. O teste fala com o banco REAL via psql do conjunto local (`spawnSync`, `zapp-db-local psql`), com `set_config('request.jwt.claims', jsonb_build_object('sub', <uid real de public.profiles>, 'role','authenticated'))` **e** `set local role authenticated`. 50 asserções em 5 testes.
+3. **PASS — optimistic locking assere EXCEÇÃO.** `assert.equal(texto(corrida,'sqlstate'),'40001')` + `assert.equal(texto(corrida,'mensagem'),'optimistic_lock_failed')`, e mais: `total_versoes === 0` e a linha viva intocada (`name='Intocado'`, `updated_at_mudou=false`). Não é retorno vazio.
+4. **PASS — `note` exata e `version_number` explícito.** `note` da versão 1 = `'nota do usuario'`, da versão 2 = `'nota final'`; `version_number` = **1** e depois **2** (valores literais, não "maior que"); `saved_by` == perfil da fixture; `created_at` da versão dentro da instrução do UPDATE.
+5. **PASS — isolamento.** Duas rodadas seguidas: 5/5 nas duas, RC=0, e contagem de linhas das duas tabelas igual (0) antes e depois (cada caso em transação com `rollback`).
+6. **PASS — escopo do diff.** `git diff --numstat 96dd72dc5f b2b5944008` → `527 0 tests/talkx/save_talkx_template.test.ts`; 1 arquivo, 527 inserções, 0 deleções; arquivo 21.235 bytes, diff 21.985 caracteres (< 25.000); migration NÃO editada; `sha256` do arquivo que eu rodei == `sha256` do blob do commit (`ddf595355fd15e77946262814aaeb996e85043ceb6c9f1c6b5c072ebb44f7a6d`).
+7. **PASS — `zapp-verify . --rapido` VERDE** (5ª rodada, `VERDE SEM BANCO (326s)`; as 4 vermelhas anteriores foram OOM do host — `tsc` morto com 137 —, não o diff: nenhum tsconfig inclui `tests/talkx` (app `["src"]`, e2e `["e2e","playwright.config.ts"]`, vite `src/**`, contratos `tests/contracts/**`), então o typecheck nem lê o arquivo novo).
+
+## Proveniência dos 4 fatos do recon (relidos por mim no arquivo-fonte)
+
+Fonte única: `git show 34ee3b9485:supabase/migrations/20261011000012_talkx_template_save_rpc.sql` (cartão t_a3551220), conferida literalmente nesta sessão:
+1. assinatura: `public.save_talkx_template(p_template_id uuid, p_expected_updated_at timestamptz, p_name text, p_content text, p_category text, p_status text, p_media_url text, p_media_type text, p_tags text[], p_custom_variables text[], p_note text) RETURNS uuid` — `LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp` (bate com a constante `ASSINATURA_RPC` do teste);
+2. tabela alvo: linha viva `public.talkx_templates` (só UPDATE); histórico `public.talkx_template_versions`;
+3. coluna de versão: `talkx_template_versions.version_number integer NOT NULL`, `UNIQUE(template_id, version_number)`; a coluna `note` é justamente o que esta migration adiciona;
+4. `version_number` = `SELECT COALESCE(MAX(version_number), 0) + 1 FROM public.talkx_template_versions WHERE template_id = p_template_id`.
+Extra conferido: ACL `REVOKE ALL FROM PUBLIC, anon; GRANT EXECUTE TO authenticated, service_role` — é o que o caso 1 (anon → 42501) prende.
+
+## Observações (não são defeito)
+
+- No caso 1, o bloco `sem_perfil` roda depois de `reset role` (o papel SQL volta a postgres), então a negativa de ACL é provada no bloco `anon` e a de perfil no bloco `sem_perfil` — as duas com `42501` e mensagem exata. A prova de "negado" vem junto com a prova de que o objeto e a fixture EXISTEM (`rpc_existe=true`, `fixture.linhas=1`), que é o que distingue "não existe" de "proibido".
+- A migration 20261011000012 não está em `dia/2026-10-13` (só na branch do cartão t_a3551220): fora do escopo daqui, mas é o alerta de integração já registrado pelo recon.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+
+- Não commitei código: o cartão é auditoria e o artefato auditado está no commit do cartão t_c745d776. Árvore limpa; o commit deste cartão é vazio, só para o `hermes-tarefa-fechar` ter HEAD.
+- Não editei a migration nem o teste auditado (leitura apenas); a cópia que rodei ficou em `.tmp/evidencia/` e os logs em `.tmp/red.log`, `.tmp/green1.log`, `.tmp/green2.log`, `.tmp/green3_semenv.log`, `.tmp/verify5.log`.
+- Desmontei o banco local da cópia (`zapp-db-local down . v2-2610132231117b`) depois de colher a prova, para devolver memória ao host.
