@@ -3,6 +3,8 @@
 #   prova: lint, tipos, testes, build, security e E2E do codigo
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
