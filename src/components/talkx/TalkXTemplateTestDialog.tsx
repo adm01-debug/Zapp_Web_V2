@@ -63,8 +63,14 @@ export function TalkXTemplateTestDialog({ template, open, onClose, contentOverri
   // cada disparo ganha um número de ordem e só o último aplica estado.
   const requestSeq = useRef(0);
 
-  /** Override = o editor manda o texto que está na tela (ainda não salvo). */
-  const hasOverride = typeof contentOverride === 'string' && contentOverride.length > 0;
+  /**
+   * Override = o editor manda o texto que está na tela (ainda não salvo).
+   * O que decide é a PROP ter sido fornecida, não o texto ter caracteres: o
+   * editor sempre passa `contentOverride` (inclusive com o texto vazio), e
+   * editor vazio tem de testar VAZIO (recusar com "Template vazio"), não cair
+   * no conteúdo salvo do template.
+   */
+  const hasOverride = typeof contentOverride === 'string';
 
   // Variáveis personalizadas que vão junto do texto: as do editor (override) ou
   // as da própria linha do template. O `talkx-send` precisa delas para trocar
