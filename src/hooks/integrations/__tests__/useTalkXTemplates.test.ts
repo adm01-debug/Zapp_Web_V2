@@ -377,14 +377,20 @@ describe('useTalkXTemplates — deleteTemplate', () => {
 
 describe('useTalkXTemplates — duplicateTemplate', () => {
   it('duplica como rascunho com o sufixo (copia), preservando o conteudo', async () => {
-    mutationResult = { data: null, error: null };
+    // X090: a mutação passou a pedir `.select().single()` e devolve a LINHA
+    // criada (é com ela que o "Duplicar" abre a cópia). Sem a linha, a mutação
+    // recusa com "Cópia não confirmada pelo banco".
+    const copiaCriada = { ...TEMPLATE, id: 'tpl-copia', name: 'Boas-vindas (cópia)', status: 'draft' as const };
+    mutationResult = { data: copiaCriada, error: null };
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
+    let devolvida: TalkXTemplate | undefined;
     await act(async () => {
-      await result.current.duplicateTemplate.mutateAsync(TEMPLATE);
+      devolvida = await result.current.duplicateTemplate.mutateAsync(TEMPLATE);
     });
 
+    expect(devolvida).toEqual(copiaCriada);
     expect(calls(tableBuilder(1).insert)[0][0]).toEqual({
       name: 'Boas-vindas (cópia)',
       description: 'd',

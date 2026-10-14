@@ -64,6 +64,15 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 
+// X090: o menu ⋮ (ações do template) e o controle de status leem o papel e o dono
+// da linha (`useUserRole` → `useAuth`).
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, isSpecialAgent: false, roles: [] }),
+}));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'p-hugo', phone: '5541999001234' } }),
+}));
+
 import { TalkXTemplates } from '../TalkXTemplates';
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
 import { useTalkXTemplateStats, useTalkXTemplateLibraryStats, pointsDelta, templateStatsRange } from '@/hooks/integrations/useTalkXTemplateStats';

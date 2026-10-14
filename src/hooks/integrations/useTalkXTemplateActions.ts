@@ -55,7 +55,13 @@ export interface TalkXTemplateActions {
   canApprove: boolean;
   duplicate: (template: TalkXTemplate) => Promise<TalkXTemplate | null>;
   remove: (template: TalkXTemplate) => Promise<void>;
-  setStatus: (template: TalkXTemplate, status: TalkXTemplateStatus) => Promise<void>;
+  /**
+   * Devolve a LINHA atualizada (a RPC de snapshot devolve a linha gravada, com
+   * `updated_at` novo). O editor usa o `updated_at` devolvido como
+   * `expectedUpdatedAt` do próximo salvar — sem isto, aprovar no editor e
+   * salvar em seguida cai em `talkx_template_stale_version`.
+   */
+  setStatus: (template: TalkXTemplate, status: TalkXTemplateStatus) => Promise<TalkXTemplate>;
   /** Alguma das mutações acima em andamento (o gatilho do ⋮ mostra o giro). */
   busy: boolean;
 }
@@ -80,10 +86,15 @@ export function useTalkXTemplateActions(): TalkXTemplateActions {
   /**
    * Só o `status` muda: a RPC de snapshot grava o template inteiro, então os
    * outros campos vão como estão na linha atual (é o que o editor já faz).
+   *
+   * A RPC avança o `updated_at` e devolve a linha gravada: `setStatus` repassa
+   * essa linha para quem chamou (o editor usa o `updated_at` novo no próximo
+   * salvar). Antes devolvia `void` e o editor ficava com o `expectedUpdatedAt`
+   * velho, recusado com `talkx_template_stale_version`.
    */
   const setStatus = useCallback(
     async (template: TalkXTemplate, status: TalkXTemplateStatus) => {
-      await updateTemplate.mutateAsync({
+      return updateTemplate.mutateAsync({
         id: template.id,
         expectedUpdatedAt: template.updated_at,
         name: template.name,

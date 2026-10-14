@@ -155,6 +155,9 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         editing={startNew ? null : editing}
         onClose={() => { setMode('list'); onStartNewHandled?.(); }}
         onOpenMonitor={onOpenMonitor}
+        // X090: "Duplicar" no cabeçalho do editor entrega a CÓPIA a este mesmo
+        // fluxo `openEdit` — a cópia abre no editor em vez de o editor fechar.
+        onOpenCopy={openEdit}
       />
     );
   }

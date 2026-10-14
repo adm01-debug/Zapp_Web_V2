@@ -43,6 +43,8 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     createTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
     updateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
     duplicateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
+    deleteTemplate: { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false },
+    refetch: vi.fn(),
     testTemplate: vi.fn(),
     fetchVersionHistory,
     fetchVariants,
@@ -50,6 +52,15 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     deleteVariant,
     countVariantRecipients,
   }),
+}));
+
+// X090: o menu ⋮ do cabeçalho (ações do template) e o controle de status leem o
+// papel e o dono da linha (`useUserRole` → `useAuth`).
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, isSpecialAgent: false, roles: [] }),
+}));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'p-hugo', phone: '5541999001234' } }),
 }));
 
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
