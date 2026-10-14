@@ -4252,6 +4252,36 @@ export type Database = {
           },
         ]
       }
+      instance_auth_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          http_status: number | null
+          id: string
+          instance_name: string
+          reason: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          instance_name: string
+          reason: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          instance_name?: string
+          reason?: string
+          source?: string
+        }
+        Relationships: []
+      }
       instance_pauses: {
         Row: {
           auto: boolean
@@ -11528,6 +11558,21 @@ export type Database = {
           outcome: string
         }[]
       }
+      instance_auth_event_summary: {
+        Args: { p_hours?: number; p_instance?: string }
+        Returns: Json
+      }
+      instance_auth_event_trend: {
+        Args: { p_hours?: number; p_instance?: string }
+        Returns: {
+          auth_401: number
+          auth_403: number
+          bucket: string
+          instance_name: string
+          invalid_signature: number
+          total: number
+        }[]
+      }
       is_account_locked: {
         Args: { check_email: string }
         Returns: {
@@ -11783,6 +11828,10 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
+      purge_instance_auth_events: {
+        Args: { p_days?: number }
+        Returns: number
+      }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
