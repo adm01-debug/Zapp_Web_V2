@@ -1,6 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailOAuthActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import {
+  GMAIL_REAUTH_HTTP_STATUS,
+  gmailReauthErrorPayload,
+  isGmailReauthError,
+  recordGmailAccountFailure,
+  requestGmailTokenRefresh,
+} from "../_shared/gmail-helpers.ts";
 
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -42,14 +49,17 @@ async function exchangeCode(code: string, clientId: string, clientSecret: string
   return response.json();
 }
 
+// Adaptador do seam de DI para a cópia ÚNICA do refresh (requestGmailTokenRefresh,
+// em _shared/gmail-helpers.ts) — não há fetch próprio de token aqui.
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<TokenResponse> {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: refreshToken, client_id: clientId, client_secret: clientSecret, grant_type: "refresh_token" }),
-  });
-  if (!response.ok) throw new Error(`Token refresh failed: ${await response.text()}`);
-  return response.json();
+  const tokens = await requestGmailTokenRefresh(refreshToken, clientId, clientSecret);
+  return {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_in: tokens.expires_in,
+    token_type: "Bearer",
+    scope: GMAIL_SCOPES,
+  };
 }
 
 async function getGmailProfile(accessToken: string): Promise<{ emailAddress: string }> {
@@ -169,8 +179,11 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             is_active: true,
             sync_status: "pending",
             // reconectar a mesma conta (onConflict email_address) limpa o erro
-            // anterior — inclusive 'reauth_required' de token revogado.
+            // anterior — inclusive 'reauth_required' de token revogado — e zera
+            // a espera crescente das falhas transitórias.
             last_error: null,
+            error_count: 0,
+            next_attempt_at: null,
           }, { onConflict: "email_address" })
           .select()
           .single();
@@ -193,7 +206,18 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         if (!account) return errorResponse("Gmail account not found", 404, req);
 
         const storedTokens = await getTokens(supabase, account.id);
-        const tokens = await deps.google.refreshToken(storedTokens.refresh_token);
+
+        let tokens: TokenResponse;
+        try {
+          tokens = await deps.google.refreshToken(storedTokens.refresh_token);
+        } catch (refreshError) {
+          if (!isGmailReauthError(refreshError)) throw refreshError;
+          // Token revogado: marca a conta e devolve 409 com code reauth_required
+          // (o app converte em kind:'reauth' e abre a reconexão).
+          await recordGmailAccountFailure(supabase, account.id, refreshError, 1);
+          log.done(GMAIL_REAUTH_HTTP_STATUS, { action });
+          return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+        }
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
