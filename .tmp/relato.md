@@ -1,27 +1,45 @@
-Especialista: workertestes
+Especialista: iris
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- src/components/admin/PlaybooksManager.tsx
+  - `save()` agora descarta passo vazio e REGRAVA `order` em sequência (1..N) antes de gravar: o banco deixa de
+    receber ordem com buraco (ex.: 1 e 3 quando o passo 2 ficou em branco). A lista também passou a ser ordenada por
+    `order` na leitura, então a tela mostra 1, 2, 3.
+  - Diplomacia do erro: `loadPlaybooks()` checa `error` e mostra estado explícito de erro com "Tentar novamente";
+    antes, falha de consulta caía no mesmo "Nenhum playbook criado" do estado vazio (a tela mentia).
+  - `save()` ficou travado (ref síncrona + botão desabilitado + estado "Salvando..."): clique duplo grava uma vez.
+  - Excluir saiu do `window.confirm` para o `AlertDialog` do design system; a remoção só é confirmada
+    depois de checar `error` da mutation (erro → toast de erro, sem toast de sucesso).
+  - Campo **Ativo** no diálogo de criação/edição (`Switch`, ligado a `is_active`) e selo "Inativo" no card
+    quando o playbook está desligado — o campo existia só na leitura.
+  - Teclado: o card é focável (`tabIndex=0`), abre o detalhe com Enter/Espaço, tem `aria-label`, anel de foco e os
+    botões de ação aparecem com `focus-within` (antes só no hover). Os botões de ação seguem sendo `<button>` com
+    `aria-label` ("Editar playbook", "Excluir playbook").
+- src/components/admin/__tests__/PlaybooksManager.test.tsx (novo): prova os itens acima no componente REAL (não em mock),
+  com o client do Supabase mockado por tabela e `sonner` mockado para observar os toasts.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- comando: `npx vitest run src/components/admin/__tests__/PlaybooksManager.test.tsx`
+  - vermelho antes (mesmo teste sobre a versão da base, obtida com `git show HEAD:<arquivo>`):
+    `Test Files 1 failed (1)` / `Tests 6 failed (6)` — os mesmos testes que passam depois falham na base
+  - verde depois: `Test Files 1 passed (1)` / `Tests 6 passed (6)`
+- sem regressão no diretório vizinho: `npx vitest run src/components/admin/__tests__`
+  → `Test Files 17 passed (17)` / `Tests 57 passed (57)`
+- lint do pre-commit (ratchet): `OK: nenhuma nova divida de lint foi introduzida.` (`baseline=1, atual=1, novas=0`)
+
+## Estados da tela (conferidos)
+- vazio: "Nenhum playbook criado" — só quando a consulta deu certo e voltou sem linhas.
+- carregando: skeleton.
+- erro: mensagem explícita + botão "Tentar novamente" (não confunde com o vazio).
+
+## Decisão de acessibilidade (para o revisor não ler como divergência)
+O cartão pede o card operável por teclado. Não usei `role="button"` no card porque ele CONTÉM os botões
+Editar/Excluir: `role="button"` com botão dentro é botão-dentro-de-botão (axe acusa `nested-interactive`). Segui o
+padrão já aprovado no repositório (`WorkItemCard`, `TalkXTemplates`): `role="article"` + `tabIndex=0` + `onKeyDown`
+Enter/Espaço + `aria-label`. O card abre o detalhe pelo teclado do mesmo jeito, sem aninhar controles.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não criei botões de mover passo (↑/↓) no diálogo: o critério deste cartão é reordenar/renumerar a ordem na gravação;
+  reordenar passos por botão é de outro cartão (evito regra a mais).
+- Não mexi em hook/service do Supabase (`is_active` continua gravado direto pelo componente, como o resto do arquivo);
+  a leitura/estado de `is_active` fora da tela está no cartão filho do perfil de hooks (t_a6400eda).
