@@ -17,9 +17,15 @@ export{
 import {
   resolveNetworkPolicy,
   networkPolicyDenialResponse,
+  extractCountryCode,
   type NetworkPolicyDecision,
   type NetworkPolicyRpcClient,
 } from './request-policy.ts';
+import {
+  recordRateLimitDenial,
+  scheduleRateLimitDenial,
+  type RateLimitLogWriter,
+} from './rate-limit-log.ts';
 
 // ─── Structured Logger ─────────────────────────────────────────
 
@@ -318,15 +324,74 @@ function getServiceClient(): Promise<RateLimitRpcClient> {
   return serviceClientPromise;
 }
 
+/**
+ * Contexto opcional de uma chamada a `enforceRateLimit`, usado SÓ para registrar
+ * a negação em `rate_limit_logs` (cartão t_6a08446c). Sem ele ainda grava, com o
+ * que dá para derivar (`endpoint` = prefixo da chave, `ip` = "unknown"); com
+ * `req` o registro fica completo (IP real, país do header confiável, user-agent).
+ * O `writer` é injetável para teste.
+ */
+export interface EnforceRateLimitContext {
+  req?: Request;
+  endpoint?: string;
+  ip?: string;
+  country?: string | null;
+  userAgent?: string | null;
+  writer?: RateLimitLogWriter;
+  /**
+   * Client da RPC `consume_rate_limit` injetável (padrão: service_role do
+   * `getServiceClient`). Só para teste offline do ramo persistente.
+   */
+  consumeRpc?: RateLimitRpcClient;
+}
+
+/**
+ * Endpoint canônico derivado da chave do limiter quando o chamador não passa o
+ * `req`. Todas as chaves de `enforceRateLimit` nascem como `<função>:...`
+ * (ex.: `auth-login-email:<email>`), então o prefixo antes do primeiro `:` é
+ * estável e NÃO vem do cliente. Sem prefixo, cai em "unknown".
+ */
+function endpointFromRateLimitKey(key: string): string {
+  const prefix = key.split(":", 1)[0]?.trim();
+  return prefix || "unknown";
+}
+
+/**
+ * Registra (fire-and-forget, best-effort) uma negação de rate limit (429) em
+ * `rate_limit_logs`. Nunca atrasa nem derruba a resposta: `scheduleRateLimitDenial`
+ * não é aguardado.
+ */
+function recordRateLimitDenialFor(
+  key: string,
+  maxRequests: number,
+  ctx: EnforceRateLimitContext,
+): void {
+  const req = ctx.req;
+  const writer = ctx.writer ?? recordRateLimitDenial;
+  scheduleRateLimitDenial(writer, {
+    ip: ctx.ip ?? (req ? getClientIP(req) : "unknown"),
+    endpoint: ctx.endpoint ?? (req ? canonicalEndpointFromUrl(req) : endpointFromRateLimitKey(key)),
+    country: ctx.country ?? (req ? extractCountryCode(req) : null),
+    userAgent: ctx.userAgent ?? (req ? req.headers.get("user-agent") : null),
+    // O limite atingido é determinístico (config), não uma contagem adivinhada.
+    requestCount: maxRequests,
+    blocked: true,
+  });
+}
+
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
-  windowMs = 60_000
+  windowMs = 60_000,
+  ctx: EnforceRateLimitContext = {},
 ): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
-  if (!local.allowed) return { ...local, persistent: false };
+  if (!local.allowed) {
+    recordRateLimitDenialFor(key, maxRequests, ctx);
+    return { ...local, persistent: false };
+  }
   try {
-    const client = await getServiceClient();
+    const client = ctx.consumeRpc ?? await getServiceClient();
     const { data, error } = await client.rpc("consume_rate_limit", {
       p_key: key,
       p_max: maxRequests,
@@ -335,6 +400,9 @@ export async function enforceRateLimit(
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
     if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
+    if (row.allowed === false) {
+      recordRateLimitDenialFor(key, maxRequests, ctx);
+    }
     return {
       allowed: row.allowed,
       remaining: typeof row.remaining === "number" ? row.remaining : 0,
@@ -388,6 +456,12 @@ export interface RequireAuthOptions {
   /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
   defaultMaxRequests?: number;
   defaultWindowSeconds?: number;
+  /**
+   * Escritor de `rate_limit_logs` para as negações de política de rede (403).
+   * Padrão: `recordRateLimitDenial` (client service_role, best-effort).
+   * Injectable p/ testar a gravação sem tocar rede/env.
+   */
+  rateLimitLogWriter?: RateLimitLogWriter;
 }
 
 /**
@@ -456,6 +530,8 @@ export async function requireAuth(
       rpc,
       defaultMaxRequests: opts.defaultMaxRequests ?? 30,
       defaultWindowSeconds: opts.defaultWindowSeconds ?? 60,
+      // Toda negação 403 deixa uma linha em `rate_limit_logs` (best-effort).
+      recordDenial: opts.rateLimitLogWriter ?? recordRateLimitDenial,
     });
   } catch {
     decision = { allowed: false, status: 503 };
