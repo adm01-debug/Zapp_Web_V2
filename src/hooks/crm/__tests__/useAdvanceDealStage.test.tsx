@@ -31,11 +31,12 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: (...a: unknown[]) => fromMock(...(a as [string])) },
 }));
 
-import { useAdvanceDealStage, nextActiveStage, type Crm360Stage } from '@/hooks/crm/useContactCrm360';
+import { useAdvanceDealStage, nextActiveStage, contactCrm360Key, type Crm360Stage } from '@/hooks/crm/useContactCrm360';
 
+let testQueryClient: QueryClient;
 function wrapper({ children }: { children: ReactNode }) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return createElement(QueryClientProvider, { client: qc }, children);
+  testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return createElement(QueryClientProvider, { client: testQueryClient }, children);
 }
 
 function renderAdvance() {
@@ -92,18 +93,41 @@ describe('useAdvanceDealStage', () => {
     });
   });
 
-  it('rejeita e alerta quando o INSERT da atividade falha (INSERT falho deixa de passar em silêncio)', async () => {
+  it('rejeita e alerta quando o INSERT da atividade falha: falha parcial usa mensagem verdadeira e invalida o cache', async () => {
     insertErrorRef.current = { message: 'new row violates row-level security policy' };
+    const { result } = renderAdvance();
+
+    // Semeia o cache para observar a invalidação.
+    await testQueryClient.fetchQuery({ queryKey: contactCrm360Key('contact-1'), queryFn: async () => 'ok' });
+
+    // O UPDATE passou (o negócio JÁ avançou): a rejeição carrega a mensagem parcial, não a genérica.
+    await expect(result.current.mutateAsync({
+      dealId: 'd1', nextStageId: 's2', nextStageName: 'Proposta', currentStageId: 's1',
+    })).rejects.toThrow('Etapa avançada, mas o histórico não foi registrado');
+
+    expect(updateMock).toHaveBeenCalledWith({ stage_id: 's2' });
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    expect(toastError).toHaveBeenCalledTimes(1);
+    expect(toastError).toHaveBeenCalledWith('Etapa avançada, mas o histórico não foi registrado');
+    expect(logError).toHaveBeenCalledTimes(1);
+    // o payload do log não carrega PII: só a mensagem fixa do evento
+    expect(String(logError.mock.calls[0]?.[0])).toContain('useAdvanceDealStage');
+    // A etapa JÁ avançou no banco: a tela tem de sair da etapa antiga.
+    expect(testQueryClient.getQueryState(contactCrm360Key('contact-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('falha do UPDATE: toast de erro genérico e o INSERT nem é tentado', async () => {
+    updateErrorRef.current = { message: 'new row violates row-level security policy' };
     const { result } = renderAdvance();
 
     await expect(result.current.mutateAsync({
       dealId: 'd1', nextStageId: 's2', nextStageName: 'Proposta', currentStageId: 's1',
     })).rejects.toBeTruthy();
 
+    expect(updateMock).toHaveBeenCalledWith({ stage_id: 's2' });
+    expect(insertMock).not.toHaveBeenCalled();
     expect(toastError).toHaveBeenCalledTimes(1);
-    expect(logError).toHaveBeenCalledTimes(1);
-    // o payload do log não carrega PII: só a mensagem fixa do evento
-    expect(String(logError.mock.calls[0]?.[0])).toContain('useAdvanceDealStage');
+    expect(toastError).toHaveBeenCalledWith('Não foi possível avançar a etapa do negócio');
   });
 
   it('não dispara UPDATE nem INSERT quando a etapa de destino já é a atual', async () => {

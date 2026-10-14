@@ -275,9 +275,13 @@ export function nextActiveStage(
  * - `performed_by` = perfil do usuário logado: sem isso a política de INSERT de `deal_activities`
  *   (`performed_by IN (perfis do usuário) OR is_admin_or_supervisor`, e a versão apertada que exige
  *   `deal_id` de negócio do próprio agente) nega a escrita e o deal avançaria sem histórico.
- * - o erro do INSERT é verificado: se falhar, a mutação rejeita e o `onError` avisa o usuário.
+ * - o erro do INSERT é verificado. Se SÓ ele falhar, o negócio JÁ avançou: a rejeição carrega
+ *   `DEAL_STAGE_PARTIAL_HISTORY_MESSAGE` (mensagem verdadeira) em vez da genérica, e o `onSettled`
+ *   invalida o cache para a tela sair da etapa antiga. Reverter o `stage_id` com outro UPDATE foi
+ *   descartado: seria uma segunda escrita que também pode falhar, recriando o meio-termo.
  * - se `currentStageId` já for o destino, nada é disparado (nem UPDATE nem INSERT).
  */
+const DEAL_STAGE_PARTIAL_HISTORY_MESSAGE = 'Etapa avançada, mas o histórico não foi registrado';
 export function useAdvanceDealStage(contactId: string | null | undefined) {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
@@ -302,15 +306,22 @@ export function useAdvanceDealStage(contactId: string | null | undefined) {
         description: `Movido para ${nextStageName}`,
         performed_by: performedBy,
       });
-      if (activityError) throw activityError;
+      if (activityError) throw new Error(DEAL_STAGE_PARTIAL_HISTORY_MESSAGE);
     },
-    onSuccess: () => {
+    onSettled: () => {
+      // Também no erro: na falha parcial o negócio JÁ avançou no banco e a
+      // tela precisa sair da etapa antiga (sem isso o onSuccess não rodava e
+      // a interface exibia a etapa antiga).
       if (contactId) queryClient.invalidateQueries({ queryKey: contactCrm360Key(contactId) });
     },
-    onError: () => {
+    onError: (err) => {
       // Sem PII: só o evento, nunca nome/telefone do contato.
       log.error('[useAdvanceDealStage] falha ao avançar a etapa do negócio');
-      toast.error('Não foi possível avançar a etapa do negócio');
+      toast.error(
+        err instanceof Error && err.message === DEAL_STAGE_PARTIAL_HISTORY_MESSAGE
+          ? DEAL_STAGE_PARTIAL_HISTORY_MESSAGE
+          : 'Não foi possível avançar a etapa do negócio',
+      );
     },
   });
 }
