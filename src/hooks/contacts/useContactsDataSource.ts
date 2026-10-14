@@ -42,7 +42,12 @@ export interface ContactsDataSourceState {
   carregando: boolean;
 }
 
-/** Primeiro elemento da chave da consulta do lote do Singu do módulo. */
+/**
+ * Primeiro elemento da chave da consulta do lote do Singu do módulo.
+ * `useExternalContact360Batch` (`src/hooks/crm/useExternalContact360Batch.ts`)
+ * não exporta essa chave — o literal é repetido aqui; as duas precisam andar
+ * juntas.
+ */
 export const CONTACTS_SINGU_BATCH_QUERY_KEY = 'external-contact-360-batch';
 
 type BatchState = 'ausente' | 'erro' | 'carregando' | 'ok';
@@ -53,7 +58,13 @@ type BatchState = 'ausente' | 'erro' | 'carregando' | 'ok';
  * Nenhuma consulta em cache = nenhum Singu consultado ainda ('ausente').
  */
 function readBatchState(cache: QueryCache): BatchState {
-  const queries = cache.findAll({ queryKey: [CONTACTS_SINGU_BATCH_QUERY_KEY] });
+  // Só as consultas ATIVAS importam: um lote antigo que falhou (outra lista ou
+  // página de contatos) fica no cache até o gcTime, mas não pode prender o
+  // selo em 'indisponivel' quando o lote atual já responde.
+  const queries = cache.findAll({
+    queryKey: [CONTACTS_SINGU_BATCH_QUERY_KEY],
+    type: 'active',
+  });
   if (queries.length === 0) return 'ausente';
   if (queries.some((query) => query.state.status === 'error')) return 'erro';
   if (queries.some((query) => query.state.fetchStatus === 'fetching')) return 'carregando';
