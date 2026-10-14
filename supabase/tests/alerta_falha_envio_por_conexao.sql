@@ -9,14 +9,25 @@
 --   T2 disparo por TAXA: conexão com >= 20 envios terminais na hora e >= 20% de falha
 --      ganha alerta; a mesma proporção com amostra < 20 NÃO gera nada (ruído de amostra).
 --   T3 fronteira da taxa: exatamente 20% com amostra 20 dispara (>=); 15% não.
---   T4 disparo por PRESAS: mais de 10 'sending' presas (>15 min, SEM lease vivo)
---      dispara; 10 não dispara; presas com lease vivo não contam; 'sending' recente não conta.
+--   T4 presas: > 10 presas dispara; 10 não. Cobre os 3 caminhos do defeito:
+--      (a) ainda 'sending' (>15 min, SEM lease vivo) conta;
+--      (b) já VARVIDAS pelo sweep_stale_outbound_sending na última hora
+--          (status='failed', delivery_failure_reason='nao_despachada') contam — senão o
+--          alerta some quando o varredor roda antes do monitor (mesmo cron */5);
+--      (c) a linha SEM whatsapp_connection_id direta conta pela conexão do CONTATO
+--          (coalesce(message.whatsapp_connection_id, contact.whatsapp_connection_id)),
+--          que é como o claim/varredor resolvem a conexão;
+--      e o que NÃO conta: 10 presas, presas com lease vivo, 'sending' recentes,
+--      12 com lease vivo, 10 varridas.
 --   T5 conteúdo e idempotência: 1 alerta por conexão na MESMA hora (rodar 2x não
 --      duplica); alert_type='critical', source='envio-falha', dedupe_key estável
---      'envio-falha:<conexao>:<hora>', contagem de outcome_unknown no texto; e o alerta
---      NÃO carrega telefone nem texto de mensagem.
---   T6 rollback: o bloco de rollback (extraído do arquivo) desfaz tudo — função some,
---      job desagendado — e reaplicar a migration volta ao estado (idempotência).
+--      'envio-falha:<conexao>:<hora>' (a conexão resolvida pelo contato aparece no
+--      dedupe_key); texto próprio quando dispara só por presas (NÃO diz "amostra
+--      insuficiente"); contagem de outcome_unknown no texto; e o alerta NÃO carrega
+--      telefone nem texto de mensagem.
+--   T6 rollback: o bloco de rollback da migration (as duas sentenças do cabeçalho,
+--      mantidas em sincronia à mão) desfaz tudo — função some, job desagendado — e
+--      reaplicar a migration volta ao estado (idempotência).
 --
 -- COMO RODA (PostgreSQL 17 descartável; o repo é montado somente-leitura):
 --   docker run --rm -d --name zapp-alerta-falha-t_106a978a -e POSTGRES_PASSWORD=test_only \
@@ -46,7 +57,8 @@ create role service_role nologin bypassrls;
 
 create table public.contacts (
   id uuid primary key,
-  phone text
+  phone text,
+  whatsapp_connection_id uuid
 );
 
 create table public.whatsapp_connections (
@@ -62,6 +74,7 @@ create table public.messages (
   status text,
   content text,
   whatsapp_connection_id uuid,
+  delivery_failure_reason text,
   delivery_claim_token uuid,
   delivery_claimed_at timestamptz,
   delivery_claim_expires_at timestamptz,
@@ -114,8 +127,13 @@ begin
 end $$;
 
 -- ── Fixtures ────────────────────────────────────────────────────────────────
-insert into public.contacts (id, phone) values
-  ('00000000-0000-0000-0000-0000000000d1', '5511999999999');
+-- d1: sem conexão própria (as linhas trazem whatsapp_connection_id).
+-- d2: conexão c9 — usada pelas linhas SEM conexão direta (caso 'sem_conexao').
+-- d3: conexão c11 — idem para o Canal K.
+insert into public.contacts (id, phone, whatsapp_connection_id) values
+  ('00000000-0000-0000-0000-0000000000d1', '5511999999999', null),
+  ('00000000-0000-0000-0000-0000000000d2', '5511988888888', '00000000-0000-0000-0000-0000000000c9'),
+  ('00000000-0000-0000-0000-0000000000d3', '5511977777777', '00000000-0000-0000-0000-0000000000cb');
 
 insert into public.whatsapp_connections (id, name, status) values
   ('00000000-0000-0000-0000-0000000000c1', 'Canal A', 'connected'),  -- taxa 24% (25/6) -> ALERTA
@@ -125,7 +143,11 @@ insert into public.whatsapp_connections (id, name, status) values
   ('00000000-0000-0000-0000-0000000000c5', 'Canal E', 'connected'),  -- 12 presas COM lease -> nao
   ('00000000-0000-0000-0000-0000000000c6', 'Canal F', 'connected'),  -- taxa 20% exatos (20/4) -> ALERTA
   ('00000000-0000-0000-0000-0000000000c7', 'Canal G', 'connected'),  -- taxa 15% (20/3) -> nao
-  ('00000000-0000-0000-0000-0000000000c8', 'Canal H', 'connected');  -- 12 sending RECENTES -> nao
+  ('00000000-0000-0000-0000-0000000000c8', 'Canal H', 'connected'),  -- 12 sending RECENTES -> nao
+  ('00000000-0000-0000-0000-0000000000c9', 'Canal I', 'connected'),  -- 11 presas SEM conexao direta (contato) -> ALERTA
+  ('00000000-0000-0000-0000-0000000000ca', 'Canal J', 'connected'),  -- 11 ja VARVIDAS na ultima hora -> ALERTA
+  ('00000000-0000-0000-0000-0000000000cb', 'Canal K', 'connected'),  -- 6 presas + 5 varridas SEM conexao direta -> ALERTA
+  ('00000000-0000-0000-0000-0000000000cc', 'Canal L', 'connected');  -- 10 varridas -> nao
 
 -- envios com desfecho terminal na última hora (created_at -30min)
 insert into public.messages (id, contact_id, sender, status, content, whatsapp_connection_id, created_at, updated_at)
@@ -182,6 +204,41 @@ select gen_random_uuid(), 'agent', 'sending', 'TEXTO-SECRETO-r' || g, '00000000-
        now() - interval '5 minutes', now() - interval '5 minutes'
 from generate_series(1, 12) g;
 
+-- Canal I: 11 presas SEM whatsapp_connection_id direta — a conexão vem do contato (d2 -> c9)
+insert into public.messages (id, contact_id, sender, status, content, whatsapp_connection_id, created_at, updated_at)
+select gen_random_uuid(), '00000000-0000-0000-0000-0000000000d2', 'agent', 'sending',
+       'TEXTO-SECRETO-i' || g, null, now() - interval '40 minutes', now() - interval '40 minutes'
+from generate_series(1, 11) g;
+
+-- Canal J: 11 JÁ VARVIDAS na última hora (created_at velho, updated_at recente) -> ALERTA só por presas
+insert into public.messages
+  (id, contact_id, sender, status, content, whatsapp_connection_id, delivery_failure_reason, created_at, updated_at)
+select gen_random_uuid(), '00000000-0000-0000-0000-0000000000d1', 'agent', 'failed',
+       'TEXTO-SECRETO-j' || g, '00000000-0000-0000-0000-0000000000ca', 'nao_despachada',
+       now() - interval '2 hours', now() - interval '30 minutes'
+from generate_series(1, 11) g;
+
+-- Canal K: 6 presas com conexão direta + 5 varridas SEM conexão direta (contato d3 -> c11) = 11 -> ALERTA
+insert into public.messages (id, contact_id, sender, status, content, whatsapp_connection_id, created_at, updated_at)
+select gen_random_uuid(), '00000000-0000-0000-0000-0000000000d1', 'agent', 'sending',
+       'TEXTO-SECRETO-k' || g, '00000000-0000-0000-0000-0000000000cb',
+       now() - interval '40 minutes', now() - interval '40 minutes'
+from generate_series(1, 6) g;
+insert into public.messages
+  (id, contact_id, sender, status, content, whatsapp_connection_id, delivery_failure_reason, created_at, updated_at)
+select gen_random_uuid(), '00000000-0000-0000-0000-0000000000d3', 'agent', 'failed',
+       'TEXTO-SECRETO-kv' || g, null, 'nao_despachada',
+       now() - interval '2 hours', now() - interval '30 minutes'
+from generate_series(1, 5) g;
+
+-- Canal L: 10 varridas -> não dispara
+insert into public.messages
+  (id, contact_id, sender, status, content, whatsapp_connection_id, delivery_failure_reason, created_at, updated_at)
+select gen_random_uuid(), '00000000-0000-0000-0000-0000000000d1', 'agent', 'failed',
+       'TEXTO-SECRETO-lv' || g, '00000000-0000-0000-0000-0000000000cc', 'nao_despachada',
+       now() - interval '2 hours', now() - interval '30 minutes'
+from generate_series(1, 10) g;
+
 -- ── T1: ACL e agendamento ───────────────────────────────────────────────────
 do $$
 begin
@@ -219,32 +276,51 @@ do $$
 declare n integer;
 begin
   n := public.alert_outbound_failure_rate();
-  perform pg_temp.asserta(n = 3, 'T2 deveria alertar 3 conexoes (Canal A, C, F), alertou ' || n);
+  perform pg_temp.asserta(n = 6,
+    'T2 deveria alertar 6 conexoes (Canal A, C, F, I, J, K), alertou ' || n);
 
+  -- T2: taxa
   perform pg_temp.asserta(
     (select count(*) = 1 from public.warroom_alerts where dedupe_key like 'envio-falha:00000000-0000-0000-0000-0000000000c1:%'),
     'T2 Canal A (24% com amostra 25) deveria alertar');
   perform pg_temp.asserta(
     (select count(*) = 0 from public.warroom_alerts where title like '%Canal B%'),
     'T2 Canal B (50% com amostra 10) NAO deveria alertar por amostra insuficiente');
-  perform pg_temp.asserta(
-    (select count(*) = 1 from public.warroom_alerts where title like '%Canal C%'),
-    'T3 Canal C (11 presas) deveria alertar');
-  perform pg_temp.asserta(
-    (select count(*) = 0 from public.warroom_alerts where title like '%Canal D%'),
-    'T3 Canal D (10 presas) NAO deveria alertar');
-  perform pg_temp.asserta(
-    (select count(*) = 0 from public.warroom_alerts where title like '%Canal E%'),
-    'T3 Canal E (12 presas COM lease vivo) NAO deveria alertar');
+  -- T3: fronteira da taxa
   perform pg_temp.asserta(
     (select count(*) = 1 from public.warroom_alerts where title like '%Canal F%'),
     'T3 Canal F (20% exatos, amostra 20) deveria alertar');
   perform pg_temp.asserta(
     (select count(*) = 0 from public.warroom_alerts where title like '%Canal G%'),
     'T3 Canal G (15%) NAO deveria alertar');
+
+  -- T4: presas
+  perform pg_temp.asserta(
+    (select count(*) = 1 from public.warroom_alerts where title like '%Canal C%'),
+    'T4 Canal C (11 presas ainda sending) deveria alertar');
+  perform pg_temp.asserta(
+    (select count(*) = 0 from public.warroom_alerts where title like '%Canal D%'),
+    'T4 Canal D (10 presas) NAO deveria alertar');
+  perform pg_temp.asserta(
+    (select count(*) = 0 from public.warroom_alerts where title like '%Canal E%'),
+    'T4 Canal E (12 presas COM lease vivo) NAO deveria alertar');
   perform pg_temp.asserta(
     (select count(*) = 0 from public.warroom_alerts where title like '%Canal H%'),
     'T4 Canal H (12 sending recentes) NAO deveria alertar');
+  -- T4(b): já varridas na última hora contam (senão o alerta some quando o varredor roda antes)
+  perform pg_temp.asserta(
+    (select count(*) = 1 from public.warroom_alerts where title like '%Canal J%'),
+    'T4 Canal J (11 ja varridas na ultima hora) deveria alertar');
+  perform pg_temp.asserta(
+    (select count(*) = 0 from public.warroom_alerts where title like '%Canal L%'),
+    'T4 Canal L (10 varridas) NAO deveria alertar');
+  -- T4(c): conexão resolvida pelo CONTATO quando a linha não tem whatsapp_connection_id
+  perform pg_temp.asserta(
+    (select count(*) = 1 from public.warroom_alerts where title like '%Canal I%'),
+    'T4 Canal I (11 presas sem conexao direta) deveria alertar pela conexao do contato');
+  perform pg_temp.asserta(
+    (select count(*) = 1 from public.warroom_alerts where title like '%Canal K%'),
+    'T4 Canal K (6 presas + 5 varridas sem conexao direta) deveria alertar');
 end $$;
 
 -- ── T5: conteúdo, ausência de PII e idempotência na mesma hora ──────────────
@@ -256,15 +332,32 @@ begin
        from public.warroom_alerts where title like '%Canal A%'),
     'T5 o alerta deveria ser critical/envio-falha');
 
+  -- texto do disparo por TAXA
   perform pg_temp.asserta(
     (select message like '%Canal A%' and message like '%24%' and message like '%Sem confirmação: 2.%'
        from public.warroom_alerts where title like '%Canal A%'),
     'T5 o texto deveria trazer a conexao, a taxa e as sem confirmacao');
 
+  -- texto do disparo só por PRESAS: redação própria, NÃO fala em "amostra insuficiente"
+  perform pg_temp.asserta(
+    (select message like '%Presas em envio (mais de 15 min): 11%'
+       from public.warroom_alerts where title like '%Canal J%'),
+    'T5 o alerta do Canal J deveria trazer as 11 presas');
+  perform pg_temp.asserta(
+    (select message not like '%insuficiente%'
+       from public.warroom_alerts where title like '%Canal J%'),
+    'T5 o alerta de presas NAO pode dizer "amostra insuficiente"');
+
+  -- conexão resolvida pelo contato aparece no dedupe_key (c9)
+  perform pg_temp.asserta(
+    (select count(*) = 1 from public.warroom_alerts
+      where dedupe_key like 'envio-falha:00000000-0000-0000-0000-0000000000c9:%'),
+    'T5 o Canal I deveria usar a conexao do contato (c9) no dedupe_key');
+
   -- nenhum alerta carrega telefone nem texto de mensagem
   perform pg_temp.asserta(
     (select count(*) = 0 from public.warroom_alerts
-      where title like '%5511999999999%' or message like '%5511999999999%'),
+      where title like '%5511%' or message like '%5511%'),
     'T5 o alerta NAO pode conter telefone');
   perform pg_temp.asserta(
     (select count(*) = 0 from public.warroom_alerts
@@ -276,13 +369,13 @@ begin
   n := public.alert_outbound_failure_rate();
   perform pg_temp.asserta(n = 0, 'T5 2a passada na mesma hora deveria inserir 0, inseriu ' || n);
   perform pg_temp.asserta(
-    (select count(*) = 3 from public.warroom_alerts where source = 'envio-falha'),
-    'T5 deveria continuar com exatamente 3 alertas apos a 2a passada');
+    (select count(*) = 6 from public.warroom_alerts where source = 'envio-falha'),
+    'T5 deveria continuar com exatamente 6 alertas apos a 2a passada');
 end $$;
 
 -- ── T6: rollback de verdade ─────────────────────────────────────────────────
--- O bloco de rollback é extraído do próprio arquivo da migration (linhas logo após
--- a linha 2). Aqui as duas sentenças são executadas como psql:
+-- Executa as DUAS sentenças do bloco `-- Rollback (SQL executável, na ordem):` do
+-- cabeçalho da migration (mantidas em sincronia à mão: são só estas duas).
 select cron.unschedule(jobid) from cron.job where jobname = 'alerta-falha-envio-por-conexao';
 drop function if exists public.alert_outbound_failure_rate();
 
