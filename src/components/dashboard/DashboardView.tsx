@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ import { VolumeChart } from './overview/VolumeChart';
 import { NowPanel } from './overview/NowPanel';
 import { DailyGoalsCard } from './overview/DailyGoalsCard';
 import { QueueHealthTable } from './overview/QueueHealthTable';
+import { SystemHealthCard } from './overview/SystemHealthCard';
 import { RecentActivityCard } from './overview/RecentActivityCard';
 import { TeamHighlightCard } from './overview/TeamHighlightCard';
 import { AIToolsCard } from './overview/AIToolsCard';
@@ -42,8 +43,33 @@ import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const OVERVIEW_TAB = 'overview';
+
+/**
+ * Agrupa os cards da Visão Geral em zonas rotuladas, no lugar de uma grade
+ * plana de ~12 blocos de peso visual idêntico: nada dizia quais números olhar
+ * primeiro. Cada zona tem um título curto e um separador sutil; a primeira não
+ * leva separador (é o topo da aba).
+ */
+function DashboardZone({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return (
+    <section
+      data-testid={`dash-zone-${id}`}
+      aria-labelledby={`dash-zone-${id}-title`}
+      className="space-y-2.5 pt-4 mt-2 border-t border-border first:border-t-0 first:pt-0 first:mt-0"
+    >
+      <h3
+        id={`dash-zone-${id}-title`}
+        className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground"
+      >
+        {title}
+      </h3>
+      <div className="space-y-2.5">{children}</div>
+    </section>
+  );
+}
 
 const DASHBOARD_TABS: DashboardTabDef[] = [
   { value: 'overview', label: 'Visão Geral', icon: TrendingUp },
@@ -79,11 +105,19 @@ export function DashboardView() {
   // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard({ queueId: filters.queueId, agentId: filters.agentId });
-  // E31: fila/agente do filtro do topo propagados para a RPC dashboard_kpi —
-  // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
-  // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
-  // filters.agentId trouxer.
-  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
+  // E31/E34: período, fila e agente do filtro do topo propagados para a RPC
+  // dashboard_kpi — antes o dropdown era cosmético para este card (achado A9) e
+  // o período era ignorado (E34). `filters.dateRange` é a janela [from, until)
+  // do período escolhido ("hoje" por padrão); a RPC devolve o período anterior
+  // de mesmo tamanho para o delta. Para não-staff, a RPC trava
+  // p_agent = auth.uid() no servidor (E33), independente do que filters.agentId
+  // trouxer.
+  const { data: kpi, isPending } = useDashboardKpi({
+    queueId: filters.queueId,
+    agentId: filters.agentId,
+    from: filters.dateRange.from,
+    until: filters.dateRange.to,
+  });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -156,83 +190,151 @@ export function DashboardView() {
               Conteúdo real chega nas Fases 5-9. RealtimeMetricsPanel e ProgressiveDisclosureDashboard
               deixam de renderizar aqui (widgets level 3 + desafios voltam na Fase 9). */}
           <div data-testid="dash-banner">
-            <GreetingBanner personal={!isStaff} />
+            <SectionErrorBoundary sectionName="Saudação">
+              <GreetingBanner personal={!isStaff} />
+            </SectionErrorBoundary>
           </div>
+          <DashboardZone id="numeros" title={filters.period === 'today' ? 'Números de hoje' : 'Números do período'}>
           <div data-testid="dash-kpis">
-            {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
-                Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
-                fixos no servidor) — o período do filtro acima não afeta esses cards.
-                Isso NÃO se estende ao gráfico de volume (só recebe fila/agente, nunca
-                recebeu período) nem ao card "Conversas Abertas" (vem de
-                dashboard_contact_counts, que respeita p_since/p_until) — o texto antigo
-                afirmava os dois incorretamente. Antes isso acontecia em silêncio
-                (achado E34); agora avisa, só sobre o que de fato é fixo. */}
-            {filters.period !== 'today' && (
-              <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
-                Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
-              </p>
-            )}
+            {/* E34 (revisado em 13/10/2026): Resolvidas / Tempo de Resposta / SLA
+                agora seguem o período do filtro acima — dashboard_kpi recebe
+                p_from/p_until e devolve o período anterior de mesmo tamanho para o
+                delta (antes v_today/v_yesterday eram fixos no servidor e o período
+                era ignorado em silêncio; a tela avisava isso, aviso removido junto
+                com a correção). O rótulo da zona acompanha: "hoje" só quando o
+                período é hoje. Isso NÃO se estende ao gráfico de volume (só recebe
+                fila/agente, nunca recebeu período) nem ao card "Conversas Abertas"
+                (vem de dashboard_contact_counts, que respeita p_since/p_until). */}
+            <SectionErrorBoundary sectionName="Indicadores">
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
+            </SectionErrorBoundary>
           </div>
+          </DashboardZone>
+          <DashboardZone id="operacao" title="Operação em tempo real">
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
-            <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
-            <NowPanel
-              realtime={realtime}
-              pendingConversations={stats.pendingConversations}
-              slaBreachedToday={kpi?.slaBreachedToday}
-              busiestQueue={isStaff ? busiestQueue : null}
-            />
-            <DailyGoalsCard
-              onSeeAll={() => goToTab('goals')}
-              stats={{
-                totalConversations: stats.totalConversations,
-                // stats.resolvedToday/avgResponseTime já vêm de useDashboardKpi
-                // (fonte única, ver useDashboardData) — sem fallback duplicado.
-                resolvedToday: stats.resolvedToday,
-                avgResponseTime: stats.avgResponseTime,
-                pendingConversations: stats.pendingConversations,
-              }}
-            />
+            <SectionErrorBoundary sectionName="Gráfico de volume">
+              <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="Agora">
+              <NowPanel
+                realtime={realtime}
+                pendingConversations={stats.pendingConversations}
+                slaBreachedToday={kpi?.slaBreachedToday}
+                busiestQueue={isStaff ? busiestQueue : null}
+              />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="Metas diárias">
+              <DailyGoalsCard
+                onSeeAll={() => goToTab('goals')}
+                stats={{
+                  totalConversations: stats.totalConversations,
+                  // stats.resolvedToday/avgResponseTime já vêm de useDashboardKpi
+                  // (fonte única, ver useDashboardData) — sem fallback duplicado.
+                  resolvedToday: stats.resolvedToday,
+                  avgResponseTime: stats.avgResponseTime,
+                  pendingConversations: stats.pendingConversations,
+                }}
+              />
+            </SectionErrorBoundary>
           </div>
           <div data-testid="dash-row3" className={isStaff ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5' : 'grid grid-cols-1 gap-2.5'}>
             {isStaff && (
-              <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => goToTab('sla')} />
+              <SectionErrorBoundary sectionName="Saúde das filas">
+                <QueueHealthTable rows={queueHealthRows} isConnected={realtime.isConnected} onSeeAll={() => goToTab('sla')} />
+              </SectionErrorBoundary>
             )}
-            <RecentActivityCard items={recentEvents?.items ?? []} />
+            <SectionErrorBoundary sectionName="Atividade recente">
+              <RecentActivityCard items={recentEvents?.items ?? []} />
+            </SectionErrorBoundary>
             {isStaff && (
-              <TeamHighlightCard
-                agents={leaderboardAgents}
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-                slaRateByAgent={slaRateByAgent}
-              />
+              <SectionErrorBoundary sectionName="Equipe em destaque">
+                <TeamHighlightCard
+                  agents={leaderboardAgents}
+                  timeRange={timeRange}
+                  onTimeRangeChange={setTimeRange}
+                  slaRateByAgent={slaRateByAgent}
+                />
+              </SectionErrorBoundary>
             )}
           </div>
+          {isStaff && (
+            <div data-testid="dash-row-saude" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
+              <SystemHealthCard />
+            </div>
+          )}
+          </DashboardZone>
+          <DashboardZone id="engajamento" title="Engajamento e IA">
           <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
-            <AIToolsCard onSeeAll={() => goToTab('ai')} />
-            <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
-            <SentimentTrendCard />
+            <SectionErrorBoundary sectionName="Ferramentas de IA">
+              <AIToolsCard onSeeAll={() => goToTab('ai')} />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="CSAT">
+              <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="Tendência de sentimento">
+              <SentimentTrendCard />
+            </SectionErrorBoundary>
           </div>
           <div data-testid="dash-gamification">
-            <GamificationSection stats={stats} isStaff={isStaff} />
+            <SectionErrorBoundary sectionName="Gamificação">
+              <GamificationSection stats={stats} isStaff={isStaff} />
+            </SectionErrorBoundary>
           </div>
+          </DashboardZone>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-2.5">
-          <DemandPrediction />
+          <SectionErrorBoundary sectionName="Previsão de demanda">
+            <DemandPrediction />
+          </SectionErrorBoundary>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ConversationHeatmap />
-            <ActivityHeatmap />
+            <SectionErrorBoundary sectionName="Mapa de calor de conversas">
+              <ConversationHeatmap />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="Mapa de atividade">
+              <ActivityHeatmap />
+            </SectionErrorBoundary>
           </div>
         </TabsContent>
 
-        <TabsContent value="goals" className="space-y-2.5"><GoalsDashboard onNavigateTab={goToTab} /></TabsContent>
-        <TabsContent value="ai" className="space-y-2.5"><AIQuickAccess onNavigateTab={goToTab} /></TabsContent>
-        <TabsContent value="sla"><SLAMetricsDashboard /></TabsContent>
-        <TabsContent value="team" className="space-y-2.5"><AgentPerformancePanel onNavigateTab={goToTab} /></TabsContent>
-        <TabsContent value="satisfaction" className="space-y-2.5"><SatisfactionMetrics /><CSATDashboard /></TabsContent>
-        <TabsContent value="sentiment" className="space-y-2.5"><SentimentTrendChart onNavigateTab={goToTab} /></TabsContent>
-        <TabsContent value="reports" className="space-y-2.5"><ScheduledReportsManager /></TabsContent>
+        <TabsContent value="goals" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Metas">
+            <GoalsDashboard onNavigateTab={goToTab} />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="ai" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Acesso rápido IA">
+            <AIQuickAccess onNavigateTab={goToTab} />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="sla">
+          <SectionErrorBoundary sectionName="Métricas de SLA">
+            <SLAMetricsDashboard />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="team" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Desempenho dos atendentes">
+            <AgentPerformancePanel onNavigateTab={goToTab} />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="satisfaction" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Satisfação">
+            <SatisfactionMetrics />
+          </SectionErrorBoundary>
+          <SectionErrorBoundary sectionName="Painel CSAT">
+            <CSATDashboard />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="sentiment" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Análise de sentimento">
+            <SentimentTrendChart onNavigateTab={goToTab} />
+          </SectionErrorBoundary>
+        </TabsContent>
+        <TabsContent value="reports" className="space-y-2.5">
+          <SectionErrorBoundary sectionName="Relatórios agendados">
+            <ScheduledReportsManager />
+          </SectionErrorBoundary>
+        </TabsContent>
         </Tabs>
       </div>
     </div>

@@ -15,6 +15,7 @@ const mockLogs = [
 const estado = vi.hoisted(() => ({
   dados: [] as unknown[],
   chamadas: {
+    select: '' as string,
     eq: [] as Array<[string, unknown]>,
     in: [] as Array<[string, unknown[]]>,
     like: [] as Array<[string, string]>,
@@ -31,20 +32,23 @@ type ConstrutorConsulta = PromiseLike<ResultadoConsulta> & {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => {
-            const resultado = Promise.resolve({ data: estado.dados, error: null });
-            const construtor: ConstrutorConsulta = {
-              eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
-              in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
-              like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
-              then: resultado.then.bind(resultado),
-            };
-            return construtor;
-          }),
-        })),
-      })),
+      select: vi.fn((cols: string) => {
+        estado.chamadas.select = cols;
+        return ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => {
+              const resultado = Promise.resolve({ data: estado.dados, error: null });
+              const construtor: ConstrutorConsulta = {
+                eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
+                in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
+                like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
+                then: resultado.then.bind(resultado),
+              };
+              return construtor;
+            }),
+          })),
+        });
+      }),
     })),
   },
 }));
@@ -78,6 +82,19 @@ describe('AuditLogDashboard', () => {
     estado.chamadas.eq.length = 0;
     estado.chamadas.in.length = 0;
     estado.chamadas.like.length = 0;
+    estado.chamadas.select = '';
+  });
+
+  // ===== QUERY COLUMNS =====
+  describe('Query columns', () => {
+    it('selects explicit columns instead of * for audit_logs', async () => {
+      render(<AuditLogDashboard />);
+      await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+      expect(estado.chamadas.select).not.toBe('*');
+      expect(estado.chamadas.select).toContain('id');
+      expect(estado.chamadas.select).toContain('action');
+      expect(estado.chamadas.select).toContain('created_at');
+    });
   });
 
   // ===== RENDERING =====
@@ -263,5 +280,39 @@ describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', (
       expect(estado.chamadas.in).toContainEqual(['entity_type', ['user', 'user_roles']])
     );
     expect(estado.chamadas.eq).not.toContainEqual(['entity_type', 'user']);
+  });
+});
+
+// t_638c8a1a: o "+detalhes" era um <Badge> puramente decorativo — parecia um
+// controle mas não abria nada. A correção o torna um botão de verdade que revela
+// o JSON de `details` (e pode recolher de novo).
+describe('t_638c8a1a — "+detalhes" abre o JSON de details', () => {
+  beforeEach(() => {
+    estado.dados = mockLogs;
+  });
+
+  it('revela e recolhe o details ao clicar', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+
+    // Dois registros do mock têm `details` (id 2 e id 4).
+    const botoes = await screen.findAllByRole('button', { name: '+detalhes' });
+    expect(botoes).toHaveLength(2);
+
+    const primeiro = botoes[0];
+    expect(primeiro).toHaveAttribute('aria-expanded', 'false');
+    // Antes de clicar o JSON não está na tela.
+    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
+
+    fireEvent.click(primeiro);
+
+    const aberto = screen.getByRole('button', { name: '−detalhes' });
+    expect(aberto).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/"reason": "test"/)).toBeInTheDocument();
+
+    // Clicar de novo recolhe.
+    fireEvent.click(aberto);
+    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
+    expect(screen.getAllByRole('button', { name: '+detalhes' })).toHaveLength(2);
   });
 });

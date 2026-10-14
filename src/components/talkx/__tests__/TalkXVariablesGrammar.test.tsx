@@ -5,6 +5,13 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
 
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+
 import { TalkXMessageEditor } from '../TalkXMessageEditor';
 import { TalkXWizardReview } from '../TalkXWizardDelivery';
 import { personalizePreview } from '../talkxShared';
@@ -24,7 +31,7 @@ import type { WizardState } from '../TalkXCampaignWizard';
 function reviewEd(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Campanha', description: '', objective: 'sales',
-    audienceSource: 'contacts', selectedSegment: null,
+    audienceSource: 'contacts', selectedSegments: [],
     selectedContacts: [], eligibleCount: 10, audienceTotal: 12,
     respectSuppression: true, suppressedCount: 2,
     selectedTemplate: null, messageTemplate: 'Oi {{nome}}',
@@ -53,7 +60,7 @@ describe('TalkXMessageEditor — gramática de variáveis (R2-MOD-062)', () => {
       <TalkXMessageEditor value="Oi {{ nome | cliente }}" onChange={() => {}} knownVariables={['{{nome}}']} />,
     );
     const overlay = container.querySelector('pre') as HTMLElement;
-    expect(overlay.innerHTML).toContain('text-primary-glow');
+    expect(overlay.innerHTML).toContain('text-[hsl(var(--primary-text))]');
     expect(overlay.innerHTML).not.toContain('text-dash-amber');
   });
 

@@ -270,7 +270,7 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
   });
 
-  it('etapa 51 (B5): a coluna Concluído mostra 7 dias e "Ver mais antigas (30 dias)" revela o resto', () => {
+  it('etapa 51 (B5): a coluna Concluído mostra 7 dias e "Ver até 30 dias →" revela o resto', () => {
     cleanup();
     const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
@@ -295,12 +295,12 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByText('Feita ontem')).toBeTruthy();
     expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
 
-    fireEvent.click(screen.getByText('Ver mais antigas (30 dias)'));
+    fireEvent.click(screen.getByText('Ver até 30 dias →'));
     expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
     expect(screen.getByText('Ver menos')).toBeTruthy();
   });
 
-  it('Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO diz "Coluna vazia"', () => {
+  it('Fase F (auditoria): coluna só com concluídas de 8 a 30 dias mostra o rodapé e NÃO fica vazia', () => {
     cleanup();
     const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
@@ -322,8 +322,8 @@ describe('Tarefas — componentes dos três modos', () => {
 
     // A coluna TEM conteúdo (atrás do rodapé): antes ela dizia "Coluna vazia" e
     // oferecia "Ver mais antigas (30 dias)" ao mesmo tempo — contradição.
-    expect(screen.getByText('Ver mais antigas (30 dias)')).toBeTruthy();
-    expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
+    expect(screen.getByText('Ver até 30 dias →')).toBeTruthy();
+    expect(screen.getAllByTestId('board-column-empty')).toHaveLength(4);
   });
 
   it('Fase F (auditoria): contato sem nome aparece como "Sem nome" e id fora da lista como "Contato indisponível"', () => {
@@ -443,7 +443,9 @@ describe('Tarefas — componentes dos três modos', () => {
       </TooltipProvider>
     );
 
-    expect(screen.getAllByText('Coluna vazia')).toHaveLength(5);
+    expect(screen.getAllByTestId('board-column-empty')).toHaveLength(5);
+    // a microcopy do vazio por coluna (etapa 103)
+    expect(screen.getAllByText('Nada aqui. Arraste uma tarefa ou capture acima')).toHaveLength(5);
     // a política sai da KANBAN_COLUMNS (mesmo texto do tooltip do cabeçalho)
     expect(screen.getByText('O que está nas suas mãos agora. Três é o limite.')).toBeTruthy();
     expect(screen.getByText('Feito. Fica 7 dias à vista.')).toBeTruthy();
@@ -467,7 +469,7 @@ describe('Tarefas — componentes dos três modos', () => {
 
     // 5 colunas × 3 cartões do BoardColumnSkeleton
     expect(container.querySelectorAll('.animate-shimmer')).toHaveLength(15);
-    expect(screen.queryByText('Coluna vazia')).toBeNull();
+    expect(screen.queryAllByTestId('board-column-empty')).toHaveLength(0);
   });
 
   it('etapa 53: a coluna não usa mais o teto mágico de 100vh e encolhe por flex', () => {

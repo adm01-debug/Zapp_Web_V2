@@ -7,9 +7,9 @@ const OLD_KEY = 'contact-details-accordion-state';
 describe('sidebarSections — migração do localStorage (etapa 44)', () => {
   beforeEach(() => localStorage.clear());
 
-  it('storage antigo só com seções que não existem mais → default (3 abertas)', () => {
+  it('storage antigo só com seções que não existem mais → default (seções atuais abertas)', () => {
     localStorage.setItem(OLD_KEY, JSON.stringify(['info', 'tags']));
-    expect(getStoredSidebarState()).toEqual(['professional', 'personal', 'singu']);
+    expect(getStoredSidebarState()).toEqual(DEFAULT_OPEN_SECTIONS);
   });
 
   it('storage antigo com valor válido sobrevive e migra para a chave nova', () => {
@@ -59,5 +59,17 @@ describe('sidebarSections — migração do localStorage (etapa 44)', () => {
     });
     expect(() => saveSidebarState(['personal'])).not.toThrow();
     setItem.mockRestore();
+  });
+
+  // Seção nova "Inteligência comercial" (2026-10-12): passa a ser um valor
+  // conhecido, sem mexer na chave de storage nem na preferência já salva.
+  it('a seção nova intelligence é conhecida e persiste ao reabrir', () => {
+    saveSidebarState(['intelligence']);
+    expect(getStoredSidebarState()).toEqual(['intelligence']);
+  });
+
+  it('preferência salva antes da seção nova sobrevive intacta', () => {
+    localStorage.setItem(NEW_KEY, JSON.stringify(['professional', 'singu']));
+    expect(getStoredSidebarState()).toEqual(['professional', 'singu']);
   });
 });

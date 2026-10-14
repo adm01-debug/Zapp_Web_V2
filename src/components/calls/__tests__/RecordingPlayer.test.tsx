@@ -13,6 +13,7 @@ import {
 const getSession = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   SUPABASE_URL: 'https://zapp-local.supabase.co',
+  SUPABASE_ANON_KEY: 'anon-key-do-teste',
   supabase: { auth: { getSession: (...args: unknown[]) => getSession(...args) } },
 }));
 
@@ -85,6 +86,15 @@ function prepararAmbiente() {
 
 describe('RecordingPlayer (T67)', () => {
   beforeEach(prepararAmbiente);
+
+  it('helpers reais de Edge recebem auth e anon key sinteticos do mock', async () => {
+    const { edgeAuthHeaders } = await import('@/lib/edgeAuthHeaders');
+
+    await expect(edgeAuthHeaders()).resolves.toEqual({
+      apikey: 'anon-key-do-teste',
+      Authorization: 'Bearer jwt-local',
+    });
+  });
 
   it('nao renderiza nada quando a chamada nao tem gravacao', () => {
     renderPlayer(<RecordingPlayer callId="c1" recordingStatus="none" />);

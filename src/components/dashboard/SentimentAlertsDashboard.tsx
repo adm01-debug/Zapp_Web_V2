@@ -20,7 +20,7 @@ export function SentimentAlertsDashboard() {
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2 opacity-50 cursor-not-allowed" disabled><ShieldAlert className="h-4 w-4 text-destructive" />Exportação Bloqueada</Button>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40"><Calendar className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40" aria-label="Filtrar período"><Calendar className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="14">Últimos 14 dias</SelectItem>
               <SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem>
@@ -32,7 +32,7 @@ export function SentimentAlertsDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { title: 'Total de Alertas', value: stats.totalAlerts, icon: AlertTriangle, iconBg: 'bg-destructive/20', iconColor: 'text-destructive', sub: <><span className="text-destructive">{stats.criticalAlerts} críticos</span><span>•</span><span>{stats.emailsSent} emails enviados</span></> },
+          { title: 'Total de Alertas', value: stats.totalAlerts, icon: AlertTriangle, iconBg: 'bg-destructive/20', iconColor: 'text-destructive', sub: <><span className="text-[hsl(var(--destructive-text))]">{stats.criticalAlerts} críticos</span><span>•</span><span>{stats.emailsSent} emails enviados</span></> },
           { title: 'Sentimento Médio', value: <span className={getSentimentColor(stats.avgSentiment)}>{stats.avgSentiment === null ? '—' : `${stats.avgSentiment}%`}</span>, icon: Activity, iconBg: 'bg-primary/20', iconColor: 'text-primary', sub: <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden"><div className={`h-full transition-all ${getSentimentBg(stats.avgSentiment)}`} style={{ width: `${stats.avgSentiment ?? 0}%` }} /></div> },
           { title: 'Taxa de Negativos', value: <span className={stats.negativeRate > 30 ? 'text-destructive' : 'text-success'}>{stats.negativeRate}%</span>, icon: TrendingDown, iconBg: 'bg-warning/20', iconColor: 'text-warning', sub: <>{stats.negativeAnalyses} de {stats.totalAnalyses} análises</> },
           { title: 'Clientes Afetados', value: stats.uniqueContacts, icon: Users, iconBg: 'bg-info/20', iconColor: 'text-info', sub: <>Com alertas de sentimento</> },

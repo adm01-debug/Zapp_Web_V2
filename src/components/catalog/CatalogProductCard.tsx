@@ -355,7 +355,7 @@ export function CatalogProductCard({
 
           {/* ações */}
           <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowDetails(true)}>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Ver detalhes de ${product.name}`} onClick={() => setShowDetails(true)}>
               <Eye className="w-4 h-4" />
             </Button>
             {onSend && (
@@ -363,7 +363,7 @@ export function CatalogProductCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="inline-flex">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" disabled>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" disabled aria-label={`Enviar ${product.name}`}>
                         <Send className="w-4 h-4" />
                       </Button>
                     </span>
@@ -371,7 +371,7 @@ export function CatalogProductCard({
                   <TooltipContent>Produto esgotado</TooltipContent>
                 </Tooltip>
               ) : (
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onSend(product)}>
+                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Enviar ${product.name}`} onClick={() => onSend(product)}>
                   <Send className="w-4 h-4" />
                 </Button>
               )
@@ -380,6 +380,7 @@ export function CatalogProductCard({
               <Button
                 size="icon" variant="ghost"
                 className={cn('h-8 w-8', isFavorite && 'text-rose-500')}
+                aria-label={`Favoritar ${product.name}`}
                 onClick={() => onToggleFavorite(product.id)}
               >
                 <Heart className={cn('w-4 h-4', isFavorite && 'fill-current')} />
@@ -453,7 +454,7 @@ export function CatalogProductCard({
 
           {/* is_kit top-right (quando sem favorito) */}
           {product.is_kit && !onToggleFavorite && (
-            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[hsl(var(--badge-new))] text-primary-foreground">
+            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-violeta text-violeta-foreground">
               Kit
             </span>
           )}

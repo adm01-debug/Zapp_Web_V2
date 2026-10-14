@@ -18,14 +18,19 @@ export function GmailIntegrationCard() {
   const stateLabel = activeAccount ? 'Conectado' : checking ? 'Verificando' : unavailable ? 'Indisponível' : 'Desconectado';
   const description = activeAccount?.email_address
     || (checking ? 'Verificando conta...' : unavailable ? 'Não foi possível verificar a conexão' : 'Não conectado');
+  // "Não conectado" fala a mesma língua nas 3 telas (Conexões/Integrações/Omnichannel):
+  // badge outline com o par status-offline. `destructive` fica reservado à falha real
+  // (consulta indisponível).
+  const offline = !activeAccount && !checking && !unavailable;
+  const badgeVariant = activeAccount ? 'default' : unavailable ? 'destructive' : offline ? 'outline' : 'secondary';
 
   return (
     <Card className="border-secondary/30">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500">
-              <Mail className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-muted">
+              <Mail className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
               <CardTitle className="text-base">Gmail</CardTitle>
@@ -34,7 +39,10 @@ export function GmailIntegrationCard() {
               </CardDescription>
             </div>
           </div>
-          <Badge variant={activeAccount ? 'default' : unavailable ? 'destructive' : 'secondary'}>
+          <Badge
+            variant={badgeVariant}
+            className={offline ? 'border-status-offline text-status-offline' : undefined}
+          >
             {stateLabel}
           </Badge>
         </div>

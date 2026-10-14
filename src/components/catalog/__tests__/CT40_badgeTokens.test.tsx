@@ -2,13 +2,13 @@
  * CT-40 — aceite de fonte: o módulo do catálogo não usa cor literal.
  *
  * Contrato do plano: "zerar `text-white`/`violet-500` restantes por tokens
- * (`text-primary-foreground`, `--badge-new`)" e "grep de cores literais no
+ * (`text-primary-foreground`, `--violeta`)" e "grep de cores literais no
  * módulo = 0".
  *
  * Este teste varre os componentes de produção do módulo
  * (`src/components/catalog/*.tsx`, sem `__tests__/`) e falha se algum repetir
  * `text-white`, `bg-violet-500` ou um hexadecimal literal. Também confere que
- * o token `--badge-new` existe em `tokens.css` — sem ele o Aceite seria só
+ * o token `--violeta` existe em `tokens.css` — sem ele o Aceite seria só
  * cosmético. Os arquivos de teste ficam de fora (as fixtures de cor usam hex
  * de mock de propósito, como o `color_hex` dos produtos/variantes).
  */
@@ -41,15 +41,15 @@ describe('CT-40 — o módulo não usa cor literal', () => {
   });
 });
 
-describe('CT-40 — o token `--badge-new` existe em tokens.css', () => {
+describe('CT-40 — o violeta consolidado é o token das badges', () => {
   const tokens = readFileSync(path.resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
 
-  it('define `--badge-new` com um valor hsl', () => {
-    expect(tokens).toMatch(/--badge-new:\s*\d/);
+  it('o tokens.css publica `--violeta` (consolidação t_290f3cdc)', () => {
+    expect(tokens).toMatch(/--violeta:\s*\d/);
   });
 
-  it('as badges do Kit consomem o token via `hsl(var(--badge-new))`', () => {
-    const consumidores = arquivosDeProducao.filter((f) => /hsl\(var\(--badge-new\)\)/.test(fonte(f)));
+  it('as badges do Kit consomem o par `bg-violeta`/`text-violeta-foreground`', () => {
+    const consumidores = arquivosDeProducao.filter((f) => /bg-violeta\b/.test(fonte(f)));
     expect(consumidores.length).toBeGreaterThan(0);
   });
 });

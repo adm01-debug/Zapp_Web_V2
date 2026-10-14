@@ -198,9 +198,9 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSuccess }: Co
 
             {/* Sexo */}
             <div className="space-y-1.5">
-              <Label>Sexo</Label>
+              <Label htmlFor="sexo">Sexo</Label>
               <Select value={form.sexo} onValueChange={v => handleChange('sexo', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger id="sexo"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {SEXO_OPTIONS.map(s => (
                     <SelectItem key={s} value={s}>{s === 'M' ? 'Masculino' : s === 'F' ? 'Feminino' : 'Outro'}</SelectItem>
@@ -211,9 +211,9 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSuccess }: Co
 
             {/* Estágio de Relacionamento */}
             <div className="space-y-1.5">
-              <Label>Estágio</Label>
+              <Label htmlFor="relationship_stage">Estágio</Label>
               <Select value={form.relationship_stage} onValueChange={v => handleChange('relationship_stage', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger id="relationship_stage"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {STAGE_OPTIONS.map(s => (
                     <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
@@ -230,9 +230,9 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSuccess }: Co
 
             {/* Sentimento */}
             <div className="space-y-1.5">
-              <Label>Sentimento</Label>
+              <Label htmlFor="sentiment">Sentimento</Label>
               <Select value={form.sentiment} onValueChange={v => handleChange('sentiment', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger id="sentiment"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {SENTIMENT_OPTIONS.map(s => (
                     <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>

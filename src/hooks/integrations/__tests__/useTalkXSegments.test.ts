@@ -126,12 +126,49 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
     expect(byField.group_category.options).toEqual(['orcamentos', 'aprovacao', 'os', 'acerto']);
   });
 
+  it('lead_origin, lead_score e risk_score ficam "em breve": nada grava/calcula essas colunas e o filtro seria morto', () => {
+    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);
+  });
+
   it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
     const opsUuid = (RULE_OPS.uuid ?? []).map((o) => o.value);
     expect(opsUuid).toContain('eq');
     expect(opsUuid).toContain('neq');
     expect(opsUuid).not.toContain('contains');
     expect(opsUuid).not.toContain('not_contains');
+  });
+});
+
+// Ponte Singu (recon t_0ed9b4f1): setor de atividade REAL (companies.ramo_atividade) e UF REAL
+// (company_addresses.estado is_primary) entram no catalogo como kind enum com igualdade EXATA.
+// O valor gravado e a string crua que a Edge leva ao Singu — por isso o campo NAO traz `options`
+// (a lista de ramos/UFs vem da RPC, nao de uma constante do front) e a UI cai na caixa de texto.
+// company/city/state continuam sendo texto livre: os segmentos ja salvos dependem deles.
+describe('RULE_FIELDS — setor e UF reais (ponte Singu)', () => {
+  const byField = Object.fromEntries(RULE_FIELDS.map((f) => [f.value, f]));
+
+  it('expoe real_sector e real_uf como kind enum na categoria basico', () => {
+    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico' });
+    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico' });
+    expect(byField.real_sector.label.length).toBeGreaterThan(0);
+    expect(byField.real_uf.label.length).toBeGreaterThan(0);
+  });
+
+  it('real_uf tem rotulo distinto do "UF" de texto livre (nao confunde os dois no seletor)', () => {
+    expect(byField.real_uf.label).not.toBe(byField.state.label);
+  });
+
+  it('os dois campos usam igualdade exata (enum: eq/neq/is_empty), nunca "contem"', () => {
+    const opsEnum = RULE_OPS.enum.map((o) => o.value);
+    expect(opsEnum).toEqual(expect.arrayContaining(['eq', 'neq', 'is_empty']));
+    expect(opsEnum).not.toContain('contains');
+    expect(opsEnum).not.toContain('not_contains');
+  });
+
+  it('nao muta os campos de texto livre usados por segmentos salvos', () => {
+    expect(byField.company).toMatchObject({ label: 'Empresa', kind: 'text', category: 'basico' });
+    expect(byField.city).toMatchObject({ label: 'Cidade', kind: 'text', category: 'basico' });
+    expect(byField.state).toMatchObject({ label: 'UF', kind: 'text', category: 'basico' });
   });
 });
 
@@ -152,6 +189,9 @@ describe('isRuleComplete — por tipo de campo', () => {
   });
 
   it('número e data exigem valor numérico válido', () => {
+    // lead_score/risk_score dizem a verdade em isRuleComplete (regra completa e
+    // bem descrita para o catálogo v2); o bloqueio do filtro morto é SÓ no
+    // caminho que executa/publica (splitRules + rulesToPostgrest + validação).
     expect(isRuleComplete(regra('lead_score', 'gt', '50'))).toBe(true);
     expect(isRuleComplete(regra('lead_score', 'gt', ''))).toBe(false);
     expect(isRuleComplete(regra('lead_score', 'gt', 'abc'))).toBe(false);
@@ -164,6 +204,54 @@ describe('isRuleComplete — por tipo de campo', () => {
     expect(isRuleComplete(regra('email', 'is_set', ''))).toBe(true);
     expect(isRuleComplete(regra('email', 'is_empty', ''))).toBe(true);
     expect(isRuleComplete(regra('unknown_field', 'eq', 'x'))).toBe(false);
+    // "Em breve" diz a verdade aqui (completo e bem descrito); o filtro morto é
+    // barrado SÓ em splitRules/rulesToPostgrest/validação, sem quebrar o v2.
+    expect(isRuleComplete(regra('lead_score', 'is_set', ''))).toBe(true);
+    expect(isRuleComplete(regra('lead_score', 'is_empty', ''))).toBe(true);
+    expect(isRuleComplete(regra('lead_score', 'eq', '0'))).toBe(true);
+    expect(isRuleComplete(regra('risk_score', 'is_set', ''))).toBe(true);
+    expect(isRuleComplete(regra('risk_score', 'eq', '0'))).toBe(true);
+  });
+
+  it('lead_score/risk_score são "em breve": completos mas fora da estimativa/PostgREST (falha fechada)', () => {
+    expect(RULE_FIELDS.find((f) => f.value === 'lead_score')?.comingSoon).toBe(true);
+    expect(RULE_FIELDS.find((f) => f.value === 'risk_score')?.comingSoon).toBe(true);
+    // Separa os conceitos: a regra é completa e bem descrita (não quebra o v2),
+    // mas nunca executa/publica.
+    expect(isRuleComplete({ id: 'r1', field: 'lead_score', op: 'eq', value: '80' } as never)).toBe(true);
+    expect(isRuleComplete({ id: 'r1', field: 'risk_score', op: 'eq', value: '10' } as never)).toBe(true);
+    expect(() => rulesToPostgrest({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_score', op: 'eq', value: '80' },
+      ] }],
+    } as never)).toThrow('Regra de segmento inválida');
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_score', op: 'eq', value: '80' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBeNull();
+  });
+
+  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna (o contato
+  // derivado do WhatsApp carrega a origem só na projeção em memória, não na linha do banco) e o
+  // Zapp não edita contatos em massa. Filtrar por origem devolveria sempre vazio → fica "em breve".
+  it('lead_origin fica "em breve": regra completa mas fora da estimativa/PostgREST (falha fechada)', () => {
+    expect(RULE_FIELDS.find((f) => f.value === 'lead_origin')?.comingSoon).toBe(true);
+    expect(isRuleComplete(regra('lead_origin', 'eq', 'whatsapp'))).toBe(true);
+    expect(() => rulesToPostgrest({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
+      ] }],
+    } as never)).toThrow('Regra de segmento inválida');
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBeNull();
   });
 });
 

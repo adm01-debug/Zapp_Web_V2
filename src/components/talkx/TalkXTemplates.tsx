@@ -1,19 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
-  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight,
+  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
 } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
-import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
+import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
+import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
+import { KpiCard } from './kit/kpi';
+import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -21,6 +19,8 @@ interface Props {
   startNew?: boolean;
   /** Chamado quando esse editor é fechado (inclusive ao salvar), para o topo limpar o pedido. */
   onStartNewHandled?: () => void;
+  /** X091 — repassado ao editor: clique do widget "Em andamento" abre o monitor. */
+  onOpenMonitor?: (campaignId: string) => void;
 }
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -61,8 +61,22 @@ function resumoVariaveis(content: string): string | null {
   return `${variaveis.length} ${rotulo}: ${inicio}${variaveis.length > 2 ? ', …' : ''}`;
 }
 
-export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: Props) {
+export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onOpenMonitor }: Props) {
   const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
+  // X091 — os 4 KPIs da tela 04 saem da RPC de métricas da biblioteca (X086),
+  // não de contagem no navegador: total, aprovações do período (com variação),
+  // mais usado por mensagens enviadas e taxa média de resposta. Sem resposta da
+  // RPC o valor vai nulo e o card do kit mostra "Sem dados ainda".
+  const { stats: libStats } = useTalkXTemplateLibraryStats(30, 3);
+  const avgReplyDelta = pointsDelta(
+    libStats?.avg_reply_rate_pct,
+    libStats?.avg_reply_rate_previous_pct,
+    libStats?.reply_base_current,
+    libStats?.reply_base_previous,
+  );
+  const avgReplyComparison = avgReplyDelta == null
+    ? undefined
+    : { previous: libStats?.avg_reply_rate_previous_pct ?? null, kind: 'points' as const };
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -104,13 +118,6 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
   const most = useMemo(() => [...templates].sort((a, b) => b.use_count - a.use_count).slice(0, 3), [templates]);
 
-  const totals = useMemo(() => ({
-    total: templates.length,
-    approved: templates.filter((t) => t.status === 'approved').length,
-    withMedia: templates.filter((t) => t.media_url).length,
-    bestRate: most[0]?.name,
-  }), [templates, most]);
-
   const limparFiltros = () => { clearFilters(); setPage(1); };
 
   if (viewMode === 'edit') {
@@ -119,8 +126,12 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
         key={startNew ? 'novo-template' : (editing?.id ?? 'novo-template')}
         templates={templates}
         isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => { void refetch(); }}
         editing={startNew ? null : editing}
         onClose={() => { setMode('list'); onStartNewHandled?.(); }}
+        onOpenMonitor={onOpenMonitor}
       />
     );
   }
@@ -129,10 +140,10 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Total de templates" value={String(totals.total)} delta={null} tile="blue" icon={FileText} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="hero" index={1} label="Aprovados" value={String(totals.approved)} delta={totals.total > 0 ? { pct: Math.round((totals.approved / totals.total) * 100), label: 'do total' } : null} tile="green" icon={Check} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="Mais usado" value={totals.bestRate ? most[0].use_count.toString() : '—'} delta={totals.bestRate ? { text: totals.bestRate, tone: 'success' } : null} tile="amber" icon={Star} bars={null} barsColor="amber" chart="none" />
-          <DashboardKpiCard size="hero" index={3} label="Templates com mídia" value={String(totals.withMedia)} delta={null} tile="violet" icon={Image} bars={null} barsColor="violet" chart="none" />
+          <KpiCard icon={FileText} color="blue" index={0} label="Total de templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} hint="Templates criados (série do período)" />
+          <KpiCard icon={Check} color="green" index={1} label="Aprovados" value={libStats?.approved_period ?? null} bars={libStats?.approved_series ?? null} comparison={{ previous: libStats?.approved_previous_period ?? null, kind: 'relative' }} hint="Aprovações no período vs. o período anterior" />
+          <KpiCard icon={Star} color="amber" index={2} label="Mais usados" value={libStats?.most_used?.name ?? null} bars={libStats?.most_used?.series ?? null} hint={libStats?.most_used?.messages != null ? `${fmtInt(libStats.most_used.messages)} mensagens enviadas` : 'Template com mais mensagens enviadas'} />
+          <KpiCard icon={BarChart3} color="violet" index={3} label="Taxa média de resposta" value={libStats?.avg_reply_rate_pct ?? null} suffix="%" comparison={avgReplyComparison} hint="Respostas ÷ enviados no período; a variação é em pontos percentuais" />
         </div>
 
         <FilterBarV2
@@ -175,7 +186,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
           <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
           {most.map((t, i) => (
             <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
               <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </button>
@@ -192,12 +203,22 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
 
 
-      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader><AlertDialogTitle>Excluir template?</AlertDialogTitle><AlertDialogDescription>O template <b className="text-foreground">"{deleting?.name}"</b> será excluído permanentemente.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={() => { if (deleting) deleteTemplate.mutate(deleting.id); setDeleting(null); }}>Excluir</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TalkXConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting ? deleteTemplate.mutateAsync(deleting.id) : false}
+        title={PRESETS_DO_PRODUTO.excluirTemplate.title}
+        subtitle={PRESETS_DO_PRODUTO.excluirTemplate.subtitle}
+        description={PRESETS_DO_PRODUTO.excluirTemplate.description}
+        consequence={PRESETS_DO_PRODUTO.excluirTemplate.consequence}
+        tone={PRESETS_DO_PRODUTO.excluirTemplate.tone}
+        icon={PRESETS_DO_PRODUTO.excluirTemplate.icon}
+        iconColor={PRESETS_DO_PRODUTO.excluirTemplate.iconColor}
+        confirmLabel={PRESETS_DO_PRODUTO.excluirTemplate.confirmLabel}
+        cancelLabel={PRESETS_DO_PRODUTO.excluirTemplate.cancelLabel}
+        entityName={deleting?.name}
+        loading={deleteTemplate.isPending}
+      />
     </div>
   );
 }
@@ -217,13 +238,18 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
   const imagem = t.media_type === 'image' && !!t.media_url && /^https?:\/\//i.test(t.media_url);
   const aprovado = t.status === 'approved';
   const motivoBloqueio = aprovado ? undefined : 'Só templates aprovados podem ser usados em campanhas';
+  // TL-175D (t_eedf548a): o cartao NAO e um controle. Era `role="button"` com os
+  // botoes de acao DENTRO dele — o axe reprovava `nested-interactive` nos cartoes
+  // da grade (controle interativo dentro de controle: o leitor de tela anuncia mal e
+  // o Tab entra num controle que ja esta dentro de outro). O clique por mouse do
+  // cartao continua; a selecao por TECLADO volta pelo BOTAO do NOME (WCAG 2.1.1):
+  // ele e IRMAO dos botoes de acao, chama `onClick`, `aria-pressed` liga o estado e
+  // o `stopPropagation` evita o clique duplo quando o mouse acerta o proprio nome.
+  // Cada acao (Usar/Editar/Duplicar/Excluir) segue sendo um `<button>` real.
   return (
     <div
       data-talkx-template-card={t.id}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('rounded-2xl border cursor-pointer transition-all hover:shadow-md', selected ? 'border-primary bg-primary/5' : 'border-border/70 bg-card hover:border-primary/40')}
     >
       {/* Prévia da mensagem: texto CRU (as variáveis aparecem como no envio) */}
@@ -244,11 +270,17 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
         </div>
       </div>
       <div className="p-3.5">
-        <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          aria-pressed={selected}
+          aria-label={`Selecionar ${t.name}`}
+          className="block max-w-full text-left text-sm font-semibold text-foreground truncate"
+        >{t.name}</button>
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
           <Pill label={sm.label} tone={sm.tone} dot />
           <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
-          {tagsVisiveis.map((tag) => <span key={tag} className="text-3xs text-primary-glow">#{tag}</span>)}
+          {tagsVisiveis.map((tag) => <span key={tag} className="text-3xs text-[hsl(var(--primary-text))]">#{tag}</span>)}
           {tagsRestantes > 0 && <span className="text-3xs text-muted-foreground" title={t.tags.join(', ')}>+{tagsRestantes}</span>}
         </div>
         {variaveis && <p className="text-2xs text-foreground-secondary mt-2 truncate">{variaveis}</p>}
@@ -273,17 +305,25 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   const aprovado = t.status === 'approved';
   const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
+  // TL-175D (t_eedf548a): a linha da lista tambem deixa de ser `role="button"` pelo
+  // MESMO motivo do cartao da grade (`nested-interactive`: controle interativo dentro
+  // de controle). O clique por mouse da linha continua; a selecao por TECLADO volta
+  // pelo BOTAO do NOME (WCAG 2.1.1), IRMAO dos botoes de acao, com `aria-pressed` e
+  // `stopPropagation` contra o clique duplo. As acoes da linha seguem `<button>` reais.
   return (
     <div
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/20', selected ? 'bg-primary/5' : '')}
     >
       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          aria-pressed={selected}
+          aria-label={`Selecionar ${t.name}`}
+          className="block max-w-full text-left text-sm font-semibold text-foreground truncate"
+        >{t.name}</button>
         <p className="text-xs text-muted-foreground truncate">{descricao}</p>
         {t.tags.length > 0 && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">

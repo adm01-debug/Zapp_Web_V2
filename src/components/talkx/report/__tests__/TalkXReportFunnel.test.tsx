@@ -3,7 +3,8 @@
  *
  * Regras provadas: degrau sem fonte (campanha sem link → `clicked` nulo) NÃO é
  * desenhado; cada trapézio é proporcional ao % do degrau sobre os ENVIADOS; o seletor
- * de segmento só aparece quando a campanha tem mais de um segmento.
+ * de segmento só aparece quando a campanha tem mais de um segmento; o % é arredondado
+ * para uma casa antes de decidir se a casa decimal aparece (99,96% → "100%").
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';

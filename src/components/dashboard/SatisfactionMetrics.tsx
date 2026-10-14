@@ -63,6 +63,10 @@ export function SatisfactionMetrics() {
   const hasCsat = (breakdown?.totalResponses ?? 0) > 0;
   const hasQueue = (breakdown?.byQueue?.length ?? 0) > 0;
   const hasTimeline = breakdown?.timeline?.some(t => t.csatPercent !== null) ?? false;
+  // A V2 não envia pesquisa NPS (CSAT automático é o PD-34): sem nenhuma linha na
+  // tabela, o KPI de NPS fica sem número — o rótulo tem de dizer isso, não "sem
+  // respostas no período".
+  const hasNpsSurveys = (npsSurveys?.length ?? 0) > 0;
 
   // `t.date` já vem formatado ('dd/MM') de useSatisfactionBreakdown — não é ISO,
   // reformatar com date-fns aqui lança RangeError (Invalid time value).
@@ -103,9 +107,9 @@ export function SatisfactionMetrics() {
         />
         <DashboardKpiCard index={1} size="hero" label="NPS" value={npsScore != null ? String(npsScore) : '—'}
           valueClassName={npsScore != null ? getNPSColor(npsScore) : 'text-muted-foreground'}
-          delta={npsScore != null ? null : { text: 'sem respostas no período', tone: 'muted' }}
+          delta={npsScore != null ? null : { text: hasNpsSurveys ? 'sem respostas no período' : 'nenhuma pesquisa enviada ainda', tone: 'muted' }}
           tile="blue" icon={Users} bars={null} barsColor="blue" chart="bars"
-          aside={npsScore == null ? <KpiEmptyAside icon={BarChart3} label="Sem avaliações no período" /> : undefined}
+          aside={npsScore == null ? <KpiEmptyAside icon={BarChart3} label={hasNpsSurveys ? 'Sem respostas no período' : 'Sem pesquisas enviadas'} /> : undefined}
         />
         <DashboardKpiCard index={2} size="hero" label="Respostas CSAT" value={isLoading ? '—' : String(breakdown?.totalResponses ?? 0)}
           delta={{ text: `nos últimos ${periodDays} dias`, tone: 'muted' }}
@@ -128,8 +132,8 @@ export function SatisfactionMetrics() {
             <SectionHeader icon={TrendingUp} title="Evolução da Satisfação" subtitle="CSAT e NPS ao longo do tempo" tileSize={44} size="lg"
               right={(
                 <div className="flex items-center gap-2">
-                  <CardSelect value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
-                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
+                  <CardSelect name="Modo gráfico" value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
+                  <CardSelect name="Período da evolução da satisfação" value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
                 </div>
               )}
             />
@@ -198,7 +202,7 @@ export function SatisfactionMetrics() {
         <div className="space-y-4">
           <DashboardCard testid="sat-queue-card" variant="comfortable">
             <SectionHeader icon={Layers} title="Satisfação por fila" subtitle="CSAT médio e volume de respostas por fila" tileSize={44} size="lg"
-              right={<CardSelect value={queueMode} onValueChange={setQueueMode} options={[{ value: 'csat', label: 'CSAT' }, { value: 'volume', label: 'Volume' }]} testid="sat-queue-mode" />}
+              right={<CardSelect name="Modo fila" value={queueMode} onValueChange={setQueueMode} options={[{ value: 'csat', label: 'CSAT' }, { value: 'volume', label: 'Volume' }]} testid="sat-queue-mode" />}
             />
             <div className="rounded-xl border border-border/50 bg-muted/10 min-h-[150px] flex items-center justify-center">
               {!hasQueue ? (
@@ -220,8 +224,8 @@ export function SatisfactionMetrics() {
             <SectionHeader icon={Users} title="Top agentes por satisfação" subtitle="Agentes com maior CSAT no período" tileSize={44} size="lg"
               right={(
                 <div className="flex items-center gap-2">
-                  <CardSelect value="csat" onValueChange={() => undefined} options={[{ value: 'csat', label: 'CSAT' }]} testid="sat-agents-mode" />
-                  <CardSelect value={topN} onValueChange={setTopN} options={[{ value: '3', label: 'Top 3' }, { value: '5', label: 'Top 5' }, { value: '10', label: 'Top 10' }]} testid="sat-agents-top" />
+                  <CardSelect name="Modo agentes" value="csat" onValueChange={() => undefined} options={[{ value: 'csat', label: 'CSAT' }]} testid="sat-agents-mode" />
+                  <CardSelect name="Top N agentes por satisfação" value={topN} onValueChange={setTopN} options={[{ value: '3', label: 'Top 3' }, { value: '5', label: 'Top 5' }, { value: '10', label: 'Top 10' }]} testid="sat-agents-top" />
                 </div>
               )}
             />

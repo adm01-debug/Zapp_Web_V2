@@ -13,7 +13,7 @@
 // conta: passo desligado por comentário não executa), e o que não aparece em nenhum bloco
 // `run:` precisa estar na ALLOWLIST_NODE com justificativa.
 
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
 import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
@@ -25,6 +25,35 @@ export const RAIZ = root;
 
 function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
+}
+
+function listarArquivosNoDisco(relDir) {
+  const base = join(root, relDir);
+  const out = [];
+  function visitar(abs, rel) {
+    for (const nome of readdirSync(abs).sort()) {
+      const filhoAbs = join(abs, nome);
+      const filhoRel = rel ? `${rel}/${nome}` : nome;
+      const st = statSync(filhoAbs);
+      if (st.isDirectory()) visitar(filhoAbs, filhoRel);
+      else if (st.isFile()) out.push(filhoRel);
+    }
+  }
+  visitar(base, relDir);
+  return out;
+}
+
+function gitLsFilesOuDisco(relDir) {
+  try {
+    const resultado = spawnSync(resolverExecutavel('git'), ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
+    if (typeof resultado.stdout === 'string') return resultado.stdout.split('\n').filter(Boolean);
+  } catch {
+    // O CI também executa este arquivo via `deno test` sem --allow-sys/--allow-run.
+    // Nesse modo o shim Node de Deno não deixa `fs.access(X_OK)`/child_process
+    // observar o git; o checkout do runner é limpo, então a varredura do disco é
+    // equivalente para este inventário.
+  }
+  return listarArquivosNoDisco(relDir);
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
@@ -44,10 +73,17 @@ const ALLOWLIST = new Set([
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
+  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
+  'scripts/db-audit/login_gate_rpc.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // N-118 (item t_f0720c47): versiona a prova SQL de talkx_campaign_window_open em PG 17
+  // descartável (docker local) contra a migration 20261011000003 — fuso da campanha,
+  // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-window-open.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
@@ -55,15 +91,30 @@ const ALLOWLIST = new Set([
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
   // db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  // MX03 / item 47: prova, em Postgres descartavel, que a conclusao do dispatch Multiplix
+  // decide pela fila por item (multiplix_delivery_items) quando ela existe. O passo no
+  // db-guard.yml e uma linha (`bash scripts/db-audit/multiplix-completion-item-queue.test.sh`)
+  // e fica para o dono do workflow.
+  'scripts/db-audit/multiplix-completion-item-queue.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
+  // encerrar→reabrir→encerrar no mesmo dia. Depende de docker (como os demais deste bloco);
+  // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
+  // e cabe junto dos outros testes de container — promover pelo dono do workflow.
+  'scripts/db-audit/conversation-closures-reopen-same-day.test.sh',
   // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
   // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // E44 (F6): prova que o REVOKE de grants de `whatsapp_connections` (anon na tabela
+  // e nas 3 views; authenticated em TRUNCATE/TRIGGER/REFERENCES) vale como o PAPEL
+  // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
+  // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
@@ -92,9 +143,7 @@ export const ALLOWLIST_NODE = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testTsOnDisk = gitLsFilesOuDisco('supabase/functions')
   .filter(f => f.endsWith('.test.ts'));
 
 const ciYaml = read('.github/workflows/ci.yml');
@@ -105,9 +154,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testShOnDisk = gitLsFilesOuDisco('scripts/db-audit')
   .filter(f => f.endsWith('.test.sh'));
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
@@ -162,9 +209,7 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
 
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
-    .stdout
-    .split('\n')
+  return gitLsFilesOuDisco('scripts')
     .filter(f => SUFIXO_SUITE_NODE.test(f));
 }
 

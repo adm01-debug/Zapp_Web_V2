@@ -34,7 +34,9 @@ export function InteractiveMessageDisplay({
     
     if (button.type === 'url' && button.url) {
       window.open(button.url, '_blank', 'noopener,noreferrer');
-    } else if (button.type === 'phone' && button.phoneNumber) {
+    } else if ((button.type === 'call' || button.type === 'phone') && button.phoneNumber) {
+      // 'call' é o tipo canônico da Evolution; 'phone' fica aceito como alias
+      // legado de mensagens já persistidas.
       window.open(`tel:${button.phoneNumber}`, '_self');
     } else if (button.type === 'reply') {
       onButtonClick?.(button);
@@ -51,6 +53,7 @@ export function InteractiveMessageDisplay({
     switch (button.type) {
       case 'url':
         return <ExternalLink className="w-3.5 h-3.5" />;
+      case 'call':
       case 'phone':
         return <Phone className="w-3.5 h-3.5" />;
       case 'reply':

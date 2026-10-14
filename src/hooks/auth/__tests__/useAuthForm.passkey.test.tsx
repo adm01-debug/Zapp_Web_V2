@@ -39,7 +39,7 @@ vi.mock('@/hooks/auth/useWebAuthn', () => ({
     loading: false,
   }),
 }));
-vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => navigate, useLocation: () => ({ pathname: '/auth', search: '', hash: '', state: null }) }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/loginAttempts', () => ({ clearLoginAttempts: vi.fn(), formatLockTime: () => '' }));
 vi.mock('@/integrations/supabase/client', () => ({

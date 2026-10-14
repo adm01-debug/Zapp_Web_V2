@@ -163,4 +163,57 @@ describe('useNextBestAction', () => {
     expect(actions).toHaveLength(1);
     expect(actions[0].type).toBe('upsell');
   });
+
+  it('só a primeira resposta estourada sugere escalar, nomeando esse prazo', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: true, resolution_breached: false }],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Primeira resposta atrasada');
+    expect(escalate[0].priority).toBe('high');
+  });
+
+  it('só o prazo de resolução estourado também sugere escalar, nomeando esse prazo', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: false, resolution_breached: true }],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Prazo de resolução vencido');
+    expect(escalate[0].label).toBe('Escalar para supervisor');
+  });
+
+  it('os dois prazos estourados geram uma única sugestão de escalar', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: true, resolution_breached: true }],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Primeira resposta atrasada e prazo de resolução vencido');
+  });
+
+  it('nenhum prazo estourado não sugere escalar', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: false, resolution_breached: false }],
+      error: null,
+    };
+
+    const actions = await render();
+
+    expect(actions.some(a => a.type === 'escalate')).toBe(false);
+    expect(actions.some(a => a.type === 'upsell')).toBe(true);
+  });
 });

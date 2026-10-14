@@ -21,11 +21,14 @@ import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectio
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
-interface Props { campaignId: string; onBack?: () => void }
+import { TalkXHealthCard } from './tracking/TalkXHealthCard';
+import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
+interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
@@ -36,6 +39,12 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
+  // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
+  // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
+  // mais um diálogo local — por isso sobe por `onOpenHelp` (o pai é quem sabe
+  // navegar para `?screen=help`), em vez de um estado de dialog aqui. O
+  // pause/cancel/resume do rodapé também não tem mais estado próprio aqui —
+  // vive no controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (TL-054/X050).
 
   const {
     data: campaign,
@@ -102,9 +111,29 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
+  // X148/TL-157 — "pendentes" para a Saúde da Campanha: mesma fórmula do cálculo
+  // pré-refactor (total menos o que já foi processado), usando o `processed` que
+  // o X051 já mantém nesta função.
+  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+
+  // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
+  // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
+  // medir saúde com ela mostraria "Envio parado" só porque o operador filtrou "falhas"
+  // (mesmo motivo pelo qual o gráfico de ritmo também não deve receber esse filtro).
+  // Com o filtro em "Todos" as duas consultas usam a MESMA chave e o React Query faz um
+  // único pedido.
+  const {
+    recipients: healthRecipients,
+    isLoading: healthLoading,
+    isError: healthError,
+  } = useTalkXMonitor(campaignId);
+  const healthSentAts = useMemo(() => (healthRecipients ?? []).map((r) => r.sent_at), [healthRecipients]);
+  // Sem a medida (consulta carregando ou falhou) o card NÃO acusa "Envio parado": erro de
+  // consulta não é o mesmo que campanha parada. Ele mostra o estado pelo status e "—" na taxa.
+  const healthMeasured = !healthLoading && !healthError;
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
@@ -147,15 +176,15 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
             {!isDone && (<>
               {isRunning && <button type="button" onClick={()=>lifecycle.request({ kind: 'pause', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
-              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
+              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
               <button type="button" onClick={()=>lifecycle.request({ kind: 'cancel', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5"/>
+        <Progress value={progress} className="h-3 mb-1.5" aria-label="Progresso do envio"/>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-[hsl(var(--primary-text))] font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
         </div>
       </div>
@@ -214,11 +243,19 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
               </ResponsiveContainer>
             </TalkXQueryBoundary>
           </section>
-          <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
-            <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>
-            <MetaRow label="Conexão WA" value={connStatusLabel ?? '—'}/>
-            <MetaRow label="Iniciado em" value={campaign.started_at?fmtDateTime(campaign.started_at):'—'}/>
-          </RailCard>
+          <TalkXHealthCard
+            status={campaign.status}
+            pauseReason={campaignPauseReason(campaign)}
+            // Sem nenhum envio ainda, a atividade de referência é o próprio início da
+            // campanha: parada é não enviar desde que começou.
+            lastActivityAt={healthMeasured ? (talkxLastSentAt(healthSentAts) ?? campaign.started_at) : null}
+            pending={remaining}
+            stalledAfterMs={talkxStallWindowMs(campaign.send_interval_max, campaign.typing_delay_max)}
+            connectionLabel={connStatusLabel}
+            ratePerMinute={healthMeasured ? talkxRatePerMinute(healthSentAts) : null}
+            startedAt={campaign.started_at}
+            onOpenHelp={onOpenHelp}
+          />
         </div>
       )}
 
@@ -227,7 +264,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
             <p className="text-sm font-bold text-foreground">Destinatários</p>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
+              <SelectTrigger aria-label="Filtrar status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
               <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v,m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -252,6 +289,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                     </div>
                     <Pill label={sm.label} tone={sm.tone}/>
                     {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }); }} />
                   </motion.div>
                 );
               })}

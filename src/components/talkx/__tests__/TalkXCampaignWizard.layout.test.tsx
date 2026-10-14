@@ -40,17 +40,49 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     // módulo precisa dos mesmos valores que o hook real exporta.
     CAMPAIGN_NAME_MIN_LENGTH: 3,
     CAMPAIGN_NAME_MAX_LENGTH: 200,
+    MESSAGE_LIMIT: 4096,
+    MORE_VARIABLES: [],
+    // X123 — a tela traduz o código da RPC pelo helper do hook; no dublê, sem
+    // código reconhecível, o aviso continua sendo o texto cru.
+    explainDraftSaveError: (message: string | null | undefined) => message ?? null,
   };
 });
 
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   useAudienceEstimate: () => ({ data: undefined, isFetching: false }),
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
 }));
+
+// X118 (TL-072) — o passo "Mensagem" passou a montar o gerenciador de links
+// rastreáveis: ele lê a permissão (`useCRMAdminAccess`, que exige `AuthProvider`)
+// e a lista de links (`useTalkXLinks`, que exige `QueryClient`). Este teste prova
+// o encaixe do wizard no shell e não monta o provider de autenticação — as duas
+// consultas ficam dubladas, como já se faz com `useContactCustomFields` acima.
+// `importOriginal` mantém os helpers puros do módulo (`buildTalkxLinkPlaceholder`),
+// que o wizard usa para montar as variáveis conhecidas do editor.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/integrations/useTalkXLinks', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXLinks')>();
+  return {
+    ...actual,
+    useTalkXLinks: () => ({
+      links: [], clicks: {}, isLoading: false, isError: false, error: null,
+      refetch: vi.fn(),
+      upsertLink: { mutate: vi.fn(), isPending: false },
+      deleteLink: { mutate: vi.fn(), isPending: false },
+    }),
+  };
+});
 
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -68,14 +100,14 @@ function editorState() {
     description: '', setDescription: vi.fn(),
     objective: 'sales', setObjective: vi.fn(),
     audienceSource: 'segment', setAudienceSource: vi.fn(),
-    segments: [], segmentId: '', setSegmentId: vi.fn(),
-    selectedSegment: null, segmentEstimate: undefined,
+    segments: [], segmentIds: [], setSegmentIds: vi.fn(), segmentSearch: '', setSegmentSearch: vi.fn(), toggleSegmentId: vi.fn(),
+    selectedSegments: [], segmentEstimates: {},
     audienceCount: 10,
     audienceRules: { groups: [{ id: 'g1', match: 'and', rules: [] }] },
     addAudienceRule: vi.fn(), updateAudienceRule: vi.fn(), removeAudienceRule: vi.fn(), setGroupMatch: vi.fn(),
     contactSearch: '', setContactSearch: vi.fn(),
-    companyFilter: 'all', setCompanyFilter: vi.fn(), tagFilter: 'all', setTagFilter: vi.fn(),
-    companies: [], tags: [], filteredContacts: [], toggleContact: vi.fn(), selectAll: vi.fn(), clearFilters: vi.fn(),
+    companyFilter: 'all', setCompanyFilter: vi.fn(),
+    companies: [], filteredContacts: [], toggleContact: vi.fn(), selectAll: vi.fn(), clearFilters: vi.fn(),
     templates: [], templateId: '', applyTemplate: vi.fn(), selectedTemplate: null,
     messageTemplate: '', setMessageTemplate: vi.fn(), insertVariable: vi.fn(),
     mediaUrl: '', setMediaUrl: vi.fn(), mediaType: '', setMediaType: vi.fn(), hasMedia: false, toggleMedia: vi.fn(),

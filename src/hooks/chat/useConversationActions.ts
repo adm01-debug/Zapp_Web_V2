@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { addHours, startOfTomorrow, addDays, setHours } from 'date-fns';
 import { undoToast } from '@/lib/undoToast';
+import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -178,40 +178,71 @@ export function useConversationActions() {
 
   const snoozeConversation = useCallback(async (contactId: string, duration: string) => {
     if (!profileId) return;
-    let snoozeUntil: Date;
-    const now = new Date();
-    switch (duration) {
-      case '1h': snoozeUntil = addHours(now, 1); break;
-      case '3h': snoozeUntil = addHours(now, 3); break;
-      case 'tomorrow': snoozeUntil = setHours(startOfTomorrow(), 9); break;
-      case 'nextweek': snoozeUntil = setHours(addDays(now, 7 - now.getDay() + 1), 9); break;
-      default: snoozeUntil = addHours(now, 1);
-    }
+    // A regra de "próxima semana" (e de amanhã às 9h) mora em snoozeDurations,
+    // compartilhada com quem mais adia — uma versão só do cálculo.
+    const snoozeUntil = snoozeDurationToDate(duration);
 
-    await supabase
+    // Gravação que PRESERVA o adiamento anterior em caso de falha: a nova linha
+    // é inserida ANTES de a antiga ser removida. Antes o delete vinha primeiro e
+    // uma inserção recusada (RLS/rede) apagava o adiamento que já existia — a
+    // conversa sumia do adiamento por causa de uma gravação que falhou.
+    const { data: anteriores, error: selectError } = await supabase
       .from('conversation_snoozes')
-      .delete()
+      .select('id')
       .eq('contact_id', contactId)
       .eq('snoozed_by', profileId);
+    if (selectError) {
+      toast.error('Erro ao adiar conversa. Tente novamente.');
+      return;
+    }
+    // Sem índice único, o par (contact_id, snoozed_by) pode ter várias linhas:
+    // é preciso remover TODAS, como o delete original fazia.
+    const idsAnteriores = (anteriores ?? []).map((linha) => linha.id);
 
-    const { error } = await supabase
+    // O `.select('id')` devolve o id da linha nova para a reversão explícita
+    // abaixo (se a remoção das antigas falhar, a nova é apagada de volta).
+    const { data: inserido, error } = await supabase
       .from('conversation_snoozes')
       .insert({
         contact_id: contactId,
         snoozed_by: profileId,
         snooze_until: snoozeUntil.toISOString(),
-      });
-    if (!error) {
-      const until = snoozeUntil.getTime();
-      setSnoozes((prev) => {
-        const next = new Map(prev);
-        next.set(contactId, until);
-        return next;
-      });
-      setAgora(Date.now());
-      _snoozeBus.dispatchEvent(new CustomEvent<SnoozeChange>('change', { detail: { contactId, until } }));
-      toast.success('Conversa adiada');
+      })
+      .select('id')
+      .single();
+    if (error) {
+      // Falha visível e adiamento anterior intacto (as linhas antigas só são
+      // removidas abaixo, depois do aceite).
+      toast.error('Erro ao adiar conversa. Tente novamente.');
+      return;
     }
+
+    if (idsAnteriores.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('conversation_snoozes')
+        .delete()
+        .in('id', idsAnteriores);
+      if (deleteError) {
+        // Sem a remoção, sobrariam duas linhas e a antiga (com vencimento
+        // mais tarde) poderia manter a conversa adiada além do novo prazo:
+        // reverte a linha nova em vez de sinalizar sucesso inconsistente.
+        if (inserido?.id) {
+          await supabase.from('conversation_snoozes').delete().eq('id', inserido.id);
+        }
+        toast.error('Erro ao adiar conversa. Tente novamente.');
+        return;
+      }
+    }
+
+    const until = snoozeUntil.getTime();
+    setSnoozes((prev) => {
+      const next = new Map(prev);
+      next.set(contactId, until);
+      return next;
+    });
+    setAgora(Date.now());
+    _snoozeBus.dispatchEvent(new CustomEvent<SnoozeChange>('change', { detail: { contactId, until } }));
+    toast.success('Conversa adiada');
   }, [profileId]);
 
   const archiveContact = useCallback(async (contactId: string) => {
@@ -237,25 +268,19 @@ export function useConversationActions() {
       toast.error('Transferência por conexão ainda não é suportada');
       return;
     }
-    const updateData: { assigned_to?: string; queue_id?: string } =
-      type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', contactId);
-    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
-    // usa a rejeição pra manter o diálogo/alvo abertos.
-    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+
     const trimmedNote = note?.trim();
-    const { error: eventError } = await supabase.from('conversation_events').insert({
-      event_type: 'transfer',
-      contact_id: contactId,
-      ...(type === 'agent' ? { to_agent_id: targetId } : { to_queue_id: targetId }),
-      ...(trimmedNote ? { metadata: { note: trimmedNote } } : {}),
+    const { error } = await supabase.rpc('transfer_conversation', {
+      p_contact_id: contactId,
+      p_to_agent_id: type === 'agent' ? targetId : null,
+      p_to_queue_id: type === 'queue' ? targetId : null,
+      p_note: trimmedNote || null,
     });
-    if (eventError) {
-      // Falha ao gravar o evento é falha da transferência: rejeita (não resolve)
-      // para a sidebar manter diálogo/alvo abertos, e não sinaliza sucesso.
-      toast.error('Conversa transferida, mas o registro do evento falhou');
-      throw eventError;
-    }
+
+    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
+    // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
+    // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
+    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 

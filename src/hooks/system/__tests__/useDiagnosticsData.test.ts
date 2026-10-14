@@ -548,6 +548,14 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(conexoes.order).toEqual({ column: 'created_at', ascending: false });
   });
 
+  it('usa lista explícita de colunas em vez de select("*") e exclui qr_code e instance_token_secret_id', async () => {
+    await montar();
+    const conexoes = consultasDe('whatsapp_connections')[0];
+    expect(conexoes.select).not.toBe('*');
+    expect(conexoes.select).not.toContain('qr_code');
+    expect(conexoes.select).not.toContain('instance_token_secret_id');
+  });
+
   it('monta os quatro tipos de log e ordena do mais novo para o mais antigo', async () => {
     const { result } = await montar();
     const logs = result.current.errorLogs;

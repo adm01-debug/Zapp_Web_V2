@@ -47,6 +47,39 @@ jobs:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
+    # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
+    # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
+    # lento, os outros terminam independentes. fail-fast: false para um grupo
+    # vermelho nao cancelar os demais. A uniao dos 3 grupos e EXATAMENTE a lista
+    # original (nem mais, nem menos) -- travado em e2e/quarantine.unit.mjs.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Grupo 1: autenticados -- o `setup` gera o storageState e os 8
+          # projetos com `dependencies: ['setup']` o consomem. Rodam no MESMO
+          # job para o login real acontecer uma vez so (sem concorrencia).
+          - name: authenticated
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            # A05: este grupo carrega 205 dos 248 testes do workflow (172 deles no
+            # `chromium-authenticated`, que e' o projeto-catch-all). Com o pool padrao
+            # do CI (`workers: 1` no playwright.config.ts) a suite roda ~9,8 s por
+            # teste, ou seja ~33 min -- muito acima dos 15 min do job, e e' por isso
+            # que as runs logadas sao canceladas desde 02/10. 4 e' o numero de vCPU do
+            # runner `ubuntu-latest` e deixa a maior parte do tempo do teste em espera
+            # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
+            # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
+            workers: 4
+          # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
+          # sem secrets de login).
+          - name: deslogado-principal
+            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
+            workers: 1
+          # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
+          - name: deslogado-secundario
+            projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+            workers: 1
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -97,11 +130,15 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.63.0 install-deps chromium firefox webkit
 
-      # Uma unica invocacao do Playwright, com os projetos listados
-      # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
+      # E83: cada job da matriz invoca o Playwright com os projetos do SEU grupo
+      # via variavel de matriz (cada token ja leva o prefixo de projeto,
+      # sem o qual o Playwright trata o nome como path de spec e ignora o projeto).
+      # Os projetos de cada grupo, EXPLICITAMENTE em vez de confiar na resolucao
+      # automatica de dependsOn:
       # na run 362506313557 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
       # (sem path de arquivo no CLI) nao disparou "setup" e e2e/.auth/user.json
-      # nunca foi gerado. chromium-authenticated cobre todos os specs autenticados;
+      # nunca foi gerado. Por isso o grupo authenticated lista `--project=setup`
+      # junto. chromium-authenticated cobre todos os specs autenticados;
       # firefox-talkx e webkit-talkx cobrem talkx.spec.ts nos engines alternativos
       # (auth cookies do user.json sao browser-agnosticos).
       # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
@@ -147,7 +184,7 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-auth --project=webkit-auth --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+        run: bun run test:e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }}
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
@@ -189,25 +226,23 @@ jobs:
       # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
       # A UNIQUE constraint (contact_id, dia) impede duplicatas no mesmo dia,
       # mas a tabela cresce 1 row/CI-run sem este step.
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY (chave nao exposta ao publico).
-      # Se o secret nao estiver configurado, o step e ignorado (continue-on-error).
+      # E25: a limpeza NAO usa mais a service role. O DELETE vive na RPC
+      # public.e2e_cleanup_conversation_closures() (SECURITY DEFINER; so o contato
+      # fixo do fixture e so o usuario de teste via auth.uid()), e o script
+      # scripts/ci/e2e-teardown.mjs a chama com o login de E2E_TEST_EMAIL /
+      # E2E_TEST_PASSWORD -- as mesmas credenciais do Playwright. A chave mestra do
+      # banco (ignora RLS) sai do CI.
+      # A URL vem do mesmo secret que o ci.yml ja entrega ao app.
+      # Sem as credenciais o script e PULADO (exit 0), como no step antigo.
       - name: 🧹 E2E teardown - limpar fixture de conversation_closures
         if: always()
         continue-on-error: true
         env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
-            exit 0
-          fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            && echo "teardown OK" \
-            || echo "teardown falhou - nao bloqueia CI"
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: node scripts/ci/e2e-teardown.mjs e2e_cleanup_conversation_closures
 
       # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
       # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar

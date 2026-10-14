@@ -155,7 +155,9 @@ const CASOS: Array<{ rotulo: string; status: SLAStatus; compact: boolean; props:
     rotulo: 'atenção (warning)',
     status: 'warning',
     compact: true,
-    props: { firstMessageAt: new Date(Date.now() - 3 * MINUTO), firstResponseAt: null, firstResponseMinutes: 5 },
+    // Prazo de 5 min: com o limiar proporcional (30% restantes = 1,5 min),
+    // 3 min decorridos ainda seria "no prazo"; 4 min deixa 1 min (20%) -> atenção.
+    props: { firstMessageAt: new Date(Date.now() - 4 * MINUTO), firstResponseAt: null, firstResponseMinutes: 5 },
   },
   {
     rotulo: 'violado (breached, ainda sem resposta)',

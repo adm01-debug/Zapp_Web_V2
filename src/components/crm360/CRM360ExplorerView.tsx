@@ -3,7 +3,7 @@
  */
 import { useState, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, Pencil } from 'lucide-react';
@@ -14,6 +14,7 @@ import { ContactFormDialog } from './ContactFormDialog';
 import { DataExplorerTable } from './DataExplorerTable';
 import { TABS } from './crm360TabsConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export function CRM360ExplorerView() {
   const { isSupervisor, loading: roleLoading } = useUserRole();
@@ -67,13 +68,12 @@ export function CRM360ExplorerView() {
 
   return (
     <div className="space-y-4 h-full flex flex-col w-full min-w-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" />CRM 360° Explorer</h1>
-          <p className="text-sm text-muted-foreground mt-1">Acesso completo a todas as tabelas do banco de dados CRM externo</p>
-        </div>
-        <Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>
-      </div>
+      <PageHeader
+        title="CRM 360° Explorer"
+        subtitle="Acesso completo a todas as tabelas do banco de dados CRM externo"
+        breadcrumbs={[{ label: 'Gestão' }, { label: 'CRM 360°' }]}
+        topRight={<Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>}
+      />
 
       <CRM360StatsCards />
 
@@ -83,7 +83,7 @@ export function CRM360ExplorerView() {
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
-                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-2xs px-2.5 py-1.5 whitespace-nowrap">
+                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-2xs px-2.5 py-1.5 whitespace-nowrap min-h-[44px]">
                   <Icon className="h-3 w-3" />{tab.label}
                   {tab.editable && <Pencil className="h-2.5 w-2.5 text-primary/60" />}
                 </TabsTrigger>
@@ -101,11 +101,11 @@ export function CRM360ExplorerView() {
                   <CardHeader className="py-2.5 px-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-sm flex items-center gap-2">
+                        <h2 className="text-sm font-semibold leading-none tracking-tight flex items-center gap-2">
                           {(() => { const Icon = tab.icon; return <Icon className="h-4 w-4 text-primary" />; })()}
                           {tab.label}
                           {tab.editable && <Badge variant="secondary" className="text-[9px] px-1.5 py-0"><Pencil className="h-2.5 w-2.5 mr-0.5" /> Editável</Badge>}
-                        </CardTitle>
+                        </h2>
                         <CardDescription className="text-2xs mt-0.5">{tab.description}</CardDescription>
                       </div>
                     </div>

@@ -9,13 +9,19 @@ import {
 import {
   Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
   Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
-  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull,
+  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock, HeartPulse,
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { BusinessHoursIndicator } from './BusinessHoursIndicator';
+import { ConnectionDisconnectDialog } from './ConnectionDisconnectDialog';
+import { ConnectionDeleteDialog } from './ConnectionDeleteDialog';
+import { ConnectionAuditDialog } from './ConnectionAuditDialog';
 import type { WhatsAppConnection } from '@/hooks/inbox/useConnectionsManager';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Wifi }> = {
@@ -38,15 +44,30 @@ interface ConnectionCardProps {
   onQueues: (id: string, name: string) => void;
   onSettings: (instanceName: string, name: string) => void;
   onSyncHistory: (connection: WhatsAppConnection) => void;
+  /** Provedor atual recusou o histórico (Evolution GO): esconde a ação. */
+  historyNotSupported?: boolean;
+  /** Health check por conexão (staff/admin). Ausente = item não aparece. */
+  onHealthCheck?: (connection: WhatsAppConnection) => void;
+  /** id da conexão com health check em andamento. */
+  checkingHealth?: string | null;
 }
 
 export function ConnectionCard({
   connection, syncingHistory,
   onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,
   onBusinessHours, onQueues, onSettings, onSyncHistory,
+  historyNotSupported = false, onHealthCheck, checkingHealth,
 }: ConnectionCardProps) {
   const status = statusConfig[connection.status] || statusConfig.disconnected;
   const StatusIcon = status.icon;
+
+  // Exclusão de conexão é destrutiva (apaga a instância na Evolution e o
+  // vínculo local): só admin vê o item. As duas ações destrutivas passam por
+  // confirmação — nada executa no primeiro clique.
+  const { isAdmin, isSupervisor } = useUserRole();
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
@@ -112,6 +133,11 @@ export function ConnectionCard({
                     </span>
                   </div>
                 )}
+                {connection.last_health_check && !Number.isNaN(new Date(connection.last_health_check).getTime()) && (
+                  <p className="text-3xs text-muted-foreground mt-1">
+                    Último check {formatDistanceToNow(new Date(connection.last_health_check), { addSuffix: true, locale: ptBR })}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -128,14 +154,14 @@ export function ConnectionCard({
               )}
               {connection.status === 'connected' && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="outline" size="sm" onClick={() => onDisconnect(connection)}><WifiOff className="w-4 h-4 mr-2" />Desconectar</Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDisconnect(true)}><WifiOff className="w-4 h-4 mr-2" />Desconectar</Button>
                 </motion.div>
               )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></Button>
                   </motion.div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -144,22 +170,59 @@ export function ConnectionCard({
                   <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}><Clock className="w-4 h-4 mr-2" />Horário de Atendimento</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}><Link2 className="w-4 h-4 mr-2" />Vincular Filas</DropdownMenuItem>
                   {connection.instance_id && (
+                    <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
+                  )}
+                  {connection.instance_id && !historyNotSupported && (
+                    <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
+                      {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <History className="w-4 h-4 mr-2" />}
+                      Sincronizar Histórico
+                    </DropdownMenuItem>
+                  )}
+                  {isSupervisor && onHealthCheck && (
+                    <DropdownMenuItem disabled={checkingHealth === connection.id} onClick={() => onHealthCheck(connection)}>
+                      {checkingHealth === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <HeartPulse className="w-4 h-4 mr-2" />}
+                      Checar agora
+                    </DropdownMenuItem>
+                  )}
+                  {isAdmin && (
                     <>
-                      <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
-                      <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
-                        {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <History className="w-4 h-4 mr-2" />}
-                        Sincronizar Histórico
-                      </DropdownMenuItem>
+                      {connection.instance_id && (
+                        <DropdownMenuItem onClick={() => setAuditOpen(true)}><FileClock className="w-4 h-4 mr-2" />Auditoria da conexão</DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDelete(true)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(connection)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <ConnectionDisconnectDialog
+        open={confirmDisconnect}
+        onOpenChange={setConfirmDisconnect}
+        connectionName={connection.name}
+        phoneNumber={connection.phone_number}
+        onConfirm={() => onDisconnect(connection)}
+      />
+      {isAdmin && (
+        <ConnectionDeleteDialog
+          open={confirmDelete}
+          onOpenChange={setConfirmDelete}
+          connectionName={connection.name}
+          onConfirm={() => onDelete(connection)}
+        />
+      )}
+      {isAdmin && (
+        <ConnectionAuditDialog
+          open={auditOpen}
+          onOpenChange={setAuditOpen}
+          connectionName={connection.name}
+          instanceId={connection.instance_id ?? null}
+        />
+      )}
     </motion.div>
   );
 }

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import {
   X, Download, Play, Pause, FileText, File, FileSpreadsheet,
-  FileImage, FileArchive, ExternalLink, Maximize, Loader2
+  FileImage, FileArchive, ExternalLink, Maximize, Loader2, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -125,28 +125,63 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     const [isMuted, setIsMuted] = useState(true);
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
-    const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(url);
+    // Guarda QUAL src falhou (e não um booleano solto): se a re-resolução devolver
+    // outra URL, o erro cai sozinho, sem `setState` dentro de efeito.
+    const [failedSrc, setFailedSrc] = useState('');
+    const [attempt, setAttempt] = useState(0);
+    const { url: resolvedUrl, isLoading, refresh, error: resolveError } = useResolvedStorageUrl(url);
     const videoRef = useRef<HTMLVideoElement>(null);
     // E20 — o hover continua mudo (deliberado), mas o elemento passa a carregar o volume
     // global e o mute global: `manageMuted: false` deixa o mute do preview com o
     // componente, e o `muted={isMuted || muted}` garante que mídia muda continue muda.
     const { muted: globalMuted } = useMediaElementVolume(videoRef, { manageMuted: false });
 
+    // "Nada de spinner eterno": o carregamento (ou a resolução da URL) que falha vira
+    // estado de erro na tela, com a ação de tentar de novo — o `src` que falhou fica
+    // registrado, então uma URL nova (renovada) limpa o erro sozinha.
+    const loadFailed = Boolean(resolveError) || (!resolvedUrl && !isLoading) || (Boolean(resolvedUrl) && failedSrc === resolvedUrl);
+
+    const handleVideoError = () => {
+      setIsLoaded(false);
+      setFailedSrc(resolvedUrl);
+      void refresh();
+    };
+
+    const handleRetry = () => {
+      setFailedSrc('');
+      setIsLoaded(false);
+      setAttempt((n) => n + 1);
+      void refresh();
+    };
+
     return (
       <div ref={ref}>
         <div className="space-y-2">
-          <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => setShowFullscreen(true)}>
-            {(!isLoaded || isLoading) && (
+          <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => { if (!loadFailed) setShowFullscreen(true); }}>
+            {(!isLoaded || isLoading) && !loadFailed && (
               <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            {resolvedUrl && <video
+            {loadFailed && (
+              <div role="alert" onClick={(e) => e.stopPropagation()} className="absolute inset-0 bg-muted flex flex-col items-center justify-center gap-2 p-3 text-center">
+                <AlertTriangle className="w-6 h-6 text-warning" />
+                <p className="text-xs text-muted-foreground">Não foi possível carregar o vídeo.</p>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRetry(); }}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 hover:bg-primary/20 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Tentar de novo
+                </button>
+              </div>
+            )}
+            {resolvedUrl && !loadFailed && <video
               ref={videoRef}
-              key={resolvedUrl}
+              key={`${resolvedUrl}#${attempt}`}
               src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted || globalMuted} loop playsInline
               onLoadedData={() => setIsLoaded(true)}
-              onError={() => { setIsLoaded(false); void refresh(); }}
+              onError={handleVideoError}
               onMouseEnter={(e) => { e.currentTarget.play(); setIsPlaying(true); }}
               onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; setIsPlaying(false); }}
             />}
@@ -159,9 +194,9 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
                 </motion.div>
               )}
             </AnimatePresence>
-            <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
+            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
               <Maximize className="w-3.5 h-3.5" />
-            </button>
+            </button>}
           </motion.div>
           {caption && <p className={cn("text-sm", isSent ? "text-primary-foreground" : "text-foreground")}>{caption}</p>}
         </div>

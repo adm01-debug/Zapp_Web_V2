@@ -71,6 +71,7 @@ const h = vi.hoisted(() => {
       not: (...a: unknown[]) => { filters.push(['not', ...a]); return q; },
       is: (...a: unknown[]) => { filters.push(['is', ...a]); return q; },
       in: (...a: unknown[]) => { filters.push(['in', ...a]); return q; },
+      gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return q; },
       order: () => q,
       range: (f: number, t: number) => { from = f; to = t; return q; },
       then: (resolve: (v: unknown) => unknown) => {
@@ -96,6 +97,17 @@ vi.mock('@/integrations/supabase/client', () => ({
 // para o card "Chats Ativos" ser o único lugar da tela que mostra o total de 2.
 vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => h.state.presence,
+}));
+
+// t_b35c23b0: o cabeçalho de conexões usa a fonte da V2 (store global de
+// whatsapp_connections). Neutro aqui — o teste prova a capacidade por atendente.
+vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
+  useConnectionsHealth: () => ({
+    connections: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
 }));
 
 import { AgentsView } from '@/components/agents/AgentsView';

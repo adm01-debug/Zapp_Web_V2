@@ -135,6 +135,8 @@ export function IntegrationKeysSection() {
                     size="icon"
                     className="h-8 w-8 shrink-0"
                     onClick={() => toggleVisibility(key)}
+                    aria-label={isVisible ? `Ocultar chave ${label}` : `Mostrar chave ${label}`}
+                    aria-pressed={isVisible ? 'true' : 'false'}
                   >
                     {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>

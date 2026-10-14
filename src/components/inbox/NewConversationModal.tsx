@@ -54,7 +54,7 @@ export function NewConversationModal({ open, onOpenChange, onConversationStarted
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Conexão WhatsApp</Label>
               <Select value={selectedConnection} onValueChange={setSelectedConnection}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9" aria-label="Conexão WhatsApp"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {connections.map(c => (
                     <SelectItem key={c.id} value={c.id}>

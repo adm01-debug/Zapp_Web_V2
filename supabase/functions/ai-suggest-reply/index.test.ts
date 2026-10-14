@@ -177,3 +177,260 @@ for (const [nome, conteudo] of SEM_JSON) {
     );
   });
 }
+/**
+ * Seleção de artigos via `search_knowledge_base` (sem fallback para publicados).
+ *
+ * O que este bloco prova, chamando o HANDLER REAL:
+ *   1. o RPC `search_knowledge_base` é chamado com a ÚLTIMA mensagem do cliente
+ *      como `search_query` (e `max_results: 5`);
+ *   2. os artigos que o RPC devolve entram no prompt do modelo (título, categoria,
+ *      rank e conteúdo), observados no `system` que chega ao provedor;
+ *   3. a tabela `knowledge_base_articles` NÃO é mais consultada — o fallback
+ *      genérico de 10 publicados não existe neste código;
+ *   4. erro no RPC deixa o contexto vazio de forma explícita (sem fallback,
+ *      sem resto parcial), e a resposta continua saindo normalmente.
+ *
+ * Onde está a fronteira sintética (e por quê ela não invalida a prova): o cliente
+ * Supabase é CONSTRUÍDO DE VERDADE (`createClient` com `SUPABASE_URL` de teste) e
+ * quem responde é o `fetch` global substituído — o mesmo padrão aprovado do
+ * `searchbox-budget-alert`. Ou seja: a seleção (qual chamada, com quais
+ * parâmetros), o parse da resposta, a formatação no prompt e o ramo de erro são
+ * o código de produção, sem seam. Sintéticos são só o provedor de IA (seam
+ * `deps.generate`, como no restante deste arquivo), a autorização/cota e os
+ * bytes HTTP. Com o código ANTERIOR (consulta direta à tabela) estes testes
+ * falham: não há POST no RPC, o `system` não contém o artigo de mentira e a
+ * tabela é consultada.
+ *
+ * Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read \
+ *           supabase/functions/ai-suggest-reply/index.test.ts
+ */
+
+type ChamadaFetch = { url: string; method: string; corpo: unknown };
+
+type LinhaArtigo = {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  rank: number;
+};
+
+const ARTIGO_MENTIRA: LinhaArtigo = {
+  id: "11111111-2222-4333-8444-555555555555",
+  title: "Prazo de entrega — Artigo-Mentira-7f3a",
+  content: "TOKEN-MENTIRA-7f3a-conteudo: pedidos saem em até 48h úteis.",
+  category: "Logística",
+  tags: ["entrega"],
+  rank: 0.85,
+};
+
+/** Liga o `fetch` falso do Supabase e o ambiente mínimo para o bloco da KB rodar. */
+function ligarBancoFalso(opcoes: { rpcStatus?: number; rpcCorpo?: unknown } = {}): {
+  chamadas: ChamadaFetch[];
+  desligar: () => void;
+} {
+  const chamadas: ChamadaFetch[] = [];
+  const fetchOriginal = globalThis.fetch;
+  const urlAnterior = Deno.env.get("SUPABASE_URL");
+  const chaveAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("SUPABASE_URL", "https://banco-falso-de-teste.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-falsa-de-teste");
+
+  globalThis.fetch = (entrada: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = String(entrada instanceof Request ? entrada.url : entrada);
+    const method = (init?.method ?? (entrada instanceof Request ? entrada.method : "GET")).toUpperCase();
+    let corpo: unknown = null;
+    try {
+      if (typeof init?.body === "string" && init.body.length > 0) corpo = JSON.parse(init.body);
+    } catch {
+      corpo = init?.body ?? null;
+    }
+    chamadas.push({ url, method, corpo });
+
+    if (url.includes("/rest/v1/rpc/search_knowledge_base")) {
+      const status = opcoes.rpcStatus ?? 200;
+      const payload = opcoes.rpcCorpo !== undefined ? opcoes.rpcCorpo : [ARTIGO_MENTIRA];
+      if (status >= 400) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ message: "falha-sintetica-do-rpc", code: "XX000" }), {
+            status,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(payload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    // Qualquer outra chamada REST (notas, campos — este cartão não passa
+    // `contactId`, então nada deveria chegar aqui além do RPC).
+    return Promise.resolve(
+      new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  };
+
+  return {
+    chamadas,
+    desligar: () => {
+      globalThis.fetch = fetchOriginal;
+      if (urlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+      else Deno.env.set("SUPABASE_URL", urlAnterior);
+      if (chaveAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+      else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", chaveAnterior);
+    },
+  };
+}
+
+function chamadasRpc(chamadas: ChamadaFetch[]): ChamadaFetch[] {
+  return chamadas.filter((c) => c.url.includes("/rest/v1/rpc/search_knowledge_base"));
+}
+
+function tocouNaTabela(chamadas: ChamadaFetch[]): ChamadaFetch[] {
+  return chamadas.filter((c) => c.url.includes("/rest/v1/knowledge_base_articles"));
+}
+
+const ULTIMA_DO_CLIENTE = "Última pergunta-Mentira-7f3a sobre entrega";
+
+function corpoComConversa(): Record<string, unknown> {
+  return corpo({
+    messages: [
+      { sender: "contact", content: "Primeira dúvida-Mentira-7f3a sobre preço" },
+      { sender: "agent", content: "Resposta do atendente (não é mensagem do cliente)" },
+      { sender: "contact", content: ULTIMA_DO_CLIENTE },
+    ],
+  });
+}
+
+Deno.test("o RPC é chamado com a última mensagem do cliente como query", async () => {
+  const banco = ligarBancoFalso();
+  try {
+    const { generate } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate });
+
+    assertEquals(res.status, 200);
+    const rpc = chamadasRpc(banco.chamadas);
+    // Com o código anterior (tabela direta) este array é vazio: o teste falha.
+    assertEquals(rpc.length, 1, `esperava 1 chamada ao RPC, vi: ${JSON.stringify(banco.chamadas)}`);
+    const params = rpc[0].corpo as Record<string, unknown>;
+    assertEquals(params["search_query"], ULTIMA_DO_CLIENTE);
+    assertEquals(params["max_results"], 5);
+  } finally {
+    banco.desligar();
+  }
+});
+
+Deno.test("os artigos do RPC entram no prompt do modelo", async () => {
+  const banco = ligarBancoFalso();
+  try {
+    const { generate, seen } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate });
+
+    assertEquals(res.status, 200);
+    assertEquals(banco.chamadas.length > 0, true, "o handler tinha de consultar o banco falso");
+    const system = String(seen[0].system ?? "");
+    // Com o código anterior o `system` não contém o artigo de mentira: falha.
+    assert(system.includes("BASE DE CONHECIMENTO"), "o prompt tinha de trazer a seção da base");
+    assert(system.includes(ARTIGO_MENTIRA.title), "o prompt tinha de citar o título do artigo");
+    assert(system.includes("TOKEN-MENTIRA-7f3a-conteudo"), "o prompt tinha de citar o conteúdo do artigo");
+    assert(system.includes("Logística"), "o prompt tinha de citar a categoria do artigo");
+  } finally {
+    banco.desligar();
+  }
+});
+
+Deno.test("a tabela de artigos não é mais consultada (sem fallback de publicados)", async () => {
+  const banco = ligarBancoFalso();
+  try {
+    const { generate } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate });
+
+    assertEquals(res.status, 200);
+    // Com o código anterior esta lista tem a consulta direta (limit 10): falha.
+    assertEquals(
+      tocouNaTabela(banco.chamadas).length,
+      0,
+      `a tabela não pode ser tocada: ${JSON.stringify(tocouNaTabela(banco.chamadas))}`,
+    );
+  } finally {
+    banco.desligar();
+  }
+});
+
+Deno.test("erro no RPC deixa o contexto vazio, sem fallback e sem parcial", async () => {
+  const banco = ligarBancoFalso({ rpcStatus: 500 });
+  try {
+    const { generate, seen } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate });
+
+    // A falha do banco não derruba a capacidade: as sugestões saem sem contexto.
+    assertEquals(res.status, 200);
+    assertEquals(chamadasRpc(banco.chamadas).length, 1, "o RPC tinha de ter sido tentado");
+    const system = String(seen[0].system ?? "");
+    assertEquals(system.includes("BASE DE CONHECIMENTO"), false, "erro no RPC: nada de seção da base");
+    assertEquals(system.includes("Artigo-Mentira-7f3a"), false, "erro no RPC: nada de artigo parcial");
+    // O ramo de erro zera o contexto de forma explícita: o prompt com RPC em
+    // erro tem de ser IDÊNTICO ao prompt com RPC vazio. Qualquer resto parcial
+    // ou fallback no ramo de erro quebraria esta igualdade.
+    const bancoVazio = ligarBancoFalso({ rpcCorpo: [] });
+    try {
+      const parcial2 = fakeProvider(TRES_VALIDAS);
+      const res2 = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate: parcial2.generate });
+      assertEquals(res2.status, 200);
+      assertEquals(system, String(parcial2.seen[0].system ?? ""), "erro no RPC: prompt idêntico ao de RPC vazio");
+    } finally {
+      bancoVazio.desligar();
+    }
+    assertEquals(
+      tocouNaTabela(banco.chamadas).length,
+      0,
+      "erro no RPC: nada de fallback para a tabela",
+    );
+  } finally {
+    banco.desligar();
+  }
+});
+
+Deno.test("RPC vazio deixa o contexto vazio (nenhum artigo entra no prompt)", async () => {
+  const banco = ligarBancoFalso({ rpcCorpo: [] });
+  try {
+    const { generate, seen } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(pedido(corpoComConversa()), { ...SEM_DONO, generate });
+
+    assertEquals(res.status, 200);
+    assertEquals(chamadasRpc(banco.chamadas).length, 1);
+    assertEquals(
+      String(seen[0].system ?? "").includes("BASE DE CONHECIMENTO"),
+      false,
+      "RPC vazio: nenhum artigo entra no prompt",
+    );
+  } finally {
+    banco.desligar();
+  }
+});
+
+Deno.test("sem mensagem do cliente o RPC nem é chamado", async () => {
+  const banco = ligarBancoFalso();
+  try {
+    const { generate } = fakeProvider(TRES_VALIDAS);
+    const res = await handleAiSuggestReply(
+      pedido(corpo({ messages: [{ sender: "agent", content: "Olá, em que posso ajudar?" }] })),
+      { ...SEM_DONO, generate },
+    );
+
+    assertEquals(res.status, 200);
+    assertEquals(
+      chamadasRpc(banco.chamadas).length,
+      0,
+      `sem mensagem do cliente não há o que buscar: ${JSON.stringify(banco.chamadas)}`,
+    );
+  } finally {
+    banco.desligar();
+  }
+});

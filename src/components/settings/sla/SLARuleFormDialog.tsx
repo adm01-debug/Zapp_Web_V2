@@ -190,7 +190,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
 
     return (
       <Select value={scopeValue} onValueChange={(v) => form.setValue('scope', v, { shouldValidate: true })}>
-        <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+        <SelectTrigger aria-label="Escopo da regra" className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
         <SelectContent>
           {options.map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
         </SelectContent>

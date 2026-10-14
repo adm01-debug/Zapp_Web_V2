@@ -39,6 +39,18 @@ const DAYS_TAREFAS: TimelineDay[] = [
   },
 ];
 
+// Nota escrita na transferência (`conversation_events.metadata.note`): o cartão do evento mostra a
+// versão cortada em 120 na linha e o texto completo no `title`. Sem nota, nenhuma linha "Nota:".
+const DAYS_NOTA: TimelineDay[] = [
+  {
+    date: '2026-09-08',
+    events: [
+      { id: 'tr-1', at: '2026-09-08T12:00:00.000Z', kind: 'transfer', title: 'Transferido', subtitle: 'De: Ana · Para: Bruno', note: `${'a'.repeat(120)}…`, noteFull: 'a'.repeat(200) },
+      { id: 'tr-2', at: '2026-09-08T13:00:00.000Z', kind: 'transfer', title: 'Transferido', subtitle: 'De: Ana · Para: Carlos' },
+    ],
+  },
+];
+
 const STATS: ContactStats = {
   totalMessages: 150,
   avgResponseTimeMinutes: 90,
@@ -84,6 +96,19 @@ describe('JourneyTab', () => {
     const pendente = screen.getByText('Tarefa criada: Ligar').closest('[data-testid="timeline-event"]') as HTMLElement;
     expect(within(pendente).getByText('Pendente')).toBeInTheDocument();
     expect(within(pendente).queryByText('Concluída')).not.toBeInTheDocument();
+  });
+
+  it('mostra a nota da transferência: cortada em 120 na linha e completa no detalhe (title)', () => {
+    renderTab({ days: DAYS_NOTA });
+
+    const comNota = screen.getByText(`Nota: ${'a'.repeat(120)}…`);
+    expect(comNota).toBeInTheDocument();
+    // o detalhe (hover) guarda a nota inteira, sem o corte da linha
+    expect(comNota).toHaveAttribute('title', 'a'.repeat(200));
+
+    // evento sem nota continua exatamente como antes: nenhuma linha "Nota:"
+    const semNota = screen.getByText('De: Ana · Para: Carlos').closest('[data-testid="timeline-event"]') as HTMLElement;
+    expect(within(semNota).queryByText(/^Nota:/)).not.toBeInTheDocument();
   });
 
   it('mostra os KPIs vindos do hook', () => {

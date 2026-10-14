@@ -182,7 +182,7 @@ export const ActivityHeatmap = ({
             <CardTitle className="text-lg">{title}</CardTitle>
           </div>
           <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '3m' | '6m' | '1y')}>
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[100px]" aria-label="Filtrar período">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -215,7 +215,7 @@ export const ActivityHeatmap = ({
         </div>
 
         {/* Heatmap */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Mapa de atividade" tabIndex={0}>
           <div className="min-w-max">
             {/* Month labels */}
             <div className="flex mb-1 ml-8">

@@ -104,6 +104,8 @@ describe('ContactViewSwitcher (etapa 82)', () => {
     const props = renderSwitcher('table');
     openMenu(screen.getByRole('button', { name: /Colunas/ }));
     expect(screen.getAllByRole('menuitem').map(i => i.textContent?.trim())).toEqual(['Por empresa']);
+    // Aviso honesto: fora da Lista o agrupamento por empresa não tem efeito.
+    expect(screen.getByText(/por empresa só na Lista/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Por empresa' }));
     expect(props.onGroupByCompanyChange).toHaveBeenCalledWith(true);

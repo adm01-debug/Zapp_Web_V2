@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import type { TeamMessage } from './teamChatTypes';
 import { queryKeys } from './queryKeys';
 
@@ -69,13 +70,28 @@ export function useTeamMessages(conversationId: string | null) {
 
   useEffect(() => {
     if (!conversationId) return;
+
+    const revalidar = () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+    };
+
+    // Nome por conversa + sufixo exclusivo por instância (`uniqueRealtimeTopic`):
+    // `supabase.channel(nome)` DEVOLVE o canal existente quando o nome se repete
+    // e, desde a realtime-js 2.101, um `.on()` em canal já inscrito derruba a
+    // tela. O prefixo `team-messages-<conversationId>` é o contrato do módulo
+    // (verificado por contratosModulo.test.ts), por isso o sufixo é concatenado.
+    let jaInscrito = false;
     const channel = supabase
-      .channel(`team-messages-${conversationId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-      })
-      .subscribe();
+      .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .subscribe((status) => {
+        // A queda do canal não avisa: o que ficou em memória envelhece. Só na
+        // RE-inscrição (depois da primeira) a página corrente é refeita.
+        if (status !== 'SUBSCRIBED') return;
+        if (jaInscrito) revalidar();
+        jaInscrito = true;
+      });
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, queryClient]);
 

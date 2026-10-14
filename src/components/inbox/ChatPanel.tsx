@@ -17,7 +17,6 @@ import { CRMAutoSync } from './CRMAutoSync';
 import { useAmbientColor } from '@/hooks/ui/useAmbientColor';
 import { ChatToolPanels } from './chat/ChatToolPanels';
 import { ChatDialogs } from './chat/ChatDialogs';
-import { dispatchStartCall } from '@/lib/calls/events';
 import { ChatPanelHeader } from './chat/ChatPanelHeader';
 import type { PinnedChatItem } from './chat/PinnedConversationsStack';
 import { ChatMessagesArea, ChatMessagesAreaRef } from './chat/ChatMessagesArea';
@@ -26,7 +25,12 @@ import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
+import { useChatMessageNavigation } from './chat/chatMessageNavigation';
+import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary';
+import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
+import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
+import type { TransferTargetType } from './TransferDialog';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -208,6 +212,15 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
 
+  // Paridade V3: quando a mensagem e do proprio agente, a lista vai ao fim
+  // mesmo que ele esteja lendo o historico acima — quem envia precisa ver o que
+  // enviou. Envolve o `onSendMessage` no ponto de entrada do painel, sem mexer
+  // no hook de handlers nem na virtualizacao.
+  const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
+    await onSendMessage(content, replyToId);
+    messagesAreaRef.current?.scrollToBottomAfterSend();
+  }, [onSendMessage]);
+
   // R2-INB-026: identidade REAL do agente logado. O literal 'agent' colidia a
   // presença de todos os agentes e `conversation.assignedTo?.name` exibia o nome do
   // agente ATRIBUÍDO à conversa — normalmente quem está olhando a tela — como se
@@ -231,7 +244,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
   const handlers = useChatPanelHandlers({
     conversationId: conversation.id, contactId: conversation.contact.id, contactPhone: conversation.contact.phone,
-    instanceName, onSendMessage, editMessageApi: editMessage, applySignature,
+    instanceName, onSendMessage: handleSendMessage, editMessageApi: editMessage, applySignature,
     handleTypingStart, handleTypingStop,
     openDialog: (key: string) => openDialog(key as DialogKey),
     closeDialog: (key: string) => closeDialog(key as DialogKey),
@@ -293,17 +306,72 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const contactAvatar = conversation.contact.avatar || undefined;
   const handleScrollToMessage = useCallback((id: string) => messagesAreaRef.current?.scrollToMessage(id), []);
 
+  // Ponte com a aba Arquivos ("Ver na conversa"): quem conhece o virtualizador é este painel,
+  // então ele registra o próprio scroll. O destaque é o MESMO da busca do chat —
+  // `highlightedMessageIds`/`activeHighlightId` que o `MessageBubble` já usa (reusar, não
+  // inventar um destaque novo).
+  const chatNavigation = useChatMessageNavigation();
+  const handleOpenMessageFromFiles = useCallback((messageId: string) => {
+    handleScrollToMessage(messageId);
+    setHighlightedMessageIds(new Set([messageId]));
+    setActiveHighlightId(messageId);
+  }, [handleScrollToMessage]);
+  useEffect(() => {
+    if (!chatNavigation) return;
+    chatNavigation.registerScrollToMessage(handleOpenMessageFromFiles);
+    return () => chatNavigation.registerScrollToMessage(null);
+  }, [chatNavigation, handleOpenMessageFromFiles]);
+
+  // Pílulas de entrega: rolar até a primeira mensagem do estado e realçar com anel por 1,2 s.
+  // O realce e PROPRIO (`deliveryFocusId`) e visual: nunca toca no realce da busca
+  // (`highlightedMessageIds`/`activeHighlightId`) — a area recebe a uniao dos dois.
+  const [deliveryFocusId, setDeliveryFocusId] = useState<string | null>(null);
+  // `useMemo` para nao quebrar a memoizacao da area com um Set novo a cada render.
+  const realceCombinado = useMemo(
+    () => (deliveryFocusId ? new Set([...highlightedMessageIds, deliveryFocusId]) : highlightedMessageIds),
+    [highlightedMessageIds, deliveryFocusId],
+  );
+  const ativoCombinado = deliveryFocusId ?? activeHighlightId;
+  const destaqueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleFocusDeliveryState = useCallback((estado: EstadoDeEnvio) => {
+    const alvo = messages.find((m) => m.sender === 'agent' && estadoDeEnvio(m) === estado);
+    if (!alvo) return;
+    if (destaqueTimerRef.current) {
+      clearTimeout(destaqueTimerRef.current);
+      destaqueTimerRef.current = null;
+    }
+    setDeliveryFocusId(alvo.id);
+    messagesAreaRef.current?.scrollToMessage(alvo.id);
+    destaqueTimerRef.current = setTimeout(() => {
+      destaqueTimerRef.current = null;
+      setDeliveryFocusId(null);
+    }, 1200);
+  }, [messages]);
+
+  useEffect(() => () => {
+    if (destaqueTimerRef.current) clearTimeout(destaqueTimerRef.current);
+  }, []);
+
   const handleQuickReply = (reply: { id: string; title: string; shortcut: string; content: string; category: string }) => {
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
 
-  const handleTransfer = async (type: 'agent' | 'queue', targetId: string, message?: string) => {
-    const updateData: { assigned_to?: string; queue_id?: string } = type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', conversation.contact.id);
+  // Contrato do TransferDialog (item 88 / R2-INB-009): só agent|queue; a nota
+  // opcional vai para conversation_events.metadata.note. A escrita é ATÔMICA na
+  // RPC transfer_conversation (UPDATE contacts + INSERT do evento numa mesma
+  // transação): se a RPC falha, NADA persiste — o callback rejeita, o diálogo
+  // exibe erro e permanece aberto. Não há estado otimista nem escrita solta.
+  const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
+    const { error } = await supabase.rpc('transfer_conversation', {
+      p_contact_id: conversation.contact.id,
+      p_to_agent_id: type === 'agent' ? targetId : null,
+      p_to_queue_id: type === 'queue' ? targetId : null,
+      p_note: message ?? null,
+    });
     if (error) {
       log.error('Failed to transfer conversation:', error);
       toast({ title: 'Erro ao transferir', description: 'Não foi possível transferir a conversa.', variant: 'destructive' });
-      return;
+      throw error;
     }
     toast({ title: 'Chat transferido!', description: type === 'agent' ? 'O chat foi transferido para outro atendente.' : 'O chat foi transferido para outra fila.' });
   };
@@ -358,7 +426,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <ChatPanelHeader conversation={conversation} isContactTyping={isContactTyping} showAIAssistant={activeTool === 'aiAssistant'} showDetails={showDetails}
             showSummaryPanel={activeTool === 'summary'} activeTool={activeTool} onSetActiveTool={handleSetActiveTool}
             voiceId={voiceId} speed={speed} onToggleAIAssistant={() => handleSetActiveTool('aiAssistant')} onToggleDetails={onToggleDetails}
-            onStartCall={() => dispatchStartCall({ channel: 'voip', phone: conversation.contact.phone, contactId: conversation.contact.id, name: conversation.contact.name, avatar: conversation.contact.avatar ?? undefined, source: 'inbox' })} onOpenSearch={() => handleSetActiveTool('chatSearch')}
+            onOpenSearch={() => handleSetActiveTool('chatSearch')}
             onOpenTransfer={() => openDialog('transferDialog')} onOpenSchedule={() => openDialog('scheduleDialog')}
             onVoiceChange={setVoiceId} onSpeedChange={setSpeed} onBack={onBack}
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}
@@ -384,20 +452,25 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
 
+        {/* Entrega da conversa (paridade V3): pílulas de fila/envio/falha e o aviso de não enviada.
+            Silenciosos quando não há pendência — não mexem no scroll nem no envio. */}
+        <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
+        <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
+
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
           onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
-          highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery}
+          highlightedMessageIds={realceCombinado} activeHighlightId={ativoCombinado} searchQuery={searchQuery}
           hasOlderMessages={hasOlderMessages} loadingOlderMessages={loadingOlderMessages} onLoadOlderMessages={onLoadOlderMessages} />
 
         <ChatQuickRepliesPopover show={dialogs.quickReplies} replies={filteredQuickReplies} onSelect={handleQuickReply} onClose={() => closeDialog('quickReplies')} />
 
         {dialogs.whisper && (
           <Suspense fallback={null}>
-            <WhisperMode contactId={conversation.contact.id} className="mx-3 mb-2" />
+            <WhisperMode contactId={conversation.contact.id} targetAgentId={conversation.assignedTo?.id} className="mx-3 mb-2" />
           </Suspense>
         )}
 
@@ -421,7 +494,6 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           conversation={conversation} forwardMessage={handlers.forwardMessage}
           contactId={conversation.contact.id} onTransfer={handleTransfer}
           onScheduleMessage={handleScheduleMessage} onSendInteractiveMessage={handlers.handleSendInteractiveMessage}
-          interactiveSendUnavailableReason={handlers.interactiveSendUnavailableReason}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
           onSetInputValue={handlers.setInputValue}
           // R2-INB-018: Ctrl+K abre a busca global dentro do chat; selecionar um

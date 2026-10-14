@@ -119,16 +119,6 @@ const CHAVE_EN: readonly Finding[] = [
     what: 'enum do tool call em EN (descreve filtro de sentimento do usuário)',
   },
   {
-    file: 'src/components/inbox/contact-details/Contact360Helpers.tsx',
-    pattern: /sentimentEmoji: Record<string, string> = \{ positive:/,
-    what: 'emoji de sentimento das interações do CRM externo chaveado EN',
-  },
-  {
-    file: 'src/components/inbox/chat/ChatHeader.tsx',
-    pattern: /briefing\?\.sentiment === 'positive'/,
-    what: 'badge do briefing do CRM externo compara EN sem normalizador',
-  },
-  {
     file: 'src/components/dashboard/AIStatsWidget.tsx',
     pattern: /type SentimentType = 'positive' \| 'negative' \| 'neutral';/,
     what: 'tipo/dataKey EN (consistente com useAIStats, mas herda o contador morto)',
@@ -159,7 +149,6 @@ describe('ADVERSARIAL — o guard de contrato do bloco não cobre estes arquivos
 
   const AUSENTES_DO_GUARD = [
     'src/hooks/analytics/useAIStats.ts',
-    'src/components/inbox/chat/ChatHeader.tsx',
     'src/hooks/ui/useAmbientColor.ts',
     'src/components/inbox/CRMAutoSync.tsx',
     'src/hooks/chat/useConversationAnalyses.ts',

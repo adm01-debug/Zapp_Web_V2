@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Phone, PhoneOff, Mic, MicOff, Grid3X3, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,10 +43,19 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
   const sessao = useCallSession();
   const { voip } = useCallChannels();
   const [tecladoAberto, setTecladoAberto] = useState(false);
+  // T75: os botoes de acao principais respondem ao toque (`whileTap` de 0,98). Sob
+  // movimento reduzido o gesto e desligado junto com a entrada do painel.
+  const reduzirMovimento = useReducedMotion();
+  const toque = reduzirMovimento ? undefined : { scale: 0.98 };
 
   const estado = sessao.session.status;
   const recebendo = estado === 'ringing_in';
   const ativa = estado === 'active';
+  // T75: enquanto a chamada ainda nao esta atendida (Tocando/Conectando) o rotulo
+  // pulsa para mostrar que ha progresso. `motion-safe:` deixa o pulso desligado sob
+  // `prefers-reduced-motion` — a duracao do pulso e do CSS, nao do framer-motion, e
+  // por isso depende do gate de movimento do proprio Tailwind.
+  const pulsando = estado === 'ringing_out' || estado === 'connecting';
   const numero = sessao.session.phone || sessao.currentNumber || '';
   const nome = sessao.session.name;
 
@@ -59,16 +68,16 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
     <AnimatePresence mode="wait">
       <motion.div
         key="active-call"
-        initial={{ opacity: 0, y: 8 }}
+        initial={reduzirMovimento ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.12 }}
+        transition={{ duration: reduzirMovimento ? 0 : 0.12 }}
       >
         <Card className="border-primary/30 bg-card" data-testid="tel-active-panel">
           <CardContent className="flex flex-col items-center gap-4 p-4">
             {/* Estado (T62) */}
             <p
-              className="text-sm font-medium text-muted-foreground"
+              className={`text-sm font-medium text-muted-foreground${pulsando ? ' motion-safe:animate-pulse' : ''}`}
               aria-live="polite"
               data-testid="tel-active-status"
             >
@@ -102,63 +111,73 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
             <div className="flex items-center justify-center gap-3">
               {recebendo ? (
                 <>
-                  <Button
-                    size="icon"
-                    className="h-12 w-12 rounded-full bg-success hover:bg-success/90"
-                    onClick={sessao.accept}
-                    aria-label="Atender"
-                    data-testid="tel-accept"
-                  >
-                    <Phone className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-12 w-12 rounded-full"
-                    onClick={sessao.reject}
-                    disabled={!voip.canReject}
-                    aria-label="Recusar"
-                    data-testid="tel-reject"
-                  >
-                    <PhoneOff className="h-5 w-5" />
-                  </Button>
+                  <motion.div className="inline-flex" whileTap={toque}>
+                    <Button
+                      size="icon"
+                      className="h-12 w-12 rounded-full bg-success hover:bg-success/90"
+                      onClick={sessao.accept}
+                      aria-label="Atender"
+                      data-testid="tel-accept"
+                    >
+                      <Phone className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                  <motion.div className="inline-flex" whileTap={toque}>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-12 w-12 rounded-full"
+                      onClick={sessao.reject}
+                      disabled={!voip.canReject}
+                      aria-label="Recusar"
+                      data-testid="tel-reject"
+                    >
+                      <PhoneOff className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 rounded-full"
-                    onClick={sessao.toggleMute}
-                    disabled={!ativa}
-                    aria-pressed={sessao.isMuted}
-                    aria-label={sessao.isMuted ? 'Ativar microfone' : 'Silenciar'}
-                    data-testid="tel-mute"
-                  >
-                    {sessao.isMuted ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 rounded-full"
-                    onClick={() => setTecladoAberto((v) => !v)}
-                    disabled={!ativa}
-                    aria-pressed={tecladoAberto}
-                    aria-label="Teclado"
-                    data-testid="tel-dtmf-toggle"
-                  >
-                    <Grid3X3 className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-12 w-12 rounded-full"
-                    onClick={sessao.hangup}
-                    aria-label="Encerrar"
-                    data-testid="tel-hangup"
-                  >
-                    <PhoneOff className="h-5 w-5" />
-                  </Button>
+                  <motion.div className="inline-flex" whileTap={toque}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 rounded-full"
+                      onClick={sessao.toggleMute}
+                      disabled={!ativa}
+                      aria-pressed={sessao.isMuted}
+                      aria-label={sessao.isMuted ? 'Ativar microfone' : 'Silenciar'}
+                      data-testid="tel-mute"
+                    >
+                      {sessao.isMuted ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
+                    </Button>
+                  </motion.div>
+                  <motion.div className="inline-flex" whileTap={toque}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 rounded-full"
+                      onClick={() => setTecladoAberto((v) => !v)}
+                      disabled={!ativa}
+                      aria-pressed={tecladoAberto}
+                      aria-label="Teclado"
+                      data-testid="tel-dtmf-toggle"
+                    >
+                      <Grid3X3 className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                  <motion.div className="inline-flex" whileTap={toque}>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-12 w-12 rounded-full"
+                      onClick={sessao.hangup}
+                      aria-label="Encerrar"
+                      data-testid="tel-hangup"
+                    >
+                      <PhoneOff className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
                 </>
               )}
             </div>

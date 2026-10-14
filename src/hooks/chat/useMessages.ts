@@ -323,6 +323,14 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     }
   }, [contactId, enabled, fetchMessages]);
 
+  // Revalidacao de rede: uma queda nao avisa o hook, entao o que ficou em memoria
+  // pode ter envelhecido. O refetch e silencioso quando a conversa ja esta carregada
+  // (loadedContactIdRef) e usa o contactId CORRENTE (fetchMessages le o contactId do
+  // render atual) — uma troca de conversa durante a queda nao revalida a antiga.
+  const recoverAfterReconnect = useCallback(() => {
+    void fetchMessages();
+  }, [fetchMessages]);
+
    // Subscribe to realtime updates using the standardized hook
    useSupabaseRealtime<MessageRow>({
      channelName: `messages:${contactId}`,
@@ -332,6 +340,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
      onInsert: handleNewMessage,
      onUpdate: handleMessageUpdate,
      onDelete: handleMessageDelete,
+     onReconnect: recoverAfterReconnect,
    });
 
   // Add a message optimistically

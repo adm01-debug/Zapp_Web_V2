@@ -194,13 +194,23 @@ export function useTalkXLifecycle(): TalkXLifecycleController {
         case 'cancel':
           await cancelCampaign(current.target.id);
           return;
-        case 'schedule':
+        case 'schedule': {
+          // A tela pode chegar sem a data (campo vazio ou não montado). Sem
+          // validar, `scheduled_at: current.scheduledAt ?? null` gravava
+          // `status: 'scheduled'` com data nula. Barra ANTES da mutação: o
+          // throw cai no `catch` do `confirm`, o erro fica em `error` e a
+          // intenção continua montada (o diálogo segue aberto).
+          const scheduledAt = current.scheduledAt?.trim();
+          if (!scheduledAt || Number.isNaN(Date.parse(scheduledAt))) {
+            throw new Error('Escolha a data e hora do agendamento.');
+          }
           await updateCampaign.mutateAsync({
             id: current.target.id,
             status: 'scheduled',
-            scheduled_at: current.scheduledAt ?? null,
+            scheduled_at: scheduledAt,
           });
           return;
+        }
       }
     },
     [startCampaign, pauseCampaign, cancelCampaign, updateCampaign],

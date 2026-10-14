@@ -68,6 +68,19 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({ useAgentPresenceJoin: () => und
 
 import { AppShell } from '@/components/layout/AppShell';
 
+// Teto de espera do MOUNT — determinismo sob carga. Mesmo idioma do irmão
+// `talkx/__tests__/RuleValueInput.test.tsx` e do teto global (`asyncUtilTimeout`,
+// `src/test/setup.ts`): `findBy*`/`waitFor` mede o relógio de PAREDE do worker e,
+// com a fábrica carregada, a preempção faz a montagem da árvore (AppShell +
+// TasksModule) passar do teto de 5 s e reprovar um teste que está correto.
+// Medido nesta suíte: 10,27 s nos 3 testes (≈3,4 s por teste) sob load 87, com
+// import de 27,5 s (load 87) e 43,0 s (load 156) contra o teto de 15 s do
+// `testTimeout`. Os tetos NÃO afrouxam asserção nenhuma: a condição esperada é a
+// mesma, muda só o orçamento de tempo para ela aparecer — e um defeito de verdade
+// continua vermelho (estoura o teto de 15 s).
+vi.setConfig({ testTimeout: 20000 });
+const ESPERA_MOUNT = { timeout: 15000 };
+
 const ZEN_KEY = 'zen-mode';
 
 const props = {
@@ -126,8 +139,8 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
 
     const { container } = renderTarefas();
 
-    await screen.findByTestId('tasks-module');
-    await screen.findByText('Ligar para o cliente');
+    await screen.findByTestId('tasks-module', {}, ESPERA_MOUNT);
+    await screen.findByText('Ligar para o cliente', {}, ESPERA_MOUNT);
 
     // 1) o zen tira a sidebar: a área de trabalho fica sozinha.
     expect(screen.queryByTestId('shell-sidebar')).toBeNull();
@@ -152,8 +165,8 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
   it('sem zen (desktop): a sidebar está na tela e a trilha NÃO aparece — é o zen que a traz', async () => {
     const { container } = renderTarefas();
 
-    await screen.findByTestId('tasks-module');
-    await screen.findByText('Ligar para o cliente');
+    await screen.findByTestId('tasks-module', {}, ESPERA_MOUNT);
+    await screen.findByText('Ligar para o cliente', {}, ESPERA_MOUNT);
 
     expect(screen.getByTestId('shell-sidebar')).toBeTruthy();
     expect(trilha(container)).toBeNull();
@@ -167,15 +180,15 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
 
     const { container } = renderTarefas();
 
-    await screen.findByTestId('tasks-module');
-    await screen.findByText('Ligar para o cliente');
+    await screen.findByTestId('tasks-module', {}, ESPERA_MOUNT);
+    await screen.findByText('Ligar para o cliente', {}, ESPERA_MOUNT);
     expect(screen.queryByTestId('shell-sidebar')).toBeNull();
 
     act(() => {
       fireEvent.keyDown(window, { key: 'Escape' });
     });
 
-    await waitFor(() => expect(screen.getByTestId('shell-sidebar')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('shell-sidebar')).toBeTruthy(), ESPERA_MOUNT);
     expect(trilha(container)).toBeNull();
     expect(localStorage.getItem(ZEN_KEY)).toBe('false');
     expect(screen.getByTestId('tasks-module')).toBeTruthy();

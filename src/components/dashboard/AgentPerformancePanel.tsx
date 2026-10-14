@@ -106,10 +106,10 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
           <SectionHeader icon={Trophy} title="Ranking de Performance" subtitle="Desempenho da equipe em tempo real" tileSize={44} size="lg"
             right={(
               <div className="flex items-center gap-2 shrink-0">
-                <CardSelect value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)} options={TIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                <CardSelect name="Período do ranking de performance" value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)} options={TIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                 <div className="hidden md:flex items-center h-9 rounded-lg border border-border/70 bg-input/40 pl-3 text-[13px] text-muted-foreground">
                   <span className="mr-1">Ordenar por</span>
-                  <CardSelect value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                  <CardSelect name="Ordenar ranking de performance" value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                 </div>
               </div>
             )}

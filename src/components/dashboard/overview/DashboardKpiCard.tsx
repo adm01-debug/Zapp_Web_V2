@@ -34,7 +34,7 @@ const barsColorClass = {
   blue: 'bg-dash-blue',
   red: 'bg-dash-red',
   green: 'bg-dash-green',
-  violet: 'bg-dash-violet',
+  violet: 'bg-violeta',
   amber: 'bg-dash-amber',
 } as const;
 
@@ -42,7 +42,7 @@ const lineStrokeVar = {
   blue: 'hsl(var(--dash-blue))',
   red: 'hsl(var(--dash-red))',
   green: 'hsl(var(--dash-green))',
-  violet: 'hsl(var(--dash-violet))',
+  violet: 'hsl(var(--violeta))',
   amber: 'hsl(var(--dash-amber))',
 } as const;
 
@@ -144,7 +144,7 @@ const tileColorClass = {
   blue: 'bg-dash-tile-blue',
   red: 'bg-dash-tile-red',
   green: 'bg-dash-tile-green',
-  violet: 'bg-dash-tile-violet',
+  violet: 'bg-violeta',
   amber: 'bg-dash-tile-amber',
 } as const;
 

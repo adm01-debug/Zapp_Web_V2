@@ -12,7 +12,6 @@ export interface UrlFiltersState {
   agentId: string | null;
   dateFrom: string | null;
   dateTo: string | null;
-  search: string;
 }
 
 const PARAM_KEYS = {
@@ -21,8 +20,11 @@ const PARAM_KEYS = {
   agentId: 'agent',
   dateFrom: 'from',
   dateTo: 'to',
-  search: 'q',
 } as const;
+
+// Texto de busca (telefone/nome) não vai para a URL: um link copiado vazaria dado do contato.
+// Links antigos com ?q= são limpos em clearFilters.
+const LEGACY_SEARCH_KEY = 'q';
 
 export function useUrlFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,7 +40,6 @@ export function useUrlFilters() {
       agentId: searchParams.get(PARAM_KEYS.agentId),
       dateFrom: searchParams.get(PARAM_KEYS.dateFrom),
       dateTo: searchParams.get(PARAM_KEYS.dateTo),
-      search: searchParams.get(PARAM_KEYS.search) || '',
     };
   }, [searchParams]);
 
@@ -92,15 +93,6 @@ export function useUrlFilters() {
         }
       }
 
-      // Handle search
-      if (newFilters.search !== undefined) {
-        if (newFilters.search) {
-          params.set(PARAM_KEYS.search, newFilters.search);
-        } else {
-          params.delete(PARAM_KEYS.search);
-        }
-      }
-
       return params;
     }, { replace: true });
   }, [setSearchParams]);
@@ -110,6 +102,7 @@ export function useUrlFilters() {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       Object.values(PARAM_KEYS).forEach(key => params.delete(key));
+      params.delete(LEGACY_SEARCH_KEY);
       return params;
     }, { replace: true });
   }, [setSearchParams]);
@@ -121,8 +114,7 @@ export function useUrlFilters() {
       filters.tags.length > 0 ||
       filters.agentId !== null ||
       filters.dateFrom !== null ||
-      filters.dateTo !== null ||
-      filters.search !== ''
+      filters.dateTo !== null
     );
   }, [filters]);
 

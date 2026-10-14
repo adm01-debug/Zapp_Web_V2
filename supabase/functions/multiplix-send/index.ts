@@ -80,6 +80,45 @@ function kindForMedia(kind: MediaKind): MessageKind {
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
+/**
+ * F60 (TL-035) — capacidades DECLARADAS da conexao (`whatsapp_connections.capabilities`).
+ *
+ * A coluna existe desde 02/10/2026 (`20261002671230_f60_conexao_capacidades_e_risco.sql`,
+ * default `'{}'`) e nenhum consumidor a lia: um bloco que a instancia nao entrega so
+ * era recusado pelo provedor, DEPOIS do POST — o item virava `outcome_unknown`/
+ * `item_failed` sem que a tela dissesse que a causa era a conexao.
+ *
+ * Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO. A conexao nao afirma
+ * nada, entao o worker nao inventa limite — so o `false` explicito (e um `max_chars`
+ * NUMERICO) recusa. Tratar o vazio como "tudo pode" seria a mesma coisa que nao olhar
+ * a coluna; tratar como "nada pode" pararia o modulo inteiro, porque `{}` e o default
+ * de toda conexao.
+ *
+ * A chave consultada e o kind do que vai sair, com UMA excecao: nota de voz (`voice`)
+ * e `audio` caem em `ptt` — o adaptador envia as duas pelo MESMO kind (`kindForMedia`
+ * mapeia `audio` -> `ptt`). Chave que o operador declarar a mais no jsonb vale pelo
+ * nome do kind (ex.: `video`); chave nao declarada nao limita nada.
+ *
+ * Devolve o motivo NOMEADO da exclusao (o operador le a causa na tela, como em
+ * `missing_variable:`) ou `null` quando nao ha recusa.
+ */
+export function connectionCapabilityDenial(
+  capabilities: unknown,
+  kind: "text" | "image" | "document" | "audio" | "voice" | "video" | "ptt",
+  text: string,
+): string | null {
+  // Coluna ausente/nula/jsonb de outro tipo = nao declarado.
+  if (capabilities === null || typeof capabilities !== "object" || Array.isArray(capabilities)) return null;
+  const caps = capabilities as Record<string, unknown>;
+  const capabilityKey = kind === "audio" || kind === "voice" ? "ptt" : kind;
+  if (caps[capabilityKey] === false) return `connection_capability_unsupported:${capabilityKey}`;
+  const maxChars = caps.max_chars;
+  if (typeof maxChars === "number" && Number.isFinite(maxChars) && text.length > maxChars) {
+    return `connection_capability_max_chars:${maxChars}`;
+  }
+  return null;
+}
+
 // SL-054: o backoff do DLQ é COMPARTILHADO (kernel, `BACKOFF_CEILING_MS`:
 // 30 s, 2 min, 10 min) — a MESMA tabela do `nextBackoff`/`planRetry`. Antes
 // este worker mantinha a própria cópia da política; corrigir um motor deixava o
@@ -251,9 +290,12 @@ export async function handleMultiplixSend(
 
     // Conexao WhatsApp: usa a escolhida no dispatch; sem uma, cai na primeira
     // conexao conectada (composer ainda nao oferece selecao de conexao).
+    // F60: `capabilities` vem junto na MESMA leitura — e ela que o laco consulta
+    // antes do POST (ver `connectionCapabilityDenial`); sem isso a coluna ficaria
+    // sem consumidor e um bloco que a instancia nao entrega so morreria no provedor.
     const connectionQuery = dispatch.whatsapp_connection_id
-      ? supabase.from("whatsapp_connections").select("id, status, instance_id").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
-      : supabase.from("whatsapp_connections").select("id, status, instance_id").eq("status", "connected").limit(1).maybeSingle();
+      ? supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
+      : supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("status", "connected").limit(1).maybeSingle();
     const { data: connection } = await connectionQuery;
     const initialInstanceId = liveTalkXInstanceId(connection);
     if (!initialInstanceId) {
@@ -621,6 +663,31 @@ export async function handleMultiplixSend(
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: unresolvedMotivo,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          skippedCount++;
+          processedCount++;
+          continue;
+        }
+
+        // F60 (TL-035): a conexao DECLARA o que entrega (`capabilities`). Bloco que
+        // ela nao declara entregar — ou texto acima do `max_chars` declarado — nao vai
+        // ao provedor: exclui o item com o motivo NOMEADO, ANTES de baixar a midia e de
+        // congelar o snapshot. Vale no caminho PADRAO (a conexao lida na selecao, sem
+        // precisar de parametro nenhum na requisicao). `{}`/chave ausente = NAO
+        // DECLARADO, e o que nao esta declarado nao recusa — ver o contrato em
+        // `connectionCapabilityDenial`.
+        const capabilityDenial = connectionCapabilityDenial(
+          connection?.capabilities,
+          resolvedBlock.asset?.kind ?? "text",
+          personalizedMsg,
+        );
+        if (capabilityDenial !== null) {
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: capabilityDenial,
           });
           if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
           skippedCount++;

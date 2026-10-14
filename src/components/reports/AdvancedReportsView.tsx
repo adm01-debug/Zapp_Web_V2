@@ -67,13 +67,13 @@ export function AdvancedReportsView() {
             <Switch id="compare-mode" checked={compareEnabled} onCheckedChange={setCompareEnabled} />
           </div>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40"><Calendar className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40" aria-label="Período"><Calendar className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
             <SelectContent>
               {PERIOD_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-            <SelectTrigger className="w-40"><Users className="w-4 h-4 mr-2" /><SelectValue placeholder="Agente" /></SelectTrigger>
+            <SelectTrigger className="w-40" aria-label="Agente"><Users className="w-4 h-4 mr-2" /><SelectValue placeholder="Agente" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os agentes</SelectItem>
               {agents.map(agent => <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>)}

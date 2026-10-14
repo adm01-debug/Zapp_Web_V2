@@ -1,28 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useWebAuthn } from '@/hooks/auth/useWebAuthn';
 import { toast } from '@/hooks/ui/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
-
-const passwordSchema = z.string()
-  .min(8, 'Senha deve ter no mínimo 8 caracteres')
-  .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
-  .regex(/[a-z]/, 'Deve conter pelo menos uma letra minúscula')
-  .regex(/[0-9]/, 'Deve conter pelo menos um número')
-  .regex(/[^A-Za-z0-9]/, 'Deve conter pelo menos um caractere especial');
+import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'Senha é obrigatória'),
-});
-
-const signupSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
-  email: z.string().email('Email inválido').max(255, 'Email muito longo'),
-  password: passwordSchema,
 });
 
 export interface LockStatus {
@@ -33,10 +21,13 @@ export interface LockStatus {
 
 export function useAuthForm() {
   const navigate = useNavigate();
-  const { user, signIn, signUp } = useAuth();
+  const location = useLocation();
+  // Destino pedido antes do login: ?next= (link direto) ou state.from (o
+  // ProtectedRoute devolve a rota que expirou). Sem destino seguro, '/'.
+  const destinoPosLogin = resolverDestinoPosLogin(location);
+  const { user, signIn } = useAuth();
   const { isSupported, isPlatformAuthenticatorAvailable, authenticateWithPasskey, loading: passkeyLoading } = useWebAuthn();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [lockStatus, setLockStatus] = useState<LockStatus>({
     isLocked: false,
@@ -44,7 +35,6 @@ export function useAuthForm() {
     attempts: 0
   });
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
   });
@@ -52,9 +42,9 @@ export function useAuthForm() {
 
   useEffect(() => {
     if (user && window.location.pathname === '/auth') {
-      navigate('/');
+      navigate(destinoPosLogin);
     }
-  }, [user, navigate]);
+  }, [user, navigate, destinoPosLogin]);
 
   useEffect(() => {
     // BUG-F3 FIX: guard against setState after unmount when the
@@ -125,8 +115,9 @@ export function useAuthForm() {
     let error: { message: string } | null = null;
     let via: 'edge' | 'direct' = 'direct';
     let lock: LockStatus | null = null;
+    let networkBlocked = false;
     try {
-      ({ error, via, lock } = await signIn(credentials.email, credentials.password));
+      ({ error, via, lock, networkBlocked = false } = await signIn(credentials.email, credentials.password));
     } finally {
       setLoading(false);
     }
@@ -142,7 +133,11 @@ export function useAuthForm() {
       setFormData((prev) => ({ ...prev, password: '' }));
       const campoSenha = formEl.querySelector<HTMLInputElement>('input[name="password"]');
       if (campoSenha) campoSenha.value = '';
-      if (lock?.isLocked) {
+      if (networkBlocked) {
+        // Barrado pela politica de rede (IP/pais, R2-AUTH-022): mensagem propria,
+        // para nao ser confundido com senha errada nem com lockout de conta.
+        toast({ title: 'Acesso bloqueado', description: error.message, variant: 'destructive' });
+      } else if (lock?.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
         toast({
@@ -156,33 +151,6 @@ export function useAuthForm() {
     } else {
       if (via !== 'edge') await clearLoginAttempts(credentials.email);
       toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    
-    const result = signupSchema.safeParse(formData);
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.name);
-    setLoading(false);
-
-    if (error) {
-      const errorMessage = error.message.includes('already registered') ? 'Este email já está cadastrado' : error.message;
-      toast({ title: 'Erro ao criar conta', description: errorMessage, variant: 'destructive' });
-    } else {
-      toast({ title: 'Conta criada!', description: 'Você já pode fazer login.' });
-      navigate('/');
     }
   };
 
@@ -213,7 +181,7 @@ export function useAuthForm() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user?.id && session.user.id === result.userId) {
       toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-      navigate('/');
+      navigate(destinoPosLogin);
     } else {
       toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
     }
@@ -238,8 +206,6 @@ export function useAuthForm() {
 
   return {
     loading,
-    activeTab,
-    setActiveTab,
     passkeyAvailable,
     passkeyLoading,
     lockStatus,
@@ -247,7 +213,6 @@ export function useAuthForm() {
     setFormData,
     errors,
     handleLogin,
-    handleSignUp,
     handlePasskeyLogin,
     handleGoogleLogin,
   };

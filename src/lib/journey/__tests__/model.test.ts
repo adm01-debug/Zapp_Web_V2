@@ -107,10 +107,9 @@ describe('CATEGORY_META', () => {
 
   it('segue o mapa de cores decidido pelo dono (D02) com os tokens que já existem', () => {
     // Mensagens, Notas, E-mail, Telefone, Tarefas, Transferências, Arquivos, Propostas, Atendimento.
-    // Notas: nenhum violeta do sistema fecha contraste como texto/ícone nos DOIS temas
-    // (`--dash-violet` 3,38:1 sobre o card claro e 2,85:1 sobre a própria tinta /15;
-    // `--dash-tile-violet` 1,65:1 sobre o card escuro) — o cartão autoriza o `primary`, que é o
-    // par que o `KIND_META` da aba já usa; a medição está no relato do cartão.
+    // Notas: os tokens soltos `--dash-violet`/`--dash-tile-violet` (3,38:1 e 1,65:1 como
+    // texto/ícone) foram consolidados no par `--violeta`/`--violeta-text` pelo t_290f3cdc;
+    // Notas seguem no `primary` (decisão D02), o par que o `KIND_META` da aba já usa.
     expect(CATEGORY_META.message.iconClass).toBe('bg-primary/15 text-primary');
     expect(CATEGORY_META.note.iconClass).toBe('bg-primary/15 text-primary');
     expect(CATEGORY_META.email.iconClass).toBe('bg-info/15 text-info');

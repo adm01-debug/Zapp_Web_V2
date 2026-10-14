@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
-  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
+  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge, AlertTriangle,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -19,9 +21,40 @@ import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
+import { campaignBlockingChecks, formatTalkXScheduleLabel } from './talkxScheduleStatus';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
+import { TalkXScheduleTimeline } from './TalkXScheduleTimeline';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { toast } from 'sonner';
+
+/**
+ * X138: o mock 10 escreve mês e dias da semana em português com inicial
+ * maiúscula e o sábado acentuado ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex
+ * Sáb"); o locale do date-fns devolve "novembro 2026" e "sab" SEM acento, e o
+ * `Intl` de "short" devolve "sáb." com ponto. Por isso o rótulo do dia da
+ * semana é um mapa fixo por `getDay()` — sai idêntico em qualquer plataforma,
+ * com o acento correto, e não depende do fuso do processo.
+ */
+const comInicialMaiuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
+/** Domingo..sábado, a partir de `Date.getDay()` (0 = domingo). */
+const DIAS_SEMANA_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
+
+const CALENDAR_FORMATTERS = {
+  formatCaption: (mes: Date) => `${comInicialMaiuscula(format(mes, 'LLLL', { locale: ptBR }))} de ${format(mes, 'yyyy')}`,
+  formatWeekdayName: (dia: Date) => DIAS_SEMANA_PT[dia.getDay()] ?? '',
+};
+
+/**
+ * X138: "hoje" é o dia da parede local da CAMPANHA — com o navegador em outro
+ * fuso, o limite do calendário continua sendo o dia em que a campanha envia.
+ */
+function todayInCampaignTimezone(timezone: string): Date {
+  const wall = utcToLocalInTimezone(new Date().toISOString(), timezone); // 'AAAA-MM-DDTHH:mm'
+  const [year, month, day] = wall.slice(0, 10).split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
 
 const TIMEZONES = [
   ['America/Sao_Paulo', 'America/São Paulo'],
@@ -122,6 +155,16 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
+  // X120/TL-151: o selo de "pronta" depende do estado real da linha WhatsApp.
+  // `useMemo` estabiliza a lista para o render e evita recalcular bloqueios sem
+  // alteração da campanha ou do status da conexão.
+  const { status: connectionStatus, loading: connectionLoading } = useTalkXConnectionStatus(
+    campaign.whatsapp_connection_id,
+  );
+  const blockers = useMemo(
+    () => campaignBlockingChecks(campaign, connectionStatus, connectionLoading),
+    [campaign, connectionStatus, connectionLoading],
+  );
   // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
   // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
   // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
@@ -185,7 +228,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     setSendInterval(intervalForProfile(profile));
   }, []);
 
+  // T00:00:00 explícito: `new Date('2026-01-15')` é meia-noite UTC e pode
+  // voltar um dia em fusos negativos (Brasil, UTC-3); com o horário embutido
+  // o parse é LOCAL.
   const calDate = localDate ? new Date(`${localDate}T00:00:00`) : undefined;
+  // X138: o calendário não aceita dia anterior a hoje NO FUSO DA CAMPANHA.
+  const calendarFloor = todayInCampaignTimezone(localTz);
 
   const handleSave = useCallback(async () => {
     if (saving) return;
@@ -233,8 +281,8 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   }, [campaign, updateCampaign, onBack]);
 
   const scheduledLabel = campaign?.scheduled_at
-    ? fmtDateTime(campaign.scheduled_at)
-    : localDate && localTime ? fmtDateTime(localToUTCInTimezone(`${localDate}T${localTime}`, localTz)) : '—';
+    ? formatTalkXScheduleLabel(utcToLocalInTimezone(campaign.scheduled_at, campaign.schedule_timezone || localTz))
+    : localDate && localTime ? formatTalkXScheduleLabel(`${localDate}T${localTime}`) : '—';
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -248,7 +296,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
         <span className="text-2xs text-muted-foreground hidden sm:inline">
-          Campanhas / <span className="text-foreground">{campaign.name}</span>
+          <span className="text-primary">Campanhas</span>
+          {' › '}
+          <span className="text-primary">Talk X</span>
+          {' › '}
+          <span className="text-foreground">Campanha Agendada</span>
         </span>
       </div>
 
@@ -257,9 +309,14 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <div className="flex items-center gap-3">
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
-            <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
+            <p className="text-[13px] font-semibold text-foreground">Campanha Agendada • {campaign.name}</p>
+            {campaign.description ? (
+              <p className="text-2xs text-muted-foreground">{campaign.description}</p>
+            ) : null}
           </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
+            Talk X · Agendamento de campanha
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <GhostButton icon={Pencil} onClick={() => onEdit(campaign)}>Editar no wizard</GhostButton>
@@ -267,14 +324,31 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </div>
       </div>
 
-      {/* Status pill */}
-      <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
-        <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-        <p className="text-[13px] text-foreground">
-          <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
-          {' '}— Campanha pronta para ser enviada.
-        </p>
-      </div>
+      {/* Status pill — X120: "pronta" só aparece sem bloqueio real. */}
+      {blockers.length === 0 ? (
+        <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
+          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <p className="text-[13px] text-foreground">
+            <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
+            {' '}— Campanha pronta para ser enviada.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-warning/30 bg-warning/8 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[13px] text-foreground">
+              <span className="font-semibold text-warning">Agendada para {scheduledLabel}</span>
+              {' '}— {blockers.length === 1 ? '1 pendência antes do envio' : `${blockers.length} pendências antes do envio`}:
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {blockers.map((blocker) => (
+                <li key={blocker} className="text-xs text-foreground-secondary">• {blocker}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 3 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -308,9 +382,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <p className="text-2xs text-muted-foreground">Data e horário no fuso {localTz}.</p>
 
             <div>
-              <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label htmlFor="talkx-timezone" className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
-                <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
+                <SelectTrigger id="talkx-timezone" className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -441,7 +515,10 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <div className="flex flex-col gap-3">
             <Calendar
               mode="single"
+              locale={ptBR}
+              formatters={CALENDAR_FORMATTERS}
               selected={calDate}
+              disabled={{ before: calendarFloor }}
               onSelect={(d) => {
                 if (!d) return;
                 const y = d.getFullYear();
@@ -449,18 +526,22 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 const day = String(d.getDate()).padStart(2, '0');
                 setLocalDate(`${y}-${m}-${day}`);
               }}
+              classNames={{ day_outside: 'day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground' }}
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
-            <div className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-2">
-              <p className="text-2xs font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
-              <div className="space-y-1.5">
-                <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
-                <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
-                <MetaRow icon={Timer} label="Fuso" value={localTz} />
-                {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
-                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
-              </div>
-            </div>
+            {/* A11: a linha do tempo lê o ESTADO EM EDIÇÃO (data, hora, fuso e
+                janela que o operador acabou de mexer), não a campanha salva. */}
+            <TalkXScheduleTimeline
+              campaign={campaign}
+              editing={{
+                date: localDate,
+                time: localTime,
+                timezone: localTz,
+                windowEnabled,
+                windowStart,
+                windowEnd,
+              }}
+            />
           </div>
         </RailCard>
 
@@ -484,7 +565,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             )}
             <div className="space-y-1.5">
               <MetaRow icon={Zap} label="Campanha" value={campaign.name} />
-              <MetaRow icon={Users} label="Público" value={`${fmtInt(campaign.total_recipients)} contatos`} />
+              <MetaRow icon={Users} label="Público" value={campaign.audience_source === 'segment' && (campaign.segment_ids ?? (campaign.segment_id ? [campaign.segment_id] : [])).length > 0 ? `${fmtInt(campaign.total_recipients)} contatos · ${(campaign.segment_ids ?? (campaign.segment_id ? [campaign.segment_id] : [])).length} segmento(s)` : `${fmtInt(campaign.total_recipients)} contatos`} />
               <MetaRow icon={Send} label="Canal" value={campaign.whatsapp_connection_id ? 'Linha WhatsApp conectada' : 'Sem linha'} />
               <MetaRow icon={Timer} label="Velocidade" value={{ slow: 'Lenta', moderate: 'Moderada', fast: 'Rápida' }[speedProfile]} />
             </div>
@@ -497,7 +578,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
               <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
+                <p className="text-xs font-semibold text-[hsl(var(--primary-text))]">Tudo pronto para o envio!</p>
                 <p className="text-2xs text-muted-foreground">Aguardando {scheduledLabel}.</p>
               </div>
             </div>

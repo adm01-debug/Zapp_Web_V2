@@ -51,6 +51,11 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
 
+// X077 — os KPIs vêm da RPC; estes testes não exercitam essa consulta.
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => ({ data: undefined }),
+}));
+
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));

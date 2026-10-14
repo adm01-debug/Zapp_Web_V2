@@ -25,7 +25,6 @@ describe('useUrlFilters', () => {
     expect(result.current.filters.agentId).toBeNull();
     expect(result.current.filters.dateFrom).toBeNull();
     expect(result.current.filters.dateTo).toBeNull();
-    expect(result.current.filters.search).toBe('');
   });
 
   it('hasActiveFilters is false when no filters', () => {
@@ -60,18 +59,33 @@ describe('useUrlFilters', () => {
     expect(result.current.filters.dateTo).toBe('2024-12-31');
   });
 
-  it('parses search from URL', () => {
+  it('does not read search text from ?q=', () => {
     mockSearchParams.set('q', 'hello world');
     const { result } = renderHook(() => useUrlFilters());
-    expect(result.current.filters.search).toBe('hello world');
+    expect(result.current.filters).not.toHaveProperty('search');
+    expect(result.current.hasActiveFilters).toBe(false);
   });
 
-  it('setFilters calls setSearchParams', () => {
+  it('setFilters writes status/agent but never ?q=', () => {
     const { result } = renderHook(() => useUrlFilters());
     act(() => {
-      result.current.setFilters({ search: 'test' });
+      result.current.setFilters({ status: ['open'], agentId: 'a1' });
     });
     expect(mockSetSearchParams).toHaveBeenCalled();
+    const updater = mockSetSearchParams.mock.calls[0][0] as (p: URLSearchParams) => URLSearchParams;
+    const next = updater(new URLSearchParams());
+    expect(next.get('status')).toBe('open');
+    expect(next.get('agent')).toBe('a1');
+    expect(next.has('q')).toBe(false);
+  });
+
+  it('clearFilters removes legacy ?q= from old links', () => {
+    const { result } = renderHook(() => useUrlFilters());
+    act(() => {
+      result.current.clearFilters();
+    });
+    const updater = mockSetSearchParams.mock.calls[0][0] as (p: URLSearchParams) => URLSearchParams;
+    expect(updater(new URLSearchParams('q=123&view=x')).toString()).toBe('view=x');
   });
 
   it('clearFilters calls setSearchParams', () => {

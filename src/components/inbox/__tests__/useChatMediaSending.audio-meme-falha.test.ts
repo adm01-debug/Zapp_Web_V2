@@ -42,6 +42,7 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 // Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a

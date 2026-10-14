@@ -9,9 +9,12 @@ interface AlertRowProps {
   onDismiss: () => void;
 }
 
+/** Y17-5 (achado 04): tinta do estado com alfa + o par de TEXTO do sistema
+ *  (`--destructive-text`/`--warning-text`) — `text-warning` sobre
+ *  `bg-warning/10` media 1,97:1. */
 const alertStyles = {
-  critical: 'bg-destructive/10 border-destructive text-destructive',
-  warning: 'bg-warning/10 border-warning text-warning',
+  critical: 'bg-destructive/10 border-destructive text-[hsl(var(--destructive-text))]',
+  warning: 'bg-warning/10 border-warning text-[hsl(var(--warning-text))]',
   info: 'bg-muted border-muted-foreground/20 text-muted-foreground',
 };
 

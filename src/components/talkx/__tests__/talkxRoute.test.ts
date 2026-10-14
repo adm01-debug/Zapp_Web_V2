@@ -5,6 +5,11 @@ import {
   goTab,
   parseTalkXRoute,
   parseTalkXWizardRoute,
+  parseTalkXScreenRoute,
+  formatTalkXRoute,
+  replaceTalkXRoute,
+  screenForStatus,
+  type TalkXRoute,
 } from '@/components/talkx/talkxRoute';
 
 describe('Talk X route contract (X052)', () => {
@@ -105,5 +110,96 @@ describe('Talk X route contract (X052)', () => {
       '/?view=talkx&tab=segments&campaign=c9',
     );
     expect(formatTalkXOpenRoute(source, null)).toBe('/?view=talkx&tab=segments');
+  });
+});
+
+describe('Talk X screen routing (TL-152)', () => {
+  it('sem parâmetros de tela retorna rota nula', () => {
+    const parsed = parseTalkXScreenRoute('');
+    expect(parsed.route).toBeNull();
+    expect(parsed.needsNormalization).toBe(false);
+  });
+
+  it('lê campaign e screen válidos', () => {
+    const parsed = parseTalkXScreenRoute('?campaign=cmp_1&screen=monitor');
+    expect(parsed.route).toEqual({ campaignId: 'cmp_1', screen: 'monitor' });
+    expect(parsed.needsNormalization).toBe(false);
+  });
+
+  it('screen omitido significa que a situação decide', () => {
+    const parsed = parseTalkXScreenRoute('?campaign=cmp_1');
+    expect(parsed.route).toEqual({ campaignId: 'cmp_1' });
+    expect(parsed.needsNormalization).toBe(false);
+  });
+
+  it('campaign duplicado ou vazio é normalização', () => {
+    const duplicated = parseTalkXScreenRoute('?campaign=cmp_1&campaign=cmp_2');
+    expect(duplicated.route).toBeNull();
+    expect(duplicated.needsNormalization).toBe(true);
+
+    const empty = parseTalkXScreenRoute('?campaign=');
+    expect(empty.route).toBeNull();
+    expect(empty.needsNormalization).toBe(true);
+  });
+
+  it('screen desconhecido é normalização (não abre campanha)', () => {
+    const unknown = parseTalkXScreenRoute('?campaign=cmp_1&screen=invalid');
+    expect(unknown.route).toBeNull();
+    expect(unknown.needsNormalization).toBe(true);
+  });
+
+  it('?screen=report é normalização (sem tela de relatório: não reescreve para outra tela)', () => {
+    const report = parseTalkXScreenRoute('?campaign=cmp_1&screen=report');
+    expect(report.route).toBeNull();
+    expect(report.needsNormalization).toBe(true);
+  });
+
+  it('campaign malformado é normalização', () => {
+    const malformed = parseTalkXScreenRoute('?campaign=!@#&screen=monitor');
+    expect(malformed.route).toBeNull();
+    expect(malformed.needsNormalization).toBe(true);
+  });
+
+  it('?screen=help não conta como normalização', () => {
+    const help = parseTalkXScreenRoute('?screen=help');
+    expect(help.route).toBeNull();
+    expect(help.needsNormalization).toBe(false);
+  });
+
+  it('formatTalkXRoute escreve campaign e screen', () => {
+    const source = new URL('https://zapp.example/talkx');
+    expect(formatTalkXRoute(source, { campaignId: 'cmp_1', screen: 'monitor' })).toBe(
+      '/talkx?campaign=cmp_1&screen=monitor',
+    );
+  });
+
+  it('formatTalkXRoute limpa screen quando não informado', () => {
+    const source = new URL('https://zapp.example/talkx?campaign=cmp_1&screen=monitor');
+    expect(formatTalkXRoute(source, { campaignId: 'cmp_1' })).toBe(
+      '/talkx?campaign=cmp_1',
+    );
+  });
+
+  it('formatTalkXRoute limpa tudo quando rota é null', () => {
+    const source = new URL('https://zapp.example/talkx?campaign=cmp_1&screen=monitor');
+    expect(formatTalkXRoute(source, null)).toBe('/talkx');
+  });
+
+  it('replaceTalkXRoute escreve a rota canônica', () => {
+    window.history.replaceState(null, '', '/talkx?campaign=cmp_1&screen=monitor');
+    replaceTalkXRoute({ campaignId: 'cmp_1', screen: 'monitor' });
+    expect(window.location.search).toBe('?campaign=cmp_1&screen=monitor');
+  });
+
+  it('screenForStatus mapeia situações às telas corretas', () => {
+    expect(screenForStatus('draft')).toBe('wizard');
+    expect(screenForStatus('scheduled')).toBe('scheduled');
+    expect(screenForStatus('sending')).toBe('running');
+    expect(screenForStatus('paused')).toBe('running');
+    expect(screenForStatus('completed')).toBe('monitor');
+    expect(screenForStatus('cancelled')).toBe('monitor');
+    expect(screenForStatus(null)).toBe('monitor');
+    expect(screenForStatus(undefined)).toBe('monitor');
+    expect(screenForStatus('unknown')).toBe('monitor');
   });
 });

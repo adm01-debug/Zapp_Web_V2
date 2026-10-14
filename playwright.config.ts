@@ -1,23 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 
-// E87: quarentena formal. Schema em e2e/quarantine.json; a validacao da forma e a cobranca
+// E87: quarentena formal. Schema em e2e/quarantine.js; a validacao da forma e a cobranca
 // do prazo vivem em scripts/ci/check-quarantine.mjs.
 // Um spec em quarentena NAO roda -- o comportamento real do Playwright e "did not run", que
 // e o efeito equivalente ao `fixme` pedido no plano, sem editar o spec para silencia-lo
 // (test.fixme() tocaria arquivos que nao sao da etapa e esconderia o motivo dentro do teste).
 // Caminho relativo à raiz, como o testDir abaixo: o Playwright roda a partir da raiz do repo.
+import { quarentena } from './e2e/quarantine.js';
+
 function specsEmQuarentena(): string[] {
-  try {
-    const cru = JSON.parse(readFileSync('e2e/quarantine.json', 'utf8')) as {
-      quarentena?: { spec?: string }[];
-    };
-    return (cru.quarentena ?? []).map((i) => i.spec).filter((s): s is string => Boolean(s));
-  } catch {
-    // Sem arquivo (ou com JSON invalido) nada e ignorado -- quem reclama disso e o
-    // verificador, nao o runner de teste.
-    return [];
-  }
+  return quarentena
+    .map((i: { spec: unknown }) => i.spec)
+    .filter((s: unknown): s is string => Boolean(s));
 }
 
 // E81 (G-05, docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md): os retries
@@ -126,12 +120,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
+      // TL-046/F87 — responsividade do Multiplix com sessão FALSA e edges mockadas.
+      // Projeto DEDICADO: sem `setup` autenticado, sem sessão salva e com
+      // `storageState` VAZIO explícito para nenhuma sessão persistida alimentar esta spec.
+      name: 'chromium-multiplix-responsivo',
+      testMatch: /multiplix-responsivo\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
+    },
+    {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
       // "setup" e salva em e2e/.auth/user.json.
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts|skins-e2e\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -160,11 +162,36 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      // Etapa 003 do PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS: linha de base visual do
+      // módulo de Tarefas (Lista/Quadro/Agenda/QuickAdd/painel em 360/768/1280, claro e
+      // escuro). Sessão FALSA (`installFakeSession`), `conversation_tasks` mockado em
+      // memória com os dados da semente da etapa 004 e a rede real barrada — DESLOGADO:
+      // sem `setup`, sem secrets e sem banco. O `storageState` VAZIO é explícito, para
+      // nenhuma sessão salva alimentar esta régua.
+      name: 'chromium-tarefas-linha-de-base',
+      testMatch: /tarefas-linha-de-base\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
+    },
+    {
+      // CP8/CP9 do plano das Skins (docs/design/PLANO_SKINS_OPERA_GX_100_ETAPAS.md):
+      // fidelidade das 19 skins + 14 checks funcionais na tela `?view=themes`.
+      // Sessão FALSA (`installFakeSession`) + backend do app shell mockado —
+      // DESLOGADO (sem `setup`, sem `storageState`, sem secrets), mesmo padrão de
+      // `chromium-onboarding-dispensar`/`chromium-contacts-visual`. Projeto
+      // dedicado porque o catch-all `chromium-authenticated` depende de `setup`.
+      name: 'chromium-skins',
+      testMatch: /skins-[a-z0-9-]*\.spec\.ts/,
+      // E81: projeto DESLOGADO não declara `retries` — o backend é mockado e determinístico,
+      // então repetir só triplicaria o tempo da falha real e esconderia o defeito. A regra é
+      // travada por scripts/ci/playwright-config-e81.unit.mjs (o global `retries` abaixo é 0).
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       // E98/a11y: axe-core na tela de contatos com sessao FALSA (installFakeSession)
       // e backend mockado — DESLOGADO (sem setup, sem secrets), mesmo padrao de
       // chromium-contacts-visual. Roda no job e2e do ci.yml.
       name: 'chromium-a11y',
-      testMatch: /a11y-contraste\.spec\.ts/,
+      testMatch: /a11y-(contraste|config-admin|tarefas-dashboard)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronRight, CheckCircle2, CircleSlash } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, CheckCircle2, CircleSlash, ClipboardList } from 'lucide-react';
 import { sections, totalFeatures, featureState, catalogSummary } from './featuresSectionsData';
 
 export function SystemFeaturesView() {
@@ -34,26 +34,31 @@ export function SystemFeaturesView() {
     <div className="h-full flex flex-col bg-background w-full min-w-0">
       <div className="border-b border-border px-6 py-4 bg-card/50 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-              📋 Funcionalidades do Sistema
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              <span className="font-semibold text-primary">{totalFeatures}+</span> funcionalidades em{' '}
-              <span className="font-semibold text-primary">34</span> seções •{' '}
-              {summary.disabled === 0 ? (
-                <Badge variant="default" className="text-xs" data-testid="catalog-status-badge">
-                  {summary.active} ativas
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-xs" data-testid="catalog-status-badge">
-                  {summary.disabled} desativada{summary.disabled === 1 ? '' : 's'}
-                </Badge>
-              )}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Catálogo histórico de produto — o estado de cada item vem da configuração ativa do sistema.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-primary)' }}>
+              <ClipboardList className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground">
+                Funcionalidades do Sistema
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                <span className="font-semibold text-primary">{totalFeatures}+</span> funcionalidades em{' '}
+                <span className="font-semibold text-primary">34</span> seções •{' '}
+                {summary.disabled === 0 ? (
+                  <Badge variant="default" className="text-xs" data-testid="catalog-status-badge">
+                    {summary.active} ativas
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs" data-testid="catalog-status-badge">
+                    {summary.disabled} desativada{summary.disabled === 1 ? '' : 's'}
+                  </Badge>
+                )}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Catálogo histórico de produto — o estado de cada item vem da configuração ativa do sistema.
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button onClick={expandAll} className="text-xs text-primary hover:underline">Expandir tudo</button>

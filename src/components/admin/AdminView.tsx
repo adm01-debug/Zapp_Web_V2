@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -22,10 +22,23 @@ import { CrisisRoom } from './CrisisRoom';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
 const roleColorMap = { admin: 'text-warning', supervisor: 'text-info', agent: 'text-muted-foreground', special_agent: 'text-accent-foreground' } as const;
+
+// O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o
+// valor: o Number.parseInt('') virava NaN e o NaN era gravado em profiles.max_chats.
+// O número enviado ao salvar é sempre um inteiro entre 1 e 50.
+const LIMITE_CHATS_MIN = 1;
+const LIMITE_CHATS_MAX = 50;
+const LIMITE_CHATS_PADRAO = 5;
+
+function normalizarLimiteChats(valor: number): number {
+  if (!Number.isFinite(valor)) return LIMITE_CHATS_PADRAO;
+  return Math.min(LIMITE_CHATS_MAX, Math.max(LIMITE_CHATS_MIN, Math.trunc(valor)));
+}
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
@@ -49,6 +62,9 @@ export function AdminView() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [limiteChatsTexto, setLimiteChatsTexto] = useState(String(LIMITE_CHATS_PADRAO));
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+  const tabsRef = useRef<Record<string, HTMLButtonElement | null>>({});
   const [savingUser, setSavingUser] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', nickname: '', signature: '', jobTitle: '', email: '', password: '', role: 'agent' as AppRole, gmail: '', dropboxEmail: '' });
   const [newUserAvatarFile, setNewUserAvatarFile] = useState<File | null>(null);
@@ -57,14 +73,44 @@ export function AdminView() {
 
   const { users, auditLogs, loading, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } = useAdminData(activeTab as 'users' | 'audit' | 'crm');
 
-  useEffect(() => { if (isSupervisor) fetchData(); }, [isSupervisor, activeTab, fetchData]);
+  // Busca dados só nas abas que os usam: as demais (CRM, Playbooks, Copilot,
+  // Treinamento, Crise) carregam dados próprios e não devem levar o spinner de tela cheia.
+  const usaDadosDeUsuario = activeTab === 'users' || activeTab === 'audit';
+  useEffect(() => {
+    if (isSupervisor && usaDadosDeUsuario) fetchData();
+  }, [isSupervisor, usaDadosDeUsuario, fetchData]);
+
+  // A URL do avatar é criada ao escolher o arquivo e revogada quando o arquivo muda,
+  // o diálogo fecha ou a tela desmonta — antes era criada a cada render e nunca liberada.
+  useEffect(() => {
+    if (!editAvatarPreview) return undefined;
+    return () => URL.revokeObjectURL(editAvatarPreview);
+  }, [editAvatarPreview]);
 
   const onSaveUser = async () => {
     if (!editingUser) return;
+    const maxChats = normalizarLimiteChats(Number.parseInt(limiteChatsTexto, 10));
+    setLimiteChatsTexto(String(maxChats));
     setSavingUser(true);
-    const ok = await handleSaveUser(editingUser, editAvatarFile);
+    const ok = await handleSaveUser({ ...editingUser, max_chats: maxChats }, editAvatarFile);
     setSavingUser(false);
-    if (ok) { setIsEditDialogOpen(false); setEditingUser(null); setEditAvatarFile(null); }
+    if (ok) { setIsEditDialogOpen(false); setEditingUser(null); setEditAvatarFile(null); setEditAvatarPreview(null); }
+  };
+
+  const abrirEdicaoUsuario = (user: UserWithRole) => {
+    setEditingUser(user);
+    setLimiteChatsTexto(String(user.max_chats ?? LIMITE_CHATS_PADRAO));
+    setEditAvatarFile(null);
+    setEditAvatarPreview(null);
+    setIsEditDialogOpen(true);
+  };
+
+  const fecharEdicaoUsuario = (aberto: boolean) => {
+    setIsEditDialogOpen(aberto);
+    if (!aberto) {
+      setEditAvatarFile(null);
+      setEditAvatarPreview(null);
+    }
   };
 
   const onCreateUser = async () => {
@@ -97,7 +143,7 @@ export function AdminView() {
   );
 
   if (roleLoading) {
-    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-whatsapp border-t-transparent animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
   }
 
   if (!isSupervisor) {
@@ -123,41 +169,65 @@ export function AdminView() {
           <p className="text-muted-foreground">Gerencie usuários, permissões e visualize logs de auditoria</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-whatsapp hover:bg-whatsapp-dark"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
+          {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
           <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Atualizar</Button>
         </div>
       </motion.div>
 
-      <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label]) => (
-          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-whatsapp hover:bg-whatsapp-dark' : ''} size="sm">
+      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
+        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label], index, lista) => (
+          <Button
+            key={tab}
+            id={`tab-${tab}`}
+            role="tab"
+            aria-selected={activeTab === tab}
+            aria-controls="admin-tabpanel"
+            tabIndex={activeTab === tab ? 0 : -1}
+            ref={(el) => { tabsRef.current[tab] = el; }}
+            variant={activeTab === tab ? 'default' : 'outline'}
+            onClick={() => setActiveTab(tab as typeof activeTab)}
+            onKeyDown={(e) => {
+              const passo = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+              if (passo === 0 && e.key !== 'Home' && e.key !== 'End') return;
+              e.preventDefault();
+              const destino = e.key === 'Home' ? 0 : e.key === 'End' ? lista.length - 1 : (index + passo + lista.length) % lista.length;
+              const proxima = lista[destino][0];
+              setActiveTab(proxima as typeof activeTab);
+              tabsRef.current[proxima]?.focus();
+            }}
+            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder={activeTab === 'users' ? 'Buscar usuários...' : 'Buscar logs...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-      </div>
+      {usaDadosDeUsuario && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder={activeTab === 'users' ? 'Buscar usuários...' : 'Buscar logs...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        </div>
+      )}
 
       {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={fecharEdicaoUsuario}>
         <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
           {editingUser && (
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-4 mb-6">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={editAvatarFile ? URL.createObjectURL(editAvatarFile) : (editingUser.avatar_url || undefined)} alt={editingUser.name || 'Usuário'} />
+                  <AvatarImage src={editAvatarPreview || editingUser.avatar_url || undefined} alt={editingUser.name || 'Usuário'} />
                   <AvatarFallback className="text-lg">{editingUser.name?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-semibold text-lg">{editingUser.name}</p>
                   <p className="text-muted-foreground">{editingUser.email}</p>
                   <Label htmlFor="edit_avatar" className="text-xs text-primary cursor-pointer hover:underline mt-1 inline-block">Alterar foto</Label>
-                  <Input id="edit_avatar" type="file" accept="image/*" className="hidden" onChange={(e) => setEditAvatarFile(e.target.files?.[0] || null)} />
+                  <Input id="edit_avatar" type="file" accept="image/*" className="hidden" onChange={(e) => {
+                    const arquivo = e.target.files?.[0] || null;
+                    setEditAvatarFile(arquivo);
+                    setEditAvatarPreview(arquivo ? URL.createObjectURL(arquivo) : null);
+                  }} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -175,13 +245,34 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label htmlFor="edit_tel">Telefone</Label><Input id="edit_tel" value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} /></div>
-                <div className="space-y-2"><Label htmlFor="edit_maxchats">Limite de Chats</Label><Input id="edit_maxchats" type="number" min={1} max={50} value={editingUser.max_chats || 5} onChange={(e) => setEditingUser({ ...editingUser, max_chats: Number.parseInt(e.target.value) })} /></div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_maxchats">Limite de Chats</Label>
+                  <Input
+                    id="edit_maxchats"
+                    type="number"
+                    min={LIMITE_CHATS_MIN}
+                    max={LIMITE_CHATS_MAX}
+                    value={limiteChatsTexto}
+                    onChange={(e) => {
+                      const bruto = e.target.value;
+                      setLimiteChatsTexto(bruto);
+                      if (bruto.trim() === '') return;
+                      const numero = Number.parseInt(bruto, 10);
+                      if (Number.isFinite(numero)) setEditingUser({ ...editingUser, max_chats: normalizarLimiteChats(numero) });
+                    }}
+                    onBlur={() => {
+                      const numero = normalizarLimiteChats(Number.parseInt(limiteChatsTexto, 10));
+                      setLimiteChatsTexto(String(numero));
+                      setEditingUser({ ...editingUser, max_chats: numero });
+                    }}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nível de Acesso</Label>
+                  <Label htmlFor="access_level">Nível de Acesso</Label>
                   <Select value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="access_level"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(accessLevelConfig).map(([key, config]) => (
                         <SelectItem key={key} value={key}>
@@ -200,8 +291,8 @@ export function AdminView() {
                 <Switch id="edit_download" checked={editingUser.can_download ?? false} onCheckedChange={(checked) => setEditingUser({ ...editingUser, can_download: checked })} />
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={onSaveUser} disabled={savingUser} className="bg-whatsapp hover:bg-whatsapp-dark">
+                <Button variant="outline" onClick={() => fecharEdicaoUsuario(false)}>Cancelar</Button>
+                <Button onClick={onSaveUser} disabled={savingUser} className="bg-primary hover:bg-primary/90">
                   {savingUser && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Salvar
                 </Button>
               </div>
@@ -231,9 +322,9 @@ export function AdminView() {
             <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
             <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label htmlFor="role">Role</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="role"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(roleIconMap) as AppRole[]).map((key) => {
                     const RIcon = roleIconMap[key];
@@ -273,7 +364,7 @@ export function AdminView() {
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={onCreateUser} disabled={creatingUser || !newUser.name || !newUser.email || !newUser.password} className="bg-whatsapp hover:bg-whatsapp-dark">
+              <Button onClick={onCreateUser} disabled={creatingUser || !newUser.name || !newUser.email || !newUser.password} className="bg-primary hover:bg-primary/90">
                 {creatingUser && <Loader2 className="w-4 h-4 animate-spin mr-2" />} Criar Usuário
               </Button>
             </div>
@@ -282,7 +373,8 @@ export function AdminView() {
       </Dialog>
 
       {/* Content */}
-      {loading ? (
+      <div role="tabpanel" id="admin-tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
+      {loading && usaDadosDeUsuario ? (
         <div className="flex justify-center py-12"><RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" /></div>
       ) : activeTab === 'users' ? (
         <AdminUsersTable
@@ -290,21 +382,32 @@ export function AdminView() {
           isAdmin={isAdmin}
           onRoleChange={handleRoleChange}
           onToggleActive={handleToggleActive}
-          onEditUser={(user) => { setEditingUser(user); setIsEditDialogOpen(true); }}
+          onEditUser={abrirEdicaoUsuario}
         />
       ) : activeTab === 'audit' ? (
         <AdminAuditTable logs={filteredLogs} />
       ) : activeTab === 'crm' ? (
-        <AdminCRMDashboard />
+        <SectionErrorBoundary key="crm" sectionName="CRM Admin">
+          <AdminCRMDashboard />
+        </SectionErrorBoundary>
       ) : activeTab === 'playbooks' ? (
-        <PlaybooksManager />
+        <SectionErrorBoundary key="playbooks" sectionName="Playbooks">
+          <PlaybooksManager />
+        </SectionErrorBoundary>
       ) : activeTab === 'copilot' ? (
-        <SupervisorCopilot />
+        <SectionErrorBoundary key="copilot" sectionName="Copiloto">
+          <SupervisorCopilot />
+        </SectionErrorBoundary>
       ) : activeTab === 'training' ? (
-        <TrainingMode />
+        <SectionErrorBoundary key="training" sectionName="Modo Treinamento">
+          <TrainingMode />
+        </SectionErrorBoundary>
       ) : activeTab === 'crisis' ? (
-        <CrisisRoom />
+        <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
+          <CrisisRoom />
+        </SectionErrorBoundary>
       ) : null}
+      </div>
     </div>
   );
 }

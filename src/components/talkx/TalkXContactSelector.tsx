@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Search, X, Building2, Tag } from 'lucide-react';
+import { Users, Search, X, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useExternalContact360Batch, type CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
@@ -51,7 +51,6 @@ interface ContactItem {
   phone: string;
   company: string | null;
   avatar_url: string | null;
-  tags: string[] | null;
 }
 
 interface Props {
@@ -62,10 +61,7 @@ interface Props {
   setContactSearch: (v: string) => void;
   companyFilter: string;
   setCompanyFilter: (v: string) => void;
-  tagFilter: string;
-  setTagFilter: (v: string) => void;
   companies: string[];
-  tags: string[];
   toggleContact: (id: string) => void;
   selectAll: () => void;
   clearFilters: () => void;
@@ -74,7 +70,7 @@ interface Props {
 export const TalkXContactSelector: React.FC<Props> = ({
   contacts, filteredContacts, selectedContacts,
   contactSearch, setContactSearch, companyFilter, setCompanyFilter,
-  tagFilter, setTagFilter, companies, tags,
+  companies,
   toggleContact, selectAll, clearFilters,
 }) => {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
@@ -153,18 +149,7 @@ export const TalkXContactSelector: React.FC<Props> = ({
                   </SelectContent>
                 </Select>
               )}
-              {tags.length > 0 && (
-                <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="h-7 text-2xs w-auto min-w-[80px] max-w-[140px]">
-                    <Tag className="w-3 h-3 mr-1 shrink-0" /><SelectValue placeholder="Tag" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas tags</SelectItem>
-                    {tags.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              {(companyFilter !== 'all' || tagFilter !== 'all') && (
+              {companyFilter !== 'all' && (
                 <Button size="sm" variant="ghost" className="h-7 text-2xs text-muted-foreground" onClick={clearFilters}>
                   <X className="w-3 h-3 mr-1" />Limpar
                 </Button>

@@ -123,10 +123,6 @@
         "webauthn_challenges",
         "webhook_rate_limits",
         "whatsapp_connection_queues",
-        "whatsapp_connections",
-        "whatsapp_connections_agent",
-        "whatsapp_connections_public",
-        "whatsapp_connections_safe",
         "whatsapp_flows",
         "whatsapp_templates",
         "whisper_messages"

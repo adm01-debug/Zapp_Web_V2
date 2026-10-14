@@ -86,7 +86,7 @@ export function GroupsView() {
             </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Grupo
                 </Button>
@@ -111,7 +111,7 @@ export function GroupsView() {
                   <div className="space-y-2">
                     <Label htmlFor="connection">Conexão WhatsApp</Label>
                     <Select value={newGroup.whatsapp_connection_id} onValueChange={(value) => setNewGroup({ ...newGroup, whatsapp_connection_id: value })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione uma conexão" /></SelectTrigger>
+                      <SelectTrigger aria-label="Conexão WhatsApp"><SelectValue placeholder="Selecione uma conexão" /></SelectTrigger>
                       <SelectContent>
                         {connections.map((conn) => (
                           <SelectItem key={conn.id} value={conn.id}>{conn.name} ({conn.phone_number})</SelectItem>
@@ -122,7 +122,7 @@ export function GroupsView() {
                   <div className="space-y-2">
                     <Label>Categoria</Label>
                     <Select value={newGroup.category} onValueChange={(value) => setNewGroup({ ...newGroup, category: value })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione uma categoria (opcional)" /></SelectTrigger>
+                      <SelectTrigger aria-label="Categoria do grupo"><SelectValue placeholder="Selecione uma categoria (opcional)" /></SelectTrigger>
                       <SelectContent>
                         {GROUP_CATEGORIES.map((cat) => (
                           <SelectItem key={cat.value} value={cat.value}>
@@ -134,7 +134,7 @@ export function GroupsView() {
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                    <Button onClick={onAddGroup} className="bg-whatsapp hover:bg-whatsapp-dark">Adicionar</Button>
+                    <Button onClick={onAddGroup} className="bg-primary hover:bg-primary/90">Adicionar</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -150,7 +150,7 @@ export function GroupsView() {
           <Input placeholder="Buscar por nome ou ID do grupo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={categoryFilter || 'all'} onValueChange={(v) => setCategoryFilter(v === 'all' ? null : v)}>
-          <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
+          <SelectTrigger aria-label="Filtrar por categoria" className="w-full sm:w-[220px]"><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as categorias</SelectItem>
             {GROUP_CATEGORIES.map(cat => (
@@ -232,7 +232,7 @@ export function GroupsView() {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="w-8 h-8" aria-label={`Ações do grupo ${group.name}`} onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -258,7 +258,7 @@ export function GroupsView() {
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <Select value={group.category || 'none'} onValueChange={(v) => handleCategoryChange(group.id, v === 'none' ? null : v)}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                        <SelectTrigger aria-label={`Categoria de ${group.name}`} className="h-7 text-xs"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Sem categoria</SelectItem>
                           {GROUP_CATEGORIES.map(cat => (
@@ -299,7 +299,7 @@ export function GroupsView() {
               <Label>Mensagem</Label>
               <Textarea placeholder="Digite a mensagem para enviar a todos os grupos selecionados..." value={broadcastMessage} onChange={(e) => setBroadcastMessage(e.target.value)} rows={5} />
             </div>
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-warning">
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-[hsl(var(--warning-text))]">
               ⚠️ Intervalo de 2 segundos entre envios para evitar bloqueios.
             </div>
             <div className="flex justify-end gap-2">

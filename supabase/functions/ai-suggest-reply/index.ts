@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
@@ -43,9 +43,9 @@ export async function handleAiSuggestReply(
   const userId = extractUserIdFromRequest(req);
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`suggest:${ip}`, 15, 60_000);
-    if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
+    // Limite POR USUÁRIO (contador compartilhado + cota diária, IA-043) via
+    // `enforceAiGuards`. O contador em memória por IP saiu: era por isolate,
+    // zerava no cold start e fazia colegas atrás do mesmo NAT dividirem a cota.
 
     const parsed = parseBody(AiSuggestReplySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -54,25 +54,34 @@ export async function handleAiSuggestReply(
     // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
     const requestId = parsed.data.requestId ?? null;
 
-    // Fetch Knowledge Base articles for context
+    // Fetch Knowledge Base articles for context — only articles returned
+    // by search_knowledge_base para a última mensagem do cliente entram
+    // no prompt. Se retornar vazio, nenhum artigo entra.
     let knowledgeContext = '';
     try {
       const supabaseUrl = requireEnv("SUPABASE_URL");
       const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const { data: articles } = await supabase
-        .from('knowledge_base_articles')
-        .select('title, content, category')
-        .eq('is_published', true)
-        .limit(10);
+      const lastClientMessage = Array.isArray(messages)
+        ? [...messages].reverse().find((m) => m.sender !== 'agent')?.content
+        : null;
 
-      if (articles && articles.length > 0) {
-        knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
-          articles.map((a: { category: string | null; title: string; content: string }) =>
-            `[${a.category || 'Geral'}] ${a.title}: ${a.content.substring(0, 500)}`
-          ).join('\n---\n')
-        }`;
+      if (lastClientMessage) {
+        const { data: relevantArticles, error: kbError } = await supabase
+          .rpc('search_knowledge_base', { search_query: lastClientMessage, max_results: 5 });
+
+        // Erro no RPC: o contexto fica vazio de forma explícita — sem fallback
+        // para artigos publicados (removido neste cartão) e sem resto parcial.
+        if (kbError) {
+          knowledgeContext = '';
+        } else if (relevantArticles && relevantArticles.length > 0) {
+          knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
+            relevantArticles.map((a: { category?: string; title: string; content: string; rank: number }) =>
+              `[${a.category || 'Geral'}] ${a.title} (relevância: ${(a.rank * 100).toFixed(0)}%):\n${a.content.substring(0, 800)}`
+            ).join('\n---\n')
+          }`;
+        }
       }
 
       // Este client roda com service_role (bypassa RLS). Sem esta checagem,
@@ -186,8 +195,8 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       : await generateWithRouting({ ...generateParams, requestId });
 
     if (!response.ok || !data) {
-      if (response.status === 429) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
-      if (response.status === 402) return errorResponse("Payment required. Please add credits.", 402, req);
+      if (response.status === 429) return errorResponse("Limite de requisicoes excedido. Tente novamente.", 429, req);
+      if (response.status === 402) return errorResponse("Creditos insuficientes. Adicione creditos.", 402, req);
       throw new Error(`AI gateway error [${response.status}]`);
     }
 

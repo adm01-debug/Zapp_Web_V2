@@ -57,6 +57,39 @@ export function NPSDashboard() {
     );
   }
 
+  // Nenhuma pesquisa NPS é enviada na V2 (o envio não existe; o CSAT automático
+  // é o PD-34). Sem respostas, mostrar medidor 0 + cards zerados seria dado
+  // fabricado — o painel diz a verdade.
+  if (metrics.totalResponses === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 w-full min-w-0"
+      >
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Net Promoter Score (NPS)</h2>
+          <p className="text-sm text-muted-foreground">Meça a lealdade dos seus clientes</p>
+        </div>
+
+        <Card>
+          <CardContent
+            data-testid="nps-empty-state"
+            className="flex flex-col items-center justify-center gap-2 py-12 px-6 text-center"
+          >
+            <BarChart3 className="w-10 h-10 text-muted-foreground/40" strokeWidth={1.6} />
+            <p className="text-sm font-semibold text-foreground">Nenhuma pesquisa NPS enviada ainda</p>
+            <p className="text-xs text-muted-foreground max-w-[420px] leading-snug">
+              O NPS é calculado a partir das respostas dos clientes às pesquisas. Enquanto nenhuma
+              pesquisa for enviada e respondida não há pontuação para exibir, por isso o painel não
+              mostra gráficos nem notas zeradas.
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}

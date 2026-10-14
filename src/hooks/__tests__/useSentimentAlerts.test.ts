@@ -54,9 +54,14 @@ import { playNotificationSound } from '@/utils/notificationSounds';
 
 const mockPlaySound = vi.mocked(playNotificationSound);
 
+const colunasAuditLogs = vi.hoisted(() => ({
+  cols: '' as string,
+}));
+
 describe('useSentimentAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    colunasAuditLogs.cols = '';
     Object.assign(mockSettings, {
       soundEnabled: true,
       slaBreachSound: true,
@@ -67,12 +72,15 @@ describe('useSentimentAlerts', () => {
     });
     mockFunctionsInvoke.mockResolvedValue({ data: { alerted: false }, error: null });
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      select: vi.fn((cols: string) => {
+        colunasAuditLogs.cols = cols;
+        return {
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
           }),
-        }),
+        };
       }),
     });
   });
@@ -260,5 +268,16 @@ describe('useSentimentAlerts', () => {
     });
 
     expect(mockPlaySound).not.toHaveBeenCalled();
+  });
+
+  it('audit_logs usa lista explícita de colunas em vez de *', async () => {
+    const { result } = renderHook(() => useSentimentAlerts());
+    await result.current.getRecentAlerts();
+    expect(colunasAuditLogs.cols).not.toBe('*');
+    expect(typeof colunasAuditLogs.cols).toBe('string');
+    expect(colunasAuditLogs.cols).toContain('id');
+    expect(colunasAuditLogs.cols).toContain('entity_id');
+    expect(colunasAuditLogs.cols).toContain('created_at');
+    expect(colunasAuditLogs.cols).toContain('details');
   });
 });

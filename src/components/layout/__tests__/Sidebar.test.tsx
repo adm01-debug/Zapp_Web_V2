@@ -248,6 +248,29 @@ describe('Sidebar — acessibilidade alcançável pela interface', () => {
 });
 
 /**
+ * U12 — os 3 botões da barra lateral (recolher, voltar, notificações)
+ * tinham 28 px de área clicável, abaixo do mínimo de 44 px para
+ * ponteiro grosso (pointer: coarse). No modo expandido o botão visível
+ * continua com 28 px e só sob ponteiro de toque cresce para 44 px
+ * ([@media(pointer:coarse)]:min-w/min-h) — com mouse (pointer: fine) nada muda,
+ * mantendo o ícone no tamanho visual original.
+ */
+describe('Sidebar — botões com área clicável ≥ 44 px só sob toque (pointer: coarse)', () => {
+  it('o botão "Recolher menu" mantém 28 px no desktop e cresce só sob (pointer: coarse)', () => {
+    renderSidebar();
+    const btn = screen.getByRole('button', { name: 'Recolher menu' });
+    expect(btn).not.toBeNull();
+    const tokens = btn.className.split(/\s+/);
+    expect(tokens).toContain('w-[28px]');
+    expect(tokens).toContain('h-[28px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-w-[44px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-h-[44px]');
+    expect(tokens).not.toContain('min-w-[44px]');
+    expect(tokens).not.toContain('min-h-[44px]');
+  });
+});
+
+/**
  * U01 — selo do item Email. O dono vê na barra lateral quantas conversas de e-mail
  * ainda não foram lidas (todas as contas, via RLS). O item Email não tinha selo; o
  * Chat (`inboxBadge`) e o Tarefas (`useMyWorkItemsBadgeInfo`) já tinham, e a regra

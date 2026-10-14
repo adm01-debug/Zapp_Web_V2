@@ -69,6 +69,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
           <Button
             variant="secondary"
             size="icon"
+            aria-label={isZoomed ? "Reduzir" : "Ampliar"}
             onClick={(e) => {
               e.stopPropagation();
               setIsZoomed(!isZoomed);
@@ -81,6 +82,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
           <Button
             variant="secondary"
             size="icon"
+            aria-label="Baixar"
             className={!canDownload ? 'opacity-50 cursor-not-allowed' : ''}
             onClick={(e) => {
               e.stopPropagation();
@@ -91,7 +93,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
           </Button>
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="secondary" size="icon" onClick={onClose}>
+          <Button variant="secondary" size="icon" aria-label="Fechar" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
         </motion.div>

@@ -11,7 +11,24 @@ export interface SignInResult {
   lock: ServerLoginLock | null;
   /** A Edge ou a persistencia local da sessao falhou; nao confundir com senha invalida. */
   unavailable: boolean;
+  /**
+   * Negacao da politica de rede (IP/pais, R2-AUTH-022): nem senha errada nem
+   * lockout. Presente e `true` so nesse caso; nos demais fica ausente para nao
+   * alterar o contrato existente dos chamadores.
+   */
+  networkBlocked?: boolean;
 }
+
+/**
+ * Mensagem ao usuario barrado pela politica de rede. Segue generica de proposito:
+ * nao revela IP, pais nem a regra aplicada (o corpo do 403 tambem nao revela).
+ */
+export const NETWORK_BLOCKED_MESSAGE =
+  'Acesso bloqueado pela política de rede da empresa (endereço ou país não permitido). Se você deveria ter acesso, fale com o administrador.';
+
+/** Mensagem quando a politica de rede nao pode ser avaliada agora (retentavel). */
+export const NETWORK_UNAVAILABLE_MESSAGE =
+  'Não foi possível verificar sua rede agora. Tente novamente em instantes.';
 
 export class AuthService {
   private static sessionPromise: Promise<Session | null> | null = null;
@@ -93,6 +110,19 @@ export class AuthService {
         refresh_token: result.refreshToken,
       });
       return { error, via: 'edge', lock: null, unavailable: error !== null };
+    }
+    if ('networkBlocked' in result) {
+      // Nao e senha errada nem lockout: a politica de rede (IP/pais) barrou o
+      // login antes de qualquer verificacao de senha. Mensagem generica — nunca
+      // IP, pais ou regra na tela.
+      log.warn('[AuthService] Login negado pela politica de rede', { retryable: result.retryable });
+      return {
+        error: new Error(result.retryable ? NETWORK_UNAVAILABLE_MESSAGE : NETWORK_BLOCKED_MESSAGE),
+        via: 'edge',
+        lock: null,
+        unavailable: false,
+        networkBlocked: true,
+      };
     }
     if (!result.unavailable) {
       return { error: new Error(result.error), via: 'edge', lock: result.lock, unavailable: false };

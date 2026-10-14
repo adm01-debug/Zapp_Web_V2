@@ -89,6 +89,7 @@ export function TeamConversationList({
               variant="ghost"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
               onClick={() => setSearch('')}
+              aria-label="Limpar busca"
             >
               <X className="w-3 h-3" />
             </Button>
@@ -120,14 +121,16 @@ export function TeamConversationList({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas">
-        {filtered.length === 0 ? (
+      {filtered.length === 0 ? (
+        <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
             <span>Nenhuma conversa</span>
           </div>
-        ) : (
-          filtered.map((conv, idx) => {
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto" role="list" aria-label="Conversas">
+          {filtered.map((conv, idx) => {
             const isSelected = conv.id === selectedId;
             const dept = conv.department_id
               ? departments.find(d => d.id === conv.department_id)
@@ -137,8 +140,8 @@ export function TeamConversationList({
               <div
                 key={conv.id}
                 ref={el => { itemRefs.current[idx] = el; }}
-                role="option"
-                aria-selected={isSelected}
+                role="listitem"
+                aria-current={isSelected ? 'true' : undefined}
                 tabIndex={0}
                 onClick={() => onSelect(conv.id)}
                 onKeyDown={e => handleKeyDown(e, idx)}
@@ -152,9 +155,9 @@ export function TeamConversationList({
                     <AvatarImage src={conv.avatar_url ?? undefined} />
                     <AvatarFallback className={cn(
                       'text-xs font-semibold',
-                      conv.type === 'direct' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                      conv.department_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                      conv.type === 'direct' ? 'bg-primary/15 text-[hsl(var(--primary-text))]' :
+                      conv.department_id ? 'bg-violeta/15 text-[hsl(var(--violeta-text))] dark:bg-violeta/10 dark:text-[hsl(var(--violeta-text))]' :
+                      'bg-success/15 text-success'
                     )}>
                       {conv.type === 'direct'
                         ? <MessageSquare className="w-4 h-4" />
@@ -186,7 +189,7 @@ export function TeamConversationList({
                   </div>
                   <div className="flex items-center gap-1 justify-between">
                     <p className="text-xs text-muted-foreground truncate">
-                      {conv.last_message?.content ?? (dept ? dept.description ?? dept.name : '')}
+                      {conv.last_message?.content ?? (dept ? dept.name : '')}
                     </p>
                     {conv.department_id && canManageDepartments && dept && (
                       <Button
@@ -203,9 +206,9 @@ export function TeamConversationList({
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {managingDept && (
         <DepartmentManagementDialog

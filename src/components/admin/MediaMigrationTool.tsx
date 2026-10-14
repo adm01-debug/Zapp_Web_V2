@@ -96,7 +96,7 @@ export function MediaMigrationTool() {
 
           {running && (
             <div className="space-y-2">
-              <Progress value={30} className="h-2" />
+              <Progress value={30} className="h-2" aria-label="Progresso da migração de mídia" />
               <p className="text-xs text-muted-foreground animate-pulse">Processando mídias...</p>
             </div>
           )}
@@ -133,7 +133,7 @@ export function MediaMigrationTool() {
             </div>
 
             {result.processed > 0 && (
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-2" aria-label="Progresso da migração" />
             )}
 
             {result.message && (

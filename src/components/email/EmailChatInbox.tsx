@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
 import { emailLoadErrorCopy } from '@/lib/emailErrorState';
+import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 
 function matchesWideDetailsLayout(): boolean {
   return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
@@ -270,7 +271,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
         </aside>
         <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={handleThreadContextChange} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (
-            <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground"><div className="mb-4 rounded-2xl border border-border bg-card p-5"><Mail className="h-12 w-12 opacity-40" /></div><p className="text-sm font-medium text-foreground">Selecione uma conversa para começar</p><p className="mt-1 text-xs">A leitura e a resposta acontecerão no painel central.</p></div>
+            <ConversationEmptyState icon={Mail} title="Selecione uma conversa para começar" description="A leitura e a resposta acontecerão no painel central." />
           )}
         </section>
         {selectedThread && showDetails && isWideDetailsLayout && <aside data-testid="email-contact-panel" className="w-80 shrink-0 border-l border-border"><EmailContactPanel key={`${activeAccount.id}:${selectedThread.id}:${selectedThread.contact_id ?? 'external'}`} accountId={activeAccount.id} accountEmail={activeAccount.email_address} thread={selectedThread} messages={threadContext.accountId === activeAccount.id ? threadContext.messages : []} attachments={threadContext.accountId === activeAccount.id ? threadContext.attachments : []} relatedThreads={threads.filter(item => item.id !== selectedThread.id && item.contact_id && item.contact_id === selectedThread.contact_id)} labels={labels} onClose={() => setShowDetails(false)} onCompose={email => { setComposerTo(email); setShowComposer(true); }} onSelectRelated={thread => navigateToThread(thread.id)} onDownloadAttachment={attachment => attachment.gmail_message_id && downloadAttachment.mutate({ ...attachment, gmail_message_id: attachment.gmail_message_id })} /></aside>}

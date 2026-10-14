@@ -141,7 +141,7 @@ export function ChannelRoutingRules() {
             {adding && (
               <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-primary/30 bg-primary/5">
                 <Select value={newRule.channel_type} onValueChange={v => setNewRule(r => ({ ...r, channel_type: v }))}>
-                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-36" aria-label="Canal"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(channelLabels).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v}</SelectItem>
@@ -149,7 +149,7 @@ export function ChannelRoutingRules() {
                   </SelectContent>
                 </Select>
                 <Select value={newRule.queue_id} onValueChange={v => setNewRule(r => ({ ...r, queue_id: v }))}>
-                  <SelectTrigger className="w-48"><SelectValue placeholder="Selecione fila..." /></SelectTrigger>
+                  <SelectTrigger className="w-48" aria-label="Fila"><SelectValue placeholder="Selecione fila..." /></SelectTrigger>
                   <SelectContent>
                     {queues.map((q: { id: string; name: string }) => (
                       <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>
@@ -178,6 +178,7 @@ export function ChannelRoutingRules() {
                       <Switch
                         checked={rule.is_active ?? true}
                         onCheckedChange={(checked) => toggleRule.mutate({ id: rule.id, is_active: checked })}
+                        aria-label={`Ativar regra ${channelLabels[rule.channel_type] || rule.channel_type}`}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

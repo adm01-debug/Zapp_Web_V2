@@ -9,8 +9,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
-import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isToday, isYesterday } from 'date-fns';
+import { formatRelativeTime } from '@/lib/formatters';
 import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
@@ -18,6 +18,7 @@ import { ConversationGroupHeader } from './conversation-list/ConversationGroupHe
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
@@ -273,6 +274,16 @@ const SENTIMENT_LABEL: Record<Sentiment, string> = {
 };
 const SEM_ANALISE = 'sem análise';
 
+// Estado da conversa (contacts.conversation_status) em pt-BR, para a
+// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
+// do sentimento acima): a pré-visualização só omite o estado.
+const CONVERSATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Aberto',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
+  archived: 'Arquivado',
+};
+
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
   virtualRow: VirtualItem;
@@ -393,8 +404,29 @@ const ConversationRow = memo(({
     else toast.info(`${label}: em breve`);
   };
 
+  // Pré-visualização por hover (QuickPeek): só dados JÁ carregados na linha
+  // (nome, última mensagem, não lidas e estado) — nenhuma consulta nova e
+  // nenhum campo fora do que a própria linha já recebe.
+  const conversationStatusLabel = CONVERSATION_STATUS_LABEL[conversation.contact.conversation_status];
+  const peekPreview = (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-foreground">
+        {conversation.contact.nickname?.trim() || conversation.contact.name || 'Contato'}
+      </p>
+      {conversation.lastMessage?.content && (
+        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-4">
+          {conversation.lastMessage.content}
+        </p>
+      )}
+      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground">
+        <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
+        {conversationStatusLabel && <span>• {conversationStatusLabel}</span>}
+      </div>
+    </div>
+  );
+
   return (
-    <div
+    <QuickPeek
       style={{
         position: 'absolute',
         top: 0,
@@ -416,6 +448,11 @@ const ConversationRow = memo(({
       // container.
       className="px-3 overflow-clip"
       data-testid="conversation-item"
+      preview={peekPreview}
+      // Desligado na conversa ABERTA (o balão repetiria a tela que o usuário
+      // já está vendo) e, dentro do QuickPeek, em telas de toque.
+      enabled={selectedContactId !== contactId}
+      delay={500}
     >
       <div
         className={cn(
@@ -524,9 +561,8 @@ const ConversationRow = memo(({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
                   <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
+                    {formatRelativeTime(conversation.lastMessage.created_at, {
                       addSuffix: false,
-                      locale: ptBR,
                     })}
                   </span>
                 )}
@@ -601,7 +637,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Resolver conversa"
                   onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-success hover:bg-success/10 active:scale-90 transition-all duration-150"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </button>
@@ -625,7 +661,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Fixar conversa"
                   onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-warning hover:bg-warning/10 active:scale-90 transition-all duration-150"
                 >
                   <Pin className="w-3.5 h-3.5" />
                 </button>
@@ -639,7 +675,7 @@ const ConversationRow = memo(({
                     <button
                       aria-label="Adiar conversa"
                       onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-info hover:bg-info/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
                     </button>
@@ -676,6 +712,6 @@ const ConversationRow = memo(({
           </TooltipProvider>
         </div>
       </div>
-    </div>
+    </QuickPeek>
   );
 });

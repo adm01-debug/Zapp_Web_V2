@@ -13,7 +13,10 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
+import { TalkXNoData } from './kit/states';
+import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -159,6 +162,41 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
 /* Passo 4 — Revisão final                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * T09 — CTA do template na prévia da revisão.
+ *
+ * Extrai o `interactive` que o template carrega para o formato simples que a
+ * prévia entende (`TalkXPreviewInteractive`): botões viram rótulos (a forma
+ * rica do X096 — `{ type, label, url? }` — ou `string[]`), enquete vira
+ * pergunta + opções. Só passa adiante texto não vazio; sem `interactive` no
+ * template devolve `null` e a prévia não inventa botão nenhum.
+ */
+function templatePreviewInteractive(template: unknown): TalkXPreviewInteractive | null {
+  if (!template || typeof template !== 'object') return null;
+  const raw = (template as { interactive?: unknown }).interactive;
+  if (!raw || typeof raw !== 'object') return null;
+  const { buttons, poll } = raw as { buttons?: unknown; poll?: unknown };
+  const labels = Array.isArray(buttons)
+    ? buttons
+      .map((button) => typeof button === 'string' ? button : (button as { label?: unknown } | null)?.label)
+      .filter((label): label is string => typeof label === 'string' && label.trim().length > 0)
+      .map((label) => label.trim())
+    : [];
+  let pollPreview: TalkXPreviewInteractive['poll'];
+  if (poll && typeof poll === 'object') {
+    const { question, options } = poll as { question?: unknown; options?: unknown };
+    const cleanQuestion = typeof question === 'string' ? question.trim() : '';
+    const cleanOptions = Array.isArray(options)
+      ? options
+        .filter((option): option is string => typeof option === 'string' && option.trim().length > 0)
+        .map((option) => option.trim())
+      : [];
+    if (cleanQuestion) pollPreview = { question: cleanQuestion, ...(cleanOptions.length > 0 ? { options: cleanOptions } : {}) };
+  }
+  if (labels.length === 0 && !pollPreview) return null;
+  return { ...(labels.length > 0 ? { buttons: labels } : {}), ...(pollPreview ? { poll: pollPreview } : {}) };
+}
+
 const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3; onEditStep?: (step: 1 | 2 | 3) => void }) => (
     <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
@@ -170,6 +208,42 @@ const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.El
       <button type="button" onClick={() => onEditStep?.(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
     </div>
   );
+
+/* ------------------------------------------------------------------ */
+/* X135 — previsões do "Resumo operacional" (CAP-087)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Base mínima para a revisão mostrar uma previsão: 5 campanhas concluídas com
+ * 100 ou mais enviados nos últimos 90 dias. Quem calcula a previsão é o SERVIDOR
+ * (CAP-087: taxa projetada e risco de opt-out); sem essa base ele não devolve
+ * valor, e a revisão mostra "sem dados ainda" (A9) em vez de um número sem lastro.
+ */
+const FORECAST_MIN_CAMPAIGNS = 5;
+const FORECAST_MIN_SENT = 100;
+const FORECAST_WINDOW_DAYS = 90;
+
+const FORECAST_EMPTY_HINT =
+  `Sem base ainda: a projeção aparece depois de ${FORECAST_MIN_CAMPAIGNS} campanhas concluídas ` +
+  `com ${FORECAST_MIN_SENT} ou mais enviados nos últimos ${FORECAST_WINDOW_DAYS} dias.`;
+
+/**
+ * X135 — linha de previsão do "Resumo operacional". As duas previsões (taxa de
+ * resposta projetada e risco de opt-out) ficam no estado vazio do kit enquanto o
+ * servidor não indicar base suficiente — a revisão não promete resultado que não
+ * tem histórico para sustentar.
+ */
+function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <div className="pt-3">
+      <p className="flex items-center gap-2 text-xs text-foreground-secondary mb-1.5">
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        {label}
+      </p>
+      <TalkXNoData hint={FORECAST_EMPTY_HINT} />
+    </div>
+  );
+}
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3 | 4) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -200,11 +274,17 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   // visível na mesma linha, para não sumir do resumo.
   const objectiveSub = [objectiveEntry?.description, ed.description].filter(Boolean).join(' · ') || undefined;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
-  const responses = null; // sem histórico de respostas no motor atual — não estimamos
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
   const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
+  // T09 — CTA do template na prévia: só o que o template carrega (nunca inventado).
+  const templateInteractive = templatePreviewInteractive(ed.selectedTemplate);
+  // T09 — 2 recomendações REAIS do motor (horário ideal + template campeão).
+  // O motor se abstém sem dados (buildInsights devolve []); sem dado não há card.
+  const { data: insights } = useTalkXInsights();
+  const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
+  const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
 
   const launch = async () => {
     if (!launchAllowed) return;
@@ -226,7 +306,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       <Section icon={FileText} title="Resumo da campanha" subtitle="Verifique se todas as informações estão corretas.">
         <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} onEditStep={onEditStep} />
         <Row icon={Target} label="Objetivo" value={objective} sub={objectiveSub} step={1} onEditStep={onEditStep} />
-        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmento selecionado' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={`${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
+        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmentos selecionados' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? `${fmtInt(ed.audienceTotal)} contatos na união · ${ed.selectedSegments.map((s) => `${s.name} (${fmtInt(ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? 0)})`).join(' · ')}` : `${fmtInt(ed.audienceTotal)} contatos na união`) : `${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
         <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} onEditStep={onEditStep} />
         <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} onEditStep={onEditStep} />
         <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} onEditStep={onEditStep} />
@@ -237,7 +317,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} />
+        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} interactive={templateInteractive} />
       </Section>
 
       <div className="space-y-4 min-w-0">
@@ -245,8 +325,22 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           <MetaRow icon={Users} label="Público total" value={<span><b className="text-[15px]">{fmtInt(ed.eligibleCount)}</b> <span className="text-foreground-secondary font-normal">contatos elegíveis</span></span>} />
           <MetaRow icon={Clock} label="Tempo estimado de entrega" value={<span><b className="text-[15px]">{ed.estimatedTime ?? '—'}</b> <span className="text-foreground-secondary font-normal">a ~{ed.messagesPerMinute} msg/min</span></span>} />
           <MetaRow icon={Ban} label="Suprimidos" value={<span><b className="text-[15px]">{fmtInt(ed.suppressedCount)}</b> <span className="text-foreground-secondary font-normal">{fmtPct(ed.suppressedCount, ed.audienceTotal)}</span></span>} />
-          <MetaRow icon={MessageSquare} label="Taxa de resposta projetada" value={<span className="text-foreground-secondary font-normal">{responses ?? 'sem histórico suficiente'}</span>} />
+          <ForecastRow icon={MessageSquare} label="Taxa de resposta projetada" />
+          <ForecastRow icon={ShieldAlert} label="Risco de opt-out" />
         </RailCard>
+
+        {/* T09 — 2 recomendações REAIS do motor (`useTalkXInsights`, o mesmo das
+            telas Resumo/Análise): horário ideal + template campeão, com o selo
+            honesto "Heurístico" do `InsightCard`. Sem dado no motor não há card
+            (o 3º — reativação/opt-out — fica de fora, como manda o cartão). */}
+        {(timingInsight || templateInsight) && (
+          <RailCard icon={MessageSquare} title="Recomendações" subtitle="Sinais do histórico da conta.">
+            <div className="space-y-2">
+              {timingInsight && <InsightCard key={timingInsight.id} {...timingInsight} />}
+              {templateInsight && <InsightCard key={templateInsight.id} {...templateInsight} />}
+            </div>
+          </RailCard>
+        )}
 
         <RailCard icon={ShieldAlert} color="amber" title="Confirmações obrigatórias" subtitle="Marque para habilitar o lançamento.">
           {[
@@ -291,7 +385,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
         details={[
           { label: 'Campanha', value: ed.name || '—' },
-          { label: 'Público', value: ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : 'Contatos ZAPP' },
+          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
           { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
           { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
           { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },

@@ -1,10 +1,12 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
-import { buildElevenLabsRequest } from "./request.ts";
+import { buildElevenLabsRequest, voiceAiDisabledResponse } from "./request.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
-Deno.serve(async (req) => {
+// `import.meta.main` (mesmo padrão de `elevenlabs-sts`): o handler pode ser
+// importado por teste sem subir o servidor.
+export async function handleElevenLabsSfx(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -22,6 +24,15 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { prompt, duration, mode } = parsed.data;
+
+    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz/áudio
+    // lido no SERVIDOR antes de tocar o provedor pago (ver `request.ts`).
+    const aiOff = await voiceAiDisabledResponse(req);
+    if (aiOff) {
+      log.warn("IA de voz desativada por flag — provedor nao chamado");
+      return aiOff;
+    }
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const isMusic = mode === "music";
@@ -76,4 +87,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsSfx);
+}

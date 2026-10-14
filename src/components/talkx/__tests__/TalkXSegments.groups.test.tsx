@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -76,6 +76,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 });
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
+import { TalkXSegmentBuilder } from '@/components/talkx/segments/TalkXSegmentBuilder';
 import { rulesJoin, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 
 function renderView() {
@@ -127,6 +128,13 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     f.create.mockReset();
     f.update.mockReset();
     f.create.mockResolvedValue(undefined);
+  });
+
+  // X111 (TL-133) — o construtor da tela 03 grava o estado no endereço; sem
+  // limpar a URL o `mode=new` de um caso vaza para o próximo e o teste seguinte
+  // já monta com o construtor aberto. Mesmo reset dos testes irmãos do X111.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
   });
 
   it('o selo do grupo vem do `match`, não da posição', async () => {
@@ -247,19 +255,101 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     const { container } = render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><TalkXSegments onUseCampaign={() => {}} /></QueryClientProvider>);
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
 
+    // lead_score/risk_score são "em breve" (coluna nunca calculada): o botão
+    // continua visível com o MESMO nome acessível, mas desabilitado — clicar
+    // não adiciona condição (filtro morto removido).
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    expect(leadScore).toHaveAttribute('title', expect.stringContaining('Em breve'));
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+
     // O catálogo de filtros adiciona a condição com o campo — e o campo traz o tipo.
-    for (const filtro of ['Lead score', 'Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
+    for (const filtro of ['Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
       fireEvent.click(screen.getByRole('button', { name: filtro }));
     }
     adicionarCondicao(0);
 
-    // Ícone por tipo de campo (number, text, date, uuid, enum, array).
-    for (const icone of ['hash', 'type', 'calendar-days', 'user', 'list-filter', 'tags']) {
+    // Ícone por tipo de campo (text, date, uuid, enum, array); o number só existe em campos "em breve".
+    for (const icone of ['type', 'calendar-days', 'user', 'list-filter', 'tags']) {
       expect(container.querySelector(`svg.lucide-${icone}`), `ícone ${icone}`).not.toBeNull();
     }
 
     // Linha vertical com um nó por condição.
     expect(container.querySelector('[data-talkx-line]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(6);
+    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(5);
+  });
+
+  it('regra já salva de lead_score renderiza com o ícone number (hash) e só ela segue selecionável', async () => {
+    const regras: SegmentRules = {
+      groups: [{
+        id: 'g1', match: 'and',
+        rules: [
+          { id: 'r1', field: 'lead_score', op: 'gte', value: '50' },
+          { id: 'r2', field: 'tags', op: 'contains', value: 'VIP' },
+        ],
+      }],
+    };
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <TalkXSegmentBuilder
+          initial={{ name: 'Salvo', description: '', rules: regras }}
+          isNew={false}
+          saving={false}
+          onSave={() => {}}
+          onCancel={() => {}}
+        />
+      </QueryClientProvider>,
+    );
+
+    // A regra antiga não quebra: renderiza com o valor salvo e o ícone do tipo number.
+    expect(await screen.findByDisplayValue('50')).toBeTruthy();
+    expect(container.querySelector('svg.lucide-hash')).not.toBeNull();
+
+    // No seletor de campo: o filtro "em breve" que NÃO é o da regra fica desabilitado,
+    // e o da própria regra continua selecionável (não derruba o que já foi salvo).
+    // O Radix Select usa APIs de ponteiro/rolagem que o jsdom não implementa.
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+    window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+    const gatilhos = screen.getAllByRole('combobox');
+    fireEvent.pointerDown(gatilhos[0], { button: 0, ctrlKey: false });
+    fireEvent.click(gatilhos[0]);
+    const risco = await screen.findByRole('option', { name: /Risco de churn/ });
+    expect(risco).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('option', { name: /Lead score/ })).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('segmento salvo com lead_score 50 mantém hash e bloqueia só risk_score', async () => {
+    const regras: SegmentRules = {
+      groups: [{
+        id: 'g-hash', match: 'and',
+        rules: [{ id: 'r-hash', field: 'lead_score', op: 'gte', value: '50' }],
+      }],
+    };
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <TalkXSegmentBuilder
+          initial={{ name: 'Lead salvo', description: '', rules: regras }}
+          isNew={false}
+          saving={false}
+          onSave={() => {}}
+          onCancel={() => {}}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByDisplayValue('50')).toBeTruthy();
+    expect(container.querySelector('svg.lucide-hash')).not.toBeNull();
+
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+    window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+    const [campo] = screen.getAllByRole('combobox');
+    fireEvent.pointerDown(campo, { button: 0, ctrlKey: false });
+    fireEvent.click(campo);
+
+    expect(screen.getByRole('option', { name: /Lead score/ })).not.toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByRole('option', { name: /Risco de churn/ })).toHaveAttribute('aria-disabled', 'true');
   });
 });

@@ -7,7 +7,9 @@ import {
   Logger,
   getClientIP,
   internalErrorResponse,
+  enforceRateLimit,
 } from "../_shared/validation.ts";
+import { escapeHtml } from "../_shared/notification-events.ts";
 import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
@@ -117,6 +119,16 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
     const { device_fingerprint, browser, os, device_name } = parsed.data;
     const clientIp = getClientIP(req);
 
+    // Rate limit por USUÁRIO (sem IP): o limite governa só o envio do e-mail de
+    // alerta. O contador é consumido aqui, mas o 429 é devolvido no fim, depois de
+    // security_alerts e do upsert de sessão — o 429 não pode pular o inventário de
+    // sessão (R2-AUTH-004).
+    const rate = await enforceRateLimit(`detect-new-device:${user.id}`, 5, 60_000);
+    const emailAllowed = rate.allowed;
+    if (!emailAllowed) {
+      log.warn("Rate limit atingido: e-mail de alerta não será enviado");
+    }
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if device exists
@@ -133,9 +145,6 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
     let deviceId: string;
 
     if (!existingDevice) {
-      isNewDevice = true;
-      log.warn("New device detected");
-
       const { data: newDevice, error: insertError } = await supabaseAdmin
         .from("user_devices")
         .insert({
@@ -150,12 +159,37 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
         .select()
         .single();
 
-      if (insertError) throw insertError;
-      deviceId = newDevice.id;
+      // 23505 = unique_violation: outra requisição concorrente (segunda aba
+      // abrindo ao mesmo tempo) já inseriu este (user_id, device_fingerprint).
+      // O UNIQUE user_devices_user_id_device_fingerprint_key segura a corrida:
+      // só uma linha nasce. Rebusca a linha vencedora e trata como dispositivo
+      // conhecido — sem segunda linha, sem segundo e-mail e sem segundo alerta.
+      if (insertError) {
+        if ((insertError as { code?: string }).code === "23505") {
+          const { data: raceDevice, error: raceError } = await supabaseAdmin
+            .from("user_devices")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("device_fingerprint", device_fingerprint)
+            .maybeSingle();
 
-      // Send email notification
+          if (raceError) throw raceError;
+          if (!raceDevice) throw insertError;
+          deviceId = raceDevice.id;
+          log.info("Corrida 23505: dispositivo já registrado por outra aba, tratado como conhecido");
+        } else {
+          throw insertError;
+        }
+      } else {
+        isNewDevice = true;
+        log.warn("New device detected");
+        deviceId = newDevice.id;
+      }
+
+      // Send email notification (só para dispositivo realmente novo; no caminho
+      // da corrida 23505 isNewDevice já é false e nada é enviado).
       const userEmail = user.email;
-      if (userEmail && RESEND_API_KEY) {
+      if (isNewDevice && userEmail && RESEND_API_KEY && emailAllowed) {
         try {
           const emailHtml = `
             <!DOCTYPE html>
@@ -170,10 +204,10 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
                 <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #667eea;">Detalhes do Dispositivo:</h3>
                   <table style="width: 100%; font-size: 14px;">
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${device_name}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${browser}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${os}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${clientIp}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${escapeHtml(device_name)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${escapeHtml(browser)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${escapeHtml(os)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${escapeHtml(clientIp)}</td></tr>
                     <tr><td style="padding: 8px 0; color: #666;"><strong>Data/Hora:</strong></td><td>${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
                   </table>
                 </div>
@@ -184,7 +218,7 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
             </body>
             </html>`;
 
-          await fetch("https://api.resend.com/emails", {
+          const resendResp = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${RESEND_API_KEY}` },
             body: JSON.stringify({
@@ -194,22 +228,29 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
               html: emailHtml,
             }),
           });
-          log.info("Security email sent");
+          if (!resendResp.ok) {
+            log.error("Error sending email", { status: resendResp.status });
+          } else {
+            log.info("Security email sent");
+          }
         } catch (emailError) {
           log.error("Error sending email", { error: emailError instanceof Error ? emailError.message : String(emailError) });
         }
       }
 
-      // Create security alert
-      await supabaseAdmin.from("security_alerts").insert({
-        user_id: user.id,
-        alert_type: "new_device",
-        severity: "medium",
-        title: "Novo dispositivo detectado",
-        description: `Login realizado a partir de ${browser} em ${os} (IP: ${clientIp})`,
-        ip_address: clientIp,
-        metadata: { device_fingerprint, browser, os, device_name },
-      });
+      // Create security alert — só quando o dispositivo é realmente novo; no
+      // caminho da corrida 23505 (isNewDevice=false) o alerta sairia em dobro.
+      if (isNewDevice) {
+        await supabaseAdmin.from("security_alerts").insert({
+          user_id: user.id,
+          alert_type: "new_device",
+          severity: "medium",
+          title: "Novo dispositivo detectado",
+          description: `Login realizado a partir de ${browser} em ${os} (IP: ${clientIp})`,
+          ip_address: clientIp,
+          metadata: { device_fingerprint, browser, os, device_name },
+        });
+      }
     } else {
       deviceId = existingDevice.id;
       log.info("Known device, updating last_seen");
@@ -267,6 +308,13 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
       }
     } else {
       log.warn("JWT sem claim session_id; inventário de sessão não foi criado/atualizado");
+    }
+
+    // 429 só depois de security_alerts e do upsert de sessão: o limite governa o
+    // e-mail, não o inventário de sessão (R2-AUTH-004).
+    if (!emailAllowed && isNewDevice) {
+      log.done(429);
+      return errorResponse("Rate limit exceeded", 429, req);
     }
 
     log.done(200);

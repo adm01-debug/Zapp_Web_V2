@@ -27,7 +27,7 @@ export function SettingsTabContent({ settingsData, settingsItems, onChange, onSa
       {settingsItems.map(({ key, label, desc }) => (
         <div key={key} className="flex items-center justify-between p-3 rounded-lg border border-border/20 hover:bg-muted/10 transition-colors">
           <div><Label className="text-sm font-medium">{label}</Label><p className="text-xs text-muted-foreground">{desc}</p></div>
-          <Switch checked={settingsData[key] as boolean} onCheckedChange={(checked) => onChange(key, checked)} />
+          <Switch checked={settingsData[key] as boolean} onCheckedChange={(checked) => onChange(key, checked)} aria-label={label} />
         </div>
       ))}
       {settingsData.rejectCall && (

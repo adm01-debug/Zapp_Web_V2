@@ -72,6 +72,7 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
 
 import { AnalyticsPerformanceChart } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
 import type { PerformancePoint } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
@@ -163,7 +164,7 @@ describe('AnalyticsFunnel — degraus proporcionais (X186)', () => {
     { key: 'sent', label: 'Enviadas', value: 18742, token: 'primary' },
     { key: 'delivered', label: 'Entregues', value: 18075, token: 'dash-green' },
     { key: 'read', label: 'Lidas', value: null, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: 3748, token: 'dash-violet' },
+    { key: 'replied', label: 'Respostas', value: 3748, token: 'violeta' },
     { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
   ];
 
@@ -259,20 +260,32 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     const sentWidth = Number(screen.getByTestId('funnel-bar-sent').getAttribute('width'));
     const deliveredWidth = Number(screen.getByTestId('funnel-bar-delivered').getAttribute('width'));
     expect(deliveredWidth / sentWidth).toBeCloseTo(0.9644, 3);
+    // O refazer troca só Respostas para --violeta: Lidas permanece na cor de info
+    // do funil e não colide com o mesmo grupo de etapas.
+    expect(screen.getByTestId('funnel-bar-read')).toHaveAttribute('stroke', 'hsl(var(--info))');
+    expect(screen.getByTestId('funnel-bar-replied')).toHaveAttribute('stroke', 'hsl(var(--violeta))');
     // Conversão, que o sistema ainda não mede, não vira 0.
     expect(screen.getByText('Conversões: sem dados ainda')).toBeInTheDocument();
 
     // O seletor do gráfico nasce no filtro da tela (30 dias) e, tocado, refaz a consulta.
     await waitFor(() => expect(rpcMock).toHaveBeenCalled());
-    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
+    // A primeira chamada é a RPC principal (talkx_overview_stats com 30 dias).
     expect(rpcMock.mock.calls[0][0]).toBe('talkx_overview_stats');
+    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
     expect((new Date(firstArgs.p_to).getTime() - new Date(firstArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(30, 1);
 
     fireEvent.click(screen.getByRole('button', { name: '90 dias' }));
 
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(2));
-    const secondArgs = rpcMock.mock.calls[1][1] as { p_from: string; p_to: string };
-    expect((new Date(secondArgs.p_to).getTime() - new Date(secondArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
+    // O seletor do gráfico refaz a consulta de performance (3ª chamada:
+    // resumo 30d + performance diária inicial 30d + performance diária 90d).
+    // O comparativo usa a mesma queryKey do resumo e o React Query deduplica,
+    // por isso não há chamada extra dele.
+    await waitFor(() => {
+      expect(rpcMock).toHaveBeenCalledTimes(3);
+    });
+    const lastArgs = rpcMock.mock.calls[2][1] as { p_from: string; p_to: string };
+    expect(rpcMock.mock.calls[2][0]).toBe('talkx_overview_stats');
+    expect((new Date(lastArgs.p_to).getTime() - new Date(lastArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
   });
 
   it('erro da RPC na tela real vira estado de erro, não "Sem envios registrados"', async () => {

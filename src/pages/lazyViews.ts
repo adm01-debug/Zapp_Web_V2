@@ -25,12 +25,10 @@ export const AutomationsManager = lazyWithRetry(() => import('@/components/autom
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
 export const LGPDComplianceView = lazyWithRetry(() => import('@/components/compliance/LGPDComplianceView').then(m => ({ default: m.LGPDComplianceView })));
 export const KnowledgeBaseView = lazyWithRetry(() => import('@/components/knowledge/KnowledgeBaseView').then(m => ({ default: m.KnowledgeBaseView })));
-export const PaymentLinksView = lazyWithRetry(() => import('@/components/payments/PaymentLinksView').then(m => ({ default: m.PaymentLinksView })));
 export const WhatsAppFlowsBuilder = lazyWithRetry(() => import('@/components/whatsapp-flows/WhatsAppFlowsBuilder').then(m => ({ default: m.WhatsAppFlowsBuilder })));
 export const MetaCAPIView = lazyWithRetry(() => import('@/components/meta-capi/MetaCAPIView').then(m => ({ default: m.MetaCAPIView })));
 export const DiagnosticsView = lazyWithRetry(() => import('@/components/diagnostics/DiagnosticsView').then(m => ({ default: m.DiagnosticsView })));
 export const TelefoniaView = lazyWithRetry(() => import('@/components/calls/TelefoniaView').then(m => ({ default: m.TelefoniaView })));
-export const AutoExportManager = lazyWithRetry(() => import('@/components/reports/AutoExportManager').then(m => ({ default: m.AutoExportManager })));
 export const GoogleCalendarIntegration = lazyWithRetry(() => import('@/components/integrations/GoogleCalendarIntegration').then(m => ({ default: m.GoogleCalendarIntegration })));
 export const ThemeCustomizer = lazyWithRetry(() => import('@/components/settings/ThemeCustomizer').then(m => ({ default: m.ThemeCustomizer })));
 export const ScheduleCalendarView = lazyWithRetry(() => import('@/components/schedule/ScheduleCalendarView').then(m => ({ default: m.ScheduleCalendarView })));

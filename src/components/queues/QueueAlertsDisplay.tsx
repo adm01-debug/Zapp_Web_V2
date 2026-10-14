@@ -16,6 +16,15 @@ const alertIcons = {
   messages_pending: MessageSquare,
 };
 
+// Rotulo em pt-BR de cada tipo de alerta, usado no nome acessivel do botao
+// de dispensar (o icone X sozinho nao da nome ao botao).
+const alertLabels: Record<QueueAlert['type'], string> = {
+  waiting_contacts: 'contatos aguardando',
+  wait_time: 'tempo de espera',
+  assignment_rate: 'taxa de atribuição',
+  messages_pending: 'mensagens pendentes',
+};
+
 export function QueueAlertsDisplay({ alerts, onDismiss, onNavigate }: QueueAlertsDisplayProps) {
   if (alerts.length === 0) return null;
 
@@ -81,6 +90,7 @@ export function QueueAlertsDisplay({ alerts, onDismiss, onNavigate }: QueueAlert
                   size="icon"
                   className="w-6 h-6 opacity-60 hover:opacity-100"
                   onClick={() => onDismiss(alert)}
+                  aria-label={`Dispensar alerta ${alertLabels[alert.type]}`}
                 >
                   <X className="w-3 h-3" />
                 </Button>

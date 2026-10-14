@@ -106,7 +106,7 @@ export default function RateLimitDashboard() {
                   <Ban className="w-5 h-5 text-destructive dark:text-destructive" />
                 </div>
               </div>
-              <Progress value={blockedPercentage} className="mt-2 h-1" />
+              <Progress value={blockedPercentage} className="mt-2 h-1" aria-label="Percentual de requisições bloqueadas" />
               <p className="text-xs text-muted-foreground mt-1">{blockedPercentage}% do total</p>
             </CardContent>
           </Card>

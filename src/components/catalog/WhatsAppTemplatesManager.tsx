@@ -14,6 +14,7 @@ import {
   useWhatsAppTemplates, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES,
   STATUS_BADGES, EMPTY_TEMPLATE, type WhatsAppTemplate,
 } from '@/hooks/integrations/useWhatsAppTemplates';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 const STATUS_ICONS: Record<string, React.ElementType> = {
   CheckCircle2, Clock, XCircle, FileText,
@@ -29,6 +30,13 @@ export function WhatsAppTemplatesManager() {
     handlePreview, renderPreviewContent, openNew, openEdit,
   } = useWhatsAppTemplates();
 
+  // R2-MOD-067 / gate de escrita: a rota `wa-templates` é STAFF (admin +
+  // supervisor), mas as políticas de escrita de `whatsapp_templates` são
+  // admin-only (20260315123034 cria "Admins can manage templates";
+  // 20260317222534 troca o insert por "Admins can insert templates"). Sem o
+  // gate, o supervisor clica e o banco recusa com erro de RLS no toast.
+  const { isAdmin } = useUserRole();
+
   // CT-70 — com "reduzir movimento" ligado, as linhas aparecem sem fade.
   const prefersReducedMotion = useReducedMotion();
 
@@ -38,8 +46,9 @@ export function WhatsAppTemplatesManager() {
         <div>
           <h2 className="text-lg md:text-xl font-bold text-foreground">Templates WhatsApp</h2>
           <p className="text-xs md:text-sm text-muted-foreground">Gerencie templates oficiais aprovados pelo WhatsApp Business API</p>
+          {!isAdmin && <p className="text-xs text-muted-foreground mt-1">Somente administradores podem criar, editar, duplicar ou excluir modelos.</p>}
         </div>
-        <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>
+        {isAdmin && <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>}
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -48,14 +57,14 @@ export function WhatsAppTemplatesManager() {
           <Input placeholder="Buscar templates..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectTrigger className="w-[160px]" aria-label="Filtrar por categoria"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas categorias</SelectItem>
             {TEMPLATE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]" aria-label="Filtrar por status"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos status</SelectItem>
             <SelectItem value="approved">Aprovado</SelectItem>
@@ -74,7 +83,7 @@ export function WhatsAppTemplatesManager() {
             <div className="p-8 text-center">
               <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">Nenhum template encontrado</p>
-              <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>
+              {isAdmin && <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>}
             </div>
           ) : (
             <Table>
@@ -109,10 +118,14 @@ export function WhatsAppTemplatesManager() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(template.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
+                            {isAdmin && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => handleDelete(template.id)}><Trash2 className="w-4 h-4" /></Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </motion.tr>
@@ -141,7 +154,7 @@ export function WhatsAppTemplatesManager() {
               <div className="space-y-2">
                 <Label>Categoria</Label>
                 <Select value={editingTemplate.category || 'utility'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, category: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Categoria do template"><SelectValue /></SelectTrigger>
                   <SelectContent>{TEMPLATE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
@@ -150,14 +163,14 @@ export function WhatsAppTemplatesManager() {
               <div className="space-y-2">
                 <Label>Idioma</Label>
                 <Select value={editingTemplate.language || 'pt_BR'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, language: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Idioma do template"><SelectValue /></SelectTrigger>
                   <SelectContent>{TEMPLATE_LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={editingTemplate.status || 'draft'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Status do template"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Rascunho</SelectItem><SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="approved">Aprovado</SelectItem><SelectItem value="rejected">Rejeitado</SelectItem>
@@ -200,12 +213,16 @@ export function WhatsAppTemplatesManager() {
                   ))}
                 </div>
               )}
-              <div className="bg-[hsl(202_50%_8%)] rounded-xl p-4">
-                <div className="bg-whatsapp-dark rounded-lg p-3 max-w-[280px] ml-auto">
-                  {previewTemplate.header_text && <p className="text-primary-foreground font-bold text-sm mb-1">{renderPreviewContent(previewTemplate.header_text, previewVariables)}</p>}
-                  <p className="text-primary-foreground text-sm whitespace-pre-wrap">{renderPreviewContent(previewTemplate.content, previewVariables)}</p>
-                  {previewTemplate.footer_text && <p className="text-primary-foreground/60 text-xs mt-2">{renderPreviewContent(previewTemplate.footer_text, previewVariables)}</p>}
-                  <p className="text-primary-foreground/40 text-3xs text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+              {/* CT-38: prévia do template usa o primitivo `.catalog-phone`/tokens `--wa-*`
+                  (components.css) — fonte única da cor da bolha WhatsApp. */}
+              <div className="catalog-phone">
+                <div className="catalog-phone__body">
+                  <div className="catalog-phone__bubble">
+                    {previewTemplate.header_text && <p className="font-bold text-sm mb-1">{renderPreviewContent(previewTemplate.header_text, previewVariables)}</p>}
+                    <p className="text-sm whitespace-pre-wrap">{renderPreviewContent(previewTemplate.content, previewVariables)}</p>
+                    {previewTemplate.footer_text && <p className="opacity-60 text-xs mt-2">{renderPreviewContent(previewTemplate.footer_text, previewVariables)}</p>}
+                    <p className="opacity-40 text-3xs text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
                 </div>
               </div>
             </div>

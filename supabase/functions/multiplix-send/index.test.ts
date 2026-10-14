@@ -1,5 +1,34 @@
-import { handleMultiplixSend, personalize } from './index.ts';
+import { connectionCapabilityDenial, handleMultiplixSend, personalize } from './index.ts';
 import { resolveBlockContent } from '../_shared/multiplix-content.ts';
+import { resetRateLimitServiceClient } from '../_shared/validation.ts';
+
+// ── F60: hermeticidade de ambiente nos testes "zero rede" (Deno.env é processo-wide) ─
+// Outro arquivo da suíte (crm-integration) deixa SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY
+// setados para a URL de produção. O rate-limiter persistente (enforceRateLimit ->
+// consume_rate_limit) guarda o cliente Supabase numa promise de MÓDULO (validation.ts):
+// criado uma vez com a URL vazada, ele é reutilizado pelos testes seguintes e um deles
+// tenta rede real — o "zero rede" deixa de valer. Limpar só dentro do teste (helper
+// abaixo) não basta: um teste anterior DESTE arquivo já teria criado o cliente. A
+// limpeza no CARREGAMENTO do módulo garante que nenhum teste daqui o crie; o helper
+// mantém o mesmo isolamento dentro de cada teste e restaura o ambiente que encontrar.
+// É efeito no processo inteiro, mas a suíte Deno completa segue verde (ver relato).
+const F60_ENV_QUE_VAZA = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "EVOLUTION_API_FLAVOR"] as const;
+for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+
+/** F60: roda `rodar` com as variáveis acima LIMPAS e as restaura depois, seja qual for
+ *  o resultado — o teste prova o que diz sem depender da ordem da suíte. */
+async function comAmbienteHermetico<T>(rodar: () => Promise<T>): Promise<T> {
+  const anteriores = F60_ENV_QUE_VAZA.map((nome) => [nome, Deno.env.get(nome)] as const);
+  for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+  try {
+    return await rodar();
+  } finally {
+    for (const [nome, valor] of anteriores) {
+      if (valor === undefined) Deno.env.delete(nome);
+      else Deno.env.set(nome, valor);
+    }
+  }
+}
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -133,7 +162,7 @@ interface MockOpts {
   /** perfil (profiles.id) do usuario do JWT — e o que casa com created_by */
   ownProfileId?: string;
   dispatch?: DispatchRow | null;
-  connection?: { id: string; status: string; instance_id: string } | null;
+  connection?: { id: string; status: string; instance_id: string; capabilities?: unknown } | null;
   recipients?: Array<ReturnType<typeof recipientRow>>;
   /** telefones que a lista negra responde como suprimidos (F09) */
   suppressedPhones?: string[];
@@ -178,6 +207,12 @@ interface MockOpts {
   /** R2-API-013: segura a renovacao em voo ate o teste chamar releaseHeartbeat (prova de que
    * um tick novo nao empilha outro heartbeat por cima do que ainda esta pendente). */
   heartbeatPending?: boolean;
+  /** MX03: resposta do dreno ANTIGO `complete_multiplix_dispatch_if_drained` (o que conta
+   * `multiplix_recipients`). Existe so para provar que o "concluido" do worker nao vem mais
+   * dele: o dreno POR ITEM (`complete_multiplix_dispatch_if_items_drained`) e fiel ao banco —
+   * conclui so quando `ctx.remaining` esvazia de verdade — e `legacyDrainResult:true` prova que
+   * a resposta do worker nao vem do dreno antigo mesmo quando ele mentiria "concluido". */
+  legacyDrainResult?: boolean;
 }
 
 interface MockCtx {
@@ -461,6 +496,12 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               finally: (aoFinalizar?: () => void) => executar().finally(aoFinalizar),
             };
           }
+          case "complete_multiplix_dispatch_if_drained":
+            // MX03: o dreno ANTIGO, que conta `multiplix_recipients` pending/sending.
+            // Continua stubado (default true) porque o worker NAO pode mais chama-lo:
+            // e a assercao "0 chamadas" que prova a troca. `legacyDrainResult:true`
+            // com a fila por item ainda aberta prova que a resposta nao vem daqui.
+            return Promise.resolve({ data: opts.legacyDrainResult ?? true, error: null });
           default:
             return Promise.resolve({ data: true, error: null });
         }
@@ -973,6 +1014,57 @@ Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
   assert(ctx.completions.length === 5, `esperava 5 conclusoes (um lote), recebeu ${ctx.completions.length}`);
   assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
   assert(ctx.limits[0] === 5, `lote esperado 5, veio ${JSON.stringify(ctx.limits)}`);
+});
+
+// ------------------------------------------------------------------ MX03 (dreno)
+// O worker entrega ITENS (F55), mas ate esta correcao fechava o disparo chamando
+// `complete_multiplix_dispatch_if_drained` — a RPC do modelo ANTIGO, que conta
+// pending/sending em `multiplix_recipients`. Como `record_multiplix_item_sent` e
+// `complete_multiplix_item` NAO carimbam o recipient, com todos os itens terminais
+// o disparo ficava 'sending' para sempre (o cron reprocessava de 2 em 2 minutos).
+// O par certo e `complete_multiplix_dispatch_if_items_drained` (f32b §3), que foi
+// criado para isso e nao tinha nenhum chamador.
+
+Deno.test("MX03: com o lote processado o worker conclui pelo dreno POR ITEM (nunca pelo de recipients)", async () => {
+  // length=20 == MULTIPLIX_BATCH_SIZE padrao: a UNICA passada do worker (F11a) processa
+  // os 20, `ctx.remaining` esvazia de verdade e o dreno POR ITEM (fiel ao banco: conclui
+  // so quando a fila esvazia) pode dizer "concluido" sem precisar fingir nada.
+  const opts = batchSendingOpts("551193000", 20);
+  opts.legacyDrainResult = true; // o dreno velho diria "concluido" de todo jeito
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(ctx.completions.length === 20, `esperava os 20 itens do lote fechados, houve ${ctx.completions.length}`);
+  const drenos = rpcs(ctx, "complete_multiplix_dispatch_if_items_drained");
+  assert(drenos.length === 1, `esperava 1 dreno POR ITEM, houve ${drenos.length}`);
+  assert(
+    drenos[0].args.p_dispatch_id === ctx.dispatch?.id,
+    `o dreno tem de receber o disparo do lote, veio ${JSON.stringify(drenos[0].args)}`,
+  );
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_drained").length === 0,
+    "o worker NAO pode mais chamar o dreno de recipients (MX03): e ele que nunca drena a fila por item",
+  );
+  assert(body.completed === true, `esperava completed:true vindo do dreno por item, veio ${body.completed}`);
+});
+
+Deno.test("MX03: 'concluido' vem da fila POR ITEM — dreno antigo dizendo true nao fecha o disparo", async () => {
+  // Discriminante: os dois drenos respondem diferente. Se o worker ainda chamasse o
+  // antigo, `completed` seria true (e o disparo concluiria com item na fila). Aqui o
+  // lote (25) excede o MULTIPLIX_BATCH_SIZE padrao (20): a UNICA passada processa so
+  // 20, sobram 5 em `ctx.remaining` e o dreno POR ITEM (fiel ao banco) recusa de verdade.
+  const opts = batchSendingOpts("551193111");
+  opts.legacyDrainResult = true; // o antigo mentiria "drenado"
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    "o dreno por item tem de ser consultado mesmo quando ele recusa",
+  );
+  assert(body.completed === false, `esperava completed:false (fila de itens nao drenada), veio ${body.completed}`);
 });
 
 // ---------------------------------------------------------- F17 (cota diária)
@@ -1853,7 +1945,9 @@ Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do w
   const ctx = newCtx(opts);
   const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(risco.length === 1, `esperava UMA marcacao de risco, veio ${risco.length}`);
     assert(
@@ -1881,7 +1975,9 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   // 503 = indisponibilidade temporaria do provedor: o item falha, mas a conexao esta bem.
   const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(
       risco.length === 0,
@@ -3082,4 +3178,243 @@ Deno.test("F43: correlationId é propagado por request e o log não carrega cont
   for (const [index, linhas] of logsPorRequest.entries()) {
     f43AssertSemConteudo(linhas, [telefoneMock, textoMock, "Empresa Sigilosa"], `request ${index + 1}`);
   }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// F60 (TL-035) — a conexao DECLARA o que entrega (`whatsapp_connections.capabilities`)
+// e o worker honra a declaracao ANTES do POST. A coluna existe desde 02/10
+// (20261002671230_f60_conexao_capacidades_e_risco.sql, default '{}') e NENHUM
+// consumidor a lia: um bloco que a instancia nao entrega so era recusado pelo
+// provedor, depois do POST — o item virava outcome_unknown/failed sem dizer que a
+// causa era a conexao.
+// Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO -> o worker nao inventa
+// limite; so o `false` explicito (e um `max_chars` NUMERICO) recusa. A exclusao e
+// DETERMINISTICA (skipped, nao volta a fila): o mesmo bloco contra a mesma conexao
+// daria o mesmo resultado. Nota de voz (`voice`) e `audio` caem na chave `ptt` —
+// os dois saem pelo mesmo kind do adaptador.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** F60: roda o handler com QUALQUER fetch bloqueado e devolve as URLs tentadas.
+ *  Prova "zero rede" sem depender da flavor do provedor (em GO o POST de texto sai
+ *  em /send/text — fora do filtro "/message/" que os testes antigos contavam).
+ *  Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+ *  EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+ *  fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real. */
+async function runWithFetchRecorded(opts: MockOpts): Promise<{ ctx: MockCtx; urls: string[] }> {
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.delete("EVOLUTION_API_FLAVOR");
+  // F60: o limiter persistente guarda o client em cache no modulo — sem este
+  // reset, um client criado com o env de outro arquivo do mesmo processo
+  // `deno test` faria UMA chamada real (registrada pelo stub, quebrando o
+  // "zero rede") mesmo com o env limpo acima.
+  resetRateLimitServiceClient();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    return { ctx, urls: provider.urls };
+  } finally {
+    provider.restore();
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+}
+
+Deno.test("F60: conexao que NAO declara documento barra o bloco de documento (skipped, zero rede)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550301")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", file_name: "Contrato.pdf" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada (nem o download da midia), houve ${JSON.stringify(urls)}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_status === "skipped",
+    `status esperado 'skipped', veio ${String(ctx.completions[0].p_status)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:document",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem ser marcado como iniciado",
+  );
+});
+
+Deno.test("F60: conexao que NAO declara nota de voz barra o audio (chave ptt) — zero rede", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550302")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { ptt: false } },
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o audio tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:ptt",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+});
+
+Deno.test("F60: texto acima do max_chars DECLARADO e excluido com o teto no motivo — zero rede", async () => {
+  // "Ola Empresa 1" = 13 caracteres; o teto declarado e 5.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550303")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { max_chars: 5 } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o texto acima do teto tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_max_chars:5",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem recusada pela conexao nao pode ser congelada em snapshot",
+  );
+});
+
+Deno.test("F60: capabilities VAZIO nao inventa limite — o item segue e e enviado", async () => {
+  // O caso que o cartao fixa: "vazio significa NAO DECLARADO". Todas as conexoes
+  // nascem com '{}' — recusar o vazio pararia o modulo inteiro.
+  // Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+  // EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+  // fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real.
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  resetRateLimitServiceClient();
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550304")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: {} },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-1");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "conexao sem capacidade declarada nao pode excluir o envio (vazio = nao declarado)",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+  }
+});
+
+Deno.test("F60: o veto e POR CAPACIDADE — document:false nao barra um bloco de texto", async () => {
+  // Guarda contra o excesso de zelo: declarar que a conexao nao entrega DOCUMENTO
+  // nao pode excluir um bloco de texto. Sem esta prova, um mutante que barra
+  // qualquer item com capabilities nao-vazio passaria.
+  // Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+  // EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+  // fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real.
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  resetRateLimitServiceClient();
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550305")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-2");
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "capacidade de OUTRO tipo nao pode excluir o bloco de texto",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+  }
+});
+
+Deno.test("F60 (unidade): connectionCapabilityDenial — vazio nao limita; `false` e numero limitam", () => {
+  // Bordas que o teste de integracao nao alcanca: o TETO exato (passa) contra um
+  // caractere acima (recusa), `max_chars` nao-numerico (nao limita) e a chave do
+  // audio caindo em `ptt`.
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(10)) === null,
+    "texto EXATAMENTE no teto declarado tem de passar",
+  );
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)) === "connection_capability_max_chars:10",
+    `um caractere acima do teto tem de recusar, veio ${String(connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)))}`,
+  );
+  assert(
+    connectionCapabilityDenial({}, "text", "x".repeat(10_000)) === null,
+    "capabilities vazio = nao declarado: nao pode inventar teto",
+  );
+  assert(connectionCapabilityDenial(null, "document", "x") === null, "coluna nula = nao declarado");
+  assert(connectionCapabilityDenial(undefined, "document", "x") === null, "coluna ausente = nao declarado");
+  assert(
+    connectionCapabilityDenial({ max_chars: "4096" }, "text", "x".repeat(9_000)) === null,
+    "max_chars nao-numerico (string) nao pode virar teto",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "ptt", "oi") === "connection_capability_unsupported:ptt",
+    "ptt:false tem de recusar a nota de voz",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "audio", "oi") === "connection_capability_unsupported:ptt",
+    "audio e nota de voz saem pelo MESMO kind (ptt) — a mesma chave tem de valer",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: true }, "voice", "oi") === null,
+    "capacidade declarada como compativel nao pode recusar",
+  );
 });

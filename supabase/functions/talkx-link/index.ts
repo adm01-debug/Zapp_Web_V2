@@ -90,6 +90,22 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("Bad request: missing slug", { status: 400 });
     }
 
+    // Gate HMAC do clique: sem TALKX_CONVERT_SECRET o endpoint fecha (503,
+    // igual ao POST de conversao). Com o secret, `t` e `r` sao obrigatorios
+    // e `t` precisa ser o HMAC-SHA256 de `r` — tudo antes de qualquer escrita.
+    const convertSecret = env.get("TALKX_CONVERT_SECRET");
+    if (!convertSecret) {
+      return new Response("Service unavailable", { status: 503 });
+    }
+    const token = url.searchParams.get("t");
+    if (!token || !recipient) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const valid = await verifyHmacSignature(recipient, token, convertSecret);
+    if (!valid) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
     // destinatário (sem sessão), então o limite é por-IP, não por-usuário.
     // Falha aberta com o fallback em memória se o limiter persistente cair —

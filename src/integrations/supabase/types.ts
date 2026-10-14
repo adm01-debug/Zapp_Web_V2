@@ -10366,6 +10366,10 @@ export type Database = {
     }
     Functions: {
       accept_department_invite: { Args: { p_code: string }; Returns: Json }
+      add_contact_tag: {
+        Args: { p_contact_id: string; p_tag: string }
+        Returns: string[]
+      }
       add_agent_xp: {
         Args: { p_profile_id: string; p_xp: number }
         Returns: Json
@@ -11865,6 +11869,10 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remove_contact_tag: {
+        Args: { p_contact_id: string; p_tag: string }
+        Returns: string[]
+      }
       remove_team_member: {
         Args: { p_conversation_id: string; p_profile_id: string }
         Returns: Json
@@ -12345,6 +12353,15 @@ export type Database = {
       toggle_team_reaction: {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
+      }
+      transfer_conversation: {
+        Args: {
+          p_contact_id: string
+          p_note?: string | null
+          p_to_agent_id?: string | null
+          p_to_queue_id?: string | null
+        }
+        Returns: string
       }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }

@@ -159,7 +159,7 @@ export function CampaignsView() {
                             </div>
                             {(campaign.status === 'sending' || campaign.status === 'completed') && (
                               <div className="mt-2 flex items-center gap-2">
-                                <Progress value={progress} className="flex-1 h-2" />
+                                <Progress value={progress} className="flex-1 h-2" aria-label={`Andamento de ${campaign.name}`} />
                                 <span className="text-xs text-muted-foreground font-mono">{progress}%</span>
                               </div>
                             )}

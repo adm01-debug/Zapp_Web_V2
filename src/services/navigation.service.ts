@@ -2,12 +2,12 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
+  Building2, Wallet, Package, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
-  ScrollText, ClipboardList, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
+  ScrollText, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
   Webhook, HardDrive, FlaskConical, ListChecks, Send,
 } from 'lucide-react';
 
@@ -136,7 +136,6 @@ export class NavigationService {
         label: 'Em Desenvolvimento',
         icon: FlaskConical,
         items: [
-          { id: 'payments', icon: CreditCard, label: 'Pagamentos', roles: STAFF_ROLES },
           { id: 'meta-capi', icon: Activity, label: 'Meta CAPI', roles: STAFF_ROLES },
           { id: 'google-calendar', icon: Calendar, label: 'Calendário', roles: STAFF_ROLES },
         ],
@@ -147,7 +146,6 @@ export class NavigationService {
   static getAdvancedNav(): NavItem[] {
     return [
       { id: 'audit-logs', icon: ScrollText, label: 'Auditoria', roles: ADMIN_ONLY },
-      { id: 'auto-export', icon: ClipboardList, label: 'Export Auto', roles: ADMIN_ONLY },
       { id: 'transcriptions', icon: Mic, label: 'Transcrições', roles: ADMIN_ONLY },
       { id: 'diagnostics', icon: Compass, label: 'Diagnóstico', roles: ADMIN_ONLY },
       { id: 'performance', icon: Cpu, label: 'Performance', roles: ADMIN_ONLY },

@@ -96,6 +96,22 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        // Cores de CATEGORIA — definidas em src/styles/tokens.css (`:root` e
+        // `.dark`), par completo com contraste WCAG AA. O par de texto
+        // (`--{nome}-text`) não vira classe aqui, igual a `--primary-text`/
+        // `--warning-text`/`--destructive-text`: use `hsl(var(--violeta-text))`.
+        violeta: {
+          DEFAULT: "hsl(var(--violeta))",
+          foreground: "hsl(var(--violeta-foreground))",
+        },
+        teal: {
+          DEFAULT: "hsl(var(--teal))",
+          foreground: "hsl(var(--teal-foreground))",
+        },
+        rosa: {
+          DEFAULT: "hsl(var(--rosa))",
+          foreground: "hsl(var(--rosa-foreground))",
+        },
         kpi: {
           blue: "hsl(var(--kpi-tile-blue))",
           "blue-fg": "hsl(var(--kpi-tile-blue-fg))",
@@ -110,12 +126,10 @@ export default {
           "tile-blue": "hsl(var(--dash-tile-blue))",
           "tile-red": "hsl(var(--dash-tile-red))",
           "tile-green": "hsl(var(--dash-tile-green))",
-          "tile-violet": "hsl(var(--dash-tile-violet))",
           "tile-amber": "hsl(var(--dash-tile-amber))",
           blue: "hsl(var(--dash-blue))",
           red: "hsl(var(--dash-red))",
           green: "hsl(var(--dash-green))",
-          violet: "hsl(var(--dash-violet))",
           amber: "hsl(var(--dash-amber))",
           yellow: "hsl(var(--dash-yellow))",
         },

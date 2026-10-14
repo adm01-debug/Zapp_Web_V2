@@ -259,6 +259,26 @@ jobs:
           SECDEF_EXEC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-secdef-public-execute.test.sh
 
+      # M-DB-05 / item 474: as 13 SECURITY DEFINER de public executaveis por qualquer
+      # usuario logado sem checagem do chamador vazam papel/permissao/config. A prova
+      # aplica o arquivo inteiro da migration 20261007004545 no PostgreSQL descartavel;
+      # a guarda acima (M-DB-02) so olha EXECUTE para PUBLIC/anon,
+      # que nao cobre `authenticated`.
+      - name: Simular chamador ausente nas SECURITY DEFINER expostas
+        env:
+          SECD_CALLER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/secd-caller-check.test.sh
+
+      # Guarda geral dos invariantes do banco vivo (nao vacua, nao frouxa): RLS em toda
+      # tabela de public, security_invoker em toda view, matview exposta a anon/authenticated,
+      # search_path em SECURITY DEFINER, policy de escrita aberta e referencia pendurada em
+      # funcao/RPC e em comando de cron. A prova monta cada violacao, exige o bloqueio,
+      # desfaz e exige verde.
+      - name: Simular violações dos invariantes gerais do banco vivo
+        env:
+          LIVE_INVARIANTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-live-invariants.test.sh
+
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -405,6 +425,22 @@ jobs:
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
 
+      # R2-DB-013 (cartao t_ca15ba02): o 2o UPDATE de update_talkx_template_with_snapshot
+      # (SET current_version_id) era recusado com 42501 talkx_template_update_requires_
+      # authorized_rpc quando o snapshot do estado NOVO gravava created_at = o updated_at
+      # persistido (transaction_timestamp() via trigger) em vez de statement_timestamp().
+      # O harness roda contra PostgreSQL 17 descartavel, aplica as migrations reais e chama
+      # a RPC como 'authenticated': RED (42501) sem a correcao de t_d412bd86, GREEN com ela,
+      # e um dente que volta o carimbo do estado NOVO e derruba a prova. A migration da
+      # correcao e 20261011000017_talkx_template_snapshot_second_update.sql.
+      # E47: SKIP_DOCKER_SHIM=1 — o harness valida current_database() === 'postgres'; com o
+      # shim o banco criado e shim_<container> e essa assercao quebraria.
+      - name: Simular snapshot do 2o UPDATE de template Talk X (R2-DB-013)
+        env:
+          TALKX_SECOND_UPDATE_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-second-update-snapshot.test.sh
+
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -529,6 +565,14 @@ jobs:
         env:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-delivery-leases.test.sh
+
+      # R2-DB-007 (#78): as duas rotinas de conclusão de dispatch drenado do Multiplix
+      # precisam atribuir status com cast explícito para public.multiplix_dispatch_status;
+      # sem isso o CASE vira text e o UPDATE falha com 42804 no enum real.
+      - name: Simular conclusão drenada do Multiplix gravando status enum
+        env:
+          MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-drain-enum-cast.test.sh
 
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
@@ -724,6 +768,15 @@ jobs:
           TALKX_X033_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-health.test.sh
 
+      # M-DB-03/R3-DELTA-002: helper SECURITY DEFINER talkx_engine_cron_runs
+      # continua executavel por authenticated para admin/supervisor, mas nega
+      # authenticated comum no corpo; service_role e chamadores internos seguem
+      # funcionando. Harness RED→GREEN em PostgreSQL 17 descartável.
+      - name: Provar gate de papel nas leituras do cron do motor Talk X (M-DB-03)
+        env:
+          TALKX_CRON_GATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh
+
       # M-DB-01: o tick do motor nao aborta no expurgo LGPD (storage.protect_delete
       # FOR EACH STATEMENT levanta 42501 em DELETE direto; a fixture recria o gatilho).
       # Manifesto talkx_storage_purge_queue, alerta purge_failed com espera de 1 h,
@@ -774,6 +827,15 @@ jobs:
           MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
+
+      # R2-INB-003: prova o transporte canônico de mensagens interativas (botões,
+      # lista e CTA URL) sobre as migrations da fila atômica + a migration nova.
+      # SKIP_DOCKER_SHIM=1 porque o harness aguarda readiness com `docker logs`.
+      - name: Simular transporte canônico de mensagens interativas (botões/lista)
+        env:
+          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/interactive-buttons-list-behavior.test.sh
 
       - name: Simular contrato de dados da Telefonia v2
         env:
@@ -888,6 +950,15 @@ jobs:
         env:
           TEAM_CID_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
+      # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
+      # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
+      # Usa Docker real: o harness cria roles globais e compara pg_get_functiondef,
+      # o que nao e compativel com o docker-shim compartilhado do E47.
+      - name: Simular member_role nas RPCs de saída/remoção do team chat (TC-004)
+        env:
+          TEAM_MEMBER_ROLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
 
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
@@ -975,3 +1046,84 @@ jobs:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+
+      # N-136 (P2 · banco, roteiro de recriacao): o runbook docs/runbooks/recriar-banco-local.md
+      # documenta o comando para recriar o banco local do zero. O teste prova que o arquivo
+      # existe, cita os caminhos corretos (replay-local.sh, supabase/migrations), nao menciona
+      # o banco de producao e confere que os arquivos citados existem no repo.
+      - name: Provar o runbook de recriacao do banco local (N-136)
+        run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+  # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
+  # existia e era provado so por harness offline; nenhum workflow o chamava, entao
+  # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
+  # roda de verdade, mas SO quando o PR toca supabase/migrations/**: aplicar as ~831
+  # migrations num PostgreSQL 17 descartavel leva minutos e nao interessa a um PR que
+  # nao mexeu em migration.
+  #
+  # Sem docker-shim: o shim do E47 FINGE o docker (roteia para o postgres do service)
+  # para acelerar ~48 contratos. O replay precisa de um docker DE VERDADE, porque o
+  # replay-local.sh sobe a imagem publica do Supabase e aplica arquivo por arquivo.
+  replay-migrations:
+    name: Replay local das migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # fetch-depth: 0 para o `git diff` achar o merge-base do PR.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detectar mudanca em supabase/migrations
+        id: mudou
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # So o PR olha o diff: push na main e merge_group ja passaram pelo gate na PR.
+          if [ "${{ github.event_name }}" != "pull_request" ] || [ -z "$BASE_SHA" ]; then
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$BASE_SHA" HEAD -- supabase/migrations | grep -q .; then
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # O ECR limita pull anonimo; sem este passo um 429 do registry apareceria como
+      # "exit 2" do replay e confundiria infraestrutura com drift de migration.
+      - name: Pre-baixar a imagem do replay
+        if: steps.mudou.outputs.mudou == 'true'
+        run: |
+          img=$(grep -m1 -oE 'public\.ecr\.aws/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
+          if [ -z "$img" ]; then
+            echo "nao achei a imagem fixada por digest em scripts/db-audit/replay-local.sh"
+            exit 2
+          fi
+          echo "imagem do replay: $img"
+          for tentativa in 1 2 3; do
+            if docker image inspect "$img" >/dev/null 2>&1 || docker pull "$img"; then break; fi
+            echo "pull falhou (tentativa $tentativa); aguardando antes de repetir"
+            sleep $((tentativa * 20))
+          done
+          docker image inspect "$img" >/dev/null
+
+      # 0 = verde, 1 = migration fora do allowlist (o script NOMEIA a culpada), 2 = setup.
+      - name: Aplicar as migrations em PostgreSQL 17 descartavel
+        if: steps.mudou.outputs.mudou == 'true'
+        run: bash scripts/db-audit/replay-local.sh
+
+      # Log e TSV existem no verde e no vermelho; e o que deixa o revisor ver a
+      # migration culpada sem baixar o repo (o upload so roda se o diff tocou migration).
+      - name: Publicar o log e os erros do replay
+        if: always() && steps.mudou.outputs.mudou == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: replay-migrations
+          path: |
+            replay.log
+            replay-erros.tsv
+          if-no-files-found: warn
+          retention-days: 7

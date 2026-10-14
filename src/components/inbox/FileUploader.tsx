@@ -1,5 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { motion, AnimatePresence } from '@/components/ui/motion';
+import { zappMotion, zappTransition } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -10,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   Paperclip, Image as ImageIcon, FileVideo, FileAudio, FileText,
-  X, Upload, AlertCircle, Check, Send,
+  X, Upload, AlertCircle, Check, Send, Loader2, RotateCcw,
 } from 'lucide-react';
 import { getFileInputAccept, formatFileSize, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
 import { useFileUploadLogic, type QueuedFile } from './useFileUploadLogic';
@@ -45,17 +47,20 @@ function getCategoryIcon(category: string) {
   }
 }
 
-function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedFile; onRemove: () => void; disabled: boolean }) {
+function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile: QueuedFile; onRemove: () => void; onRetry: () => void; disabled: boolean }) {
+  // Movimento reduzido: nada se desloca, só opacidade.
+  const reduceMotion = useReducedMotion() ?? false;
+  const isError = queuedFile.status === 'error' || !queuedFile.validation.valid;
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
+      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -10 }}
+      animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 10 }}
+      transition={zappTransition.fast}
       className={cn(
         "relative border rounded-lg p-3 bg-muted/30",
         queuedFile.status === 'done' && "border-success/50 bg-success/10",
-        queuedFile.status === 'error' && "border-destructive/50 bg-destructive/10",
-        !queuedFile.validation.valid && "border-destructive/50 bg-destructive/10"
+        isError && "border-destructive/50 bg-destructive/10"
       )}
     >
       <div className="flex items-center gap-3">
@@ -77,13 +82,42 @@ function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedF
             ) : (
               <Badge variant="destructive" className="text-3xs py-0 h-5">Inválido</Badge>
             )}
-            {queuedFile.status === 'uploading' && <Badge variant="secondary" className="text-3xs py-0 h-5">Enviando...</Badge>}
+            {queuedFile.status === 'uploading' && (
+              <Badge variant="secondary" className="text-3xs py-0 h-5 gap-1">
+                <Loader2 className="w-3 h-3 motion-safe:animate-spin motion-reduce:animate-none" aria-hidden="true" />Enviando...
+              </Badge>
+            )}
             {queuedFile.status === 'done' && <Badge variant="outline" className="text-3xs py-0 h-5 bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />Enviado</Badge>}
-            {queuedFile.status === 'error' && <Badge variant="destructive" className="text-3xs py-0 h-5"><AlertCircle className="w-3 h-3 mr-1" />Erro</Badge>}
+            {queuedFile.status === 'error' && (
+              <motion.span
+                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: [0, -2, 2, -1, 1, 0] }}
+                transition={{ duration: zappMotion.duration.slow, ease: zappMotion.ease.standard }}
+              >
+                <Badge variant="destructive" className="text-3xs py-0 h-5"><AlertCircle className="w-3 h-3 mr-1" />Erro</Badge>
+              </motion.span>
+            )}
           </div>
-          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" />}
+          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />}
         </div>
-        <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7" onClick={onRemove} disabled={disabled}><X className="w-3 h-3" /></Button>
+        {queuedFile.status === 'error' && queuedFile.validation.valid && (
+          <motion.div
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={reduceMotion ? zappTransition.fast : { type: 'spring', duration: zappMotion.duration.moderate, bounce: 0.28 }}
+          >
+            <Button
+              variant="outline"
+              className="h-10 gap-1.5 px-3 border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+              onClick={onRetry}
+              disabled={disabled}
+              aria-label={`Tentar de novo: ${queuedFile.file.name}`}
+            >
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+              Tentar de novo
+            </Button>
+          </motion.div>
+        )}
+        <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7" onClick={onRemove} disabled={disabled} aria-label={`Remover ${queuedFile.file.name}`}><X className="w-3 h-3" /></Button>
       </div>
     </motion.div>
   );
@@ -103,8 +137,10 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
     uploading, uploadProgress, uploadStage, currentQueueIndex,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
-    handleExternalFile, handleExternalFiles, removeFromQueue,
+    handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
   } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
+
+  const failedCount = fileQueue.filter(f => f.status === 'error').length;
 
   useImperativeHandle(ref, () => ({
     handleExternalFile,
@@ -140,9 +176,17 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
           {isMultiMode && fileQueue.length > 0 && (
             <div className="flex-1 overflow-y-auto space-y-3 py-2 max-h-[40vh]">
-              {fileQueue.map((qf) => (
-                <QueueFileItem key={qf.id} queuedFile={qf} onRemove={() => removeFromQueue(qf.id)} disabled={uploading} />
-              ))}
+              <AnimatePresence initial={false}>
+                {fileQueue.map((qf) => (
+                  <QueueFileItem
+                    key={qf.id}
+                    queuedFile={qf}
+                    onRemove={() => removeFromQueue(qf.id)}
+                    onRetry={() => retryQueueFile(qf.id)}
+                    disabled={uploading}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           )}
 
@@ -173,7 +217,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
                       <Badge variant="destructive" className="mt-2 text-xs"><AlertCircle className="w-3 h-3 mr-1" />Inválido</Badge>
                     )}
                   </div>
-                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={handleClose} disabled={uploading}><X className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={handleClose} disabled={uploading} aria-label="Fechar envio"><X className="w-4 h-4" /></Button>
                 </div>
                 {!filePreview.validation.valid && (
                   <div className="mt-3 p-3 bg-destructive/10 rounded-lg">
@@ -190,7 +234,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
               <AnimatePresence>
                 {uploading && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-                    <Progress value={uploadProgress} className="h-2" />
+                    <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
                     <p className="text-xs text-muted-foreground text-center">
                       {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
                     </p>
@@ -218,12 +262,23 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
           {isMultiMode && uploading && (
             <div className="space-y-2">
-              <Progress value={totalQueueProgress} className="h-2" />
+              <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
               <p className="text-xs text-muted-foreground text-center">Enviando arquivo {currentQueueIndex + 1} de {fileQueue.length}...</p>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
+            {failedCount > 0 && (
+              <Button
+                variant="outline"
+                className="mr-auto border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleSendAllFiles}
+                disabled={uploading}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
+                Tentar de novo ({failedCount})
+              </Button>
+            )}
             <Button variant="outline" onClick={handleClose} disabled={uploading}>Cancelar</Button>
             <Button
               onClick={isMultiMode ? handleSendAllFiles : handleSendFile}

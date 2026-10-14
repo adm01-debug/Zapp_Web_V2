@@ -5,10 +5,18 @@ import { Target, Timer, CheckCircle2, XCircle, Users } from 'lucide-react';
 import { Sparkline } from '@/components/ui/sparkline';
 import { cn } from '@/lib/utils';
 
+/**
+ * Y17-5 — a cor do número/ícone sobre a tinta do estado (achado 04).
+ *
+ * `text-warning` (tinta de preenchimento, L50 no claro) sobre `bg-warning/10`
+ * media 1,97:1 — abaixo até dos 3:1 de texto grande. O par de TEXTO do sistema
+ * (`--warning-text`/`--destructive-text`) fecha >=4,5:1 nos quatro temas; o
+ * verde já é o próprio par de texto (`--success`).
+ */
 const getRateColor = (rate: number) => {
   if (rate >= 90) return 'text-success';
-  if (rate >= 70) return 'text-warning';
-  return 'text-destructive';
+  if (rate >= 70) return 'text-[hsl(var(--warning-text))]';
+  return 'text-[hsl(var(--destructive-text))]';
 };
 
 const getRateBg = (rate: number) => {
@@ -67,7 +75,7 @@ export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, spark
             <div className="flex items-center gap-3 mt-3">
               <div className="flex gap-4 text-sm flex-1">
                 <span className="text-success flex items-center gap-1"><CheckCircle2 className="h-4 w-4" />{data.firstResponse.onTime} no prazo</span>
-                <span className="text-destructive flex items-center gap-1"><XCircle className="h-4 w-4" />{data.firstResponse.breached} atrasados</span>
+                <span className="text-[hsl(var(--destructive-text))] flex items-center gap-1"><XCircle className="h-4 w-4" />{data.firstResponse.breached} atrasados</span>
               </div>
               {sparkFR.length >= 2 && <Sparkline data={sparkFR} width={64} height={20} color="hsl(var(--info))" />}
             </div>
@@ -83,7 +91,7 @@ export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, spark
                 <p className="text-sm font-medium text-muted-foreground">Total Conversas</p>
                 <p className="text-3xl font-bold">{data.totalConversations}</p>
               </div>
-              <div className="p-3 rounded-full bg-warning/10"><Users className="h-6 w-6 text-warning" /></div>
+              <div className="p-3 rounded-full bg-warning/10"><Users className="h-6 w-6 text-[hsl(var(--warning-text))]" /></div>
             </div>
             <div className="flex items-center gap-3 mt-3">
               <p className="text-sm text-muted-foreground flex-1">{periodLabel}</p>

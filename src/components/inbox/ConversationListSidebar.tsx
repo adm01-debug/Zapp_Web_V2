@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback, useRef, useMemo } from 'react';
+import { lazy, Suspense, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { MobilePullToRefreshIndicator } from '@/components/mobile/MobilePullToRefresh';
@@ -12,7 +12,7 @@ import type { useConversationActions } from '@/hooks/chat/useConversationActions
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Search as SearchIcon, X } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CloseConversationDialog } from './CloseConversationDialog';
@@ -26,6 +26,32 @@ const SKELETON_WIDTHS = [
   { name: 91, msg: 80 }, { name: 65, msg: 48 }, { name: 78, msg: 65 },
   { name: 88, msg: 73 },
 ];
+
+/* Largura ajustável da lista (paridade V3, useInboxSidebarResize): arrasta de 280
+   a 600 px, lembra a escolha e o duplo clique/Home volta ao padrão. */
+const SIDEBAR_WIDTH_STORAGE_KEY = 'zapp:inbox:sidebar-width';
+const SIDEBAR_MIN_WIDTH = 280;
+const SIDEBAR_MAX_WIDTH = 600;
+const SIDEBAR_DEFAULT_WIDTH = 350;
+const SIDEBAR_WIDTH_STEP = 16;
+/** Espaço que precisa sobrar para o painel da conversa ao arrastar a lista. */
+const SIDEBAR_RESERVED_WIDTH = 60;
+
+function clampSidebarWidth(width: number, maxWidth: number): number {
+  return Math.max(SIDEBAR_MIN_WIDTH, Math.min(maxWidth, Math.round(width)));
+}
+
+/** Lê a largura lembrada; storage indisponível ou valor inválido cai no padrão. */
+function readStoredSidebarWidth(): number {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    const parsed = raw === null ? Number.NaN : Number.parseInt(raw, 10);
+    if (Number.isFinite(parsed)) return parsed;
+  } catch {
+    /* localStorage indisponível (modo privado/cota): a largura vale só nesta sessão */
+  }
+  return SIDEBAR_DEFAULT_WIDTH;
+}
 
 interface ConversationListSidebarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- facade legado do Inbox; tipagem integral fica fora deste componente.
@@ -59,6 +85,114 @@ export function ConversationListSidebar({
   const isMobile = useIsMobile();
   const { isZen = false, toggleZen } = useLayoutContext();
   const contactSearchRef = useRef<HTMLInputElement>(null);
+
+  /* ── Largura ajustável da lista (desktop) ─────────────────────────────── */
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isResizingRef = useRef(false);
+  const dragLeftRef = useRef(0);
+  const [windowWidth, setWindowWidth] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+  const [sidebarWidth, setSidebarWidth] = useState<number>(readStoredSidebarWidth);
+
+  // O teto acompanha a janela: a lista não pode engolir o painel da conversa.
+  const maxSidebarWidth = Math.max(
+    SIDEBAR_MIN_WIDTH,
+    Math.min(SIDEBAR_MAX_WIDTH, windowWidth - SIDEBAR_RESERVED_WIDTH)
+  );
+  // Largura efetiva derivada no render: se a janela encolher, a lista acompanha
+  // sem precisar de setState em efeito.
+  const effectiveSidebarWidth = Math.min(sidebarWidth, maxSidebarWidth);
+
+  const applySidebarWidth = useCallback(
+    (nextWidth: number) => {
+      const clamped = clampSidebarWidth(nextWidth, maxSidebarWidth);
+      setSidebarWidth(clamped);
+      try {
+        localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clamped));
+      } catch {
+        /* localStorage indisponível: a largura vale só nesta sessão */
+      }
+    },
+    [maxSidebarWidth]
+  );
+
+  const stopResizing = useCallback(() => {
+    isResizingRef.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  const handleMoveRef = useRef<(clientX: number) => void>(() => {});
+  const handleMove = useCallback(
+    (clientX: number) => {
+      if (!isResizingRef.current) return;
+      // clientX é do viewport; a largura é a distância até a borda esquerda da lista.
+      applySidebarWidth(clientX - dragLeftRef.current);
+    },
+    [applySidebarWidth]
+  );
+
+  useEffect(() => {
+    handleMoveRef.current = handleMove;
+  }, [handleMove]);
+
+  const startResizing = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    event.preventDefault();
+    isResizingRef.current = true;
+    dragLeftRef.current = sidebarRef.current?.getBoundingClientRect().left ?? 0;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (event: MouseEvent) => handleMoveRef.current(event.clientX);
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (touch) handleMoveRef.current(touch.clientX);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('mouseup', stopResizing);
+    document.addEventListener('touchend', stopResizing);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('mouseup', stopResizing);
+      document.removeEventListener('touchend', stopResizing);
+    };
+  }, [stopResizing]);
+
+  useEffect(() => {
+    const onWindowResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onWindowResize);
+    return () => window.removeEventListener('resize', onWindowResize);
+  }, []);
+
+  /** Setas ajustam de pouco em pouco; Home/End vão ao mínimo/máximo. */
+  const handleResizeKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        applySidebarWidth(effectiveSidebarWidth - SIDEBAR_WIDTH_STEP);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        applySidebarWidth(effectiveSidebarWidth + SIDEBAR_WIDTH_STEP);
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        applySidebarWidth(SIDEBAR_MIN_WIDTH);
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        applySidebarWidth(SIDEBAR_MAX_WIDTH);
+      }
+    },
+    [applySidebarWidth, effectiveSidebarWidth]
+  );
+
+  const resetSidebarWidth = useCallback(() => {
+    applySidebarWidth(SIDEBAR_DEFAULT_WIDTH);
+  }, [applySidebarWidth]);
+
   const [contactSearch, setContactSearch] = useState('');
   const [resolveTarget, setResolveTarget] = useState<string | null>(null);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
@@ -114,10 +248,37 @@ export function ConversationListSidebar({
   }, [inboxFilters]);
 
   return (
-    <div className={cn(
-      'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-inbox-panel flex flex-col overflow-hidden',
-      isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : 'w-[350px] min-w-[350px] max-w-[350px]'
-    )}>
+    <div
+      ref={sidebarRef}
+      data-testid="conversation-list-sidebar"
+      style={
+        isMobile
+          ? undefined
+          : { width: effectiveSidebarWidth, minWidth: SIDEBAR_MIN_WIDTH, maxWidth: maxSidebarWidth }
+      }
+      className={cn(
+        'h-full min-h-0 flex-shrink-0 relative z-10 border-r border-border bg-inbox-panel flex flex-col overflow-hidden',
+        isMobile ? (inbox.selectedContactId ? 'hidden' : 'w-full') : undefined
+      )}
+    >
+      {!isMobile && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Ajustar largura da lista de conversas"
+          aria-valuenow={effectiveSidebarWidth}
+          aria-valuemin={SIDEBAR_MIN_WIDTH}
+          aria-valuemax={maxSidebarWidth}
+          tabIndex={0}
+          data-testid="conversation-list-resize-handle"
+          title="Arraste para ajustar a largura · duplo clique restaura"
+          onMouseDown={startResizing}
+          onTouchStart={startResizing}
+          onDoubleClick={resetSidebarWidth}
+          onKeyDown={handleResizeKeyDown}
+          className="absolute inset-y-0 right-0 z-20 w-1.5 cursor-col-resize touch-none bg-transparent transition-colors hover:bg-primary/30 focus-visible:bg-primary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+        />
+      )}
       <BulkActionsToolbar
         selectedCount={bulkActions.selectedIds.size}
         onMarkAsRead={bulkActions.bulkMarkAsRead}
@@ -129,19 +290,54 @@ export function ConversationListSidebar({
 
       <div className="border-b border-border shrink-0">
         {!isMobile && (
-          <div className="h-14 px-4 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
-                <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground leading-none">Conversas</h1>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={inbox.refetch}
+                  disabled={inbox.loading}
+                  aria-label="Atualizar conversas"
+                  title="Atualizar conversas"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={cn('h-4 w-4', inbox.loading && 'motion-safe:animate-spin')} />
+                </Button>
               </div>
+              {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
             </div>
-            {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
+              <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+            </div>
           </div>
         )}
 
-        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'pb-1')}>
+        <StatusChips
+          conversations={inbox.conversations}
+          chipTab={inboxFilters.chipTab}
+          onChipTabChange={inboxFilters.setChipTab}
+        />
+      </div>
+
+      <div className="border-b border-border shrink-0">
+        <div className={cn('flex items-center gap-2 px-4', isMobile ? 'pt-1.5 pb-1' : 'py-2')}>
+          {!isMobile && (
+            <div className="shrink-0">
+              <InboxFilters
+                filters={inboxFilters.filters}
+                onFiltersChange={inboxFilters.setFilters}
+                showAll={inboxFilters.showAll}
+                onShowAllChange={inboxFilters.setShowAll}
+                selectedContactType={inboxFilters.selectedContactType}
+                onContactTypeChange={inboxFilters.handleContactTypeChange}
+                selectedQueueId={inboxFilters.selectedQueueId}
+                onQueueChange={inboxFilters.setSelectedQueueId}
+              />
+            </div>
+          )}
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -149,7 +345,7 @@ export function ConversationListSidebar({
               placeholder="Buscar conversas…"
               value={contactSearch}
               onChange={(e) => handleContactSearch(e.target.value)}
-              className="pl-10 pr-8 h-10 rounded-xl bg-input border border-border text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
+              className="pl-10 pr-8 h-12 rounded-full bg-input border border-border text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30"
               aria-label="Buscar contato pelo nome"
             />
             {contactSearch && (
@@ -172,26 +368,22 @@ export function ConversationListSidebar({
             />
           )}
         </div>
-        <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
-          <InboxFilters
-            filters={inboxFilters.filters}
-            onFiltersChange={inboxFilters.setFilters}
-            showAll={inboxFilters.showAll}
-            onShowAllChange={inboxFilters.setShowAll}
-            selectedContactType={inboxFilters.selectedContactType}
-            onContactTypeChange={inboxFilters.handleContactTypeChange}
-            selectedQueueId={inboxFilters.selectedQueueId}
-            onQueueChange={inboxFilters.setSelectedQueueId}
-            onRefetch={inbox.refetch}
-            isRefetching={inbox.loading}
-          />
-        </div>
-
-        <StatusChips
-          conversations={inbox.conversations}
-          chipTab={inboxFilters.chipTab}
-          onChipTabChange={inboxFilters.setChipTab}
-        />
+        {isMobile && (
+          <div className="px-4 pb-2 overflow-x-auto scrollbar-none">
+            <InboxFilters
+              filters={inboxFilters.filters}
+              onFiltersChange={inboxFilters.setFilters}
+              showAll={inboxFilters.showAll}
+              onShowAllChange={inboxFilters.setShowAll}
+              selectedContactType={inboxFilters.selectedContactType}
+              onContactTypeChange={inboxFilters.handleContactTypeChange}
+              selectedQueueId={inboxFilters.selectedQueueId}
+              onQueueChange={inboxFilters.setSelectedQueueId}
+              onRefetch={inbox.refetch}
+              isRefetching={inbox.loading}
+            />
+          </div>
+        )}
       </div>
 
       {isMobile && (
@@ -248,14 +440,86 @@ export function ConversationListSidebar({
               prestador_servico: 'Nenhum prestador encontrado',
               transportadora: 'Nenhuma transportadora encontrada',
             };
-            const msg = inboxFilters.search ? 'Nenhuma conversa encontrada' : emptyMessages[inboxFilters.selectedContactType || ''] || 'Sem conversas';
+            // Distingue "não há conversas" de "os filtros escondem todas": sem
+            // isso o atendente lê "Sem conversas" quando na verdade o escopo
+            // "Meus" (ou a busca, a fila e o tipo de contato) escondeu a lista.
+            // `chipCounts` é a MESMA contagem que alimenta os chips (countByChip),
+            // então o número do atalho bate com o que a lista mostraria.
+            const totalLoaded = inbox.conversations?.length ?? 0;
+            const chipCounts = inboxFilters.chipCounts ?? {};
+            const countWaiting = chipCounts.waiting ?? 0;
+            const countAttending = chipCounts.attending ?? 0;
+            const countUnread = chipCounts.unread ?? 0;
+            const hasActiveTypeFilter =
+              !!inboxFilters.selectedContactType && inboxFilters.selectedContactType !== 'all';
+            const filtersHideAll =
+              inboxFilters.chipTab !== 'archived' &&
+              !inbox.usingCache &&
+              !inboxFilters.search &&
+              totalLoaded > 0;
+            const canShowWaiting =
+              filtersHideAll && inboxFilters.chipTab !== 'waiting' && countWaiting > 0;
+            const canShowAttending =
+              filtersHideAll && inboxFilters.chipTab !== 'attending' && countAttending > 0;
+            const canShowUnread =
+              filtersHideAll && inboxFilters.chipTab !== 'unread' && countUnread > 0;
+            const canShowAllAgents =
+              filtersHideAll && inboxFilters.chipTab === 'attending' && !inboxFilters.showAll;
+            const canClearTypeFilter = filtersHideAll && hasActiveTypeFilter;
+            const hasShortcuts =
+              canShowWaiting || canShowAttending || canShowUnread || canShowAllAgents || canClearTypeFilter;
+            const msg = inboxFilters.chipTab === 'archived'
+              ? 'Nenhuma conversa arquivada'
+              : inbox.usingCache
+                ? 'Modo offline — sem dados em cache'
+                : inboxFilters.search
+                  ? 'Nenhuma conversa encontrada'
+                  : filtersHideAll
+                    ? `Nenhuma conversa nesta aba (${totalLoaded} no total). Ajuste os filtros.`
+                    : emptyMessages[inboxFilters.selectedContactType || ''] || 'Sem conversas';
             return (
-              <motion.div key={inboxFilters.selectedContactType || 'all'} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="p-8 text-center">
+              <motion.div key={inboxFilters.selectedContactType || 'all'} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="p-8 text-center" data-testid="inbox-empty-state">
                 <div className="w-14 h-14 rounded-2xl bg-kpi-blue text-kpi-blue-fg flex items-center justify-center mx-auto mb-3">
                   <EmptyIcon className="w-6 h-6" />
                 </div>
-                <p className="text-[15px] font-semibold text-foreground mb-1">{msg}</p>
-                <p className="text-[13px] text-muted-foreground">Novas conversas aparecerão aqui.</p>
+                <p role="status" className="text-[15px] font-semibold text-foreground mb-1">{msg}</p>
+                {!filtersHideAll && !inbox.usingCache && inboxFilters.chipTab !== 'archived' && (
+                  <p className="text-[13px] text-muted-foreground">Novas conversas aparecerão aqui.</p>
+                )}
+                {filtersHideAll && hasShortcuts && (
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2" data-testid="inbox-empty-shortcuts">
+                    {canShowWaiting && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('waiting')}>
+                        Ver aguardando ({countWaiting})
+                      </Button>
+                    )}
+                    {canShowAttending && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('attending')}>
+                        Ver atendendo ({countAttending})
+                      </Button>
+                    )}
+                    {canShowUnread && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('unread')}>
+                        Ver não lidas ({countUnread})
+                      </Button>
+                    )}
+                    {canShowAllAgents && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setShowAll(true)}>
+                        Ver todos os atendentes
+                      </Button>
+                    )}
+                    {canClearTypeFilter && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.handleContactTypeChange(null)}>
+                        Limpar filtro de tipo
+                      </Button>
+                    )}
+                  </div>
+                )}
               </motion.div>
             );
           })()

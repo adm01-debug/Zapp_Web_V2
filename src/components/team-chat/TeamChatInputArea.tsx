@@ -101,7 +101,7 @@ export function TeamChatInputArea({
                 <p className="text-3xs font-medium text-primary">{replyTo.sender?.name || 'Você'}</p>
                 <p className="text-xs text-muted-foreground truncate">{replyTo.content || 'Mídia'}</p>
               </div>
-              <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={onCancelReply}><X className="w-3 h-3" /></Button>
+              <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={onCancelReply} aria-label="Cancelar resposta"><X className="w-3 h-3" /></Button>
             </div>
           </motion.div>
         )}
@@ -155,6 +155,7 @@ export function TeamChatInputArea({
           <div className="flex items-center gap-1.5 shrink-0">
             <Tooltip><TooltipTrigger asChild>
               <Button onClick={handleSendWithAnimation} disabled={!draft.hasText || draft.isOverLimit || isPending} size="icon"
+                aria-label="Enviar mensagem"
                 className={cn("rounded-full shrink-0 disabled:opacity-40 touch-manipulation active:scale-95 transition-all bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25",
                   isMobile ? "w-11 h-11" : "w-10 h-10", sendAnimation && "motion-safe:animate-pulse")}>
                 {isPending ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />}
@@ -165,7 +166,8 @@ export function TeamChatInputArea({
               <Button size="icon" className={cn("shrink-0 touch-manipulation active:scale-95 rounded-full transition-all",
                 isMobile ? "w-11 h-11" : "w-10 h-10",
                 isRecordingAudio ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30" : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30")}
-                onClick={onRecordToggle}>
+                onClick={onRecordToggle}
+                aria-label={isRecordingAudio ? "Parar gravação" : "Gravar áudio"}>
                 <Mic className={cn("w-5 h-5", isRecordingAudio && "motion-safe:animate-pulse")} />
               </Button>
             </TooltipTrigger><TooltipContent side="top">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent></Tooltip>

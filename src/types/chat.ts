@@ -30,6 +30,14 @@ export interface MessageReaction {
   createdAt?: string;
 }
 
+/**
+ * Motivo pelo qual uma mensagem cai no tipo `unsupported`: o Zapp Web V2 não
+ * renderiza enquete, visualização única nem contato compartilhado, e qualquer
+ * outro tipo cru do WhatsApp que chegue sem tradução. O componente de fallback
+ * (MessageBubbleUnsupported) escolhe o texto por este campo.
+ */
+export type UnsupportedMessageKind = 'poll' | 'view_once' | 'contact' | 'other';
+
 export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'sender'>> {
   id: string;
   content: string;
@@ -37,7 +45,9 @@ export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'se
   sender: 'agent' | 'contact';
   senderName?: string;
   timestamp: Date;
-  type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'document' | 'location' | 'interactive' | 'sticker';
+  type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'document' | 'location' | 'interactive' | 'sticker' | 'unsupported';
+  /** Preenchido quando `type === 'unsupported'`: diz qual fallback mostrar. */
+  unsupportedKind?: UnsupportedMessageKind;
   mediaUrl?: string;
   isEdited?: boolean;
   replyTo?: { messageId: string; content: string; sender: 'agent' | 'contact'; type?: string } | null;
@@ -118,6 +128,8 @@ export interface InteractiveButton {
   id: string;
   text?: string;
   title?: string;
+  // 'call' e o tipo canonico (CTA de ligacao); 'phone' e alias legado mantido
+  // porque mensagens ja persistidas usam 'phone'.
   type?: 'reply' | 'url' | 'call' | 'phone';
   url?: string;
   phoneNumber?: string;

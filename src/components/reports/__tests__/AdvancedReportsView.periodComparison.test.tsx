@@ -3,6 +3,7 @@ import { render, renderHook, screen, waitFor, fireEvent, act } from '@testing-li
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { axe } from 'vitest-axe';
 import { appDayKey, appDayStart, appShiftDayKey } from '@/lib/localDay';
 
 // R2-MOD-017 — Relatórios Avançados.
@@ -169,5 +170,26 @@ describe('AdvancedReportsView — rótulo do período anterior (R2-MOD-017)', ()
       `${inicio.slice(6, 10)}-${inicio.slice(3, 5)}-${inicio.slice(0, 2)}`,
     );
     expect(inicio).toBe(format(new Date(previousWindow.gte), 'dd/MM/yyyy'));
+  });
+});
+
+describe('AdvancedReportsView — acessibilidade dos filtros (N-091)', () => {
+  beforeEach(() => {
+    h.calls.length = 0;
+    h.state.rows = seededMessages(1, 7);
+  });
+
+  it('getByRole acha os 2 comboboxes (Período e Agente) pelos nomes acessíveis', async () => {
+    render(<AdvancedReportsView />, { wrapper: makeWrapper() });
+
+    expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Agente' })).toBeInTheDocument();
+  });
+
+  it('axe button-name zerado nos filtros de período e agente', async () => {
+    const { container } = render(<AdvancedReportsView />, { wrapper: makeWrapper() });
+    const results = await axe(container);
+    const buttonNameViolations = results.violations.filter((v: { id: string }) => v.id === 'button-name');
+    expect(buttonNameViolations).toHaveLength(0);
   });
 });

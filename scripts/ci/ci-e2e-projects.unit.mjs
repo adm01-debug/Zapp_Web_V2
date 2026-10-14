@@ -17,12 +17,25 @@ import { readFileSync } from 'node:fs';
 const RAIZ = new URL('../../', import.meta.url);
 const ler = (rel) => readFileSync(new URL(rel, RAIZ), 'utf8');
 
-/** Nomes de projeto passados ao Playwright em cada invocação de `bun run test:e2e`. */
+/** Nomes de projeto passados ao Playwright: na linha `bun run test:e2e`
+ *  (job simples) ou nas linhas `projects:` da matriz do e2e-logado.yml
+ *  (E83: a run expande `matrix.projects`). Na matriz cada token ja leva o
+ *  prefixo de projeto (travado em e2e/quarantine.unit.mjs); aqui o prefixo
+ *  e removido para comparar nomes. */
 function projetosNoWorkflow(yaml) {
   const nomes = [];
   for (const linha of yaml.split('\n')) {
-    if (!linha.includes('bun run test:e2e')) continue;
-    for (const m of linha.matchAll(/--project=([a-z0-9-]+)/g)) nomes.push(m[1]);
+    if (linha.includes('bun run test:e2e')) {
+      for (const m of linha.matchAll(/--project=([a-z0-9-]+)/g)) nomes.push(m[1]);
+      continue;
+    }
+    const matriz = /^\s*projects:\s*(.+)$/.exec(linha);
+    if (matriz) {
+      for (const token of matriz[1].trim().split(/\s+/)) {
+        const m = /^--project=([a-z0-9-]+)$/.exec(token);
+        if (m) nomes.push(m[1]);
+      }
+    }
   }
   return nomes;
 }

@@ -5,9 +5,17 @@
  * waiting_count = 0 e o alerta configurado ("mais de N contatos aguardando")
  * nunca aparecia; com a contagem real, o alerta dispara para a fila acima do
  * limite e nao dispara para a fila zerada.
+ *
+ * N086 — ordem de cabecalhos e nome do botao de dispensar alerta:
+ *  - 'Alertas Ativos' e uma SECAO da pagina logo abaixo do h1 do PageHeader
+ *    (PageHeader.tsx:148) e acima dos h3 dos CardTitle dos cartoes (card.tsx:93).
+ *    Logo o nivel correto e h2 (h1 -> h2 -> h3, sem pular nivel).
+ *  - o botao X (QueueAlertsDisplay.tsx) nao tinha nome; passa a ter
+ *    "Dispensar alerta <tipo>".
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockQueues = [
@@ -124,5 +132,46 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     // O cartao da fila mostra a contagem real (nao mais 0).
     expect(screen.getAllByText('Aguardando')).toHaveLength(2);
     expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('mantem a ordem de cabecalhos (h1->h2->h3) e da nome ao botao de dispensar por tipo', async () => {
+    const { container } = renderView();
+
+    await waitFor(() => {
+      expect(screen.getByText('Alertas Ativos (2)')).toBeInTheDocument();
+    });
+
+    // Causa 1 — nivel do titulo: 'Alertas Ativos' e secao da pagina (h2), nao h3.
+    // O h1 vem do PageHeader (PageHeader.tsx:148) e os titulos dos cartoes sao h3
+    // (CardTitle, card.tsx:93); logo a secao fica em h2.
+    const alertasHeading = screen.getByText('Alertas Ativos (2)').closest('h2');
+    expect(alertasHeading).toBeTruthy();
+
+    // Ordem real de TODOS os cabecalhos renderizados: nenhum nivel sobe mais de 1.
+    const levels = screen.getAllByRole('heading').map((h) => Number(h.tagName.slice(1)));
+    expect(levels[0]).toBe(1); // existe o h1 da pagina
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1);
+    }
+    // 'Alertas Ativos' (h2) aparece antes dos titulos dos cartoes (h3).
+    expect(levels.indexOf(2)).toBeGreaterThanOrEqual(0);
+    expect(levels.indexOf(3)).toBeGreaterThan(levels.indexOf(2));
+
+    // Causa 2 — nome acessivel: cada tipo de alerta da nome proprio ao botao X.
+    expect(screen.getByRole('button', { name: 'Dispensar alerta contatos aguardando' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dispensar alerta taxa de atribuição' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Dispensar alerta / })).toHaveLength(2);
+
+    // axe — ordem de cabecalhos sem violacao.
+    const results = await axe(container);
+    const headingOrder = results.violations.filter((v) => v.id === 'heading-order');
+    expect(headingOrder).toHaveLength(0);
+
+    // axe — o subtree dos alertas nao tem botao sem nome (os botoes de dispensar
+    // agora tem nome; o cartao de fila tem outros botoes fora deste escopo).
+    const alertsRegion = screen.getByText('Alertas Ativos (2)').parentElement!;
+    const alertResults = await axe(alertsRegion, { rules: { 'button-name': { enabled: true } } });
+    const buttonName = alertResults.violations.filter((v) => v.id === 'button-name');
+    expect(buttonName).toHaveLength(0);
   });
 });

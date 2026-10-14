@@ -36,7 +36,7 @@ export const ReactionBadge = memo(function ReactionBadge({ reaction, onClick, si
           ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
           : 'border-border bg-background hover:bg-accent text-foreground',
       )}
-      aria-label={`${reaction.emoji} ${reaction.count} reação${reaction.count !== 1 ? 'ões' : ''}`}
+      aria-label={`${reaction.emoji} ${reaction.count} ${reaction.count === 1 ? 'reação' : 'reações'}`}
       aria-pressed={reaction.reactedByMe}
     >
       <span>{reaction.emoji}</span>

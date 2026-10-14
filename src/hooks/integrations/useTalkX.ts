@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { TALKX_OVERVIEW_STATS_KEY } from './useTalkXOverviewStats';
 
 // A função é introduzida pela migration desta mesma mudança. O types-sync gera
 // a assinatura canônica somente depois que o banco canônico receber a migration.
@@ -49,6 +50,7 @@ export interface TalkXCampaign {
   audience_source?: 'contacts' | 'segment' | 'crm360';
   audience_filters?: Record<string, unknown>;
   segment_id?: string | null;
+  segment_ids?: string[] | null;
   template_id?: string | null;
   // V26 — versão do template (talkx_template_versions.id) que originou a
   // mensagem. Opcional até o types-sync canônico após a migration da coluna.
@@ -70,6 +72,10 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
+  // N-102: dias da semana permitidos para envio (0=dom, 6=sáb; nulo=todos).
+  send_weekdays?: number[] | null;
+  // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
+  respect_dnd?: boolean | null;
 }
 
 export interface TalkXRecipient {
@@ -81,6 +87,7 @@ export interface TalkXRecipient {
   sent_at: string | null;
   delivered_at: string | null;
   error_message: string | null;
+  manual_retry_count: number | null;
   created_at: string;
   contacts?: {
     name: string;
@@ -184,6 +191,7 @@ export function useTalkX() {
             if (pending.size === 0) return;
             // Novo mapa: eventos que chegarem durante o flush formam o próximo lote.
             pendingUpdatesRef.current = new Map();
+            queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
             queryClient.setQueryData<TalkXCampaign[]>(['talkx-campaigns'], (old) => {
               if (!old) return old;
               return old.map((c) => {
@@ -199,6 +207,7 @@ export function useTalkX() {
         { event: 'INSERT', schema: 'public', table: 'talkx_campaigns' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+          queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
         }
       )
       .subscribe((status) => {

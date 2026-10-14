@@ -31,7 +31,7 @@ export function AbandonmentRate() {
             Taxa de Abandono
           </CardTitle>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-24 h-7 text-xs" aria-label="Período"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="1">Hoje</SelectItem>
               <SelectItem value="7">7 dias</SelectItem>

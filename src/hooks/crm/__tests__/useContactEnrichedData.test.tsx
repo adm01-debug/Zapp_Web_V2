@@ -48,28 +48,8 @@ const mockFrom = vi.fn((table: string) => {
       })),
     };
   }
-  if (table === 'ai_conversation_tags') {
-    return {
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      })),
-    };
-  }
-  if (table === 'conversation_sla') {
-    return {
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() => ({
-              maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
-            })),
-          })),
-        })),
-      })),
-    };
-  }
+  // Qualquer outra tabela (ex: ai_conversation_tags, conversation_sla) cai aqui: se o hook
+  // voltar a consultá-las, a cadeia não bate com o esperado e o teste falha.
   return { select: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ data: [], error: null })) })) };
 });
 
@@ -164,5 +144,18 @@ describe('useContactEnrichedData — sincronização ao vivo via Realtime', () =
     enrichedRow = { ...enrichedRow!, company: 'OutraEmpresa' };
     rerender({ contactId: 'contact-2' });
     await waitFor(() => expect(result.current.enrichedData?.company).toBe('OutraEmpresa'));
+  });
+
+  it('não consulta ai_conversation_tags nem conversation_sla e não devolve aiTags/slaInfo (etiquetas de IA e SLA saíram do painel)', async () => {
+    mockFrom.mockClear();
+    const { result } = renderHook(() => useContactEnrichedData('contact-sem-tags-sla'), { wrapper });
+
+    await waitFor(() => expect(result.current.enrichedData?.company).toBe('Acme'));
+
+    const tabelasConsultadas = mockFrom.mock.calls.map(([tabela]) => tabela);
+    expect(tabelasConsultadas).not.toContain('ai_conversation_tags');
+    expect(tabelasConsultadas).not.toContain('conversation_sla');
+    // O contrato do hook ficou só com o dado enriquecido.
+    expect(Object.keys(result.current)).toEqual(['enrichedData']);
   });
 });

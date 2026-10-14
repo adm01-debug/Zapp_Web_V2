@@ -6,6 +6,13 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
 
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
 import type { WizardState } from '@/components/talkx/TalkXCampaignWizard';
 
@@ -20,7 +27,7 @@ import type { WizardState } from '@/components/talkx/TalkXCampaignWizard';
 function reviewEd(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Campanha X136', description: '', objective: 'sales',
-    audienceSource: 'contacts', selectedSegment: null,
+    audienceSource: 'contacts', selectedSegments: [],
     selectedContacts: [], eligibleCount: 10, audienceTotal: 12,
     respectSuppression: true, suppressedCount: 2,
     selectedTemplate: null, messageTemplate: 'Oi {{nome}}',

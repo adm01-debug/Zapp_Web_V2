@@ -202,7 +202,7 @@ describe('tamanho de página com efeito — R2-MOD-060 (#497)', () => {
   it('Supressão: "20 por página" mostra os 14 contatos e volta para a 1ª página', async () => {
     wrap(<TalkXSuppression />);
     expect(await screen.findByText('Mostrando 1 a 10 de 14 contatos suprimidos')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Remover' })).toHaveLength(10);
+    expect(screen.getAllByRole('button', { name: /^Ações de / })).toHaveLength(10);
 
     fireEvent.click(screen.getByRole('button', { name: '2' }));
     expect(screen.getByText('Mostrando 11 a 14 de 14 contatos suprimidos')).toBeTruthy();
@@ -210,6 +210,6 @@ describe('tamanho de página com efeito — R2-MOD-060 (#497)', () => {
     escolherTamanhoPagina(20);
 
     expect(screen.getByText('Mostrando 1 a 14 de 14 contatos suprimidos')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Remover' })).toHaveLength(14);
+    expect(screen.getAllByRole('button', { name: /^Ações de / })).toHaveLength(14);
   });
 });

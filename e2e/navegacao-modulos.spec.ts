@@ -21,13 +21,13 @@ import { join } from 'node:path';
  *
  * AUTENTICAÇÃO: sempre contra o banco LOCAL do conjunto do cartão — o wrapper
  * zapp-e2e-local entrega ao app a URL local (VITE_ZAPP_LOCAL_SUPABASE_URL) e o
- * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). O projeto
- * que executa este spec (`chromium-authenticated`) chega com a sessão do projeto
- * `setup`, que faz login REAL contra esse mesmo banco local: se ela já estiver
- * montada o app redireciona para o shell e a varredura segue daí; se não estiver,
- * o teste faz o próprio login pela tela. Em nenhum caminho se lê sessão de
- * produção, fixture real ou segredo externo (R1): o conjunto local prende o DNS
- * da produção e o zapp-db-guard confere o ambiente antes de rodar.
+ * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). A rodada
+ * do agente roda por config local do cartão (em `.tmp/`), sem projeto
+ * autenticado pré-salvo nem sessão salva do `setup`: se a sessão local já
+ * estiver montada o app redireciona para o shell e a varredura segue daí; se não
+ * estiver, o teste faz o próprio login pela tela. Em nenhum caminho se lê sessão
+ * de produção, fixture real ou segredo externo (R1): o conjunto local prende o
+ * DNS da produção e o zapp-db-guard confere o ambiente antes de rodar.
  *
  * A VARREDURA REPROVA por padrão. Só escapam as ocorrências de DUAS listas
  * explícitas e curtas, separadas de propósito, porque a natureza é diferente:
@@ -485,7 +485,9 @@ function observar(page: Page): Trafego {
 
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
-    trafego.ruido.push({ tipo: 'console', texto: msg.text() });
+    const localizacao = msg.location();
+    const url = localizacao.url ? localizacao.url.split('?')[0] : undefined;
+    trafego.ruido.push({ tipo: 'console', texto: msg.text(), ...(url ? { url } : {}) });
   });
   page.on('pageerror', (err) => {
     trafego.ruido.push({ tipo: 'pageerror', texto: err.message });
@@ -544,20 +546,26 @@ function resumir(itens: { tipo?: string; texto?: string; motivo?: string; url?: 
  * gmail-oauth). Só espera o que o espião registra (funções de ponta): resposta de
  * outro caminho não tem corpo para esperar. Sem prova depois do teto, REPROVA.
  */
-async function esperarMedidaDaResposta(page: Page, texto: string): Promise<void> {
-  const url = ((texto.match(/https?:\/\/\S+/) ?? [''])[0]).split('?')[0];
-  const status = statusDaOcorrencia(texto);
+async function esperarMedidaDaResposta(page: Page, ocorrencia: Ocorrencia, todas: Ocorrencia[]): Promise<void> {
+  const url = urlDaOcorrencia(ocorrencia);
+  const status = statusDaOcorrencia(ocorrencia.texto);
   if (!url || !status || !url.includes('/functions/v1/')) return;
+
+  const indice = indiceDaRespostaNaChave(ocorrencia, todas);
+  if (indice < 0) return;
 
   await page
     .waitForFunction(
-      ({ alvo, alvoStatus }: { alvo: string; alvoStatus: number }) => {
+      ({ alvo, alvoStatus, alvoIndice }: { alvo: string; alvoStatus: number; alvoIndice: number }) => {
         const lista =
           (window as unknown as { __lacunasLocais?: { url: string; status: number; corpo: string }[] })
             .__lacunasLocais ?? [];
-        return lista.some((m) => m.url.includes(alvo) && m.status === alvoStatus && m.corpo.length > 0);
+        const medidasDaResposta = lista.filter(
+          (m) => m.url.includes(alvo) && m.status === alvoStatus && m.corpo.length > 0,
+        );
+        return medidasDaResposta.length > alvoIndice;
       },
-      { alvo: caminhoDaFuncao(url), alvoStatus: status },
+      { alvo: caminhoDaFuncao(url), alvoStatus: status, alvoIndice: indice },
       { timeout: 5_000 },
     )
     .catch(() => undefined);
@@ -585,7 +593,7 @@ async function julgar(
   // A prova medida de cada resposta da janela precisa estar legível antes do veredito.
   for (const ocorrencia of fatia) {
     if (ocorrencia.tipo !== 'resposta') continue;
-    await esperarMedidaDaResposta(page, ocorrencia.texto);
+    await esperarMedidaDaResposta(page, ocorrencia, trafego.ruido);
   }
 
   const medidas = await lacunasMedidas(page);
@@ -598,19 +606,79 @@ function urlDaOcorrencia(ocorrencia: Ocorrencia): string {
   return bruta.split('?')[0];
 }
 
+function chaveBaseDaResposta(url: string, status: number): string {
+  return `${caminhoDaFuncao(url)}#${status}`;
+}
+
+/** Índice (0-based) da resposta dentro das ocorrências do mesmo caminho#status. */
+function indiceDaRespostaNaChave(ocorrencia: Ocorrencia, todas: Ocorrencia[]): number {
+  if (ocorrencia.tipo !== 'resposta') return -1;
+  const status = statusDaOcorrencia(ocorrencia.texto);
+  const url = urlDaOcorrencia(ocorrencia);
+  if (!status || !url) return -1;
+  const chave = chaveBaseDaResposta(url, status);
+  let indice = 0;
+  for (const item of todas) {
+    if (item.tipo !== 'resposta') continue;
+    const itemStatus = statusDaOcorrencia(item.texto);
+    const itemUrl = urlDaOcorrencia(item);
+    if (!itemStatus || !itemUrl || chaveBaseDaResposta(itemUrl, itemStatus) !== chave) continue;
+    if (item === ocorrencia) return indice;
+    indice += 1;
+  }
+  return -1;
+}
+
+function chaveDaResposta(ocorrencia: Ocorrencia, todas: Ocorrencia[]): string | undefined {
+  if (ocorrencia.tipo !== 'resposta') return undefined;
+  const status = statusDaOcorrencia(ocorrencia.texto);
+  const url = urlDaOcorrencia(ocorrencia);
+  const indice = indiceDaRespostaNaChave(ocorrencia, todas);
+  if (!status || !url || indice < 0) return undefined;
+  return `${chaveBaseDaResposta(url, status)}#${indice}`;
+}
+
 /**
- * Pares `caminho EXATO da função#status` que a sessão já justificou com uma medida real
- * (corpo da resposta casando a assinatura declarada). É esta chave que autoriza a sombra
- * de console — status solto NÃO autoriza nada.
+ * Amarra cada resposta à sua própria medida: a n-ésima resposta de um mesmo
+ * caminho#status consome a n-ésima medida daquele caminho#status. Assim uma medida
+ * válida anterior não justifica uma ocorrência posterior com corpo diferente.
+ */
+function medidasPorOcorrencia(todas: Ocorrencia[], medidas: MedidaResposta[]): Map<Ocorrencia, MedidaResposta> {
+  const porChave = new Map<string, MedidaResposta[]>();
+  for (const medida of medidas) {
+    const chave = chaveBaseDaResposta(medida.url, medida.status);
+    porChave.set(chave, [...(porChave.get(chave) ?? []), medida]);
+  }
+
+  const consumidas = new Map<string, number>();
+  const porOcorrencia = new Map<Ocorrencia, MedidaResposta>();
+  for (const ocorrencia of todas) {
+    if (ocorrencia.tipo !== 'resposta') continue;
+    const status = statusDaOcorrencia(ocorrencia.texto);
+    const url = urlDaOcorrencia(ocorrencia);
+    if (!status || !url) continue;
+    const chave = chaveBaseDaResposta(url, status);
+    const indice = consumidas.get(chave) ?? 0;
+    consumidas.set(chave, indice + 1);
+    const medida = porChave.get(chave)?.[indice];
+    if (medida) porOcorrencia.set(ocorrencia, medida);
+  }
+  return porOcorrencia;
+}
+
+/**
+ * Ocorrências de resposta que a sessão já justificou com a medida da própria
+ * ocorrência (corpo da n-ésima medida casando a assinatura declarada). É esta
+ * chave com índice que autoriza a sombra de console; status solto NÃO autoriza.
  */
 function respostasJustificadas(ruido: Ocorrencia[], medidas: MedidaResposta[]): Set<string> {
   const chaves = new Set<string>();
+  const porOcorrencia = medidasPorOcorrencia(ruido, medidas);
   for (const ocorrencia of ruido) {
     if (ocorrencia.tipo !== 'resposta') continue;
-    const url = urlDaOcorrencia(ocorrencia);
-    const status = statusDaOcorrencia(ocorrencia.texto);
-    const medida = medidas.find((m) => caminhoDaFuncao(m.url) === caminhoDaFuncao(url) && m.status === status);
-    if (medida && respostaTolerada(medida)) chaves.add(`${caminhoDaFuncao(url)}#${status}`);
+    const medida = porOcorrencia.get(ocorrencia);
+    const chave = chaveDaResposta(ocorrencia, ruido);
+    if (medida && chave && respostaTolerada(medida)) chaves.add(chave);
   }
   return chaves;
 }
@@ -632,20 +700,20 @@ function classificar(
   const defeitos: Ocorrencia[] = [];
   const justificadas = new Set(justificadasDaSessao);
   const pendentes = new Set<Ocorrencia>();
+  const medidaDaOcorrencia = medidasPorOcorrencia(todas, medidas);
 
   for (const ocorrencia of fatia) {
     if (ocorrencia.tipo !== 'resposta') {
       pendentes.add(ocorrencia);
       continue;
     }
-    const url = urlDaOcorrencia(ocorrencia);
-    const status = statusDaOcorrencia(ocorrencia.texto);
-    const medida = medidas.find((m) => caminhoDaFuncao(m.url) === caminhoDaFuncao(url) && m.status === status);
+    const medida = medidaDaOcorrencia.get(ocorrencia);
     const tolerada = medida ? respostaTolerada(medida) : undefined;
 
     if (tolerada) {
       ocorrencia.tolerada = tolerada;
-      justificadas.add(`${caminhoDaFuncao(url)}#${status}`);
+      const chave = chaveDaResposta(ocorrencia, todas);
+      if (chave) justificadas.add(chave);
       (tolerada.origem === 'lacuna' ? lacunas : defeitos).push(ocorrencia);
     } else {
       pendentes.add(ocorrencia);
@@ -687,33 +755,33 @@ function classificar(
  * Chave `caminho EXATO da função#status` da sombra de console.
  *
  * O console.error de recurso ("Failed to load resource ... the server responded with a
- * status of N") NÃO traz a URL no texto, e a localização da mensagem aponta o DOCUMENTO
- * (medido na rodada local de 08/10: a sombra do 500 de `gmail-oauth` caiu na tela de
- * Contatos). Então a URL vem da RESPOSTA que produziu a sombra — o evento de resposta
- * imediatamente anterior, na mesma sessão, com aquele status (o `page.on('response')`
- * registra a URL real). Sem resposta anterior com esse status, ou se ela não for de uma
- * função de ponta, não há sombra: REPROVA.
+ * status of N") NÃO traz a URL no texto. `observar` grava a localização da
+ * mensagem quando o navegador informa uma URL; se ela não apontar uma função de
+ * ponta (medido na rodada local de 08/10: a sombra do 500 de `gmail-oauth` caiu
+ * na tela de Contatos), a URL vem da RESPOSTA que produziu a sombra — o evento de
+ * resposta imediatamente anterior, na mesma sessão, com aquele status. Sem uma
+ * resposta anterior correspondente e já justificada pela própria medida, não há
+ * sombra: REPROVA.
  */
 function chaveDaSombra(ocorrencia: Ocorrencia, todas: Ocorrencia[]): string | undefined {
   const status = statusDaOcorrencia(ocorrencia.texto);
   if (!status) return undefined;
 
-  // 1) localização da mensagem, quando o navegador aponta a própria função de ponta.
-  const daLocalizacao = ocorrencia.url;
-  if (daLocalizacao?.includes('/functions/v1/')) {
-    return `${caminhoDaFuncao(daLocalizacao.split('?')[0])}#${status}`;
-  }
-
-  // 2) a resposta medida que precede a sombra nesta sessão.
   const indice = todas.indexOf(ocorrencia);
   if (indice < 0) return undefined;
+
+  const caminhoDaLocalizacao = ocorrencia.url?.includes('/functions/v1/')
+    ? caminhoDaFuncao(ocorrencia.url)
+    : undefined;
+
   for (let i = indice - 1; i >= 0; i -= 1) {
     const anterior = todas[i];
     if (anterior.tipo !== 'resposta') continue;
     if (statusDaOcorrencia(anterior.texto) !== status) continue;
     const url = urlDaOcorrencia(anterior);
     if (!url.includes('/functions/v1/')) return undefined;
-    return `${caminhoDaFuncao(url)}#${status}`;
+    if (caminhoDaLocalizacao && caminhoDaFuncao(url) !== caminhoDaLocalizacao) continue;
+    return chaveDaResposta(anterior, todas);
   }
   return undefined;
 }
@@ -723,16 +791,44 @@ function relatar(onde: string, itens: Ocorrencia[]): string[] {
   return itens.map((i) => `${onde}: ${i.texto.replace(/\s+/g, ' ').slice(0, 180)} — ${i.tolerada?.motivo}`);
 }
 
+interface CancelamentoLocal {
+  metodo: string;
+  url: string;
+  motivo: string;
+  sintoma: string;
+}
+
+/**
+ * Cancelamentos do CONJUNTO LOCAL, exatos e medidos. Não são HTTP >= 400 do app:
+ * o navegador bloqueia o script de debug do Speed Insights por ORB antes de haver
+ * resposta, porque a rodada local não roda dentro da infraestrutura da Vercel.
+ * Qualquer outro script, URL ou motivo continua reprovando.
+ */
+const CANCELAMENTOS_DO_CONJUNTO_LOCAL: CancelamentoLocal[] = [
+  {
+    metodo: 'GET',
+    url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
+    motivo: 'net::ERR_BLOCKED_BY_ORB',
+    sintoma: 'Speed Insights debug externo é bloqueado por ORB no navegador local antes de responder',
+  },
+];
+
+function cancelamentoLocalJustificado(cancelada: Trafego['canceladas'][number]): boolean {
+  return CANCELAMENTOS_DO_CONJUNTO_LOCAL.some(
+    (c) => c.metodo === cancelada.metodo && c.url === cancelada.url && c.motivo === cancelada.motivo,
+  );
+}
+
 /**
  * Cancelamento de requisição pelo PRÓPRIO app só é aceitável com prova de que
  * aquela mesma URL respondeu (com qualquer status) na sequência: o React
  * StrictMode (ligado em main.tsx, E38) monta os efeitos duas vezes em
  * desenvolvimento, então a primeira rajada de contagens é cancelada e a segunda
- * responde. Cancelamento sem essa prova continua reprovando — é requisição que
- * nunca chegou a lugar nenhum.
+ * responde. Cancelamento sem essa prova continua reprovando — salvo a lista curta
+ * e exata de lacunas do conjunto local acima, que não é resposta HTTP do produto.
  */
 function canceladasSemProva(trafego: Trafego): Trafego['canceladas'] {
-  return trafego.canceladas.filter((c) => !trafego.responderam.has(c.url));
+  return trafego.canceladas.filter((c) => !trafego.responderam.has(c.url) && !cancelamentoLocalJustificado(c));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -793,9 +889,9 @@ function shellAutenticado(page: Page) {
 }
 
 /**
- * Deixa a sessão do banco local montada: aproveita o shell já autenticado (sessão
- * do projeto `setup`, que loga contra o MESMO banco local) ou faz o login pela
- * tela, com o usuário sintético do seed.
+ * Deixa a sessão do banco local montada: aproveita o shell do conjunto local já
+ * montado ou faz o login pela tela, com o usuário sintético do seed. Não depende
+ * de projeto autenticado pré-salvo nem de sessão salva do `setup` quando executado por agente.
  */
 async function entrar(page: Page): Promise<void> {
   // Tetos explícitos: sob carga alta o dev server demora a servir o bundle e um
@@ -1082,7 +1178,7 @@ async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<vo
   }
 }
 
-// A varredura inteira (login + 42 módulos + busca) passa longe do teto padrão de
+// A varredura inteira (login + 40 entradas do menu + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
 test.describe.configure({ timeout: 15 * 60_000 });
 
@@ -1150,7 +1246,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
   test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
-    // A varredura é longa (42 módulos + busca, cada um com espera de view e de
+    // A varredura é longa (40 entradas do menu + busca, cada uma com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
@@ -1352,6 +1448,19 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     expect(resumir(reprovam), 'corpo fora da assinatura passou pela varredura').toHaveLength(1);
   });
 
+  test('duas respostas iguais usam medidas em ordem: a segunda com corpo fora da assinatura REPROVA', () => {
+    const primeira = respostaSintetica(503, SIP_URL);
+    const segunda = respostaSintetica(503, SIP_URL);
+    const { reprovam, lacunas } = classificar(
+      [primeira, segunda],
+      [medidaSintetica(SIP_URL, 503, CORPO_SIP), medidaSintetica(SIP_URL, 503, '{"error":"BOOT_ERROR"}')],
+      NADA_JUSTIFICADO,
+    );
+    expect(resumir(reprovam), 'a segunda resposta reaproveitou a medida da primeira').toHaveLength(1);
+    expect(reprovam[0], 'a ocorrência reprovada precisa ser a segunda resposta').toBe(segunda);
+    expect(lacunas).toHaveLength(1);
+  });
+
   test('endpoint, status e corpo MEDIDOS da lista viram lacuna do conjunto local', () => {
     const ocorrencia = respostaSintetica(503, SIP_URL);
     const { reprovam, lacunas } = classificar(
@@ -1370,6 +1479,28 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     expect(resumir(reprovam), '4xx sem prova medida passou pela varredura').toHaveLength(1);
   });
 
+  test('cancelamento local do Speed Insights é exato; outro cancelamento REPROVA', () => {
+    const trafego: Trafego = {
+      ruido: [],
+      responderam: new Set(),
+      canceladas: [
+        {
+          metodo: 'GET',
+          url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
+          motivo: 'net::ERR_BLOCKED_BY_ORB',
+        },
+        {
+          metodo: 'GET',
+          url: 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js',
+          motivo: 'net::ERR_FAILED',
+        },
+        { metodo: 'GET', url: `${HOST_LOCAL}/functions/v1/get-sip-password`, motivo: 'net::ERR_ABORTED' },
+      ],
+    };
+
+    expect(resumir(canceladasSemProva(trafego)), 'cancelamento não medido passou pela varredura').toHaveLength(2);
+  });
+
   test('console.error sem resposta justificada REPROVA (status solto não tolera)', () => {
     const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
     const outraUrl = consoleSintetico(
@@ -1381,20 +1512,26 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     expect(resumir(reprovam), 'console.error tolerado por status solto').toHaveLength(2);
   });
 
-  test('sombra de console da MESMA resposta medida e justificada é tolerada', () => {
-    const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
+  test('sombra de console com URL da mensagem só casa com a resposta MEDIDA correspondente', () => {
+    const resposta = respostaSintetica(503, SIP_URL);
     const sombra = consoleSintetico(
       'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
       SIP_URL,
     );
-    const { reprovam, lacunas } = classificar([sombra], [], justificadas);
+    const { reprovam, lacunas } = classificar(
+      [resposta, sombra],
+      [medidaSintetica(SIP_URL, 503, CORPO_SIP)],
+      NADA_JUSTIFICADO,
+    );
     expect(resumir(reprovam)).toEqual([]);
-    expect(lacunas).toHaveLength(1);
-    expect(lacunas[0].tolerada?.motivo, 'a sombra não aponta o par exato que a justificou').toContain('#503');
+    expect(lacunas).toHaveLength(2);
+    expect(lacunas[1].tolerada?.motivo, 'a sombra não aponta a ocorrência exata que a justificou').toContain('#0');
+
+    const sozinha = classificar([sombra], [], NADA_JUSTIFICADO);
+    expect(resumir(sozinha.reprovam), 'sombra sem resposta medida na sessão passou pela varredura').toHaveLength(1);
   });
 
   test('sombra sem URL na mensagem só casa com a resposta MEDIDA que a precede', () => {
-    const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
     const resposta = respostaSintetica(503, SIP_URL);
     const sombra = consoleSintetico(
       'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
@@ -1403,12 +1540,12 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     const comResposta = classificar(
       [resposta, sombra],
       [medidaSintetica(SIP_URL, 503, CORPO_SIP)],
-      new Set(justificadas),
+      NADA_JUSTIFICADO,
     );
     expect(resumir(comResposta.reprovam)).toEqual([]);
     expect(comResposta.lacunas).toHaveLength(2);
 
-    const sozinha = classificar([sombra], [], new Set(justificadas));
+    const sozinha = classificar([sombra], [], NADA_JUSTIFICADO);
     expect(
       resumir(sozinha.reprovam),
       'sombra sem resposta medida na sessão passou pela varredura',

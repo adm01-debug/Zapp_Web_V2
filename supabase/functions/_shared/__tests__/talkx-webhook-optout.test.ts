@@ -340,6 +340,43 @@ Deno.test("X030: resposta de botão com id 'talkx_optout' (X064) aciona o opt-ou
   }
 });
 
+Deno.test("X030: talkx_optout enviado por fromMe não aciona opt-out", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso();
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    const supabase = fakeSupabase(chamadas, {
+      keywords: SEED,
+      recentSend: [{ id: "recip-1" }],
+      suppressions: ["supp-fromme"],
+      autoreply: "MENSAGEM DO SETTING (fixture)",
+      instanceToken: "token-inst-1",
+    });
+
+    const payload = goButton("talkx_optout", "3EB0BTN-ME");
+    ((payload.data as Record<string, unknown>).Info as Record<string, unknown>).IsFromMe = true;
+    const { data, key } = traduzir(payload);
+    await handleIncomingMessage(supabase, "inst-go-x030-fromme", data, key, "http://localhost:54321", "svc");
+
+    assertEquals(chamadas.filter((c) => c.nome === "ingest_inbound_message").length, 1);
+    assertEquals(
+      chamadas.some((c) => c.nome === "talkx_suppress_contact"),
+      false,
+      "mensagem própria com id talkx_optout não pode suprimir o contato",
+    );
+    assertEquals(fetchCalls.length, 0, "mensagem própria não envia confirmação de opt-out");
+    assertEquals(
+      chamadas.some((c) => c.nome === "attribute_talkx_reply"),
+      false,
+      "mensagem própria também não conta como resposta Talk X",
+    );
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
 Deno.test("X030: resposta que NÃO é opt-out continua sendo atribuída ao Talk X", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso();

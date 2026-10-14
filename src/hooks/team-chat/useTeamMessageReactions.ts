@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { queryKeys } from './queryKeys';
 
 interface RawReaction {
@@ -60,8 +61,16 @@ export function useTeamMessageReactions(conversationId: string) {
   });
 
   useEffect(() => {
+    const revalidar = () => { void qc.invalidateQueries({ queryKey: qKey }); };
+
+    // Nome por conversa + sufixo exclusivo por instância (`uniqueRealtimeTopic`):
+    // `supabase.channel(nome)` DEVOLVE o canal existente quando o nome se repete
+    // e, desde a realtime-js 2.101, um `.on()` em canal já inscrito derruba a
+    // tela. O prefixo `team-reactions-<conversationId>` é o contrato do módulo
+    // (verificado por contratosModulo.test.ts), por isso o sufixo é concatenado.
+    let jaInscrito = false;
     const channel = supabase
-      .channel(`team-reactions-${conversationId}`)
+      .channel(`team-reactions-${conversationId}` + uniqueRealtimeTopic(''))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .on('postgres_changes' as any, {
           event: '*',
@@ -69,9 +78,16 @@ export function useTeamMessageReactions(conversationId: string) {
           table: 'team_message_reactions',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        () => { void qc.invalidateQueries({ queryKey: qKey }); },
+        revalidar,
       )
-      .subscribe();
+      .subscribe((status) => {
+        // A queda do canal não avisa: o que ficou em memória envelhece. Só na
+        // RE-inscrição (depois da primeira) as reações da conversa corrente
+        // são refeitas.
+        if (status !== 'SUBSCRIBED') return;
+        if (jaInscrito) revalidar();
+        jaInscrito = true;
+      });
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, qc, qKey]);
 

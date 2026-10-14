@@ -70,7 +70,7 @@ export const TEMPLATE_STATUS: Record<string, { label: string; tone: PillTone }> 
   approved: { label: 'Aprovado', tone: 'success' },
 };
 
-export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{{empresa}}', '{{saudacao}}'] as const;
+export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{{empresa}}', '{{saudacao}}', '{{vendedor}}', '{{data_atual}}', '{{link}}'] as const;
 
 /**
  * A15 — Canal. O motor do Talk X envia só por WhatsApp, então o canal real é um

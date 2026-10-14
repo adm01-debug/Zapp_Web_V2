@@ -27,6 +27,11 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
 
+// X077 — os KPIs vêm da RPC; este teste não exercita essa consulta.
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => ({ data: undefined }),
+}));
+
 import { campaignRowActions, useCampaignRowActions } from '../useCampaignRowActions';
 import type { CampaignRowActionHandlers, CampaignRowActions } from '../useCampaignRowActions';
 import { TalkXOverview } from '../TalkXOverview';

@@ -62,6 +62,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', async () => {
     fetchMultiplixRecipientsTotal: () => h.skippedCountError
       ? Promise.reject(new Error('recipients.list nao devolveu total'))
       : Promise.resolve(0),
+    // F50 (TL-028): o monitor tambem consulta a estimativa. Este teste e sobre os
+    // estados de erro/carregamento, entao a estimativa fica vazia (nada renderiza).
+    useMultiplixEstimate: () => ({ data: undefined, isError: false }),
   };
 });
 
@@ -189,5 +192,17 @@ describe('MultiplixMonitor — contagem de sem WhatsApp que falha (F80)', () => 
     renderMonitor();
 
     expect(screen.queryByText(/Não foi possível contar os contatos sem WhatsApp/)).toBeNull();
+  });
+});
+
+describe('MultiplixMonitor — piscar respeita reduzir movimento (motion-safe)', () => {
+  it('o "Enviando agora…" pisca só sob motion-safe', () => {
+    // dispatchRow() nasce com status 'sending' -> isRunning true.
+    renderMonitor();
+
+    const piscando = screen.getByText('Enviando agora…');
+    expect(piscando.className).toMatch(/(^|\s)motion-safe:animate-pulse(\s|$)/);
+    // Sem o prefixo, quem pediu "reduzir movimento" continuaria vendo o piscar.
+    expect(piscando.className).not.toMatch(/(^|\s)animate-pulse(\s|$)/);
   });
 });

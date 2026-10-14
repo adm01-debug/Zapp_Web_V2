@@ -28,7 +28,7 @@ import { Calendar, Clock, TrendingUp, Flame, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -159,20 +159,18 @@ export default function ConversationHeatmap({
             Mapa de Calor
           </CardTitle>
 
-          <Tabs value={selectedMetric} onValueChange={(v) => setSelectedMetric(v as 'volume' | 'response_time' | 'satisfaction')}>
-            <TabsList className="h-8">
-              <TabsTrigger value="volume" className="text-xs px-2 h-6">Volume</TabsTrigger>
-              <TabsTrigger value="response_time" className="text-xs px-2 h-6">Resposta</TabsTrigger>
-              <TabsTrigger value="satisfaction" className="text-xs px-2 h-6">Satisfação</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <ToggleGroup type="single" value={selectedMetric} onValueChange={(v) => { if (v) setSelectedMetric(v as 'volume' | 'response_time' | 'satisfaction'); }} className="h-8">
+            <ToggleGroupItem value="volume" className="text-xs px-2 h-6">Volume</ToggleGroupItem>
+            <ToggleGroupItem value="response_time" className="text-xs px-2 h-6">Resposta</ToggleGroupItem>
+            <ToggleGroupItem value="satisfaction" className="text-xs px-2 h-6">Satisfação</ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         <p className="text-sm text-muted-foreground flex items-center gap-1">
           {config.description}
           <Tooltip>
             <TooltipTrigger>
-              <Info className="w-3.5 h-3.5" />
+              <Info className="w-3.5 h-3.5" aria-label="Informação" />
             </TooltipTrigger>
             <TooltipContent>
               Clique em uma célula para ver detalhes do período
@@ -194,7 +192,7 @@ export default function ConversationHeatmap({
         </div>
 
         {/* Heatmap Grid */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Mapa de calor" tabIndex={0}>
           <div className="min-w-[600px]">
             {/* Hour labels */}
             <div className="flex ml-12 mb-1">

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import React from 'react';
 import { InviteAgentDialog } from '../InviteAgentDialog';
 
@@ -53,5 +54,14 @@ describe('InviteAgentDialog — payload de convite vinculado ao template do serv
     fireEvent.click(screen.getByRole('button', { name: 'Enviar Convite' }));
 
     expect(supabase.functions.invoke).not.toHaveBeenCalled();
+  });
+
+  it('combobox de cargo tem nome acessível e axe zerado', async () => {
+    render(<InviteAgentDialog open onOpenChange={() => {}} />);
+
+    expect(screen.getByRole('combobox', { name: 'Cargo' })).toBeInTheDocument();
+
+    const semRuidoDePagina = { rules: { region: { enabled: false } } };
+    expect(await axe(document.body, semRuidoDePagina)).toHaveNoViolations();
   });
 });

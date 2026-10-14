@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/ui/use-toast';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,10 @@ interface WhatsAppFlow {
   screens: FlowScreen[];
   status: string;
   whatsapp_flow_id: string | null;
+  // `published_at` só é preenchido quando o flow foi publicado de verdade no
+  // WhatsApp. É o sinal real de publicação (o `status` sozinho nunca é alterado,
+  // porque não há ação de publicar nem Edge Function).
+  published_at: string | null;
   created_at: string;
 }
 
@@ -50,8 +54,11 @@ const COMPONENT_TYPES = [
 ] as const;
 
 export function WhatsAppFlowsBuilder() {
+  // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const [flows, setFlows] = useState<WhatsAppFlow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<WhatsAppFlow | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingScreen, setEditingScreen] = useState<number>(0);
@@ -61,7 +68,16 @@ export function WhatsAppFlowsBuilder() {
 
   const fetchFlows = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('whatsapp_flows').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('whatsapp_flows').select('*').order('created_at', { ascending: false });
+    // Erro de leitura não pode virar "lista vazia": mostra o erro e sinaliza o
+    // estado para a tela não anunciar "Nenhum WhatsApp Flow" por engano.
+    if (error) {
+      setLoadError(true);
+      toast({ title: 'Erro ao carregar os flows', description: error.message, variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+    setLoadError(false);
     if (data) {
       setFlows(data.map((f) => ({
         ...f,
@@ -107,12 +123,22 @@ export function WhatsAppFlowsBuilder() {
   const updateFlowScreens = async (screens: FlowScreen[]) => {
     if (!selectedFlow) return;
     const flowId = selectedFlow.id;
-    setSelectedFlow({ ...selectedFlow, screens });
+    // Salvar só confirma depois de gravar: escreve PRIMEIRO e só aplica o estado
+    // (selectedFlow + lista) quando o banco aceitou. Antes a UI atualizava
+    // otimisticamente e o erro era descartado, então uma falha parecia sucesso.
+    const { error } = await supabase
+      .from('whatsapp_flows')
+      .update({ screens: screens as unknown as Json })
+      .eq('id', flowId);
+    if (error) {
+      toast({ title: 'Erro ao salvar o flow', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setSelectedFlow((prev) => (prev && prev.id === flowId ? { ...prev, screens } : prev));
     // R2-API-050: mantém a lista em sincronia. Sem isto, reabrir o flow pelo card
     // usava a cópia VELHA de `flows` e a edição seguinte gravava por cima do banco,
     // apagando as telas salvas desde a primeira edição.
     setFlows((prev) => prev.map((f) => (f.id === flowId ? { ...f, screens } : f)));
-    await supabase.from('whatsapp_flows').update({ screens: screens as unknown as Json }).eq('id', flowId);
   };
 
   const addScreen = () => {
@@ -162,7 +188,7 @@ export function WhatsAppFlowsBuilder() {
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {flows.map((flow) => (
-              <motion.div key={flow.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key={flow.id} initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }} animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}>
                 <Card className="bg-card/50 border-border/30 hover:border-secondary/30 transition-all cursor-pointer group"
                   onClick={() => { setSelectedFlow(flow); setEditingScreen(0); }}>
                   <CardContent className="p-4">
@@ -176,14 +202,21 @@ export function WhatsAppFlowsBuilder() {
                     <p className="text-xs text-muted-foreground line-clamp-2">{flow.description || 'Sem descrição'}</p>
                     <div className="flex items-center gap-2 mt-3">
                       <Badge variant="outline" className="text-3xs">{flow.screens.length} telas</Badge>
-                      <Badge variant={flow.status === 'published' ? 'default' : 'secondary'} className="text-3xs">{flow.status === 'published' ? 'Publicado' : 'Rascunho'}</Badge>
+                      <Badge variant={flow.status === 'published' && flow.published_at ? 'default' : 'secondary'} className="text-3xs">{flow.status === 'published' && flow.published_at ? 'Publicado' : 'Rascunho'}</Badge>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
-          {flows.length === 0 && !loading && (
+          {loadError && !loading && (
+            <div role="alert" className="text-center py-16 text-muted-foreground">
+              <Workflow className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">Não foi possível carregar os WhatsApp Flows</p>
+              <p className="text-sm">Tente novamente em instantes.</p>
+            </div>
+          )}
+          {flows.length === 0 && !loading && !loadError && (
             <div className="text-center py-16 text-muted-foreground">
               <Workflow className="w-12 h-12 mx-auto mb-3 opacity-20" />
               <p className="font-medium">Nenhum WhatsApp Flow</p>

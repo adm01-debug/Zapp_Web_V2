@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import {
   Clock, MessageSquare, FileText, ArrowLeftRight, UserPlus, Paperclip, CheckSquare,
   DollarSign, XCircle, RotateCcw, Activity, CalendarClock, CheckCircle2, BarChart3,
-  Route, type LucideIcon,
+  Route, Phone, type LucideIcon,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRelativeTime } from '@/lib/formatters';
@@ -31,6 +31,9 @@ const KIND_META: Record<TimelineEventKind, { icon: LucideIcon; className: string
   deal: { icon: DollarSign, className: 'bg-success/15 text-success' },
   close: { icon: XCircle, className: 'bg-muted/60 text-muted-foreground' },
   reopen: { icon: RotateCcw, className: 'bg-success/15 text-success' },
+  // R2-J06: ligação entra na jornada como evento próprio; o par token/ícone é o mesmo
+  // já fixado em src/lib/journey/model.ts (CATEGORY_META.call), para as duas trilhas não divergirem.
+  call: { icon: Phone, className: 'bg-success/15 text-success' },
 };
 
 const PILL_CLASS: Record<string, string> = {
@@ -56,6 +59,7 @@ const TYPE_OPTIONS: { value: TimelineTypeFilter; label: string }[] = [
   { value: 'transfers', label: 'Transferências' },
   { value: 'files', label: 'Arquivos' },
   { value: 'deals', label: 'Propostas' },
+  { value: 'calls', label: 'Chamadas' },
 ];
 
 function formatAvgResponse(min: number | null): string {
@@ -162,6 +166,13 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold truncate">{event.title}</p>
                             {event.subtitle && <p className="text-xs text-muted-foreground truncate">{event.subtitle}</p>}
+                            {/* Nota escrita na transferência (`metadata.note`): a linha mostra a versão
+                                cortada em 120 e o `title` guarda o texto completo — sem nota, nada muda. */}
+                            {event.note && (
+                              <p className="text-xs text-muted-foreground truncate" title={event.noteFull ?? event.note}>
+                                Nota: {event.note}
+                              </p>
+                            )}
                           </div>
                           {event.pill && (
                             <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center shrink-0', PILL_CLASS[event.pill.tone])}>

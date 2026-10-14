@@ -2,10 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Palette, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
+import { Palette, RefreshCw, GraduationCap, LayoutGrid, Type } from 'lucide-react';
 import { AvatarUpload } from '@/components/settings/AvatarUpload';
 import { motion } from '@/components/ui/motion';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { ChatTextSize } from '@/components/theme/ChatTextSize';
 
 interface AppearanceSettingsProps {
   settings: {
@@ -25,7 +26,7 @@ function DensitySelector() {
   ];
   return (
     <Select value={density} onValueChange={(v) => setDensity(v as DensityMode)}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectTrigger aria-label="Densidade da interface"><SelectValue /></SelectTrigger>
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
@@ -58,7 +59,7 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
           <div className="space-y-2">
             <Label>Tema</Label>
             <Select value={settings.theme} onValueChange={(value) => updateSettings({ theme: value })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Tema"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dark">Escuro</SelectItem>
                 <SelectItem value="light">Claro</SelectItem>
@@ -70,7 +71,7 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
           <div className="space-y-2">
             <Label>Idioma</Label>
             <Select value={settings.language} onValueChange={(value) => updateSettings({ language: value })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Idioma"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
                 <SelectItem value="en-US">English (US)</SelectItem>
@@ -86,6 +87,17 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
             </Label>
             <p className="text-sm text-muted-foreground">Controle o espaçamento geral da UI</p>
             <DensitySelector />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Type className="w-4 h-4 text-primary" />
+              Tamanho do texto do chat
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Escolha o tamanho das mensagens nas conversas — a preferência fica lembrada
+            </p>
+            <ChatTextSize />
           </div>
 
           <div className="pt-4 border-t border-border">

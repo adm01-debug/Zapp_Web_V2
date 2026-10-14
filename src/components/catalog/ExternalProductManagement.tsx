@@ -45,7 +45,7 @@ const SendProductDialog = lazy(() =>
   import('./SendProductDialog').then((m) => ({ default: m.SendProductDialog }))
 );
 import { ModuleHeader, fmtAgo, AlertCard, TalkXPagination, TalkXTable, StatusPill, fmtDateTime, type TalkXColumn, type PillTone } from '@/components/talkx/talkxShared';
-import { CatalogRail, type CatalogRailFilterKey } from './CatalogRail';
+import { CatalogRail } from './CatalogRail';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { CatalogKpiStrip, CategoryChips, AdvancedFilterChips, countAdvancedFilters, matchesAnySelected, DEFAULT_ADVANCED_FILTERS, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback, type AdvancedFilters } from './catalogShared';
 const CatalogAdvancedFilters = lazy(() =>
@@ -58,10 +58,9 @@ import { CatalogBulkBar } from './CatalogBulkBar';
 const CatalogBulkSendDialog = lazy(() =>
   import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
 );
-// CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20), como no
-// catálogo do chat: as linhas são exatamente os produtos selecionados na tela
-// (nada é buscado na edge; o export do filtro inteiro é o do rail).
-import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+// Y29 — a única gravação de CSV desta tela (histórico de envios) passa pela
+// porta com o gate de `profiles.can_download` (`triggerCsvDownload`).
+import { triggerCsvDownload } from './catalogExport';
 import { notifyDownloadBlocked } from '@/lib/downloadFile';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
@@ -95,7 +94,7 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
       'flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border',
       isFresh ? 'text-success border-success/30 bg-success/10' : 'text-muted-foreground border-border bg-muted/30'
     )}>
-      <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success animate-pulse' : 'bg-muted-foreground')} />
+      <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success motion-safe:animate-pulse' : 'bg-muted-foreground')} />
       {label}
     </span>
   );
@@ -290,8 +289,8 @@ export const ExternalProductManagement: React.FC = () => {
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
   const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
 
-  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — todo CSV desta tela (histórico de
-  // envios e "Exportar seleção") passa pelo gate `profiles.can_download`.
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o CSV do histórico de envios passa
+  // pelo gate `profiles.can_download`.
   const { canDownload } = useDownloadPermission();
 
   // E56 — recentes/mais enviados do rail (catalog_send_events).
@@ -441,15 +440,6 @@ export const ExternalProductManagement: React.FC = () => {
     () => visibleProducts.filter((p) => selectedIds.has(p.id)),
     [visibleProducts, selectedIds]
   );
-
-  /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos,
-   * reusando os builders puros do CT-20 (sem tocar na edge). */
-  const handleExportSelection = useCallback(() => {
-    if (selectedProducts.length === 0) return;
-    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()), canDownload);
-    if (wrote === false) return;
-    toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
-  }, [selectedProducts, canDownload]);
 
   /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só os selecionados que ainda
    * não são favoritos e só anuncia DEPOIS da escrita. `toggle` devolve o
@@ -638,18 +628,6 @@ export const ExternalProductManagement: React.FC = () => {
    * não duplicar a regra. */
   const handleApplyLowStock = useCallback(() => { handleKpiSelect('low_stock'); }, [handleKpiSelect]);
 
-  /** CT-21 — chave do filtro do rail ativo agora, para o "Exportar catálogo"
-   * exportar o filtro atual em vez do catálogo inteiro. A precedência só
-   * importa com 2+ filtros ligados ao mesmo tempo; todas as chaves são as que
-   * o builder do CSV sabe traduzir para a edge (filterKeyToEdgeParams). */
-  const activeRailFilter: CatalogRailFilterKey | null =
-    onlyInStock ? 'in_stock' : isFeatured ? 'featured' : isNew ? 'new_30d' : null;
-
-  /** R2-MOD-041 — filtros da listagem que o "Exportar catálogo" tem de levar
-   * junto com o do rail (busca, categoria, fornecedor, estoque baixo, preço,
-   * cor, material, bestseller). Mesma fonte da consulta da grade. */
-  const exportFilterParams = listingFilterParams();
-
   const [sendProduct, setSendProduct] = useState<ExternalProduct | null>(null);
   const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
   const handleSendProduct = (product: ExternalProduct, variantColor?: string) => {
@@ -775,20 +753,23 @@ export const ExternalProductManagement: React.FC = () => {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
-      <TabsList className="mb-4 h-9">
-        <TabsTrigger value="produtos" className="gap-1.5 text-xs">
+      {/* N-058 — alvo de toque: no celular cada aba tem no mínimo 44 px
+          (min-h-11); a partir de sm o `sm:h-9`/`sm:min-h-0` devolve a altura
+          original, então o visual no desktop não muda. */}
+      <TabsList className="mb-4 h-auto sm:h-9">
+        <TabsTrigger value="produtos" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Package className="w-3.5 h-3.5" />
           Produtos
           <TabCount value={totalProducts} />
         </TabsTrigger>
-        <TabsTrigger value="favoritos" className="gap-1.5 text-xs">
+        <TabsTrigger value="favoritos" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Heart className="w-3.5 h-3.5" />
           Favoritos
           <TabCount value={favorites.length} />
         </TabsTrigger>
         {/* CT-57 — envios do agente logado (admin/supervisor veem a equipe):
             o recorte é a RLS de catalog_send_events, não um filtro da tela. */}
-        <TabsTrigger value="enviados" className="gap-1.5 text-xs">
+        <TabsTrigger value="enviados" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Send className="w-3.5 h-3.5" />
           Enviados
           <TabCount value={sendHistoryRows.length} />
@@ -1037,8 +1018,6 @@ export const ExternalProductManagement: React.FC = () => {
               recentSends={recentSends}
               topSent={topSent}
               onOpenProduct={handleOpenProductFromRail}
-              exportFilter={activeRailFilter}
-              exportFilters={exportFilterParams}
               onApplyLowStock={handleApplyLowStock}
             />
           </AccordionContent>
@@ -1154,7 +1133,6 @@ export const ExternalProductManagement: React.FC = () => {
           onToggleSelectAll={toggleSelectAll}
           onClear={clearSelection}
           onSend={handleBulkSend}
-          onExport={handleExportSelection}
           onFavorite={handleFavoriteSelection}
         />
       )}
@@ -1187,9 +1165,7 @@ export const ExternalProductManagement: React.FC = () => {
       {/* E51-E53: o rail nasceu vazio na E31 (layout). onApplyFilter reusa
           handleKpiSelect — as chaves do rail são keyof CatalogStats de
           propósito, pra não duplicar a lógica de aplicar filtro.
-          CT-21/CT-23: exportFilter = filtro do rail ativo agora (o export sai
-          do filtro atual, não do catálogo inteiro) e onApplyLowStock liga o
-          botão do alerta de estoque baixo. */}
+          CT-21/CT-23: onApplyLowStock liga o botão do alerta de estoque baixo. */}
       <CatalogRail
         stats={stats}
         loading={statsLoading}
@@ -1198,8 +1174,6 @@ export const ExternalProductManagement: React.FC = () => {
         recentSends={recentSends}
         topSent={topSent}
         onOpenProduct={handleOpenProductFromRail}
-        exportFilter={activeRailFilter}
-        exportFilters={exportFilterParams}
         onApplyLowStock={handleApplyLowStock}
       />
     </aside>
@@ -1222,17 +1196,18 @@ export const ExternalProductManagement: React.FC = () => {
                 placeholder="Buscar por produto, SKU, contato ou agente..."
                 value={sentSearch}
                 onChange={(e) => handleSentSearch(e.target.value)}
+                aria-label="Buscar envios"
                 className="pl-9"
               />
               {sentSearch && (
-                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => handleSentSearch('')}>
+                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca de enviados" onClick={() => handleSentSearch('')}>
                   <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
 
             <Select value={sentStatus} onValueChange={handleSentStatus}>
-              <SelectTrigger className="w-[170px]">
+              <SelectTrigger className="w-[170px]" aria-label="Filtrar envios por status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

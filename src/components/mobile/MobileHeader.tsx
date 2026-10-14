@@ -4,6 +4,7 @@ import { Menu, Search, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { NavigationService } from '@/services/navigation.service';
 
 interface MobileHeaderProps {
   onMenuOpen: () => void;
@@ -29,7 +30,6 @@ const viewLabels: Record<string, string> = {
   tasks: 'Tarefas',
   wallet: 'Carteira',
   catalog: 'Catálogo',
-  payments: 'Pagamentos',
 knowledge: 'Base de Conhecimento',
   automations: 'Automações',
   reports: 'Relatórios',
@@ -58,6 +58,17 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
       .join('')
       .slice(0, 2) || 'U';
 
+    // Fonte única: o rótulo oficial vem do NavigationService (o mesmo que rotula
+    // menu e ViewRouter). O dicionário local age só como SOBRESCRITA pontual
+    // (ex.: 'inbox' → 'Conversas'). O fallback de capitalizar o id só existe para
+    // ids legados que não estão (mais) no catálogo de navegação.
+    const navLabel = NavigationService.getViewLabel(currentView);
+    const title =
+      viewLabels[currentView] ??
+      (navLabel !== currentView
+        ? navLabel
+        : currentView.charAt(0).toUpperCase() + currentView.slice(1));
+
     return (
       <motion.header
         ref={ref}
@@ -71,7 +82,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
             <Button
               variant="ghost"
               size="icon"
-              className="w-10 h-10 rounded-xl touch-manipulation active:scale-95"
+              className="w-11 h-11 rounded-xl touch-manipulation active:scale-95"
               onClick={onMenuOpen}
               aria-label="Abrir menu"
             >
@@ -104,7 +115,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               animate={{ opacity: 1, y: 0 }}
               className="font-display font-semibold text-sm text-foreground truncate max-w-[180px]"
             >
-              {viewLabels[currentView] || currentView.charAt(0).toUpperCase() + currentView.slice(1)}
+              {title}
             </motion.h1>
           </div>
 
@@ -114,7 +125,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-10 h-10 rounded-xl touch-manipulation active:scale-95"
+                className="w-11 h-11 rounded-xl touch-manipulation active:scale-95"
                 onClick={onSearchOpen}
                 aria-label="Buscar"
               >
@@ -126,7 +137,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-10 h-10 rounded-xl touch-manipulation active:scale-95 relative"
+                className="w-11 h-11 rounded-xl touch-manipulation active:scale-95 relative"
                 onClick={onNotificationsOpen}
                 aria-label="Notificações"
               >
