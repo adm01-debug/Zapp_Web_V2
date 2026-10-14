@@ -4,7 +4,11 @@ import { toast } from 'sonner';
 import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { type ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
+import { AI_PROXY_CONTENT_LIMIT, limitAiTexts, readAiErrorEnvelope } from '@/components/inbox/ai-tools/analysisConfigs';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
+
+/** Prefixo do conteúdo enviado ao `ai-proxy` (conta para o teto de 50000 chars). */
+const CLIENT_MESSAGES_PREFIX = 'Mensagens do cliente:\n';
 
 interface Objection {
   objection: string;
@@ -64,6 +68,15 @@ export function useObjectionDetector(
       .map(m => m.content);
   }, [hasPeriodMessages, periodFilter.filteredMessages, lastMessages]);
 
+  // O `ai-proxy` recusa UMA mensagem acima de 50000 chars (index.ts:54) e a
+  // recusa chega crua no cliente ("Edge Function returned a non-2xx"). O recorte
+  // é do cliente: manda as últimas mensagens do cliente que couberem no teto.
+  const clientMessageWindow = useMemo(
+    () => limitAiTexts(clientMessages, AI_PROXY_CONTENT_LIMIT - CLIENT_MESSAGES_PREFIX.length),
+    [clientMessages],
+  );
+  const sentClientMessages = clientMessageWindow.texts;
+
   useEffect(() => {
     // Troca de contato: descarta resposta em voo e zera o estado do contato anterior.
     invalidateRequests();
@@ -77,7 +90,7 @@ export function useObjectionDetector(
   }, [objectionPeriod, objectionFrom, objectionTo, invalidateRequests]);
 
   const analyze = useCallback(async (tone?: ToneKey) => {
-    if (clientMessages.length === 0) { toast.warning('Nenhuma mensagem do cliente para analisar.'); return; }
+    if (sentClientMessages.length === 0) { toast.warning('Nenhuma mensagem do cliente para analisar.'); return; }
     const now = Date.now();
     if (now - lastCallRef.current < 3000) { toast.warning('Aguarde alguns segundos antes de tentar novamente.'); return; }
     lastCallRef.current = now;
@@ -109,7 +122,7 @@ Responda APENAS em JSON válido com este formato:
 [{"objection":"texto da objeção","counterArgument":"sugestão de resposta","confidence":0.85}]
 Se não houver objeções, retorne []`,
             },
-            { role: 'user', content: `Mensagens do cliente:\n${clientMessages.join('\n')}` },
+            { role: 'user', content: `${CLIENT_MESSAGES_PREFIX}${sentClientMessages.join('\n')}` },
           ],
           model: 'google/gemini-3-flash-preview',
           // IA-051 — o id do clique (IA-048) para o log de consumo do `ai-proxy`.
@@ -121,7 +134,12 @@ Se não houver objeções, retorne []`,
       // não são aplicadas nem disparam toast na tela atual.
       if (!isRequestCurrent(request)) return;
 
-      if (response.error) throw new Error(response.error.message || 'Erro na API');
+      if (response.error) {
+        // O 422/400 traz o motivo no corpo (`error.context`); sem lê-lo o usuário
+        // só veria "Edge Function returned a non-2xx status code".
+        const envelope = await readAiErrorEnvelope<unknown>(response.error);
+        throw new Error(envelope?.error || response.error.message || 'Erro na API');
+      }
       // N-169 — resposta vazia ou fora do formato é FALHA, nunca "nenhuma objeção":
       // só um "[]" explícito da IA diz que o cliente não apresentou resistências.
       const content = response.data?.content ?? response.data?.choices?.[0]?.message?.content;
@@ -141,7 +159,13 @@ Se não houver objeções, retorne []`,
         confidence: typeof o.confidence === 'number' ? Math.min(1, Math.max(0, o.confidence)) : 0.5,
       }));
       setObjections(valid);
-      if (valid.length > 0) toast.success(`${valid.length} objeção(ões) detectada(s)!`);
+      if (valid.length > 0) {
+        toast.success(
+          clientMessageWindow.omitted > 0
+            ? `${valid.length} objeção(ões) detectada(s)! Analisadas as ${sentClientMessages.length} de ${clientMessages.length} mensagens do cliente.`
+            : `${valid.length} objeção(ões) detectada(s)!`,
+        );
+      }
     } catch (err) {
       if (!isRequestCurrent(request)) return;
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -152,7 +176,7 @@ Se não houver objeções, retorne []`,
     }
     if (!isRequestCurrent(request)) return;
     setAnalyzed(true); setLoading(false);
-  }, [beginRequest, clientMessages, contactName, isRequestCurrent, selectedTone]);
+  }, [beginRequest, contactName, isRequestCurrent, selectedTone, sentClientMessages, clientMessageWindow.omitted, clientMessages.length]);
 
   const rewriteSingle = useCallback(async (idx: number) => {
     const target = objections[idx];
@@ -213,7 +237,9 @@ Se não houver objeções, retorne []`,
   return {
     objections, loading, analyzed, selectedTone, setSelectedTone,
     rewritingIdx, error, copiedIdx,
-    hasPeriodMessages, clientMessages,
+    hasPeriodMessages, clientMessages: sentClientMessages,
+    clientMessagesTotal: clientMessages.length,
+    clientMessagesOmitted: clientMessageWindow.omitted,
     periodFilter,
     analyze, rewriteSingle, handleSelect, handleCopy, resetAnalysis,
   };

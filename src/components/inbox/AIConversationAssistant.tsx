@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { PeriodFilterSelector, usePeriodFilter, getPeriodDays } from './ai-tools/PeriodFilterSelector';
@@ -24,7 +24,7 @@ import { withRetry } from '@/lib/retry';
 import { VisionIcon } from './ai-tools/VisionIcon';
 import { useAnalysisTts } from './ai-tools/useAnalysisTts';
 import { AnalysisTabs } from './ai-tools/AnalysisTabs';
-import { type AnalysisData, type AnalysisMessage, type AiEnvelope, aiEnvelopeErrorMessage, readAiErrorEnvelope, sentimentConfig } from './ai-tools/analysisConfigs';
+import { type AnalysisData, type AnalysisMessage, type AiEnvelope, AI_CONTEXT_LIMITS, aiEnvelopeErrorMessage, readAiErrorEnvelope, limitAnalysisContext, sentimentConfig } from './ai-tools/analysisConfigs';
 import { normalizeScore } from '@/lib/ai-values';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
@@ -34,9 +34,16 @@ interface AIConversationAssistantProps {
   contactName: string;
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * O painel carrega só a página mais recente (`useMessages`, 100 mensagens) e
+   * `messages` é esse recorte. Com `hasOlderMessages` existe histórico MAIS
+   * ANTIGO que o período escolhido não cobre: o `periodDays` gravado pelo
+   * servidor não pode afirmar um recorte que não foi analisado.
+   */
+  hasOlderMessages?: boolean;
 }
 
-export function AIConversationAssistant({ messages, contactId, contactName, isOpen }: AIConversationAssistantProps) {
+export function AIConversationAssistant({ messages, contactId, contactName, isOpen, hasOlderMessages = false }: AIConversationAssistantProps) {
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('resumo'); const isMountedRef = useRef(true);
@@ -65,6 +72,16 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
   } = useAnalysisTts();
 
   const canAnalyze = filteredMessages.length >= 5;
+
+  // O servidor recusa com 422 acima de 200 mensagens / 5000 chars por mensagem /
+  // 120000 no total e NUNCA trunca (schemas.ts, CONTEXT_LIMITS). O recorte é do
+  // cliente: manda as últimas 200 mensagens e diz quantas ficaram de fora.
+  const contextWindow = useMemo(() => limitAnalysisContext(filteredMessages), [filteredMessages]);
+  const analyzedCount = contextWindow.messages.length;
+  const hasWindowCut = contextWindow.omitted > 0;
+  // Histórico mais antigo não carregado = o período escolhido não está coberto;
+  // gravar `period_days` assim afirmaria um recorte que não foi analisado.
+  const periodDays = hasOlderMessages ? null : getPeriodDays(analysisPeriod);
 
   // IA-048 — identidade da requisição: contato + período ESCOLHIDO. Não inclui
   // `messages`/`filteredMessages` de propósito; mensagens que chegam por tempo
@@ -106,7 +123,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
         async () => {
           const { data, error } = await supabase.functions.invoke('ai-conversation-analysis', {
             body: {
-              messages: filteredMessages.map((message) => ({
+              messages: contextWindow.messages.map((message) => ({
                 id: message.id,
                 sender: message.sender,
                 content: message.content,
@@ -115,7 +132,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
               })),
               contactName,
               contactId,
-              periodDays: getPeriodDays(analysisPeriod),
+              periodDays,
               // IA-051 — mesmo id em todas as tentativas de `withRetry`: as linhas
               // de `ai_usage_logs` ficam agrupadas por clique, e um retry aparece
               // como segunda linha em vez de virar gasto órfão.
@@ -192,7 +209,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
     } finally {
       if (isMountedRef.current && isRequestCurrent(request)) setIsLoading(false);
     }
-  }, [analysisPeriod, analyses, beginRequest, canAnalyze, checkAndTriggerAlert, contactId, contactName, filteredMessages, isRequestCurrent, refetch]);
+  }, [analysisPeriod, analyses, beginRequest, canAnalyze, checkAndTriggerAlert, contactId, contactName, contextWindow, isRequestCurrent, periodDays, refetch]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -223,6 +240,12 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
         totalCount={messages.length}
       />
 
+      {hasOlderMessages && (
+        <p className="px-1 text-3xs text-muted-foreground">
+          Há mensagens mais antigas ainda não carregadas — o período pode não estar completo.
+        </p>
+      )}
+
       <div className="flex flex-col items-center gap-1.5">
         <Button
           size="sm"
@@ -231,8 +254,17 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
           className="gap-2 rounded-xl bg-primary px-6 text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {isLoading ? 'Analisando...' : `Analisar (${filteredMessages.length} msgs)`}
+          {isLoading
+            ? 'Analisando...'
+            : hasWindowCut
+              ? `Analisar (últimas ${analyzedCount} de ${filteredMessages.length} msgs)`
+              : `Analisar (${analyzedCount} msgs)`}
         </Button>
+        {hasWindowCut && !isLoading && (
+          <p className="text-3xs text-muted-foreground">
+            O servidor aceita até {AI_CONTEXT_LIMITS.maxMessages} mensagens — as mais antigas do período ficam de fora.
+          </p>
+        )}
         {canAnalyze && !isLoading && !analysis && (
           <p className="text-[9px] text-muted-foreground">Resumo · Sentimento · Pontos-chave · Histórico</p>
         )}
@@ -281,7 +313,11 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
         <div role="status" aria-live="polite" aria-atomic="true" className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <Loader2 className="w-4 h-4 text-primary animate-spin" />
-            <span className="text-xs font-medium text-muted-foreground">Analisando {filteredMessages.length} mensagens...</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {hasWindowCut
+                ? `Analisando as últimas ${analyzedCount} de ${filteredMessages.length} mensagens...`
+                : `Analisando ${analyzedCount} mensagens...`}
+            </span>
           </div>
           <div className="space-y-3 animate-pulse">
             <div className="h-24 rounded-xl bg-muted/40 border border-border/20" />

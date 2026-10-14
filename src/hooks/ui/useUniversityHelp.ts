@@ -3,7 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
+import { AI_PROXY_CONTENT_LIMIT, limitAiTexts, readAiErrorEnvelope } from '@/components/inbox/ai-tools/analysisConfigs';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
+
+/** Prefixo do conteúdo enviado ao `ai-proxy` (conta para o teto de 50000 chars). */
+const SELECTED_MESSAGES_PREFIX = 'Mensagens selecionadas da conversa:\n';
 
 interface ChatMessage {
   id: string;
@@ -66,6 +70,19 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
   const selectedInOrder = useMemo(() => {
     return normalized.filter(m => selectedIds.has(m.id));
   }, [normalized, selectedIds]);
+
+  // O `ai-proxy` recusa UMA mensagem acima de 50000 chars (index.ts:54) — sem
+  // recorte, selecionar muitas mensagens (ou uma gigante) devolvia só
+  // "Edge Function returned a non-2xx status code". Manda o que cabe, do mais
+  // recente para o mais antigo, e informa quantas ficaram de fora.
+  const selectedLines = useMemo(
+    () => selectedInOrder.map(m => `[${m.sender === 'agent' ? 'Atendente' : 'Cliente'}]: ${m.content}`),
+    [selectedInOrder],
+  );
+  const selectedWindow = useMemo(
+    () => limitAiTexts(selectedLines, AI_PROXY_CONTENT_LIMIT - SELECTED_MESSAGES_PREFIX.length),
+    [selectedLines],
+  );
 
   // Reset on contact change
   useEffect(() => {
@@ -136,7 +153,7 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
             },
             {
               role: 'user',
-              content: `Mensagens selecionadas da conversa:\n${selectedInOrder.map(m => `[${m.sender === 'agent' ? 'Atendente' : 'Cliente'}]: ${m.content}`).join('\n')}`,
+              content: `${SELECTED_MESSAGES_PREFIX}${selectedWindow.texts.join('\n')}`,
             },
           ],
           model: 'google/gemini-3-flash-preview',
@@ -149,11 +166,20 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
       // para o período antigo não é aplicado nem dispara toast na tela atual.
       if (!isRequestCurrent(request)) return;
 
-      if (result.error) throw new Error(result.error.message || 'Erro na API');
+      if (result.error) {
+        // O 422/400 traz o motivo no corpo (`error.context`); sem lê-lo o usuário
+        // só veria "Edge Function returned a non-2xx status code".
+        const envelope = await readAiErrorEnvelope<unknown>(result.error);
+        throw new Error(envelope?.error || result.error.message || 'Erro na API');
+      }
       const content = result.data?.content || result.data?.choices?.[0]?.message?.content;
       if (content && content.trim().length > 0) {
         setResponse(content.trim());
-        toast.success('Resposta gerada com sucesso!');
+        toast.success(
+          selectedWindow.omitted > 0
+            ? `Resposta gerada com sucesso! Analisadas as ${selectedWindow.texts.length} de ${selectedLines.length} mensagens selecionadas.`
+            : 'Resposta gerada com sucesso!',
+        );
       } else {
         throw new Error('Resposta vazia da IA');
       }
@@ -193,5 +219,9 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
     generateResponse,
     handleRegenerate,
     lastCallRef,
+    /** Recorte enviado ao `ai-proxy`: quantas mensagens selecionadas couberam. */
+    selectedMessagesAnalyzed: selectedWindow.texts.length,
+    selectedMessagesTotal: selectedLines.length,
+    selectedMessagesOmitted: selectedWindow.omitted,
   };
 }

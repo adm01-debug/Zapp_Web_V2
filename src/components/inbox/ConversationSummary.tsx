@@ -1,20 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
-import { PeriodFilterSelector, usePeriodFilter } from './ai-tools/PeriodFilterSelector';
+import { PeriodFilterSelector, usePeriodFilter, getPeriodDays } from './ai-tools/PeriodFilterSelector';
 import { FileText, Loader2, CheckCircle2, Clock, AlertCircle, ThumbsUp, ThumbsDown, Minus, X, Sparkles, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSummaryTts } from './summary/useSummaryTts';
+import { limitAnalysisContext } from './ai-tools/analysisConfigs';
 import { SummaryResult } from './summary/SummaryResult';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
 interface Message { id: string; sender: 'agent' | 'contact'; content: string; created_at: string; }
 interface SummaryData { summary: string; status: 'resolvido' | 'pendente' | 'aguardando_cliente' | 'aguardando_atendente'; keyPoints: string[]; nextSteps?: string[]; sentiment: 'positivo' | 'neutro' | 'negativo'; }
 
-interface ConversationSummaryProps { messages: Message[]; contactName: string; contactId?: string; initialSummary?: Record<string, unknown> | null; onClose?: () => void; }
+interface ConversationSummaryProps { messages: Message[]; contactName: string; contactId?: string; initialSummary?: Record<string, unknown> | null; onClose?: () => void;
+  /** Ver `AIConversationAssistantProps.hasOlderMessages`: com histórico mais antigo não carregado, o período escolhido não está coberto e não pode ser gravado. */
+  hasOlderMessages?: boolean; }
 
 const statusConfig = {
   resolvido: { label: 'Resolvido', icon: CheckCircle2, className: 'text-success border-success/30 bg-success/10' },
@@ -28,7 +31,7 @@ const sentimentConfig = {
   negativo: { icon: ThumbsDown, className: 'text-destructive' },
 };
 
-export function ConversationSummary({ messages, contactName, contactId, initialSummary }: ConversationSummaryProps) {
+export function ConversationSummary({ messages, contactName, contactId, initialSummary, hasOlderMessages = false }: ConversationSummaryProps) {
   const [summary, setSummary] = useState<SummaryData | null>((initialSummary as unknown as SummaryData) ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(!!initialSummary);
@@ -36,6 +39,16 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
   const tts = useSummaryTts(contactId);
   const { analysisPeriod, setAnalysisPeriod, customDateFrom, customDateTo, setCustomDateFrom, setCustomDateTo, clearCustomDates, filteredMessages } = usePeriodFilter(messages, '7d');
   const canGenerateSummary = filteredMessages.length >= 10;
+
+  // O servidor recusa com 422 acima de 200 mensagens / 5000 chars por mensagem /
+  // 120000 no total e nunca trunca (schemas.ts, CONTEXT_LIMITS): o recorte é do
+  // cliente. Sem recorte, conversas longas nunca geravam resumo.
+  const contextWindow = limitAnalysisContext(filteredMessages);
+  const analyzedCount = contextWindow.messages.length;
+  const hasWindowCut = contextWindow.omitted > 0;
+  // Histórico mais antigo não carregado = o período escolhido não está coberto;
+  // gravar `periodDays` faria o servidor registrar um recorte que não foi analisado.
+  const periodDays = hasOlderMessages ? null : getPeriodDays(analysisPeriod);
 
   // IA-048 — identidade da requisição: contato + período ESCOLHIDO. As mensagens
   // vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo.
@@ -89,7 +102,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-conversation-summary', {
-        body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId },
+        body: { messages: contextWindow.messages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, periodDays, requestId: request.requestId },
       });
 
       // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
@@ -104,7 +117,12 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
         if (context && typeof context.clone === 'function') {
           try { envelopeError = ((await context.clone().json()) as { error?: unknown } | null)?.error; } catch { /* corpo sem JSON (timeout/proxy) */ }
         }
-        toast.error(typeof envelopeError === 'string' && envelopeError ? envelopeError : 'Erro ao gerar resumo. Tente novamente.');
+        // O 422 de validação chega como `{ error: { code, message, fields } }`
+        // (schemas.ts:635-641) — sem ler `message`, o usuário só veria o genérico.
+        const envelopeMessage = typeof envelopeError === 'string'
+          ? envelopeError
+          : (envelopeError as { message?: unknown } | null)?.message;
+        toast.error(typeof envelopeMessage === 'string' && envelopeMessage ? envelopeMessage : 'Erro ao gerar resumo. Tente novamente.');
         log.error('Error generating summary:', error);
         return;
       }
@@ -149,14 +167,26 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
         onCustomFromChange={setCustomDateFrom} onCustomToChange={setCustomDateTo} onClearCustom={clearCustomDates}
         filteredCount={filteredMessages.length} totalCount={messages.length} />
 
+      {hasOlderMessages && (
+        <p className="px-1 text-3xs text-muted-foreground">
+          Há mensagens mais antigas ainda não carregadas — o período pode não estar completo.
+        </p>
+      )}
+
       <Button onClick={generateSummary} disabled={isLoading || !canGenerateSummary} className="w-full gap-2 text-xs" variant={hasGenerated ? 'ghost' : 'default'} size="sm">
         {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : hasGenerated ? <FileText className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
-        {!canGenerateSummary ? `Mín. 10 mensagens (${filteredMessages.length} no período)` : hasGenerated ? 'Regenerar resumo' : `Gerar resumo (${filteredMessages.length} msgs)`}
+        {!canGenerateSummary
+          ? `Mín. 10 mensagens (${filteredMessages.length} no período)`
+          : hasGenerated
+            ? 'Regenerar resumo'
+            : hasWindowCut
+              ? `Gerar resumo (últimas ${analyzedCount} de ${filteredMessages.length} msgs)`
+              : `Gerar resumo (${analyzedCount} msgs)`}
       </Button>
 
       {isLoading && (
         <motion.div role="status" aria-live="polite" aria-atomic="true" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3 motion-safe:animate-pulse">
-          <div className="flex items-center gap-2 px-1"><Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /><span className="text-2xs font-medium text-muted-foreground">Gerando resumo de {filteredMessages.length} mensagens...</span></div>
+          <div className="flex items-center gap-2 px-1"><Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /><span className="text-2xs font-medium text-muted-foreground">{hasWindowCut ? `Gerando resumo das últimas ${analyzedCount} de ${filteredMessages.length} mensagens...` : `Gerando resumo de ${analyzedCount} mensagens...`}</span></div>
           <div className="h-16 rounded-xl bg-muted/40 border border-border/20" />
           <div className="space-y-1.5"><div className="h-3 bg-muted/30 rounded w-full" /><div className="h-3 bg-muted/30 rounded w-4/5" /><div className="h-3 bg-muted/30 rounded w-3/5" /></div>
         </motion.div>
