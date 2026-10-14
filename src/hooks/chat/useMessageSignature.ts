@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const SIGNATURE_ENABLED_KEY = 'chat_signature_enabled';
 
+/**
+ * Assinatura de texto do agente no Inbox.
+ *
+ * O nome vem do contexto de autenticação (`useAuth`) — a identidade já resolvida no
+ * boot. Antes o hook chamava `supabase.auth.getUser()` a cada montagem do `ChatPanel`,
+ * o que era uma ida à rede desnecessária (e uma nova espera) toda vez que a conversa
+ * era aberta.
+ *
+ * `applySignature` é IDEMPOTENTE: aplicar de novo a um texto que já começa pelo
+ * prefixo não duplica a assinatura. Isso protege os caminhos em que a mensagem passa
+ * mais de uma vez pela assinatura (reuso de rascunho, prévia e envio medindo o mesmo
+ * payload) — sem essa guarda o prefixo era empilhado uma vez por passagem.
+ */
 export function useMessageSignature() {
+  const { user } = useAuth();
   const [signatureEnabled, setSignatureEnabled] = useState(() => {
     try {
       return localStorage.getItem(SIGNATURE_ENABLED_KEY) !== 'false';
@@ -20,9 +35,8 @@ export function useMessageSignature() {
   }, []);
 
   useEffect(() => {
+    if (!user || !mountedRef.current) return;
     const fetchName = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !mountedRef.current) return;
       const { data: profile } = await supabase
         .from('profiles')
         .select('name, job_title')
@@ -38,7 +52,7 @@ export function useMessageSignature() {
       }
     };
     void fetchName();
-  }, []);
+  }, [user]);
 
   const toggleSignature = useCallback(() => {
     setSignatureEnabled(prev => {
@@ -49,8 +63,10 @@ export function useMessageSignature() {
   }, []);
 
   const applySignature = useCallback((content: string): string => {
-    if (!signatureEnabled || !agentSignature) return content;
-    return `*${agentSignature}:*\n${content}`;
+    if (!signatureEnabled || !agentSignature || !content) return content;
+    const prefix = `*${agentSignature}:*\n`;
+    if (content.startsWith(prefix)) return content;
+    return `${prefix}${content}`;
   }, [signatureEnabled, agentSignature]);
 
   return { signatureEnabled, agentName: agentSignature, toggleSignature, applySignature };

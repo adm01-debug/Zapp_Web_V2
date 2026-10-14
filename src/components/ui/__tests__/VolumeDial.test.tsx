@@ -30,6 +30,15 @@ function Harness({ inicial = 50, onNovo, ...props }: HarnessProps) {
 }
 
 const dial = () => screen.getByRole('slider');
+const knob = () => screen.getByTestId('volume-dial-knob');
+
+/** jsdom não implementa captura de ponteiro; a captura é espiada no elemento real. */
+function espiaCaptura(el: HTMLElement) {
+  const capturar = vi.fn();
+  const soltar = vi.fn();
+  Object.assign(el, { setPointerCapture: capturar, releasePointerCapture: soltar });
+  return { capturar, soltar };
+}
 
 beforeEach(() => {
   estado.reduzido = false;
@@ -97,6 +106,21 @@ describe('VolumeDial — ponteiro', () => {
     fireEvent.pointerUp(el, { pointerId: 1 });
   });
 
+  it('arrasta com o ponteiro (pointermove) e captura o ponteiro', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    const { capturar } = espiaCaptura(el);
+
+    fireEvent.pointerDown(el, { clientX: 0, clientY: -100, pointerId: 7 }); // topo → 50%
+    expect(capturar).toHaveBeenCalledWith(7);
+    expect(el).toHaveAttribute('aria-valuenow', '50');
+
+    fireEvent.pointerMove(el, { clientX: 100, clientY: 0, pointerId: 7 }); // direita → 83%
+    expect(el).toHaveAttribute('aria-valuenow', '83');
+
+    fireEvent.pointerUp(el, { pointerId: 7 });
+  });
+
   it('não salta de 100 para 0 ao cruzar a abertura inferior do arco', () => {
     render(<Harness inicial={0} />);
     const el = dial();
@@ -104,9 +128,76 @@ describe('VolumeDial — ponteiro', () => {
     fireEvent.pointerDown(el, { clientX: 71, clientY: 71, pointerId: 1 });
     expect(el).toHaveAttribute('aria-valuenow', '100');
 
-    // Arrasta para a abertura (base, 90°): o valor fica na ponta, não volta a 0.
+    // Passa pela abertura (base, 90°): o valor fica na ponta.
     fireEvent.pointerMove(el, { clientX: 0, clientY: 100, pointerId: 1 });
     expect(el).toHaveAttribute('aria-valuenow', '100');
+
+    // Sai do outro lado (135°) e continua na ponta — não volta a 0.
+    fireEvent.pointerMove(el, { clientX: -71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('não salta de 0 para 100 ao cruzar a abertura no sentido inverso', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    // Base esquerda do arco (135°) = início → 0%.
+    fireEvent.pointerDown(el, { clientX: -71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    fireEvent.pointerMove(el, { clientX: 0, clientY: 100, pointerId: 1 }); // abertura
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    // Sai do outro lado (45°) e continua na ponta — não salta para 100.
+    fireEvent.pointerMove(el, { clientX: 71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('fica preso em 100 quando o ponteiro continua para o lado oposto depois do vão', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    // Base direita do arco (45°) = ponta → 100%.
+    fireEvent.pointerDown(el, { clientX: 71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+
+    // Entra no vão (90°, base) vindo da ponta: valor preso em 100.
+    fireEvent.pointerMove(el, { clientX: 0, clientY: 100, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+
+    // Já do outro lado do arco (150° e 160°, t≈15 e 25 → ~6% e ~9%): continua preso em 100.
+    fireEvent.pointerMove(el, { clientX: -87, clientY: 50, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+    fireEvent.pointerMove(el, { clientX: -94, clientY: 34, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '100');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('fica preso em 0 quando o ponteiro continua para o lado oposto depois do vão', () => {
+    render(<Harness inicial={0} />);
+    const el = dial();
+    // Base esquerda do arco (135°) = início → 0%.
+    fireEvent.pointerDown(el, { clientX: -71, clientY: 71, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    // Entra no vão (90°, base) vindo do início: valor preso em 0.
+    fireEvent.pointerMove(el, { clientX: 0, clientY: 100, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+
+    // Já do outro lado do arco (30° e 20°, t≈255 e 245 → ~94% e ~91%): continua preso em 0.
+    fireEvent.pointerMove(el, { clientX: 87, clientY: 50, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+    fireEvent.pointerMove(el, { clientX: 94, clientY: 34, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '0');
+    fireEvent.pointerUp(el, { pointerId: 1 });
+  });
+
+  it('ignora o pointerdown no centro (raio abaixo de 60% do raio do anel)', () => {
+    render(<Harness inicial={50} />);
+    const el = dial();
+    // (10,10) → raio ~14px, menos de 60% dos ~40px do anel: nada muda.
+    fireEvent.pointerDown(el, { clientX: 10, clientY: 10, pointerId: 1 });
+    expect(el).toHaveAttribute('aria-valuenow', '50');
     fireEvent.pointerUp(el, { pointerId: 1 });
   });
 
@@ -149,6 +240,39 @@ describe('VolumeDial — ponteiro', () => {
   });
 });
 
+describe('VolumeDial — gradiente', () => {
+  it('deriva as duas paradas do próprio primary (acompanha as skins)', () => {
+    const { container } = render(<Harness inicial={50} />);
+    const paradas = Array.from(container.querySelectorAll('stop'));
+    expect(paradas).toHaveLength(2);
+    // As duas paradas são o token que o componente usa; a segunda é mais clara (opacidade).
+    for (const parada of paradas) {
+      expect(parada.getAttribute('stop-color')).toBe('hsl(var(--primary))');
+    }
+    expect(paradas[1].getAttribute('stop-opacity')).toBe('0.55');
+  });
+});
+
+describe('VolumeDial — tamanho proporcional', () => {
+  it('no size padrão (96) mantém knob de 14px e número de 24px', () => {
+    render(<Harness inicial={50} />);
+    expect(knob().style.width).toBe('14px');
+    expect(knob().style.height).toBe('14px');
+    expect(dial().style.getPropertyValue('--volume-dial-fonte')).toBe('24px');
+  });
+
+  it('escala knob e número junto com o prop size (192 → 28px / 48px)', () => {
+    render(<Harness inicial={50} size={192} />);
+    expect(knob().style.width).toBe('28px');
+    expect(knob().style.height).toBe('28px');
+    expect(dial().style.getPropertyValue('--volume-dial-fonte')).toBe('48px');
+    // O número do centro é o elemento que usa o var — a medida chega ao alvo real.
+    expect(screen.getByTestId('volume-dial-value')).toHaveClass(
+      'text-[length:var(--volume-dial-fonte)]',
+    );
+  });
+});
+
 describe('VolumeDial — estados', () => {
   it('muted mostra "Mudo" no centro e no texto falado', () => {
     render(<Harness inicial={70} muted />);
@@ -165,6 +289,14 @@ describe('VolumeDial — movimento', () => {
 
     rerender(<VolumeDial ariaLabel="Volume" value={90} onChange={() => {}} />);
     expect(screen.getByTestId('volume-dial-value')).toHaveTextContent('90%');
+  });
+
+  it('com movimento reduzido o knob não tem transição CSS e vai direto à posição', () => {
+    estado.reduzido = true;
+    render(<Harness inicial={50} />);
+    const el = knob();
+    expect(el.className).not.toMatch(/transition/);
+    expect(el.style.transform).toContain('translate');
   });
 
   it('com movimento ligado o número conta até o novo valor', async () => {

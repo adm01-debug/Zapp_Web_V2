@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import {
   Brain,
@@ -14,7 +13,11 @@ export interface AIFeature {
   title: string;
   description: string;
   icon: React.ElementType;
-  route?: string;
+  /**
+   * View interna do ViewRouter (VIEW_MAP) para onde o cartão leva. É sempre uma
+   * view de `?view=...` — nunca uma rota de URL (um cartão apontando para rota
+   * inexistente cai em `path="*"` → NotFound, foi o caso de `/sentiment-alerts`).
+   */
   action?: string;
   gradient: string;
   badge?: string;
@@ -43,7 +46,7 @@ export const AI_FEATURES: AIFeature[] = [
     title: 'Alertas de Sentimento',
     description: 'Monitore conversas com sentimento negativo',
     icon: AlertTriangle,
-    route: '/sentiment-alerts',
+    action: 'sentiment',
     gradient: 'from-warning to-warning',
     badge: 'Novo',
   },
@@ -68,19 +71,19 @@ export const AI_FEATURES: AIFeature[] = [
     title: 'Tendências de Sentimento',
     description: 'Acompanhe a evolução do sentimento dos clientes',
     icon: TrendingUp,
-    route: '/sentiment-alerts',
+    action: 'sentiment',
     gradient: 'from-coins to-warning',
   },
 ];
 
-/** Encapsula a navegação usada pelo handleFeatureClick original de AIQuickAccess — reaproveitada por AIToolsCard (Fase 8) sem alterar o comportamento da tab "ai". */
+/**
+ * Navegação dos cartões de IA: leva à VIEW interna (`action`) de cada feature.
+ * Antes os cartões 'Alertas de Sentimento' e 'Tendências de Sentimento' usavam
+ * `route: '/sentiment-alerts'`, rota que não existe em AppRoutes — o clique caía
+ * no NotFound. A tela real é a view `sentiment`.
+ */
 export function useAIFeatureNavigation() {
-  const navigate = useNavigate();
   return (feature: AIFeature) => {
-    if (feature.route) {
-      navigate(feature.route);
-    } else if (feature.action === 'inbox') {
-      navigateToView('inbox');
-    }
+    if (feature.action) navigateToView(feature.action);
   };
 }

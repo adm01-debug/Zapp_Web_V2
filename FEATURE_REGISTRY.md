@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 54 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-09`. 53 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -24,9 +24,9 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | Estado | Views |
 |---|---|
 | Full | 42 |
-| Partial | 12 |
+| Partial | 11 |
 | Suggested | 0 |
-| **total** | **54** |
+| **total** | **53** |
 
 ## Tabela
 
@@ -59,7 +59,6 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `meta-capi` | `MetaCAPIView` | `src/components/meta-capi/MetaCAPIView.tsx` | Full | `src/hooks/integrations/useMetaCAPIData.ts` |
 | `diagnostics` | `DiagnosticsView` | `src/components/diagnostics/DiagnosticsView.tsx` | Full | `src/hooks/system/useDiagnosticsData.ts` |
 | `voip` | `TelefoniaView` | `src/components/calls/TelefoniaView.tsx` | Full | `src/hooks/communication/useCalls.ts` |
-| `auto-export` | `AutoExportManager` | `src/components/reports/AutoExportManager.tsx` | Partial | `src/components/reports/AutoExportManager.tsx` |
 | `google-calendar` | `GoogleCalendarIntegration` | `src/components/integrations/GoogleCalendarIntegration.tsx` | Partial | `src/components/integrations/GoogleCalendarIntegration.tsx` |
 | `themes` | `ThemeCustomizer` | `src/components/settings/ThemeCustomizer.tsx` | Partial | `src/components/settings/ThemeCustomizer.tsx` |
 | `schedule` | `ScheduleCalendarView` | `src/components/schedule/ScheduleCalendarView.tsx` | Full | `src/components/schedule/ScheduleCalendarView.tsx` |

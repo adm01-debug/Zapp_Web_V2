@@ -398,6 +398,61 @@ export async function handleVoiceCopilotAction(
         break;
       }
 
+      case 'search_files_in_conversation': {
+        const { query, contactId } = params ?? {};
+
+        // Sem termo e sem conversa não há o que procurar: devolve vazio em vez de
+        // varrer TODOS os arquivos visíveis ao chamador (busca sem intenção dita).
+        const sanitized = String(query || '').replace(/[%_\\]/g, '').trim();
+        if (!sanitized && !contactId) {
+          result = [];
+          break;
+        }
+
+        // A RLS real de `messages` (FOR SELECT TO authenticated — só mensagens de
+        // contatos atribuídos ao profile do chamador, ou admin/supervisor) decide
+        // o que ele vê. Por isso a leitura é SEMPRE pelo authedClient (token do
+        // PRÓPRIO chamador): o service_role bypassa a RLS e vazaria o arquivo de
+        // qualquer conversa. Mesmo padrão de `search_contacts`.
+        let filesQuery = authedClient
+          .from('messages')
+          .select('id, contact_id, media_type, media_filename, created_at')
+          // Só linhas que são arquivo (mensagem de texto tem media_url nulo).
+          .not('media_url', 'is', null)
+          // Fora as apagadas (is_deleted = true; nulo/false continuam visíveis).
+          .not('is_deleted', 'is', true);
+
+        // Conversa dita restringe a ela; sem ela, a RLS já limita às conversas visíveis.
+        if (contactId) filesQuery = filesQuery.eq('contact_id', contactId);
+
+        if (sanitized) {
+          const like = escapeOrFilterValue(`%${sanitized}%`);
+          filesQuery = filesQuery.or(`media_filename.ilike.${like},media_type.ilike.${like}`);
+        }
+
+        const { data, error } = await filesQuery
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+
+        // O `messageId` é o que o frontend usa para abrir a conversa já rolada até
+        // o arquivo (mesmo mecanismo de "ver na conversa").
+        result = (data ?? []).map((row: {
+          id: string;
+          contact_id: string | null;
+          media_type: string | null;
+          media_filename: string | null;
+          created_at: string;
+        }) => ({
+          messageId: row.id,
+          contactId: row.contact_id,
+          mediaType: row.media_type,
+          filename: row.media_filename,
+          createdAt: row.created_at,
+        }));
+        break;
+      }
+
       default:
         result = { error: `Ação desconhecida: ${action}` };
     }
@@ -411,6 +466,8 @@ export async function handleVoiceCopilotAction(
   }
 }
 
+// `Deno.serve` só quando este módulo é o principal (deploy). O guard mantém o
+// handler importável pelos testes, sem abrir porta.
 if (import.meta.main) {
   Deno.serve((req) => handleVoiceCopilotAction(req));
 }

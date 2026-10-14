@@ -1,11 +1,15 @@
 import type { ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface CallKpiCardProps {
   rotulo: string;
   valor: ReactNode;
   carregando?: boolean;
   dica?: string;
+  /** Acento de atenção para o KPI que exige ação (ex.: "Perdidas"). Sem ele os
+   * 5 tiles ficam idênticos e o número ruim se perde na fileira. */
+  alerta?: boolean;
 }
 
 /**
@@ -19,13 +23,17 @@ interface CallKpiCardProps {
  * pulada (`initial={false}`) e a transicao tem duracao 0 — o numero aparece no
  * primeiro paint, sem movimento.
  */
-export function CallKpiCard({ rotulo, valor, carregando = false, dica }: CallKpiCardProps) {
+export function CallKpiCard({ rotulo, valor, carregando = false, dica, alerta = false }: CallKpiCardProps) {
   const reduzirMovimento = useReducedMotion();
 
   return (
     <motion.div
       data-testid="tel-kpi-card"
-      className="h-[78px] rounded-lg border border-border bg-card px-3 py-2 flex flex-col justify-between min-w-0"
+      data-tom={alerta ? 'alerta' : undefined}
+      className={cn(
+        'relative h-[78px] rounded-lg border bg-card px-3 py-2 flex flex-col justify-between min-w-0',
+        alerta ? 'border-destructive/50' : 'border-border',
+      )}
       initial={reduzirMovimento ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: reduzirMovimento ? 0 : 0.15 }}
@@ -41,6 +49,13 @@ export function CallKpiCard({ rotulo, valor, carregando = false, dica }: CallKpi
           {carregando ? '\u2014' : valor}
         </span>
       </div>
+      {alerta && (
+        <div
+          data-testid="tel-kpi-accent"
+          aria-hidden="true"
+          className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-destructive"
+        />
+      )}
     </motion.div>
   );
 }

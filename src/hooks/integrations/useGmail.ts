@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 import { callGmailFunction } from '../gmail/gmailApi';
+import { useGmailLabelsManagement, gmailLabelsQueryKey } from './useGmailLabels';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
 import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
@@ -21,6 +22,15 @@ export type { EmailThreadListFilters, EmailThreadListQuery, EmailThreadStateFilt
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 import type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
+
+// PE-94: camada de escrita dos marcadores, alcançável por quem importa o barril
+// `hooks/integrations` (que faz `export * from './useGmail'`).
+export {
+  useGmailLabelsManagement, gmailLabelsQueryKey, normalizeGmailLabelName, GMAIL_LABEL_MAX_NAME_LENGTH,
+} from './useGmailLabels';
+export type {
+  CreateGmailLabelInput, UpdateGmailLabelInput, GmailLabelResource, GmailLabelColor,
+} from './useGmailLabels';
 
 // Arrays vazios de identidade estável: `= []` no destructuring cria uma referência nova a cada
 // render enquanto a consulta carrega, o que re-dispara memos/efeitos dos consumidores
@@ -275,7 +285,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
   });
 
   const { data: labels = [] } = useQuery({
-    queryKey: ['gmail-labels', activeAccount?.id],
+    queryKey: gmailLabelsQueryKey(activeAccount?.id),
     queryFn: async () => {
       if (!activeAccount) return [];
       const { data, error } = await supabase.from('email_labels').select('*').eq('gmail_account_id', activeAccount.id).order('name');
@@ -284,6 +294,10 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     },
     enabled: !!activeAccount,
   });
+
+  // PE-94: camada de escrita dos marcadores (criar/renomear/apagar) com
+  // atualização otimista sobre a MESMA consulta `gmail-labels` acima.
+  const labelsManagement = useGmailLabelsManagement(activeAccount?.id);
 
   const syncInbox = useMutation({
     mutationFn: async (options?: { query?: string; maxResults?: number }) => {
@@ -455,7 +469,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
   return {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts, connectGmail, exchangeCode, disconnectGmail,
     threads, threadsLoading, threadsError, requestedThread, requestedThreadLoading, requestedThreadError, selectedThreadId, setSelectedThreadId, refetchThreads,
-    threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels,
+    threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels, labelsManagement,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
     subscribeToThreads,
     threadsTotalCount: threadPage.total ?? threads.length,

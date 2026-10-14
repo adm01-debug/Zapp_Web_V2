@@ -13,7 +13,6 @@ const baseSettings = {
   newMessageSound: true,
   mentionSound: true,
   slaBreachSound: true,
-  desktopAlerts: true,
   transcriptionNotificationEnabled: true,
   messageSoundType: 'chime',
   mentionSoundType: 'bell',

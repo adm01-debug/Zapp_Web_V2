@@ -173,9 +173,9 @@ function corDaClasse(
 /* ------------------------------------------------------------------ */
 
 const CONTATOS = [
-  { id: 'c1', name: 'Ana Prado', nickname: null, phone: '5511900000001', company: 'Acme Brindes', avatar_url: null, tags: ['VIP'] },
-  { id: 'c2', name: 'Bruno Lima', nickname: null, phone: '5511900000002', company: 'Acme Brindes', avatar_url: null, tags: null },
-  { id: 'c3', name: 'Carla Dias', nickname: null, phone: '5511900000003', company: null, avatar_url: null, tags: null },
+  { id: 'c1', name: 'Ana Prado', nickname: null, phone: '5511900000001', company: 'Acme Brindes', avatar_url: null },
+  { id: 'c2', name: 'Bruno Lima', nickname: null, phone: '5511900000002', company: 'Acme Brindes', avatar_url: null },
+  { id: 'c3', name: 'Carla Dias', nickname: null, phone: '5511900000003', company: null, avatar_url: null },
 ];
 
 const nada = () => {};
@@ -191,10 +191,7 @@ function contadorDoCardContatos(): HTMLElement {
       setContactSearch={nada}
       companyFilter="all"
       setCompanyFilter={nada}
-      tagFilter="all"
-      setTagFilter={nada}
       companies={['Acme Brindes']}
-      tags={['VIP']}
       toggleContact={nada}
       selectAll={nada}
       clearFilters={nada}

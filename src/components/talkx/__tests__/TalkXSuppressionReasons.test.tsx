@@ -105,6 +105,18 @@ async function abrirMotivos() {
   return screen.findByRole('dialog');
 }
 
+/**
+ * O diálogo expõe dois botões com o nome acessível "Fechar": o ícone do
+ * primitivo DialogContent (o X, com o texto "Fechar" em sr-only) e o botão de
+ * ação do rodapé (GhostButton). O teste mira o botão de ação do rodapé — o que
+ * NÃO traz ícone (svg) — sem ambiguidade e sem afrouxar a asserção.
+ */
+function botaoFecharDoRodape(dialog: HTMLElement) {
+  return within(dialog)
+    .getAllByRole('button', { name: /^Fechar$/i })
+    .find((botao) => !botao.querySelector('svg'));
+}
+
 describe('TalkXSuppression · modal Gerenciar motivos (X182/T06-057)', () => {
   it('lista os motivos de sistema com o uso de cada um', async () => {
     const dialog = await abrirMotivos();
@@ -125,13 +137,15 @@ describe('TalkXSuppression · modal Gerenciar motivos (X182/T06-057)', () => {
 
     expect(dentro.getAllByText('Sistema')).toHaveLength(7);
     expect(dentro.queryByRole('button', { name: /Desativar|Excluir|Remover|Renomear|Salvar|Nova/i })).toBeNull();
-    expect(dentro.getByRole('button', { name: /^Fechar$/i })).toBeTruthy();
+    expect(botaoFecharDoRodape(dialog)).toBeTruthy();
   });
 
   it('fecha pelo botão Fechar', async () => {
     const dialog = await abrirMotivos();
+    const fechar = botaoFecharDoRodape(dialog);
+    expect(fechar).toBeTruthy();
 
-    fireEvent.click(within(dialog).getByRole('button', { name: /^Fechar$/i }));
+    fireEvent.click(fechar!);
 
     expect(screen.queryByText('Motivos de supressão')).toBeNull();
   });

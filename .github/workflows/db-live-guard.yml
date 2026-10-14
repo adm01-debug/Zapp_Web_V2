@@ -220,6 +220,23 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      # Guarda GERAL de invariantes do banco vivo: toda tabela de public com RLS,
+      # toda view com security_invoker, nenhuma matview legivel por anon/authenticated,
+      # toda SECURITY DEFINER com search_path fixo, nenhuma policy de escrita aberta
+      # (USING/WITH CHECK true) para authenticated/PUBLIC e nenhuma funcao/comando de
+      # cron citando objeto inexistente. Cada furo ja aconteceu em algum momento e so
+      # sobrava o GRANT como portao. Prova de que nao e vacua nem frouxa:
+      # scripts/db-audit/check-live-invariants.test.sh (roda no db-guard).
+      # Le o catalogo do PROPRIO banco: nenhuma migration basta para provar o estado de hoje.
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-live-invariants.sql 2>&1 | tee /tmp/step-live-invariants.log
+
       - name: Regenerar catalogo e comparar com o commitado
         id: catalog
         if: steps.credencial.outcome == 'success'
@@ -510,6 +527,7 @@ jobs:
             /tmp/step-acl-talkx-metrics.log
             /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
+            /tmp/step-live-invariants.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log
             /tmp/step-types.log

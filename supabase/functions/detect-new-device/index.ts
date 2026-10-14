@@ -145,9 +145,6 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
     let deviceId: string;
 
     if (!existingDevice) {
-      isNewDevice = true;
-      log.warn("New device detected");
-
       const { data: newDevice, error: insertError } = await supabaseAdmin
         .from("user_devices")
         .insert({
@@ -162,12 +159,37 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
         .select()
         .single();
 
-      if (insertError) throw insertError;
-      deviceId = newDevice.id;
+      // 23505 = unique_violation: outra requisição concorrente (segunda aba
+      // abrindo ao mesmo tempo) já inseriu este (user_id, device_fingerprint).
+      // O UNIQUE user_devices_user_id_device_fingerprint_key segura a corrida:
+      // só uma linha nasce. Rebusca a linha vencedora e trata como dispositivo
+      // conhecido — sem segunda linha, sem segundo e-mail e sem segundo alerta.
+      if (insertError) {
+        if ((insertError as { code?: string }).code === "23505") {
+          const { data: raceDevice, error: raceError } = await supabaseAdmin
+            .from("user_devices")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("device_fingerprint", device_fingerprint)
+            .maybeSingle();
 
-      // Send email notification
+          if (raceError) throw raceError;
+          if (!raceDevice) throw insertError;
+          deviceId = raceDevice.id;
+          log.info("Corrida 23505: dispositivo já registrado por outra aba, tratado como conhecido");
+        } else {
+          throw insertError;
+        }
+      } else {
+        isNewDevice = true;
+        log.warn("New device detected");
+        deviceId = newDevice.id;
+      }
+
+      // Send email notification (só para dispositivo realmente novo; no caminho
+      // da corrida 23505 isNewDevice já é false e nada é enviado).
       const userEmail = user.email;
-      if (userEmail && RESEND_API_KEY && emailAllowed) {
+      if (isNewDevice && userEmail && RESEND_API_KEY && emailAllowed) {
         try {
           const emailHtml = `
             <!DOCTYPE html>
@@ -216,16 +238,19 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
         }
       }
 
-      // Create security alert
-      await supabaseAdmin.from("security_alerts").insert({
-        user_id: user.id,
-        alert_type: "new_device",
-        severity: "medium",
-        title: "Novo dispositivo detectado",
-        description: `Login realizado a partir de ${browser} em ${os} (IP: ${clientIp})`,
-        ip_address: clientIp,
-        metadata: { device_fingerprint, browser, os, device_name },
-      });
+      // Create security alert — só quando o dispositivo é realmente novo; no
+      // caminho da corrida 23505 (isNewDevice=false) o alerta sairia em dobro.
+      if (isNewDevice) {
+        await supabaseAdmin.from("security_alerts").insert({
+          user_id: user.id,
+          alert_type: "new_device",
+          severity: "medium",
+          title: "Novo dispositivo detectado",
+          description: `Login realizado a partir de ${browser} em ${os} (IP: ${clientIp})`,
+          ip_address: clientIp,
+          metadata: { device_fingerprint, browser, os, device_name },
+        });
+      }
     } else {
       deviceId = existingDevice.id;
       log.info("Known device, updating last_seen");

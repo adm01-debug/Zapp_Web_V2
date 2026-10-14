@@ -155,6 +155,17 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+// t_b35c23b0: o cabeçalho de conexões usa a fonte da V2 (store global de
+// whatsapp_connections). Neutro aqui — o teste prova as pendências por atendente.
+vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
+  useConnectionsHealth: () => ({
+    connections: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {

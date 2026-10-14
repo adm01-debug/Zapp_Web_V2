@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { invokeEdge, supabase } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
+import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
 
 export interface UserWithRole {
@@ -48,12 +49,69 @@ const ROLE_CHANGE_ERROR_MESSAGES: Record<string, string> = {
   jwt_session_required: 'Sessão expirada. Faça login novamente.',
 };
 
-function roleChangeErrorMessage(error: { message?: string }): string {
+function roleChangeErrorMessage(error: { code?: string; message?: string }): string {
+  // A negação de RLS (42501/403) chega crua do PostgREST; a UI mostra a
+  // mensagem fixa do helper, sem nome de tabela nem de policy.
+  if (isAccessDeniedError(error)) return describeAccessError(error);
   const message = error.message ?? '';
   for (const [code, text] of Object.entries(ROLE_CHANGE_ERROR_MESSAGES)) {
     if (message.includes(code)) return text;
   }
   return 'Erro ao atualizar role';
+}
+
+// Campos que a criação de usuário (Edge `create-user`) valida no servidor.
+export type CreateUserField = 'name' | 'email' | 'password' | 'role';
+
+export interface CreateUserFieldError {
+  /** Campo do formulário que originou o erro; `null` quando não dá para atribuir. */
+  field: CreateUserField | null;
+  /** Mensagem em pt-BR para mostrar ao lado do campo. */
+  message: string;
+}
+
+// A Edge devolve tudo num único texto (mensagem do GoTrue ou os erros do zod
+// unidos por '; '). Traduzimos esse texto para o CAMPO que o formulário destaca,
+// sem mostrar a mensagem crua do servidor.
+const CREATE_USER_ERROR_RULES: ReadonlyArray<{ field: CreateUserField; pattern: RegExp; message: string }> = [
+  // E-mail duplicado chega do GoTrue como "...already been registered".
+  { field: 'email', pattern: /already\s+(been\s+)?registered|already\s+exists|duplicate|j[áa]\s+cadastrad/i, message: 'Este e-mail já está cadastrado.' },
+  { field: 'email', pattern: /email/i, message: 'Informe um e-mail válido.' },
+  { field: 'password', pattern: /password|senha/i, message: 'A senha deve ter pelo menos 8 caracteres.' },
+  // O zod da Edge não devolve o NOME do campo inválido (a mensagem é
+  // "Invalid enum value. Expected ..."); o único enum escalar do corpo é `role`.
+  { field: 'role', pattern: /invalid enum value|role|papel/i, message: 'Papel de usuário inválido.' },
+  { field: 'name', pattern: /name|nome/i, message: 'Informe o nome do usuário.' },
+];
+
+export function mapCreateUserError(serverMessage: string | null | undefined): CreateUserFieldError {
+  const texto = typeof serverMessage === 'string' ? serverMessage : '';
+  for (const rule of CREATE_USER_ERROR_RULES) {
+    if (rule.pattern.test(texto)) return { field: rule.field, message: rule.message };
+  }
+  return { field: null, message: 'Erro ao criar usuário' };
+}
+
+// Mensagem e status de um erro de `functions.invoke`. O supabase-js devolve
+// `FunctionsHttpError` com o `Response` cru em `error.context`; o corpo é
+// `{ error: '...' }` na Edge padrão, mas pode vir vazio/HTML de um proxy —
+// por isso a leitura do corpo é guardada.
+async function readEdgeError(error: unknown): Promise<{ status: number | null; message: string }> {
+  const context = (error as { context?: { status?: number; clone?: () => Response } } | null)?.context;
+  if (context && typeof context.status === 'number' && typeof context.clone === 'function') {
+    let message = '';
+    try {
+      const parsed: unknown = await context.clone().json();
+      if (parsed && typeof parsed === 'object' && typeof (parsed as { error?: unknown }).error === 'string') {
+        message = (parsed as { error: string }).error;
+      }
+    } catch {
+      // corpo não-JSON (HTML de proxy, resposta vazia): segue com o padrão.
+    }
+    return { status: context.status, message: message || 'Erro ao criar usuário' };
+  }
+  const message = error instanceof Error && error.message ? error.message : 'Erro ao criar usuário';
+  return { status: null, message };
 }
 
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
@@ -70,6 +128,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   // Reentrância de desativação/reativação por usuário: evita que um duplo clique
   // no Switch dispare duas gravações concorrentes do mesmo perfil.
   const togglingRef = useRef<Set<string>>(new Set());
+  // Erro por campo da última tentativa de criação (limpo a cada nova tentativa).
+  const [createUserError, setCreateUserError] = useState<CreateUserFieldError | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -226,6 +286,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   }
 
   const handleCreateUser = useCallback(async (payload: CreateUserPayload): Promise<boolean> => {
+    setCreateUserError(null);
     if (!payload.name || !payload.email || !payload.password) {
       toast.error('Preencha todos os campos obrigatórios');
       return false;
@@ -250,42 +311,44 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
       avatarUrl = urlData.publicUrl;
     }
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/create-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            name: payload.name,
-            nickname: payload.nickname || undefined,
-            signature: payload.signature || undefined,
-            job_title: payload.job_title || undefined,
-            avatar_url: avatarUrl,
-            email: payload.email,
-            password: payload.password,
-            role: payload.role,
-            gmail_email: payload.gmail_email || undefined,
-            google_services: payload.google_services,
-            dropbox_email: payload.dropbox_email || undefined,
-          }),
-        }
-      );
+    const body = {
+      name: payload.name,
+      nickname: payload.nickname || undefined,
+      signature: payload.signature || undefined,
+      job_title: payload.job_title || undefined,
+      avatar_url: avatarUrl,
+      email: payload.email,
+      password: payload.password,
+      role: payload.role,
+      gmail_email: payload.gmail_email || undefined,
+      google_services: payload.google_services,
+      dropbox_email: payload.dropbox_email || undefined,
+    };
 
-      const result = await response.json();
-      if (!response.ok) {
-        toast.error(result.error || 'Erro ao criar usuário');
-        return false;
+    try {
+      // Camada padrão (PE-43): `invokeEdge` (src/lib/supabaseHelpers) anexa o
+      // token da sessão atual e trata corpo/status HTTP. O `fetch` cru montava
+      // `Bearer ${session?.access_token}` à mão (podia virar 'Bearer undefined')
+      // e lia o corpo do erro sem guarda.
+      try {
+        await invokeEdge('create-user', body);
+      } catch (firstError) {
+        const { status } = await readEdgeError(firstError);
+        if (status !== 401) throw firstError;
+        // Sessão expirada: renova UMA vez e repete antes de desistir.
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) throw firstError;
+        await invokeEdge('create-user', body);
       }
+
       toast.success('Usuário criado com sucesso!');
       fetchData();
       return true;
-    } catch {
-      toast.error('Erro ao criar usuário');
+    } catch (error) {
+      const { message } = await readEdgeError(error);
+      const fieldError = mapCreateUserError(message);
+      setCreateUserError(fieldError);
+      toast.error(fieldError.message);
       return false;
     }
   }, [fetchData]);
@@ -299,5 +362,6 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     handleToggleActive,
     handleSaveUser,
     handleCreateUser,
+    createUserError,
   };
 }

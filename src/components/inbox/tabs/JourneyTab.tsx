@@ -166,6 +166,13 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold truncate">{event.title}</p>
                             {event.subtitle && <p className="text-xs text-muted-foreground truncate">{event.subtitle}</p>}
+                            {/* Nota escrita na transferência (`metadata.note`): a linha mostra a versão
+                                cortada em 120 e o `title` guarda o texto completo — sem nota, nada muda. */}
+                            {event.note && (
+                              <p className="text-xs text-muted-foreground truncate" title={event.noteFull ?? event.note}>
+                                Nota: {event.note}
+                              </p>
+                            )}
                           </div>
                           {event.pill && (
                             <span className={cn('h-6 px-2.5 rounded-full border text-2xs font-semibold inline-flex items-center shrink-0', PILL_CLASS[event.pill.tone])}>

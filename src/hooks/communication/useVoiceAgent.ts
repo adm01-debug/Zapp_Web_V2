@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useScribe, CommitStrategy } from '@elevenlabs/react';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
-import type { VoiceAgentPhase, VoiceAgentAction, UseVoiceAgentOptions, UseVoiceAgentReturn } from '../voice/types';
+import type { VoiceAgentPhase, VoiceAgentAction, UseVoiceAgentOptions, UseVoiceAgentReturn, VoiceTtsIssue } from '../voice/types';
 import { processVoiceTranscript } from '../voice/processTranscript';
 import { playTtsAudio, type TtsPlayback } from '../voice/playTtsAudio';
 import { logVoiceCommand } from '../voice/logVoiceCommand';
@@ -43,6 +43,11 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const [finalTranscript, setFinalTranscript] = useState('');
   const [agentResponse, setAgentResponse] = useState('');
   const [error, setError] = useState('');
+  /**
+   * O áudio da resposta falhou? O operador precisa saber por que ficou sem som —
+   * antes o erro do TTS morria num `log.warn` e a tela não dizia nada.
+   */
+  const [ttsIssue, setTtsIssue] = useState<VoiceTtsIssue>('');
 
   const onActionRef = useRef(options?.onAction);
   const onErrorRef = useRef(options?.onError);
@@ -120,7 +125,10 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
 
     const startTime = Date.now();
     safeSetPhase('processing');
-    if (mountedRef.current) setAgentResponse('');
+    if (mountedRef.current) {
+      setAgentResponse('');
+      setTtsIssue('');
+    }
 
     try {
       const authToken = await resolveAuthToken();
@@ -137,11 +145,18 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       safeSetPhase('speaking');
 
       try {
-        const tts = playTtsAudio(result.response, supabaseUrl, authToken);
+        const tts = playTtsAudio(result.response, supabaseUrl, authToken, {
+          // O navegador pode RECUSAR o play() (Safari/iOS): sem este aviso o operador
+          // fica sem som e sem explicação.
+          onAutoplayBlocked: () => {
+            if (isCurrent()) setTtsIssue('autoplay-blocked');
+          },
+        });
         ttsRef.current = tts;
         await waitForPlaybackOrAbort(tts.promise, abortCtrl.signal);
       } catch (ttsErr) {
-        log.warn('TTS playback failed, continuing silently', ttsErr);
+        if (isCurrent()) setTtsIssue('playback-failed');
+        log.warn('TTS playback failed', ttsErr);
       }
 
       if (!isCurrent()) return;
@@ -218,6 +233,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     setFinalTranscript('');
     setAgentResponse('');
     setError('');
+    setTtsIssue('');
 
     try {
       const { data, error: tokenError } = await supabase.functions.invoke('elevenlabs-scribe-token');
@@ -297,6 +313,39 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     safeSetPhase(scribe.isConnected ? 'listening' : 'idle');
   }, [scribe, safeSetPhase]);
 
+  /**
+   * Toca de novo a última resposta em voz. É a ação do aviso de falha: o toque do
+   * operador é um gesto do usuário, então o navegador libera o áudio que antes recusou.
+   */
+  const replayResponse = useCallback(async () => {
+    const text = agentResponse.trim();
+    if (!text || !mountedRef.current) return;
+
+    setTtsIssue('');
+    ttsRef.current?.stop();
+    ttsRef.current = null;
+
+    const authToken = await resolveAuthToken();
+    if (!mountedRef.current) return;
+
+    safeSetPhase('speaking');
+    const tts = playTtsAudio(text, supabaseUrl, authToken, {
+      onAutoplayBlocked: () => {
+        if (mountedRef.current) setTtsIssue('autoplay-blocked');
+      },
+    });
+    ttsRef.current = tts;
+
+    try {
+      await tts.promise;
+    } catch (ttsErr) {
+      if (mountedRef.current) setTtsIssue('playback-failed');
+      log.warn('TTS replay failed', ttsErr);
+    } finally {
+      if (mountedRef.current) safeSetPhase(scribeRef.current?.isConnected ? 'listening' : 'idle');
+    }
+  }, [agentResponse, resolveAuthToken, safeSetPhase, supabaseUrl]);
+
   const reset = useCallback(() => {
     processingAbortRef.current?.abort();
     scribe.disconnect();
@@ -308,6 +357,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     setFinalTranscript('');
     setAgentResponse('');
     setError('');
+    setTtsIssue('');
   }, [scribe, clearAllTimers, safeSetPhase]);
 
   // Cleanup on unmount
@@ -328,9 +378,11 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     finalTranscript,
     agentResponse,
     error,
+    ttsIssue,
     startListening,
     stopListening,
     stopSpeaking,
+    replayResponse,
     reset,
   };
 }

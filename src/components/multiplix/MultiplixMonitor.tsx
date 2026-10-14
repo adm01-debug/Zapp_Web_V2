@@ -8,6 +8,7 @@ import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
   fetchMultiplixRecipientsTotal, useMultiplixEstimate,
+  type MultiplixRecipientRow,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import { useMultiplixReplies, type MultiplixReplyAttribution } from '@/hooks/integrations/useMultiplixReplies';
 import { openContactChat } from '@/components/catalog/useSendProduct';
@@ -134,7 +135,7 @@ function ReturnsRoom({ dispatchId }: { dispatchId: string }) {
         <p className="text-center py-8 text-muted-foreground text-xs">Nenhum retorno neste disparo ainda</p>
       )}
       {status === 'ready' && (
-        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
+        <div role="region" aria-label="Lista de retornos" tabIndex={0} className="max-h-[30rem] overflow-auto divide-y divide-border/40">
           {replies.map((r) => (
             <div key={r.recipient_id} data-testid="reply-row" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
               <div className="flex-1 min-w-0">
@@ -163,6 +164,38 @@ function ReturnsRoom({ dispatchId }: { dispatchId: string }) {
 }
 
 interface Props { dispatchId: string; onBack: () => void }
+
+/**
+ * F87 — render isolado por linha. A linha da lista de destinatarios tem
+ * componente proprio + `React.memo`: o monitor re-renderiza a cada interacao
+ * local (AlertDialog de pausar/cancelar) e a cada atualizacao de dados (canal
+ * realtime debounced + contagem de pulados a cada 5s), e a lista carrega em
+ * blocos de 500. Com o JSX inline, cada um desses eventos re-renderizava TODA a
+ * lista carregada. Com `React.memo`, a linha so re-renderiza quando o proprio
+ * objeto de dado muda (comparacao rasa das props — uma leitura nova cria
+ * objetos novos e re-renderiza; um re-render da tela sem dado novo, nao).
+ */
+const RecipientRow = React.memo(function RecipientRow({ r }: { r: MultiplixRecipientRow }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
+        <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
+        {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
+        {((r.attempt_count ?? 0) > 0 || r.external_id) && (
+          <p className="text-3xs text-muted-foreground truncate">
+            {(r.attempt_count ?? 0) > 0 && <span data-testid="recipient-attempts">{r.attempt_count} {r.attempt_count === 1 ? 'tentativa' : 'tentativas'}</span>}
+            {(r.attempt_count ?? 0) > 0 && r.external_id && ' · '}
+            {r.external_id && <span data-testid="recipient-external-id">ID {r.external_id}</span>}
+          </p>
+        )}
+      </div>
+      <StatusPill status={r.status} map={RECIPIENT_STATUS} />
+      {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
+    </div>
+  );
+});
+
 
 export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const qc = useQueryClient();
@@ -222,6 +255,16 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
 
   const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // F86 (TL-045): a lista de disparos e desmontada quando o monitor abre; sem
+  // mover o foco, quem navega por teclado volta para o <body> e perde o lugar
+  // na troca lista<->monitor. O titulo (tabIndex -1) recebe o foco quando o
+  // disparo chega -- o efeito roda de novo por id, nao a cada re-render do
+  // realtime.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [dispatch?.id]);
 
   useEffect(() => {
     // Debounce 500ms nos dois handlers: durante envio ativo cada destinatario
@@ -335,7 +378,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-4 min-w-0">
+    <div className="space-y-4 min-w-0" data-testid="multiplix-monitor">
       <button type="button" onClick={onBack} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 w-fit">
         <ArrowLeft className="w-4 h-4" />Voltar aos disparos
       </button>
@@ -345,7 +388,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           <div className="flex items-center gap-3 min-w-0">
             <IconTile icon={isRunning ? Send : isPaused ? Pause : XCircle} color={isRunning ? 'blue' : isPaused ? 'amber' : dispatch.status === 'completed' ? 'green' : 'red'} size={48} />
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
+              <h2 ref={headingRef} tabIndex={-1} className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
               <p className="text-xs text-foreground-secondary line-clamp-1">{dispatch.message_template}</p>
             </div>
           </div>
@@ -358,10 +401,22 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5" />
+        <Progress value={progress} aria-label="Progresso do disparo" className="h-3 mb-1.5" />
+        {/* F86 (TL-045): os contadores e a barra mudam sozinhos (realtime) sem
+            ninguem tocar na tela -- este texto e o que a regiao aria-live
+            anuncia; sai dos mesmos numeros que a tela mostra. */}
+        <span
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          data-testid="multiplix-progresso-live"
+        >
+          {`${progress}% concluído · ${fmtInt(processed)} de ${fmtInt(dispatch.total_recipients)} processados · ${fmtInt(dispatch.failed_count)} falha(s) · ${fmtInt(remaining)} restantes`}
+        </span>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(dispatch.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-primary-glow font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
         {/* F80: a contagem de "sem WhatsApp" pode falhar sozinha (o servidor sem o
@@ -452,7 +507,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             )}
           </p>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[8.125rem]"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar destinatários por status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[8.125rem]"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -471,27 +526,16 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             Mostrando os primeiros {fmtInt(recipients.length)} destinatários (amostra do total, veja o filtro de status).
           </p>
         )}
-        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
-          {recipients.map((r) => {
-            const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
-            return (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
-                  <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
-                  {((r.attempt_count ?? 0) > 0 || r.external_id) && (
-                    <p className="text-3xs text-muted-foreground truncate">
-                      {(r.attempt_count ?? 0) > 0 && <span data-testid="recipient-attempts">{r.attempt_count} {r.attempt_count === 1 ? 'tentativa' : 'tentativas'}</span>}
-                      {(r.attempt_count ?? 0) > 0 && r.external_id && ' · '}
-                      {r.external_id && <span data-testid="recipient-external-id">ID {r.external_id}</span>}
-                    </p>
-                  )}</div>
-                <StatusPill status={r.status} map={RECIPIENT_STATUS} />
-                {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
-              </div>
-            );
-          })}
+        {/* F86 (TL-045): a lista rola em `overflow-auto`; sem foco proprio o
+            teclado nao alcanca a rolagem (os itens nao sao focaveis) e quem
+            nao usa mouse fica sem ver os destinatarios alem do corte. */}
+        <div
+          role="region"
+          aria-label="Lista de destinatários"
+          tabIndex={0}
+          className="max-h-[30rem] overflow-auto divide-y divide-border/40"
+        >
+          {recipients.map((r) => <RecipientRow key={r.id} r={r} />)}
           {/* F80: CARREGANDO nao e VAZIO — a primeira pagina em andamento espera em
               vez de confirmar "nenhum destinatario". */}
           {!recipientsFailed && recipientsLoading && (

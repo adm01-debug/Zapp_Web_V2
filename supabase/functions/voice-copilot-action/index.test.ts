@@ -1,26 +1,32 @@
 /**
- * feat(voice): copiloto de voz busca tarefas pessoais — contrato executável.
+ * Contrato executável do copiloto de voz (`voice-copilot-action`). Cobre duas
+ * ações que o handler REAL expõe:
  *
- * Defeito/escopo: o copiloto não conhecia as tarefas PESSOAIS do usuário
- * (módulo Tarefas, src/components/tasks/). A ação `search_tasks` lê
- * `conversation_tasks` pelo client do PRÓPRIO chamador (authedClient), para que
- * a RLS real decida o que ele enxerga — o service_role bypassaria a RLS e
- * vazaria tarefa de outra pessoa.
+ *  - `search_tasks` — tarefas PESSOAIS do módulo Tarefas (src/components/tasks/):
+ *    a leitura sai pelo client do PRÓPRIO chamador (authedClient) para que a RLS
+ *    real decida o que ele enxerga; o service_role (que bypassa a RLS) nunca lê
+ *    `conversation_tasks`, senão vazaria tarefa de outra pessoa.
  *
- * O teste chama o handler REAL (`handleVoiceCopilotAction`) com um Request real
- * e dois clients falsos: o `authedClient` (só as tarefas que o usuário vê) e o
- * `supabase` service_role (com uma tarefa SECRETA de outro agente). Se o handler
- * usasse o service_role para `conversation_tasks`, a tarefa secreta vazaria e o
- * teste falharia. Roda offline, sem rede, sem banco e sem env: tudo entra por
- * `deps`.
+ *  - `search_files_in_conversation` (cartão t_b8b573c3) — o copiloto precisa
+ *    ACHAR ARQUIVO numa conversa. O defeito medido: `voice-copilot-action` tinha
+ *    7 ações e nenhuma devolvia arquivo de conversa; pedir "acha o contrato.pdf"
+ *    não tinha para onde ir. A ação devolve o `messageId` que o frontend usa
+ *    para abrir a conversa rolada até o arquivo; a visibilidade é decidida pela
+ *    RLS de `messages` e a leitura vai SEMPRE pelo authedClient (token do próprio
+ *    chamador) — o service_role nunca é tocado.
+ *
+ * Além disso, provamos que a busca por arquivo não varre tudo quando não foi dito
+ * nem o termo nem a conversa, e que nenhum dos dois clientes service_role é
+ * acionado nessas leituras.
+ *
+ * O teste chama o handler REAL (`handleVoiceCopilotAction`) com Request real e
+ * clients falsos injetados por `deps` (VoiceCopilotDeps). Roda offline, sem rede,
+ * sem banco e sem env.
  *
  * Comando do CI: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read <este arquivo>
  */
+import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { handleVoiceCopilotAction, type VoiceCopilotDeps } from "./index.ts";
-
-function assert(cond: unknown, msg: string): asserts cond {
-  if (!cond) throw new Error(msg);
-}
 
 type Row = Record<string, unknown>;
 
@@ -215,4 +221,184 @@ Deno.test("search_tasks: termo sem correspondência devolve lista vazia (não in
   const rows = await callSearchTasks(deps, { query: "xyz-nao-existe" });
 
   assert(rows.length === 0, "nenhuma tarefa casa com o termo: a resposta deve ser vazia");
+});
+
+// ---------------------------------------------------------------------------
+// search_files_in_conversation — cartão t_b8b573c3
+// ---------------------------------------------------------------------------
+
+const UID = "0f1e2d3c-4b5a-4978-8899-aabbccddeeff";
+const CONVERSA_A = "11111111-1111-4111-8111-111111111111";
+const CONVERSA_B = "22222222-2222-4222-8222-222222222222";
+const MSG_CONTRATO = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const MSG_FOTO = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+type Linha = Record<string, unknown>;
+
+function arquivo(id: string, conversa: string, tipo: string, nome: string): Linha {
+  return {
+    id,
+    contact_id: conversa,
+    media_type: tipo,
+    media_filename: nome,
+    media_url: `https://storage.local/${nome}`,
+    is_deleted: false,
+    created_at: "2026-10-10T12:00:00.000Z",
+  };
+}
+
+/** Uma consulta PostgREST registrada (para conferir os filtros emitidos). */
+interface Consulta {
+  table: string;
+  calls: string[];
+}
+
+/**
+ * Client autenticado falso: devolve só as linhas que "a RLS" dá ao chamador.
+ * `visiveis` é o que o usuário enxerga — a mesma fronteira que a RLS de
+ * `messages` aplica em produção (contatos atribuídos ao profile ou admin).
+ */
+function fakeAuthedClient(
+  visiveis: Linha[],
+  consultas: Consulta[],
+): { from: (table: string) => unknown } {
+  return {
+    from(table: string) {
+      const consulta: Consulta = { table, calls: [] };
+      consultas.push(consulta);
+      const b: Record<string, unknown> = {};
+      const encadeia = (nome: string, ...args: unknown[]) => {
+        consulta.calls.push(`${nome}:${args.map((a) => JSON.stringify(a)).join(",")}`);
+        return b;
+      };
+      b.select = (...a: unknown[]) => encadeia("select", ...a);
+      b.not = (...a: unknown[]) => encadeia("not", ...a);
+      b.eq = (...a: unknown[]) => encadeia("eq", ...a);
+      b.or = (...a: unknown[]) => encadeia("or", ...a);
+      b.order = (...a: unknown[]) => encadeia("order", ...a);
+      b.limit = (...a: unknown[]) => encadeia("limit", ...a);
+      b.then = (resolve: (v: unknown) => void) => resolve({ data: visiveis, error: null });
+      return b;
+    },
+  };
+}
+
+/** service_role falso: se for usado para ler qualquer coisa, explode. */
+function fakeServiceClient(tocados: string[]): { from: (table: string) => unknown } {
+  return {
+    from(table: string) {
+      tocados.push(table);
+      throw new Error(`service_role não pode ser usado aqui (tabela ${table})`);
+    },
+  };
+}
+
+function pedido(action: string, params: Record<string, unknown>): Request {
+  return new Request("https://local.test/voice-copilot-action", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: "Bearer token-de-teste" },
+    body: JSON.stringify({ action, params }),
+  });
+}
+
+interface Cenario {
+  deps: VoiceCopilotDeps;
+  consultas: Consulta[];
+  serviceTocado: string[];
+}
+
+function cenario(visiveis: Linha[]): Cenario {
+  const consultas: Consulta[] = [];
+  const serviceTocado: string[] = [];
+  return {
+    consultas,
+    serviceTocado,
+    deps: {
+      authorize: () => Promise.resolve({ userId: UID }),
+      authedClient: fakeAuthedClient(visiveis, consultas) as never,
+      supabase: fakeServiceClient(serviceTocado) as never,
+      env: (key) => `env-${key}`,
+    },
+  };
+}
+
+async function chamar(
+  c: Cenario,
+  params: Record<string, unknown>,
+): Promise<{ status: number; result: unknown }> {
+  const res = await handleVoiceCopilotAction(
+    pedido("search_files_in_conversation", params),
+    c.deps,
+  );
+  const body = await res.json();
+  return { status: res.status, result: body.result };
+}
+
+Deno.test("acha o arquivo pelo nome e devolve o messageId da conversa", async () => {
+  const c = cenario([arquivo(MSG_CONTRATO, CONVERSA_A, "document", "contrato.pdf")]);
+  const { status, result } = await chamar(c, { query: "contrato", contactId: CONVERSA_A });
+
+  assertEquals(status, 200);
+  const linhas = result as Array<Record<string, unknown>>;
+  assertEquals(linhas.length, 1);
+  // O id é o que o frontend usa para abrir a conversa rolada até o arquivo.
+  assertEquals(linhas[0].messageId, MSG_CONTRATO);
+  assertEquals(linhas[0].filename, "contrato.pdf");
+  assertEquals(linhas[0].contactId, CONVERSA_A);
+
+  // A leitura foi em `messages`, pelo authedClient, filtrando nome E tipo.
+  const consulta = c.consultas.find((x) => x.table === "messages");
+  assert(consulta, "a busca tem de consultar messages");
+  const or = consulta!.calls.find((x) => x.startsWith("or:"));
+  assert(or?.includes("media_filename.ilike"), "o nome do arquivo é filtrado no servidor");
+  assert(or?.includes("media_type.ilike"), "o tipo do arquivo também é filtrado no servidor");
+  assert(consulta!.calls.some((x) => x.startsWith("limit:")), "a busca é limitada");
+  assert(
+    consulta!.calls.some((x) => x.startsWith("eq:") && x.includes("contact_id")),
+    "restrita à conversa dita",
+  );
+
+  // E o service_role (que bypassa a RLS) não foi tocado.
+  assertEquals(c.serviceTocado, []);
+});
+
+Deno.test("usuário sem visibilidade NÃO recebe o arquivo (RLS decide)", async () => {
+  // Mesmo arquivo existe, mas a RLS não o dá a este chamador (contato não é dele).
+  const c = cenario([]);
+  const { status, result } = await chamar(c, { query: "contrato", contactId: CONVERSA_A });
+
+  assertEquals(status, 200);
+  assertEquals(result, []);
+  assertEquals(c.serviceTocado, []);
+});
+
+Deno.test("nenhum resultado quando não há arquivo na conversa", async () => {
+  const c = cenario([]);
+  const { status, result } = await chamar(c, { query: "proposta", contactId: CONVERSA_B });
+
+  assertEquals(status, 200);
+  assertEquals(result, []);
+});
+
+Deno.test("sem termo e sem conversa não varre tudo: devolve vazio e nem consulta", async () => {
+  const c = cenario([arquivo(MSG_FOTO, CONVERSA_A, "image", "foto.png")]);
+  const { status, result } = await chamar(c, {});
+
+  assertEquals(status, 200);
+  assertEquals(result, []);
+  assertEquals(c.consultas, [], "sem intenção dita, nenhuma consulta é emitida");
+});
+
+Deno.test("busca pelo tipo leva o media_type ao filtro do servidor", async () => {
+  const c = cenario([
+    arquivo(MSG_CONTRATO, CONVERSA_A, "document", "contrato.pdf"),
+    arquivo(MSG_FOTO, CONVERSA_A, "image", "foto.png"),
+  ]);
+  const { status, result } = await chamar(c, { query: "image", contactId: CONVERSA_A });
+
+  assertEquals(status, 200);
+  const consulta = c.consultas.find((x) => x.table === "messages");
+  const or = consulta!.calls.find((x) => x.startsWith("or:"));
+  assert(or?.includes("media_type.ilike"), "media_type entra no filtro do banco");
+  assertEquals((result as unknown[]).length, 2);
 });

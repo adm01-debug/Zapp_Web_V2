@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
+  Archive, AlertTriangle, PowerOff, Tag,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
+import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -27,7 +28,12 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
+    // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
+    // injetam um hook mínimo: o hook real sempre devolve os seis.
+    selectedIds = [], toggleSelect = () => {}, selectAll = () => {}, clearSelection = () => {}, runBulkAction = async () => [], isBulkRunning = false,
   } = useTalkXSegments();
+  const [bulkResult, setBulkResult] = useState<TalkXSegmentBulkResult[] | null>(null);
+  const [bulkTag, setBulkTag] = useState('');
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -96,6 +102,34 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   }, [segments, filterOrigin, filterStatus, search]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
+     do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
+  const pageIds = paged.map((s) => s.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const nameOfSegment = (id: string) => segments.find((s) => s.id === id)?.name ?? id;
+
+  // "Selecionar todos" é o que está VISÍVEL (filtro + página), e mexe só nele:
+  // o que já estava escolhido em outra página continua escolhido.
+  const toggleAllOnPage = () => {
+    if (allPageSelected) pageIds.forEach((id) => toggleSelect(id));
+    else pageIds.filter((id) => !selectedIds.includes(id)).forEach((id) => toggleSelect(id));
+  };
+
+  const runBulk = async (action: TalkXSegmentBulkAction, tag?: string) => {
+    if (isBulkRunning || selectedIds.length === 0) return;
+    try {
+      const results = await runBulkAction({ action, ids: selectedIds, tag });
+      setBulkResult(results);
+      // Só o que NÃO foi aplicado segue selecionado: item barrado pela guarda
+      // fica à mão para conferir e refazer, sem reselecionar o lote inteiro.
+      const falhos = results.filter((r) => !r.succeeded).map((r) => r.segment_id);
+      clearSelection();
+      if (falhos.length > 0) selectAll(falhos);
+    } catch (e) {
+      toast.error(`Não foi possível aplicar a ação: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
 
   /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
   const existingNames = useMemo(
@@ -218,6 +252,26 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
         />
 
+        <TalkXBulkBar
+          count={selectedIds.length}
+          onClear={clearSelection}
+          actions={
+            <>
+              <GhostButton size="sm" icon={Check} onClick={() => void runBulk('activate')}>Ativar</GhostButton>
+              <GhostButton size="sm" icon={PowerOff} onClick={() => void runBulk('deactivate')}>Desativar</GhostButton>
+              <GhostButton size="sm" icon={Archive} onClick={() => void runBulk('archive')}>Arquivar</GhostButton>
+              <input
+                type="text" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)}
+                aria-label="Tag para aplicar em massa" placeholder="tag…"
+                className="h-8 w-28 rounded-lg border border-border/70 bg-input/40 px-2 text-xs text-foreground"
+              />
+              <GhostButton size="sm" icon={Tag} onClick={() => void runBulk('tag', bulkTag)}>Aplicar tag</GhostButton>
+            </>
+          }
+        />
+
+        {bulkResult && <BulkResultPanel results={bulkResult} nameOf={nameOfSegment} onClose={() => setBulkResult(null)} />}
+
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           <TalkXQueryBoundary
             query={{ isLoading, isError, error }}
@@ -232,11 +286,13 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
+                  <Th className="w-10"><input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Th>
                   <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Público relativo</Th><Th className="text-right">Ações</Th>
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
                     <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                      <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-sm font-semibold text-foreground">{s.name}</p>
@@ -247,7 +303,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                         <div className="flex flex-wrap gap-1 max-w-[280px]">
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
                             const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
+                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{field}</span>;
                           })}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-3xs text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
@@ -388,6 +444,68 @@ function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
         />
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* X114 — feedback do lote (itens aplicados × itens não aplicados)     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Motivo do item não aplicado, lido do veredito do servidor. A guarda de uso
+ * (P0001: segmento em campanha scheduled/sending/paused) é BLOQUEIO — o item é
+ * "não aplicável", nunca sucesso; os demais códigos são falha de aplicação.
+ */
+function motivoFalha(r: TalkXSegmentBulkResult): string {
+  const detalhe = r.error_message?.trim();
+  return r.error_code === 'P0001'
+    ? `Não aplicável — ${detalhe || 'bloqueado pela guarda de uso (segmento em campanha ativa).'}`
+    : `Falhou — ${detalhe || 'o servidor não aplicou este item.'}`;
+}
+
+/**
+ * Resumo do lote POR SEGMENTO: quantos entraram, quantos não, e o detalhamento
+ * item a item do que ficou de fora. Só o que falhou aparece na lista — item
+ * aplicado não é listado, e item bloqueado nunca conta como aplicado.
+ */
+function BulkResultPanel({ results, nameOf, onClose }: { results: TalkXSegmentBulkResult[]; nameOf: (id: string) => string; onClose: () => void }) {
+  const aplicados = results.filter((r) => r.succeeded);
+  const falhos = results.filter((r) => !r.succeeded);
+  return (
+    <section
+      data-testid="talkx-bulk-resultado" role="status" aria-live="polite" aria-label="Resultado da ação em massa"
+      className="rounded-xl border border-border/70 bg-card px-3.5 py-3 space-y-2"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-foreground">Resultado da ação em massa</span>
+        <Pill label={`${aplicados.length} aplicado${aplicados.length === 1 ? '' : 's'}`} tone={aplicados.length > 0 ? 'success' : 'muted'} />
+        {falhos.length > 0 && <Pill label={`${falhos.length} não aplicado${falhos.length === 1 ? '' : 's'}`} tone="danger" />}
+        <button
+          type="button" onClick={onClose} aria-label="Fechar resultado"
+          className="ml-auto h-7 w-7 rounded-md border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {falhos.length === 0 ? (
+        <p className="text-2xs text-foreground-secondary">Todos os itens selecionados foram aplicados.</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-2xs text-foreground-secondary">Confira item a item o que não foi aplicado:</p>
+          <ul className="space-y-1">
+            {falhos.map((r) => (
+              <li key={r.segment_id} data-testid="talkx-bulk-item-falho" className="flex items-start gap-2 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-dash-amber mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-foreground">{nameOf(r.segment_id)}</span>
+                  <span className="text-foreground-secondary"> · {motivoFalha(r)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 

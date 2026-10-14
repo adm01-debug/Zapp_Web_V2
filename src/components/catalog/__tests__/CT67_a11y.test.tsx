@@ -93,6 +93,7 @@ vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   fetchCatalogContactResults: (...args: unknown[]) => mockFetchContacts(...args),
   logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
   CONTACT_SEARCH_MIN_CHARS: 2,
+  CONTACT_SEARCH_ERROR_MESSAGE: 'Não foi possível buscar contatos. Tente de novo.',
 }));
 
 vi.mock('@/services/outbound-message.service', () => ({

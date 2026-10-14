@@ -34,6 +34,12 @@ vi.mock('@/hooks/system/useDownloadPermission', () => ({
   useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
 }));
 
+// O gate de escrita do gerenciador de modelos lê `useUserRole`; admin é o
+// cenário em que as linhas da tabela existem com as ações de escrita.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, loading: false }),
+}));
+
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
   return { ...actual, useReducedMotion: () => reduceMotion.value };

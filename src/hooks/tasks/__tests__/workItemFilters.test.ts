@@ -4,9 +4,9 @@ import { DEFAULT_FILTERS, filtersFromSearch, isFilterActive, searchWithFilters }
 /** Etapa 45: o estado da barra de filtros mora na URL — estas são as regras do
  *  parse e do serialize, provadas sem React. */
 describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
-  it('lê os parâmetros do plano da query string', () => {
+  it('lê os parâmetros do plano da query string e IGNORA ?q= (SEC-FRONTEND-05: reload não restaura a busca)', () => {
     expect(filtersFromSearch('?q=liga&prio=urgent&contact=c1&alarm=1&done=0')).toEqual({
-      q: 'liga', prio: 'urgent', contact: 'c1', alarm: true, done: false, due: 'all',
+      q: '', prio: 'urgent', contact: 'c1', alarm: true, done: false, due: 'all',
     });
   });
 

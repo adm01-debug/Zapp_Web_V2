@@ -17,6 +17,10 @@ export interface TimelineEvent {
   subtitle?: string;
   pill?: { label: string; tone: 'success' | 'warning' | 'primary' | 'muted' | 'destructive' };
   count?: number;
+  /** Nota escrita na transferência (`conversation_events.metadata.note`), cortada em 120. */
+  note?: string;
+  /** A mesma nota SEM corte — para o detalhe do episódio. */
+  noteFull?: string;
 }
 
 export interface TimelineDay {
@@ -46,6 +50,11 @@ export interface RawEventRow {
   id: string;
   event_type: string;
   created_at: string;
+  /**
+   * `conversation_events.metadata` (jsonb). A transferência grava a nota do atendente em
+   * `metadata.note`; mapa aberto porque a coluna é jsonb.
+   */
+  metadata?: Record<string, unknown> | null;
   from_agent_name?: string | null;
   to_agent_name?: string | null;
 }
@@ -228,6 +237,24 @@ function eventKindFor(eventType: string): TimelineEventKind | null {
   return null;
 }
 
+/** Mesmo teto de corte do resto do app para a linha da timeline. */
+const NOTA_MAX = 120;
+
+/**
+ * Nota escrita na transferência (`conversation_events.metadata.note`): devolve o texto cortado
+ * em 120 (`curto`, para a linha) e o texto completo (`completo`, para o detalhe). Nota
+ * vazia/ausente → `null`; sem nota, o evento sai exatamente como antes.
+ */
+function comentarioDoEvento(
+  metadata: RawEventRow['metadata'],
+): { curto: string; completo: string } | null {
+  const bruto = metadata && typeof metadata['note'] === 'string' ? String(metadata['note']) : '';
+  const completo = bruto.replace(/\s+/g, ' ').trim();
+  if (!completo) return null;
+  const curto = completo.length <= NOTA_MAX ? completo : `${completo.slice(0, NOTA_MAX).trimEnd()}…`;
+  return { curto, completo };
+}
+
 /** Une as fontes, agrupa rajadas de mensagens e ordena — função pura, testável sem rede. */
 export function buildTimeline(
   rows: TimelineRawRows,
@@ -260,13 +287,18 @@ export function buildTimeline(
     ...rows.events
       .map((e) => ({ e, kind: eventKindFor(e.event_type) }))
       .filter((x): x is { e: RawEventRow; kind: TimelineEventKind } => x.kind !== null)
-      .map(({ e, kind }): TimelineEvent => ({
-        id: `event-${e.id}`,
-        at: e.created_at,
-        kind,
-        title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
-        subtitle: e.from_agent_name && e.to_agent_name ? `De: ${e.from_agent_name} · Para: ${e.to_agent_name}` : undefined,
-      })),
+      .map(({ e, kind }): TimelineEvent => {
+        const nota = comentarioDoEvento(e.metadata);
+        return {
+          id: `event-${e.id}`,
+          at: e.created_at,
+          kind,
+          title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
+          subtitle: e.from_agent_name && e.to_agent_name ? `De: ${e.from_agent_name} · Para: ${e.to_agent_name}` : undefined,
+          note: nota?.curto,
+          noteFull: nota?.completo,
+        };
+      }),
     ...(rows.calls ?? []).map((c): TimelineEvent => {
       const result = toResult(c);
       const resultado = result ? RESULT_LABEL[result] : undefined;
@@ -346,7 +378,7 @@ export function useConversationHistoryTimeline(
         .limit(fetchLimit);
       const eventsQuery = supabase
         .from('conversation_events')
-        .select('id, event_type, created_at')
+        .select('id, event_type, created_at, metadata')
         .eq('contact_id', cid)
         .order('created_at', { ascending: false })
         .limit(fetchLimit);

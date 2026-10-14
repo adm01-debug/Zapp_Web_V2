@@ -46,21 +46,21 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
   it('CRM 360° lançando mostra o aviso no lugar da aba e mantém o painel', () => {
     render(<AdminView />);
 
-    fireEvent.click(screen.getByRole('button', { name: /CRM 360/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
 
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
     // A tela não foi derrubada: o cabeçalho e as demais abas continuam de pé.
     expect(screen.getByRole('heading', { name: /Administração/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Playbooks/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Playbooks/ })).toBeInTheDocument();
   });
 
   it('com o CRM quebrado, o Playbooks (bloco independente) ainda renderiza', () => {
     render(<AdminView />);
 
-    fireEvent.click(screen.getByRole('button', { name: /CRM 360/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Playbooks/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /Playbooks/ }));
     expect(screen.getByTestId('playbooks-ok')).toBeInTheDocument();
   });
 });

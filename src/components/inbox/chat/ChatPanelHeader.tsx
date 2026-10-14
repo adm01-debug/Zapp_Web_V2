@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TypingIndicatorCompact } from '../TypingIndicator';
+import { ContactPresenceIndicator } from './ContactPresenceIndicator';
+import type { ContactPresenceFields } from './contactPresence';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { SLAIndicator } from '../SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
@@ -125,18 +127,14 @@ function ChatPanelHeaderBase({
             )}
           </div>
           <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground flex-wrap">
-            {/* R2-INB-030: não estar digitando NÃO é sinal de presença online. Sem um
-                sinal de presença do contato, o cabeçalho mostra o estado neutro
-                (desconhecido) em vez de afirmar "Online"; o indicador de digitação
-                continua sendo o único sinal real exibido aqui. */}
+            {/* R2-INB-030: não estar digitando NÃO é sinal de presença online.
+                "Digitando…" tem prioridade; sem ele, a presença exibida vem do
+                sinal REAL do contato (presence_status/presence_updated_at/
+                last_seen_at) — "Online" só com sinal online recente (até 2 min),
+                "Visto por último há X" com last_seen_at, e o estado neutro
+                (desconhecido) quando não há sinal nenhum. */}
             {isContactTyping ? <TypingIndicatorCompact isVisible={true} /> : (
-              <span
-                data-testid="contact-presence"
-                role="img"
-                aria-label="Presença do contato não informada"
-                title="Presença do contato não informada"
-                className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40"
-              />
+              <ContactPresenceIndicator contact={conversation.contact as ContactPresenceFields} />
             )}
             {typeConfig && (
               <>

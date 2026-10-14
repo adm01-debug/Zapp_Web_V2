@@ -15,6 +15,7 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
 import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
+import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -208,6 +209,42 @@ const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.El
     </div>
   );
 
+/* ------------------------------------------------------------------ */
+/* X135 — previsões do "Resumo operacional" (CAP-087)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Base mínima para a revisão mostrar uma previsão: 5 campanhas concluídas com
+ * 100 ou mais enviados nos últimos 90 dias. Quem calcula a previsão é o SERVIDOR
+ * (CAP-087: taxa projetada e risco de opt-out); sem essa base ele não devolve
+ * valor, e a revisão mostra "sem dados ainda" (A9) em vez de um número sem lastro.
+ */
+const FORECAST_MIN_CAMPAIGNS = 5;
+const FORECAST_MIN_SENT = 100;
+const FORECAST_WINDOW_DAYS = 90;
+
+const FORECAST_EMPTY_HINT =
+  `Sem base ainda: a projeção aparece depois de ${FORECAST_MIN_CAMPAIGNS} campanhas concluídas ` +
+  `com ${FORECAST_MIN_SENT} ou mais enviados nos últimos ${FORECAST_WINDOW_DAYS} dias.`;
+
+/**
+ * X135 — linha de previsão do "Resumo operacional". As duas previsões (taxa de
+ * resposta projetada e risco de opt-out) ficam no estado vazio do kit enquanto o
+ * servidor não indicar base suficiente — a revisão não promete resultado que não
+ * tem histórico para sustentar.
+ */
+function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <div className="pt-3">
+      <p className="flex items-center gap-2 text-xs text-foreground-secondary mb-1.5">
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        {label}
+      </p>
+      <TalkXNoData hint={FORECAST_EMPTY_HINT} />
+    </div>
+  );
+}
+
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3 | 4) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,7 +274,6 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   // visível na mesma linha, para não sumir do resumo.
   const objectiveSub = [objectiveEntry?.description, ed.description].filter(Boolean).join(' · ') || undefined;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
-  const responses = null; // sem histórico de respostas no motor atual — não estimamos
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
@@ -289,7 +325,8 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           <MetaRow icon={Users} label="Público total" value={<span><b className="text-[15px]">{fmtInt(ed.eligibleCount)}</b> <span className="text-foreground-secondary font-normal">contatos elegíveis</span></span>} />
           <MetaRow icon={Clock} label="Tempo estimado de entrega" value={<span><b className="text-[15px]">{ed.estimatedTime ?? '—'}</b> <span className="text-foreground-secondary font-normal">a ~{ed.messagesPerMinute} msg/min</span></span>} />
           <MetaRow icon={Ban} label="Suprimidos" value={<span><b className="text-[15px]">{fmtInt(ed.suppressedCount)}</b> <span className="text-foreground-secondary font-normal">{fmtPct(ed.suppressedCount, ed.audienceTotal)}</span></span>} />
-          <MetaRow icon={MessageSquare} label="Taxa de resposta projetada" value={<span className="text-foreground-secondary font-normal">{responses ?? 'sem histórico suficiente'}</span>} />
+          <ForecastRow icon={MessageSquare} label="Taxa de resposta projetada" />
+          <ForecastRow icon={ShieldAlert} label="Risco de opt-out" />
         </RailCard>
 
         {/* T09 — 2 recomendações REAIS do motor (`useTalkXInsights`, o mesmo das

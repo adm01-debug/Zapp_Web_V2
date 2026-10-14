@@ -49,7 +49,13 @@ describe('ContactMapView — mapa x localização (R2-AUTH-038)', () => {
     // Numa conta só, 3 contatos mapeados: 1 confirmado + 1 aproximado + 1 região sem ponto
     // conhecido (que fica nos cartões). Nenhum contato conta duas vezes.
     expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('contatos mapeados')).toBeInTheDocument();
+    // Rótulo honesto: o mapa diz que são contatos CARREGADOS (recorte da tela), não o total.
+    expect(screen.getByTestId('map-count')).toHaveTextContent('3 contatos carregados');
+  });
+
+  it('mostra o recorte real "X de N carregados" quando há total maior que a página', () => {
+    render(<ContactMapView contacts={contacts} totalCount={120} />);
+    expect(screen.getByTestId('map-count')).toHaveTextContent('3 de 120 contatos carregados');
   });
 
   it('mantém o agrupamento comercial por DDD nos cartões, com todos os contatos', () => {
@@ -63,5 +69,20 @@ describe('ContactMapView — mapa x localização (R2-AUTH-038)', () => {
     expect(screen.getByText('1 contato')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument(); // 2 regiões
     expect(screen.getByText('regiões')).toBeInTheDocument();
+  });
+
+  // RD-086: a visão de Mapa precisa de estado vazio claro quando não há
+  // contato na página — antes só sobrava a legenda com "0 regiões" e um mapa nu.
+  it('sem contatos mostra "Sem coordenadas" no lugar do mapa', () => {
+    render(<ContactMapView contacts={[]} />);
+    expect(screen.getByTestId('contact-mapa-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem coordenadas')).toBeInTheDocument();
+    expect(screen.queryByText(/regiões$/)).not.toBeInTheDocument();
+  });
+
+  it('com contatos mantém a visão de mapa (sem o aviso de vazio) e o cabeçalho', () => {
+    render(<ContactMapView contacts={contacts} />);
+    expect(screen.queryByTestId('contact-mapa-empty')).not.toBeInTheDocument();
+    expect(screen.getByText('Mapa')).toBeInTheDocument();
   });
 });

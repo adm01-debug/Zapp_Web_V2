@@ -45,6 +45,16 @@ export const hasContact = (c: ConversationWithMessages): boolean =>
 export const isSnoozed = (c: ConversationWithMessages, snoozedIds?: Set<string> | null): boolean =>
   Boolean(snoozedIds && snoozedIds.size > 0 && snoozedIds.has(c.contact.id));
 
+/** Compara sem acento e sem caixa (NFD) — a mesma regra da busca do chat (`normalizeText`). */
+const normalizeSearchText = (text: string): string =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Só os dígitos, para o telefone digitado casar com ou sem formatação. */
+const onlyDigits = (text: string): string => text.replace(/\D/g, '');
+
+/** A busca tem letra? Decide se o telefone entra na comparação (ver passesExtraFilters). */
+const hasLetter = (text: string): boolean => /[a-zA-ZÀ-ÿ]/.test(text);
+
 /** "Não lidas": contador da conversa ou o agregado persistido no contato. */
 export const isUnread = (c: ConversationWithMessages): boolean => {
   const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
@@ -88,8 +98,8 @@ const CHIPS: ChipTab[] = ['all', 'unread', 'attending', 'waiting', 'resolved', '
  * atendente, intervalo de datas) e tipo de contato. `useInboxFilters.ts` chama
  * esta função na sua filtragem, então lista e contador compartilham o código.
  *
- * O intervalo de datas só filtra quando há `from`, como a lista faz hoje
- * (um `to` sozinho não recorta nada) — reproduzido de propósito.
+ * O intervalo de datas aceita `from` e/ou `to`: cada ponta recorta por si
+ * (`to` sozinho filtra até o fim daquele dia).
  */
 export function passesExtraFilters(
   c: ConversationWithMessages,
@@ -97,18 +107,22 @@ export function passesExtraFilters(
 ): boolean {
   const filters = ctx.filters;
 
-  // Busca — trim só decide se há busca; a comparação usa o texto bruto,
-  // igual à lista original ("resolvida " fica diferente de "Resolvida").
+  // Busca — nome e e-mail sem acento e sem caixa (NFD: 'joao' acha 'João'),
+  // telefone só por dígitos. O trim só decide se HÁ busca; o texto bruto segue
+  // sendo a base da comparação com o nome ("resolvida " continua diferente de
+  // "Resolvida").
   const rawSearch = ctx.search ?? '';
   if (rawSearch.trim()) {
-    const searchLower = rawSearch.toLowerCase();
-    const nome = c.contact.name?.toLowerCase() ?? '';
-    const email = c.contact.email?.toLowerCase() ?? '';
-    if (
-      !nome.includes(searchLower) &&
-      !c.contact.phone.includes(rawSearch) &&
-      !email.includes(searchLower)
-    ) {
+    const q = normalizeSearchText(rawSearch);
+    const nome = normalizeSearchText(c.contact.name ?? '');
+    const email = normalizeSearchText(c.contact.email ?? '');
+    const digitos = onlyDigits(rawSearch);
+    // Telefone entra na comparação só quando a busca PARECE telefone (tem dígito
+    // e nenhuma letra) — "joao1" continua sendo busca por nome, e não casa o
+    // telefone de qualquer contato que tenha um '1'.
+    const casaTelefone =
+      digitos.length > 0 && !hasLetter(rawSearch) && onlyDigits(c.contact.phone).includes(digitos);
+    if (!nome.includes(q) && !email.includes(q) && !casaTelefone) {
       return false;
     }
   }
@@ -135,13 +149,16 @@ export function passesExtraFilters(
     // Atendente.
     if (filters.agentId && c.contact.assigned_to !== filters.agentId) return false;
 
-    // Intervalo de datas — data da última mensagem, caindo para a criação do contato.
-    if (filters.dateRange?.from) {
+    // Intervalo de datas — data da última mensagem, caindo para a criação do
+    // contato. `from` e `to` valem cada um por si: só "até" recorta até o fim
+    // daquele dia (antes, sem `from`, o `to` era ignorado).
+    const dateRange = filters.dateRange;
+    if (dateRange && (dateRange.from || dateRange.to)) {
       const lastMessageDate = c.lastMessage
         ? new Date(c.lastMessage.created_at)
         : new Date(c.contact.created_at);
-      if (isBefore(lastMessageDate, startOfDay(filters.dateRange.from))) return false;
-      if (filters.dateRange.to && isAfter(lastMessageDate, endOfDay(filters.dateRange.to))) return false;
+      if (dateRange.from && isBefore(lastMessageDate, startOfDay(dateRange.from))) return false;
+      if (dateRange.to && isAfter(lastMessageDate, endOfDay(dateRange.to))) return false;
     }
   }
 

@@ -38,9 +38,6 @@ vi.mock('@/components/calls/IncomingCallAlert', () => ({ IncomingCallAlert: () =
 vi.mock('@/components/effects/EasterEggs', () => ({
   EasterEggsProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
-vi.mock('@/components/mobile/InAppNotificationProvider', () => ({
-  InAppNotificationProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
 vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
   TeamChatNotificationsListener: h.listener,
 }));

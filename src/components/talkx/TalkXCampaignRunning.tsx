@@ -26,6 +26,7 @@ import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish, type MinuteBucket } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -238,7 +239,7 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; segment_id: string | null; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
+type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; segment_id: string | null; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 /** Opções do filtro de status dos destinatários (mesma ordem do rótulo da coluna). */
@@ -277,13 +278,14 @@ function ListFilters({ search, onSearch, status, onStatus, options = RECIPIENT_S
 }
 
 function TabRecipients({ campaignId, segmentName }: { campaignId: string; segmentName: SegmentNameResolver }) {
+  const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
-        .select('status, segment_id, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .select('id, campaign_id, contact_id, segment_id, personalized_message, status, sent_at, delivered_at, error_message, manual_retry_count, created_at, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
       if (error) throw error;
@@ -329,13 +331,13 @@ function TabRecipients({ campaignId, segmentName }: { campaignId: string; segmen
         <div className="overflow-x-auto">
           <table className="w-full min-w-[540px] border-collapse">
             <thead><tr>
-              {['Contato', 'Telefone', 'Segmento', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
+              {['Contato', 'Telefone', 'Segmento', 'Status', 'Enviada em', 'Entregue em', ''].map((h) => (
                 <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
               ))}
             </tr></thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-xs text-foreground-secondary">Nenhum destinatário para os filtros aplicados.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-xs text-foreground-secondary">Nenhum destinatário para os filtros aplicados.</td></tr>
               )}
               {filtered.map((r, i) => (
                 <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
@@ -345,6 +347,9 @@ function TabRecipients({ campaignId, segmentName }: { campaignId: string; segmen
                   <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-2xs">
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-running-recipients', campaignId] }); }} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -446,7 +451,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-3xs text-muted-foreground">
                   {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
                   {canExpand && (
-                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
+                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-[hsl(var(--primary-text))] hover:underline">
                       {isExpanded ? 'Mostrar menos' : 'Ler mensagem completa'}
                     </button>
                   )}
@@ -466,7 +471,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
 type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
-const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
+const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-[hsl(var(--primary-text))]' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 /** Status possíveis nos logs (a consulta exclui só `pending`). */
 const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
@@ -662,7 +667,7 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
             <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
             {etaMinutes !== null ? (
               <>
-                <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
+                <p className="text-2xl font-bold text-[hsl(var(--primary-text))]">{etaMinutes} min</p>
                 <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
               </>
             ) : (
@@ -930,7 +935,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                   onClick={() => setActiveTab(t.id)}
                   className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
                     ${activeTab === t.id
-                      ? 'border-primary text-primary'
+                      ? 'border-primary text-[hsl(var(--primary-text))]'
                       : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
                 >
                   {t.label}

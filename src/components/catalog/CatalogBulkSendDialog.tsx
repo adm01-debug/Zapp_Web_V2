@@ -108,7 +108,8 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
 
   const {
     contactSearch, setContactSearch,
-    contactResults, searchingContacts,
+    contactResults, searchingContacts, contactSearchError,
+    retryContactSearch,
     selectedContact, setSelectedContact,
     resetContactSelection,
   } = useContactSearch(step === 'selectContact' ? 'selectContact' : 'configure');
@@ -237,6 +238,8 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
             onContactSearchChange={setContactSearch}
             contactResults={contactResults}
             searchingContacts={searchingContacts}
+            contactSearchError={contactSearchError}
+            onRetryContactSearch={retryContactSearch}
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSendingFlag}

@@ -23,6 +23,7 @@ import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
@@ -175,15 +176,15 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
             {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
             {!isDone && (<>
               {isRunning && <button type="button" onClick={()=>lifecycle.request({ kind: 'pause', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
-              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
+              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
               <button type="button" onClick={()=>lifecycle.request({ kind: 'cancel', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5"/>
+        <Progress value={progress} className="h-3 mb-1.5" aria-label="Progresso do envio"/>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-[hsl(var(--primary-text))] font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
         </div>
       </div>
@@ -263,7 +264,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
             <p className="text-sm font-bold text-foreground">Destinatários</p>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
+              <SelectTrigger aria-label="Filtrar status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
               <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v,m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -288,6 +289,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
                     </div>
                     <Pill label={sm.label} tone={sm.tone}/>
                     {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }); }} />
                   </motion.div>
                 );
               })}

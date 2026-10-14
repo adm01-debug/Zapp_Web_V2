@@ -13,15 +13,6 @@ import { formatWorkItemDate }   from '@/hooks/tasks/workItemFormat';
 import type { WorkItemCardActions } from '../shared/cardActions';
 import { usePressaoLonga } from '../shared/pointerMedia';
 
-const SUBTITULOS_COLUNA: Record<WorkItemStatus, string> = {
-  backlog: 'Capture primeiro',
-  todo: 'Próximo passo',
-  doing: 'Até 3 agora',
-  waiting: 'Com motivo',
-  done: '7 dias à vista',
-  cancelled: '',
-};
-
 interface Props extends WorkItemCardActions {
   status: WorkItemStatus;
   items: WorkItem[];
@@ -46,7 +37,6 @@ export function BoardColumn({
   onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
 }: Props) {
   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
-  const subtitulo = SUBTITULOS_COLUNA[status];
   const limit = WIP_LIMITS[status];
   const hardFull  = limit.hard != null && doingCount >= limit.hard;
   const softOver  = limit.soft != null && items.length > limit.soft;
@@ -120,7 +110,7 @@ export function BoardColumn({
       ].join(' ')}>
         <span className="min-w-0 shrink-0 truncate text-[13px] font-semibold">{col.label}</span>
         {/* Etapa 080: o subtítulo curto fica à vista; a política longa continua no tooltip do ⓘ. */}
-        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{subtitulo}</span>
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{col.subtitle}</span>
         {headerCount && (
           <span className={`shrink-0 text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
             {headerCount}

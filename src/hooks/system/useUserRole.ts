@@ -13,7 +13,7 @@ export function useUserRole() {
   // mesmo tempo (Sidebar, ProtectedRoute, CommandPalette, etc.) dividem um
   // único fetch e um único loading state em vez de cada um correr sua
   // própria requisição e seu próprio timer de segurança.
-  const { data: roles = [], isLoading, refetch } = useQuery({
+  const { data: roles = [], isLoading, isError: rolesLoadError, refetch } = useQuery({
     queryKey: ['user-roles', user?.id],
     // Deriva o userId da própria queryKey em vez de "user!.id": refetch()
     // chamado manualmente ignora `enabled`, então um non-null assertion
@@ -65,6 +65,7 @@ export function useUserRole() {
     ...derivedRoles,
     hasRole,
     loading: isLoading,
+    rolesLoadError,
     // Permissoes nomeadas da nav que o usuario possui + o loading delas
     // (separado de `loading` para nao mudar o tempo de espera do ProtectedRoute).
     permissions,

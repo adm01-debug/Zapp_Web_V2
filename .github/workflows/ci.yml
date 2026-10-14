@@ -314,6 +314,13 @@ jobs:
       - name: 📏 Enforce initial bundle budget (performance-budget.json)
         run: node scripts/ci/bundle-budget.mjs
 
+      # O budget olha o TAMANHO do bundle; esta guarda olha o CONTEUDO: decodifica
+      # o payload de cada JWT ("eyJ...") dos .js/.mjs/.cjs do dist/ e reprova
+      # role=service_role (incidente de 20/08). Tambem reprova qualquer JWT em
+      # .env.production cujo role nao seja anon.
+      - name: 🔑 Guard que o bundle dist/ não expõe a chave service_role
+        run: node scripts/ci/check-bundle-secrets.mjs
+
       - name: 📐 Report bundle size
         run: |
           echo "📦 Bundle Size Report"

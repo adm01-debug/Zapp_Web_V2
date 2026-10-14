@@ -21,6 +21,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WhatsAppTemplatesManager } from '../WhatsAppTemplatesManager';
 import './catalogMocks';
 
+// O gate de escrita do componente lê `useUserRole`; aqui o usuário é admin, o
+// cenário em que os 4 botões de ação existem e precisam de nome acessível.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, loading: false }),
+}));
+
 const mockTemplate = vi.hoisted(() => ({
   id: 'tpl-1',
   name: 'confirmacao_pedido',

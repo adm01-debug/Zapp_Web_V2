@@ -1,7 +1,8 @@
 # Inventário de objetos do banco — `public`
 
 **Fonte de verdade:** `supabase/schema-catalog.json` — snapshot versionado de `postgres`.`public`
-(campo `generated_at`: 2026-10-04), regenerado por
+(campo `generated_at`: 2026-10-04; identidade do banco: schema=`public` database=`postgres`
+server_major=`17`), regenerado por
 `scripts/db-audit/catalog.sql` e conferido contra o banco oficial pelo workflow `db-live-guard.yml`
 (ver `scripts/db-audit/README.md`).
 Este documento não substitui o catálogo: ele dá o que o catálogo não tem — **propósito, status de

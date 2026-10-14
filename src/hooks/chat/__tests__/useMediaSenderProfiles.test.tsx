@@ -119,6 +119,16 @@ describe('useMediaSenderProfiles — lote e cache (D04)', () => {
     expect(result.current.profiles).toEqual({});
   });
 
+  it('falha de leitura marca isError: "falhou" não é o mesmo que "sem perfil"', async () => {
+    h.in.mockResolvedValue({ data: null, error: { message: 'permission denied for table profiles' } });
+    const qc = makeClient();
+
+    const { result } = renderHook(() => useMediaSenderProfiles(['p1']), { wrapper: wrapperFor(qc) });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.profiles).toEqual({});
+  });
+
   it('sem ids nao consulta o banco', async () => {
     const qc = makeClient();
     const { result } = renderHook(() => useMediaSenderProfiles([]), { wrapper: wrapperFor(qc) });

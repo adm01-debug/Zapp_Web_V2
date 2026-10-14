@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
@@ -42,7 +43,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   // Realtime subscription for transcription updates
   useEffect(() => {
     const channel = supabase
-      .channel(`transcription-${messageId}`)
+      .channel(uniqueRealtimeTopic(`transcription-${messageId}`))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
         (payload) => {
           const newData = payload.new as { transcription_status?: string; transcription?: string };
@@ -58,24 +59,32 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     setIsTranscribing(true); setTranscriptionStatus('processing'); setShowTranscription(true);
     try {
       const freshUrl = await resolveAudioUrl(audioUrl);
+      // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
+      // `transcription`/`transcription_status` com service_role (processing →
+      // completed/failed) e reusa o texto em re-execução; o cliente só INVOCA e LÊ
+      // (a linha da mensagem chega pelo realtime acima) — daqui não sai escrita.
       const { data, error } = await supabase.functions.invoke('ai-transcribe-audio', { body: { audioUrl: freshUrl, messageId } });
       if (error) throw error;
+      if (!isMountedRef.current) return;
       if (data?.fallback) {
-        if (!isMountedRef.current) return;
         setTranscriptionStatus('failed');
         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
         return;
       }
-      if (data?.transcription) {
-        if (isMountedRef.current) { setTranscription(data.transcription); setTranscriptionStatus('completed'); }
-        await supabase.from('messages').update({ transcription: data.transcription, transcription_status: 'completed' }).eq('id', messageId);
+      const text = typeof data?.transcription === 'string' ? data.transcription.trim() : '';
+      if (text) {
+        setTranscription(text);
+        setTranscriptionStatus('completed');
+      } else {
+        // Resposta sem erro e sem texto não é sucesso silencioso: sem isto o player
+        // ficaria preso em "Transcrevendo..." para sempre. Falha visível.
+        setTranscriptionStatus('failed');
+        toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
       }
     } catch (error) {
       log.error('Transcription error:', error);
-      if (isMountedRef.current) {
-        setTranscriptionStatus('failed');
-        setTranscription(null);
-      }
+      // Uma nova falha não apaga a transcrição já conhecida (estado verdadeiro).
+      if (isMountedRef.current) setTranscriptionStatus('failed');
       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
     } finally { if (isMountedRef.current) setIsTranscribing(false); }
   };

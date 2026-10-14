@@ -23,6 +23,14 @@ const H = vi.hoisted(() => ({
   refetch: vi.fn(),
 }));
 
+const P = vi.hoisted(() => ({
+  templates: [] as Array<Record<string, unknown>>,
+  isLoading: false,
+  isError: false,
+  error: null as Error | null,
+  refetch: vi.fn(),
+}));
+
 // O editor consome os KPIs da biblioteca (react-query real, X091) e o widget
 // "Em andamento" (campanhas): provider real + supabase/useTalkX mínimos.
 vi.mock('@/integrations/supabase/client', () => ({
@@ -66,8 +74,11 @@ function renderEditor() {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <TalkXTemplateEditor
-        templates={H.templates as never}
-        isLoading={H.isLoading}
+        templates={P.templates as never}
+        isLoading={P.isLoading}
+        isError={P.isError}
+        error={P.error}
+        onRetry={() => { void P.refetch(); }}
         editing={null}
         onClose={vi.fn()}
       />
@@ -81,12 +92,17 @@ beforeEach(() => {
   H.isError = false;
   H.error = null;
   H.refetch.mockClear();
+  P.templates = [];
+  P.isLoading = false;
+  P.isError = false;
+  P.error = null;
+  P.refetch.mockClear();
 });
 
 describe('matriz de estados — TalkXTemplateEditor / biblioteca (X047)', () => {
   it('consulta com erro: mostra o erro, NUNCA o vazio da biblioteca', () => {
-    H.isError = true;
-    H.error = new Error('falha exclusiva X047 — editor de template');
+    P.isError = true;
+    P.error = new Error('falha exclusiva X047 — editor de template');
     const { container } = renderEditor();
 
     expect(screen.getByText(/Não foi possível carregar/)).toBeTruthy();
@@ -96,8 +112,8 @@ describe('matriz de estados — TalkXTemplateEditor / biblioteca (X047)', () => 
   });
 
   it('erro: "Ver detalhes" revela a mensagem real da consulta', () => {
-    H.isError = true;
-    H.error = new Error('falha exclusiva X047 — editor de template');
+    P.isError = true;
+    P.error = new Error('falha exclusiva X047 — editor de template');
     renderEditor();
 
     fireEvent.click(screen.getByRole('button', { name: /Ver detalhes/i }));
@@ -105,16 +121,16 @@ describe('matriz de estados — TalkXTemplateEditor / biblioteca (X047)', () => 
   });
 
   it('erro: "Tentar novamente" refaz a consulta que alimenta a biblioteca', () => {
-    H.isError = true;
-    H.error = new Error('falha exclusiva X047 — editor de template');
+    P.isError = true;
+    P.error = new Error('falha exclusiva X047 — editor de template');
     renderEditor();
 
     fireEvent.click(screen.getByRole('button', { name: /Tentar novamente/i }));
-    expect(H.refetch).toHaveBeenCalledTimes(1);
+    expect(P.refetch).toHaveBeenCalledTimes(1);
   });
 
   it('carregando: esqueleto com aria-busy e sem anúncio de erro', () => {
-    H.isLoading = true;
+    P.isLoading = true;
     const { container } = renderEditor();
 
     expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
@@ -131,11 +147,24 @@ describe('matriz de estados — TalkXTemplateEditor / biblioteca (X047)', () => 
   });
 
   it('com templates: a biblioteca mostra a lista, não o vazio', () => {
-    H.templates = [tpl];
+    P.templates = [tpl];
     const { container } = renderEditor();
 
     expect(screen.getAllByText(tpl.name).length).toBeGreaterThan(0);
     expect(screen.queryByText(VAZIO)).toBeNull();
     expect(container.querySelector('[data-talkx-query="empty"]')).toBeNull();
   });
+
+  it('usa o estado da consulta do pai: erro da chamada interna do hook não derruba biblioteca já carregada', () => {
+    P.templates = [tpl];
+    H.isError = true;
+    H.error = new Error('erro interno que não pertence ao pai');
+
+    const { container } = renderEditor();
+
+    expect(screen.getAllByText(tpl.name).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Não foi possível carregar/)).toBeNull();
+    expect(container.querySelector('[data-talkx-query="empty"]')).toBeNull();
+  });
+
 });

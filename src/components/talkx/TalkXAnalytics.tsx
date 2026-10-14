@@ -11,12 +11,13 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { IconTile, KpiCard, KpiCardSkeleton, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, fmtDateTime, fmtInt, fmtPct } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
-import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXInsights, type TalkXInsightAction } from '@/hooks/integrations/useTalkXInsights';
 import { useTalkXAnalytics, variacaoPct, variacaoPontos, ANALYTICS_REFETCH_MS } from '@/hooks/integrations/useTalkXAnalytics';
 import { AnalyticsPerformanceChart } from './analytics/AnalyticsPerformanceChart';
 import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsPerformanceChart';
 import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
 import type { FunnelStep } from './analytics/AnalyticsFunnel';
+import { goTab, pushTalkXWizardRoute } from './talkxRoute';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 import {
   ANALYTICS_FILTER_DEFAULTS, AUDIENCE_OPTIONS, CHANNEL_OPTIONS,
@@ -265,7 +266,27 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   // E94: insights heurísticos — hook SEMPRE antes do return antecipado (regra dos
   // hooks); chamar depois dele causava "Rendered more hooks" quando a lista ia de
   // 0 para 1 campanha.
-  const { data: insights } = useTalkXInsights();
+  // TL-173: a janela dos insights é o período escolhido na tela. Em mês/customizado,
+  // usamos o tamanho real do intervalo resolvido pela barra de filtros.
+  const insightsWindowDays = useMemo(
+    () => Math.max(1, Math.ceil((range.to.getTime() - range.from.getTime()) / 86_400_000)),
+    [range],
+  );
+  const { data: insightsData, isLoading: insightsLoading, isError: insightsError, estimatedLiftPct } = useTalkXInsights(insightsWindowDays);
+  const insights = useMemo(() => insightsData ?? [], [insightsData]);
+  // Resumo estima ganho só com número medido: valor ausente não vira "0%".
+  const liftPct = typeof estimatedLiftPct === 'number' ? estimatedLiftPct : null;
+
+  // TL-173: cada recomendação traz a ação que o botão executa; quem navega é esta
+  // tela (o hook só declara o destino, a partir dos parâmetros da regra).
+  const runInsightAction = (action?: TalkXInsightAction) => {
+    if (action === 'campaigns') { goTab('overview'); return; }
+    if (action === 'templates') { goTab('templates'); return; }
+    if (action === 'new-campaign') {
+      pushTalkXWizardRoute({ campaignId: 'new', step: 1 });
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
 
   // X047: os tres returns antecipados (erro, carga, vazio) saem; o boundary decide na ordem
   // carregando -> erro -> vazio -> conteudo, com o erro tendo precedencia sobre o vazio.
@@ -556,6 +577,45 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
 
         </div>
         <div className="space-y-4 min-w-0">
+          {/* E94/TL-173: Insights heurísticos com ação e Resumo condicionado */}
+          {!insightsError && !insightsLoading && (
+            <section className="space-y-3" aria-label="Insights">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Insights</h3>
+          </div>
+          <p className="text-2xs text-foreground-secondary">Análise dos seus dados de campanhas.</p>
+          <div className="rounded-2xl bg-card border border-border/70 p-3">
+            <p className="text-xs font-semibold text-foreground">Resumo</p>
+            {insights.length === 0 ? (
+              <p className="text-2xs text-foreground-secondary mt-1">Ainda não há dados suficientes para recomendações.</p>
+            ) : liftPct === null ? (
+              <p className="text-2xs text-foreground-secondary mt-1">
+                {insights.length === 1 ? '1 recomendação' : `${insights.length} recomendações`} com dados medidos nas suas campanhas.
+              </p>
+            ) : (
+              <p className="text-2xs text-foreground-secondary mt-1">
+                {insights.length === 1 ? '1 recomendação' : `${insights.length} recomendações`} — ganho estimado de{' '}
+                {`${Math.round(liftPct * 100)}%`} (estimativa medida, não garantia de resultado).
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            {insights.map((insight) => (
+              <InsightCard
+                key={insight.id}
+                type={insight.type}
+                title={insight.title}
+                description={insight.description}
+                priority={insight.priority}
+                applyLabel={insight.applyLabel}
+                onApply={insight.action ? () => runInsightAction(insight.action) : undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
           {/* X185: comparativo de PERÍODOS no rail, com seletor próprio. Três linhas
               (campanhas enviadas, taxa de resposta, receita) em 2 colunas e variação. */}
           <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3" data-testid="comparativo-periodos">
@@ -590,29 +650,6 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
               ))}
             </div>
           </section>
-
-          {/* E94: Insights heurísticos */}
-          {insights && insights.length > 0 && (
-            <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Insights</h3>
-          </div>
-          <div className="space-y-2">
-            {insights.map((insight) => (
-              <InsightCard
-                key={insight.id}
-                type={insight.type}
-                title={insight.title}
-                description={insight.description}
-                priority={insight.priority}
-                applyLabel={insight.applyLabel}
-                onApply={insight.apply}
-              />
-            ))}
-          </div>
-        </section>
-      )}
         </div>
     </div>
   );

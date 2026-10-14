@@ -8,6 +8,8 @@ import { useExternalConversations, useExternalMessages } from '@/hooks/integrati
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
+import { toast } from '@/hooks/ui/use-toast';
+import { validatePttBlob } from '@/lib/audio/pttLimits';
 import { Conversation, Message } from '@/types/chat';
 import { 
   mapRealtimeConversationToConversation, 
@@ -127,12 +129,27 @@ export function useRealtimeInbox() {
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
   }, []);
 
+  // R2-INB-059: o contato "aberto" — aquele que suprime som/toast em
+  // `notifyAboutIncomingMessage` — tem UMA fonte: `selectedContactId`. Antes, só
+  // `handleSelectConversation` atualizava esse ref; os demais caminhos que trocam
+  // a seleção (nova conversa criada pelo modal, "Voltar" no celular e expandir o
+  // PiP, que só chamam `setSelectedContactId`) ficavam de fora. Efeito: no
+  // celular, o contato recém-fechado continuava MUDO (sem som, toast nem
+  // notificação) até uma nova seleção; a conversa criada pelo modal não suprimia
+  // o aviso dela nem marcava como lida. Aqui o id governa o ref e a leitura em
+  // TODOS os caminhos.
+  useEffect(() => {
+    setSelectedContact(selectedContactId ?? null);
+    if (selectedContactId) void markAsRead(selectedContactId);
+    // `markAsRead` não é memoizado (lê `conversationsRef` por dentro); listá-lo
+    // faria o efeito disparar a cada render. Só a TROCA do id deve agir.
+  }, [selectedContactId, setSelectedContact]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {
+    // `setSelectedContact`/`markAsRead` vivem no efeito acima: não duplicar aqui.
     setSelectedContactId(contactId);
-    setSelectedContact(contactId);
-    void markAsRead(contactId);
-  }, [setSelectedContactId, setSelectedContact, markAsRead]);
+  }, [setSelectedContactId]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
@@ -178,10 +195,20 @@ export function useRealtimeInbox() {
    // refresh da conversa caia), e resolve `true` no sucesso — o valor que o `ChatPanel` lê para
    // fechar o gravador. Antes ela resolvia `false`/saía em silêncio, então quem está acima não
    // distinguia "áudio enviado" de "áudio descartado".
-   // Sem toast aqui: o aviso ao usuário é da camada de cima (`useChatPanelHandlers.handleAudioSend`
-   // / TextToAudioButton); duplicar faria o mesmo erro aparecer duas vezes.
+   // Sem toast para falha de TRANSPORTE: o aviso ao usuário é da camada de cima
+   // (`useChatPanelHandlers.handleAudioSend` / TextToAudioButton); duplicar faria o mesmo
+   // erro aparecer duas vezes.
+   // EXCEÇÃO (PE-24): áudio fora dos limites do WhatsApp é recusado AQUI, antes do upload,
+   // e o motivo é avisado aqui — esta é a camada que conhece a mensagem exata da validação
+   // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
    const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
      if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
+     const ptt = await validatePttBlob(blob);
+     if (!ptt.ok) {
+       const motivo = ptt.message ?? 'Áudio inválido.';
+       toast({ title: 'Áudio não enviado', description: motivo, variant: 'destructive' });
+       throw new Error(motivo);
+     }
      try {
        const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
        await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);

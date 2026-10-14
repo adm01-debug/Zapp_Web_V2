@@ -54,6 +54,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { useContactSlaTimeline } from '../useContactSlaTimeline';
+import type { ContactSlaScope } from '../useContactSlaTimeline';
 import type { SlaTimelineFilters } from '@/lib/slaTimeline';
 
 const T0 = Date.parse('2026-10-12T10:00:00.000Z');
@@ -82,15 +83,19 @@ const linhaSla = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-function setup(initialProps: { id: string | null; filters?: SlaTimelineFilters }) {
+function setup(initialProps: {
+  id: string | null;
+  filters?: SlaTimelineFilters;
+  scope?: ContactSlaScope;
+}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity, staleTime: Infinity } },
   });
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
   const rendered = renderHook(
-    (props: { id: string | null; filters?: SlaTimelineFilters }) =>
-      useContactSlaTimeline(props.id, props.filters),
+    (props: { id: string | null; filters?: SlaTimelineFilters; scope?: ContactSlaScope }) =>
+      useContactSlaTimeline(props.id, props.filters, props.scope),
     { wrapper, initialProps },
   );
   return { ...rendered, queryClient };
@@ -221,5 +226,55 @@ describe('useContactSlaTimeline — falha e ausência de contato', () => {
     expect(result.current.milestones).toEqual([]);
     expect(opsDe('conversation_sla')).toHaveLength(0);
     expect(opsDe('conversation_events')).toHaveLength(0);
+  });
+});
+
+describe('useContactSlaTimeline — hierarquia igual à do cabeçalho', () => {
+  const regraEm = (over: Record<string, unknown>) => ({
+    id: 'rule-x',
+    name: 'Regra',
+    first_response_minutes: 2,
+    resolution_minutes: 10,
+    contact_id: null,
+    company: null,
+    job_title: null,
+    contact_type: null,
+    queue_id: null,
+    agent_id: null,
+    ...over,
+  });
+
+  function comUmaConversa(rules: unknown[]) {
+    h.tables.sla_rules = { data: rules, error: null };
+    h.tables.conversation_sla = { data: [linhaSla()], error: null };
+    h.tables.conversation_events = { data: [], error: null };
+  }
+
+  const limitePrimeiraResposta = async (
+    scope?: ContactSlaScope,
+  ) => {
+    const { result } = setup({ id: 'c1', scope });
+    await waitFor(() => expect(result.current.milestones.length).toBeGreaterThan(0));
+    return result.current.milestones.find((m) => m.kind === 'first_response')?.limitMinutes;
+  };
+
+  it('aplica a regra de EMPRESA quando o escopo traz a empresa (não cai no padrão)', async () => {
+    comUmaConversa([regraEm({ company: 'ACME', first_response_minutes: 2 })]);
+    expect(await limitePrimeiraResposta({ company: 'ACME' })).toBe(2);
+  });
+
+  it('aplica a regra de FILA quando o escopo traz a fila', async () => {
+    comUmaConversa([regraEm({ queue_id: 'q1', first_response_minutes: 3 })]);
+    expect(await limitePrimeiraResposta({ queueId: 'q1' })).toBe(3);
+  });
+
+  it('sem o escopo não adivinha a empresa: prazo do padrão do sistema', async () => {
+    comUmaConversa([regraEm({ company: 'ACME', first_response_minutes: 2 })]);
+    expect(await limitePrimeiraResposta()).toBe(5);
+  });
+
+  it('outro escopo (empresa diferente) também não casa a regra', async () => {
+    comUmaConversa([regraEm({ company: 'ACME', first_response_minutes: 2 })]);
+    expect(await limitePrimeiraResposta({ company: 'OUTRA' })).toBe(5);
   });
 });

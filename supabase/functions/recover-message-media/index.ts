@@ -1,5 +1,5 @@
 // recover-message-media — recuperação sob demanda de UMA mensagem de mídia cuja
-// URL do CDN do WhatsApp venceu (cartão t_4ebeb0c4).
+// URL do CDN do WhatsApp venceu (cartões t_4ebeb0c4 e t_84d1a2fc).
 //
 // Contexto: o webhook (_shared/evolution-webhook-messages.ts) só troca a URL do
 // CDN pela URL permanente do bucket quando `persistIncomingMedia` dá certo. Se
@@ -11,13 +11,23 @@
 // Contrato de resposta (sempre um corpo com `status`):
 //   { status: 'ok',           media_url }  — recuperou agora
 //   { status: 'ja_permanente', media_url }  — já estava no Storage; nada baixado
-//   { status: 'indisponivel' }              — não recuperável agora (sem chave,
-//                                             sem conexão, tentativa recente, a
-//                                             Evolution não devolveu bytes ou o
-//                                             upload falhou)
-//   { status: 'negado' }                    — sem autorização/acesso, payload
-//                                             inválido ou tipo recusado
-// Nenhum conteúdo de mensagem nem telefone entra em log.
+//   { status: 'indisponivel', motivo, tentar_apos? }
+//                                            — não recuperável AGORA. O `motivo`
+//                                              diz como quem consome (MR2) deve
+//                                              reagir:
+//        motivo: 'em_espera'         — limite de 10 min por mensagem ainda
+//                                       ativo; `tentar_apos` traz os SEGUNDOS
+//                                       que faltam. Botão desabilitado até lá.
+//        motivo: 'falha_temporaria'  — rede/timeout/5xx/rede do WhatsApp fora
+//                                       ou erro de gravação; vale tentar de
+//                                       novo. Botão habilitado.
+//        motivo: 'expirada'          — a mídia venceu de vez (404/410 ou mídia
+//                                       sem chave/conexão de origem). Não há o
+//                                       que recuperar. SEM botão.
+//   { status: 'negado' }                   — sem autorização/acesso, payload
+//                                            inválido ou tipo recusado
+// Nenhum conteúdo de mensagem, telefone, token ou URL vencem em log; o `motivo`
+// é uma palavra fechada do contrato, sem PII.
 //
 // Segurança: exige JWT (requireAuth, com a política de rede) e confere o acesso
 // à MENSAGEM pela MESMA regra de RLS de `messages` — um client com o JWT do
@@ -29,8 +39,7 @@
 // `ja_permanente` sem baixar. No máximo 1 tentativa por mensagem a cada 10 min,
 // carimbadas em `messages.media_meta` (coluna de metadados JÁ existente, sem
 // PII) — o carimbo é gravado ANTES da chamada externa, então a chamada não repete
-// mesmo se a Evolution falhar. Tipos fora de image/video/audio/document e
-// mensagem apagada (`is_deleted`) são recusados.
+// mesmo se a Evolution falhar.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import {
@@ -50,11 +59,39 @@ import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 // ─── Regras puras (testáveis sem rede/banco) ─────────────────────────────────
 
 export const RECOVERY_COOLDOWN_MS = 10 * 60 * 1000;
+
+/** Tipos de mídia que a recuperação atende (allowlist — o resto é recusado). */
 export const RECOVERABLE_MEDIA_TYPES = ["image", "video", "audio", "document"] as const;
+
+/**
+ * Tipos que NUNCA tentam recuperar: recusa imediata, sem nenhuma chamada
+ * externa. A allowlist acima já barra qualquer tipo fora dela; esta lista nomeia
+ * os casos conhecidos (inclusive os que carregam mídia no payload, como `ptv` e
+ * `viewOnce`, e os que não são mídia de arquivo) para documentar e testar.
+ */
+export const NON_RECOVERABLE_MESSAGE_TYPES = [
+  "ptv",
+  "viewOnce",
+  "viewOnceMessage",
+  "viewOnceMessageV2",
+  "vcard",
+  "contact",
+  "location",
+  "liveLocation",
+  "reaction",
+  "poll",
+  "pollUpdate",
+  "sticker",
+  "ephemeral",
+] as const;
+
 /** Chave do carimbo de tentativa dentro de `messages.media_meta` (sem PII). */
 export const ATTEMPT_META_KEY = "media_recovery_attempted_at";
 
 export type RecoveryStatus = "ok" | "ja_permanente" | "indisponivel" | "negado";
+
+/** Por que não foi possível recuperar agora (palavra fechada do contrato). */
+export type RecoveryMotive = "em_espera" | "falha_temporaria" | "expirada";
 
 export interface RecoveryRow {
   id: string;
@@ -69,6 +106,10 @@ export interface RecoveryRow {
 
 export interface RecoveryDecision {
   status: RecoveryStatus;
+  /** Só quando `indisponivel`: como quem consome deve reagir. */
+  motive?: RecoveryMotive;
+  /** Só em `em_espera`: segundos que faltam para nova tentativa permitida. */
+  tentarApos?: number;
   /** Só para log/diagnóstico; nunca volta no corpo da resposta. */
   reason?: string;
 }
@@ -78,6 +119,11 @@ export function isPermanentStorageUrl(url: unknown): boolean {
   return typeof url === "string" && url.includes("/storage/v1/object/");
 }
 
+/** Tipo que a recuperação atende? Allowlist fechada. */
+export function isRecoverableMediaType(type: unknown): boolean {
+  return typeof type === "string" && (RECOVERABLE_MEDIA_TYPES as readonly string[]).includes(type);
+}
+
 /** Carimbo da última tentativa, lido de media_meta (sem PII). */
 export function lastRecoveryAttemptAt(meta: unknown): string | null {
   if (!meta || typeof meta !== "object") return null;
@@ -85,29 +131,68 @@ export function lastRecoveryAttemptAt(meta: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
+/** Segundos restantes do limite de 10 min, ou 0 se já liberou. */
+export function cooldownRemainingSeconds(attemptedAt: string | null, now: Date): number {
+  if (!attemptedAt) return 0;
+  const attemptedMs = Date.parse(attemptedAt);
+  if (Number.isNaN(attemptedMs)) return 0;
+  const remaining = RECOVERY_COOLDOWN_MS - (now.getTime() - attemptedMs);
+  return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+}
+
 /**
  * Decide o destino de UMA mensagem. Ordem fixa: recusa de tipo/apagada, já
- * permanente, tentativa recente (limite de 10 min), e por fim os pré-requisitos
- * para tentar (chave externa + conexão de origem).
+ * permanente, tentativa recente (limite de 10 min → `em_espera`), e por fim os
+ * pré-requisitos para tentar (chave externa + conexão de origem). Sem chave ou
+ * sem conexão não há de onde baixar: é definitivo (`expirada`).
  */
 export function classifyRecovery(row: RecoveryRow, now: Date): RecoveryDecision {
-  if (!(RECOVERABLE_MEDIA_TYPES as readonly string[]).includes(row.message_type)) {
+  if (!isRecoverableMediaType(row.message_type)) {
     return { status: "negado", reason: "tipo_nao_recuperavel" };
   }
   if (row.is_deleted === true) return { status: "negado", reason: "apagada" };
   if (isPermanentStorageUrl(row.media_url)) return { status: "ja_permanente" };
 
-  const attemptedAt = lastRecoveryAttemptAt(row.media_meta);
-  if (attemptedAt) {
-    const attemptedMs = Date.parse(attemptedAt);
-    if (!Number.isNaN(attemptedMs) && now.getTime() - attemptedMs < RECOVERY_COOLDOWN_MS) {
-      return { status: "indisponivel", reason: "tentativa_recente" };
-    }
+  const tentarApos = cooldownRemainingSeconds(lastRecoveryAttemptAt(row.media_meta), now);
+  if (tentarApos > 0) {
+    return { status: "indisponivel", motive: "em_espera", tentarApos, reason: "tentativa_recente" };
   }
 
-  if (!row.external_id) return { status: "indisponivel", reason: "sem_external_id" };
-  if (!row.whatsapp_connection_id) return { status: "indisponivel", reason: "sem_conexao" };
+  if (!row.external_id) {
+    return { status: "indisponivel", motive: "expirada", reason: "sem_external_id" };
+  }
+  if (!row.whatsapp_connection_id) {
+    return { status: "indisponivel", motive: "expirada", reason: "sem_conexao" };
+  }
   return { status: "ok" };
+}
+
+// ─── Classificação da falha da Evolution ─────────────────────────────────────
+
+export type EvolutionFailureKind = "expirada" | "falha_temporaria";
+
+/**
+ * Traduz a RESPOSTA da Evolution (status HTTP + corpo) num `motivo`. Regra:
+ * só é definitivo (`expirada`) o que diz explicitamente que a mídia não existe
+ * mais — 404/410, ou 400 com corpo de "expirou/não encontrada". Todo o resto
+ * (5xx, 429, 403, 408, timeout, rede fora) é `falha_temporaria`: vale tentar de
+ * novo. O limite de 10 min já impede repetição em rajada.
+ */
+export function classifyEvolutionFailure(status: number, body: unknown): EvolutionFailureKind {
+  if (status === 404 || status === 410) return "expirada";
+  if (status === 400) {
+    const text = typeof body === "string" ? body : safeJson(body);
+    if (/expir|vencid|not.?found|no.?media|media.?message/i.test(text)) return "expirada";
+  }
+  return "falha_temporaria";
+}
+
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value ?? "");
+  } catch {
+    return "";
+  }
 }
 
 // ─── Portas (injetáveis para teste) ──────────────────────────────────────────
@@ -117,12 +202,17 @@ export interface RecoveryMedia {
   mimetype: string;
 }
 
+/** Resultado de uma descida à Evolution: bytes OU o motivo da falha. */
+export type FetchOutcome =
+  | { kind: "ok"; media: RecoveryMedia }
+  | { kind: "falha"; motive: EvolutionFailureKind };
+
 export interface RecoverPorts {
   /** Mesma regra de RLS de `messages`: o JWT vê a linha? */
   checkAccess(messageId: string): Promise<boolean>;
   loadMessage(messageId: string): Promise<RecoveryRow | null>;
   resolveInstance(connectionId: string): Promise<string | null>;
-  fetchMedia(instance: string, externalId: string): Promise<RecoveryMedia | null>;
+  fetchMedia(instance: string, externalId: string): Promise<FetchOutcome>;
   persistMedia(row: RecoveryRow, media: RecoveryMedia): Promise<string | null>;
   markAttempt(messageId: string, mergedMeta: Record<string, unknown>, previousAttemptAt: string | null): Promise<boolean>;
   saveMediaUrl(messageId: string, url: string, mimetype: string, messageType: string): Promise<boolean>;
@@ -163,10 +253,11 @@ function buildPorts(req: Request, deps: RecoverDeps): RecoverPorts {
       return (data?.instance_id as string | null) ?? null;
     },
     async fetchMedia(instance, externalId) {
+      // Nada aqui escapa como exceção: rede/timeout/5xx viram `falha_temporaria`.
       try {
         const evolutionUrl = Deno.env.get("EVOLUTION_API_URL");
         const evolutionKey = Deno.env.get("EVOLUTION_API_KEY");
-        if (!evolutionUrl || !evolutionKey) return null;
+        if (!evolutionUrl || !evolutionKey) return { kind: "falha", motive: "falha_temporaria" };
         const baseUrl = evolutionUrl.replace(/\/+$/, "");
         const resp = await evoFetch(
           baseUrl,
@@ -175,11 +266,14 @@ function buildPorts(req: Request, deps: RecoverDeps): RecoverPorts {
           { message: { key: { id: externalId } }, convertToMp4: false },
           (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(15000) }),
         );
-        if (!resp.ok) return null;
         const result = await resp.json().catch(() => null);
-        return extractBase64Media(result);
+        if (!resp.ok) return { kind: "falha", motive: classifyEvolutionFailure(resp.status, result) };
+        const media = extractBase64Media(result);
+        // 200 sem bytes: a Evolution respondeu mas não tem mais esta mídia.
+        if (!media) return { kind: "falha", motive: "expirada" };
+        return { kind: "ok", media };
       } catch {
-        return null;
+        return { kind: "falha", motive: "falha_temporaria" };
       }
     },
     persistMedia: (row, media) =>
@@ -210,6 +304,14 @@ function buildPorts(req: Request, deps: RecoverDeps): RecoverPorts {
 function negado(status: number, req: Request, log: Logger, reason: string): Response {
   log.done(status, { status: "negado", reason });
   return jsonResponse({ status: "negado" }, status, req);
+}
+
+/** Não recuperável agora: 200 com `status: indisponivel`, `motivo` e (em espera) `tentar_apos`. */
+function indisponivel(req: Request, log: Logger, motive: RecoveryMotive, tentarApos?: number): Response {
+  log.done(200, { status: "indisponivel", motivo: motive, tentarApos });
+  const body: Record<string, unknown> = { status: "indisponivel", motivo: motive };
+  if (tentarApos != null) body.tentar_apos = tentarApos;
+  return jsonResponse(body, 200, req);
 }
 
 export async function handleRecoverMessageMedia(req: Request, deps: RecoverDeps = {}): Promise<Response> {
@@ -248,8 +350,7 @@ export async function handleRecoverMessageMedia(req: Request, deps: RecoverDeps 
     try {
       row = await ports.loadMessage(messageId);
     } catch {
-      log.done(200, { status: "indisponivel", reason: "erro_ao_carregar_mensagem" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
+      return indisponivel(req, log, "falha_temporaria");
     }
     if (!row) return negado(404, req, log, "mensagem_inexistente");
 
@@ -260,8 +361,7 @@ export async function handleRecoverMessageMedia(req: Request, deps: RecoverDeps 
       return jsonResponse({ status: "ja_permanente", media_url: row.media_url }, 200, req);
     }
     if (decision.status === "indisponivel") {
-      log.done(200, { status: "indisponivel", reason: decision.reason ?? "indisponivel" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
+      return indisponivel(req, log, decision.motive ?? "falha_temporaria", decision.tentarApos);
     }
 
     // 5. Carimba a tentativa ANTES do trabalho externo: o limite de 10 min vale
@@ -269,31 +369,23 @@ export async function handleRecoverMessageMedia(req: Request, deps: RecoverDeps 
     const previousAttemptAt = lastRecoveryAttemptAt(row.media_meta);
     const mergedMeta: Record<string, unknown> = { ...(row.media_meta ?? {}), [ATTEMPT_META_KEY]: now.toISOString() };
     if (!(await ports.markAttempt(messageId, mergedMeta, previousAttemptAt))) {
-      log.done(200, { status: "indisponivel", reason: "carimbo_falhou_ou_corrida" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
+      return indisponivel(req, log, "falha_temporaria");
     }
 
     const instance = await ports.resolveInstance(row.whatsapp_connection_id!);
-    if (!instance) {
-      log.done(200, { status: "indisponivel", reason: "sem_instancia" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
-    }
+    if (!instance) return indisponivel(req, log, "falha_temporaria");
 
-    const media = await ports.fetchMedia(instance, row.external_id!).catch(() => null);
-    if (!media) {
-      log.done(200, { status: "indisponivel", reason: "api_sem_base64" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
+    const outcome = await ports.fetchMedia(instance, row.external_id!).catch(() => null);
+    if (!outcome || outcome.kind === "falha") {
+      return indisponivel(req, log, outcome?.motive ?? "falha_temporaria");
     }
+    const media = outcome.media;
 
     const url = await ports.persistMedia(row, media);
-    if (!url) {
-      log.done(200, { status: "indisponivel", reason: "upload_falhou" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
-    }
+    if (!url) return indisponivel(req, log, "falha_temporaria");
 
     if (!(await ports.saveMediaUrl(messageId, url, media.mimetype, row.message_type))) {
-      log.done(200, { status: "indisponivel", reason: "update_mensagem_falhou" });
-      return jsonResponse({ status: "indisponivel" }, 200, req);
+      return indisponivel(req, log, "falha_temporaria");
     }
     log.done(200, { status: "ok" });
     return jsonResponse({ status: "ok", media_url: url }, 200, req);
