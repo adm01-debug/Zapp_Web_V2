@@ -305,7 +305,9 @@ test('W09: workflows invocam o Playwright do lockfile, sem bunx nem seletor play
     const texto = wf[nome];
     if (!/\bplaywright\b/.test(texto)) continue;
     if (/(?:@playwright\/[\w.-]+|\bplaywright)@[^\s"'`]+/.test(texto)) problemas.push(`${nome}: seletor playwright@… literal`);
-    if (/\bbunx\s+(?:@playwright\/[\w.-]+|playwright)\b/.test(texto)) problemas.push(`${nome}: usa bunx playwright (resolve fora do bun.lock)`);
+    // Por linha e com qualquer coisa entre `bunx` e o pacote: `bunx --bun playwright test`
+    // tambem resolve fora do lockfile (Codex, PR #1923).
+    if (/^.*\bbunx\b.*\b(?:@playwright\/[\w.-]+|playwright)\b/m.test(texto)) problemas.push(`${nome}: usa bunx playwright (resolve fora do bun.lock)`);
     if (/\bplaywright\s+install/.test(texto) && !/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) {
       problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
     }
