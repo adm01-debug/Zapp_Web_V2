@@ -99,6 +99,24 @@ export function goHistoryNotSupported(actionName: string, corsHeaders: Record<st
   }, corsHeaders);
 }
 
+// Feed de stories/status (find-status-messages). Na GO ele não existe: o
+// provedor não emite eventos de status (EVENT_IGNORE_STATUS=true; GO_GAPS D5) nem
+// expõe /chat/findMessages (D6). Por isso `[]` seria MENTIRA — significaria "o
+// contato não publicou status". O retorno é um ESTADO explícito, distinguível de
+// lista vazia, para o consumidor escrever "indisponível neste provedor".
+export const STATUS_FEED_UNAVAILABLE_STATE = 'unavailable_in_provider';
+
+/** Resposta do feed de status quando o provedor não o suporta (nunca lista vazia). */
+export function statusFeedUnavailable(corsHeaders: Record<string, string>): Response {
+  return jsonRes({
+    success: false,
+    notSupported: true,
+    state: STATUS_FEED_UNAVAILABLE_STATE,
+    provider: 'evolution-go',
+    message: 'Stories/status do WhatsApp não estão disponíveis na Evolution GO: o provedor não emite eventos de status nem expõe status@broadcast no histórico (GO_GAPS D5/D6).',
+  }, corsHeaders);
+}
+
 export async function syncMessages(
   supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, contactPhone: string, corsHeaders: Record<string, string>
