@@ -22,6 +22,17 @@ Especialista: worker (geral)
 - `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`,
   `VERIFY: VERDE SEM BANCO (1003s)`.
 
+## Pontos do cartão (O QUE FAZER)
+- Ponto 1: parti da entrega com `git cherry-pick -x` dos dois commits de código dela
+  (`647c2890fd`, `845f146ccf`) sobre a ponta atual de `dia/2026-10-13` (`453e6b69f9`) — não recomecei.
+- Ponto 2: reproduzi o item no espelho e corrigi a causa em `ESTADO.md:65` (âncora
+  `src/hooks/inbox/useInboxBulkActions.ts:143` → `:165`), sem afrouxar asserção: o teste de âncora
+  (`scripts/ci/docs-estado-registry-convention.unit.mjs`) ficou intacto e verde.
+- Ponto 3: provei com o mesmo comando do cartão (`ci_espelho.sh .`) — o item
+  `node: ESTADO.md cita só âncoras reais...` sumiu da lista — e com
+  `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `# pass 11` / `# fail 0`
+  e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+
 ## FAIXA DO PAI
 FAIXA DO PAI: commits `647c2890fd` (`fix(inbox): lote marca so mensagens recebidas e transfere via RPC por contato`)
 e `845f146ccf` (`fix(inbox): barra de acoes em lote so fecha o dialogo depois do resultado`) do cartão
