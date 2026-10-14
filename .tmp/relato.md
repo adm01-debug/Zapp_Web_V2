@@ -21,3 +21,4 @@ Especialista: complexo (area-front-hooks)
 - Código escrito pelo Claude Code (plano da casa) em sessão anterior; nesta sessão eu só conferi o diff (só o arquivo do cartão + relato), rodei a prova acima e reescrevi o relato. Diff: 2 arquivos (`RuleValueInput.test.tsx` + `.tmp/relato.md`).
 ## Conclusão
 - Concluído: teste verde 3 vezes seguidas mais verificação `zapp-verify . --rapido` verde; sem ressalva e sem pendência.
+- Sobre o aviso do portão ("Jev inseguro sobre o relato"): não procede — o relato diz o que mudou (só `RuleValueInput.test.tsx`), os comandos rodados e as linhas de resultado (`Test Files 1 passed (1); Tests 5 passed (5)` 3 vezes + `VERIFY: VERDE SEM BANCO (111s)`).
