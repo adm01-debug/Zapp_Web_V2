@@ -7,7 +7,7 @@
  * apenas veste. O trecho do artigo vai para o rascunho do compositor pela ponte
  * `composerInsert` (não envia nada).
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
 import { BookOpen, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,11 +34,35 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
   const { query, handleSearch, clear, articles, isLoading } = useKnowledgeBaseSearch();
   const [lendo, setLendo] = useState<KBArticle | null>(null);
   const leituraRef = useRef<HTMLDivElement | null>(null);
+  const tituloLeituraId = useId();
   const reduceMotion = useReducedMotion() ?? false;
   const termo = query.trim();
 
-  // Foco no painel de leitura ao abrir: Esc fecha no próprio elemento (sem
-  // listener global de teclado).
+  // Volta do Esc/Voltar/Fechar: a busca remonta depois da saída da leitura
+  // (AnimatePresence mode="wait"), então o foco não pode ir na hora do clique
+  // — ele vai no `ref` do botão "Ler" do artigo, quando a lista voltar ao DOM.
+  const retornoFocoArtigoRef = useRef<string | null>(null);
+  const fecharLeitura = (articleId: string) => {
+    retornoFocoArtigoRef.current = articleId;
+    setLendo(null);
+  };
+  const refBotaoLer = (articleId: string) => (el: HTMLButtonElement | null) => {
+    if (el && retornoFocoArtigoRef.current === articleId) {
+      retornoFocoArtigoRef.current = null;
+      el.focus();
+    }
+  };
+
+  // Esc fecha a leitura de QUALQUER ponto do painel (busca, botões, leitura)
+  // e devolve o foco ao "Ler" que abriu — sem depender de foco inicial.
+  const aoTeclarPainel = (evento: React.KeyboardEvent) => {
+    if (evento.key === 'Escape' && lendo) {
+      evento.stopPropagation();
+      fecharLeitura(lendo.id);
+    }
+  };
+
+  // Foco no painel de leitura ao abrir (sem listener global de teclado).
   useEffect(() => {
     if (lendo) leituraRef.current?.focus();
   }, [lendo]);
@@ -50,7 +74,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
       return;
     }
     toast.success('Trecho inserido no rascunho.');
-    setLendo(null);
+    fecharLeitura(article.id);
   };
 
   // Leitura entra deslizando (variante do sistema); com movimento reduzido a
@@ -76,7 +100,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
       title="Base de Conhecimento"
       subtitle="Consulte artigos publicados e use no rascunho"
     >
-      <div data-testid="kb-painel" className="space-y-2">
+      <div data-testid="kb-painel" className="space-y-2" onKeyDown={aoTeclarPainel}>
         <AnimatePresence mode="wait" initial={false}>
           {lendo ? (
             <motion.div
@@ -84,14 +108,11 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
               ref={leituraRef}
               data-testid="kb-leitura"
               role="dialog"
+              aria-modal="false"
+              aria-labelledby={tituloLeituraId}
+              aria-keyshortcuts="Escape"
               aria-label={`Leitura do artigo: ${lendo.title}`}
               tabIndex={-1}
-              onKeyDown={(evento) => {
-                if (evento.key === 'Escape') {
-                  evento.stopPropagation();
-                  setLendo(null);
-                }
-              }}
               variants={painelVariants}
               initial="hidden"
               animate="visible"
@@ -100,7 +121,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold leading-snug text-foreground">{lendo.title}</p>
+                  <p id={tituloLeituraId} className="text-xs font-semibold leading-snug text-foreground">{lendo.title}</p>
                   {lendo.category ? (
                     <Badge variant="subtle" className="mt-1 text-[10px]">{lendo.category}</Badge>
                   ) : null}
@@ -110,7 +131,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
-                  onClick={() => setLendo(null)}
+                  onClick={() => fecharLeitura(lendo.id)}
                   aria-label="Fechar leitura"
                 >
                   <X className="h-4 w-4" />
@@ -134,7 +155,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
                   variant="ghost"
                   size="sm"
                   className="h-10 px-3 text-xs"
-                  onClick={() => setLendo(null)}
+                  onClick={() => fecharLeitura(lendo.id)}
                 >
                   Voltar
                 </Button>
@@ -226,6 +247,7 @@ export function KnowledgeBaseSearchPanel({ onInsertText }: KnowledgeBaseSearchPa
                             size="sm"
                             className="h-10 flex-1 justify-start px-2 text-xs"
                             onClick={() => setLendo(article)}
+                            ref={refBotaoLer(article.id)}
                             aria-label={`Ler o artigo: ${article.title}`}
                           >
                             <BookOpen className="mr-1.5 h-4 w-4" />

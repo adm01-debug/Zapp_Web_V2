@@ -28,6 +28,7 @@ import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
 import { useChatMessageNavigation } from './chat/chatMessageNavigation';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
+import { registerComposerInsert } from './contact-details/composerInsert';
 import type { TransferTargetType } from './TransferDialog';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
@@ -256,6 +257,19 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
     handlers.inputRef.current?.focus();
     onDraftConsumed?.();
   }, [pendingDraft, onDraftConsumed, handlers]);
+
+  // Base de Conhecimento (detalhes do contato): este painel é o dono do
+  // rascunho — registra o escritor para a ponte `composerInsert`. O painel da
+  // base só PEDE a inserção; sem este registro o pedido vira aviso honesto em
+  // vez de texto no rascunho. Anexa ao rascunho atual (não substitui) e foca o
+  // input; ao desmontar, solta o registro.
+  useEffect(() => {
+    registerComposerInsert((trecho) => {
+      handlers.setInputValue((atual) => (atual.trim() ? `${atual.replace(/\s+$/, '')}\n\n${trecho}` : trecho));
+      handlers.inputRef.current?.focus();
+    });
+    return () => { registerComposerInsert(null); };
+  }, [handlers]);
 
   const canGenerateSummary = messages.length >= 10;
 

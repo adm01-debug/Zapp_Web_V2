@@ -146,6 +146,44 @@ describe('KnowledgeBaseSearchPanel — leitura do artigo', () => {
   });
 });
 
+describe('KnowledgeBaseSearchPanel — leitura: Escape e foco', () => {
+  it('Esc em qualquer ponto da leitura fecha e devolve o foco ao Ler que abriu', async () => {
+    renderPainel();
+    digitar('contrato');
+    await passarDebounce();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ler o artigo: Contrato de serviço' }));
+    await screen.findByTestId('kb-leitura');
+
+    // O Esc nasce num botão dentro da leitura (sem depender de foco inicial).
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Voltar' }), { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByTestId('kb-leitura')).not.toBeInTheDocument());
+    await waitFor(() => expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Ler o artigo: Contrato de serviço' }),
+    ));
+  });
+
+  it('a leitura é um diálogo não-modal rotulado, com o atalho anunciado', async () => {
+    renderPainel();
+    digitar('contrato');
+    await passarDebounce();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ler o artigo: Contrato de serviço' }));
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Contrato de serviço' });
+    expect(dialogo).toHaveAttribute('aria-modal', 'false');
+    expect(dialogo).toHaveAttribute('aria-keyshortcuts', 'Escape');
+  });
+
+  it('Esc no campo de busca limpa sem fechar nada (não borbulha para o painel)', async () => {
+    renderPainel();
+    digitar('c');
+
+    fireEvent.keyDown(campoBusca(), { key: 'Escape' });
+
+    expect(campoBusca()).toHaveValue('');
+    expect(screen.getByTestId('kb-dica')).toHaveTextContent('Busque por título');
+  });
+});
 describe('KnowledgeBaseSearchPanel — inserir no texto', () => {
   it('entrega o corpo do artigo ao compositor, avisa e não envia nada', async () => {
     const onInsertText = vi.fn().mockReturnValue(true);
