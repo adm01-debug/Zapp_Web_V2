@@ -12,7 +12,20 @@ Especialista: iris
 ## CRITÉRIO DE PRONTO item a item
 1. Bloqueio e tentativas anunciados: `src/pages/Auth.tsx:124` (role="alert" do bloqueio) e `src/pages/Auth.tsx:145` (role="alert" das tentativas), provados pelos testes 1, 2 e 3 do arquivo novo.
 2. Sem enumeração de contas: o anúncio do bloqueio é o MESMO texto para qualquer e-mail e não contém o e-mail digitado (teste 4 do arquivo novo); nenhuma RPC nova entrou no diff de Auth.tsx (nada de `is_account_locked`).
-3. `zapp-verify . --rapido`: rodado pelo fechar (bloco FATOS MEDIDOS abaixo).
+3. `zapp-verify . --rapido`: ver "[Verificação](#verificação)" abaixo — rodado por mim, RC=0.
+
+## Verificação
+```
+$ zapp-verify . --rapido
+OK      db_guard        0s
+OK      tipos         149s
+OK      lint            4s
+OK      migrations      1s
+AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+VERIFY: VERDE SEM BANCO (154s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/7baa0e1f2b76
+RC=0
+```
+(AVISO esperado: este cartão é só de tela, não mexe em banco/migration.)
 ## FAIXA DO PAI
 FAIXA DO PAI: commit `cd211554c1` (e o `a2e02bca2` pulado) do cartão `t_48ac4716` — não são deste cartão. O trabalho do pai (429 = "muitas tentativas") não estava no meu workspace (`git merge-base --is-ancestor a2e02bca2 HEAD` era falso), então trouxe a faixa com o comando do cartão: `git cherry-pick cd211554c1 a2e02bca2`. O commit de código `cd211554c1` entrou em `4f00bb403b` e traz `src/lib/serverLogin.ts` + `src/lib/__tests__/serverLogin.test.ts` (dois arquivos do pai, não deste cartão). O segundo commit (`a2e02bca2`) só mexia no `.tmp/relato.md` do cartão pai, conflitava com o meu relato e foi pulado com `git cherry-pick --skip` — não é código.
 ## O que NÃO fiz e por quê
