@@ -11,7 +11,9 @@ import type { ReactElement, ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
   user: { id: 'user-a' } as { id: string } | null,
-  rpc: vi.fn(async () => ({ data: true, error: null })),
+  rpc: vi.fn<(name: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>>(
+    async () => ({ data: true, error: null }),
+  ),
   toast: vi.fn(),
   from: vi.fn(),
 }));

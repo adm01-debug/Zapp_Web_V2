@@ -239,7 +239,7 @@ export function useQuickReplies() {
     if (!template) return;
 
     // A RPC soma no banco e só toca linha visível ao chamador (dono ou global).
-    const { error } = await supabase.rpc('increment_quick_reply_use', { p_id: templateId });
+    const { error } = await (supabase as any).rpc('increment_quick_reply_use', { p_id: templateId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (PH-10, cartão pai t_32034c99), types.ts ainda não sincronizado
     if (error) {
       toast.error('Erro ao registrar o uso da resposta rápida');
       log.error('Error incrementing quick reply use:', error);
