@@ -213,11 +213,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
-            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} />
-            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} bars={stats?.dailySent} />
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} comparison={{ previous: prev?.campaignsSent, kind: 'relative' }} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} />
             <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={cur?.completed} comparison={{ previous: prev?.completed, kind: 'relative' }} />
-            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rateLabel} comparison={{ previous: prevRate, kind: 'points' }} />
-            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rate} suffix="%" comparison={{ previous: prevRate, kind: 'points' }} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} bars={stats?.dailySent} />
           </div>
 
         {/* Filtros */}
