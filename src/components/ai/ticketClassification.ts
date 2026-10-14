@@ -1,5 +1,3 @@
-import { normalizeScore } from '@/lib/ai-values';
-
 export interface ClassifiedTicket {
   contactId: string;
   contactName: string;
@@ -7,7 +5,6 @@ export interface ClassifiedTicket {
   priority: string;
   /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
   confidence: number | null;
-  tags: string[];
   lastMessage: string;
 }
 
@@ -47,35 +44,4 @@ export function derivePriority(tagName: string, confidence: number): string {
 
 export function getCategoryInfo(name: string) {
   return CATEGORIES.find(c => c.name === name) || CATEGORIES[4];
-}
-
-/** Agrupa tags de IA por contato no formato de ticket exibido no painel. */
-export function groupTagsIntoTickets(tags: Array<Record<string, unknown>>): ClassifiedTicket[] {
-  const grouped = new Map<string, ClassifiedTicket>();
-  tags.forEach((tag) => {
-    // Linhas malformadas (sem contact_id/tag_name) são ignoradas em vez de quebrar a classificação
-    const contactId = typeof tag.contact_id === 'string' && tag.contact_id ? tag.contact_id : null;
-    const tagName = typeof tag.tag_name === 'string' ? tag.tag_name : null;
-    if (!contactId || !tagName) return;
-
-    const contact = tag.contacts as Record<string, string> | null;
-    // Ausente ou inválido continua ausente (null): a UI omite a confiança em vez
-    // de exibir um "70%" que ninguém mediu. Confiança 0 permanece 0 (IA-023).
-    const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
-    if (!grouped.has(contactId)) {
-      grouped.set(contactId, {
-        contactId,
-        contactName: contact?.name || 'Desconhecido',
-        category: classifyTag(tagName),
-        priority: derivePriority(tagName, confidence.value ?? 0),
-        confidence: confidence.value === null ? null : confidence.value * 100,
-        tags: [tagName],
-        lastMessage: '',
-      });
-    } else {
-      const existing = grouped.get(contactId)!;
-      existing.tags.push(tagName);
-    }
-  });
-  return Array.from(grouped.values());
 }

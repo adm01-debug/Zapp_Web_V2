@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Tag, Brain, RefreshCw, Loader2, CheckCircle, Filter, BarChart3 } from 'lucide-react';
+import { Tag, Brain, Loader2, CheckCircle, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,6 @@ interface ClassifiedTicket {
   priority: string;
   /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
   confidence: number | null;
-  tags: string[];
   lastMessage: string;
 }
 
@@ -51,9 +50,9 @@ const PRIORITY_RANK: Record<string, number> = { urgent: 4, high: 3, medium: 2, l
 
 /**
  * IA-114 — a categoria/prioridade exibida vem do servidor. Como um contato pode ter
- * mais de uma etiqueta, a consolidação é determinística: maior severidade; no empate,
- * maior confiança; ainda no empate, categoria em ordem alfabética. Assim a ordem de
- * chegada das etiquetas não muda arbitrariamente o resultado.
+ * mais de uma etiqueta classificada, a consolidação é determinística: maior severidade;
+ * no empate, maior confiança; ainda no empate, categoria em ordem alfabética. Assim a
+ * ordem de chegada das classificações não muda arbitrariamente o resultado.
  */
 const normalizeServerConfidence = (server: ServerClassification): number | null => {
   return normalizeScore(server.confidence, { min: 0, max: 1, scale: 'ratio' }).value;
@@ -78,25 +77,37 @@ function consolidateServerResults(results: ServerClassification[]): Map<string, 
   return byContact;
 }
 
-function applyServerClassifications(
-  list: ClassifiedTicket[],
-  results: ServerClassification[],
-): { tickets: ClassifiedTicket[]; appliedCount: number } {
+/**
+ * IA-114 — as etiquetas de IA saíram do sistema: a lista exibida NÃO é mais lida da
+ * tabela de etiquetas. Ela nasce do resultado de `ai-classify-tickets` e só o nome
+ * do contato vem de `contacts`, pelos ids devolvidos pelo servidor.
+ */
+async function buildTicketsFromResults(results: ServerClassification[]): Promise<ClassifiedTicket[]> {
   const byContact = consolidateServerResults(results);
-  let appliedCount = 0;
-  const tickets = list.map(ticket => {
-    const server = byContact.get(ticket.contactId);
-    if (!server) return ticket;
-    appliedCount += 1;
+  const ids = Array.from(byContact.keys());
+  if (ids.length === 0) return [];
+
+  const { data: contacts, error } = await supabase
+    .from('contacts')
+    .select('id, name')
+    .in('id', ids);
+  if (error) throw error;
+
+  const names = new Map<string, string>(
+    (contacts ?? []).map(row => [String(row.id), String(row.name ?? '')]),
+  );
+
+  return ids.map((contactId) => {
+    const server = byContact.get(contactId)!;
     const confidence = normalizeServerConfidence(server);
     return {
-      ...ticket,
+      contactId,
+      contactName: names.get(contactId) || 'Desconhecido',
       category: server.category,
       priority: server.priority,
       confidence: confidence === null ? null : confidence * 100,
     };
   });
-  return { tickets, appliedCount };
 }
 
 function countByCategory(list: ClassifiedTicket[]): Record<string, number> {
@@ -112,91 +123,14 @@ export function AutoTicketClassifier() {
   const prefersReducedMotion = useReducedMotion();
   const [autoClassify, setAutoClassify] = useState(true);
   const [tickets, setTickets] = useState<ClassifiedTicket[]>([]);
-  const [loading, setLoading] = useState(true);
   const [classifying, setClassifying] = useState(false);
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
 
-  const classifyTag = (tagName: string): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('suporte') || lower.includes('bug') || lower.includes('erro')) return 'Suporte Técnico';
-    if (lower.includes('vend') || lower.includes('preço') || lower.includes('compra')) return 'Vendas';
-    if (lower.includes('pag') || lower.includes('boleto') || lower.includes('fatura')) return 'Financeiro';
-    if (lower.includes('reclam') || lower.includes('insatisf')) return 'Reclamação';
-    if (lower.includes('agend') || lower.includes('horário')) return 'Agendamento';
-    return 'Informação';
-  };
-
-  const derivePriority = (tagName: string, confidence: number): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
-    if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
-    if (confidence > 0.5) return 'medium';
-    return 'low';
-  };
-
-  const loadClassifiedTickets = useCallback(async (): Promise<ClassifiedTicket[] | null> => {
-    setLoading(true);
-    try {
-      // Fetch AI-tagged contacts
-      const { data: tags, error } = await supabase
-        .from('ai_conversation_tags')
-        .select('*, contacts(name, phone)')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) {
-        toast.error('Erro ao carregar tickets classificados');
-        return null;
-      }
-      if (!tags) {
-        toast.error('A lista de tickets classificados não pôde ser carregada');
-        return null;
-      }
-
-      const grouped = new Map<string, ClassifiedTicket>();
-      tags.forEach((tag: Record<string, unknown>) => {
-        const contactId = tag.contact_id as string;
-        const contact = tag.contacts as Record<string, string> | null;
-        // Confiança ausente/inválida não vira 0,7: fica null e a UI omite (IA-023).
-        const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
-        if (!grouped.has(contactId)) {
-          grouped.set(contactId, {
-            contactId,
-            contactName: contact?.name || 'Desconhecido',
-            category: classifyTag(tag.tag_name as string),
-            priority: derivePriority(tag.tag_name as string, confidence.value ?? 0),
-            confidence: confidence.value === null ? null : confidence.value * 100,
-            tags: [tag.tag_name as string],
-            lastMessage: '',
-          });
-        } else {
-          const existing = grouped.get(contactId)!;
-          existing.tags.push(tag.tag_name as string);
-        }
-      });
-
-      const list = Array.from(grouped.values());
-      setTickets(list);
-      setCategoryStats(countByCategory(list));
-      return list;
-    } catch (err) {
-      toast.error('Erro ao carregar tickets classificados');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
-    loadClassifiedTickets();
-  }, [loadClassifiedTickets]);
-
   /**
-   * IA-114 — consome o resultado do servidor em vez de recalculá-lo localmente.
-   * Antes o retorno de `ai-classify-tickets` era descartado e a categoria/prioridade
-   * exibidas vinham só das heurísticas locais; no erro o toast ainda dizia
-   * "classificação local aplicada com sucesso", escondendo a falha.
+   * IA-114 — consome o resultado do servidor em vez de recalculá-lo localmente e em vez
+   * de montar a lista a partir das etiquetas de IA (removidas do sistema). Antes o
+   * retorno de `ai-classify-tickets` era só sobreposto a uma lista carregada da tabela
+   * de etiquetas e, no erro, o toast ainda dizia "sucesso".
    */
   const runBatchClassification = async () => {
     setClassifying(true);
@@ -208,30 +142,20 @@ export function AutoTicketClassifier() {
 
       const results = Array.isArray(data?.results) ? (data.results as ServerClassification[]) : [];
       if (results.length === 0) {
-        toast.error('O servidor não devolveu classificações; os valores locais foram mantidos.');
+        toast.error('O servidor não devolveu classificações; nada foi aplicado.');
         return;
       }
 
-      const list = await loadClassifiedTickets();
-      if (list === null) {
-        // Falha de recarga já foi avisada em `loadClassifiedTickets`; aplicar sobre
-        // lista desconhecida apagaria a tela e ainda poderia dizer "sucesso".
-        return;
-      }
+      const list = await buildTicketsFromResults(results);
       if (list.length === 0) {
-        toast.error('Nenhum ticket carregado para aplicar as classificações do servidor.');
+        toast.error('O servidor não devolveu classificações válidas; nada foi aplicado.');
         return;
       }
-      const { tickets: applied, appliedCount } = applyServerClassifications(list, results);
-      if (appliedCount === 0) {
-        toast.error('O servidor não devolveu classificações para os tickets carregados; os valores locais foram mantidos.');
-        return;
-      }
-      setTickets(applied);
-      setCategoryStats(countByCategory(applied));
-      toast.success(`Classificação do servidor aplicada a ${appliedCount} ticket(s).`);
+      setTickets(list);
+      setCategoryStats(countByCategory(list));
+      toast.success(`Classificação do servidor aplicada a ${list.length} ticket(s).`);
     } catch {
-      toast.error('A classificação do servidor não pôde ser aplicada; os valores locais foram mantidos.');
+      toast.error('A classificação do servidor não pôde ser aplicada.');
     } finally {
       setClassifying(false);
     }
@@ -292,11 +216,7 @@ export function AutoTicketClassifier() {
         <CardContent>
           <ScrollArea className="h-[400px]">
             <div className="space-y-2">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-14 bg-muted/50 animate-pulse rounded-lg" />
-                ))
-              ) : tickets.length === 0 ? (
+              {tickets.length === 0 ? (
                 <div className="text-center py-12">
                   <Tag className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">Nenhum ticket classificado ainda</p>
