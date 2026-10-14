@@ -175,13 +175,61 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
   }
 
   it('o texto dos chips de prioridade usa o par de TEXTO (não a cor de preenchimento)', () => {
+    // D12 / etapa 170: Alta é o vermelho (par de texto `--destructive-text`).
     const { container: high } = render(<PriorityChip priority="high" />);
-    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
+    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
 
     const { container: urgent } = render(<PriorityChip priority="urgent" />);
     expect(urgent.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
     expect(urgent.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
+
+    // Média é o âmbar (Média âmbar, D12) — e não o `primary` do segmento.
+    const { container: medium } = render(<PriorityChip priority="medium" />);
+    expect(medium.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
+    expect(medium.firstElementChild?.className).not.toMatch(/(^|\s)text-primary(\s|$)/);
+  });
+
+  it('D12: o segmento pinta de primary só a escolhida e escreve as demais na cor da prioridade, com AA', () => {
+    // `PrioritySegment` (etapa 170): a opção escolhida é `bg-primary
+    // text-primary-foreground`; as demais escrevem com o par de TEXTO da própria
+    // prioridade (`--muted-foreground` na Baixa, `--warning-text` na Média,
+    // `--destructive-text` na Alta/Urgente — os mesmos tokens da pílula) sobre a
+    // trilha `bg-muted/30` do controle, que vive no `DialogContent`
+    // (`bg-background`). Hover das demais: `bg-muted/60`. Pares REAIS, medidos.
+    for (const [nome, vars] of [['claro', claro], ['escuro', escuro]] as const) {
+      expect(
+        razao(vars['primary-foreground'], vars.primary),
+        `${nome}: opção escolhida sobre bg-primary`,
+      ).toBeGreaterThanOrEqual(MIN_TEXTO);
+      for (const [rotulo, texto] of [
+        ['Baixa', vars['muted-foreground']],
+        ['Média', vars['warning-text']],
+        ['Alta', vars['destructive-text']],
+        ['Urgente', vars['destructive-text']],
+      ] as const) {
+        expect(
+          razaoNaTinta(texto, vars.muted, 0.3, vars.background),
+          `${nome}: ${rotulo} sobre a trilha bg-muted/30`,
+        ).toBeGreaterThanOrEqual(MIN_TEXTO);
+        expect(
+          razaoNaTinta(texto, vars.muted, 0.6, vars.background),
+          `${nome}: ${rotulo} no hover bg-muted/60`,
+        ).toBeGreaterThanOrEqual(MIN_TEXTO);
+      }
+    }
+  });
+
+  it('D12: a ponta da escada (Urgente, tinta /20 e borda sólida) também fecha AA', () => {
+    // `PriorityPill`/`PriorityChip` usam `bg-destructive/20` em Urgente — a tinta
+    // mais cheia da escada. O texto é o mesmo `--destructive-text`; aqui se mede o
+    // par REAL sobre essa tinta, nos dois modos, com o medidor WCAG de cima.
+    for (const [nome, vars] of [['claro', claro], ['escuro', escuro]] as const) {
+      expect(
+        razaoNaTinta(vars['destructive-text'], vars.destructive, 0.2, vars.card),
+        `${nome}: texto de Urgente sobre bg-destructive/20`,
+      ).toBeGreaterThanOrEqual(MIN_TEXTO);
+    }
   });
 
   it('DueChip: atrasado e "Hoje" usam o par de TEXTO do estado', () => {

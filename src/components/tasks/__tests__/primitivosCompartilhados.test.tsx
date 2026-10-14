@@ -21,6 +21,7 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
 import { TaskCheckbox } from '@/components/tasks/shared/TaskCheckbox';
 import { PriorityPill } from '@/components/tasks/shared/PriorityPill';
+import { PriorityChip } from '@/components/tasks/shared/PriorityChip';
 import { StatusPill } from '@/components/tasks/shared/StatusPill';
 import { DateLabel } from '@/components/tasks/shared/DateLabel';
 import { ContactAvatar } from '@/components/tasks/shared/ContactAvatar';
@@ -141,13 +142,33 @@ describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor 
     const media = classes('medium');
     const baixa = classes('low');
 
-    expect(alta).toContain('--warning-text');
+    // D12 / etapa 170: a pílula tem SEMPRE a cor da prioridade — Média é ÂMBAR
+    // (`--warning-text`), não `primary` (o azul é do segmento do controle).
+    expect(media).toContain('--warning-text');
+    expect(media).not.toContain('text-primary');
+    expect(alta).toContain('--destructive-text');
     expect(urgente).toContain('--destructive-text');
-    expect(media).toContain('text-primary');
     expect(baixa).toContain('text-muted-foreground');
 
     // quatro prioridades, quatro classes distintas
     expect(new Set([alta, urgente, media, baixa]).size).toBe(4);
+  });
+
+  it('a escada de cor é a MESMA do PriorityChip (Lista, Quadro e prévia combinam — D12)', () => {
+    // A prévia do modal desenha o `WorkItemCard` real, que usa o `PriorityChip`;
+    // o painel usa o `PriorityPill`. Se as duas escadas divergirem, "Média" volta a
+    // aparecer azul numa tela e âmbar na outra — o defeito da etapa 170.
+    for (const p of ['low', 'medium', 'high', 'urgent'] as Priority[]) {
+      const { unmount: soltaPilula } = render(<PriorityPill priority={p} />);
+      const daPilula = screen.getByTestId('priority-pill').className;
+      soltaPilula();
+
+      const { container, unmount: soltaChip } = render(<PriorityChip priority={p} />);
+      const doChip = container.querySelector('span')!.className;
+      soltaChip();
+
+      expect(doChip.trim(), `escada divergente em "${p}"`).toBe(daPilula.trim());
+    }
   });
 
   it('prioridade nula ou desconhecida cai no padrão do banco (medium) sem imprimir "undefined"', () => {
