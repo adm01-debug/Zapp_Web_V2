@@ -451,7 +451,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-3xs text-muted-foreground">
                   {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
                   {canExpand && (
-                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
+                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-[hsl(var(--primary-text))] hover:underline">
                       {isExpanded ? 'Mostrar menos' : 'Ler mensagem completa'}
                     </button>
                   )}
@@ -471,7 +471,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
 type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
-const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
+const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-[hsl(var(--primary-text))]' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 /** Status possíveis nos logs (a consulta exclui só `pending`). */
 const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
@@ -667,7 +667,7 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
             <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
             {etaMinutes !== null ? (
               <>
-                <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
+                <p className="text-2xl font-bold text-[hsl(var(--primary-text))]">{etaMinutes} min</p>
                 <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
               </>
             ) : (
@@ -935,7 +935,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                   onClick={() => setActiveTab(t.id)}
                   className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
                     ${activeTab === t.id
-                      ? 'border-primary text-primary'
+                      ? 'border-primary text-[hsl(var(--primary-text))]'
                       : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
                 >
                   {t.label}

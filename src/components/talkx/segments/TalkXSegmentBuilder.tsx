@@ -168,7 +168,7 @@ export function TalkXSegmentBuilder({
                         um 2º grupo AND e "G" para o 3º grupo, qualquer que fosse o match. */}
                     <span
                       aria-label={`Grupo ${gi + 1}: ${g.match === 'and' ? 'E (AND)' : 'OU (OR)'}`}
-                      className={cn('min-w-7 h-7 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center shrink-0', g.match === 'and' ? 'bg-primary/20 text-primary-glow' : 'bg-violeta/15 text-[hsl(var(--violeta-text))]')}
+                      className={cn('min-w-7 h-7 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center shrink-0', g.match === 'and' ? 'bg-primary/20 text-[hsl(var(--primary-text))]' : 'bg-violeta/15 text-[hsl(var(--violeta-text))]')}
                     >{g.match === 'and' ? 'E' : 'OU'}</span>
                     <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                     <DropdownMenu>
@@ -202,14 +202,14 @@ export function TalkXSegmentBuilder({
                       ))}
                     </div>
                     {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
-                    <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
+                    <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-[hsl(var(--primary-text))] text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
                   </div>
                 </div>
               </React.Fragment>
             ))}
           </div>
           <div className="flex items-center gap-2 mt-4">
-            <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'and' })} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
+            <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'and' })} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
             <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'or' })} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-xs font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
           </div>
         </section>
@@ -234,7 +234,7 @@ export function TalkXSegmentBuilder({
                   onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
                   onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
                   onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab', f.comingSoon && 'opacity-50 cursor-not-allowed hover:border-border/60 hover:bg-muted/30 hover:text-foreground-secondary')}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-[hsl(var(--primary-text))] cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-[hsl(var(--primary-text))] cursor-grab', f.comingSoon && 'opacity-50 cursor-not-allowed hover:border-border/60 hover:bg-muted/30 hover:text-foreground-secondary')}
                 >
                   <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}{f.comingSoon ? <span aria-hidden="true"> (em breve)</span> : null}
                 </button>
