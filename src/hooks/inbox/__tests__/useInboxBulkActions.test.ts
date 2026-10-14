@@ -389,6 +389,7 @@ describe('useInboxBulkActions — bulkTransfer', () => {
 
 describe('useInboxBulkActions — bulkArchive', () => {
   it('arquiva cada contato pela RPC (p_next archived) e o desfazer reabre só as arquivadas', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }, { id: 'c2' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -450,6 +451,10 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     const { result } = renderInbox();
     selectIds(result, ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7']);
+    selectQueue.push({
+      data: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'].map((id) => ({ id })),
+      error: null,
+    });
 
     let pendente: Promise<void> | undefined;
     await act(async () => {
@@ -479,6 +484,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
   });
 
   it('falha parcial: informa "X arquivadas, Y falharam", mantém só as que falharam e o desfazer reabre só as arquivadas', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }, { id: 'c2' }], error: null });
     rpcQueue = [{ error: null }, { error: { message: 'rls' } }];
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
@@ -506,6 +512,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
   });
 
   it('falha total: informa "0 arquivadas, N falharam", mantém a seleção, não recarrega e não abre desfazer', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }], error: null });
     rpcQueue = [{ error: { message: 'rls' } }];
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
@@ -523,6 +530,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
   });
 
   it('usa o retrato da seleção: mexer na seleção durante a janela de desfazer não troca o alvo', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }], error: null });
     const { result } = renderInbox();
     selectIds(result, ['c1']);
     await act(async () => {
@@ -543,6 +551,76 @@ describe('useInboxBulkActions — bulkArchive', () => {
         args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
       },
     ]);
+  });
+
+  it('erro de leitura/RLS no SELECT: avisa em pt-BR, não chama a RPC e mantém a seleção', async () => {
+    selectQueue.push({ data: null, error: { message: 'denied' } });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
+    expect(rpcCalls).toEqual([]);
+    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(refetch).not.toHaveBeenCalled();
+    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('SELECT sem linhas: avisa, não arquiva ninguém e mantém a seleção', async () => {
+    selectQueue.push({ data: [], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
+    expect(rpcCalls).toEqual([]);
+    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+    expect(refetch).not.toHaveBeenCalled();
+    expect(mocks.execute).not.toHaveBeenCalled();
+  });
+
+  it('só arquiva quem foi lido: id fora do SELECT não recebe RPC', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }], error: null });
+    const { result } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(rpcCalls).toEqual([
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c1', p_next: 'archived', p_reason: 'arquivada_em_massa' },
+      },
+    ]);
+    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+  });
+
+  it('desfazer com falha de reabertura: avisa quantas não puderam ser reabertas', async () => {
+    selectQueue.push({ data: [{ id: 'c1' }], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    expect(mocks.execute).toHaveBeenCalledTimes(1);
+
+    rpcQueue = [{ error: { message: 'boom' } }];
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('1 conversa(s) não puderam ser reabertas');
+    expect(refetch).toHaveBeenCalledTimes(2);
   });
 });
 

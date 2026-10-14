@@ -132,7 +132,18 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     const arquivadas: string[] = [];
 
     try {
-      const falhas = await executarComConcorrencia(contactIds, BULK_ARCHIVE_CONCURRENCY, async (id) => {
+      // Reconciliação com o pai (t_70d06027): só arquiva quem foi LIDO (erro de
+      // leitura/RLS avisa em pt-BR sem arquivar ninguém) e nada arquiva quando o
+      // SELECT volta sem linhas.
+      const { data: lidos, error: erroLeitura } = await supabase
+        .from('contacts')
+        .select('id')
+        .in('id', contactIds);
+      if (erroLeitura) throw erroLeitura;
+      const targetIds = (lidos ?? []).map((c) => c.id).filter((id) => contactIds.includes(id));
+      if (targetIds.length === 0) throw new Error('nenhum contato lido');
+
+      const falhas = await executarComConcorrencia(targetIds, BULK_ARCHIVE_CONCURRENCY, async (id) => {
         const { error } = await supabase.rpc('set_conversation_status', {
           p_contact_id: id,
           p_next: 'archived',
@@ -162,7 +173,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           action: async () => {},
           undoAction: async () => {
             const ids = [...arquivadas];
-            await executarComConcorrencia(ids, BULK_ARCHIVE_CONCURRENCY, async (id) => {
+            // Na FSM do ADR, 'archived' só volta para 'open' — por isso o desfazer
+            // reabre via RPC sem precisar do status anterior (o agrupamento por status
+            // do pai perde o sentido aqui). Falha de reabertura não é silenciosa.
+            const falhasReabertura = await executarComConcorrencia(ids, BULK_ARCHIVE_CONCURRENCY, async (id) => {
               const { error } = await supabase.rpc('set_conversation_status', {
                 p_contact_id: id,
                 p_next: 'open',
@@ -170,6 +184,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
               });
               if (error) throw error;
             });
+            if (falhasReabertura.length > 0) {
+              toast.error(`${falhasReabertura.length} conversa(s) não puderam ser reabertas`);
+            }
             refetch();
           },
           onCommit: () => {},
