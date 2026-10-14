@@ -18,6 +18,10 @@ Especialista: iris
 - O indicador de carregamento da visão usa `motion-safe:animate-spin` (o giro só acontece com movimento permitido); nenhuma outra animação foi adicionada.
 - commit: `feat(nav): visao supervisao para as ferramentas do supervisor` (9 arquivos, 376 inserções / 37 remoções); lint ratchet do pre-commit: `baseline=0, atual=0, novas=0`.
 
+## Sobre arquivos fora da lista ("ARQUIVOS QUE PODE TOCAR")
+
+- `src/components/admin/SupervisaoView.tsx` e os dois testes novos foram indispensáveis: o cartão manda **criar a visão** em `navigation.service.ts`, `ViewRouter.tsx` e `lazyViews.ts` — o `VIEW_MAP` precisa de um componente para renderizar, e a tela não existe hoje (o `AdminView` é o painel do admin). Os testes novos entram no item "testes de navegação" da lista (`SupervisaoView.test.tsx` prova a tela da visão; `ViewRouter.supervisao-gate.test.tsx` prova a rota/gate).
+
 ## O que NÃO fiz e por quê
 
 - **"Fila" da visão = o item `queues` ("Filas") que o sistema já tem**: o `AdminView` nunca teve aba de fila. Encaixei a tela de filas existente (`QueuesView`) como aba "Filas"; não criei rota nem item de menu novo (o cartão proíbe item duplicado).
