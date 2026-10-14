@@ -920,7 +920,26 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
-    if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
+    if (action === 'check-numbers') {
+      // check-numbers sonda números na Meta (cada chamada é um gatilho de
+      // bloqueio). No máximo 20 números por chamada e limite por USUÁRIO
+      // (user.id), não por IP — o teto por IP já existe no topo do handler.
+      const numbers = Array.isArray(body.numbers) ? body.numbers : [];
+      if (numbers.length === 0 || numbers.length > 20) {
+        return validationErrorResponse([{
+          path: 'numbers',
+          message: 'Informe de 1 a 20 números por chamada.',
+          code: 'custom',
+        }], req);
+      }
+      const rlUser = checkRateLimit(`evolution:check-numbers:${callerUserId}`, 20, 60_000);
+      if (!rlUser.allowed) {
+        return new Response(JSON.stringify({ error: true, message: 'Muitas consultas de números em pouco tempo. Aguarde e tente de novo.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers });
+    }
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });
     if (action === 'delete-for-everyone') return await proxy(`/chat/deleteMessageForEveryone/${instance}`, 'DELETE', body);
     if (action === 'edit-message') return await proxy(`/chat/updateMessage/${instance}`, 'PUT', body);
