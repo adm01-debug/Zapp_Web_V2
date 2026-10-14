@@ -59,24 +59,32 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     setIsTranscribing(true); setTranscriptionStatus('processing'); setShowTranscription(true);
     try {
       const freshUrl = await resolveAudioUrl(audioUrl);
+      // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
+      // `transcription`/`transcription_status` com service_role (processing →
+      // completed/failed) e reusa o texto em re-execução; o cliente só INVOCA e LÊ
+      // (a linha da mensagem chega pelo realtime acima) — daqui não sai escrita.
       const { data, error } = await supabase.functions.invoke('ai-transcribe-audio', { body: { audioUrl: freshUrl, messageId } });
       if (error) throw error;
+      if (!isMountedRef.current) return;
       if (data?.fallback) {
-        if (!isMountedRef.current) return;
         setTranscriptionStatus('failed');
         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
         return;
       }
-      if (data?.transcription) {
-        if (isMountedRef.current) { setTranscription(data.transcription); setTranscriptionStatus('completed'); }
-        await supabase.from('messages').update({ transcription: data.transcription, transcription_status: 'completed' }).eq('id', messageId);
+      const text = typeof data?.transcription === 'string' ? data.transcription.trim() : '';
+      if (text) {
+        setTranscription(text);
+        setTranscriptionStatus('completed');
+      } else {
+        // Resposta sem erro e sem texto não é sucesso silencioso: sem isto o player
+        // ficaria preso em "Transcrevendo..." para sempre. Falha visível.
+        setTranscriptionStatus('failed');
+        toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
       }
     } catch (error) {
       log.error('Transcription error:', error);
-      if (isMountedRef.current) {
-        setTranscriptionStatus('failed');
-        setTranscription(null);
-      }
+      // Uma nova falha não apaga a transcrição já conhecida (estado verdadeiro).
+      if (isMountedRef.current) setTranscriptionStatus('failed');
       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
     } finally { if (isMountedRef.current) setIsTranscribing(false); }
   };
