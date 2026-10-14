@@ -128,7 +128,10 @@ export function getInitials(name: string, maxChars = 2): string {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, maxChars)
-    .map((word) => word[0].toUpperCase())
+    // `codePointAt(0)` + `fromCodePoint` pegam o primeiro CARACTERE (code
+    // point), não o primeiro par de surrogates: `word[0]` partia o emoji ao
+    // meio ("😀Ana" virava o caractere quebrado, não "😀").
+    .map((word) => String.fromCodePoint(word.codePointAt(0)!).toUpperCase())
     .join('');
 }
 

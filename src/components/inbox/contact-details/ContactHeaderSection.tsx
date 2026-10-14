@@ -4,10 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Briefcase, Crown, Star, Calendar } from 'lucide-react';
 import { CompanyLogo } from '@/components/contacts/CompanyLogo';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { normalizeOperationalPriority, normalizeSentiment, type OperationalPriority } from '@/lib/ai-vocabulary';
+import { normalizeOperationalPriority, normalizeSentiment, type OperationalPriority, type Sentiment } from '@/lib/ai-vocabulary';
+import { getInitials } from '@/lib/formatters';
 import { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import { ImagePreview } from '../ImagePreview';
 import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
@@ -19,6 +20,20 @@ import { ContactPresenceIndicator } from '../chat/ContactPresenceIndicator';
 import type { ContactPresenceFields } from '../chat/contactPresence';
 import { ContactActionButtons } from './ContactActionButtons';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
+
+// Rótulo e cor do SENTIMENTO canônico (pt-BR). O valor cru passa antes por
+// normalizeSentiment, que traduz o legado em inglês e devolve `value: null`
+// para o que não tem rótulo — daí o chip fica oculto, nunca um sentimento
+// inventado. Tinta e fundo saem de tokens: o `--success` já é o par de TEXTO
+// (L27 no claro); âmbar e vermelho usam `--warning-text`/`--destructive-text`,
+// o par AA da etapa 80/E.3, porque `--warning`/`--destructive` crus não passam
+// 4,5:1 sobre a própria tinta clara.
+const SENTIMENT_CHIP: Record<Sentiment, { label: string; color: string }> = {
+  positivo: { label: 'Positivo', color: 'bg-success/15 text-success border-success/40' },
+  neutro: { label: 'Neutro', color: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40' },
+  negativo: { label: 'Negativo', color: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40' },
+  critico: { label: 'Crítico', color: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40' },
+};
 
 // Rótulos da prioridade operacional canônica (EN). O valor cru passa por
 // normalizeOperationalPriority: o legado pt-BR que as funções de análise
@@ -61,6 +76,7 @@ interface ContactHeaderSectionProps {
 export function ContactHeaderSection({ contact, enrichedData, conversation, onQuickAction, isCompact = false, hasExpandedSections = false, onCollapseAll, tags }: ContactHeaderSectionProps) {
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
+  const reduzido = useReducedMotion() ?? false;
 
   const { isFavorite, favoriteContact, unfavoriteContact } = useConversationActions();
   const isFav = isFavorite(contact.id);
@@ -123,7 +139,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
 
   return (
     <>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+      <motion.div data-testid="contact-header-section" initial={reduzido ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="p-4 border-b border-border">
         <div className="flex items-start gap-3">
           {/* Avatar with engagement ring */}
@@ -138,8 +154,8 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
               <Avatar data-testid="contact-avatar" className="w-[72px] h-[72px] ring-2 ring-background cursor-pointer hover:ring-primary/50 transition-all"
                 onClick={() => contact.avatar && setShowAvatarPreview(true)}>
                 <AvatarImage src={contact.avatar} alt={contact.name || 'Avatar'} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                  {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <AvatarFallback data-testid="contact-avatar-initials" className="bg-primary/10 text-primary text-xl font-semibold">
+                  {getInitials(contact.name)}
                 </AvatarFallback>
               </Avatar>
               <TooltipProvider>
@@ -225,6 +241,15 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
           )}
           {priorityBadge && (
             <Badge variant="outline" className={`h-6 px-2.5 rounded-full text-xs font-semibold ${priorityBadge.color}`}>{priorityBadge.label}</Badge>
+          )}
+          {sentiment.value && (
+            <Badge
+              variant="outline"
+              data-testid="contact-sentiment-chip"
+              className={`h-6 px-2.5 rounded-full text-xs font-semibold ${SENTIMENT_CHIP[sentiment.value].color}`}
+            >
+              {SENTIMENT_CHIP[sentiment.value].label}
+            </Badge>
           )}
         </div>
 

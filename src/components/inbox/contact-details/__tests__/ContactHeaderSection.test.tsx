@@ -72,9 +72,14 @@ describe('ContactHeaderSection', () => {
     expect(screen.queryByText('+5511999999999')).not.toBeInTheDocument();
   });
 
-  it('does not render a sentiment chip (fora do escopo dos chips §5.3: tipo/VIP/alta prioridade)', () => {
+  it('mostra o chip de sentimento com TEXTO (positivo/neutro/negativo) — §5.3 revisto no cartão do painel mobile', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.queryByText(/Positivo/)).not.toBeInTheDocument();
+    // ai_sentiment legado em inglês ('positive') passa por normalizeSentiment
+    // e cai no rótulo canônico pt-BR.
+    const chip = screen.getByTestId('contact-sentiment-chip');
+    expect(chip).toHaveTextContent('Positivo');
+    // Texto, não só cor: o rótulo é legível sem depender da tinta.
+    expect(chip.textContent).toBe('Positivo');
   });
 
   it('renders priority badge', () => {
