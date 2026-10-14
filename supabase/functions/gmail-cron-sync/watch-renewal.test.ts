@@ -287,12 +287,11 @@ const cronRequest = () =>
     headers: { "x-cron-secret": "segredo-do-cron" },
   });
 
-const ambienteCron = (jwksNaoUsado?: string) => ({
+const ambienteCron = () => ({
   CRON_SECRET: "segredo-do-cron",
   SUPABASE_URL: "https://stub.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "srk-de-teste",
   [TOPIC_ENV]: TOPIC,
-  __jwks: jwksNaoUsado,
 });
 
 function rotasCron(store: ReturnType<typeof gmailAccountsStore>, seed: Row, novoVencimento: number): Route[] {
