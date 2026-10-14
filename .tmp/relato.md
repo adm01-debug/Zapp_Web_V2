@@ -6,7 +6,7 @@ Especialista: semisenior (area-edge-api)
 ## Prova
 - verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/evolution-api/session-flavor-routes.test.ts supabase/functions/evolution-api/index.test.ts` → `ok | 40 passed | 0 failed` (inclui o NEGADO `R2-API-015/TRA-002 status GO: conexão que NÃO é a padrão e sem token no Vault nega sem tocar o provedor`).
 - vermelho antes (mutação temporária, revertida com `git checkout`, árvore limpa depois): removido o `if (!token) return deny` do status GO com fallback para a key global → `FAILED | 0 passed | 1 failed` no teste NEGADO (linha 403: provedor tocado). O teste chama o handler real e falha sem a correção.
-- `zapp-verify . --rapido`: dependências OK, db_guard OK; etapa `tipos` morta pelo OOM da máquina (tsc Killed, exit 137, load 76, RAM 42/47GB) — falha de execução ambiental, sem relação com este cartão (diff vazio, nenhum `.ts` tocado).
+- `zapp-verify . --rapido`: dependências OK, db_guard OK; etapa `tipos` morta pelo OOM da máquina em 2 tentativas (tsc Killed, exit 137: 1ª 291s com load 76, 2ª 372s com pool pesado 3 em uso) — falha de execução ambiental, sem relação com este cartão (diff vazio, nenhum `.ts` tocado).
 
 ## Pontos do revisor
 - Ponto 1 (rebase sem cherry-pick cego): resolvido — `git show --stat` dos 2 commits antes de trazer; diff vazio contra a base provou que o trabalho já entrou via `62337b79dd` (10/10) e `ff4754bcc5` (13/10); nenhum commit trazido, nenhum arquivo fora do título.
