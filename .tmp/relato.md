@@ -11,7 +11,7 @@ Nenhuma linha de conteúdo foi editada; só versiono as 3 fatias que sobraram do
   - PARTE1 a2d4016d5210974888f5a1dc6de05723
   - PARTE2 7fe97157834d3e801215a8241754b3de
   - PARTE4 c91739f872f9b9b04fb4bd4006817ed8
-- sem segredo nem dado pessoal: busca de regex (JWT `eyJ`, `sk-`, `ghp_`, hex longo, `tnnnlkbymytvtqngbbqh`, `service_role_key`/`anon_key`/`Bearer`, `+55`/`(DD)9...`) nos 3 arquivos deu 0 ocorrências; o único e-mail é o exemplo `a@x.com` (PARTE1 linha 57).
+- sem segredo nem dado pessoal: busca de regex (JWT `eyJ`, `sk-`, `ghp_`, hex longo, o identificador do banco real e os nomes das chaves `service_role`/`anon`, `Bearer`, `+55`/`(DD)9...`) nos 3 arquivos deu 0 ocorrências; o único e-mail é o exemplo `a@x.com` (PARTE1 linha 57).
 - verificação: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations OK).
 
 ## O que NÃO fiz e por quê
