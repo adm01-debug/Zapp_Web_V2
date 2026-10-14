@@ -437,3 +437,26 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
   }
   assert.deepEqual(violacoesTabelaAbertura(plano), []);
 });
+
+// W32 — docs/MIGRATIONS.md deve ter a secao "Fluxo diario (lote)" com os termos obrigatorios
+const MIGRATIONS_DOC = join(RAIZ, 'docs/MIGRATIONS.md');
+const TERMOS_LOTE = ['apply_all_missing', 'PENDENTE DE APPLY', 'producao-ddl'];
+
+test('W32: docs/MIGRATIONS.md tem secao "Fluxo diario (lote)" com todos os termos obrigatorios', async () => {
+  const conteudo = await readFile(MIGRATIONS_DOC, 'utf8');
+  assert.match(conteudo, /Fluxo diário \(lote\)/u, 'secao "Fluxo diário (lote)" ausente');
+  for (const termo of TERMOS_LOTE) {
+    assert.ok(conteudo.includes(termo), `termo obrigatorio ausente: ${termo}`);
+  }
+});
+
+test('W32: fixture — secao sem termo obrigatorio e rejeitada', () => {
+  const semTermo = 'Fluxo diário (lote)\nproducao-ddl\nPENDENTE DE APPLY';
+  for (const termo of TERMOS_LOTE) {
+    const ok = TERMOS_LOTE.every((t) => semTermo.includes(t));
+    if (!semTermo.includes(termo)) assert.ok(!ok, `fixture sem "${termo}" deveria falhar`);
+  }
+  // fixture completa passa
+  const completa = TERMOS_LOTE.join('\n');
+  assert.ok(TERMOS_LOTE.every((t) => completa.includes(t)));
+});
