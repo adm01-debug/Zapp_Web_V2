@@ -16,7 +16,7 @@ export function NowPanel({ realtime, pendingConversations, slaBreachedToday, bus
     { testid: 'now-row', tile: 'bg-dash-tile-green', icon: Clock, value: String(pendingConversations), label: 'Aguardando atendimento' },
     {
       testid: 'now-row',
-      tile: 'bg-destructive',
+      tile: 'bg-destructive/15',
       icon: AlertTriangle,
       value: String(slaBreachedToday ?? 0),
       label: 'SLA violado hoje',

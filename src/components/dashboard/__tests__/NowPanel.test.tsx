@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { NowPanel } from '../overview/NowPanel';
 import type { RealtimeDashboardState } from '@/hooks/analytics/useRealtimeDashboard';
 
@@ -57,5 +57,19 @@ describe('NowPanel', () => {
     );
     expect(container.querySelector('.text-destructive')).not.toBeNull();
     expect(container.querySelector('.text-dash-red')).toBeNull();
+  });
+
+  it('tile do SLA violado é tingido bg-destructive/15 (não bg-dash-tile-red, nem bg-destructive sólido)', () => {
+    render(
+      <NowPanel realtime={baseRealtime()} pendingConversations={0} slaBreachedToday={3} busiestQueue={null} />,
+    );
+    const slaRow = screen
+      .getAllByTestId('now-row')
+      .find((row) => within(row).queryByText('SLA violado hoje') !== null);
+    expect(slaRow).toBeDefined();
+    const tile = slaRow!.children[0];
+    expect(tile.classList.contains('bg-destructive/15')).toBe(true);
+    expect(tile.classList.contains('bg-destructive')).toBe(false);
+    expect(tile.classList.contains('bg-dash-tile-red')).toBe(false);
   });
 });
