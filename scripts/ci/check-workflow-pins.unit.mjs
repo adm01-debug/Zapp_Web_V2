@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, loadToolchain, main } from "./check-workflow-pins.mjs";
+import { PLAYWRIGHT_ESPERADO, TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, loadToolchain, main } from "./check-workflow-pins.mjs";
 
 // Fonte única de versões do repositório (.github/toolchain.json), lida de verdade
 // pelo teste de integração no fim do arquivo.
@@ -18,7 +18,6 @@ const FONTE = {
   node: "24",
   go: "1.24.x",
   "supabase-cli": "2.116.0",
-  playwright: "1.63.0",
   "postgres-image": "postgres:17-alpine@sha256:" + "a".repeat(64),
 };
 
@@ -103,7 +102,7 @@ test("aceita workflow cujas versões de toolchain batem com a fonte única", () 
     "          node-version: '24'",
     "          deno-version: '2.9.5'",
     "          go-version: '1.24.x'",
-    "      - run: bunx playwright@1.63.0 install --with-deps chromium",
+    "      - run: ./node_modules/.bin/playwright install --with-deps chromium",
     "      postgres:",
     "        image: " + FONTE["postgres-image"],
   ].join("\n");
@@ -162,14 +161,14 @@ test("rejeita version literal dentro do passo supabase/setup-cli", () => {
   ]);
 });
 
-test("rejeita playwright@ fora da fonte única e aceita a versão da fonte", () => {
+test("W09: rejeita qualquer playwright@<versão> literal (a versão vem do bun.lock)", () => {
   assert.deepEqual(
-    findToolchainDrift("        run: bunx playwright@1.63.0 install --with-deps chromium\n", "ci.yml", FONTE),
+    findToolchainDrift("        run: ./node_modules/.bin/playwright install --with-deps chromium\n", "ci.yml", FONTE),
     [],
   );
   assert.deepEqual(
-    findToolchainDrift("        run: bunx playwright@1.62.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
-    [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.62.0", expected: "1.63.0" }],
+    findToolchainDrift("        run: bunx playwright@1.63.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
+    [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.63.0", expected: PLAYWRIGHT_ESPERADO }],
   );
 });
 

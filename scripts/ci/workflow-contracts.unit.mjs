@@ -244,7 +244,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
     const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
@@ -279,17 +279,31 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const miss = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install\s+--with-deps\b/.test(p),
     );
     if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
 
     const hit = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install-deps\b/.test(p),
     );
     if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+// W09 (plano de 14/10/2026, achado N-05b): a versão do Playwright tem UMA fonte, o
+// bun.lock. `bunx playwright@1.63.0` nos workflows duplicava a versão em 6 lugares e o
+// bump do Dependabot (#1918) nascia vermelho até alguém editar YAML e teste à mão.
+test('W09: workflows instalam o Playwright do lockfile, sem pin literal', () => {
+  const problemas = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install/.test(texto)) continue;
+    if (/\bplaywright@[0-9]/.test(texto)) problemas.push(`${nome}: playwright@<versão> literal`);
+    if (!/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
+  }
+  assert.deepEqual(problemas, [], problemas.join('\n'));
 });
