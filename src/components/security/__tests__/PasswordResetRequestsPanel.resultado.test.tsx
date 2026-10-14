@@ -82,6 +82,42 @@ describe('PasswordResetRequestsPanel — resultado real do envio', () => {
     expect(screen.getByRole('button', { name: /Reenviar/ })).toBeInTheDocument();
   });
 
+  it('2xx com emailSent=false: NÃO promete envio — segue o caminho da falha (alerta + Reenviar)', async () => {
+    invoke.mockResolvedValueOnce({ data: { success: true, emailSent: false }, error: null });
+
+    await renderEPendentes();
+    fireEvent.click(screen.getByRole('button', { name: /Aprovar/ }));
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta).toHaveTextContent('Aprovado, mas o e-mail não foi enviado — tente novamente');
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Reenviar/ })).toBeInTheDocument();
+  });
+
+  it('2xx com data sem emailSent: NÃO promete envio — segue o caminho da falha (alerta + Reenviar)', async () => {
+    invoke.mockResolvedValueOnce({ data: { success: true }, error: null });
+
+    await renderEPendentes();
+    fireEvent.click(screen.getByRole('button', { name: /Aprovar/ }));
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta).toHaveTextContent('Aprovado, mas o e-mail não foi enviado — tente novamente');
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Reenviar/ })).toBeInTheDocument();
+  });
+
+  it('2xx com emailSent malformado (string): NÃO promete envio — segue o caminho da falha', async () => {
+    invoke.mockResolvedValueOnce({ data: { success: true, emailSent: 'yes' }, error: null });
+
+    await renderEPendentes();
+    fireEvent.click(screen.getByRole('button', { name: /Aprovar/ }));
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta).toHaveTextContent('Aprovado, mas o e-mail não foi enviado — tente novamente');
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Reenviar/ })).toBeInTheDocument();
+  });
+
   it('o botão Reenviar dispara uma nova aprovação e some quando o e-mail sai', async () => {
     invoke.mockResolvedValueOnce({
       data: null,

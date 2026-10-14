@@ -75,7 +75,7 @@ export function PasswordResetRequestsPanel() {
   const handleApprove = async (request: ResetRequest) => {
     setProcessing(true);
     try {
-      const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
+      const { data, error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
       if (error) {
         const payload = await readFunctionErrorPayload(error);
         if (payload?.emailSent === false) {
@@ -86,6 +86,14 @@ export function PasswordResetRequestsPanel() {
           return;
         }
         throw new Error(payload?.error || (error instanceof Error ? error.message : 'Erro ao aprovar'));
+      }
+      if ((data as FunctionErrorPayload | null)?.emailSent !== true) {
+        // 2xx sem emailSent=true (false, ausente ou malformado): a mensagem de
+        // "enviado" só sai com emailSent=true, então segue o mesmo caminho da
+        // falha fechada — alerta com Reenviar ([refazer 1]).
+        setEmailFailedRequest(request);
+        toast.error('Aprovado, mas o e-mail não foi enviado — tente novamente');
+        return;
       }
       setEmailFailedRequest(null);
       toast.success(`E-mail de redefinição enviado para ${maskEmail(request.email)}`);
