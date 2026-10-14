@@ -30,11 +30,15 @@ export function VisuallyHidden({
  */
 export function useAnnounce() {
   const [announcement, setAnnouncement] = React.useState('');
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const announce = React.useCallback((message: string, _politeness: 'polite' | 'assertive' = 'polite') => {
     // Clear first to ensure re-announcement of same message
     setAnnouncement('');
-    setTimeout(() => setAnnouncement(message), 100);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setAnnouncement(message), 100);
   }, []);
 
   const Announcer = React.useMemo(() => {

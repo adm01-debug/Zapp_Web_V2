@@ -57,14 +57,32 @@ interface DialogContentProps
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, size, showCloseButton = true, ...props }, ref) => (
+>(({ className, children, size, showCloseButton = true, ...props }, ref) => {
+  // A11y: o Radix avisa no console ("Missing `Description` or
+  // `aria-describedby={undefined}` for {DialogContent}") sempre que o conteúdo
+  // não declara descrição, e o leitor de tela perde o contexto do diálogo.
+  // Injetamos uma descrição oculta em pt-BR quando o chamador NÃO informa
+  // `aria-describedby`. A chave é conferida no objeto de props (e não por valor)
+  // porque vários diálogos da V2 passam `aria-describedby={undefined}` de
+  // propósito para silenciar o aviso: nesse caso respeitamos e não injetamos nada.
+  const temDescribedByProp = Object.prototype.hasOwnProperty.call(props, 'aria-describedby');
+  const autoDescriptionId = React.useId();
+  const describedBy = temDescribedByProp ? props['aria-describedby'] : autoDescriptionId;
+  const needsFallbackDescription = !temDescribedByProp;
+  return (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(dialogContentVariants({ size }), className)}
       {...props}
+      aria-describedby={describedBy}
     >
+      {needsFallbackDescription && (
+        <DialogPrimitive.Description id={autoDescriptionId} className="sr-only">
+          Conteúdo da caixa de diálogo
+        </DialogPrimitive.Description>
+      )}
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
@@ -74,7 +92,8 @@ const DialogContent = React.forwardRef<
       )}
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

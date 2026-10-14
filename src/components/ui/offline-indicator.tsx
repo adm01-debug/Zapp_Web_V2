@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wifi, WifiOff, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,12 +83,14 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
 export function useOfflineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleOnline = () => {
       if (!isOnline) {
         setWasOffline(true);
-        setTimeout(() => setWasOffline(false), 3000);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setWasOffline(false), 3000);
       }
       setIsOnline(true);
     };
@@ -103,6 +105,7 @@ export function useOfflineStatus() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isOnline]);
 
