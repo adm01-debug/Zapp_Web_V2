@@ -9,8 +9,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
-import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isToday, isYesterday } from 'date-fns';
+import { formatRelativeTime } from '@/lib/formatters';
 import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
@@ -561,9 +561,8 @@ const ConversationRow = memo(({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
                   <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
+                    {formatRelativeTime(conversation.lastMessage.created_at, {
                       addSuffix: false,
-                      locale: ptBR,
                     })}
                   </span>
                 )}
