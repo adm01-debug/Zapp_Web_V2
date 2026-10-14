@@ -18,17 +18,22 @@ interface BlockedIP {
 export function BlockedIPsPanel() {
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
   const [loading, setLoading] = useState(true);
+  // Falha de consulta ≠ lista vazia: o painel afirmava "Nenhum IP bloqueado"
+  // mesmo quando o select tinha falhado.
+  const [erro, setErro] = useState(false);
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [ipToRemove, setIpToRemove] = useState<BlockedIP | null>(null);
 
   const fetchBlockedIPs = async () => {
     setLoading(true);
+    setErro(false);
     const { data, error } = await supabase
       .from('blocked_ips')
       .select('id, ip_address, reason, expires_at, is_permanent, request_count')
       .order('blocked_at', { ascending: false });
-    if (!error && data) setBlockedIPs(data as BlockedIP[]);
+    if (error) setErro(true);
+    else if (data) setBlockedIPs(data as BlockedIP[]);
     setLoading(false);
   };
 
@@ -53,6 +58,10 @@ export function BlockedIPsPanel() {
           <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar por IP ou motivo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" /></div>
 
           {loading ? <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          : erro ? <div role="alert" data-testid="bloqueados-erro" className="rounded-xl border border-destructive/25 bg-destructive/10 p-3 text-xs text-[hsl(var(--destructive-text))]">
+              <p>Não foi possível carregar os IPs bloqueados.</p>
+              <Button variant="outline" size="sm" className="mt-2 h-8" onClick={() => void fetchBlockedIPs()}>Tentar de novo</Button>
+            </div>
           : filteredIPs.length === 0 ? <div className="text-center py-8 text-muted-foreground"><Shield className="w-12 h-12 mx-auto mb-2 opacity-20" /><p>Nenhum IP bloqueado</p></div>
           : (
             <div className="space-y-2">
