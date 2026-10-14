@@ -1,7 +1,7 @@
 Especialista: iris
 Cartão: t_9d56e788 — tela e componentes (area-front-componentes)
 
-FAIXA DO PAI: commits 67ffa98586, be958f52af, 59bb4f8aa4, e5f6219be7 do cartão t_ac0acb5c (hook da Sala de Crise) e, dentro dele, a migration da RPC de t_7d403167 — não são deste cartão.
+FAIXA DO PAI: commits 67ffa98586, be958f52af, 59bb4f8aa4, e5f6219be7 do cartão t_ac0acb5c (hook da Sala de Crise) e, dentro dele, a migration da RPC de t_7d403167 — não são deste cartão. Arquivos que essa faixa traz e que o meu relato NÃO muda: `supabase/migrations/20261013140359_crisis_room_snapshot.sql`, `src/integrations/supabase/types.ts`, `scripts/db-audit/crisis-room-snapshot.test.sh`, `scripts/ci/check-test-inventory.mjs`, `src/hooks/business/useCrisisRoomMetrics.ts` e `src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx`.
 
 # fix(admin): Sala de Crise com erro explícito, limiares duplos e alerta acessível
 
