@@ -9,6 +9,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { useAgentPendingCounts } from '@/hooks/agents/useAgentPendingCounts';
 import { useAgentRecentSends } from '@/hooks/agents/useAgentRecentSends';
+import { useConnectionsHealth } from '@/hooks/connections/useConnectionsHealth';
+import { ConnectionsHeader } from '@/components/agents/ConnectionsHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,6 +38,10 @@ export function AgentsView() {
   // equipe — nunca uma consulta por atendente. O supervisor vê a sobrecarga sem procurar.
   const { pendingCounts, isLoading: pendingLoading, error: pendingError, refetch: refetchPending } = useAgentPendingCounts();
   const { recentSends, isLoading: sendsLoading, error: sendsError, refetch: refetchSends } = useAgentRecentSends();
+  // Saúde das conexões do WhatsApp: mesma fonte da tela de Conexões (store global,
+  // uma única inscrição de realtime compartilhada), para o supervisor ver de relance
+  // se alguma instância caiu.
+  const { connections, loading: connectionsLoading, error: connectionsError, refresh: refreshConnections } = useConnectionsHealth();
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [permissionsOpen, setPermissionsOpen] = useState(false);
@@ -59,6 +65,7 @@ export function AgentsView() {
     refetch();
     refetchPending();
     refetchSends();
+    refreshConnections();
   };
 
   const statsData = [
@@ -114,6 +121,13 @@ export function AgentsView() {
             </Button>
           </div>
         }
+      />
+
+      {/* Saúde das conexões do WhatsApp — visão rápida, sem abrir a tela de Conexões. */}
+      <ConnectionsHeader
+        connections={connections}
+        loading={connectionsLoading}
+        error={connectionsError}
       />
 
       {/* Stats */}

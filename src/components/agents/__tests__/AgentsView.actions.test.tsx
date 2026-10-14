@@ -56,6 +56,17 @@ vi.mock('@/hooks/agents/useAgentRecentSends', () => ({
   useAgentRecentSends: () => ({ recentSends: {}, isLoading: false, error: null, refetch: vi.fn() }),
 }));
 
+// t_b35c23b0: a tela também mostra a saúde das conexões do WhatsApp, pela fonte da V2
+// (store global de whatsapp_connections). Neutro aqui: sem conexões e sem rede.
+vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
+  useConnectionsHealth: () => ({
+    connections: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}));
+
 import { AgentsView } from '../AgentsView';
 
 // PageHeader usa useNavigate/useLocation: a tela precisa de um Router.
