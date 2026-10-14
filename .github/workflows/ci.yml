@@ -26,11 +26,7 @@ on:
   # E24: reexecutar a suite na main sem precisar de um push novo.
   workflow_dispatch:
 
-env:
-  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-  VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-  VITE_CRM_INTEGRATION_ENABLED: 'true'
-
+# W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
 permissions:
   contents: read
 
@@ -362,6 +358,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: lint-and-typecheck
+    # W49: VITE_* necessários para o dev server que o Playwright sobe (playwright.config.ts webServer).
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_CRM_INTEGRATION_ENABLED: 'true'
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
