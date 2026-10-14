@@ -73,6 +73,8 @@ const ALLOWLIST = new Set([
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
+  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
+  'scripts/db-audit/login_gate_rpc.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
