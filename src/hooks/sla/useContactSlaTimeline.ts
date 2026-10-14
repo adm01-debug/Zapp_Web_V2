@@ -26,21 +26,42 @@ export interface ContactSlaTimeline {
 }
 
 /**
+ * Atributos do contato/conversa que entram na hierarquia de SLA.
+ * Sem eles, só a regra do contato (e o padrão) poderiam casar e a linha do tempo
+ * discordaria do cabeçalho quando o prazo vem de empresa, cargo, tipo, fila ou agente.
+ */
+export interface ContactSlaScope {
+  company?: string | null;
+  jobTitle?: string | null;
+  contactType?: string | null;
+  queueId?: string | null;
+  agentId?: string | null;
+}
+
+/**
  * Linha do tempo de SLA de um contato.
  *
  * Lê só o que já está gravado: `conversation_sla` (abertura, 1ª resposta, resolução e as
  * violações) e `conversation_events` (transferências do TR1). Nenhum marco é inferido de
  * mensagem. O prazo aplicado vem da MESMA hierarquia do resto do SLA (`useApplicableSLA`:
- * regra do contato > configuração padrão > padrão do sistema) — sem um limite inventado.
+ * regra do contato > empresa > cargo > tipo > fila > agente > padrão) — por isso o hook
+ * recebe os atributos do contato/conversa em `scope`; sem um limite inventado e sem
+ * discordar do cabeçalho.
  *
  * O filtro de período/tipo é do cliente: trocar de filtro NÃO dispara nova leitura.
  */
 export function useContactSlaTimeline(
   contactId: string | null | undefined,
   filters: SlaTimelineFilters = {},
+  scope: ContactSlaScope = {},
 ) {
   const { data: sla, isLoading: slaLoading } = useApplicableSLA({
     contactId: contactId ?? undefined,
+    company: scope.company ?? null,
+    jobTitle: scope.jobTitle ?? null,
+    contactType: scope.contactType ?? null,
+    queueId: scope.queueId ?? null,
+    agentId: scope.agentId ?? null,
   });
 
   const firstResponseMinutes = sla?.firstResponseMinutes ?? null;

@@ -135,6 +135,41 @@ describe('buildSlaMilestones — abertura e 1ª resposta', () => {
       status: 'breached',
     });
   });
+
+  it('encerrada sem resposta: marco fixo no fechamento, não vira "Estourado" com o relógio', () => {
+    // Fechada 2min após a abertura e lida 10 dias depois: a duração tem de ser a do
+    // fechamento (2min, "no prazo") e não o tempo decorrido até agora (10d, "estourado").
+    const milestones = buildSlaMilestones(
+      [row('r1', { resolved_at: iso(T0 + 2 * 60_000) })],
+      [],
+      LIMITS,
+      T0 + 10 * 86_400_000,
+    );
+
+    expect(milestones.find((m) => m.id === 'r1-closed_no_response')).toMatchObject({
+      kind: 'closed_no_response',
+      at: iso(T0 + 2 * 60_000),
+      durationMs: 2 * 60_000,
+      status: 'ok',
+      limitMinutes: 5,
+    });
+    // o marco pendente de 1ª resposta não existe mais para esta linha
+    expect(milestones.some((m) => m.id === 'r1-first_response')).toBe(false);
+  });
+
+  it('encerrada sem resposta depois do prazo: julgada pelo fechamento, "estourada"', () => {
+    const milestones = buildSlaMilestones(
+      [row('r1', { resolved_at: iso(T0 + 30 * 60_000) })],
+      [],
+      LIMITS,
+      T0,
+    );
+    expect(milestones.find((m) => m.id === 'r1-closed_no_response')).toMatchObject({
+      at: iso(T0 + 30 * 60_000),
+      durationMs: 30 * 60_000,
+      status: 'breached',
+    });
+  });
 });
 
 describe('buildSlaMilestones — resolução', () => {
