@@ -64,6 +64,17 @@ const { state, refetchCampaigns, mockCampaign } = vi.hoisted(() => {
       campaignList: [campaign] as unknown[],
       campaignsLoading: false,
       campaignsIsError: false,
+      abStats: null as {
+        variants: Array<{
+          variant_id: string;
+          label: string | null;
+          total: number;
+          replies: number;
+          clicks: number;
+          deliveries: number;
+        }>;
+      } | null,
+      setSelectedCampaignId: vi.fn(),
       // Resposta por `limit(n)`: 200 = destinatários, 100 = mensagens, 50 = logs, 2000 = histórico.
       rows: {} as Record<number, { data: unknown; error: { message: string } | null }>,
     },
@@ -83,6 +94,8 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     pauseCampaign: vi.fn(),
     cancelCampaign: vi.fn(),
     startCampaign: vi.fn(),
+    abStats: state.abStats ?? null,
+    setSelectedCampaignId: state.setSelectedCampaignId,
   }),
 }));
 
@@ -188,6 +201,8 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
       50: { data: [], error: null },
     };
     refetchCampaigns.mockClear();
+    state.setSelectedCampaignId.mockClear();
+    state.abStats = null;
   });
 
   it('erro na consulta de campanhas: mostra o erro, NÃO o vazio e permite refetch', () => {
@@ -296,5 +311,63 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
     expect(select.value).toBe('c1');
     expect(screen.getByRole('button', { name: 'Logs em Tempo Real' }).className).toContain('border-primary');
+  });
+
+  describe('A/B test results', () => {
+    const abCampaign = {
+      ...mockCampaign,
+      ab_enabled: true,
+      ab_metric: 'reply_rate' as const,
+      ab_min_sample: 10,
+      ab_winner_variant_id: 'uuid-variante-b',
+    };
+
+    const VARIANTS_AB = [
+      { variant_id: 'uuid-variante-a', label: null, total: 800, replies: 200, clicks: 80, deliveries: 760 },
+      { variant_id: 'uuid-variante-b', label: null, total: 750, replies: 375, clicks: 150, deliveries: 700 },
+    ];
+
+    it('mostra as barras por variante e o selo de vencedor quando a amostra >= ab_min_sample', async () => {
+      state.campaignList = [abCampaign];
+      state.abStats = { variants: VARIANTS_AB };
+
+      const { container } = renderView();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+
+      expect(await screen.findByText('Teste A/B')).toBeTruthy();
+      expect(screen.getByText('Variante A')).toBeTruthy();
+      expect(screen.getByText('Variante B')).toBeTruthy();
+      expect(screen.queryByText('uuid-variante-a')).toBeNull();
+      expect(screen.queryByText('uuid-variante-b')).toBeNull();
+      expect(screen.getByText('Variante A').getAttribute('title')).toBe('uuid-variante-a');
+      expect(screen.getByText('Vencedora')).toBeTruthy();
+      expect(screen.getByText(/Amostra: 1550/)).toBeTruthy();
+      expect(container.querySelectorAll('.motion-safe\\:transition-all')).toHaveLength(2);
+    });
+
+    it('não mostra o bloco A/B quando a amostra ainda não atingiu ab_min_sample', async () => {
+      const smallCampaign = { ...abCampaign, ab_min_sample: 100 };
+      state.campaignList = [smallCampaign];
+      state.abStats = {
+        variants: [
+          { variant_id: 'uuid-1', label: null, total: 40, replies: 10, clicks: 2, deliveries: 38 },
+          { variant_id: 'uuid-2', label: null, total: 30, replies: 9, clicks: 1, deliveries: 29 },
+        ],
+      };
+
+      renderView();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+
+      expect(screen.queryByText('Teste A/B')).toBeNull();
+      expect(screen.queryByText('Vencedora')).toBeNull();
+    });
+
+    it('sincroniza o seletor da tela com o hook: o A/B exibido é o da campanha aberta (ponto 5)', () => {
+      renderView();
+
+      expect(state.setSelectedCampaignId).toHaveBeenCalledWith('c1');
+    });
   });
 });

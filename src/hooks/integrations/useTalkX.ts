@@ -76,6 +76,12 @@ export interface TalkXCampaign {
   send_weekdays?: number[] | null;
   // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
   respect_dnd?: boolean | null;
+  ab_enabled?: boolean;
+  ab_metric?: 'reply_rate' | 'click_rate' | 'delivery_rate' | null;
+  ab_min_sample?: number | null;
+  ab_winner_variant_id?: string | null;
+  ab_winner_decided_at?: string | null;
+  ab_winner_decided_by?: string | null;
 }
 
 export interface TalkXRecipient {
@@ -145,6 +151,91 @@ function parseDraftSaveResult(data: unknown): TalkXDraftSaveResult {
     revision: revision as number,
     creationReplayed: result.creation_replayed === true,
   };
+}
+
+export interface TalkXAbVariantStat {
+  variant_id: string;
+  label: string | null;
+  total: number;
+  replies: number;
+  clicks: number;
+  deliveries: number;
+}
+
+export type TalkXAbStatsClient = Pick<typeof supabase, 'from'>;
+const TALKX_AB_VARIANT_SCAN_LIMIT = 1000;
+
+async function countHeads(
+  client: TalkXAbStatsClient,
+  campaignId: string,
+  variantId: string,
+  notNullColumn?: 'replied_at' | 'clicked_at' | 'delivered_at',
+): Promise<number> {
+  let query = client
+    .from('talkx_recipients')
+    .select('id', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId)
+    .eq('variant_id', variantId);
+  if (notNullColumn) query = query.not(notNullColumn, 'is', null);
+  const { count, error } = await query;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function fetchTalkXAbStats(
+  client: TalkXAbStatsClient,
+  campaignId: string,
+): Promise<{ variants: TalkXAbVariantStat[] }> {
+  const { data: campaignRow, error: campaignError } = await client
+    .from('talkx_campaigns')
+    .select('template_id')
+    .eq('id', campaignId)
+    .maybeSingle();
+  if (campaignError) throw campaignError;
+  const templateId = campaignRow?.template_id ?? null;
+
+  let variants: Array<{ variant_id: string; label: string | null }>;
+  if (templateId) {
+    const { data, error } = await client
+      .from('talkx_template_variants')
+      .select('id, label')
+      .eq('template_id', templateId)
+      .order('label', { ascending: true });
+    if (error) throw error;
+    variants = ((data ?? []) as Array<{ id: string; label: string }>).map((v) => ({
+      variant_id: v.id,
+      label: v.label,
+    }));
+  } else {
+    const { data, error } = await client
+      .from('talkx_recipients')
+      .select('variant_id')
+      .eq('campaign_id', campaignId)
+      .not('variant_id', 'is', null)
+      .limit(TALKX_AB_VARIANT_SCAN_LIMIT);
+    if (error) throw error;
+    const ids = [
+      ...new Set(
+        ((data ?? []) as Array<{ variant_id: string | null }>)
+          .map((r) => r.variant_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ].sort();
+    variants = ids.map((variant_id) => ({ variant_id, label: null }));
+  }
+
+  const stats = await Promise.all(
+    variants.map(async (v) => {
+      const [total, replies, clicks, deliveries] = await Promise.all([
+        countHeads(client, campaignId, v.variant_id),
+        countHeads(client, campaignId, v.variant_id, 'replied_at'),
+        countHeads(client, campaignId, v.variant_id, 'clicked_at'),
+        countHeads(client, campaignId, v.variant_id, 'delivered_at'),
+      ]);
+      return { variant_id: v.variant_id, label: v.label, total, replies, clicks, deliveries };
+    }),
+  );
+  return { variants: stats };
 }
 
 export function useTalkX() {
@@ -232,6 +323,15 @@ export function useTalkX() {
         .order('created_at');
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
+    },
+    enabled: !!selectedCampaignId,
+  });
+
+  const abStatsQuery = useQuery({
+    queryKey: ['talkx-ab-stats', selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return null;
+      return fetchTalkXAbStats(supabase, selectedCampaignId);
     },
     enabled: !!selectedCampaignId,
   });
@@ -489,6 +589,8 @@ export function useTalkX() {
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
+    abStats: abStatsQuery.data,
+    abStatsLoading: abStatsQuery.isLoading,
     selectedCampaignId,
     setSelectedCampaignId,
     createCampaign,

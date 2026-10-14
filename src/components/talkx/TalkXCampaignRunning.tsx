@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkX, type TalkXCampaign, type TalkXAbVariantStat } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, InsightCard, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
@@ -592,12 +592,73 @@ function TabLogs({ campaignId, active, segmentName }: { campaignId: string; acti
   );
 }
 
+function AbTestResults({ campaign, abStats }: {
+  campaign: TalkXCampaign;
+  abStats?: { variants: TalkXAbVariantStat[] } | null;
+}) {
+  if (!campaign.ab_enabled || !abStats) return null;
+
+  const metric = campaign.ab_metric ?? 'reply_rate';
+  const minSample = campaign.ab_min_sample ?? 0;
+  const winnerId = campaign.ab_winner_variant_id;
+
+  const variants = abStats.variants.map((st) => {
+    const hits = metric === 'reply_rate' ? st.replies : metric === 'click_rate' ? st.clicks : st.deliveries;
+    return { ...st, rate: st.total > 0 ? (hits / st.total) * 100 : 0 };
+  });
+
+  const maxRate = variants.length > 0 ? Math.max(...variants.map((v) => v.rate)) : 0;
+  const totalSample = variants.reduce((sum, v) => sum + v.total, 0);
+
+  if (totalSample < minSample) return null;
+
+  const metricLabel = metric === 'reply_rate' ? 'Taxa de resposta'
+    : metric === 'click_rate' ? 'Taxa de clique'
+    : 'Taxa de entrega';
+
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground">Teste A/B</h3>
+        <span className="text-2xs font-semibold text-foreground-secondary">{metricLabel}</span>
+      </div>
+      <p className="text-2xs text-foreground-secondary">
+        Amostra: {totalSample} destinatários · mínima {minSample}
+      </p>
+      <div className="space-y-2">
+        {variants.map((v, i) => {
+          const label = v.label && v.label.trim() ? v.label : `Variante ${String.fromCharCode(65 + i)}`;
+          return (
+          <div key={v.variant_id} className="flex items-center gap-3">
+            <span title={v.variant_id} className="text-2xs font-medium text-foreground-secondary w-20 shrink-0">{label}</span>
+            <div className="flex-1 h-4 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className="h-full rounded-full motion-safe:transition-all"
+                style={{
+                  width: `${maxRate > 0 ? (v.rate / maxRate) * 100 : 0}%`,
+                  backgroundColor: v.variant_id === winnerId ? 'hsl(var(--success))' : 'hsl(var(--primary))',
+                }}
+              />
+            </div>
+            <span className="text-2xs font-bold text-foreground w-12 text-right">{v.rate.toFixed(1)}%</span>
+            {v.variant_id === winnerId && (
+              <span className="text-2xs font-bold text-success shrink-0">Vencedora</span>
+            )}
+          </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab: Resultados ───────────────────────────────────────────────────────────────
-function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
+function TabResults({ c, sentHistory, historyQuery, onRetryHistory, abStats }: {
   c: TalkXCampaign;
   sentHistory: { time: string; Enviadas: number; Entregues: number }[];
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
+  abStats?: { variants: TalkXAbVariantStat[] } | null;
 }) {
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
@@ -639,6 +700,9 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
           </div>
         ))}
       </div>
+      {c.ab_enabled && c.ab_min_sample != null && abStats && (
+        <AbTestResults campaign={c} abStats={abStats} />
+      )}
       {c.started_at && c.status === 'sending' && pending > 0 && (
         <TalkXQueryBoundary
           query={historyQuery}
@@ -690,10 +754,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     campaigns, updateCampaign, updateCampaignLimits, pauseCampaign, cancelCampaign, startCampaign,
     refetchCampaigns, isLoading: campaignsLoading, isFetching: campaignsFetching,
     isError: campaignsIsError, error: campaignsError,
+    abStats,
+    setSelectedCampaignId = () => {},
   } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
+  useEffect(() => {
+    setSelectedCampaignId(selectedId);
+  }, [selectedId, setSelectedCampaignId]);
   const [activeTab, setActiveTab] = useState<RunTab>('overview');
   const [pauseOpen, setPauseOpen] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
@@ -956,7 +1025,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} segmentName={segmentName} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} abStats={abStats} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}
             </div>
 
