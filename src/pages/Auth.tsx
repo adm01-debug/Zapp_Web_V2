@@ -23,6 +23,11 @@ export default function Auth() {
   // Movimento reduzido: a marca entra sem deslocar nada.
   const prefersReducedMotion = useReducedMotion() ?? false;
 
+  // Espera do bloqueio em minutos (arredonda para cima). A região viva do bloqueio
+  // anuncia UMA vez, com esse valor; a contagem mm:ss que muda a cada segundo fica
+  // fora dela (aria-hidden), para o leitor de tela não ler em laço.
+  const lockMinutes = Math.max(1, Math.ceil(lockStatus.remainingTime / 60));
+
   return (
     <main
       id="main-content"
@@ -113,15 +118,19 @@ export default function Auth() {
                       {lockStatus.isLocked && (
                         <motion.div initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                           <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-full bg-destructive/20"><Lock className="w-5 h-5 text-destructive" /></div>
+                            <div className="p-2 rounded-full bg-destructive/20" aria-hidden="true"><Lock className="w-5 h-5 text-destructive" /></div>
                             <div className="flex-1">
-                              <p className="font-medium text-destructive">Conta bloqueada temporariamente</p>
-                              <p className="text-sm text-muted-foreground mt-1">Muitas tentativas de login falhadas. Aguarde antes de tentar novamente.</p>
+                              {/* Região viva: anuncia UMA vez, no início do bloqueio, com a espera em minutos. */}
+                              <div role="alert">
+                                <p className="font-medium text-destructive">Conta bloqueada temporariamente</p>
+                                <p className="text-sm text-muted-foreground mt-1">Muitas tentativas de login falhadas. Aguarde {lockMinutes} {lockMinutes === 1 ? 'minuto' : 'minutos'} antes de tentar novamente.</p>
+                              </div>
+                              {/* Contagem visual (mm:ss muda a cada segundo): fora da região viva. */}
                               <div className="mt-3 flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden" aria-hidden="true">
                                   <motion.div initial={{ width: '100%' }} animate={{ width: '0%' }} transition={{ duration: lockStatus.remainingTime, ease: 'linear' }} className="h-full bg-destructive rounded-full" />
                                 </div>
-                                <span className="text-sm font-mono text-destructive min-w-[60px] text-right">
+                                <span data-testid="auth-bloqueio-contagem" aria-hidden="true" className="text-sm font-mono text-destructive min-w-[60px] text-right">
                                   {Math.floor(lockStatus.remainingTime / 60)}:{(lockStatus.remainingTime % 60).toString().padStart(2, '0')}
                                 </span>
                               </div>
@@ -133,8 +142,8 @@ export default function Auth() {
 
                     <AnimatePresence>
                       {!lockStatus.isLocked && lockStatus.attempts > 0 && lockStatus.attempts < 5 && (
-                        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mb-4 flex items-center gap-2.5 rounded-lg border-l-2 border-warning bg-warning/5 px-3 py-2">
-                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" />
+                        <motion.div role="alert" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mb-4 flex items-center gap-2.5 rounded-lg border-l-2 border-warning bg-warning/5 px-3 py-2">
+                          <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-warning" />
                           <p className="text-xs text-warning/90">
                             <span className="font-semibold">{5 - lockStatus.attempts}</span> tentativa{5 - lockStatus.attempts > 1 ? 's' : ''} restante{5 - lockStatus.attempts > 1 ? 's' : ''} antes do bloqueio
                           </p>
