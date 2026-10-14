@@ -72,6 +72,23 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
   };
 }
 
+/**
+ * Registra o watch de push do Gmail: o Google passa a avisar cada e-mail novo
+ * (INBOX) no tópico Pub/Sub indicado. Devolve o vencimento do watch para o
+ * cron de renovação. Sem tópico configurado NÃO é chamado (fica o polling).
+ */
+async function registerGmailWatch(accessToken: string, topicName: string): Promise<{ expiration: string | null }> {
+  const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/watch", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ topicName, labelIds: ["INBOX"], labelFilterBehavior: "INCLUDE" }),
+  });
+  if (!response.ok) throw new Error("Failed to register Gmail watch");
+  const data = await response.json();
+  const expirationMs = Number.parseInt(String(data?.expiration ?? ""), 10);
+  return { expiration: Number.isFinite(expirationMs) ? new Date(expirationMs).toISOString() : null };
+}
+
 async function getGmailProfile(accessToken: string): Promise<{ emailAddress: string }> {
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -113,6 +130,10 @@ export interface GmailOAuthDeps {
     refreshToken: (refreshToken: string) => Promise<TokenResponse>;
     fetchProfile: (accessToken: string) => Promise<{ emailAddress: string }>;
     revoke: (token: string) => Promise<Response>;
+    /** Tópico Pub/Sub do push (vem do ambiente; injetável para teste). */
+    topicName?: string | null;
+    /** Registro do watch no Google (injetável: o teste prova os dois ramos). */
+    setupWatch?: (accessToken: string, topicName: string) => Promise<{ expiration: string | null }>;
   };
 }
 
@@ -227,6 +248,9 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             // cursor de sync antigo é descartado: 'pending' refaz o sync do zero
             // e um historyId velho só renderia 404 de histórico no próximo ciclo
             history_id: null,
+            // vencimento do watch anterior é descartado: só volta a ter valor se
+            // o watch for registrado de novo (ver o bloco abaixo).
+            watch_expiration: null,
           }, { onConflict: "email_address" })
           .select()
           .single();
@@ -235,6 +259,29 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
 
         // Store tokens encrypted
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || "");
+
+        // Push do Gmail (aviso de e-mail novo) só é ligado se o tópico Pub/Sub
+        // estiver configurado na Edge (`GMAIL_PUBSUB_TOPIC`, resolvido na borda em
+        // `import.meta.main` e injetado aqui). Sem tópico NÃO inventamos destino:
+        // a conta fica com watch_expiration null (limpo no upsert acima) e o
+        // e-mail novo continua chegando pelo polling de 5 min.
+        const topicName = deps.google.topicName ?? "";
+        if (topicName) {
+          try {
+            const setupWatch = deps.google.setupWatch ?? registerGmailWatch;
+            const watch = await setupWatch(tokens.access_token, topicName);
+            const { error: watchError } = await supabase.from("gmail_accounts")
+              .update({ watch_expiration: watch.expiration })
+              .eq("id", account.id);
+            if (watchError) throw watchError;
+          } catch (watchError) {
+            // O watch é acessório à conexão (que já foi concluída): a falha não
+            // derruba o login e o polling cobre. O motivo sai no log, nunca mudo.
+            log.error("Falha ao registrar o watch do Gmail; o polling cobre", {
+              error: watchError instanceof Error ? watchError.message : String(watchError),
+            });
+          }
+        }
 
         log.done(200, { action });
         return jsonResponse({
@@ -392,6 +439,8 @@ if (import.meta.main) {
         exchangeCode: (code) => exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI),
         refreshToken: (refreshToken) => refreshAccessToken(refreshToken, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
         fetchProfile: getGmailProfile,
+        topicName: Deno.env.get("GMAIL_PUBSUB_TOPIC") ?? "",
+        setupWatch: registerGmailWatch,
         revoke: (token) => fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
           method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
         }),
