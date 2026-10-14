@@ -160,10 +160,15 @@ export function useRealtimeInbox() {
 
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {
+    // DL1 — trocar de conversa aposenta o alvo do link direto anterior: ele
+    // pertencia à conversa antiga e, se sobrevivesse, seria procurado (e
+    // avisado como "não encontrada") na conversa nova. Quem abre COM alvo
+    // (busca global, fixada, deep link) define o novo logo em seguida.
+    setInitialHighlightMessageId(null);
     setSelectedContactId(contactId);
     setSelectedContact(contactId);
     void markAsRead(contactId);
-  }, [setSelectedContactId, setSelectedContact, markAsRead]);
+  }, [setInitialHighlightMessageId, setSelectedContactId, setSelectedContact, markAsRead]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
@@ -304,5 +309,5 @@ export function useRealtimeInbox() {
      markAsRead,
      initialHighlightMessageId,
      setInitialHighlightMessageId,
-     };
-     }
+   };
+}

@@ -120,4 +120,16 @@ describe('useRealtimeInbox — deep link ?message= (DL1)', () => {
     act(() => result.current.setInitialHighlightMessageId(null));
     expect(result.current.initialHighlightMessageId).toBeNull();
   });
+
+  it('trocar de conversa aposenta o alvo do link anterior (ponto 2)', () => {
+    const { result } = renderHook(() => useRealtimeInbox());
+
+    act(() => result.current.setInitialHighlightMessageId('m-antiga'));
+    expect(result.current.initialHighlightMessageId).toBe('m-antiga');
+
+    // Troca explícita de conversa: o alvo era da conversa antiga; se
+    // sobrevivesse, seria procurado na nova e avisado como "não encontrada".
+    act(() => result.current.handleSelectConversation('outro-contato'));
+    expect(result.current.initialHighlightMessageId).toBeNull();
+  });
 });

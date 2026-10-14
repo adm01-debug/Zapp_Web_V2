@@ -4,18 +4,31 @@ import { useEffect, useRef } from 'react';
  * DL1 — realce da mensagem alvo de um link direto (deep link `?message=` ou
  * resultado da busca global).
  *
- * O alvo pode chegar como id interno (UUID) ou como `external_id` (id do
- * WhatsApp, o que um link colado de outro sistema costuma carregar), então a
- * procura cobre os dois. A mensagem pode estar fora da primeira página do
- * histórico — nesse caso o hook paga a paginação anterior (`loadOlderMessages`)
- * até encontrá-la. Só desiste (e avisa) quando o histórico realmente acabou:
- * `hasOlderMessages === false`. Enquanto o contrato de paginação for
- * desconhecido (`undefined`), o hook espera em vez de acusar "não encontrada" —
- * assim uma lista ainda em carga nunca produz o aviso falso.
+ * Contrato do cartão (modelo por tempo, não por render):
+ * - a cada 250 ms procura o alvo por id ou `external_id` na lista carregada;
+ * - até 20 tentativas; na 5ª tentativa chama `onLoadOlder` UMA única vez
+ *   (paga a página anterior do histórico, caso o alvo esteja nela);
+ * - se esgotar as 20 tentativas sem achar, chama `onNotFound` UMA vez
+ *   (o consumidor mostra o toast "Mensagem não encontrada");
+ * - ao desmontar ou trocar de alvo, limpa o timer: nenhum callback dispara
+ *   depois.
  *
- * Os callbacks disparam UMA vez por alvo: cada efeito roda de novo a cada
- * mensagem nova, e sem a trava o realce/aviso repetiriam.
+ * O teto de 20 tentativas é também o prazo do alvo: com ele o `ChatPanel`
+ * sempre resolve (acha ou desiste com aviso) em no máximo 5 s, então o
+ * `initialHighlightMessageId` nunca fica preso — mesmo quando o contrato de
+ * paginação é desconhecido (`hasOlderMessages === undefined`) ou a lista
+ * ainda está em carga.
+ *
+ * Entrega o resultado por callback (achar/desistir); a rolagem e o realce
+ * são do cartão seguinte.
  */
+
+/** Intervalo entre tentativas (ms) — contrato do cartão. */
+export const HIGHLIGHT_ATTEMPT_INTERVAL_MS = 250;
+/** Teto de tentativas antes de desistir com aviso — contrato do cartão. */
+export const HIGHLIGHT_MAX_ATTEMPTS = 20;
+/** Tentativa em que se paga a página anterior do histórico (UMA única vez). */
+export const HIGHLIGHT_LOAD_OLDER_AT_ATTEMPT = 5;
 
 export interface HighlightableMessage {
   id: string;
@@ -25,20 +38,14 @@ export interface HighlightableMessage {
 export interface UseInitialHighlightOptions {
   /** Alvo do link direto: id interno ou `external_id`. */
   messageId: string | null | undefined;
-  /** Mensagens já carregadas da conversa aberta. */
+  /** Mensagens já carregadas da conversa aberta (lidas via ref a cada tick). */
   messages: HighlightableMessage[];
-  /** Há histórico mais antigo a paginar. `undefined` = contrato ausente (não desiste). */
-  hasOlderMessages?: boolean;
-  /** Paginação em andamento — evita chamadas concorrentes. */
-  loadingOlderMessages?: boolean;
-  /** Paga a página anterior do histórico. */
-  loadOlderMessages?: () => Promise<void> | void;
+  /** Paga a página anterior do histórico; chamado UMA vez, na 5ª tentativa. */
+  onLoadOlder?: () => Promise<void> | void;
   /** Chamado UMA vez quando a mensagem aparece na lista; recebe o id interno real. */
   onFound: (messageId: string) => void;
-  /** Chamado UMA vez quando o histórico acaba sem a mensagem. */
+  /** Chamado UMA vez quando as 20 tentativas esgotam sem a mensagem. */
   onNotFound?: (messageId: string) => void;
-  /** Teto de páginas paginadas antes de desistir (default 5). */
-  maxRounds?: number;
 }
 
 /** Procura o alvo pelo id interno ou pelo `external_id` (id do WhatsApp). */
@@ -56,62 +63,66 @@ export function findHighlightTarget(
 export function useInitialHighlight({
   messageId,
   messages,
-  hasOlderMessages,
-  loadingOlderMessages,
-  loadOlderMessages,
+  onLoadOlder,
   onFound,
   onNotFound,
-  maxRounds = 5,
 }: UseInitialHighlightOptions): void {
-  const roundsRef = useRef(0);
-  const targetRef = useRef<string | null>(null);
-  const settledRef = useRef<string | null>(null);
-  const callbacksRef = useRef({ onFound, onNotFound });
+  // A lista mais recente: o timer lê aqui para não ser recriado a cada render
+  // (mensagem nova do realtime não zera a contagem de tentativas).
+  const messagesRef = useRef(messages);
   useEffect(() => {
-    callbacksRef.current = { onFound, onNotFound };
+    messagesRef.current = messages;
   });
 
-  // Alvo novo (outro deep link, ou conversa A → B): zera rodadas e trava, para
-  // um resultado atrasado da conversa anterior não contaminar a nova.
+  const callbacksRef = useRef({ onLoadOlder, onFound, onNotFound });
   useEffect(() => {
-    if (messageId !== targetRef.current) {
-      targetRef.current = messageId ?? null;
-      roundsRef.current = 0;
-      settledRef.current = null;
-    }
+    callbacksRef.current = { onLoadOlder, onFound, onNotFound };
+  });
+
+  useEffect(() => {
+    if (!messageId) return;
+    const target = messageId;
+    let attempts = 0;
+    let settled = false;
+    let olderPaid = false;
+
+    const timer = setInterval(() => {
+      if (settled) return;
+      const found = findHighlightTarget(messagesRef.current, target);
+      if (found) {
+        settled = true;
+        clearInterval(timer);
+        callbacksRef.current.onFound(found.id);
+        return;
+      }
+      attempts += 1;
+      if (attempts === HIGHLIGHT_LOAD_OLDER_AT_ATTEMPT && !olderPaid) {
+        olderPaid = true;
+        // Dispara-e-esquece: o erro da paginação é do loader (publicado no
+        // `error` dele); se a página não chegar, o teto de 20 tentativas
+        // desiste com o aviso — o alvo nunca fica preso.
+        try {
+          const result = callbacksRef.current.onLoadOlder?.();
+          if (result && typeof (result as Promise<unknown>).catch === 'function') {
+            (result as Promise<unknown>).catch(() => {});
+          }
+        } catch {
+          // Idem acima: engolir aqui não esconde falha — o aviso de
+          // "não encontrada" ao esgotar é o sinal visível.
+        }
+      }
+      if (attempts >= HIGHLIGHT_MAX_ATTEMPTS) {
+        settled = true;
+        clearInterval(timer);
+        callbacksRef.current.onNotFound?.(target);
+      }
+    }, HIGHLIGHT_ATTEMPT_INTERVAL_MS);
+
+    // Desmontou ou trocou de alvo: o timer morre aqui e nenhum callback
+    // dispara depois (o `settled` trava a última execução concorrente).
+    return () => {
+      settled = true;
+      clearInterval(timer);
+    };
   }, [messageId]);
-
-  useEffect(() => {
-    if (!messageId || settledRef.current === messageId) return;
-
-    const found = findHighlightTarget(messages, messageId);
-    if (found) {
-      settledRef.current = messageId;
-      callbacksRef.current.onFound(found.id);
-      return;
-    }
-
-    // Paginação em voo: espera a próxima lista antes de decidir.
-    if (loadingOlderMessages) return;
-
-    if (hasOlderMessages === false) {
-      settledRef.current = messageId;
-      callbacksRef.current.onNotFound?.(messageId);
-      return;
-    }
-
-    // Contrato desconhecido (undefined): aguarda em vez de acusar falso negativo.
-    if (hasOlderMessages === undefined) return;
-
-    if (loadOlderMessages && roundsRef.current < maxRounds) {
-      roundsRef.current += 1;
-      void loadOlderMessages();
-      return;
-    }
-
-    // Teto de paginação atingido (ou não há como paginar): desiste com aviso,
-    // para o painel não ficar num realce que nunca chega.
-    settledRef.current = messageId;
-    callbacksRef.current.onNotFound?.(messageId);
-  }, [messageId, messages, hasOlderMessages, loadingOlderMessages, loadOlderMessages, maxRounds]);
 }

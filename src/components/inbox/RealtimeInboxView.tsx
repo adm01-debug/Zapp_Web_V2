@@ -131,10 +131,14 @@ export function RealtimeInboxView() {
     () => ({ contactId: null, tab: inbox.conversationTab, restaurada: true })
   );
   const activeTab: ConversationTab = resolverAbaAtiva(tabState, inbox.selectedContactId);
-  // DL1 — com um alvo pendente (deep link/busca global) a aba Chat precisa estar
-  // visível: é o painel visível que dá container para o `scrollToMessage` posicionar
-  // a mensagem. Derivado, sem setState dentro de efeito (nada de render cascateado).
-  const activeTabVisivel: ConversationTab = inbox.initialHighlightMessageId ? 'chat' : activeTab;
+  // DL1 — o alvo pendente só força a aba Chat enquanto há painel montado para
+  // resolvê-lo (a MESMA condição que monta o ChatPanel abaixo): com o timer de
+  // 20 tentativas o alvo sempre se resolve em até 5 s; sem painel (sem conversa,
+  // ChatFallback em carga, erro sem mensagens) o clique do usuário na aba vale.
+  const chatPanelMontado = !!inbox.legacyConversation
+    && !(inbox.selectedMessagesError && inbox.legacyMessages.length === 0)
+    && !(inbox.selectedContactId && inbox.selectedMessagesLoading);
+  const activeTabVisivel: ConversationTab = inbox.initialHighlightMessageId && chatPanelMontado ? 'chat' : activeTab;
   // `setConversationTab` desestruturado: chamá-lo como `inbox.setConversationTab`
   // faria o exhaustive-deps exigir o objeto `inbox` inteiro (recriado a cada render).
   const { setConversationTab } = inbox;

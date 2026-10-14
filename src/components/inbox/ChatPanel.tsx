@@ -67,10 +67,11 @@ interface ChatPanelProps {
   hasOlderMessages?: boolean;
   loadingOlderMessages?: boolean;
   onLoadOlderMessages?: () => Promise<void> | void;
-  /** DL1 — mensagem alvo de um link direto/busca: o painel realça e rola até ela. */
+  /** DL1 — mensagem alvo de um link direto/busca: o painel só recebe e repassa
+   * (a rolagem e o realce são do cartão seguinte). */
   initialHighlightMessageId?: string | null;
-  /** DL1 — avisa o pai que o alvo foi resolvido (achado ou desistido) e pode ser limpo. */
-  onInitialHighlightConsumed?: () => void;
+  /** DL1 — avisa o pai que o alvo foi resolvido (achado ou desistido) e pode ser limpo; recebe o id resolvido. */
+  onInitialHighlightConsumed?: (messageId: string) => void;
 }
 
 /**
@@ -328,28 +329,25 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   }, [chatNavigation, handleOpenMessageFromFiles]);
 
   // DL1 — deep link / busca global: acha a mensagem alvo (paginando o histórico, se
-  // preciso) e reusa o MESMO realce+rolagem do "Ver na conversa". O alvo é devolvido
-  // ao pai assim que resolvido, para não repetir o realce a cada render.
+  // preciso) e devolve o id resolvido SÓ pelo callback ao pai — sem rolar nem
+  // realçar aqui (rolagem e realce são do cartão seguinte).
   const handleInitialHighlightFound = useCallback((messageId: string) => {
-    handleOpenMessageFromFiles(messageId);
-    onInitialHighlightConsumed?.();
-  }, [handleOpenMessageFromFiles, onInitialHighlightConsumed]);
+    onInitialHighlightConsumed?.(messageId);
+  }, [onInitialHighlightConsumed]);
 
-  const handleInitialHighlightNotFound = useCallback(() => {
+  const handleInitialHighlightNotFound = useCallback((messageId: string) => {
     toast({
       title: 'Mensagem não encontrada',
       description: 'Ela pode ter sido apagada ou está fora do histórico carregado.',
       variant: 'destructive',
     });
-    onInitialHighlightConsumed?.();
+    onInitialHighlightConsumed?.(messageId);
   }, [onInitialHighlightConsumed]);
 
   useInitialHighlight({
     messageId: initialHighlightMessageId,
     messages,
-    hasOlderMessages,
-    loadingOlderMessages,
-    loadOlderMessages: onLoadOlderMessages,
+    onLoadOlder: onLoadOlderMessages,
     onFound: handleInitialHighlightFound,
     onNotFound: handleInitialHighlightNotFound,
   });

@@ -1,190 +1,203 @@
 /**
- * DL1 — realce da mensagem alvo de um link direto (`?message=` / busca global).
- *
- * O hook recebe a lista já carregada e o `loadOlderMessages` do painel; aqui os
- * testes cobrem os canais onde ele costuma falhar: mensagem na primeira página,
- * mensagem em página antiga (paginação paga uma vez por rodada), alvo por
- * `external_id`, histórico esgotado (desiste com aviso, sem repetir) e a corrida
- * de trocar de alvo/conversa no meio (o atraso da conversa A não contamina a B).
+ * DL1 — `useInitialHighlight` no modelo por tempo (contrato do cartão):
+ * procura a cada 250 ms por id ou `external_id`, até 20 tentativas; na 5ª
+ * tentativa paga a página anterior UMA única vez; ao esgotar avisa UMA vez;
+ * desmontar ou trocar de alvo limpa o timer (nada dispara depois).
  */
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { useInitialHighlight, type HighlightableMessage } from '@/hooks/chat/useInitialHighlight';
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-function msg(id: string, external_id?: string): HighlightableMessage {
-  return { id, external_id: external_id ?? null };
+import {
+  HIGHLIGHT_ATTEMPT_INTERVAL_MS,
+  HIGHLIGHT_LOAD_OLDER_AT_ATTEMPT,
+  HIGHLIGHT_MAX_ATTEMPTS,
+  findHighlightTarget,
+  useInitialHighlight,
+  type HighlightableMessage,
+} from '@/hooks/chat/useInitialHighlight';
+
+function montar(messages: HighlightableMessage[], messageId: string | null) {
+  const onLoadOlder = vi.fn();
+  const onFound = vi.fn();
+  const onNotFound = vi.fn();
+  const hook = renderHook(
+    ({ msgs, alvo }: { msgs: HighlightableMessage[]; alvo: string | null }) => useInitialHighlight({
+      messageId: alvo,
+      messages: msgs,
+      onLoadOlder,
+      onFound,
+      onNotFound,
+    }),
+    { initialProps: { msgs: messages, alvo: messageId } },
+  );
+  return { ...hook, onLoadOlder, onFound, onNotFound };
 }
 
-describe('useInitialHighlight — realce do alvo do deep link (DL1)', () => {
-  it('encontra a mensagem na primeira página e dispara o realce uma única vez', () => {
-    const onFound = vi.fn();
-    const loadOlderMessages = vi.fn();
-    const props = {
-      messageId: 'm2',
-      messages: [msg('m1'), msg('m2'), msg('m3')],
-      hasOlderMessages: false,
-      loadingOlderMessages: false,
-      loadOlderMessages,
-      onFound,
-    };
-
-    const { rerender } = renderHook((p: typeof props) => useInitialHighlight(p), { initialProps: props });
-
-    expect(onFound).toHaveBeenCalledTimes(1);
-    expect(onFound).toHaveBeenCalledWith('m2');
-    expect(loadOlderMessages).not.toHaveBeenCalled();
-
-    // Uma nova lista chegando (realtime) não repete o realce.
-    rerender({ ...props, messages: [msg('m1'), msg('m2'), msg('m3'), msg('m4')] });
-    expect(onFound).toHaveBeenCalledTimes(1);
+function avancarTentativas(n: number) {
+  act(() => {
+    vi.advanceTimersByTime(HIGHLIGHT_ATTEMPT_INTERVAL_MS * n);
   });
+}
 
-  it('pagina o histórico uma vez por rodada até achar a mensagem na página antiga', () => {
-    const onFound = vi.fn();
-    const loadOlderMessages = vi.fn();
-    const props = {
-      messageId: 'antiga',
-      messages: [msg('m9')],
-      hasOlderMessages: true,
-      loadingOlderMessages: false,
-      loadOlderMessages,
-      onFound,
-    };
+beforeEach(() => {
+  vi.useFakeTimers();
+});
 
-    const { rerender } = renderHook((p: typeof props) => useInitialHighlight(p), { initialProps: props });
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
+describe('useInitialHighlight — modelo por tempo (DL1)', () => {
+  it('acha o alvo no primeiro tick e resolve UMA vez', () => {
+    const { onLoadOlder, onFound, onNotFound } = montar(
+      [{ id: 'm-1' }, { id: 'm-2' }],
+      'm-2',
+    );
+
+    // Modelo por timer: nada dispara de forma síncrona na montagem.
     expect(onFound).not.toHaveBeenCalled();
 
-    // A página anterior chegou com a mensagem: realce com o id interno.
-    rerender({ ...props, messages: [msg('antiga'), msg('m9')], hasOlderMessages: false });
+    avancarTentativas(1);
     expect(onFound).toHaveBeenCalledTimes(1);
-    expect(onFound).toHaveBeenCalledWith('antiga');
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
+    expect(onFound).toHaveBeenCalledWith('m-2');
+    expect(onLoadOlder).not.toHaveBeenCalled();
+    expect(onNotFound).not.toHaveBeenCalled();
+
+    // Timer encerrado ao achar: avançar o relógio não repete.
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
+    expect(onFound).toHaveBeenCalledTimes(1);
+    expect(onNotFound).not.toHaveBeenCalled();
   });
 
-  it('aceita o alvo pelo external_id (id do WhatsApp) e devolve o id interno', () => {
-    const onFound = vi.fn();
-    renderHook(() => useInitialHighlight({
-      messageId: 'WA-ABC-123',
-      messages: [msg('uuid-1', 'WA-ABC-123')],
-      hasOlderMessages: false,
-      loadingOlderMessages: false,
-      onFound,
-    }));
+  it('acha pelo external_id e devolve o id interno real', () => {
+    const { onFound } = montar(
+      [{ id: 'interno-9', external_id: 'wa-999' }],
+      'wa-999',
+    );
 
+    avancarTentativas(1);
     expect(onFound).toHaveBeenCalledTimes(1);
-    expect(onFound).toHaveBeenCalledWith('uuid-1');
+    expect(onFound).toHaveBeenCalledWith('interno-9');
   });
 
-  it('não paga paginação enquanto ela está em voo (uma rodada por lista nova)', () => {
-    const onFound = vi.fn();
-    const loadOlderMessages = vi.fn();
-    const { rerender } = renderHook((p: Parameters<typeof useInitialHighlight>[0]) => useInitialHighlight(p), {
-      initialProps: {
-        messageId: 'x',
-        messages: [msg('m1')],
-        hasOlderMessages: true,
-        loadingOlderMessages: false,
-        loadOlderMessages,
-        onFound,
-      },
-    });
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
+  it('acha depois de pagar a página anterior — onLoadOlder UMA única vez', () => {
+    const { rerender, onLoadOlder, onFound, onNotFound } = montar(
+      [{ id: 'm-1' }],
+      'm-antiga',
+    );
 
+    // 4 primeiras tentativas: nem achou, nem pagou.
+    avancarTentativas(HIGHLIGHT_LOAD_OLDER_AT_ATTEMPT - 1);
+    expect(onFound).not.toHaveBeenCalled();
+    expect(onLoadOlder).not.toHaveBeenCalled();
+
+    // 5ª tentativa: paga a página anterior UMA vez.
+    avancarTentativas(1);
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+    expect(onFound).not.toHaveBeenCalled();
+
+    // A página chega (lista nova com o alvo): acha no próximo tick…
     rerender({
-      messageId: 'x',
-      messages: [msg('m1')],
-      hasOlderMessages: true,
-      loadingOlderMessages: true,
-      loadOlderMessages,
-      onFound,
+      msgs: [{ id: 'm-antiga' }, { id: 'm-1' }],
+      alvo: 'm-antiga',
     });
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
+    avancarTentativas(1);
+    expect(onFound).toHaveBeenCalledTimes(1);
+    expect(onFound).toHaveBeenCalledWith('m-antiga');
+
+    // …e nunca mais paga nem avisa, mesmo até o fim do teto.
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+    expect(onNotFound).not.toHaveBeenCalled();
   });
 
-  it('desiste com aviso depois do teto de rodadas, sem repetir o aviso', () => {
-    const onFound = vi.fn();
-    const onNotFound = vi.fn();
-    const loadOlderMessages = vi.fn();
-    const props = {
-      messageId: 'fantasma',
-      messages: [msg('m1')],
-      hasOlderMessages: true,
-      loadingOlderMessages: false,
-      loadOlderMessages,
-      onFound,
-      onNotFound,
-      maxRounds: 2,
-    };
+  it('não acha em 20 tentativas: avisa UMA vez e pagou UMA vez', () => {
+    const { onLoadOlder, onFound, onNotFound } = montar(
+      [{ id: 'm-1' }],
+      'm-inexistente',
+    );
 
-    const { rerender } = renderHook((p: typeof props) => useInitialHighlight(p), { initialProps: props });
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
-
-    rerender({ ...props, messages: [msg('m1'), msg('m2')] });
-    expect(loadOlderMessages).toHaveBeenCalledTimes(2);
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS - 1);
+    expect(onFound).not.toHaveBeenCalled();
     expect(onNotFound).not.toHaveBeenCalled();
 
-    rerender({ ...props, messages: [msg('m1'), msg('m2'), msg('m3')] });
+    avancarTentativas(1);
     expect(onNotFound).toHaveBeenCalledTimes(1);
-    expect(onNotFound).toHaveBeenCalledWith('fantasma');
+    expect(onNotFound).toHaveBeenCalledWith('m-inexistente');
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
 
-    rerender({ ...props, messages: [msg('m1'), msg('m2'), msg('m3'), msg('m4')] });
+    // Assentou: o relógio pode correr que nada mais dispara.
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
     expect(onNotFound).toHaveBeenCalledTimes(1);
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
   });
 
-  it('avisa "não encontrada" quando o histórico acabou (hasOlderMessages === false)', () => {
-    const onFound = vi.fn();
-    const onNotFound = vi.fn();
-    renderHook(() => useInitialHighlight({
-      messageId: 'apagada',
-      messages: [msg('m1')],
-      hasOlderMessages: false,
-      loadingOlderMessages: false,
-      onFound,
-      onNotFound,
-    }));
+  it('com contrato desconhecido o teto resolve: avisa em vez de prender', () => {
+    // Ponto 2 da recusa: sem o teto, `hasOlderMessages === undefined` deixava
+    // o alvo pendente para sempre. No modelo por tempo não há espera infinita.
+    const { onNotFound, onLoadOlder } = montar([{ id: 'm-1' }], 'm-solta');
 
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
     expect(onNotFound).toHaveBeenCalledTimes(1);
-    expect(onNotFound).toHaveBeenCalledWith('apagada');
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
   });
 
-  it('NÃO acusa falso "não encontrada" quando o contrato de paginação é desconhecido', () => {
-    const onFound = vi.fn();
-    const onNotFound = vi.fn();
-    renderHook(() => useInitialHighlight({
-      messageId: 'x',
-      messages: [],
-      hasOlderMessages: undefined,
-      loadingOlderMessages: false,
-      onFound,
-      onNotFound,
-    }));
+  it('desmontar no meio: nenhum callback dispara depois', () => {
+    const { unmount, onLoadOlder, onFound, onNotFound } = montar(
+      [{ id: 'm-1' }],
+      'm-alvo',
+    );
 
+    // Paga a página (6 ticks > 5ª tentativa) mas não acha ainda.
+    avancarTentativas(HIGHLIGHT_LOAD_OLDER_AT_ATTEMPT + 1);
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+    expect(onFound).not.toHaveBeenCalled();
+
+    unmount();
+
+    // O alvo chega tarde demais: o timer morreu na desmontagem.
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS * 2);
+    expect(onFound).not.toHaveBeenCalled();
+    expect(onNotFound).not.toHaveBeenCalled();
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+  });
+
+  it('trocar de alvo limpa o timer do alvo antigo', () => {
+    const alvoAntigo = 'm-antiga';
+    const alvoNovo = 'm-nova';
+    const montado = montar([{ id: 'm-nova' }], alvoAntigo);
+    const { rerender, onFound, onNotFound, onLoadOlder } = montado;
+
+    avancarTentativas(2);
+
+    rerender({ msgs: [{ id: 'm-nova' }], alvo: alvoNovo });
+    avancarTentativas(1);
+
+    // Só o alvo novo resolveu; o antigo nunca dispara (nem achado, nem aviso).
+    expect(onFound).toHaveBeenCalledTimes(1);
+    expect(onFound).toHaveBeenCalledWith('m-nova');
+    expect(onNotFound).not.toHaveBeenCalled();
+
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
+    expect(onFound).toHaveBeenCalledTimes(1);
+    expect(onNotFound).not.toHaveBeenCalled();
+    expect(onLoadOlder).not.toHaveBeenCalled();
+  });
+
+  it('sem alvo não arma timer nenhum', () => {
+    const { onLoadOlder, onFound, onNotFound } = montar([{ id: 'm-1' }], null);
+
+    avancarTentativas(HIGHLIGHT_MAX_ATTEMPTS);
+    expect(onLoadOlder).not.toHaveBeenCalled();
     expect(onFound).not.toHaveBeenCalled();
     expect(onNotFound).not.toHaveBeenCalled();
   });
+});
 
-  it('troca de alvo no meio (conversa A → B): atraso de A não contamina o realce de B', () => {
-    const onFound = vi.fn();
-    const loadOlderMessages = vi.fn();
-    const props = {
-      messageId: 'A',
-      messages: [msg('m1')],
-      hasOlderMessages: true,
-      loadingOlderMessages: false,
-      loadOlderMessages,
-      onFound,
-    };
-
-    const { rerender } = renderHook((p: typeof props) => useInitialHighlight(p), { initialProps: props });
-    expect(loadOlderMessages).toHaveBeenCalledTimes(1);
-
-    // A conversa B abriu com o alvo dela já na primeira página.
-    rerender({ ...props, messageId: 'B', messages: [msg('B'), msg('m1')], hasOlderMessages: false });
-
-    expect(onFound).toHaveBeenCalledTimes(1);
-    expect(onFound).toHaveBeenCalledWith('B');
-    expect(onFound).not.toHaveBeenCalledWith('A');
+describe('findHighlightTarget', () => {
+  it('retorna null sem alvo e ignora external_id nulo', () => {
+    expect(findHighlightTarget([{ id: 'm-1' }], null)).toBeNull();
+    expect(findHighlightTarget([{ id: 'm-1', external_id: null }], 'x')).toBeNull();
+    expect(findHighlightTarget([], 'm-1')).toBeNull();
   });
 });

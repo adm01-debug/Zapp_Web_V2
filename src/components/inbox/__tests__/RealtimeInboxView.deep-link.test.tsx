@@ -74,7 +74,11 @@ vi.mock('@/components/mobile/MiniChatPiP', () => ({ MiniChatPiP: () => null }));
 vi.mock('../NewMessageIndicator', () => ({ NewMessageIndicator: () => null }));
 vi.mock('../InboxEmptyChat', () => ({ InboxEmptyChat: () => null }));
 vi.mock('../ConversationListSidebar', () => ({ ConversationListSidebar: () => null }));
-vi.mock('../chat/ConversationTabs', () => ({ ConversationTabs: () => null }));
+vi.mock('../chat/ConversationTabs', () => ({
+  ConversationTabs: ({ activeTab }: { activeTab: string }) => (
+    <div data-testid="abas" data-aba-ativa={activeTab} />
+  ),
+}));
 vi.mock('../chat/ConversationTabContent', () => ({
   ConversationTabContent: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
@@ -251,5 +255,30 @@ describe('RealtimeInboxView — busca global leva à mensagem (DL1)', () => {
     const inbox = mocks.inbox as { handleSelectConversation: ReturnType<typeof vi.fn>; setInitialHighlightMessageId: ReturnType<typeof vi.fn> };
     expect(inbox.handleSelectConversation).toHaveBeenCalledWith('c-9');
     expect(inbox.setInitialHighlightMessageId).not.toHaveBeenCalled();
+  });
+});
+
+describe('RealtimeInboxView — alvo pendente não prende a aba sem painel (DL1, ponto 2)', () => {
+  function renderComAlvo(sobrescrita: Record<string, unknown> = {}) {
+    mocks.inbox = {
+      ...baseInbox(),
+      conversationTab: 'files',
+      initialHighlightMessageId: 'm-alvo',
+      ...sobrescrita,
+    };
+    renderInbox();
+    return screen.getByTestId('abas').getAttribute('data-aba-ativa');
+  }
+
+  it('com painel pronto o alvo força a aba Chat', () => {
+    expect(renderComAlvo()).toBe('chat');
+  });
+
+  it('com o ChatFallback em carga o clique do usuário vale', () => {
+    expect(renderComAlvo({ selectedMessagesLoading: true })).toBe('files');
+  });
+
+  it('com erro e sem mensagens o clique do usuário vale', () => {
+    expect(renderComAlvo({ selectedMessagesError: 'falha de rede', legacyMessages: [] })).toBe('files');
   });
 });
