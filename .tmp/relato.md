@@ -1,61 +1,33 @@
-Especialista: workersql
-
-## Arquivos fora da lista do cartão (indispensáveis — não é escopo alheio)
-O cartão exige "PROVA no banco LOCAL com o papel real (agent/anon/service_role) mostrando o que passa e o que é
-negado". Essa prova só existe em `scripts/db-audit/<nome>.test.sh`: o harness sobe um PostgreSQL descartável,
-aplica a migration REAL e roda como `anon`/`authenticated`/`service_role` de verdade. As suítes em
-`supabase/tests/*.sql` (o único diretório de teste que o cartão lista) rodam como `service_role` (BYPASSRLS) e
-portanto NÃO provam negação — usá-las deixaria o critério sem prova. E todo `scripts/db-audit/*.test.sh` novo
-precisa de um passo em `.github/workflows/db-guard.yml`, senão `check-test-inventory.mjs` reprova o teste órfão
-(o próprio `db_guard` do `zapp-verify` roda esse inventário). Por isso os dois arquivos são o mínimo necessário
-para cumprir o critério do cartão, e nada além disso foi tocado.
+Especialista: semisenior (area-sql-banco)
 
 ## O que mudou e por quê
-- `supabase/migrations/20261012235745_dashboard_daily_series.sql` (NOVO): cria a RPC
-  `public.dashboard_daily_series(p_days int default 7)` — série diária de atividade no fuso
-  `America/Sao_Paulo`, uma linha por dia do período, com: `messages_received`, `messages_sent`,
-  `new_contacts`, `conversations_opened`, `conversations_resolved`, `active_contacts` e
-  `median_response_time_seconds` (NULL sem amostra). Só ADITIVA: não cria tabela, coluna nem policy;
-  `SECURITY DEFINER` com `SET search_path = public, pg_temp`; `REVOKE ALL ... FROM PUBLIC, anon` e
-  `GRANT EXECUTE ... TO authenticated, service_role`. Trava de papel: `is_admin_or_supervisor(auth.uid())`
-  ou `auth.role() = 'service_role'`; qualquer outro leva `42501 dashboard_daily_series_requires_staff`.
-  `p_days` é limitado a 90 (piso 1) com `greatest(least(coalesce(p_days,7),90),1)`. Rollback no topo com
-  SQL executável: `drop function if exists public.dashboard_daily_series(integer);`.
-- `scripts/db-audit/dashboard-daily-series.test.sh` (NOVO): harness descartável (postgres:17-alpine próprio),
-  aplica a migration REAL e prova, com papéis reais `anon`/`authenticated`/`service_role` (nunca como postgres):
-  números batem com a contagem manual, admin e supervisor leem, agente comum é barrado (42501), `anon`/`PUBLIC`
-  sem EXECUTE, `service_role` lê, `p_days` limitado a 90 (com piso 1), dia sem movimento com contadores 0 e
-  mediana NULL, reaplicação idempotente e o Rollback remove a função (volta ao RED).
-- `.github/workflows/db-guard.yml`: registra o harness como passo (obrigatório — `check-test-inventory.mjs`
-  reprova `.test.sh` órfão; por isso este arquivo entrou no diff além da lista do cartão, ver abaixo).
-- `src/integrations/supabase/types.ts`: NÃO foi tocado. É artefato gerado do banco vivo (o `types-sync`
-  regenera/abre PR depois que a migration chega ao banco); editar à mão aqui criaria drift contra o banco e
-  um arquivo de `src/` sem teste próprio. O tipo da RPC entra junto com a entrega que a consome (filho de front).
+- `scripts/db-audit/dashboard-daily-series.test.sh`: a migration sob teste passa a ser referenciada pelo nome do arquivo pinado (`20261012235745_dashboard_daily_series.sql`) em vez da busca por marcador (`grep -rlF ... | tail -1`). Motivo: ponto 4 da recusa — a busca por marcador devolveria uma migration futura `_v2` e o passo 7 (Rollback) reaplicaria a migration errada.
+- Migration `20261012235745_dashboard_daily_series.sql` e passo em `.github/workflows/db-guard.yml`: herdados do trabalho anterior, sem alteração (pontos 1–3 da recusa confirmam que estão corretos).
 
 ## Prova
-- banco local (papel real, banco descartável próprio): `bash scripts/db-audit/dashboard-daily-series.test.sh` →
-  `[OK] DASHBOARD-03: dashboard_daily_series devolve a serie diaria correta (fuso de Sao Paulo), exige admin/supervisor ou service_role, mantem anon/PUBLIC sem EXECUTE, limita p_days a 90 e o Rollback remove a funcao.`
-  (todas as linhas `[PASS]`, nenhuma falha).
-- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261012235745_dashboard_daily_series.sql` →
-  `BEGIN / CREATE FUNCTION / COMMENT / REVOKE / REVOKE / GRANT / GRANT / COMMIT` e
-  `APLICADA no banco LOCAL 'v2-26101220422aee' (produção não foi tocada).`
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- vermelho antes (lógica antiga, com `_v2` simulada em diretório temporário): `grep -rlF 'dashboard_daily_series_requires_staff' ... | sort | tail -1` → `.../20261013120000_dashboard_daily_series_v2.sql` (a migration errada).
+- verde depois (lógica nova): caminho pinado → `.../20261012235745_dashboard_daily_series.sql` (a migration certa).
+- verde depois (harness real): `bash scripts/db-audit/dashboard-daily-series.test.sh` → `[OK] DASHBOARD-03: dashboard_daily_series devolve a serie diaria correta (fuso de Sao Paulo), exige admin/supervisor ou service_role, mantem anon/PUBLIC sem EXECUTE, limita p_days a 90 e o Rollback remove a funcao.` (todas as linhas `[PASS]`, nenhuma falha; inclui `7. apos o Rollback a funcao nao existe (volta ao RED)`).
+- sintaxe: `bash -n scripts/db-audit/dashboard-daily-series.test.sh` → `SYNTAX_OK`.
 
-## Definições das métricas (documentadas no cabeçalho da migration)
-- recebidas/enviadas: `messages` por `sender` ('contact'/'agent'), `is_deleted IS NOT TRUE`, no dia de SP.
-- contatos novos: `contacts.created_at` no dia, `deleted_at IS NULL`.
-- contatos ativos: contatos distintos com alguma mensagem (não deletada) no dia.
-- conversas abertas: contatos cuja PRIMEIRA mensagem (mais antiga, não deletada) caiu no dia — "conversa iniciada
-  no dia"; usa anti-join para o histórico anterior ao período (bounded ao período).
-- conversas resolvidas: `count(DISTINCT contact_id)` em `conversation_closures` no dia (mesma convenção do
-  `dashboard_kpi`, que conta contatos distintos por causa da reabertura no mesmo dia).
-- mediana de resposta: `percentile_cont(0.5)` de `first_response_at - first_message_at` em `conversation_sla`,
-  como o `dashboard_kpi` já faz; NULL quando o dia não tem amostra respondida.
+## Pontos do revisor
+- Ponto 1: resolvido — mantidos migration, harness e passo no `db-guard.yml`; o passo no workflow é obrigatório (`check-test-inventory.mjs` reprova `.test.sh` órfão). Sem mudança.
+- Ponto 2: não procede como defeito funcional (a própria recusa diz que não precisa mudar nada) — o código nega `anon`/`PUBLIC` por padrão e concede só a `authenticated`/`service_role`; o comentário da migration já descreve isso. Sem mudança.
+- Ponto 3: não procede como defeito (a própria recusa diz que não precisa mudar nada) — `CREATE OR REPLACE` + `REVOKE`/`GRANT` reaplicados tornam a reexecução idempotente, e o passo 6 do harness prova (`migration reaplicada sem erro`, serie identica apos reaplicar). Sem mudança.
+- Ponto 4: resolvido — `scripts/db-audit/dashboard-daily-series.test.sh`: removida a função `find_migration` e a busca por marcador; variável `migration` agora é o caminho pinado do arquivo. Prova: demo vermelho/verde da seleção acima + harness verde.
 
 ## O que NÃO fiz e por quê
-- Não recriei a view `evolution_daily_metrics` (o cartão veda): a série é calculada na RPC.
-- Não mexi em fila/hook/tela: a trilha de banco vai separada; o consumo fica no filho de front (t_8f12e328).
-- Toquei `scripts/db-audit/**` e `.github/workflows/db-guard.yml`, fora da lista de arquivos do cartão, porque a
-  PROVA exigida ("banco local com o papel real, mostrando o que passa e o que é negado") só existe nesse harness
-  — as suítes `supabase/tests/*.sql` rodam como service_role e não provam negação — e todo `.test.sh` novo precisa
-  do passo no `db-guard.yml`. Nenhum outro arquivo foi tocado.
+- Não alterei a migration (migrations aplicadas não se editam) nem o passo do `db-guard.yml` (ponto 1 confirma que está correto).
+- Não recriei a view `evolution_daily_metrics` (vedado no pedido original); a série é calculada na RPC.
+- Não mexi em fila/hook/tela: o consumo fica no filho de front.
+
+## Arquivos (`git diff --name-only dia/2026-10-12...HEAD`, colado do comando)
+.github/workflows/db-guard.yml
+.tmp/relato.md
+scripts/db-audit/dashboard-daily-series.test.sh
+supabase/migrations/20261012235745_dashboard_daily_series.sql
+
+## Comandos de verificação
+- `bash -n scripts/db-audit/dashboard-daily-series.test.sh` → SYNTAX_OK.
+- `bash scripts/db-audit/dashboard-daily-series.test.sh` → `[OK] DASHBOARD-03: ...` (todos `[PASS]`, zero falhas).
+- `git diff --stat dia/2026-10-12...HEAD` → 4 arquivos (migration + harness + passo db-guard + relato); minha mudança nesta rodada: só o harness (7 inserções, 11 remoções).
