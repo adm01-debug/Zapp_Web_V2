@@ -109,9 +109,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .in('id', contactIds);
       if (selectError) throw selectError;
 
-      const previousStatus = new Map<string, string | null>();
+      const previousStatus = new Map<string, string>();
       for (const row of originals ?? []) {
-        previousStatus.set(row.id, row.conversation_status ?? null);
+        previousStatus.set(row.id, row.conversation_status);
       }
       // Só arquiva quem foi LIDO: sem o status anterior o desfazer não teria como
       // devolver a conversa ao estado dela. Zero linha lida (RLS filtrando) não é
@@ -137,9 +137,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         undoAction: async () => {
           // Agrupado por valor anterior: um update por status distinto, não um
           // laço de um update por contato.
-          const groups = new Map<string | null, string[]>();
+          const groups = new Map<string, string[]>();
           for (const id of targetIds) {
-            const status = previousStatus.get(id) ?? null;
+            const status = previousStatus.get(id);
+            if (status === undefined) continue;
             const ids = groups.get(status) ?? [];
             ids.push(id);
             groups.set(status, ids);
