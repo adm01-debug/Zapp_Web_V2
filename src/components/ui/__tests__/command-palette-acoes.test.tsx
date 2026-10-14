@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { GlobalKeyboardProvider } from '@/components/keyboard/GlobalKeyboardProvider';
+import { defaultActionCommands } from '@/components/ui/command-palette-data';
 
 // O host da paleta consulta o catálogo; aqui nenhum produto é buscado (a prova é a ação
 // padrão, não a busca).
@@ -59,10 +60,11 @@ describe('CommandPalette — ações padrão com executor (R2-INF-033)', () => {
     document.removeEventListener('show-shortcuts-help', ouviuAjuda);
   });
 
-  it('"Nova conversa" é oferecida e dispara o gatilho global do fluxo', () => {
+  it('"Nova conversa" é oferecida e chega ao dono em `window` (alvo real do listener)', () => {
     const { onOpenChange, input } = renderPalette();
     const abrirNovaConversa = vi.fn();
-    document.addEventListener('open-new-conversation', abrirNovaConversa);
+    // O dono real (RealtimeInboxView) escuta em `window`: o teste escuta no MESMO alvo.
+    window.addEventListener('open-new-conversation', abrirNovaConversa);
 
     digitar(input, 'nova conversa');
     clicarPelaDescricao('Iniciar uma nova conversa');
@@ -70,13 +72,14 @@ describe('CommandPalette — ações padrão com executor (R2-INF-033)', () => {
     expect(abrirNovaConversa).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    document.removeEventListener('open-new-conversation', abrirNovaConversa);
+    window.removeEventListener('open-new-conversation', abrirNovaConversa);
   });
 
-  it('"Respostas rápidas" é oferecida e dispara o gatilho global do fluxo', () => {
+  it('"Respostas rápidas" é oferecida e chega ao dono em `window` (alvo real do listener)', () => {
     const { onOpenChange, input } = renderPalette();
     const abrirRespostasRapidas = vi.fn();
-    document.addEventListener('open-quick-replies', abrirRespostasRapidas);
+    // O dono real (ChatPanel) escuta em `window`: o teste escuta no MESMO alvo.
+    window.addEventListener('open-quick-replies', abrirRespostasRapidas);
 
     digitar(input, 'respostas rápidas');
     clicarPelaDescricao('Acessar templates de resposta');
@@ -84,7 +87,7 @@ describe('CommandPalette — ações padrão com executor (R2-INF-033)', () => {
     expect(abrirRespostasRapidas).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    document.removeEventListener('open-quick-replies', abrirRespostasRapidas);
+    window.removeEventListener('open-quick-replies', abrirRespostasRapidas);
   });
 
   it('mantém o controle de ação explícita (callback do próprio item)', () => {
@@ -154,5 +157,30 @@ describe('paleta → ajuda de atalhos, ponta a ponta (R2-INF-033)', () => {
     // pela entrada da paleta é a ajuda aberta, não o simples fechamento do diálogo.
     expect(await screen.findByText('Enviar mensagem')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Buscar ou digitar comando/)).not.toBeInTheDocument();
+  });
+});
+
+describe('paleta → dono, ponte de ponta a ponta (refazer 1: alvo `window`)', () => {
+  /**
+   * A recusa provou que emissor e ouvinte usavam alvos diferentes: o comando publicava
+   * em `document` (sem bubbles) e os donos escutam em `window`. Esta ponte chama a
+   * `action` REAL do catálogo (o mesmo código que o clique na paleta executa) e prova
+   * que um listener em `window` — como o dos donos — recebe o evento.
+   */
+  it.each([
+    { id: 'action-new-chat', evento: 'open-new-conversation' },
+    { id: 'action-quick-reply', evento: 'open-quick-replies' },
+  ])('a action REAL de "$id" chega a um listener em `window`', ({ id, evento }) => {
+    const item = defaultActionCommands.find((c) => c.id === id);
+    expect(item?.action).toBeTypeOf('function');
+
+    const ouviuEmWindow = vi.fn();
+    window.addEventListener(evento, ouviuEmWindow);
+    try {
+      item?.action?.();
+      expect(ouviuEmWindow).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(evento, ouviuEmWindow);
+    }
   });
 });

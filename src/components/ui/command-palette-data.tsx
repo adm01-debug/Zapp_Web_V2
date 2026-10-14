@@ -37,24 +37,26 @@ export const defaultNavigationCommands: CommandItem[] = [
 ];
 
 // R2-INF-033 (#378) + UI-08 (paridade V3): "Nova conversa" e "Respostas rápidas" voltaram
-// ligadas ao dono REAL de cada fluxo. Nenhuma tela da V2 abria esses fluxos a partir da
-// paleta, então cada comando publica o evento global que o dono já escuta — o MESMO padrão
-// de `show-shortcuts-help` acima e de `inbox-open-tasks-tab` (RealtimeInboxView.tsx):
-//   - `open-new-conversation` → o Inbox abre o NewConversationModal;
-//   - `open-quick-replies`    → o ChatPanel abre o seletor de respostas rápidas do compositor.
+// ligadas ao dono REAL de cada fluxo. Cada comando publica em `window` o evento global
+// que o dono escuta em `window` (mesmo alvo nos dois lados — CustomEvent não borbulha
+// de `document` para `window`): `open-new-conversation` → o Inbox abre o NewConversationModal;
+// `open-quick-replies` → o ChatPanel abre o seletor de respostas rápidas do compositor.
+// (`show-shortcuts-help` abaixo segue document→document porque o GlobalKeyboardProvider
+// escuta em `document`; aqui os donos escutam em `window`, como os vizinhos
+// `inbox-open-tasks-tab` e `open-transfer-dialog`.)
 // Sem o listener correspondente a entrada apenas fecharia o diálogo (o defeito do #378).
 export const defaultActionCommands: CommandItem[] = [
   {
     id: 'action-new-chat', title: 'Nova conversa', description: 'Iniciar uma nova conversa',
     icon: <Plus className="h-4 w-4" />, category: 'action',
     keywords: ['criar', 'iniciar', 'novo', 'conversa', 'chat', 'mensagem'],
-    action: () => document.dispatchEvent(new CustomEvent('open-new-conversation')),
+    action: () => window.dispatchEvent(new CustomEvent('open-new-conversation')),
   },
   {
     id: 'action-quick-reply', title: 'Respostas rápidas', description: 'Acessar templates de resposta',
     icon: <Zap className="h-4 w-4" />, category: 'action',
     keywords: ['template', 'atalho', 'rápida', 'resposta'],
-    action: () => document.dispatchEvent(new CustomEvent('open-quick-replies')),
+    action: () => window.dispatchEvent(new CustomEvent('open-quick-replies')),
   },
   {
     id: 'action-keyboard', title: 'Atalhos de teclado', description: 'Ver todos os atalhos',
