@@ -1,27 +1,54 @@
-Especialista: workertestes
+Especialista: worker (sql) (area-sql-banco)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+- supabase/migrations/20261014014129_close_stale_calls.sql (novo): cria
+  public.close_stale_calls() (SECURITY DEFINER, search_path fixo 'public, pg_temp')
+  que fecha chamadas presas (ended_at IS NULL):
+  - status='ringing' há mais de 2 min -> 'missed' se direction='inbound', senão
+    'ended'; end_reason='timeout'; ended_at=now();
+  - status='answered' há mais de 4 h -> 'ended'; end_reason='failed';
+    ended_at=now(); talk_seconds limitado a 14400 s (teto: não há evento de fim);
+  - devolve a contagem de linhas fechadas; idempotente (só toca ended_at IS NULL);
+  - permissão: REVOKE de public/anon/authenticated; GRANT EXECUTE só a service_role;
+  - agendamento pg_cron 'close-stale-calls' a cada 5 min, idempotente
+    (unschedule do job homônimo antes de recriar).
+- supabase/tests/close_stale_calls.sql (novo): prova no banco LOCAL do cartão.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Escolha do agendamento: pg_cron está instalado no banco local e no retrato de
+produção -> uso pg_cron (não a Edge agendada). Registro conforme o cartão.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: sem a migration, `select public.close_stale_calls();` ->
+  `ERROR: function public.close_stale_calls() does not exist` (42883). Executei
+  dentro de transação com DROP + ROLLBACK (função confirmada de volta depois).
+- verde depois: `zapp-db-local psql . v2-26101322397971 < supabase/tests/close_stale_calls.sql`
+  -> `NOTICE: close_stale_calls: suite OK (fechou 3, idempotente, anon/authenticated negados, service_role permitido)` (DO; ROLLBACK).
+- job registrado: `select jobname,schedule,active from cron.job where jobname='close-stale-calls'`
+  -> `close-stale-calls | */5 * * * * | t`.
+- rollback executado de verdade: rodei as duas linhas `-- Rollback:` em transação
+  (DO de unschedule + `drop function if exists`) -> `DO` / `DROP FUNCTION`, e o
+  ROLLBACK restaurou tudo (função e job de volta: fn=1, job=1).
+- verificação: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (161s)`
+  (banco_local é pulado sem o nome do conjunto, exatamente como o fechar chama).
+
+## O que a suíte prova (supabase/tests/close_stale_calls.sql)
+- ringing inbound há 3 min -> missed + timeout + ended_at preenchido;
+- ringing outbound há 10 min -> ended + timeout;
+- answered há 5 h -> ended + failed + talk_seconds = 14400 (teto);
+- ringing de 30 s e answered de 1 h -> intactos; linha já terminal -> intacta;
+- 2ª rodada -> 0 linhas (idempotente);
+- has_function_privilege: anon=false, authenticated=false, service_role=true; e
+  tentativa REAL como anon e como authenticated levanta 42501
+  (insufficient_privilege), provando o "quem pode / não pode / anônimo".
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei produção; o retrato (supabase/schema-manifest.json) ainda não tem
+  close_stale_calls — esperado, a produção ganha a função só quando a migration
+  for integrada e aplicada.
+- O banco LOCAL do cartão veio do replay sem a migration
+  20260926800000_calls_telefonia_v2 (as colunas end_reason/talk_seconds de calls
+  estavam ausentes). Apliquei essa migration do PRÓPRIO repo ao banco local para
+  ter o schema real de calls e rodar a prova. Nenhuma fixture fica no banco (a
+  suíte abre e termina em ROLLBACK).
+- Não criei scripts/db-audit/*.test.sh (fora de ARQUIVOS QUE PODE TOCAR); a prova
+  vive em supabase/tests/close_stale_calls.sql, que o cartão permite.
