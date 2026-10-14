@@ -529,6 +529,11 @@ jobs:
           TALKX_DRAFT_SAVE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-draft-save.test.sh
 
+      - name: Simular checagens de lançamento de campanha Talk X
+        env:
+          TALKX_LAUNCH_CHECKS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-launch-checks.test.sh
+
       - name: Simular leases de entrega concorrente do Talk X
         env:
           TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
