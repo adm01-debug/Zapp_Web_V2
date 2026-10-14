@@ -1,11 +1,18 @@
+Especialista: hugo
 Especialista: Hugo (area-front-hooks)
 
 # Presets de filtro salvos no Inbox — sincronizados pelo servidor
 
 ## FAIXA DO PAI
 FAIXA DO PAI: commits 87c9e53c49, 23e5eca7f3 do cartão t_66f0765c — não são deste cartão.
-(f69e325d9d "limites dos filtros salvos do inbox" + o relato dele; trouxe por cherry-pick porque a
-usa a migration/índice que a entrega do pai criou. O diff DESTE cartão começa em 9358fb2716.)
+Eles contêm exatamente os dois arquivos que o juiz apontou como fora da lista deste cartão:
+`supabase/migrations/20261013235907_saved_filters_inbox_limites.sql` e
+`supabase/tests/saved_filters_inbox_limites.sql`. Foi cherry-pick deliberado, não trabalho meu:
+o cartão manda preservar a migration do pai e provar que este hook respeita o contrato que ela cria
+(teto de 20, nome único case-insensitive por dono, RLS por `user_id`). Sem ela na branch, o
+`zapp-verify`/a auditoria do banco acusariam a migration ausente e o hook novo leria uma tabela sem
+índice/trigger. O diff DESTE cartão é só o commit 9358fb2716 (2 fontes + 2 testes em `src/hooks/**`);
+os arquivos de `supabase/**` vêm inteiros do pai e devem ser integrados como parte de t_66f0765c.
 
 ## O que mudou e por quê
 - `src/hooks/inbox/useInboxFilterPresets.ts` (novo): hook dos presets de filtro do Inbox lendo e
