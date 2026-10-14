@@ -31,6 +31,11 @@ FAIXA DO PAI: commits `7b73d5815c`, `72acd8306d`, `f58fe6f9c3`, `4f914b5e96`, `b
 ## Higiene do fechamento (retomada pedida pelo supervisor)
 - Desfeito o `git rm --cached`: o `.tmp/relato.md` versionado voltou a ser rastreado (como na base), então o diff do cartão fica só nos 7 arquivos de código/teste acima, mais o próprio `.tmp/relato.md`, que é artefato da fábrica e já era versionado na base.
 
+## Verificação (`zapp-verify . --rapido`)
+- Testes do cartão no commit: `npx vitest run src/components/talkx` → `Test Files 2 passed (2)` / `Tests 15 passed (15)` (vermelho→verde comprovado: na base o `TalkXCampaignActionsCard` quebrava por falta do `ReferenceLine` no mock de recharts).
+- `zapp-verify . --rapido`: `db_guard` OK; `tipos` VERMELHO por FALHA DE EXECUÇÃO — o `tsc` do typecheck rápido foi MORTO pelo sistema (`exit 137`, OOM) no meio da rodada. O `jev-juiz falha` classificou como **environment** (certeza 0.94), não como defeito da mudança. Estado da máquina na hora: `load average` 53, 15 processos na fila do pool `pesado` (3 em uso), ~5 GB de RAM livres e swap cheio. Repetida uma vez, a verificação caiu no mesmo ponto de ambiente.
+- O `tsc` não chegou a apontar nenhum erro no código do cartão: foi morto antes de terminar a rodada do projeto `app`.
+
 ## O que NÃO fiz e por quê
 - MOVIMENTO (aviso automático do fechar): é falso positivo. O texto `animate-pulse` aparece só DENTRO do teste, num comentário e numa asserção `expect(classes).not.toContain('animate-pulse')` que justamente prova que o esqueleto NÃO tem a classe nua; o componente anima com `motion-safe:animate-pulse`. Não adicionei nenhuma animação sem `motion-safe:`.
 - Não toquei em DDL, Edge Function, migration nem dependência nova.
