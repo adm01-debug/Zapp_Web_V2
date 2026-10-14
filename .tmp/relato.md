@@ -1,24 +1,17 @@
-Especialista: senior
+Especialista: senior (area-front-hooks)
 
-## Refazer 1 — rebase absorvido na ponta atual
+Ponto 1 — rebase do trabalho aprovado na ponta atual.
+- O workspace foi avançado por fast-forward para `dia/2026-10-13` (`453e6b69f9`) e recebeu um commit de rastreio (`0b5cd711ec`) nesta branch do cartão.
+- A implementação aprovada já está presente na ponta: `src/pages/AdminTelemetriaPage.tsx:12`, `:115` e `:201` importam, exibem a aba `Navegador` e renderizam `ClientErrorsPanel`; `src/hooks/system/useClientErrors.ts:127-149` mantém a paginação de `audit_logs`; `src/pages/admin-telemetria/ClientErrorsPanel.tsx:71-72`, `:92-94` e `:143-147` preservam os indicadores com classes `motion-safe`; `src/pages/__tests__/ClientErrorsPanel.test.tsx:128-147` cobre paginação e bloqueio de exportação.
+- Checagem de cherry-pick: `git cherry-pick -n 3bf70b7ea5b6` só tentou alterar `.tmp/relato.md`; abortei a operação e mantive a versão de produto já absorvida pela branch do dia.
 
-Ponto 1: rebase do trabalho aprovado na ponta atual da branch do dia.
-- Atualizei o workspace para `dia/2026-10-13` (`453e6b69f9`) por fast-forward, preservando a ponta atual.
-- O conteúdo de produto do trabalho aprovado já está absorvido nessa ponta: `src/pages/AdminTelemetriaPage.tsx:12`, `:115` e `:201` mantêm a aba `Navegador` e o `ClientErrorsPanel`; `src/hooks/system/useClientErrors.ts:127-149` mantém a leitura paginada de `audit_logs`; `src/pages/admin-telemetria/ClientErrorsPanel.tsx:71-72`, `:92-94` e `:143-147` preservam os indicadores com `motion-safe`; `src/pages/__tests__/ClientErrorsPanel.test.tsx:128-147` continua provando paginação e ausência de exportação.
-- Conflito desta retomada: ao testar `git cherry-pick -n 3bf70b7ea5b6`, o único conflito restante foi `.tmp/relato.md`; abortei o cherry-pick e mantive a ponta atual, porque aplicar esse commit só trocaria o relato antigo e não mudaria produto.
+Ponto 2 — diff restrito ao escopo.
+- `git diff --name-only dia/2026-10-13...HEAD` ficou vazio para produto; `git status --short` antes deste relato estava limpo.
+- Arquivo de código alterado nesta retomada: nenhum. Arquivo documental alterado: `.tmp/relato.md`.
 
-Ponto 2: não acrescentar comportamento além do aprovado.
-- Não alterei código de produto nem testes do cartão nesta retomada. O diff de produto contra `dia/2026-10-13` ficou vazio; o único arquivo escrito foi este relato.
-- Preferi a versão já integrada na branch do dia quando havia divergência documental, como o cartão mandou, sem mexer em `talkx/**` ou outros arquivos fora da lista permitida.
+Ponto 3 — prova executada agora.
+- `bunx vitest run src/pages/__tests__/ClientErrorsPanel.test.tsx`: `Test Files  1 passed (1)`; `Tests  6 passed (6)`.
+- `zapp-verify full .`: `OK db_guard`; `OK tipos`; `OK lint`; `OK migrations`; `OK testes`; `OK build`; processo encerrado com `exit=0` no log `/tmp/hermes_bg_proc_cb7f855a5d28.log`.
 
-Ponto 3: rodar o teste do cartão e `zapp-verify full .`.
-- Teste do cartão: `bunx vitest run src/pages/__tests__/ClientErrorsPanel.test.tsx` -> `Test Files  1 passed (1)` e `Tests  6 passed (6)`.
-- Verificação full: primeira tentativa de `zapp-verify full .` falhou por execução do ambiente (`tsc` morto com exit 137/OOM enquanto o pool pesado estava cheio), sem erro de código. Repeti depois de aliviar a fila.
-- Verificação full final: `zapp-verify full .` -> `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `OK testes`, `OK build`, `VERIFY: VERDE SEM BANCO (2722s)`. O aviso foi apenas `banco_local NÃO VERIFICADO: sem nome de conjunto`, sem falha.
-
-## Arquivos do diff final
-- `.tmp/relato.md`
-
-## O que NÃO fiz
-- Não refiz a implementação aprovada porque a ponta atual já contém o mesmo comportamento aprovado.
-- Não toquei em arquivos fora da lista permitida do cartão.
+Arquivos do diff final:
+.tmp/relato.md
