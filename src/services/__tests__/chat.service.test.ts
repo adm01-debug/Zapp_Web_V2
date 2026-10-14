@@ -18,6 +18,8 @@ vi.mock('@/lib/logger', () => ({
 
 import { ChatService } from '@/services/chat.service';
 
+const UUID_PATH = /^contact-1\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webm$/;
+
 describe('ChatService.uploadAudio', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,7 +31,6 @@ describe('ChatService.uploadAudio', () => {
     storageMocks.getPublicUrl.mockReturnValue({
       data: { publicUrl: 'https://project.supabase.co/storage/v1/object/public/audio-messages/contact/audio.webm' },
     });
-    vi.spyOn(Date, 'now').mockReturnValue(1234567890);
   });
 
   afterEach(() => {
@@ -41,14 +42,27 @@ describe('ChatService.uploadAudio', () => {
 
     const result = await ChatService.uploadAudio('contact-1', blob);
 
-    expect(storageMocks.upload).toHaveBeenCalledWith(
-      'contact-1/1234567890.webm',
-      blob,
-      { contentType: 'audio/webm' }
-    );
-    expect(storageMocks.getPublicUrl).toHaveBeenCalledWith('contact-1/1234567890.webm');
+    // Robustez item 6: o nome do objeto deixou de ser `Date.now()` (dois envios no
+    // mesmo milissegundo gravavam no MESMO caminho) e passou a levar identificador
+    // por objeto. O caminho enviado e o registrado no locator precisam ser o mesmo.
+    const [uploadedPath, uploadedBlob, options] = storageMocks.upload.mock.calls[0];
+    expect(uploadedPath).toMatch(UUID_PATH);
+    expect(uploadedBlob).toBe(blob);
+    expect(options).toEqual({ contentType: 'audio/webm' });
+    expect(storageMocks.getPublicUrl).toHaveBeenCalledWith(uploadedPath);
     expect(result).toContain('/storage/v1/object/public/audio-messages/');
     expect(result).not.toContain('token=');
+  });
+
+  it('grava em caminhos distintos em envios no mesmo instante', async () => {
+    await ChatService.uploadAudio('contact-1', new Blob(['a']));
+    await ChatService.uploadAudio('contact-1', new Blob(['b']));
+
+    const [firstPath] = storageMocks.upload.mock.calls[0];
+    const [secondPath] = storageMocks.upload.mock.calls[1];
+    expect(firstPath).toMatch(UUID_PATH);
+    expect(secondPath).toMatch(UUID_PATH);
+    expect(firstPath).not.toBe(secondPath);
   });
 
   it('does not create a locator when upload fails', async () => {

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createStorageObjectId, sanitizeStorageFileName } from '@/lib/storage_object_upload';
 import { toast } from '@/hooks/ui/use-toast';
 
 export interface Article {
@@ -76,7 +77,7 @@ export function useKnowledgeBase() {
   }, [fetchData]);
 
   const uploadFile = useCallback(async (file: File) => {
-    const fileName = `kb/${Date.now()}_${file.name}`;
+    const fileName = `kb/${createStorageObjectId()}-${sanitizeStorageFileName(file.name)}`;
     const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(fileName, file);
     if (uploadError) { toast({ title: 'Erro no upload', description: uploadError.message, variant: 'destructive' }); return; }
     const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);

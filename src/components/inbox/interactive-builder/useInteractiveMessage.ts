@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { InteractiveMessage, InteractiveButton, InteractiveListSection } from '@/types/chat';
 import { toast } from '@/hooks/ui/use-toast';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
 
 export function useInteractiveMessage() {
   const [messageType, setMessageType] = useState<'buttons' | 'list'>('buttons');
@@ -30,7 +31,7 @@ export function useInteractiveMessage() {
     }
     const newButton: InteractiveButton = {
       type,
-      id: `btn_${Date.now()}`,
+      id: `btn_${createStorageObjectId()}`,
       title: '',
       ...(type === 'url' && { url: '' }),
       ...(type === 'call' && { phoneNumber: '' }),
@@ -51,7 +52,7 @@ export function useInteractiveMessage() {
       toast({ title: 'Limite atingido', description: 'Máximo de 10 seções por lista (limite WhatsApp)', variant: 'destructive' });
       return;
     }
-    const newSectionId = `section_${Date.now()}`;
+    const newSectionId = `section_${createStorageObjectId()}`;
     setSections(prev => [...prev, { title: '', rows: [] }]);
     setExpandedSections(prev => [...prev, newSectionId]);
   }, [sections.length]);
@@ -73,7 +74,7 @@ export function useInteractiveMessage() {
       }
       return prev.map((s, i) =>
         i === sectionIndex
-          ? { ...s, rows: [...s.rows, { id: `row_${Date.now()}`, title: '', description: '' }] }
+          ? { ...s, rows: [...s.rows, { id: `row_${createStorageObjectId()}`, title: '', description: '' }] }
           : s
       );
     });

@@ -147,14 +147,14 @@ export function useFileUploadLogic(opts: {
   }, []);
 
   const processFilesToQueue = useCallback((files: File[]): QueuedFile[] => {
-    const processed = files.slice(0, MAX_FILES).map((file, index) => {
+    const processed = files.slice(0, MAX_FILES).map((file) => {
       const validation = validateFile(file);
       let preview: string | undefined;
       if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) {
         preview = URL.createObjectURL(file);
         previewsRef.current.add(preview);
       }
-      return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0 };
+      return { id: createStorageObjectId(), file, validation, preview, status: 'pending' as const, progress: 0 };
     });
     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
   }, []);

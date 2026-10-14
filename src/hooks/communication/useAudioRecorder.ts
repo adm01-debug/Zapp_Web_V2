@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 
@@ -154,7 +155,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
   }, [releaseCapture]);
 
   const uploadAudio = useCallback(async (blob: Blob, conversationId: string) => {
-    const fileName = `${conversationId}/${Date.now()}.webm`;
+    const fileName = `${conversationId}/${createStorageObjectId()}.webm`;
     
     const { error } = await supabase.storage
       .from('audio-messages')

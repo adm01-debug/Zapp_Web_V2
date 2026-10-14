@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Message, MessageInsert } from '@/types/chat';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
 
@@ -109,7 +110,7 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    const fileName = `${contactId}/${createStorageObjectId()}.webm`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
       .upload(fileName, blob, { contentType: 'audio/webm' });
