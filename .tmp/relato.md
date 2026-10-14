@@ -24,6 +24,7 @@ Banco LOCAL descartável `v2-26101322425bea` (`zapp-db-local up . v2-26101322425
 - `zapp-verify . --rapido` → `OK dependencias / OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (163s)` (`VERIFY_RC=0`). "SEM BANCO" é esperado: o `--rapido` só compara com o banco quando recebe o nome do conjunto; a prova de banco é a suíte SQL acima, no banco LOCAL da tarefa.
 
 ## O que NÃO fiz e por quê
+- Arquivos do diff: são os 3 do cartão (`supabase/migrations/20261014020402_voice_command_logs_lgpd.sql`, `supabase/tests/voice_command_logs_lgpd.sql` — o único de teste — e `docs/LGPD-RETENTION-POLICY.md`) mais `.tmp/relato.md`, que é este próprio relato (arquivo versionado na base). Não há outro arquivo tocado.
 - Não toquei no front: `src/hooks/voice/logVoiceCommand.ts` só faz INSERT (fire-and-forget), não precisa mudar.
 - Não agendei cron: o job de expurgo por política é de outro cartão (branch `v2/lgpd-retencao-jobs-26101301294d35`, **retido no portão, não integrado**); a função fica pronta para ele chamar. Registrei em `kanban_comment`.
 - Não liguei o teste ao CI: `supabase/tests/*.sql` roda via `zapp-db-local psql`; amarrar/registrar é do worker ci. REGISTRO PENDENTE: `supabase/tests/voice_command_logs_lgpd.sql`.
