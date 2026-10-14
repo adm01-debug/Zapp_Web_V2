@@ -375,8 +375,9 @@ describe('T78 — os componentes reais pintam os pares do laudo', () => {
 });
 
 // ─── T75: o fade de entrada do KPI respeita `useReducedMotion` ───
-// Sem motion, o tile já nasce com opacidade 1 e nenhuma transição; com motion,
-// entra de opacidade 0 em 0,15 s. Os dois casos são medidos no tile REAL.
+// Com motion, entra de opacidade 0 em 0,15 s; com movimento reduzido a entrada
+// é pulada (`initial={false}`) e a transição tem duração 0 — o tile nasce
+// visível no primeiro paint. Os dois casos são medidos no tile REAL.
 describe('T75 — CallKpiCard: fade de entrada de 150 ms', () => {
   it('com movimento ligado entra animando: opacidade 0 → 1 em 0,15 s', () => {
     reduzirMovimento.value = false;
@@ -387,13 +388,13 @@ describe('T75 — CallKpiCard: fade de entrada de 150 ms', () => {
     expect(card.getAttribute('data-motion-duracao')).toBe('0.15');
   });
 
-  it('com movimento reduzido o tile nasce visível e sem transição', () => {
+  it('com movimento reduzido o tile nasce visível e a transição tem duração 0', () => {
     reduzirMovimento.value = true;
     const { container } = render(<CallKpiCard rotulo="Total" valor="12" />);
     const card = container.querySelector<HTMLElement>('[data-testid="tel-kpi-card"]')!;
-    expect(card.getAttribute('data-motion-inicial')).toBe('nenhuma');
-    expect(card.getAttribute('data-motion-animar')).toBe('nenhuma');
-    expect(card.getAttribute('data-motion-duracao')).toBe('nenhuma');
+    expect(card.getAttribute('data-motion-inicial')).toBe('false');
+    expect(card.getAttribute('data-motion-animar')).toBe('{"opacity":1}');
+    expect(card.getAttribute('data-motion-duracao')).toBe('0');
     expect(card.querySelector('[data-testid="tel-kpi-value"]')!.textContent).toBe('12');
   });
 });
