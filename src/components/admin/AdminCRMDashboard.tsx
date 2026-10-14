@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
-import { useNavigate } from 'react-router-dom';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
 import { callCRMIntegration } from '@/lib/crmIntegration';
 
@@ -250,7 +250,6 @@ function RecentSales() {
 
 // ─── Main ────────────────────────────────────────────────────
 export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
-  const navigate = useNavigate();
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
   if (!crmIntegrationEnabled) {
@@ -275,7 +274,7 @@ export const AdminCRMDashboard = memo(function AdminCRMDashboard() {
           </h2>
           <p className="text-xs text-muted-foreground">Visão gerencial dos dados do CRM 360°</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => navigate('/#crm360')} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => navigateToView('crm360')} className="gap-1.5">
           <ExternalLink className="h-3.5 w-3.5" /> Explorer Completo
         </Button>
       </div>
