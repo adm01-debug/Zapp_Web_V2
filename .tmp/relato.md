@@ -1,27 +1,27 @@
-Especialista: workertestes
+Especialista: iris
+Perfil: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/pages/ResetPassword.tsx`:
+  * `checkingSession` (ResetPassword.tsx:33, true na montagem): enquanto a troca do link (PKCE + detectSessionInUrl) não termina, a tela mostra "Verificando link de recuperação…" numa região viva em vez de piscar "Link Inválido"; o estado só é decidido depois de `getSession()` resolver (ou do evento `PASSWORD_RECOVERY`), e `getSession` tem `catch` para não prender a tela no "Verificando". Resolve o "Link inválido" falso.
+  * `Link Inválido` passou a viver dentro de região viva (ResetPassword.tsx:143) — o texto é anunciado.
+  * botão do olho com nome acessível (`Mostrar senha`/`Ocultar senha`), `aria-pressed` (ResetPassword.tsx:244) e `aria-controls="password"`; ícones Eye/EyeOff `aria-hidden`.
+  * os dois campos ganharam `name` e `autoComplete="new-password"` (ResetPassword.tsx:233 e :259).
+  * o medidor alimenta o envio via `onStrengthChange`: `Alterar Senha` fica `disabled={loading || !isValid}` (ResetPassword.tsx:283), há guarda no `handleSubmit` (ResetPassword.tsx:88) e, com senha digitada e inválida, o motivo aparece em texto (ResetPassword.tsx:267). Senha vazada (HIBP breached) passa a BLOQUEAR o envio.
+- `src/components/auth/PasswordStrengthMeter.tsx`: a barra virou `role="progressbar"` com `aria-label`/`aria-valuemin`/`aria-valuemax`/`aria-valuenow`/`aria-valuetext` (PasswordStrengthMeter.tsx:194) e cada requisito ganhou texto para leitor de tela, além da cor/ícone (`— requisito atendido`/`— requisito pendente`, PasswordStrengthMeter.tsx:309); ícones de estado `aria-hidden`.
+- Testes novos: `src/pages/__tests__/ResetPassword.acessivel.test.tsx` e `src/components/auth/__tests__/PasswordStrengthMeter.acessivel.test.tsx`.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: com o patch de produção revertido (`git apply -R`), os 2 arquivos novos de teste dão `Test Files  2 failed (2)` / `Tests  7 failed (7)` (as 7 falham sem a correção).
+- verde depois: `npx vitest run <os 5 arquivos>` → `Test Files  5 passed (5)` / `Tests  23 passed (23)` (novos + `ResetPassword.redirect-cancelavel`, `PasswordStrengthMeter.test`, `PasswordStrengthMeter.corrida` — nenhum afrouxado).
+- Os testes renderizam os componentes REAIS; o de senha vazada calcula o SHA-1 da senha e faz o fetch do HIBP responder com o sufixo dela, provando o bloqueio de ponta a ponta.
+
+## Critério de pronto (cartão)
+1. Sem "Link inválido" falso → ResetPassword.tsx:33 e :123; testado em "mostra Verificando e NÃO Link Inválido…" e "só mostra Link Inválido depois de a sessão ser conferida".
+2. Senha vazada barrada → ResetPassword.tsx:283 + :88; testado em "bloqueia o envio quando o HIBP confirma vazamento e mostra o motivo".
+3. Acessível → olho/`aria-pressed`/`autoComplete`/`progressbar`/requisitos em texto; 3 testes no arquivo do medidor e da tela.
+4. `zapp-verify . --rapido` verde → rodado pelo fechar.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não usei `<main>` nem `role="alert"` nesta tela: o cartão diz que PD-05 é dono disso — usei `role="status"` para não colidir.
+- Não toquei no 2º fator (cartão-criança t_c3262e42): mantive a assinatura de `onStrengthChange(password, (strength, isValid))` sem argumento novo, para não conflitar.
