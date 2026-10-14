@@ -200,6 +200,23 @@ export function useSupabaseConnectivity(): UseSupabaseConnectivityResult {
     schedule(nextBackoffDelay(failures));
   }, [commit, schedule]);
 
+  // Guarda de montagem de propósito PRIMEIRO (e limpeza ao desmontar: para o
+  // timer e descarta respostas em voo). Na remontagem do StrictMode os efeitos
+  // abaixo executam depois dele, então o de `browserOnline` encontra
+  // `mountedRef` verdadeiro e sonda em vez de sair cedo e prender em 'checking'.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      generationRef.current += 1;
+      inFlightRef.current = null;
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+
   // Mantém a referência da sonda viva para os agendamentos.
   useEffect(() => {
     runProbeRef.current = () => {
@@ -212,6 +229,7 @@ export function useSupabaseConnectivity(): UseSupabaseConnectivityResult {
     browserOnlineRef.current = browserOnline;
     if (!browserOnline) {
       generationRef.current += 1; // invalida sonda em voo
+      inFlightRef.current = null; // libera a nova sonda do evento `online`
       failuresRef.current = 0;
       clearTimer();
       commit({ status: 'offline', consecutiveFailures: 0 });
@@ -234,20 +252,6 @@ export function useSupabaseConnectivity(): UseSupabaseConnectivityResult {
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [clearTimer]);
-
-  // Limpeza ao desmontar: para o timer e descarta respostas em voo.
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      generationRef.current += 1;
-      inFlightRef.current = null;
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, []);
 
   const retryNow = useCallback(() => {
     generationRef.current += 1; // invalida sonda em voo

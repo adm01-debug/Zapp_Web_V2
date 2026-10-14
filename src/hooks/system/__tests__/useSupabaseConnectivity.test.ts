@@ -9,6 +9,7 @@
  * tentativas, a pausa com a aba oculta, a retomada e a limpeza ao desmontar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { StrictMode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 
@@ -275,5 +276,55 @@ describe('nextBackoffDelay — recuo exponencial', () => {
     expect(nextBackoffDelay(2)).toBe(120_000);
     expect(nextBackoffDelay(3)).toBe(240_000);
     expect(nextBackoffDelay(5)).toBe(300_000);
+  });
+});
+
+describe('useSupabaseConnectivity — oscilação offline→online e StrictMode', () => {
+  it('sonda em voo durante oscilação offline→online não prende o hook em offline', async () => {
+    const pendentes: Array<(value: { data: null; error: unknown }) => void> = [];
+    mocks.invoke.mockImplementation(
+      () => new Promise<{ data: null; error: unknown }>((resolve) => {
+        pendentes.push(resolve);
+      }),
+    );
+    const { result } = renderHook(() => useSupabaseConnectivity());
+    expect(pendentes).toHaveLength(1);
+
+    // Navegador cai com a sonda 1 em voo: fica offline sem sondar.
+    onlineFlag = false;
+    await act(async () => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(result.current.status).toBe('offline');
+
+    // Navegador volta ANTES da sonda 1 terminar: uma sonda nova tem de disparar.
+    onlineFlag = true;
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(mocks.invoke).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      pendentes[1](OK);
+    });
+    expect(result.current.status).toBe('online');
+    expect(result.current.consecutiveFailures).toBe(0);
+
+    // A sonda antiga, se responder depois, é obsoleta e não apaga o online.
+    await act(async () => {
+      pendentes[0](REDE);
+    });
+    expect(result.current.status).toBe('online');
+  });
+
+  it('sob StrictMode a primeira montagem chega a online', async () => {
+    const { result } = renderHook(() => useSupabaseConnectivity(), {
+      wrapper: StrictMode,
+    });
+    await flush();
+
+    expect(mocks.invoke).toHaveBeenCalled();
+    expect(result.current.status).toBe('online');
+    expect(result.current.isOnline).toBe(true);
   });
 });
