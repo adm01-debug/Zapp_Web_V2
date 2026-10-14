@@ -9,6 +9,7 @@ import {
   errorResponse,
   getClientIP,
   handleCors,
+  internalErrorResponse,
   jsonResponse,
   Logger,
   requireEnv,
@@ -19,6 +20,7 @@ import {
   validationErrorResponse,
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 import { detectMediaKind } from "../_shared/messaging/media.ts";
 import {
   createClient,
@@ -26,15 +28,93 @@ import {
 } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
+/** G4 — teto do download do objeto do Storage (o proxy corta em 60 s). */
+export const DOWNLOAD_TIMEOUT_MS = 20_000;
+/** G4 — teto da chamada de STT ao provedor pago. */
+export const STT_TIMEOUT_MS = 60_000;
+/** Modelo pedido ao provedor (o efetivo é o que a resposta trouxer). */
+const STT_MODEL = "scribe_v2";
 const APPROVED_AUDIO_BUCKETS = [
   "whatsapp-media",
   "audio-messages",
   "audio-memes",
 ] as const;
 
+/**
+ * G4 — corrida entre a promessa e um `AbortSignal` de timeout.
+ *
+ * O sinal também vai ao `fetch` real (abort nativo). Este invólucro garante que
+ * um `fetch` PENDURADO — ou uma implementação que ignore o `signal` do `init` —
+ * não trave o handler: o timeout rejeita a promessa de fora.
+ */
+function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () =>
+      reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+/** Timeout de `AbortSignal.timeout` (ou abort de rede) — vira 504/registro próprio. */
+function isTimeoutError(error: unknown): boolean {
+  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
+    return error.name === "TimeoutError" || error.name === "AbortError";
+  }
+  return error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError");
+}
+
 type DownloadAudioResult =
   | { buffer: ArrayBuffer; contentType: string }
-  | { error: string };
+  | { error: string; status?: number };
+
+interface ConsumoDeTranscricao {
+  userId: string | null;
+  status: "success" | "error";
+  errorMessage: string | null;
+  httpStatus: number | null;
+  durationMs: number;
+  audioBytes: number;
+}
+
+/**
+ * G4 — ledger do consumo PAGO de STT.
+ *
+ * A rota `/v1/speech-to-text` cobra por SEGUNDO e não devolve a quantidade que
+ * faturou: por isso a unidade é declarada em `billing_unit: "second"` e
+ * `usage_unknown` marca que a ausência do número NÃO é zero (tratar ausência
+ * como zero foi recusa de revisão repetida). O registro sai por tentativa —
+ * uma linha por chamada paga, inclusive a que estourou o tempo.
+ */
+async function registrarConsumoDeTranscricao(args: ConsumoDeTranscricao): Promise<void> {
+  await logAiUsageDetached({
+    functionName: "ai-transcribe-audio",
+    userId: args.userId,
+    model: STT_MODEL,
+    durationMs: args.durationMs,
+    status: args.status,
+    errorMessage: args.errorMessage,
+    usageUnknown: true,
+    metadata: {
+      provider: "elevenlabs",
+      endpoint: "/v1/speech-to-text",
+      billing_unit: "second",
+      input_bytes: args.audioBytes,
+      http_status: args.httpStatus,
+    },
+  });
+}
 
 /**
  * Only accepts an exact URL for the project's approved media buckets.
@@ -58,9 +138,47 @@ async function downloadAudio(
   if (!storageObject) return { error: "Untrusted audio URL" };
   const { bucket, path } = storageObject;
 
-  log.info("Downloading approved storage audio", { bucket, path });
   const sb = createClient(supabaseUrl, serviceKey);
-  const { data, error } = await sb.storage.from(bucket).download(path);
+
+  // G4 — TAMANHO ANTES DE BAIXAR: o metadado do objeto é lido primeiro (via
+  // `info`), para um arquivo acima do teto ser recusado SEM trazer os bytes à
+  // memória nem ao provedor. Se `info` falhar, o download segue — o teto real
+  // continua sendo conferido pelo `byteLength` depois do download (nenhuma
+  // recusa é afrouxada por essa consulta opcional).
+  let declaredSize: number | undefined;
+  try {
+    const info = await sb.storage.from(bucket).info(path);
+    if (typeof info.data?.size === "number") declaredSize = info.data.size;
+  } catch (error) {
+    log.error("Storage info failed; falling back to post-download size check", {
+      bucket,
+      path,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  if (typeof declaredSize === "number" && declaredSize > MAX_AUDIO_SIZE) {
+    log.warn("Rejected oversized audio from storage metadata", { bucket, path, size: declaredSize });
+    return { error: "Audio file too large (max 25MB)" };
+  }
+
+  log.info("Downloading approved storage audio", { bucket, path, size: declaredSize ?? null });
+  let data: Blob | null = null;
+  let error: { message: string } | null = null;
+  try {
+    // G4 — o download tem teto: um Storage lento não segura o handler.
+    const result = await abortable<{ data: Blob | null; error: { message: string } | null }>(
+      sb.storage.from(bucket).download(path),
+      AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+    );
+    data = result.data;
+    error = result.error;
+  } catch (err) {
+    if (isTimeoutError(err)) {
+      log.error("Storage download timed out", { bucket, path });
+      return { error: "Audio download timed out", status: 504 };
+    }
+    throw err;
+  }
   if (error || !data) {
     log.error("Storage download failed", { error: error?.message });
     return { error: "Audio storage download failed" };
@@ -285,6 +403,8 @@ export interface TranscribeAudioDeps {
   ) => Promise<boolean>;
   /** `fetch` para o provedor de STT (default: o global). */
   fetch?: typeof fetch;
+  /** G4 — teto da chamada de STT em ms (default: `STT_TIMEOUT_MS`). */
+  sttTimeoutMs?: number;
 }
 
 export async function handleTranscribeAudio(
@@ -406,7 +526,7 @@ export async function handleTranscribeAudio(
       ? await deps.downloadAudio(audioUrl, log)
       : await downloadAudio(audioUrl, log);
     if ("error" in downloadResult) {
-      return errorResponse(downloadResult.error, 400, req);
+      return errorResponse(downloadResult.error, downloadResult.status ?? 400, req);
     }
 
     const { buffer: audioBuffer, contentType } = downloadResult;
@@ -443,14 +563,54 @@ export async function handleTranscribeAudio(
     await persistState({ status: "processing" });
 
     const doFetch = deps.fetch ?? fetch;
-    const response = await doFetch(
-      "https://api.elevenlabs.io/v1/speech-to-text",
-      {
-        method: "POST",
-        headers: { "xi-api-key": ELEVENLABS_API_KEY },
-        body: formData,
-      },
-    );
+    const sttTimeoutMs = deps.sttTimeoutMs ?? STT_TIMEOUT_MS;
+    const sttSignal = AbortSignal.timeout(sttTimeoutMs);
+    const sttStartedAt = Date.now();
+    let response: Response;
+    try {
+      // G4 — a chamada PAGA ao provedor tem teto: `fetch` pendurado vira 504 em
+      // vez de prender o handler. O `signal` também vai no `init` (abort nativo).
+      response = await abortable(
+        doFetch("https://api.elevenlabs.io/v1/speech-to-text", {
+          method: "POST",
+          headers: { "xi-api-key": ELEVENLABS_API_KEY },
+          body: formData,
+          signal: sttSignal,
+        }),
+        sttSignal,
+      );
+    } catch (error) {
+      const timedOut = isTimeoutError(error);
+      // A tentativa pode ter sido cobrada mesmo abortada: o consumo sai aqui também.
+      await registrarConsumoDeTranscricao({
+        userId: identity.userId,
+        status: "error",
+        errorMessage: timedOut
+          ? "provider_timeout"
+          : (error instanceof Error ? error.message : "provider_fetch_failed"),
+        httpStatus: null,
+        durationMs: Date.now() - sttStartedAt,
+        audioBytes: audioBlob.size,
+      });
+      await persistState({ status: "failed" });
+      if (timedOut) {
+        log.error("ElevenLabs STT timed out", { timeoutMs: sttTimeoutMs });
+        return errorResponse("Transcription provider timed out", 504, req);
+      }
+      throw error;
+    }
+
+    // G4 — a chamada PAGA deixa linha no ledger, com o consumo DECLARADO como
+    // desconhecido (`usage_unknown`): o provedor fatura por segundo e não devolve
+    // a quantidade nesta rota. Uma linha por chamada, sucesso OU erro do provedor.
+    await registrarConsumoDeTranscricao({
+      userId: identity.userId,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `elevenlabs_http_${response.status}`,
+      httpStatus: response.status,
+      durationMs: Date.now() - sttStartedAt,
+      audioBytes: audioBlob.size,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -510,7 +670,8 @@ export async function handleTranscribeAudio(
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
     await persistState({ status: "failed" });
-    return errorResponse(msg, 500, req);
+    // G4 — 500 sem detalhe interno: o `error.message` do provedor não vai ao cliente.
+    return internalErrorResponse(error, req);
   }
 }
 

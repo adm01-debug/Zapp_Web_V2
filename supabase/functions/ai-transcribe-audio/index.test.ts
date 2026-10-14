@@ -386,3 +386,153 @@ Deno.test(
     assert(!fetchCalled, "nada pode ir ao provedor quando a autorização nega");
   },
 );
+
+// ─── G4: ledger de consumo, timeouts e 500 sem detalhe interno ───────────────
+const G4_ENV_KEYS = [
+  "SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "ELEVENLABS_API_KEY",
+] as const;
+
+interface G4Call {
+  url: string;
+  init?: RequestInit;
+}
+
+/**
+ * Stuba o `fetch` GLOBAL: é por ele que o supabase-js (dentro de
+ * `logAiUsageDetached`) faz o POST no ledger. O STT continua entrando por
+ * `deps.fetch`, então os dois caminhos não se confundem.
+ */
+function withGlobalFetch(
+  make: (url: string) => Response,
+): { calls: G4Call[]; restore: () => void } {
+  const original = globalThis.fetch;
+  const calls: G4Call[] = [];
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string"
+      ? input
+      : input instanceof URL
+      ? input.toString()
+      : (input as Request).url;
+    calls.push({ url, init });
+    return Promise.resolve(make(url));
+  }) as typeof fetch;
+  return {
+    calls,
+    restore: () => {
+      globalThis.fetch = original;
+    },
+  };
+}
+
+async function withG4Env(fn: () => Promise<void>): Promise<void> {
+  const saved = G4_ENV_KEYS.map((k) => [k, Deno.env.get(k)] as const);
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-key-de-teste");
+  Deno.env.set("ELEVENLABS_API_KEY", "xi-key-de-teste");
+  try {
+    await fn();
+  } finally {
+    for (const [key, value] of saved) {
+      if (value === undefined) Deno.env.delete(key);
+      else Deno.env.set(key, value);
+    }
+  }
+}
+
+function insertsNoLedger(calls: G4Call[]): G4Call[] {
+  return calls.filter(
+    (c) => c.url.includes("/rest/v1/ai_usage_logs") && c.init?.method === "POST",
+  );
+}
+
+const OGG_DOWNLOAD = () =>
+  Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" });
+
+Deno.test(
+  "G4: chamada paga ao STT deixa UMA linha em ai_usage_logs (unidade segundo, consumo declarado desconhecido)",
+  async () => {
+    await withG4Env(async () => {
+      const stub = withGlobalFetch((url) => {
+        if (url.includes("/rest/v1/ai_usage_logs")) {
+          return new Response("", { status: 201 });
+        }
+        if (url.includes("api.elevenlabs.io")) {
+          return new Response(JSON.stringify({ text: "oi" }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        return new Response("nao stubado", { status: 599 });
+      });
+      try {
+        // Sem `deps.fetch`: o STT usa o MESMO `fetch` global stubado.
+        const deps = baseDeps({ downloadAudio: OGG_DOWNLOAD });
+        const res = await handleTranscribeAudio(makeRequest(), deps);
+        assertEquals(res.status, 200, "a chamada paga conclui 200");
+
+        const inserts = insertsNoLedger(stub.calls);
+        assertEquals(inserts.length, 1, `esperado 1 insert no ledger, veio ${inserts.length}`);
+        const linha = JSON.parse(String(inserts[0].init?.body)) as Record<string, unknown>;
+        assertEquals(linha.function_name, "ai-transcribe-audio", "a linha é do STT");
+        assertEquals(linha.input_tokens, null, "consumo não medido vai NULL, nunca 0");
+        assertEquals(linha.output_tokens, null, "consumo não medido vai NULL, nunca 0");
+        const meta = linha.metadata as Record<string, unknown>;
+        assertEquals(meta.usage_unknown, true, "a ausência de medida é DECLARADA");
+        assertEquals(meta.billing_unit, "second", "a rota de STT é cobrada por segundo");
+      } finally {
+        stub.restore();
+      }
+    });
+  },
+);
+
+Deno.test(
+  "G4: fetch pendurado ao STT estoura o timeout e devolve 504 (e registra o consumo da tentativa)",
+  async () => {
+    await withG4Env(async () => {
+      const stub = withGlobalFetch((url) =>
+        url.includes("/rest/v1/ai_usage_logs")
+          ? new Response("", { status: 201 })
+          : new Response("nao stubado", { status: 599 })
+      );
+      try {
+        const deps = baseDeps({
+          downloadAudio: OGG_DOWNLOAD,
+          sttTimeoutMs: 25,
+          // Provedor que NUNCA responde: só o teto de tempo encerra a chamada.
+          fetch: (() => new Promise<Response>(() => {})) as typeof fetch,
+        });
+        const res = await handleTranscribeAudio(makeRequest(), deps);
+        assertEquals(res.status, 504, "provedor pendurado vira 504 em vez de travar o handler");
+        assertEquals(
+          insertsNoLedger(stub.calls).length,
+          1,
+          "a tentativa paga é registrada no ledger mesmo quando estoura o tempo",
+        );
+      } finally {
+        stub.restore();
+      }
+    });
+  },
+);
+
+Deno.test(
+  "G4: erro inesperado devolve 500 SEM o detalhe interno do provedor",
+  async () => {
+    const deps = baseDeps({
+      downloadAudio: OGG_DOWNLOAD,
+      fetch: (() => Promise.reject(new Error("segredo-interno-do-provedor"))) as typeof fetch,
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 500, "erro inesperado vira 500");
+
+    const body = await res.text();
+    assert(
+      !body.includes("segredo-interno-do-provedor"),
+      "o `error.message` interno não pode vazar na resposta",
+    );
+  },
+);
