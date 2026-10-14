@@ -35,7 +35,7 @@ function makeStore() {
 
 type Store = ReturnType<typeof makeStore>;
 
-function makeFakeAdmin(store: Store): unknown {
+function makeFakeAdmin(store: Store, opts: { getUserByIdError?: unknown } = {}): unknown {
   function builder(table: string) {
     const filters: Array<[string, unknown]> = [];
     const ilikes: Array<[string, string]> = [];
@@ -100,18 +100,25 @@ function makeFakeAdmin(store: Store): unknown {
   return {
     from: (table: string) => builder(table),
     rpc: async () => ({ data: null, error: null }),
-    auth: { admin: { getUserById: async (id: string) => ({ data: { user: { id, email: 'passkey-user@example.test' } }, error: null }) } },
+    auth: {
+      admin: {
+        getUserById: async (id: string) =>
+          opts.getUserByIdError
+            ? { data: { user: null }, error: opts.getUserByIdError }
+            : { data: { user: { id, email: 'passkey-user@example.test' } }, error: null },
+      },
+    },
   };
 }
 
-function makeDeps(store: Store, overrides: Partial<WebAuthnDeps> = {}): WebAuthnDeps {
+function makeDeps(store: Store, overrides: Partial<WebAuthnDeps> = {}, adminOpts: { getUserByIdError?: unknown } = {}): WebAuthnDeps {
   const caller: WebAuthnCallerClient = {
     auth: { getClaims: async () => ({ data: { claims: { sub: undefined } }, error: null }) },
   };
   return {
     // O cliente real do supabase-js é estruturalmente enorme; o handler só usa
     // `.from()/.rpc()/.auth.admin` — o fake cobre exatamente esse contrato.
-    admin: makeFakeAdmin(store) as unknown as WebAuthnDeps['admin'],
+    admin: makeFakeAdmin(store, adminOpts) as unknown as WebAuthnDeps['admin'],
     createCallerClient: () => caller,
     enforceRateLimit: async () => ({ allowed: true }),
     ...overrides,
@@ -164,11 +171,12 @@ function rawToDer(raw: Uint8Array): Uint8Array {
   return out;
 }
 
-async function buildAssertion(challenge: string, counter = 1): Promise<{
+async function buildAssertion(challenge: string, counter = 1, existingKeyPair?: CryptoKeyPair): Promise<{
   credential: Row;
   storedPublicKey: string;
+  keyPair: CryptoKeyPair;
 }> {
-  const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const keyPair = existingKeyPair ?? await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
   const jwk = (await crypto.subtle.exportKey('jwk', keyPair.publicKey)) as JsonWebKey;
   const coseKey = encMap([
     [1, 2], [3, -7], [-1, 1],
@@ -197,6 +205,7 @@ async function buildAssertion(challenge: string, counter = 1): Promise<{
 
   return {
     storedPublicKey: bytesToBase64url(coseKey),
+    keyPair,
     credential: {
       id: 'cred-id-abc',
       type: 'public-key',
@@ -281,4 +290,75 @@ Deno.test('webauthn: desafio de OUTRA conta é negado', async () => {
 
   const res = await handleWebAuthn(request('verify-authentication', { credential: built.credential }), deps);
   if (res.status === 200) throw new Error('desafio de outra conta deveria ser negado');
+});
+
+// ─── Refazer 1: provas exigidas pela recusa ────────────────────────────────
+
+// Ponto 1 — clientDataJSON adulterado (JSON interno com challenge divergente do
+// que foi assinado) tem de ser REJEITADO pelo caminho real do verify.
+Deno.test('webauthn [refazer1]: clientDataJSON adulterado (challenge divergente) é rejeitado', async () => {
+  const store = makeStore();
+  const deps = makeDeps(store);
+  const optRes = await handleWebAuthn(request('authentication-options'), deps);
+  const { options } = (await optRes.json()) as { options: { challenge: string } };
+  // Assinatura legítima sobre o challenge C1 emitido.
+  const built = await buildAssertion(options.challenge);
+  store.passkey_credentials.push({
+    id: 'cred-row-1', user_id: USER_ID, credential_id: 'cred-id-abc', public_key: built.storedPublicKey, counter: 0,
+  });
+  // Segundo desafio C2 vivo no banco (cenário do atacante).
+  const otherChallenge = 'QXRhY2tlci1jaGFsbGVuZ2UtMDAwMDAwMDAwMDA';
+  store.webauthn_challenges.push({
+    id: 'chal-atacante', user_id: null, challenge: otherChallenge,
+    type: 'authentication', created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 60_000).toISOString(),
+  });
+  // Adultera SÓ o JSON interno (troca o challenge para C2), mantendo
+  // authenticatorData e assinatura originais — a assinatura não casa mais.
+  const resp = built.credential.response as Row;
+  const clientData = JSON.parse(new TextDecoder().decode(base64urlToBytes(resp.clientDataJSON as string))) as Row;
+  clientData.challenge = otherChallenge;
+  const tampered = {
+    ...(built.credential as Row),
+    response: { ...(resp as Row), clientDataJSON: bytesToBase64url(new TextEncoder().encode(JSON.stringify(clientData))) },
+  };
+  const res = await handleWebAuthn(request('verify-authentication', { credential: tampered }), deps);
+  if (res.status === 200) throw new Error('clientDataJSON adulterado deveria ser rejeitado, obtido 200');
+});
+
+// Ponto 2 — o counter avança no banco (stored 0 → counter do autenticador) e
+// counter regredido, mesmo com assinatura válida, é NEGADO.
+Deno.test('webauthn [refazer1]: counter avança no banco e counter regredido é negado', async () => {
+  const store = makeStore();
+  const deps = makeDeps(store);
+  // Fluxo 1: stored 0, autenticador em 5 → 200 e grava 5.
+  const opt1 = await handleWebAuthn(request('authentication-options'), deps);
+  const { options: o1 } = (await opt1.json()) as { options: { challenge: string } };
+  const first = await buildAssertion(o1.challenge, 5);
+  store.passkey_credentials.push({
+    id: 'cred-row-1', user_id: USER_ID, credential_id: 'cred-id-abc', public_key: first.storedPublicKey, counter: 0,
+  });
+  const r1 = await handleWebAuthn(request('verify-authentication', { credential: first.credential }), deps);
+  if (r1.status !== 200) throw new Error('login válido deveria ser 200, obtido ' + r1.status);
+  const row = store.passkey_credentials.find((c) => (c as Row).id === 'cred-row-1') as Row;
+  if ((row.counter as number) !== 5) throw new Error('counter deveria ter avançado para 5, obtido ' + String(row.counter));
+  // Fluxo 2: MESMA chave assina novo desafio com counter 3 (< 5) → negado.
+  const opt2 = await handleWebAuthn(request('authentication-options'), deps);
+  const { options: o2 } = (await opt2.json()) as { options: { challenge: string } };
+  const replay = await buildAssertion(o2.challenge, 3, first.keyPair);
+  const r2 = await handleWebAuthn(request('verify-authentication', { credential: replay.credential }), deps);
+  if (r2.status === 200) throw new Error('counter regredido (3 < 5) deveria ser negado, obtido 200');
+});
+
+// Ponto 3 — getUserById com erro: falha fechada, 500 explícito, nunca 200 parcial.
+Deno.test('webauthn [refazer1]: erro do getUserById nega o login com 500 (sem 200 parcial)', async () => {
+  const store = makeStore();
+  const deps = makeDeps(store, {}, { getUserByIdError: { message: 'auth admin indisponível' } });
+  const optRes = await handleWebAuthn(request('authentication-options'), deps);
+  const { options } = (await optRes.json()) as { options: { challenge: string } };
+  const built = await buildAssertion(options.challenge);
+  store.passkey_credentials.push({
+    id: 'cred-row-1', user_id: USER_ID, credential_id: 'cred-id-abc', public_key: built.storedPublicKey, counter: 0,
+  });
+  const res = await handleWebAuthn(request('verify-authentication', { credential: built.credential }), deps);
+  if (res.status !== 500) throw new Error('erro de usuário deveria dar 500, obtido ' + res.status);
 });

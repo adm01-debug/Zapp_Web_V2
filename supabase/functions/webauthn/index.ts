@@ -289,7 +289,9 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps): Promise<
 
         await deps.admin.from('passkey_credentials').update({ last_used_at: new Date().toISOString(), counter: result.newCounter }).eq('id', storedCred.id);
 
-        const { data: userData } = await deps.admin.auth.admin.getUserById(storedCred.user_id);
+        const { data: userData, error: userError } = await deps.admin.auth.admin.getUserById(storedCred.user_id);
+        // Falha fechada: sem o usuário não há login — nunca 200 parcial.
+        if (userError || !userData?.user) return errorResponse('Failed to load user', 500, req);
         log.done(200, { action });
         return jsonResponse({ success: true, userId: storedCred.user_id, userEmail: userData?.user?.email }, 200, req);
       }
