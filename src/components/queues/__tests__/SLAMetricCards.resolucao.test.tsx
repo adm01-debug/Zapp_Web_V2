@@ -54,4 +54,28 @@ describe('SLAMetricCards — card de Resolução', () => {
     renderCards([70, 72, 75]);
     expect(screen.getByText('Resolução')).toBeInTheDocument();
   });
+
+  it('sem amostra (total 0) mostra estado neutro, não 0.0% com cor de falha', () => {
+    render(
+      <SLAMetricCards
+        data={{
+          overallRate: 80,
+          totalConversations: 3,
+          firstResponse: { rate: 50, onTime: 1, breached: 1 },
+          resolution: { rate: 0, onTime: 0, breached: 0, total: 0 },
+        }}
+        periodLabel="Hoje"
+        sparkOverall={[]}
+        sparkFR={[]}
+        sparkRes={[]}
+        sparkConversations={[]}
+      />
+    );
+
+    // Sem escritor de resolution_breached/resolved_at toda conversa é pendente:
+    // a taxa não existe, então o card mostra "—" neutro em vez de 0.0% (cor de falha).
+    expect(screen.getByText('Resolução')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByText('0.0%')).toBeNull();
+  });
 });

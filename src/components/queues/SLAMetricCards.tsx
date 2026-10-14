@@ -42,6 +42,10 @@ interface SLAMetricCardsProps {
 }
 
 export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, sparkRes, sparkConversations }: SLAMetricCardsProps) {
+  // Sem amostra de resolução (nenhum escritor de `resolution_breached`/`resolved_at`
+  // ainda preencheu o banco) a taxa não existe: o card mostra "—" neutro em vez de
+  // 0.0% com cor de falha.
+  const semAmostraResolucao = data.resolution.total === 0;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -86,12 +90,12 @@ export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, spark
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card className="border-l-4 border-l-primary">
+        <Card className={semAmostraResolucao ? "border-l-4 border-l-muted" : cn("border-l-4 border-l-primary", getRateBg(data.resolution.rate))}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Resolução</p>
-                <p className={cn("text-3xl font-bold", getRateColor(data.resolution.rate))}>{data.resolution.rate.toFixed(1)}%</p>
+                <p className={cn("text-3xl font-bold", semAmostraResolucao ? "text-muted-foreground" : getRateColor(data.resolution.rate))}>{semAmostraResolucao ? '—' : `${data.resolution.rate.toFixed(1)}%`}</p>
               </div>
               <div className="p-3 rounded-full bg-primary/10"><CheckCircle2 className="h-6 w-6 text-[hsl(var(--primary-text))]" /></div>
             </div>
