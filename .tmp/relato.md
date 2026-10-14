@@ -50,6 +50,11 @@ Verde nesta árvore:
 - regressão da lista: `npx vitest run src/components/inbox/__tests__/ConversationListSidebar.topo.test.tsx src/components/inbox/__tests__/ConversationListSidebar.test.tsx`
   → `Test Files 2 passed (2); Tests 13 passed (13)`
 - `npx eslint` nos 3 arquivos → sem saída (exit 0)
+- CRITÉRIO 2 — `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (392s)`: OK tipos (384s), OK lint (6s),
+  OK db_guard (1s), OK migrations (1s). Aviso `banco_local NÃO VERIFICADO: sem nome de conjunto` é
+  esperado: este cartão não tem banco (nenhuma migration própria). A primeira execução deu
+  `VERMELHO em tipos` porque a árvore nova estava sem `node_modules` (ambiente, não código);
+  `bun install` (651 pacotes) e a reexecução ficaram verdes.
 
 Cobre o critério: salvar grava o filtro atual com o nome digitado (sem `id` = criação), aplicar devolve
 o conteúdo ao `onApply` e fecha, renomear grava pelo `id` mantendo o conteúdo, excluir remove no
