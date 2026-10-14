@@ -199,6 +199,9 @@ jobs:
       # que ninguem executa da sensacao de cobertura sem cobrir nada.
       - name: Fixtures de E2E em producao (E85)
         id: e2e-fixtures
+        # W07 (14/10/2026): era o unico dos 11 sub-checks sem esta guarda — sem
+        # credencial ele rodava, falhava e entrava na causa do alerta.
+        if: steps.credencial.outcome == 'success'
         continue-on-error: true
         run: |
           set -o pipefail
