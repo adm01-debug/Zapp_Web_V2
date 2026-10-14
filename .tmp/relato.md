@@ -18,3 +18,6 @@ FAIXA DO PAI: commit `cd211554c1` (e o `a2e02bca2` pulado) do cartão `t_48ac471
 ## O que NÃO fiz e por quê
 - Não implementei a pré-checagem de bloqueio por e-mail (`is_account_locked`): o cartão manda não implementar (risco de enumeração de contas).
 - Não mexi em `src/hooks/auth/useAuthForm.ts` nem em `src/components/ui/**`: fora da lista de arquivos do cartão; a mudança cabia inteira em `Auth.tsx`.
+## Pontos do juiz automático (não procedem)
+- "Um teste que já existia foi removido, pulado ou afrouxado": a única linha que o diff REMOVE é `['429', () => jsonResponse(429, { error: 'Rate limit exceeded' })]`, e ela é do commit do cartão PAI (`cd211554c1`). O pai tirou o 429 do caso genérico de erro/cliente e lhe deu um teste próprio ("429 vira muitas tentativas"), ou seja, REFORÇOU a cobertura. Nenhum teste foi removido ou pulado no MEU commit (`565f77aac9` só cria `Auth.avisos-bloqueio.test.tsx`).
+- "Arquivo que o cartão não lista": `src/lib/serverLogin.ts` e `src/lib/__tests__/serverLogin.test.ts` são a faixa do cartão PAI, trazida por ordem da seção DEPENDÊNCIA do cartão (seção FAIXA DO PAI acima). Não são trabalho deste cartão.
