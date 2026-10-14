@@ -98,3 +98,12 @@ EXIT=0
 ```
 
 commit: 767a80dd01
+
+## Sobre o alarme "código alterado sem teste"
+O teste NASCEU neste cartão e está no commit 767a80dd01:
+`supabase/tests/update_own_profile_sem_email.sql` (banco descartável, migrations
+reais, papel real; vermelho com `-v sem_correcao=1`, verde sem ele), mais a prova
+no banco LOCAL da tarefa em `.tmp/db_local_update_own_profile.sql`. As duas mudanças
+em `src/**` são a ponta de cliente do MESMO contrato (tirar `p_email` do hook e da
+tipagem gerada) — não há lógica de app a testar ali; o que prova o defeito é a suíte
+de banco. Rodando o MESMO comando de fechar de novo.
