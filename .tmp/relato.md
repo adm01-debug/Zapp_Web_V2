@@ -1,3 +1,37 @@
+Especialista: semisenior (area-front-componentes + area-front-hooks)
+
+# [refazer 1] — resposta ponto a ponto à recusa (commit 735c1ac26e; anterior 0fc87f6ec)
+
+## Ponto 1 — "Resumo de Violações": resolvido por prova, sem mudança de código (a alternativa que a própria recusa prevê)
+Não há o que incluir porque o componente não existe: o "Resumo de Violações" foi removido do `SLADashboard.tsx` por cartão anterior, antes da base, e um teste trava a ausência.
+Prova: `git grep -n "Resumo de Viola" dia/2026-10-12 -- src/` só devolve o comentário que conta a remoção (`SLADashboard.tsx:156`) e o teste que exige a ausência (`SLADashboard.redundancia.test.tsx:50`, `expect(screen.queryByText('Resumo de Violações')).toBeNull()`); o mesmo grep na árvore atual devolve as mesmas linhas (`SLADashboard.tsx:158`, teste na linha 51). Recriar o card seria desfazer outro cartão e repetir taxa/contagens que já estão no card "Resolução".
+Onde as violações de resolução do período JÁ aparecem: card "Resolução" em `src/components/queues/SLAMetricCards.tsx` (`{resolution.breached} atrasados`, linha ~115), provado pelo teste `mostra as contagens de resolução` (`3 atrasados`), mais "Resoluções avaliadas"/"Pendentes de resolução" na Base do cálculo (`SLADashboard.tsx:180-185`).
+O outro resumo de violações — "Histórico de Violações SLA" em `src/components/sla/SLAHistoryDashboard.tsx:66` (cards + `SLAViolationsChart`) — está fora de ARQUIVOS QUE PODE TOCAR; os totais que ele precisaria (`totals.resolutionBreaches`/`resolutionEvaluated`) já ficam expostos pelo histórico nesta entrega para um próximo cartão.
+
+## Ponto 2 — teste do fio em useSLAMetrics: resolvido
+Novo `src/hooks/sla/__tests__/useSLAMetrics.resolucao.test.tsx`: monta PostgREST fake (mesmo padrão de `src/hooks/__tests__/useSLAMetrics.test.tsx`), renderiza o hook REAL e prova que 4 linhas viram `overall.resolution` = 2 no prazo / 1 atrasada / 1 pendente / taxa 66,67% e `byAgent[].resolution` separado por agente com a pendente fora da taxa.
+Prova: `npx vitest run src/hooks/sla/__tests__/useSLAMetrics.resolucao.test.tsx` → `Test Files 1 passed (1); Tests 2 passed (2)`. Sensibilidade: com `tallyResolution(slaData)` trocado por `emptyResolutionTally()` em `useSLAMetrics.ts:73` o teste do overall FALHA (`1 failed | 1 passed`), restaurado em seguida (`git diff --stat` vazio antes de commitar).
+
+## Ponto 3 — estado neutro sem amostra: resolvido
+Sem escritor de `resolution_breached`/`resolved_at` toda conversa é pendente, `total === 0` e a taxa não existe. `src/components/queues/SLAMetricCards.tsx:48,93,98`: quando `total === 0` o card "Resolução" mostra "—" em `text-muted-foreground` com borda `border-l-muted`, em vez de `0.0%` com `getRateColor(0)` (cor de falha). Com amostra, o caminho antigo segue igual.
+Prova: teste novo `sem amostra (total 0) mostra estado neutro` em `src/components/queues/__tests__/SLAMetricCards.resolucao.test.tsx:58` — vermelho antes (`Unable to find '—'`, `1 failed | 3 passed`), verde depois.
+Sem regressão (8 arquivos, saída real): `Test Files 8 passed (8); Tests 56 passed (56)` — inclui `y17Selos.contraste.test.tsx` (fixture com `total: 10`, fora do caminho neutro) e `SLADashboard.redundancia.test.tsx`.
+Verificação: `zapp-verify <cópia> --rapido` → `OK db_guard; OK tipos; OK lint; OK migrations; VERIFY: VERDE SEM BANCO` (sem migration no diff; banco não se aplica).
+
+## O que mudou (só o meu commit; a entrega anterior é 0fc87f6ec e anteriores)
+- `src/components/queues/SLAMetricCards.tsx` (linhas 45-48, 93, 98)
+- `src/components/queues/__tests__/SLAMetricCards.resolucao.test.tsx` (teste da linha 58)
+- `src/hooks/sla/__tests__/useSLAMetrics.resolucao.test.tsx` (novo)
+`git diff 0fc87f6ec..HEAD --stat` → `3 files changed, 169 insertions(+), 2 deletions(-)`. Nada fora de ARQUIVOS QUE PODE TOCAR; nenhum teste existente removido, pulado ou afrouxado; sem migration; sem project-ref de produção.
+
+## O que NÃO fiz e por quê
+- Não recriei o "Resumo de Violações" nem mexi em `SLAHistoryDashboard`/`SLACharts`: fora dos arquivos permitidos; o Ponto 1 autoriza a prova (acima).
+- Não mexi em `SLAAgentTable`: não renderiza resolução (grep `resolution` vazio), então o caminho neutro não o afeta.
+
+---
+
+## Relato da entrega anterior (0fc87f6ec e anteriores — mantido para histórico; a linha "Estados da tela" abaixo está SUPERADA no ponto do 0.0%: sem amostra o card agora mostra "—" neutro, Ponto 3 acima)
+
 Especialista: Íris (area-front-componentes)
 
 Entrega concluída. O cartão pede que o prazo de resolução fique visível e provado; a tela lê e exibe o desfecho de resolução de `conversation_sla`. A ESCRITA desse desfecho é trilha de banco, fora do escopo desta tela de métricas (registrado em `kanban_comment`).
