@@ -12,7 +12,7 @@ Especialista: iris
 - vermelho antes (correções revertidas temporariamente): `npx vitest run src/components/admin/__tests__/VisibilityGrantsManager.loadErrorRemocao.test.tsx src/pages/admin/__tests__/RolesPage.availableUsersError.test.tsx` → `Tests 6 failed (6)`, incluindo `× mostra erro com "Tentar de novo" e nunca o cartão de nenhum agente especial` e `× o botão de remover role da lista anuncia de quem é a role`.
 - verde depois: `npx vitest run <as 5 suítes de admin de grants/roles>` → `Test Files 5 passed (5); Tests 12 passed (12)`.
 - `npx vitest run` com os dois arquivos novos: `Test Files 2 passed (2); Tests 6 passed (6)`.
-- verificação do projeto: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO` — saída crua versionada no diff em `docs/verificacao/zapp-verify-rapido-admin-grants-roles.log` (além de `.tmp/verify.log`, que o `.gitignore` esconde do diff).
+- verificação do projeto: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO` — saída crua versionada no diff em `docs/verificacao/zapp-verify-rapido-admin-grants-roles.md` (além de `.tmp/verify.log`, que o `.gitignore` esconde do diff).
 - Os testes renderizam os componentes REAIS (`VisibilityGrantsManager`, `RolesPage`) com o hook real, sobre um cliente Supabase mockado que devolve erro de PostgREST; não há mock que já traga a resposta na tela.
 
 ## Estados da tela alterada
