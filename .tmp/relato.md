@@ -1,3 +1,4 @@
+Especialista: hugo
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
