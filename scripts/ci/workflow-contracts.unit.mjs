@@ -297,13 +297,18 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 // W09 (plano de 14/10/2026, achado N-05b): a versão do Playwright tem UMA fonte, o
 // bun.lock. `bunx playwright@1.63.0` nos workflows duplicava a versão em 6 lugares e o
 // bump do Dependabot (#1918) nascia vermelho até alguém editar YAML e teste à mão.
-test('W09: workflows instalam o Playwright do lockfile, sem pin literal', () => {
+// Vale para QUALQUER invocação, não só `install`: `bunx playwright@latest test` resolve o
+// pacote fora do lockfile do mesmo jeito (Codex, PR #1923).
+test('W09: workflows invocam o Playwright do lockfile, sem bunx nem seletor playwright@…', () => {
   const problemas = [];
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright(?:@[\w.-]+)?\s+install/.test(texto)) continue;
-    if (/\bplaywright@[0-9]/.test(texto)) problemas.push(`${nome}: playwright@<versão> literal`);
-    if (!/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
+    if (!/\bplaywright\b/.test(texto)) continue;
+    if (/\bplaywright@[^\s"'`]+/.test(texto)) problemas.push(`${nome}: seletor playwright@… literal`);
+    if (/\bbunx\s+playwright\b/.test(texto)) problemas.push(`${nome}: usa bunx playwright (resolve fora do bun.lock)`);
+    if (/\bplaywright\s+install/.test(texto) && !/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) {
+      problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
+    }
   }
   assert.deepEqual(problemas, [], problemas.join('\n'));
 });

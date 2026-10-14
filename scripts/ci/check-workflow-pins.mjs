@@ -19,9 +19,10 @@ const SUPABASE_CLI_ENV = /^\s*["']?SUPABASE_CLI_VERSION["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_VERSION_INPUT = /^\s*["']?version["']?\s*:\s*(.*)$/u;
 const IMAGE_LINE = /^\s*(?:-\s*)?(?:["']?image["']?|["']?[A-Za-z][A-Za-z0-9_]*_IMAGE["']?)\s*:\s*(.*)$/u;
 // W09: a versão do Playwright vem SÓ do bun.lock (`./node_modules/.bin/playwright`).
-// Qualquer `playwright@<versão>` literal num workflow reintroduz a duplicação que
-// deixava o bump do Dependabot vermelho por construção — é violação, sempre.
-const PLAYWRIGHT_PIN = /playwright@([0-9][0-9A-Za-z.-]*)/gu;
+// Qualquer seletor `playwright@…` num workflow — número, `latest`, `next`, `v1.63.0` —
+// faz o `bunx` resolver o pacote fora do lockfile e reintroduz a duplicação que deixava
+// o bump do Dependabot vermelho por construção — é violação, sempre (Codex, PR #1923).
+const PLAYWRIGHT_PIN = /\bplaywright@([^\s"'`]+)/gu;
 export const PLAYWRIGHT_ESPERADO = "(sem pin: ./node_modules/.bin/playwright, versão do bun.lock)";
 
 /** Valor literal de um escalar YAML; `null` quando é expressão do Actions ou valor multilinha. */

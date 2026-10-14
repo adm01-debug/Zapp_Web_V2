@@ -394,7 +394,7 @@ jobs:
         # Só em cache miss. W09 (plano de 14/10/2026, achado N-05b): o binário vem
         # do pacote instalado pelo `bun install --frozen-lockfile`, logo a versão é
         # EXATAMENTE a do bun.lock — sem pin literal no YAML. Antes, um
-        # `bunx playwright@<versão>` duplicava a versão em 6 lugares e todo bump
+        # invocar o Playwright via bunx com versão explícita duplicava a versão em 6 lugares e todo bump
         # do Dependabot (PR #1918) nascia vermelho até alguém editar workflows e
         # testes à mão. Continua atendendo o SonarCloud githubactions:S8543: nada é
         # baixado fora do lockfile.

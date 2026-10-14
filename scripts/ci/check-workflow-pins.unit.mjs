@@ -161,7 +161,7 @@ test("rejeita version literal dentro do passo supabase/setup-cli", () => {
   ]);
 });
 
-test("W09: rejeita qualquer playwright@<versão> literal (a versão vem do bun.lock)", () => {
+test("W09: rejeita qualquer seletor playwright@… (a versão vem do bun.lock)", () => {
   assert.deepEqual(
     findToolchainDrift("        run: ./node_modules/.bin/playwright install --with-deps chromium\n", "ci.yml", FONTE),
     [],
@@ -170,6 +170,14 @@ test("W09: rejeita qualquer playwright@<versão> literal (a versão vem do bun.l
     findToolchainDrift("        run: bunx playwright@1.63.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
     [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.63.0", expected: PLAYWRIGHT_ESPERADO }],
   );
+  // Seletores nao numericos tambem resolvem o pacote fora do lockfile (Codex, PR #1923).
+  for (const seletor of ["latest", "next", "v1.63.0"]) {
+    assert.deepEqual(
+      findToolchainDrift(`        run: bunx playwright@${seletor} test\n`, "e2e-logado.yml", FONTE),
+      [{ file: "e2e-logado.yml", line: 1, tool: "playwright", value: seletor, expected: PLAYWRIGHT_ESPERADO }],
+      `playwright@${seletor} passou`,
+    );
+  }
 });
 
 test("rejeita imagem do serviço postgres divergente da fonte única", () => {
