@@ -56,6 +56,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .from('messages')
         .update({ is_read: true })
         .in('contact_id', contactIds)
+        // Só mensagens RECEBIDAS do contato: sem este filtro o lote também
+        // zerava o `is_read` das mensagens enviadas pelo agente.
+        .eq('sender', 'contact')
         .eq('is_read', false);
       if (error) throw error;
       toast.success(`${contactIds.length} conversa(s) marcada(s) como lida(s)`);
@@ -71,27 +74,46 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
   const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, _message?: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
+    const contactIds = Array.from(selectedIds);
+    const failures: unknown[] = [];
+    let transferidos = 0;
+
     try {
-      const contactIds = Array.from(selectedIds);
-      const updateData: { assigned_to?: string; queue_id?: string } = {};
-      if (type === 'agent') {
-        updateData.assigned_to = targetId;
-      } else {
-        updateData.queue_id = targetId;
+      // Uma RPC por contato, em série: `transfer_conversation` é atômica POR
+      // CONVERSA (UPDATE em contacts + INSERT do evento na mesma transação).
+      // Chamadas concorrentes sobre o mesmo lote só gerariam corrida de erro.
+      for (const contactId of contactIds) {
+        const { error } = await supabase.rpc('transfer_conversation', {
+          p_contact_id: contactId,
+          p_to_agent_id: type === 'agent' ? targetId : null,
+          p_to_queue_id: type === 'queue' ? targetId : null,
+          p_note: null,
+        });
+        if (error) failures.push(error);
+        else transferidos += 1;
       }
-      const { error } = await supabase
-        .from('contacts')
-        .update(updateData)
-        .in('id', contactIds);
-      if (error) throw error;
-      toast.success(`${contactIds.length} contato(s) transferido(s)`);
-      clearSelection();
-      refetch();
-    } catch {
+    } catch (err) {
+      // Rejeição inesperada (rede): o laço acima só devolve `error`, então isto
+      // cobre a exceção crua e preserva o toast de erro.
       toast.error('Erro ao transferir contatos');
+      throw err;
     } finally {
       setBulkLoading(false);
     }
+
+    // Sucesso parcial (ou total negativo): avisa quantos foram e mantém a
+    // seleção — quem chamou precisa saber que falhou (a sidebar usa a rejeição
+    // para manter o diálogo/alvo abertos).
+    if (failures.length > 0) {
+      toast.error(
+        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`,
+      );
+      throw failures[0];
+    }
+
+    toast.success(`${contactIds.length} contato(s) transferido(s)`);
+    clearSelection();
+    refetch();
   }, [selectedIds, clearSelection, refetch]);
 
   const bulkArchive = useCallback(async () => {
