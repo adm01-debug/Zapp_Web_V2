@@ -396,6 +396,17 @@ jobs:
           GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
+      # t_d7ef14d6 (Gmail com token revogado): a migration 20261014023912_gmail_accounts_sync_backoff
+      # acrescenta error_count/next_attempt_at a public.gmail_accounts para a espera crescente do
+      # gmail-cron-sync. Prova em PostgreSQL 17 descartavel: as colunas antes/depois com
+      # tipo/default/NOT NULL corretos, a linha antiga herda error_count = 0 e next_attempt_at NULL,
+      # o ACL da tabela (o papel real) e IDENTICO antes/depois (a adicao nao concede nada a
+      # anon/authenticated) e o Rollback declarado no topo desfaz a adicao.
+      - name: Simular espera crescente do gmail_accounts (Gmail token revogado)
+        env:
+          GMAIL_BACKOFF_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-accounts-sync-backoff.test.sh
+
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
