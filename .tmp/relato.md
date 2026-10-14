@@ -1,5 +1,9 @@
 Especialista: iris
 
+## Arquivo tocado fora da lista (justificativa)
+
+`src/components/automations/AutomationCard.tsx` NÃO está em "ARQUIVOS QUE PODE TOCAR". Foi indispensável: o item 2 do critério ("a lista marca a automação antiga e a deixa desativada, sem apagar o registro") não existe em outro lugar — `AutomationsManager.tsx` só faz o `map` das automações para os cards, e quem desenha o item da lista é o `AutomationCard` (linhas 33-34, 52-53 e 73-79). Sem tocá-lo, não haveria onde marcar nem o que desabilitar. O diff nele é só isso: rótulo `Obsoleta (tag removida)`, estilo de inativo, `Switch` `disabled` e o badge caindo para o tipo cru quando não há rótulo. Nenhum outro arquivo fora da lista foi tocado.
+
 ## O que mudou e por quê
 
 - `src/components/automations/automationConstants.ts`: saíram o gatilho `tag_added` de `TRIGGER_TYPES`, a ação `add_tag` de `ACTION_TYPES` e a chave `tag_id` de `ACTION_CONFIG_OWNERS` — o editor deixou de oferecer qualquer opção de tag. Entraram `OBSOLETE_AUTOMATION_LABEL` e `isObsoleteAutomation()`, que usam as MESMAS listas como fonte única do que a tela sabe oferecer: gatilho ou ação fora delas = registro antigo, reconhecido e marcado (nada é apagado).
