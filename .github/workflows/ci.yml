@@ -31,6 +31,10 @@ env:
   VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
   VITE_CRM_INTEGRATION_ENABLED: 'true'
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 

@@ -38,6 +38,10 @@ on:
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 permissions:
   contents: read
 
