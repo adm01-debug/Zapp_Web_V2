@@ -46,6 +46,11 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, refetch: vi.fn() }),
 }));
 
+// X090: o menu ⋮ e o controle de status leem o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
+}));
+
 import { TalkXTemplates } from '../TalkXTemplates';
 
 /** A tela passou a consumir o hook de KPIs (react-query real): precisa do provider. */
