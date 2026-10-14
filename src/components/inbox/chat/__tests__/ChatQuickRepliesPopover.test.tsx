@@ -42,6 +42,14 @@ describe('ChatQuickRepliesPopover — títulos, rótulos e teclado', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('o botão fechar mede 40px (h-10 w-10) — alvo mínimo de toque', () => {
+    setup();
+
+    const closeButton = screen.getByLabelText('Fechar respostas rápidas');
+    expect(closeButton.getAttribute('class')).toContain('h-10');
+    expect(closeButton.getAttribute('class')).toContain('w-10');
+  });
+
   it('lista vazia mostra "Nenhuma resposta rápida cadastrada" (e não o vazio da busca)', () => {
     setup({ replies: [] });
 

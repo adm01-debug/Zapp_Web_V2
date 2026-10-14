@@ -86,7 +86,7 @@ export function ChatQuickRepliesPopover({ show, replies, onSelect, onClose }: Ch
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-10 w-10"
               onClick={onClose}
               aria-label="Fechar respostas rápidas"
             >

@@ -40,6 +40,21 @@ describe('InputPreviewBars — barras de edição e resposta', () => {
     expect(onCancelEdit).toHaveBeenCalledTimes(1);
   });
 
+  it('o botão cancelar edição mede 40px (h-10 w-10) — alvo mínimo de toque', () => {
+    render(
+      <InputPreviewBars
+        replyToMessage={null}
+        editingMessage={CONTACT_MESSAGE}
+        onCancelReply={vi.fn()}
+        onCancelEdit={vi.fn()}
+      />,
+    );
+
+    const cancelButton = screen.getByLabelText('Cancelar edição');
+    expect(cancelButton.getAttribute('class')).toContain('h-10');
+    expect(cancelButton.getAttribute('class')).toContain('w-10');
+  });
+
   it('a barra de resposta tem o rótulo "Cancelar resposta" e cancela a resposta', () => {
     const onCancelReply = vi.fn();
     render(

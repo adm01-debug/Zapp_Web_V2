@@ -57,7 +57,7 @@ export function InputPreviewBars({ replyToMessage, editingMessage, onCancelReply
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={onCancelEdit}
                 aria-label="Cancelar edição"
               >
