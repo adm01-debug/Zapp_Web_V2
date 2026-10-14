@@ -180,3 +180,34 @@ Deno.test("grupo (@g.us e @s.whatsapp.net+isGroup) é filtrado e não sincroniza
     restore();
   }
 });
+
+// ===========================================================================
+// 4. Instância desconhecida NÃO cria conexão fantasma (404, zero escritas)
+//    Antes, syncContacts criava uma linha em whatsapp_connections com
+//    status 'connected' e telefone vazio para qualquer nome de instância.
+// ===========================================================================
+
+Deno.test("instância desconhecida: syncContacts devolve 404 e não escreve nada", async () => {
+  const restore = installFetchSpy(() =>
+    new Response(JSON.stringify([v2Contact("5511999998888@s.whatsapp.net", "João Silva")]), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    })
+  );
+
+  const { client: supabase, inserted } = createMockSupabase(null); // conexão inexistente
+  const corsHeaders = { "Access-Control-Allow-Origin": "*" };
+
+  try {
+    const response = await syncContacts(
+      supabase as unknown as Parameters<typeof syncContacts>[0],
+      "https://evo.example.com", "key", "INST-1", corsHeaders, 1, 50,
+    );
+    const body = await response.json();
+
+    assertEquals(response.status, 404, "instância sem conexão deve devolver 404");
+    assertStringIncludes(body.error, "Conexão não encontrada");
+    assertEquals(inserted.length, 0, "não deve inserir conexão nem contato");
+  } finally {
+    restore();
+  }
+});
