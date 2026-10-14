@@ -20,12 +20,21 @@ Especialista: iris
 
 ## Prova
 - comando: `npx vitest run src/components/admin/__tests__/PlaybooksManager.test.tsx`
-  - vermelho antes (mesmo teste sobre a versão da base, obtida com `git show HEAD:<arquivo>`):
-    `Test Files 1 failed (1)` / `Tests 6 failed (6)` — os mesmos testes que passam depois falham na base
-  - verde depois: `Test Files 1 passed (1)` / `Tests 6 passed (6)`
+  - vermelho antes (os 6 testes originais rodados sobre a versão da base, obtida com `git show HEAD:<arquivo>`):
+    `Test Files 1 failed (1)` / `Tests 6 failed (6)`
+  - vermelho do ponto do juiz (o 7º teste, rodado com a linha de guarda removida — sem o
+    `event.target !== event.currentTarget`): `Tests 1 failed | 6 passed (7)`
+  - verde depois: `Test Files 1 passed (1)` / `Tests 7 passed (7)`
 - sem regressão no diretório vizinho: `npx vitest run src/components/admin/__tests__`
   → `Test Files 17 passed (17)` / `Tests 57 passed (57)`
 - lint do pre-commit (ratchet): `OK: nenhuma nova divida de lint foi introduzida.` (`baseline=1, atual=1, novas=0`)
+
+## Ponto do juiz adversarial (procedia — corrigido com commit novo)
+Ponto 1 (Critério 3 — teclado): o `onKeyDown` do card pegava Enter/Espaço vindos dos botões Editar/Excluir (o evento
+borbulha) e o `preventDefault` engolia o clique do botão. Corrigi em `PlaybooksManager.tsx`: o card só abre o detalhe
+quando o alvo é o próprio card (`if (event.target !== event.currentTarget) return;`). Prova: novo teste
+"Enter/Espaço nos botões de ação não abre o detalhe..." em `src/components/admin/__tests__/PlaybooksManager.test.tsx`,
+vermelho com a guarda removida e verde com ela.
 
 ## Estados da tela (conferidos)
 - vazio: "Nenhum playbook criado" — só quando a consulta deu certo e voltou sem linhas.

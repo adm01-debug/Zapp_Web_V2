@@ -199,7 +199,10 @@ export function PlaybooksManager() {
     }
   };
 
-  const openFromKeyboard = (event: KeyboardEvent, pb: Playbook) => {
+  // Só o próprio card abre o detalhe: se o foco está nos botões Editar/Excluir, o
+  // Enter/Espaço pertence a eles (preventDefault aqui engoliria o clique do botão).
+  const openFromKeyboard = (event: KeyboardEvent<HTMLDivElement>, pb: Playbook) => {
+    if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       setViewPlaybook(pb);
