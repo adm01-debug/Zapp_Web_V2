@@ -170,7 +170,8 @@ describe('AuditLogDashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Carregar mais/ }));
 
     await waitFor(() => expect(screen.getByText('Página Dois')).toBeInTheDocument());
-    const ultima = chamadasDe('audit_log_list').at(-1)!;
+    const lista = chamadasDe('audit_log_list');
+    const ultima = lista[lista.length - 1]!;
     expect(ultima.args.p_cursor).toBe(pagina[49].created_at);
     expect(ultima.args.p_cursor_id).toBe('p49');
   });
