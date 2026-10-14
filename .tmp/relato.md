@@ -1,4 +1,5 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
+Sou o mesmo perfil que fez a entrega anterior, atuando como worker(db) (banco/RLS).
 
 ## O que mudou
 1. `supabase/migrations/20261012215000_custom_fields_rls_visibility.sql`
