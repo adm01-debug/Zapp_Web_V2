@@ -487,6 +487,62 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
     if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
+    // ─── reconcile-instances: compara provedor × banco (SOMENTE LEITURA) ───
+    // Devolve as duas listas de divergência por NOME de instância: o que existe
+    // no provedor e não tem linha em whatsapp_connections (`so_no_provedor`) e o
+    // que tem linha sem instância no provedor (`so_no_banco` — a linha reservada
+    // que pode ter ficado fantasma). NUNCA importa, cria ou apaga nada: a regra
+    // do dono é "o Zapp não importa". A resposta carrega só nomes — nunca token,
+    // JID ou telefone. Falha do provedor é fail-closed: sem a listagem não há
+    // comparação, então devolve error:true em vez de acusar todas as linhas como
+    // órfãs (o que induziria o admin a apagar conexões boas).
+    if (action === 'reconcile-instances') {
+      const adminError = await requireAdmin();
+      if (adminError) return adminError;
+
+      const { data: rows, error: rowsError } = await supabase
+        .from('whatsapp_connections').select('instance_id');
+      if (rowsError) {
+        new Logger('evolution-api').error('reconcile-instances: leitura de whatsapp_connections falhou', { error: rowsError.message });
+        return new Response(JSON.stringify({ error: true, message: 'Não foi possível ler as conexões registradas.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const dbNames = new Set<string>();
+      for (const row of rows ?? []) {
+        const name = String((row as { instance_id?: unknown }).instance_id ?? '').trim();
+        if (name) dbNames.add(name);
+      }
+
+      let providerRecords: Record<string, unknown>[] = [];
+      try {
+        const res = await fetch(`${evolutionApiUrl}${isGoFlavor ? '/instance/all' : '/instance/fetchInstances'}`, {
+          headers: { 'apikey': evolutionApiKey },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload: unknown = await res.json();
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray((payload as { data?: unknown } | null)?.data)
+            ? (payload as { data: unknown[] }).data
+            : [];
+        providerRecords = list.filter((r): r is Record<string, unknown> => !!r && typeof r === 'object' && !Array.isArray(r));
+      } catch (err: unknown) {
+        new Logger('evolution-api').error('reconcile-instances: listagem do provedor falhou — comparação não realizada', { error: err instanceof Error ? err.message : String(err) });
+        return new Response(JSON.stringify({ error: true, message: 'Não foi possível listar as instâncias no provedor — a comparação não foi feita.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const providerNames = new Set<string>();
+      for (const rec of providerRecords) {
+        const nested = (rec.instance ?? {}) as Record<string, unknown>;
+        const name = String(rec.name ?? rec.Name ?? nested.instanceName ?? rec.instanceName ?? nested.name ?? '').trim();
+        if (name) providerNames.add(name);
+      }
+
+      const soNoProvedor = [...providerNames].filter((n) => !dbNames.has(n)).sort();
+      const soNoBanco = [...dbNames].filter((n) => !providerNames.has(n)).sort();
+      return new Response(JSON.stringify({ so_no_provedor: soNoProvedor, so_no_banco: soNoBanco }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
       // flavor. O bloco abaixo é o fluxo do GO (webhook reafirmado no connect,

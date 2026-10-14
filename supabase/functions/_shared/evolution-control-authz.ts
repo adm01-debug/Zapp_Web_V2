@@ -110,6 +110,12 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   // group-participants: declarado só no hook useEvolutionGroups, sem tela que o
   // consuma.
   'group-participants',
+  // reconcile-instances: compara o que existe no provedor com o que está em
+  // whatsapp_connections e devolve as duas listas divergentes (só nomes, nunca
+  // tokens). É leitura, mas enxerga a topologia de todas as conexões — fica no
+  // mesmo escopo de admin/supervisor de list-instances (a tela de Conexões só
+  // a mostra para admin). NUNCA importa: nenhuma linha é criada.
+  'reconcile-instances',
 ]);
 
 /**
