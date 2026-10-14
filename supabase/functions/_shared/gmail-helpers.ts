@@ -160,6 +160,45 @@ export async function reconcileEmailThreads(supabase: SupabaseClient, accountId:
   }
 }
 
+/**
+ * Persiste no banco local o resultado de uma ação do Gmail que devolve a
+ * mensagem com os `labelIds` atualizados (ex.: `trash`). Atualiza
+ * `email_messages.label_ids/is_read/is_starred` da mensagem e recalcula
+ * `label_ids/is_unread/is_starred/status` da thread dona — os mesmos campos
+ * que o handler de `modify-thread-labels` mantém. Devolve `false` quando
+ * alguma escrita local falha, para o handler responder
+ * `local_persistence_failed` sem derrubar a ação que o Gmail já executou.
+ */
+export async function persistGmailMessageLabels(
+  supabase: SupabaseClient,
+  accountId: string,
+  gmailMessageId: string,
+  labelIds: string[],
+  localThreadId: string | null,
+): Promise<boolean> {
+  const messageUpdate = await supabase.from("email_messages")
+    .update({ label_ids: labelIds, is_read: !labelIds.includes("UNREAD"), is_starred: labelIds.includes("STARRED") })
+    .eq("gmail_message_id", gmailMessageId).eq("gmail_account_id", accountId);
+  if (messageUpdate.error) return false;
+  if (!localThreadId) return true;
+
+  const { data: messages, error: readError } = await supabase.from("email_messages")
+    .select("label_ids,is_read,is_starred")
+    .eq("gmail_account_id", accountId).eq("thread_id", localThreadId);
+  if (readError) return false;
+  const rows = (messages || []) as Array<{ label_ids?: string[] | null; is_read?: boolean | null; is_starred?: boolean | null }>;
+  const aggregateLabels = [...new Set(rows.flatMap(row => row.label_ids || []))];
+  const threadUpdate = await supabase.from("email_threads")
+    .update({
+      label_ids: aggregateLabels,
+      is_unread: rows.some(row => !row.is_read),
+      is_starred: rows.some(row => row.is_starred),
+      status: aggregateLabels.includes("INBOX") ? "open" : "archived",
+    })
+    .eq("id", localThreadId).eq("gmail_account_id", accountId);
+  return !threadUpdate.error;
+}
+
 export async function syncMessageIds(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, messageIds: string[]) {
   const { data: gmailAccount, error: accountError } = await supabase.from("gmail_accounts").select("email_address").eq("id", accountId).single();
   if (accountError || !gmailAccount?.email_address) throw new Error("Gmail account address unavailable during sync");
