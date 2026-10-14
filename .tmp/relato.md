@@ -11,6 +11,7 @@ Especialista: iris (area-front-componentes)
 - verde depois: `npx vitest run src/components/security/__tests__/AuditLogDashboard.test.tsx src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx` → Test Files 2 passed; Tests 14 passed
 - pasta inteira (não quebrou vizinhos): `npx vitest run src/components/security` → Test Files 20 passed; Tests 84 passed
 - ajuste pedido pelo juiz do fechar: os skeletons e o spinner de "Carregar mais" passaram a usar `motion-safe:animate-*` (respeitam reduzir movimento); o teste dos skeletons consulta `[data-testid="audit-skeleton"]`.
+- typecheck (ratchet): o teste de paginação usava `Array.prototype.at`, que não existe no lib-alvo e era o ÚNICO erro novo de tipo (`AuditLogDashboard.test.tsx(173,49) TS2550`) — trocado por índice `lista[lista.length - 1]`.
 
 ## Critério de pronto (item a item)
 - permissão/erro explícitos e nunca zero: `.tsx` (cards de erro/permissão) + testes "em falha mostra o erro e 'Tentar de novo' — nunca zeros silenciosos", "'Tentar de novo' refaz a leitura e mostra os números" e "sem papel admin diz que não tem permissão e não consulta o banco".
@@ -21,3 +22,8 @@ Especialista: iris (area-front-componentes)
 - Não toquei no barramento de dados (migration/RPCs/`types.ts`): é do PG-06 (t_4d66a644) e já está integrado — trouxe a faixa inteira por cherry-pick (5 commits) para cima da base `dia/2026-10-13`.
 - Testes removidos no arquivo de teste: "selects explicit columns instead of *" e as contagens mock-a-mock (suspicious/unique/total) protegiam o query-builder antigo, que deixou de existir; o equivalente agora é "renderiza os cards de resumo com números que vieram do banco". A proteção de `select('*')` não se aplica mais — a RPC devolve colunas fixas. A antiga "action color mapping" conferia strings hardcoded contra si mesmas (sem valor).
 - `npx eslint` no arquivo aponta 1 warning pré-existente (`no-restricted-imports` do client Supabase) que já existia na base — o lint-ratchet não cresce.
+
+## Pontos do juiz barato (respondidos)
+- "teste removido/afrouxado": os testes removidos protegiam o query-builder antigo (`supabase.from('audit_logs').select(...)`), que a tela deixou de usar; o cartão manda trocar a leitura pelas RPCs, então o teste do caminho antigo não tem mais código a provar. O equivalente atual (número vindo do banco, erro explícito, cursor, filtro de data) está nos 14 testes. Nenhuma asserção negativa viva foi enfraquecida.
+- "fora do escopo: types.ts, migration, supabase/tests/*.sql": NÃO PROCEDE como trabalho meu — são do cartão PAI PG-06 (t_4d66a644), já integrado; a faixa foi trazida inteira por cherry-pick (5 commits) sobre `dia/2026-10-13`, conforme a seção DEPENDÊNCIA do cartão. Meu diff de tela é só `AuditLogDashboard.tsx` + os 2 arquivos de teste.
+- "SECURITY DEFINER sem `SET search_path`": NÃO PROCEDE — as duas funções da migration têm `SET search_path = public, pg_temp` (linhas 65 e 134).
