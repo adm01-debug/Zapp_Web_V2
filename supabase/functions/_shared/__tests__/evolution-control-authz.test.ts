@@ -92,6 +92,17 @@ Deno.test("PL-01 - leituras de integração removidas caem em control (deny by d
   }
 });
 
+// Forma do retorno de `maskSecretFields` usada nas asserções abaixo (evita `any`:
+// o lint ratchet recusa ocorrência nova de @typescript-eslint/no-explicit-any).
+type Mascarado = {
+  enabled: boolean;
+  apiKey: string;
+  openAiApiKey: string;
+  aninhado: { token: string; password: string; keep: string };
+  lista: Array<{ secret?: string; name?: string }>;
+  authorization: string;
+};
+
 Deno.test("PL-01 - maskSecretFields troca o valor de campo de credencial por '***'", () => {
   const mascarado = maskSecretFields({
     enabled: true,
@@ -100,7 +111,7 @@ Deno.test("PL-01 - maskSecretFields troca o valor de campo de credencial por '**
     aninhado: { token: "tok-123", password: "pwd", keep: "ok" },
     lista: [{ secret: "s1" }, { name: "visível" }],
     authorization: "Bearer x",
-  }) as Record<string, any>;
+  }) as Mascarado;
   assertEquals(mascarado.apiKey, "***");
   assertEquals(mascarado.openAiApiKey, "***");
   assertEquals(mascarado.aninhado.token, "***");
