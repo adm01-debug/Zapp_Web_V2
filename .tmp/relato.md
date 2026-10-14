@@ -11,7 +11,7 @@ Especialista: Íris (area-front-componentes)
 - `src/pages/__tests__/SSOCallback.porteiro-pos-login.test.tsx` (novo): prova do fluxo do porteiro na tela real — liberado entra; 403 recusa; indisponível (promessa rejeitada) recusa; uma única consulta; nenhuma mensagem vaza o motivo; volta para `/auth`.
 - `src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx`: o componente passou a depender de `supabase.functions` e de `auth.signOut`; o mock do teste existente foi completado (`functions.invoke`, `auth.signOut`) com o porteiro liberando por padrão, e a espera da cadeia `getSession → porteiro → setStatus` virou o helper `assentarFluxo()`. Nenhuma asserção foi afrouxada ou removida.
 
-FAIXA DO PAI: commits a1ffcde343 (ADR-007 + Edge `post-login-gate` + testes, do cartão t_5f904bf8) e d8c6ae5fd3 (retorno do login social em pt-BR/acessível, do cartão t_f7e0f50f) — trazidos por cherry-pick do que já estava feito; não são deste cartão.
+FAIXA DO PAI: commits a1ffcde343 e d8c6ae5fd3, trazidos por cherry-pick do que já estava feito — não são deste cartão. Arquivos que eles trazem (por isso aparecem no diff da branch): `docs/adr/ADR-007-porteiro-pos-login.md`, `supabase/functions/post-login-gate/index.ts` e `supabase/functions/post-login-gate/index.test.ts` (cartão t_5f904bf8, ADR-007 + Edge do porteiro + testes dela) e o ajuste de pt-BR/acessibilidade de `src/pages/SSOCallback.tsx` (cartão t_f7e0f50f).
 
 ## Prova
 
