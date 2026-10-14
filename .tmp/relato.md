@@ -10,6 +10,9 @@ de 87c9e53c49, 23e5eca7f3 (`supabase/migrations/20261013235907_saved_filters_inb
 teste) + os commits de relato. Nada disso é trabalho DESTE cartão: são os arquivos que o cartão manda
 preservar (a migration do pai tem de entrar junto com t_66f0765c e o hook é a fonte dos presets).
 O diff DESTE cartão é só o commit cf59223673 (2 fontes + 1 teste, todos em `src/components/inbox/**`).
+O componente novo `InboxSavedFiltersMenu.tsx` é o "componente atual dos filtros da lista" que o cartão
+autoriza: extraí como arquivo próprio na MESMA pasta (`src/components/inbox/`) para não inchar o
+`InboxFilters.tsx` (já com ~330 linhas) — é exatamente ele que o `InboxFilters` renderiza.
 
 ## O que mudou e por quê
 - `src/components/inbox/InboxSavedFiltersMenu.tsx` (novo): o menu "Filtros salvos" da lista de
