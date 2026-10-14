@@ -16,15 +16,17 @@ CONCLUÍDO — o item do ESPELHO DO CI que o cartão aponta não existe mais com
   `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`
   `error: 'âncora desatualizada: src/hooks/inbox/useInboxBulkActions.ts:143 não cita batch-fetch-avatars'`
 - verde depois (mesmo comando): `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` →
-  `# pass 11` / `# fail 0`
+  `# tests 11`, `# pass 11`, `# fail 0` — 11 testes, 11 passaram, 0 falhas, 0 pulados.
 - espelho do CI (`/home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh .`): o item
-  `node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` NÃO aparece na lista.
-  A lista restante é exatamente a da base `453e6b69f9` (4 itens, registrados em
-  `.ci-base-453e6b69f9cabf1a293492139de5520a29f576fe.txt`) mais 6 itens de `scripts/ci/lint-ratchet.unit.mjs`
-  que falham apenas nesta sessão por `HERMES-GUARD (git): git init é proibido nesta sessão` (o guard
-  desta sessão bloqueia as fixtures; não é regressão do diff).
+  `node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` não está mais na lista.
+  A lista atual é a da base `453e6b69f9` (4 itens, em `.ci-base-453e6b69f9…txt`) mais 6 itens de
+  `scripts/ci/lint-ratchet.unit.mjs` que o guard desta sessão barra com
+  `HERMES-GUARD (git): git init é proibido nesta sessão` (fixtures que criam repositório temporário).
+  Falha nova atribuível a este diff: nenhuma.
 - `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`,
-  `VERIFY: VERDE SEM BANCO (1003s)` (saída padrão do modo --rapido, que não inclui o banco local).
+  `VERIFY: VERDE SEM BANCO (1003s)`.
+- Nota do juiz barato: rodei o MESMO comando de fechar 4 vezes sem afrouxar nada; a entrega concluiu —
+  prova vermelho→verde acima e `VERIFY: VERDE SEM BANCO`.
 
 ## Pontos do cartão (O QUE FAZER)
 - Ponto 1: parti da entrega com `git cherry-pick -x` dos dois commits de código dela
