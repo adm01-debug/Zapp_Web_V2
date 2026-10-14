@@ -1,6 +1,9 @@
 Especialista: workersql
 
 ## O que mudou e por quê
+- Arquivos no diff do commit (3 no total, 1 de teste): `.tmp/relato.md` (este relato, arquivo já
+  versionado na branch), `supabase/migrations/20261013235910_record_failed_login_escalation.sql` (novo) e
+  `supabase/tests/record_failed_login_escalation.sql` (novo, o teste).
 - `supabase/migrations/20261013235910_record_failed_login_escalation.sql` (novo, ADITIVO): recria
   `public.record_failed_login` com `CREATE OR REPLACE` (mesma assinatura, `SECURITY DEFINER`,
   `SET search_path TO 'public'`). A regressão vinha de
