@@ -2,12 +2,15 @@
  * Estado vazio da conversa + botao flutuante "Rolar para o final".
  *
  * Prova, com o componente REAL renderizado:
- * 1. conversa sem mensagens mostra "Nenhuma mensagem ainda" + apoio e o botao
- *    "Dizer olá" leva o foco ao compositor;
+ * 1. conversa sem mensagens mostra "Nenhuma mensagem ainda" + apoio; o botao
+ *    "Escrever mensagem" dispara `onEmptyAction` (prop; sem ela e no-op) e
+ *    nunca consulta o DOM; a regiao anuncia o vazio no aria-label, o bloco
+ *    tem role="status" e o texto secundario usa zinc-300 (#D4D4D8);
  * 2. o estado vazio nao aparece com carga em andamento nem com mensagens;
  * 3. "Rolar para o final" so aparece acima de 300px do fim e some no fim;
  * 4. o clique leva a lista ao fim (o guard de acompanhamento nao o bloqueia);
- * 5. com movimento reduzido nada se desloca (so opacidade).
+ * 5. com movimento reduzido nada se desloca (so opacidade);
+ * 6. o indicador de digitacao fica FORA do role="log" (posicao de leitura).
  */
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
@@ -171,22 +174,63 @@ function simularScroll(el: HTMLElement, scrollHeight: number, clientHeight: numb
 const botaoRolar = () => screen.queryByRole('button', { name: 'Rolar para o final' });
 
 describe('ChatMessagesArea — estado vazio da conversa', () => {
-  it('sem mensagens mostra o estado vazio e "Dizer olá" foca o compositor', () => {
-    const compositor = document.createElement('textarea');
-    compositor.setAttribute('aria-label', 'Digite sua mensagem');
-    document.body.appendChild(compositor);
-    (document.activeElement as HTMLElement | null)?.blur();
-
+  it('sem mensagens mostra o estado vazio com CTA "Escrever mensagem"', () => {
     renderArea(makeProps([]));
 
     const vazio = screen.getByTestId('chat-empty-state');
     expect(vazio).toHaveTextContent('Nenhuma mensagem ainda');
     expect(vazio).toHaveTextContent('Envie a primeira mensagem para começar.');
+    expect(screen.getByRole('button', { name: 'Escrever mensagem' })).toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dizer olá' }));
-    expect(document.activeElement).toBe(compositor);
+  it('CTA do estado vazio dispara onEmptyAction sem consultar o DOM', () => {
+    const qsSpy = vi.spyOn(document, 'querySelector');
+    const onEmptyAction = vi.fn();
+    renderArea(makeProps([], { onEmptyAction }));
 
-    compositor.remove();
+    fireEvent.click(screen.getByRole('button', { name: 'Escrever mensagem' }));
+
+    expect(onEmptyAction).toHaveBeenCalledTimes(1);
+    expect(qsSpy).not.toHaveBeenCalled();
+    qsSpy.mockRestore();
+  });
+
+  it('CTA do estado vazio sem onEmptyAction e no-op silencioso (nao lanca)', () => {
+    renderArea(makeProps([]));
+    expect(() =>
+      fireEvent.click(screen.getByRole('button', { name: 'Escrever mensagem' })),
+    ).not.toThrow();
+  });
+
+  it('regiao do log anuncia o vazio no proprio aria-label (derivado, sem prop nova)', () => {
+    renderArea(makeProps([]));
+    expect(screen.getByRole('log')).toHaveAttribute(
+      'aria-label',
+      'Mensagens da conversa, nenhuma mensagem ainda',
+    );
+  });
+
+  it('regiao do log mantem o rotulo padrao quando ha mensagens', () => {
+    renderArea(makeProps([makeMessage('msg-1')]));
+    expect(screen.getByRole('log')).toHaveAttribute('aria-label', 'Mensagens da conversa');
+  });
+
+  it('bloco vazio tem role="status" e mantem o data-testid', () => {
+    renderArea(makeProps([]));
+    expect(screen.getByTestId('chat-empty-state')).toHaveAttribute('role', 'status');
+  });
+
+  it('texto secundario do vazio usa zinc-300 (#D4D4D8, contraste AA no fundo escuro)', () => {
+    renderArea(makeProps([]));
+    expect(screen.getByText('Envie a primeira mensagem para começar.').className)
+      .toContain('text-zinc-300');
+  });
+
+  it('indicador de digitacao fica FORA do role="log" (posicao de leitura)', () => {
+    const { container } = renderArea(makeProps([makeMessage('msg-1')], { isContactTyping: true }));
+    const digitando = screen.getByText('Contato está digitando');
+    expect(screen.getByRole('log').contains(digitando)).toBe(false);
+    expect(container.contains(digitando)).toBe(true);
   });
 
   it('nao mostra o estado vazio enquanto carrega nem quando ha mensagens', () => {

@@ -68,6 +68,13 @@ interface ChatMessagesAreaProps {
    * Omitido = consumidor antigo, tratado como "nao carregando".
    */
   isLoading?: boolean;
+  /**
+   * Acao do botao "Escrever mensagem" do estado vazio (ex.: focar o
+   * compositor da conversa). O compositor e irmao desta area (vive no
+   * ChatPanel), entao o acoplamento vem por prop — nunca por consulta ao DOM.
+   * Omitido = no-op silencioso (area usada isolada, sem compositor).
+   */
+  onEmptyAction?: () => void;
 }
 
 export interface ChatMessagesAreaRef {
@@ -115,24 +122,12 @@ function distanceFromBottom(el: HTMLElement): number {
   return el.scrollHeight - el.scrollTop - el.clientHeight;
 }
 
-/**
- * Foca o compositor da conversa. O compositor e irmao desta area (vive no
- * ChatPanel), entao o foco vai pelo DOM — mesmo caminho ja usado pelo atalho da
- * aba Tarefas (`focarQuickAdd` em RealtimeInboxView). Sem compositor montado
- * (area usada isolada), a acao e um no-op silencioso.
- */
-function focusComposer(): void {
-  const composer = document.querySelector<HTMLTextAreaElement>(
-    'textarea[aria-label="Digite sua mensagem"], textarea[aria-label="Escrever mensagem"]',
-  );
-  composer?.focus();
-}
-
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
   hasOlderMessages, loadingOlderMessages, onLoadOlderMessages, isLoading = false,
+  onEmptyAction,
 }, ref) => {
   const queryClient = useQueryClient();
   const reduceMotion = useReducedMotion();
@@ -413,7 +408,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   return (
     <ReactionsBatchProvider messageIds={reactionMessageIds}>
     <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
-    <div ref={scrollContainerRef} onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
+    <div ref={scrollContainerRef} onScroll={handleScroll} role="log" aria-label={isEmpty ? 'Mensagens da conversa, nenhuma mensagem ainda' : 'Mensagens da conversa'} aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
       {showLoadOlder && (
         <div className={cn(OLDER_ROW_CLASS, 'sticky top-0 z-10')} data-testid="older-messages-control">
           <button
@@ -444,6 +439,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       )}
       {isEmpty && (
         <div
+          role="status"
           data-testid="chat-empty-state"
           className="flex min-h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center"
         >
@@ -472,14 +468,15 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
           </motion.div>
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">Nenhuma mensagem ainda</p>
-            <p className="text-xs text-muted-foreground">Envie a primeira mensagem para começar.</p>
+            {/* zinc-300 (#D4D4D8): contraste AA (~7:1) sobre fundo escuro. */}
+            <p className="text-xs text-zinc-300">Envie a primeira mensagem para começar.</p>
           </div>
           <button
             type="button"
-            onClick={focusComposer}
+            onClick={() => { onEmptyAction?.(); }}
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-card-elevated hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
           >
-            Dizer olá
+            Escrever mensagem
           </button>
         </div>
       )}
@@ -580,9 +577,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
         )}
       </AnimatePresence>
 
-      <div className="flex justify-start pl-10 mt-4">
-        <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />
       </div>
+      {/* Indicador de digitacao FORA do role="log": presenca ("… está digitando")
+       * nao e historico lido de cima a baixo; dentro do log o leitor anuncia a
+       * mudanca no meio da leitura sequencial (R2-INB-009 achado 009). */}
+      <div className="flex justify-start px-4 pb-2 pt-1 md:px-8">
+        <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />
       </div>
       <AnimatePresence>
         {showScrollToBottom && (
