@@ -96,16 +96,18 @@ function createHarness(startAt = 1000) {
   const invokeConnect = vi.fn<InvokeConnect>(async () => ({ data: { ok: true }, error: null }));
 
   let clock = startAt;
+  const getNow = () => clock;
   const store = createConnectionsHealthStore({
     client: { from, channel, removeChannel },
     invokeConnect,
-    now: () => clock,
+    now: getNow,
   });
 
   return {
     store,
     channel,
     removeChannel,
+    now: getNow,
     resolveAt: (index: number, rows: Row[]) => resolvers[index]?.({ data: rows, error: null }),
     emit: (payload: unknown) => payloadCallback?.(payload),
     setClock: (value: number) => { clock = value; },
@@ -127,7 +129,9 @@ function restore(harness: Harness, id: string, instanceId = `inst-${id}`) {
 }
 
 async function mountAlerts(harness: Harness, rows: Row[]) {
-  const view = renderHook(() => useConnectionDropAlerts({ store: harness.store }));
+  // O relógio do hook é o MESMO do store: `at` dos eventos e "agora" andam
+  // juntos, então velhice da queda é determinística no teste.
+  const view = renderHook(() => useConnectionDropAlerts({ store: harness.store, now: harness.now }));
   await act(async () => { harness.resolveAt(0, rows); });
   await waitFor(() => expect(harness.store.getSnapshot().loading).toBe(false));
   return view;
@@ -226,15 +230,20 @@ describe('useConnectionDropAlerts — aviso global de queda de conexão', () => 
     await waitFor(() => expect(h.toast).toHaveBeenCalledTimes(2));
   });
 
-  it('não avisa quando o usuário desligou a notificação no navegador', async () => {
+  it('preferência do navegador desligada: toast dentro do app sim, notificação do navegador não', async () => {
+    // A preferência do navegador regula SÓ o navegador: o cartão pede toast E
+    // notificação, e o toast continua para staff (só o silêncio o cala).
     h.browserNotifications = false;
     const harness = createHarness();
     await mountAlerts(harness, [row('A', 'connected')]);
 
     drop(harness, 'A');
-    await act(async () => { await Promise.resolve(); });
 
-    expect(h.toast).not.toHaveBeenCalled();
+    await waitFor(() => expect(h.toast).toHaveBeenCalledTimes(1));
+    expect(h.toast).toHaveBeenCalledWith(
+      expect.objectContaining({ description: expect.stringContaining('Conexão A') }),
+    );
+    await act(async () => { await Promise.resolve(); });
     expect(h.showBrowserNotification).not.toHaveBeenCalled();
   });
 
@@ -278,5 +287,79 @@ describe('useConnectionDropAlerts — aviso global de queda de conexão', () => 
     view.rerender();
     await act(async () => { await Promise.resolve(); });
     expect(h.toast).toHaveBeenCalledTimes(1);
+  });
+
+  it('queda no silêncio não vira rajada quando o silêncio acaba', async () => {
+    h.quiet = true;
+    const harness = createHarness();
+    const view = await mountAlerts(harness, [row('A', 'connected')]);
+
+    drop(harness, 'A');
+    await act(async () => { await Promise.resolve(); });
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
+
+    h.quiet = false;
+    view.rerender();
+    await act(async () => { await Promise.resolve(); });
+
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
+  });
+
+  it('preferência desligada e depois ligada não avisa a queda antiga', async () => {
+    h.browserNotifications = false;
+    const harness = createHarness();
+    const view = await mountAlerts(harness, [row('A', 'connected')]);
+
+    drop(harness, 'A');
+    // Com a preferência desligada o toast dentro do app já saiu, mas o
+    // navegador não — e a queda fica marcada como vista.
+    await waitFor(() => expect(h.toast).toHaveBeenCalledTimes(1));
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
+
+    h.browserNotifications = true;
+    view.rerender();
+    await act(async () => { await Promise.resolve(); });
+
+    // Ligar a preferência não reavisa a queda antiga, em nenhum canal.
+    expect(h.toast).toHaveBeenCalledTimes(1);
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
+  });
+
+  it('queda seguida de reconexão antes do papel resolver não avisa', async () => {
+    h.isSupervisor = false;
+    const harness = createHarness();
+    const view = await mountAlerts(harness, [row('A', 'connected')]);
+
+    drop(harness, 'A');
+    restore(harness, 'A');
+    await act(async () => { await Promise.resolve(); });
+    expect(h.toast).not.toHaveBeenCalled();
+
+    h.isSupervisor = true;
+    view.rerender();
+    await act(async () => { await Promise.resolve(); });
+
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
+  });
+
+  it('queda mais antiga que a janela não é reapresentada quando o papel resolve', async () => {
+    h.isSupervisor = false;
+    const harness = createHarness(1_000);
+    const view = await mountAlerts(harness, [row('A', 'connected')]);
+
+    drop(harness, 'A');
+    await act(async () => { await Promise.resolve(); });
+    expect(h.toast).not.toHaveBeenCalled();
+
+    harness.setClock(1_000 + DROP_ALERT_DEDUP_MS + 1);
+    h.isSupervisor = true;
+    view.rerender();
+    await act(async () => { await Promise.resolve(); });
+
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(h.showBrowserNotification).not.toHaveBeenCalled();
   });
 });
