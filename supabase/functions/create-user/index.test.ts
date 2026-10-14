@@ -20,6 +20,8 @@
 //   (j)  createUser falha                   -> erro GENÉRICO (não vaza a mensagem do provedor);
 //   (k)  auditoria gravada                  -> ator, ação e user_id criado, sem e-mail/senha;
 //   (l)  falha ao gravar auditoria          -> não 200 + compensação.
+//   (m)  senha fora da política do app      -> 400 com mensagem pt-BR por campo
+//        (min 8 / maiúscula / minúscula / número / especial) e NÃO cria usuário.
 //
 // Run with:
 //   deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/create-user/index.test.ts
@@ -39,7 +41,8 @@ const NEW_USER_ID = "20000000-0000-0000-0000-00000000000b";
 
 const BODY_BASE = {
   email: "novo@empresa.com",
-  password: "senha-forte-123",
+  // Senha dentro da política do app: 8+, maiúscula, minúscula, número e especial.
+  password: "Senha-forte-123",
   name: "Novo Usuário",
 };
 
@@ -329,4 +332,57 @@ Deno.test("R2-AUTH-016b (l): falha ao gravar auditoria -> erro + compensação",
   const { admin, deleted } = fakeAdmin({ failOn: { "audit_logs:insert": { message: "permission denied" } } });
   const res = await run(BODY_BASE, admin);
   await assertFalhaComCompensacao(res, deleted, "auditoria");
+});
+
+// R2-AUTH-016c: a Edge criava conta com senha fora da política que a tela aplica
+// (ResetPassword.tsx / useAuthForm.ts). Cada caso isola UMA regra para a mensagem
+// por campo ser determinística. O campo `fieldErrors` é o formato que o PF-11
+// consome; nenhum caso pode chegar a createUser.
+async function assertSenhaRecusada(senha: string, esperada: string, cenario: string) {
+  const { admin, calls } = fakeAdmin();
+  const res = await run({ ...BODY_BASE, password: senha }, admin);
+  assert(res.status === 400, `${cenario}: esperado 400, veio ${res.status}`);
+  const body = await res.json() as Record<string, unknown>;
+  assert(body.success !== true, `${cenario}: corpo não pode trazer success:true — ${JSON.stringify(body)}`);
+  const fieldErrors = body.fieldErrors as Record<string, string> | undefined;
+  assert(
+    fieldErrors?.password === esperada,
+    `${cenario}: fieldErrors.password esperado "${esperada}", veio ${JSON.stringify(fieldErrors)}`,
+  );
+  assert(
+    typeof body.error === "string" && body.error.includes(esperada),
+    `${cenario}: o texto do toast deve trazer a mensagem — ${JSON.stringify(body.error)}`,
+  );
+  assert(
+    !calls.includes("auth.admin.createUser"),
+    `${cenario}: nenhum usuário pode ser criado — ${JSON.stringify(calls)}`,
+  );
+}
+
+Deno.test("R2-AUTH-016c (m): senha sem maiúscula -> 400 e não cria usuário", async () => {
+  await assertSenhaRecusada("senha@123", "Deve conter letra maiúscula", "sem maiúscula");
+});
+
+Deno.test("R2-AUTH-016c (m): senha sem minúscula -> 400 e não cria usuário", async () => {
+  await assertSenhaRecusada("SENHA@123", "Deve conter letra minúscula", "sem minúscula");
+});
+
+Deno.test("R2-AUTH-016c (m): senha sem número -> 400 e não cria usuário", async () => {
+  await assertSenhaRecusada("Senha@Abc", "Deve conter número", "sem número");
+});
+
+Deno.test("R2-AUTH-016c (m): senha sem caractere especial -> 400 e não cria usuário", async () => {
+  await assertSenhaRecusada("Senha123Ab", "Deve conter caractere especial", "sem caractere especial");
+});
+
+Deno.test("R2-AUTH-016c (m): senha curta (6) -> 400 e não cria usuário", async () => {
+  await assertSenhaRecusada("S3nh@1", "Mínimo 8 caracteres", "curta (6)");
+});
+
+Deno.test("R2-AUTH-016c (m): senha que cumpre a política passa a validação e cria", async () => {
+  const { admin, calls } = fakeAdmin();
+  // Minúscula + maiúscula + número + especial e 8+ caracteres.
+  const res = await run({ ...BODY_BASE, password: "Abcdef1!" }, admin);
+  assert(res.status === 200, `senha válida deve criar, veio ${res.status}`);
+  assert(calls.includes("auth.admin.createUser"), `createUser deveria ter rodado: ${JSON.stringify(calls)}`);
 });

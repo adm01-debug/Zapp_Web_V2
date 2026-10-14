@@ -87,7 +87,19 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
 
     const bodySchema = z.object({
       email: z.string().email("Email inválido").max(255),
-      password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").max(128),
+      // R2-AUTH-016c: a política de senha do app (ResetPassword.tsx /
+      // useAuthForm.ts) é min 8 + maiúscula + minúscula + número + especial.
+      // Antes o servidor só exigia 8 caracteres, então a tela aprovava e a Edge
+      // criava conta com senha fora da política. Mesmas mensagens pt-BR do app,
+      // na mesma ordem das regras.
+      password: z
+        .string()
+        .min(8, "Mínimo 8 caracteres")
+        .max(128)
+        .regex(/[A-Z]/, "Deve conter letra maiúscula")
+        .regex(/[a-z]/, "Deve conter letra minúscula")
+        .regex(/[0-9]/, "Deve conter número")
+        .regex(/[^A-Za-z0-9]/, "Deve conter caractere especial"),
       name: z.string().min(1, "Nome é obrigatório").max(255),
       nickname: z.string().max(100).optional(),
       signature: z.string().max(500).optional(),
@@ -101,8 +113,19 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
 
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) {
-      const errors = parsed.error.flatten().fieldErrors;
-      return errorResponse(Object.values(errors).flat().join("; "), 400, req);
+      // R2-AUTH-016c: uma mensagem por campo, no formato Record<field, message>
+      // que o PF-11 consome (mesma forma do fieldErrors do useAuthForm: o
+      // primeiro issue de cada campo define a mensagem). O `error` continua
+      // trazendo o texto completo para quem só lê o toast.
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0];
+        if (typeof field === "string" && !(field in fieldErrors)) {
+          fieldErrors[field] = issue.message;
+        }
+      }
+      const error = parsed.error.issues.map((issue) => issue.message).join("; ");
+      return jsonResponse({ error, fieldErrors }, 400, req);
     }
 
     const { email, password, name, nickname, signature, job_title, avatar_url, role, gmail_email, google_services, dropbox_email } = parsed.data;
