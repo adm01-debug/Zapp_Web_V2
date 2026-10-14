@@ -103,6 +103,8 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
 
   const { addMutation, removeMutation } = useReactionMutations(messageId, profile?.id, options);
 
+  const isReacting = addMutation.isPending || removeMutation.isPending;
+
   const addReaction = useCallback((emoji: string) => addMutation.mutateAsync(emoji), [addMutation]);
   const removeReaction = useCallback((emoji: string) => removeMutation.mutateAsync(emoji), [removeMutation]);
 
@@ -124,6 +126,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
     addReaction,
     removeReaction,
     hasReacted,
+    isReacting,
     currentProfileId: profile?.id,
     refetch,
   };
