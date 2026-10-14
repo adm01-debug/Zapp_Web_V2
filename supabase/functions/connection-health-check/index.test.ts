@@ -58,6 +58,8 @@ interface Fake {
   tokenRpcError: boolean;
   alerts: Array<Record<string, unknown>>;
   healthLogs: Array<Record<string, unknown>>;
+  /** linhas que o handler grava em `audit_logs` (trilha de transição de status) */
+  auditLogs: Array<Record<string, unknown>>;
   connUpdates: Array<Record<string, unknown>>;
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
@@ -72,6 +74,7 @@ function baseFake(): Fake {
     tokenRpcError: false,
     alerts: [],
     healthLogs: [],
+    auditLogs: [],
     connUpdates: [],
     calls: [],
     rpcCalls: [],
@@ -113,6 +116,10 @@ function result(
   }
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
     fake.healthLogs.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'audit_logs' && op === 'insert' && pending) {
+    fake.auditLogs.push(pending);
     return { data: null, error: null };
   }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
@@ -528,4 +535,70 @@ Deno.test('N-162: service key interna continua passando sem exigir papel', async
   const deps = makeDepsWithUser(fake, 'user-ignorado', false);
   const res = await run(fake, makeUserRequest((deps as { serviceKey: string }).serviceKey), deps);
   assert(res.status === 200, `service key deve passar, veio ${res.status}`);
+});
+
+// ──────────────────────── CA2: trilha de auditoria ─────────────────────────
+
+Deno.test('CA2: queda detectada pelo monitor grava a transição em audit_logs, no formato que o diálogo lê', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-a', phone_number: '+5511999999999' }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-a': 'tok-da-inst-a' };
+  // Provedor responde 'close' → o monitor transiciona a linha para 'disconnected'.
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+
+  // Duas checagens iguais da MESMA queda: o CAS só deixa transicionar uma vez.
+  await run(fake);
+  await run(fake);
+
+  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha para uma única transição, veio ${fake.auditLogs.length}`);
+  const ev = fake.auditLogs[0];
+  assert(ev.action === 'connection_disconnected', `ação inesperada: ${String(ev.action)}`);
+  assert(ev.entity_type === 'connection', `entity_type inesperado: ${String(ev.entity_type)}`);
+  assert(ev.entity_id === 'c1', `entity_id deve ser o uuid da linha: ${String(ev.entity_id)}`);
+  assert(ev.user_id === null, 'transição automática não tem autor — user_id nulo (a tela mostra "Sistema")');
+  const details = ev.details as Record<string, unknown>;
+  // O diálogo de auditoria filtra por details.instance_id: sem ele a linha não aparece.
+  assert(details.instance_id === 'inst-a', `details.instance_id deve ser o da conexão: ${String(details.instance_id)}`);
+  assert(details.previous_status === 'connected', `previous_status inesperado: ${String(details.previous_status)}`);
+  assert(details.status === 'disconnected', `status inesperado: ${String(details.status)}`);
+  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
+  // Sem telefone, token nem payload bruto do provedor.
+  const serializado = JSON.stringify(ev);
+  assert(!serializado.includes('+5511999999999'), 'a trilha NÃO pode conter o telefone');
+  assert(!serializado.includes('tok-da-inst-a'), 'a trilha NÃO pode conter o token');
+  assert(!serializado.includes('"close"'), 'a trilha NÃO pode conter payload bruto do provedor');
+});
+
+Deno.test('CA2: reconexão detectada pelo monitor grava connection_connected', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c9', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c9: 'disconnected' };
+  fake.tokens = { 'inst-b': 'tok-da-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  await run(fake);
+
+  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha, veio ${fake.auditLogs.length}`);
+  const ev = fake.auditLogs[0];
+  assert(ev.action === 'connection_connected', `ação inesperada: ${String(ev.action)}`);
+  const details = ev.details as Record<string, unknown>;
+  assert(details.instance_id === 'inst-b', `details.instance_id inesperado: ${String(details.instance_id)}`);
+  assert(details.previous_status === 'disconnected', `previous_status inesperado: ${String(details.previous_status)}`);
+  assert(details.status === 'connected', `status inesperado: ${String(details.status)}`);
+  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
+});
+
+Deno.test('CA2: checagem SEM transição não grava linha de trilha', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  // Já está 'connected' e o provedor confirma 'open': nada muda na linha.
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  const res = await run(fake);
+
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(fake.auditLogs.length === 0, `sem mudança de status não pode haver trilha, veio ${fake.auditLogs.length}`);
 });
