@@ -282,7 +282,16 @@ describe('FilesTab (adversarial) — conversa sem arquivo no periodo', () => {
 });
 
 describe('FilesTab (adversarial) — mais de 60 arquivos', () => {
-  it('tres paginas de 60: a varredura busca a pagina antiga ate CRUZAR o inicio do periodo e para nela', async () => {
+  // Os dois casos abaixo varrem dezenas/centenas de paginas e, por isso, chegam a renderizar o
+  // componente ~tantas vezes quantas paginas: e trabalho DETERMINISTICO (sem rede nem relogio),
+  // mas medido no relogio de PAREDE. Isolado, este arquivo passa com folga; na suite completa o
+  // worker e preemptado pela carga e o `testTimeout: 15000` global estoura por LENTIDAO — sempre
+  // com "Test timed out", nunca com uma assercao de contagem quebrada (o teto segue respeitado).
+  // O teto proprio de cada caso cobre a carga e NAO afrouxa assercao nenhuma: as contagens
+  // exatas (`toHaveBeenCalledTimes(MAX_PAGES_TO_LOAD_ALL)`) continuam iguais.
+  // Medido em 13/10/2026 (maquina de 24 nucleos): "tres paginas" 2,7-3,8 s isolado; "caminho do
+  // De" 5,8-7,6 s isolado e 17-22 s (reprovando) com 12 workers em paralelo.
+  it('tres paginas de 60: a varredura busca a pagina antiga ate CRUZAR o inicio do periodo e para nela', { timeout: 30_000 }, async () => {
     const fetchNextPage = vi.fn().mockResolvedValue({ hasNextPage: true });
     usarMidia(pagina('p1', Date.now()), { hasMore: true, fetchNextPage });
     const { rerenderTab } = renderTab();
@@ -311,7 +320,7 @@ describe('FilesTab (adversarial) — mais de 60 arquivos', () => {
     expect(MAX_PAGES_TO_LOAD_ALL).toBeGreaterThanOrEqual(100);
   });
 
-  it('caminho do "De": a varredura que nunca cruza o inicio para no TETO, sem skeleton infinito', async () => {
+  it('caminho do "De": a varredura que nunca cruza o inicio para no TETO, sem skeleton infinito', { timeout: 60_000 }, async () => {
     // Cada pagina traz um item mais NOVO que o "De" (5 dias atras): o limite nunca e cruzado,
     // entao o unico freio possivel e o teto. O item esta DENTRO do periodo — a lista nao fica
     // vazia e da para medir o teto sem confundir com o vazio do periodo.
