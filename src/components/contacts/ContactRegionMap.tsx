@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type mapboxgl from 'mapbox-gl';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { loadMapbox } from '@/lib/mapboxLoader';
 import {
@@ -208,6 +209,16 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
             <Button size="sm" variant="outline" onClick={() => { setMapError(null); setAttempt((n) => n + 1); }}>
               Tentar novamente
             </Button>
+          </div>
+        )}
+        {plotted.length === 0 && preciseContacts.length === 0 && (
+          <div
+            data-testid="contact-regiao-empty"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-muted/95 px-4 text-center"
+          >
+            <MapPin className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+            <p className="text-sm font-semibold text-foreground">Sem coordenadas</p>
+            <p className="text-caption max-w-xs">Nenhum contato com DDD conhecido ou endereço confirmado nesta página.</p>
           </div>
         )}
       </div>

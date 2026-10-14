@@ -77,8 +77,27 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
     .map((c) => ({ id: c.id, name: c.name, lat: c.latitude, lng: c.longitude })),
   [contacts]);
 
+  const isEmpty = contacts.length === 0;
+
   return (
     <div className="space-y-4">
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <MapPin className="w-5 h-5 text-primary" aria-hidden="true" />
+        <h2 className="font-display text-lg font-bold text-foreground">Mapa</h2>
+        <p className="text-caption">Distribuição dos contatos por região (DDD e endereço confirmado).</p>
+      </header>
+
+      {isEmpty ? (
+        <div
+          data-testid="contact-mapa-empty"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
+        >
+          <MapPin className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+          <p className="text-sm font-semibold text-foreground">Sem coordenadas</p>
+          <p className="text-caption max-w-xs">Nenhum contato mapeado nesta página para distribuir por região.</p>
+        </div>
+      ) : (
+      <>
       {/* Summary Bar */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -187,6 +206,8 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }

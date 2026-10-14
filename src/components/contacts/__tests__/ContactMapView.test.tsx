@@ -64,4 +64,19 @@ describe('ContactMapView — mapa x localização (R2-AUTH-038)', () => {
     expect(screen.getByText('2')).toBeInTheDocument(); // 2 regiões
     expect(screen.getByText('regiões')).toBeInTheDocument();
   });
+
+  // RD-086: a visão de Mapa precisa de estado vazio claro quando não há
+  // contato na página — antes só sobrava a legenda com "0 regiões" e um mapa nu.
+  it('sem contatos mostra "Sem coordenadas" no lugar do mapa', () => {
+    render(<ContactMapView contacts={[]} />);
+    expect(screen.getByTestId('contact-mapa-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem coordenadas')).toBeInTheDocument();
+    expect(screen.queryByText(/regiões$/)).not.toBeInTheDocument();
+  });
+
+  it('com contatos mantém a visão de mapa (sem o aviso de vazio) e o cabeçalho', () => {
+    render(<ContactMapView contacts={contacts} />);
+    expect(screen.queryByTestId('contact-mapa-empty')).not.toBeInTheDocument();
+    expect(screen.getByText('Mapa')).toBeInTheDocument();
+  });
 });
