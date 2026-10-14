@@ -25,7 +25,8 @@ export default function RolesPage() {
   const {
     loading, loadError, retryLoad, search, setSearch, showAddDialog, setShowAddDialog,
     selectedUser, setSelectedUser, selectedRole, setSelectedRole,
-    availableUsers, userToRemove, setUserToRemove, updating,
+    availableUsers, availableUsersError, retryAvailableUsers,
+    userToRemove, setUserToRemove, updating,
     handleAddRole, handleRemoveRole, groupedUsers,
   } = useRolesPageState();
 
@@ -117,7 +118,7 @@ export default function RolesPage() {
                                 <p className="text-xs text-muted-foreground truncate">{user.profile?.email}</p>
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => setUserToRemove(user)} className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
+                            <Button variant="ghost" size="sm" onClick={() => setUserToRemove(user)} aria-label={`Remover role de ${user.profile?.name || 'usuário'}`} className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </motion.div>
@@ -167,6 +168,16 @@ export default function RolesPage() {
                 </SelectContent>
               </Select>
             </div>
+            {availableUsersError && (
+              <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 space-y-2">
+                <p className="text-sm font-medium">Não foi possível carregar os usuários</p>
+                <p className="text-xs text-muted-foreground break-words">{availableUsersError}</p>
+                <Button variant="outline" size="sm" onClick={() => { void retryAvailableUsers(); }}>
+                  <RotateCw className="w-4 h-4 mr-2" />
+                  Tentar de novo
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>

@@ -41,6 +41,9 @@ export function useRolesPageState() {
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedRole, setSelectedRole] = useState<RoleType>('agent');
   const [availableUsers, setAvailableUsers] = useState<{ user_id: string; name: string; email: string }[]>([]);
+  // R2-AUTH-035 (irmão): a falha ao carregar os usuários disponíveis não pode virar
+  // uma lista vazia no diálogo — isso diria "não há usuários" quando a consulta quebrou.
+  const [availableUsersError, setAvailableUsersError] = useState<string | null>(null);
   const [userToRemove, setUserToRemove] = useState<UserWithRole | null>(null);
   const [updating, setUpdating] = useState(false);
 
@@ -63,7 +66,13 @@ export function useRolesPageState() {
   };
 
   const fetchAvailableUsers = async () => {
-    const { data } = await supabase.from('profiles').select('user_id, name, email').order('name');
+    const { data, error } = await supabase.from('profiles').select('user_id, name, email').order('name');
+    if (error) {
+      setAvailableUsers([]);
+      setAvailableUsersError(error.message || 'Não foi possível carregar os usuários.');
+      return;
+    }
+    setAvailableUsersError(null);
     if (data) {
       const usersWithRoles = users.map(u => u.user_id);
       setAvailableUsers(data.filter(u => !usersWithRoles.includes(u.user_id)) as { user_id: string; name: string; email: string }[]);
@@ -108,7 +117,8 @@ export function useRolesPageState() {
     users, loading, loadError, retryLoad: fetchUsers,
     search, setSearch, showAddDialog, setShowAddDialog,
     selectedUser, setSelectedUser, selectedRole, setSelectedRole,
-    availableUsers, userToRemove, setUserToRemove, updating,
+    availableUsers, availableUsersError, retryAvailableUsers: fetchAvailableUsers,
+    userToRemove, setUserToRemove, updating,
     handleAddRole, handleRemoveRole, groupedUsers,
   };
 }

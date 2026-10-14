@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Plus, Trash2, Loader2, Users, ArrowRight } from 'lucide-react';
+import { Star, Plus, Trash2, Loader2, Users, ArrowRight, AlertTriangle, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Profile {
   id: string;
@@ -23,52 +24,81 @@ interface Grant {
   target_profile?: Profile;
 }
 
+/**
+ * O erro do PostgREST NÃO é instância de `Error` (é um objeto com `message`).
+ * Sem ler esse campo a tela mostraria um aviso genérico.
+ */
+function mensagemDoErro(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg) return msg;
+  }
+  return 'Não foi possível carregar as permissões de visibilidade.';
+}
+
 export function VisibilityGrantsManager() {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [specialAgents, setSpecialAgents] = useState<Profile[]>([]);
   const [allAgents, setAllAgents] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [grantToRemove, setGrantToRemove] = useState<Grant | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [selectedSpecialAgent, setSelectedSpecialAgent] = useState('');
   const [selectedTargetAgent, setSelectedTargetAgent] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
 
-    // Fetch special agents (users with special_agent role)
-    const { data: specialAgentRoles } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'special_agent');
+    try {
+      // Fetch special agents (users with special_agent role)
+      const { data: specialAgentRoles, error: specialRolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'special_agent');
+      if (specialRolesError) throw specialRolesError;
 
-    const specialAgentUserIds = specialAgentRoles?.map(r => r.user_id) || [];
+      const specialAgentUserIds = specialAgentRoles?.map(r => r.user_id) || [];
 
-    // Fetch all profiles
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, user_id, name, email')
-      .order('name');
+      // Fetch all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, user_id, name, email')
+        .order('name');
+      if (profilesError) throw profilesError;
 
-    if (profiles) {
-      setAllAgents(profiles);
-      setSpecialAgents(profiles.filter(p => specialAgentUserIds.includes(p.user_id)));
+      if (profiles) {
+        setAllAgents(profiles);
+        setSpecialAgents(profiles.filter(p => specialAgentUserIds.includes(p.user_id)));
+      }
+
+      // Fetch existing grants
+      const { data: grantsData, error: grantsError } = await supabase
+        .from('agent_visibility_grants')
+        .select('id, agent_id, can_see_agent_id');
+      if (grantsError) throw grantsError;
+
+      if (grantsData && profiles) {
+        const mapped = grantsData.map(g => ({
+          ...g,
+          agent_profile: profiles.find(p => p.id === g.agent_id),
+          target_profile: profiles.find(p => p.id === g.can_see_agent_id),
+        }));
+        setGrants(mapped);
+      }
+    } catch (error) {
+      // Falha nunca pode virar "nenhum agente especial / nenhuma permissão":
+      // isso anunciaria tela vazia quando a consulta quebrou. O erro fica explícito.
+      setGrants([]);
+      setSpecialAgents([]);
+      setAllAgents([]);
+      setLoadError(mensagemDoErro(error));
+    } finally {
+      setLoading(false);
     }
-
-    // Fetch existing grants
-    const { data: grantsData } = await supabase
-      .from('agent_visibility_grants')
-      .select('id, agent_id, can_see_agent_id');
-
-    if (grantsData && profiles) {
-      const mapped = grantsData.map(g => ({
-        ...g,
-        agent_profile: profiles.find(p => p.id === g.agent_id),
-        target_profile: profiles.find(p => p.id === g.can_see_agent_id),
-      }));
-      setGrants(mapped);
-    }
-
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -118,16 +148,22 @@ export function VisibilityGrantsManager() {
     setSaving(false);
   };
 
-  const handleRemoveGrant = async (grantId: string) => {
+  const handleRemoveGrant = async () => {
+    if (!grantToRemove) return;
+    setRemoving(true);
+
     const { error } = await supabase
       .from('agent_visibility_grants')
       .delete()
-      .eq('id', grantId);
+      .eq('id', grantToRemove.id);
 
+    setRemoving(false);
     if (error) {
+      // Nada é anunciado como concluído: o diálogo continua aberto para nova tentativa.
       toast.error('Erro ao remover permissão');
     } else {
       toast.success('Permissão removida');
+      setGrantToRemove(null);
       fetchData();
     }
   };
@@ -146,6 +182,24 @@ export function VisibilityGrantsManager() {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card className="border-destructive/40" role="alert">
+        <CardContent className="py-10 text-center space-y-3">
+          <AlertTriangle className="w-10 h-10 mx-auto text-destructive" />
+          <div>
+            <p className="font-medium">Não foi possível carregar as permissões de visibilidade</p>
+            <p className="text-sm text-muted-foreground break-words">{loadError}</p>
+          </div>
+          <Button variant="outline" onClick={() => { void fetchData(); }}>
+            <RotateCw className="w-4 h-4 mr-2" />
+            Tentar de novo
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -271,7 +325,8 @@ export function VisibilityGrantsManager() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveGrant(grant.id)}
+                        onClick={() => setGrantToRemove(grant)}
+                        aria-label={`Remover visibilidade de ${grant.target_profile?.name || 'agente'}`}
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -284,6 +339,28 @@ export function VisibilityGrantsManager() {
           </Card>
         ))}
       </div>
+
+      <AlertDialog open={!!grantToRemove} onOpenChange={(open) => { if (!open) setGrantToRemove(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover visibilidade?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o acesso de <strong>{grantToRemove?.agent_profile?.name}</strong> aos
+              contatos de <strong>{grantToRemove?.target_profile?.name}</strong>? O agente deixa de ver esses contatos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { void handleRemoveGrant(); }}
+              disabled={removing}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {removing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
