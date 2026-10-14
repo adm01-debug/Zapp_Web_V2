@@ -1,4 +1,4 @@
-Especialista: semisenior (area-front-hooks)
+Especialista: hugo
 Troquei o comentário contraditório acima da chamada get_team_messages_page por uma frase única e verdadeira: a RPC recebe p_before_id e desempata (created_at, id) no servidor.
 
 ## Pontos do revisor
