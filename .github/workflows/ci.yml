@@ -354,6 +354,15 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
+      # W85: revisa dependências novas introduzidas no PR; falha se alguma tiver
+      # severidade HIGH ou maior. Só em pull_request: o evento push não tem diff
+      # de dependências relevante (o lock já foi auditado no passo anterior).
+      - name: 🔍 Dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
   # ===========================================
   # JOB 5: E2E Tests (Playwright)
   # ===========================================
