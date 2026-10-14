@@ -1,3 +1,4 @@
+Especialista: iris
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
@@ -17,6 +18,7 @@ FAIXA DO PAI: commits a1ffcde343 (ADR-007 + Edge `post-login-gate` + testes, do 
 - vermelho antes: `git show 338a420d1e:src/pages/SSOCallback.tsx > src/pages/SSOCallback.tsx && npx vitest run src/pages/__tests__/SSOCallback.porteiro-pos-login.test.tsx` → `Test Files 1 failed (1); Tests 5 failed | 1 passed (6)` (a tela sem porteiro entra com qualquer sessão: as 3 recusas, a consulta única e o caminho liberado falham).
 - verde depois: `npx vitest run src/pages/__tests__/SSOCallback.porteiro-pos-login.test.tsx src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx` → `Test Files 2 passed (2); Tests 17 passed (17)`.
 - tipagem: `npx tsc --noEmit -p tsconfig.app.json` → nenhum erro em `SSOCallback`.
+- verificação do cartão: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos (146s)`, `OK lint`, `OK migrations`; linha final `VERIFY: VERDE SEM BANCO (151s) — o banco NÃO foi verificado; sem nome de conjunto` (este cartão não toca banco).
 - comando e resultado completos no bloco FATOS MEDIDOS do fechar.
 
 ## O que NÃO fiz e por quê
