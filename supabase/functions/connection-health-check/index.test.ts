@@ -1,4 +1,10 @@
-import { handleConnectionHealthCheck } from './index.ts';
+import {
+  handleConnectionHealthCheck,
+  evaluateOpenConnectionHealth,
+  parseOwnerJid,
+  parseSilenceMinutes,
+  inboxSilenceDedupeKey,
+} from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -61,6 +67,20 @@ interface Fake {
   connUpdates: Array<Record<string, unknown>>;
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
+  /** corpos crus das chamadas de rede (para inspecionar o e-mail do Resend) */
+  bodies: string[];
+  /** última mensagem recebida devolvida por messages (camada 3 / caixa muda) */
+  lastInbound: Array<{ created_at: string }>;
+  /** linhas de connection_alert_preferences (opt-in por canal/tipo) */
+  prefs: Array<Record<string, unknown>>;
+  /** admins (id + email) para o fan-out de e-mail */
+  adminProfiles: Array<{ id: string; email: string }>;
+  /** pushes gravados em app_notifications */
+  appNotifications: Array<unknown>;
+  /** deletes em warroom_alerts (auto-resolve), com os filtros aplicados */
+  alertDeletes: Array<Array<[string, string]>>;
+  /** resposta de is_within_business_hours */
+  withinHours: boolean;
   fetchImpl: (call: { path: string; apikey: string | null }) => Response;
 }
 
@@ -75,6 +95,13 @@ function baseFake(): Fake {
     connUpdates: [],
     calls: [],
     rpcCalls: [],
+    bodies: [],
+    lastInbound: [],
+    prefs: [],
+    adminProfiles: [],
+    appNotifications: [],
+    alertDeletes: [],
+    withinHours: false,
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
   };
 }
@@ -127,6 +154,23 @@ function result(
         .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null })),
       error: null,
     };
+  }
+  if (op === 'select' && table === 'messages') {
+    return { data: fake.lastInbound[0] ?? null, error: null };
+  }
+  if (op === 'select' && table === 'connection_alert_preferences') {
+    return { data: fake.prefs, error: null };
+  }
+  if (op === 'select' && table === 'profiles') {
+    return { data: fake.adminProfiles, error: null };
+  }
+  if (op === 'insert' && table === 'app_notifications' && pending) {
+    fake.appNotifications.push(pending);
+    return { data: null, error: null };
+  }
+  if (op === 'delete' && table === 'warroom_alerts') {
+    fake.alertDeletes.push(filters);
+    return { data: null, error: null };
   }
   return { data: [], error: null };
 }
@@ -195,6 +239,9 @@ function makeDeps(fake: Fake): any {
           const instance = params?.p_instance_id as string;
           return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
         }
+        if (name === 'is_within_business_hours') {
+          return Promise.resolve({ data: fake.withinHours, error: null });
+        }
         return Promise.resolve({ data: null, error: null });
       },
       auth: {
@@ -218,6 +265,8 @@ async function run(fake: Fake, req?: Request, deps?: unknown): Promise<Response>
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(input)).pathname;
     const apikey = ((init?.headers ?? {}) as Record<string, string>).apikey ?? null;
+    const body = init?.body ? String(init.body) : null;
+    if (body) fake.bodies.push(body);
     fake.calls.push({ path, apikey });
     return Promise.resolve(fake.fetchImpl({ path, apikey }));
   }) as typeof fetch;
@@ -243,20 +292,23 @@ Deno.test('E24: cada conexão consulta o provedor com o token DELA, nunca com a 
   const res = await run(fake);
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
-  // No flavor GO a instância é escolhida pela CREDENCIAL, então duas conexões =
-  // duas chamadas, cada uma com o token da sua instância.
+  // No flavor GO a instância é escolhida pela CREDENCIAL, então cada conexão
+  // consulta o estado com o token dela. A checagem de identidade (ownerJid) usa a
+  // rota GLOBAL de listagem de instâncias (mesma credencial global da V3) — por isso
+  // a asserção de "nunca a chave global" fica restrita às chamadas de ESTADO.
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
   assert(
-    fake.calls.length === 2,
-    `esperado uma consulta por conexão (2), recebido ${fake.calls.length}: ${JSON.stringify(fake.calls)}`,
+    stateCalls.length === 2,
+    `esperado uma consulta de estado por conexão (2), recebido ${stateCalls.length}: ${JSON.stringify(fake.calls)}`,
   );
-  const apikeys = fake.calls.map((c) => c.apikey).sort();
+  const apikeys = stateCalls.map((c) => c.apikey).sort();
   assert(
     JSON.stringify(apikeys) === JSON.stringify(['tok-da-inst-b', 'tok-da-padrao']),
     `cada chamada tem de levar o token da própria instância, recebido ${JSON.stringify(apikeys)}`,
   );
   assert(
-    !fake.calls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
-    `a credencial global/legada não pode ser usada numa rota de instância: ${JSON.stringify(fake.calls)}`,
+    !stateCalls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
+    `a credencial global/legada não pode ser usada numa rota de instância: ${JSON.stringify(stateCalls)}`,
   );
 
   // E24: as duas instâncias têm estado independente — a segunda não é 'error'.
@@ -528,4 +580,187 @@ Deno.test('N-162: service key interna continua passando sem exigir papel', async
   const deps = makeDepsWithUser(fake, 'user-ignorado', false);
   const res = await run(fake, makeUserRequest((deps as { serviceKey: string }).serviceKey), deps);
   assert(res.status === 200, `service key deve passar, veio ${res.status}`);
+});
+
+// ─────────────── paridade V3: 3 camadas, preferências e caixa muda ───────────────
+
+Deno.test('3 camadas (V3): phantom_session, stale_session, webhook_silent e healthy', () => {
+  const now = new Date('2026-10-13T12:00:00Z');
+  const ok = '5511999999999@s.whatsapp.net';
+
+  const phantom = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: null }, lastActivityAt: null, now });
+  assert(
+    phantom.healthStatus === 'degraded' && phantom.dbStatus === 'disconnected' && phantom.reason === 'phantom_session',
+    `socket aberto sem número pareado deve ser phantom_session: ${JSON.stringify(phantom)}`,
+  );
+
+  const stale = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: ok },
+    lastActivityAt: new Date(now.getTime() - 7 * 60 * 60 * 1000),
+    now,
+  });
+  assert(
+    stale.healthStatus === 'disconnected' && stale.dbStatus === 'disconnected' && stale.reason === 'stale_session',
+    `7 h sem entrada deve ser stale_session: ${JSON.stringify(stale)}`,
+  );
+
+  const silent = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: ok },
+    lastActivityAt: new Date(now.getTime() - 45 * 60 * 1000),
+    now,
+  });
+  assert(
+    silent.healthStatus === 'degraded' && silent.dbStatus === 'connected' && silent.reason === 'webhook_silent',
+    `45 min sem entrada deve ser webhook_silent: ${JSON.stringify(silent)}`,
+  );
+
+  const fresh = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: ok },
+    lastActivityAt: new Date(now.getTime() - 5 * 60 * 1000),
+    now,
+  });
+  assert(
+    fresh.healthStatus === 'healthy' && fresh.dbStatus === 'connected' && fresh.reason === null,
+    `5 min de atividade é healthy: ${JSON.stringify(fresh)}`,
+  );
+
+  // Bordas exatas dos limiares (não podem "cair" para o lado errado).
+  const exato30 = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: ok }, lastActivityAt: new Date(now.getTime() - 30 * 60 * 1000), now,
+  });
+  assert(exato30.healthStatus === 'healthy', `exatamente 30 min ainda é healthy: ${JSON.stringify(exato30)}`);
+  const exato6h = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: ok }, lastActivityAt: new Date(now.getTime() - 6 * 60 * 60 * 1000), now,
+  });
+  assert(exato6h.healthStatus === 'degraded' && exato6h.reason === 'webhook_silent', `exatamente 6 h ainda é degradada: ${JSON.stringify(exato6h)}`);
+
+  // Sem mensagem alguma conhecida não rebaixa (evita alerta falso em conexão nova).
+  const semMensagem = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: ok }, lastActivityAt: null, now });
+  assert(semMensagem.healthStatus === 'healthy', `sem mensagem não rebaixa: ${JSON.stringify(semMensagem)}`);
+
+  // Identidade desconhecida (rota sem resposta de identidade) NÃO vira fantasma.
+  const semIdentidade = evaluateOpenConnectionHealth({
+    owner: { known: false, ownerJid: null }, lastActivityAt: null, now,
+  });
+  assert(semIdentidade.reason === null && semIdentidade.healthStatus === 'healthy', `owner desconhecido não é fantasma: ${JSON.stringify(semIdentidade)}`);
+});
+
+Deno.test('parseOwnerJid: array/objeto v2/v3 e resposta sem identidade', () => {
+  assert(
+    parseOwnerJid([{ instance: { ownerJid: 'a@s' } }]).ownerJid === 'a@s',
+    'array (v2) com instance.ownerJid',
+  );
+  const objeto = parseOwnerJid({ owner: 'b@s' });
+  assert(objeto.known && objeto.ownerJid === 'b@s', 'objeto com owner na raiz');
+  const vazio = parseOwnerJid({ instance: { state: 'open' } });
+  assert(!vazio.known && vazio.ownerJid === null, 'sem campo de identidade ⇒ known=false (camada pulada)');
+  const nulo = parseOwnerJid(null);
+  assert(!nulo.known, 'null ⇒ known=false');
+  // Identidade presente mas sem número pareado ⇒ known=true e ownerJid null (fantasma).
+  const fantasma = parseOwnerJid({ instance: { connectionStatus: 'open' } });
+  assert(fantasma.known && fantasma.ownerJid === null, 'identidade sem número ⇒ known=true, ownerJid=null');
+});
+
+Deno.test('parseSilenceMinutes: faixa 1..1440 com o padrão 10', () => {
+  assert(parseSilenceMinutes('15') === 15, 'string numérica');
+  assert(parseSilenceMinutes(30) === 30, 'número');
+  assert(parseSilenceMinutes('0') === 10, 'abaixo do mínimo cai no padrão');
+  assert(parseSilenceMinutes('9999') === 10, 'acima do máximo cai no padrão');
+  assert(parseSilenceMinutes(undefined) === 10, 'ausente cai no padrão');
+  assert(parseSilenceMinutes('abc') === 10, 'não numérico cai no padrão');
+  assert(parseSilenceMinutes(1440) === 1440 && parseSilenceMinutes(1) === 1, 'limites inclusos');
+});
+
+Deno.test('inboxSilenceDedupeKey: chave estável por conexão', () => {
+  assert(inboxSilenceDedupeKey('c1') === 'inbox-silent:v1:c1', 'chave do episódio');
+});
+
+Deno.test('preferências: alerta dispara, push/e-mail só para quem optou pelo canal e tipo', async () => {
+  Deno.env.set('RESEND_API_KEY', 'test-resend-key');
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: '5511999' }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } }); // queda ⇒ alerta desconectada
+  fake.prefs = [
+    { user_id: 'u-email', email_enabled: true, push_enabled: false, alert_on_disconnected: true },
+    { user_id: 'u-push', push_enabled: true, email_enabled: false, alert_on_disconnected: true },
+    { user_id: 'u-off', push_enabled: true, email_enabled: true, alert_on_disconnected: false },
+  ];
+  fake.adminProfiles = [
+    { id: 'u-email', email: 'email@ex.com' },
+    { id: 'u-push', email: 'push@ex.com' },
+    { id: 'u-off', email: 'off@ex.com' },
+  ];
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+
+  const alerts = fake.alerts.filter((a) => a.source === 'connection-health-check');
+  assert(alerts.length === 1, `uma queda = um alerta: ${JSON.stringify(fake.alerts)}`);
+
+  // Push: só push_enabled e alert_on_disconnected=true.
+  assert(fake.appNotifications.length === 1, `um insert de push: ${JSON.stringify(fake.appNotifications)}`);
+  const pushRows = fake.appNotifications[0] as Array<Record<string, unknown>>;
+  const pushIds = pushRows.map((r) => r.user_id).sort();
+  assert(JSON.stringify(pushIds) === JSON.stringify(['u-push']), `push só para opt-in: ${JSON.stringify(pushIds)}`);
+  assert(pushRows.every((r) => r.type === 'connection_alert'), `tipo connection_alert: ${JSON.stringify(pushRows)}`);
+
+  // E-mail: só email_enabled e alert_on_disconnected=true.
+  const resend = fake.bodies.filter((b) => b.includes('"to"'));
+  assert(resend.length === 1, `um e-mail enviado: ${JSON.stringify(fake.bodies)}`);
+  assert(resend[0].includes('email@ex.com'), `o optante por e-mail recebe: ${resend[0]}`);
+  assert(
+    !resend[0].includes('push@ex.com') && !resend[0].includes('off@ex.com'),
+    `quem não optou não recebe e-mail: ${resend[0]}`,
+  );
+});
+
+Deno.test('caixa muda (PE-87): sem mensagem recebida no horário comercial ⇒ alerta idempotente', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open', ownerJid: '5511@s.whatsapp.net' } });
+  fake.withinHours = true;
+  fake.lastInbound = []; // nenhuma mensagem recebida
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  const silencioso = fake.alerts.filter((a) => a.dedupe_key === 'inbox-silent:v1:c1');
+  assert(silencioso.length === 1, `um alerta de caixa muda: ${JSON.stringify(fake.alerts)}`);
+  assert(silencioso[0].source === 'connection-health-check', 'origem do alerta');
+  // Conexão saudável ⇒ nenhum alerta de queda junto.
+  assert(!fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'não pode marcar queda');
+});
+
+Deno.test('caixa muda (PE-87): fora do horário comercial não alerta nem resolve', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open', ownerJid: '5511@s.whatsapp.net' } });
+  fake.withinHours = false;
+  fake.lastInbound = [];
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(!fake.alerts.some((a) => a.dedupe_key === 'inbox-silent:v1:c1'), `fora do horário não alerta: ${JSON.stringify(fake.alerts)}`);
+  assert(fake.alertDeletes.length === 0, `fora do horário não resolve: ${JSON.stringify(fake.alertDeletes)}`);
+});
+
+Deno.test('caixa muda (PE-87): mensagem voltou ⇒ auto-resolve do episódio', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open', ownerJid: '5511@s.whatsapp.net' } });
+  fake.withinHours = true;
+  fake.lastInbound = [{ created_at: new Date().toISOString() }]; // recebeu agora
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(!fake.alerts.some((a) => a.dedupe_key === 'inbox-silent:v1:c1'), `não alerta com mensagem recente: ${JSON.stringify(fake.alerts)}`);
+  const resolveu = fake.alertDeletes.some((f) => f.some(([c, v]) => c === 'dedupe_key' && v === 'inbox-silent:v1:c1'));
+  assert(resolveu, `o alerta do episódio deve ser removido: ${JSON.stringify(fake.alertDeletes)}`);
 });
