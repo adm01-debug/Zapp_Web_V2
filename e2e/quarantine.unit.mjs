@@ -29,6 +29,10 @@ const ORIGINAIS = [
   'chromium-telefonia',
   'firefox-telefonia',
   'webkit-telefonia',
+  // SL-107: historico T86 no grupo deslogado-secundario (3 browsers).
+  'chromium-telefonia-historico',
+  'firefox-telefonia-historico',
+  'webkit-telefonia-historico',
 ];
 
 /**
@@ -81,7 +85,7 @@ test('E83: cada token da matriz leva o prefixo --project=', () => {
   }
 });
 
-test('E83: a uniao da matriz e EXATAMENTE a lista original (15 projetos)', () => {
+test('E83: a uniao da matriz e EXATAMENTE a lista original (18 projetos)', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
   const nomes = gruposDaMatriz(content)
     .flat()
