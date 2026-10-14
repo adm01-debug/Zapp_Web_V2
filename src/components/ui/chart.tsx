@@ -29,6 +29,10 @@ function useChart() {
   return context;
 }
 
+// Strip characters that could break out of a CSS attribute selector or property name/value.
+const sanitizeCssIdent = (s: string) => s.replace(/[^\w-]/g, "");
+const sanitizeCssValue = (s: string) => s.replace(/[^\w#(),.%\s-]/g, "");
+
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -37,7 +41,7 @@ const ChartContainer = React.forwardRef<
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  const chartId = `chart-${sanitizeCssIdent(id || uniqueId)}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -65,17 +69,24 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  const safeId = sanitizeCssIdent(id);
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${safeId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const safeKey = sanitizeCssIdent(key);
+    const safeColor = color ? sanitizeCssValue(color) : "";
+    // Chave sem caractere válido (ex.: ";{}") ou cor que esvazia na limpeza
+    // (ex.: "<>") geraria a declaração inválida "--color-: ;". Omitir é mais
+    // seguro do que declarar um custom property sem nome/valor.
+    return safeKey && safeColor ? `  --color-${safeKey}: ${safeColor};` : null;
   })
   .join("\n")}
 }
