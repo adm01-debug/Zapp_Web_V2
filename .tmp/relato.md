@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## O que mudou e por quê
 Portei da V3 o isolamento de erro por bloco (`SectionErrorBoundary`) para as telas de SLA e Relatórios. Antes, qualquer erro em um bloco subia e derrubava a tela inteira; agora cada bloco independente mostra o aviso com botão "Tentar novamente" e o resto da tela continua funcionando.
@@ -12,10 +12,10 @@ Portei da V3 o isolamento de erro por bloco (`SectionErrorBoundary`) para as tel
 - verde depois: `npx vitest run` nos mesmos 3 arquivos → `Test Files 3 passed (3); Tests 3 passed (3)`.
 - regressão (telas vizinhas): `npx vitest run` dos 3 arquivos novos + `SLADashboard.redundancia.test.tsx` + `AdvancedReportsView.periodComparison.test.tsx` + `SLADashboard.sidebar-navegacao.test.tsx` → `Test Files 6 passed (6); Tests 14 passed (14)`.
 
-Testes (arquivos novos):
-- `src/components/queues/__tests__/SLADashboard.isolamentoErro.test.tsx`
-- `src/pages/__tests__/SLAHistory.isolamentoErro.test.tsx`
-- `src/components/reports/__tests__/AdvancedReportsView.isolamentoErro.test.tsx`
+Testes (arquivos novos) e nomes dos 3 casos:
+- `src/components/queues/__tests__/SLADashboard.isolamentoErro.test.tsx` — caso 'um bloco de métricas que lança erro mostra aviso e não derruba o resto da tela'
+- `src/pages/__tests__/SLAHistory.isolamentoErro.test.tsx` — caso 'o bloco de histórico que lança erro mostra aviso e a página continua'
+- `src/components/reports/__tests__/AdvancedReportsView.isolamentoErro.test.tsx` — caso 'um bloco de análise que lança erro mostra aviso e não derruba a tela nem as outras abas'
 
 Cada teste renderiza a TELA real, faz UM bloco lançar erro e confere: (a) aparece o aviso `Erro em "<bloco>"`; (b) o resto da tela (cabeçalho/outra aba/sidebar) continua utilizável. Só os componentes de bloco são mockados, para forçar o erro; a composição (Tabs, header, fallback) é a real.
 
