@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useGamificationMutations } from './mutations';
 import type { AgentStats, Achievement } from './types';
 
 // Re-export types and utilities for external consumers
@@ -9,6 +8,11 @@ export type { AgentStats, Achievement } from './types';
 export { ACHIEVEMENT_TYPES } from './types';
 export { calculateLevel, xpForNextLevel, levelProgress } from './levelUtils';
 
+/**
+ * Leitura da gamificação do agente: XP, nível, sequência, mensagens, resoluções
+ * e conquistas. A escrita é do servidor (gatilhos SECURITY DEFINER); o cliente
+ * não chama RPC de escrita — as RPCs de gamificação são só de `service_role`.
+ */
 export const useAgentGamification = () => {
   const { user } = useAuth();
 
@@ -61,8 +65,6 @@ export const useAgentGamification = () => {
     enabled: !!profileId,
   });
 
-  const mutations = useGamificationMutations(profileId, statsQuery.data);
-
   return {
     stats: statsQuery.data,
     achievements: achievementsQuery.data || [],
@@ -73,6 +75,5 @@ export const useAgentGamification = () => {
     isError: profileQuery.isError || statsQuery.isError || achievementsQuery.isError,
     error: profileQuery.error ?? statsQuery.error ?? achievementsQuery.error,
     profileId,
-    ...mutations,
   };
 };
