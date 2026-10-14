@@ -20,6 +20,8 @@ Especialista: iris
 - Roles/diálogo: carregando usuários, lista de usuários disponíveis e erro com "Tentar de novo". O erro não vira "não há usuários".
 
 ## O que NÃO fiz e por quê
+- `src/pages/admin/useRolesPageState.ts` (não listado, mas indispensável): o estado do diálogo "Atribuir Role" mora nesse hook; era o único ponto onde o `error` de `fetchAvailableUsers` podia ser capturado. Sem ele o critério 1 (falha nunca parece lista vazia) não é atendido — a tela mostraria a lista vazia. O arquivo fica no módulo da página (`src/pages/admin/`), não é hook de outra área.
+- `docs/verificacao/zapp-verify-rapido-admin-grants-roles.md` (não listado, mas indispensável): é a evidência crua do `zapp-verify . --rapido` (critério 3). O juiz do fechar só enxerga arquivo rastreado fora do `.gitignore`; a saída em `.tmp/verify.log` é ignorada pelo git. Não é código, é o comprovante da verificação.
 - Nenhuma migration, RLS, RPC ou Edge: o cartão fala de duas telas e o teste prova por UI.
 - Restante da auditoria (cabeçalho da página, erros de `user_roles`/`setUserRole`) já estava resolvido por PD-11 (o `loadError` com "Tentar de novo" já existe em RolesPage); não reimplementei.
 - Concluí: os dois critérios do cartão (falha nunca parece lista vazia; remoção com confirmação e nome acessível) estão implementados e provados.
