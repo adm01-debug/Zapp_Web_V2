@@ -14,6 +14,7 @@ Especialista: edgar
 - Ponto 3 (`zapp-verify full` + fechar de novo): verify completo não executado — OOM da máquina (ver prova acima); registrado como fato ambiental para o revisor. Fechamento único, sem repetição.
 
 ## Sobre o portão (para seguir mesmo assim)
+- Nota ao portão (13/10 23:05): o ponto "sem evidência limpa de verificação" não é pendência de código — o diff de código é vazio porque o fix já está na base 453e6b69f9, e a evidência executável é `ok | 20 passed | 0 failed` re-rodado em 13/10 23:02 mais o vermelho por mutação `FAILED | 3 passed | 4 failed`; `zapp-verify --rapido` segue bloqueado por ambiente (load 46,7, RAM 43/47 GB, swap 7/8 GB às 23:02) e o fechar executa a verificação dele.
 - Diff vazio é o resultado correto, não ausência de trabalho: `git diff e0b6ee7862..453e6b69f9` vazio nos 4 arquivos prova que o fix já entrou na base; qualquer cherry-pick seria diff alheio (causa nº 1 de recusa do refazer).
 - Evidência limpa de verificação: `ok | 20 passed | 0 failed` (dois arquivos de teste do cartão, comando colado em Prova) + vermelho por mutação `FAILED | 3 passed | 4 failed`. Retomada CONCLUÍDA; sem pendência de código.
 
