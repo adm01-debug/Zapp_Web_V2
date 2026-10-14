@@ -381,15 +381,19 @@ interface KpiDef {
   label: string;
   icon: typeof Box;
   color: TileColor;
+  /** true só nos KPIs que têm filtro booleano real na listagem (`handleKpiSelect`).
+   * Os demais são números informativos: NÃO viram botão, para não oferecer um
+   * clique que não faz nada (E33). */
+  filtravel?: boolean;
 }
 
 const CATALOG_KPI_DEFS: KpiDef[] = [
   { key: 'total', label: 'Produtos no total', icon: Box, color: 'blue' },
-  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'amber' },
-  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'blue' },
-  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green' },
-  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'blue' },
-  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'amber' },
+  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'violet' },
+  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'amber' },
+  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green', filtravel: true },
+  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'red', filtravel: true },
+  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'blue', filtravel: true },
 ];
 
 interface CatalogKpiStripProps {
@@ -422,14 +426,8 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
   }
   return (
     <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      {visible.map((d, i) => (
-        <button
-          key={d.key}
-          type="button"
-          onClick={() => onSelect?.(d.key)}
-          disabled={!onSelect}
-          className="text-left disabled:cursor-default"
-        >
+      {visible.map((d, i) => {
+        const card = (
           <KpiCard
             icon={d.icon}
             color={d.color}
@@ -438,8 +436,24 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
             compact
             index={i}
           />
-        </button>
-      ))}
+        );
+        // Só os KPIs com filtro real são botão. Os informativos (Total,
+        // Categorias, Fornecedores) ficam sem handler e sem affordance de
+        // clique — antes todos eram botão e os três sem filtro pareciam
+        // clicáveis sem fazer nada.
+        if (!d.filtravel) return <div key={d.key}>{card}</div>;
+        return (
+          <button
+            key={d.key}
+            type="button"
+            onClick={() => onSelect?.(d.key)}
+            disabled={!onSelect}
+            className="text-left disabled:cursor-default"
+          >
+            {card}
+          </button>
+        );
+      })}
     </div>
   );
 }

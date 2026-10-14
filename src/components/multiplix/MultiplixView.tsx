@@ -564,6 +564,12 @@ export default function MultiplixView() {
             </Button>
           </div>
 
+          {!hasSearched && (
+            <p className="text-sm text-muted-foreground px-4 pt-3" data-testid="multiplix-empty-hint">
+              Escolha os filtros e clique em Buscar para ver o público.
+            </p>
+          )}
+
           {count.data !== undefined && (
             <div className="flex flex-wrap items-center gap-2 px-4 pt-3">
               <p className="text-sm text-muted-foreground">
