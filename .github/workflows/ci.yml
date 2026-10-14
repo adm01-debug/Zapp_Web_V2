@@ -1,8 +1,10 @@
 # docs:
-#   gatilho: pull_request, push na main e dispatch
-#   prova: checagem de tipos, testes de unidade e build do app
-#   falha: o run fica vermelho (a main nao tem branch protection: nada e bloqueado)
-#   avisa: autor do PR, via checks do GitHub
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   falha: PR fica vermelho e o merge e bloqueado pelos required checks
+#   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
 # =================================================
 # CI minimo (16/10/2026, decisao do Joaquim): tipos + testes de unidade + build.
 # Guardas de banco, E2E, auditorias e contratos de workflow sairam do CI por PR.
