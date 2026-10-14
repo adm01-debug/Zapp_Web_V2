@@ -162,4 +162,45 @@ describe('useContactCustomFields — mutações invalidam a lista', () => {
 
     await expect(result.current.addField('CPF', '999')).rejects.toBeTruthy();
   });
+
+  it('dois addField concorrentes: a lista final tem os dois (nada some)', async () => {
+    // O "servidor" (dublê) aplica cada upsert nas linhas: a reconsulta pós-mutação
+    // lê a verdade do servidor, então nenhum campo some mesmo com resposta fora de ordem.
+    const servidor = [
+      { id: 'cf1', contact_id: CONTATO, field_name: 'CPF', field_value: '1', created_at: 'x' },
+    ];
+    mocks.from.mockImplementation(() => ({
+      select: () => {
+        mocks.selectChamadas += 1;
+        return { eq: () => ({ order: async () => ({ data: [...servidor], error: null }) }) };
+      },
+      upsert: async (payload: { field_name: string; field_value: string }) => {
+        mocks.upsertPayloads.push(payload);
+        servidor.push({
+          id: `id-${payload.field_name}`,
+          contact_id: CONTATO,
+          field_name: payload.field_name,
+          field_value: payload.field_value,
+          created_at: 'x',
+        });
+        return { error: null };
+      },
+      delete: () => ({ eq: async () => ({ error: null }) }),
+    }));
+    const { result } = renderHook(() => useContactCustomFields(CONTATO), { wrapper: wrapperDe(novoQueryClient()) });
+    await waitFor(() => expect(mocks.selectChamadas).toBe(1));
+
+    await act(async () => {
+      await Promise.all([
+        result.current.addField('Telefone', '119'),
+        result.current.addField('Empresa', 'ACME'),
+      ]);
+    });
+
+    await waitFor(() => {
+      const nomes = result.current.fields.map((f) => f.field_name);
+      expect(nomes).toContain('Telefone');
+      expect(nomes).toContain('Empresa');
+    });
+  });
 });

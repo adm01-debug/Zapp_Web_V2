@@ -10,6 +10,32 @@ const contactEnrichedKey = (contactId: string) => ['contact-enriched', contactId
 const conversationTabCountsKey = (contactId: string) => ['conversation-tab-counts', contactId] as const;
 
 /**
+ * Fila de atribuições por contato: dois toques rápidos (A, depois B) disparam dois
+ * UPDATEs. Sem ordem, o banco pode gravar B antes de A e cada aceite invalida o
+ * cache — a UI pisca fora da ordem dos cliques. A cadeia executa um de cada vez POR
+ * CONTATO (o `Map` é do módulo, então instâncias diferentes do hook dividem a mesma
+ * fila do mesmo contato; contato diferente tem fila própria e não espera). A ordem
+ * do banco passa a ser a ordem dos cliques, e cada aceite continua invalidando e
+ * avisando — resposta obsoleta nunca apaga o estado da mais nova, porque nenhuma
+ * resposta é descartada. A entrada sai do `Map` ao assentar (sem vazar).
+ */
+const filasPorContato = new Map<string, Promise<void>>();
+
+function encadearPorContato(contactId: string, trabalho: () => Promise<void>): Promise<void> {
+  const anterior = filasPorContato.get(contactId) ?? Promise.resolve();
+  const atual = anterior.then(trabalho, trabalho);
+  const registrada = atual.then(
+    () => undefined,
+    () => undefined,
+  );
+  filasPorContato.set(contactId, registrada);
+  void registrada.finally(() => {
+    if (filasPorContato.get(contactId) === registrada) filasPorContato.delete(contactId);
+  });
+  return atual;
+}
+
+/**
  * Troca de responsável (atendente/fila) de um contato.
  *
  * O UPDATE direto em `contacts` sozinho não bastava: quem exibe o contato lê de caches
@@ -31,35 +57,39 @@ export function useContactAssignment(contactId: string) {
   }, [queryClient, contactId]);
 
   const assignAgent = useCallback(async (agentId: string | null) => {
-    try {
-      const { error } = await supabase
-        .from('contacts')
-        .update({ assigned_to: agentId })
-        .eq('id', contactId);
+    await encadearPorContato(contactId, async () => {
+      try {
+        const { error } = await supabase
+          .from('contacts')
+          .update({ assigned_to: agentId })
+          .eq('id', contactId);
 
-      if (error) throw error;
-      invalidarCachesDoContato();
-      toast.success(agentId ? 'Atendente atribuído' : 'Atendente removido');
-    } catch (err) {
-      log.error('Error assigning agent:', err);
-      toast.error('Erro ao atribuir atendente');
-    }
+        if (error) throw error;
+        invalidarCachesDoContato();
+        toast.success(agentId ? 'Atendente atribuído' : 'Atendente removido');
+      } catch (err) {
+        log.error('Error assigning agent:', err);
+        toast.error('Erro ao atribuir atendente');
+      }
+    });
   }, [contactId, invalidarCachesDoContato]);
 
   const assignQueue = useCallback(async (queueId: string | null) => {
-    try {
-      const { error } = await supabase
-        .from('contacts')
-        .update({ queue_id: queueId })
-        .eq('id', contactId);
+    await encadearPorContato(contactId, async () => {
+      try {
+        const { error } = await supabase
+          .from('contacts')
+          .update({ queue_id: queueId })
+          .eq('id', contactId);
 
-      if (error) throw error;
-      invalidarCachesDoContato();
-      toast.success(queueId ? 'Fila atribuída' : 'Fila removida');
-    } catch (err) {
-      log.error('Error assigning queue:', err);
-      toast.error('Erro ao atribuir fila');
-    }
+        if (error) throw error;
+        invalidarCachesDoContato();
+        toast.success(queueId ? 'Fila atribuída' : 'Fila removida');
+      } catch (err) {
+        log.error('Error assigning queue:', err);
+        toast.error('Erro ao atribuir fila');
+      }
+    });
   }, [contactId, invalidarCachesDoContato]);
 
   return { assignAgent, assignQueue };

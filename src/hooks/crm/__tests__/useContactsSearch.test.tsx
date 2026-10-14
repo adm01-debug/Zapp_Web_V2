@@ -23,7 +23,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, useLocation, unstable_HistoryRouter as HistoryRouter, UNSAFE_createMemoryHistory as createMemoryHistory } from 'react-router-dom';
 
 type Args = Record<string, unknown>;
 
@@ -612,5 +612,61 @@ describe('useContactsSearch — estado na URL (recarregar mantém)', () => {
     expect(urlAtual()).toContain('tab=lead');
     expect(urlAtual()).not.toContain('sort=');
     expect(urlAtual()).not.toContain('p=');
+  });
+});
+
+describe('useContactsSearch — espelho na URL não empilha histórico (P1)', () => {
+  it('N trocas de filtro mantêm 1 entrada: voltar do navegador sai da tela', async () => {
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const history = createMemoryHistory({ initialEntries: ['/contatos'] });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(() => useContactsSearch(), {
+      wrapper: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(
+          HistoryRouter,
+          { history },
+          React.createElement(QueryClientProvider, { client: queryClient, children }),
+        ),
+    });
+    await esperaBusca();
+
+    // Cinco trocas de filtro em sequência, como um atendente refinando a lista.
+    act(() => result.current.setFilterCompany('ACME'));
+    act(() => result.current.setActiveTab('lead'));
+    act(() => result.current.setSortBy('created_desc'));
+    act(() => result.current.setPage(2));
+    act(() => result.current.setFilterCompany('ACME2'));
+
+    // Com replace, tudo é REPLACE: 1 Voltar sai da tela.
+    // Com push, cada troca seria PUSH (5 Voltar para sair).
+    await waitFor(() => expect(callsOf(SEARCH).length).toBeGreaterThan(3));
+    const buscaFinal = history.location.search;
+    expect(buscaFinal).toContain('company=ACME2');
+    // Voltar não tem para onde ir dentro da tela: continua no mesmo estado.
+    // (Com push, o índice seria 5 e o voltar cairia no estado anterior.)
+    act(() => {
+      history.go(-1);
+    });
+    expect(history.index).toBe(0);
+    expect(history.location.search).toBe(buscaFinal);
+  });
+});
+
+describe('useContactsSearch — "Hoje" é 00:00 do dia civil no fuso do app (P2)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('às 23h em SP (02h UTC do dia seguinte) o Hoje começa no dia de SP, não no UTC', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-15T02:00:00.000Z')); // 23:00 do dia 14 em SP
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+    const { result } = setup();
+
+    act(() => result.current.setFilterDateRange('today'));
+
+    // Dia civil de SP: começa dia 14 às 00:00 SP = 03:00 UTC do dia 14.
+    // Fatiar a data em UTC daria 2026-03-15 (errado: incluiria o dia 15 inteiro).
+    await waitFor(() => expect(ultimoArgs(SEARCH).date_from).toBe('2026-03-14T03:00:00.000Z'));
   });
 });

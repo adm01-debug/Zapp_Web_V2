@@ -1,27 +1,79 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: semisenior (area-front-hooks)
 
-Cartão CT-F (P2): 4 correções na ficha do contato — estado da lista de Contatos na URL, "Hoje" = 00:00 do fuso do app, campos personalizados no React Query com guarda de UUID, enriquecidos sem `undefined`, e o hook de atribuição deixando de gravar sem avisar o cache.
+Refazer 1 do cartão busca-filtros-url-hoje-hooks-ficha (contatos: URL + Hoje + atribuição + campos).
+Verificação prévia obrigatória: os 4 defeitos descritos na recusa NÃO existem na entrega
+anterior (4ada55f2a) — conferi no código real antes de obedecer (receber-revisao-de-codigo):
+P1 fala em `setSearchParams(params)` com push, mas o hook usa `{ replace: true }`
+(useContactsSearch.ts:113); P2 fala em `toLocaleDateString` com fallback UTC dentro do
+useContactEnrichedData, mas esse arquivo não calcula "Hoje" — o chip usa `appDayStart(0)`
+de `@/lib/localDay` (America/Sao_Paulo, 2 passadas p/ DST); P3 fala em `assignment_seq`
+global, mas o hook não tem ref nenhum (`rg assignment_seq` = 0 ocorrências em src);
+P4 fala em merge otimista que some campos, mas o hook só invalida e relê do servidor.
+O commit ce2a8e6e7a citado no cartão como "trabalho anterior" é de outro cartão
+(clientNoise) — não foi cherry-pick; parti do 4ada55f2a (HEAD do workspace).
+Abaixo, cada ponto: o que a recusa temia, o estado real e a prova.
 
-## O que mudou e por quê
-- src/hooks/crm/useContactsSearch.ts — busca/aba/empresa/cargo/período/ordem/página espelhados na URL (`?q,tab,company,job,date,sort,p`) via `useSearchParams` + `replace`: recarregar (ou abrir um link) mantém o estado da lista e filtrar não empilha histórico. A URL é lida só na montagem e reescrita quando algo muda (só quando difere, então não há laço de navegação). Parâmetro vindo da URL passa por validação/corte (período e ordem por whitelist, texto cortado em 120, `p` inteiro ≥ 1). `tag` fica de fora de propósito (etiqueta de contato é função excluída do sistema; `filterTag` segue em memória). O `case 'today'` passou de `now - 24h` para `appDayStart(0)` (00:00 em America/Sao_Paulo, `src/lib/localDay.ts`) — às 09h o balcão espera ver tudo desde 00:00.
-- src/hooks/crm/useContactCustomFields.ts — trocado o `useState`+`fetch` manual por `useQuery` (`queryKey: ['contact-custom-fields', id]`, `staleTime: 30s`), com guarda `isValidContactId` (UUID): id texto/vazio/`undefined` não consulta o banco e não fica "carregando" (o PostgREST devolvia 400 com id inválido). Erro do banco sobe para a query em vez de virar lista vazia em cache; `addField`/`removeField` invalidam a lista e mantêm o `throw` que já existia. Contrato de retorno preservado (`fields`, `isLoading`, `addField`, `removeField`, `refetch`).
-- src/hooks/crm/useContactEnrichedData.ts — `normalizeEnrichedData` preenche com `null` explícito as 16 colunas do enriquecido quando vierem ausentes, em vez de `undefined`: o tipo promete `string | null` e o painel deixa de ter dois "vazios" diferentes.
-- src/hooks/crm/useContactAssignment.ts — o cartão oferece remover o órfão **ou** invalidar os caches; escolhi invalidar (apagar arquivo exige `rm`/`git rm`, proibido no modo sem humano — registrei em comentário). `assignAgent`/`assignQueue` agora invalidam `contacts-kpi`, `contacts-type-counts`, `contacts-search`, `contact-enriched:<id>`, `contact-crm-360:<id>` e `conversation-tab-counts:<id>` depois do UPDATE — antes a lista, os KPIs e o Crm360 mostravam o responsável antigo até recarregar.
+Ponto 1 — push vs replace nos filtros (VERIFICADO: já era replace; provei + travei)
+O que mudei: nenhum comportamento — `setSearchParams(params, { replace: true })`
+(useContactsSearch.ts:113) já substitui. Adicionei o teste que faltava, fim a fim com
+history real (unstable_HistoryRouter + UNSAFE_createMemoryHistory):
+`src/hooks/crm/__tests__/useContactsSearch.test.tsx` > "N trocas de filtro mantêm
+1 entrada: voltar do navegador sai da tela" (5 trocas → go(-1) não sai do estado final,
+index 0). Soube no caminho: `location.key` muda a cada replace e o `listen` do memory
+history do RR7 nunca dispara (provei em node) — por isso a prova é `go(-1)` + índice.
+Teste que prova: vermelho sem a correção (troquei p/ `setSearchParams(params)`:
+1 failed, 28 skipped) e verde com ela (28 passed, 1 expected fail — o fail esperado
+é pré-existente do commit anterior).
 
-## Prova
-Vermelho antes (fonte revertida para a base `dia/2026-10-12` com os testes novos no lugar):
-`npx vitest run src/hooks/crm/__tests__/useContactsSearch.test.tsx src/hooks/crm/__tests__/useContactsSearch.urlReplace.test.tsx src/hooks/crm/__tests__/useContactAssignment.test.tsx src/hooks/crm/__tests__/useContactEnrichedData.test.tsx src/hooks/__tests__/useContactCustomFields.test.tsx src/hooks/crm/__tests__/contactsAggregatesRefetchOnMount.test.tsx`
-→ `Test Files 5 failed | 1 passed (6); Tests 14 failed | 34 passed | 1 expected fail (49)` — falham exatamente a URL (`monta busca, aba...`, `cada mudança reescreve a URL...`, `clearFilters...`, `escreve com { replace: true }...`), o período (`date_from por período...`), o UUID (`contact_id que não é UUID...`, `addField com id inválido...`), a invalidação (`removeField apaga pelo id e reconsulta`, os dois `assignAgent/assignQueue`) e a normalização (`coluna ausente vira null explícito`).
+Ponto 2 — "Hoje" em 00:00 do fuso do app (VERIFICADO: já era appDayStart; provei + travei)
+O que mudei: nenhum comportamento — `case 'today': return appDayStart(0).toISOString()`
+(useContactsSearch.ts:122; `APP_TIMEZONE='America/Sao_Paulo'`, src/lib/localDay.ts:11).
+Adicionei o caso que discrimina UTC de SP:
+`useContactsSearch.test.tsx` > "às 23h em SP (02h UTC do dia seguinte) o Hoje começa
+no dia de SP" (espera `date_from` = 2026-03-14T03:00:00.000Z; fatiar UTC daria dia 15).
+Teste que prova: vermelho com janela de 24h (mutação temporária p/ `Date.now()-24h`:
+1 failed) e verde com appDayStart. Já existia cobertura p/ 09h SP (03:00Z) — mantida.
 
-Verde depois (mesmo comando, fonte com a correção):
-→ `Test Files 6 passed (6); Tests 48 passed | 1 expected fail (49)`
+Ponto 3 — guarda anti-concorrência na atribuição (CORREÇÃO REAL — único código que mudou)
+O que a recusa temia (stale descartado por seq global) não existia; o risco real era
+outro: dois toques rápidos disparam 2 UPDATEs paralelos e o banco pode gravar fora da
+ordem dos cliques. Em vez de seq que descarta resposta (descartar criaria o stale que a
+recusa teme: se a nova falha, o aceite da antiga nunca invalidaria), serializei:
+`src/hooks/crm/useContactAssignment.ts` — `filasPorContato: Map<contactId, Promise>`
++ `encadearPorContato` envolvendo `assignAgent`/`assignQueue`. Ordem do banco = ordem
+dos cliques; cada aceite continua invalidando + avisando (nada descartado, nada stale);
+fila é por contato (contatos diferentes andam em paralelo, instâncias dividem a fila
+do mesmo contato); entrada sai do Map ao assentar (sem vazar); erro num item não trava
+a fila (`.then(trabalho, trabalho)` + cada trabalho engole o próprio erro como antes).
+Chamadores: nenhum componente importa o hook na árvore (só o barril `hooks/crm/index.ts`)
+— sem regressão ao lado.
+Testes que provam (arquivo novo
+`src/hooks/crm/__tests__/useContactAssignment.concorrencia.test.tsx`):
+(1) "mesmo contato com resolução fora de ordem: B espera A" — B só vai ao banco após A
+assentar, payloads [A,B], 2 toasts em ordem, 2 invalidações de `contact-enriched`;
+(2) "contatos diferentes andam em paralelo" — UPDATEs imediatos p/ ids distintos.
+Vermelho sem a correção (fila virada em no-op de 1 linha: 1 failed, 1 passed) e verde
+com ela (2 passed); os 3 testes pré-existentes do hook continuam verdes.
 
-Sem regressão nas áreas vizinhas:
-`npx vitest run src/components/contacts/__tests__ src/components/tasks/__tests__` → `Test Files 62 passed (62); Tests 568 passed | 1 todo (569)`
-`npx vitest run src/components/inbox src/components/talkx src/hooks/chat src/hooks/crm` → `Test Files 356 passed | 1 failed (357); Tests 3000 passed` — a única falha é um websocket (`ERR_INVALID_ARG_TYPE`, `RealtimeInboxView.selectedMessagesError.test.tsx`) que passa isolado (`1 passed (1); Tests 3 passed`) e não toca nenhum arquivo deste diff.
+Ponto 4 — campos personalizados que somem (VERIFICADO: sem merge otimista; provei + travei)
+O que mudei: nenhum comportamento — `addField`/`removeField` fazem upsert/delete e
+`invalidateQueries` (relê a verdade do servidor; `useContactCustomFields.ts`:60,74).
+Adicionei regressão de concorrência em `src/hooks/__tests__/useContactCustomFields.test.tsx`:
+"dois addField concorrentes: a lista final tem os dois" (dublê de servidor aplica cada
+upsert; após os dois assentarem, a lista tem Telefone + Empresa).
+Teste que prova: vermelho sem o invalidate (mutação temporária removendo a reconsulta:
+1 failed, 9 skipped) e verde com ele (10 passed).
 
-O hook passou a exigir `Router` no `useSearchParams`: o único consumidor de teste que o chamava sem Router (`contactsAggregatesRefetchOnMount.test.tsx`) passou a envolver em `MemoryRouter`; `useContactsCRUD.test.tsx` já dubla o hook.
+Arquivos (git diff --name-only + 1 novo):
+src/hooks/__tests__/useContactCustomFields.test.tsx
+src/hooks/crm/__tests__/useContactsSearch.test.tsx
+src/hooks/crm/__tests__/useContactAssignment.concorrencia.test.tsx (novo)
+src/hooks/crm/useContactAssignment.ts
 
-## O que NÃO fiz e por quê
-- useContactAssignment continua órfão (nenhum importador) e exportado pelo barril `src/hooks/crm/index.ts`: apagar exigiria `rm`/`git rm`, bloqueado neste modo. Comentado no cartão.
-- `ContactCombobox` (src/components/tasks) compartilha `useContactsSearch`, então a busca dele agora também aparece em `?q=` na URL da tela de Tarefas. É arquivo de componentes (fora da minha área): comentado no cartão para quem cuida da tela decidir se quer passar a sincronização só na tela de Contatos.
+Comandos de verificação (todos no workspace, agora):
+npx vitest run <7 arquivos dos 4 hooks> → 7 passed, 53 passed + 1 expected fail (pré-existente)
+npx vitest run useContactAssignment.test.tsx → 3 passed (sem regressão)
+git diff -U3 | wc -c → 9636 (teto 90k); nenhuma linha adicionada cita projeto de produção.
+Não fiz: cherry-pick de ce2a8e6e7a (é de outro cartão); mescla cliente de campos (sem
+sentido sobre lista recém-lida do servidor); seq global que descarta resposta (criaria
+stale de verdade — fiz fila que ordena sem descartar, com o porquê acima).
