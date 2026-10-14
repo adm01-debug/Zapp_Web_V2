@@ -35,7 +35,12 @@ VERDE depois (com os 3 ajustes): `Test Files 1 passed (1) | Tests 4 passed (4)`
 
 Vizinhos que também montam a tela do admin (sem regressão):
 `npx vitest run .../AdminView.a11y.test.tsx .../AdminView.section-error-boundary.test.tsx` →
-`Test Files 3 passed (3) | Tests 11 passed (11)`
+`Test Files 2 passed (2) | Tests 7 passed (7)` (com o cartão novo: 3 arquivos, 11 testes).
+
+Verificação do cartão (critério 4):
+`zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (188s)` — `OK` em `db_guard`, `tipos`, `lint`
+e `migrations`; `banco_local` NÃO VERIFICADO por não haver conjunto local informado (o cartão não
+pede migration).
 
 O que o teste prova, e onde:
 - URL canônica `?view=crm360` gravada + evento `zapp:navigate` com `view: 'crm360'` no clique.
