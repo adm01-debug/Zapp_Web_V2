@@ -31,6 +31,8 @@ interface Requisicao {
 interface FakeOpts {
   /** Erro devolvido pela RPC `ingest_inbound_message` (null = sucesso). */
   rpcErro?: { code: string; message: string } | null;
+  /** Quando true, o insert na dead-letter (`webhook_failures`) falha (HTTP 500). */
+  falhaDeadLetter?: boolean;
 }
 
 const TX_OK = [{
@@ -67,6 +69,12 @@ function iniciarSupabaseFalso(opts: FakeOpts = {}) {
       return new Response(JSON.stringify({ id: "conexao-1" }), { status: 200, headers: cabecalhos });
     }
     if (url.pathname.includes("/rest/v1/webhook_failures")) {
+      if (opts.falhaDeadLetter) {
+        return new Response(
+          JSON.stringify({ code: "XX000", message: "dead-letter simulada indisponivel", details: null, hint: null }),
+          { status: 500, headers: cabecalhos },
+        );
+      }
       return new Response("", { status: 201, headers: cabecalhos });
     }
     return new Response(req.method === "GET" ? "null" : "[]", { status: 200, headers: cabecalhos });
@@ -212,6 +220,39 @@ Deno.test("ingest OK: 200 sem tocar a dead-letter", async () => {
         const res = await chamarWebhook(falso.url);
         assertEquals(res.status, 200);
         assertEquals(linhasDaDeadLetter(falso.requisicoes).length, 0);
+      },
+    );
+  } finally {
+    await falso.parar();
+  }
+});
+
+Deno.test("falha permanente + dead-letter indisponivel: 503 (nada some sem registro)", async () => {
+  // 22001 sozinho daria 200 (permanente). Com o insert em `webhook_failures`
+  // falhando, não há prova do evento: a resposta precisa pedir reenvio (503).
+  const falso = iniciarSupabaseFalso({
+    rpcErro: { code: "22001", message: "value too long for type character varying(10)" },
+    falhaDeadLetter: true,
+  });
+  try {
+    await withEnv(
+      {
+        SUPABASE_URL: falso.url,
+        SUPABASE_SERVICE_ROLE_KEY: "fake-service-role-local",
+        EVOLUTION_INSTANCE_TOKEN: TOKEN,
+        EVOLUTION_WEBHOOK_SECRET: undefined,
+        WEBHOOK_SECRET: undefined,
+        EVOLUTION_WEBHOOK_ENFORCE: undefined,
+      },
+      async () => {
+        invalidateConnectionCache();
+        const res = await chamarWebhook(falso.url);
+        assertEquals(res.status, 503, "sem registro na dead-letter, a mensagem só sobrevive via reenvio");
+        assertEquals(
+          falso.requisicoes.filter((r) => r.metodo === "POST" && r.caminho.includes("/rest/v1/webhook_failures")).length,
+          1,
+          "o handler precisa ao menos tentar registrar na dead-letter",
+        );
       },
     );
   } finally {

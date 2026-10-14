@@ -494,7 +494,7 @@ export async function handleIncomingMessage(
     // Sem telefone/bestJid no log: o identificador fica no hash da dead-letter.
     console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, externalId: key.id, messageType });
     const kind = classifyIngestFailure(txError.code);
-    await recordWebhookFailure(supabase, {
+    const recorded = await recordWebhookFailure(supabase, {
       externalId: key.id,
       eventType: 'messages.upsert',
       instance,
@@ -510,7 +510,9 @@ export async function handleIncomingMessage(
       }),
       replayArgs,
     });
-    return { ok: false, retryable: kind === 'transient' };
+    // Sem registro na dead-letter não há prova do evento: pede reenvio (503)
+    // mesmo em falha permanente — nada some só com console.error (critério 1).
+    return { ok: false, retryable: kind === 'transient' || !recorded };
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
     contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
@@ -520,7 +522,7 @@ export async function handleIncomingMessage(
     console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, messageType });
     // A RPC respondeu sem contato: nao da para dizer que e permanente — pode ser
     // corrida de conexao. Registra a evidencia e deixa o provedor reenviar.
-    await recordWebhookFailure(supabase, {
+    const recorded = await recordWebhookFailure(supabase, {
       externalId: key.id,
       eventType: 'messages.upsert',
       instance,
@@ -536,6 +538,11 @@ export async function handleIncomingMessage(
       }),
       replayArgs,
     });
+    if (!recorded) {
+      // A dead-letter também falhou: sem prova do evento, o reenvio do
+      // provedor é a única chance da mensagem (critério 1).
+      console.error('[INCOMING] dead-letter indisponivel para evento sem contato:', { externalId: key.id });
+    }
     return { ok: false, retryable: true };
   }
 

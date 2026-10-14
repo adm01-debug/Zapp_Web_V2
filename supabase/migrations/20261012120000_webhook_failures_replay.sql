@@ -16,12 +16,22 @@
 --                    external_id, sender), então reprocessar o mesmo external_id
 --                    atualiza/no-op em vez de duplicar a mensagem.
 --   * replay_payload — argumentos do ingest já validados (p_connection_id,
---                    p_phone, p_content...). Contém o telefone do contato porque
---                    NÃO há replay sem ele; por isso a coluna vive só nesta
---                    tabela, cujo acesso é exclusivo do service_role (RLS +
---                    ACL, ver 20260831120000 e grants abaixo). O snapshot de
+--                    p_phone, p_push_name, p_content = texto da mensagem,
+--                    p_message_type, p_media_url, p_external_id, p_created_at).
+--                    Contém o telefone do contato porque NÃO há replay sem ele —
+--                    e, além do telefone, o TEXTO (p_content) e a URL de mídia
+--                    (p_media_url): sem eles o replay recriaria uma mensagem
+--                    vazia. Por isso a coluna vive só nesta tabela, cujo acesso
+--                    é exclusivo do service_role (RLS + ACL, ver 20260831120000
+--                    e grants abaixo; anon/authenticated sem privilégio — provado
+--                    pelo check check-webhook-failures-replay). O snapshot de
 --                    DIAGNÓSTICO continua em payload_truncated, que NÃO recebe
 --                    telefone nem conteúdo (ver _shared/webhook-dead-letter.ts).
+--                    Ciclo de vida: ao resolver, o webhook-replay só marca
+--                    resolved/resolved_at; a linha (inclusive replay_payload) é
+--                    mantida para auditoria. Esta change NÃO cria purga automática
+--                    (sem TTL); retenção limitada, se o produto exigir, é outro
+--                    cartão.
 --
 -- ADD COLUMN sem NOT NULL/DEFAULT: 100% aditivo, as linhas existentes seguem
 -- válidas e continuam sem replay (replay_payload NULL = fora da fila).
@@ -32,7 +42,7 @@ ALTER TABLE public.webhook_failures
 COMMENT ON COLUMN public.webhook_failures.external_id IS
   'Id do evento no provedor (key.id). Chave de idempotencia do replay contra ux_messages_dedup.';
 COMMENT ON COLUMN public.webhook_failures.replay_payload IS
-  'Argumentos minimos do ingest_inbound_message para reprocessar o evento. Contem telefone: acesso restrito a service_role.';
+  'Argumentos validados do ingest_inbound_message para reprocessar o evento. Contem telefone, TEXTO (p_content) e URL de midia (p_media_url) — acesso restrito a service_role; anon/authenticated sem privilegio. Ao resolver, a linha e mantida para auditoria (somente resolved/resolved_at mudam); sem purga automatica nesta change.';
 
 -- Fila de replay: só linhas não resolvidas com payload reprocessável.
 CREATE INDEX IF NOT EXISTS webhook_failures_replay_pendente_idx
