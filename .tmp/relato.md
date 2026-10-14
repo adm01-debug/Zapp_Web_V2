@@ -1,27 +1,21 @@
-Especialista: workertestes
+Especialista: Íris (area-front-componentes)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
+Cartão pedia enxertar na ponta viva (`dia/2026-10-14`) o commit revisado de `v2/t-0f01df80-2610090332235c` ("linhas com dado real e Editar que leva ao passo", TL-146) e **resolver os conflitos preservando o que já entrou na ponta**. Fiz o cherry-pick de `4716556cb4` e resolvi os 3 arquivos que conflitaram:
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+- `src/components/talkx/TalkXWizardDelivery.tsx` (conflito em 5 pontos): mantive da ponta a revisão rica (X135 previsões, `templatePreviewInteractive`/CTA do template, `TalkXPreviewInteractive`, `TalkXNoData`) e trouxe do commit revisado o que a ponta não tinha: assinatura `onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void` (o botão "Editar" navega pela rota com o destino de volta e o passo aberto vira "Voltar à revisão"), o relativo do agendamento (`formatScheduleRelative` → "Hoje, 16:12 (tz)" + "Em 5 minutos") e a linha de Conformidade com o resultado real das checagens (supressão + consentimento). A linha "Segmentos selecionados" ficou com o **nome de cada segmento** e o sub **"N segmentos | X contatos"** (exigência do título) **mais** o total da união e a contagem por segmento que a ponta já mostrava — os nomes vêm de `ed.selectedSegments` (o wizard da ponta aceita mais de um segmento).
+- `src/components/talkx/kit/constants.ts`: conflito de comentário/ordem no catálogo `OBJECTIVES`; mantive o lado da ponta (mesmas descrições que já estavam vivas).
+- `src/components/talkx/__tests__/TalkXView.route.test.tsx`: o teste do commit revisado preenchia `selectedSegment` (singular, campo que a ponta não tem mais) — atualizei o fixture para `selectedSegments: [...]` do modelo vivo **mantendo a asserção idêntica** (`VIP` e `1 segmento | 1.200 contatos`).
+- `src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx`: o mock do editor do teste revisado não trazia `selectedSegments` (o wizard da ponta usa) e a revisão da ponta consome `useTalkXInsights`; acrescentei `selectedSegments: []` no mock e o mock de `useTalkXInsights` (mesma forma do `TalkXView.route.test.tsx`) — nenhuma asserção alterada.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+Conferi os demais consumidores: `TalkXMultiSegmentos.test.tsx` (união + contagem por segmento) e `TalkXWizardReview.resumo.test.tsx` continuam passando — nada foi afrouxado.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (`npx vitest run .../TalkXView.route.test.tsx` com a árvore ainda em conflito): `Transform failed ... [PARSE_ERROR] Encountered diff marker ... TalkXWizardDelivery.tsx:213:1` e depois `TypeError: Cannot read properties of undefined (reading 'length')` em `TalkXCampaignWizard.tsx:713`.
+- verde depois (`npx vitest run src/components/talkx`): `Test Files 111 passed (111); Tests 958 passed (958)`.
+
+FAIXA DO PAI: commit 4716556cb4 do cartão t-0f01df80 (branch v2/t-0f01df80-2610090332235c) — trazido por cherry-pick porque ESTE cartão manda enxertá-lo na ponta.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não mexi nas telas citadas na evidência (`TalkXCampaignScheduled.tsx`, `TalkXCampaignWizard.tsx`) além do que o próprio commit revisado já trazia: a `TalkXCampaignWizard.tsx` foi auto-mesclada e é ela que já implementa o "Voltar à revisão"; não havia conflito nela.
+- Não alterei valores, tetos nem escalas — a união/contagem por segmento veio da ponta e só ganhou o prefixo "N segmentos | X contatos" pedido no título.
