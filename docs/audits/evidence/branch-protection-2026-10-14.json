@@ -1,0 +1,67 @@
+{
+  "_o_que_e": "W01/W02 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md: estado do perimetro ANTES e DEPOIS de restaurar a politica vigente (strict=true, allow_auto_merge=true), medido pela API do GitHub com token de admin.",
+  "_por_que": "4a regressao do strict (25/09, 27/09, 01/10 e esta, sem data conhecida) e 2a de allow_auto_merge. O settings-guard nao detectou nenhuma: roda com GITHUB_TOKEN (403 em branch protection; GET /repos sem os campos de merge). Esta e a linha de base datada para a proxima.",
+  "_metodo": "GET antes -> PATCH /branches/main/protection/required_status_checks {strict:true, contexts inalterados} -> PATCH /repos {allow_auto_merge:true} -> GET depois. PATCH parcial do sub-recurso, nunca PUT completo da protecao (os PUTs completos de 27/09 e 01/10 foram o que alterou o strict sem querer).",
+  "decisao": "W01 opcao (a): restaurar a politica decidida pelo Joaquim em 02/10 (E15(b)); aprovada em 14/10 ('seu plano foi aprovado! execute').",
+  "antes": {
+    "medido_em": "2026-10-14T18:45:00Z",
+    "branch_protection_main": {
+      "required_status_checks": {
+        "strict": false,
+        "contexts": ["🔍 Lint & TypeCheck", "🧪 Unit Tests", "🏗️ Build", "🔒 Security Audit", "Contrato DB offline", "🎭 E2E Tests (Playwright)"]
+      },
+      "enforce_admins": true,
+      "required_linear_history": false,
+      "allow_force_pushes": false,
+      "allow_deletions": false,
+      "required_conversation_resolution": false,
+      "required_signatures": false,
+      "lock_branch": false
+    },
+    "repo": {
+      "allow_auto_merge": false,
+      "allow_squash_merge": true,
+      "allow_merge_commit": false,
+      "allow_rebase_merge": false,
+      "delete_branch_on_merge": true,
+      "allow_update_branch": true,
+      "squash_merge_commit_message": "PR_BODY",
+      "squash_merge_commit_title": "PR_TITLE"
+    },
+    "environments_count": 11,
+    "environments_fora_do_baseline": ["Preview – zapp_web_v2", "Preview – zapp-web-v2-main", "Production – zapp_web_v2", "Production – zapp-web-v2-main"]
+  },
+  "depois": {
+    "medido_em": "2026-10-14T20:54:00Z",
+    "branch_protection_main": {
+      "required_status_checks": {
+        "strict": true,
+        "contexts": ["🔍 Lint & TypeCheck", "🧪 Unit Tests", "🏗️ Build", "🔒 Security Audit", "Contrato DB offline", "🎭 E2E Tests (Playwright)"]
+      },
+      "enforce_admins": true,
+      "required_linear_history": false,
+      "allow_force_pushes": false,
+      "allow_deletions": false,
+      "required_conversation_resolution": false,
+      "required_signatures": false,
+      "lock_branch": false
+    },
+    "repo": {
+      "allow_auto_merge": true,
+      "allow_squash_merge": true,
+      "allow_merge_commit": false,
+      "allow_rebase_merge": false,
+      "delete_branch_on_merge": true,
+      "allow_update_branch": true,
+      "squash_merge_commit_message": "PR_BODY",
+      "squash_merge_commit_title": "PR_TITLE"
+    }
+  },
+  "nao_alterado_de_proposito": [
+    "required_linear_history (W15, decisao separada)",
+    "secret_scanning_validity_checks (W16)",
+    "environments extras da Vercel (W13/W67)",
+    "contexts dos 6 required checks (inalterados, conferidos no PATCH)"
+  ],
+  "coerencia": "scripts/ci/github-settings-baseline.json e a tabela 'Perimetro do GitHub' do CLAUDE.md ja declaravam strict=true e allow_auto_merge=true; nenhum dos dois precisou mudar."
+}
