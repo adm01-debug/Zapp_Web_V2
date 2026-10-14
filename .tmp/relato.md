@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris (area-front-componentes)
 
 ## O que mudou e por quê
 - `src/components/security/AuditLogDashboard.tsx`: a aba de auditoria passou a ler do banco pelas RPCs admin-only do PG-06 — `audit_log_summary` (totais) e `audit_log_list` (lista) — dentro de um hook local da própria tela. Antes era `supabase.from('audit_logs').select(...).limit(200)` e o `if (!error && data)` engolia a falha: erro de RLS/permissão/servidor virava "0" na tela, sem aviso.
