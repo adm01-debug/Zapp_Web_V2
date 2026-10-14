@@ -499,4 +499,97 @@ describe('useSipConnection', () => {
 
     expect(mockUaInstances.length).toBe(2);
   });
+
+  // === T21: soltar o ramal no unmount, no pagehide e no backoff ===
+
+  it('T21: unmount desregistra e para o ramal', async () => {
+    const { result, unmount } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+    expect(registerer.unregister).not.toHaveBeenCalled();
+    expect(ua.stop).not.toHaveBeenCalled();
+
+    unmount();
+
+    // Sem isto o ramal ficava preso no servidor e o proximo login tomava 403.
+    expect(registerer.unregister).toHaveBeenCalledTimes(1);
+    expect(ua.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('T21: pagehide (fechar/sair da aba) desregistra e para o ramal, uma unica vez', async () => {
+    const { result, unmount } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    const ua = mockUaInstances[0];
+    const registerer = mockRegistererInstances[0];
+
+    // O navegador não roda o cleanup do React ao fechar a aba: o listener de
+    // `pagehide` é o que solta o ramal.
+    await act(async () => { window.dispatchEvent(new Event('pagehide')); });
+    expect(registerer.unregister).toHaveBeenCalledTimes(1);
+    expect(ua.stop).toHaveBeenCalledTimes(1);
+
+    // Idempotente: o unmount depois do pagehide não solta de novo.
+    unmount();
+    expect(registerer.unregister).toHaveBeenCalledTimes(1);
+    expect(ua.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('T21: aba SEGUIDORA ao desmontar nao derruba a linha de outra aba', async () => {
+    const leader = renderHook(() => useSipConnection());
+    await act(async () => {
+      await leader.result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances.length).toBe(1);
+    const leaderUa = mockUaInstances[0];
+    const leaderRegisterer = mockRegistererInstances[0];
+
+    // A segunda aba perde a eleicao (T20): nao registra e, ao desmontar, nao
+    // pode mexer no UA/Registerer que pertencem a aba lider.
+    mockIsLeader.mockReturnValue(false);
+    const follower = renderHook(() => useSipConnection());
+    await act(async () => {
+      await follower.result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    expect(mockUaInstances.length).toBe(1);
+
+    follower.unmount();
+
+    expect(leaderRegisterer.unregister).not.toHaveBeenCalled();
+    expect(leaderUa.stop).not.toHaveBeenCalled();
+    expect(mockUaInstances.length).toBe(1);
+
+    // A aba lider continua dona do ramal: e ela quem o solta ao sair.
+    leader.unmount();
+    expect(leaderRegisterer.unregister).toHaveBeenCalledTimes(1);
+    expect(leaderUa.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it('T21: no backoff, o UserAgent morto recebe stop() antes de o novo nascer', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+    const deadUa = mockUaInstances[0];
+    const deadRegisterer = mockRegistererInstances[0];
+    expect(deadUa.stop).not.toHaveBeenCalled();
+
+    // O transporte cai: ha um retry agendado e o UA antigo ainda esta nas refs.
+    act(() => { deadUa.transport.onDisconnect?.(); });
+    expect(result.current.sipStatus).toBe('reconnecting');
+
+    await act(async () => { vi.advanceTimersByTime(31000); });
+
+    // O retry so pode criar o UA novo depois de parar o morto (senao o REGISTER
+    // toma 403 porque a linha ainda esta registrada pelo UA que morreu).
+    expect(deadUa.stop).toHaveBeenCalledTimes(1);
+    expect(deadRegisterer.unregister).toHaveBeenCalledTimes(1);
+    expect(mockUaInstances.length).toBe(2);
+    vi.useRealTimers();
+  });
 });
