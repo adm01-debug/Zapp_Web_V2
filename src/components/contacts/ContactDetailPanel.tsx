@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap, Package,
+  Calendar, Tag, Clock, Package, ChevronLeft, ChevronRight, ContactRound,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -52,6 +52,15 @@ interface ContactDetailPanelProps<T extends ContactDetail> {
   onClose: () => void;
   onOpenChat: (id: string) => void;
   onEdit: (contact: T) => void;
+  /**
+   * RD-071 (casca da janela) — ganchos de navegação da ficha. Os botões
+   * Anterior/Próximo fazem parte da casca; quem os liga ao contato
+   * anterior/seguinte da lista filtrada é o item RD-078 (o consumidor,
+   * `ContactsView`, não passa estes handlers ainda). Sem handler o botão fica
+   * desabilitado — nunca um clique morto.
+   */
+  onPrev?: () => void;
+  onNext?: () => void;
 }
 
 /** Atividade de um contato: nº de mensagens + data da última (ou `null` = sem mensagens). */
@@ -167,18 +176,33 @@ export function ContactCatalogSendHistory({ contactId }: { contactId: string }) 
   );
 }
 
+/**
+ * RD-071 — Ficha completa do contato: casca da janela.
+ *
+ * A ficha deixou de ser um painel lateral de 380 px (`fixed right-0`) e virou
+ * a janela centralizada do design (`docs/design/contatos-redesign-2026-10-12/`,
+ * `zc-dialog`): largura de até 1050 px, raio 17 px, borda e sombra do token,
+ * cabeçalho com ícone + contexto "Contatos / Ficha completa" + controles
+ * Anterior / Próximo / Fechar. No celular (<640 px) ocupa a tela inteira.
+ *
+ * Toda a casca agora é o `Dialog` do sistema (Radix): foco preso dentro da
+ * janela, `Esc` fecha e, ao fechar, o foco volta ao elemento que abriu (o
+ * card/linha de Contatos) — por isso o `document.addEventListener('keydown')`
+ * manual de antes saiu (era um listener global). O conteúdo interno continua o
+ * de hoje; ele será reorganizado em abas nos próximos itens da fase.
+ */
 export function ContactDetailPanel<T extends ContactDetail>({
-  contact, onClose, onOpenChat, onEdit,
+  contact, onClose, onOpenChat, onEdit, onPrev, onNext,
 }: ContactDetailPanelProps<T>) {
   const activity = useContactActivity(contact?.id);
   const activityReady = !!activity.data && !activity.isError;
-
-  useEffect(() => {
-    if (!contact) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [contact, onClose]);
+  // RD-071 — o gatilho da ficha está FORA dela (o card/linha de Contatos), então
+  // o Radix não tem como devolver o foco: sem `DialogTrigger` ele só sabe
+  // focar o gatilho registrado e, sem ele, larga o foco no `<body>`. Guardamos
+  // quem estava focado quando a janela abriu e devolvemos no fechamento.
+  const openedFrom = useRef<HTMLElement | null>(
+    typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null),
+  );
 
   if (!contact) return null;
 
@@ -197,36 +221,55 @@ export function ContactDetailPanel<T extends ContactDetail>({
   ].filter(item => item.value);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="detail-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
-        onClick={onClose}
-      />
-      <motion.div
-        key="detail-panel"
-        initial={{ x: 400, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: 400, opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed right-0 top-0 h-full w-[380px] bg-card border-l border-border shadow-2xl z-50 flex flex-col"
-        role="dialog"
-        aria-label={`Detalhes do contato ${contact.name}`}
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        aria-describedby={undefined}
         aria-modal="true"
+        data-testid="contact-detail-dialog"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          openedFrom.current?.focus();
+        }}
+        className="flex w-full max-w-[1050px] flex-col gap-0 overflow-hidden border-border bg-card p-0 shadow-elev-4 sm:rounded-[17px] max-sm:left-0 max-sm:top-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none"
       >
-        {/* Header */}
-        <div className="relative p-6 pb-4">
-          <Button
-            variant="ghost" size="icon"
-            className="absolute top-3 right-3 w-8 h-8"
-            onClick={onClose}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+        {/* Cabeçalho da janela: contexto + controles (Anterior / Próximo / Fechar). */}
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 py-4">
+          <DialogTitle className="flex min-w-0 items-center gap-2 text-xs font-normal text-muted-foreground">
+            <ContactRound className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="truncate">Contatos / Ficha completa</span>
+          </DialogTitle>
 
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Ver contato anterior"
+              title={onPrev ? 'Ver contato anterior' : 'Disponível ao navegar pela lista'}
+              disabled={!onPrev}
+              onClick={() => onPrev?.()}
+            >
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Ver próximo contato"
+              title={onNext ? 'Ver próximo contato' : 'Disponível ao navegar pela lista'}
+              disabled={!onNext}
+              onClick={() => onNext?.()}
+            >
+              <ChevronRight aria-hidden="true" />
+            </Button>
+            <DialogClose asChild>
+              <Button variant="outline" size="icon" aria-label="Fechar ficha" title="Fechar ficha">
+                <X aria-hidden="true" />
+              </Button>
+            </DialogClose>
+          </div>
+        </header>
+
+        <div className="p-6 pb-4">
           <div className="flex flex-col items-center text-center gap-3">
             <Avatar className="w-20 h-20 ring-4 ring-background shadow-lg">
               <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
@@ -338,7 +381,7 @@ export function ContactDetailPanel<T extends ContactDetail>({
         <Separator />
 
         {/* Info */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="p-6 space-y-5">
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -426,7 +469,7 @@ export function ContactDetailPanel<T extends ContactDetail>({
             <ContactCatalogSendHistory contactId={contact.id} />
           </div>
         </ScrollArea>
-      </motion.div>
-    </AnimatePresence>
+      </DialogContent>
+    </Dialog>
   );
 }
