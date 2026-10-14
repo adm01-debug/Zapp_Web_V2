@@ -1,19 +1,15 @@
-Especialista: complexo (backend-zapp-como-provar; area: banco/RPC)
+Especialista: worker (geral)
 
-NÃO CONCLUÍ: fechamento sem código — a correção exige migration e o cartão proíbe (juiz: PROIBIÇÃO). Decisão do Joaquim pendente.
+NÃO CONCLUÍ a correção do comportamento: reabrir resolved|archived → open no inbound exige alterar a RPC ingest_inbound_message (migration), o que o cartão proíbe ("sem DDL/Edge Function/migration"). Esta entrega contém só este relato; a decisão é do Joaquim (autorizar trilha de banco separada ou manter o comportamento atual).
 
-## A lacuna existe (provada com código real)
-- `bash scripts/db-audit/ingest-inbound-reopen-conversation.test.sh` → `== BLOCO A: definicao anterior (defeito) ==` + `[PASS] antes: resolved + inbound novo` / `[PASS] antes: archived + inbound novo`: ingest_inbound_message (20260905070000) nunca toca conversation_status; conversa resolved|archived continua assim após inbound. Os dois webhooks (evolution-webhook-messages.ts:460 e whatsapp-webhook/index.ts:231) chamam só essa RPC — ela é o único caminho.
+## O gap existe (prova só-leitura, sem migration)
+- `grep -c "conversation_status"` nas duas migrations que definem a RPC vigente → `20260905050000_ingest_inbound_message_tx.sql:0` e `20260905070000_ingest_lock_feature_flags_audit_rate_limit_cleanup.sql:0`: a RPC nunca toca conversation_status (escreve só messages.status).
+- Chamadores: `supabase/functions/whatsapp-webhook/index.ts:231` e `supabase/functions/_shared/evolution-webhook-messages.ts:460` chamam só essa RPC — ela é o único caminho do inbound para o banco.
 
-## A correção provada (removida deste fechamento, guardada na história da branch)
-- Commit anterior desta branch continha (sha 5b020d411cb2c9e54beec7b10211d070cea40a32): supabase/migrations/20261012100000_ingest_inbound_message_reopen_conversation.sql (reabre resolved|archived -> open só em outcome inserted; mesma assinatura e grants service_role; rollback completo executável) + scripts/db-audit/ingest-inbound-reopen-conversation.test.sh + entrada na ALLOWLIST de check-test-inventory.mjs.
-- Verde medido antes de remover: `[PASS] depois: resolved + inbound novo`, `[PASS] depois: archived + inbound novo`, `[PASS] redelivery (updated) nao reabre`, `[PASS] contato novo fica open`, `[PASS] reabertura carimba conversation_status_changed_at` + `OK: reabertura automatica resolved|archived -> open validada`; `hermes-db-migrar` → `APLICADA no banco LOCAL`; rollback executado no banco local (`CREATE FUNCTION`/`REVOKE`/`GRANT`, `position('conversation_status' in prosrc) = 0`, 1 assinatura).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (171s)`.
+## Pontos do revisor ([refazer 1])
+- Ponto 1 (entrada allowlist órfã no check-test-inventory.mjs): arquivo revertido ao estado da base (merge-base 33a75289bc); `grep -c "ingest-inbound-reopen"` nele → 0; o diff da branch não o contém mais.
+- Ponto 2 (sem teste nem correção): não há teste neste diff porque não há correção neste diff — a correção exige migration, vedada pelo cartão. Commitar teste que falha sem um código que não existe aqui seria nova inconsistência. O gap segue aberto e provado acima, só com leitura.
+- Ponto 3 (relato dizia o que o diff não mostra; decisão do Joaquim): este relato afirma só o que o diff contém (só .tmp/relato.md, lista abaixo) e deixa a decisão explícita no topo. Nada do histórico da branch é apresentado como entrega desta rodada.
 
-## O que falta (dono: Joaquim)
-- Autorizar ou recusar a migration de repositório (banco local + futuro deploy; produção nunca tocada por este cartão). Se autorizar, o commit removido pode ser reaplicado do histórico da branch.
-
-## Sobre os avisos do juiz (2a rodada)
-- Pontos 1 e 2 (reabertura via ingest_inbound_message; seed t_ IN seed_peer_user_message_stale_resolved_when_inbound_later_arrives): o cenário do seed é exatamente o bloco B do teste (contato resolved + inbound posterior => open); foi provado no commit 5b020d411cb2c9e54beec7b10211d070cea40a32 e removido do diff final pela proibição de migration. Falta = decisão do Joaquim.
-- Ponto 3 (arquivos do projeto em docs): nenhum arquivo de projeto foi criado; só migration/teste/scripts (removidos do diff final) e .tmp/relato.md (scratch do workspace).
-- Ponto 4 (check-test-inventory.mjs): revertido com git checkout; o diff final não o contém — constava só no commit intermediário removido.
+## Arquivos no diff
+- `git diff dia/2026-10-14...HEAD --name-only` → `.tmp/relato.md` (único arquivo)
