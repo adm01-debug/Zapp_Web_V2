@@ -113,6 +113,14 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // t_2b046874 (cartao "presenca real na reatribuicao por ausencia", migration
+  // 20261014010805): prova, em PG 17 descartavel (docker local), que o RPC
+  // reassign_absent_agents decide ausencia pelo heartbeat de agent_presence —
+  // RED com o corpo anterior + GREEN aplicando o arquivo real da migration,
+  // sob os papeis reais (authenticated admin/sem papel, anon, PUBLIC). Passo de
+  // uma linha em db-guard.yml (`bash scripts/db-audit/absent-agents-presence.test.sh`),
+  // a promover pelo dono do workflow.
+  'scripts/db-audit/absent-agents-presence.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
