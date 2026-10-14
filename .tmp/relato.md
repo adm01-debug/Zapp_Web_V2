@@ -1,43 +1,56 @@
-Especialista: hugo
+Especialista: Iris (area-front-componentes)
 
-# feat(admin): hook da Sala de Crise com atualização periódica e erro explícito
+FAIXA DO PAI: commits 67ffa98586, be958f52af, 59bb4f8aa4, e5f6219be7 do cartão t_ac0acb5c (hook da Sala de Crise) e, dentro dele, a migration da RPC de t_7d403167 — não são deste cartão.
 
-## O que mudou (diff desta área: src/hooks/)
-- `src/hooks/business/useCrisisRoomMetrics.ts` (novo): hook React Query que consome a RPC
-  `crisis_room_snapshot()` e entrega as 4 métricas da Sala de Crise prontas para a tela.
-  - Atualização automática: `refetchInterval` de 45 s (dentro da faixa 30-60 s do cartão) e
-    `refetchOnReconnect: true` no próprio hook — não depende da config do QueryClient do consumidor.
-  - Aba oculta pausa o relógio (`refetchInterval: false`) e, ao voltar à frente, mede na hora,
-    sem esperar o próximo ciclo (ref que guarda a visibilidade anterior).
-  - Falha nunca vira zero: `.error` da RPC lança; campo ausente/não numérico em
-    `parseCrisisRoomSnapshot` lança. Em erro, `snapshot`/`metrics` ficam `undefined` e `isCrisis`
-    fica `null` (a tela não anuncia "Operação normal" sobre dado que não existe). `queue_ratio`
-    NULL = "não medido" (`severity: 'unknown'`), nunca 0 pintado de verde.
-  - Expõe `isError`, `error`, `isFirstLoad`, `isRefreshing`, `dataUpdatedAt`, `refetch` e
-    `refetchIntervalMs` para a tela.
-- `src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx` (novo): chama o hook REAL
-  (`renderHook` + `QueryClientProvider`), mockando só o cliente Supabase, com 11 casos.
+# fix(admin): Sala de Crise com erro explícito, limiares duplos e alerta acessível
 
-## Arquivos herdados do cartão pai (t_7d403167, já aprovado) — presentes no diff desta branch
-- `supabase/migrations/20261013140359_crisis_room_snapshot.sql`: a RPC que este hook consome.
-- `src/integrations/supabase/types.ts`: tipo da RPC gerado a partir dela.
-- `scripts/db-audit/crisis-room-snapshot.test.sh` + `scripts/ci/check-test-inventory.mjs`: prova da
-  RPC com papéis reais (admin/agente/anon/service_role) em PostgreSQL descartável e a entrada
-  necessária na ALLOWLIST do inventário de testes (senão o `.test.sh` é reprovado como órfão).
-Vieram na faixa do pai e são indispensáveis para o hook: sem a RPC não há agregado para consumir.
-Não editei nenhum desses arquivos.
+## O que mudou e por quê
+
+- `src/components/admin/CrisisRoom.tsx` — a tela deixou de consultar o banco por conta própria e passou a ler o hook
+  `useCrisisRoomMetrics` (RPC `crisis_room_snapshot`, entregue e provada no cartão pai). Em cima disso, os estados
+  que o cartão pede:
+  - **Erro explícito, sem mentir:** quando `isError`, aparece um bloco com `role="alert"`, título
+    "Não foi possível medir a operação", o motivo da falha e o botão **"Tentar de novo"** (`refetch`). Os quatro
+    cartões continuam na página com **"—"** e selo **"Sem dado"** — nunca "Operação normal" nem selo verde.
+  - **Os DOIS limiares por cartão:** cada cartão mostra `Atenção:` e `Crítico:` com o número e a unidade. O sinal
+    acompanha o sentido da métrica (`>` para "quanto mais, pior"; `<` para `lowerIsWorse`, ex.: agentes ativos
+    "Atenção: < 4 online" / "Crítico: < 2 online"). Os valores vêm de `CRISIS_THRESHOLDS` (leitura real do hook),
+    não de constantes escritas aqui dentro.
+  - **Mudança de severidade anunciada:** o banner de crise recebeu `role="alert"`; a região do selo do topo ficou
+    dentro de um contêiner com `aria-live="polite"` (atômico), para leitor de tela ouvir a troca de Normal ↔ Crítico.
+  - **Botão de atualizar acessível:** "Atualizar métricas" agora tem `aria-busy` e fica `disabled` enquanto a
+    atualização corre (antes: nem um, nem outro).
+  - **Skeleton só na primeira carga:** o esqueleto usa `isFirstLoad` (`isPending`), não `isFetching` — recarga de
+    fundo não apaga mais os números já na tela.
+  - **"Atualizado há X":** texto derivado de `dataUpdatedAt` ("Atualizado agora" / "Atualizado há N s|min"),
+    atualizado a cada 30 s sem re-render do gráfico.
+  - **Movimento:** `motion-safe:` nas pulsações de esqueleto e `useReducedMotion()` nas animações do framer-motion,
+    para quem pediu menos movimento não receber nada.
+- `src/components/admin/__tests__/CrisisRoom.metricas.test.tsx` — reescrito:
+  - o componente **real** é renderizado; a única peça substituída é a fonte de dados (`useCrisisRoomMetrics`), via
+    `vi.mock` com `importOriginal` — ou seja, `CRISIS_THRESHOLDS`, labels, unidades e a regra de severidade
+    continuam vindo do **módulo de produção**, e o mock só devolve o objeto que o hook devolveria. Nada de mock
+    "já com a resposta pronta".
+  - as asserções antigas deste arquivo exercitavam `supabase.from(...)` dentro da tela — consulta que o componente
+    deixou de fazer. Essa regra (mensagem já respondida não conta, etc.) mora hoje no hook (cartão pai,
+    `useCrisisRoomMetrics.test.tsx`) e no SQL (`scripts/db-audit/crisis-room-snapshot.test.sh`); reafirmá-la aqui
+    sobre um mock seria provar o mock, não a tela. Nenhuma asserção de acessibilidade/estado foi afrouxada — foram
+    adicionadas (erro, limiares, aria-live, aria-busy, "—", skeleton só no 1º load, "Atualizado há").
 
 ## Prova
-- `npx vitest run src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx`
-  -> `Test Files 1 passed (1); Tests 11 passed (11)`.
-  Cobre: falha da RPC vira erro e nunca zero; agregado quebrado (campo ausente) falha; `queue_ratio`
-  nulo = `unknown`; atualização automática no intervalo configurado; aba oculta pausa e ao voltar
-  mede de novo; reconexão re-sincroniza mesmo com o `refetchOnReconnect` do QueryClient desligado.
-- `zapp-verify . --rapido` -> `OK db_guard 0s`; a etapa `tipos` foi interrompida duas vezes por
-  OOM deste host compartilhado (tsc morto com exit 137, "falha de execução, NÃO é aprovação"),
-  sem nenhum diagnóstico de tipo apontado. A verificação roda de novo no fechamento.
-- O commit do hook toca só `src/hooks/business/useCrisisRoomMetrics.ts` e o teste. Nada de produção.
 
-## NÃO FEITO
-- Nenhum arquivo de UI: `CrisisRoom.tsx` é do worker de telas. O hook já entrega os 4 cartões com
-  os dois limiares (atenção e crítico) para a tela só renderizar.
+- vermelho antes (tela antiga, `06f42f143`, sem a minha mudança):
+  `npx vitest run src/components/admin/__tests__/CrisisRoom.metricas.test.tsx`
+  → `Test Files  1 failed (1)` ; `Tests  6 failed | 1 passed (7)`
+- verde depois (meu commit):
+  `npx vitest run src/components/admin/__tests__/CrisisRoom.metricas.test.tsx`
+  → `Test Files  1 passed (1)` ; `Tests  7 passed (7)`
+- testes que cobrem os 3 itens do critério: erro → "Tentar de novo" + "—" + sem selo verde; severidade crítica →
+  `role="alert"` no banner e `aria-live` no selo; limiares "Atenção"/"Crítico" com os dois números por cartão.
+
+## O que NÃO fiz e por quê
+
+- Não toquei no hook nem na migration (são do cartão pai; fora da minha área).
+- **Captura claro/escuro:** não a entreguei porque exige uma spec E2E nova e um `project` no `playwright.config.ts`
+  (arquivo fora de "ARQUIVOS QUE PODE TOCAR" deste cartão). O contraste dos tokens usados (muted/warning/destructive/
+  success) já é coberto por `e2e/a11y-contraste.spec.ts`. Deixei a nota no cartão para quem puder ampliar o harness.
