@@ -49,7 +49,13 @@ describe('ContactMapView — mapa x localização (R2-AUTH-038)', () => {
     // Numa conta só, 3 contatos mapeados: 1 confirmado + 1 aproximado + 1 região sem ponto
     // conhecido (que fica nos cartões). Nenhum contato conta duas vezes.
     expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('contatos mapeados')).toBeInTheDocument();
+    // Rótulo honesto: o mapa diz que são contatos CARREGADOS (recorte da tela), não o total.
+    expect(screen.getByTestId('map-count')).toHaveTextContent('3 contatos carregados');
+  });
+
+  it('mostra o recorte real "X de N carregados" quando há total maior que a página', () => {
+    render(<ContactMapView contacts={contacts} totalCount={120} />);
+    expect(screen.getByTestId('map-count')).toHaveTextContent('3 de 120 contatos carregados');
   });
 
   it('mantém o agrupamento comercial por DDD nos cartões, com todos os contatos', () => {

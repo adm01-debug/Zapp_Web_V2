@@ -26,6 +26,8 @@ interface Contact {
 interface ContactMapViewProps {
   contacts: Contact[];
   onContactClick?: (id: string) => void;
+  /** Total de contatos que batem no filtro (pode ser maior que `contacts`, que é o recorte carregado). */
+  totalCount?: number;
 }
 
 /** Contato com coordenada própria (endereço confirmado) — vira pino, não bolha aproximada. */
@@ -41,7 +43,7 @@ const REGION_COLORS = [
   { icon: 'bg-muted-foreground/15', bar: 'bg-muted-foreground/40' },
 ] as const;
 
-export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps) {
+export function ContactMapView({ contacts, onContactClick, totalCount }: ContactMapViewProps) {
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
 
   const regions = useMemo(() => {
@@ -104,9 +106,17 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
           <Globe className="w-4 h-4" />
           <span className="font-medium text-foreground">{regions.length}</span> regiões
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div
+          className="flex items-center gap-2 text-sm text-muted-foreground"
+          data-testid="map-count"
+          title="O mapa plota apenas os contatos já carregados nesta tela."
+        >
           <Users className="w-4 h-4" />
-          <span className="font-medium text-foreground">{contacts.length}</span> contatos mapeados
+          <span className="font-medium text-foreground">{contacts.length}</span>{' '}
+          {totalCount != null && totalCount > contacts.length && (
+            <span>de <span className="font-medium text-foreground">{totalCount}</span></span>
+          )}{' '}
+          <span>contatos carregados</span>
         </div>
       </div>
 

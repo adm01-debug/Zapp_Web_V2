@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -181,12 +180,10 @@ export function ContactDetailPanel<T extends ContactDetail>({
   const activity = useContactActivity(contact?.id);
   const activityReady = !!activity.data && !activity.isError;
 
-  useEffect(() => {
-    if (!contact) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [contact, onClose]);
+  // O Esc NÃO é tratado aqui: quem fecha o painel é o handler central de
+  // atalhos (`useContactsViewState`), que só fecha a camada de topo — com um
+  // diálogo Radix aberto por cima, o Esc é do diálogo e o painel fica. Ter um
+  // listener próprio aqui fechava as duas camadas com um único Esc.
 
   if (!contact) return null;
 
@@ -231,6 +228,7 @@ export function ContactDetailPanel<T extends ContactDetail>({
             variant="ghost" size="icon"
             className="absolute top-3 right-3 w-8 h-8"
             onClick={onClose}
+            aria-label="Fechar detalhes do contato"
           >
             <X className="w-4 h-4" />
           </Button>
