@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   sonnerError: vi.fn(),
   sonnerSuccess: vi.fn(),
   sonnerInfo: vi.fn(),
+  onForward: vi.fn().mockResolvedValue({ pairOutcomes: [], nonForwardable: [], attempted: 0 }),
 }));
 
 function tableResult(table: string) {
@@ -77,7 +78,9 @@ describe('useForwardMessage — busca de contatos que falha avisa', () => {
   it('avisa quando a busca falha e o usuario fica com a lista vazia', async () => {
     mocks.tables.contacts = { data: null, error: new Error('db fora') };
 
-    renderHook(() => useForwardMessage({ open: true, allowGroups: false }));
+    renderHook(() => useForwardMessage({
+      open: true, allowGroups: false, onForward: mocks.onForward, onOpenChange: vi.fn(),
+    }));
 
     await waitFor(() => expect(mocks.toast).toHaveBeenCalled());
     expect(mocks.toast).toHaveBeenCalledWith({
@@ -94,7 +97,9 @@ describe('useForwardMessage — busca de contatos que falha avisa', () => {
     };
 
     const { rerender } = renderHook(
-      ({ open }: { open: boolean }) => useForwardMessage({ open, allowGroups: false }),
+      ({ open }: { open: boolean }) => useForwardMessage({
+        open, allowGroups: false, onForward: mocks.onForward, onOpenChange: vi.fn(),
+      }),
       { initialProps: { open: true } },
     );
 

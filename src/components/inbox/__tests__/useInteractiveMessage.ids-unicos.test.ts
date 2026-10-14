@@ -24,7 +24,7 @@ describe('useInteractiveMessage — ids unicos', () => {
     const { result } = renderHook(() => useInteractiveMessage());
 
     act(() => {
-      result.current.addButton('quick_reply');
+      result.current.addButton('reply');
       result.current.addButton('url');
     });
 

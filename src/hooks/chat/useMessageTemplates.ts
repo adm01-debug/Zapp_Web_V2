@@ -41,7 +41,7 @@ export function useMessageTemplates() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   const addTemplate = useCallback(async (template: { title: string; content: string; shortcut: string; category: string }) => {
     if (!user || !template.title || !template.content) {

@@ -99,24 +99,28 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         contactId, content: '[Sticker]', messageType: 'sticker', mediaUrl: stickerUrl,
       });
 
-      // Auto-save da figurinha: best-effort. Sem o catch no fim da cadeia uma
-      // falha aqui virava rejeicao nao tratada (o envio ja tinha acontecido).
-      supabase.from('stickers').select('id').eq('image_url', stickerUrl).maybeSingle()
-        .then(async ({ data: existing, error }) => {
+      // Auto-save da figurinha: best-effort. Antes a cadeia `.then(async ...)` nao
+      // tinha catch e uma falha aqui virava rejeicao nao tratada (o envio ja
+      // tinha acontecido).
+      void (async () => {
+        try {
+          const { data: existing, error } = await supabase
+            .from('stickers').select('id').eq('image_url', stickerUrl).maybeSingle();
           if (error) {
             log.warn('Nao foi possivel verificar a figurinha enviada:', error);
             return;
           }
-          if (!existing) {
-            const { data: { user } } = await supabase.auth.getUser();
-            const { error: insertError } = await supabase.from('stickers').insert({
-              name: `Enviada ${new Date().toLocaleDateString('pt-BR')}`,
-              image_url: stickerUrl, category: 'enviadas', is_favorite: false, use_count: 1, uploaded_by: user?.id || null,
-            });
-            if (insertError) log.warn('Nao foi possivel salvar a figurinha enviada:', insertError);
-          }
-        })
-        .catch((err) => log.warn('Nao foi possivel salvar a figurinha enviada:', err));
+          if (existing) return;
+          const { data: { user } } = await supabase.auth.getUser();
+          const { error: insertError } = await supabase.from('stickers').insert({
+            name: `Enviada ${new Date().toLocaleDateString('pt-BR')}`,
+            image_url: stickerUrl, category: 'enviadas', is_favorite: false, use_count: 1, uploaded_by: user?.id || null,
+          });
+          if (insertError) log.warn('Nao foi possivel salvar a figurinha enviada:', insertError);
+        } catch (err) {
+          log.warn('Nao foi possivel salvar a figurinha enviada:', err);
+        }
+      })();
 
       toast({ title: 'Figurinha enviada!' });
     } catch {
