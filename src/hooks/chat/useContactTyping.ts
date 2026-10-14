@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -77,10 +77,11 @@ export function useContactTyping(
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Reset síncrono ancorado na identidade do contato: sem zerar aqui o
+    // contato novo herdaria o "digitando" do anterior até o próximo timer.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset de estado ancorado na identidade do contato (padrão do repo).
+    setIsTyping(false);
     if (!enabled || !contactId || contactId.endsWith('@broadcast') || contactId.endsWith('@g.us')) {
-      // startTransition evita setState síncrono no corpo do efeito
-      // (react-hooks/set-state-in-effect).
-      startTransition(() => setIsTyping(false));
       return;
     }
 

@@ -127,6 +127,18 @@ describe('useContactTyping (aviso de digitando da lista)', () => {
     expect(fake.removeChannel).toHaveBeenCalledTimes(1);
   });
 
+  it('troca de contato zera o aviso imediatamente (sem arrastar true do anterior)', () => {
+    const { result, rerender } = renderHook(({ id }) => useContactTyping(id), {
+      initialProps: { id: CONTACT },
+    });
+    broadcast(fake.entries[0], { isTyping: true });
+    expect(result.current).toBe(true);
+
+    act(() => { rerender({ id: 'contato-999' }); });
+    // B nunca digitou: sem avançar nenhum timer o aviso já tem de estar apagado.
+    expect(result.current).toBe(false);
+  });
+
   it('troca de contato re-assina no canal novo e libera o antigo', () => {
     const { rerender } = renderHook(({ id }) => useContactTyping(id), {
       initialProps: { id: CONTACT },
