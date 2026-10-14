@@ -76,20 +76,20 @@ describe('handlers globais — ruído não reporta, erro real reporta uma vez', 
     preventDefault: vi.fn(),
   }) as unknown as ErrorEvent;
 
-  it('rejeição de ruído é silenciada: sem log e sem reportClientError', () => {
+  it('rejeição de ruído é silenciada: sem log, sem reportClientError e sem preventDefault', () => {
     const h = makeHandlers();
     const event = rejectionEvent(new Error('ResizeObserver loop limit exceeded'));
     h.onUnhandledRejection(event);
-    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    expect(event.preventDefault).not.toHaveBeenCalled();
     expect(h.logError).not.toHaveBeenCalled();
     expect(h.report).not.toHaveBeenCalled();
   });
 
-  it('erro de window de ruído (Script error.) é silenciado', () => {
+  it('erro de window de ruído (Script error.) é silenciado: sem preventDefault', () => {
     const h = makeHandlers();
     const event = errorEvent(undefined, 'Script error.');
     h.onWindowError(event);
-    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    expect(event.preventDefault).not.toHaveBeenCalled();
     expect(h.logError).not.toHaveBeenCalled();
     expect(h.report).not.toHaveBeenCalled();
   });
@@ -106,10 +106,29 @@ describe('handlers globais — ruído não reporta, erro real reporta uma vez', 
   it('erro real de window é reportado com a origem window.onerror', () => {
     const h = makeHandlers();
     const boom = new RangeError('boom');
-    h.onWindowError(errorEvent(boom));
+    const event = errorEvent(boom);
+    h.onWindowError(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
     expect(h.logError).toHaveBeenCalledTimes(1);
     expect(h.report).toHaveBeenCalledTimes(1);
     expect(h.report).toHaveBeenCalledWith(boom, { source: 'window.onerror' });
+  });
+
+  it('handlers nunca chamam preventDefault: nem no ruído, nem no erro real (sem interferir no browser)', () => {
+    const h = makeHandlers();
+    const noiseRejection = rejectionEvent(new Error('ResizeObserver loop limit exceeded'));
+    const noiseWindow = errorEvent(undefined, 'Script error.');
+    const realRejection = rejectionEvent(new TypeError('boom'));
+    const realWindow = errorEvent(new RangeError('boom'));
+    h.onUnhandledRejection(noiseRejection);
+    h.onWindowError(noiseWindow);
+    h.onUnhandledRejection(realRejection);
+    h.onWindowError(realWindow);
+    for (const event of [noiseRejection, noiseWindow, realRejection, realWindow]) {
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(h.logError).toHaveBeenCalledTimes(2);
+    expect(h.report).toHaveBeenCalledTimes(2);
   });
 });
 

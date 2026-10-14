@@ -2,9 +2,11 @@
  * Filtro de ruído benigno dos eventos globais de erro do browser.
  *
  * Fonte única da verdade usada pelos handlers de `window` em `src/main.tsx`.
- * Ruído benigno é silenciado de verdade: `preventDefault()` + `return`, SEM log
- * e SEM `reportClientError` — assim ele não gasta a cota de 10 envios por sessão
- * do errorReporter (src/lib/errorReporter.ts) e não aparece como erro real.
+ * Ruído benigno é silenciado com `return` antecipado, SEM log, SEM
+ * `reportClientError` e SEM `preventDefault()` — o handler não interfere no
+ * comportamento padrão do browser; assim o ruído também não gasta a cota de
+ * 10 envios por sessão do errorReporter (src/lib/errorReporter.ts) e não
+ * aparece como erro real.
  *
  * O que é ruído (e NUNCA deve ser confundido com erro real):
  * - `ResizeObserver loop ...` (limit exceeded / completed with undelivered
@@ -91,7 +93,6 @@ export interface ClientErrorHandlerDeps {
 export function createClientErrorHandlers(deps: ClientErrorHandlerDeps) {
   const onUnhandledRejection = (event: PromiseRejectionEvent): void => {
     if (isBenignClientNoise(event.reason)) {
-      event.preventDefault();
       return;
     }
     deps.logError('Unhandled promise rejection:', event.reason);
@@ -101,7 +102,6 @@ export function createClientErrorHandlers(deps: ClientErrorHandlerDeps) {
   const onWindowError = (event: ErrorEvent): void => {
     const detail = event.error || event.message;
     if (isBenignClientNoise(event.error) || isBenignClientNoise(event.message)) {
-      event.preventDefault();
       return;
     }
     deps.logError('Unhandled error:', detail);
