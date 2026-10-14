@@ -27,6 +27,7 @@ Especialista: worker (sql)
 - verde depois: `bash scripts/db-audit/inbox-filter-presets.test.sh` → `Inbox filter presets PostgreSQL 17 behavioral contract: PASS` (exit 0).
   Cobre: dono vê/grava o próprio preset; outro authenticated não vê/altera/apaga e spoof de user_id é barrado; anon não vê nem insere; service_role (BYPASSRLS) lê os dois; chave desconhecida/array/valor não-string/data fora do ISO recusados; preset válido e entity_type='contacts' aceitos; is_shared=true recusado no inbox e aceito fora; 50 passa, 51 falha, teto é por usuário, não conta 'contacts', bloco acima do teto falha e não deixa linha parcial; remover um libera espaço; função SECURITY DEFINER/search_path sem EXECUTE público e as 5 policies originais + RLS intactos.
 - aplicação no banco da tarefa: `hermes-db-migrar supabase/migrations/20261014021029_saved_filters_inbox_presets.sql` → `APLICADA no banco LOCAL 'v2-2610132305ee85'`.
+- verificação da fábrica: `zapp-verify . --rapido` → `OK dependencias / OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (202s)`. Sem nome de conjunto o passo banco_local é pulado (a prova de banco é o teste descartável acima, que traz o nome do conjunto).
 
 ## O que NÃO fiz e por quê
 - src/integrations/supabase/types.ts: não mudou. Reutilizar saved_filters e só acrescentar CHECK + gatilho não altera tabela, coluna nem assinatura de RPC exposta — nada a regerar (o snapshot oficial é refeito pelo job trusted de types/manifest, não à mão).
