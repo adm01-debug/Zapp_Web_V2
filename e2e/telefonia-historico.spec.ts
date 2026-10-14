@@ -219,29 +219,43 @@ test.describe('Telefonia (T86)', () => {
     await page.goto('/?view=voip&channel=voip&dir=inbound&result=missed&q=ana&scope=all');
 
     await expect(page.getByTestId('tel-view')).toBeVisible({ timeout: 20_000 });
-    // A consulta saiu com o recorte da URL (não com os defaults).
+    // A consulta saiu com o recorte da URL (não com os defaults). SEC-FRONTEND-05:
+    // o texto livre `q` NÃO é lido da URL (mora em memória) — `?q=ana` de link
+    // antigo é ignorado na montagem.
     await expect.poll(() => backend.consultas.at(-1)).toMatchObject({
       p_channel: 'voip',
       p_direction: 'inbound',
       p_result: 'missed',
-      p_q: 'ana',
+      p_q: '',
       p_scope: 'all',
     });
 
-    // E a tela mostra o mesmo recorte.
-    await expect(page.getByTestId('tel-history-search')).toHaveValue('ana');
+    // E a tela mostra o mesmo recorte (busca vazia: `q` não veio da URL).
+    await expect(page.getByTestId('tel-history-search')).toHaveValue('');
     await expect(page.getByTestId('tel-channel-tab').filter({ hasText: 'VoIP' })).toHaveAttribute('data-state', 'on');
     await expect(page.getByTestId('tel-history-direction')).toContainText('Recebidas');
     await expect(page.getByTestId('tel-history-result')).toContainText('Perdida');
     await expect(page.getByTestId('tel-history-scope')).toContainText('Todas as ligações');
 
-    // O link compartilhado/reload mantém o recorte. Depois do reload a view
-    // remonta do zero: sem esperar por ela, os 5s padrão não bastam no dev
-    // server frio/sob carga (WebKit mediu >5s uma vez).
+    // A busca DIGITADA chega à RPC (debounce de 300ms na toolbar + 300ms na view).
+    await page.getByTestId('tel-history-search').fill('ana');
+    await expect.poll(() => backend.consultas.at(-1)?.p_q, { timeout: 20_000 }).toBe('ana');
+
+    // O link compartilhado/reload mantém o recorte da URL — mas NÃO a busca
+    // digitada (SEC-FRONTEND-05: `q` é memória, não sobrevive ao reload). Depois
+    // do reload a view remonta do zero: sem esperar por ela, os 5s padrão não
+    // bastam no dev server frio/sob carga (WebKit mediu >5s uma vez).
     await page.reload();
     await expect(page.getByTestId('tel-view')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId('tel-history-search')).toHaveValue('ana', { timeout: 20_000 });
-    await expect.poll(() => backend.consultas.at(-1)?.p_q, { timeout: 20_000 }).toBe('ana');
+    await expect(page.getByTestId('tel-history-search')).toHaveValue('', { timeout: 20_000 });
+    await expect.poll(() => backend.consultas.at(-1), { timeout: 20_000 }).toMatchObject({
+      p_channel: 'voip',
+      p_q: '',
+    });
+    await expect(page.getByTestId('tel-channel-tab').filter({ hasText: 'VoIP' })).toHaveAttribute('data-state', 'on');
+    await expect(page.getByTestId('tel-history-direction')).toContainText('Recebidas');
+    await expect(page.getByTestId('tel-history-result')).toContainText('Perdida');
+    await expect(page.getByTestId('tel-history-scope')).toContainText('Todas as ligações');
   });
 
   test('selecionar uma ligação abre o painel de detalhe e a anotação salva', async ({ page }) => {
