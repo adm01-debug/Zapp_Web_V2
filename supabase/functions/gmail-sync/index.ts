@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, GMAIL_HISTORY_MAX_PAGES_PER_RUN, GMAIL_SYNC_SCOPE_QUERY, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 // Cor de marcador do Gmail: o schema só garante o formato hex; a paleta exata é
@@ -86,6 +86,7 @@ export async function runGmailIncrementalSync(
   let pageToken: string | undefined;
   let latestHistoryId = account.history_id;
   let pages = 0;
+  let truncated = false;
   do {
     const params = new URLSearchParams({ startHistoryId: account.history_id });
     for (const historyType of ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"]) params.append("historyTypes", historyType);
@@ -100,7 +101,10 @@ export async function runGmailIncrementalSync(
     latestHistoryId = historyData.historyId || latestHistoryId;
     pageToken = historyData.nextPageToken;
     pages += 1;
-    if (pages >= 100 && pageToken) throw new Error("Gmail history exceeded the safe pagination limit");
+    // Teto por rodada (limite de tempo da Edge): o cursor abaixo grava o
+    // historyId DESTA página; o que sobrar volta na próxima rodada a partir daí,
+    // sem pular eventos (o histórico é ordenado por historyId crescente).
+    if (pageToken && pages >= GMAIL_HISTORY_MAX_PAGES_PER_RUN) { truncated = true; break; }
   } while (pageToken);
 
   for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
@@ -129,7 +133,7 @@ export async function runGmailIncrementalSync(
   }).eq("id", account.id).eq("history_id", account.history_id).select("id");
   if (cursorError) throw new Error("Failed to persist Gmail history cursor");
   const cursorAdvanced = Boolean(advanced && advanced.length > 0);
-  return { status: 200, payload: { success: true, cursor_advanced: cursorAdvanced, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages } };
+  return { status: 200, payload: { success: true, cursor_advanced: cursorAdvanced, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages, history_truncated: truncated } };
 }
 
 // ─── Gerenciamento de marcadores do Gmail (create/update/delete-label) ───────
@@ -314,7 +318,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       case "sync-inbox": {
         await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
         try {
-          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
+          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || GMAIL_SYNC_SCOPE_QUERY, body.maxResults || 50);
           if (result.failed > 0) {
             log.done(207, { synced: result.synced, failed: result.failed });
             return jsonResponse({ success: false, ...result }, 207, req);

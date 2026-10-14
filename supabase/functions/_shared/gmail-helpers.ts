@@ -273,6 +273,22 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
 
 const GMAIL_MESSAGES_MAX_PAGES = 100;
 
+// ── Escopo de CONTEÚDO da sincronização (t_97dde6f3 / PE-44) ────────────────
+// Decisão registrada: só baixamos conteúdo de Entrada e Enviados, dentro de 12
+// meses. Spam, Lixeira e Rascunhos aparecem na barra lateral apenas como
+// CONTAGEM de rótulo (`syncLabels` grava `email_labels.message_count`), nunca
+// como mensagem baixada — é o escopo mínimo pedido e evita trazer lixo ao local.
+// A janela de 12 meses (`newer_than:365d`) limita o volume do full sync para
+// caber no tempo da Edge. A query é o default de `runGmailFullSync`; a UI ainda
+// pode passar `q` própria em `sync-inbox`.
+export const GMAIL_SYNC_SCOPE_QUERY = "(in:inbox OR in:sent) newer_than:365d";
+
+// Teto de páginas de histórico por rodada. O cron roda a cada 5 min: cada
+// rodada para dentro do limite de tempo da Edge e o cursor (history_id) é
+// persistido via CAS no historyId da última página processada, então a rodada
+// seguinte continua exatamente de onde a anterior parou — sem pular eventos.
+export const GMAIL_HISTORY_MAX_PAGES_PER_RUN = 10;
+
 export async function syncMessages(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "", maxResults = 50) {
   const totals = {
     synced: 0, failed: 0,
@@ -318,7 +334,7 @@ export async function resetGmailHistoryCursor(supabase: SupabaseClient, accountI
   return data && data.length > 0 ? "reset" : "conflict";
 }
 
-export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
+export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = GMAIL_SYNC_SCOPE_QUERY, maxResults = 50) {
   const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
   if (result.failed > 0) {
     const { error: statusError } = await supabase.from("gmail_accounts").update({
