@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 // pode sobrescrever passando `onOpenContact`.
 import { openContactChat } from '@/components/catalog/useSendProduct';
 import { toast } from 'sonner';
-import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, Upload, Download, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity, Pencil, Eye, Megaphone, RotateCcw, Save } from 'lucide-react';
+import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity, Pencil, Eye, Megaphone, RotateCcw, Save } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -646,14 +646,11 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
 
       {/* Rail: ações da lista (SH:242) + proteção + trilha */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={ListChecks} color="violet" title="Ações da lista" subtitle="Importar, exportar e personalizar a supressão">
+        <RailCard icon={ListChecks} color="violet" title="Ações da lista" subtitle="Adicionar contatos e personalizar os motivos">
           <div className="flex flex-col gap-2">
             <RailAction icon={Plus} color="blue" title="Adicionar contato" subtitle="Inserir manualmente" onClick={() => setShowAdd(true)} />
             <RailAction icon={Settings} color="violet" title="Gerenciar motivos" subtitle="Personalizar categorias" onClick={() => setShowReasons(true)} />
-            <RailAction icon={Upload} color="amber" title="Importar contatos" subtitle="CSV, XLSX ou TXT" disabled />
-            <RailAction icon={Download} color="amber" title="Exportar lista" subtitle="Baixar lista em CSV" disabled />
           </div>
-          <p className="text-2xs text-muted-foreground">Importar e exportar ainda não estão disponíveis nesta tela.</p>
         </RailCard>
 
         <RailCard icon={ShieldCheck} color="green" title="Centro de proteção" subtitle="Mais segurança para suas campanhas" glow>
