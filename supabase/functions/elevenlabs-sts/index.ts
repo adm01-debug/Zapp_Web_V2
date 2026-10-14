@@ -1,4 +1,4 @@
-import { handleCors, errorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
 
@@ -20,6 +20,86 @@ import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
 
 /** Teto do upload aceito, igual ao do caminho de STT. */
 export const MAX_STS_AUDIO_BYTES = 25 * 1024 * 1024;
+
+/**
+ * G5 — teto da chamada PAGA de speech-to-speech ao provedor
+ * (`POST /v1/speech-to-speech`). Sem ele o `fetch` fica pendurado para sempre
+ * quando o provedor não responde.
+ */
+export const STS_TIMEOUT_MS = 60_000;
+
+/**
+ * G5 — corrida entre a promessa e o `AbortSignal` do prazo.
+ *
+ * O sinal também vai ao `fetch` real (abort nativo). Este invólucro garante que
+ * um `fetch` PENDURADO — ou uma implementação que ignore o `signal` do `init` —
+ * não trave o handler: o prazo rejeita a promessa de fora.
+ */
+function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () =>
+      reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+/** Estouro de prazo (ou abort de rede) — vira 504 em vez de 500 genérico. */
+function isTimeoutError(error: unknown): boolean {
+  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
+    return error.name === "TimeoutError" || error.name === "AbortError";
+  }
+  return error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError");
+}
+
+/**
+ * SL-013 / IA-003 B6 — conversão paga (speech-to-speech) sem linha no ledger é
+ * consumo invisível no relatório de custo. A unidade cobrada é o SEGUNDO de
+ * áudio; a duração não é medida aqui (o arquivo chega em bytes), então a linha
+ * declara `usage_unknown: true` — ausência declarada, nunca zero medido (IA-053).
+ *
+ * G5 — a linha sai por TENTATIVA, inclusive a que estourou o prazo: o provedor
+ * pode ter sido cobrado antes do abort, e a tentativa abortada não pode virar
+ * consumo invisível. `http_status: null` distingue "não houve resposta".
+ */
+async function registrarConsumoSts(args: {
+  userId: string;
+  model: string;
+  durationMs: number;
+  ok: boolean;
+  httpStatus: number | null;
+  errorMessage: string | null;
+  inputBytes: number;
+}): Promise<void> {
+  await logAiUsageDetached({
+    functionName: "elevenlabs-sts",
+    userId: args.userId,
+    model: args.model,
+    durationMs: args.durationMs,
+    status: args.ok ? "success" : "error",
+    errorMessage: args.errorMessage,
+    usageUnknown: true,
+    metadata: {
+      provider: "elevenlabs",
+      endpoint: "/v1/speech-to-speech",
+      billing_unit: "second",
+      billing_quantity: null,
+      input_bytes: args.inputBytes,
+      http_status: args.httpStatus,
+    },
+  });
+}
 
 /** Containers que o app envia (gravador webm/opus, wav, m4a, mp3) e o provedor aceita. */
 export type StsAudioFormat = "mp3" | "wav" | "ogg" | "webm" | "m4a";
@@ -89,7 +169,22 @@ export async function validateStsUpload(file: File): Promise<StsUploadRejection 
   return null;
 }
 
-export async function handleElevenLabsSts(req: Request): Promise<Response> {
+/**
+ * Seam de teste (mesmo padrão das outras edge functions): o `fetch` ao provedor
+ * e o prazo podem ser injetados. Em produção nada é passado e o handler usa as
+ * implementações reais — por isso o teste chama o handler REAL.
+ */
+export interface ElevenLabsStsDeps {
+  /** `fetch` para o provedor de STS (default: o global). */
+  fetch?: typeof fetch;
+  /** G5 — teto da chamada em ms (default: `STS_TIMEOUT_MS`). */
+  stsTimeoutMs?: number;
+}
+
+export async function handleElevenLabsSts(
+  req: Request,
+  deps: ElevenLabsStsDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -140,37 +235,62 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
     apiFormData.append('audio', audioFile);
     apiFormData.append('model_id', selectedModel);
 
+    const doFetch = deps.fetch ?? fetch;
+    const timeoutMs = deps.stsTimeoutMs ?? STS_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const iniciadoEm = Date.now();
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`,
-      {
-        method: 'POST',
-        headers: { 'xi-api-key': ELEVENLABS_API_KEY },
-        body: apiFormData,
-      }
-    );
 
-    // SL-013 / IA-003 B6 — conversão paga (speech-to-speech) sem linha no
-    // ledger é consumo invisível no relatório de custo. A unidade cobrada é o
-    // SEGUNDO de áudio; a duração não é medida aqui (o arquivo chega em bytes),
-    // então a linha declara `usage_unknown: true` — ausência declarada, nunca
-    // zero medido (IA-053).
-    await logAiUsageDetached({
-      functionName: "elevenlabs-sts",
+    let response: Response;
+    try {
+      // G5 — a conversão PAGA tem teto: provedor pendurado vira 504 em vez de
+      // prender o handler. O `signal` também vai no `init` (abort nativo).
+      response = await abortable(
+        doFetch(
+          `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`,
+          {
+            method: 'POST',
+            headers: { 'xi-api-key': ELEVENLABS_API_KEY },
+            body: apiFormData,
+            signal: controller.signal,
+          },
+        ),
+        controller.signal,
+      );
+    } catch (error) {
+      clearTimeout(timer);
+      const timedOut = isTimeoutError(error);
+      await registrarConsumoSts({
+        userId: auth.userId,
+        model: selectedModel,
+        durationMs: Date.now() - iniciadoEm,
+        ok: false,
+        httpStatus: null,
+        errorMessage: timedOut
+          ? "provider_timeout"
+          : (error instanceof Error ? error.message : "provider_fetch_failed"),
+        inputBytes: audioFile.size,
+      });
+      if (timedOut) {
+        log.error("ElevenLabs STS timed out", { timeoutMs });
+        return errorResponse("ElevenLabs provider timed out", 504, req);
+      }
+      throw error;
+    }
+
+    // G5 — o prazo vale só até os CABEÇALHOS chegarem e é desarmado AQUI. Não se
+    // usa `AbortSignal.timeout` porque ele continuaria armado durante a leitura do
+    // corpo: uma conversão longa (`arrayBuffer()` demorado) seria cortada no meio.
+    clearTimeout(timer);
+
+    await registrarConsumoSts({
       userId: auth.userId,
       model: selectedModel,
       durationMs: Date.now() - iniciadoEm,
-      status: response.ok ? "success" : "error",
+      ok: response.ok,
+      httpStatus: response.status,
       errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
-      usageUnknown: true,
-      metadata: {
-        provider: "elevenlabs",
-        endpoint: "/v1/speech-to-speech",
-        billing_unit: "second",
-        billing_quantity: null,
-        input_bytes: audioFile.size,
-        http_status: response.status,
-      },
+      inputBytes: audioFile.size,
     });
 
     if (!response.ok) {
@@ -190,12 +310,13 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     log.error("Unhandled error", { error: errorMessage });
-    return errorResponse(errorMessage, 500, req);
+    // G5 — 500 sem detalhe interno: o `error.message` não vai ao cliente.
+    return internalErrorResponse(error, req);
   }
 }
 
 // `import.meta.main` (mesmo padrão de `elevenlabs-dialogue`): o handler pode ser
 // importado por teste sem subir o servidor.
 if (import.meta.main) {
-  Deno.serve(handleElevenLabsSts);
+  Deno.serve((req) => handleElevenLabsSts(req));
 }

@@ -27,6 +27,7 @@ import {
   handleElevenLabsSts,
   MAX_STS_AUDIO_BYTES,
   sniffStsAudioFormat,
+  STS_TIMEOUT_MS,
   validateStsUpload,
 } from "./index.ts";
 import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
@@ -38,7 +39,7 @@ function assert(condition: unknown, message: string): asserts condition {
 const USER_ID = "20000000-0000-0000-0000-00000000000c";
 const VOZ_FORA_DA_LISTA = "voz-clonada-fora-da-lista";
 
-type Route = { match: string; make: () => Response };
+type Route = { match: string; make: (init?: RequestInit) => Response | Promise<Response> };
 type Call = { url: string; init?: RequestInit };
 
 function jsonResp(body: unknown, status = 200): Response {
@@ -69,7 +70,7 @@ function withFetch(routes: Route[]) {
     }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
-    return Promise.resolve(route.make());
+    return Promise.resolve(route.make(init));
   }) as typeof fetch;
   return { calls, restore: () => { globalThis.fetch = original; } };
 }
@@ -416,6 +417,116 @@ Deno.test("SL-008 (B4): sem bearer continua 401 e não toca o provedor (caminho 
         callsTo(stub.calls, PROVIDER).length === 0,
         "sem autenticação não se chama o provedor",
       );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G5 — teto de tempo na chamada PAGA ao provedor (speech-to-speech).
+//
+// Sem prazo, um provedor pendurado prendia o handler para sempre. Também aqui o
+// prazo vale só até os CABEÇALHOS: `AbortSignal.timeout` continuaria armado
+// durante a leitura do CORPO e cortaria conversões longas no meio. Por isso o
+// teste "corpo lento" prova que um áudio que demora MAIS que o prazo, mas cujos
+// cabeçalhos chegaram a tempo, sai inteiro (200).
+// ---------------------------------------------------------------------------
+
+/** Linhas do ledger de consumo (`ai_usage_logs`) realmente enviadas ao PostgREST. */
+function ledgerRows(calls: Call[]): Array<Record<string, unknown>> {
+  return calls
+    .filter((c) => c.url.includes("/rest/v1/ai_usage_logs") && (c.init?.method ?? "GET") === "POST")
+    .map((c) => JSON.parse(String(c.init?.body)) as Record<string, unknown>);
+}
+/**
+ * Corpo de áudio que chega em DOIS pedaços separados por atrasos.
+ *
+ * O `fetch` real amarra o CORPO ao `signal`: abortar rejeita a leitura do corpo.
+ * A emulação reproduz isso (`controller.error(signal.reason)`), senão o teste do
+ * prazo não provaria nada — o `Response` sintético não enxergaria o abort.
+ */
+function slowAudioBody(totalMs: number, signal?: AbortSignal | null): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      if (signal) {
+        signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+      }
+      const meio = Math.floor(totalMs / 2);
+      await new Promise((r) => setTimeout(r, meio));
+      controller.enqueue(new Uint8Array([7, 8]));
+      await new Promise((r) => setTimeout(r, meio));
+      controller.enqueue(new Uint8Array([9, 10]));
+      controller.close();
+    },
+  });
+}
+
+Deno.test("G5: prazo de produção declarado é o teto acordado (60 s)", () => {
+  assert(STS_TIMEOUT_MS === 60_000, `prazo de produção esperado 60 s, é ${STS_TIMEOUT_MS}`);
+});
+
+Deno.test("G5: provedor pendurado estoura o prazo -> 504 e linha no ledger", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      // O provedor NUNCA resolve: prova o teto de tempo (o wrapper de abort
+      // rejeita de fora mesmo que a implementação ignore o `signal`).
+      { match: PROVIDER, make: () => new Promise<Response>(() => {}) },
+    ]);
+    try {
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
+        { stsTimeoutMs: 25 },
+      );
+
+      assert(res.status === 504, `esperado 504 no estouro de prazo, veio ${res.status}`);
+      const row = ledgerRows(stub.calls).find((r) => r.function_name === "elevenlabs-sts");
+      assert(row !== undefined, "a tentativa abortada tem de deixar linha no ledger");
+      assert(row.status === "error", `status esperado error, veio ${String(row.status)}`);
+      assert(
+        row.error_message === "provider_timeout",
+        `error_message esperado provider_timeout, veio ${String(row.error_message)}`,
+      );
+      const meta = row.metadata as Record<string, unknown>;
+      assert(meta.http_status === null, "tentativa sem resposta tem http_status nulo");
+      assert(meta.billing_unit === "second", "unidade cobrada é segundo de áudio");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("G5: cabeçalhos a tempo + corpo LENTO (> prazo) -> áudio completo (o prazo só cobre os cabeçalhos)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      {
+        match: PROVIDER,
+        make: (init) =>
+          new Response(slowAudioBody(60, init?.signal), {
+            status: 200,
+            headers: { "content-type": "audio/mpeg" },
+          }),
+      },
+    ]);
+    try {
+      const inicio = Date.now();
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
+        { stsTimeoutMs: 25 },
+      );
+      const decorrido = Date.now() - inicio;
+
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+      assert(
+        decorrido >= 50,
+        `o corpo tinha de levar mais que o prazo (25 ms) sem cortar; levou ${decorrido} ms`,
+      );
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      assert(bytes.byteLength === 4, `áudio completo esperado (4 bytes), veio ${bytes.byteLength}`);
     } finally {
       stub.restore();
     }
