@@ -13,7 +13,13 @@ export function useUserRole() {
   // mesmo tempo (Sidebar, ProtectedRoute, CommandPalette, etc.) dividem um
   // único fetch e um único loading state em vez de cada um correr sua
   // própria requisição e seu próprio timer de segurança.
-  const { data: roles = [], isLoading, isError: rolesLoadError, refetch } = useQuery({
+  const {
+    data: roles = [],
+    isLoading,
+    isError: rolesLoadError,
+    isPaused: rolesPaused,
+    refetch,
+  } = useQuery({
     queryKey: ['user-roles', user?.id],
     // Deriva o userId da própria queryKey em vez de "user!.id": refetch()
     // chamado manualmente ignora `enabled`, então um non-null assertion
@@ -66,6 +72,13 @@ export function useUserRole() {
     hasRole,
     loading: isLoading,
     rolesLoadError,
+    // Estado REAL da leitura de papéis, além de `rolesLoadError`: `isError` é o
+    // próprio flag do React Query (mesmo valor, nome canônico) e `isPaused`
+    // cobre consulta sem rede (a query não roda, `roles` fica vazio sem ser
+    // "sem papel"). Quem consome o acesso (ProtectedRoute) usa os dois para não
+    // confundir falha de leitura com negação de acesso.
+    isError: rolesLoadError,
+    isPaused: rolesPaused,
     // Permissoes nomeadas da nav que o usuario possui + o loading delas
     // (separado de `loading` para nao mudar o tempo de espera do ProtectedRoute).
     permissions,

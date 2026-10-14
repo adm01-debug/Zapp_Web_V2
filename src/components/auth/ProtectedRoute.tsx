@@ -21,9 +21,13 @@
    fallback
  }: ProtectedRouteProps) {
    const { user, loading: authLoading } = useAuth();
-   const { loading: rolesLoading, hasRole, rolesLoadError } = useUserRole();
+   const { loading: rolesLoading, hasRole, rolesLoadError, isPaused: rolesPaused } = useUserRole();
    const location = useLocation();
    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  // Falha ao CONSULTAR a permissão (erro de RPC ou timeout) — estado separado de
+  // `hasPermission === false`, que é negação de verdade. Nunca vira
+  // /access-denied nem auditoria.
+  const [permissionReadFailed, setPermissionReadFailed] = useState(false);
    const [mfaGate, setMfaGate] = useState<{ userId: string; status: 'required' | 'ok' | 'error' } | null>(null);
 
     const [safetyForced, setSafetyForced] = useState(false);
@@ -74,13 +78,19 @@
       return () => clearTimeout(timer);
     }, [authLoading, rolesLoading]);
 
-   /**
-    * BUG-8 FIX: reset hasPermission whenever the user identity or the required
-    * permission changes so stale permission state is never shown to a new user.
-    */
-    useEffect(() => {
+    /**
+     * BUG-8 FIX: quando o usuário ou a permissão exigida muda, a verificação é
+     * reiniciada para nunca exibir estado velho a um usuário novo. O ajuste é
+     * feito DURANTE o render (padrão "ajustar estado quando uma prop muda"), não
+     * dentro de um efeito: assim não há render em cascata nem estado defasado.
+     */
+    const identidadeVerificacao = `${user?.id ?? ''}|${requiredPermission ?? ''}`;
+    const [identidadeAnterior, setIdentidadeAnterior] = useState(identidadeVerificacao);
+    if (identidadeAnterior !== identidadeVerificacao) {
+      setIdentidadeAnterior(identidadeVerificacao);
       setHasPermission(null);
-    }, [user?.id, requiredPermission]);
+      setPermissionReadFailed(false);
+    }
 
     useEffect(() => {
       if (loading || !user) return;
@@ -118,7 +128,10 @@
       };
     }, [loading, user]);
 
-    const falhaCarregamentoPapeis = Boolean(requiredRoles?.length && rolesLoadError);
+    // `rolesPaused` (consulta sem rede, pausada) também é falha de leitura: a
+    // lista fica vazia sem o usuário ter sido negado.
+    const falhaCarregamentoPapeis = Boolean(requiredRoles?.length && (rolesLoadError || rolesPaused));
+    const falhaVerificacaoPermissao = Boolean(requiredPermission && permissionReadFailed);
     const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
     const isPermissioned = !requiredPermission || hasPermission;
     // Só decide acesso quando saiu da verificação: sem isso o registro dispararia
@@ -152,49 +165,68 @@
     }, [deveRegistrarNegado, user, rotaNegada, location.pathname, requiredPermission, requiredRoles]);
 
     useEffect(() => {
-      if (!loading && user && requiredPermission) {
-        log.debug('[ProtectedRoute] Checking permission:', requiredPermission);
+      // Sem sessão o ramo é o `!user` do render (Navigate /auth); sem permissão
+      // exigida não há o que consultar. Nada de setState síncrono aqui.
+      if (loading || !user || !requiredPermission) return;
 
-        const permTimeout = setTimeout(() => {
-          if (hasPermission === null) {
-            log.warn('[ProtectedRoute] Permission check timed out');
-            setHasPermission(false);
-          }
-        }, 5000);
+      log.debug('[ProtectedRoute] Checking permission:', requiredPermission);
 
-        RoleService.checkPermission(user.id, requiredPermission)
-          .then(result => {
-            log.debug('[ProtectedRoute] Permission result:', requiredPermission, result);
-            setHasPermission(result);
-          })
-          .catch(err => {
-            log.error('[ProtectedRoute] Permission error:', err);
-            setHasPermission(false);
-          })
-          .finally(() => {
-            clearTimeout(permTimeout);
-          });
-      } else if (!loading && !requiredPermission) {
-        setHasPermission(true);
-      } else if (!loading && !user) {
-        setHasPermission(false);
-      }
+      const permTimeout = setTimeout(() => {
+        // Sem resposta no prazo: NÃO é "sem permissão" — é leitura não
+        // confirmada. Vira tela de erro (sem /access-denied, sem auditoria).
+        log.warn('[ProtectedRoute] Permission check timed out');
+        setPermissionReadFailed(true);
+      }, 5000);
+
+      RoleService.checkPermission(user.id, requiredPermission)
+        .then(result => {
+          log.debug('[ProtectedRoute] Permission result:', requiredPermission, result);
+          setPermissionReadFailed(false);
+          setHasPermission(result);
+        })
+        .catch(err => {
+          log.error('[ProtectedRoute] Permission error:', err);
+          setPermissionReadFailed(true);
+        })
+        .finally(() => {
+          clearTimeout(permTimeout);
+        });
     }, [loading, user, requiredPermission]);
 
-   if (loading || (requiredPermission && hasPermission === null)) {
+   if (loading) {
      return verificandoAcesso;
    }
-
-    // R2-AUTH-003: enquanto a decisão AAL da sessão não sai, a rota continua em
-    // verificação — o conteúdo protegido nunca renderiza antes dela (fail closed).
-    if (user && gate === 'checking') {
-      return verificandoAcesso;
-    }
 
     if (!user) {
       return <Navigate to="/auth" state={{ from: location }} replace />;
     }
 
+   if (falhaVerificacaoPermissao) {
+     return (
+       <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center" role="alert">
+         <div className="space-y-4">
+           <h1 className="text-2xl font-bold text-destructive">Não foi possível verificar suas permissões</h1>
+           <p className="text-muted-foreground">Falha ao consultar suas permissões de acesso. Tente novamente.</p>
+           <button
+             onClick={() => window.location.reload()}
+             className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+           >
+             Tentar de novo
+           </button>
+         </div>
+       </div>
+     );
+   }
+
+    // R2-AUTH-003: enquanto a decisão AAL da sessão não sai, a rota continua em
+    // verificação — o conteúdo protegido nunca renderiza antes dela (fail closed).
+    if (gate === 'checking') {
+      return verificandoAcesso;
+    }
+
+    if (requiredPermission && hasPermission === null) {
+      return verificandoAcesso;
+    }
     if (gate === 'required') {
       return <Navigate to="/2fa" state={{ from: location }} replace />;
     }

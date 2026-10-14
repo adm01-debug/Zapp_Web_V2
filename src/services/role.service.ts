@@ -38,8 +38,13 @@ const _pendingFetch = new Map<string, Promise<AppRole[]>>();
        _user_id: userId,
        _permission_name: permission
      });
- 
-     if (error) return false;
+
+     // Falha de LEITURA não é "sem permissão": antes o erro de RPC (JWT vencido,
+     // RLS, rede) virava `false` e o ProtectedRoute tratava como acesso negado —
+     // redirecionava para /access-denied e gravava auditoria falsa. Quem chama
+     // decide o que fazer com o erro (ver ProtectedRoute: tela de erro, sem
+     // auditoria e sem redirecionar).
+     if (error) throw error;
      return data === true;
    }
  }

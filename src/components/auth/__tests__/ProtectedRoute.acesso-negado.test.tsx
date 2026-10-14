@@ -21,6 +21,8 @@ let usuarioAtual: unknown = USUARIO;
 const papeis = { value: [] as string[] };
 const permissao = { value: true };
 const falhaPapeis = { value: false };
+const pausaPapeis = { value: false };
+const erroPermissao = { value: false };
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: usuarioAtual, loading: false }),
@@ -29,11 +31,18 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
     loading: false,
     rolesLoadError: falhaPapeis.value,
+    isPaused: pausaPapeis.value,
     hasRole: (papel: string) => papeis.value.includes(papel),
   }),
 }));
 vi.mock('@/services/role.service', () => ({
-  RoleService: { checkPermission: vi.fn(async () => permissao.value) },
+  RoleService: {
+    // Erro de RPC (JWT vencido/RLS/rede) NÃO é "sem permissão": rejeita.
+    checkPermission: vi.fn(async () => {
+      if (erroPermissao.value) throw new Error('user_has_permission indisponivel');
+      return permissao.value;
+    }),
+  },
 }));
 vi.mock('@/services/auth.service', () => ({
   AuthService: {
@@ -88,6 +97,8 @@ beforeEach(() => {
   papeis.value = [];
   permissao.value = true;
   falhaPapeis.value = false;
+  pausaPapeis.value = false;
+  erroPermissao.value = false;
   vi.mocked(logAudit).mockClear();
 });
 
@@ -165,5 +176,51 @@ describe('ProtectedRoute — acesso negado explicado e registrado', () => {
     expect(screen.queryByText('Acesso negado')).toBeNull();
     expect(screen.queryByText('CONTEUDO PROTEGIDO')).toBeNull();
     expect(vi.mocked(logAudit)).not.toHaveBeenCalled();
+  });
+
+  it('leitura de papeis pausada (sem rede) também não vira acesso negado nem auditoria', async () => {
+    pausaPapeis.value = true;
+    cenario({ roles: ['admin'] });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Erro ao verificar permissões' })).toBeTruthy();
+    });
+    expect(screen.queryByText('Acesso negado')).toBeNull();
+    expect(screen.queryByText('CONTEUDO PROTEGIDO')).toBeNull();
+    expect(vi.mocked(logAudit)).not.toHaveBeenCalled();
+  });
+
+  it('erro ao consultar a permissão NÃO vira acesso negado: mostra o erro com Tentar de novo e não audita', async () => {
+    erroPermissao.value = true;
+    cenario({ permissao: 'relatorios.ver' });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Não foi possível verificar suas permissões' })
+      ).toBeTruthy();
+    });
+    expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeTruthy();
+    expect(screen.queryByText('Acesso negado')).toBeNull();
+    expect(screen.queryByText('CONTEUDO PROTEGIDO')).toBeNull();
+    expect(vi.mocked(logAudit)).not.toHaveBeenCalled();
+  });
+
+  it('negação REAL da permissão (resultado false) continua indo para /access-denied e auditando', async () => {
+    permissao.value = false;
+    cenario({ permissao: 'relatorios.ver' });
+
+    await waitFor(() => {
+      expect(screen.getByText('/painel')).toBeTruthy();
+    });
+    expect(screen.getByRole('heading', { name: 'Acesso negado' })).toBeTruthy();
+    expect(screen.queryByText('Não foi possível verificar suas permissões')).toBeNull();
+    expect(vi.mocked(logAudit)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(logAudit)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'unauthorized_access',
+        entityId: '/painel',
+        details: expect.objectContaining({ required: ['relatorios.ver'] }),
+      })
+    );
   });
 });
