@@ -1,27 +1,23 @@
-Especialista: workertestes
+Especialista: workersql
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+Refazer 1 do cartao de previsao de demanda e heatmap (skill de area usada: area-sql-banco). Trouxe so o trabalho deste cartao com `git cherry-pick -n c2a98309a0` (migration + suite de contrato + tipos); os commits c9ff78efc0 (relato) e e41482dcc (registro no db-guard.yml) ficaram de fora — corrigi so o que foi apontado.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `supabase/migrations/20261012115458_demand_forecast.sql`: `demand_forecast` calcula a media por dia da semana sobre a CTE `janela` (serie completa dos `v_hist` dias, `LEFT JOIN` com o diario, `avg(coalesce(base.n, 0))`); dow sem nenhuma demanda no periodo tem media 0 e previsao 0 real (nunca NULL); regra de arredondamento decidida e documentada: round, 0 casas. `dashboard_heatmap`, gate, `search_path`, ACL, clamps, reais e cabecalho de rollback: inalterados.
+- `scripts/db-audit/demand-forecast-heatmap-contract.test.sh`: GREEN 2 reescrito com os valores corretos — previsao 1 no dow de ontem (media 1.25 arredondada), 0 no dow de hoje (media 0.25 arredondada), 0 real nos outros 5 dows e nenhum NULL em forecast; semente documentada como ~26 dias zerados implicitos na janela de 28.
+- `src/integrations/supabase/types.ts`: inalterado funcionalmente (bloco `demand_forecast` veio no cherry-pick; `value: number` segue correto porque previsao nunca e NULL).
+- `.github/workflows/db-guard.yml`: passo novo que roda a suite no CI (`Provar o contrato das RPCs de demanda (heatmap + previsao)`, com `SKIP_DOCKER_SHIM=1` porque a suite cria as roles globais); `node scripts/ci/check-test-inventory.mjs` nao lista mais a suite como orfa (restam 6 orfaos de outros cartoes, pre-existentes na base, fora do escopo).
+- `COMMENT ON FUNCTION`, cabecalho da migration e este relato: ajustados para a nova regra (antes diziam 'NULL quando nao ha historico daquele dow').
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- Comando: `bash scripts/db-audit/demand-forecast-heatmap-contract.test.sh` (PostgreSQL 17 descartavel, dados reais, sem mock do cliente).
+- Vermelho (suite nova x migration com media antiga): `FAIL: previsao do dow de ontem (2) deveria ser 1 (media 1.25 arredondada)` (EXIT=1; o codigo antigo previa 5 e 1 e NULLs, ignorando os zeros).
+- Verde depois (EXIT=0): `[OK] dashboard_heatmap: bucket local (dow=2, hora=23)=2 e (dow=3, hora=10)=1`, `[OK] demand_forecast: 7 reais (ontem=5, hoje=1, 5 zeros), previsao por dow (1, 0 e 0s reais), sem NULL`, `[OK] permissao`, `[OK] search_path fixado`, `[OK] rollback do cabecalho remove as duas funcoes`.
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+## Pontos do revisor
+- Ponto 1 (media so sobre dias com mensagem; janela completa com `coalesce(n,0)`): resolvido — `supabase/migrations/20261012115458_demand_forecast.sql` (CTE `janela`, `avg(coalesce(base.n, 0))`); prova: vermelho/verde acima.
+- Ponto 2 (assercoes `forecast.*|5$` e 5 NULLs validavam o errado; valores corretos 1.25→1, 0.25→0, demais 0 real): resolvido — `scripts/db-audit/demand-forecast-heatmap-contract.test.sh` (GREEN 2 reescrito, sem nenhum NULL em forecast); prova: vermelho/verde acima.
+- Ponto 3 (COMMENT/cabecalho/relato diziam NULL; documentar arredondamento): resolvido — cabecalho e `COMMENT ON FUNCTION public.demand_forecast` dizem agora media sobre todos os dias, round 0 casas, dow sem demanda = 0 real nunca NULL; a suite verde aplica a migration (inclui os COMMENTs) duas vezes.
+
+## O que NAO fiz e por quê
+- Nao mexi em front (o consumo das RPCs nos componentes do Dashboard e outro trabalho, PD-24/PD-25), nao afrouxei guarda/CI/manifesto, nao registrei os 6 orfaos de outros cartoes no inventario (pre-existentes na base), e nao inclui identificador de producao em nada.
