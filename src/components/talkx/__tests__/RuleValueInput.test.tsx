@@ -120,6 +120,12 @@ async function regraGravada() {
 
 describe('TalkXSegments · campo de valor por tipo (X106)', () => {
   beforeEach(() => {
+    // O jsdom reaproveita o MESMO `window.location` entre os casos. Abrir o
+    // construtor sem publicar deixa `?view=talkx&tab=segments&mode=new` no
+    // endereço (X111); sem limpar, o caso seguinte renderiza o construtor
+    // direto a partir da URL e a biblioteca — com o botão "Novo segmento" —
+    // nunca aparece. Cada caso começa na biblioteca.
+    window.history.replaceState(null, '', '/');
     f.create.mockReset();
     f.update.mockReset();
     f.create.mockResolvedValue(undefined);
