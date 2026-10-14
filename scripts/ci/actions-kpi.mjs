@@ -201,7 +201,7 @@ export async function publicarIssue({ repo, token, marca, corpo }) {
   if (existente) {
     await pedir(`/repos/${repo}/issues/${existente.number}`, token, {
       metodo: 'PATCH',
-      corpo: { body: corpo },
+      corpo: { title: marca, body: corpo },
     });
     return { acao: 'atualizada', numero: existente.number };
   }
