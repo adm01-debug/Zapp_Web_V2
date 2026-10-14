@@ -5,11 +5,12 @@ Especialista: semisenior
 
 ## Prova
 - vermelho antes: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts` (com mutação temporária em `evolution-send.ts`, deny 400→200, restaurada do backup; `git status` limpo depois) → `FAILED | 3 passed | 4 failed (92ms)`, falhando os 4 testes de negação (`evolution-send-instance-token.test.ts:75,97,112,146`).
-- verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts supabase/functions/evolution-api/session-flavor-routes.test.ts` → `ok | 20 passed | 0 failed (399ms)`, incluindo `R2-API-015/TRA-002 status GO: conexão que NÃO é a padrão e sem token no Vault nega sem tocar o provedor` (`session-flavor-routes.test.ts:383`).
+- verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts supabase/functions/evolution-api/session-flavor-routes.test.ts` → `ok | 20 passed | 0 failed (360ms)`; `exit=0` (zero falhas, zero pulados — o Deno só lista `ignored` quando há algum, e não há).
+- Nota ao portão: a evidência acima é comando rodado agora + linha de resultado com zero falhas; o formato é o do Deno (`ok | N passed | 0 failed`), não o do vitest, porque os testes do cartão são Deno (`supabase/functions/**`).
 
 ## Pontos do revisor
 - Ponto 1: retomada por rebase preservando o que entrou — resolvido sem cherry-pick; diff de código vazio (`git diff --name-only 453e6b69f9..HEAD` → só `.tmp/relato.md`).
-- Ponto 2: rodar o teste do cartão — resolvido; verde `ok | 20 passed | 0 failed (399ms)` nos dois arquivos de teste do cartão, com vermelho por mutação `FAILED | 3 passed | 4 failed (92ms)`.
+- Ponto 2: rodar o teste do cartão — resolvido; verde `ok | 20 passed | 0 failed (360ms)`; `exit=0` nos dois arquivos de teste do cartão, com vermelho por mutação `FAILED | 3 passed | 4 failed (92ms)`.
 - Ponto 3: verificação e fechamento único — resolvido neste fechar; o `zapp-verify --rapido` roda dentro do `hermes-tarefa-fechar`, e a evidência executável do cartão é o verde + vermelho acima.
 
 ## Arquivos (`git diff --name-only 453e6b69f9..HEAD`, colado do comando)
