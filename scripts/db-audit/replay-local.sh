@@ -62,8 +62,8 @@ trap 'exit 143' TERM
 
 # Ratchet do allowlist ANTES de subir o container: a lista de falhas esperadas so pode DIMINUIR. Se
 # alguem "resolve" uma falha nova acrescentando uma linha em replay-known-failures.json, o teto
-# (replay-allowlist-baseline.json) tem de ser baixado no mesmo commit; sem isso o replay ja para
-# aqui, sem gastar o setup. Teto ilegivel = nao medi (2), que nao vira "verde".
+# (replay-allowlist-baseline.json) tem de ser SUBIDO no mesmo commit (adicionar a linha); sem isso
+# o replay ja para aqui, sem gastar o setup. Teto ilegivel = nao medi (2), que nao vira "verde".
 echo "verificando o teto da lista de falhas esperadas (ratchet)" | tee -a "$LOG"
 python3 "$(dirname "$0")/check-replay-allowlist-ratchet.py" \
   "$(dirname "$0")/replay-known-failures.json" "$(dirname "$0")/replay-allowlist-baseline.json" | tee -a "$LOG"

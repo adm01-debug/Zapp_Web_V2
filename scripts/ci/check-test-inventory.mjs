@@ -99,7 +99,7 @@ const ALLOWLIST = new Set([
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
   // N-020: ratchet do allowlist do replay (check-replay-allowlist-ratchet.py) — entrada nova em
-  // replay-known-failures.json sem baixar o teto derruba; remover entrada passa; arquivo de teto
+  // replay-known-failures.json sem subir o teto derruba; remover entrada passa; arquivo de teto
   // ausente/ilegivel nao vira verde. Offline (JSON de fixture + os arquivos reais), sem docker e
   // sem banco. Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/check-replay-allowlist-ratchet.test.sh',

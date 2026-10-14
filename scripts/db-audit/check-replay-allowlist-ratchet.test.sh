@@ -11,11 +11,11 @@
 # Vermelho antes / verde depois, caso a caso (a mutacao do caso 2 e o discriminante: sem o ratchet,
 # acrescentar a entrada nova daria exit 0 e o caso FALHARIA):
 #   1. lista igual ao teto                            -> exit 0;
-#   2. MUTACAO: entrada nova sem baixar o teto        -> exit 1, nomeia a entrada;
+#   2. MUTACAO: entrada nova sem subir o teto          -> exit 1, nomeia a entrada;
 #   3. entrada REMOVIDA da lista (falha reparada)     -> exit 0;
 #   4. lista vazia (todas reparadas)                  -> exit 0;
-#   5. teto com entrada que saiu da lista             -> exit 0, mas avisa (aperta);
-#   6. allowlist ausente / ilegivel / sem a chave     -> exit 2 (nao consegui medir);
+#   5. teto vazio (fechado) contra lista com entrada -> exit 1;
+#   6. allowlist ausente / ilegivel / sem a chave / item nao hasheavel (6f) -> exit 2
 #   7. arquivos REAIS do repositorio, sem argumento    -> exit 0.
 set -u
 DIR=$(cd "$(dirname "$0")" && pwd)
@@ -79,7 +79,7 @@ checa "1: lista igual ao teto -> exit 0" "0" "$RC"
 contem "1: diz que esta dentro do teto" "RATCHET OK" "$TMP/o1.txt"
 
 # ===========================================================================
-# Caso 2 (MUTACAO): entrada NOVA na lista sem baixar o teto -> exit 1 e nomeia.
+# Caso 2 (MUTACAO): entrada NOVA na lista sem subir o teto -> exit 1 e nomeia.
 # ===========================================================================
 lista "$TMP/l2.json" "$A" "$B" "$NOVA"
 python3 "$CHECK" "$TMP/l2.json" "$TMP/t1.json" >"$TMP/o2.txt" 2>&1
@@ -134,6 +134,11 @@ checa "6d: allowlist sem a chave 'esperadas' -> exit 2" "2" "$?"
 printf '{\n  "aceitas": [""]\n}\n' > "$TMP/tetonome.json"
 python3 "$CHECK" "$TMP/l1.json" "$TMP/tetonome.json" >"$TMP/o6e.txt" 2>&1
 checa "6e: teto com nome vazio -> exit 2" "2" "$?"
+printf '{\n  "esperadas": [{"objeto": 1}]\n}\n' > "$TMP/l6f.json"
+python3 "$CHECK" "$TMP/l6f.json" "$TMP/t1.json" >"$TMP/o6f.txt" 2>&1
+checa "6f: item nao hasheavel -> exit 2" "2" "$?"
+contem "6f: diz que nao mediu" "RATCHET NAO MEDIDO" "$TMP/o6f.txt"
+nao_contem "6f: sem traceback" "Traceback" "$TMP/o6f.txt"
 
 # ===========================================================================
 # Caso 7: o teto do REPOSITORIO cobre a lista REAL (sem argumentos) - se a

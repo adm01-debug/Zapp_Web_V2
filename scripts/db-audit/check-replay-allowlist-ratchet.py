@@ -10,8 +10,9 @@ novo aceito.
 Esta catraca fixa o teto em `replay-allowlist-baseline.json` - o conjunto aceito na data em que
 foi medido. Regras:
 
-  * entrada na lista FORA do teto  -> exit 1 (RATCHET VIOLADO): quem acrescenta uma falha nova tem
-    de baixar o teto no MESMO commit, e essa edicao e o registro explicito do motivo;
+  * entrada na lista FORA do teto -> exit 1 (RATCHET VIOLADO): quem acrescenta uma falha nova
+    tem de SUBIR o teto no MESMO commit (adicionar a linha em replay-allowlist-baseline.json),
+    e essa edicao e o registro explicito do motivo;
   * entrada que saiu da lista (o replay foi reparado) -> exit 0; o teto pode encolher depois
     (remover a linha do teto aperta, nunca afrouxa);
   * lista vazia dentro do teto -> exit 0.
@@ -33,7 +34,8 @@ BASELINE_PADRAO = os.path.join(AQUI, "replay-allowlist-baseline.json")
 def _carregar_nomes(caminho, chave):
     """Le um JSON e devolve o conjunto de nomes em `chave` (lista de nomes ou mapa nome->detalhe).
 
-    ValueError = nao medi: arquivo ilegivel, sem a chave, ou com nomes que nao sao texto.
+    ValueError ou TypeError = nao medi: arquivo ilegivel, sem a chave, com nomes que nao sao texto,
+    ou com item nao hasheavel (ex.: objeto) na lista.
     """
     with open(caminho, encoding="utf-8") as fh:
         dados = json.load(fh)
@@ -61,7 +63,7 @@ def main() -> int:
     try:
         aceitas = _carregar_nomes(allowlist, "esperadas")
         teto = _carregar_nomes(baseline, "aceitas")
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
         print(f"RATCHET NAO MEDIDO: {exc}", file=sys.stderr)
         print("  nao consegui provar que a lista de aceitas esta dentro do teto", file=sys.stderr)
         return 2
@@ -73,7 +75,7 @@ def main() -> int:
         print(f"RATCHET VIOLADO: {len(novas)} entrada(s) nova(s) na lista de aceitas (a lista so pode diminuir)")
         for nome in novas:
             print(f"  NOVA: {nome}")
-        print("  Falha nova so entra com o teto baixado no mesmo commit (replay-allowlist-baseline.json),")
+        print("  Falha nova so entra com o teto SUBIDO no mesmo commit (linha adicionada em replay-allowlist-baseline.json),")
         print("  e isso exige o motivo medido no canonico. Sem essa edicao, o arquivo nao entra na lista.")
         return 1
 

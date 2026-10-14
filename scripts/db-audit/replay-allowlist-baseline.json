@@ -1,5 +1,5 @@
 {
-  "_comment": "Teto (ratchet) da lista de falhas esperadas do replay local. E o conjunto aceito na data em que foi medido no banco canonico: entrada nova em replay-known-failures.json so entra se esta lista for baixada no MESMO commit, com o motivo medido. Quando a falha for reparada, remove-se a linha daqui - o teto so aperta. Verificado por scripts/db-audit/check-replay-allowlist-ratchet.py, que o replay-local.sh roda antes de subir o container.",
+  "_comment": "Teto (ratchet) da lista de falhas esperadas do replay local. E o conjunto aceito na data em que foi medido no banco canonico: entrada nova em replay-known-failures.json so entra se o teto for SUBIDO no MESMO commit (adicionar a linha aqui), com o motivo medido. Quando a falha for reparada, remove-se a linha daqui - o teto so aperta. Verificado por scripts/db-audit/check-replay-allowlist-ratchet.py, que o replay-local.sh roda antes de subir o container.",
   "_atualizado_em": "2026-10-12",
   "_fonte": "scripts/db-audit/replay-known-failures.json (chave 'esperadas')",
   "aceitas": [
