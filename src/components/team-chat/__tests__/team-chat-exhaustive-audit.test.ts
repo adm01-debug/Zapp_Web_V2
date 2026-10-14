@@ -26,6 +26,9 @@ const panelHookSrc = readSrc('components/team-chat/useTeamChatPanel.ts');
 // codigo hoje.
 const draftHookSrc = readSrc('hooks/chat/useTeamChatDraft.ts');
 const uploadModuleSrc = readSrc('hooks/team-chat/uploadTeamMedia.ts');
+// SL-016: a busca saiu do filtro EM MEMÓRIA da janela carregada e virou a RPC
+// `search_team_messages`, montada em `useTeamMessageSearch`.
+const searchHookSrc = readSrc('hooks/team-chat/useTeamMessageSearch.ts');
 // TC-006: o Panel passou a COMPOR o TeamMessageItem (que já trazia reações,
 // ticks de leitura, reply, edição e mídia) e o markup de mídia/data separadora
 // vive em teamChatParts. As asserts de markup apontam para o arquivo que
@@ -256,9 +259,15 @@ describe('Team Chat — Exhaustive Audit', () => {
   // 5. SEARCH
   // ═══════════════════════════════════════════
   describe('Message Search', () => {
-    it('should filter messages by search query', () => {
-      expect(panelHookSrc).toMatch(/debouncedSearchQuery\.toLowerCase\(\)/);
-      expect(panelHookSrc).toMatch(/messages\.filter\(m => m\.content\?\.toLowerCase\(\)\.includes\(q\)\)/);
+    it('consulta o servidor pela RPC em vez de filtrar a janela carregada', () => {
+      expect(searchHookSrc).toMatch(/supabase\.rpc\('search_team_messages'/);
+      expect(searchHookSrc).toContain('p_conversation_id');
+      // mínimo de caracteres antes de consultar
+      expect(searchHookSrc).toContain('TEAM_MESSAGE_SEARCH_MIN_CHARS');
+      // a resposta velha é descartada (não mexe no resultado do pedido atual)
+      expect(searchHookSrc).toMatch(/if \(cancelado\) return;/);
+      expect(panelHookSrc).toMatch(/useTeamMessageSearch\(conversation\.id/);
+      expect(panelHookSrc).not.toMatch(/messages\.filter\(m => m\.content/);
     });
 
     it('should show result count', () => {

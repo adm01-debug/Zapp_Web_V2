@@ -21,6 +21,16 @@ const TEAM_MESSAGES_PAGE_SIZE = 200;
  */
 type TeamMessagePageRow = Database['public']['Functions']['get_team_messages_page']['Returns'][number];
 
+/**
+ * Evento de realtime de `team_messages` já normalizado, entregue a quem precisa
+ * reconciliar estado que NÃO vive no cache do React Query (ex.: as mensagens
+ * anteriores acumuladas pelo painel do Team Chat). O cache é revalidado à parte
+ * pela invalidação que já existia; este aviso é só o valor da linha que mudou.
+ */
+export type TeamMessageRealtimeEvent =
+  | { type: 'update'; id: string; content?: string | null; is_edited?: boolean | null; updated_at?: string | null }
+  | { type: 'delete'; id: string };
+
 function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   return {
     id: row.id,
@@ -42,10 +52,17 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export function useTeamMessages(
+  conversationId: string | null,
+  onMessageEvent?: (event: TeamMessageRealtimeEvent) => void,
+) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  // O ouvinte vive num ref: quem chama passa um callback novo a cada render e
+  // isso não pode ressuscitar o canal (o efeito depende só de conversa/cliente).
+  const listenerRef = useRef(onMessageEvent);
+  useEffect(() => { listenerRef.current = onMessageEvent; });
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -71,9 +88,31 @@ export function useTeamMessages(conversationId: string | null) {
     if (!conversationId) return;
     const channel = supabase
       .channel(`team-messages-${conversationId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
         queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+
+        const notify = listenerRef.current;
+        if (!notify) return;
+        // SL-016: DELETE só traz a chave primária no `old`; UPDATE traz a linha
+        // inteira. Só os dois casos importam para reconciliar texto antigo.
+        if (payload.eventType === 'DELETE') {
+          const id = (payload.old as { id?: string } | null)?.id;
+          if (id) notify({ type: 'delete', id });
+        } else if (payload.eventType === 'UPDATE') {
+          const row = payload.new as {
+            id?: string; content?: string | null; is_edited?: boolean | null; updated_at?: string | null;
+          } | null;
+          if (row?.id) {
+            notify({
+              type: 'update',
+              id: row.id,
+              content: row.content ?? null,
+              is_edited: row.is_edited ?? null,
+              updated_at: row.updated_at ?? null,
+            });
+          }
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -126,5 +165,12 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, query.data]);
 
-  return { messages: query.data ?? [], isLoading: query.isLoading };
+  return {
+    messages: query.data ?? [],
+    isLoading: query.isLoading,
+    // A leitura pode falhar (rede/RLS): o painel precisa distinguir "sem
+    // mensagens" de "não deu para ler" e oferecer o "Tentar novamente".
+    isError: query.isError,
+    refetch: query.refetch,
+  };
 }

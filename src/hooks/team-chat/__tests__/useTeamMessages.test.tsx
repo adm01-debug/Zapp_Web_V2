@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TestQueryWrapper } from '@/test/mocks/queryClient';
@@ -20,6 +20,10 @@ const h = vi.hoisted(() => ({
   page: [] as unknown[],
   pageError: null as unknown,
   readError: null as unknown,
+  // SL-016: o realtime precisa entregar o evento a quem reconcilia a janela
+  // antiga do painel — o teste guarda o retorno de `.on` para disparar à mão.
+  realtimeHandler: null as unknown,
+  realtimeFilter: null as unknown,
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -34,7 +38,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: h.rpc,
     from: h.from,
-    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    channel: () => ({
+      on: (_evento: unknown, filtro: unknown, handler: unknown) => {
+        h.realtimeFilter = filtro;
+        h.realtimeHandler = handler;
+        return { subscribe: () => ({}) };
+      },
+    }),
     removeChannel: () => {},
   },
 }));
@@ -142,5 +152,35 @@ describe('useTeamMessages — página e marcação de leitura por RPC (SL-016)',
     await waitFor(() => expect(h.rpc).toHaveBeenCalledWith('get_team_messages_page', expect.anything()));
 
     expect(h.rpc.mock.calls.filter(c => c[0] === 'mark_team_conversation_read')).toHaveLength(0);
+  });
+
+  it('SL-016 — entrega o evento de realtime normalizado para reconciliar a janela antiga', async () => {
+    h.page = [linha()];
+    const eventos: unknown[] = [];
+
+    renderHook(() => useTeamMessages('conv-1', (e) => eventos.push(e)), { wrapper: TestQueryWrapper });
+    await waitFor(() => expect(h.rpc).toHaveBeenCalledWith('get_team_messages_page', expect.anything()));
+    await waitFor(() => expect(typeof h.realtimeHandler).toBe('function'));
+
+    // O canal é preso à conversa: evento de outra conversa não chega aqui.
+    expect(h.realtimeFilter).toMatchObject({ table: 'team_messages', filter: 'conversation_id=eq.conv-1' });
+
+    act(() => {
+      (h.realtimeHandler as (p: unknown) => void)({
+        eventType: 'UPDATE',
+        new: { id: 'm-antiga', content: 'editado', is_edited: true, updated_at: '2026-10-08T16:00:00+00:00' },
+        old: {},
+      });
+      (h.realtimeHandler as (p: unknown) => void)({ eventType: 'DELETE', new: {}, old: { id: 'm-antiga' } });
+      // INSERT e evento sem id não viram reconciliação (a janela nova já é
+      // refeita pela invalidação do cache).
+      (h.realtimeHandler as (p: unknown) => void)({ eventType: 'INSERT', new: { id: 'm-nova' }, old: {} });
+      (h.realtimeHandler as (p: unknown) => void)({ eventType: 'DELETE', new: {}, old: {} });
+    });
+
+    expect(eventos).toEqual([
+      { type: 'update', id: 'm-antiga', content: 'editado', is_edited: true, updated_at: '2026-10-08T16:00:00+00:00' },
+      { type: 'delete', id: 'm-antiga' },
+    ]);
   });
 });

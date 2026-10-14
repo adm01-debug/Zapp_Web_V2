@@ -112,7 +112,15 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
               <Input ref={s.searchInputRef} value={s.searchQuery} onChange={e => s.setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
                 placeholder="Buscar nas mensagens..." className="h-8 text-sm" />
-              {s.searchQuery && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
+              {s.searchQuery && (
+                s.searchBelowMinChars ? (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Digite ao menos {s.searchMinChars} caracteres</span>
+                ) : s.isSearchingMessages ? (
+                  <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin text-muted-foreground shrink-0" role="status" aria-label="Buscando mensagens" />
+                ) : (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length}{s.searchIsCapped ? '+' : ''} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>
+                )
+              )}
               <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca"><X className="w-3.5 h-3.5" /></Button>
             </div>
           </motion.div>
@@ -122,15 +130,34 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
       <div ref={s.scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-muted/5" onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite">
         {s.isLoading ? (
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn("flex", i % 2 === 0 ? "justify-start" : "justify-end")}><Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div>
+        ) : s.messagesError && !s.showSearch ? (
+          // SL-016 — a leitura falhou (rede/RLS): antes isto aparecia como
+          // "Envie a primeira mensagem!", como se a conversa estivesse vazia.
+          <div role="alert" className="flex flex-col items-center gap-2 py-12 text-center">
+            <p className="text-sm text-muted-foreground">Não foi possível carregar as mensagens desta conversa.</p>
+            <Button variant="outline" size="sm" onClick={() => { void s.refetchMessages(); }}>Tentar novamente</Button>
+          </div>
+        ) : s.searchError ? (
+          <div role="alert" className="flex flex-col items-center gap-2 py-12 text-center">
+            <p className="text-sm text-muted-foreground">A busca falhou.</p>
+            <Button variant="outline" size="sm" onClick={s.retrySearch}>Tentar novamente</Button>
+          </div>
+        ) : s.isSearchingMessages ? (
+          <div className="flex justify-center py-12" role="status">
+            <Loader2 className="w-6 h-6 motion-safe:animate-spin text-muted-foreground" aria-label="Buscando mensagens..." />
+          </div>
         ) : s.filteredMessages.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-12">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div>
         ) : (
           <>
             {s.hasOlderMessages && !s.searchQuery && (
-              <div className="flex justify-center py-2">
+              <div className="flex flex-col items-center gap-1 py-2">
+                {s.olderError && (
+                  <p className="text-xs text-destructive" role="alert">Não foi possível carregar as mensagens anteriores.</p>
+                )}
                 <Button variant="ghost" size="sm" className="gap-2 text-xs text-muted-foreground" disabled={s.isFetchingOlder} onClick={() => { void s.fetchOlderMessages(); }}>
-                  {s.isFetchingOlder && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />}
-                  Carregar mensagens anteriores
+                  {s.isFetchingOlder && <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" aria-hidden />}
+                  {s.olderError ? 'Tentar novamente' : 'Carregar mensagens anteriores'}
                 </Button>
               </div>
             )}

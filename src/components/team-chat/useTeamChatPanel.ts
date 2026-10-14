@@ -5,7 +5,8 @@ import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
 import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
-import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessages, type TeamMessageRealtimeEvent } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessageSearch, TEAM_MESSAGE_SEARCH_MIN_CHARS } from '@/hooks/team-chat/useTeamMessageSearch';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +66,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  const [olderError, setOlderError] = useState(false);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -82,7 +84,27 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  // SL-016 — as mensagens ANTERIORES vivem em estado do painel (fora do cache do
+  // React Query), então a invalidação que o realtime já faz não as alcança: uma
+  // mensagem antiga editada ou apagada continuava na tela com o texto velho.
+  // `useTeamMessages` revalida o cache e ainda avisa aqui o valor que mudou.
+  const handleOlderReconcile = useCallback((event: TeamMessageRealtimeEvent) => {
+    if (event.type === 'delete') {
+      setOlderMessages(prev => prev.filter(m => m.id !== event.id));
+      return;
+    }
+    setOlderMessages(prev => prev.map(m => (m.id === event.id
+      ? {
+        ...m,
+        content: event.content ?? m.content,
+        is_edited: event.is_edited ?? m.is_edited,
+        updated_at: event.updated_at ?? m.updated_at,
+      }
+      : m)));
+  }, []);
+
+  const { messages: newestMessages, isLoading, isError: messagesError, refetch: refetchMessages } =
+    useTeamMessages(conversation.id, handleOlderReconcile);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -155,6 +177,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setOlderMessages([]);
     setOldestCursor(null);
     setHasOlderMessages(true);
+    setOlderError(false);
     setShowStats(false);
     setShowTransferDialog(false);
     setShowGroupManagement(false);
@@ -182,6 +205,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (isFetchingOlder || !hasOlderMessages || !oldestCursor) return;
     const el = scrollRef.current;
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
+    setOlderError(false);
     setIsFetchingOlder(true);
     try {
       // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
@@ -214,18 +238,27 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       }
     } catch (err) {
       log.error('Erro ao carregar mensagens anteriores', err);
+      // A falha NÃO pode virar "não há mais mensagens": o botão continua ali
+      // com o "Tentar novamente" em vez de sumir e esconder o histórico.
+      setOlderError(true);
     } finally {
       setIsFetchingOlder(false);
     }
   }, [isFetchingOlder, hasOlderMessages, oldestCursor, conversation.id]);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
+  const searchTerm = debouncedSearchQuery.trim();
+  // Abaixo do mínimo não há consulta: o painel mostra a lista carregada e o
+  // aviso do mínimo em vez de disparar uma RPC que casaria com quase tudo.
+  const searchEnabled = showSearch && searchTerm.length >= TEAM_MESSAGE_SEARCH_MIN_CHARS;
+  const search = useTeamMessageSearch(conversation.id, searchTerm, searchEnabled);
 
   const filteredMessages = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return messages;
-    const q = debouncedSearchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, debouncedSearchQuery]);
+    // SL-016 — a busca vai ao SERVIDOR: filtrar só `messages` (janela carregada)
+    // dizia "Nenhuma mensagem encontrada" para um termo que existia no histórico.
+    if (!searchEnabled) return messages;
+    return search.results ?? [];
+  }, [messages, searchEnabled, search.results]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -389,6 +422,18 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isFetchingOlder,
     hasOlderMessages,
     fetchOlderMessages,
+    olderError,
+    // SL-016 — leitura e busca podem falhar: o painel mostra o erro com o
+    // "Tentar novamente" em vez de confundir falha com "sem mensagens".
+    messagesError,
+    refetchMessages,
+    isSearchingMessages: search.isSearching,
+    searchError: search.isError,
+    searchIsCapped: search.isCapped,
+    searchMinChars: TEAM_MESSAGE_SEARCH_MIN_CHARS,
+    searchBelowMinChars:
+      searchQuery.trim().length > 0 && searchTerm.length < TEAM_MESSAGE_SEARCH_MIN_CHARS,
+    retrySearch: search.retry,
     showStats,
     setShowStats,
     showTransferDialog,
