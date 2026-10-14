@@ -17,26 +17,41 @@ Migration nova e ADITIVA:
      - a guarda vale so para auth.role()='authenticated' (service_role/back-office livre, como em
        20260929590000_multiplix_mutability_guard.sql);
   2. CHECK `email_templates_body_not_blank` (corpo vazio barrado; nome em branco ja e barrado pela ET1).
-- scripts/db-audit/email-templates-rls.test.sh: BLOCO C (o defeito reproduzido ANTES e provado fechado
-  depois, com os papeis reais dono/staff/outro + anon) e BLOCO D (rollback do hardening extraido do
-  proprio arquivo, executado, e reaplicacao idempotente). Arquivo ja registrado no db-guard pelo
-  cartao-avo (commit de0635599) — nao toquei no workflow de CI.
+- scripts/db-audit/email-templates-rls.test.sh: BLOCO C (defeito REPRODUZIDO em C0 antes do
+  hardening e provado fechado depois, com os 3 papeis — dono/staff/outro) e BLOCO D (rollback
+  do hardening extraido do proprio arquivo, executado, e reaplicacao idempotente). Arquivo ja
+  registrado no db-guard pelo cartao-avo (commit de0635599) — nao toquei no workflow de CI.
 
 ## Prova (saida real, do teste que roda com os papeis reais)
-Vermelho SEM a correcao (migration trocada por um stub sem gatilho):
-  RC_VERMELHO=1
-  [FAIL] C1 staff nao reatribui a autoria da linha de outro (guardado): deveria falhar, mas passou
-Verde COM a correcao:
-  RC_VERDE=0 ; == TODOS OS PASSOS PASSARAM ==
-  [PASS] C1..C6 autoria imutavel (staff/outro nao reatribuem; dono edita/exclui; staff edita o corpo)
-  [PASS] C7 service_role segue livre para back-office
-  [PASS] C8/C9 agente comum nao marca is_shared (UPDATE) nem nasce compartilhado (INSERT)
-  [PASS] C10 staff marca is_shared no proprio modelo
-  [PASS] C11/C12 corpo vazio e nome em branco barrados por CHECK
-  [PASS] D1..D3 rollback remove gatilho+funcao e nao derruba a tabela
-  [PASS] D4..D6 reaplicar recria gatilho, funcao e CHECK (idempotente)
+Vermelho reproduzivel DENTRO do teste (C0, so com a RLS da ET1, antes do hardening):
+  [PASS] C0 staff troca a autoria da linha de outro (defeito: PASSA com a RLS da ET1)
+Verde COM a correcao (o mesmo UPDATE, depois do hardening):
+  [PASS] C1 staff nao reatribui a autoria da linha de outro (guardado)
+Run completo: exit 0, `== TODOS OS PASSOS PASSARAM ==`
+  Passos C com os 3 papeis: C0 (staff reatribui pre-fix) + autoria restaurada como postgres;
+  C1/C2 (staff barrado; autoria do OWNER); C2b/C2c (JWT_OTHER: 0 linhas; autoria intacta);
+  C3/C4 (dono edita/exclui o proprio); C5/C6 (staff edita o corpo; autoria preservada);
+  C7 service_role livre; C8/C9/C10 is_shared so staff; C11/C12 CHECKs de corpo/nome;
+  D1..D3 rollback remove gatilho+funcao sem derrubar a tabela; D4..D6 reaplicacao idempotente.
+Nota complementar: o vermelho via stub (migration trocada por stub sem gatilho, fora do teste:
+  `[FAIL] C1 staff nao reatribui a autoria da linha de outro (guardado): deveria falhar, mas passou`)
+  foi experimento manual da rodada anterior; o C0 o substitui como prova reproduzivel no teste.
 Migration aplicada no banco LOCAL do cartao:
   `APLICADA no banco LOCAL 'v2-26101221510dae' (producao nao foi tocada)`.
+
+## Pontos da recusa (refazer 1)
+- Ponto 1: passo C0 em scripts/db-audit/email-templates-rls.test.sh, logo apos o B32 e ANTES de
+  `psql_file "$hardening"`: staff troca created_by da linha compartilhada do OWNER e PASSA
+  (expect '1'); autoria restaurada como postgres (com conferencia) e so entao o hardening e
+  aplicado. Cabecalho do BLOCO C e comentario corrigidos para C0. Prova: as 2 linhas [PASS] C0 acima.
+- Ponto 2: passos C2b (JWT_OTHER tenta trocar created_by da linha compartilhada do OWNER:
+  0 linhas) e C2c (autoria segue do OWNER) no BLOCO C — o terceiro papel na prova.
+  Prova: `[PASS] C2b outro nao reatribui a autoria da linha de outro (0 linhas)` e
+  `[PASS] C2c autoria preservada apos a tentativa do outro`.
+- Ponto 3: comentario do C2 corrigido — quem e atomico e o UPDATE rejeitado pelo gatilho
+  (falhou inteiro), nao a migration.
+- Ponto 4: este relato — vermelho reproduzivel em C0, passos C listados com os 3 papeis,
+  nota do stub mantida como complementar.
 
 ## Escolhas (registradas como o cartao pede)
 - Autoria: RAISE em vez de `NEW.created_by := OLD.created_by` — nao mascara a tentativa de escalada e
