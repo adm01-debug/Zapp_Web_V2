@@ -184,7 +184,11 @@ E71 (drafts → W45), E73 (retenção → W47), E77 (Dependabot do toolchain →
   trata "entrada obsoleta no baseline" (violação que **sumiu**) como falha e bloqueia a sincronização inteira (#1454,
   09/10) — a mensagem do próprio guard diz "remova-as", não "pare".
 - **N-13 · `db-live-guard.yml:200-206`: o passo "Fixtures de E2E em producao (E85)" é o único dos 11 sub-checks sem
-  `if: steps.credencial.outcome == 'success'`** — sem credencial ele roda, falha, e entra na causa do alerta.
+  `if: steps.credencial.outcome == 'success'`.** Retificado em 14/10 (revisão da PR #1921): o efeito hoje é nulo, porque
+  `credencial` não tem `continue-on-error` e a falha dele já pula os passos seguintes pelo `success()` implícito. O
+  achado é de **invariante**, não de comportamento: a guarda precisa ser explícita em todo sub-check com
+  `continue-on-error`, para que relaxar o passo de credencial no futuro não faça nenhum check rodar contra destino não
+  validado.
 - **N-14 · Pipeline de PR serial e sem cache.** `lint-and-typecheck` tem **27 passos** (Deno check + testes, Go, download
   do actionlint, `pip install zizmor`, 819 testes Node, eslint do repo inteiro, `tsc -b --force`, …) e é `needs:` de
   `test`, `security` e `e2e`; `build` espera `test`. `bun install` roda 5× por PR sem `actions/cache` (os 2 caches
@@ -283,7 +287,8 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W06** · A · N-03 · Investigar o `auth.setup` do run 38239077346: usuário E2E no Auth de produção (lockout, senha,
   MFA, e-mail), app respondendo em `PLAYWRIGHT_BASE_URL`; disparar `e2e-logado` manual até ✅ (#1915 fecha sozinha).
   Verificação: run manual ✅ com os 10 projetos.
-- [~] **W07** · B · N-13 · **PR #1921 aberta.** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85.
+- [~] **W07** · B · N-13 · **PR #1921 aberta.** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
+  (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
 - [ ] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
