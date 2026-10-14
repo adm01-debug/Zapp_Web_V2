@@ -24,7 +24,7 @@ import { withRetry } from '@/lib/retry';
 import { VisionIcon } from './ai-tools/VisionIcon';
 import { useAnalysisTts } from './ai-tools/useAnalysisTts';
 import { AnalysisTabs } from './ai-tools/AnalysisTabs';
-import { type AnalysisData, type AnalysisMessage, type AiEnvelope, AI_CONTEXT_LIMITS, aiEnvelopeErrorMessage, readAiErrorEnvelope, limitAnalysisContext, sentimentConfig } from './ai-tools/analysisConfigs';
+import { type AnalysisData, type AnalysisMessage, type AiEnvelope, AI_CONTEXT_LIMITS, aiEnvelopeErrorMessage, readAiErrorEnvelope, isPeriodCoveredByWindow, limitAnalysisContext, sentimentConfig } from './ai-tools/analysisConfigs';
 import { normalizeScore } from '@/lib/ai-values';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 
@@ -79,9 +79,12 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
   const contextWindow = useMemo(() => limitAnalysisContext(filteredMessages), [filteredMessages]);
   const analyzedCount = contextWindow.messages.length;
   const hasWindowCut = contextWindow.omitted > 0;
-  // Histórico mais antigo não carregado = o período escolhido não está coberto;
-  // gravar `period_days` assim afirmaria um recorte que não foi analisado.
-  const periodDays = hasOlderMessages ? null : getPeriodDays(analysisPeriod);
+  // `period_days` só é gravado quando o período pedido está INTEIRO dentro da
+  // janela carregada — senão o servidor registraria um recorte que não foi analisado.
+  const requestedPeriodDays = getPeriodDays(analysisPeriod);
+  const periodDays = isPeriodCoveredByWindow(contextWindow.messages, requestedPeriodDays, hasOlderMessages)
+    ? requestedPeriodDays
+    : null;
 
   // IA-048 — identidade da requisição: contato + período ESCOLHIDO. Não inclui
   // `messages`/`filteredMessages` de propósito; mensagens que chegam por tempo

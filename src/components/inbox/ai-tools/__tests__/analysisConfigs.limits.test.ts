@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   AI_CONTEXT_LIMITS,
   AI_PROXY_CONTENT_LIMIT,
+  isPeriodCoveredByWindow,
   limitAnalysisContext,
   limitAiTexts,
   readAiErrorEnvelope,
@@ -83,6 +84,33 @@ describe('limitAiTexts — teto de UMA mensagem do ai-proxy (50000 chars)', () =
 
     expect(janela.texts).toHaveLength(1);
     expect(janela.omitted).toBe(0);
+  });
+});
+
+describe('isPeriodCoveredByWindow — só grava period_days com o período inteiro na janela', () => {
+  const agora = Date.parse('2026-10-14T12:00:00.000Z');
+  const emDias = (d: number) => new Date(agora - d * 86_400_000).toISOString();
+
+  it('sem histórico mais antigo não carregado a janela é o histórico inteiro', () => {
+    expect(isPeriodCoveredByWindow([{ created_at: emDias(3) }], 7, false, agora)).toBe(true);
+  });
+
+  it('com histórico mais antigo, só cobre se a janela alcança o início do período', () => {
+    // janela começa há 10 dias, período de 7: o período inteiro está dentro dela
+    expect(isPeriodCoveredByWindow([{ created_at: emDias(10) }, { created_at: emDias(1) }], 7, true, agora)).toBe(true);
+    // janela começa há 2 dias, período de 7: faltam 5 dias que ninguém analisou
+    expect(isPeriodCoveredByWindow([{ created_at: emDias(2) }, { created_at: emDias(1) }], 7, true, agora)).toBe(false);
+  });
+
+  it('período sem dias (todos/última interação) nunca é gravado', () => {
+    expect(isPeriodCoveredByWindow([{ created_at: emDias(1) }], null, false, agora)).toBe(false);
+  });
+
+  it('a janela cortada pelo teto de caracteres conta pelo começo dela, não do período', () => {
+    // recorte agregado: a janela enviada começa há 1 dia, o período pedido é de 7
+    const janelaCortada = [{ created_at: emDias(1) }, { created_at: emDias(0.5) }];
+    expect(isPeriodCoveredByWindow(janelaCortada, 7, true, agora)).toBe(false);
+    expect(isPeriodCoveredByWindow(janelaCortada, 1, true, agora)).toBe(true);
   });
 });
 
