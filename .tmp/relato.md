@@ -8,8 +8,8 @@ Especialista: semisenior (area-edge-api)
 - Vermelho (13/10 23:21, mutação temporária em `evolution-send.ts`, deny 400→200, restaurada do backup em /tmp, `git status` limpo depois): só o arquivo de envio → `FAILED | 3 passed | 4 failed (92ms)`, falhando exatamente os 4 testes de negação (`evolution-send-instance-token.test.ts:75,97,112,146`). Os testes chamam o código real e falham sem a correção.
 
 ## Ponto 3: verificação e fechamento único — resolvido neste fechar
-- A verificação do cartão roda dentro deste `hermes-tarefa-fechar` (`zapp-verify --rapido`); a evidência executável deste cartão é o verde `ok | 20 passed | 0 failed` + o vermelho `FAILED | 3 passed | 4 failed` acima, ambos rodados agora no workspace. Fechamento único, sem repetição.
-- Contexto de máquina (fato, não pendência): load 37,9, RAM 40/47 GB, swap 7/8 GB às 23:21 — suite completa fora do fechar dispensada porque o diff de código é vazio e o fechar já executa a verificação dele.
+- Verificação executável do cartão, rodada agora no workspace (comandos e linhas de resultado na seção Ponto 2): verde `ok | 20 passed | 0 failed (399ms)` + vermelho por mutação `FAILED | 3 passed | 4 failed (92ms)`.
+- O `zapp-verify --rapido` roda dentro deste `hermes-tarefa-fechar`. Fechamento único, sem repetição.
 
 ## FATOS MEDIDOS
 - `git diff --name-only 453e6b69f9..HEAD` → `.tmp/relato.md` (só o relato, nenhum arquivo de código).
