@@ -1,27 +1,68 @@
-Especialista: workertestes
+Especialista: worker (testes) (area-testes-do-produto)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+# Recon (leitura apenas): assinatura, tabela, coluna de versao e version_number do RPC save_talkx_template
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Cartao t_6bbf43c6. Nenhum arquivo de codigo/migration tocado; unico arquivo alterado e este relato.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## Fontes usadas
+- Fonte primaria (card t_a3551220): a migration `supabase/migrations/20261011000012_talkx_template_save_rpc.sql`, lida via `git show 34ee3b9485:...` (mesmo conteudo de `9fe8ad8743`).
+- ATENCAO (bloqueio de integracao, nao de recon): essa migration NAO esta na base `dia/2026-10-13`. Comprovado:
+  - `git cat-file -e dia/2026-10-13:supabase/migrations/20261011000012_talkx_template_save_rpc.sql` -> nao existe.
+  - varredura de TODOS os refs locais: so `v2/talkx-salvar-template-rpc-26101009316dde` contem o arquivo.
+  - migration mais nova em `dia/2026-10-13` = `20261009000118_revoke_whatsapp_connections_anon_grants.sql`.
+  - `git grep save_talkx_template dia/2026-10-13` so acha docs/plano, nunca SQL.
+  Ou seja: o teste da t_c745d776 so passa com a migration aplicada no banco local (a propria prova red->green do cartao ja assume isso).
+- Fonte 3 (schema do banco): o banco local NAO estava de pe neste host (`pg_isready` -> `/var/run/postgresql:5432 - no response`). Em vez de subir stack (caro), confirmei o schema pelas migrations canonicas da base:
+  - `supabase/migrations/20260909130000_talkx_template_versions_custom_variables.sql:9` -> `CREATE TABLE IF NOT EXISTS public.talkx_template_versions`
+  - `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql:201-217` -> colunas + `version_number integer NOT NULL` + `UNIQUE (template_id, version_number)`.
 
-## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+## BLOCO DE FATOS CORPORIVEIS (pronto para o proximo worker)
 
-## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+(1) Assinatura literal da funcao (fonte: migration 20261011000012, trecho `CREATE OR REPLACE FUNCTION public.save_talkx_template(...)`):
+```
+public.save_talkx_template(
+  p_template_id uuid,
+  p_expected_updated_at timestamptz,
+  p_name text,
+  p_content text,
+  p_category text,
+  p_status text,
+  p_media_url text,
+  p_media_type text,
+  p_tags text[],
+  p_custom_variables text[],
+  p_note text
+) RETURNS uuid
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+```
+Assinatura para GRANT/REVOKE (mesma ordem):
+`save_talkx_template(uuid, timestamptz, text, text, text, text, text, text, text[], text[], text)`
+
+(2) Tabela alvo:
+- Linha viva (UPDATE): `public.talkx_templates`
+- Historico/versao (INSERT do snapshot ANTERIOR + a nota): `public.talkx_template_versions`
+
+(3) Coluna de versoes: `public.talkx_template_versions.version_number` (integer, NOT NULL; UNIQUE (template_id, version_number)). Coluna de nota adicionada pela migration: `talkx_template_versions.note` (text).
+
+(4) Expressao exata que produz `version_number` (dentro da RPC, antes do INSERT do historico):
+```sql
+SELECT COALESCE(MAX(version_number), 0) + 1 INTO v_version_number
+FROM public.talkx_template_versions
+WHERE template_id = p_template_id;
+```
+A RPC retorna `v_version_id` (uuid da linha de historico criada).
+
+## Fatos extras uteis ao teste (todos da mesma migration)
+- Retorno: `uuid` = id da versao de historico criada (`RETURNING id INTO v_version_id`).
+- Ordem: INSERT no historico com o estado ANTERIOR (`v_template.*`) + `note`; depois UPDATE da linha viva (`updated_at = now()`). `v_saved_at := statement_timestamp()`.
+- Optimistic locking: `SELECT * INTO v_template ... WHERE id = p_template_id FOR UPDATE`.
+  - nao achou -> `RAISE EXCEPTION 'talkx_template_not_found' USING ERRCODE = 'P0002'`
+  - `v_template.updated_at IS DISTINCT FROM p_expected_updated_at` -> `RAISE EXCEPTION 'optimistic_lock_failed' USING ERRCODE = '40001'`
+- Auth: `auth.role() <> 'authenticated'` ou `auth.uid() IS NULL` -> `'authentication_required'` ERRCODE `42501`; `get_profile_id_for_user(auth.uid())` NULL -> `'authenticated_profile_not_found'` ERRCODE `42501`.
+- ACL: `REVOKE ALL ... FROM PUBLIC, anon; GRANT EXECUTE ... TO authenticated, service_role`.
+- Requisito do guard canonico (20260909210000): a linha de historico precisa ter `created_at = statement_timestamp()`, `saved_by = public.get_profile_id_for_user(auth.uid())` e colunas iguais a OLD, senao `guard_talkx_template_update` recusa (42501). A RPC atende por construcao — o teste pode usar isso como caso de negacao.
+
+## O que NAO fiz e por que
+- Nao editei nenhum arquivo de codigo/migration (o cartao manda leitura apenas). O unico arquivo alterado neste commit e o proprio `.tmp/relato.md` (rastreado no repo; o fechar exige arvore limpa).
+- Nao subi o stack local nem rodei `psql` (banco local fora do ar; fonte 3 coberta pelas migrations canonicas, citadas acima com arquivo:linha). Nao ha verificacao de banco a colar aqui alem do schema lido.
+- Nada foi enviado a lugar nenhum; nenhum dado real usado.
