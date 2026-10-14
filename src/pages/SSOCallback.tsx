@@ -46,6 +46,22 @@ function traduzirErroAuth(raw: string): string | null {
   return null;
 }
 
+// Porteiro pós-login (ADR-007, Edge `post-login-gate`). Os caminhos que NÃO
+// passam pela Edge `auth-login` (Google/`signInWithOAuth`, link por e-mail/OTP)
+// emitiam sessão sem decisão de política de rede; o PostgREST/RLS do app fica
+// fora do `requireAuth`. A decisão é do servidor: só `{allowed:true}` libera.
+// Qualquer outra resposta — 403 do porteiro, 503 indecidível, erro de rede ou
+// corpo inesperado — é tratada como recusa (falha fechada, ADR-007).
+async function porteiroLiberaEntrada(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.functions.invoke('post-login-gate', { method: 'POST' });
+    if (error) return false;
+    return (data as { allowed?: boolean } | null)?.allowed === true;
+  } catch {
+    return false;
+  }
+}
+
 // A mensagem vem da URL (quem monta o link controla o texto): textos conhecidos
 // viram pt-BR; o resto é cortado no tamanho máximo, perde caracteres de marcação
 // e cai no texto genérico quando não sobra nada.
@@ -69,8 +85,12 @@ export default function SSOCallback() {
   // ref tracks live status to avoid stale closure in the timeout callback
   const statusRef = useRef<CallbackStatus>(initialError ? 'error' : 'loading');
   // Garante um único toast de sucesso e um único redirecionamento, mesmo que a
-  // sessão chegue pelos dois caminhos (getSession e onAuthStateChange SIGNED_IN).
-  const loginConcluidoRef = useRef(false);
+  // sessão chegue pelos dois caminhos (getSession e onAuthStateChange SIGNED_IN):
+  // a consulta ao porteiro só roda uma vez por montagem.
+  // Na negação, a sessão encerrada pelo próprio fluxo não pode ser
+  // reclassificada pelo SIGNED_OUT.
+  const porteiroConsultadoRef = useRef(false);
+  const porteiroNegouRef = useRef(false);
   const redirecionamentoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -83,9 +103,32 @@ export default function SSOCallback() {
 
     let ativo = true;
 
-    const concluirLogin = () => {
-      if (loginConcluidoRef.current) return;
-      loginConcluidoRef.current = true;
+    const concluirLogin = async () => {
+      if (porteiroConsultadoRef.current) return;
+      porteiroConsultadoRef.current = true;
+
+      // Nada é anunciado (nem navegado) antes do porteiro liberar (ADR-007).
+      const liberado = await porteiroLiberaEntrada();
+      if (!ativo) return;
+
+      if (!liberado) {
+        // Recusa genérica: não revela se a negação foi de rede, país ou conta
+        // inativa. A Edge já revogou a sessão; o signOut local limpa o resto.
+        porteiroNegouRef.current = true;
+        statusRef.current = 'error';
+        setStatus('error');
+        setErrorMessage(ACESSO_NEGADO);
+        toast.error('Erro no login SSO');
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Sessão pode já ter sido revogada pelo porteiro; o /auth segue valendo.
+        }
+        if (!ativo) return;
+        redirecionamentoRef.current = setTimeout(() => navigate('/auth', { replace: true }), 1500);
+        return;
+      }
+
       statusRef.current = 'success';
       setStatus('success');
       toast.success('Login realizado com sucesso!');
@@ -98,7 +141,6 @@ export default function SSOCallback() {
         clearTimeout(redirecionamentoRef.current);
         redirecionamentoRef.current = null;
       }
-      loginConcluidoRef.current = false;
       statusRef.current = 'error';
       setStatus('error');
       setErrorMessage(mensagem);
@@ -107,8 +149,10 @@ export default function SSOCallback() {
     // Subscribe to auth state changes — cleanup returned directly to React (not inside async fn)
     const { data: authData } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        concluirLogin();
+        void concluirLogin();
       } else if (event === 'SIGNED_OUT') {
+        // A negação do porteiro já encerrou a sessão e fixou a mensagem genérica.
+        if (porteiroNegouRef.current) return;
         falharLogin('Sessão não encontrada');
       }
     });
@@ -122,7 +166,7 @@ export default function SSOCallback() {
         return;
       }
       if (data.session) {
-        concluirLogin();
+        void concluirLogin();
       }
     });
 

@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
+  signOut: vi.fn(),
+  invoke: vi.fn(),
   authCallback: null as null | ((event: string, session: unknown) => void),
 }));
 
@@ -28,7 +30,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: {
       getSession: mocks.getSession,
       onAuthStateChange: mocks.onAuthStateChange,
+      signOut: mocks.signOut,
     },
+    functions: { invoke: mocks.invoke },
   },
 }));
 
@@ -56,10 +60,21 @@ function renderComErroNaUrl(raw: string) {
   return renderComQuery('?error_description=' + encodeURIComponent(raw));
 }
 
+/** Deixa a cadeia getSession -> porteiro -> setStatus assentar. */
+async function assentarFluxo() {
+  await act(async () => {
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.authCallback = null;
   mocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
+  mocks.signOut.mockResolvedValue({ error: null });
+  // Default: o porteiro pós-login libera (o fluxo proprio dele tem teste em
+  // SSOCallback.porteiro-pos-login.test.tsx).
+  mocks.invoke.mockResolvedValue({ data: { allowed: true }, error: null });
   mocks.onAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
     mocks.authCallback = cb;
     return { data: { subscription: { unsubscribe: mocks.unsubscribe } } };
@@ -136,9 +151,7 @@ describe('SSOCallback — um único sucesso e um único redirecionamento (t_f7e0
 
     renderComQuery('');
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await assentarFluxo();
     act(() => {
       mocks.authCallback?.('SIGNED_IN', { access_token: 't' });
     });
@@ -155,9 +168,7 @@ describe('SSOCallback — um único sucesso e um único redirecionamento (t_f7e0
 
     renderComQuery('');
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await assentarFluxo();
 
     expect(screen.getByText('Login Realizado!')).toBeTruthy();
     expect(screen.getByRole('status').textContent).toContain('Login Realizado!');
@@ -168,9 +179,7 @@ describe('SSOCallback — um único sucesso e um único redirecionamento (t_f7e0
     mocks.getSession.mockResolvedValue({ data: { session: { access_token: 't' } }, error: null });
 
     const { unmount } = renderComQuery('');
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await assentarFluxo();
 
     unmount();
     act(() => {
