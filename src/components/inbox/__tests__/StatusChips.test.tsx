@@ -98,22 +98,33 @@ describe('StatusChips', () => {
   });
 
   it('aplica o mesmo estilo ativo dos demais chips em Arquivadas', () => {
-    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary/50', 'text-foreground'] as const;
-    render(<StatusChips conversations={conversations} chipTab="archived" onChipTabChange={() => {}} />);
+    // O design do dono (11/10) trocou o ativo para `border-primary` + anel
+    // (`ring-2 ring-primary/40`) e o texto inativo para `text-foreground`.
+    // A prova mede as classes REAIS do componente; além dos tokens, compara
+    // Arquivadas ativa com outro chip ativo para travar a PARIDADE (não um
+    // valor fixo de token que envelhece).
+    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary', 'ring-2', 'ring-primary/40', 'text-foreground'] as const;
+    const { unmount } = render(<StatusChips conversations={conversations} chipTab="archived" onChipTabChange={() => {}} />);
 
     const archivedChip = screen.getByTestId('status-chip-archived');
     for (const classToken of activeClassTokens) {
       expect(archivedChip).toHaveClass(classToken);
     }
+    const archivedActiveClasses = [...archivedChip.classList].sort().join(' ');
+    unmount();
 
-    const inactiveChipIds = ['all', 'unread', 'attending', 'waiting', 'resolved'] as const;
+    render(<StatusChips conversations={conversations} chipTab="attending" onChipTabChange={() => {}} />);
+    // Paridade: um chip ativo em outra aba sai com exatamente as mesmas classes.
+    expect([...screen.getByTestId('status-chip-attending').classList].sort().join(' ')).toBe(archivedActiveClasses);
+
+    const inactiveChipIds = ['all', 'unread', 'waiting', 'resolved'] as const;
     for (const chipId of inactiveChipIds) {
       const inactiveChip = screen.getByTestId(`status-chip-${chipId}`);
       expect(inactiveChip).not.toHaveClass('status-chip-active');
       expect(inactiveChip).not.toHaveClass('bg-accent');
       expect(inactiveChip).toHaveClass('bg-muted/40');
       expect(inactiveChip).toHaveClass('border-border');
-      expect(inactiveChip).toHaveClass('text-muted-foreground');
+      expect(inactiveChip).toHaveClass('text-foreground');
     }
   });
 
@@ -143,5 +154,75 @@ describe('StatusChips', () => {
     expect(archiveIcon).not.toBeNull();
     expect(archiveIcon).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('status-chip-all').querySelector('svg')).toBeNull();
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Design do dono (11/10) — chips em pílula grande, badge redondo.
+  //
+  // O jsdom não aplica o CSS do Tailwind: a geometria NÃO é computável aqui.
+  // A prova é sobre as classes que o componente REALMENTE renderiza — o que o
+  // Tailwind aplica no navegador é a classe presente (h-11 = 44px,
+  // rounded-full = pílula). Se uma classe sumir do componente, o teste cai.
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('pílula grande e badge redondo (design do dono 11/10)', () => {
+    const renderComAtivo = () =>
+      render(<StatusChips conversations={conversations} chipTab="attending" onChipTabChange={() => {}} />);
+
+    it('o chip é pílula de 44px com rótulo de 15px', () => {
+      renderComAtivo();
+      const chip = screen.getByTestId('status-chip-attending');
+      for (const classe of ['h-11', 'px-4', 'rounded-full', 'text-[15px]', 'font-medium', 'border']) {
+        expect(chip.className, `chip sem "${classe}"`).toContain(classe);
+      }
+    });
+
+    it('o contador é badge redondo (rounded-full, h-7, min-w-7, text-sm)', () => {
+      renderComAtivo();
+      const badge = screen.getByTestId('status-chip-attending').querySelector('span');
+      expect(badge).not.toBeNull();
+      for (const classe of ['rounded-full', 'h-7', 'min-w-7', 'px-2', 'text-sm', 'font-bold']) {
+        expect(badge!.className, `badge sem "${classe}"`).toContain(classe);
+      }
+    });
+
+    it('o container usa gap-2 e pt-3/pb-3', () => {
+      renderComAtivo();
+      const box = screen.getByTestId('status-chips');
+      expect(box.className).toContain('gap-2');
+      expect(box.className).toContain('pt-3');
+      expect(box.className).toContain('pb-3');
+      expect(box.className).toContain('flex-wrap');
+    });
+
+    it('a transição é só de cores (transition-colors, sem transition-all)', () => {
+      renderComAtivo();
+      const chip = screen.getByTestId('status-chip-attending');
+      expect(chip.className).toContain('transition-colors');
+      expect(chip.className).not.toContain('transition-all');
+    });
+
+    it('o chip ativo tem anel e foco visível por token (nada de cor crua)', () => {
+      renderComAtivo();
+      const chip = screen.getByTestId('status-chip-attending');
+      expect(chip.className).toContain('ring-2');
+      expect(chip.className).toContain('ring-primary/40');
+      expect(chip.className).toContain('focus-visible:ring-2');
+      expect(chip.className).toContain('focus-visible:ring-primary/50');
+    });
+
+    it('aria-pressed marca só o chip ativo', () => {
+      renderComAtivo();
+      expect(screen.getByTestId('status-chip-attending')).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByTestId('status-chip-all')).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByTestId('status-chip-resolved')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('o ícone Archive vai em h-4 w-4 antes do texto', () => {
+      renderComAtivo();
+      const svg = screen.getByTestId('status-chip-archived').querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute('class')).toContain('h-4');
+      expect(svg!.getAttribute('class')).toContain('w-4');
+    });
   });
 });
