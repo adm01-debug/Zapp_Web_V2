@@ -222,9 +222,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       // `profiles` voltava `sender: null` para o agente (a RLS de `profiles` é
       // 'own + admin'), então as antigas apareciam sem nome nem foto. O keyset
       // composto `(created_at, id)` vai no `p_before_id` e é resolvido no
-      // servidor. O desempate por `id` para mensagens com o MESMO `created_at`
-      // do cursor é do banco (N-072) — o SQL desta RPC ainda compara só
-      // `created_at < v_before_at`.
+      // servidor (N-072): a RPC lê `(v_before_at, v_before_id)` do `p_before_id`
+      // e filtra `created_at < v_before_at OR (created_at = v_before_at AND id < v_before_id)`.
       const { data, error } = await supabase.rpc('get_team_messages_page', {
         p_conversation_id: conversation.id,
         p_before_id: oldestCursor.id,
