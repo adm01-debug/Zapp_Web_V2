@@ -19,3 +19,5 @@ Especialista: complexo (area-front-hooks)
 ## O que NÃO fiz e por quê
 - Não toquei no componente nem no fluxo do construtor (restrição do cartão); não removi nem afrouxei asserções; sem mock do componente sob teste.
 - Código escrito pelo Claude Code (plano da casa) em sessão anterior; nesta sessão eu só conferi o diff (só o arquivo do cartão + relato), rodei a prova acima e reescrevi o relato. Diff: 2 arquivos (`RuleValueInput.test.tsx` + `.tmp/relato.md`).
+## Conclusão
+- Concluído: teste verde 3 vezes seguidas mais verificação `zapp-verify . --rapido` verde; sem ressalva e sem pendência.
