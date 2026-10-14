@@ -67,7 +67,9 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
               Desempenho do Atendente
             </h4>
             <div className="space-y-3">
-              {(Object.entries(analysis.agentPerformance) as [string, number][]).map(([key, value]) => {
+              {Object.entries(analysis.agentPerformance)
+                .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+                .map(([key, value]) => {
                 const config = performanceLabels[key];
                 if (!config) return null;
                 const Icon = config.icon;
