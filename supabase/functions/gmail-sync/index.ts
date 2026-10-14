@@ -159,8 +159,9 @@ export async function handleGmailSync(req: Request): Promise<Response> {
           return jsonResponse({ success: true, ...result }, 200, req);
         } catch (err: unknown) {
           try {
-            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
+            // token revogado/expirado vira 'reauth_required'; o resto 'error'
+            // (a contagem de tentativas vem da leitura do estado anterior).
+            await recordGmailAccountFailure(supabase, account.id, err);
           } catch (recordErr) {
             log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
           }

@@ -1,31 +1,17 @@
+Especialista: edgar
 ## O que mudou e por quê
-- supabase/functions/_shared/gmail-helpers.ts: o refresh recusado pelo Google (`ensureValidToken`) descartava o corpo da resposta e subia sempre "Failed to refresh token" — sem o `invalid_grant` a conta virava `error` mudo. Agora o corpo entra na mensagem; novas funções `isGmailReauthError`, `sanitizeGmailErrorMessage` e `recordGmailAccountFailure` classificam a falha: token revogado/expirado (`invalid_grant`, `unauthorized_client`) → `sync_status='reauth_required'`; falha transitória → `error` com a contagem de tentativas; `last_error` sempre sem token nem e-mail completo.
-- supabase/functions/gmail-cron-sync/index.ts e gmail-sync/index.ts: os dois pontos que gravavam `sync_status='error'` passam a usar `recordGmailAccountFailure`. O ramo de sucesso não mudou (segue gravando `synced` e limpando `last_error`).
-- supabase/functions/gmail-oauth/index.ts: o `exchange-code` já reconecta pela mesma linha (`upsert` com `onConflict: "email_address"`, UNIQUE(email_address)); agora também grava `last_error: null`, para a mensagem de reconexão sumir ao reconectar.
-- Testes: `supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts` (novo) e `supabase/functions/gmail-oauth/index.test.ts` (ganhou a prova de reconexão).
-
-## Escopo do diff (números reais)
-- 7 arquivos no commit: 4 de código (`gmail-helpers.ts`, `gmail-cron-sync/index.ts`, `gmail-sync/index.ts`, `gmail-oauth/index.ts`), 2 de teste e este `.tmp/relato.md`.
-- 2 arquivos de teste; 6 casos de teste novos: 5 em `gmail-reauth-required.test.ts` e 1 em `gmail-oauth/index.test.ts` (reconexão pela mesma linha).
-
-## Sensibilidade
-- (a) O diff toca o caminho de token/OAuth, mas não mexe em `rateLimit`, `requireRole`, `verifyHmac` nem `DELETE`; usa `service_role` só onde já era usado (funções de sincronização).
-- (b) Nenhuma proteção afrouxada: nenhuma policy, nenhuma RPC, nenhum grant alterado. Nada de migração.
-- (c) Nenhuma referência ao banco/endpoint de produção (as mudanças rodam no banco local da tarefa).
-- (d) Para quem chama: a resposta 500 do `gmail-sync` e o campo `error` do lote do `gmail-cron-sync` agora vêm sanitizados (sem e-mail/token) — texto, não contrato de formato.
-
-## Diagnóstico da conta em error (item 3)
-A causa mais provável é o refresh token expirado/revogado (`invalid_grant`): com o código anterior isso chegava ao banco como "Failed to refresh token", indistinguível de falha de rede. Não consulto produção (regra R1), então não afirmo o estado da conta; o que entrego é a classificação, que faz o próximo ciclo do cron gravar `reauth_required` com o motivo do Google no `last_error`. A conta segue `is_active=true`, então o cron continua a tentar — reconectar (`gmail-oauth` `exchange-code`) volta a linha a `pending` e limpa o erro.
-
+- supabase/functions/_shared/gmail-helpers.ts: `recordGmailAccountFailure` perdeu o parâmetro `attempts` e passou a derivar a contagem real — lê `sync_status, last_error` da conta; se já estava em `error`, incrementa o prefixo de tentativas do `last_error` anterior via `parseGmailFailureAttempts` (novo, puro, exportado). Leitura falhou → registra como 1ª tentativa e segue para o update (que continua lançando erro se falhar). Novo `recordGmailAccountSuccess` grava `synced` + `last_error: null`; `runGmailFullSync` passou a usá-lo no ramo de sucesso com os mesmos valores de antes (ramo de sucesso sem mudança de comportamento).
+- supabase/functions/gmail-sync/index.ts e supabase/functions/gmail-cron-sync/index.ts: os dois `catch` que passavam `1` fixo agora chamam `recordGmailAccountFailure(supabase, account.id, err)`.
+- supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts: fake com estado por conta (o SELECT enxerga o que o UPDATE gravou); testes de incremento 1→2→3, de reset após sucesso (via `recordGmailAccountSuccess` real), de fallback com leitura quebrada, de `parseGmailFailureAttempts` e do caminho `reauth_required` sem vazar segredo. Testes de `isGmailReauthError`, `sanitizeGmailErrorMessage` e `ensureValidToken` mantidos.
 ## Prova
-- vermelho antes: `deno test --no-check .../gmail-reauth-required.test.ts` com `gmail-helpers.ts` original (git stash) → `FAILED | 0 passed | 1 failed`
-- verde depois: `deno test --config scripts/ci/deno.json --allow-env --allow-net --allow-read .../gmail-reauth-required.test.ts .../gmail-oauth/index.test.ts .../gmail-helpers.test.ts` → `ok | 34 passed | 0 failed`
-
-## Ramo de erro (antes → depois)
-- `gmail-cron-sync` catch: antes `update({sync_status:'error', last_error: msg})` com a mensagem crua (o corpo do Google podia trazer o endereço) e `return {id, error: msg}`; depois classifica + sanitiza, e o lote continua com `Promise.allSettled` (uma conta não derruba as outras). Se o próprio UPDATE de estado falhar, loga e segue — antes o erro do update também não era propagado.
-- `gmail-sync` sync-inbox catch: antes `error` + mensagem crua e `throw`; depois helper, `throw` mantido (a resposta 500 vem do catch externo, agora com `sanitizeGmailErrorMessage`).
-
+- vermelho antes (helper antigo em /tmp/prova-vermelha/vermelho.test.ts, mesma cadeia select/update com estado): `deno test --no-check --cached-only --allow-env --allow-read vermelho.test.ts` → `error: AssertionError: Values are not equal. Actual false / Expected true` em `vermelho.test.ts:38` (a 2ª falha consecutiva gravou "1 tentativa(s)" de novo, não "2").
+- verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts` → `ok | 8 passed | 0 failed`.
+- regressão: `supabase/functions/_shared/__tests__/` + `supabase/functions/gmail-oauth/index.test.ts` → `ok | 625 passed | 0 failed | 2 ignored`.
+## Pontos do revisor
+- Ponto 1: resolvido — contagem real derivada da leitura do `last_error` anterior, sem migration nova; chamadores não passam mais `1` fixo. Testes que provam: `falhas transitórias consecutivas incrementam a contagem (1→2→3)`, `sucesso zera a contagem: próxima falha volta a 1`, `parseGmailFailureAttempts só aceita o prefixo de tentativas`, `leitura do estado anterior falhou: registra como 1ª tentativa e segue`.
+- Ponto 2: resolvido — a primeira linha deste relato é exatamente `Especialista: edgar`.
+- Ponto 3 (opcional): NÃO FEITO — o teste de handler (provar que o `catch` chama o helper e retorna erro sanitizado) exigiria mockar a autenticação/criação de cliente dentro dos handlers, estourando o escopo mínimo do ponto 1. Os dois `catch` existentes já chamam o helper e tratam `recordErr` sem engolir o erro original (gmail-sync relança; cron-sync retorna sanitizado) — comportamento inalterado.
 ## O que NÃO fiz e por quê
-- Não usei o literal `ok` no sucesso: o estado saudável já usado no módulo é `synced` (front e testes CAS leem esse valor). Criar um segundo estado saudável quebraria consumidores; o "ok" do cartão == `synced` de hoje.
-- Não toquei no front (`GmailIntegrationCard.tsx` / `useGmail.ts`): fora da minha área. Deixo comentário no cartão para a tela mostrar "reconectar" quando `sync_status='reauth_required'`.
-- Não regenerei `deployment-manifest.json` (é do integrador).
+- Sem migration nova (a recusa proibiu); sem `deployment-manifest.json`; sem tocar em `gmail-oauth`.
+- Os testes antigos `token revogado...` e `falha transitória... (attempts explícito)` foram substituídos pelos equivalentes na nova assinatura — o parâmetro explícito deixou de existir por exigência do ponto 1.
+- Arquivos do diff (git diff --name-only HEAD): supabase/functions/_shared/gmail-helpers.ts, supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts, supabase/functions/gmail-sync/index.ts, supabase/functions/gmail-cron-sync/index.ts, .tmp/relato.md.

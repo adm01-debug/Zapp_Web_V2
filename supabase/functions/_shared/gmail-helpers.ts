@@ -281,11 +281,15 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
   }
   const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
   if (!profile.historyId) throw new Error("Gmail profile response missing historyId");
-  const { error } = await supabase.from("gmail_accounts").update({
-    sync_status: "synced", history_id: profile.historyId,
-    last_sync_at: new Date().toISOString(), last_error: null,
-  }).eq("id", accountId);
-  if (error) throw new Error("Failed to persist Gmail sync cursor");
+  // Sucesso zera o contador de tentativas (limpa `last_error`; helper abaixo).
+  try {
+    await recordGmailAccountSuccess(supabase, accountId, {
+      history_id: profile.historyId,
+      last_sync_at: new Date().toISOString(),
+    });
+  } catch {
+    throw new Error("Failed to persist Gmail sync cursor");
+  }
   return result;
 }
 
@@ -294,8 +298,9 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
 // token revogado/expirado exigem RECONECTAR a conta — não é falha transitória.
 // Essas contas passam a `sync_status = 'reauth_required'` (estado explícito que
 // o front lê para dizer "reconecte"), e as demais falhas ficam em `error` com a
-// contagem de tentativas. Qualquer sincronização bem-sucedida volta a gravar
-// `synced` e limpa `last_error`.
+// contagem REAL de tentativas (lida do `last_error` anterior, sem coluna nova).
+// Qualquer sincronização bem-sucedida volta a gravar `synced` e limpa
+// `last_error`, zerando a contagem.
 export type GmailAccountFailure = "reauth_required" | "error";
 
 export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
@@ -315,17 +320,52 @@ export function sanitizeGmailErrorMessage(raw: string): string {
     .slice(0, 200);
 }
 
+const GMAIL_ATTEMPTS_PREFIX_RE = /^(\d+) tentativa\(s\) de sincronização falharam/;
+
+// Lê a contagem anterior do próprio `last_error` (sem coluna nova): devolve 0
+// quando a conta não estava em 'error' ou o prefixo não existe.
+export function parseGmailFailureAttempts(lastError: unknown): number {
+  const match = String(lastError ?? "").match(GMAIL_ATTEMPTS_PREFIX_RE);
+  const parsed = match ? Number.parseInt(match[1], 10) : Number.NaN;
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+// Sucesso zera o contador: grava `synced` e limpa `last_error`, então a
+// próxima falha volta a contar da tentativa 1.
+export async function recordGmailAccountSuccess(
+  supabase: SupabaseClient,
+  accountId: string,
+  extra: Record<string, unknown> = {},
+): Promise<void> {
+  const { error: updateError } = await supabase.from("gmail_accounts")
+    .update({ sync_status: "synced", last_error: null, ...extra })
+    .eq("id", accountId);
+  if (updateError) throw new Error("Failed to record Gmail account success state");
+}
+
 export async function recordGmailAccountFailure(
   supabase: SupabaseClient,
   accountId: string,
   error: unknown,
-  attempts: number,
 ): Promise<GmailAccountFailure> {
   const status: GmailAccountFailure = isGmailReauthError(error) ? "reauth_required" : "error";
   const detail = sanitizeGmailErrorMessage(error instanceof Error ? error.message : String(error ?? ""));
+  // Contagem real sem migration: lê o estado atual; se já estava em 'error',
+  // incrementa o prefixo de tentativas do `last_error` anterior. Leitura
+  // falhou → registra como 1ª tentativa e segue para o update (que acusa
+  // falha real de banco com o erro próprio abaixo).
+  let attempts = 1;
+  try {
+    const { data: current } = await supabase.from("gmail_accounts")
+      .select("sync_status, last_error").eq("id", accountId).maybeSingle();
+    const row = current as { sync_status?: unknown; last_error?: unknown } | null;
+    if (row?.sync_status === "error") attempts = parseGmailFailureAttempts(row.last_error) + 1;
+  } catch {
+    attempts = 1;
+  }
   const base = status === "reauth_required"
     ? GMAIL_REAUTH_MESSAGE
-    : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
+    : `${attempts} tentativa(s) de sincronização falharam`;
   const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
   const { error: updateError } = await supabase.from("gmail_accounts")
     .update({ sync_status: status, last_error: lastError })
