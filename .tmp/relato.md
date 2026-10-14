@@ -1,21 +1,27 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013010929_contacts_stats.sql`: cria `public.contacts_stats(p_include_legacy boolean DEFAULT false) RETURNS jsonb`, SECURITY DEFINER com `SET search_path=public`. Passa a calcular NO SERVIDOR os agregados que hoje o `useContactsKpi` faz paginando a tabela `contacts` no cliente — `total`, `with_email`, `with_company`, `by_status` (por `conversation_status`), `recent_30d`/`base_30d`, `growth_30d_pct` (com piso de amostra: base < 50 → NULL), `duplicate_candidates` (mesmo telefone normalizado por `regexp_replace(phone,'\D','','g')` ou mesmo e-mail `lower(btrim(email))`) e `lgpd_pending` (NULL, porque a tabela de LGPD só existe com o LG1/t_5e2dd21d). Usa a MESMA trava de escopo de `search_contacts`: `can_edit_contact(assigned_to, queue_id, get_visible_agent_ids, get_profile_id_for_user, is_admin_or_supervisor)`, com os helper hoisted (resolvidos uma vez) e `COALESCE(p_include_legacy,false)` para NULL explícito não zerar o resultado. Não muda nada existente (só a função nova): sem trigger, sem backfill, sem UPDATE, sem tocar GRANT/RLS de objeto antigo.
-- `src/integrations/supabase/types.ts`: entra `contacts_stats: { Args: { p_include_legacy?: boolean }; Returns: Json }` na posição alfabética — contrato novo, tipos junto.
-- `scripts/db-audit/contacts-stats-rpc.test.sh`: prova (ver abaixo).
-- `scripts/ci/check-test-inventory.mjs`: `scripts/db-audit/contacts-stats-rpc.test.sh` na ALLOWLIST com justificativa. Sem isso o check-test-inventory reprova a suíte nova como órfã; a promoção para um passo de `.github/workflows/db-guard.yml` é do dono do workflow.
-
-`REGISTRO PENDENTE: scripts/db-audit/contacts-stats-rpc.test.sh` — suíte nova, ainda fora do workflow (a ALLOWLIST registra isso). Arquivos fora da lista do cartão: só os dois de CI (`check-test-inventory.mjs` é exigido pelo próprio guard; a suíte em `scripts/db-audit/` é o harness descartável padrão de banco, como `contacts-legacy-visibility.test.sh`), ambos explicados aqui.
+- `supabase/migrations/20261014203630_contacts_stats_growth_fix.sql` (nova, aditiva): `CREATE OR REPLACE` de `public.contacts_stats(boolean)` corrigindo SÓ o `growth_30d_pct` para `CASE WHEN base_30d < 50 THEN NULL ELSE round(recent_30d::numeric / NULLIF(base_30d,0) * 100)::integer END`. Corpo, escopo, COMMENT, REVOKE/GRANT idênticos aos da `20261013010929`. Rollback do cabeçalho: `DROP FUNCTION` (volta ao RED, como o bloco 8 da suíte exige).
+- `scripts/db-audit/contacts-stats-rpc.test.sh`: 4 expectativas de growth atualizadas (admin 4, agente A 2, legacy admin 8, legacy agente A 6) + comentário com a conta feita à mão.
 
 ## Prova
-- vermelho antes: `bash scripts/db-audit/contacts-stats-rpc.test.sh` → `[PASS] RED: funcao ainda nao existe (= )` e `[PASS] RED: chamar a RPC inexistente falha (does not exist)` — a migration é aplicada depois do RED, no Postgres 17 descartável.
-- verde depois: `bash scripts/db-audit/contacts-stats-rpc.test.sh` → `[OK] CT-E/PB-30: contacts_stats respeita o escopo de search_contacts ... e o Rollback remove a funcao.` (44 asserções PASS, 0 FALHA). Cobre: admin (54) × agente A (52) × agente B (2) × escopo vazio (0, `by_status {}`, growth NULL, sem divisão por zero); `include_legacy=true` (admin 56, agente A 54) e soft-deleted c7 fora; piso de amostra (base 1 → growth NULL); `anon`/`PUBLIC` sem EXECUTE e `anon` barrado com `permission denied`; `service_role` lendo tudo; desempenho `[MEDIDO] ... contacts_stats em 3.106 contatos: 120 ms`; e o Rollback do cabeçalho executado volta ao RED.
-- aplicação no banco LOCAL da tarefa: `hermes-db-migrar supabase/migrations/20261013010929_contacts_stats.sql` → `APLICADA no banco LOCAL 'v2-2610122149f5da' (produção não foi tocada).`
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations todos OK).
+- vermelho antes (correção fora do caminho; a suíte aplica a `20261013010929`): `bash scripts/db-audit/contacts-stats-rpc.test.sh` → `[FALHA] 1. admin growth_30d_pct: esperado '4', obtido '-96'`
+- verde depois (suíte aplica a `20261014203630`): mesma suíte, todos os blocos PASS (escopo admin/agentes, piso, ACL anon/PUBLIC, service_role, desempenho `[MEDIDO] 50 ms` em 3.106 contatos, Rollback executado e função ausente depois) → `[OK] CT-E/PB-30: contacts_stats respeita o escopo de search_contacts ... e o Rollback remove a funcao.`, exit 0
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard/tipos/lint/migrations OK). A variante com conjunto nomeado não se aplica: o conjunto local não está de pé (`hermes-db-migrar` congelado nesta janela); a prova de banco é a suíte descartável acima, mesmo veículo da entrega anterior.
+
+## Pontos do revisor
+- Ponto 1: fórmula adotada `growth_30d_pct = round(recent_30d * 100.0 / base_30d)` (inteiro), piso `base_30d < 50 → NULL` mantido, `NULLIF` anti-zero. Paridade: a V3 deriva `Math.round((stats.recent_30d / base) * 100)` com `base = total - recent_30d` (`src/features/contacts/hooks/useContactStats.ts:46-52`); o `useContactsKpi` da V2 não calcula crescimento (sem match para growth/recent) — a fórmula antiga `(recent-base)/base` não espelhava nada, foi corrigida. Divergência registrada: o resumo do cartão sugeria `ROUND((new-old)*100/old,1)`; não segui porque `(new-old)/old` dá -96,2 no fixture e contraria este ponto ("nunca (recent-base)/base").
+- Ponto 2: 4 valores atualizados e conferidos à mão a partir de recent/base (admin 2/52→4; agente A 1/51→2; legacy admin 4/52→8; legacy agente A 3/51→6), suíte rodada vermelho→verde (ver Prova).
+- Ponto 3: a primeira linha deste relato é exatamente `Especialista: workersql`.
+- Ponto 4: fórmula citada no Ponto 1; `zapp-verify` citado na Prova.
+
+## Passada de efeito colateral
+- Gatilhos: a migration só faz `CREATE OR REPLACE` + COMMENT + REVOKE/GRANT; nenhum UPDATE/INSERT em tabela, nenhum trigger tocado.
+- Tudo ou nada: uma aplicação = uma transação DDL; falha não deixa rastro.
+- Permissão só a pedida: REVOKE/GRANT idênticos aos da migration original; `types.ts` inalterado (`Returns: Json` já cobre o inteiro).
+- Entrada inválida: `include_legacy` NULL, escopo vazio, `base<50` e `anon` barrado cobertos pela suíte (blocos 2–5); divisão sem zero via `NULLIF`.
 
 ## O que NÃO fiz e por quê
-- Alarme do juiz "código alterado sem teste novo neste commit: src/integrations/supabase/types.ts": não procede. `types.ts` é artefato de contrato (a RPC nova precisa aparecer nele para o hook do filho t_858c0ff2 tipar); a prova da mudança é `scripts/db-audit/contacts-stats-rpc.test.sh`, commitada junto e vermelho→verde neste mesmo cartão (suíte de banco, não vitest — por isso o juiz não a reconhece como "teste").
-- Não troquei o `useContactsKpi`/`ContactStatsCards` para chamar a RPC: é o cartão filho t_858c0ff2 (hugo), cujo card já deixei com o contrato exato da RPC (chaves jsonb, escopo, `include_legacy`) num `kanban_comment`. A RPC entrega só os indicadores que este cartão lista; as séries (12 semanas/30 dias) continuam fora deste contrato e precisam de decisão no filho.
-- Não toquei o retrato da produção (`supabase/schema-manifest.json`): gerado por ferramenta, não se edita à mão (a verificação `migrations`/`tipos` passa sem ele).
-- Não abri migration nova para correção de nome/rollback: a única versão que sobrou no repo é a `20261013010929` (a primeira tentativa, `20261013005638`, foi movida para `.tmp/` e nunca foi commitada nem aplicada em produção).
+- Não editei a migration `20261013010929` (regra: migrations só aditivas; a correção vai em arquivo novo de timestamp maior).
+- Não mudei o Rollback para "restaurar o corpo anterior": o revisor aprovou o Rollback real (DROP→RED) e o bloco 8 da suíte exige a função ausente após o rollback.
+- Não criei a migration via `hermes-db-migrar --nova`: a ferramenta está congelada nesta janela (recusa CONGELADO); o arquivo segue o mesmo padrão de cabeçalho/layout das migrations da pasta.

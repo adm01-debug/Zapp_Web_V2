@@ -108,7 +108,10 @@ assert_eq '1. admin with_company' '3' "$(psql_val "$(f "$admin" false with_compa
 assert_eq '1. admin by_status' '{"aberto": 2, "cliente": 50, "encerrado": 2}' "$(psql_val "$admin SELECT public.contacts_stats(false)->'by_status'::text")"
 assert_eq '1. admin recent_30d' '2' "$(psql_val "$(f "$admin" false recent_30d)")"
 assert_eq '1. admin base_30d' '52' "$(psql_val "$(f "$admin" false base_30d)")"
-assert_eq '1. admin growth_30d_pct' '-96' "$(psql_val "$(f "$admin" false growth_30d_pct)")"
+# crescimento = recent_30d/base_30d*100 (arredondado; piso base<50 -> NULL):
+# admin 2/52 -> 3.8 -> 4; agente A 1/51 -> 2.0 -> 2; legacy admin 4/52 -> 7.7 -> 8;
+# legacy agente A 3/51 -> 5.9 -> 6 (conferido a mao a partir de recent/base acima).
+assert_eq '1. admin growth_30d_pct' '4' "$(psql_val "$(f "$admin" false growth_30d_pct)")"
 assert_eq '1. admin duplicate_candidates (telefone c2/c3 + e-mail c1/c4)' '4' "$(psql_val "$(f "$admin" false duplicate_candidates)")"
 assert_eq '1. admin lgpd_pending NULL' 'null' "$(psql_val "$admin SELECT public.contacts_stats(false)->'lgpd_pending'::text")"
 
@@ -117,7 +120,7 @@ assert_eq '2. agente A total' '52' "$(psql_val "$(f "$ag_a" false total)")"
 assert_eq '2. agente A with_email' '2' "$(psql_val "$(f "$ag_a" false with_email)")"
 assert_eq '2. agente A with_company' '2' "$(psql_val "$(f "$ag_a" false with_company)")"
 assert_eq '2. agente A base_30d' '51' "$(psql_val "$(f "$ag_a" false base_30d)")"
-assert_eq '2. agente A growth_30d_pct' '-98' "$(psql_val "$(f "$ag_a" false growth_30d_pct)")"
+assert_eq '2. agente A growth_30d_pct' '2' "$(psql_val "$(f "$ag_a" false growth_30d_pct)")"
 assert_eq '2. agente A duplicados 0 (pares fora do escopo)' '0' "$(psql_val "$(f "$ag_a" false duplicate_candidates)")"
 assert_eq '2. agente B total (c3,c4)' '2' "$(psql_val "$(f "$ag_b" false total)")"
 assert_eq '2. agente B with_company (c4)' '1' "$(psql_val "$(f "$ag_b" false with_company)")"
@@ -130,10 +133,10 @@ assert_eq '2. escopo vazio: growth NULL' 'null' "$(psql_val "$ag_c SELECT public
 # ── 3) include_legacy ───────────────────────────────────────────────────────
 assert_eq '3. admin include_legacy total (c1..c6 + 50)' '56' "$(psql_val "$(f "$admin" true total)")"
 assert_eq '3. admin include_legacy recent_30d' '4' "$(psql_val "$(f "$admin" true recent_30d)")"
-assert_eq '3. admin include_legacy growth_30d_pct' '-92' "$(psql_val "$(f "$admin" true growth_30d_pct)")"
+assert_eq '3. admin include_legacy growth_30d_pct' '8' "$(psql_val "$(f "$admin" true growth_30d_pct)")"
 assert_eq '3. admin include_legacy duplicados (c5/c6 normalizado igual)' '6' "$(psql_val "$(f "$admin" true duplicate_candidates)")"
 assert_eq '3. agente A include_legacy total' '54' "$(psql_val "$(f "$ag_a" true total)")"
-assert_eq '3. agente A include_legacy growth_30d_pct' '-94' "$(psql_val "$(f "$ag_a" true growth_30d_pct)")"
+assert_eq '3. agente A include_legacy growth_30d_pct' '6' "$(psql_val "$(f "$ag_a" true growth_30d_pct)")"
 assert_eq '3. agente A include_legacy duplicados (c5/c6 no escopo)' '2' "$(psql_val "$(f "$ag_a" true duplicate_candidates)")"
 assert_eq '3. include_legacy mantem o soft-deleted c7 fora (contagem manual)' '56' "$(psql_val "SELECT count(*)::text FROM public.contacts c WHERE c.deleted_at IS NULL")"
 assert_eq '3. include_legacy=NULL cai no padrao (COALESCE), nao zera' '54' "$(psql_val "$admin SELECT public.contacts_stats(NULL)->>'total'")"
