@@ -1,4 +1,4 @@
-Especialista: Edgar (area-edge-api)
+Especialista: edgar
 
 ## Sensibilidade
 - O diff toca INSERT em `audit_logs` por client service-role e o gate `requireAdminOnly` do
@@ -64,7 +64,12 @@ Especialista: Edgar (area-edge-api)
   (recovered) — nenhuma duplicada.
 - fail-open: com o insert de `audit_logs` devolvendo erro, disconnect ainda responde 200.
 
+## Pontos da recusa (refazer 1 — só o relato; código inalterado)
+- Ponto 1: primeira linha de `.tmp/relato.md` agora é exatamente `Especialista: edgar` (antes `Especialista: Edgar (area-edge-api)`).
+- Ponto 2: registrado em "O que NÃO fiz" que a auditoria da troca de padrão ficou para depois porque a RPC `set_default_whatsapp_connection` ainda está em refazer (#174 `t_ae0a55a6`) e não foi recriada.
+
 ## O que NÃO fiz e por quê
+- Não auditei a troca de padrão (conexão default): a RPC `set_default_whatsapp_connection` ainda está em refazer (#174 `t_ae0a55a6`); pelo item 3 do cartão, NÃO a recriei e a auditoria dela fica para depois.
 - Não gravei trilha nos caminhos de ERRO do connect/disconnect/create (token ausente, 403 do provedor):
   auditar a ação bem-sucedida espelha o CX0; o cartão pede a trilha da ação que aconteceu.
 - Não mexi nas outras ações de conexão (status/instance-info/list-instances): fora do que o cartão lista.
