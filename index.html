@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ZAPP WEB</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Instalável (PWA): sem estas tags o beforeinstallprompt nunca dispara e a
+         página /install não conseguia oferecer o app. O manifesto e o ícone já
+         existiam em public/ sem ninguém apontar para eles. O tema acompanha o
+         theme_color do manifesto (mesmo valor que o Chrome usa na barra).
+         Service Worker/Push seguem DESLIGADOS por decisão
+         (src/config/service_worker.ts) — instalar NÃO depende deles. -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#25d366" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ZAPP Web" />
     <!-- Preconnect to Google Fonts for faster font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
