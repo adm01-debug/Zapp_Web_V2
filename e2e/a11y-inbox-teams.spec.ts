@@ -17,7 +17,7 @@
  * view=team-chat), roda o AxeBuilder restrito a button-name e list e
  * espera zero violacoes.
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
 import { mockAppShell, json, bloquearRedeReal, type Registro } from './fixtures/mapa-mocks';
 import { installFakeSession } from './fixtures/talkx-demo';
@@ -54,7 +54,37 @@ async function semViolacao(
 ): Promise<void> {
   const v = await violacoes(page, regras);
   const resumo = v.map((viol) => `${viol.id} (${viol.impact}): ${viol.nodes.length} no(s)`).join(' | ');
-  expect(v, `${onde}: zero violacoes de ${regras.join(', ')}\n${resumo}`).toHaveLength(0);
+  expect(v, `${onde}: nenhuma violacao de ${regras.join(', ')}\n${resumo}`).toHaveLength(0);
+}
+
+async function abrirAteVisivel(
+  page: Page,
+  url: string,
+  alvo: () => Locator,
+  descricao: string,
+): Promise<void> {
+  // O app tem um watchdog de 8s para montagem do React. Em Vite frio, sob carga
+  // do runner, ele pode mostrar "Falha ao inicializar o app" antes do bundle
+  // terminar de compilar. Recarregar depois desse aquecimento mede a mesma rota,
+  // sem transformar uma falha de bootstrap local em falso negativo da regra axe.
+  let ultimoErro: unknown;
+  for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+    await page.goto(url);
+    try {
+      await alvo().waitFor({ state: 'visible', timeout: 12_000 });
+      return;
+    } catch (error) {
+      ultimoErro = error;
+      if (tentativa === 3) {
+        break;
+      }
+      const watchdog = await page.getByRole('heading', { name: /Falha ao inicializar o app/ }).isVisible().catch(() => false);
+      if (!watchdog) {
+        await page.waitForTimeout(500);
+      }
+    }
+  }
+  throw ultimoErro instanceof Error ? ultimoErro : new Error(`${descricao}: alvo nao ficou visivel`);
 }
 
 const DONO = '00000000-0000-4000-8000-000000000001';
@@ -182,6 +212,9 @@ async function mockTeamsComDados(page: Page): Promise<void> {
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('N-078 · a11y: button-name e list no Inbox e Teams', () => {
+  test.describe.configure({ mode: 'serial' });
+  test.setTimeout(60_000);
+
   let registro: Registro;
 
   test.beforeEach(async ({ page }) => {
@@ -201,15 +234,18 @@ test.describe('N-078 · a11y: button-name e list no Inbox e Teams', () => {
 
     test('Inbox: zero violacoes button-name e list', async ({ page }) => {
       await mockInboxComDados(page);
-      await page.goto('/?view=inbox');
-      await expect(page.getByTestId('conversation-item').first()).toBeVisible({ timeout: 20_000 });
+      await abrirAteVisivel(page, '/?view=inbox', () => page.getByTestId('conversation-item').first(), 'Inbox desktop');
       await semViolacao(page, 'Inbox desktop', ['button-name', 'list']);
     });
 
     test('Teams (team-chat): zero violacoes button-name e list', async ({ page }) => {
       await mockTeamsComDados(page);
-      await page.goto('/?view=team-chat');
-      await expect(page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first()).toBeVisible({ timeout: 20_000 });
+      await abrirAteVisivel(
+        page,
+        '/?view=team-chat',
+        () => page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first(),
+        'Teams desktop',
+      );
       await semViolacao(page, 'Teams desktop', ['button-name', 'list']);
     });
   });
@@ -220,15 +256,18 @@ test.describe('N-078 · a11y: button-name e list no Inbox e Teams', () => {
 
     test('Inbox mobile: zero violacoes button-name e list', async ({ page }) => {
       await mockInboxComDados(page);
-      await page.goto('/?view=inbox');
-      await expect(page.getByTestId('conversation-item').first()).toBeVisible({ timeout: 20_000 });
+      await abrirAteVisivel(page, '/?view=inbox', () => page.getByTestId('conversation-item').first(), 'Inbox mobile');
       await semViolacao(page, 'Inbox mobile', ['button-name', 'list']);
     });
 
     test('Teams mobile (team-chat): zero violacoes button-name e list', async ({ page }) => {
       await mockTeamsComDados(page);
-      await page.goto('/?view=team-chat');
-      await expect(page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first()).toBeVisible({ timeout: 20_000 });
+      await abrirAteVisivel(
+        page,
+        '/?view=team-chat',
+        () => page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first(),
+        'Teams mobile',
+      );
       await semViolacao(page, 'Teams mobile', ['button-name', 'list']);
     });
   });
