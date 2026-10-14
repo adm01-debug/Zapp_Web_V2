@@ -27,6 +27,8 @@ Especialista: hugo
   (linha 327); resumo `Test Files 1 failed (1)` / `Tests 2 failed | 11 skipped (13)`.
 - verde depois (mesmo comando, hook corrigido):
   `Test Files 1 passed (1)` / `Tests 13 passed (13)` (11 existentes + 2 novos).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (11s)` (db_guard, tipos,
+  lint e migrations OK; sem banco — a mudança é só de hook, sem migration).
 - Arquivos do diff (`git diff --name-only caaac3797..HEAD`, copiado do comando):
   src/hooks/system/__tests__/useSupabaseConnectivity.test.ts
   src/hooks/system/useSupabaseConnectivity.ts
