@@ -100,6 +100,16 @@ EXIT=0
 
 commit: 767a80dd01
 
+## Sobre o alarme "arquivo fora do escopo: src/integrations/supabase/types.ts"
+Foi indispensável e é um par da MESMA mudança: `types.ts` é a tipagem do cliente
+Supabase que descreve os argumentos de `update_own_profile`. Se eu tirasse `p_email`
+do RPC e do hook mas deixasse o tipo, o TypeScript continuaria oferecendo `p_email`
+como argumento válido — exatamente o caminho que este cartão fecha — e o erro só
+apareceria em produção (42883). A edição é de uma linha (remove `p_email?: string`
+dos Args) e é o que uma regeração `gen-types` produziria depois do merge; não mexi
+em `schema-manifest.json`/`schema-catalog.json` de propósito (gerados do banco
+oficial pelo fluxo `types-sync`). Rodando o MESMO comando de fechar de novo.
+
 ## Sobre o alarme "código alterado sem teste"
 O teste NASCEU neste cartão e está no commit 767a80dd01:
 `supabase/tests/update_own_profile_sem_email.sql` (banco descartável, migrations
