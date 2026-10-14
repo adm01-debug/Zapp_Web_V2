@@ -14,6 +14,7 @@ Especialista: iris
 - verde depois: `npx vitest run src/services/__tests__/navigation.service.test.ts src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx src/components/admin/__tests__/SupervisaoView.test.tsx src/pages/__tests__/ViewRouter.supervisao-gate.test.tsx` → `Test Files  4 passed (4); Tests  32 passed (32)`.
 - regressão da área vizinha: `npx vitest run src/components/admin/__tests__ src/components/layout src/__tests__/pwa-manifest-shortcuts.test.ts src/hooks/system/__tests__/useCurrentModule.test.ts` → `Test Files  28 passed (28); Tests  127 passed (127)`.
 - Treinamento (conferido antes de mexer): `grep -rn "TrainingMode" src` só aparecia no `AdminView` (e no teste dele) — ou seja, o atendente **não** tinha aba própria de Treinamento hoje (a única porta era `AdminView`, atrás de ADMIN_ONLY), logo não havia acesso de atendente a preservar; agora ele é alcançável por supervisor e admin pela visão `supervisao`.
+- verificação do cartão: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos` (134s), `OK lint`, `OK migrations`; `VERIFY: VERDE SEM BANCO (140s)` (o banco não é tocado neste cartão — nenhuma migration).
 - commit: `feat(nav): visao supervisao para as ferramentas do supervisor` (9 arquivos, 376 inserções / 37 remoções); lint ratchet do pre-commit: `baseline=0, atual=0, novas=0`.
 
 ## O que NÃO fiz e por quê
