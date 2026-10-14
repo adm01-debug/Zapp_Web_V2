@@ -262,3 +262,133 @@ Deno.test('TRA-002: o fallback do env vale só para a instância padrão — e o
     assertEquals(b.chamadas[0]?.apikey, 'token-da-global');
   });
 });
+
+// ---------------------------------------------------------------------------
+// PARIDADE-V3 — o recibo do provedor pode vir ANINHADO (ex.: sendWhatsAppAudio
+// devolve `{ message: { message: { key: { id } } } }`). Antes, o extrator só
+// lia `key.id`/`data.Info.ID`: o id aninhado sumia, `externalId` ficava nulo e
+// o handler devolvia 502 com failClaim + reconciliação MESMO com o WhatsApp já
+// tendo entregue. Este teste chama o HANDLER REAL (nada de seam interno) com um
+// PostgREST e uma Evolution sintéticos: prova o 200 com o id aninhado e, como
+// contraste, que a resposta SEM id nenhum continua 502. É o contraste que
+// garante que o teste exercita mesmo o ramo do recibo.
+// ---------------------------------------------------------------------------
+
+const USER_ID = '0f1e2d3c-4b5a-4978-8899-aabbccddeeff';
+const PROFILE_ID = '1a2b3c4d-5e6f-4071-8899-aabbccddee01';
+const MESSAGE_ID = '2b3c4d5e-6f70-4182-899a-bbccddeeff02';
+
+const CLAIM = {
+  message_id: MESSAGE_ID,
+  contact_id: '3c4d5e6f-7081-4293-8aab-ccddeeff0303',
+  agent_id: PROFILE_ID,
+  content: 'oi',
+  message_type: 'text',
+  media_url: null,
+  caption: null,
+  media_filename: null,
+  media_mimetype: null,
+  reply_external_id: null,
+  whatsapp_instance_name: 'main',
+  contact_phone: '5511999999999',
+  claim_token: 'tok-de-teste',
+};
+
+/** PostgREST + GoTrue + Evolution sintéticos: só o handler de produção responde. */
+function fakeStack(providerBody: unknown) {
+  const rpcs: string[] = [];
+  const server = Deno.serve({ hostname: '127.0.0.1', port: 0, onListen() {} }, async (req) => {
+    const url = new URL(req.url);
+    const json = (body: unknown) => new Response(JSON.stringify(body), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+    if (url.pathname === '/auth/v1/user') return json({ id: USER_ID });
+    if (url.pathname.startsWith('/rest/v1/profiles')) return json({ id: PROFILE_ID, is_active: true });
+    if (url.pathname.startsWith('/rest/v1/rpc/')) {
+      const fn = url.pathname.slice('/rest/v1/rpc/'.length);
+      rpcs.push(fn);
+      switch (fn) {
+        case 'resolve_network_policy':
+          return json([{ allowed: true, rate_limit_max_requests: 100, rate_limit_window_seconds: 60 }]);
+        case 'consume_rate_limit': return json([{ allowed: true, remaining: 50 }]);
+        case 'get_instance_token': return json('token-de-teste');
+        case 'claim_outbound_message': return json([CLAIM]);
+        case 'complete_outbound_message': return json({ id: MESSAGE_ID, status: 'sent' });
+        case 'fail_outbound_message': return json({ id: MESSAGE_ID, status: 'failed' });
+        default: return json({});
+      }
+    }
+    if (url.pathname.startsWith('/message/')) return json(providerBody);
+    return new Response('not found', { status: 404 });
+  });
+  return { server, rpcs };
+}
+
+async function comStack(
+  providerBody: unknown,
+  ip: string,
+  fn: (base: string, rpcs: string[]) => Promise<void>,
+): Promise<void> {
+  const { server, rpcs } = fakeStack(providerBody);
+  const base = `http://127.0.0.1:${(server.addr as Deno.NetAddr).port}`;
+  // O limiter de rede guarda o client service-role em cache NO MÓDULO: sem
+  // descartá-lo, o 2º teste herdaria o client apontando para o servidor já
+  // derrubado do 1º e a política de rede viraria 503 (indecidível).
+  const { resetRateLimitServiceClient, resetDegraded } = await import('../_shared/validation.ts');
+  resetRateLimitServiceClient();
+  resetDegraded();
+  const anteriores = new Map<string, string | undefined>();
+  const env: Record<string, string> = {
+    SUPABASE_URL: base,
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-de-teste',
+    SUPABASE_ANON_KEY: 'anon-de-teste',
+    EVOLUTION_API_URL: base,
+    EVOLUTION_API_KEY: 'admin-key-de-teste',
+    EVOLUTION_API_FLAVOR: 'v2',
+  };
+  for (const [k, v] of Object.entries(env)) { anteriores.set(k, Deno.env.get(k)); Deno.env.set(k, v); }
+  const semTokenAnterior = Deno.env.get('EVOLUTION_INSTANCE_TOKEN');
+  Deno.env.delete('EVOLUTION_INSTANCE_TOKEN');
+  resetInstanceTokenCache();
+  try {
+    await fn(base, rpcs);
+  } finally {
+    await server.shutdown();
+    for (const [k, v] of anteriores) { if (v === undefined) Deno.env.delete(k); else Deno.env.set(k, v); }
+    if (semTokenAnterior !== undefined) Deno.env.set('EVOLUTION_INSTANCE_TOKEN', semTokenAnterior);
+    resetInstanceTokenCache();
+  }
+}
+
+function pedidoEntrega(ip: string): Request {
+  return new Request('https://local.test/functions/v1/message-delivery', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: 'Bearer token-de-teste',
+      'x-forwarded-for': ip,
+    },
+    body: JSON.stringify({ messageId: MESSAGE_ID }),
+  });
+}
+
+Deno.test('recibo aninhado do provedor NÃO vira 502: o id é extraído e a entrega conclui (200)', async () => {
+  await comStack({ message: { message: { key: { id: 'wamid.aninhado' } } } }, '10.7.1.1', async (_base, rpcs) => {
+    const resposta = await handleMessageDeliveryRequest(pedidoEntrega('10.7.1.1'));
+    const corpo = await resposta.json();
+    assertEquals(resposta.status, 200, `handler deveria concluir a entrega, obtido ${resposta.status} ${JSON.stringify(corpo)}`);
+    assertEquals(corpo.externalId, 'wamid.aninhado');
+    assertEquals(corpo.status, 'sent');
+    assertEquals(corpo.idempotent, false);
+    assertEquals(rpcs.includes('complete_outbound_message'), true, 'o recibo tem de ser persistido');
+    assertEquals(rpcs.includes('fail_outbound_message'), false, 'nenhuma falha pode ser registrada');
+  });
+});
+
+Deno.test('resposta do provedor SEM id nenhum continua 502 (o contraste exercita o ramo do recibo)', async () => {
+  await comStack({ message: 'success', data: { algo: 'sem-id' } }, '10.7.1.2', async (_base, rpcs) => {
+    const resposta = await handleMessageDeliveryRequest(pedidoEntrega('10.7.1.2'));
+    assertEquals(resposta.status, 502);
+    assertEquals(rpcs.includes('fail_outbound_message'), true, 'sem id a linha tem de falhar');
+  });
+});
