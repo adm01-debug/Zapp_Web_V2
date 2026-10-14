@@ -59,8 +59,19 @@ export function ReauthDialog({
     onCancel();
   };
 
+  // Esc e clique fora fecham pelo `onOpenChange` do Radix, que não passava pelo
+  // `handleCancel`: o rascunho de senha/erro ficava no state e voltava preenchido
+  // ao reabrir. Limpar aqui cobre todo caminho de fechamento.
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setPassword('');
+      setError('');
+    }
+    onOpenChange(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent aria-describedby={undefined} className="sm:max-w-md">
         <DialogHeader>
           <motion.div
@@ -97,10 +108,13 @@ export function ReauthDialog({
                 }}
                 className="pl-10 pr-10"
                 disabled={isLoading}
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -108,6 +122,7 @@ export function ReauthDialog({
             </div>
             {error && (
               <motion.p
+                role="alert"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-sm text-destructive"
