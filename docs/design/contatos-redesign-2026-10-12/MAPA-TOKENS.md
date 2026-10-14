@@ -2,18 +2,19 @@
 
 Referência: `design-contatos.css` (dark). Regra: **nenhuma cor literal em componente**; tudo por token.
 Os tokens novos vivem em `src/styles/tokens.css`, nos blocos `:root` (claro) e `.dark` (escuro), com
-prefixo `--contacts-*`. Cores são **trincas HSL sem `hsl()`** — o componente escreve `hsl(var(--contacts-*))`.
+prefixo `--contacts-*`. As superfícies são **apelidos (`var()`) das bases** — o componente escreve `hsl(var(--contacts-*))`
+e o `var()` interno resolve para a trinca da base; recolorir a base propaga sozinho, sem deriva.
 Todos derivam de tokens que já existem; nenhuma matiz nova foi criada.
 
 ## Superfícies, linhas e raios (tokens `--contacts-*` declarados no RD-002)
 
-| Papel no design | Valor do design (dark) | Token | Claro (`:root`) | Escuro (`.dark`) | Vem de |
-|---|---|---|---|---|---|
-| Fundo da página | `#0d0d0f` | `--contacts-page` | `221 20% 97%` | `240 6% 6%` | `--background` |
-| Painel / card | `#19191b`, `#18181b` | `--contacts-panel` | `0 0% 100%` | `240 5% 10%` | `--card` |
-| Superfície elevada | `#252527`, `#202023` | `--contacts-raised` | `0 0% 100%` | `240 5% 13%` | `--card-elevated` |
-| Linha / borda | `#2b2c30`, `#343439`, `#3a3b42` | `--contacts-line` | `221 15% 90%` | `240 4% 18%` | `--border` |
-| Linha suave | `#242427` | `--contacts-line-soft` | `221 15% 93%` | `240 5% 14%` | `--input` |
+| Papel no design | Valor do design (dark) | Token | Claro (`:root`) e Escuro (`.dark`) — mesmo valor nos dois | Vem de |
+|---|---|---|---|---|
+| Fundo da página | `#0d0d0f` | `--contacts-page` | `var(--background)` | `--background` |
+| Painel / card | `#19191b`, `#18181b` | `--contacts-panel` | `var(--card)` | `--card` |
+| Superfície elevada | `#252527`, `#202023` | `--contacts-raised` | `var(--card-elevated)` | `--card-elevated` |
+| Linha / borda | `#2b2c30`, `#343439`, `#3a3b42` | `--contacts-line` | `var(--border)` | `--border` |
+| Linha suave | `#242427` | `--contacts-line-soft` | `var(--input)` | `--input` |
 
 `--contacts-card-gradient` — gradiente do card (`148deg #1d1d20 → #18181b → #151517`):
 `linear-gradient(148deg, hsl(var(--contacts-raised)) 0%, hsl(var(--contacts-panel)) 65%, hsl(var(--contacts-page)) 100%)`.
