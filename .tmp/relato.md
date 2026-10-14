@@ -40,6 +40,11 @@ FAIXA DO PAI: commits 67ffa98586, be958f52af, 59bb4f8aa4, e5f6219be7 do cartão 
 
 ## Prova
 
+- verificação rápida do repositório: `zapp-verify . --rapido`
+  → `OK db_guard 0s` ; `OK tipos 213s` ; `OK lint 11s` ; `OK migrations 1s`
+  → `VERIFY: VERDE SEM BANCO (225s)`
+  (a 1ª tentativa saiu VERMELHA em "tipos" porque o `tsc` foi morto por OOM — exit 137, `load average` ~42,
+  swap cheio; o `jev-juiz falha` classificou como environment e a repetição saiu verde.)
 - vermelho antes (tela antiga, `06f42f143`, sem a minha mudança):
   `npx vitest run src/components/admin/__tests__/CrisisRoom.metricas.test.tsx`
   → `Test Files  1 failed (1)` ; `Tests  6 failed | 1 passed (7)`
