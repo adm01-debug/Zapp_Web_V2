@@ -55,6 +55,7 @@ vi.mock('../../pages/admin/RateLimitDashboard', () => ({
 }));
 vi.mock('../../pages/Index', () => ({ default: () => <div data-testid="index" /> }));
 vi.mock('../../pages/NotFound', () => ({ default: () => <div data-testid="not-found" /> }));
+vi.mock('../../pages/ChatPopup', () => ({ default: () => <div data-testid="chat-popup-view" /> }));
 
 import { AppRoutes } from '../AppRoutes';
 import { NavigationService } from '@/services/navigation.service';
@@ -143,6 +144,26 @@ describe('AppRoutes — coerencia rota x menu (staff)', () => {
     renderAllowed('/install');
 
     expect(await screen.findByTestId('install-view')).toBeInTheDocument();
+  });
+
+  it('getRouteRoles espelha os papeis do menu (sla, filas, admin)', () => {
+    expect(NavigationService.getRouteRoles('sla')).toEqual(['admin', 'supervisor']);
+    expect(NavigationService.getRouteRoles('queues')).toEqual(['admin', 'supervisor']);
+    expect(NavigationService.getRouteRoles('admin')).toEqual(['admin']);
+  });
+
+  it('item do menu sem roles vira rota so-autenticada (getRouteRoles -> undefined)', () => {
+    // 'settings' existe no menu e nao exige papel; id desconhecido tambem
+    // devolve undefined — nunca uma lista vazia que travaria todo mundo.
+    expect(NavigationService.getRouteRoles('settings')).toBeUndefined();
+    expect(NavigationService.getRouteRoles('view-que-nao-existe')).toBeUndefined();
+  });
+
+  it('agente autenticado abre /chat-popup/:id (rota so-autenticada, sem papel do menu)', async () => {
+    state.roles = ['agent'];
+    renderAllowed('/chat-popup/123');
+
+    expect(await screen.findByTestId('chat-popup-view')).toBeInTheDocument();
   });
 
   it('o menu e a fonte das listas usadas pelas rotas', () => {

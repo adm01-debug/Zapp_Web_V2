@@ -5,7 +5,7 @@ import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { Sparkles } from "lucide-react";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { PageTransitionProvider } from "@/components/transitions";
-import { NavigationService, type NavItem } from "@/services/navigation.service";
+import { NavigationService } from "@/services/navigation.service";
 
 // Route components
 const Index = lazyWithRetry(() => import("../pages/Index"));
@@ -43,28 +43,6 @@ function RouteLoadingFallback() {
   );
 }
 
-/** Papeis que o ProtectedRoute sabe comparar (o mesmo union dele). */
-type RouteRole = 'admin' | 'supervisor' | 'agent';
-
-/**
- * Papeis exigidos pela entrada de MENU equivalente (ex.: /sla -> id 'sla').
- * A lista continua em NavigationService: menu e rota nao podem divergir. Id
- * desconhecido devolve undefined (rota sem papel proprio, nunca autoriza por
- * engano uma lista vazia).
- */
-function navRolesForView(viewId: string): RouteRole[] | undefined {
-  const items: NavItem[] = [
-    ...NavigationService.getPrimaryNav(),
-    ...NavigationService.getGroups().flatMap((group) => group.items),
-    ...NavigationService.getAdvancedNav(),
-  ];
-  // 'special_agent' (AppRole) nao e comparavel pelo ProtectedRoute: fora da
-  // lista a rota fica mais restritiva, nunca mais permissiva.
-  return items
-    .find((item) => item.id === viewId)
-    ?.roles?.filter((role): role is RouteRole => role !== 'special_agent');
-}
-
 export function AppRoutes() {
   return (
     <ErrorBoundary fallback={<div className="p-4 text-center">Erro ao carregar roteamento</div>}>
@@ -81,7 +59,7 @@ export function AppRoutes() {
           <Route path="/auth/callback" element={<SSOCallback />} />
           <Route path="/2fa" element={<TwoFactorAuth />} />
           {/* Rota publica: instala a PWA antes de existir sessao. */}
-          <Route {...{ path: '/install' }} element={<Install />} />
+          <Route path="/install" element={<Install />} />
           <Route
             path="/chat-popup/:contactId"
             element={
@@ -93,7 +71,7 @@ export function AppRoutes() {
           <Route
             path="/queue/:id"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('queues')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('queues')}>
                 <QueueDetails />
               </ProtectedRoute>
             }
@@ -101,7 +79,7 @@ export function AppRoutes() {
           <Route
             path="/queues/comparison"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('queues')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('queues')}>
                 <QueuesComparison />
               </ProtectedRoute>
             }
@@ -109,7 +87,7 @@ export function AppRoutes() {
           <Route
             path="/sla"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('sla')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('sla')}>
                 <SLADashboard />
               </ProtectedRoute>
             }
@@ -117,7 +95,7 @@ export function AppRoutes() {
           <Route
             path="/sla/history"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('sla')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('sla')}>
                 <SLAHistory />
               </ProtectedRoute>
             }
@@ -125,7 +103,7 @@ export function AppRoutes() {
           <Route
             path="/admin/roles"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('admin')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('admin')}>
                 <RolesPage />
               </ProtectedRoute>
             }
@@ -133,7 +111,7 @@ export function AppRoutes() {
           <Route
             path="/admin/rate-limit"
             element={
-              <ProtectedRoute requiredRoles={navRolesForView('admin')}>
+              <ProtectedRoute requiredRoles={NavigationService.getRouteRoles('admin')}>
                 <RateLimitDashboard />
               </ProtectedRoute>
             }

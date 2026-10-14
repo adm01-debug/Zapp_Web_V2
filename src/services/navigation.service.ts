@@ -41,6 +41,13 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/**
+ * Papeis que o ProtectedRoute sabe comparar (o mesmo union dele).
+ * 'special_agent' (AppRole) nao e comparavel por ele: fora da lista a rota
+ * fica mais restritiva, nunca mais permissiva.
+ */
+export type RouteRole = 'admin' | 'supervisor' | 'agent';
+
 // Grupos visiveis apenas para staff (supervisor/admin). Usado por filterNavItems
 // para negar por padrao qualquer id nao mapeado (nunca autorizar por omissao).
 const STAFF_ROLES: AppRole[] = ['admin', 'supervisor'];
@@ -197,6 +204,23 @@ export class NavigationService {
     if (item.permission) return userPermissions.includes(item.permission);
     if (!item.roles) return true;
     return item.roles.some(role => userRoles.includes(role));
+  }
+
+  /**
+   * Papeis exigidos pela entrada de MENU equivalente (ex.: /sla -> id 'sla').
+   * Fonte unica para as guardas de rota: menu e rota nao podem divergir. Id
+   * desconhecido ou entrada sem `roles` devolve undefined (rota so-autenticada,
+   * nunca autoriza por engano uma lista vazia).
+   */
+  static getRouteRoles(viewId: string): RouteRole[] | undefined {
+    const all = [
+      ...this.getPrimaryNav(),
+      ...this.getGroups().flatMap(g => g.items),
+      ...this.getAdvancedNav(),
+    ];
+    return all
+      .find(item => item.id === viewId)
+      ?.roles?.filter((role): role is RouteRole => role !== 'special_agent');
   }
 
   static getViewLabel(viewId: string): string {
