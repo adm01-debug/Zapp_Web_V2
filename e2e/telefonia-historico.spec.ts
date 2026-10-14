@@ -230,7 +230,7 @@ test.describe('Telefonia (T86)', () => {
 
     // E a tela mostra o mesmo recorte.
     await expect(page.getByTestId('tel-history-search')).toHaveValue('ana');
-    await expect(page.getByTestId('tel-channel-tab').filter({ hasText: 'VoIP' })).toHaveAttribute('data-state', 'active');
+    await expect(page.getByTestId('tel-channel-tab').filter({ hasText: 'VoIP' })).toHaveAttribute('data-state', 'on');
     await expect(page.getByTestId('tel-history-direction')).toContainText('Recebidas');
     await expect(page.getByTestId('tel-history-result')).toContainText('Perdida');
     await expect(page.getByTestId('tel-history-scope')).toContainText('Todas as ligações');
