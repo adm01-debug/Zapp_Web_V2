@@ -1,65 +1,62 @@
 Especialista: worker (telas)
-Agente: Íris (area-front-componentes)
 
-RETOMADA (conflito com dia/2026-10-12). Trouxe o commit 6392bcfe3 da branch
-`v2/t-69817e72-2610091343d93a` com `git cherry-pick` e resolvi os 2 arquivos em
-conflito PRESERVANDO o que já tinha entrado na ponta.
+[refazer 1] TL-158 — tabela unificada de destinatários. Resolvo abaixo os 3 pontos
+da recusa, na mesma ordem e numeração.
 
-## Como resolvi o motivo da retomada (conflito)
-- `git cherry-pick 6392bcfe3` → CONFLICT em `TalkXCampaignRunning.tsx` e
-  `TalkXLiveMonitor.tsx`; os 4 arquivos novos (tabela + 3 testes) entraram sem conflito.
-- Confirmei antes que o defeito ainda existia na ponta ATUAL:
-  `git cat-file -e 96dd72dc5:src/components/talkx/tracking/TalkXRecipientsTable.tsx`
-  → `fatal: ... not in '96dd72dc5'`. Ou seja, a tabela unificada não existia na ponta:
-  cada tela ainda tinha a própria tabela e o próprio mapa de estado
-  (`STATUS_LABEL` local em `TalkXCampaignRunning.tsx`, mapa divergente do kit).
-- `TalkXCampaignRunning.tsx`: mantive TUDO o que a ponta tinha (imports de
-  `recentMinuteSeries`/`MinuteBucket`, `TalkXCampaignActionsCard`, `TalkXLimitsDialog`,
-  `talkxCampaignRules`, e `segmentName` do `TabLogs`) e apliquei só a troca da aba
-  Destinatários para `TalkXRecipientsTable` (o cherry-pick tinha a versão antiga do
-  arquivo, sem essas features). Removi só o que a troca tornou morto:
-  `type RecipRow`, os estados `statusFilter`/`search`, o `useMemo filtered` e a prop
-  `segmentName` do `TabRecipients` (a tabela unificada já tem busca/filtro internos).
-- `TalkXLiveMonitor.tsx`: mantive `onOpenHelp` + `TalkXHealthCard`/`talkxHealth` da
-  ponta e apliquei a tabela unificada em "Entregas em Tempo Real" (mantendo
-  `statusFilter`, o aviso de recorte `RECIPIENTS_CUTOFF_NOTE` e o `TalkXQueryBoundary`).
-- `TalkXCampaignRunning.segmentoPico.test.tsx` (teste da ponta da mesma tela): ajustei
-  ao componente novo — fixtures com `id` e `segments: { name }`, e os seletores reais do
-  componente (`aria-label` "Buscar destinatário", "Filtrar por estado", paginação
-  "Mostrando 1 a 1 de 1 destinatários"). Mesmas 3 asserções de comportamento
-  (coluna Segmento, busca por nome, filtro de status) — nada afrouxado.
+## Ponto 1 — Ritmo de Entrega volta a receber o filtro de status
+O que mudei (`src/components/talkx/TalkXLiveMonitor.tsx`, linha 129):
+`useTalkXMonitor(campaignId)` → `useTalkXMonitor(campaignId, statusFilter)`.
+Era a única mudança de comportamento fora do escopo: a entrega anterior tinha
+tirado o filtro do gráfico "Ritmo de Entrega" sem pedido do cartão e sem relato.
+A consulta da Saúde (linha 141) continua sem filtro, como antes do cartão.
+No comentário X148 logo abaixo (linhas 131-136), a frase "A consulta acima recebe
+o filtro de status da aba de destinatários" volta a ser verdadeira com a reversão;
+fiz um ajuste a mais no MESMO comentário: removido o parêntese "(mesmo motivo
+pelo qual o gráfico de ritmo também não deve receber esse filtro)", herdado do
+TL-157, que passaria a afirmar o contrário do código (o gráfico recebe o filtro,
+só a Saúde não). Sem esse ajuste o comentário continuaria falso — foi o que a
+recusa mandou corrigir ("fazer o comentário X148 voltar a ser verdadeiro").
+Teste que prova (`src/components/talkx/__tests__/TalkXLiveMonitor.entregas.test.tsx`
+› "o gráfico Ritmo de Entrega recebe o filtro de status da aba (X148)"): renderiza
+o monitor real, troca o filtro para "Falha" no combobox "Filtrar por estado" e
+afirma que `useTalkXMonitor` (caminho real de import da tela) foi chamado com
+`('camp-1', 'failed')` — e que a chamada da Saúde segue sem filtro.
+Vermelho sem a correção: `Tests 1 failed | 5 skipped (6)` (o filtro nunca chega
+ao hook). Verde com ela: `Test Files 1 passed (1); Tests 6 passed (6)`.
 
-## O que mudou e por quê
-- `src/components/talkx/tracking/TalkXRecipientsTable.tsx` (novo): tabela única sobre
-  colunas configuráveis; tela 11 (`live`) = Contato/Origem/Segmento/Status/Horário/Ações;
-  tela 12 (`deliveries`) = + Tiques/Mensagem; mapa de estado do kit (fim do rótulo
-  divergente entre as telas); busca (300 ms), filtro de estado e paginação.
-- `src/components/talkx/TalkXCampaignRunning.tsx`: aba Destinatários passa a usar a
-  tabela unificada (mesmo estado exibido da tela 12).
-- `src/components/talkx/TalkXLiveMonitor.tsx`: "Entregas em Tempo Real" usa a mesma tabela.
-- 3 testes novos + ajuste do `segmentoPico.test.tsx` (acima).
+## Ponto 2 — JSDoc de `segment_name` reflete a origem real
+O que mudei (`src/components/talkx/tracking/TalkXRecipientsTable.tsx`, linha 74):
+"vem da leitura paginada (X144); hoje fica "—"" → "preenchido pela tela via join
+`segments:segment_id(name)` ("—" quando ausente)". As duas telas já preenchem o
+campo por esse join (`TalkXLiveMonitor.tsx` linha 83/90 e
+`TalkXCampaignRunning.tsx` linha 288/294). Só comentário, sem comportamento;
+sem teste novo (nenhum ramo de produção muda).
 
-## Prova
-- vermelho antes: `git cat-file -e 96dd72dc5:src/components/talkx/tracking/TalkXRecipientsTable.tsx`
-  → `fatal: path 'src/components/talkx/tracking/TalkXRecipientsTable.tsx' ... not in '96dd72dc5'`
-  (o módulo não existia na ponta; os testes novos não coletavam).
-- verde depois: `npx vitest run src/components/talkx/tracking/__tests__/TalkXRecipientsTable.test.tsx src/components/talkx/__tests__/TalkXCampaignRunning.destinatarios.test.tsx src/components/talkx/__tests__/TalkXLiveMonitor.entregas.test.tsx`
-  → `Test Files 3 passed (3); Tests 19 passed (19)`.
-- `npx vitest run src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx`
-  → `Test Files 1 passed (1); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (68s)`.
-- `npx tsc --noEmit` sem saída; `npx eslint` nos 3 arquivos sem saída.
+## Ponto 3 — Relato
+Este arquivo (`.tmp/relato.md`) está listado entre os tocados (ver lista abaixo).
+A tabela NÃO usa `useTalkXRecipientsPage`: o título pedia a tabela "sobre" esse
+hook, mas ele é a leitura paginada por cursor da etapa X144, que mora em
+`src/hooks/**` — fora da área deste cartão (telas) — e ainda não existe; por isso
+a tabela é apresentacional (recebe as linhas já lidas pela consulta de cada tela,
+cabeçalho do arquivo, linhas 28-29) e o filtro/busca rodam na tela, como o próprio
+cabeçalho já documenta (linhas 20-22). A asserção "Mostrando 1 de 2" do
+`segmentoPico.test.tsx` virou "Mostrando 1 a 1 de 1 destinatários" porque o rodapé
+antigo da tela 11 contava `filtrados de lidos` (`Mostrando ${filtered.length} de
+${recips?.length}`) e o rodapé novo da tabela unificada conta o recorte filtrado
+(`TalkXPagination` sobre `filtered`), não o total lido.
 
-## Estados da tela (X047) e recorte
-- carregando/erro/vazio: o `TalkXRecipientsTable` usa `TalkXQueryBoundary` (props
-  `isLoading`/`isError`/`error`/`onRetry`); a falha de leitura continua lançando
-  (`if (error) throw error`), não vira lista vazia.
-- recorte: `limit(RECIPIENTS_READ_LIMIT)` com aviso visível quando a lista encosta no
-  teto (`note` no monitor, `Mostrando X de Y` + página no componente).
+## Arquivos tocados (`git diff --name-only 2656ebc64...HEAD`, só estes 4)
+- src/components/talkx/TalkXLiveMonitor.tsx (pontos 1: filtro do Ritmo + X148)
+- src/components/talkx/tracking/TalkXRecipientsTable.tsx (ponto 2: JSDoc)
+- src/components/talkx/__tests__/TalkXLiveMonitor.entregas.test.tsx (ponto 1: prova)
+- .tmp/relato.md (ponto 3: este relato)
 
-## O que NÃO fiz e por quê
-- `src/components/talkx/__tests__/RuleValueInput.test.tsx` falha na ponta
-  (`Unable to find role="button" and name "Novo segmento"`), mas é PRÉ-EXISTENTE: o teste
-  e os arquivos que ele importa não estão no meu diff e o teste é idêntico à base
-  (`git diff HEAD~1 -- src/components/talkx/__tests__/RuleValueInput.test.tsx` vazio).
-  Registrado em `kanban_comment`; não é da tabela de destinatários.
+## Verificações (comandos rodados agora, resultado real)
+- `npx vitest run` nos 4 arquivos do cartão (RecipientsTable, CampaignRunning
+  destinatarios, LiveMonitor entregas, CampaignRunning segmentoPico):
+  `Test Files 4 passed (4); Tests 28 passed (28)`.
+- `npx tsc --noEmit`: sem saída (exit 0).
+- `npx eslint` nos 3 arquivos de código/teste: sem saída (exit 0).
+- `zapp-verify . --rapido`: `VERIFY: VERDE SEM BANCO (15s)` (sem migration no cartão).
+- `git diff --stat`: 3 arquivos de código/teste + relato, todos deste cartão;
+  nenhum chamador de `useTalkXMonitor` além deste monitor (rg confere).

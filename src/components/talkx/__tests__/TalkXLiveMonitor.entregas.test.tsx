@@ -42,6 +42,7 @@ const h = vi.hoisted(() => ({
   status: 'sending' as string,
   recipients: [] as unknown[],
   eqs: [] as [string, unknown][],
+  monitorCalls: [] as unknown[][],
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -86,7 +87,10 @@ vi.mock('@/hooks/integrations/useTalkXEvents', () => ({
 }));
 vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({ useTalkXConnectionStatus: () => ({ status: null, label: null, loading: false }) }));
 vi.mock('@/hooks/integrations/useTalkXMonitor', () => ({
-  useTalkXMonitor: () => ({ rateByMinute: [], isLoading: false, isError: false, refetch: vi.fn() }),
+  useTalkXMonitor: (...args: unknown[]) => {
+    h.monitorCalls.push(args);
+    return { recipients: [], rateByMinute: [], isLoading: false, isError: false, error: null, refetch: vi.fn() };
+  },
 }));
 
 import { TalkXLiveMonitor } from '@/components/talkx/TalkXLiveMonitor';
@@ -104,6 +108,7 @@ beforeEach(() => {
   h.status = 'sending';
   h.recipients = Array.from({ length: 25 }, (_, i) => destinatario(i + 1));
   h.eqs = [];
+  h.monitorCalls = [];
 });
 
 describe('X150 — Deliveries em Tempo Real na tabela unificada (tela 12)', () => {
@@ -147,6 +152,22 @@ describe('X150 — Deliveries em Tempo Real na tabela unificada (tela 12)', () =
     fireEvent.click(screen.getByRole('option', { name: 'Falha' }));
 
     await waitFor(() => expect(h.eqs).toContainEqual(['status', 'failed']));
+  });
+
+  it('o gráfico Ritmo de Entrega recebe o filtro de status da aba (X148)', async () => {
+    renderMonitor();
+    await waitFor(() => expect(screen.getByText('Campanha X150')).toBeTruthy());
+
+    const trigger = screen.getByRole('combobox', { name: 'Filtrar por estado' });
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('option', { name: 'Falha' }));
+
+    // O gráfico (Ritmo) filtra pelo estado escolhido; a Saúde continua sem filtro.
+    await waitFor(() => expect(
+      h.monitorCalls.some((c) => c[0] === 'camp-1' && c[1] === 'failed'),
+    ).toBe(true));
+    expect(h.monitorCalls.some((c) => c[0] === 'camp-1' && c[1] === undefined)).toBe(true);
   });
 
   it('avisa o corte de leitura nas duas instâncias quando a consulta chega ao teto de 200 linhas', async () => {

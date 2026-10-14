@@ -126,14 +126,13 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId);
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
 
   // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
   // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
-  // medir saúde com ela mostraria "Envio parado" só porque o operador filtrou "falhas"
-  // (mesmo motivo pelo qual o gráfico de ritmo também não deve receber esse filtro).
-  // Com o filtro em "Todos" as duas consultas usam a MESMA chave e o React Query faz um
-  // único pedido.
+  // medir saúde com ela mostraria "Envio parado" só porque o operador filtrou "falhas".
+  // Por isso a Saúde usa a consulta própria abaixo, sem filtro. Com o filtro em "Todos"
+  // as duas consultas usam a MESMA chave e o React Query faz um único pedido.
   const {
     recipients: healthRecipients,
     isLoading: healthLoading,

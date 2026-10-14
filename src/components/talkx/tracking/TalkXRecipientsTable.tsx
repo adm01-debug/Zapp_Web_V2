@@ -71,7 +71,7 @@ export interface TalkXRecipientRow {
   updated_at?: string | null;
   personalized_message?: string | null;
   error_message?: string | null;
-  /** Nome do segmento do público — vem da leitura paginada (X144); hoje fica "—". */
+  /** Nome do segmento do público — preenchido pela tela via join `segments:segment_id(name)` ("—" quando ausente). */
   segment_name?: string | null;
   contacts?: TalkXRecipientContact | null;
 }
