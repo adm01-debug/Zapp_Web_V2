@@ -1,27 +1,34 @@
-Especialista: workertestes
+Especialista: worker (geral)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `ESTADO.md:65`: a âncora da edge `batch-fetch-avatars` no hook da barra de ações em lote passou de
+  `src/hooks/inbox/useInboxBulkActions.ts:143` para `:165`. A entrega de t_8016679b mexeu nesse hook
+  (bloco de exclusão de contatos) e empurrou a chamada de `supabase.functions.invoke('batch-fetch-avatars')`
+  da linha 143 para a 165; a âncora publicada ficou apontando para uma linha que não cita mais a edge.
+- Nenhuma asserção foi afrouxada: o teste `ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`
+  continua exigindo arquivo existente e linha que cite a edge.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (árvore com os commits do pai cherry-pickados, sem a correção):
+  `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` →
+  `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`
+  `error: 'âncora desatualizada: src/hooks/inbox/useInboxBulkActions.ts:143 não cita batch-fetch-avatars'`
+- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `# pass 11` / `# fail 0`
+- Espelho do CI (`ci_espelho.sh .`): o item do cartão
+  (`node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`) NÃO aparece mais na lista.
+  A lista restante é a da base `453e6b69f9` (4 itens, arquivo `.ci-base-453e6b69f9…txt`) mais 6 itens
+  `scripts/ci/lint-ratchet.unit.mjs` que falham SÓ nesta sessão: o erro é
+  `HERMES-GUARD (git): git init é proibido nesta sessão` nas fixtures, artefato do guard e não do diff.
+- `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`,
+  `VERIFY: VERDE SEM BANCO (1003s)`.
+
+## FAIXA DO PAI
+FAIXA DO PAI: commits `647c2890fd` (`fix(inbox): lote marca so mensagens recebidas e transfere via RPC por contato`)
+e `845f146ccf` (`fix(inbox): barra de acoes em lote so fecha o dialogo depois do resultado`) do cartão
+`t_8016679b` — cherry-pickados do commit de entrega `1400d7071` como o cartão manda (partir da entrega, não
+recomeçar) — não são deste cartão. O diff próprio deste cartão é só `ESTADO.md`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não mudei o teste de âncora nem o relaxei: o defeito era a âncora do documento, não a guarda.
+- Não mexi nos 6 itens de `lint-ratchet.unit.mjs`: são o guard desta sessão bloqueando `git init` nas fixtures
+  (já conhecido local), não regressão da entrega — a base do integrador não os lista.
