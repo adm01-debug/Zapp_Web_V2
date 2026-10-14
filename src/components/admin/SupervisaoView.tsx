@@ -27,7 +27,7 @@ export function SupervisaoView() {
   const [activeTab, setActiveTab] = useState<SupervisorTab>('queue');
 
   if (roleLoading) {
-    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-full w-full"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent motion-safe:animate-spin" /></div>;
   }
 
   if (!isSupervisor) {
