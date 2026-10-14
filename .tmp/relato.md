@@ -12,6 +12,7 @@ Especialista: workersql
 ## zapp-verify . --rapido (critério 2)
 - `zapp-verify . --rapido` → `OK db_guard 0s`, `OK tipos 305s`, `OK lint 0s`, `OK migrations 1s`, `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)`, `VERIFY: VERDE SEM BANCO (306s)`. (Nas tentativas anteriores o passo `tipos` morria com `tsc saiu 137` por saturação da máquina — load ~50-70, memória quase toda em uso; neste momento rodou verde.)
 - Nas tentativas anteriores o `tipos` era morto por OOM (`tsc saiu 137`) por saturação da máquina; nesta rodou verde. O diff deste cartão é SÓ SQL (`supabase/migrations/**.sql` + `supabase/tests/**.sql`) — nenhum `.ts`/`.tsx` alterado, então o typecheck não depende desta entrega.
+- O `hermes-tarefa-fechar` roda o mesmo verify por dentro: nas execuções de 13/10 20:57–21:22 o passo `tipos` foi morto por OOM de novo (`tsc saiu 137`, pool `pesado` 3 em uso, load 60+, ~40/47 GiB usados) → `VERIFY: VERMELHO em tipos`. Por isso o cartão vai BLOQUEADO como transiente de infraestrutura, e não por defeito do diff — que já passou um verify completo verde (VERDE SEM BANCO 306s).
 
 ## Prova
 - vermelho antes: `docker exec -i <pg> psql -v ON_ERROR_STOP=1 -v sem_guarda=1 -v mig_dir=/repo/supabase/migrations < supabase/tests/quick_replies_uso_e_global.sql` → `EXIT_VERMELHO=3`; `ERROR: PH-10 FALHOU [B1 agente conta uso da GLOBAL de outro (retorno true)]: esperado true, obtido ERRO 42883 function public.increment_quick_reply_use(unknown) does not exist`.
