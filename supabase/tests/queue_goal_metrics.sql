@@ -90,6 +90,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM public.queue_goal_metrics() WHERE queue_id = v_qC) THEN
     RAISE EXCEPTION 'T3 FALHOU: fila inativa apareceu no resultado';
   END IF;
+  RAISE NOTICE 'T3 OK: ativas com/sem meta no resultado, inativa fora';
 
   SELECT * INTO v_a FROM public.queue_goal_metrics() WHERE queue_id = v_qA;
   IF v_a.waiting_contacts <> 2 THEN
