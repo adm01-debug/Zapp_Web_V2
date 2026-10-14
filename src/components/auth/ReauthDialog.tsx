@@ -12,12 +12,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { ReauthOutcome } from '@/hooks/auth/useReauthentication';
 
 interface ReauthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   actionLabel: string;
-  onConfirm: (password: string) => Promise<boolean>;
+  onConfirm: (password: string) => Promise<ReauthOutcome>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -41,12 +42,14 @@ export function ReauthDialog({
     }
 
     setError('');
-    const success = await onConfirm(password);
-    
-    if (success) {
+    const outcome = await onConfirm(password);
+
+    if (outcome.ok) {
       setPassword('');
     } else {
-      setError('Senha incorreta');
+      // Motivo real da falha (bloqueio, serviço indisponível, rede) — não mais
+      // 'Senha incorreta' para tudo.
+      setError(outcome.mensagem || 'Senha incorreta');
     }
   };
 

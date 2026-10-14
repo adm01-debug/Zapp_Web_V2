@@ -5,10 +5,29 @@ import { AuthService } from '@/services/auth.service';
 
 type SensitiveAction = 'change_password' | 'change_email' | 'configure_mfa' | 'admin_action' | 'delete_account';
 
-interface ReauthResult {
+/** Por que a reautenticação falhou. O diálogo mostra a mensagem certa em vez de 'Senha incorreta' para tudo. */
+export type ReauthMotivo = 'senha_incorreta' | 'conta_bloqueada' | 'indisponivel' | 'rede';
+
+export interface ReauthResult {
   success: boolean;
   error?: string;
+  /** Só nas falhas: motivo classificado da recusa. */
+  motivo?: ReauthMotivo;
 }
+
+export interface ReauthOutcome {
+  ok: boolean;
+  motivo?: ReauthMotivo;
+  /** Mensagem pt-BR pronta para o campo do diálogo; ausente quando ok. */
+  mensagem?: string;
+}
+
+const MENSAGENS: Record<ReauthMotivo, string> = {
+  senha_incorreta: 'Senha incorreta',
+  conta_bloqueada: 'Conta temporariamente bloqueada. Tente novamente mais tarde.',
+  indisponivel: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.',
+  rede: 'Não foi possível verificar agora. Confira sua conexão e tente novamente.',
+};
 
 export function useReauthentication() {
   const [isReauthenticating, setIsReauthenticating] = useState(false);
@@ -18,12 +37,12 @@ export function useReauthentication() {
 
   const reauthenticate = async (password: string): Promise<ReauthResult> => {
     setIsReauthenticating(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user?.email) {
-        return { success: false, error: 'Usuário não encontrado' };
+        return { success: false, error: 'Usuário não encontrado', motivo: 'indisponivel' };
       }
 
       // Re-authenticate through auth-login edge (lockout-aware, ADR-006)
@@ -31,18 +50,18 @@ export function useReauthentication() {
 
       if (result.error) {
         if (result.unavailable) {
-          return { success: false, error: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.' };
+          return { success: false, error: MENSAGENS.indisponivel, motivo: 'indisponivel' };
         }
         if (result.lock?.isLocked) {
-          return { success: false, error: 'Conta temporariamente bloqueada. Tente novamente mais tarde.' };
+          return { success: false, error: MENSAGENS.conta_bloqueada, motivo: 'conta_bloqueada' };
         }
-        return { success: false, error: 'Senha incorreta' };
+        return { success: false, error: MENSAGENS.senha_incorreta, motivo: 'senha_incorreta' };
       }
 
       return { success: true };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro na re-autenticação';
-      return { success: false, error: errorMessage };
+    } catch {
+      // getUser/setSession falhou (rede). Não vazar a mensagem crua do erro.
+      return { success: false, error: MENSAGENS.rede, motivo: 'rede' };
     } finally {
       setIsReauthenticating(false);
     }
@@ -54,30 +73,31 @@ export function useReauthentication() {
     setShowReauthDialog(true);
   };
 
-  const confirmReauth = async (password: string): Promise<boolean> => {
+  const confirmReauth = async (password: string): Promise<ReauthOutcome> => {
     const result = await reauthenticate(password);
-    
-    if (result.success) {
-      setShowReauthDialog(false);
-      
-      if (pendingCallback) {
-        try {
-          await pendingCallback();
-          toast.success('Ação realizada com sucesso');
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Erro ao executar ação';
-          toast.error(errorMessage);
-          return false;
-        }
-      }
-      
-      setPendingAction(null);
-      setPendingCallback(null);
-      return true;
-    } else {
-      toast.error(result.error || 'Falha na re-autenticação');
-      return false;
+
+    if (!result.success) {
+      const motivo = result.motivo ?? 'senha_incorreta';
+      return { ok: false, motivo, mensagem: result.error ?? MENSAGENS[motivo] };
     }
+
+    setShowReauthDialog(false);
+
+    if (pendingCallback) {
+      try {
+        await pendingCallback();
+        toast.success('Ação realizada com sucesso');
+      } catch (error) {
+        // Reautenticou: a falha aqui é da AÇÃO, não da senha. Um toast só; o
+        // diálogo fecha e nunca mostra 'Senha incorreta'.
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao executar ação';
+        toast.error(errorMessage);
+      }
+    }
+
+    setPendingAction(null);
+    setPendingCallback(null);
+    return { ok: true };
   };
 
   const cancelReauth = () => {
