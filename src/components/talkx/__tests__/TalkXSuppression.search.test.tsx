@@ -43,16 +43,35 @@ vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
     const filters: ((r: Row) => boolean)[] = [];
     const orders: { col: string; asc: boolean }[] = [];
+    const ors: { filter: string; table?: string }[] = [];
+    let joinInner = false;
     const record = (method: string, args: unknown[]) => { if (table === 'talkx_blacklist') h.blacklistCalls.push({ method, args }); };
+    // A busca passou a ser feita NA CONSULTA (`.or()` no servidor), então o mock
+    // precisa emular o PostgREST: `contacts!inner` só deixa passar linha com
+    // contato e cada `.or()` restringe as linhas pelo termo do seu grupo.
+    const matchesOr = (r: Row, o: { filter: string; table?: string }): boolean => {
+      const terms = [...o.filter.matchAll(/ilike\."%(.+?)%"/g)].map((m) => m[1].toLowerCase());
+      const contact = r.contacts as { name?: string | null; phone?: string | null } | null;
+      return terms.some((t) => (o.table === 'contacts'
+        ? (contact?.name ?? '').toLowerCase().includes(t) || (contact?.phone ?? '').includes(t)
+        : ((r.phone as string | null) ?? '').includes(t) || ((r.reason as string | null) ?? '').toLowerCase().includes(t)));
+    };
     const run = () => {
       if (table !== 'talkx_blacklist') return { data: [], error: null };
-      return { data: sortBy(h.blacklist.filter((r) => filters.every((f) => f(r))), orders), error: null };
+      let rows = h.blacklist.filter((r) => filters.every((f) => f(r)));
+      if (joinInner) rows = rows.filter((r) => r.contacts);
+      for (const o of ors) rows = rows.filter((r) => matchesOr(r, o));
+      return { data: sortBy(rows, orders), error: null };
     };
     const self: Record<string, unknown> = {};
-    self.select = (...a: unknown[]) => { record('select', a); return self; };
+    self.select = (...a: unknown[]) => { record('select', a); if (String(a[0] ?? '').includes('contacts!inner')) joinInner = true; return self; };
     self.not = () => self;
     self.eq = () => self;
-    self.or = () => self;
+    self.or = (filter: string, opts?: { referencedTable?: string }) => {
+      record('or', [filter, opts]);
+      ors.push({ filter, table: opts?.referencedTable });
+      return self;
+    };
     self.limit = () => Promise.resolve({ data: [], error: null });
     self.is = (col: string, val: unknown) => { record('is', [col, val]); filters.push((r) => r[col] === val); return self; };
     self.order = (col: string, opts?: { ascending?: boolean }) => {
