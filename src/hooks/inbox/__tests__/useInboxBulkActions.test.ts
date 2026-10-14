@@ -113,6 +113,18 @@ function renderInbox(convs: ConversationWithMessages[] = []) {
   return { ...rendered, refetch };
 }
 
+// Igual ao `renderInbox`, mas permite TROCAR a lista filtrada entre renderizações
+// (props iniciais + `rerender`), que é o que prova a poda da seleção no filtro.
+function renderInboxComFiltro(initial: ConversationWithMessages[]) {
+  const refetch = vi.fn();
+  const rendered = renderHook(
+    ({ convs }: { convs: ConversationWithMessages[] }) =>
+      useInboxBulkActions({ refetch, filteredConversations: convs }),
+    { initialProps: { convs: initial } },
+  );
+  return { ...rendered, refetch };
+}
+
 function selectIds(result: { current: ReturnType<typeof useInboxBulkActions> }, ids: string[]) {
   if (!result.current.selectionMode) act(() => result.current.toggleSelectionMode());
   for (const id of ids) act(() => result.current.toggleSelection(id));
@@ -635,5 +647,64 @@ describe('useInboxBulkActions — handleBatchFetchAvatars', () => {
       await pending;
     });
     expect(result.current.fetchingAvatars).toBe(false);
+  });
+});
+
+describe('useInboxBulkActions — a seleção acompanha o filtro visível', () => {
+  it('poda a seleção por interseção: o id que sai da lista filtrada não fica selecionado', () => {
+    const { result, rerender } = renderInboxComFiltro([conversation('c1'), conversation('c2')]);
+
+    act(() => result.current.selectAll());
+    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+
+    // Troca de chip/fila/busca: 'c2' deixa de aparecer.
+    rerender({ convs: [conversation('c1')] });
+
+    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+  });
+
+  it('a ação em lote só atinge o que está visível: o contato escondido pelo filtro não vai para o banco', async () => {
+    const { result, rerender, refetch } = renderInboxComFiltro([
+      conversation('c1'),
+      conversation('c2'),
+    ]);
+    act(() => result.current.selectAll());
+
+    rerender({ convs: [conversation('c1')] });
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].filters).toEqual({ contact_id: ['c1'], is_read: false, sender: 'contact' });
+    expect(mocks.toast.success).toHaveBeenCalledWith('1 conversa(s) marcada(s) como lida(s)');
+    expect(result.current.selectedIds.size).toBe(0);
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('filtro que esvazia a lista limpa a seleção e nenhuma ação encontra alvo', async () => {
+    const { result, rerender } = renderInboxComFiltro([conversation('c1')]);
+    act(() => result.current.toggleSelectionMode());
+    act(() => result.current.toggleSelection('c1'));
+    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+
+    rerender({ convs: [] });
+
+    expect(result.current.selectedIds.size).toBe(0);
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+    expect(recorded).toEqual([]);
+  });
+
+  it('lista filtrada que só troca a identidade do array, sem tirar ninguém, mantém a seleção', () => {
+    const { result, rerender } = renderInboxComFiltro([conversation('c1')]);
+    act(() => result.current.selectAll());
+
+    // Mesmos ids, array novo (o pai recalcula o filtro a cada render).
+    rerender({ convs: [conversation('c1')] });
+
+    expect(result.current.selectedIds).toEqual(new Set(['c1']));
   });
 });
