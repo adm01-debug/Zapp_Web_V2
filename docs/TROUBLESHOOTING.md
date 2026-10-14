@@ -128,10 +128,10 @@ Os nomes abaixo já estão na forma canônica (minúsculo, com ponto) que o rote
 | `presence.update` | `evolution-webhook-handlers.ts:handlePresenceUpdate` | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `chats.upsert` | `evolution-webhook-handlers.ts:handleChatsUpdate` | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `chats.update` | `evolution-webhook-handlers.ts:handleChatsUpdate` | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
-| `groups.upsert` | `evolution-webhook/index.ts` — só log (`id` + `subject`) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
-| `group.update` | `evolution-webhook/index.ts` — só log (`id` + `subject`) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
-| `group.participants.update` | `evolution-webhook/index.ts` — só log (`id` + `action` + membros) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
-| `group-participants.update` | `evolution-webhook/index.ts` — só log (mesmo ramo de `group.participants.update`) | evolution-webhook-event-coverage.test.ts (sem acesso ao banco) | coberto (despacho) |
+| `groups.upsert` | `evolution-sync-actions.ts:handleGroupsUpdate` (upsert por `group_id`) | evolution-webhook-event-coverage.test.ts + evolution-webhook-groups-upsert.test.ts (corpo gravado) | coberto (despacho + gravação) |
+| `group.update` | `evolution-sync-actions.ts:handleGroupsUpdate` (nome/descrição/tamanho) | evolution-webhook-event-coverage.test.ts + evolution-webhook-groups-upsert.test.ts (corpo gravado) | coberto (despacho + gravação) |
+| `group.participants.update` | `evolution-sync-actions.ts:handleGroupsUpdate` (recalcula `participant_count`) | evolution-webhook-event-coverage.test.ts + evolution-webhook-groups-upsert.test.ts (corpo gravado) | coberto (despacho + gravação) |
+| `group-participants.update` | `evolution-sync-actions.ts:handleGroupsUpdate` (mesmo ramo de `group.participants.update`) | evolution-webhook-event-coverage.test.ts + evolution-webhook-groups-upsert.test.ts (corpo gravado) | coberto (despacho + gravação) |
 | `labels.edit` | `evolution-webhook-handlers.ts:handleLabelsEdit` (RPC) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `labels.association` | `evolution-webhook-handlers.ts:handleLabelsAssociation` (RPC por contato) | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |
 | `call` | `evolution-webhook-handlers.ts:handleCallEvent` | evolution-webhook-event-coverage.test.ts (toca o banco) | coberto (despacho) |

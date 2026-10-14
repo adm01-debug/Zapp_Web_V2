@@ -22,6 +22,7 @@ import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
 } from "../_shared/evolution-webhook-messages.ts";
 import { WebhookSecurityService, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import { handleGroupsUpdate } from "../_shared/evolution-sync-actions.ts";
 import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ---------------------------------------------------------------------------
@@ -296,15 +297,13 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     if (event === 'chats.upsert' || event === 'chats.update') await handleChatsUpdate(db, instance, data);
 
     if (event === 'groups.upsert' || event === 'group.update') {
-      const groupData = isRecord(data) ? data : {};
-      const groupJid = groupData.id as string;
-      const subject = groupData.subject as string;
-      if (groupJid && subject) console.warn(`Group update: ${groupJid.substring(0, 6)}... — ${subject.substring(0, 30)}`);
+      // Renomear/criar grupo no celular chega por aqui: grava em whatsapp_groups
+      // na hora, sem depender do botão 'Sincronizar' (só admin/supervisor).
+      await handleGroupsUpdate(db, instance, data, 'set');
     }
 
     if (event === 'group.participants.update' || event === 'group-participants.update') {
-      const participantData = isRecord(data) ? data : {};
-      console.warn(`Group ${participantData.id ? String(participantData.id).substring(0, 6) + '...' : ''} participants ${participantData.action}: ${(participantData.participants as string[])?.length ?? 0} members`);
+      await handleGroupsUpdate(db, instance, data, 'participants');
     }
 
     if (event === 'labels.edit') await handleLabelsEdit(db, instance, data);

@@ -1,27 +1,32 @@
-Especialista: workertestes
+Especialista: edgar
+Assinatura: Edgar (area-edge-api)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## Escopo (confere com o diff)
+- Arquivos alterados: 6. Arquivos de teste alterados/novos: 2. Casos de teste novos: 5 (em 1 arquivo novo). Nenhum manifesto regenerado.
+- `docs/TROUBLESHOOTING.md` NÃO está na lista "ARQUIVOS QUE PODE TOCAR" do cartão: a alteração foi indispensável. As 4 linhas do runbook dos eventos de grupo afirmavam "só log / sem acesso ao banco"; como o código novo passou a gravar, mantê-las criaria contradição aberta entre documento e código (recusa conhecida, ponto 7 do `afinar-edge`). A mudança é só a sincronização dessas 4 linhas (rota + prova); nenhum evento novo entrou na tabela, então a enumeração do teste de cobertura continua a mesma.
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+## Sensibilidade
+- Área `supabase/functions/**` (sempre vai ao revisor forte). O diff NÃO toca `rateLimit`, `service_role`, `requireRole`, `verifyHmac` nem `DELETE`: troca dois blocos de `console.warn` por uma chamada de upsert.
+- Nenhuma proteção afrouxada: o gate de HMAC/`instanceToken` em `evolution-webhook/index.ts` fica igual e roda ANTES do handler; o caso NEGADO (instância sem `whatsapp_connections`) tem teste próprio provando que nada é escrito.
+- Nenhuma referência a banco/endpoint de produção: os testes usam Supabase FALSO em 127.0.0.1, com JID e `connection_id` sintéticos.
+- Quem chama: a Evolution (webhook de entrada) — nada muda para o emissor; eventos que antes eram no-op passam a gravar.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+Escopo do diff: 6 arquivos alterados, sendo 2 de teste; 5 casos de teste novos no arquivo novo. Sem manifesto regenerado.
+
+- `_shared/evolution-sync-actions.ts`: novo `handleGroupsUpdate`. `groups.upsert`/`group.update` fazem upsert por `group_id` (a UNIQUE da tabela) com `name`/`description`/`participant_count` e o `whatsapp_connection_id` da instância. `group.participants.update` só recalcula o `participant_count` sobre o valor atual (o payload traz o delta, e não traz nome/descrição — um upsert ali sobrescreveria o nome com vazio). Rename sem tamanho no payload NÃO zera o contador. Instância sem conexão cadastrada retorna sem escrever.
+- `evolution-webhook/index.ts`: os dois ramos de grupo deixam de só logar e chamam `handleGroupsUpdate` ('set' e 'participants'); import novo de `_shared/evolution-sync-actions.ts`.
+- `_shared/__tests__/evolution-webhook-event-coverage.test.ts`: as 4 linhas dos eventos de grupo saem de `log`/`sem-acesso-banco` para `handleGroupsUpdate`/`toca-banco`.
+- `_shared/__tests__/evolution-webhook-groups-upsert.test.ts` (NOVO): prova o CORPO gravado — payload v2 (`{id, subject, size}`) e GO (`{JID, Name, Participants}`, via `translateGoPayload`), o rename sem tamanho, o recálculo de participantes e o caso negado. 5 casos de teste.
+- `.tmp/relato.md`: este relato (arquivo já versionado no workspace desde o início; a alteração entra no mesmo commit).
+- `docs/TROUBLESHOOTING.md`: FORA DA LISTA DO CARTÃO — indispensable porque as 4 linhas do runbook dos eventos de grupo diziam literalmente "só log / sem acesso ao banco", e o código novo passou a gravar: deixá-las assim abriria contradição entre documento e código (ponto 7 do `afinar-edge`, recusa conhecida). A mudança é só sincronização das 4 linhas (rota + prova) para o comportamento novo; nenhum evento novo entrou na tabela, então a enumeração do teste de cobertura continua a mesma.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes (com as fontes no estado anterior, `git stash` de `index.ts` e `evolution-sync-actions.ts`):
+  `deno test --config scripts/ci/deno.json ... evolution-webhook-groups-upsert.test.ts` → `FAILED | 1 passed | 4 failed` — `AssertionError: nenhuma escrita POST em whatsapp_groups (foi: [])`.
+- verde depois:
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 ... evolution-webhook-groups-upsert.test.ts ... evolution-webhook-event-coverage.test.ts` → `ok | 9 passed | 0 failed (372ms)`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- A função agendada diária: o próprio cartão a declara fora do escopo.
+- Nada em `src/` (front) nem no botão "Sincronizar": o cartão pede o caminho do webhook.

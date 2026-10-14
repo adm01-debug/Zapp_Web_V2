@@ -42,6 +42,98 @@ async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: 
   return [];
 }
 
+// ─── Grupos: upsert a partir do webhook ───
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
+}
+
+function txt(v: unknown): string | undefined {
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
+/** JID do grupo: v2 (`id`) ou GO/whatsmeow (`JID`), com os apelidos já aceitos na tela. */
+function groupJid(d: Record<string, unknown>): string | undefined {
+  return txt(d.id) ?? txt(d.JID) ?? txt(d.jid) ?? txt(d.groupJid) ?? txt(d.group_id);
+}
+
+/** Nome do grupo: v2 (`subject`) ou GO/whatsmeow (`Name`). */
+function groupName(d: Record<string, unknown>): string | undefined {
+  return txt(d.subject) ?? txt(d.Name) ?? txt(d.name) ?? txt(d.groupName);
+}
+
+/** Quantidade de membros que o payload traz, quando ele traz a lista inteira (`Participants`/`participants`). */
+function groupMembers(d: Record<string, unknown>): number | undefined {
+  if (Array.isArray(d.Participants)) return d.Participants.length;
+  if (Array.isArray(d.participants)) return d.participants.length;
+  return undefined;
+}
+
+/**
+ * Grava o grupo que mudou no celular sem depender do botão 'Sincronizar'.
+ * Chamado pelo webhook para `groups.upsert`/`group.update` (v2) e
+ * `joinedgroup`/`groupinfo` (GO) — `versao` 'set' — e para
+ * `group.participants.update`/`group-participants.update` — `versao`
+ * 'participants'.
+ *
+ * 'set': upsert por `group_id` (a UNIQUE da tabela) com nome/descrição/tamanho
+ * e a conexão da instância. Sem nome no payload não há o que gravar.
+ * 'participants': o payload traz só o delta de membros (`action` + lista), e
+ * NÃO traz nome/descrição — então o upsert sobrescreveria esses campos com
+ * vazio. Aqui só o `participant_count` é recalculado (soma/desconta o delta
+ * sobre o valor atual); grupo ainda desconhecido é ignorado.
+ * Instância sem `whatsapp_connections` cadastrada é ignorada: nenhuma escrita.
+ */
+export async function handleGroupsUpdate(
+  supabase: EvolutionDbClient,
+  instance: string,
+  data: unknown,
+  versao: 'set' | 'participants',
+): Promise<void> {
+  const d = asRecord(data);
+  const gid = groupJid(d);
+  if (!gid) return;
+
+  const { data: conn } = await supabase.from('whatsapp_connections')
+    .select('id').eq('instance_id', instance).maybeSingle();
+  const connectionId = conn ? txt(conn.id) : undefined;
+  if (!connectionId) return; // instância não cadastrada: ignora sem escrever
+
+  const agora = new Date().toISOString();
+
+  if (versao === 'participants') {
+    const { data: atual } = await supabase.from('whatsapp_groups')
+      .select('participant_count').eq('group_id', gid).maybeSingle();
+    if (!atual) return; // grupo desconhecido: sem nome não há como inserir
+    const antes = typeof atual.participant_count === 'number' ? atual.participant_count : 0;
+    const acao = txt(d.action);
+    const delta = acao === 'remove' ? -(groupMembers(d) ?? 0)
+      : acao === 'add' ? (groupMembers(d) ?? 0)
+      : 0;
+    if (delta === 0) return;
+    const depois = Math.max(0, antes + delta);
+    await supabase.from('whatsapp_groups')
+      .update({ participant_count: depois, updated_at: agora })
+      .eq('group_id', gid);
+    return;
+  }
+
+  const nome = groupName(d);
+  if (!nome) return; // sem nome no payload não há o que atualizar
+  const descricao = txt(d.desc) ?? txt(d.description) ?? txt(d.Topic) ?? txt(d.topic) ?? null;
+  const tamanhoPayload = typeof d.size === 'number' && Number.isFinite(d.size) ? d.size : groupMembers(d);
+
+  await supabase.from('whatsapp_groups').upsert({
+    group_id: gid,
+    name: nome,
+    description: descricao,
+    whatsapp_connection_id: connectionId,
+    updated_at: agora,
+    // Sem tamanho no payload não se sobrescreve o contador com 0.
+    ...(tamanhoPayload !== undefined ? { participant_count: tamanhoPayload } : {}),
+  }, { onConflict: 'group_id' });
+}
+
 export async function syncContacts(
   supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, corsHeaders: Record<string, string>, page: number, offset: number
