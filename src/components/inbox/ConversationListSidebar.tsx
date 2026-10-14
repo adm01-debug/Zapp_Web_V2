@@ -279,14 +279,86 @@ export function ConversationListSidebar({
               prestador_servico: 'Nenhum prestador encontrado',
               transportadora: 'Nenhuma transportadora encontrada',
             };
-            const msg = inboxFilters.search ? 'Nenhuma conversa encontrada' : emptyMessages[inboxFilters.selectedContactType || ''] || 'Sem conversas';
+            // Distingue "não há conversas" de "os filtros escondem todas": sem
+            // isso o atendente lê "Sem conversas" quando na verdade o escopo
+            // "Meus" (ou a busca, a fila e o tipo de contato) escondeu a lista.
+            // `chipCounts` é a MESMA contagem que alimenta os chips (countByChip),
+            // então o número do atalho bate com o que a lista mostraria.
+            const totalLoaded = inbox.conversations?.length ?? 0;
+            const chipCounts = inboxFilters.chipCounts ?? {};
+            const countWaiting = chipCounts.waiting ?? 0;
+            const countAttending = chipCounts.attending ?? 0;
+            const countUnread = chipCounts.unread ?? 0;
+            const hasActiveTypeFilter =
+              !!inboxFilters.selectedContactType && inboxFilters.selectedContactType !== 'all';
+            const filtersHideAll =
+              inboxFilters.chipTab !== 'archived' &&
+              !inbox.usingCache &&
+              !inboxFilters.search &&
+              totalLoaded > 0;
+            const canShowWaiting =
+              filtersHideAll && inboxFilters.chipTab !== 'waiting' && countWaiting > 0;
+            const canShowAttending =
+              filtersHideAll && inboxFilters.chipTab !== 'attending' && countAttending > 0;
+            const canShowUnread =
+              filtersHideAll && inboxFilters.chipTab !== 'unread' && countUnread > 0;
+            const canShowAllAgents =
+              filtersHideAll && inboxFilters.chipTab === 'attending' && !inboxFilters.showAll;
+            const canClearTypeFilter = filtersHideAll && hasActiveTypeFilter;
+            const hasShortcuts =
+              canShowWaiting || canShowAttending || canShowUnread || canShowAllAgents || canClearTypeFilter;
+            const msg = inboxFilters.chipTab === 'archived'
+              ? 'Nenhuma conversa arquivada'
+              : inbox.usingCache
+                ? 'Modo offline — sem dados em cache'
+                : inboxFilters.search
+                  ? 'Nenhuma conversa encontrada'
+                  : filtersHideAll
+                    ? `Nenhuma conversa nesta aba (${totalLoaded} no total). Ajuste os filtros.`
+                    : emptyMessages[inboxFilters.selectedContactType || ''] || 'Sem conversas';
             return (
-              <motion.div key={inboxFilters.selectedContactType || 'all'} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="p-8 text-center">
+              <motion.div key={inboxFilters.selectedContactType || 'all'} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="p-8 text-center" data-testid="inbox-empty-state">
                 <div className="w-14 h-14 rounded-2xl bg-kpi-blue text-kpi-blue-fg flex items-center justify-center mx-auto mb-3">
                   <EmptyIcon className="w-6 h-6" />
                 </div>
-                <p className="text-[15px] font-semibold text-foreground mb-1">{msg}</p>
-                <p className="text-[13px] text-muted-foreground">Novas conversas aparecerão aqui.</p>
+                <p role="status" className="text-[15px] font-semibold text-foreground mb-1">{msg}</p>
+                {!filtersHideAll && !inbox.usingCache && inboxFilters.chipTab !== 'archived' && (
+                  <p className="text-[13px] text-muted-foreground">Novas conversas aparecerão aqui.</p>
+                )}
+                {filtersHideAll && hasShortcuts && (
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2" data-testid="inbox-empty-shortcuts">
+                    {canShowWaiting && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('waiting')}>
+                        Ver aguardando ({countWaiting})
+                      </Button>
+                    )}
+                    {canShowAttending && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('attending')}>
+                        Ver atendendo ({countAttending})
+                      </Button>
+                    )}
+                    {canShowUnread && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setChipTab('unread')}>
+                        Ver não lidas ({countUnread})
+                      </Button>
+                    )}
+                    {canShowAllAgents && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.setShowAll(true)}>
+                        Ver todos os atendentes
+                      </Button>
+                    )}
+                    {canClearTypeFilter && (
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]"
+                        onClick={() => inboxFilters.handleContactTypeChange(null)}>
+                        Limpar filtro de tipo
+                      </Button>
+                    )}
+                  </div>
+                )}
               </motion.div>
             );
           })()
