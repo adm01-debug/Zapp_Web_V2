@@ -11,14 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2, Brain,
+  UserPlus, Building, Eye, Loader2,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
-import { PlaybooksManager } from './PlaybooksManager';
-import { SupervisorCopilot } from './SupervisorCopilot';
-import { TrainingMode } from './TrainingMode';
-import { CrisisRoom } from './CrisisRoom';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
@@ -44,7 +40,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -130,7 +126,7 @@ export function AdminView() {
       </motion.div>
 
       <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label]) => (
+        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
           <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
             className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
@@ -298,22 +294,6 @@ export function AdminView() {
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
-        </SectionErrorBoundary>
-      ) : activeTab === 'playbooks' ? (
-        <SectionErrorBoundary key="playbooks" sectionName="Playbooks">
-          <PlaybooksManager />
-        </SectionErrorBoundary>
-      ) : activeTab === 'copilot' ? (
-        <SectionErrorBoundary key="copilot" sectionName="Copiloto">
-          <SupervisorCopilot />
-        </SectionErrorBoundary>
-      ) : activeTab === 'training' ? (
-        <SectionErrorBoundary key="training" sectionName="Modo Treinamento">
-          <TrainingMode />
-        </SectionErrorBoundary>
-      ) : activeTab === 'crisis' ? (
-        <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
-          <CrisisRoom />
         </SectionErrorBoundary>
       ) : null}
     </div>

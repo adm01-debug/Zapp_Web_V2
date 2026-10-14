@@ -123,6 +123,11 @@ export class NavigationService {
           { id: 'agents', icon: Phone, label: 'Equipe', roles: STAFF_ROLES },
           { id: 'security', icon: Shield, label: 'Segurança', roles: STAFF_ROLES },
           { id: 'privacy', icon: ShieldCheck, label: 'LGPD', roles: STAFF_ROLES },
+          // Ferramentas do supervisor (Fila, Copiloto, Sala de Crise, Playbooks e
+          // Treinamento) ficavam presas dentro de `admin`, que e ADMIN_ONLY — o
+          // publico a que se destinam nao alcancava. `supervisao` e STAFF
+          // (supervisor e admin); `admin` fica com Usuarios e Auditoria.
+          { id: 'supervisao', icon: ShieldCheck, label: 'Supervisão', roles: STAFF_ROLES },
           { id: 'admin', icon: UserCog, label: 'Admin', roles: ADMIN_ONLY },
           { id: 'themes', icon: Palette, label: 'Skins', roles: STAFF_ROLES },
           { id: 'docs', icon: BookOpen, label: 'Documentação', roles: STAFF_ROLES },
