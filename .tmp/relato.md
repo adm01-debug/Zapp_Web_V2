@@ -1,27 +1,39 @@
-Especialista: workertestes
+Especialista: Hugo (area-front-hooks)
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
+## O que mudou e por quê
 
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
+Arquivar conversa deixava de ser estado e virava "tirar o responsável": o UPDATE em `contacts.assigned_to`.
+Agora arquiva pela RPC `set_conversation_status`, a mesma do CloseConversationDialog.
 
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+- `src/hooks/chat/useConversationActions.ts:268-287` (novo `setConversationStatus`) e `:289-305` (`archiveContact`): arquiva com `p_next:'archived'` e o Desfazer reabre com `p_next:'open'` pela mesma RPC. `assigned_to` não é mais zerado em lugar nenhum do arquivamento (o `grep assigned_to` no arquivo só devolve o comentário da linha 271). Cada chamada dispara `zapp:contact-status-changed`, o mesmo evento do CloseConversationDialog: `src/hooks/chat/useRealtimeMessages.ts:239-246` aplica o patch em `contact.conversation_status`, que é exatamente o campo que `src/hooks/inbox/chipCounts.ts:75-77` lê para o chip "Arquivadas" — por isso a arquivada aparece no chip sem esperar refetch.
+- `src/hooks/chat/useConversationActions.ts:127-141` (fixar), `:143-159` (desafixar), `:161-177` (favoritar), `:179-196` (desfavoritar): falha deixou de ser silenciosa. `if (!profileId) return` e o retorno calado no erro viraram toast de erro + `return`, e o `setPinnedIds`/`setFavoriteIds` só roda depois do sucesso — na falha o item continua como estava.
+- `src/hooks/inbox/useInboxBulkActions.ts:49-80` (`bulkMarkAsRead`): ganhou `.eq('sender','contact')` (mesma regra da unitária `RealtimeService.markMessagesAsRead`, `src/services/realtime.service.ts:209-221`) e `.select('contact_id')`. O toast anuncia a contagem REAL de conversas alteradas; zero linha alterada → aviso e nenhum recarregamento da lista inteira.
+- `src/hooks/inbox/useInboxBulkActions.ts:82-118` (`bulkTransfer`): o lote deixou de ser UPDATE direto em `contacts` e passa conversa a conversa pela RPC `transfer_conversation` (`p_to_agent_id` ou `p_to_queue_id`, e a nota em `p_note` — antes ignorada), que grava o dono E a trilha da transferência. Conta sucesso e falha de cada conversa; sucesso em todas → contagem real, falha em algumas → "N transferido(s); M falhou(aram)", falha em todas → erro e a seleção fica.
+- `src/hooks/inbox/useInboxBulkActions.ts:120-175` (`bulkArchive`): arquiva cada conversa pela RPC e só conta o que a RPC confirmou; o toast mostra a contagem real (inclusive "N de M"); o Desfazer reabre exatamente os contatos arquivados naquela chamada (alvo congelado: mexer na seleção depois não troca o que reverte). Saiu o SELECT prévio de `assigned_to` que existia só para poder restaurar à mão.
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+
+- vermelho antes (fontes antigas restauradas com `git checkout --`, testes novos no lugar):
+  `npx vitest run src/hooks/chat/__tests__/useConversationActions.test.ts src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`
+  → `Test Files  2 failed (2)` / `Tests  21 failed | 31 passed (52)`
+- verde depois (mesmos arquivos + vizinhança do inbox):
+  `npx vitest run src/hooks/chat/__tests__/useConversationActions.test.ts src/hooks/inbox src/components/inbox`
+  → `Test Files  223 passed | 2 skipped (225)` / `Tests  1812 passed | 14 todo (1826)`
+- verde depois (só os dois arquivos do defeito, para leitura rápida):
+  `npx vitest run src/hooks/chat/__tests__/useConversationActions.test.ts src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`
+  → `Test Files  2 passed (2)` / `Tests  52 passed (52)`
+
+## CRITÉRIO DE PRONTO
+
+1. "Arquivadas aparecem no chip e ninguém perde o responsável, provado."
+   - chip: `src/hooks/inbox/useInboxBulkActions.ts:137-141` (evento no lote) e `src/hooks/chat/useConversationActions.ts:282-286` (evento no individual) → consumidos em `src/hooks/chat/useRealtimeMessages.ts:239-246`, campo lido em `src/hooks/inbox/chipCounts.ts:75-77`. Teste: `src/hooks/chat/__tests__/useConversationActions.test.ts:214` ('anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch', que confere `{contactId:'contact-1', status:'archived'}` e depois `status:'open'` no Desfazer).
+   - responsável: `src/hooks/chat/useConversationActions.ts:289-305`. Testes: `src/hooks/chat/__tests__/useConversationActions.test.ts:187` (RPC `set_conversation_status` + `contactsUpdateCalls` vazio + Desfazer reabrindo) e `src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx:164` (o caminho real do botão "Arquivar" do painel de detalhes).
+2. `zapp-verify --rapido` verde: rodado pelo próprio `hermes-tarefa-fechar` nesta entrega.
+
+Itens 2, 3 e 4 do corpo do cartão (transferir em lote pela RPC com contagem real; marcar lido com a regra da unitária e contagem real; fixar/favoritar avisando em erro sem mentir no estado visual) estão nos arquivos citados acima, com testes em `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts:350-440` (transferir), `:257-330` (marcar lido) e `:449-566` (arquivar em lote), e `src/hooks/chat/__tests__/useConversationActions.test.ts:488-543` (fixar/favoritar em erro).
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+
+- Não toquei em `src/components/inbox/ContactDetails.tsx` — não está na lista de arquivos do cartão. O componente já delega certo (`:76 case 'archive': void archiveContact(contact.id)`), mas o comentário `:69-71` ainda descreve a semântica antiga ("zera assigned_to ... decisão do dono em 06/10, cartão #241"), que é justamente o que este cartão reverte. Registrado em `kanban_comment` do cartão para o cartão de telas corrigir 1 linha.
+- Não mexi em `CloseConversationDialog.tsx`: já usava a RPC e o mesmo evento, não precisava.
+- `bulkMarkAsRead` continua chamando `refetch()` quando houve linha alterada: o estado das conversas (não lidas em memória) vive no `useRealtimeMessages`, que não está na lista de arquivos deste cartão; o que este cartão pede — a regra da unitária e a contagem real — está feito, e o no-op deixou de recarregar nada.

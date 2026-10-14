@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useUndoableAction } from '@/hooks/system/useUndoableAction';
+import { undoToast } from '@/lib/undoToast';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 interface UseInboxBulkActionsProps {
@@ -14,7 +14,6 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [fetchingAvatars, setFetchingAvatars] = useState(false);
-  const { execute: executeUndoable } = useUndoableAction();
 
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => {
@@ -52,13 +51,25 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     setBulkLoading(true);
     try {
       const contactIds = Array.from(selectedIds);
-      const { error } = await supabase
+      // Mesma regra da unitária (RealtimeService.markMessagesAsRead): só a
+      // mensagem RECEBIDA (sender='contact') e ainda não lida. Sem o filtro de
+      // sender o lote marcava como lida também a mensagem do operador.
+      // `.select('contact_id')` devolve as linhas de fato alteradas: a contagem
+      // anunciada é a real, não o número de contatos selecionados.
+      const { data, error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .in('contact_id', contactIds)
-        .eq('is_read', false);
+        .eq('sender', 'contact')
+        .eq('is_read', false)
+        .select('contact_id');
       if (error) throw error;
-      toast.success(`${contactIds.length} conversa(s) marcada(s) como lida(s)`);
+      const markedContacts = new Set((data ?? []).map(row => row.contact_id));
+      if (markedContacts.size === 0) {
+        toast.info('Nenhuma mensagem não lida nesses contatos');
+        return;
+      }
+      toast.success(`${markedContacts.size} conversa(s) marcada(s) como lida(s)`);
       clearSelection();
       refetch();
     } catch {
@@ -68,23 +79,35 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     }
   }, [selectedIds, clearSelection, refetch]);
 
-  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, _message?: string) => {
+  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, message?: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     try {
       const contactIds = Array.from(selectedIds);
-      const updateData: { assigned_to?: string; queue_id?: string } = {};
-      if (type === 'agent') {
-        updateData.assigned_to = targetId;
-      } else {
-        updateData.queue_id = targetId;
+      const note = message?.trim() ? message.trim() : null;
+      // Transferir é a RPC transfer_conversation (mesma do atendimento
+      // individual): ela grava o assigned_to/queue_id E abre a trilha da
+      // transferência. O UPDATE direto em contacts só trocava o dono — o
+      // histórico da conversa não registrava nada. Conversa a conversa, para
+      // contar sucesso e falha de cada uma.
+      let ok = 0;
+      let failed = 0;
+      for (const contactId of contactIds) {
+        const { error } = await supabase.rpc('transfer_conversation', {
+          p_contact_id: contactId,
+          p_to_agent_id: type === 'agent' ? targetId : null,
+          p_to_queue_id: type === 'queue' ? targetId : null,
+          p_note: note,
+        });
+        if (error) failed += 1;
+        else ok += 1;
       }
-      const { error } = await supabase
-        .from('contacts')
-        .update(updateData)
-        .in('id', contactIds);
-      if (error) throw error;
-      toast.success(`${contactIds.length} contato(s) transferido(s)`);
+      if (ok === 0) throw new Error('nenhuma transferência concluída');
+      if (failed > 0) {
+        toast.error(`${ok} contato(s) transferido(s); ${failed} falhou(aram)`);
+      } else {
+        toast.success(`${ok} contato(s) transferido(s)`);
+      }
       clearSelection();
       refetch();
     } catch {
@@ -97,45 +120,61 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
   const bulkArchive = useCallback(async () => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
-    const contactIds = Array.from(selectedIds);
-
-    const { data: originalContacts } = await supabase
-      .from('contacts')
-      .select('id, assigned_to')
-      .in('id', contactIds);
-
     try {
-      await executeUndoable({
-        successMessage: `${contactIds.length} contato(s) arquivado(s)`,
-        undoMessage: 'Arquivamento desfeito',
-        action: async () => {
-          const { error } = await supabase
-            .from('contacts')
-            .update({ assigned_to: null })
-            .in('id', contactIds);
-          if (error) throw error;
-          clearSelection();
-          refetch();
-        },
-        undoAction: async () => {
-          if (originalContacts) {
-            for (const contact of originalContacts) {
-              await supabase
-                .from('contacts')
-                .update({ assigned_to: contact.assigned_to })
-                .eq('id', contact.id);
-            }
+      const contactIds = Array.from(selectedIds);
+      // Arquivamento em lote pela MESMA RPC do individual: muda o
+      // conversation_status (o campo do chip "Arquivadas") e NÃO mexe em
+      // assigned_to, então ninguém perde o responsável. Cada conversa é
+      // confirmada pela RPC antes de entrar na contagem e no desfazer.
+      const archived: string[] = [];
+      for (const contactId of contactIds) {
+        const { error } = await supabase.rpc('set_conversation_status', {
+          p_contact_id: contactId,
+          p_next: 'archived',
+        });
+        if (error) continue;
+        archived.push(contactId);
+        window.dispatchEvent(
+          new CustomEvent('zapp:contact-status-changed', {
+            detail: { contactId, status: 'archived' },
+          })
+        );
+      }
+      if (archived.length === 0) throw new Error('nenhuma conversa arquivada');
+      undoToast({
+        message:
+          archived.length === contactIds.length
+            ? `${archived.length} contato(s) arquivado(s)`
+            : `${archived.length} de ${contactIds.length} contato(s) arquivado(s)`,
+        icon: '📦',
+        onUndo: async () => {
+          // Reabre pela RPC os MESMOS contatos arquivados nesta chamada (o
+          // alvo fica congelado: mexer na seleção não troca o que o Desfazer
+          // reverte). Como o arquivamento não mexe em assigned_to, reabrir
+          // basta — o responsável nunca saiu do lugar.
+          for (const contactId of archived) {
+            const { error } = await supabase.rpc('set_conversation_status', {
+              p_contact_id: contactId,
+              p_next: 'open',
+            });
+            if (error) throw error;
+            window.dispatchEvent(
+              new CustomEvent('zapp:contact-status-changed', {
+                detail: { contactId, status: 'open' },
+              })
+            );
           }
           refetch();
         },
-        onCommit: () => {},
       });
+      clearSelection();
+      refetch();
     } catch {
       toast.error('Erro ao arquivar contatos');
     } finally {
       setBulkLoading(false);
     }
-  }, [selectedIds, clearSelection, refetch, executeUndoable]);
+  }, [selectedIds, clearSelection, refetch]);
 
   const handleBatchFetchAvatars = useCallback(async () => {
     setFetchingAvatars(true);

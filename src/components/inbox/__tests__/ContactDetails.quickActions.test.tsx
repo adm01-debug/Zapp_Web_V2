@@ -8,6 +8,7 @@ const h = vi.hoisted(() => {
     error: null as { message: string } | null,
     rows: {} as Record<string, unknown>,
     invokeError: null as { message: string } | null,
+    archiveRpcError: null as { message: string } | null,
   };
   const eq = vi.fn(() => Promise.resolve({ error: state.error }));
   const update = vi.fn(() => ({ eq }));
@@ -34,12 +35,17 @@ const h = vi.hoisted(() => {
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, select, from, invoke, toast };
+  // Arquivar/reabrir agora passam pela RPC de estado (set_conversation_status),
+  // a MESMA do diálogo de encerrar — não mais por UPDATE em contacts.
+  const archiveRpc = vi.fn((_name: string, _args: Record<string, unknown>) =>
+    Promise.resolve({ data: null, error: state.archiveRpcError }));
+  return { state, eq, update, select, from, invoke, toast, archiveRpc };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: h.from,
+    rpc: h.archiveRpc,
     functions: { invoke: h.invoke },
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
   },
@@ -117,6 +123,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     vi.clearAllMocks();
     h.state.error = null;
     h.state.invokeError = null;
+    h.state.archiveRpcError = null;
     h.state.rows = {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
       whatsapp_connections: { instance_id: 'inst-1' },
@@ -154,21 +161,32 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     expect(seloVip()).toBeTruthy();
   });
 
-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
+  it('"Arquivar" usa a semântica do archiveContact (RPC set_conversation_status); Desfazer reabre', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
-    // A segunda implementação paralela está proibida: nunca escreve status.
+    await waitFor(() =>
+      expect(h.archiveRpc).toHaveBeenCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'archived',
+      }),
+    );
+    // Arquivar é ESTADO: o responsável (assigned_to) não é zerado.
+    expect(h.update).not.toHaveBeenCalledWith({ assigned_to: null });
+    // E não existe implementação paralela escrevendo status por UPDATE em contacts.
     expect(h.update).not.toHaveBeenCalledWith(
       expect.objectContaining({ conversation_status: expect.anything() }),
     );
 
     await clickUndo();
-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
+    // O Desfazer REABRE pela mesma RPC — não restaura assigned_to à mão.
     await waitFor(() =>
-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
+      expect(h.archiveRpc).toHaveBeenLastCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'open',
+      }),
     );
+    expect(h.update).not.toHaveBeenCalledWith({ assigned_to: 'agent-9' });
     expect(h.update).not.toHaveBeenCalledWith(
       expect.objectContaining({ conversation_status: expect.anything() }),
     );

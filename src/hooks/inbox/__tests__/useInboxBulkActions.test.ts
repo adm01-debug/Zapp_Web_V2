@@ -30,29 +30,29 @@ interface RecordedCall {
   filters: Record<string, unknown>;
 }
 interface UndoOptions {
-  successMessage: string;
-  undoMessage?: string;
-  action: () => Promise<unknown>;
-  undoAction: () => Promise<void>;
-  onCommit?: () => void;
+  message: string;
+  icon?: string;
+  onUndo: () => Promise<void>;
+  delay?: number;
 }
 
 const mocks = vi.hoisted(() => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
-  execute: vi.fn(),
+  undoToast: vi.fn(),
   invoke: vi.fn(),
   from: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: mocks.toast }));
-vi.mock('@/hooks/system/useUndoableAction', () => ({
-  useUndoableAction: () => ({ execute: mocks.execute }),
-}));
+// O desfazer em si (lib) é OUTRO módulo, não o alvo: aqui gravamos a última
+// chamada para poder disparar o `onUndo` na mão e provar o que ele reverte.
+vi.mock('@/lib/undoToast', () => ({ undoToast: mocks.undoToast }));
 // O hook só usa o TIPO `ConversationWithMessages` deste módulo; o dublê evita puxar a
 // cadeia de Realtime para dentro do teste.
 vi.mock('@/hooks/chat/useRealtimeMessages', () => ({}));
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: mocks.from, functions: { invoke: mocks.invoke } },
+  supabase: { from: mocks.from, functions: { invoke: mocks.invoke }, rpc: mocks.rpc },
 }));
 
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
@@ -60,10 +60,12 @@ import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages'
 import type { ContactRow } from '@/types/contact';
 
 let updateQueue: DbResult[] = [];
-let selectQueue: DbResult[] = [];
 let recorded: RecordedCall[] = [];
 let updateGate: Promise<void> | null = null;
 let lastUndo: UndoOptions | null = null;
+let rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+/** Erros por nome de RPC, consumidos em ordem (um por chamada). */
+let rpcErrors = new Map<string, unknown[]>();
 
 function buildChain(
   call: RecordedCall,
@@ -79,7 +81,10 @@ function buildChain(
       call.filters[column] = value;
       return chain;
     },
-    select: () => Promise.resolve({ data: result.data ?? null, error: result.error ?? null }),
+    select: () => {
+      const base = opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
+      return base.then((r) => ({ data: r.data ?? null, error: r.error ?? null }));
+    },
     then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => {
       const base = opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
       return base.then(onFulfilled, onRejected);
@@ -117,16 +122,23 @@ function contactUpdates() {
 beforeEach(() => {
   vi.clearAllMocks();
   updateQueue = [];
-  selectQueue = [];
   recorded = [];
   updateGate = null;
   lastUndo = null;
+  rpcCalls = [];
+  rpcErrors = new Map();
 
-  mocks.execute.mockImplementation(async (options: UndoOptions) => {
+  // O desfazer é capturado, não acionado: os casos chamam `onUndo` na mão.
+  mocks.undoToast.mockImplementation((options: UndoOptions) => {
     lastUndo = options;
-    await options.action();
   });
   mocks.invoke.mockResolvedValue({ data: { updated: 0, processed: 0 }, error: null });
+  mocks.rpc.mockImplementation((name: string, args: Record<string, unknown>) => {
+    rpcCalls.push({ name, args });
+    const queued = rpcErrors.get(name);
+    const error = queued && queued.length > 0 ? queued.shift() : null;
+    return Promise.resolve({ data: null, error });
+  });
 
   mocks.from.mockImplementation((table: string) => ({
     update: (payload: unknown) => {
@@ -139,7 +151,7 @@ beforeEach(() => {
     select: (columns: string) => {
       const call: RecordedCall = { table, op: 'select', columns, filters: {} };
       recorded.push(call);
-      return buildChain(call, selectQueue.shift() ?? { data: [], error: null });
+      return buildChain(call, { data: [], error: null });
     },
   }));
 });
@@ -242,7 +254,8 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
     expect(mocks.toast.success).not.toHaveBeenCalled();
   });
 
-  it('marca só as mensagens NÃO lidas dos contatos selecionados e recarrega', async () => {
+  it('marca só as mensagens NÃO lidas e RECEBIDAS dos contatos selecionados e recarrega', async () => {
+    updateQueue.push({ data: [{ contact_id: 'c1' }, { contact_id: 'c2' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -255,12 +268,42 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
       table: 'messages',
       op: 'update',
       payload: { is_read: true },
-      filters: { contact_id: ['c1', 'c2'], is_read: false },
+      filters: { contact_id: ['c1', 'c2'], is_read: false, sender: 'contact' },
     });
     expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) marcada(s) como lida(s)');
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(result.current.selectedIds.size).toBe(0);
     expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('a contagem anunciada é a das linhas ALTERADAS, não a dos contatos selecionados', async () => {
+    // Três selecionados, mas só um tinha mensagem não lida de contato no banco.
+    updateQueue.push({ data: [{ contact_id: 'c2' }], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2', 'c3']);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(mocks.toast.success).toHaveBeenCalledWith('1 conversa(s) marcada(s) como lida(s)');
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('nenhuma linha alterada: avisa sem dizer que marcou e não recarrega tudo', async () => {
+    updateQueue.push({ data: [], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhuma mensagem não lida nesses contatos');
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(refetch).not.toHaveBeenCalled();
+    // Nada mudou: a seleção continua de pé para o operador tentar outra ação.
+    expect(result.current.selectedIds.has('c1')).toBe(true);
   });
 
   it('erro do banco (RLS): avisa, mantém a seleção e não recarrega', async () => {
@@ -279,6 +322,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
   });
 
   it('bulkLoading liga enquanto a operação está em voo e volta a false no fim', async () => {
+    updateQueue.push({ data: [{ contact_id: 'c1' }], error: null });
     let release: (() => void) | undefined;
     updateGate = new Promise<void>((resolve) => {
       release = resolve;
@@ -310,10 +354,10 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('agent', 'ag-2');
     });
 
-    expect(recorded).toEqual([]);
+    expect(rpcCalls).toEqual([]);
   });
 
-  it('agente: grava assigned_to no lote, limpa a seleção e recarrega', async () => {
+  it('agente: transfere CADA contato pela RPC (sem UPDATE cru) e recarrega', async () => {
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -321,19 +365,17 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('agent', 'ag-2');
     });
 
-    expect(recorded).toHaveLength(1);
-    expect(recorded[0]).toMatchObject({
-      table: 'contacts',
-      op: 'update',
-      payload: { assigned_to: 'ag-2' },
-      filters: { id: ['c1', 'c2'] },
-    });
+    expect(recorded).toEqual([]);
+    expect(rpcCalls).toEqual([
+      { name: 'transfer_conversation', args: { p_contact_id: 'c1', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null } },
+      { name: 'transfer_conversation', args: { p_contact_id: 'c2', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null } },
+    ]);
     expect(mocks.toast.success).toHaveBeenCalledWith('2 contato(s) transferido(s)');
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('fila: grava queue_id (e não assigned_to)', async () => {
+  it('fila: preenche p_to_queue_id e deixa p_to_agent_id nulo', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -341,10 +383,13 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('queue', 'q-7');
     });
 
-    expect(recorded[0].payload).toEqual({ queue_id: 'q-7' });
+    expect(rpcCalls[0]).toEqual({
+      name: 'transfer_conversation',
+      args: { p_contact_id: 'c1', p_to_agent_id: null, p_to_queue_id: 'q-7', p_note: null },
+    });
   });
 
-  it('a mensagem opcional NÃO é persistida (o update não ganha campo de texto)', async () => {
+  it('a mensagem opcional vai para a RPC como p_note (é o recado da transferência)', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -352,11 +397,40 @@ describe('useInboxBulkActions — bulkTransfer', () => {
       await result.current.bulkTransfer('agent', 'ag-2', 'recado do operador');
     });
 
-    expect(recorded[0].payload).toEqual({ assigned_to: 'ag-2' });
+    expect(rpcCalls[0].args.p_note).toBe('recado do operador');
   });
 
-  it('erro do banco: avisa e mantém a seleção', async () => {
-    updateQueue.push({ error: { message: 'rls' } });
+  it('mensagem em branco vira null (não grava nota vazia na trilha)', async () => {
+    const { result } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await result.current.bulkTransfer('agent', 'ag-2', '   ');
+    });
+
+    expect(rpcCalls[0].args.p_note).toBeNull();
+  });
+
+  it('falha em um contato e sucesso no outro: anuncia a contagem real e recarrega', async () => {
+    rpcErrors.set('transfer_conversation', [{ message: 'rls' }]);
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkTransfer('queue', 'q-1');
+    });
+
+    // Primeira chamada falhou, segunda passou — a ordem é a da seleção.
+    expect(rpcCalls).toHaveLength(2);
+    expect(mocks.toast.error).toHaveBeenCalledWith('1 contato(s) transferido(s); 1 falhou(aram)');
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.selectedIds.size).toBe(0);
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('erro em TODOS os contatos: avisa o erro e mantém a seleção', async () => {
+    rpcErrors.set('transfer_conversation', [{ message: 'rls' }]);
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -372,14 +446,7 @@ describe('useInboxBulkActions — bulkTransfer', () => {
 });
 
 describe('useInboxBulkActions — bulkArchive', () => {
-  it('lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato', async () => {
-    selectQueue.push({
-      data: [
-        { id: 'c1', assigned_to: 'ag-1' },
-        { id: 'c2', assigned_to: null },
-      ],
-      error: null,
-    });
+  it('arquiva cada contato pela RPC set_conversation_status e NÃO mexe em assigned_to', async () => {
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -387,47 +454,67 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await result.current.bulkArchive();
     });
 
-    expect(recorded[0]).toMatchObject({
-      table: 'contacts',
-      op: 'select',
-      columns: 'id, assigned_to',
-      filters: { id: ['c1', 'c2'] },
-    });
-    expect(mocks.execute).toHaveBeenCalledTimes(1);
-    expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
-    expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
-    expect(contactUpdates()[0]).toMatchObject({
-      payload: { assigned_to: null },
-      filters: { id: ['c1', 'c2'] },
-    });
+    // O caminho do banco é a RPC (o mesmo do individual e do chip Arquivadas).
+    expect(rpcCalls).toEqual([
+      { name: 'set_conversation_status', args: { p_contact_id: 'c1', p_next: 'archived' } },
+      { name: 'set_conversation_status', args: { p_contact_id: 'c2', p_next: 'archived' } },
+    ]);
+    // Nenhum UPDATE cru em contacts: o responsável (assigned_to) não é tocado.
+    expect(recorded).toEqual([]);
+    expect(mocks.undoToast).toHaveBeenCalledTimes(1);
+    expect(lastUndo?.message).toBe('2 contato(s) arquivado(s)');
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
 
+    // O desfazer REABRE (p_next: 'open') exatamente quem foi arquivado.
     await act(async () => {
-      await lastUndo?.undoAction();
+      await lastUndo?.onUndo();
     });
 
-    const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: 'c1' } });
-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: 'c2' } });
+    expect(rpcCalls.slice(2)).toEqual([
+      { name: 'set_conversation_status', args: { p_contact_id: 'c1', p_next: 'open' } },
+      { name: 'set_conversation_status', args: { p_contact_id: 'c2', p_next: 'open' } },
+    ]);
+    expect(contactUpdates()).toEqual([]);
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('sem seleção não lê nem arquiva nada', async () => {
+  it('sem seleção não chama RPC nem oferece desfazer', async () => {
     const { result } = renderInbox();
 
     await act(async () => {
       await result.current.bulkArchive();
     });
 
-    expect(recorded).toEqual([]);
-    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(rpcCalls).toEqual([]);
+    expect(mocks.undoToast).not.toHaveBeenCalled();
   });
 
-  it('erro no UPDATE do arquivamento: avisa, não recarrega e mantém a seleção', async () => {
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
-    updateQueue.push({ error: { message: 'rls update' } });
+  it('falha em uma conversa: a contagem é a REAL e o desfazer só reabre o que arquivou', async () => {
+    rpcErrors.set('set_conversation_status', [{ message: 'rls' }]);
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(lastUndo?.message).toBe('1 de 2 contato(s) arquivado(s)');
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.selectedIds.size).toBe(0);
+
+    await act(async () => {
+      await lastUndo?.onUndo();
+    });
+
+    // Só o c2 foi arquivado (o c1 falhou), então só o c2 é reaberto.
+    expect(rpcCalls.slice(2)).toEqual([
+      { name: 'set_conversation_status', args: { p_contact_id: 'c2', p_next: 'open' } },
+    ]);
+  });
+
+  it('erro em todas as conversas: avisa, mantém a seleção e não oferece desfazer', async () => {
+    rpcErrors.set('set_conversation_status', [{ message: 'rls update' }]);
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -436,46 +523,35 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
+    expect(mocks.undoToast).not.toHaveBeenCalled();
     expect(refetch).not.toHaveBeenCalled();
     expect(result.current.selectedIds.has('c1')).toBe(true);
     expect(result.current.bulkLoading).toBe(false);
   });
 
   it('usa o retrato da seleção do momento da chamada: mudar a seleção durante a janela de desfazer não troca o alvo', async () => {
-    // A ação fica pendente de propósito (o desfazer só existe depois que ela roda).
-    mocks.execute.mockImplementation(async (options: UndoOptions) => {
-      lastUndo = options;
-    });
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
-
     const { result } = renderInbox();
     selectIds(result, ['c1']);
     await act(async () => {
       await result.current.bulkArchive();
     });
-    expect(recorded[0].filters.id).toEqual(['c1']);
+    expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual(['c1']);
 
     // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
     act(() => result.current.toggleSelection('c2'));
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(result.current.selectedIds).toEqual(new Set(['c2']));
 
     await act(async () => {
-      await lastUndo?.action();
+      await lastUndo?.onUndo();
     });
 
-    const archiveUpdate = contactUpdates().find(
-      (call) => (call.payload as { assigned_to?: unknown })?.assigned_to === null,
-    );
-    expect(archiveUpdate?.filters.id).toEqual(['c1']);
+    const reabertos = rpcCalls.filter((c) => c.args.p_next === 'open');
+    expect(reabertos).toEqual([
+      { name: 'set_conversation_status', args: { p_contact_id: 'c1', p_next: 'open' } },
+    ]);
   });
 
-  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
-  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
-  // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não
-  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.
-  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.
-  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
-    selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
+  it('não faz SELECT prévio dos contatos (nada de janela em que um SELECT falho silencia o desfazer)', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -483,13 +559,8 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await result.current.bulkArchive();
     });
 
-    const antesDoDesfazer = contactUpdates().length;
-    await act(async () => {
-      await lastUndo?.undoAction();
-    });
-
-    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
-    expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
+    expect(recorded.filter((call) => call.op === 'select')).toEqual([]);
+    expect(mocks.undoToast).toHaveBeenCalledTimes(1);
   });
 });
 
