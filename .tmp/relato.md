@@ -6,6 +6,7 @@ Troquei o comentário contraditório acima da chamada get_team_messages_page por
 
 ## Prova
 - `npx vitest run src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` → `Test Files 1 passed (1); Tests 3 passed (3)` (só comentário alterado; suite do hook continua verde).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (9s)` (db_guard OK, tipos OK, lint OK, migrations OK).
 - Segunda passada (defeito novo): `grep -rn get_team_messages_page src supabase` — chamadores são `src/components/team-chat/useTeamChatPanel.ts` (comentário corrigido, chamada inalterada) e `src/hooks/team-chat/useTeamMessages.ts` (não tocado); nenhuma lógica de chamada mudou, nenhum toast/efeito duplicado, nenhum arquivo de guarda/manifesto/CI alterado neste commit.
 
 ## Arquivos (git diff --name-only base...HEAD)
