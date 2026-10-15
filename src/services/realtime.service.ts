@@ -38,26 +38,29 @@ const CONTACT_SUMMARY_CHUNK_SIZE = 200;
  * (`components/inbox/chat/messageSendTimeline.ts`); cada coluna removida não tem
  * leitor em `src` fora do adaptador de escrita.
  */
-export const INBOX_MESSAGE_COLUMNS = [
-  'id', 'contact_id', 'sender', 'content', 'message_type', 'created_at', 'updated_at',
-  'is_read', 'external_id', 'status', 'status_updated_at', 'agent_id', 'is_deleted',
-  'is_edited', 'link_preview', 'channel_type', 'channel_connection_id',
-  'whatsapp_connection_id', 'client_message_id', 'media_url', 'media_type',
-  'media_filename', 'media_mimetype', 'media_size', 'media_meta', 'caption', 'ptt',
-  'reply_to_id', 'transcription', 'transcription_status', 'delivery_attempt_count',
-  'delivery_claimed_at', 'delivery_claim_expires_at', 'delivery_last_claim_token',
-].join(', ');
+export const INBOX_MESSAGE_COLUMNS =
+  'id, contact_id, sender, content, message_type, created_at, updated_at, is_read, external_id, status, status_updated_at, agent_id, is_deleted, is_edited, link_preview, channel_type, channel_connection_id, whatsapp_connection_id, client_message_id, media_url, media_type, media_filename, media_mimetype, media_size, media_meta, caption, ptt, reply_to_id, transcription, transcription_status, delivery_attempt_count, delivery_claimed_at, delivery_claim_expires_at, delivery_last_claim_token';
 
 /** Colunas de `contacts` usadas pela inbox (ver {@link INBOX_MESSAGE_COLUMNS}). */
-export const INBOX_CONTACT_COLUMNS = [
-  'id', 'name', 'surname', 'nickname', 'phone', 'email', 'company', 'job_title', 'notes',
-  'tags', 'avatar_url', 'conversation_status', 'conversation_status_changed_at',
-  'assigned_to', 'queue_id', 'created_at', 'updated_at', 'deleted_at', 'channel_type',
-  'channel_connection_id', 'whatsapp_connection_id', 'contact_type', 'group_category',
-  'lead_origin', 'lead_score', 'risk_score', 'ai_priority', 'ai_sentiment',
-  'consent_status', 'is_lid_legacy', 'address', 'address_number', 'neighborhood', 'city',
-  'state', 'postal_code', 'latitude', 'longitude',
-].join(', ');
+export const INBOX_CONTACT_COLUMNS =
+  'id, name, surname, nickname, phone, email, company, job_title, notes, tags, avatar_url, conversation_status, conversation_status_changed_at, assigned_to, queue_id, created_at, updated_at, deleted_at, channel_type, channel_connection_id, whatsapp_connection_id, contact_type, group_category, lead_origin, lead_score, risk_score, ai_priority, ai_sentiment, consent_status, is_lid_legacy, address, address_number, neighborhood, city, state, postal_code, latitude, longitude';
+
+/** Contatos com o embed do SLA: é o select das consultas do inbox. */
+export const INBOX_CONTACT_COLUMNS_WITH_SLA = `${INBOX_CONTACT_COLUMNS}, conversation_sla(first_response_at, first_message_at, first_response_breached)`;
+
+/**
+ * As consultas do inbox pedem só as colunas usadas (INBOX_*_COLUMNS). O DTO que
+ * circula na aplicação continua sendo o Row completo, então a linha volta a esse
+ * tipo por aqui — as colunas internas que ficaram fora do select ficam ausentes
+ * em runtime e nenhum leitor em `src` as usa (ver o comentário das listas).
+ */
+export function asInboxRows<T>(rows: unknown): T[] {
+  return (rows ?? []) as T[];
+}
+
+export function asInboxRow<T>(row: unknown): T {
+  return row as T;
+}
 
 /** Linha da RPC get_inbox_contact_summaries (última mensagem + não lidas por contato). */
 interface InboxContactSummaryRow {
@@ -83,14 +86,14 @@ export class RealtimeService {
     for (const idsChunk of chunkArray(uniqueIds, CONTACT_FETCH_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from('contacts')
-        .select(`${INBOX_CONTACT_COLUMNS}, conversation_sla(first_response_at, first_message_at, first_response_breached)`)
+        .select(INBOX_CONTACT_COLUMNS_WITH_SLA)
         .in('id', idsChunk);
         
       if (error) {
         log.error('Error fetching contacts by IDs:', error);
         throw error;
       }
-      fetchedContacts.push(...((data ?? []) as ConversationContact[]));
+      fetchedContacts.push(...asInboxRows<ConversationContact>(data));
     }
     return dedupeContacts(fetchedContacts);
   }
@@ -164,7 +167,7 @@ export class RealtimeService {
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
-      .select(`${INBOX_CONTACT_COLUMNS}, conversation_sla(first_response_at, first_message_at, first_response_breached)`)
+      .select(INBOX_CONTACT_COLUMNS_WITH_SLA)
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       
@@ -183,7 +186,7 @@ export class RealtimeService {
     if (messagesError) throw messagesError;
 
     // Dedup por external_id: mantém a linha com mais conteúdo
-    const rawMessages = (recentMessages ?? []) as RealtimeMessage[];
+    const rawMessages = asInboxRows<RealtimeMessage>(recentMessages);
     const dedupedMessages = (() => {
       const seen = new Map<string, RealtimeMessage>();
       for (const m of rawMessages) {
@@ -197,7 +200,7 @@ export class RealtimeService {
     })();
 
     const normalizedMessages = dedupedMessages.map(normalizeMessage);
-    const seededContactRows = (seededContacts ?? []) as ConversationContact[];
+    const seededContactRows = asInboxRows<ConversationContact>(seededContacts);
     const seededContactIds = new Set(seededContactRows.map((c) => c.id));
     
     const missingContactIds = getUniqueMessageContactIds(normalizedMessages)
