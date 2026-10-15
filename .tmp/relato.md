@@ -1,10 +1,10 @@
-Especialista: iris
+Especialista: senior (area-front-componentes)
 
 ## O que mudou e por quê
 - src/components/admin/PlaybooksManager.tsx
   - `save()` agora descarta passo vazio e REGRAVA `order` em sequência (1..N) antes de gravar: o banco deixa de
-    receber ordem com buraco (ex.: 1 e 3 quando o passo 2 ficou em branco). A lista também passou a ser ordenada por
-    `order` na leitura, então a tela mostra 1, 2, 3.
+    receber ordem com buraco (ex.: 1 e 3 quando o passo 2 ficou em branco). A leitura preserva a ordem gravada
+    (o `save()` grava os passos já renumerados em sequência); a consulta ordena os playbooks por `category`.
   - Diplomacia do erro: `loadPlaybooks()` checa `error` e mostra estado explícito de erro com "Tentar novamente";
     antes, falha de consulta caía no mesmo "Nenhum playbook criado" do estado vazio (a tela mentia).
   - `save()` ficou travado (ref síncrona + botão desabilitado + estado "Salvando..."): clique duplo grava uma vez.
@@ -35,6 +35,13 @@ borbulha) e o `preventDefault` engolia o clique do botão. Corrigi em `Playbooks
 quando o alvo é o próprio card (`if (event.target !== event.currentTarget) return;`). Prova: novo teste
 "Enter/Espaço nos botões de ação não abre o detalhe..." em `src/components/admin/__tests__/PlaybooksManager.test.tsx`,
 vermelho com a guarda removida e verde com ela.
+
+## Refazer 1 (só o relato — nenhum código foi alterado neste refazer)
+Ponto 1 (afirmação falsa na leitura): o relato dizia que a lista passou a ser ordenada por `order` na leitura — o código não faz isso (a consulta ordena os playbooks por `category` e os passos vão para a tela na ordem gravada, que o `save()` já renumera em 1..N). Removi a frase e descrevi o comportamento real no item do `save()` acima.
+Ponto 2 (excluir com RLS silenciosa): o `confirmDelete()` em `src/components/admin/PlaybooksManager.tsx` trata só o `error` retornado; ver observações abaixo.
+
+## Observações (para o revisor — comportamento fora do pedido, não alterado)
+- Excluir sob RLS silenciosa: se uma policy negar o `delete` sem retornar erro (0 linhas afetadas), o `confirmDelete()` mostra "Playbook removido" e recarrega a lista (que continua mostrando o item). O tratamento cobre só o `error`, como o cartão pede; detectar 0 linhas afetadas (ex.: conferir retorno) é melhoria fora do escopo deste cartão.
 
 ## Estados da tela (conferidos)
 - vazio: "Nenhum playbook criado" — só quando a consulta deu certo e voltou sem linhas.
