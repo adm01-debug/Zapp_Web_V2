@@ -64,16 +64,27 @@ export function useChatSearch({
   const [customDateFrom, setCustomDateFrom] = useState<Date | null>(null);
   const [customDateTo, setCustomDateTo] = useState<Date | null>(null);
 
-  // Stable refs for callbacks
+  // Stable refs for callbacks. Sincronizadas em useEffect (escrever no ref durante
+  // o render é proibido pela regra react-hooks/refs) e declaradas ANTES dos efeitos
+  // que as leem — no mesmo commit o ref já carrega o valor atual.
   const onHighlightChangeRef = useRef(onHighlightChange);
   const onNavigateToMessageRef = useRef(onNavigateToMessage);
-  onHighlightChangeRef.current = onHighlightChange;
-  onNavigateToMessageRef.current = onNavigateToMessage;
+  const onSearchQueryChangeRef = useRef(onSearchQueryChange);
+
+  useEffect(() => {
+    onHighlightChangeRef.current = onHighlightChange;
+  }, [onHighlightChange]);
+
+  useEffect(() => {
+    onNavigateToMessageRef.current = onNavigateToMessage;
+  }, [onNavigateToMessage]);
+
   // `onSearchQueryChange` também vira ref: o timer de debounce (200 ms) dispara
   // depois do render, então sem o ref ele chamaria a versão capturada quando a
   // query mudou — um callback antigo, se o pai tiver trocado o prop no meio.
-  const onSearchQueryChangeRef = useRef(onSearchQueryChange);
-  onSearchQueryChangeRef.current = onSearchQueryChange;
+  useEffect(() => {
+    onSearchQueryChangeRef.current = onSearchQueryChange;
+  }, [onSearchQueryChange]);
 
   // Compute effective date range
   const dateRange = useMemo(() => {

@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
 
@@ -47,10 +47,14 @@ const CONVERSAS = [
 ] as never;
 
 // Guarda o que o ROTEADOR enxerga (não o window.location) — é esse o caminho que
-// os outros filtros usam e onde o `type` precisa aparecer.
-let routerSearch = '';
+// os outros filtros usam e onde o `type` precisa aparecer. A escrita fica no
+// useEffect (e não no render), como pede a regra react-hooks/globals.
+const routerSearchRef: { current: string } = { current: '' };
 function Probe() {
-  routerSearch = useLocation().search;
+  const { search } = useLocation();
+  useEffect(() => {
+    routerSearchRef.current = search;
+  }, [search]);
   return null;
 }
 
@@ -72,7 +76,7 @@ const ids = (r: { current: ReturnType<typeof useInboxFilters> }) =>
   r.current.filteredConversations.map((c) => c.contact.id).sort();
 
 beforeEach(() => {
-  routerSearch = '';
+  routerSearchRef.current = '';
 });
 
 describe('useInboxFilters — type pela URL (PK-14)', () => {
@@ -102,12 +106,12 @@ describe('useInboxFilters — type pela URL (PK-14)', () => {
 
   it('grava o tipo no roteador (não em window.location)', () => {
     const { result } = montar('/inbox');
-    expect(routerSearch).not.toContain('type=');
+    expect(routerSearchRef.current).not.toContain('type=');
 
     act(() => result.current.handleContactTypeChange('grupo'));
 
     expect(result.current.selectedContactType).toBe('grupo');
-    expect(routerSearch).toContain('type=grupo');
+    expect(routerSearchRef.current).toContain('type=grupo');
   });
 
   it('o tipo sobrevive à troca de outro filtro (o defeito do cartão)', () => {
@@ -118,8 +122,8 @@ describe('useInboxFilters — type pela URL (PK-14)', () => {
     act(() => result.current.setFilters({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } }));
     act(() => result.current.setFilters({ status: [], tags: [], agentId: PROFILE, dateRange: { from: null, to: null } }));
 
-    expect(routerSearch).toContain('type=grupo');
-    expect(routerSearch).toContain('agent=p1');
+    expect(routerSearchRef.current).toContain('type=grupo');
+    expect(routerSearchRef.current).toContain('agent=p1');
     expect(result.current.selectedContactType).toBe('grupo');
   });
 
@@ -130,13 +134,13 @@ describe('useInboxFilters — type pela URL (PK-14)', () => {
 
     act(() => result.current.handleContactTypeChange(null));
     expect(result.current.selectedContactType).toBeNull();
-    expect(routerSearch).not.toContain('type=');
+    expect(routerSearchRef.current).not.toContain('type=');
     expect(ids(result)).toEqual(['ana', 'grp']);
 
     act(() => result.current.handleContactTypeChange('cliente'));
     act(() => result.current.handleContactTypeChange('all'));
     expect(result.current.selectedContactType).toBeNull();
-    expect(routerSearch).not.toContain('type=');
+    expect(routerSearchRef.current).not.toContain('type=');
     expect(ids(result)).toEqual(['ana', 'grp']);
   });
 });
@@ -149,7 +153,7 @@ describe('useInboxFilters — busca em memória (PK-14)', () => {
     act(() => result.current.setSearch('ana'));
     expect(result.current.search).toBe('ana');
     expect(ids(result)).toEqual(['ana']);
-    expect(routerSearch).not.toContain('ana');
+    expect(routerSearchRef.current).not.toContain('ana');
   });
 
   it('descartar os termos: zera a busca e a lista volta ao todo', () => {
