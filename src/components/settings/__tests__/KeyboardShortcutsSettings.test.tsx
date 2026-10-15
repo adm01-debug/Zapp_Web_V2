@@ -64,12 +64,15 @@ describe('etapa 84 — tela de atalhos exibe nome e descrição das Tarefas', ()
     expect(screen.getByText('Mostra o painel de atalhos')).toBeInTheDocument();
   });
 
-  it('mantém os atalhos globais intactos', () => {
+  it('lista só os atalhos que têm executor — nenhuma tecla sem efeito', () => {
     render(<KeyboardShortcutsSettings />);
 
-    expect(screen.getByText('Enviar mensagem')).toBeInTheDocument();
-    expect(screen.getByText('Envia a mensagem atual')).toBeInTheDocument();
     expect(screen.getByText('Busca global')).toBeInTheDocument();
+    // t_3d996237: `send-message` (Ctrl+Enter) só existe por caminho fixo, que
+    // não lê a tecla gravada — sem executor no registry, sai da tela em vez de
+    // prometer um remapeamento que não muda nada.
+    expect(screen.queryByText('Enviar mensagem')).not.toBeInTheDocument();
+    expect(screen.queryByText('Envia a mensagem atual')).not.toBeInTheDocument();
   });
 });
 

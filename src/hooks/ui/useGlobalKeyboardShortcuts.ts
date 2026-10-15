@@ -25,13 +25,21 @@ function viewAtual(): string {
   return new URLSearchParams(window.location.search).get('view') ?? 'inbox';
 }
 
-export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[]) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { shortcuts, getActiveBinding } = useCustomShortcuts();
+export interface AcoesGlobaisDeps {
+  /** `useLocation().pathname` do shell. */
+  pathname: string;
+  /** `useNavigate()`. */
+  navigate: (to: string) => void;
+}
 
-  // Default global actions
-  const defaultActions: Record<string, (event: KeyboardEvent) => void> = {
+/**
+ * Tabela de executores globais. Fica fora do hook e é exportada de propósito: é
+ * dela que sai a lista de ids COM executor. `atalhosSemExecutor.test.ts` chama
+ * esta função em vez de repetir a lista à mão — lista copiada não prova nada e
+ * envelhece junto com o código.
+ */
+export function criarAcoesGlobais({ pathname, navigate }: AcoesGlobaisDeps): Record<string, (event: KeyboardEvent) => void> {
+  return {
     'global-search': () => {
       document.dispatchEvent(new CustomEvent('open-global-search'));
     },
@@ -46,7 +54,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       // `useNavigationHistory` escutam para trocar a tela.
       // Fora da raiz (/sla, /admin/roles) o `?view=` sozinho não levaria ao
       // shell: volta para a raiz já com a view no caminho.
-      if (location.pathname !== '/') navigate('/?view=dashboard');
+      if (pathname !== '/') navigate('/?view=dashboard');
       navigateToView('dashboard');
       toast.info('📊 Dashboard', { duration: 1500 });
     },
@@ -94,6 +102,15 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       document.dispatchEvent(new CustomEvent('show-shortcuts-help'));
     },
   };
+}
+
+export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[]) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { shortcuts, getActiveBinding } = useCustomShortcuts();
+
+  // Default global actions
+  const defaultActions = criarAcoesGlobais({ pathname: location.pathname, navigate });
 
   // A tabela de acoes mistura os defaults com `customActions`, que o provider
   // recria a cada render. Guardada numa ref, ela deixa de invalidar o listener

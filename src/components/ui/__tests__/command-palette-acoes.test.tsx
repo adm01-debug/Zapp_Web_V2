@@ -139,7 +139,9 @@ describe('paleta → ajuda de atalhos, ponta a ponta (R2-INF-033)', () => {
 
     // O painel de ajuda REAL (KeyboardShortcutsDialog) fica visível: o efeito anunciado
     // pela entrada da paleta é a ajuda aberta, não o simples fechamento do diálogo.
-    expect(await screen.findByText('Enviar mensagem')).toBeInTheDocument();
+    // t_3d996237: o painel agora lista só atalhos com executor — a linha usada como
+    // prova é a de `toggle-sidebar`; 'Enviar mensagem' saiu da ajuda.
+    expect(await screen.findByText('Alternar barra lateral')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Buscar ou digitar comando/)).not.toBeInTheDocument();
   });
 });
