@@ -171,15 +171,22 @@ function makeClient(cfg: {
   rpcErrors?: Record<string, { code?: string; message?: string }>;
   /** RPCs que LANÇAM (o handler absorve em try/catch). */
   rpcThrows?: string[];
+  /** Linhas de `contacts` e `whatsapp_connections` (classificação do claim vazio). */
+  contacts?: RpcResult[];
+  connections?: RpcResult[];
 }): FakeClient {
   const rpcCalls: { fn: string; args?: Row }[] = [];
   const messagesQueue: RpcResult[] = [...(cfg.messages ?? [])];
+  const contactsQueue: RpcResult[] = [...(cfg.contacts ?? [])];
+  const connectionsQueue: RpcResult[] = [...(cfg.connections ?? [])];
   return {
     rpcCalls,
     from(table: string): Chain {
       let result: RpcResult = { data: null, error: null };
       if (table === 'profiles') result = { data: { id: 'profile-1', is_active: true }, error: null };
       if (table === 'messages') result = messagesQueue.shift() ?? { data: null, error: null };
+      if (table === 'contacts') result = contactsQueue.shift() ?? { data: null, error: null };
+      if (table === 'whatsapp_connections') result = connectionsQueue.shift() ?? { data: null, error: null };
       const chain: Chain = {
         select: () => chain,
         eq: () => chain,
@@ -428,7 +435,9 @@ Deno.test('PD-80: limite de envios do próprio Zapp vira code=rate_limited (429)
 Deno.test('PD-80: envio em andamento devolve code=in_progress (409) sem reenviar', async () => {
   const client = makeClient({
     claim: { data: [], error: null },
-    messages: [{ data: { agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null }, error: null }],
+    messages: [{ data: { agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null, contact_id: 'contact-1', whatsapp_connection_id: 'conn-1' }, error: null }],
+    contacts: [{ data: { phone: CONTACT_PHONE, whatsapp_connection_id: 'conn-1' }, error: null }],
+    connections: [{ data: { status: 'connected', instance_id: 'inst-1' }, error: null }],
   });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
   assertStatus(response.status, 409);
@@ -549,3 +558,168 @@ Deno.test('PD-80: métrica mark_first_response LANÇANDO NÃO derruba um envio j
   assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
+function emptyClaimClient(row: Row, contact: Row | null, connection: Row | null): FakeClient {
+  return makeClient({
+    claim: { data: [], error: null },
+    messages: [{ data: row, error: null }],
+    contacts: [{ data: contact, error: null }],
+    connections: [{ data: connection, error: null }],
+  });
+}
+
+const SENDING_ROW: Row = {
+  agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+  contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+};
+const CONNECTED_ROW: Row = { status: 'connected', instance_id: 'inst-1' };
+const VALID_CONTACT_ROW: Row = { phone: CONTACT_PHONE, whatsapp_connection_id: 'conn-1' };
+
+Deno.test('PD-80 [refazer1]: claim vazio com conexão fora do ar vira code=instance_unavailable (409), retryable e sem telefone no corpo', async () => {
+  const client = emptyClaimClient(SENDING_ROW, VALID_CONTACT_ROW, { status: 'disconnected', instance_id: 'inst-1' });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'instance_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  const serialized = JSON.stringify(body);
+  if (serialized.includes(CONTACT_PHONE)) throw new Error('resposta vazou telefone');
+});
+
+Deno.test('PD-80 [refazer1]: claim vazio com conexão sem instance_id vira code=instance_unavailable (409)', async () => {
+  const client = emptyClaimClient(SENDING_ROW, VALID_CONTACT_ROW, { status: 'connected', instance_id: null });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 409);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'instance_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+});
+
+Deno.test('PD-80 [refazer1]: claim vazio com telefone fora de 8–15 dígitos vira code=invalid_number (422), sem retry e sem telefone no corpo', async () => {
+  const client = emptyClaimClient(SENDING_ROW, { phone: '12ab', whatsapp_connection_id: 'conn-1' }, CONNECTED_ROW);
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 422);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'invalid_number', 'code');
+  assertEqual(body.retryable, false, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  const serialized = JSON.stringify(body);
+  if (serialized.includes('12ab')) throw new Error('resposta vazou telefone');
+});
+
+Deno.test('PD-80 [refazer1]: claim vazio com status final sem recibo (failed) vira code=provider_rejected (422), não in_progress', async () => {
+  const failedRow: Row = { ...SENDING_ROW, status: 'failed' };
+  const client = emptyClaimClient(failedRow, VALID_CONTACT_ROW, CONNECTED_ROW);
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 422);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_rejected', 'code');
+  assertEqual(body.retryable, false, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+});
+
+Deno.test('PD-80 [refazer1]: falha de INFRA ao assinar URL privada (storage) vira code=provider_unavailable (503), retryable, sem reconciliar e sem chamar o provedor', async () => {
+  const mediaClaim = {
+    ...CLAIM,
+    message_type: 'image',
+    media_url: 'https://supabase.invalid/storage/v1/object/sign/whatsapp-media/msg-1.jpg',
+  };
+  const client = makeClient({ claim: { data: [mediaClaim], error: null } });
+  (client as unknown as Row).storage = {
+    from: () => ({ createSignedUrl: async () => ({ data: null, error: { message: 'storage down' } }) }),
+  };
+  let providerCalled = false;
+  const deps = makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, {});
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), {
+    ...deps,
+    requireEnv: (name: string) => (name === 'EVOLUTION_API_URL' ? 'https://evolution.invalid' : 'https://supabase.invalid'),
+  });
+  assertStatus(response.status, 503);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(providerCalled, false, 'provedor chamado antes do POST');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+});
+
+Deno.test('PD-80 [refazer1]: falha de INFRA ao ler o payload rico vira code=provider_unavailable (503), retryable e sem reconciliar', async () => {
+  const pollClaim = { ...CLAIM, message_type: 'poll', content: '{}' };
+  const client = makeClient({
+    claim: { data: [pollClaim], error: null },
+    messages: [{ data: null, error: { code: 'XX000', message: 'db down' } }],
+  });
+  let providerCalled = false;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, {});
+  }));
+  assertStatus(response.status, 503);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(providerCalled, false, 'provedor chamado antes do POST');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+});
+
+Deno.test('PD-80 [refazer1]: linha legível sem payload rico continua erro de CONTEÚDO (422 media_invalid), não infra', async () => {
+  const pollClaim = { ...CLAIM, message_type: 'poll', content: '{}' };
+  const client = makeClient({
+    claim: { data: [pollClaim], error: null },
+    messages: [{ data: { media_meta: {} }, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 422);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'media_invalid', 'code');
+  assertEqual(body.retryable, false, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+});
+
+Deno.test('PD-80 [refazer1]: erro ao ler contato/conexão na causa do claim vazio degrada para infra (503 provider_unavailable), retryable', async () => {
+  const contactError = makeClient({
+    claim: { data: [], error: null },
+    messages: [{ data: SENDING_ROW, error: null }],
+    contacts: [{ data: null, error: { code: 'XX000', message: 'db down' } }],
+    connections: [{ data: CONNECTED_ROW, error: null }],
+  });
+  const connectionError = makeClient({
+    claim: { data: [], error: null },
+    messages: [{ data: SENDING_ROW, error: null }],
+    contacts: [{ data: VALID_CONTACT_ROW, error: null }],
+    connections: [{ data: null, error: { code: 'XX000', message: 'db down' } }],
+  });
+  for (const client of [contactError, connectionError]) {
+    const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+    assertStatus(response.status, 503);
+    const body = await response.json() as Row;
+    assertEqual(body.code, 'provider_unavailable', 'code');
+    assertEqual(body.retryable, true, 'retryable');
+    assertEqual(body.ambiguous, false, 'ambiguous');
+    assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  }
+});
+
+Deno.test('PD-80 [refazer1]: contato ausente (linha não achada) com conexão ok vira code=invalid_number (422)', async () => {
+  const client = makeClient({
+    claim: { data: [], error: null },
+    messages: [{ data: SENDING_ROW, error: null }],
+    contacts: [{ data: null, error: null }],
+    connections: [{ data: CONNECTED_ROW, error: null }],
+  });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(200, {})));
+  assertStatus(response.status, 422);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'invalid_number', 'code');
+  assertEqual(body.retryable, false, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+});

@@ -1,47 +1,17 @@
-Especialista: Edgar (area-edge-api)
+Especialista: edgar
 
-## O que mudou e por quê
-- `supabase/functions/message-delivery/index.ts`: o corpo de erro da entrega passa a carregar
-  `error` (mensagem fixa pt-BR), `code` (estável), `retryable` e `ambiguous`. Fonte única do código
-  por ramo: `classifyProviderFailure()` (recusa do provedor) + `unconfirmedReceiptFailure()` /
-  `preDispatchFailure()`; o corpo é montado só em `deliveryFailureBody()`/`deliveryFailureResponse()`.
-  Assim EV1/M2 conseguem traduzir "número inválido" sem confundir com "instância desconectada" e
-  sem oferecer reenvio cego quando o POST já saiu.
-- `supabase/functions/message-delivery/index.test.ts`: testes de RAMO de verdade do handler (o
-  handler ganhou um parâmetro opcional `deps` só para isto; os defaults de produção são os reais
-  `requireAuth`/`enforceRateLimit`/`createClient`/`requireEnv`/`evoFetch`).
+[refazer 1] message-delivery: claim vazio devolve o código da causa (não mais sempre in_progress) e falha de infra pré-POST vira 503 retryable, separada de erro de conteúdo.
 
-Mapa por ramo (antes → depois):
-- taxa do próprio Zapp estourou: `errorResponse('Rate limit exceeded', 429)` → `429` + `code=rate_limited`, `retryable=true`, `ambiguous=false`.
-- claim vazio e não enviado: `errorResponse('...already in progress...', 409)` → `409` + `code=in_progress`.
-- recusa 4xx do provedor: `502` "Message provider rejected the delivery" → `422` `invalid_number` (número/não registrado), `409` `instance_unavailable` (instância desconectada/401), ou `422` `provider_rejected` (demais).
-- 429 do provedor: → `429` + `code=rate_limited`.
-- 5xx do provedor: `502` → `502` + `code=provider_unavailable`, `ambiguous=true`; reconciliação continua só aqui (o `enqueueDeliveryReconciliation` passou a seguir `failure.ambiguous`, que só é true no 5xx — mesmo efeito de antes).
-- 200 sem id, recibo não gravado, e exceção DEPOIS do POST: `502` → `502` + `code=receipt_unconfirmed`, `ambiguous=true`, reconciliação igual a antes.
-- exceção ANTES do POST (mídia/payload do pedido não montável): `502` "Message delivery failed" → `422` + `code=media_invalid`, `ambiguous=false`, SEM chamar o provedor e SEM reconciliar.
+O que mudou e por quê: o ramo de claim vazio agora classifica a causa lendo contato + conexão (critérios da claim_outbound_message) e só diz in_progress para sending com o resto elegível; e a fase pré-POST separa infra (storage/payload ilegível → provider_unavailable 503, retryable, sem reconciliar) de conteúdo (media_invalid 422). Arquivos: supabase/functions/message-delivery/index.ts, supabase/functions/message-delivery/index.test.ts.
 
-## Sensibilidade
-- O diff toca: leitura de `SUPABASE_SERVICE_ROLE_KEY` (inalterada) e a resposta do rate limit (`enforceRateLimit` só foi injetado para teste; a lógica não mudou).
-- Nenhuma proteção afrouxada: `requireAuth` continua antes de ler o corpo; nenhum segredo/PII voltou na resposta. Prova: no teste do 5xx o corpo do provedor traz o telefone (`5511999999999`) e o texto de erro, e o teste afirma que NENHUM dos dois aparece em `JSON.stringify(body)`.
-- Nenhuma referência a banco/endpoint de produção: o teste injeta um cliente falso e um `evoFetch` falso; nenhuma rede, nenhum segredo.
-- O que muda para quem chama: `error` continua no mesmo campo e continua sendo a mensagem; os campos novos são aditivos. O status HTTP de falha do provedor mudou (era sempre `502`) — o cliente (`outbound-message.service.ts`) trata qualquer não-2xx como erro e lê só `.error`.
+Ponto 1 — claim vazio com código errado: em index.ts, novo helper classifyUnclaimedCause (ordem: conexão → número → sending → terminal) com CONNECTION_DOWN_FAILURE (409 instance_unavailable, retryable=true), INVALID_NUMBER_FAILURE (422 invalid_number) e TERMINAL_WITHOUT_RECEIPT_FAILURE (422 provider_rejected; fail_outbound_message com retryable=false grava status='failed', ou seja, desfecho definitivo sem recibo — não "em andamento" nem ambíguo; nova tentativa exige ação explícita). Contato ausente cai em invalid_number (sem telefone válido o pedido nunca é reivindicável); erro de LEITURA em contatos/conexões degrada para infra 503 retryable (transitório, nunca bucket definitivo). Telefone nunca entra em log nem resposta (só dígitos locais para o regex). Teste que prova: 6 testes 'PD-80 [refazer1]' (conexão fora do ar, sem instance_id, telefone inválido, failed→provider_rejected, erro de leitura→503, contato ausente→422) — vermelhos sem a correção (ex.: expected "instance_unavailable", got "in_progress"), verdes com ela.
+Ponto 2 — Deno cobre cada ramo do claim vazio: os 6 testes acima + fixture do teste in_progress estendida (conexão connected + telefone válido) + asserts de ausência do telefone no corpo (JSON.stringify sem CONTACT_PHONE) e de code/retryable/ambiguous em cada um. Vermelho antes / verde depois conforme o Ponto 1.
+Ponto 3 — exceção antes do POST separada: em index.ts, PreDispatchInfraError + preDispatchInfraFailure() (503 provider_unavailable, retryable=true, ambiguous=false, sem reconcile — nada saiu para o provedor); resolvePrivateBucketUrl e leitura de media_meta com erro viram infra; linha legível sem payload e throws de providerPayload continuam conteúdo (media_invalid 422). Teste que prova: 'falha de INFRA ao assinar URL privada' e 'falha de INFRA ao ler o payload rico' (503, retryable, sem enqueue_ai_job, provedor não chamado) — vermelhos sem a correção (caíam em media_invalid); 'linha legível sem payload rico continua 422 media_invalid' é o pino de regressão do lado conteúdo (passa antes e depois por desenho).
+Ponto 4 — número do relato: a entrega anterior adicionou 14 Deno.test no diff (8→22, conferido por git show 5bb163778: 14 linhas '+Deno.test'), não 11; e a linha FATOS 'Nenhum arquivo de teste alterado' contradizia o próprio diff (index.test.ts +269). Este refazer adiciona 9 Deno.test (28→37; o HEAD andou com o commit irmão c3d58ffa, só-testes, que preservei — meu diff não remove nenhum teste dele).
 
-## Prova
-- Escopo do diff (checagem mecânica do fechar): 6 arquivos, 2 de teste, 11 casos de teste novos.
-- vermelho antes: `git show cd9f5e69e8:supabase/functions/message-delivery/index.ts > .../index.ts` e `deno test --no-check supabase/functions/message-delivery/index.test.ts` → `error: SyntaxError: The requested module './index.ts' does not provide an export named 'classifyProviderFailure'` / `FAILED | 0 passed | 1 failed` (a base não tem código estável nem os helpers). Arquivo restaurado em seguida; `git diff --stat` ficou vazio.
-- verde depois: `deno test supabase/functions/message-delivery/index.test.ts` → `ok | 22 passed | 0 failed (38ms)`, type-check limpo. (A contagem de testes novos/alterados do commit está no bloco FATOS MEDIDOS.)
+Arquivos (git diff --name-only HEAD):
+supabase/functions/message-delivery/index.test.ts
+supabase/functions/message-delivery/index.ts
 
-## Dependência trazida (PD-79, cartão pai t_8c6419cf)
-A seção DEPENDÊNCIA do cartão manda literalmente rodar `git cherry-pick --empty=drop $(git rev-list --reverse --no-merges dia/2026-10-13..<sha do pai>)` antes de começar — por isso estes arquivos entraram no commit mesmo não estando em "ARQUIVOS QUE PODE TOCAR": são a banda OBRIGATÓRIA do pai, não um achado do escopo. Vieram
-íntegros do pai (`a4d3f44074`, `4a9d27aa6f`), sem alteração minha, para o schema local ter a coluna/RPC do PD-79:
-- `supabase/migrations/20261013210004_outbound_post_started.sql` (coluna + RPC do POST iniciado)
-- `scripts/db-audit/message-delivery-phase1-behavior.test.sh` (auditoria do pai)
-- `scripts/db-audit/message-delivery-phase1-runtime.sql` (runtime de auditoria do pai)
-Os arquivos escritos por este cartão são os 2 de `message-delivery` (`index.ts` e `index.test.ts`); o commit tem 6 arquivos no total, contando `.tmp/relato.md`.
-
-## O que NÃO fiz e por quê
-- Não liguei `mark_outbound_post_started` (coluna/RPC do PD-79): essa chamada é do cartão irmão do PD-79 (t_ea8decbb), não veio por dependência para este workspace. O `ambiguous` foi derivado do ponto do código (`providerPostAttempted`), como o cartão permite.
-- Não mexi em `_shared/validation.ts`: a mudança ficou contida no `message-delivery`, então nenhuma outra Edge que usa `errorResponse` muda de comportamento.
-- `p_retryable` em `fail_outbound_message` continua `false` (sem mudança): uma nova tentativa segue sendo ação explícita do operador. O `retryable` da resposta é o sinal separado para o cliente.
-- No ramo de claim vazio, `ambiguous=false`: o caso "POST iniciado + lease vencido" só é distinguível pela marca do PD-79, que não está integrada nesta base — quem resolve esse ramo é o fluxo PD-78/PD-79 (`fail_outbound_unclaimed`), fora deste cartão.
-- `code=media_invalid` cobre qualquer carga inválida ANTES do POST (mídia ou payload persistido), não só mídia.
+Comando de verificação: zapp-verify --rapido
+Resultado: VERDE SEM BANCO (14s) — db_guard OK, tipos OK, lint OK, migrations OK; banco_local AVISO (sem nome de conjunto; sem migration no diff, nada a verificar no banco). Suíte Deno (fora do --rapido): deno test --config scripts/ci/deno.json supabase/functions/message-delivery/index.test.ts → ok | 37 passed | 0 failed.

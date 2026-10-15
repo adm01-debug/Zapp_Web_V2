@@ -102,6 +102,23 @@ export const PROMPT_REJECTED_FAILURE: DeliveryFailure = {
 export const IN_PROGRESS_FAILURE: DeliveryFailure = {
   status: 409, code: 'in_progress', retryable: false, ambiguous: false,
 };
+/** Claim vazio porque a conexão não está 'connected' (ou não há instância):
+ *  causa temporária — o OPERADOR pode tentar de novo depois de reconectar. */
+export const CONNECTION_DOWN_FAILURE: DeliveryFailure = {
+  status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false,
+};
+/** Claim vazio porque o telefone do contato não tem 8–15 dígitos: o pedido
+ *  nunca será reivindicável sem corrigir o número. Não é retentável. */
+export const INVALID_NUMBER_FAILURE: DeliveryFailure = {
+  status: 422, code: 'invalid_number', retryable: false, ambiguous: false,
+};
+/** Linha terminal sem recibo (ex.: status 'failed' gravado por
+ *  fail_outbound_message): a tentativa anterior encerrou de forma definitiva,
+ *  não há lease nem recibo pendente — não está "em andamento" nem é ambíguo.
+ *  Nova tentativa exige ação explícita do operador. */
+export const TERMINAL_WITHOUT_RECEIPT_FAILURE: DeliveryFailure = {
+  status: 422, code: 'provider_rejected', retryable: false, ambiguous: false,
+};
 /** Limite de envios do próprio Zapp (não é recusa do provedor). */
 export const EDGE_RATE_LIMITED_FAILURE: DeliveryFailure = {
   status: 429, code: 'rate_limited', retryable: true, ambiguous: false,
@@ -114,6 +131,15 @@ export function unconfirmedReceiptFailure(): DeliveryFailure {
 export function preDispatchFailure(): DeliveryFailure {
   return { status: 422, code: 'media_invalid', retryable: false, ambiguous: false };
 }
+/** Falha de INFRA antes do POST (ex.: assinar URL privada no storage ou ler o
+ *  payload rico): nada saiu para o provedor, logo não é ambíguo e não há o
+ *  que reconciliar; causa temporária — o OPERADOR pode tentar de novo. */
+export function preDispatchInfraFailure(): DeliveryFailure {
+  return { status: 503, code: 'provider_unavailable', retryable: true, ambiguous: false };
+}
+/** Marca os throws da fase pré-POST que são infra (storage/payload ilegível),
+ *  não erro de conteúdo. Só carrega texto fixo — nunca dado do pedido. */
+export class PreDispatchInfraError extends Error {}
 
 /** Marcas textuais de instância/conexão fora do ar. O corpo do provedor NUNCA é
  *  devolvido; ele só decide o código estável (nada ambíguo: não houve entrega). */
@@ -407,6 +433,69 @@ async function failClaim(
 }
 
 /**
+ * Claim vazio: descobre a CAUSA lendo contato + conexão (os mesmos critérios
+ * da claim_outbound_message: conexão 'connected' com instance_id e telefone
+ * de 8–15 dígitos) e devolve o código estável correspondente. Ordem:
+ * conexão → número → lease vivo (sending) → linha terminal sem recibo.
+ * Nunca loga nem devolve o telefone.
+ */
+async function classifyUnclaimedCause(
+  service: DeliveryDbClient,
+  existing: {
+    status?: string | null; contact_id?: string | null;
+    whatsapp_connection_id?: string | null;
+  },
+): Promise<DeliveryFailure> {
+  let contact: { phone?: unknown; whatsapp_connection_id?: unknown } | null = null;
+  let causeLookupFailed = false;
+  if (existing.contact_id) {
+    const { data, error } = await service.from('contacts')
+      .select('phone, whatsapp_connection_id')
+      .eq('id', existing.contact_id)
+      .maybeSingle();
+    if (error) {
+      console.error(JSON.stringify({ event: 'message_delivery_cause_contact_error', code: error.code }));
+      causeLookupFailed = true;
+    } else {
+      const row = (data ?? null) as { phone?: unknown; whatsapp_connection_id?: unknown } | null;
+      contact = row;
+    }
+  }
+  const connectionId = (existing.whatsapp_connection_id ??
+    (typeof contact?.whatsapp_connection_id === 'string' ? contact.whatsapp_connection_id : null)) as string | null;
+  let connection: { status?: unknown; instance_id?: unknown } | null = null;
+  if (connectionId) {
+    const { data, error } = await service.from('whatsapp_connections')
+      .select('status, instance_id')
+      .eq('id', connectionId)
+      .maybeSingle();
+    if (error) {
+      console.error(JSON.stringify({ event: 'message_delivery_cause_connection_error', code: error.code }));
+      causeLookupFailed = true;
+    } else {
+      const row = (data ?? null) as { status?: unknown; instance_id?: unknown } | null;
+      connection = row;
+    }
+  }
+  // Leitura de causa falhou (transitório): sem classificar às cegas — nada
+  // saiu, não ambíguo, o OPERADOR pode tentar de novo. Sem reconciliação.
+  if (causeLookupFailed) {
+    return preDispatchInfraFailure();
+  }
+  if (!connection || connection.status !== 'connected' || !connection.instance_id) {
+    return CONNECTION_DOWN_FAILURE;
+  }
+  const digits = typeof contact?.phone === 'string' ? contact.phone.replace(/\D/g, '') : '';
+  if (!/^[0-9]{8,15}$/.test(digits)) {
+    return INVALID_NUMBER_FAILURE;
+  }
+  if (existing.status === 'sending') {
+    return IN_PROGRESS_FAILURE;
+  }
+  return TERMINAL_WITHOUT_RECEIPT_FAILURE;
+}
+
+/**
  * IA-047: enfileira a RECONCILIAÇÃO (somente-leitura, idempotente, SEM reenvio)
  * de uma entrega cujo resultado ficou incerto. A chave estável
  * `reconcile:message.send:<message_id>` colide no UNIQUE de `ai_jobs`, então
@@ -502,7 +591,7 @@ export async function handleMessageDeliveryRequest(
   if (!claim) {
     const { data: existing, error: existingError } = await service
       .from('messages')
-      .select('agent_id, sender, status, external_id')
+      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id')
       .eq('id', messageId)
       .maybeSingle();
     if (existingError || !existing || existing.agent_id !== profile.id || existing.sender !== 'agent') {
@@ -511,10 +600,11 @@ export async function handleMessageDeliveryRequest(
     if (existing.external_id && ['sent', 'delivered', 'read'].includes(existing.status || '')) {
       return jsonResponse({ messageId, status: existing.status, externalId: existing.external_id, idempotent: true }, 200, req);
     }
-    // PD-79: claim vazio também cobre "POST iniciado + lease vencido"; o caso
-    // ambíguo desse ramo é resolvido pelo fluxo PD-78/PD-79
-    // (fail_outbound_unclaimed), não aqui. Não reenviamos.
-    return deliveryFailureResponse(IN_PROGRESS_FAILURE, req);
+    // Claim vazio: a causa decide o código — conexão fora do ar, número
+    // inválido, lease vivo em outro worker ou linha terminal sem recibo.
+    // PD-79: o subcaso "POST iniciado + lease vencido" continua resolvido pelo
+    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.
+    return deliveryFailureResponse(await classifyUnclaimedCause(service, existing), req);
   }
 
   // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
@@ -522,9 +612,15 @@ export async function handleMessageDeliveryRequest(
   let providerPostAttempted = false;
   let externalId: string | null = null;
   try {
-    const mediaUrl = claim.media_url
-      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
-      : null;
+    let mediaUrl: string | null = null;
+    try {
+      mediaUrl = claim.media_url
+        ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
+        : null;
+    } catch {
+      // Assinar a URL privada falhou (storage): infra, não conteúdo.
+      throw new PreDispatchInfraError('media_resolve_failed');
+    }
     let richPayload: Record<string, unknown> | null = null;
     if (claim.message_type === 'poll' || claim.message_type === 'contact'
         || claim.message_type === 'buttons' || claim.message_type === 'list') {
@@ -533,9 +629,12 @@ export async function handleMessageDeliveryRequest(
         .select('media_meta')
         .eq('id', claim.message_id)
         .maybeSingle();
+      // Leitura do payload rico falhou: infra (nada saiu para o provedor).
+      if (metadataError) throw new PreDispatchInfraError('rich_payload_read_failed');
       const meta = asRecord(messageMetadata?.media_meta);
       richPayload = asRecord(meta?.outbound_delivery_payload);
-      if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
+      // Linha legível mas sem payload: conteúdo, não infra.
+      if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     providerPostAttempted = true;
@@ -600,8 +699,12 @@ export async function handleMessageDeliveryRequest(
     await failClaim(service, claim);
     // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
     // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
-    // Antes do POST (payload/mídia inválidos): nada saiu → não ambíguo.
-    const failure = providerPostAttempted ? unconfirmedReceiptFailure() : preDispatchFailure();
+    // Antes do POST há dois casos: infra (storage/payload ilegível — nada
+    // saiu, não ambíguo, sem reconciliar, OPERADOR pode tentar de novo) e
+    // conteúdo (payload/mídia inválidos — nada saiu → não ambíguo).
+    const failure = providerPostAttempted
+      ? unconfirmedReceiptFailure()
+      : error instanceof PreDispatchInfraError ? preDispatchInfraFailure() : preDispatchFailure();
     if (providerPostAttempted) {
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
