@@ -5,32 +5,32 @@
  * `csat_auto_config` existia e ninguém executava o envio).
  *
  * O que diverge do v3 de propósito (o v2 é melhor onde diverge):
- *  - O v3 fazia um POST direto no Evolution sem fila durável; aqui a mensagem sai
- *    pela FILA CANÔNICA (`enqueue_outbound_message`), idempotente por
- *    `(contact_id, client_message_id)`, que respeita a permissão `send_messages`,
- *    o escopo de fila da conexão e é entregue pelo worker `message-delivery`.
- *  - O v3 gravava o convite em `csat_surveys(status='scheduled')`. No v2,
- *    `csat_surveys` é a tabela de RESPOSTAS (`rating NOT NULL`, `agent_id NOT
- *    NULL`) e é a fonte da média/distribuição do dashboard CSAT. Um convite ali
- *    exigiria rating sintético e sujaria a média — então o convite fica durável
- *    na própria fila (linha de `messages` idempotente), e a criação de um estado
- *    de convite no banco é migration (registrado no cartão para o especialista
- *    de banco, fora da minha área).
- *  - O atraso (`csat_auto_config.delay_minutes`) não é aplicado: a fila canônica
- *    do v2 entrega imediatamente e não tem `send_at`. Agendar é outro cartão.
+ *  - O v3 fazia um POST direto no Evolution no fechamento; aqui o fechamento só
+ *    AGENDA o convite (`csat_surveys.status='scheduled'`, `send_at = agora +
+ *    delay_minutes`, migration `20261015210626_csat_pipeline.sql` do cartão
+ *    t_69726cda) e quem envia é a Edge de cron `csat-dispatch`, pela fila
+ *    canônica (`messages` + `claim_outbound_message`), nunca por fetch solto.
+ *  - O atraso (`csat_auto_config.delay_minutes`) agora É aplicado: é o `send_at`
+ *    do convite. O que não venceu não sai — quem decide o "venceu" é a RPC
+ *    `claim_due_csat_surveys`, com `send_at <= now()`.
+ *  - Quem agenda é o PRÓPRIO chamador (JWT do atendente): nenhuma leitura ou
+ *    escrita usa service_role. A RLS do INSERT de `csat_surveys` exige que
+ *    `agent_id` seja o perfil do chamador (ou admin/supervisor) e a RLS de
+ *    SELECT decide o que ele vê.
  *
  * Garantias (cada uma com prova em index.test.ts):
- *  - só envia com `csat_auto_config.is_enabled` verdadeiro;
+ *  - só agenda com `csat_auto_config.is_enabled` verdadeiro;
  *  - LGPD: `contacts.consent_status = 'revoked'` nunca recebe pesquisa;
- *  - cooldown de 30 dias por contato (outra conversa encerrada no período, ou
- *    resposta de CSAT recente);
- *  - no máximo UMA pesquisa por conversa: `client_message_id` = id do
- *    encerramento; a unicidade `(contact_id, client_message_id)` do banco é a
- *    garantia final (a checagem explícita cobre o caminho comum);
+ *  - cooldown por convite: nada nos últimos 30 dias com status `scheduled`,
+ *    `sent` ou `responded` para o mesmo contato (o pendente também bloqueia —
+ *    senão dois encerramentos seguidos criariam dois convites para o mesmo
+ *    contato, e o índice único de `csat_surveys` é por conversa, não por contato);
+ *  - no máximo UMA pesquisa por conversa: o índice único parcial
+ *    `uq_csat_surveys_conversation` (conversation_id) é a garantia — a UNIQUE
+ *    decide, nunca uma consulta prévia;
  *  - só conversa realmente encerrada por atendente: `contacts.conversation_status
  *    = 'resolved'` E encerramento com `closed_by` preenchido;
- *  - quem envia é o PRÓPRIO chamador: nenhuma leitura/escrita usa service_role; a
- *    RLS decide o que ele vê e a RPC decide o que ele pode enfileirar.
+ *  - sem telefone não há entrega: o convite nem é agendado.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
@@ -58,8 +58,14 @@ export const CSAT_DEFAULT_TEMPLATE =
 /** Variáveis aceitas no modelo, as mesmas documentadas na tela de configuração. */
 export const CSAT_TEMPLATE_TOKENS = ["name", "agent", "queue"] as const;
 
-/** RPC canônica da fila de saída (a única porta de envio do v2). */
-export const CSAT_ENQUEUE_RPC = "enqueue_outbound_message";
+/** Tabela onde o convite fica durável, com `status`/`send_at` (PK-03). */
+export const CSAT_SURVEY_TABLE = "csat_surveys";
+
+/** Teto do atraso aceito, em minutos (30 dias) — acima disso a config está corrompida. */
+export const CSAT_MAX_DELAY_MINUTES = 43_200;
+
+/** Status que ocupam o contato: qualquer convite vivo bloqueia outro (cooldown). */
+export const CSAT_COOLDOWN_STATUSES = ["scheduled", "sent", "responded"] as const;
 
 export interface ErroDb {
   message?: string;
@@ -75,9 +81,11 @@ type Linha = Record<string, unknown> | null;
 export interface ConsultaCsat
   extends PromiseLike<{ data: unknown[] | null; error: ErroDb | null }> {
   select(colunas: string): ConsultaCsat;
+  insert(valores: Record<string, unknown>): ConsultaCsat;
   eq(coluna: string, valor: string): ConsultaCsat;
   neq(coluna: string, valor: string): ConsultaCsat;
   gte(coluna: string, valor: string): ConsultaCsat;
+  in(coluna: string, valores: readonly string[]): ConsultaCsat;
   order(coluna: string, opts: { ascending: boolean }): ConsultaCsat;
   limit(quantidade: number): ConsultaCsat;
   maybeSingle(): Promise<{ data: Linha; error: ErroDb | null }>;
@@ -127,18 +135,28 @@ export function renderCsatTemplate(
 }
 
 /**
- * Código da falha de `enqueue_outbound_message` → HTTP. A RPC levanta 42501 para
- * autenticação, permissão `send_messages`, escopo de fila da conexão, perfil
- * inativo e contato não autorizado: tudo isso vira um 403 genérico (não existe e
- * existe-mas-sem-permissão respondem IGUAL). 23505 é reuso de
- * `client_message_id` com payload diferente e 22023 é payload inválido/sem
- * conexão conectada — ambos 409. O resto é 500.
+ * Código da falha do INSERT do convite → HTTP. A RLS de INSERT de `csat_surveys`
+ * levanta 42501 quando o `agent_id` não é o perfil do chamador (nem admin/
+ * supervisor): sem permissão vira 403 genérico. 23505 é reuso de conversa e é
+ * tratado ANTES (idempotência); sobra 22023 (payload inválido) → 409 e o resto 500.
  */
-export function statusDoErroDeEnqueue(erro: ErroDb | null): number {
+export function statusDoErroDeAgendamento(erro: ErroDb | null): number {
   const code = erro?.code ?? "";
   if (code === "42501") return 403;
-  if (code === "23505" || code === "22023") return 409;
+  if (code === "22023" || code === "23503" || code === "23514") return 409;
   return 500;
+}
+
+/**
+ * Quando o convite sai, em ISO. `delay_minutes` ausente/ilegível/negativo = 0
+ * (entrega na próxima passada do dispatcher, nunca "nunca"); acima do teto
+ * (`CSAT_MAX_DELAY_MINUTES`) a config está corrompida e o atraso é aparado no
+ * teto, em vez de agendar para décadas.
+ */
+export function calcularEnvioEm(delayMinutes: unknown, agoraMs: number): string {
+  const bruto = typeof delayMinutes === "number" ? delayMinutes : Number(delayMinutes);
+  const minutos = Number.isFinite(bruto) && bruto > 0 ? Math.min(bruto, CSAT_MAX_DELAY_MINUTES) : 0;
+  return new Date(agoraMs + minutos * 60_000).toISOString();
 }
 
 interface CorpoDoPedido {
@@ -148,9 +166,10 @@ interface CorpoDoPedido {
 
 interface RespostaLida {
   ok: true;
-  sent: boolean;
+  scheduled: boolean;
   reason?: string;
-  message_id?: string;
+  survey_id?: string;
+  send_at?: string;
   contact_id: string;
   closure_id?: string;
 }
@@ -159,10 +178,10 @@ function resposta(
   req: Request,
   status: number,
   contactId: string,
-  sent: boolean,
-  extra: { reason?: string; message_id?: string; closure_id?: string } = {},
+  scheduled: boolean,
+  extra: { reason?: string; survey_id?: string; send_at?: string; closure_id?: string } = {},
 ): Response {
-  const corpo: RespostaLida = { ok: true, sent, contact_id: contactId, ...extra };
+  const corpo: RespostaLida = { ok: true, scheduled, contact_id: contactId, ...extra };
   return jsonResponse(corpo, status, req);
 }
 
@@ -216,7 +235,7 @@ export async function handleCsatAutoSend(
     // 3. Config: desligada = nada acontece (nem leitura de contato).
     const { data: config, error: erroConfig } = await cliente
       .from("csat_auto_config")
-      .select("id, is_enabled, message_template, whatsapp_connection_id")
+      .select("id, is_enabled, message_template, delay_minutes, whatsapp_connection_id")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -250,8 +269,7 @@ export async function handleCsatAutoSend(
     const janela = new Date(Date.now() - CSAT_COOLDOWN_DAYS * 86_400_000).toISOString();
 
     // 6. A conversa: o encerramento pedido (validado contra o contato) ou o mais
-    //    recente. Consulta dirigida, sem listar/cortar: o cooldown do passo 9 é
-    //    decidido por `neq`+`gte`, então nada depende de um LIMIT.
+    //    recente. Consulta dirigida, sem listar/cortar o histórico.
     const { data: atual, error: erroEncerramento } = await (closureIdPedido
       ? cliente
         .from("conversation_closures")
@@ -282,64 +300,34 @@ export async function handleCsatAutoSend(
       return resposta(req, 200, contactId, false, { reason: "not_closed_by_agent" });
     }
 
-    // 8. Nunca duas vezes para a mesma conversa: o id do encerramento é o
-    //    `client_message_id`; se a linha já existe, o convite já foi feito.
-    const { data: jaEnfileirado, error: erroDuplicado } = await cliente
-      .from("messages")
+    // 8. Cooldown por contato: qualquer convite vivo (agendado, enviado ou
+    //    respondido) dos últimos 30 dias bloqueia. O PENDENTE também conta e é
+    //    o ponto sutil: o índice único do convite é por CONVERSA, então sem
+    //    esta checagem dois encerramentos seguidos do mesmo contato criariam
+    //    dois convites 'scheduled' e a RPC os reivindicaria no MESMO lote (o
+    //    cooldown dela olha só sent/responded) — dois convites na mesma hora.
+    const { data: conviteVivo, error: erroCooldown } = await cliente
+      .from(CSAT_SURVEY_TABLE)
       .select("id")
       .eq("contact_id", contactId)
-      .eq("client_message_id", String(atual.id))
-      .maybeSingle();
-    if (erroDuplicado) {
-      log.error("erro checando convite existente", { erro: erroDuplicado.message });
-      return internalErrorResponse(erroDuplicado, req);
-    }
-    if (jaEnfileirado) {
-      return resposta(req, 200, contactId, false, {
-        reason: "already_sent",
-        message_id: String(jaEnfileirado.id),
-        closure_id: String(atual.id),
-      });
-    }
-
-    // 9. Cooldown por contato: outra conversa encerrada na janela, ou resposta
-    //    de CSAT recente (o contato acabou de avaliar).
-    const { data: outroEncerramento, error: erroOutro } = await cliente
-      .from("conversation_closures")
-      .select("id")
-      .eq("contact_id", contactId)
-      .neq("id", String(atual.id))
+      .in("status", [...CSAT_COOLDOWN_STATUSES])
       .gte("created_at", janela)
       .limit(1)
       .maybeSingle();
-    if (erroOutro) {
-      log.error("erro checando cooldown", { erro: erroOutro.message });
-      return internalErrorResponse(erroOutro, req);
+    if (erroCooldown) {
+      log.error("erro checando o cooldown do convite", { erro: erroCooldown.message });
+      return internalErrorResponse(erroCooldown, req);
     }
-    if (outroEncerramento) {
-      return resposta(req, 200, contactId, false, { reason: "cooldown" });
-    }
-    const { data: respostaRecente, error: erroResposta } = await cliente
-      .from("csat_surveys")
-      .select("id")
-      .eq("contact_id", contactId)
-      .gte("created_at", janela)
-      .limit(1)
-      .maybeSingle();
-    if (erroResposta) {
-      log.error("erro lendo csat_surveys", { erro: erroResposta.message });
-      return internalErrorResponse(erroResposta, req);
-    }
-    if (respostaRecente) {
+    if (conviteVivo) {
       return resposta(req, 200, contactId, false, { reason: "cooldown" });
     }
 
-    // 10. Sem telefone não há como entregar.
+    // 9. Sem telefone não há como entregar — não agenda o que não sai.
     if (typeof contato.phone !== "string" || contato.phone.trim() === "") {
       return resposta(req, 200, contactId, false, { reason: "no_phone" });
     }
 
-    // 11. Mensagem: modelo da config (ou padrão) + variáveis usadas.
+    // 10. Mensagem: modelo da config (ou padrão) + variáveis usadas.
     const template = typeof config.message_template === "string" && config.message_template.trim() !== ""
       ? config.message_template
       : CSAT_DEFAULT_TEMPLATE;
@@ -369,36 +357,49 @@ export async function handleCsatAutoSend(
       return resposta(req, 200, contactId, false, { reason: "empty_template" });
     }
 
-    // 12. Fila canônica, como o CHAMADOR: a RPC impõe `send_messages`, o escopo da
-    //     conexão e a idempotência por (contact_id, client_message_id).
-    const conexao = (typeof config.whatsapp_connection_id === "string" && config.whatsapp_connection_id)
-      ? config.whatsapp_connection_id
-      : (typeof contato.whatsapp_connection_id === "string" ? contato.whatsapp_connection_id : null);
+    // 11. Convite agendado: `send_at` = agora + `delay_minutes`. O estado vive em
+    //     `csat_surveys` (migration do PK-03) e o envio é da `csat-dispatch`.
+    const agoraMs = Date.now();
+    const enviarEm = calcularEnvioEm(config.delay_minutes, agoraMs);
 
-    const { data: mensagem, error: erroEnqueue } = await cliente.rpc(CSAT_ENQUEUE_RPC, {
-      p_contact_id: contactId,
-      p_client_message_id: String(atual.id),
-      p_content: conteudo,
-      p_message_type: "text",
-      p_media_url: null,
-      p_reply_to_id: null,
-      p_whatsapp_connection_id: conexao,
-      p_caption: null,
-    });
-    if (erroEnqueue) {
-      const status = statusDoErroDeEnqueue(erroEnqueue);
-      if (status === 500) {
-        log.error("erro enfileirando a pesquisa", { erro: erroEnqueue.message, code: erroEnqueue.code });
-        return internalErrorResponse(erroEnqueue, req);
+    // 12. Escrita como o CHAMADOR: quem garante "uma pesquisa por conversa" é o
+    //     índice único parcial `uq_csat_surveys_conversation` — o INSERT decide,
+    //     não um SELECT prévio. O 23505 aqui é a CORRIDA entre duas chamadas
+    //     simultâneas da mesma conversa (as duas passam pelo passo 8).
+    const { data: convite, error: erroConvite } = await cliente
+      .from(CSAT_SURVEY_TABLE)
+      .insert({
+        contact_id: contactId,
+        agent_id: fechadoPor,
+        conversation_id: String(atual.id),
+        conversation_resolved_at: typeof atual.created_at === "string" ? atual.created_at : null,
+        message_text: conteudo,
+        send_at: enviarEm,
+        status: "scheduled",
+      })
+      .select("id")
+      .maybeSingle();
+    if (erroConvite) {
+      if (erroConvite.code === "23505") {
+        return resposta(req, 200, contactId, false, {
+          reason: "already_scheduled",
+          closure_id: String(atual.id),
+        });
       }
-      log.warn("enqueue recusado", { status, code: erroEnqueue.code });
-      return errorResponse(status === 403 ? "Forbidden" : "Nao foi possivel enfileirar a pesquisa", status, req);
+      const status = statusDoErroDeAgendamento(erroConvite);
+      if (status === 500) {
+        log.error("erro agendando o convite", { erro: erroConvite.message, code: erroConvite.code });
+        return internalErrorResponse(erroConvite, req);
+      }
+      log.warn("convite recusado", { status, code: erroConvite.code });
+      return errorResponse(status === 403 ? "Forbidden" : "Nao foi possivel agendar a pesquisa", status, req);
     }
 
-    const messageId = (mensagem as Record<string, unknown> | null)?.id;
-    log.info("pesquisa enfileirada", { contact_id: contactId, closure_id: atual.id });
+    const surveyId = typeof convite?.id === "string" ? convite.id : undefined;
+    log.info("convite agendado", { contact_id: contactId, closure_id: atual.id, send_at: enviarEm });
     return resposta(req, 200, contactId, true, {
-      message_id: typeof messageId === "string" ? messageId : undefined,
+      survey_id: surveyId,
+      send_at: enviarEm,
       closure_id: String(atual.id),
     });
   } catch (erro) {
