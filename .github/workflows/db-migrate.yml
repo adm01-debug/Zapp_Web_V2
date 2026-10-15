@@ -77,6 +77,10 @@ jobs:
     # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
     # apply + as validacoes de ledger/runtime do file completo.
     timeout-minutes: 45
+    # W33: actions:write somente neste job para disparar types-sync apos apply.
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -1511,3 +1515,15 @@ jobs:
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Disparar types-sync apos apply bem-sucedido (W33)
+        # W33: fecha o lote no mesmo dia sem esperar o push/schedule do types-sync.
+        # Dispara apenas quando apply=true E os passos anteriores terminaram com exito.
+        # Nao usa workflow_run (o gatilho nao expoe inputs do dispatch original).
+        if: inputs.apply == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run types-sync.yml --ref main \
+            --repo "${{ github.repository }}"
+          echo "types-sync disparado apos apply bem-sucedido."
