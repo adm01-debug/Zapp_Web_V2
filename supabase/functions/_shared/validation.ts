@@ -11,6 +11,10 @@ export{
   createWebhookValidator 
 } from './hmac-validation.ts';
 
+// Política de origem do CORS: fonte única em ./cors-origins.ts (também usada por schemas.ts).
+import { allowedOriginFor } from './cors-origins.ts';
+export { EXACT_ALLOWED_ORIGINS } from './cors-origins.ts';
+
 // ─── Structured Logger ─────────────────────────────────────────
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -89,26 +93,6 @@ export class Logger {
   }
 }
 
-// W61: origens exatas canonicas de producao no CORS. Atualizadas em sincronia com
-// scripts/edge-deploy/allowed-origins.json. URLs de deployment/preview do projeto
-// (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em ORIGIN_PATTERNS; o alias
-// padrao do projeto (zappwebv2-juca1.vercel.app) nao entra de proposito.
-export const EXACT_ALLOWED_ORIGINS = new Set([
-  'https://zapp-web-v2.vercel.app',
-  'https://zappweb.app.br',
-]);
-
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
 /** Security headers applied to all responses */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -124,8 +108,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
-  const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = allowedOriginFor(req);
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
   return {
     ...SECURITY_HEADERS,
