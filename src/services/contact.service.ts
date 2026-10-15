@@ -192,13 +192,20 @@ export class ContactService {
    }
  
    static async upsertCustomField(payload: Database['public']['Tables']['contact_custom_fields']['Insert']) {
-     return supabase.from('contact_custom_fields').upsert(payload);
+     // A tabela tem índice ÚNICO em (contact_id, field_name). Sem `onConflict` o PostgREST
+     // resolve o conflito pela chave primária e reescrever um campo de mesmo nome devolve
+     // 23505 — o Salvar falhava justamente no campo que já existia.
+     return supabase
+       .from('contact_custom_fields')
+       .upsert(payload, { onConflict: 'contact_id,field_name' });
    }
- 
+
    static async deleteCustomField(fieldId: string) {
-     return supabase.from('contact_custom_fields').delete().eq('id', fieldId);
+     // `.select('id')` faz o PostgREST devolver as linhas realmente removidas: com a RLS
+     // bloqueando, o delete afeta ZERO linhas sem erro e o chamador não teria como saber.
+     return supabase.from('contact_custom_fields').delete().eq('id', fieldId).select('id');
    }
- 
+
    static async fetchEnrichedData(contactId: string) {
      return supabase
        .from('contacts')
