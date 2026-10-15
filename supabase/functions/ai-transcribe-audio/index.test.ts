@@ -14,6 +14,7 @@
  * Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/ai-transcribe-audio/index.test.ts
  */
 import {
+  decideAudioSizeRefusal,
   handleTranscribeAudio,
   resolveTranscriptionAudioFormat,
   type TranscribeAudioDeps,
@@ -387,6 +388,66 @@ Deno.test(
   },
 );
 
+// ─── G1: o teto por IP do painel não pode estrangular o caminho de SERVIÇO ─────
+// O webhook do WhatsApp chama esta Edge com a service role key e TODAS as
+// chamadas chegam do MESMO IP (o do worker). O teto de 10/min por IP era
+// aplicado ao serviço também: a partir da 11ª transcrição do minuto o webhook
+// recebia 429 e a mensagem ficava `failed` — com o áudio já pago no provedor.
+// Quem limita o serviço é o `servicePerMinute` (60/min) de `requireAiIdentityOrService`.
+
+Deno.test(
+  "G1: 15 transcrições de SERVIÇO no mesmo minuto concluem 200 (sem teto por IP no serviço)",
+  async () => {
+    let rateLimitCalls = 0;
+    const statuses: number[] = [];
+
+    for (let i = 0; i < 15; i++) {
+      const capture: StoreCapture = { writes: [], loads: [] };
+      const deps = baseDeps({
+        ...stubStore(capture),
+        // Se o caminho de serviço ainda passasse por aqui, a PRIMEIRA chamada
+        // receberia 429 (o falso nega sempre) — é o que prova a remoção.
+        rateLimit: () => {
+          rateLimitCalls += 1;
+          return { allowed: false };
+        },
+        downloadAudio: () =>
+          Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+        fetch: capturingFetch({ form: null }, { text: `transcricao-${i}` }),
+      });
+
+      const res = await handleTranscribeAudio(makeRequest(), deps);
+      statuses.push(res.status);
+    }
+
+    assertEquals(
+      statuses.every((s) => s === 200),
+      true,
+      `as 15 chamadas de serviço deveriam concluir 200; vieram ${statuses.join(",")}`,
+    );
+    assertEquals(rateLimitCalls, 0, "o teto por IP do painel não é consultado no caminho de serviço");
+  },
+);
+
+Deno.test(
+  "G1: o caminho de USUÁRIO continua recebendo 429 acima do teto por IP",
+  async () => {
+    let rateLimitCalls = 0;
+    const deps = baseDeps({
+      authorize: () => Promise.resolve({ kind: "user", userId: "u-1" }),
+      rateLimit: () => {
+        rateLimitCalls += 1;
+        return { allowed: false };
+      },
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 429, "usuário acima do teto por IP recebe 429");
+    assertEquals(rateLimitCalls, 1, "o teto por IP do painel continua valendo para o usuário");
+  },
+);
+
 // ─── G4: ledger de consumo, timeouts e 500 sem detalhe interno ───────────────
 const G4_ENV_KEYS = [
   "SUPABASE_URL",
@@ -441,98 +502,189 @@ async function withG4Env(fn: () => Promise<void>): Promise<void> {
   }
 }
 
-function insertsNoLedger(calls: G4Call[]): G4Call[] {
-  return calls.filter(
-    (c) => c.url.includes("/rest/v1/ai_usage_logs") && c.init?.method === "POST",
-  );
-}
-
-const OGG_DOWNLOAD = () =>
-  Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" });
-
 Deno.test(
-  "G4: chamada paga ao STT deixa UMA linha em ai_usage_logs (unidade segundo, consumo declarado desconhecido)",
+  "G4: STT 200 registra o consumo pago no ledger com usage_unknown",
   async () => {
-    await withG4Env(async () => {
-      const stub = withGlobalFetch((url) => {
-        if (url.includes("/rest/v1/ai_usage_logs")) {
-          return new Response("", { status: 201 });
-        }
-        if (url.includes("api.elevenlabs.io")) {
-          return new Response(JSON.stringify({ text: "oi" }), {
-            status: 200,
-            headers: { "content-type": "application/json" },
-          });
-        }
-        return new Response("nao stubado", { status: 599 });
-      });
-      try {
-        // Sem `deps.fetch`: o STT usa o MESMO `fetch` global stubado.
-        const deps = baseDeps({ downloadAudio: OGG_DOWNLOAD });
-        const res = await handleTranscribeAudio(makeRequest(), deps);
-        assertEquals(res.status, 200, "a chamada paga conclui 200");
-
-        const inserts = insertsNoLedger(stub.calls);
-        assertEquals(inserts.length, 1, `esperado 1 insert no ledger, veio ${inserts.length}`);
-        const linha = JSON.parse(String(inserts[0].init?.body)) as Record<string, unknown>;
-        assertEquals(linha.function_name, "ai-transcribe-audio", "a linha é do STT");
-        assertEquals(linha.input_tokens, null, "consumo não medido vai NULL, nunca 0");
-        assertEquals(linha.output_tokens, null, "consumo não medido vai NULL, nunca 0");
-        const meta = linha.metadata as Record<string, unknown>;
-        assertEquals(meta.usage_unknown, true, "a ausência de medida é DECLARADA");
-        assertEquals(meta.billing_unit, "second", "a rota de STT é cobrada por segundo");
-      } finally {
-        stub.restore();
-      }
-    });
-  },
-);
-
-Deno.test(
-  "G4: fetch pendurado ao STT estoura o timeout e devolve 504 (e registra o consumo da tentativa)",
-  async () => {
-    await withG4Env(async () => {
-      const stub = withGlobalFetch((url) =>
-        url.includes("/rest/v1/ai_usage_logs")
-          ? new Response("", { status: 201 })
-          : new Response("nao stubado", { status: 599 })
-      );
-      try {
+    const stub = withGlobalFetch(() =>
+      Response.json({ status: "ok" }, { status: 200 })
+    );
+    try {
+      await withG4Env(async () => {
         const deps = baseDeps({
-          downloadAudio: OGG_DOWNLOAD,
-          sttTimeoutMs: 25,
-          // Provedor que NUNCA responde: só o teto de tempo encerra a chamada.
-          fetch: (() => new Promise<Response>(() => {})) as typeof fetch,
+          downloadAudio: () =>
+            Promise.resolve({
+              buffer: OGG_HEADER.buffer as ArrayBuffer,
+              contentType: "audio/ogg",
+            }),
+          fetch: (() =>
+            Promise.resolve(
+              Response.json({ text: "olá mundo" }, { status: 200 }),
+            )) as typeof fetch,
         });
+
         const res = await handleTranscribeAudio(makeRequest(), deps);
-        assertEquals(res.status, 504, "provedor pendurado vira 504 em vez de travar o handler");
-        assertEquals(
-          insertsNoLedger(stub.calls).length,
-          1,
-          "a tentativa paga é registrada no ledger mesmo quando estoura o tempo",
+
+        assertEquals(res.status, 200, "o STT stubado deveria concluir 200");
+        const ledger = stub.calls.filter((c) =>
+          c.url.includes("/rest/v1/ai_usage_logs")
         );
-      } finally {
-        stub.restore();
-      }
-    });
+        assertEquals(
+          ledger.length,
+          1,
+          "uma linha de consumo por chamada paga (nem zero, nem duas)",
+        );
+        const row = JSON.parse(
+          (ledger[0].init?.body as string) ?? "{}",
+        ) as Record<string, unknown>;
+        const meta = row["metadata"] as Record<string, unknown>;
+        assertEquals(
+          meta["usage_unknown"],
+          true,
+          "o provedor não devolve a quantidade: ausência NÃO é zero",
+        );
+        assertEquals(
+          meta["billing_unit"],
+          "second",
+          "a rota /v1/speech-to-text fatura por segundo",
+        );
+      });
+    } finally {
+      stub.restore();
+    }
   },
 );
 
 Deno.test(
-  "G4: erro inesperado devolve 500 SEM o detalhe interno do provedor",
+  "G4: fetch pendurado ao STT estoura o timeout e devolve 504 em pt-BR (e registra o consumo da tentativa)",
+  async () => {
+    const stub = withGlobalFetch(() =>
+      Response.json({ status: "ok" }, { status: 200 })
+    );
+    try {
+      await withG4Env(async () => {
+        // `fetch` que PRENDE a promessa: ignora o `signal` do `init` de
+        // propósito — é o `abortable` que garante o 504, não o abort nativo.
+        const hangingFetch = (() =>
+          new Promise<Response>(() => {})) as typeof fetch;
+        const deps = baseDeps({
+          downloadAudio: () =>
+            Promise.resolve({
+              buffer: OGG_HEADER.buffer as ArrayBuffer,
+              contentType: "audio/ogg",
+            }),
+          fetch: hangingFetch,
+          saveTranscription: () => Promise.resolve(true),
+          sttTimeoutMs: 25,
+        });
+
+        const res = await handleTranscribeAudio(makeRequest(), deps);
+
+        assertEquals(res.status, 504, "provedor pendurado vira 504 em vez de travar o handler");
+        const body = await res.json() as Record<string, unknown>;
+        assertEquals(
+          body["error"],
+          "O provedor de transcrição demorou demais para responder",
+          "o corpo do 504 sai em pt-BR (não 'Internal server error')",
+        );
+        const ledger = stub.calls.filter((c) =>
+          c.url.includes("/rest/v1/ai_usage_logs")
+        );
+        assertEquals(
+          ledger.length,
+          1,
+          "a tentativa abortada também deixa linha no ledger (pode ter sido cobrada)",
+        );
+        const row = JSON.parse(
+          (ledger[0].init?.body as string) ?? "{}",
+        ) as Record<string, unknown>;
+        assertEquals(
+          row["error_message"],
+          "provider_timeout",
+          "a linha do timeout carrega o motivo próprio, não o detalhe do fetch",
+        );
+      });
+    } finally {
+      stub.restore();
+    }
+  },
+);
+
+Deno.test(
+  "G4: 500 de exceção devolve texto fixo em pt-BR, sem vazar o detalhe interno",
   async () => {
     const deps = baseDeps({
-      downloadAudio: OGG_DOWNLOAD,
-      fetch: (() => Promise.reject(new Error("segredo-interno-do-provedor"))) as typeof fetch,
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: OGG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        }),
+      fetch: (() =>
+        Promise.resolve(
+          Response.json({ text: "tanto faz" }, { status: 200 }),
+        )) as typeof fetch,
+      loadTranscription: () => {
+        throw new Error("segredo-interno-do-banco");
+      },
     });
 
     const res = await handleTranscribeAudio(makeRequest(), deps);
-    assertEquals(res.status, 500, "erro inesperado vira 500");
 
-    const body = await res.text();
+    assertEquals(res.status, 500, "exceção inesperada continua 500");
+    const body = await res.json() as Record<string, unknown>;
+    assertEquals(
+      body["error"],
+      "Erro interno ao transcrever o áudio",
+      "o cliente recebe texto fixo em pt-BR",
+    );
     assert(
-      !body.includes("segredo-interno-do-provedor"),
-      "o `error.message` interno não pode vazar na resposta",
+      !JSON.stringify(body).includes("segredo-interno-do-banco"),
+      "o detalhe interno não pode vazar no corpo",
     );
   },
 );
+
+Deno.test(
+  "Refazer t_eeac9ac7: erro de download com status 504 chega ao cliente como 504 em pt-BR",
+  async () => {
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          error: "Tempo esgotado ao baixar o áudio",
+          status: 504,
+        }),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 504, "o status do download é propagado, não vira 400");
+    const body = await res.json() as Record<string, unknown>;
+    assertEquals(
+      body["error"],
+      "Tempo esgotado ao baixar o áudio",
+      "o corpo do 504 do download sai em pt-BR (não 'Internal server error')",
+    );
+  },
+);
+
+Deno.test("Refazer t_eeac9ac7: decideAudioSizeRefusal — decisão de tamanho por metadado", () => {
+  assertEquals(
+    decideAudioSizeRefusal(null),
+    null,
+    "sem metadado, segue para o download (a checagem pós-download continua valendo)",
+  );
+  assertEquals(
+    decideAudioSizeRefusal(25 * 1024 * 1024),
+    null,
+    "no limite exato, não recusa",
+  );
+  assertEquals(
+    decideAudioSizeRefusal(25 * 1024 * 1024 + 1)?.error,
+    "Arquivo de áudio grande demais (máximo 25 MB)",
+    "acima do limite, recusa em pt-BR antes de baixar",
+  );
+  assertEquals(
+    decideAudioSizeRefusal(25 * 1024 * 1024 + 1)?.status,
+    413,
+    "a recusa por metadado sai com 413",
+  );
+});

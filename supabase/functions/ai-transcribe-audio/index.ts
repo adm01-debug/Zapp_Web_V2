@@ -9,7 +9,6 @@ import {
   errorResponse,
   getClientIP,
   handleCors,
-  internalErrorResponse,
   jsonResponse,
   Logger,
   requireEnv,
@@ -40,18 +39,26 @@ const APPROVED_AUDIO_BUCKETS = [
   "audio-memes",
 ] as const;
 
-/**
- * G4 — corrida entre a promessa e um `AbortSignal` de timeout.
- *
- * O sinal também vai ao `fetch` real (abort nativo). Este invólucro garante que
- * um `fetch` PENDURADO — ou uma implementação que ignore o `signal` do `init` —
- * não trave o handler: o timeout rejeita a promessa de fora.
- */
+// Teto por usuário por minuto no caminho de UI (memória do isolate).
+const USER_PER_MINUTE = 10;
+// Teto por IP no caminho de SERVIÇO (worker de entrada). O webhook manda TODA a
+// auto-transcrição da MESMA origem, então o teto de usuário (10/min) estrangulava
+// a 11ª transcrição do minuto. O teto de serviço é 60/min — configurável pelo
+// `servicePerMinute` de `_shared/ai-auth.ts` — e vive lá, não aqui.
+const SERVICE_PER_MINUTE = 60;
+
+// G4 — envolve a promessa do provedor com o teto da função: sem isso, um STT
+// pendurado prende o isolate. O `signal` aborta o `fetch`; a promessa rejeita
+// com `TimeoutError`, que o chamador traduz em 504.
 function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) return Promise.reject(signal.reason);
+  if (signal.aborted) {
+    return Promise.reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+  }
   return new Promise<T>((resolve, reject) => {
-    const onAbort = () =>
+    const onAbort = () => {
+      signal.removeEventListener("abort", onAbort);
       reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+    };
     signal.addEventListener("abort", onAbort, { once: true });
     promise.then(
       (value) => {
@@ -66,55 +73,24 @@ function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   });
 }
 
-/** Timeout de `AbortSignal.timeout` (ou abort de rede) — vira 504/registro próprio. */
+// G4 — `AbortSignal.timeout` rejeita com `TimeoutError`; um `fetch` abortado por
+// outro motivo rejeita com `AbortError`. Os dois significam "o provedor não
+// respondeu a tempo" e viram 504 — qualquer outro erro continua 500.
 function isTimeoutError(error: unknown): boolean {
   if (typeof DOMException !== "undefined" && error instanceof DOMException) {
     return error.name === "TimeoutError" || error.name === "AbortError";
   }
-  return error instanceof Error &&
-    (error.name === "TimeoutError" || error.name === "AbortError");
+  return (
+    error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError")
+  );
 }
 
 type DownloadAudioResult =
   | { buffer: ArrayBuffer; contentType: string }
+  // G4 — o erro carrega o `status` para o 504 de timeout chegar ao cliente com
+  // o status certo (antes todo erro de download virava 400).
   | { error: string; status?: number };
-
-interface ConsumoDeTranscricao {
-  userId: string | null;
-  status: "success" | "error";
-  errorMessage: string | null;
-  httpStatus: number | null;
-  durationMs: number;
-  audioBytes: number;
-}
-
-/**
- * G4 — ledger do consumo PAGO de STT.
- *
- * A rota `/v1/speech-to-text` cobra por SEGUNDO e não devolve a quantidade que
- * faturou: por isso a unidade é declarada em `billing_unit: "second"` e
- * `usage_unknown` marca que a ausência do número NÃO é zero (tratar ausência
- * como zero foi recusa de revisão repetida). O registro sai por tentativa —
- * uma linha por chamada paga, inclusive a que estourou o tempo.
- */
-async function registrarConsumoDeTranscricao(args: ConsumoDeTranscricao): Promise<void> {
-  await logAiUsageDetached({
-    functionName: "ai-transcribe-audio",
-    userId: args.userId,
-    model: STT_MODEL,
-    durationMs: args.durationMs,
-    status: args.status,
-    errorMessage: args.errorMessage,
-    usageUnknown: true,
-    metadata: {
-      provider: "elevenlabs",
-      endpoint: "/v1/speech-to-text",
-      billing_unit: "second",
-      input_bytes: args.audioBytes,
-      http_status: args.httpStatus,
-    },
-  });
-}
 
 /**
  * Only accepts an exact URL for the project's approved media buckets.
@@ -156,9 +132,10 @@ async function downloadAudio(
       error: error instanceof Error ? error.message : String(error),
     });
   }
-  if (typeof declaredSize === "number" && declaredSize > MAX_AUDIO_SIZE) {
+  const sizeRefusal = decideAudioSizeRefusal(declaredSize);
+  if (sizeRefusal) {
     log.warn("Rejected oversized audio from storage metadata", { bucket, path, size: declaredSize });
-    return { error: "Audio file too large (max 25MB)" };
+    return sizeRefusal;
   }
 
   log.info("Downloading approved storage audio", { bucket, path, size: declaredSize ?? null });
@@ -175,7 +152,7 @@ async function downloadAudio(
   } catch (err) {
     if (isTimeoutError(err)) {
       log.error("Storage download timed out", { bucket, path });
-      return { error: "Audio download timed out", status: 504 };
+      return { error: "Tempo esgotado ao baixar o áudio", status: 504 };
     }
     throw err;
   }
@@ -201,6 +178,57 @@ export type TranscriptionWrite = {
   transcription?: string | null;
   status: "processing" | "completed" | "failed";
 };
+
+/**
+ * Refazer t_eeac9ac7 — decisão pura de recusa por tamanho via metadado (`info`
+ * do Storage): devolve `true` quando o tamanho declarado passa do teto, para
+ * recusar ANTES de baixar. Exportada só para teste; o caminho real continua
+ * dentro de `downloadAudio`, que chama esta função.
+ */
+/** Recusa de tamanho pelo metadado do objeto (antes de baixar). */
+export type SizeRefusal = { error: string; status: 413 };
+
+export function decideAudioSizeRefusal(declaredSize: number | null | undefined): SizeRefusal | null {
+  if (declaredSize == null || declaredSize <= MAX_AUDIO_SIZE) return null;
+  return { error: "Arquivo de áudio grande demais (máximo 25 MB)", status: 413 };
+}
+
+interface ConsumoDeTranscricao {
+  userId: string | null;
+  status: "success" | "error";
+  errorMessage: string | null;
+  httpStatus: number | null;
+  durationMs: number;
+  audioBytes: number;
+}
+
+/**
+ * G4 — ledger do consumo PAGO de STT.
+ *
+ * A rota `/v1/speech-to-text` cobra por SEGUNDO e não devolve a quantidade que
+ * faturou: por isso a unidade é declarada em `billing_unit: "second"` e
+ * `usage_unknown` marca que a ausência do número NÃO é zero (tratar ausência
+ * como zero foi recusa de revisão repetida). O registro sai por tentativa —
+ * uma linha por chamada paga, inclusive a que estourou o tempo.
+ */
+async function registrarConsumoDeTranscricao(args: ConsumoDeTranscricao): Promise<void> {
+  await logAiUsageDetached({
+    functionName: "ai-transcribe-audio",
+    userId: args.userId,
+    model: STT_MODEL,
+    durationMs: args.durationMs,
+    status: args.status,
+    errorMessage: args.errorMessage,
+    usageUnknown: true,
+    metadata: {
+      provider: "elevenlabs",
+      endpoint: "/v1/speech-to-text",
+      billing_unit: "second",
+      input_bytes: args.audioBytes,
+      http_status: args.httpStatus,
+    },
+  });
+}
 
 /**
  * Cliente service-role para LER/GRAVAR o estado da transcrição da mensagem.
@@ -417,7 +445,8 @@ export async function handleTranscribeAudio(
   const authorize = deps.authorize ??
     ((r: Request) =>
       requireAiIdentityOrService(r, "ai-transcribe-audio", {
-        perUserPerMinute: 10,
+        perUserPerMinute: USER_PER_MINUTE,
+        servicePerMinute: SERVICE_PER_MINUTE,
       }));
 
   // IA-011/IA-012: caminho de usuário com identidade verificada + cota; caminho de
@@ -434,15 +463,22 @@ export async function handleTranscribeAudio(
     Promise.resolve(false);
 
   try {
-    const rateLimit = deps.rateLimit ?? checkRateLimit;
-    const ip = deps.clientIp ?? getClientIP(req);
-    const { allowed } = rateLimit(`transcribe:${ip}`, 10, 60_000);
-    if (!allowed) {
-      return errorResponse(
-        "Limite de transcrições excedido. Tente novamente em 1 minuto.",
-        429,
-        req,
-      );
+    // Teto por IP SÓ no caminho de USUÁRIO (painel). O caminho de SERVIÇO
+    // (evolution-webhook) chega todo da MESMA origem e era estrangulado aqui a
+    // cada 11ª transcrição do minuto — cada recusa ainda marcava a mensagem como
+    // `failed`. Quem limita o serviço é o `servicePerMinute` (60/min) aplicado
+    // dentro de `requireAiIdentityOrService`, que já passou acima.
+    if (identity.kind === "user") {
+      const rateLimit = deps.rateLimit ?? checkRateLimit;
+      const ip = deps.clientIp ?? getClientIP(req);
+      const { allowed } = rateLimit(`transcribe:${ip}`, USER_PER_MINUTE, 60_000);
+      if (!allowed) {
+        return errorResponse(
+          "Limite de transcrições excedido. Tente novamente em 1 minuto.",
+          429,
+          req,
+        );
+      }
     }
 
     const parsed = parseBody(TranscribeAudioSchema, await req.json());
@@ -526,7 +562,13 @@ export async function handleTranscribeAudio(
       ? await deps.downloadAudio(audioUrl, log)
       : await downloadAudio(audioUrl, log);
     if ("error" in downloadResult) {
-      return errorResponse(downloadResult.error, downloadResult.status ?? 400, req);
+      const status = downloadResult.status ?? 400;
+      // O `errorResponse` troca o corpo por "Internal server error" em 5xx
+      // (convenção do repositório: corpo próprio em 5xx sai por `jsonResponse`,
+      // como o ai-proxy faz com `AiRoutingError`). O 504 do download tem texto
+      // em pt-BR que precisa chegar ao cliente.
+      if (status >= 500) return jsonResponse({ error: downloadResult.error }, status, req);
+      return errorResponse(downloadResult.error, status, req);
     }
 
     const { buffer: audioBuffer, contentType } = downloadResult;
@@ -595,7 +637,9 @@ export async function handleTranscribeAudio(
       await persistState({ status: "failed" });
       if (timedOut) {
         log.error("ElevenLabs STT timed out", { timeoutMs: sttTimeoutMs });
-        return errorResponse("Transcription provider timed out", 504, req);
+        // `jsonResponse` em vez de `errorResponse`: o helper troca o corpo por
+        // "Internal server error" em 5xx e o pt-BR não chegaria ao cliente.
+        return jsonResponse({ error: "O provedor de transcrição demorou demais para responder" }, 504, req);
       }
       throw error;
     }
@@ -670,8 +714,12 @@ export async function handleTranscribeAudio(
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
     await persistState({ status: "failed" });
-    // G4 — 500 sem detalhe interno: o `error.message` do provedor não vai ao cliente.
-    return internalErrorResponse(error, req);
+    // Refazer t_eeac9ac7 — 500 sem detalhe interno: a mensagem do provedor (ou
+    // de qualquer erro inesperado) fica no log do servidor e o cliente recebe
+    // texto fixo em pt-BR. Sai por `jsonResponse` porque o `errorResponse`
+    // troca o corpo por "Internal server error" em 5xx (a recusa sugeria
+    // `errorResponse`, mas com ele o pt-BR nunca chegaria ao cliente).
+    return jsonResponse({ error: "Erro interno ao transcrever o áudio" }, 500, req);
   }
 }
 
