@@ -28,10 +28,10 @@ export function useRealtimeNotifications() {
   /**
    * Emite o aviso e devolve `true` quando foi ESTA instância que o emitiu.
    *
-   * Duas instâncias escutam a mesma mensagem (o inbox e o aviso global do
-   * AppShell): `claimNotificationEvent` garante UM aviso por mensagem, e o
-   * consumidor que recebeu `true` é o dono daquele evento — é ele que mostra o
-   * toast, sem duplicar.
+   * Duas instâncias escutam a mesma mensagem (o inbox e o aviso global montado
+   * em `App.tsx`/DeferredProviders): `claimNotificationEvent` garante UM aviso
+   * por mensagem, e o consumidor que recebeu `true` é o dono daquele evento — é
+   * ele que mostra o toast, sem duplicar.
    */
   const notifyAboutIncomingMessage = useCallback(
     (contact: ConversationContact, message: RealtimeMessage): boolean => {
@@ -103,7 +103,7 @@ export function useRealtimeNotifications() {
   const setSelectedContact = useCallback((contactId: string | null) => {
     lastSelectedContactIdRef.current = contactId;
     // A seleção vive FORA do React (openConversationStore) porque o aviso
-    // global, montado no AppShell, precisa dela no instante do evento.
+    // global, montado em App.tsx/DeferredProviders, precisa dela no instante do evento.
     setOpenConversationId(contactId);
   }, []);
 
