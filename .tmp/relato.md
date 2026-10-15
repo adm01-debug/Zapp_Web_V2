@@ -1,29 +1,20 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
+Skill de área usada: area-front-componentes (remoção de UI já entregue; este refazer só sincroniza o mapa ESTADO.md).
 
 ## O que mudou e por quê
-- `src/components/settings/AIAutoTagsConfig.tsx` e `src/components/settings/__tests__/AIAutoTagsConfig.recentesErro.test.tsx`: removidos (`git rm`) — o produto não oferece mais etiquetas automáticas de IA.
-- `src/components/settings/SettingsView.tsx`: sai a aba (TABS_META + TAB_GROUPS do grupo de IA), o `TabsContent` que montava o painel, o import e o ícone `Tags` (que ficou sem uso).
-- `src/hooks/analytics/useAIUsageDashboard.ts`: sai a cor e o rótulo de `ai-auto-tag`. Funções antigas em logs históricos continuam tratadas pelo rótulo/cor genéricos que os painéis admin já usavam (`FUNCTION_LABELS[fn] || fn`, `FUNCTION_COLORS[fn] || '#666'`) — nenhum consumidor quebra.
-- `src/components/settings/ai-providers/AIProviderHealthPanel.tsx`: sai `ai-auto-tag` da lista de exemplos do comentário; a regra (não filtrar por `function_name`) continua igual.
-- `src/components/reports/useReportsData.ts`: sai a coluna `tags` dos dois `select` de contatos, o estado `selectedTag`, o memo `tags`, a série `byTag` de `contactsChartData` e o `selectedTag` do `queryKey`/do retorno. O recorte dos relatórios passa a ser só período + agente.
-- `src/components/reports/AdvancedReportsView.tsx`: sai o destructuring de `selectedTag`/`tags` e o subtítulo deixa de citar tags.
-- `src/components/reports/ReportCharts.tsx`: sai o cartão "Contatos por Tag" e o campo `byTag` do tipo `ContactsChartData` (com o `topTag`/`ariaBar` que só ele usava).
-- `src/components/docs/featuresSectionsData.ts`: sai o item "Tags/etiquetas em contatos" e, do inventário de banco, `contacts.tags (array — modelo único de etiqueta)` e `ai_conversation_tags`. **Fica** `contact_tags_ext` (contrato externo do CRM), que o cartão manda não tocar.
-- `tests/contracts/etiquetas-remocao-residuos.contract.test.ts`: o contrato afirmava o estado antigo (inventário listando `contacts.tags` e `ai_conversation_tags`); passou a exigir a ausência dos dois e a presença só do contrato externo. Não afrouxei: as checagens de ausência das tabelas locais continuam.
+- ESTADO.md: a edge `ai-auto-tag` perdeu seu único chamador quando a entrega removeu `src/components/settings/AIAutoTagsConfig.tsx`; a âncora virou "sem chamador no repositório" (grupo E), totais A 54→53 e E 17→18, seção de órfãs 17→18 com `- ai-auto-tag` em ordem alfabética. Motivo: a guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula a tabela a partir do código e falha quando a âncora some — foi exatamente o vermelho do ESPELHO no empilhamento.
+- A entrega anterior (94d2e594c5) já estava nesta branch; nenhum commit foi trazido por cherry-pick neste refazer, então não há FAIXA DO PAI. Meu diff contra a entrega anterior (461ec2bcd) é só ESTADO.md + este relato.
 
 ## Prova
-- vermelho antes (testes escritos primeiro, 22:22:57): `npx vitest run <arquivos tocados>` → `Tests 2 failed | 28 passed (30)` — SettingsView ainda oferecia a aba removida (`expected [ 'Chatbot L1', 'Gestão IA' ] to deeply equal [ Array(3) ]`) e SystemFeaturesView ainda achava "tags" no catálogo (`expect(screen.queryByText(/\btags?\b/i)).toBeNull()`); ReportCharts e useReportsData acusavam `data.byTag`/`tags` ainda expostos.
-- verde depois: `npx vitest run src/components/settings/__tests__/SettingsView.test.tsx ... AIProviderHealthPanel.escopo-e-erro.test.tsx` → `Test Files 6 passed (6); Tests 30 passed (30)`
-- regressão nas áreas tocadas: `npx vitest run src/components/settings src/components/reports src/components/docs src/hooks/analytics` → `Test Files 59 passed (59); Tests 895 passed | 3 expected fail | 1 todo (899)`
-- contrato: `npx vitest run --config vitest.contracts.config.ts tests/contracts/etiquetas-remocao-residuos.contract.test.ts` → `Test Files 1 passed (1); Tests 6 passed (6)`
-- grep do critério de pronto: `git grep -nE 'ai-tags|Tags IA' -- src` → 0 resultados.
+- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` e `✖ ESTADO.md publica o grupo do primeiro chamador real na ordem A→B→C→D` (`grupo de ai-auto-tag divergiu dos chamadores reais: {"A":[],"B":[],"C":[],"D":[]} 'A' !== 'E'`).
+- verde depois: mesmo comando → `ℹ tests 11 / ℹ pass 11 / ℹ fail 0`.
+- `zapp-verify full .` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `AVISO banco_local` (sem nome de conjunto, esperado), `Test Files 1 failed | 1313 passed (1314)` / `Tests 1 failed | 11900 passed | 25 expected fail | 14 todo (11940)`. O único vermelho é `src/components/talkx/__tests__/RuleValueInput.test.tsx` ("Unable to find role=button name Novo segmento"), módulo talkx sem relação com etiquetas: rodei o mesmo arquivo com minha mudança em stash e falhou igual (1 failed | 4 passed), logo é preexistente e fora do escopo — registrado em comentário no cartão, sem correção. O build não foi alcançado porque o verify para no primeiro vermelho.
 
-## Explicação dos avisos do juiz
-- Teste existente removido: `AIAutoTagsConfig.recentesErro.test.tsx` saiu JUNTO com `AIAutoTagsConfig.tsx` porque o cartão manda remover o componente — não há teste possível de um componente que deixa de existir. O git guarda o histórico dos dois.
-- Arquivo fora da lista `tests/contracts/etiquetas-remocao-residuos.contract.test.ts`: foi **indispensável**, não conveniência. Ele AFIRMAVA o estado antigo (exigia `contacts.tags` e `ai_conversation_tags` no inventário de docs) e falharia por construção depois da remoção pedida pelo cartão. Não afrouxei nada: troquei a exigência de PRESENÇA das tabelas removidas por exigência de AUSÊNCIA (mantendo a presença só do contrato externo `contact_tags_ext`). Sem essa troca, a própria verificação/CI ficaria vermelha por causa deste cartão.
+## Pontos do revisor
+- Ponto 1 (quebra o ESPELHO no empilhamento: âncora deixa de existir e grupo A→E): resolvido — ESTADO.md sincronizado, guarda 11/11 verde.
+- Ponto 2 (reproduzir com `zapp-verify full .`, corrigir e fechar): executado — falha do espelho reproduzida e corrigida; full executado com o resultado acima; o residual é preexistente e fora do escopo.
 
-## O que NÃO fiz e por quê (fora da lista de arquivos do cartão; comentado no cartão)
-- `src/components/ai/AutoTicketClassifier.tsx:141-145` lê `ai_conversation_tags` (tabela que o cartão de banco vai derrubar) — não é meu arquivo.
-- `src/services/contact.service.ts:216` lê `ai_conversation_tags` — área do worker (hooks).
-- Edge `ai-auto-tag` (`supabase/functions/ai-auto-tag/**`) e os contratos que a citam — cartão das edges.
-- `src/components/inbox/GlobalSearch.tsx:177` ainda traz o placeholder `# para tags` — cartão do inbox.
+## O que NÃO fiz e por quê
+- Não corrigi o RuleValueInput (talkx, outro módulo/cartão) nem a migration/edge `ai-auto-tag` (fora de escopo declarado no cartão pai).
+- Não rebaseei nem recriei branch: a guarda proíbe criar/apagar/renomear branches e indicou esta branch como a da tarefa; commitei sobre ela.
+- Não toquei em manifesto, CI, guardas nem testes existentes.
