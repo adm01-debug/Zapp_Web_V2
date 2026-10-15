@@ -20,6 +20,7 @@ import {
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
 
 interface MobileDrawerMenuProps {
   isOpen: boolean;
@@ -63,12 +64,13 @@ const RECENTS_KEY = 'mobile-drawer-recents';
 const MAX_RECENTS = 5;
 
 function getRecents(): string[] {
-  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]'); } catch { return []; }
+  const parsed = safeGetJSON<string[]>(RECENTS_KEY, []);
+  return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
 }
 function saveRecent(id: string) {
   const recents = getRecents().filter(r => r !== id);
   recents.unshift(id);
-  localStorage.setItem(RECENTS_KEY, JSON.stringify(recents.slice(0, MAX_RECENTS)));
+  safeSetJSON(RECENTS_KEY, recents.slice(0, MAX_RECENTS));
 }
 
 const listItemVariants = {

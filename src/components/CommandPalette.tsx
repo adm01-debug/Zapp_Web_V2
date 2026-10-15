@@ -13,6 +13,7 @@ import {
  import { useUserRole } from '@/hooks/system/useUserRole';
  import { NavigationService } from '@/services/navigation.service';
 import type { NavItemConfig } from '@/components/layout/SidebarNavItem';
+import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
 
 interface CommandPaletteProps {
   onNavigate: (view: string) => void;
@@ -22,15 +23,14 @@ const RECENT_KEY = 'zapp-recent-modules';
 const MAX_RECENT = 5;
 
 function getRecent(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-  } catch { return []; }
+  const parsed = safeGetJSON<string[]>(RECENT_KEY, []);
+  return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
 }
 
 function pushRecent(id: string) {
   const list = getRecent().filter(r => r !== id);
   list.unshift(id);
-  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
+  safeSetJSON(RECENT_KEY, list.slice(0, MAX_RECENT));
 }
 
  export function CommandPalette({ onNavigate }: CommandPaletteProps) {

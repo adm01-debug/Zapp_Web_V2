@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -25,7 +26,7 @@ type ThemeSnapshot = {
 const getStoredTheme = (): Theme => {
   if (typeof window === 'undefined') return 'system';
 
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  const stored = safeGetItem(THEME_STORAGE_KEY);
   return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
 };
 
@@ -105,7 +106,7 @@ const updateThemeState = (nextTheme: Theme, animate = true) => {
   };
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    safeSetItem(THEME_STORAGE_KEY, nextTheme);
   }
 
   applyThemeToDocument(themeState.resolvedTheme, animate);
