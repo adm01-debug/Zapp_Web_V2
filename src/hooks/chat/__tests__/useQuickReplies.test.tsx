@@ -7,15 +7,15 @@ import type { ReactElement, ReactNode } from 'react';
 //  1. a busca não normalizava acento: 'saudacao' não achava 'Saudação';
 //  2. os favoritos viviam numa chave única do navegador (sem o usuário), então
 //     uma conta herdava a lista da outra na mesma máquina;
-//  3. o uso era contado por um `update` do cliente — resposta GLOBAL de outro
-//     dono era alcançada por 0 linhas sem erro. Agora vai pela RPC do PH-10.
+//  3. o uso era contado sem tratar erro. Conta por `update` direto com erro
+//     tratado; a RPC atômica do PH-10 nasce na migration do cartão pai
+//     (t_32034c99) e ainda não existe neste recorte (guard de uso exige
+//     auto-suficiência: só chama o que está no catálogo).
 
 const mocks = vi.hoisted(() => ({
   user: { id: 'user-a' } as { id: string } | null,
   templates: [] as Array<Record<string, unknown>>,
-  rpc: vi.fn<(name: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>>(
-    async () => ({ data: true, error: null }),
-  ),
+  from: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
 }));
@@ -48,8 +48,7 @@ function chain(result: Record<string, unknown>) {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => chain({ data: mocks.templates, error: null })),
-    rpc: mocks.rpc,
+    from: mocks.from,
   },
 }));
 
@@ -85,8 +84,8 @@ beforeEach(() => {
   localStorage.clear();
   mocks.user = { id: 'user-a' };
   mocks.templates = TEMPLATES;
-  mocks.rpc.mockReset();
-  mocks.rpc.mockResolvedValue({ data: true, error: null });
+  mocks.from.mockReset();
+  mocks.from.mockImplementation(() => chain({ data: mocks.templates, error: null }));
   mocks.toastError.mockReset();
   mocks.toastSuccess.mockReset();
 });
@@ -135,31 +134,36 @@ describe('useQuickReplies — favoritos por usuário', () => {
   });
 });
 
-describe('useQuickReplies — uso contado pela RPC do PH-10', () => {
-  it('chama a RPC com o id e invalida [quick-replies]', async () => {
+describe('useQuickReplies — uso contado por update direto', () => {
+  it('soma 1 no use_count e invalida [quick-replies]', async () => {
     const { result, invalidate } = await renderReady();
+    let last: ReturnType<typeof chain> | undefined;
+    mocks.from.mockImplementationOnce(() => (last = chain({ data: [], error: null })));
 
     await act(async () => {
       await result.current.incrementUseCount('t-global');
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith('increment_quick_reply_use', { p_id: 't-global' });
+    expect(mocks.from).toHaveBeenCalledWith('message_templates');
+    expect(last?.update).toHaveBeenCalledWith({ use_count: 10 });
+    expect(last?.eq).toHaveBeenCalledWith('id', 't-global');
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['quick-replies'] });
   });
 
-  it('id fora da lista local não chama a RPC', async () => {
+  it('id fora da lista local não toca o banco', async () => {
     const { result } = await renderReady();
+    mocks.from.mockClear();
 
     await act(async () => {
       await result.current.incrementUseCount('id-que-nao-existe');
     });
 
-    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
-  it('erro da RPC vira aviso e não invalida o cache', async () => {
+  it('erro do update vira aviso e não invalida o cache', async () => {
     const { result, invalidate } = await renderReady();
-    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+    mocks.from.mockImplementationOnce(() => chain({ data: null, error: { message: 'permission denied' } }));
 
     await act(async () => {
       await result.current.incrementUseCount('t-global');

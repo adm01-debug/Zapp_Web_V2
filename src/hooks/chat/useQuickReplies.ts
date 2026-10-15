@@ -233,13 +233,18 @@ export function useQuickReplies() {
     },
   });
 
-  // Increment use count — contagem atômica no servidor (RPC do PH-10)
+  // Increment use count — contagem direta na tabela. A RPC atômica
+  // (`increment_quick_reply_use`) nasce na migration do cartão pai (t_32034c99)
+  // e não existe neste recorte: o guard de uso exige que o cartão só chame o
+  // que já está no catálogo.
   const incrementUseCount = useCallback(async (templateId: string) => {
     const template = templates?.find((t) => t.id === templateId);
     if (!template) return;
 
-    // A RPC soma no banco e só toca linha visível ao chamador (dono ou global).
-    const { error } = await (supabase as any).rpc('increment_quick_reply_use', { p_id: templateId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (PH-10, cartão pai t_32034c99), types.ts ainda não sincronizado
+    const { error } = await supabase
+      .from('message_templates')
+      .update({ use_count: (template.use_count ?? 0) + 1 })
+      .eq('id', templateId);
     if (error) {
       toast.error('Erro ao registrar o uso da resposta rápida');
       log.error('Error incrementing quick reply use:', error);
