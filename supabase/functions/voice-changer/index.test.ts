@@ -26,6 +26,19 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const USER_ID = "20000000-0000-0000-0000-00000000000c";
+// Os 2 casos novos do refazer 1 usam usuários próprios: o `enforceRateLimit`
+// consulta um balde LOCAL (`voice-changer:<userId>`, 10 req/60 s) antes do RPC,
+// e o stub do RPC sempre libera — sem usuário próprio, os casos novos
+// consumiriam o mesmo balde dos 9 casos com bearer e o 11º tomaria 429.
+const USER_ID_CORPO_QUEBRADO = "20000000-0000-0000-0000-0000000000d1";
+const USER_ID_AUDIO_TEXTO = "20000000-0000-0000-0000-0000000000d2";
+
+function rotaAuthComo(userId: string): Route {
+  return {
+    match: "/auth/v1/user",
+    make: () => jsonResp({ id: userId, aud: "authenticated" }),
+  };
+}
 
 type Route = { match: string; make: () => Response | Promise<Response> };
 type Call = { url: string; init?: RequestInit };
@@ -377,6 +390,80 @@ Deno.test("G3: timeout do provedor -> 504 claro e a tentativa PAGA continua no l
   });
 });
 
+// Ponto 1 da recusa do refazer 1 (regressão do fetch reestruturado): o
+// provedor devolve 200 mas a CONEXÃO cai no meio do corpo. Antes da correção o
+// handler seguia para `new Response(audioBuffer...)` com `audioBuffer` nulo e
+// devolvia 200 com `Content-Length: 0`; depois da correção a falha vira 500
+// (o caminho que o código tinha antes da reestruturação) com linha `error` no
+// ledger — a tentativa paga continua registrada.
+Deno.test("G3: corpo 200 que quebra no meio do download -> 500 e ledger error (nunca 200 vazio)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      rotaAuthComo(USER_ID_CORPO_QUEBRADO),
+      ROTA_RATE_LIMIT,
+      ROTA_LEDGER,
+      {
+        match: PROVIDER,
+        make: () =>
+          Promise.resolve(
+            new Response(
+              new ReadableStream({
+                start(controller) {
+                  controller.enqueue(new Uint8Array([1, 2]));
+                  controller.error(new Error("conexao caiu no meio do corpo"));
+                },
+              }),
+              { status: 200, headers: { "content-type": "audio/mpeg" } },
+            ),
+          ),
+      },
+    ]);
+    try {
+      const res = await handleVoiceChanger(
+        voiceRequest(formFor(new File([oggBytes()], "audio.ogg", { type: "audio/ogg" }))),
+      );
+      assert(res.status === 500, `falha no corpo não pode sair 200 vazio, veio ${res.status}`);
+      const linha = linhaDoLedger(stub.calls);
+      assert(linha !== null, "a tentativa paga que quebrou no meio continua sendo consumo: falta a linha no ledger");
+      assert(linha!.status === "error", `status inesperado: ${String(linha!.status)}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// Ponto 2 da recusa do refazer 1: o campo `audio` chega como TEXTO (string),
+// não como arquivo. Antes da correção o `!audioFile` deixava passar (string é
+// truthy) e o `file.slice` dentro do validador caía no 500 genérico; depois da
+// correção a guarda `instanceof File` devolve 400 claro sem tocar o provedor.
+Deno.test("G3: campo audio como texto (string) -> 400 claro e não toca o provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      rotaAuthComo(USER_ID_AUDIO_TEXTO),
+      ROTA_RATE_LIMIT,
+      ROTA_AUDIO,
+      ROTA_LEDGER,
+    ]);
+    try {
+      const form = new FormData();
+      form.append("audio", "sou-um-texto-nao-um-arquivo");
+      form.append("voice_preset", "grave");
+      const res = await handleVoiceChanger(voiceRequest(form));
+      assert(res.status === 400, `esperado 400, veio ${res.status}`);
+      const body = await res.json() as { error?: string };
+      assert(
+        body.error === "Arquivo de áudio é obrigatório",
+        `mensagem inesperada: ${JSON.stringify(body)}`,
+      );
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "campo texto não pode chegar ao provedor pago",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
 // Armadilha do revisor no PH-06 (13/10): `AbortSignal.timeout` num fetch cujo corpo
 // é lido DEPOIS pode cortar a resposta no meio do download. Aqui o corpo volta como
 // buffer (não há streaming para o cliente) e é lido dentro do MESMO relógio — então

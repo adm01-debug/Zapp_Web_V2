@@ -84,10 +84,12 @@ export async function handleVoiceChanger(req: Request): Promise<Response> {
     }
 
     const formData = await req.formData();
-    const audioFile = formData.get('audio') as File | null;
+    // Ponto 2 do refazer 1: o campo `audio` pode chegar como TEXTO (string) e
+    // string é truthy — `!audioFile` não pegava, e o `file.slice` estourava em
+    // 500 genérico. `instanceof File` barra texto e ausência com 400 claro.
+    const audioFile = formData.get('audio');
     const voicePreset = (formData.get('voice_preset') as string) || 'grave';
-
-    if (!audioFile) {
+    if (!(audioFile instanceof File)) {
       return errorResponse('Arquivo de áudio é obrigatório', 400, req);
     }
 
@@ -189,21 +191,26 @@ export async function handleVoiceChanger(req: Request): Promise<Response> {
         req,
       );
     }
-    if (!response) throw falhaDeRede;
+    // Ponto 1 do refazer 1: falha de rede NÃO-timeout (fetch rejeitado ou corpo
+    // 200 que quebra no meio do download, com audioBuffer nulo) cai no catch e
+    // vira 500 — nunca 200 vazio. O `!response || !audioBuffer` junto ao
+    // `falhaDeRede` estreita os tipos para o `deno check` (strict): qualquer
+    // caminho que deixasse response/audioBuffer nulos armou falhaDeRede acima.
+    if (falhaDeRede || !response || !audioBuffer) throw falhaDeRede;
 
     if (!response.ok) {
       log.error(`ElevenLabs STS error ${response.status}`, { detail: textoErro });
       return errorResponse(`Voice transformation failed: ${response.status}`, 502, req);
     }
 
-    log.done(200, { outputSize: audioBuffer?.byteLength ?? 0 });
+    log.done(200, { outputSize: audioBuffer.byteLength });
 
     return new Response(audioBuffer, {
       status: 200,
       headers: {
         ...getCorsHeaders(req),
         'Content-Type': 'audio/mpeg',
-        'Content-Length': (audioBuffer?.byteLength ?? 0).toString(),
+        'Content-Length': audioBuffer.byteLength.toString(),
       },
     });
   } catch (err: unknown) {
