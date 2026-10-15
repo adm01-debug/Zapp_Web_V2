@@ -1,0 +1,59 @@
+# docs:
+#   gatilho: agendado (segunda 07:17 UTC) e dispatch
+#   prova: OpenSSF Scorecard mede praticas de segurança do repositório
+#   falha: SARIF publicado em Code Scanning; score visível em Security
+#   avisa: aba Security → Code scanning alerts
+# W86 (auditoria de GitHub Actions, 2026-10-14)
+name: OpenSSF Scorecard
+
+on:
+  schedule:
+    # Segunda-feira 07:17 UTC — sem colisão com outros agendamentos.
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+  # Publicar SARIF também quando a branch principal muda.
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  # Necessário para publicar SARIF em Code Scanning.
+  security-events: write
+  # Para ler o repositório.
+  contents: read
+  # Para publicar os resultados como checks no commit.
+  checks: write
+  # Para ler informações de tokens.
+  id-token: write
+
+concurrency:
+  group: scorecard
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: 📊 OpenSSF Scorecard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🔍 Run Scorecard analysis
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75b3f07db4 # v2.4.1
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          # Publica em ossf/scorecard-results para o badge; requer GITHUB_TOKEN.
+          publish_results: true
+
+      - name: 📤 Upload SARIF para Code Scanning
+        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1a # v3.28.15
+        with:
+          sarif_file: scorecard-results.sarif
+          wait-for-processing: true

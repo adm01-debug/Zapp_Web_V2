@@ -31,6 +31,10 @@ on:
 # VITE_SUPABASE_URL/KEY; o e2e usa VITE_CRM_INTEGRATION_ENABLED inline no
 # playwright.config.ts (fallback 'true'). Reduz o escopo de exposicao dos secrets.
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
@@ -132,7 +136,6 @@ jobs:
           # actionlint vem do release oficial pinado (v1.7.7) com o sha256
           # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
           # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
-          set -euo pipefail
           actionlint_version="1.7.7"
           actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
           actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
@@ -370,7 +373,6 @@ jobs:
       # registry, e o gate confere o codigo E o relatorio (R2-INF-009).
       - name: 🔎 Audit completo (informativo, inclui devDependencies)
         run: |
-          set -euo pipefail
           status=0
           bun audit --audit-level=low > audit-report.txt 2>&1 || status=$?
           echo "$status" > audit-status.txt
@@ -389,6 +391,15 @@ jobs:
           GITLEAKS_ENABLE_COMMENTS: 'false'
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'false'
+
+      - name: 🔒 Dependency review
+        # W85: falha em vulnerabilidade `high` nova introduzida no PR; lista licenças.
+        # Só faz sentido em pull_request (compara base↔head).
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@ce3cf9537a52e8119d91fd484ab5957752996a68 # v4.7.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
 
   # ===========================================
   # JOB 5: E2E Tests (Playwright)
@@ -515,7 +526,6 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          set -euo pipefail
           if [ -z "${BASE_REF:-}" ]; then
             # push/dispatch/merge_group: sem base de PR, roda (fail-open).
             echo "map_changed=true" >> "$GITHUB_OUTPUT"

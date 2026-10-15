@@ -23,7 +23,7 @@
  * porque "não consegui olhar" é justamente o que precisa de gente.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -267,6 +267,19 @@ async function main() {
 
   for (const d of divergencias) {
     console.log(`divergencia: ${semQuebra(d.campo)} esperado=${semQuebra(d.esperado)} encontrado=${semQuebra(d.encontrado)}`);
+  }
+
+  // W17: salva snapshot do perimetro medido para artifact de diff.
+  const snapshotPath = process.env.PERIMETER_SNAPSHOT_PATH;
+  if (snapshotPath) {
+    const snapshot = {
+      medido_em: new Date().toISOString(),
+      run_id: process.env.GITHUB_RUN_ID ?? 'manual',
+      divergencias,
+      nao_verificaveis: naoVerificaveis,
+    };
+    writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
+    console.log(`Snapshot do perimetro salvo em ${snapshotPath}`);
   }
 
   if (divergencias.length === 0 && naoVerificaveis.length === 0) {

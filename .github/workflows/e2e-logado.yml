@@ -27,6 +27,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
@@ -126,7 +130,6 @@ jobs:
         env:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
         run: |
-          set -euo pipefail
           if [ -n "$E2E_TEST_EMAIL" ]; then
             echo "::add-mask::$E2E_TEST_EMAIL"
             echo "e-mail do E2E mascarado no log"
@@ -158,7 +161,6 @@ jobs:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: |
-          set -euo pipefail
           node scripts/ci/redigir-relatorio.mjs playwright-report \
             --segredo-env=E2E_TEST_EMAIL \
             --segredo-env=E2E_TEST_PASSWORD
