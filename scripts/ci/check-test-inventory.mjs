@@ -105,6 +105,11 @@ const ALLOWLIST = new Set([
   // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
   // e cabe junto dos outros testes de container — promover pelo dono do workflow.
   'scripts/db-audit/conversation-closures-reopen-same-day.test.sh',
+  // PE-SQL-010 (refazer t_592aa1bc): prova em PG 17 descartável (docker local) que a
+  // migration 20261013042745 cria os 8 gatilhos de auditoria administrativa, que a
+  // trilha grava sem vazar segredos e que o `-- Rollback:` do cabeçalho remove tudo.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/audit-admin-changes.test.sh',
   // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
   // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
