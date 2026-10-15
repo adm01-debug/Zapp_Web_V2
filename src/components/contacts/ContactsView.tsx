@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { MotionConfig } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
@@ -119,7 +118,6 @@ export function ContactsView() {
   const canMerge = canMergeContacts(adminAccess);
 
   return (
-    <MotionConfig reducedMotion="user">
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
@@ -273,6 +271,5 @@ export function ContactsView() {
         canChangeTypeSelection={canChangeTypeSelection}
       />
     </div>
-    </MotionConfig>
   );
 }

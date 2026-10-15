@@ -1,5 +1,5 @@
-import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { ReactNode, useEffect, useState } from 'react';
+import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // Animated counter
@@ -7,17 +7,20 @@ interface AnimatedCounterProps { value: number; duration?: number; className?: s
 
 export function AnimatedCounter({ value, duration = 1, className }: AnimatedCounterProps) {
   const [displayValue, setDisplayValue] = useState(0);
-  const prevRef = { current: 0 };
+  // useRef (e nao um objeto novo a cada render): so assim a animacao sabe de
+  // onde veio e nao reinicia sempre do zero a cada mudanca de valor.
+  const prevRef = useRef(0);
 
   useEffect(() => {
-    let startTime: number;
-    let frame: number;
+    let startTime: number | undefined;
+    let frame = 0;
     const start = prevRef.current;
     const diff = value - start;
     if (diff === 0) return;
 
     const animate = (ts: number) => {
-      if (!startTime) startTime = ts;
+      // `undefined` e nao falsy: um ts 0 valido nao pode remarcar o inicio.
+      if (startTime === undefined) startTime = ts;
       const progress = Math.min((ts - startTime) / (duration * 1000), 1);
       const ease = 1 - Math.pow(1 - progress, 3);
       setDisplayValue(Math.round(start + diff * ease));
@@ -83,12 +86,26 @@ export function AnimatedListItem({ children, className, layoutId }: { children: 
 
 // Typewriter
 export function Typewriter({ text, speed = 50, className, onComplete }: { text: string; speed?: number; className?: string; onComplete?: () => void }) {
-  const [display, setDisplay] = useState('');
-  useEffect(() => {
-    let i = 0;
-    const iv = setInterval(() => { if (i <= text.length) { setDisplay(text.slice(0, i)); i++; } else { clearInterval(iv); onComplete?.(); } }, speed);
-    return () => clearInterval(iv);
-  }, [text, speed, onComplete]);
+  const reduzido = useReducedMotion();
+  const [digitado, setDigitado] = useState('');
+  // `onComplete` em ref: um callback inline do pai muda de identidade a cada
+  // render e, se ele ficasse nas deps, o efeito reiniciava e o texto voltava
+  // ao comeco no meio da digitacao.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  return <span className={className}>{display}{display.length < text.length && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}</span>;
+  useEffect(() => {
+    // Com movimento reduzido nao ha o que digitar: o texto sai inteiro de uma
+    // vez (derivado abaixo, sem setState dentro do efeito) e so avisamos o fim.
+    if (reduzido) {
+      onCompleteRef.current?.();
+      return;
+    }
+    let i = 0;
+    const iv = setInterval(() => { if (i <= text.length) { setDigitado(text.slice(0, i)); i++; } else { clearInterval(iv); onCompleteRef.current?.(); } }, speed);
+    return () => clearInterval(iv);
+  }, [text, speed, reduzido]);
+
+  const display = reduzido ? text : digitado;
+  return <span className={className}>{display}{!reduzido && display.length < text.length && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}</span>;
 }
