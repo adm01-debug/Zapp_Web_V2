@@ -3,8 +3,11 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+// `max-w-full min-w-0` impedem a pílula de estourar a caixa do pai e `truncate` corta o
+// rótulo longo com reticências; o texto inteiro continua vindo de quem usa o componente,
+// pelo `title` (o `...props` repassa o atributo para o DOM).
 const badgeVariants = cva(
-  "inline-flex items-center max-w-full min-w-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center max-w-full min-w-0 truncate rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
