@@ -1,48 +1,26 @@
-Especialista: Hugo (area-front-hooks)
-
-## Origem do range (cartão pai trazido por cherry-pick)
-- O commit do cartão pai (PE-16, id de correlação) não estava na base `dia/2026-10-13` do meu workspace,
-  então eu o trouxe por cherry-pick, como o cartão manda. É esse commit que altera
-  `src/services/outbound-message.service.ts` (+ `src/services/__tests__/outbound-message.service.test.ts`)
-  e `supabase/functions/_shared/validation.ts` (+ `supabase/functions/_shared/validation.cors.test.ts`):
-  injeção do `x-request-id`/`x-correlation-id` e do cabeçalho no CORS. Nada disso é meu diff de hoje —
-  está citado aqui só porque aparece no range do cartão.
-
+Especialista: hugo
 ## O que mudou e por quê
-- src/lib/invokeEdge.ts: ganhou o leitor ÚNICO do corpo de erro (`readEdgeErrorBody`) e o tradutor
-  `parseEdgeError` (envelope canônico `{error:{code,message,fields}}`, código plano `{error,message}` e
-  `{code}`, e falha de rede → `network_error`); `invokeEdge` passa a devolver
-  `{ data, error: EdgeFunctionError }` com `code`, `message`, `fieldErrors` e `status` — antes o chamador
-  recebia só o `Error` do SDK ("Edge Function returned a non-2xx status code").
-- src/components/inbox/ai-tools/analysisConfigs.ts, src/hooks/integrations/useMultiplixDispatches.ts,
-  src/hooks/integrations/useExternalCatalog.ts e src/hooks/integrations/useMultiplixAudience.ts: as 4
-  cópias do parser (cada uma fazendo `error.context.clone().json()`) passam a ler o corpo por
-  `parseEdgeError`/`readEdgeErrorBody`; cada uma mantém só a tradução para o SEU erro de domínio
-  (MultiplixOverLimitError, MultiplixDispatchEdgeError, CatalogEdgeError, envelope de IA).
-- src/components/admin/ForceLogoutButton.tsx e src/components/security/PasswordResetRequestsPanel.tsx:
-  passam a mostrar a mensagem/código do servidor em vez do genérico — só a leitura do erro mudou, a
-  chamada `supabase.functions.invoke` continua idêntica (payload e headers inalterados).
-- src/lib/__tests__/invokeEdge.erro.test.ts: teste que prova o código do servidor no erro do cliente.
-
+- src/hooks/integrations/useMultiplixDispatches.ts (toMultiplixDispatchError, linhas 96-124): a tradução do erro voltou a derivar o código do corpo cru — body.error (string) vence, depois o código traduzido do leitor único (envelope canônico), depois body.message. Corpo só com `{ message }` volta a ser `MultiplixDispatchEdgeError` (não `Error` genérico); over-limit continua lido do corpo cru com count/limit (F17). Não mexi no `parseEdgeError`: ele é compartilhado e o catálogo depende da precedência de `body.code`.
+- src/hooks/integrations/useExternalCatalog.ts (linha 195): fallback sem `code` de topo voltou a `CATALOG_UNEXPECTED` (era o comportamento pré-migração; a migração tinha trocado por `null`). Varredura do mesmo padrão da recusa nos outros traduzidos.
+- Testes novos/ajustados (chamam o código real; mocks só na borda do SDK):
+  - src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx (linha 216): `{ message }` só vira EdgeError com code=message; `{ error }` plano; `body.error` vence `body.code`; over-limit vira MultiplixOverLimitError com count/limit.
+  - src/hooks/integrations/__tests__/useMultiplixAudience.test.ts (linha 259): `{ message }` só e envelope canônico passam pela tradução nova.
+  - src/hooks/__tests__/useExternalCatalog.test.ts (linha 276): envelope canônico, `{ error, code }` plano e 429 sem código.
+  - src/components/admin/__tests__/ForceLogoutButton.test.tsx (linha 76): toast mostra a mensagem do corpo, não o "non-2xx".
+  - src/components/security/__tests__/PasswordResetRequestsPanel.edge-erro.test.tsx (NOVO): aprovar com erro mostra a mensagem do servidor e não chama toast.success.
+  - src/components/inbox/ai-tools/__tests__/analysisConfigs.envelope.test.ts (NOVO): envelope válido, corpo que não é envelope, sem context/clone e JSON inválido.
 ## Prova
-- Range do cartão desde `dia/2026-10-13`: 14 arquivos (4 deles de teste); inclui o commit do pai trazido
-  por cherry-pick e o `.tmp/relato.md` (documentação) — as contagens exatas saem de `git diff --stat`.
-- vermelho antes: `npx vitest run src/lib/__tests__/invokeEdge.erro.test.ts` com o wrapper ANTERIOR →
-  `Tests 7 failed | 1 passed (8)` (`The instanceof assertion needs a constructor but undefined was given`
-  — `EdgeFunctionError` e `error.code` não existiam).
-- verde depois: `npx vitest run src/lib/__tests__/invokeEdge.erro.test.ts` →
-  `Test Files 1 passed (1); Tests 8 passed (8)`.
-- regressão dos 4 hooks + as 2 telas + o wrapper + o serviço migrado no PE-16:
-  `npx vitest run <9 arquivos>` → `Test Files 9 passed (9); Tests 179 passed (179)`.
-
-## Aviso do juiz automático (não procede)
-- O juiz apontou que mexi em arquivos "fora de ARQUIVOS QUE PODE TOCAR" (as 4 cópias + analysisConfigs +
-  ForceLogoutButton + PasswordResetRequestsPanel). Não procede: o corpo do cartão pede exatamente
-  "migre as 4 cópias e os primeiros chamadores (…, reset de senha, forçar logout)" e lista os dois
-  componentes em ARQUIVOS QUE PODE TOCAR com a ressalva "(somente a leitura do erro)" — respeitada:
-  a chamada `supabase.functions.invoke` de cada um continua idêntica, só a leitura do erro mudou.
-
+- Vermelho ponto 2 (sem a correção): `npx vitest run src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx -t "message } continua"` → `Tests 1 failed | 24 skipped (25)` (toBeInstanceOf falhou: vinha `Error` genérico); `-t "precedencia anterior"` → `Tests 1 failed | 24 skipped (25)` (`expected MultiplixDispatchEdgeError ... to match object { code: 'multiplix_lista_vazia', … }`, vinha `body.code`).
+- Vermelho ponto 3 (fontes pré-migração `38a8e9f073^` instaladas, teste novo rodado, fonte restaurada): audience → `expected 'Edge Function returned a non-2xx stat…' to be 'Fila do provedor indisponivel'` e `expected '[object Object]' to be 'Provedor fora do ar'`; catálogo canônico → `expected '[object Object]' to be 'Banco externo indisponivel'`; ForceLogoutButton → `expected "vi.fn()" to be called with arguments: [ 'Sessão já revogada pelo servidor' ]`; painel → `expected "vi.fn()" to be called with arguments: [ Array(1) ]`; catálogo sem o restauro do fallback → `expected null to be 'CATALOG_UNEXPECTED'`. analysisConfigs é refatoração pura (passa no código antigo); a fiação no leitor compartilhado foi provada quebrando temporariamente o import → `Failed to resolve import "@/lib/invokeEdge-QUEBRADO"`, restaurado em seguida.
+- Verde depois: `npx vitest run` nos 10 arquivos (dispatches edge, audience, catalog, ForceLogoutButton, painel edge-erro + abas + select, analysisConfigs envelope, invokeEdge.erro, invokeEdge) → `Test Files 10 passed (10)` e `Tests 176 passed (176)`.
+- Segunda passada: `toMultiplixDispatchError` só é chamada por `invokeMultiplixDispatch`; `MultiplixMonitor` usa `instanceof MultiplixDispatchEdgeError` com fallback para a mensagem — o texto visível é idêntico nos dois ramos; consumidores de `errorCode` do catálogo (`ExternalProductManagement`, `ExternalProductCatalog`) tratavam `CATALOG_UNEXPECTED` antes da migração. Commits com ratchet de lint OK (0 dívidas novas).
+## Verificação full (pedida no cartão)
+- `zapp-verify` full: passou trava-produção, tipos, lint, migrations e estrutura; parou em VERMELHO na etapa de testes unitários (`VERIFY: VERMELHO em testes (676s)`).
+- Investiguei: suite completa deu `Test Files 24 failed | 1295 passed (1319)` e `Tests 2 failed | 11797 passed (11838)` — os 2 testes falhados são `src/__tests__/smoke.test.ts` (gateway atômico) e `RuleValueInput.test.tsx` (talkx), que não importam nenhum módulo deste cartão; os outros 22 arquivos falham na coleta por `No "createLogger" export is defined on the "@/lib/logger" mock`, também fora do escopo. Prova de que é pré-existente: com minhas 2 fontes revertidas ao estado anterior (`HEAD~2`) os mesmos 2 arquivos falham igual (`Test Files 2 failed (2)`, `Tests 2 failed | 8 passed (10)`); fontes restauradas em seguida.
+- Contratos do módulo: `bun run test:contracts` nos 3 arquivos (multiplix-dispatch-write-path, ai-response-envelope, multiplix-docs) → `Test Files 3 passed (3)`, `Tests 25 passed (25)`.
+## Pontos do revisor
+- Ponto 1: resolvido — a primeira linha deste relato é exatamente `Especialista: hugo`.
+- Ponto 2: resolvido — `src/hooks/integrations/useMultiplixDispatches.ts` (linhas 109-122): `{ message }` só volta a ser `MultiplixDispatchEdgeError(message, message)`; `body.error` voltou a vencer `body.code`; over-limit preservado. Prova: os 4 testes em `useMultiplixDispatches.edge.test.tsx` (linha 216), com vermelho antes e verde depois acima.
+- Ponto 3: resolvido — testes do que mudou em cada ponto migrado: `useMultiplixAudience` (linha 259), `useExternalCatalog` (linha 276), `ForceLogoutButton` (linha 76), `PasswordResetRequestsPanel` (arquivo novo), `analysisConfigs` (arquivo novo). O item truncado da recusa ("useExternalCatalog (4…") foi coberto por inteiro: envelope canônico, `{ error, code }` e 429. Prova: vermelhos no código pré-migração e `Tests 176 passed (176)` no final.
 ## O que NÃO fiz e por quê
-- Não toquei em `src/components/settings/ai-providers/useAIProviders.ts` (5ª cópia do leitor, variante
-  `context.json()` sem `clone()`): arquivo fora de ARQUIVOS QUE PODE TOCAR; registrado em comentário no cartão.
-- Não migrei o "convite" citado no corpo do cartão: nenhum arquivo de convite está em ARQUIVOS QUE PODE TOCAR.
+- Não reempilhei a branch nem removi o commit do PE-16 que já estava nela: o leitor deste cartão estende `src/lib/invokeEdge.ts` criado por aquele commit, então separar quebraria a compilação; meu diff (2 commits novos) só contém arquivos deste cartão. Não encontrei defeito novo na minha correção (2ª passada acima).
