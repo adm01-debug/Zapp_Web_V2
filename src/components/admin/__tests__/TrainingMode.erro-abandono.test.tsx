@@ -18,6 +18,9 @@ const ctrl = vi.hoisted(() => ({
   listaError: null as unknown,
   equipe: [] as unknown[],
   equipeError: null as unknown,
+  equipeEspera: null as { promise: Promise<unknown>; resolve: (v: unknown) => void } | null,
+  consultasEquipe: 0,
+  limites: [] as { tabela: string; n: number }[],
   isSupervisor: false,
 }));
 
@@ -29,7 +32,7 @@ vi.mock('@/integrations/supabase/client', () => {
     chain.select = (c?: string) => { cols = c ?? ''; return chain; };
     chain.eq = () => chain;
     chain.order = () => chain;
-    chain.limit = () => chain;
+    chain.limit = (n?: number) => { ctrl.limites.push({ tabela, n: n ?? 0 }); return chain; };
     chain.insert = () => { op = 'insert'; ctrl.insercoes += 1; return chain; };
     chain.update = (p: Record<string, unknown>) => { op = 'update'; ctrl.updates.push(p); return chain; };
     chain.single = () =>
@@ -45,7 +48,11 @@ vi.mock('@/integrations/supabase/client', () => {
       let res: unknown;
       if (tabela === 'profiles') res = ctrl.perfil;
       else if (op === 'update') res = { data: null, error: ctrl.updateError };
-      else if (cols.includes('created_at')) res = { data: ctrl.equipe, error: ctrl.equipeError };
+      else if (cols.includes('created_at')) {
+        ctrl.consultasEquipe += 1;
+        if (ctrl.equipeEspera) return ctrl.equipeEspera.promise.then(onOk, onErr);
+        res = { data: ctrl.equipe, error: ctrl.equipeError };
+      }
       else res = { data: ctrl.sessoes, error: ctrl.listaError };
       return Promise.resolve(res).then(onOk, onErr);
     };
@@ -102,6 +109,9 @@ beforeEach(() => {
   ctrl.listaError = null;
   ctrl.equipe = [];
   ctrl.equipeError = null;
+  ctrl.equipeEspera = null;
+  ctrl.consultasEquipe = 0;
+  ctrl.limites = [];
   ctrl.isSupervisor = false;
 });
 
@@ -191,11 +201,56 @@ describe('TrainingMode — acessibilidade do cenário em andamento', () => {
 });
 
 describe('TrainingMode — aba "Resultados da equipe" (admin/supervisor)', () => {
-  it('atendente comum não vê a aba da equipe', async () => {
+  it('papel-atendente-equipe: a aba da equipe segue o papel lido do hook (some sem supervisão, aparece com)', async () => {
+    // Sem o papel de supervisão: sem aba da equipe, mas o atendente vê o que
+    // pode usar (cenários e os próprios resultados).
+    ctrl.isSupervisor = false;
+    const visaoAtendente = render(<TrainingMode />);
+    await screen.findByText(SESSAO_ANTERIOR.scenario_name);
+    expect(screen.queryByRole('tab', { name: /Resultados da equipe/i })).toBeNull();
+    expect(screen.getByText(CENARIO)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Meus resultados/i })).toBeInTheDocument();
+    visaoAtendente.unmount();
+
+    // Com o papel: a aba aparece. Se o componente ignorasse o hook (valor fixo),
+    // uma das duas metades falharia.
+    ctrl.isSupervisor = true;
     render(<TrainingMode />);
     await screen.findByText(SESSAO_ANTERIOR.scenario_name);
+    expect(screen.getByRole('tab', { name: /Resultados da equipe/i })).toBeInTheDocument();
+  });
 
-    expect(screen.queryByRole('tab', { name: /Resultados da equipe/i })).toBeNull();
+  it('limite-equipe-50: a consulta da equipe é limitada (não lê a tabela inteira)', async () => {
+    ctrl.isSupervisor = true;
+    render(<TrainingMode />);
+    await screen.findByText(SESSAO_ANTERIOR.scenario_name);
+    expect(ctrl.consultasEquipe).toBe(0);
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /Resultados da equipe/i }));
+
+    await waitFor(() => expect(ctrl.consultasEquipe).toBe(1));
+    expect(ctrl.limites).toContainEqual({ tabela: 'training_sessions', n: 50 });
+  });
+
+  it('equipe-carregando: antes do retorno não se afirma vazio ("Nenhuma sessão" só depois de carregar)', async () => {
+    ctrl.isSupervisor = true;
+    let resolver!: (v: unknown) => void;
+    ctrl.equipeEspera = { promise: new Promise<unknown>(r => { resolver = r; }), resolve: resolver };
+    render(<TrainingMode />);
+    await screen.findByText(SESSAO_ANTERIOR.scenario_name);
+    expect(ctrl.consultasEquipe).toBe(0);
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /Resultados da equipe/i }));
+
+    await waitFor(() => expect(ctrl.consultasEquipe).toBe(1));
+    expect(screen.getByText(/Carregando resultados da equipe/i)).toBeInTheDocument();
+    expect(screen.queryByText('Nenhuma sessão de treinamento registrada.')).toBeNull();
+
+    await act(async () => {
+      resolver({ data: [], error: null });
+      await Promise.resolve();
+    });
+    expect(await screen.findByText('Nenhuma sessão de treinamento registrada.')).toBeInTheDocument();
   });
 
   it('supervisor vê a aba e as sessões que a RLS libera, com o estado traduzido', async () => {

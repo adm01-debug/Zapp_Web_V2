@@ -117,7 +117,7 @@ function avaliarTreinamento(respostasDoAtendente: string[]): { score: number; fe
 }
 
 export function TrainingMode() {
-  const { isSupervisor } = useUserRole();
+  const { isSupervisor, loading: papelCarregando } = useUserRole();
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [scenario, setScenario] = useState<typeof SCENARIOS[0] | null>(null);
   const [messages, setMessages] = useState<SimMessage[]>([]);
@@ -136,6 +136,9 @@ export function TrainingMode() {
   const [aba, setAba] = useState('meus');
   const [sessoesEquipe, setSessoesEquipe] = useState<TrainingSession[]>([]);
   const [erroEquipe, setErroEquipe] = useState<string | null>(null);
+  // A aba da equipe começa sem nada buscado: enquanto não carregou, a tela mostra
+  // "carregando" em vez do "nenhuma sessão" (que afirmaria um vazio não verificado).
+  const [equipeCarregada, setEquipeCarregada] = useState(false);
 
   const loadProfile = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -178,17 +181,23 @@ export function TrainingMode() {
 
   /** Sessões de todos os atendentes — só chega aqui para admin/supervisor (RLS + aba). */
   const loadTeamSessions = useCallback(async () => {
+    // Padrão é negar: sem o papel de supervisão (ou com o papel ainda carregando)
+    // a consulta da equipe nem é emitida.
+    if (papelCarregando || !isSupervisor) return;
     const { data, error } = await supabase
       .from('training_sessions')
       .select('id, scenario_name, status, score, created_at')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50);
     if (error) {
       setErroEquipe('Não foi possível carregar os resultados da equipe.');
+      setEquipeCarregada(true);
       return;
     }
     setErroEquipe(null);
     setSessoesEquipe((data ?? []) as TrainingSession[]);
-  }, []);
+    setEquipeCarregada(true);
+  }, [papelCarregando, isSupervisor]);
 
   useEffect(() => {
     loadProfile();
@@ -309,6 +318,8 @@ export function TrainingMode() {
           value={aba}
           onValueChange={(valor) => {
             setAba(valor);
+            // Único ponto de chamada: só a escolha da aba dispara a busca (o
+            // Radix não emite onValueChange na montagem, que abre em "meus").
             if (valor === 'equipe') loadTeamSessions();
           }}
           className="space-y-3"
@@ -364,7 +375,9 @@ export function TrainingMode() {
           {isSupervisor && (
             <TabsContent value="equipe" className="space-y-2">
               {erroEquipe && <p role="alert" className="text-xs text-destructive">{erroEquipe}</p>}
-              {sessoesEquipe.length === 0 ? (
+              {!equipeCarregada ? (
+                <p className="text-xs text-muted-foreground">Carregando resultados da equipe…</p>
+              ) : sessoesEquipe.length === 0 ? (
                 !erroEquipe && <p className="text-xs text-muted-foreground">Nenhuma sessão de treinamento registrada.</p>
               ) : (
                 sessoesEquipe.map(s => (
