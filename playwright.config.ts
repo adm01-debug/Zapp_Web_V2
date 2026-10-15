@@ -120,12 +120,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
+      // TL-046/F87 — responsividade do Multiplix com sessão FALSA e edges mockadas.
+      // Projeto DEDICADO: sem `setup` autenticado, sem sessão salva e com
+      // `storageState` VAZIO explícito para nenhuma sessão persistida alimentar esta spec.
+      name: 'chromium-multiplix-responsivo',
+      testMatch: /multiplix-responsivo\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
+    },
+    {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
       // "setup" e salva em e2e/.auth/user.json.
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|settings-persistencia\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -171,19 +179,6 @@ export default defineConfig({
       name: 'chromium-a11y',
       testMatch: /a11y-(contraste|config-admin)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      // Configurações — persistência das preferências (tema/idioma, notificação do
-      // navegador e Reiniciar Tour): sessão FALSA (`installFakeSession`) + a linha de
-      // `user_settings` mockada EM MEMÓRIA (`page.route`) + rede real barrada
-      // (`bloquearRedeReal`) — o MESMO padrão deslogado de `chromium-telefonia` e
-      // `chromium-a11y`, então roda sem `setup` e sem secrets. Projeto DEDICADO
-      // porque esta spec mede o que o app GRAVOU (o `user_settings` precisa sobreviver
-      // ao reload): o catch-all autenticado faria um login REAL, que não é o que se mede.
-      // O `storageState` VAZIO fica explícito aqui: nenhuma sessão salva alimenta a spec.
-      name: 'chromium-settings',
-      testMatch: /settings-persistencia\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
       // talkx.spec.ts on Chromium — cobertura focada do Talk X usada pelo

@@ -25,8 +25,6 @@ const BASE = {
   settings: { theme: 'dark', language: 'pt-BR', compact_mode: false },
   updateSettings: vi.fn(),
   onResetOnboarding: vi.fn(),
-  isSaving: false,
-  onSave: vi.fn(),
 };
 
 describe('N-156 — selectores de aparência têm nome acessível', () => {
