@@ -416,6 +416,26 @@ jobs:
               const linkHeader = primeira.headers?.link || '';
               const ultimaPaginaMatch = linkHeader.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
               const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              // W91/E51: rotacionar issue apos 20 comentarios para manter legibilidade.
+              if (ultimaPagina > 20) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body: `⚠️ Esta issue atingiu ${ultimaPagina} comentários e está sendo rotacionada para manter legibilidade (política E51/W91).\n\nÚltimo alerta antes do fechamento:\n\n---\n\n${body}`,
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number, state: 'closed', state_reason: 'completed',
+                });
+                try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'db-live-guard', color: 'b60205', description: 'Contrato vivo do banco oficial quebrado' }); } catch {}
+                await github.rest.issues.create({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  title,
+                  body: `Continuação de #${existing.number} (fechada por atingir ${ultimaPagina} comentários — E51/W91).\n\n---\n\n${body}`,
+                  labels: ['db-live-guard'],
+                });
+                return;
+              }
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
