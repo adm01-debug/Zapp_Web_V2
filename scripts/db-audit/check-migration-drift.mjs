@@ -524,16 +524,20 @@ function parseLedger(raw) {
     });
   }
 
+  const duplicateVersions = [];
   const seen = new Set();
   for (const record of records) {
-    if (seen.has(record.version)) errors.push(`versao duplicada no ledger: ${record.version}`);
+    if (seen.has(record.version)) {
+      errors.push(`versao duplicada no ledger: ${record.version}`);
+      duplicateVersions.push(record.version);
+    }
     seen.add(record.version);
   }
 
-  return { records: records.sort((a, b) => a.version.localeCompare(b.version)), errors };
+  return { records: records.sort((a, b) => a.version.localeCompare(b.version)), errors, duplicateVersions };
 }
 
-function compare(migrations, records, exceptionsByVersion) {
+function compare(migrations, records, exceptionsByVersion, { duplicateVersions = [] } = {}) {
   const errors = [];
   const warnings = [];
   const byFileVersion = new Map(migrations.map((migration) => [migration.version, migration]));
@@ -542,6 +546,7 @@ function compare(migrations, records, exceptionsByVersion) {
   const withoutFile = records.filter(({ version }) => !byFileVersion.has(version));
   let verifiedEvidence = 0;
   let pinnedWithoutHistoricalContent = 0;
+  const classifications = [];
 
   for (const record of records) {
     if (typeof record.name === 'string'
@@ -568,6 +573,18 @@ function compare(migrations, records, exceptionsByVersion) {
         `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
       ].join(' ');
     }));
+  }
+
+  // W21: classificar cada version para --classificar / --json
+  for (const { version, fileName } of withoutRecord) {
+    classifications.push({ version, disco: fileName, ledger: '-', classe: 'apply-pendente' });
+  }
+  for (const record of withoutFile) {
+    const lname = record.name ? normalizeLedgerName(record.version, record.name) : '-';
+    classifications.push({ version: record.version, disco: '-', ledger: lname, classe: 'ledger-sem-arquivo' });
+  }
+  for (const version of duplicateVersions) {
+    classifications.push({ version, disco: '-', ledger: '-', classe: 'version-duplicada' });
   }
 
   for (const migration of migrations) {
@@ -769,9 +786,15 @@ function compare(migrations, records, exceptionsByVersion) {
         warnings.push(`${migration.version} (${migration.fileName})`);
       }
     }
+
+    // W21: se novos erros foram adicionados para esta version, e' conteudo divergente
+    if (errors.length > errorsBeforeMigration) {
+      const lname = record.name ? normalizeLedgerName(migration.version, record.name) : '-';
+      classifications.push({ version: migration.version, disco: migration.fileName, ledger: lname, classe: 'conteudo-divergente' });
+    }
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
+  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, classifications };
 }
 
 function printErrors(errors) {
@@ -779,6 +802,10 @@ function printErrors(errors) {
 }
 
 function main() {
+  const argv = process.argv.slice(2);
+  const classificar = argv.includes('--classificar');
+  const jsonOutput = argv.includes('--json');
+
   let evidence;
   let local;
   try {
@@ -789,7 +816,7 @@ function main() {
     return 2;
   }
 
-  console.log(`arquivos validos em ${DIR}: ${local.migrations.length}`);
+  if (!jsonOutput) console.log(`arquivos validos em ${DIR}: ${local.migrations.length}`);
   if (evidence.errors.length || local.errors.length) {
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors([...evidence.errors, ...local.errors].map((error) => `  ${error}`));
@@ -809,14 +836,52 @@ function main() {
     return 2;
   }
 
-  console.log(`registros em schema_migrations: ${parsed.records.length}`);
-  if (parsed.errors.length) {
+  if (!jsonOutput) console.log(`registros em schema_migrations: ${parsed.records.length}`);
+  // --classificar: erros de versao duplicada sao classificados, nao fatais
+  const parsedErrorsFiltrados = classificar
+    ? parsed.errors.filter((e) => !e.startsWith('versao duplicada no ledger: '))
+    : parsed.errors;
+  if (parsedErrorsFiltrados.length) {
     console.error('\nFALHA: ledger invalido:');
-    printErrors(parsed.errors.map((error) => `  ${error}`));
+    printErrors(parsedErrorsFiltrados.map((error) => `  ${error}`));
     return 1;
   }
 
-  const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
+  const result = compare(local.migrations, parsed.records, local.exceptionsByVersion, { duplicateVersions: parsed.duplicateVersions });
+
+  // W21: --classificar imprime tabela de classes antes dos detalhes de erro
+  if (classificar) {
+    const drift = result.classifications.filter((c) => c.classe !== 'apply-pendente');
+    if (jsonOutput) {
+      const pendente = result.classifications.filter((c) => c.classe === 'apply-pendente');
+      console.log(JSON.stringify({
+        classificacoes: result.classifications.sort((a, b) => a.version.localeCompare(b.version)),
+        totais: {
+          'apply-pendente': pendente.length,
+          'ledger-sem-arquivo': drift.filter((c) => c.classe === 'ledger-sem-arquivo').length,
+          'conteudo-divergente': drift.filter((c) => c.classe === 'conteudo-divergente').length,
+          'version-duplicada': drift.filter((c) => c.classe === 'version-duplicada').length,
+        },
+      }, null, 2));
+    } else {
+      const rows = result.classifications.sort((a, b) => a.version.localeCompare(b.version));
+      if (rows.length === 0) {
+        console.log('classificar: sem pendencias ou drift');
+      } else {
+        for (const c of rows) {
+          console.log(`${c.version} | ${c.disco} | ${c.ledger} | ${c.classe}`);
+        }
+      }
+    }
+    if (drift.length > 0) {
+      if (!jsonOutput) {
+        console.error(`\nFALHA (classificar): ${drift.length} item(ns) de drift real detectado(s)`);
+      }
+      return 1;
+    }
+    return 0;
+  }
+
   if (result.errors.length) {
     console.error('\nFALHA: drift de migrations detectado:');
     printErrors(result.errors.map((error) => `  ${error}`));

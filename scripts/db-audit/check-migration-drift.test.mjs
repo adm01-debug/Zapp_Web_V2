@@ -132,6 +132,8 @@ function runGuard({
   psqlFailCount = 0,
   psqlFailMessage = 'connection refused (fake)',
   retryDelaysMs = null,
+  // scriptArgs: argumentos extras passados ao script (ex.: ['--classificar', '--json'])
+  scriptArgs = [],
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -180,7 +182,7 @@ function runGuard({
   else delete env.DESTINO_URL;
 
   try {
-    return spawnSync(process.execPath, [SCRIPT], {
+    return spawnSync(process.execPath, [SCRIPT, ...scriptArgs], {
       cwd: ROOT,
       encoding: 'utf8',
       env,
@@ -1065,4 +1067,106 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
   assert.equal(result.status, 2);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
+});
+
+// ── W21: --classificar ────────────────────────────────────────────────────────
+
+const VERSION2 = '20260829060000';
+const FILE2 = `${VERSION2}_create_second.sql`;
+const SQL2 = 'CREATE TABLE public.second (id integer);\n';
+
+test('W21 (classificar): arquivo local sem ledger → apply-pendente, exit 0', () => {
+  // FILE exists on disk, ledger has NO entry for it → apply-pendente
+  const result = runGuard({
+    files: { [FILE]: SQL },
+    ledger: [], // ledger empty → file has no record
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /apply-pendente/);
+  assert.match(result.stdout, new RegExp(VERSION));
+});
+
+test('W21 (classificar): ledger sem arquivo → ledger-sem-arquivo, exit 1', () => {
+  // Ledger has VERSION, disk has FILE2 only (not FILE)
+  const result = runGuard({
+    files: { [FILE2]: SQL2 },
+    ledger: [ledgerRecord(), ledgerRecord({ version: VERSION2, name: 'create_second', statements: [SQL2.trim()] })],
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stdout, /ledger-sem-arquivo/);
+  assert.match(result.stdout, new RegExp(VERSION));
+});
+
+test('W21 (classificar): conteudo divergente → conteudo-divergente, exit 1', () => {
+  // FILE on disk, ledger has DIFFERENT SQL for same version
+  const divergentLedger = [ledgerRecord({
+    statements: ['CREATE TABLE public.different_table (id integer)'],
+  })];
+  const result = runGuard({
+    files: { [FILE]: SQL },
+    ledger: divergentLedger,
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stdout, /conteudo-divergente/);
+  assert.match(result.stdout, new RegExp(VERSION));
+});
+
+test('W21 (classificar): version duplicada no ledger → version-duplicada, exit 1', () => {
+  // Two ledger records with the same version
+  const dupLedger = [
+    ledgerRecord(),
+    ledgerRecord({ name: 'create_demo_dup' }),
+  ];
+  const result = runGuard({
+    files: { [FILE]: SQL },
+    ledger: dupLedger,
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /version-duplicada/);
+  assert.match(result.stdout, new RegExp(VERSION));
+});
+
+test('W21 (classificar): sem pendencias nem drift → exit 0, mensagem indicativa', () => {
+  const result = runGuard({ scriptArgs: ['--classificar'] });
+  assert.equal(result.status, 0, result.stderr);
+  // Either empty table or "sem pendencias" message
+  assert.doesNotMatch(result.stdout, /ledger-sem-arquivo/);
+  assert.doesNotMatch(result.stdout, /conteudo-divergente/);
+  assert.doesNotMatch(result.stdout, /version-duplicada/);
+});
+
+test('W21 (classificar --json): saida e JSON valido com campo classificacoes', () => {
+  const result = runGuard({
+    files: { [FILE]: SQL },
+    ledger: [],
+    scriptArgs: ['--classificar', '--json'],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  let parsed;
+  assert.doesNotThrow(() => { parsed = JSON.parse(result.stdout); }, 'stdout deve ser JSON valido');
+  assert.ok(Array.isArray(parsed.classificacoes), 'classificacoes deve ser array');
+  assert.ok(parsed.totais && typeof parsed.totais['apply-pendente'] === 'number', 'totais deve ter apply-pendente');
+  assert.ok(parsed.classificacoes.some((c) => c.classe === 'apply-pendente'), 'deve ter item apply-pendente');
+});
+
+test('W21 (classificar): tabela tem formato version | disco | ledger | classe por linha', () => {
+  // Snapshot do formato: cada linha tem 3 separadores "|"
+  const result = runGuard({
+    files: { [FILE]: SQL },
+    ledger: [],
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const lines = result.stdout.trim().split('\n').filter((l) => l.includes('|'));
+  assert.ok(lines.length >= 1, 'deve ter pelo menos uma linha com |');
+  for (const line of lines) {
+    const parts = line.split('|');
+    assert.equal(parts.length, 4, `linha deve ter 4 campos separados por |: ${line}`);
+    assert.match(parts[0].trim(), /^\d{14}$/, `primeiro campo deve ser version: ${line}`);
+    assert.ok(['apply-pendente', 'ledger-sem-arquivo', 'conteudo-divergente', 'version-duplicada'].includes(parts[3].trim()), `ultimo campo deve ser classe valida: ${line}`);
+  }
 });
