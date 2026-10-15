@@ -94,10 +94,13 @@ BEGIN
 
   -- O predicado assigned_to IS NULL repete a trava: se outro já atribuiu entre o
   -- SELECT e aqui, nada muda e nada é auditado.
+  -- Uma linha só (WHERE na chave primária). O gatilho update_contacts_updated_at
+  -- marca o updated_at DESTE contato — mudança real, esperada. Nenhuma outra linha é
+  -- reescrita: provado pelo T1b da suíte (1 contato com data nova, 7 intactos).
   UPDATE public.contacts
      SET assigned_to = v_agent
    WHERE id = p_contact_id
-     AND assigned_to IS NULL;
+   AND assigned_to IS NULL;
 
   GET DIAGNOSTICS v_updated = ROW_COUNT;
   IF v_updated = 0 THEN
