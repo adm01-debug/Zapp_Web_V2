@@ -260,7 +260,6 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
           ROTATE_SECRETS: ${{ inputs.rotate_secrets }}
-          SOURCE_REF: ${{ inputs.source_ref }}
           DRY_RUN: ${{ inputs.dry_run }}
           SOURCE_REF: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref }}
         run: |

@@ -248,7 +248,7 @@ jobs:
           fi
           TARGET_FILE=$(find supabase/migrations -maxdepth 1 -type f \
             -name "${TARGET_VERSION}_*.sql" -printf '%f\n')
-          TARGET_NAME=${TARGET_FILE#${TARGET_VERSION}_}
+          TARGET_NAME=${TARGET_FILE#"${TARGET_VERSION}_"}
           TARGET_NAME=${TARGET_NAME%.sql}
           if [ "$APPLY" = "true" ] && [ "$NEEDS_APPLY" != "true" ]; then
             echo "::error::A migration alvo ja esta registrada; apply repetido foi bloqueado."
