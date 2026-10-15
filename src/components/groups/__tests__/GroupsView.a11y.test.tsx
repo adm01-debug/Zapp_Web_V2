@@ -102,4 +102,14 @@ describe('GroupsView — card de grupo selecionável por teclado (t_bd1c2989)', 
     expect(screen.queryByRole('button', { name: /Enviar para 1 grupo/ })).not.toBeInTheDocument();
     expect(card).toHaveAttribute('aria-pressed', 'false');
   });
+
+  it('Enter no botão "Ações do grupo" não seleciona o grupo (t_12c888c1)', async () => {
+    await renderGrupos();
+    const card = cardDoGrupo();
+    const menu = screen.getByRole('button', { name: 'Ações do grupo Meu Grupo' });
+
+    fireEvent.keyDown(menu, { key: 'Enter' });
+    expect(card).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('button', { name: /Enviar para 1 grupo/ })).not.toBeInTheDocument();
+  });
 });

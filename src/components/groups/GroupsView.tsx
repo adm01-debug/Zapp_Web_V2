@@ -221,6 +221,7 @@ export function GroupsView() {
                   className={`border transition-all cursor-pointer ${isSelected ? 'border-primary bg-primary/5 shadow-glow-primary-md' : 'border-secondary/20 bg-card hover:border-secondary/40 hover:shadow-glow-secondary-sm'}`}
                   onClick={() => toggleGroupSelection(group.id)}
                   onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       toggleGroupSelection(group.id);

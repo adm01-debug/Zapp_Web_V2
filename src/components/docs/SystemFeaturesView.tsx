@@ -90,6 +90,7 @@ export function SystemFeaturesView() {
                   className="cursor-pointer hover:shadow-md transition-shadow border-border/50"
                   onClick={() => !searchTerm && toggleSection(section.id)}
                   onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
                     if (!searchTerm && (e.key === 'Enter' || e.key === ' ')) {
                       e.preventDefault();
                       toggleSection(section.id);
