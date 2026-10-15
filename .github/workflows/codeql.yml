@@ -4,10 +4,7 @@
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security e revisores do PR
 # nao-e-bug:
-#   - CodeQL nao e required check ainda: analise de ~3 min informativa; tornar
-#     required e decisao humana (W84) -- esta PR so remove o paths-ignore que
-#     bloqueava essa decisao (uma PR so de docs/migration nunca disparava o
-#     job, entao exigir o check travaria a fila para sempre nesse caso).
+#   - CodeQL e required desde W84: o check `CodeQL` da branch protection e publicado pelo app `github-advanced-security`, nao pelo job `analyze` deste arquivo (que e so informativo, ~3 min).
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
