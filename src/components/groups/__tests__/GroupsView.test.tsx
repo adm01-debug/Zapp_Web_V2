@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
 const mockUpsert = vi.hoisted(() => vi.fn());
+const mockRpc = vi.hoisted(() => vi.fn());
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -14,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       upsert: mockUpsert,
     })),
+    rpc: mockRpc,
     functions: { invoke: mockInvoke },
     channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() }),
     removeChannel: vi.fn(),
@@ -71,7 +73,7 @@ const GRUPO_A = grupo({ id: 'g1', group_id: '1@g.us', name: 'Meu Grupo' });
 const GRUPO_B = grupo({ id: 'g2', group_id: '2@g.us', name: 'Grupo B' });
 
 describe('GroupsView', () => {
-  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); });
+  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); mockRpc.mockReset(); mockRpc.mockResolvedValue({ data: { id: 'msg-1' }, error: null }); });
 
   it('renders the page title', async () => { render(<GroupsView />); expect(screen.getByText('Grupos WhatsApp')).toBeInTheDocument(); });
 
@@ -171,13 +173,14 @@ describe('GroupsView', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('envio em massa trata erro lógico da Evolution (data.error) como falha', async () => {
+  it('envio em massa trata a recusa da fila (erro da RPC) como falha e mantém a tentativa', async () => {
     const grupo = { id: 'g1', group_id: '1@g.us', name: 'Grupo Alvo', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: 'c1', created_at: '2025-01-01', updated_at: '2025-01-01' };
     mockOrder
       .mockResolvedValueOnce({ data: [grupo], error: null })
       .mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }], error: null });
     mockOrder.mockResolvedValue({ data: [grupo], error: null });
-    mockInvoke.mockResolvedValue({ data: { error: 'falha' }, error: null });
+    // A fila recusa: o grupo não ganha registro nenhum.
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'sem conexão de WhatsApp' } });
     render(<GroupsView />);
     await waitFor(() => expect(screen.getByText('Grupo Alvo')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Grupo Alvo'));
@@ -186,9 +189,11 @@ describe('GroupsView', () => {
     const campo = await screen.findByPlaceholderText('Digite a mensagem para enviar a todos os grupos selecionados...');
     fireEvent.change(campo, { target: { value: 'Olá' } });
     fireEvent.click(screen.getByText('Enviar'));
-    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum envio deu certo (1 falha(s)) — mensagem e seleção mantidas'); });
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum grupo entrou na fila (1 falha(s)) — mensagem e seleção mantidas'); });
     expect(toast.warning).toHaveBeenCalledTimes(1);
     expect(toast.success).not.toHaveBeenCalled();
+    // A aba não chama mais a Evolution para o envio em massa: quem entrega é a fila.
+    expect(mockInvoke).not.toHaveBeenCalled();
   });
 
   // Regressão R2-API-061 (#233): o item "Enviar mensagem" do menu do card
