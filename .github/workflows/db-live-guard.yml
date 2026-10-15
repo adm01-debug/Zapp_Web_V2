@@ -156,7 +156,17 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          node scripts/db-audit/check-migration-drift.mjs 2>&1 | tee /tmp/step-migrations.log
+          # W21/W22: --classificar distingue apply-pendente (exit 2) de drift real (exit 1).
+          # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
+          # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
+          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 1).
+          node scripts/db-audit/check-migration-drift.mjs --classificar 2>&1 | tee /tmp/step-migrations.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
+            exit 0
+          fi
+          exit "$rc"
 
       - name: Verificar ACL e contrato de mcp_exec
         id: acl-mcp-exec

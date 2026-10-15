@@ -535,6 +535,10 @@ function parseLedger(raw) {
 
 function compare(migrations, records, exceptionsByVersion) {
   const errors = [];
+  // W21: apply-pending = arquivo local sem ledger (esperado no fluxo de lote
+  // diario). Separado de `errors` para que --classificar possa retornar exit 2
+  // (neutral) quando *so* apply-pending existir, sem mascarar drift real.
+  const applyPending = [];
   const warnings = [];
   const byFileVersion = new Map(migrations.map((migration) => [migration.version, migration]));
   const byLedgerVersion = new Map(records.map((record) => [record.version, record]));
@@ -551,8 +555,8 @@ function compare(migrations, records, exceptionsByVersion) {
   }
 
   if (withoutRecord.length) {
-    errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
-    errors.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
+    applyPending.push('Arquivo no repo sem registro no banco (apply pendente — lote nao aplicado ainda):');
+    applyPending.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
@@ -771,7 +775,7 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
+  return { errors, applyPending, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
 }
 
 function printErrors(errors) {
@@ -816,12 +820,37 @@ function main() {
     return 1;
   }
 
+  // W21: --classificar separa apply-pendente (exit 2) de drift real (exit 1).
+  // Sem a flag: comportamento original — apply-pendente tambem causa exit 1.
+  const classificar = process.argv.includes('--classificar');
+
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
+
+  if (result.applyPending.length) {
+    console.warn('\nATENCAO: migrations aguardando apply (arquivo local sem ledger):');
+    for (const line of result.applyPending) console.warn(line);
+    if (!classificar) {
+      console.error('\nFALHA: arquivo local sem registro no banco e tratado como drift.');
+      console.error('Use --classificar para tratar apply-pendente como nao-fatal (exit 2).');
+    }
+  }
+
   if (result.errors.length) {
     console.error('\nFALHA: drift de migrations detectado:');
     printErrors(result.errors.map((error) => `  ${error}`));
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
     return 1;
+  }
+
+  // Sem --classificar: apply-pendente tambem e fatal (retrocompat).
+  if (!classificar && result.applyPending.length) {
+    console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
+    return 1;
+  }
+
+  // Com --classificar e so apply-pendente: exit 2 (neutral; lote ainda nao aplicado).
+  if (result.applyPending.length) {
+    return 2;
   }
 
   if (result.warnings.length) {
