@@ -20,6 +20,11 @@ import { fileURLToPath } from 'node:url';
 
 // Jobs que podem falhar sem bloquear merge não impedem o reuso — o push também não os bloquearia.
 const NAO_BLOQUEANTE = /não bloqueante/i;
+// O próprio job de reuso só roda em push: em todo run de PR ele aparece `skipped`.
+// Sem esta exceção nenhum run de PR seria aceito e o reuso nunca dispararia
+// (achado da revisão da PR #1949). O nome é conferido nos dois workflows pelo
+// contrato da arquitetura.
+export const JOB_REUSO = '♻️ Reuso de árvore já testada';
 
 export async function decidirReuso({ evento, sha, repo, workflow, api }) {
   if (evento !== 'push') return { reusar: false, motivo: `evento ${evento}: roda tudo` };
@@ -46,7 +51,7 @@ export async function decidirReuso({ evento, sha, repo, workflow, api }) {
   const jobs = await api(`/repos/${repo}/actions/runs/${ultimo.id}/jobs?filter=latest&per_page=100`);
   const lista = jobs?.jobs ?? [];
   if (lista.length === 0) return { reusar: false, motivo: `run ${ultimo.id} sem jobs listados: roda tudo` };
-  const naoAprovados = lista.filter((j) => j.conclusion !== 'success' && !NAO_BLOQUEANTE.test(j.name));
+  const naoAprovados = lista.filter((j) => j.name !== JOB_REUSO && j.conclusion !== 'success' && !NAO_BLOQUEANTE.test(j.name));
   if (naoAprovados.length > 0) {
     const nomes = naoAprovados.map((j) => `${j.name}=${j.conclusion}`).join(', ');
     return { reusar: false, motivo: `run ${ultimo.id} tem job não aprovado (${nomes}): roda tudo` };

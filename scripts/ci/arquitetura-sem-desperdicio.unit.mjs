@@ -17,6 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { JOB_REUSO } from './reuso-arvore.mjs';
 
 const ler = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const CI = ler('.github/workflows/ci.yml');
@@ -71,6 +72,9 @@ for (const [nome, lista, isentos, workflow] of [
     const reuso = lista.reuso;
     assert.equal(reuso.if, "github.event_name == 'push'", 'o reuso só existe no push (em PR não ocupa runner)');
     assert.match(reuso.bloco, new RegExp(`reuso-arvore\\.mjs --workflow ${workflow.replace('.', '\\.')}`), 'o reuso consulta o próprio workflow');
+    // O script ignora o próprio job de reuso (sempre `skipped` em PR) pelo NOME: se o
+    // nome divergir, o job pulado reprova todo run de PR e o reuso nunca dispara.
+    assert.match(reuso.bloco, new RegExp(`^ {4}name: ${JOB_REUSO}$`, 'm'), `o job reuso precisa se chamar exatamente "${JOB_REUSO}"`);
     const faltando = Object.entries(lista)
       .filter(([id]) => !isentos.has(id))
       .filter(([, j]) => !j.needs.includes('reuso') || !/needs\.reuso\.outputs\.reusar != 'true'/.test(j.if ?? ''))

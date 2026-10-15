@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decidirReuso } from './reuso-arvore.mjs';
+import { decidirReuso, JOB_REUSO } from './reuso-arvore.mjs';
 
 const REPO = 'adm01-debug/Zapp_Web_V2';
 const SHA = 'aaaaaaaa1111';
@@ -18,7 +18,9 @@ function apiFalsa(over = {}) {
       ],
     },
     [`/repos/${REPO}/actions/runs/2/jobs?filter=latest&per_page=100`]: {
+      // Formato real de um run de PR: o job de reuso sempre `skipped` (só roda em push).
       jobs: [
+        { name: '♻️ Reuso de árvore já testada', conclusion: 'skipped' },
         { name: '🧪 Unit Tests', conclusion: 'success' },
         { name: '🧬 Mutação do mapa (não bloqueante)', conclusion: 'failure' },
       ],
@@ -101,4 +103,19 @@ test('job bloqueante pulado (ex.: PR em draft) não conta como aprovado', async 
 
 test('erro de API propaga para o chamador, que cai em "roda tudo"', async () => {
   await assert.rejects(decidirReuso({ ...base, api: apiFalsa({ [`/repos/${REPO}/commits/${SHA}/pulls`]: new Error('HTTP 502') }) }));
+});
+
+test('o job de reuso pulado no run da PR não impede o reuso; outro job pulado impede', async () => {
+  assert.equal(JOB_REUSO, '♻️ Reuso de árvore já testada');
+  const rota = `/repos/${REPO}/actions/runs/2/jobs?filter=latest&per_page=100`;
+  const so = await decidirReuso({ ...base, api: apiFalsa({ [rota]: { jobs: [
+    { name: JOB_REUSO, conclusion: 'skipped' },
+    { name: '🏗️ Build', conclusion: 'success' },
+  ] } }) });
+  assert.equal(so.reusar, true, so.motivo);
+  const outro = await decidirReuso({ ...base, api: apiFalsa({ [rota]: { jobs: [
+    { name: JOB_REUSO, conclusion: 'skipped' },
+    { name: '🏗️ Build', conclusion: 'skipped' },
+  ] } }) });
+  assert.equal(outro.reusar, false);
 });
