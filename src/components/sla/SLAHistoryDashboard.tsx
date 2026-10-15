@@ -93,7 +93,7 @@ export const SLAHistoryDashboard = () => {
 
       {semAmostra ? (
         <Card data-testid="sla-history-sem-dados" className="p-8 text-center">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/60" />
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold text-foreground mb-1">Sem dados de SLA no período</h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
             Nenhuma conversa teve a 1ª resposta avaliada — a taxa de SLA só existe depois do desfecho da 1ª resposta.
