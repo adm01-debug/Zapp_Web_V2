@@ -1,22 +1,23 @@
 /**
- * MR1 — balão de mídia SEM URL.
+ * MessageBubble — mídia sem URL mostra placeholder, nunca balão vazio.
  *
- * O defeito: os previews do `MessageBubble` (imagem, vídeo, áudio, documento, figurinha) só
- * desenhavam DENTRO de `message.mediaUrl &&`; com a linha sem URL nenhum ramo casava e o balão
- * saía VAZIO — sem motivo visível para o atendente.
- *
- * A prova RENDERIZA o `MessageBubble` REAL e lê o que aparece na tela: o cartão
- * `[data-testid="media-indisponivel"]` com "Mídia indisponível" e o rótulo do tipo, para os
- * cinco tipos de mídia; e QUE ELE NÃO aparece quando há URL nem em mensagem de texto (não pode
- * virar ruído). Também prende as regras do cartão: nenhuma URL inventada (nenhum elemento com
- * `src`) e nenhuma ação falsa (não há botão de "tentar de novo" nesta rodada — é do MR2).
+ * Cobre o pedido do cartão: mensagem de mídia (`image`, `video`, `audio`,
+ * `document`, `sticker`) sem `mediaUrl` mostra placeholder com `role="status"` —
+ * 'Baixando…' quando recente (mais nova que MIDIA_BAIXANDO_LIMITE_MS) e sem falha
+ * marcada, 'Mídia indisponível' quando mais antiga que o limite ou com falha
+ * marcada (`status === 'failed'`) — com frase neutra por tipo e direção
+ * (recebido x enviado), sem gênero errado.
  */
-import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { MessageBubble } from '../MessageBubble';
-import { Message } from '@/types/chat';
+import { MIDIA_BAIXANDO_LIMITE_MS } from '../../MediaPreview';
+import type { Message } from '@/types/chat';
 
-const MEDIA_URL = 'https://proj.supabase.co/storage/v1/object/public/whatsapp-media/x.webp';
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { name: 'Atendente' } }),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -37,16 +38,58 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
-vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { name: 'Ana' } }) }));
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
+vi.mock('@/hooks/ui/use-toast', () => ({
+  useToast: () => ({ toast: vi.fn() }),
+}));
+
+vi.mock('@/hooks/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, requestPermission: vi.fn() }),
+}));
+
+vi.mock('@/components/inbox/chat/messageUtils', async (importarOriginal) => {
+  const atual = await importarOriginal<typeof import('@/components/inbox/chat/messageUtils')>();
+  return { ...atual, MessageStatusIcon: () => null };
+});
+
+// Previews reais de documento/vídeo pedem storage/permissão: anula os dois, mas
+// mantém o módulo real (MediaMissing + MIDIA_BAIXANDO_LIMITE_MS) via importOriginal.
+vi.mock('@/components/inbox/MediaPreview', async (importarOriginal) => {
+  const atual = await importarOriginal<typeof import('@/components/inbox/MediaPreview')>();
+  return { ...atual, DocumentPreview: () => null, VideoPreview: () => null };
+});
+
+vi.mock('@/components/inbox/ImagePreview', () => ({ MessageImage: () => null }));
+vi.mock('@/components/inbox/AudioMessagePlayer', () => ({ AudioMessagePlayer: () => null }));
+vi.mock('@/components/inbox/InteractiveMessage', () => ({
+  InteractiveMessageDisplay: () => null,
+  ButtonResponseBadge: () => null,
+}));
+vi.mock('@/components/inbox/ReplyQuote', () => ({ QuotedMessage: () => null }));
+vi.mock('@/components/security/QuarantineBadge', () => ({ QuarantineBadge: () => null }));
+vi.mock('@/components/inbox/DeletedMessagePlaceholder', () => ({ DeletedMessagePlaceholder: () => null }));
+vi.mock('@/components/inbox/TypingIndicator', () => ({ TypingIndicator: () => null }));
+vi.mock('@/components/inbox/TextToSpeechButton', () => ({ TextToSpeechButton: () => null }));
+vi.mock('@/components/inbox/MessageReactions', () => ({
+  MessageReactions: () => null,
+  QuickReactionBar: () => null,
+}));
+vi.mock('@/components/inbox/chat/HighlightedText', () => ({
+  HighlightedText: ({ text }: { text: string }) => <>{text}</>,
+}));
+vi.mock('@/components/inbox/chat/MessageHoverToolbar', () => ({ MessageHoverToolbar: () => null }));
+vi.mock('@/components/inbox/chat/LinkPreviewCard', () => ({ LinkPreviewCard: () => null }));
+vi.mock('@/components/ui/avatar', () => ({
+  Avatar: () => null,
+  AvatarFallback: () => null,
+  AvatarImage: () => null,
+}));
 vi.mock('@/components/mobile/SwipeableMessage', () => ({
   SwipeableMessage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
-
 vi.mock('@/components/ui/motion', () => ({
   motion: {
     div: ({
@@ -59,141 +102,181 @@ vi.mock('@/components/ui/motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Previews reais não entram nesta prova: o alvo é o RAMO do balão, não o player/lightbox.
-vi.mock('@/components/inbox/DeletedMessagePlaceholder', () => ({ DeletedMessagePlaceholder: () => null }));
-vi.mock('@/components/inbox/TypingIndicator', () => ({ TypingIndicator: () => null }));
-vi.mock('@/components/inbox/ImagePreview', () => ({ MessageImage: () => null }));
-vi.mock('@/components/inbox/MediaPreview', () => ({
-  DocumentPreview: () => null,
-  VideoPreview: () => null,
-}));
-vi.mock('@/components/inbox/AudioMessagePlayer', () => ({ AudioMessagePlayer: () => null }));
-vi.mock('@/components/inbox/InteractiveMessage', () => ({
-  InteractiveMessageDisplay: () => null,
-  ButtonResponseBadge: () => null,
-}));
-vi.mock('@/components/inbox/ReplyQuote', () => ({ QuotedMessage: () => null }));
-vi.mock('@/components/inbox/TextToSpeechButton', () => ({ TextToSpeechButton: () => null }));
-vi.mock('@/components/inbox/MessageReactions', () => ({
-  MessageReactions: () => null,
-  QuickReactionBar: () => null,
-}));
-vi.mock('@/components/inbox/chat/HighlightedText', () => ({
-  HighlightedText: ({ text }: { text: string }) => <>{text}</>,
-}));
-vi.mock('@/components/inbox/chat/MessageHoverToolbar', () => ({ MessageHoverToolbar: () => null }));
-vi.mock('@/components/security/QuarantineBadge', () => ({ QuarantineBadge: () => null }));
-vi.mock('@/components/inbox/chat/LinkPreviewCard', () => ({ LinkPreviewCard: () => null }));
-vi.mock('@/components/ui/avatar', () => ({
-  Avatar: () => null,
-  AvatarFallback: () => null,
-  AvatarImage: () => null,
-}));
+type TipoMidia = 'image' | 'video' | 'audio' | 'document' | 'sticker';
 
-function linha(overrides: Partial<Message>): Message {
+const ROTULO: Record<TipoMidia, string> = {
+  image: 'Imagem',
+  video: 'Vídeo',
+  audio: 'Áudio',
+  document: 'Documento',
+  sticker: 'Figurinha',
+};
+
+const TIPOS: TipoMidia[] = ['image', 'video', 'audio', 'document', 'sticker'];
+
+const AGORA = Date.now();
+const RECENTE = new Date(AGORA - 60_000);
+const ANTIGA = new Date(AGORA - (MIDIA_BAIXANDO_LIMITE_MS + 60_000));
+const NO_LIMITE = new Date(AGORA - MIDIA_BAIXANDO_LIMITE_MS);
+
+function linha(parcial: Partial<Message> & { type: Message['type'] }): Message {
   return {
-    id: 'm-midia',
+    id: `m-${parcial.type}-${Math.random().toString(36).slice(2)}`,
     content: '',
     sender: 'contact',
-    timestamp: new Date(2026, 9, 13, 12, 0, 0),
-    type: 'image',
-    status: 'delivered',
-    ...overrides,
+    timestamp: RECENTE,
+    ...parcial,
   } as Message;
 }
 
-function renderBubble(overrides: Partial<Message>) {
-  return render(
-    <MessageBubble
-      message={linha(overrides)}
-      isFirstInGroup
-      isLastInGroup
-      ttsLoading={false}
-      ttsPlaying={false}
-      ttsMessageId={null}
-      onSpeak={vi.fn()}
-      onStop={vi.fn()}
-      onReply={vi.fn()}
-      onForward={vi.fn()}
-      onCopy={vi.fn()}
-      onScrollToMessage={vi.fn()}
-      onInteractiveButtonClick={vi.fn()}
-      onMessageDeleted={vi.fn()}
-      registerRef={vi.fn()}
-    />,
-  );
-}
+const PROPS_BASE = {
+  isFirstInGroup: true,
+  isLastInGroup: true,
+  ttsLoading: false,
+  ttsPlaying: false,
+  ttsMessageId: null,
+  onSpeak: vi.fn(),
+  onStop: vi.fn(),
+  onReply: vi.fn(),
+  onForward: vi.fn(),
+  onCopy: vi.fn(),
+  onScrollToMessage: vi.fn(),
+  onInteractiveButtonClick: vi.fn(),
+  onMessageDeleted: vi.fn(),
+  registerRef: vi.fn(),
+} as const;
 
-const CASOS: Array<[Message['type'], string]> = [
-  ['image', 'Imagem'],
-  ['video', 'Vídeo'],
-  ['audio', 'Áudio'],
-  ['document', 'Documento'],
-  ['sticker', 'Figurinha'],
-];
-
-describe('MessageBubble — mídia sem URL não deixa o balão vazio', () => {
-  it.each(CASOS)('tipo %s sem mediaUrl mostra "Mídia indisponível" com o rótulo (%s)', (type, label) => {
-    const { container } = renderBubble({ type, mediaUrl: undefined });
-
-    const cartao = container.querySelector('[data-testid="media-indisponivel"]');
-    expect(cartao).not.toBeNull();
-    expect(container.querySelectorAll('[data-testid="media-indisponivel"]')).toHaveLength(1);
-    expect(cartao?.getAttribute('data-media-label')).toBe(label);
-    expect(container.textContent).toContain('Mídia indisponível');
-    expect(container.textContent).toContain(`${label} não foi recebida.`);
+describe('MessageBubble — mídia sem URL mostra placeholder, nunca balão vazio', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('é um role=note com rótulo acessível que nomeia o que falta', () => {
-    const { container } = renderBubble({ type: 'video', mediaUrl: undefined });
-
-    const nota = container.querySelector('[role="note"]');
-    expect(nota).not.toBeNull();
-    expect(nota?.getAttribute('aria-label')).toContain('Vídeo indisponível');
-    // o ícone é decorativo
-    const svg = nota?.querySelector('svg');
-    expect(svg?.getAttribute('aria-hidden')).toBe('true');
+  afterEach(() => {
+    cleanup();
+    document.documentElement.classList.remove('dark');
   });
 
-  it('vale para o balão RECEBIDO e para o ENVIADO (nenhum dos dois fica vazio)', () => {
-    const recebido = renderBubble({ type: 'image', mediaUrl: undefined, sender: 'contact' });
-    expect(recebido.container.querySelector('[data-testid="media-indisponivel"]')).not.toBeNull();
-    recebido.unmount();
+  it.each(TIPOS)('tipo %s recente mostra "Baixando…" com role="status"', (tipo) => {
+    render(<MessageBubble {...PROPS_BASE} message={linha({ type: tipo, timestamp: RECENTE })} />);
 
-    const enviado = renderBubble({ type: 'document', mediaUrl: undefined, sender: 'agent' });
-    expect(enviado.container.querySelector('[data-testid="media-indisponivel"]')).not.toBeNull();
+    const regioes = screen.getAllByRole('status');
+    expect(regioes.length).toBeGreaterThan(0);
+    const baixa = regioes.find((el) => /Baixando/i.test(el.textContent ?? ''));
+    expect(baixa).toBeTruthy();
+    expect(baixa!.textContent?.toLowerCase()).toContain(ROTULO[tipo].toLowerCase());
+    // Sem role="note": o estado da mídia é anunciado como status.
+    expect(screen.queryByRole('note')).toBeNull();
   });
 
-  it('não inventa URL: nenhum elemento de mídia com src é renderizado', () => {
-    const { container } = renderBubble({ type: 'image', mediaUrl: undefined });
+  it.each(TIPOS)('tipo %s antigo (além do limite) mostra "indisponível" com role="status"', (tipo) => {
+    render(<MessageBubble {...PROPS_BASE} message={linha({ type: tipo, timestamp: ANTIGA })} />);
 
-    expect(container.querySelectorAll('[src]')).toHaveLength(0);
+    const indisponivel = screen.getByRole('status', { name: new RegExp(`${ROTULO[tipo]} indisponível`, 'i') });
+    expect(indisponivel.textContent).toContain('A mídia não foi recebida.');
+    expect(screen.queryByRole('note')).toBeNull();
+  });
+
+  it.each(TIPOS)('tipo %s recente com falha marcada mostra "indisponível", não "Baixando…"', (tipo) => {
+    render(
+      <MessageBubble
+        {...PROPS_BASE}
+        message={linha({ type: tipo, timestamp: RECENTE, status: 'failed' })}
+      />,
+    );
+
+    expect(screen.queryByText(/Baixando/i)).toBeNull();
+    const indisponivel = screen.getByRole('status', { name: new RegExp(`${ROTULO[tipo]} indisponível`, 'i') });
+    expect(indisponivel).toBeTruthy();
+  });
+
+  it('no limite exato vira "indisponível" (regra: idade < limite para "Baixando…")', () => {
+    render(<MessageBubble {...PROPS_BASE} message={linha({ type: 'image', timestamp: NO_LIMITE })} />);
+
+    expect(screen.queryByText(/Baixando/i)).toBeNull();
+    expect(screen.getByRole('status', { name: /Imagem indisponível/i })).toBeTruthy();
+  });
+
+  it('balão ENVIADO recente mostra "Enviando…" e antigo mostra "não foi enviada" (direção separada)', () => {
+    const { unmount } = render(
+      <MessageBubble {...PROPS_BASE} message={linha({ type: 'video', sender: 'agent', timestamp: RECENTE })} />,
+    );
+    expect(screen.getByRole('status', { name: /Enviando vídeo…/i })).toBeTruthy();
+    unmount();
+
+    render(
+      <MessageBubble {...PROPS_BASE} message={linha({ type: 'video', sender: 'agent', timestamp: ANTIGA })} />,
+    );
+    const indisponivel = screen.getByRole('status', { name: /Vídeo indisponível/i });
+    expect(indisponivel.textContent).toContain('A mídia não foi enviada.');
+  });
+
+  it('balão RECEBIDO antigo diz "não foi recebida" (sujeito "mídia", sem erro de gênero)', () => {
+    render(<MessageBubble {...PROPS_BASE} message={linha({ type: 'document', timestamp: ANTIGA })} />);
+
+    const indisponivel = screen.getByRole('status', { name: /Documento indisponível/i });
+    expect(indisponivel.textContent).toContain('A mídia não foi recebida.');
+    // O particípio nunca vai direto no rótulo do tipo (era o bug: 'Documento não foi recebida').
+    expect(indisponivel.textContent).not.toContain('Documento não foi');
+    expect(indisponivel.textContent).not.toContain('não foi recebido');
+  });
+
+  it('placeholder não inventa <img>/<video>/<audio>/<source> e não tem botão de ação falsa', () => {
+    const { container } = render(
+      <MessageBubble {...PROPS_BASE} message={linha({ type: 'audio', timestamp: ANTIGA })} />,
+    );
+
+    expect(screen.getByRole('status', { name: /Áudio indisponível/i })).toBeTruthy();
     expect(container.querySelector('img,video,audio,source')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('não tem ação falsa: nenhum botão de retentativa nesta rodada (MR2)', () => {
-    const { container } = renderBubble({ type: 'sticker', mediaUrl: undefined });
+  it('horário continua visível no balão de mídia sem URL', () => {
+    render(<MessageBubble {...PROPS_BASE} message={linha({ type: 'image', timestamp: RECENTE })} />);
 
-    expect(container.querySelectorAll('button')).toHaveLength(0);
-    expect(container.textContent).not.toMatch(/tentar de novo|tentar novamente|recarregar/i);
+    expect(screen.getByText(/\d{2}:\d{2}/)).toBeTruthy();
   });
 
-  it('o horário continua saindo como nas outras bolhas', () => {
-    const { container } = renderBubble({ type: 'audio', mediaUrl: undefined });
-    expect(container.textContent).toContain('12:00');
+  it('mídia COM url não mostra placeholder', () => {
+    render(
+      <MessageBubble
+        {...PROPS_BASE}
+        message={linha({ type: 'image', mediaUrl: 'https://exemplo.test/foto.jpg', timestamp: ANTIGA })}
+      />,
+    );
+
+    expect(screen.queryByText(/Baixando|indisponível/i)).toBeNull();
   });
 
-  it.each(CASOS)('tipo %s COM mediaUrl NÃO mostra o fallback (nada de ruído)', (type) => {
-    const { container } = renderBubble({ type, mediaUrl: MEDIA_URL });
+  it('mensagem de texto não é afetada', () => {
+    render(
+      <MessageBubble {...PROPS_BASE} message={linha({ type: 'text', content: 'olá', timestamp: ANTIGA })} />,
+    );
 
-    expect(container.querySelector('[data-testid="media-indisponivel"]')).toBeNull();
-    expect(container.textContent).not.toContain('Mídia indisponível');
+    expect(screen.getByText('olá')).toBeTruthy();
+    expect(screen.queryByText(/Baixando|indisponível/i)).toBeNull();
   });
 
-  it('mensagem de texto não é afetada: nenhum fallback e o texto continua', () => {
-    const { container } = renderBubble({ type: 'text', content: 'bom dia', mediaUrl: undefined });
+  it('visual usa só tokens do sistema (claro e escuro) e registra as duas capturas', () => {
+    const casos = [
+      { nome: 'baixando', message: linha({ type: 'image', timestamp: RECENTE }) },
+      { nome: 'indisponivel', message: linha({ type: 'image', timestamp: ANTIGA }) },
+    ] as const;
 
-    expect(container.querySelector('[data-testid="media-indisponivel"]')).toBeNull();
-    expect(container.textContent).toContain('bom dia');
+    mkdirSync('.tmp', { recursive: true });
+    for (const tema of ['claro', 'escuro'] as const) {
+      document.documentElement.classList.toggle('dark', tema === 'escuro');
+      for (const caso of casos) {
+        const { container, unmount } = render(<MessageBubble {...PROPS_BASE} message={caso.message} />);
+        const regiao = screen.getByRole('status');
+        // Nenhuma cor chapada no placeholder: só classes de token (sem #hex).
+        const comHex = [...regiao.querySelectorAll('*'), regiao].filter((el) =>
+          /#[0-9a-fA-F]{3,8}/.test(el.getAttribute('class') ?? ''),
+        );
+        expect(comHex).toEqual([]);
+        writeFileSync(`.tmp/captura-midia-sem-url-${caso.nome}-${tema}.html`, container.innerHTML, 'utf8');
+        unmount();
+      }
+    }
+    document.documentElement.classList.remove('dark');
   });
 });

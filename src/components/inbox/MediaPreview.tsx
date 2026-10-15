@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import {
   X, Download, Play, Pause, FileText, File, FileSpreadsheet,
-  FileImage, FileArchive, ExternalLink, Maximize, Loader2
+  FileImage, FileArchive, ExternalLink, Maximize, Loader2, ImageOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -196,4 +196,88 @@ export function MediaMessage({ type, url, fileName, fileSize, caption, isSent }:
     case 'sticker': return <StickerPreview url={url} isSent={isSent} />;
     default: return null;
   }
+}
+
+/**
+ * Janela em que uma mídia sem URL ainda pode estar chegando: passada ela, o estado
+ * vira 'indisponível'. 5 minutos cobrem o processamento normal do webhook sem deixar
+ * um 'Baixando…' eterno na tela.
+ */
+export const MIDIA_BAIXANDO_LIMITE_MS = 5 * 60_000;
+
+export type MidiaAusenteEstado = 'baixando' | 'indisponivel';
+
+interface MediaMissingProps {
+  estado: MidiaAusenteEstado;
+  /** Rótulo do tipo com inicial maiúscula ('Imagem', 'Vídeo', 'Áudio', 'Documento', 'Figurinha'). */
+  rotulo: string;
+  isSent: boolean;
+}
+
+/**
+ * Placeholder do balão para mensagem de MÍDIA cuja URL não veio (`image`, `video`,
+ * `audio`, `document`, `sticker` sem `mediaUrl`): sem ramo, o balão saía vazio.
+ *
+ * Dois estados, por tipo e por direção, com `role="status"`:
+ * - `baixando`: mensagem recente e sem falha marcada — ainda pode estar chegando
+ *   ('Baixando imagem…' no recebido, 'Enviando imagem…' no enviado);
+ * - `indisponivel`: mensagem mais antiga que `MIDIA_BAIXANDO_LIMITE_MS` ou com falha
+ *   marcada ('Imagem indisponível' + 'A mídia não foi recebida/enviada').
+ *
+ * O texto usa 'mídia' como sujeito ('A mídia não foi recebida'), então a concordância
+ * vale para os cinco tipos; e a direção separa enviado de recebido. Não se inventa URL
+ * nem se usa o texto da mensagem como legenda. Visual só com tokens do sistema, sem
+ * selo de canal/origem; o ícone é decorativo (`aria-hidden`).
+ */
+export function MediaMissing({ estado, rotulo, isSent }: MediaMissingProps) {
+  const minusculo = rotulo.toLowerCase();
+  const titulo =
+    estado === 'baixando'
+      ? isSent
+        ? `Enviando ${minusculo}…`
+        : `Baixando ${minusculo}…`
+      : `${rotulo} indisponível`;
+  const detalhe =
+    estado === 'baixando'
+      ? isSent
+        ? 'Aguarde enquanto a mídia é enviada.'
+        : 'Aguarde enquanto a mídia é baixada.'
+      : isSent
+        ? 'A mídia não foi enviada.'
+        : 'A mídia não foi recebida.';
+
+  return (
+    <div
+      role="status"
+      aria-label={`${titulo} ${detalhe}`}
+      className={cn(
+        'motion-safe:transition-colors relative flex items-center gap-2 overflow-hidden rounded-[var(--radius)]',
+        'border border-dashed px-3 py-2 text-left',
+        isSent
+          ? 'border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground'
+          : 'border-border bg-card text-foreground',
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)]',
+          isSent ? 'bg-primary-foreground/15' : 'bg-muted',
+        )}
+      >
+        {estado === 'baixando' ? (
+          <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+        ) : (
+          <ImageOff className="h-4 w-4" />
+        )}
+      </span>
+
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-sm font-medium">{titulo}</p>
+        <p className={cn('text-xs', isSent ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+          {detalhe}
+        </p>
+      </div>
+    </div>
+  );
 }

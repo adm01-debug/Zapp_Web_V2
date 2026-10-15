@@ -11,12 +11,11 @@ import { TypingIndicator } from '../TypingIndicator';
 import { MessageReactions, QuickReactionBar } from '../MessageReactions';
 import { MessageHoverToolbar } from './MessageHoverToolbar';
 import { MessageImage } from '../ImagePreview';
-import { DocumentPreview, VideoPreview } from '../MediaPreview';
+import { DocumentPreview, VideoPreview, MediaMissing, MIDIA_BAIXANDO_LIMITE_MS } from '../MediaPreview';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
 import { MessageBubbleUnsupported } from './MessageBubbleUnsupported';
-import { MessageBubbleMediaMissing } from './MessageBubbleMediaMissing';
 const LocationMessageDisplay = lazy(() =>
   import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
 );
@@ -122,7 +121,7 @@ function tentativasDeEnvio(message: Message): number | null {
 
 /**
  * Tipos de mensagem que SÓ fazem sentido com uma URL de mídia. Sem `mediaUrl` o balão não
- * tinha ramo nenhum e saía vazio; o rótulo alimenta o fallback `MessageBubbleMediaMissing`.
+ * tinha ramo nenhum e saía vazio; o rótulo alimenta o placeholder `MediaMissing`.
  */
 const MEDIA_TYPE_LABEL: Record<string, string> = {
   image: 'Imagem',
@@ -169,10 +168,16 @@ export const MessageBubble = memo(function MessageBubble({
   const { profile } = useAuth();
   const isSent = message.sender === 'agent';
   const tentativas = tentativasDeEnvio(message);
-  // Mídia sem URL: o tipo pede preview, mas nenhuma URL chegou — cai no fallback
-  // `MessageBubbleMediaMissing` em vez de deixar o balão vazio.
+  // Mídia sem URL: o tipo pede preview, mas nenhuma URL chegou — cai no placeholder
+  // `MediaMissing` em vez de deixar o balão vazio. 'Baixando…' só enquanto a mídia
+  // ainda pode estar chegando (recente e sem falha marcada); mais antiga que
+  // MIDIA_BAIXANDO_LIMITE_MS ou com falha marcada vira 'indisponível'.
   const mediaLabel = MEDIA_TYPE_LABEL[message.type];
   const mediaSemUrl = Boolean(mediaLabel) && !message.mediaUrl;
+  const mediaBaixando =
+    mediaSemUrl &&
+    message.status !== 'failed' &&
+    Date.now() - message.timestamp.getTime() < MIDIA_BAIXANDO_LIMITE_MS;
   // Preview de imagem/vídeo colado na borda (sem padding) só quando há mídia de verdade.
   const midiaInline = (message.type === 'image' || message.type === 'video') && Boolean(message.mediaUrl);
   const senderName = isSent ? 'Você' : message.senderName || 'Contato';
@@ -271,7 +276,13 @@ export const MessageBubble = memo(function MessageBubble({
                 {message.buttonResponse && <ButtonResponseBadge buttonTitle={message.buttonResponse.buttonTitle} isSent={isSent} />}
                 {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} />}
 
-                {mediaSemUrl && <MessageBubbleMediaMissing label={mediaLabel} isSent={isSent} />}
+                {mediaSemUrl && (
+                  <MediaMissing
+                    estado={mediaBaixando ? 'baixando' : 'indisponivel'}
+                    rotulo={mediaLabel}
+                    isSent={isSent}
+                  />
+                )}
 
                 {message.type === 'image' && message.mediaUrl && (
                   <div className={cn("overflow-hidden relative", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>
