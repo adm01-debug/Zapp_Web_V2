@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- PL-06 (t_c5497c51): validação da janela e prévia da mensagem são contrato do cartão no próprio arquivo, junto do diálogo que as usa. */
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -44,13 +45,16 @@ const DAYS_OF_WEEK = [
  */
 export const COLUNA_ENVIO_AUTOMATICO = 'enabled';
 
-export function envioAutomaticoDisponivel(awayMessage: unknown): boolean {
-  return (
-    typeof awayMessage === 'object' &&
-    awayMessage !== null &&
-    COLUNA_ENVIO_AUTOMATICO in awayMessage &&
-    (awayMessage as Record<string, unknown>)[COLUNA_ENVIO_AUTOMATICO] !== undefined
-  );
+export function valorEnvioAutomatico(awayMessage: unknown): boolean | null {
+  if (
+    typeof awayMessage !== 'object' ||
+    awayMessage === null ||
+    !(COLUNA_ENVIO_AUTOMATICO in awayMessage)
+  ) {
+    return null;
+  }
+  const valor = (awayMessage as Record<string, unknown>)[COLUNA_ENVIO_AUTOMATICO];
+  return typeof valor === 'boolean' ? valor : valor != null;
 }
 
 /** O PL-04 acrescenta `enabled` ao que o hook já salva. */
@@ -97,10 +101,11 @@ export function BusinessHoursDialog({
   });
 
   // Envio automático: só existe quando a coluna do PL-04 está na linha lida.
-  const envioDisponivel = envioAutomaticoDisponivel(fetchedAway);
+  const envioSalvoNoBanco = valorEnvioAutomatico(fetchedAway);
+  const envioDisponivel = envioSalvoNoBanco !== null;
   const [envioRascunho, setEnvioRascunho] = useState<boolean | null>(null);
   const envioAutomatico = envioDisponivel
-    ? envioRascunho ?? Boolean((fetchedAway as Record<string, unknown>)[COLUNA_ENVIO_AUTOMATICO])
+    ? envioRascunho ?? Boolean(envioSalvoNoBanco)
     : false;
 
   // Jornada inválida (início igual ao fim) não pode ser salva: o selo ao lado da

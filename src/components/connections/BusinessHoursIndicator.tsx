@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- PL-06 (t_c5497c51): as regras de janela são o contrato compartilhado do par selo/diálogo e vivem aqui por isso (mesmo padrão de src/components/talkx/useTalkXLifecycle.tsx). */
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
@@ -85,7 +86,9 @@ export interface ResumoDoDia {
 }
 
 export interface LinhaDeHorario {
-  is_open: boolean;
+  day_of_week?: number;
+  /** O banco devolve `boolean | null`; nulo é tratado como fechado. */
+  is_open: boolean | null;
   open_time?: string | null;
   close_time?: string | null;
 }
