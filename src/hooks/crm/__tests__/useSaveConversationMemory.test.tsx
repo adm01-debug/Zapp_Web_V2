@@ -10,7 +10,7 @@ import { useSaveConversationMemory } from '../useSaveConversationMemory';
  */
 const h = vi.hoisted(() => {
   const state = { error: null as { message: string } | null };
-  const upsert = vi.fn(async () => ({ error: state.error }));
+  const upsert = vi.fn(async (_payload: Record<string, unknown>, _opts?: unknown) => ({ error: state.error }));
   const from = vi.fn((_table: string) => ({ upsert }));
   return { state, upsert, from };
 });
