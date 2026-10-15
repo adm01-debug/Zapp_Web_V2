@@ -58,11 +58,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:99` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
-| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:61` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
 | `auth-login` | A | `src/lib/serverLogin.ts:72` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
-| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:143` · `src/hooks/chat/useNewConversation.ts:107` · `src/hooks/chat/useNewConversation.ts:115` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
+| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:196` · `src/hooks/chat/useNewConversation.ts:107` · `src/hooks/chat/useNewConversation.ts:115` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/hooks/integrations/useBitrixApi.ts:33` · `src/components/integrations/BitrixIntegrationView.tsx:29` |
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` |
 | `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:207` · `src/components/settings/media-library/AIGenerateDialog.tsx:56` |

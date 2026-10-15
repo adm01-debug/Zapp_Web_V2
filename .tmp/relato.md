@@ -1,16 +1,7 @@
 Especialista: hugo
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxBulkActions.ts: `selectedIds` passa a ser podado por interseção com os ids visíveis (`visibleIds`, derivado de `filteredConversations`) sempre que a lista filtrada muda — trocar de chip/fila/tipo/busca não deixa mais selecionado um contato que o operador não vê. Um `useRef` marca a lista observada na renderização anterior: a primeira lista (montagem/carregamento) não poda nada, e quando nada sai o mesmo `Set` é devolvido (sem re-render quando o pai troca a identidade do array a cada render).
-- src/hooks/inbox/useInboxBulkActions.ts: `selectAll` ganhou comentário curto dizendo que seleciona só o filtrado (já usava `filteredConversations`).
-- src/hooks/inbox/__tests__/useInboxBulkActions.test.ts: 4 casos novos num `describe` próprio, com um helper `renderInboxComFiltro` que troca a lista entre renderizações (`rerender`): poda por interseção, ação em lote só atinge o visível (o contato escondido NÃO vai para o banco), lista que esvazia limpa a seleção e nenhuma ação encontra alvo, e troca de identidade do array sem tirar ninguém mantém a seleção.
-
-Dependência: o cartão pai (t_2901d317, sha 94539ff04) não estava no workspace; a faixa foi trazida por `git cherry-pick -x 2d03936628` (o commit de código+teste do pai; os demais commits da faixa só reescreviam `.tmp/relato.md`).
-
-## Prova
-- vermelho antes: `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` (com o hook do pai, sem a poda) → `Tests 3 failed | 28 passed | 1 expected fail (32)`
-- verde depois: `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` → `Test Files 1 passed (1); Tests 31 passed | 1 expected fail (32)`
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (102s)` (OK tipos, lint, migrations, db_guard)
-
-## Escopo
-- O contador e o diálogo do toolbar (PD-84/PD-85) são de tela e ficam fora dos ARQUIVOS QUE PODE TOCAR deste cartão; com a poda por interseção não existe mais seleção "fora da lista atual" para o toolbar contar.
+Ponto 1 (único) da recusa — o CI `ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` falhava com este cartão: a âncora `src/hooks/inbox/useInboxBulkActions.ts:143` da edge `batch-fetch-avatars` ficou velha porque este cartão (com o pai) fez o hook crescer e o `invoke('batch-fetch-avatars')` foi para a linha 196. Reproduzi com `node --test scripts/ci/docs-estado-registry-convention.unit.mjs`: `âncora desatualizada: src/hooks/inbox/useInboxBulkActions.ts:143 não cita batch-fetch-avatars`.
+O que mudei: ESTADO.md (linha da `batch-fetch-avatars`), `:143` → `:196`. Só essa âncora. Hook e testes deste cartão já estão integrados no dia (136c2554a) e são byte-idênticos aqui (`git diff f5885801b1 HEAD -- src/hooks/inbox/useInboxBulkActions.ts src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` vazio) — nenhum código foi tocado neste refazer.
+Teste que prova (lógica exata do teste, linhas 160-169): VERMELHO na âncora do dia — linha 143 (`}`) não contém `batch-fetch-avatars`; VERDE na corrigida — linha 196 (`await supabase.functions.invoke('batch-fetch-avatars')`) contém. Suíte do hook: `Test Files 1 passed (1); Tests 31 passed | 1 expected fail (32)`. `zapp-verify . --rapido`: `VERIFY: VERDE SEM BANCO (145s)` (OK tipos, lint, migrations, db_guard; sem migration neste refazer).
+Arquivos do meu commit (`git show --stat HEAD`): ESTADO.md (1 linha) + .tmp/relato.md.
+Não fiz (fora do escopo, virei comentário no cartão): o teste de âncoras ainda acusa 25 âncoras velhas de OUTROS cartões na árvore do dia (ex.: `ai-kb-ingest :99`, `ai-transcribe-audio evolution-webhook-messages.ts:734`, `create-user useAdminData.ts:256`); corrigi-las seria diff alheio sobre arquivos em voo. O caso `create-user` exige decisão de convenção: o chamador real existe via wrapper `invokeEdge` (useAdminData.ts:334/341, definido em src/lib/supabaseHelpers.ts:24), que o regex do teste não detecta — marcá-la órfã (grupo E) seria mentira no inventário de uma edge de admin.
