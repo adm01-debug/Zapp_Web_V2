@@ -383,7 +383,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `SUPABASE_DB_URL`, testar `supabase link --project-ref` + `SUPABASE_DB_PASSWORD` em env, ou pinar a versão do CLI que
   respeita a env (registrar em `toolchain.json`); se nada servir, documentar a exceção no `workflow-contracts.unit.mjs`
   com a prova de que `::add-mask::` cobre o log. Verificação: `ps -ef` capturado durante o dry-run sem a URL.
-- [ ] **W31** · B+C · N-08 · Arquivar as 17 validações pós-apply de versions históricas (`db-migrate.yml:947-1507`) em
+- [x] **W31** · B+C · N-08 · Arquivar as 17 validações pós-apply de versions históricas (`db-migrate.yml:947-1507`) em
   `docs/audits/evidence/db-migrate-contratos-historicos.md` com o **comando de reexecução** de cada uma; manter no YAML
   só o genérico + ledger + paridade. Verificação: `wc -l db-migrate.yml` < 500; doc lista as 17 com comando.
 - [x] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
