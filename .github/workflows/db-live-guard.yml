@@ -59,6 +59,7 @@ jobs:
     name: Contrato DB vivo
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    environment: banco-leitura
     # issues: write para abrir/comentar o alerta em falha e fechar apos
     # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
     permissions:
