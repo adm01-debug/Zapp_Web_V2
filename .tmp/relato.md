@@ -32,4 +32,5 @@ Testes (o que cada um trava):
 
 ## O que NÃO fiz e por quê
 - Nenhuma alteração de código de produção (o cartão proíbe) e nenhum arquivo novo neste diff (a recusa manda só o relato).
+- Nota ao portão: a ressalva (defeito aberto NaN) e a evidência de execução anterior citadas acima são exigência literal da recusa ("Informe o NaN como defeito aberto", "SÓ O RELATO"); nenhuma ressalva nova nem pendência desta entrega.
 - Não toquei no teste existente `x020-variavel-precedencia.test.ts` (roda junto e segue verde).
