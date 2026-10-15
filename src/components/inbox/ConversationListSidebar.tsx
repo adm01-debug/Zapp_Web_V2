@@ -137,12 +137,12 @@ export function ConversationListSidebar({
                   variant="ghost"
                   size="icon"
                   onClick={inbox.refetch}
-                  disabled={inbox.loading}
+                  disabled={inbox.refreshing ?? inbox.loading}
                   aria-label="Atualizar conversas"
                   title="Atualizar conversas"
                   className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
                 >
-                  <RefreshCw className={cn('h-4 w-4', inbox.loading && 'motion-safe:animate-spin')} />
+                  <RefreshCw className={cn('h-4 w-4', (inbox.refreshing ?? inbox.loading) && 'motion-safe:animate-spin')} />
                 </Button>
               </div>
               {toggleZen && <ZenModeToggle isZen={isZen} toggleZen={toggleZen} placement="inline" />}
@@ -219,7 +219,7 @@ export function ConversationListSidebar({
               selectedQueueId={inboxFilters.selectedQueueId}
               onQueueChange={inboxFilters.setSelectedQueueId}
               onRefetch={inbox.refetch}
-              isRefetching={inbox.loading}
+              isRefetching={inbox.refreshing ?? inbox.loading}
             />
           </div>
         )}

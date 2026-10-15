@@ -216,8 +216,10 @@ export function RealtimeInboxView() {
 
   // R2-INB-015: com um cache válido a Inbox continua utilizável offline. A tela
   // de erro global só substitui a UI quando NÃO há cache para sustentá-la —
-  // antes ela engolia o recorte em cache tão logo a carga falhava.
-  if (inbox.error && !inbox.usingCache) {
+  // antes ela engolia o recorte em cache tão logo a carga falhava. E com lista
+  // carregada o erro é não bloqueante (só o toast): a tela de erro exige lista
+  // vazia.
+  if (inbox.error && !inbox.usingCache && inbox.cachedConversations.length === 0) {
     return (
       <div className="flex items-center justify-center h-full bg-background">
         <div className="text-center p-8">

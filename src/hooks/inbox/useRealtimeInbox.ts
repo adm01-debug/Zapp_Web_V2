@@ -29,9 +29,10 @@ export function useRealtimeInbox() {
   const conversations = USE_EXTERNAL_DB ? externalData.conversations : localRealtime.conversations;
   const loading = USE_EXTERNAL_DB ? externalData.loading : localRealtime.loading;
   // "Primeira carga" da lista: a sidebar só troca a lista por esqueletos enquanto
-  // for true. Refetch/reconexão mantêm a lista renderizada (loading continua
-  // girando o RefreshCw). Fonte externa não distingue, então segue `loading`.
+  // for true. Refetch/reconexão mantêm a lista renderizada e giram o RefreshCw
+  // via `refreshing`. Fonte externa não distingue, então segue `loading`.
   const initialLoading = USE_EXTERNAL_DB ? externalData.loading : localRealtime.initialLoading;
+  const refreshing = USE_EXTERNAL_DB ? false : localRealtime.refreshing;
   const error = USE_EXTERNAL_DB ? externalData.error : localRealtime.error;
   const externalRefetch = externalData.refetch;
   const localRefetch = localRealtime.refetch;
@@ -259,7 +260,7 @@ export function useRealtimeInbox() {
      toggleSound,
      conversations, cachedConversations, usingCache,
      selectedMessagesFromCache,
-     loading, error,
+     loading, refreshing, error,
     initialLoading,
      selectedMessagesLoading,
      selectedMessagesError,
