@@ -314,3 +314,25 @@ export function drainOfflineQueueOnReconnect(
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);
 }
+
+/**
+ * Drenagem de ABERTURA (item 025): o cenário que o evento `online` não alcança
+ * é o usuário que compõe offline, fecha a aba e reabre já com rede — nenhum
+ * `online` dispara e a mensagem fica parada no IndexedDB até a próxima
+ * queda/volta de rede. Quem chama é o efeito de sessão autenticada (a fila é
+ * por usuário: nunca antes do login).
+ *
+ * Só drena quando a aba está online (`navigator.onLine !== false`): offline não
+ * há o que tentar agora, e a drenagem de reconexão cuida disso. Ordem e dedupe
+ * são os do `drain` — uma drenagem por vez e chave estável `clientMessageId`.
+ * Devolve `null` quando não era hora de drenar.
+ */
+export function drainOfflineQueueOnOpen(
+  queue: OfflineQueue,
+  deliver: (message: OfflineQueuedMessage) => Promise<void>,
+  options: { online?: boolean; onError?: OfflineQueueErrorHandler } = {},
+): Promise<OfflineQueueDrainResult | null> {
+  const online = options.online ?? (typeof navigator === 'undefined' ? true : navigator.onLine !== false);
+  if (!online) return Promise.resolve(null);
+  return queue.drain(deliver, { onError: options.onError });
+}
