@@ -156,11 +156,11 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          # W21/W22: --classificar distingue apply-pendente (exit 2) de drift real (exit 1).
+          # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
           # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
           # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
-          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 1).
-          node scripts/db-audit/check-migration-drift.mjs --classificar 2>&1 | tee /tmp/step-migrations.log
+          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 2).
+          node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."

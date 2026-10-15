@@ -378,7 +378,7 @@ jobs:
         # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
         # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
         # e nao abre issue — o problema some quando a migration entrar no banco.
-        # check-migration-drift --classificar: exit 0 = sem drift, exit 1 = drift real,
+        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
         # exit 2 = so apply-pendente.
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
@@ -387,7 +387,7 @@ jobs:
           PGSSLMODE: ${{ env.PGSSLMODE }}
         run: |
           set +e
-          node scripts/db-audit/check-migration-drift.mjs --classificar > /tmp/drift.log 2>&1
+          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
           drift_exit=$?
           set -e
           if [ "$drift_exit" -eq 2 ]; then
