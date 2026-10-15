@@ -1,47 +1,75 @@
-Especialista: Íris (area-front-componentes)
+Especialista: semisenior (area-front-componentes)
 
-# [retomar] redesenho do cartao do quadro (etapas 084 a 090)
+Refazer 1 do redesenho do cartão do Quadro (etapas 084–090): corrijo ponto a
+ponto a recusa 2, sobre a entrega anterior (base 3c5a79e9c1).
 
-## Como resolvi o motivo da retomada (conflito com a ponta do dia)
-- Base do workspace: `dia/2026-10-13` (o cartão falava de 12/10; a ponta andou um dia).
-- Trouxe o trabalho anterior por `git cherry-pick` (não recomecei):
-  - `1a9a149355` = `feat(tarefas): redesenha o cartao do quadro (etapas 084 a 090)` (era c278528253);
-  - `8715c4259f` = `fix(tarefas): foco sincronizado no card selecionado, alvo de 40px no checkbox e sino ambar do lembrete (refazer 1)` (era fe024462dc).
-- Conflito real: só `.tmp/relato.md` (arquivo de relato, não é código) — resolvi com `git cherry-pick --skip`: o relato é reescrito agora, nada de código se perdeu.
-- Os arquivos de código entraram sem conflito. Conferi que NADA da ponta foi perdido: o `TaskCheckbox` novo da base (alvo de 40x40 com o círculo de 18 px dentro) e o `PriorityPill` com `role="img"` continuam intactos — ver a prova vermelho→verde abaixo.
+Ponto 1 — teclado sozinho revela a ação: ADICIONEI `group-focus-within:opacity-100`
+e `group-focus-within:pointer-events-auto` ao "Abrir conversa" e ao kebab
+(não- agenda), em `src/components/tasks/shared/WorkItemCard.tsx`. Desvio da
+receita, proposital: TROCAR (remover o `focus-visible`) quebraria o teste-guarda
+do E16 em `quadroLarguraFocoContraste.test.tsx` (fora do escopo, não posso
+afrouxar), que exige `focus-visible:opacity-100` em todo focável que nasce
+oculto — o `focus-visible` fica, redundante. Teste:
+"P1 — teclado sozinho revela o Abrir conversa" + "P1 — o kebab da Lista também
+aparece com o foco dentro do card" — VERMELHO antes (8 falhas, classes
+ausentes), VERDE depois.
 
-## O que mudou e por quê
-- `src/components/tasks/shared/WorkItemCard.tsx`: o card parou de ampliar o alvo do checkbox com pseudo-elemento (`before:absolute before:-inset-[11px] before:content-['']`) e passa a só alinhar a peça (`mt-0.5` na Lista/Quadro, `shrink-0` na Agenda) — a ponta do dia já entrega o alvo de 40 px pelo próprio `TaskCheckbox` (`h-10 w-10` com o círculo de 18 px desenhado dentro). Motivo: o pseudo-elemento somava ao alvo novo e criava uma área clicável de ~62 px por cima do título — regressão que o visual da ponta já resolvia.
-- `src/components/tasks/__tests__/WorkItemCard.test.tsx`: o caso do alvo de 40 px deixou de medir o pseudo-elemento (implementação que não existe mais) e passa a medir o comportamento real: botão de 40x40 e o círculo visível de 18 px no `data-testid="task-checkbox-circle"`.
+Ponto 2 — régua do alvo: em `TaskCheckbox.tsx` REMOVI o `-m-[11px]` (a margem
+negativa estendia a caixa clicável de 40 px por cima do título/vizinhos) e o
+círculo passou de 18 px para 20 px (`h-5 w-5`); em `PriorityPill.tsx` e na tag
+"Atrasada" do card, `text-2xs` → `text-xs`. Sem `::before` (não revive os
+62 px). Régua colada (mesmo modo, Lista/Quadro/Agenda usam a mesma peça): alvo
+40 px (`h-10 w-10`) ≥ 24 px, visual 20 px, respiro pelo gap do flex (sem
+sobreposição). Teste: "tem alvo de toque de 40 px com o círculo visual de
+20 px" (primitivos), "alvo ≥ 40 px…" + "P2 — urgente e atraso sobem para
+text-xs" (card) — VERMELHO antes, VERDE depois.
 
-## Prova
-- vermelho antes: `npx vitest run src/components/tasks/__tests__/WorkItemCard.test.tsx` (no estado pós-cherry-pick, antes do ajuste) → `FAIL ... alvo ≥ 40 px ... AssertionError: expected 'group relative -m-[11px] inline-flex …' to contain 'h-[18px]'` / `Tests  1 failed | 24 passed (25)`.
-- verde depois: `npx vitest run src/components/tasks/__tests__/WorkItemCard.test.tsx src/components/tasks/__tests__/TasksListMode.test.tsx src/components/tasks/__tests__/agendaGroups.test.tsx` → `Test Files  3 passed (3); Tests  44 passed (44)`.
-- regressão do módulo inteiro: `npx vitest run src/components/tasks` → `Test Files  28 passed (28); Tests  333 passed | 1 todo (334)` (o todo é pré-existente).
+Ponto 3 — card fora da ordem de Tab: `tabIndex={0}` → `tabIndex={-1}` no
+`article` (`WorkItemCard.tsx`). Remover por completo quebraria em silêncio a
+seleção 090 (`cardRef.current?.focus()` viraria no-op e o teste 090, que
+afirma `document.activeElement === card`, falharia); com -1 o card sai da
+ordem e o foco programático continua valendo. Teste: dragHandleProps agora
+afirma `tabindex === '-1'` + axe `nested-interactive` sem violações; o teste
+090 segue verde — VERMELHO antes (tabindex 0), VERDE depois.
 
-## Testes PRÓPRIOS deste cartão (nome de cada caso)
-- `084 — checkbox CIRCULAR nas três superfícies e título em até 2 linhas`
-- `085 — Urgente fica junto ao título e a prioridade padrão desce para a linha de contexto`
-- `086 — prazo vencido pinta o texto de destrutivo e acrescenta a tag "Atrasada"`
-- `087 — no card em "Fazendo" o prazo e o lembrete ganham rótulos em duas colunas`
-- `087 — o prazo de hoje sai no formato único ("Hoje, 14:00") e o lembrete traz o sino âmbar`
-- `088 — a descrição curta (2 linhas) só aparece em "Fazendo"/selecionado`
-- `089 — em "Aguardando" o motivo vira chip âmbar, truncado e com tooltip`
-- `090 — card selecionado: borda primary, fundo primary/10, alça ⠿ e data-selected`
-- `090 — a seleção do painel (TasksUiProvider.selectedId) também marca o card`
-- `090 — o card selecionado RECEBE FOCO quando a seleção do painel muda`
-- `090 — card que já NASCE selecionado (deep link ?task=) não rouba o foco da página`
-- `alvo ≥ 40 px: o botão do checkbox mede 40x40 e o círculo visível segue 18 px` (reescrito nesta retomada)
+Ponto 4 — NÃO PROCEDE, com prova. O `--warning-text` EXISTE em
+`src/styles/tokens.css:158` (claro, `38 92% 30%`) e `:476` (escuro,
+`40 91% 60%`); não há sistema de skins no app (só `data-theme` em
+`team-chat-tokens.css`, sem redefinição de tokens). O sino já usa o par via
+`[&_svg]:text-[hsl(var(--warning-text))]` — conferi no CSS COMPILADO do
+`vite build`: a regra
+`.[&_svg]:text-[hsl(var(--warning-text))] svg{color:hsl(var(--warning-text))}`
+existe no bundle, e o contraste calculado é 5,40:1 no claro e 9,96:1 no
+escuro (mínimo 4,5:1). Criar o token de novo seria duplicar. Nenhum teste
+afirmava o contrário; o teste do sino segue verde.
 
-## Elementos das etapas (referência: seção 3 do plano em `~/hermes-workspaces/.assets/tarefas/PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS_2026-10-11.md`, imagens 01–05)
-- 084: checkbox circular + título 2 linhas + ⋮ + pílula de prioridade + contato com avatar + linha de prazo — `WorkItemCard.tsx:110-135` (`imagem 05`).
-- 085: Urgente junto ao título, prioridade padrão na linha de contexto — `WorkItemCard.tsx:126-140` (card "Enviar orçamento", imagem 05).
-- 086: tag "Atrasada" com ícone de alerta ao lado do prazo em destrutivo — `WorkItemCard.tsx:133-146`.
-- 087: prazo/lembrete com rótulos em duas colunas no card em Fazendo/selecionado; sino âmbar — `WorkItemCard.tsx` (bloco "Fazendo"/selecionado).
-- 088: descrição curta (2 linhas) só em Fazendo/selecionado.
-- 089: chip de espera âmbar com motivo truncado e tooltip.
-- 090: borda primary, fundo primary/10, alça ⠿, foco sincronizado com o painel.
+Ponto 5 — aria em pt-BR: `aria-label` agora é
+`"<título>, <estado por extenso>[, prazo <data formatada>|, sem prazo]"`
+(`ROTULO_STATUS` cobre os 6 estados; a data usa `formatWorkItemDate`, a mesma
+regra do `DateLabel`), sem mudar props (`WorkItemCard.tsx`). Teste: "P5 — o
+nome acessível…" (`Fazendo`, `prazo 04 mai., 14:00`, sem `doing`/ISO),
+"sem prazo…", "todos os estados…" (`Caixa de entrada`, `Cancelada`) —
+VERMELHO antes (`doing` + ISO cru, medido), VERDE depois. Chamador atualizado:
+`TasksBoardMode.a11y.test.tsx` (fora da lista, mas afirmava o nome antigo)
+casa agora pelo prefixo `"<título>, A fazer"` — adaptação ao ponto 5, sem
+afrouxar (o nome completo segue afirmado nos testes do card).
 
-## O que NÃO fiz e por quê
-- Não commitei o `.tmp/relato.md` anterior (veio do cartão antigo): o relato é este arquivo, reescrito nesta retomada.
-- Nada fora de `WorkItemCard.tsx` e `src/components/tasks/__tests__/` foi tocado; `src/components/ui/*` segue intocado, sem migration, Edge ou dependência nova.
+Arquivos (`git diff --name-only`, base 3c5a79e9c1):
+src/components/tasks/shared/WorkItemCard.tsx
+src/components/tasks/shared/TaskCheckbox.tsx
+src/components/tasks/shared/PriorityPill.tsx
+src/components/tasks/__tests__/WorkItemCard.test.tsx
+src/components/tasks/__tests__/primitivosCompartilhados.test.tsx
+src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+
+Verificações (resultado real):
+- `bun run vitest run src/components/tasks src/hooks/tasks` → 40 arquivos, 539 passed, 1 todo.
+- `bunx eslint` nos 6 arquivos → limpo; `tsc --noEmit` → nenhum erro nos 6 arquivos.
+- `bun run build` (11,03 s) → CSS contém `--warning-text` claro/escuro, a regra
+  do sino e `.group:focus-within …pointer-events-auto/opacity-100`.
+
+Nota de ambiente: `hermes-tarefa-iniciar/fechar` estão congelados (CONGELADO sem
+MODO_V2) e a guarda bloqueia criar branch/worktree; trabalhei no workspace do
+trabalho anterior
+(`redesenho-cartao-quadro-urgente-atrasa-26101310490af5`), com commits novos
+sobre 3c5a79e9c1 — o diff da revisão é `3c5a79e9c1..HEAD`.
