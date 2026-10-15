@@ -85,6 +85,12 @@ jobs:
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
+          scripts/catalog/validate-plan.test.mjs
+          scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/team-chat-db-validate.unit.mjs
+          scripts/ui-audit/*.unit.mjs
+          scripts/db-tests/run-all.unit.mjs
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs

@@ -28,67 +28,13 @@ function read(rel) {
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-const ALLOWLIST = new Set([
-  // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
-  // X034: harness de integração do motor com o provedor falso (Postgres descartável + PostgREST +
-  // fake-evolution). Roda no passo Deno/harness da Fase 3; promover em db-guard.yml quando maduro.
-  'scripts/db-audit/talkx-engine-provider.test.sh',
-  'scripts/db-audit/talk-me-client-privileges.test.sh',
-  'scripts/db-audit/talkx-current-template-version.test.sh',
-  'scripts/db-audit/talkx-v23-draft-step.test.sh',
-  'scripts/db-audit/talkx-v25-owner.test.sh',
-  'scripts/db-audit/talkx-v26-template-version.test.sh',
-  // --- .test.sh — prova em container descartável (docker); passo de YAML
-  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
-  // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
-  // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
-  // docker descartável estiver disponível no runner do db-guard.yml.
-  'scripts/db-audit/reminders-migracao-identidade.test.sh',
-  'scripts/db-audit/pg-cron-escalonamento.test.sh',
-  'scripts/db-audit/talkx-optout.test.sh',
-  'scripts/db-audit/talkx-overview-stats.test.sh',
-  'scripts/db-audit/talkx-campaign-segments.test.sh',
-  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
-  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
-  'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
-  // IA-131 (item 133): cadeia real ia033→ia131 em PG 17 descartável (docker local) — prova que a
-  // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
-  // db-guard.yml — promover pelo dono do workflow.
-  'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
-  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
-  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
-  // junto de gen-types.test.sh; promover pelo dono do workflow.
-  'scripts/db-audit/replay-classify.test.sh',
-  // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
-  // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
-  // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
-  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
-  'scripts/db-audit/replay-local-harness.test.sh',
-]);
+// W53: todos os itens anteriores promovidos — ALLOWLIST vazia.
+const ALLOWLIST = new Set([]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
-// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
-// ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
-// primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
-// ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
-export const ALLOWLIST_NODE = new Set([
-  // Valida um plano de catálogo sintético contra o repositório (offline).
-  'scripts/catalog/validate-plan.test.mjs',
-  // Prova o resolvedor de executáveis usado por várias guardas (offline).
-  'scripts/lib/seguranca-processo.test.mjs',
-  // Prova os provadores de visão com `fetch` stubbed (offline).
-  'scripts/qa/prova-visao-classificadores.unit.mjs',
-  // Prova o log do validador de banco do team chat com `fetch` stubbed (offline).
-  'scripts/team-chat-db-validate.unit.mjs',
-  // Auditorias de layout/UI lidas do próprio repositório (offline).
-  'scripts/ui-audit/contacts-navy-header.unit.mjs',
-  'scripts/ui-audit/layout-guard.unit.mjs',
-  'scripts/ui-audit/view-container-padding.unit.mjs',
-  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
-  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
-  // `run:` de ci.yml é do dono do workflow.
-  'scripts/db-tests/run-all.unit.mjs',
-]);
+// workflow nenhum. W53: todos os itens anteriores promovidos para o passo
+// "Test CI and Edge deployment guards" do lint-and-typecheck em ci.yml — ALLOWLIST_NODE vazia.
+export const ALLOWLIST_NODE = new Set([]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 

@@ -450,6 +450,26 @@ jobs:
           TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-queue-contract.test.sh
 
+      # W53: offline (sem docker, sem banco) — roda em qualquer runner.
+      - name: Classificar evidências de replay (offline)
+        run: bash scripts/db-audit/replay-classify.test.sh
+
+      - name: Harness do replay local (offline, docker de mentira no PATH)
+        run: bash scripts/db-audit/replay-local-harness.test.sh
+
+      # W53: provas de domínio core em PostgreSQL 17 descartável.
+      - name: Provar migração de identidade de reminders→conversation_tasks
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/reminders-migracao-identidade.test.sh
+
+      - name: Provar escalonamento de pg_cron no PostgreSQL 17
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -971,6 +991,67 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh
 
+      # W53: contratos TalkX em PostgreSQL 17 descartável (X-series).
+      - name: "Motor Talk X com provedor falso (X034)"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-provider.test.sh
+
+      - name: "Privilégios de cliente Talk Me (X-series)"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-client-privileges.test.sh
+
+      - name: "Versão atual de template Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-current-template-version.test.sh
+
+      - name: "V23: passo de rascunho Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v23-draft-step.test.sh
+
+      - name: "V25: owner de campanha Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v25-owner.test.sh
+
+      - name: "V26: versão de template Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v26-template-version.test.sh
+
+      - name: "Opt-out configurável de campanha Talk X (X029)"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-optout.test.sh
+
+      - name: "Estatísticas de visão geral Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-overview-stats.test.sh
+
+      - name: "Segmentos de campanha Talk X"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-segments.test.sh
+
+      - name: "Divergência de replay E27 (CAIXA-7eb1)"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-e27-replay-divergence.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -1295,6 +1376,13 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      # W53: cadeia IA em PostgreSQL 17 descartável (IA-131 / IA-AUDIO-001, item 133).
+      - name: "Cadeia audio_stt IA-131 em PostgreSQL 17"
+        if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ia131-audio-stt-cadeia.test.sh
 
       - name: "W55 — Resumo dos contratos pulados"
         if: env.SKIP_CONTRACTS == 'true'
