@@ -184,6 +184,11 @@ Fora de `pg_cron`, existe o workflow `.github/workflows/crm-sync-worker.yml`, qu
 `crm_sync_outbox` — porém **desativado por padrão** (`schedule` comentado; gate em
 `vars.CRM_SYNC_WORKER_ENABLED`, `:1-17`).
 
+> **Atualização W93 (2026-10-15, leitura `SELECT` da produção):** nenhum job do `pg_cron` drena o
+> `crm_sync_outbox`, e o workflow é só operação manual. A fila tinha 474 `pending` (a mais antiga de
+> 2026-09-26) e 0 concluídas. Números, consumidores e roteiro para religar estão em
+> `docs/runbooks/CRM_INTEGRATION_ROLLOUT.md`, seção "Estado operacional do worker".
+
 ### 1.8 Planos paralelos — o que já propõem
 
 | Plano | Estruturas/ decisões já propostas | Consequência para o plano de IA |
