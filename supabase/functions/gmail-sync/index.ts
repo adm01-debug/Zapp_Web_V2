@@ -40,6 +40,13 @@ export const GmailSyncActionSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name não pode ter espaços nas pontas' });
     }
   }
+  if (value.action === 'update-label' && value.name !== undefined) {
+    if (value.name.trim().length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name não pode ser vazio para renomear um marcador' });
+    } else if (value.name !== value.name.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name não pode ter espaços nas pontas' });
+    }
+  }
   if ((value.action === 'update-label' || value.action === 'delete-label') && !value.label_id) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['label_id'], message: 'label_id é obrigatório' });
   }

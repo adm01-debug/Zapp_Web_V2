@@ -64,6 +64,31 @@ Deno.test("update-label: exige label_id e ao menos um campo a atualizar", () => 
   assertEquals(GmailSyncActionSchema.safeParse({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: "Novo" }).success, true);
 });
 
+Deno.test("update-label: nome vazio é recusado", () => {
+  const erros = errosDe({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: "" });
+  assert(erros.some((e) => e.includes("não pode ser vazio")), JSON.stringify(erros));
+});
+
+Deno.test("update-label: nome só com espaços é recusado", () => {
+  const erros = errosDe({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: "   " });
+  assert(erros.some((e) => e.includes("não pode ser vazio")), JSON.stringify(erros));
+});
+
+Deno.test("update-label: nome com espaços nas pontas é recusado", () => {
+  const erros = errosDe({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: " Clientes " });
+  assert(erros.some((e) => e.includes("não pode ter espaços nas pontas")), JSON.stringify(erros));
+});
+
+Deno.test("update-label: nome acima de 225 caracteres é recusado (225 passa)", () => {
+  const erros = errosDe({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: "a".repeat(226) });
+  assert(erros.length > 0, "nome de 226 caracteres deve ser recusado no update");
+  assertEquals(GmailSyncActionSchema.safeParse({ action: "update-label", account_id: CONTA, label_id: "Label_42", name: "a".repeat(225) }).success, true);
+});
+
+Deno.test("update-label: sem name (só cor) continua aceito", () => {
+  assertEquals(GmailSyncActionSchema.safeParse({ action: "update-label", account_id: CONTA, label_id: "Label_42", color: { backgroundColor: "#42d692", textColor: "#ffffff" } }).success, true);
+});
+
 Deno.test("delete-label: exige label_id e aceita id válido", () => {
   const erros = errosDe({ action: "delete-label", account_id: CONTA });
   assert(erros.some((e) => e.includes("label_id é obrigatório")), JSON.stringify(erros));
