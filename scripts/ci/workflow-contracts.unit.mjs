@@ -329,6 +329,63 @@ test('W44: todos os workflows declaram defaults.run.shell com bash strict', () =
   assert.deepEqual(faltando, [], `workflows sem defaults.run.shell strict: ${faltando.join(', ')}`);
 });
 
+/**
+ * Jobs de um workflow, por varredura de linhas (sem regex com backtracking): id → linhas do job.
+ * Um job começa numa linha com 2 espaços de indentação logo abaixo de `jobs:` e vai até o próximo.
+ */
+function blocosDeJob(texto) {
+  const blocos = new Map();
+  const inicioJobs = texto.indexOf('\njobs:');
+  if (inicioJobs === -1) return blocos;
+  let atual = null;
+  for (const linha of texto.slice(inicioJobs + 1).split('\n').slice(1)) {
+    if (/^\S/.test(linha)) break; // outra chave de topo
+    if (/^ {2}\S/.test(linha) && !linha.trimStart().startsWith('#')) {
+      atual = linha.trim().split(':')[0];
+      blocos.set(atual, []);
+    } else if (atual) {
+      blocos.get(atual).push(linha);
+    }
+  }
+  return blocos;
+}
+
+// O padrão do repositório é default_workflow_permissions=read (baseline, 15/10/2026). Ele só vale
+// para job sem permissões declaradas; com este contrato não há nenhum, e trocar o padrão no
+// GitHub não muda o comportamento de nenhum workflow.
+test('todo job declara permissões (no topo do workflow ou no próprio job)', () => {
+  const sem = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    const inicioJobs = texto.indexOf('\njobs:');
+    const topo = texto.slice(0, inicioJobs);
+    if (topo.split('\n').some((l) => l.startsWith('permissions:'))) continue;
+    for (const [id, linhas] of blocosDeJob(texto)) {
+      if (!linhas.some((l) => l.startsWith('    permissions:'))) sem.push(`${nome}:${id}`);
+    }
+  }
+  assert.deepEqual(sem, [], `jobs sem permissões declaradas (herdariam o padrão do repositório): ${sem.join(', ')}`);
+});
+
+test('W86: scorecard.yml sem write no nível do workflow (a API do Scorecard recusa publicar)', () => {
+  // README v2.4.1, "Global workflow restrictions": nenhuma permissão de escrita no topo, e só o
+  // job do scorecard-action pode ter id-token: write. Run 38782461564 falhou com
+  // "global perm is set to write" para security-events e checks.
+  const texto = wf['scorecard.yml'];
+  const topo = texto.slice(0, texto.indexOf('\njobs:'));
+  assert.ok(topo.split('\n').some((l) => l.trim() === 'permissions: {}'), 'scorecard.yml: o topo deve ser permissions: {}');
+  assert.ok(!topo.split('\n').some((l) => /:\s*write\b/.test(l)), 'scorecard.yml: write no nível do workflow');
+  // id-token: write no job que usa ossf/scorecard-action e em nenhum outro (Codex, PR #1952).
+  const comToken = [];
+  const doScorecard = [];
+  for (const [id, linhas] of blocosDeJob(texto)) {
+    if (linhas.some((l) => l.trim().startsWith('id-token: write'))) comToken.push(id);
+    if (linhas.some((l) => l.includes('uses: ossf/scorecard-action@'))) doScorecard.push(id);
+  }
+  assert.equal(doScorecard.length, 1, 'scorecard.yml deve ter exatamente um job com ossf/scorecard-action');
+  assert.deepEqual(comToken, doScorecard, 'id-token: write só no job do ossf/scorecard-action');
+});
+
 test('W44: a exceção do scorecard.yml só vale enquanto ele não tiver passo run, defaults nem env', () => {
   for (const nome of SEM_DEFAULTS_POR_RESTRICAO_UPSTREAM) {
     const texto = wf[nome];

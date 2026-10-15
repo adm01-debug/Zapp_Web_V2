@@ -35,8 +35,8 @@
     "sha_pinning_required": true
   },
   "workflow_permissions": {
-    "_comentario": "W14: permissoes padrao para workflows. can_approve_pull_request_reviews=true e necessario para types-sync/talkx-status PRs (ver CLAUDE.md 'NÃO desligue can_approve_pull_request_reviews').",
-    "default_workflow_permissions": "write",
+    "_comentario": "W14: permissoes padrao para workflows. can_approve_pull_request_reviews=true e necessario para types-sync/talkx-status PRs (ver CLAUDE.md 'NÃO desligue can_approve_pull_request_reviews'). default_workflow_permissions=read desde 15/10/2026 (medido ao vivo 18:31 UTC): todo job declara as proprias permissoes (contrato em workflow-contracts.unit.mjs), entao o padrao so vale para job sem bloco -- e nao ha nenhum.",
+    "default_workflow_permissions": "read",
     "can_approve_pull_request_reviews": true
   },
   "security_and_analysis": {

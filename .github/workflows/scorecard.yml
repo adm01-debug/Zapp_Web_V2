@@ -15,15 +15,10 @@ on:
   push:
     branches: [main]
 
-permissions:
-  # Necessário para publicar SARIF em Code Scanning.
-  security-events: write
-  # Para ler o repositório.
-  contents: read
-  # Para publicar os resultados como checks no commit.
-  checks: write
-  # Para ler informações de tokens.
-  id-token: write
+# Nenhuma permissão no nível do workflow: a API do Scorecard recusa publicar com
+# qualquer `write` aqui ("global perm is set to write", run 38782461564; README
+# v2.4.1, "Global workflow restrictions"). As permissões ficam no job.
+permissions: {}
 
 concurrency:
   group: scorecard
@@ -34,6 +29,10 @@ jobs:
     name: 📊 OpenSSF Scorecard
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read  # checkout
+      security-events: write  # upload do SARIF para o Code Scanning
+      id-token: write  # assinatura do resultado publicado (só este job pode ter)
     # Sem `defaults` nem `env`, nem no topo nem no job: o scorecard-action v2.4.1
     # recusa publicar o resultado nos dois casos ("workflow contains global env
     # vars or defaults", run 38773299007; README "Restrictions on the job").
