@@ -131,7 +131,6 @@ function invalidarStatusDeConexao(): void {
   void queryClient.invalidateQueries({ queryKey: ['catalog-send-readiness'] });
 }
 
-
 export function useConnectionsManager() {
   const [connections, setConnections] = useState<WhatsAppConnection[]>([]);
   const [loading, setLoading] = useState(true);
