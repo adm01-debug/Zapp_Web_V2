@@ -112,9 +112,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'group-participants',
   // reconcile-instances: compara o que existe no provedor com o que está em
   // whatsapp_connections e devolve as duas listas divergentes (só nomes, nunca
-  // tokens). É leitura, mas enxerga a topologia de todas as conexões — fica no
-  // mesmo escopo de admin/supervisor de list-instances (a tela de Conexões só
-  // a mostra para admin). NUNCA importa: nenhuma linha é criada.
+  // tokens). É leitura, mas enxerga a topologia de TODAS as conexões: fica em
+  // CONTROL (admin/supervisor), mais restrita que 'list-instances', que é
+  // 'read'. NUNCA importa: nenhuma linha é criada.
   'reconcile-instances',
 ]);
 
