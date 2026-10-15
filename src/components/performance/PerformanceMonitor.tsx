@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { usePerformanceSnapshots } from '@/hooks/analytics/usePerformanceSnapshots';
+import { usePerformanceSnapshots, type SnapshotScope } from '@/hooks/analytics/usePerformanceSnapshots';
 import { formatRelativeTime } from '@/lib/formatters';
 
 /**
@@ -28,7 +28,10 @@ export function PerformanceMonitor() {
   const [cacheStats, setCacheStats] = useState({ hits: 0, misses: 0, size: 0 });
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState('24');
-  const { history: dbHistory, loading: dbLoading, saveSnapshot, loadHistory, clearOldSnapshots } = usePerformanceSnapshots();
+  // Escopo do histórico: 'me' (padrão) ou 'todos' — este último só é oferecido a
+  // admin/supervisor, que são quem a policy de SELECT/DELETE libera para todos.
+  const [scope, setScope] = useState<SnapshotScope>('me');
+  const { history: dbHistory, loading: dbLoading, saveSnapshot, loadHistory, clearOldSnapshots, canSeeAll } = usePerformanceSnapshots();
 
   const collectMetrics = useCallback(async () => {
     setLoading(true);
@@ -117,10 +120,10 @@ export function PerformanceMonitor() {
     return () => clearInterval(interval);
   }, [collectMetrics]);
 
-  // Load DB history on mount and when period changes
+  // Load DB history on mount and when period/scope changes
   useEffect(() => {
-    loadHistory(Number.parseInt(period));
-  }, [loadHistory, period]);
+    loadHistory(Number.parseInt(period), canSeeAll ? scope : 'me');
+  }, [loadHistory, period, scope, canSeeAll]);
 
   // Score = % de métricas boas. Métrica sem medição ('unknown') permanece na
   // conta e NÃO como "Bom": o ausente não infla o score para 100.
@@ -169,6 +172,17 @@ export function PerformanceMonitor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {canSeeAll && (
+            <Select value={scope} onValueChange={(v) => setScope(v as SnapshotScope)}>
+              <SelectTrigger aria-label="Escopo" className="w-[160px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="me">Meus dados</SelectItem>
+                <SelectItem value="todos">Todos os usuários</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger aria-label="Período" className="w-[130px] h-8 text-xs">
               <SelectValue />
@@ -181,7 +195,15 @@ export function PerformanceMonitor() {
               <SelectItem value="168">7 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => clearOldSnapshots()} className="h-8 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => clearOldSnapshots()}
+            title={canSeeAll && scope === 'todos'
+              ? 'Remove snapshots com mais de 7 dias de todos os usuários'
+              : 'Remove os seus snapshots com mais de 7 dias'}
+            className="h-8 text-xs"
+          >
             <Trash2 className="w-3 h-3 mr-1" />
             Limpar antigos
           </Button>
@@ -215,6 +237,7 @@ export function PerformanceMonitor() {
               <p className="text-xs text-muted-foreground mt-1">
                 <Clock className="w-3 h-3 inline mr-1" />
                 {dbHistory.length} snapshots no período selecionado
+                {canSeeAll && scope === 'todos' ? ' (todos os usuários)' : ' (seus dados)'}
               </p>
               {unmeasuredCount > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">

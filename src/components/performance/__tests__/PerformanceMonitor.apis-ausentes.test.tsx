@@ -20,6 +20,17 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'p1' }, user: { id: 'u1' } }),
 }));
 
+// useUserRole usa react-query no código real; o mock mantém o teste sem provider.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({
+    isSupervisor: false,
+    isAdmin: false,
+    roles: [],
+    loading: false,
+    hasRole: () => false,
+  }),
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({

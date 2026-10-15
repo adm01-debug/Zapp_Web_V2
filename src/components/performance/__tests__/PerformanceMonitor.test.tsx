@@ -41,6 +41,20 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'test-profile' }, user: { id: 'test-user' } }),
 }));
 
+// Papel do usuário: controla se o seletor de escopo ('Todos os usuários') aparece.
+// useUserRole usa react-query no código real; aqui o mock mantém o teste sem provider.
+const papelMock = vi.hoisted(() => ({ podeVerTodos: false }));
+
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({
+    isSupervisor: papelMock.podeVerTodos,
+    isAdmin: papelMock.podeVerTodos,
+    roles: papelMock.podeVerTodos ? ['admin'] : [],
+    loading: false,
+    hasRole: () => papelMock.podeVerTodos,
+  }),
+}));
+
 // Mock supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -89,6 +103,7 @@ vi.mock('recharts', () => ({
 describe('PerformanceMonitor', () => {
   beforeEach(() => {
     localStorage.clear();
+    papelMock.podeVerTodos = false;
   });
 
   // ===== RENDERING =====
@@ -325,6 +340,33 @@ describe('PerformanceMonitor', () => {
     await waitFor(() => {
       expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
     });
+
+    const semRuidoDePagina = { rules: { region: { enabled: false } } };
+    expect(await axe(document.body, semRuidoDePagina)).toHaveNoViolations();
+  });
+
+  it('agente comum não vê o seletor de escopo "Todos os usuários"', async () => {
+    render(<PerformanceMonitor />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    });
+
+    // Sem papel de admin/supervisor o histórico é sempre o próprio, então o
+    // seletor de escopo não é oferecido.
+    expect(screen.queryByRole('combobox', { name: 'Escopo' })).toBeNull();
+    expect(screen.queryByText('Todos os usuários')).toBeNull();
+  });
+
+  it('admin/supervisor vê o seletor de escopo com axe zerado', async () => {
+    papelMock.podeVerTodos = true;
+    render(<PerformanceMonitor />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Escopo' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
 
     const semRuidoDePagina = { rules: { region: { enabled: false } } };
     expect(await axe(document.body, semRuidoDePagina)).toHaveNoViolations();
