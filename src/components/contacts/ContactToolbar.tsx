@@ -8,7 +8,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Tag, Filter, ArrowUpDown, X, Search, Users,
+  Filter, ArrowUpDown, X, Search, Users,
   GitCompareArrows, Merge, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -58,7 +58,6 @@ interface ContactToolbarProps {
   groupByCompany: boolean;
   setGroupByCompany: (val: boolean) => void;
   selectedIds: string[];
-  onBulkTag: () => void;
   onCompare: () => void;
   onMerge: () => void;
   /**
@@ -83,7 +82,7 @@ export function ContactToolbar({
   filterTag, setFilterTag, filterDateRange, setFilterDateRange,
   uniqueCompanies, uniqueJobTitles, uniqueTags,
   onApplyPreset, groupByCompany, setGroupByCompany,
-  selectedIds, onBulkTag, onCompare, onMerge, canMerge,
+  selectedIds, onCompare, onMerge, canMerge,
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
   crmIntegrationEnabled, onOpenCRM,
 }: ContactToolbarProps) {
@@ -163,27 +162,19 @@ export function ContactToolbar({
           onApplyPreset={onApplyPreset}
         />
 
-        {selectedIds.length >= 1 && (
+        {selectedIds.length >= 2 && (
           <>
-            <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onBulkTag}>
-              <Tag className="w-[18px] h-[18px]" />
-              Tags ({selectedIds.length})
+            <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onCompare}>
+              <GitCompareArrows className="w-[18px] h-[18px]" />
+              Comparar
             </Button>
-            {selectedIds.length >= 2 && (
-              <>
-                <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onCompare}>
-                  <GitCompareArrows className="w-[18px] h-[18px]" />
-                  Comparar
-                </Button>
-                {/* Mesclar faz DELETE físico dos secundários e exige admin/supervisor
-                    no banco (RPC `merge_contacts_atomic`, 42501): só é oferecido a quem pode. */}
-                {canMerge && (
-                  <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
-                    <Merge className="w-[18px] h-[18px]" />
-                    Mesclar
-                  </Button>
-                )}
-              </>
+            {/* Mesclar faz DELETE físico dos secundários e exige admin/supervisor
+                no banco (RPC `merge_contacts_atomic`, 42501): só é oferecido a quem pode. */}
+            {canMerge && (
+              <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
+                <Merge className="w-[18px] h-[18px]" />
+                Mesclar
+              </Button>
             )}
           </>
         )}

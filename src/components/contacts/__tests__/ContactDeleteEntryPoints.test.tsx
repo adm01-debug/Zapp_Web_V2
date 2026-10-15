@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ContactsTable } from '../ContactsTable';
-import { canDeleteSelectedContacts } from '../contactPermissions';
 import type { Contact } from '../types';
 import { baseContact, noop, openMenu, trigger } from './contactDeleteFixtures';
 
@@ -11,10 +10,10 @@ import { baseContact, noop, openMenu, trigger } from './contactDeleteFixtures';
  * 1. A visão **Tabela** era o único ponto de exclusão SEM o gate de `can_delete`
  *    — o item "Excluir" aparecia para quem não tem vínculo com o contato e a
  *    recusa só surgia no clique (o mesmo débito que o #1187 fechou na lista e no card).
- * 2. O botão "Excluir" do lote era calculado sobre a **página visível**, então
- *    paginar com a seleção ativa (a seleção sobrevive à paginação) o desabilitava
- *    com a mensagem "nenhum dos contatos selecionados pode ser excluído" — falso:
- *    não havia informação sobre eles.
+ *
+ * CT-088 (15/10/2026) retirou a exclusão em lote — `canDeleteSelectedContacts`
+ * saiu junto com a barra de ações em massa (edição em massa de contatos é feita
+ * no Singu). O item avulso da Tabela continua coberto aqui.
  */
 
 function tableProps(contact: Contact, onDelete = noop) {
@@ -58,33 +57,5 @@ describe('ContactsTable · item Excluir (visão Tabela)', () => {
 
     await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDocument());
     expect(screen.getByText('Excluir')).toBeInTheDocument();
-  });
-});
-
-describe('canDeleteSelectedContacts · botão Excluir do lote', () => {
-  const c = (id: string, can_delete?: boolean) => ({ id, can_delete });
-
-  it('sem seleção não decide nada (undefined = comportamento anterior)', () => {
-    expect(canDeleteSelectedContacts([], [c('a', false)])).toBeUndefined();
-  });
-
-  it('selecionado que não está na lista carregada NÃO bloqueia (undefined) — bug do paginar', () => {
-    expect(canDeleteSelectedContacts(['fora-da-pagina'], [c('b', false)])).toBeUndefined();
-  });
-
-  it('bloqueia só quando todo selecionado conhecido está sem permissão', () => {
-    expect(canDeleteSelectedContacts(['a', 'b'], [c('a', false), c('b', false)])).toBe(false);
-  });
-
-  it('habilita quando ao menos um selecionado conhecido pode ser excluído', () => {
-    expect(canDeleteSelectedContacts(['a', 'b'], [c('a', false), c('b', true)])).toBe(true);
-  });
-
-  it('permissão ainda não respondida (undefined) mantém habilitado', () => {
-    expect(canDeleteSelectedContacts(['a'], [c('a')])).toBe(true);
-  });
-
-  it('ignora o que está fora da seleção', () => {
-    expect(canDeleteSelectedContacts(['a'], [c('a', false), c('b', true)])).toBe(false);
   });
 });

@@ -9,9 +9,9 @@ import type { ConversationContact } from '@/types/chat';
  * Ações rápidas do painel "Detalhes do Contato".
  *
  * Ordem do Joaquim (12/10/2026): a função de tags de contato não existe mais.
- * Este hook deixou de escrever etiquetas na tabela de contatos; ele NÃO era o
- * único ponto — `src/services/contact-bulk.service.ts` continua gravando a
- * coluna (fora do escopo deste cartão, registrado no cartão).
+ * Este hook deixou de escrever etiquetas na tabela de contatos, e o último
+ * ponto de escrita em massa da coluna saiu no CT-088 (15/10/2026): edição em
+ * massa de contatos é feita no Singu.
  *
  * - `block` → bloqueio REAL na Evolution (`update-block-status`, mesmo fluxo de
  *   MessageContextActions), com Desfazer que desbloqueia de verdade. Sem

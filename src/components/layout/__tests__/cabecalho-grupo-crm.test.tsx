@@ -31,7 +31,6 @@ vi.mock('@/components/contacts/useContactsViewState', () => ({
     isMergeOpen: false, setIsMergeOpen: vi.fn(),
     isCompareOpen: false, setIsCompareOpen: vi.fn(),
     groupByCompany: false, setGroupByCompany: vi.fn(),
-    isBulkTagOpen: false, setIsBulkTagOpen: vi.fn(),
     detailContact: null, setDetailContact: vi.fn(),
     handleApplyPreset: vi.fn(), handleToggleSelect: vi.fn(), handleSelectAll: vi.fn(), handleContactClick: vi.fn(),
     crud: {
@@ -58,7 +57,7 @@ vi.mock('@/components/contacts/useContactsViewState', () => ({
   }),
 }));
 vi.mock('@/components/contacts/contactPermissions', () => ({
-  canChangeSelectedContactsType: () => true, canDeleteSelectedContacts: () => true, canMergeContacts: () => true,
+  canMergeContacts: () => true,
 }));
 vi.mock('@/hooks/crm/useExternalContact360Batch', () => ({ useExternalContact360Batch: () => ({ lookup: () => null }) }));
 vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => true }));
@@ -67,14 +66,12 @@ vi.mock('@/contexts/LayoutScrollContext', () => ({ useLayoutScroll: () => ({ cur
 vi.mock('@/components/contacts/ContactDialogs', () => ({ ContactDialogs: () => null }));
 vi.mock('@/components/contacts/ContactMergeDialog', () => ({ ContactMergeDialog: () => null }));
 vi.mock('@/components/contacts/ContactCompareDialog', () => ({ ContactCompareDialog: () => null }));
-vi.mock('@/components/contacts/ContactBulkTagDialog', () => ({ ContactBulkTagDialog: () => null }));
 vi.mock('@/components/contacts/ContactStatsCards', () => ({ ContactStatsCards: () => null }));
 vi.mock('@/components/contacts/ContactTypeTabs', () => ({ ContactTypeTabs: () => null }));
 vi.mock('@/components/contacts/ContactToolbar', () => ({ ContactToolbar: () => null }));
 vi.mock('@/components/contacts/ContactResultsSummary', () => ({ ContactResultsSummary: () => null }));
 vi.mock('@/components/contacts/ContactContentArea', () => ({ ContactContentArea: () => null }));
 vi.mock('@/components/contacts/ContactDetailPanel', () => ({ ContactDetailPanel: () => null }));
-vi.mock('@/components/contacts/BulkActionsBar', () => ({ BulkActionsBar: () => null }));
 vi.mock('@/components/contacts/ContactCRMDialog', () => ({ ContactCRMDialog: () => null }));
 
 // CRM 360° — filhos dublados.
