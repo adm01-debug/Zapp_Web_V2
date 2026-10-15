@@ -13,9 +13,10 @@ check-runs do HEAD, runs de 07/10 a 14/10, falhas individuais com log) e via API
 Nada foi inferido do texto dos planos anteriores: o plano de 01/10 foi lido para saber o que ficou pendente,
 mas todo achado desta versão foi **re-medido hoje**.
 **Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01–W02** (perímetro)
-+ **79 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W17/W19/W21–W58/W59/W60/W65–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
-Restam: etapas **D** (W11/W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
-etapas B/C ainda não implementadas (W06/W12/W16/W62/W63).
++ **81 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W11/W12/W17/W19/W21–W58/W59/W60/W65–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
+W11+W12: environment `perimetro-leitura` criado, secret `SETTINGS_GUARD_TOKEN` adicionado, `ghAdmin()` wrapper implementado — 0 pontos cegos esperados na próxima execução do `settings-guard`.
+Restam: etapas **D** (W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
+etapas B/C ainda não implementadas (W06/W16/W62/W63).
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
