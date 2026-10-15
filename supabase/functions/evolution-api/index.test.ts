@@ -772,3 +772,89 @@ Deno.test("PH-03: na GO find-status-messages continua devolvendo goHistoryNotSup
     await fake.stop();
   }
 });
+
+// ─── PH-03 [refazer 1] ponto 1: agulha sem DDD vazava entre DDDs ─────────────
+// Defeito da entrega anterior: `statusPhoneNeedles` mantinha a forma local de
+// 8 dígitos (sem DDD e sem o 9) e `statusMatchesPhone` casava por `endsWith`
+// nos dois sentidos — um status de OUTRO DDD com os mesmos 8 dígitos finais
+// saía no lugar (ou junto) do contato pedido, e candidato curto (ex.: "9")
+// casava com qualquer agulha via `needle.endsWith(digits)`.
+Deno.test("PH-03 [refazer1]: status de outro DDD com os mesmos 8 dígitos finais NÃO sai", async () => {
+  const CONTATO = "5511987654321"; // DDD 11
+  const OUTRO_DDD_MESMO_FINAL = "5521987654321"; // DDD 21, mesmos 8 finais
+  const fake = createStatusFake([
+    statusRecord(CONTATO, "C1"),
+    statusRecord(OUTRO_DDD_MESMO_FINAL, "D1"),
+  ]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: CONTATO, page: 1, offset: 200 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const lista = await res.json();
+    assertEquals(lista.length, 1, "só o status do DDD do contato pedido pode sair");
+    assert(
+      (lista[0].participant as string).startsWith(CONTATO),
+      "o único registro devolvido é do contato pedido",
+    );
+  } finally {
+    await fake.stop();
+  }
+});
+
+// ─── PH-03 [refazer 1] ponto 2: "log sem telefone" (item 4 dos testes) ───────
+// O cartão exige prova de que o caminho não loga o telefone: captura tudo que
+// passa por console.* durante a chamada real e afirma que nenhum registro
+// contém os dígitos do contato (forma com e sem DDI).
+Deno.test("PH-03 [refazer1]: find-status-messages não registra o telefone em console.*", async () => {
+  const fake = createStatusFake([statusRecord(PH03_CONTATO, "A1")]);
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const gravados: string[] = [];
+  const captura = (...args: unknown[]) => {
+    gravados.push(args.map((a) => {
+      try {
+        return typeof a === "string" ? a : JSON.stringify(a);
+      } catch {
+        return String(a);
+      }
+    }).join(" "));
+  };
+  const originais = {
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    debug: console.debug,
+  };
+  console.log = captura as typeof console.log;
+  console.info = captura as typeof console.info;
+  console.warn = captura as typeof console.warn;
+  console.error = captura as typeof console.error;
+  console.debug = captura as typeof console.debug;
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1, offset: 200 }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    await res.json();
+  } finally {
+    console.log = originais.log;
+    console.info = originais.info;
+    console.warn = originais.warn;
+    console.error = originais.error;
+    console.debug = originais.debug;
+    await fake.stop();
+  }
+  const nacional = PH03_CONTATO.startsWith("55") ? PH03_CONTATO.slice(2) : PH03_CONTATO;
+  for (const forma of [PH03_CONTATO, nacional]) {
+    assert(
+      !gravados.some((linha) => linha.includes(forma)),
+      `nenhum registro de console pode conter o telefone (${forma}); gravados: ${JSON.stringify(gravados).slice(0, 300)}`,
+    );
+  }
+});
