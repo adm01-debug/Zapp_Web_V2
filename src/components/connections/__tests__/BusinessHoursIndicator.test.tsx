@@ -166,14 +166,17 @@ describe('BusinessHoursIndicator — estados do selo', () => {
   });
 
   it('janela que vira o dia (início > fim) fica aberta e avisa que vira o dia', async () => {
-    // Início 1 h atrás, fim 2 h atrás: início > fim (janela noturna) e o
-    // horário atual cai dentro dela — mesmo quando a hora atual é perto da
-    // meia-noite, porque o cálculo noturno atravessa o dia.
-    const abre = hojeDeslocado(-60);
-    const fecha = hojeDeslocado(-120);
+    // Janela noturna em vigor AGORA: de madrugada ela vem da linha de ONTEM
+    // (22:00→06:00); fora dela, da linha de hoje (início 1 h atrás, fim 2 h
+    // atrás — início > fim).
+    const agora = agoraBrasil();
+    const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
+    const madrugada = agoraMinutos <= 6 * 60;
+    const abre = madrugada ? '22:00' : hojeDeslocado(-60);
+    const fecha = madrugada ? '06:00' : hojeDeslocado(-120);
     h.rows = [
       {
-        day_of_week: DIA_HOJE,
+        day_of_week: madrugada ? DIA_ONTEM : DIA_HOJE,
         is_open: true,
         open_time: `${abre}:00`,
         close_time: `${fecha}:00`,
@@ -187,7 +190,11 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     fireEvent.pointerEnter(trigger);
     fireEvent.pointerMove(trigger);
     expect(
-      await screen.findByText(`Horário hoje: ${abre} - ${fecha} (vira o dia)`),
+      await screen.findByText(
+        madrugada
+          ? `Janela de ontem: ${abre} - ${fecha} (vira o dia)`
+          : `Horário hoje: ${abre} - ${fecha} (vira o dia)`,
+      ),
     ).toBeTruthy();
   });
 
@@ -267,13 +274,19 @@ describe('regra de horário comercial (função pura)', () => {
     expect(estaNaJanela(18 * 60 + 1, '09:00', '18:00')).toBe(false);
   });
 
-  it('janela noturna 22:00→06:00: aberta de noite E de madrugada, fechada à tarde', () => {
-    expect(estaNaJanela(23 * 60, '22:00', '06:00')).toBe(true);
-    expect(estaNaJanela(5 * 60, '22:00', '06:00')).toBe(true);
+  it('janela noturna 22:00→06:00: o dia abre às 22:00; a madrugada é da linha de ontem', () => {
     expect(estaNaJanela(22 * 60, '22:00', '06:00')).toBe(true);
-    expect(estaNaJanela(6 * 60, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(23 * 60 + 59, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(5 * 60, '22:00', '06:00')).toBe(false);
+    expect(estaNaJanela(6 * 60, '22:00', '06:00')).toBe(false);
     expect(estaNaJanela(12 * 60, '22:00', '06:00')).toBe(false);
-    expect(estaNaJanela(6 * 60 + 1, '22:00', '06:00')).toBe(false);
+  });
+
+  it('a madrugada não é coberta pela própria linha noturna (só pela de ontem)', () => {
+    const resumo = resumoDoDia({ is_open: true, open_time: '22:00', close_time: '06:00' }, 2 * 60);
+    expect(resumo.isOpen).toBe(false);
+    expect(resumo.motivo).toBe('fora');
+    expect(resumo.viraODia).toBe(true);
   });
 
   it('início igual ao fim não é janela: fica fechado e marcado como inválido', () => {
@@ -322,6 +335,16 @@ describe('regra de horário comercial (função pura)', () => {
     );
     expect(sabadoAberto.isOpen).toBe(true);
     expect(sabadoAberto.origem).toBe('hoje');
+  });
+
+  it('sem a linha de ontem, a madrugada fica fechada mesmo com a noturna de hoje', () => {
+    const resumo = resumoDoHorario(
+      { is_open: true, open_time: '22:00', close_time: '06:00' },
+      2 * 60,
+      null,
+    );
+    expect(resumo.isOpen).toBe(false);
+    expect(resumo.motivo).toBe('fora');
   });
 
   it('janela normal de hoje não abre a madrugada: às 02:00 quem manda é a janela de ontem', () => {

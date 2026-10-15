@@ -44,10 +44,13 @@ export function classificarJanela(
 }
 
 /**
- * O horário atual (`agoraMinutos`, em minutos desde a meia-noite no fuso da
- * conexão) cai na janela do dia? Na janela noturna — início > fim — a
- * comparação atravessa a meia-noite: aberto de `abre` até 23:59 **e** de 00:00
- * até `fecha`. Extremos são inclusivos, como o selo sempre fez.
+ * O relógio está dentro da janela QUE COMEÇA neste dia?
+ *
+ * `agoraMinutos` são minutos desde a meia-noite no fuso da conexão. Quando o
+ * fim é menor que o início (22:00→06:00) a janela termina na manhã SEGUINTE: o
+ * dia abre às `abre` e a madrugada depois da meia-noite pertence à linha de
+ * ontem (quem junta as duas é `resumoDoHorario`). Extremos são inclusivos.
+ * Início igual ao fim não é janela.
  */
 export function estaNaJanela(
   agoraMinutos: number,
@@ -59,7 +62,8 @@ export function estaNaJanela(
   const inicio = minutosDoHorario(abre)!;
   const fim = minutosDoHorario(fecha)!;
   if (tipo === 'normal') return agoraMinutos >= inicio && agoraMinutos <= fim;
-  return agoraMinutos >= inicio || agoraMinutos <= fim;
+  // Noturna: só a parte da noite ainda é do dia do cadastro.
+  return agoraMinutos >= inicio;
 }
 
 export type MotivoDoDia =
