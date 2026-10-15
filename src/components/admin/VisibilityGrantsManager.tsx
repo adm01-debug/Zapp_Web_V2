@@ -341,10 +341,14 @@ export function VisibilityGrantsManager() {
       </div>
 
       <AlertDialog open={!!grantToRemove} onOpenChange={(open) => { if (!open) setGrantToRemove(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          role="alertdialog"
+          aria-modal="true"
+          aria-describedby="remocao-visibilidade-descricao"
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Remover visibilidade?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription id="remocao-visibilidade-descricao">
               Tem certeza que deseja remover o acesso de <strong>{grantToRemove?.agent_profile?.name}</strong> aos
               contatos de <strong>{grantToRemove?.target_profile?.name}</strong>? O agente deixa de ver esses contatos.
             </AlertDialogDescription>

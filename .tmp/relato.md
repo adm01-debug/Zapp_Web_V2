@@ -1,27 +1,25 @@
-Especialista: iris
+Especialista: senior (front/admin)
 
-## O que mudou e por quê
-- src/components/admin/VisibilityGrantsManager.tsx: `fetchData` agora lê o `error` das três consultas (user_roles, profiles, agent_visibility_grants) e, quando alguma falha, mostra um cartão de erro com `role="alert"`, a mensagem real e o botão "Tentar de novo" — antes a falha caía no estado vazio "Nenhum Agente Especial" e a tela dizia "não há nada" quando a consulta havia quebrado. Loading → erro → vazio nessa ordem.
-- src/components/admin/VisibilityGrantsManager.tsx: a lixeira não apaga mais no clique. Ela abre um `AlertDialog` de confirmação que nomeia o agente especial e o alvo ("remover o acesso de X aos contatos de Y"); só o botão "Remover" do diálogo dispara o DELETE, e o erro do DELETE mantém o diálogo aberto em vez de anunciar sucesso.
-- src/components/admin/VisibilityGrantsManager.tsx: a lixeira recebe `aria-label` = "Remover visibilidade de <alvo>".
-- src/components/admin/VisibilityGrantsManager.tsx: o spinner do diálogo de remoção usa `motion-safe:animate-spin` (regra permanente de movimento).
-- src/pages/admin/RolesPage.tsx: a lixeira de cada usuário recebe `aria-label` = "Remover role de <nome>"; o diálogo "Atribuir Role" mostra o erro dos usuários disponíveis com botão "Tentar de novo" em vez de exibir a lista vazia.
-- src/pages/admin/useRolesPageState.ts: `fetchAvailableUsers` passou a ler o `error` do Supabase, guardar `availableUsersError` e limpar a lista; expõe `retryAvailableUsers`. Foi o único jeito de o erro ficar visível na tela: o estado do diálogo mora nesse hook (arquivo do módulo da página, `src/pages/admin/`).
+Refazer 1 do cartao fix-admin-grants-visibilidade-remocao. Entrega anterior: commit 5a87b6a877. Conferi cada ponto da recusa no codigo antes de corrigir.
 
-## Prova
-- vermelho antes (correções revertidas temporariamente): `npx vitest run src/components/admin/__tests__/VisibilityGrantsManager.loadErrorRemocao.test.tsx src/pages/admin/__tests__/RolesPage.availableUsersError.test.tsx` → `Tests 6 failed (6)`, incluindo `× mostra erro com "Tentar de novo" e nunca o cartão de nenhum agente especial` e `× o botão de remover role da lista anuncia de quem é a role`.
-- verde depois: `npx vitest run <as 5 suítes de admin de grants/roles>` → `Test Files 5 passed (5); Tests 12 passed (12)`.
-- `npx vitest run` com os dois arquivos novos: `Test Files 2 passed (2); Tests 6 passed (6)`.
-- verificação do projeto: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO` — saída crua versionada no diff em `docs/verificacao/zapp-verify-rapido-admin-grants-roles.md` (além de `.tmp/verify.log`, que o `.gitignore` esconde do diff).
-- Os testes renderizam os componentes REAIS (`VisibilityGrantsManager`, `RolesPage`) com o hook real, sobre um cliente Supabase mockado que devolve erro de PostgREST; não há mock que já traga a resposta na tela.
+Ponto 1 — dialogo de remocao sem role=alertdialog, sem aria-modal e sem aria-describedby.
+Conferi em src/components/admin/VisibilityGrantsManager.tsx:343-350: o `AlertDialogContent` era aberto sem nenhum desses atributos e o `AlertDialogDescription` nao tinha `id`. O teste novo provou a ausencia em tempo de execucao: sem a correcao, `aria-modal` volta `null` (saida vermelha abaixo), ou seja, o Radix nao estava expondo esses atributos sozinho nesse caminho.
+O que mudei (src/components/admin/VisibilityGrantsManager.tsx): `AlertDialogContent` passa a declarar `role="alertdialog"`, `aria-modal="true"` e `aria-describedby="remocao-visibilidade-descricao"`; `AlertDialogDescription` ganhou `id="remocao-visibilidade-descricao"` com o texto da consequencia ("O agente deixa de ver esses contatos"). Mantive o Radix AlertDialog — nao troquei nem abri outra UI.
+Teste que prova (src/components/admin/__tests__/VisibilityGrantsManager.loadErrorRemocao.test.tsx, "dialogo de remocao expoe role alertdialog com aria-modal e descricao da consequencia", chama o componente REAL com Supabase mockado): vermelho sem a correcao — `expect(dialogo).toHaveAttribute('aria-modal', 'true')` falha com `Received: null` (1 failed, 4 skipped); verde com a correcao — arquivo inteiro `1 passed... Tests 5 passed (5)`.
 
-## Estados da tela alterada
-- Grants: loading (spinner) → erro (cartão `role="alert"` + "Tentar de novo") → vazio ("Nenhum Agente Especial") → lista. Erro não se confunde com vazio.
-- Roles/diálogo: carregando usuários, lista de usuários disponíveis e erro com "Tentar de novo". O erro não vira "não há usuários".
+Ponto 2 — varredura global de motion-safe (incluiria spinners e transicoes fora do dialogo).
+Conferi em src/components/admin/VisibilityGrantsManager.tsx: o spinner do dialogo de remocao (linha 363) JA usa `motion-safe:animate-spin` desde a entrega anterior; os outros dois spinners (linhas 183 e 273: loading da pagina e botao Adicionar) estao fora do escopo que a recusa delimitou ("o dialogo de remocao em questao"). Nao alterei nenhum spinner nem transicao — reducao ja atendida, sem expansao de escopo.
 
-## O que NÃO fiz e por quê
-- `src/pages/admin/useRolesPageState.ts` (não listado, mas indispensável): o estado do diálogo "Atribuir Role" mora nesse hook; era o único ponto onde o `error` de `fetchAvailableUsers` podia ser capturado. Sem ele o critério 1 (falha nunca parece lista vazia) não é atendido — a tela mostraria a lista vazia. O arquivo fica no módulo da página (`src/pages/admin/`), não é hook de outra área.
-- `docs/verificacao/zapp-verify-rapido-admin-grants-roles.md` (não listado, mas indispensável): é a evidência crua do `zapp-verify . --rapido` (critério 3). O juiz do fechar só enxerga arquivo rastreado fora do `.gitignore`; a saída em `.tmp/verify.log` é ignorada pelo git. Não é código, é o comprovante da verificação.
-- Nenhuma migration, RLS, RPC ou Edge: o cartão fala de duas telas e o teste prova por UI.
-- Restante da auditoria (cabeçalho da página, erros de `user_roles`/`setUserRole`) já estava resolvido por PD-11 (o `loadError` com "Tentar de novo" já existe em RolesPage); não reimplementei.
-- Concluí: os dois critérios do cartão (falha nunca parece lista vazia; remoção com confirmação e nome acessível) estão implementados e provados.
+Segunda passada (defeito novo do meu diff): `grep VisibilityGrantsManager` mostra um unico chamador (src/pages/admin/RolesPage.tsx:137, render sem props — comportamento inalterado); nenhum toast/efeito duplicado; nenhum arquivo de guarda, manifesto, migration ou CI tocado; validacao de `aria-describedby` aponta para `id` existente no mesmo dialogo.
+
+Arquivos (git diff --name-only 5a87b6a877...HEAD, copiado do comando):
+.tmp/relato.md
+src/components/admin/VisibilityGrantsManager.tsx
+src/components/admin/__tests__/VisibilityGrantsManager.loadErrorRemocao.test.tsx
+
+Verificacao (resultados reais):
+- `bun run vitest run src/components/admin/__tests__/VisibilityGrantsManager.loadErrorRemocao.test.tsx src/pages/admin/__tests__/RolesPage.availableUsersError.test.tsx` → `Test Files 2 passed (2); Tests 7 passed (7)`
+- `npx tsc --noEmit` → limpo (sem saida, exit 0)
+- `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO (22s)` (banco local nao verificado — sem conjunto; sem migration neste refazer, nada de banco foi tocado)
+
+Nao fiz: trocar a UI do dialogo, tocar nos spinners fora do dialogo, reescrever relato em arquivo novo (mantive `.tmp/relato.md`, o caminho que o cartao lista).

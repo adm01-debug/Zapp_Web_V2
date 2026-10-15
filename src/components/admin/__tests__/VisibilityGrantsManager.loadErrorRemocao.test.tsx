@@ -126,6 +126,23 @@ describe('VisibilityGrantsManager — remoção de concessão confirma antes de 
     expect(estado.deleteCalls).toEqual([]);
   });
 
+  it('dialogo de remocao expoe role alertdialog com aria-modal e descricao da consequencia', async () => {
+    semear();
+    render(<VisibilityGrantsManager />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover visibilidade de Bruno Lima' }));
+    const dialogo = await screen.findByRole('alertdialog');
+
+    // Atributos exigidos na recusa do refazer 1: papel, modal e descricao da consequencia.
+    expect(dialogo).toHaveAttribute('aria-modal', 'true');
+    expect(dialogo).toHaveAttribute('aria-describedby', 'remocao-visibilidade-descricao');
+
+    const descricao = document.getElementById('remocao-visibilidade-descricao');
+    expect(descricao).not.toBeNull();
+    expect(descricao?.textContent).toMatch(/deixa de ver esses contatos/);
+    expect(within(dialogo).getByText(/deixa de ver esses contatos/)).toBe(descricao);
+  });
+
   it('cancelar não apaga; confirmar apaga a concessão pelo id', async () => {
     semear();
     render(<VisibilityGrantsManager />);
