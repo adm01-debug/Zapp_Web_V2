@@ -187,4 +187,52 @@ SQL
 [[ "$(psql_test -Atqc "SELECT business_hours_only FROM public.talkx_campaigns WHERE id='$camp_id'")" == 't' ]] \
   || fail 'e) payload valido nao gravou business_hours_only=true'
 
-printf '[OK] Talk X V09c: casts endurecidos — texto/hora/overflow viram 22023; business_hours_only "" e ausente.\n'
+# ---------------------------------------------------------------------------
+# N-102 — send_weekdays chega como array JSON e o cast direto (jsonb)::smallint[]
+# estourava 42846 ate em valor valido. A migration de correcao troca o cast por
+# conversao validada (nao-numero -> 22023) e mantem o intervalo 0..6.
+# Com N102_SKIP_FIX=1 a migration NAO e aplicada: o bloco deve FALHAR (RED),
+# provando que o teste pega a ausencia da correcao.
+# ---------------------------------------------------------------------------
+# helper N-102: chama a RPC como dono numa revisao explicita e devolve stdout+stderr
+n102_rpc() {
+  psql_test 2>&1 <<SQL || true
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claim.role = 'authenticated';
+SET LOCAL request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-000000000001';
+SELECT * FROM public.update_talkx_campaign_limits('$camp_id', $1, '$2'::jsonb);
+COMMIT;
+SQL
+}
+
+psql_test -qc "ALTER TABLE public.talkx_campaigns ADD COLUMN IF NOT EXISTS send_weekdays smallint[] DEFAULT NULL, ADD COLUMN IF NOT EXISTS respect_dnd boolean NOT NULL DEFAULT true;" >/dev/null || fail 'N-102: fixture send_weekdays/respect_dnd nao aplicou'
+if [[ "${N102_SKIP_FIX:-0}" != '1' ]]; then
+  [[ -f "$repo_root/supabase/migrations/20261013230014_talkx_n102_window_fixes.sql" ]] || fail 'N-102: migration de correcao ausente'
+  psql_test < "$repo_root/supabase/migrations/20261013230014_talkx_n102_window_fixes.sql" >/dev/null || fail 'N-102: migration de correcao nao aplicou'
+fi
+n102_rev="$(psql_test -Atqc "SELECT revision FROM public.talkx_campaigns WHERE id='$camp_id'")"
+
+n102_valid="$(n102_rpc "$n102_rev" '{"send_weekdays":[1,2,3]}')"
+echo "$n102_valid" | grep -q "$camp_id" || fail "N-102: array valido [1,2,3] foi recusado: $n102_valid"
+echo "$n102_valid" | grep -q '42846' && fail 'N-102: array valido [1,2,3] estourou 42846 (cast jsonb->smallint[] direto)'
+[[ "$(psql_test -Atqc "SELECT send_weekdays::text FROM public.talkx_campaigns WHERE id='$camp_id'")" == '{1,2,3}' ]] || fail 'N-102: [1,2,3] nao foi persistido'
+n102_rev="$(psql_test -Atqc "SELECT revision FROM public.talkx_campaigns WHERE id='$camp_id'")"
+
+n102_empty="$(n102_rpc "$n102_rev" '{"send_weekdays":[]}')"
+echo "$n102_empty" | grep -q "$camp_id" || fail "N-102: array vazio [] foi recusado: $n102_empty"
+[[ "$(psql_test -Atqc "SELECT send_weekdays::text FROM public.talkx_campaigns WHERE id='$camp_id'")" == '{}' ]] || fail 'N-102: [] nao foi persistido como vazio'
+n102_rev="$(psql_test -Atqc "SELECT revision FROM public.talkx_campaigns WHERE id='$camp_id'")"
+
+n102_text="$(n102_rpc "$n102_rev" '{"send_weekdays":["a"]}')"
+echo "$n102_text" | grep -q 'invalid_talkx_limits_values' || fail "N-102: [\"a\"] nao foi recusado com invalid_talkx_limits_values: $n102_text"
+echo "$n102_text" | grep -q '42846' && fail 'N-102: ["a"] vazou 42846 em vez de 22023'
+
+n102_range="$(n102_rpc "$n102_rev" '{"send_weekdays":[7]}')"
+echo "$n102_range" | grep -q 'invalid_talkx_limits_values' || fail "N-102: dia 7 (fora de 0..6) nao foi recusado: $n102_range"
+
+n102_dnd="$(n102_rpc "$n102_rev" '{"send_weekdays":[0,6],"respect_dnd":false}')"
+echo "$n102_dnd" | grep -q "$camp_id" || fail "N-102: [0,6]+respect_dnd=false foi recusado: $n102_dnd"
+[[ "$(psql_test -Atqc "SELECT send_weekdays::text || ':' || respect_dnd::text FROM public.talkx_campaigns WHERE id='$camp_id'")" == '{0,6}:false' ]] || fail 'N-102: [0,6]/respect_dnd=false nao persistidos'
+
+printf '[OK] Talk X V09c: casts endurecidos — texto/hora/overflow viram 22023; business_hours_only "" e ausente; N-102 grava send_weekdays validado ([1,2,3], [], [0,6]+respect_dnd=false), recusa ["a"] e dia 7 com 22023, nunca 42846\n'

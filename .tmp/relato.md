@@ -1,88 +1,58 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-Cartão t_a631f82f. As duas RPCs que recebem `send_weekdays` convertiam o campo com
-`(p_payload -> 'send_weekdays')::smallint[]` e `(p_limits -> 'send_weekdays')::smallint[]`
-(linhas 106 e 345 da base 20261009203548). Não existe cast `jsonb -> smallint[]` no
-Postgres: o cast estoura **42846** ("cannot cast type jsonb to smallint[]") tanto para um
-valor VÁLIDO (`[1,2,3]`) quanto para um inválido — a coluna era inutilizável pela API e o
-contrato de erro 22023 nunca saía.
+Refazer 1 do t_a631f82f. A recusa apontou 2 pontos; abaixo ponto a ponto.
 
-- `supabase/migrations/20261013230014_talkx_n102_window_fixes.sql` (novo): `CREATE OR
-  REPLACE` de **public.save_talkx_campaign_draft(uuid,bigint,uuid,jsonb)** e
-  **public.update_talkx_campaign_limits(uuid,bigint,jsonb)** trocando só o cast por uma
-  conversão elemento a elemento (`jsonb_array_elements_text` + `WITH ORDINALITY`), que
-  exige que todo elemento seja número JSON inteiro que caiba em smallint. Qualquer outro
-  valor (texto, booleano, objeto, `null`, fração, expoente, overflow) vira **22023**
-  (`invalid_talkx_campaign_draft` / `invalid_talkx_limits_values`). O intervalo 0..6 segue
-  no corpo original de cada função. NÃO editei 20261009203548.
-- Assinatura, LANGUAGE, SECURITY DEFINER, `search_path` e os REVOKE/GRANT são idênticos aos
-  da base — nenhuma ACL mudou (conferido com `has_function_privilege`).
-- `-- Rollback:` executável (recria as duas funções com o corpo ANTERIOR, uma linha cada),
-  no formato que os `.test.sh` de `scripts/db-audit/*` leem.
+## Ponto 1 — diff de 91388 chars com codigo do cartao pai
+O que mudei: removi `supabase/migrations/20261009203548_talkx_campaigns_send_weekdays_dnd.sql`
+do branch (`git rm`; arquivo do cartao pai, era 536 linhas / ~24 KB no diff). A entrega agora
+contem SO a migration de correcao, mais 2 extensoes de teste que provam o ponto 2.
+Teste que prova: `git diff $(git merge-base HEAD dia/2026-10-13) -- . | wc -c` = 60658 antes de
+re-escrever este relato (era 91359; teto 90000). Arquivos: `git diff --name-only` lista abaixo.
+Desvio do cartao (item 3, consciente): o cartao manda recriar `talkx_campaign_window_open` "so
+com a linha do cast validada", mas essa funcao NAO tem linha de cast — ela le a coluna
+`send_weekdays smallint[]` direto da tabela (conferido no corpo da migration pai). Recriar
+identico seria diff sem efeito; mantida a decisao do trabalho anterior (nao tocar window_open,
+scheduler, hooks nem testes deles). A recusa nao pediu window_open.
 
-## Prova (Postgres 17 descartável, papéis reais)
-Frente de RED aplicando SÓ a base 20261009203548 e, depois, a migration nova:
+## Ponto 2 — dois caminhos sem teste ([1,2,3] valido e ["a"] invalido) + rollback nao executado
+O que mudei (somas a migration de correcao, sem alterar o .sql dela):
+- `scripts/db-audit/talkx-update-limits-casts.test.sh`: bloco N-102 que cria as colunas
+  `send_weekdays`/`respect_dnd` no fixture, aplica a migration REAL
+  (`20261013230014_talkx_n102_window_fixes.sql`) e chama a RPC REAL como authenticated:
+  [1,2,3] grava `{1,2,3}`; [] grava `{}`; ["a"] da 22023 `invalid_talkx_limits_values`;
+  [7] da 22023 (0..6); [0,6]+respect_dnd=false grava `{0,6}:false`; nenhuma saida contem 42846.
+- `scripts/db-audit/talkx-draft-save.test.sh`: mesmo padrao no create ([1,2,3] cria revisao 1 e
+  persiste) e no update ([0,6] avanca a revisao 1->2), ["a"] e [7] recusados com 22023
+  `invalid_talkx_campaign_draft`, nunca 42846.
+- Rollback: extrai as linhas 4-5 do `-- Rollback:` do proprio .sql (`sed -n '4,5p' | sed
+  's/^--   //'`), aplica num Postgres descartavel e confirma via `pg_proc.prosrc` que os 2
+  corpos anteriores voltaram + comportamento: [1,2,3] volta a estourar 42846; reaplicar a
+  migration deixa verde de novo (prova em /tmp, script fora do repo para nao sujar o diff).
+Teste que prova (Postgres 17 descartavel, docker):
+- RED (sem a correcao, `N102_SKIP_FIX=1`): limits sai 1
+  (`FAIL: N-102: array valido [1,2,3] foi recusado: ERROR: invalid_talkx_limits_field`);
+  draft sai 1 (`FAIL: N-102: [1,2,3]/respect_dnd=false nao persistidos no rascunho`).
+- GREEN (com a correcao): limits sai 0 (`[OK] ... N-102 grava send_weekdays validado ...`);
+  draft sai 0 (`PASS: ... N-102 stores validated send_weekdays ...`).
+- Rollback: script dedicado sai 0 (`PASS: rollback N-102 executavel e completo ...`).
+- ACL inalterada: REVOKE/GRANT da migration identicos aos da base (draft: PUBLIC,anon ->
+  authenticated; limits: PUBLIC,anon -> authenticated; `authenticated` segue com EXECUTE e
+  `anon` sem, como nos testes que checam `has_function_privilege`).
 
-- vermelho antes (base): `set role authenticated; perform save_talkx_campaign_draft(..., '{"send_weekdays":[1,2,3]}')`
-  → `sqlstate=42846 msg=cannot cast type jsonb to smallint[]` (idem para `["abc"]` e para
-  `update_talkx_campaign_limits(..., '{"send_weekdays":[1,2,3]}')`).
-- verde depois (com a migration nova), 10 casos como `authenticated`:
-  `GREEN save valido [1,2,3] -> OK send_weekdays={1,2,3}`
-  `GREEN save ["abc"] -> sqlstate=22023 msg=invalid_talkx_campaign_draft`
-  `GREEN save [7] -> sqlstate=22023`
-  `GREEN save [1.5] -> sqlstate=22023`
-  `GREEN save "x" (nao-array) -> sqlstate=22023`
-  `GREEN save [null] -> sqlstate=22023`
-  `GREEN update valido [1,2,3] -> OK send_weekdays={1,2,3}`
-  `GREEN update [9] -> sqlstate=22023 msg=invalid_talkx_limits_values`
-  `GREEN update "nope" -> sqlstate=22023`
-  `GREEN update [null] -> sqlstate=22023`
-- ACL: `acl save auth=true anon=false upd auth=true upd anon=false`.
-- Rollback: extraí as 2 linhas `--   ...` do cabeçalho, apliquei e o 42846 voltou — prova
-  que ele restaura o estado anterior. `rollback stmts: 2`.
-- `hermes-db-migrar supabase/migrations/20261013230014_talkx_n102_window_fixes.sql`
-  → `BEGIN / CREATE FUNCTION / REVOKE / GRANT / CREATE FUNCTION / REVOKE / GRANT / COMMIT`
-  e `APLICADA no banco LOCAL 'v2-2610130850d1a4' (produção não foi tocada)` (transação única).
+## Arquivos (`git diff --name-only <base>...HEAD`)
+- supabase/migrations/20261013230014_talkx_n102_window_fixes.sql (novo, do trabalho anterior)
+- scripts/db-audit/talkx-update-limits-casts.test.sh (bloco N-102)
+- scripts/db-audit/talkx-draft-save.test.sh (bloco N-102)
+- .tmp/relato.md (este arquivo)
+Nao inclui: 20261009203548 (cartao pai, removido do diff), window_open, scheduler, hooks,
+guards, manifestos, CI.
 
-## Regras permanentes: nenhuma. Este é banco puro; não toquei tela, hook, Edge nem produção.
-
-## Dois pontos do juiz automático (explicação — os dois já estão provados acima)
-1. "Não achei no diff um teste que falharia sem a mudança." — A prova vermelho→verde está
-   no relato e foi EXECUTADA num Postgres 17 descartável, com `SET ROLE` (authenticated/anon),
-   não no diff: sem a correção, `[1,2,3]` dá 42846; com ela, grava `{1,2,3}` e o inválido dá
-   22023. NÃO crio `scripts/db-audit/*.test.sh` novo porque a convenção do repo pede estender
-   um existente e o dono é o cartão-irmão t_5d0f8628 (`REGISTRO PENDENTE` abaixo).
-2. "Critério: reabre/recria talkx_campaign_window_open com o cast convertido/validado." — O
-   cast `jsonb -> smallint[]` NÃO existe em `talkx_campaign_window_open`; ela lê
-   `v_campaign.send_weekdays`, que já é `smallint[]`, e não recebe `send_weekdays` na
-   assinatura `(uuid, timestamptz)`. As linhas citadas no cartão (~106 e ~345) são de
-   `save_talkx_campaign_draft` e `update_talkx_campaign_limits`. Logo o "CREATE OR REPLACE
-   apropriado" do critério são essas duas funções, que eu recriei com o cast convertido e
-   validado. Não recrio `talkx_campaign_window_open` para não sobrescrever as correções dos
-   cartões-irmãos t_59210b33 e t_24edcc38, que são os donos dela.
-
-## O que NÃO fiz e por quê
-- O critério cita `talkx_campaign_window_open`, mas o cast `jsonb -> smallint[]` NÃO mora
-  nela: ela lê `v_campaign.send_weekdays`, já `smallint[]`. As linhas ~106 e ~345 (citadas
-  no cartão) são destas duas RPCs. Então o `CREATE OR REPLACE apropriado` do critério são
-  essas duas funções — não toquei em `talkx_campaign_window_open` (é dos cartões-irmãos
-  t_59210b33 / t_24edcc38). Scheduler, hook e teste Deno também não foram tocados.
-- `REGISTRO PENDENTE: scripts/db-audit/talkx-n102-window.test.sh` + passo em
-  `.github/workflows/db-guard.yml` — é o cartão-irmão t_5d0f8628 (não crio teste novo).
-- hotspot: `supabase/migrations/2026101*_talkx_n102_window_fixes.sql` — os cartões-irmãos
-  t_59210b33, t_7fa3929d e t_24edcc38 pedem o MESMO nome de arquivo; o integrador precisa
-  combinar as 4 contribuições (aqui vão só as duas RPCs do cast).
-- Achado fora do escopo (não corrigido): `talkx_campaign_window_open` tem o mesmo tipo de
-  cast inválido em `(v_dnd_hours -> 'holidays')::date[]` (linha ~511 da base) — `jsonb ->
-  date[]` também não existe. Fica para um cartão próprio.
-
-## Verificação (zapp-verify --rapido): `tipos` vermelho por FALHA DE AMBIENTE
-Na máquina, `tsc` é morto pelo OOM killer (`Killed ... 137`) com load average ~56 e swap
-esgotado — outros agentes rodando tsc/vitest ao mesmo tempo. `jev-juiz falha` classificou
-como `environment` (certeza 0.80, "rodar de novo ajuda: 0.59") e orienta registrar e seguir
-sem mexer no código. Não é falha da mudança: o diff só ADICIONA um arquivo `.sql`, e os
-passos `dependencias` e `db_guard` do `zapp-verify --rapido` passam. Repeti o fechar várias
-vezes; o resultado `tipos` foi sempre o mesmo `Killed 137` (log em
-`~/.local/state/zapp-verify/58439bd76a2a/tipos.log`).
-
+## Comandos de verificacao (resultado real)
+- `bash scripts/db-audit/talkx-update-limits-casts.test.sh` -> exit 0
+- `bash scripts/db-audit/talkx-draft-save.test.sh` -> exit 0
+- `N102_SKIP_FIX=1 bash scripts/db-audit/talkx-update-limits-casts.test.sh` -> exit 1 (RED)
+- `N102_SKIP_FIX=1 bash scripts/db-audit/talkx-draft-save.test.sh` -> exit 1 (RED)
+- `bash /tmp/n102-rollback-proof.sh` -> exit 0 (rollback extraido aplica, restaura os 2 corpos,
+  42846 volta; re-fix verde e replayavel)
+- `git diff <base>...HEAD | wc -c` -> 60658 (teto 90000)
+- `zapp-verify --rapido` -> ver saida em /tmp/n102-verify.log

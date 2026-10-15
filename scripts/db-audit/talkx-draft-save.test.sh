@@ -288,4 +288,42 @@ psql_test -qc "UPDATE public.talkx_campaigns SET message_template = 'Olá' WHERE
 psql_test -qc "$owner_session UPDATE public.talkx_campaigns SET status='scheduled' WHERE id='$empty_campaign_id';" >/dev/null
 [[ "$(psql_test -Atqc "SELECT status FROM public.talkx_campaigns WHERE id='$empty_campaign_id'")" == 'scheduled' ]] || fail '(d) mensagem preenchida não liberou o agendamento'
 
-printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/owner (responsible_id obsoleta) and blocks scheduling without message or media\n'
+# ---------------------------------------------------------------------------
+# N-102 — send_weekdays como array JSON no rascunho: o cast direto
+# (jsonb)::smallint[] estourava 42846 ate em valor valido. A migration de
+# correcao aplica conversao validada (nao-numero -> 22023) e checa 0..6.
+# Com N102_SKIP_FIX=1 a migration NAO e aplicada: o bloco deve FALHAR (RED),
+# provando que o teste pega a ausencia da correcao.
+# ---------------------------------------------------------------------------
+psql_test -qc "ALTER TABLE public.talkx_campaigns ADD COLUMN IF NOT EXISTS send_weekdays smallint[] DEFAULT NULL, ADD COLUMN IF NOT EXISTS respect_dnd boolean NOT NULL DEFAULT true;" >/dev/null || fail 'N-102: fixture send_weekdays/respect_dnd nao aplicou'
+if [[ "${N102_SKIP_FIX:-0}" != '1' ]]; then
+  [[ -f "$repo_root/supabase/migrations/20261013230014_talkx_n102_window_fixes.sql" ]] || fail 'N-102: migration de correcao ausente'
+  psql_test < "$repo_root/supabase/migrations/20261013230014_talkx_n102_window_fixes.sql" >/dev/null || fail 'N-102: migration de correcao nao aplicou'
+fi
+
+# create com array valido: grava revisao 1 e persiste dias + DND.
+n102_payload="${payload%?},\"send_weekdays\":[1,2,3],\"respect_dnd\":false}"
+n102_first="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000030'::uuid, '$n102_payload'::jsonb);" 2>&1 || true)"
+[[ "$n102_first" == *':1:false'* ]] || fail "N-102: rascunho com [1,2,3] nao criou revisao 1 [$n102_first]"
+[[ "$n102_first" != *42846* ]] || fail 'N-102: rascunho com [1,2,3] estourou 42846 (cast jsonb->smallint[] direto)'
+n102_id="$(psql_test -Atqc "SELECT id FROM public.talkx_campaigns WHERE draft_creation_key='30000000-0000-0000-0000-000000000030'")"
+[[ "$(psql_test -Atqc "SELECT send_weekdays::text || ':' || respect_dnd::text FROM public.talkx_campaigns WHERE id='$n102_id'")" == '{1,2,3}:false' ]] || fail 'N-102: [1,2,3]/respect_dnd=false nao persistidos no rascunho'
+
+# update cobre o outro ramo da RPC: troca os dias dentro da revisao vigente.
+n102_upd_payload="${payload%?},\"send_weekdays\":[0,6]}"
+n102_upd="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT campaign_id || ':' || revision || ':' || creation_replayed FROM public.save_talkx_campaign_draft('$n102_id'::uuid, 1, NULL, '$n102_upd_payload'::jsonb);" 2>&1 || true)"
+[[ "$n102_upd" == *':2:false'* ]] || fail "N-102: update com [0,6] nao avancou para revisao 2 [$n102_upd]"
+[[ "$(psql_test -Atqc "SELECT send_weekdays::text FROM public.talkx_campaigns WHERE id='$n102_id'")" == '{0,6}' ]] || fail 'N-102: update nao persistiu [0,6]'
+
+# elemento nao-numerico: 22023 da conversao validada, nunca 42846.
+n102_bad_payload="${payload%?},\"send_weekdays\":[\"a\"]}"
+n102_bad="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000031'::uuid, '$n102_bad_payload'::jsonb);" 2>&1 || true)"
+[[ "$n102_bad" == *invalid_talkx_campaign_draft* && "$n102_bad" == *22023* ]] || fail "N-102: [\"a\"] nao foi recusado com 22023/invalid_talkx_campaign_draft [$n102_bad]"
+[[ "$n102_bad" != *42846* ]] || fail 'N-102: ["a"] vazou 42846 em vez de 22023'
+
+# dia fora do intervalo 0..6: recusado com 22023.
+n102_bad_day="${payload%?},\"send_weekdays\":[7]}"
+n102_range="$(psql_test -v VERBOSITY=verbose -c "$owner_session SELECT * FROM public.save_talkx_campaign_draft(NULL, NULL, '30000000-0000-0000-0000-000000000032'::uuid, '$n102_bad_day'::jsonb);" 2>&1 || true)"
+[[ "$n102_range" == *invalid_talkx_campaign_draft* ]] || fail "N-102: dia 7 (fora de 0..6) nao foi recusado [$n102_range]"
+
+printf 'PASS: Talk X draft save enforces grants, active identity and live connection, recovers idempotent creates, scopes keys per actor, rejects divergent retries, fences stale writes, accepts draft without message, caps the message at 4096, records step/owner (responsible_id obsoleta) and blocks scheduling without message or media; N-102 stores validated send_weekdays ([1,2,3] create, [0,6] update), rejects ["a"] and day 7 with 22023, never 42846\n'
