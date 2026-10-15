@@ -19,4 +19,4 @@ Teste que prova (chama o hook real, fronteira dublada como antes):
 - .tmp/relato.md (este relato)
 
 ## Verificação
-- `zapp-verify full .` → (rodando em segundo plano; resultado abaixo antes de fechar)
+- `zapp-verify full .` → db_guard OK, tipos OK (13s), lint OK (119s), migrations OK (1s), banco_local AVISO (sem conjunto, esperado); testes: `Test Files 1 failed | 1322 passed (1323)` / `Tests 1 failed | 11945 passed | 25 expected fail | 15 todo (11986)` + `Errors 1 error`. A falha (`talkx RuleValueInput`, timeout de `waitFor`) e o erro (`RealtimeInboxView`, `ERR_INVALID_ARG_TYPE` de `Event` do jsdom/undici) são PRÉ-EXISTENTES e independentes desta mudança: repetem IDÊNTICOS com o meu arquivo fora da árvore (experimento de remoção). Nenhum arquivo de `talkx/` ou `inbox/` está no diff desta entrega.
