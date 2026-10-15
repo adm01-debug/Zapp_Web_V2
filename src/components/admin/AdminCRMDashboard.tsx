@@ -2,7 +2,7 @@
  * AdminCRMDashboard — Aggregated CRM metrics for admin area
  * Shows summary cards and quick data previews from the external CRM database
  */
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +11,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import {
   Building2, Users, ShoppingCart, DollarSign, BarChart3,
-  TrendingUp, Package, Truck, Activity, ExternalLink,
+  TrendingUp, Package, Truck, Activity, ExternalLink, ChevronDown,
 } from 'lucide-react';
 import { useExternalSelect } from '@/hooks/integrations/useExternalDB';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
+import {
+  useMultiplixDeadLetterCount,
+  useMultiplixDeadLetters,
+  type MultiplixDeadLetter,
+} from '@/hooks/system/useMultiplixDeadLetters';
 import { useNavigate } from 'react-router-dom';
 import type { ExtCustomer, ExtCompanyRFMScore, ExtSale } from '@/types/externalDB';
 import { callCRMIntegration } from '@/lib/crmIntegration';
@@ -73,9 +78,74 @@ function IntegrationHealth() {
             <span>Sem vínculo: {queue?.succeeded_without_link ?? 0}</span>
           </>
         )}
+        <MultiplixDeadLetters />
       </CardContent>
     </Card>
   );
+}
+
+// ─── Dead letter do Multiplix ────────────────────────────────
+// O contador do CRM acima é do TalkX e não enxerga item do Multiplix. Aqui se
+// mostra a fila morta real (RPC count_multiplix_dead_letters) e, sob demanda, os
+// últimos itens — id, horário e motivo, sem payload.
+function MultiplixDeadLetters() {
+  const [aberto, setAberto] = useState(false);
+  const contagem = useMultiplixDeadLetterCount();
+  const lista = useMultiplixDeadLetters(20, aberto);
+
+  return (
+    <div className="w-full space-y-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-muted-foreground">DLQ Multiplix:</span>
+        {contagem.isLoading ? <Skeleton className="h-4 w-6" /> : (
+          <span
+            data-testid="multiplix-dlq"
+            aria-label="Dead letters do Multiplix"
+            className={`font-medium ${!contagem.isError && contagem.data ? 'text-destructive' : ''}`}
+          >
+            {contagem.isError ? '—' : contagem.data}
+          </span>
+        )}
+        {contagem.isError && <Badge variant="destructive">Dados não disponíveis</Badge>}
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0"
+          aria-expanded={aberto}
+          onClick={() => setAberto((v) => !v)}
+        >
+          <ChevronDown className="h-3 w-3" />
+          {aberto ? 'Ocultar últimos itens' : 'Ver últimos itens'}
+        </Button>
+      </div>
+      {aberto && (
+        lista.isLoading ? <Skeleton className="h-10 w-64" /> : lista.isError ? (
+          <p className="text-muted-foreground">Dados não disponíveis</p>
+        ) : (lista.data?.length ?? 0) === 0 ? (
+          <p className="text-muted-foreground">Nenhum item sem entrega.</p>
+        ) : (
+          <ul className="space-y-0.5 pl-0 list-none">
+            {lista.data.map((item) => (
+              <li key={item.item_id} className="flex flex-wrap items-baseline gap-x-2">
+                <span className="font-mono text-muted-foreground">#{item.item_id.slice(0, 8)}</span>
+                <span className="text-muted-foreground">
+                  {item.failed_at ? new Date(item.failed_at).toLocaleString('pt-BR') : '—'}
+                </span>
+                <span className="truncate max-w-[240px]">{motivoDoItem(item)}</span>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </div>
+  );
+}
+
+/** Motivo para o operador casar com o relato: classe do erro e, sem ela, a mensagem (curta). */
+function motivoDoItem(item: MultiplixDeadLetter): string {
+  if (item.error_class) return item.error_class;
+  if (item.error_message) return item.error_message.slice(0, 80);
+  return 'Sem motivo registrado';
 }
 
 // ─── Metric Card ─────────────────────────────────────────────
