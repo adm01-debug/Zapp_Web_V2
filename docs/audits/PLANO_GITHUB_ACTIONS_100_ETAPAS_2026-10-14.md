@@ -283,10 +283,10 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
   issue de cada guard só nasce quando ele voltar a emitir sinal verdadeiro (W04/W05/W23). Verificação: 0 issues abertas
   com labels `settings-guard`/`types-sync`.
-- [~] **W04** · C · N-02 · **PR #1920 aberta.** `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
+- [x] **W04** · C · N-02 · **FEITO (PR #1920 mergeado).** `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
   VERIFICÁVEL), nunca divergência; restaurar só o que foi efetivamente lido. Verificação: unit test com a resposta real
   do `GET /repos` sem campos de merge → 0 divergências, 1 ponto cego; `node --test scripts/ci/github-settings-guard.unit.mjs`.
-- [~] **W05** · B+C · N-02 · **PR #1920 aberta.** `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
+- [x] **W05** · B+C · N-02 · **FEITO (PR #1920 mergeado).** `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
   **uma** issue "ponto cego do perímetro" com dedupe pela assinatura dos campos não verificáveis (comenta só se o conjunto
   mudar ou a cada 7 dias). Verificação: 4 runs seguidos → 1 comentário; run deixa de ser ❌ sem divergência real.
 - [~] **W06** · A · N-03 · **PARCIAL 2026-10-15.** PR #1945 (mergeado) trocou `shell.or(getByRole('alert'))` por
@@ -300,14 +300,15 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
-- [x] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
+- [~] **W08** · C · N-05a · **PARCIAL 15/10:** o `deployment-manifest.json` é regenerado por commit (W41), mas a PR #1899
+  segue aberta, com conflito (`DIRTY`) e checks vermelhos — o merge é decisão do dono. PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
   no branch, CI verde, e o dono decide merge; após o merge, `deploy-functions` dispara sozinho (push em `supabase/functions/**`).
   Verificação: 6 checks ✅ no head; Deployment registrado.
-- [~] **W09** · C · N-05b · **PR #1923 aberta** (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
+- [x] **W09** · C · N-05b · **FEITO (PR #1923 mergeado).** Em 15/10 a PR #1918 do Dependabot passou a falhar em outro teste de documento (`E62/E76: os numeros citados conferem com o repositorio`) — mesma classe de problema, ainda aberta. (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
   `bun.lock`/workflows; o que se afirma passa a ser "versão dos workflows == `toolchain.json` == `bun.lock`", lendo os
   três. Verificação: PR #1918 do Dependabot passa no job `Lint & TypeCheck` sem edição manual (ou falha só por motivo de
   código).
-- [~] **W10** · B · N-10 · **PR #1922 aberta.** `ci.yml` `mutation-mapa`: `if: github.event_name == 'pull_request'` no job (em push não há base
+- [x] **W10** · B · N-10 · **FEITO 15/10 (junto com a correção do `db-live-guard`; substitui a PR #1922, que ficou com conflito).** `ci.yml` `mutation-mapa`: `if: github.event_name == 'pull_request'` no job (em push não há base
   para filtrar). Verificação: check-runs do próximo HEAD da `main` sem `🧬 Mutação do mapa` ❌.
 
 ### Fase 1 — Perímetro verificável de verdade (W11–W20)
@@ -552,9 +553,13 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 7 — Segurança, supply chain e Code Scanning (W81–W90)
 
-- [x] **W81** · C · N-06 · Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
+- [~] **W81** · C · N-06 · Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
   `secure-random.ts:9`, `secureRandom.ts:16`, `validation.ts:156`, `validation.ts:221`) e **dismiss com motivo** (`used
   in tests`) os 10 em arquivos de teste/scripts de CI. Verificação: 0 alertas `high` abertos; #13 fechado.
+  **Estado 15/10:** os dois XSS (`preview.tsx`, `TeamFileUploader.tsx`) já estão neutralizados no código (`toSafeImageUrl`, guarda `blob:`) e só fecham na próxima varredura
+  (a última análise da `main` é de 12/10, antes dos fixes; CodeQL não roda em push). Os comentários `// codeql[...]` **não** suprimem alerta: `secureRandomFloat` foi
+  reescrito sem divisão; `external-db-bridge` passou a usar `internalErrorResponse`; `ai-proxy` deixou de devolver o texto cru de falha de rede. Falta confirmar 0 alertas
+  `high` após `workflow_dispatch` do `codeql.yml` na `main`.
 - [x] **W82** · B · N-06 · `.github/codeql/codeql-config.yml` com `paths-ignore` para `**/*.test.ts`, `**/__tests__/**`,
   `tests/contracts/**`, `scripts/**/*.unit.mjs` (ou `query-filters` por regra) — alertas de teste param de poluir; o job
   referencia o config. Verificação: varredura seguinte sem alertas em caminhos de teste.
