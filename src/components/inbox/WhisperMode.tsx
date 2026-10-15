@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgents, type AgentWithStats } from '@/hooks/crm/useAgents';
+import { useWhisperCount, whisperCountKey } from '@/hooks/chat/useWhisperCount';
+import { log } from '@/lib/logger';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, ChevronDown, EyeOff, Loader2, RotateCcw, Send, UserRound, X } from 'lucide-react';
@@ -338,19 +341,38 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     return () => { supabase.removeChannel(channel); };
   }, [contactId, queryClient]);
 
-  // Mark as read when viewing
+  // Selo: a fonte é o hook (contagem exata no banco dos sussurros endereçados a
+  // MIM e não lidos) — a lista do painel é capada em 20 e conta o que eu enviei.
+  const unreadCount = useWhisperCount(contactId);
+  const meuPerfilId = profile?.id ?? null;
+
+  // Marcar como lido ao abrir o painel. Só invalida a contagem quando a gravação
+  // passa: erro deixa o selo de pé (dado certo) e avisa a causa em pt-BR.
   useEffect(() => {
-    if (isExpanded && whispers.some(w => !w.is_read)) {
-      supabase
+    if (!isExpanded || !contactId || !meuPerfilId || unreadCount <= 0) return;
+    let cancelado = false;
+
+    void (async () => {
+      const { error } = await supabase
         .from('whisper_messages')
         .update({ is_read: true })
         .eq('contact_id', contactId)
-        .eq('is_read', false)
-        .then();
-    }
-  }, [isExpanded, whispers, contactId]);
+        .eq('target_agent_id', meuPerfilId)
+        .eq('is_read', false);
 
-  const unreadCount = whispers.filter(w => !w.is_read).length;
+      if (cancelado) return;
+      if (error) {
+        log.error('Failed to mark whispers as read:', error);
+        toast.error('Não foi possível marcar os sussurros como lidos.');
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: whisperCountKey(contactId, meuPerfilId) });
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [isExpanded, unreadCount, contactId, meuPerfilId, queryClient]);
 
   const podeEnviar = Boolean(message.trim()) && Boolean(destinoId) && !isSending;
 

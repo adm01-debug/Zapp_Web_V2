@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { log } from '@/lib/logger';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 type Ouvinte = (contactId: string) => void;
 
 /**
- * Aviso local (mesma origem, sem rede) de que um sussurro novo foi gravado. O
- * `whisper_messages` NÃO está na publicação de realtime (migration 20260401002035
- * o removeu), então o selo do cabeçalho não recebe o evento por websocket: este
- * barramento leve é o caminho de atualização do contador para quem está com a
- * mesma conversa aberta.
+ * Aviso local (mesma origem, sem rede) de que um sussurro foi gravado. Serve à
+ * reconsulta na MESMA aba — quem está em OUTRA sessão é avisado pela assinatura
+ * de realtime abaixo. Como o contador exclui as notas do próprio usuário, gravar
+ * pelo compositor normalmente NÃO muda o número dele; o aviso só garante que o
+ * valor exibido seja reconsultado em vez de esperar o `staleTime`.
  */
 const ouvintes = new Set<Ouvinte>();
 
@@ -17,49 +19,86 @@ export function notificarSussurroEnviado(contactId: string): void {
   ouvintes.forEach((ouvinte) => ouvinte(contactId));
 }
 
-interface EstadoContagem {
-  contactId: string | null;
-  count: number;
+/** Chave da consulta do contador — o marcar-como-lido invalida exatamente esta chave. */
+export const whisperCountKey = (
+  contactId: string | null | undefined,
+  profileId: string | null | undefined,
+) => ['whisper-count', contactId, profileId] as const;
+
+/**
+ * Conta só o que ESTE usuário precisa ler: sussurros endereçados a ele
+ * (`target_agent_id`) e ainda não lidos. O `neq` em `sender_id` é obrigatório
+ * porque a RLS de SELECT também deixa o REMETENTE ver a própria nota — sem ele,
+ * quem escreveu o sussurro acenderia o próprio selo. A consulta é
+ * `count`/`head`, sem trazer conteúdo nenhum para o cliente.
+ */
+async function contarSussurrosNaoLidos(contactId: string, profileId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('whisper_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('contact_id', contactId)
+    .eq('target_agent_id', profileId)
+    .eq('is_read', false)
+    .neq('sender_id', profileId);
+
+  if (error) throw error;
+  return count ?? 0;
 }
 
 /**
- * Contador de sussurros da conversa, para o selo do cabeçalho. Conta as linhas que
- * a RLS já deixa visíveis (enviadas por mim ou endereçadas a mim) — a consulta é
- * `count`/`head`, sem trazer conteúdo nenhum para o cliente. O valor carregado é
- * marcado com o contato de origem: trocar de conversa não mostra a contagem da
- * anterior enquanto a nova carrega.
+ * Contador de sussurros não lidos da conversa, para o selo do cabeçalho.
+ *
+ * A fonte é o BANCO (cache do react-query), não a lista do painel: a lista é
+ * capada em 20 linhas e inclui as notas escritas por quem está olhando, então
+ * somar `!is_read` nela errava para mais (era o defeito).
+ *
+ * Se a leitura falhar, o cache mantém o último valor bom (o selo não zera nem
+ * inventa número). Trocar de conversa troca a chave da consulta: a contagem da
+ * anterior não aparece na nova enquanto ela carrega.
  */
 export function useWhisperCount(contactId: string | null | undefined) {
-  const [estado, setEstado] = useState<EstadoContagem>({ contactId: null, count: 0 });
+  const { profile } = useAuth();
+  const profileId = profile?.id ?? null;
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: whisperCountKey(contactId, profileId),
+    queryFn: () => contarSussurrosNaoLidos(contactId as string, profileId as string),
+    enabled: Boolean(contactId) && Boolean(profileId),
+    staleTime: 15_000,
+  });
+
+  // `whisper_messages` voltou à publicação de realtime (migration 20260828190000):
+  // o selo do destinatário atualiza sozinho, sem refresh da página.
+  useEffect(() => {
+    if (!contactId || !profileId) return;
+    const canal = supabase
+      .channel(uniqueRealtimeTopic(`whisper-count-${contactId}`))
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'whisper_messages', filter: `contact_id=eq.${contactId}` },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: whisperCountKey(contactId, profileId) });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(canal);
+    };
+  }, [contactId, profileId, queryClient]);
 
   useEffect(() => {
-    if (!contactId) return;
-    let cancelado = false;
-
-    const carregar = async () => {
-      const { count, error } = await supabase
-        .from('whisper_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('contact_id', contactId);
-      if (cancelado) return;
-      if (error) {
-        log.error('Failed to count whispers:', error);
-        return;
-      }
-      setEstado({ contactId, count: count ?? 0 });
-    };
-
-    void carregar();
-
+    if (!contactId || !profileId) return;
     const ouvinte: Ouvinte = (id) => {
-      if (id === contactId) void carregar();
+      if (id !== contactId) return;
+      void queryClient.invalidateQueries({ queryKey: whisperCountKey(contactId, profileId) });
     };
     ouvintes.add(ouvinte);
     return () => {
-      cancelado = true;
       ouvintes.delete(ouvinte);
     };
-  }, [contactId]);
+  }, [contactId, profileId, queryClient]);
 
-  return estado.contactId === (contactId ?? null) ? estado.count : 0;
+  return typeof query.data === 'number' ? query.data : 0;
 }
