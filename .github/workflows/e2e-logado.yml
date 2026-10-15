@@ -246,6 +246,31 @@ jobs:
             && echo "teardown catalog_send_events OK" \
             || echo "teardown catalog_send_events falhou - nao bloqueia CI"
 
+      # W77: captura as primeiras 20 linhas de stderr/stdout dos test-results antes
+      # do alerta -- evita round-trip ao artifact e garante o contexto imediato do erro.
+      - name: 📋 Capturar linhas de erro dos test-results (W77)
+        if: failure()
+        run: |
+          ERRO_FILE="$RUNNER_TEMP/e2e-error-lines.txt"
+          # Percorre os diretorios de testes com falha e pega as primeiras 20 linhas
+          # do primeiro arquivo de erro disponivel (stderr, stdout, ou error.txt).
+          encontrou=0
+          for dir in test-results/*/; do
+            [ -d "$dir" ] || continue
+            for f in "${dir}stderr" "${dir}stdout" "${dir}error.txt"; do
+              if [ -f "$f" ] && [ -s "$f" ]; then
+                head -n 20 "$f" > "$ERRO_FILE"
+                encontrou=1
+                echo "::debug::erro capturado de $f"
+                break 2
+              fi
+            done
+          done
+          if [ "$encontrou" -eq 0 ]; then
+            touch "$ERRO_FILE"
+            echo "::debug::nenhum arquivo de erro encontrado em test-results/"
+          fi
+
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
       # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
@@ -255,8 +280,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
-          # W77: link para o run e para o artifact redigido, sem imprimir secrets
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # W77: caminho do arquivo com as linhas de erro capturadas
+          ERRO_FILE: ${{ runner.temp }}/e2e-error-lines.txt
         with:
           script: |
             const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
@@ -270,6 +296,17 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
+            // W77: inclui as primeiras 20 linhas de erro no corpo do alerta
+            let erroLinhas = '';
+            try {
+              const fs = require('fs');
+              const conteudo = fs.readFileSync(process.env.ERRO_FILE, 'utf8').trim();
+              if (conteudo) {
+                const linhas = conteudo.split('\n').slice(0, 20).join('\n');
+                erroLinhas = `\n\n**Primeiras linhas do erro:**\n\`\`\`\n${linhas}\n\`\`\``;
+              }
+            } catch { /* arquivo ausente ou vazio -- corpo sem bloco de erro */ }
+
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
@@ -279,7 +316,8 @@ jobs:
             const rodape = `\n\n---\n[Log do run](${runUrl}) · [Artifact](${runUrl}#artifacts)`;
             if (!issue) {
               await github.rest.issues.create({
-                owner, repo, title: titulo, body: `${corpoDe(nomes)}${rodape}\n\n${marcador}`,
+                owner, repo, title: titulo,
+                body: `${corpoDe(nomes)}${erroLinhas}${rodape}\n\n${marcador}`,
               });
               core.info(`issue aberta com ${nomes.length} teste(s) quebrado(s)`);
               return;
@@ -297,7 +335,7 @@ jobs:
             }
             await github.rest.issues.createComment({
               owner, repo, issue_number: issue.number,
-              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}${rodape}\n\n${marcador}`,
+              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}${erroLinhas}${rodape}\n\n${marcador}`,
             });
             core.info('comentario novo: a causa mudou');
 
