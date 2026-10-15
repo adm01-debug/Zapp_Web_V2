@@ -1,4 +1,9 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
+
+## Pontos da recusa (só relato; nenhum código mudou)
+- Ponto 1: primeira linha agora é exatamente `Especialista: workersql`.
+- Ponto 2: removida a frase sobre o motivo da negação do `anon`; o relato diz apenas o comportamento observado (anon não lê nem grava), sem afirmar causa.
+- Ponto 3: seção `## Prova` agora contém a linha VERIFY do `zapp-verify . --rapido` no formato pedido, mais a lista das etapas OK.
 
 ## O que mudou e por quê
 - `supabase/migrations/20261013143000_user_ui_preferences.sql` (NOVO): cria
@@ -18,6 +23,8 @@ Especialista: worker (sql) (area-sql-banco)
   do schema `public` (igual às tabelas irmãs, ex.: `user_devices`/`user_settings`).
 
 ## Prova
+- Verificação rápida (zapp-verify --rapido) no fechar: OK dependencias 3s; OK db_guard 0s; OK tipos 114s; OK lint 3s; OK migrations 1s
+- Etapas OK: dependencias, db_guard, tipos, lint, migrations (todas OK, zero falha).
 - verde depois: `zapp-db-local psql . v2-2610131429994a -v ON_ERROR_STOP=1 < supabase/tests/user_ui_preferences.sql`
   → última linha `user_ui_preferences: OK (RLS propria linha + CHECKs + gatilho; anon negado; service_role ve tudo)`, exit=0
 - vermelho antes (sem a migration aplicada): mesmo comando →
@@ -29,15 +36,13 @@ Especialista: worker (sql) (area-sql-banco)
 - O que a suíte exercita de fato: A insere e lê só a própria linha; A é negado ao gravar na linha de
   B (42501); prefs array e prefs acima de 16 KiB são negados (23514); o UPDATE reescreve `updated_at`
   mesmo quando o app tenta gravar um valor antigo (gatilho lido de volta); B não vê, não atualiza e
-  não apaga a linha de A (0 linhas); `anon` é negado (`permission denied for table
-  user_ui_preferences`); `service_role` vê as 2 linhas.
+  não apaga a linha de A (0 linhas); `anon` não lê nem grava (negado); `service_role` vê as 2 linhas.
 
 ## Passada de efeitos colaterais (antes do relato)
 - Não há backfill nem UPDATE/INSERT em dado existente: a migration só cria objeto novo. O único
   gatilho criado é o da própria tabela (reescreve só `updated_at` da linha atualizada).
 - Nenhum GRANT, papel ou ACL existente mudou além do `grant ... to authenticated` pedido; não usei
-  REVOKE (numa migration nova seria contrato e não aplicaria agora, e é dispensável: no banco local
-  `anon` não tem GRANT algum na tabela — a suíte prova o `permission denied`).
+  REVOKE. Sobre o `anon`: a suíte prova apenas que ele não lê nem grava (negado) — sem afirmar causa.
 - Sem `create or replace`/`drop`/`alter` de objeto existente; sem `\` meta-comando.
 
 ## Teste novo deste cartão de banco
