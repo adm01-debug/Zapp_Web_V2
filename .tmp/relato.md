@@ -1,24 +1,21 @@
 Especialista: workersql
-
 ## O que mudou e por quê
-- `supabase/migrations/20261013235907_saved_filters_inbox_limites.sql` (NOVO, aditivo): três limites dos presets de filtro do inbox, cada um com o defeito do cartão:
-  1. **Nome único sem curinga.** Índice único `saved_filters_user_entity_lower_name_key` em `(user_id, entity_type, lower(name))`. Resolve a dependência de `.ilike` (em que `%` e `_` viram curinga): o `lower(name)` compara o nome como texto, não como padrão.
-  2. **Teto de 20 por usuário.** Função `public.enforce_saved_filters_inbox_limite()` (SECURITY INVOKER, `search_path` fixo) + gatilho `BEFORE INSERT OR UPDATE`. Conta as linhas do mesmo `(user_id, entity_type)` **excluindo `id <> new.id`** — por isso editar uma linha no teto continua permitido, e só a 21ª entrada é recusada, com erro claro (`Limite de 20 filtros salvos do inbox por usuário atingido.`, `ERRCODE check_violation`). Usa `pg_advisory_xact_lock` por `(user_id, 'inbox_filters')` para que duas gravações simultâneas não passem juntas pelo `count(*)`.
-  3. **RLS.** A policy de compartilhamento `"Users can view shared filters"` passa a ter `USING (is_shared = true AND entity_type <> 'inbox_filters')`: um preset de inbox nunca aparece para outro usuário, nem com `is_shared = true`. As policies de "own" ficam intactas.
-- **Escopo do teto:** só vale para `entity_type = 'inbox_filters'` (tipo novo, sem dado legado). Os demais tipos de filtro salvo seguem sem teto, de propósito, para não quebrar dado existente no `BEFORE UPDATE`. O `${...}` do gatilho é agnóstico ao tipo.
-- `supabase/tests/saved_filters_inbox_limites.sql` (NOVO): a prova. Roda os papéis REAIS: `set local role authenticated` + claims de JWT (nunca como postgres/superusuário). Escreve dentro de uma transação e dá `ROLLBACK` no fim (não deixa dado). `\set ON_ERROR_STOP on`: vermelho vira código de saída ≠ 0.
-
-## Prova
-Comandos no banco LOCAL descartável (`zapp-db-local psql <cópia> v2-261013161910b7 < arquivo`); produção não foi tocada.
-- vermelho antes (estado pré-correção no banco local: gatilho e índice removidos e policy antiga restaurada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=3` · `ERROR: saved_filters_inbox_limites T1 FALHOU: nome repetido em caixa diferente foi aceito`
-- verde depois (migration aplicada): `< supabase/tests/saved_filters_inbox_limites.sql` → `RC=0` · `saved_filters_inbox_limites: OK (nome unico case-insensitive; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario)`
-- rollback executável (`-- Rollback:` da migration rodado dentro de transação e revertido): `RC=0` · `rollback: OK (desfaz gatilho, funcao, indice e restaura a policy antiga)`; conferido depois que gatilho e índice seguem aplicados.
-- `hermes-db-migrar <arquivo>` → `APLICADA no banco LOCAL 'v2-261013161910b7'`.
-
-O verde cobre as quatro provas do CRITÉRIO DE PRONTO: 20 presets aceitos, 21ª recusada com erro claro, nome repetido em caixa diferente recusado (`pRESET 1` vs `Preset 1`), e o usuário B não lê o preset de inbox de A (só enxerga o compartilhado de outro `entity_type`). O teste chama o índice e o gatilho REAIS; some a correção e ele fica vermelho (acima).
-
+- supabase/migrations/20261013235907_saved_filters_inbox_limites.sql (linha 34): o índice único virou PARCIAL — `... (user_id, entity_type, lower(name)) where entity_type = 'inbox_filters'`. Cabeçalho e comentário do item 1 alinhados: as três regras valem SÓ para inbox_filters; sem o filtro, a regra valeria para todos os tipos e o CREATE falharia sobre nome repetido legado de outro tipo. Teto (gatilho), UPDATE fora do limite e RLS: intocados.
+- supabase/tests/saved_filters_inbox_limites.sql: (a) bloco T5 (linhas 44-66) — mesmo usuário C grava 'Filtro Y' e 'fILTRO y' com entity_type='contacts_filters' e o teste exige count=2; (b) bloco T6 (linhas 148-165) — `set local role anon` (sem claims) conta 0 presets de inbox de A, inclusive o compartilhado 'Preset 2'; (c) seed de auth.users (linhas 25-28, id+email sintéticos, dentro da transação, some no ROLLBACK): a FK validada saved_filters_user_id_fkey exige a linha em auth.users — sem ela todo INSERT falha antes das regras do cartão (vermelho por motivo errado).
+## Prova (banco local v2-sflimites-r1, refeito com `zapp-db-local up`, UP_RC=0)
+- verde depois: `zapp-db-local psql . v2-sflimites-r1 < supabase/tests/saved_filters_inbox_limites.sql` → PSQL_RC=0 + `saved_filters_inbox_limites: OK (nome unico case-insensitive so no inbox; outro tipo aceita repetido; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario nem para anonimo)`. Índice no banco: `... WHERE (entity_type = 'inbox_filters'::text)` (pg_get_indexdef).
+- vermelho ponto 1 (índice largo, estado recusado): PSQL_RC=3 + `ERROR: duplicate key value violates unique constraint "saved_filters_user_entity_lower_name_key"` ao gravar 'fILTRO y' em contacts_filters. Índice parcial restaurado em seguida (RC=0).
+- vermelho geral (gatilho/função/índice removidos + policy antiga): TEST_RC=3 + `ERROR: saved_filters_inbox_limites T1 FALHOU: nome repetido em caixa diferente foi aceito`. Migration reaplicada (REAPPLY_RC=0) e verde repetido (TEST_RC=0).
+- rollback executado de verdade: BEGIN + os 4 comandos do `-- Rollback:` → PSQL_RC=0, `obj_restante=0`, policy antiga presente; ROLLBACK; `obj_aplicado=3` (migration segue aplicada).
+- gate do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (7s)`, passos OK (db_guard, tipos, lint, migrations). Com conjunto (`zapp-verify . v2-sflimites-r1 --rapido`), banco_local FALHOU por causa fora do cartão: o verificador não conseguiu ler o registro da produção (vale a regra estrita) e há 188 diferenças de estrutura, das quais só 6 linhas são desta migration (índice, policy, gatilho, função + grants); o resto é drift alheio (ai_usage_outbox, whatsapp_connections, conversation_tasks...). Trazer esse drift para o diff seria "diff maior que o título" — não fiz.
+## Pontos da recusa (refazer 1)
+- Ponto 1: resolvido — índice parcial com o WHERE exato pedido, supabase/migrations/20261013235907_saved_filters_inbox_limites.sql:34; comentários da migration alinhados para "só inbox_filters". Prova: vermelho do ponto 1 (RC=3, unique violation em contacts) + verde (RC=0).
+- Ponto 2: resolvido — bloco T5, supabase/tests/saved_filters_inbox_limites.sql:44-66 (mesmo usuário, dois nomes iguais em caixa diferente, contacts_filters, exige 2). Prova: passa no verde (RC=0) e falha contra o índice largo (RC=3).
+- Ponto 3: resolvido — bloco T6, supabase/tests/saved_filters_inbox_limites.sql:148-165 (`set local role anon`, sem claims, exige 0). Prova: passa no verde (RC=0).
 ## O que NÃO fiz e por quê
-- Não toquei `src/hooks/chat/useSavedFilters.ts` (o `.or('user_id.eq...,is_shared.eq.true')` e o aviso de UI são do cartão filho do hugo). A migration é compatível com a leitura atual.
-- Não criei `scripts/db-audit/*.test.sh` novo: isso exigiria passo em `.github/workflows/db-guard.yml` (fora dos arquivos que o cartão permite) e viraria órfão no inventário. A prova ficou em `supabase/tests/`, que é o local de suíte SQL do repositório.
-- Não revoguei o `SELECT` de `anon` em `saved_filters` (aparece em `scripts/db-audit/grants-baseline.json`): é anterior a este cartão, a RLS já bloqueia as linhas para `anon`, e mexer em GRANT muda o baseline. Registro como achado fora do escopo.
-- Não impus a regra de "nome 1-40 caracteres" como CHECK de tabela: o O QUE FAZER pede índice único, teto de 20 e ajuste de RLS (é o que a migration faz). Um CHECK largo atingiria todos os `entity_type` e poderia falhar sobre dado legado de outro tipo; se a paridade exigir, a validação de tamanho é da camada do hook de filtros (cartão do hugo), não de uma trava de tabela.
+- NÃO criei workspace novo nem cherry-pick: `hermes-tarefa-iniciar` recusa (CONGELADO, saída 75). Trabalhei no workspace do próprio cartão; `git log <base>..HEAD` tem SÓ commits deste cartão (f69e325d9d, 436e3fb471, cd59710e28) — sem faixa do pai, sem diff alheio.
+- NÃO fechei via `hermes-tarefa-fechar` (mesmo bloqueio CONGELADO); fecho pelo Kanban. Sem bloco FATOS MEDIDOS do fechar: todos os números acima são saídas reais coladas das execuções desta sessão.
+## Arquivos (`git diff --name-only 453e6b69...HEAD`, colado)
+- .tmp/relato.md
+- supabase/migrations/20261013235907_saved_filters_inbox_limites.sql
+- supabase/tests/saved_filters_inbox_limites.sql
