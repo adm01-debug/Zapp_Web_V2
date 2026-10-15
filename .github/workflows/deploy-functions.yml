@@ -130,6 +130,7 @@ jobs:
       # MESMA funcao, confira se ja nao ha um run dela pendente/em execucao.
       - name: Exigir ref confiavel da main
         run: |
+          set -euo pipefail
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Deploy de producao so pode executar a partir de refs/heads/main."
             exit 1
@@ -144,6 +145,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           node --input-type=module <<'NODE'
           const token = process.env.GITHUB_TOKEN;
           const repo  = process.env.GITHUB_REPOSITORY;
@@ -192,6 +194,7 @@ jobs:
         env:
           SOURCE_REF: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref }}
         run: |
+          set -euo pipefail
           DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
           if [ -z "$SOURCE_REF" ]; then
             test "$DEPLOYED_GIT_SHA" = "$GITHUB_SHA"
@@ -208,6 +211,7 @@ jobs:
 
       - name: Fixar coletor confiavel mesmo durante rollback
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/edge-tooling"
           git archive "$GITHUB_SHA" scripts/edge-deploy | tar -x -C "$RUNNER_TEMP/edge-tooling"
 
@@ -220,6 +224,7 @@ jobs:
 
       - name: Validar gerador e manifesto de deployment
         run: |
+          set -euo pipefail
           node --test scripts/edge-deploy/*.unit.mjs
           node scripts/edge-deploy/generate-manifest.mjs --check
 
@@ -234,6 +239,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
             echo "::error::SUPABASE_ACCESS_TOKEN ausente."
             exit 1
@@ -263,6 +269,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           SOURCE_REF: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref }}
         run: |
+          set -euo pipefail
           ARQUIVO="$RUNNER_TEMP/secrets-list.json"
           if ! supabase secrets list --project-ref "$PROJECT_REF" --output-format json > "$ARQUIVO" 2>/dev/null; then
             echo "::warning::Nao foi possivel ler os secrets do projeto; a decisao cai no comportamento anterior."
@@ -301,6 +308,7 @@ jobs:
           FN: ${{ inputs.function_name }}
           REESCREVER: ${{ steps.decisoes_secrets.outputs.reescrever }}
         run: |
+          set -euo pipefail
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             if [ "$REESCREVER" = "true" ]; then
@@ -422,6 +430,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           umask 077
           mkdir -p "$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
@@ -432,6 +441,7 @@ jobs:
         env:
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           EVIDENCIA="$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/deploy-plan.mjs" --manifest supabase/deployment-manifest.json --remoto "$EVIDENCIA/edge-before.json" --escopo "$FN" --saida "$EVIDENCIA/deploy-plan.json"
 
@@ -442,6 +452,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
           # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
           # a verificação pós-deploy não encontrava o deploy esperado.
@@ -485,6 +496,7 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           umask 077
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
@@ -504,6 +516,7 @@ jobs:
         env:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
         run: |
+          set -euo pipefail
           node scripts/edge-deploy/smoke-functions.mjs \
             --manifest supabase/deployment-manifest.json \
             --base-url "https://$PROJECT_REF.supabase.co/functions/v1" \
@@ -523,6 +536,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/health-check.mjs" \
             --project-ref tnnnlkbymytvtqngbbqh \
             --scope "${FN:-all}" \
@@ -532,6 +546,7 @@ jobs:
       - name: Publicar resumo da evidencia
         if: always() && inputs.dry_run != true
         run: |
+          set -euo pipefail
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync } from 'node:fs';
           const evidenceDir = `${process.env.RUNNER_TEMP}/edge-deployment-evidence`;
@@ -570,6 +585,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ESCOPO: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/register-deployment.mjs"
 
       - name: Limpar segredos do log de deploy
@@ -592,6 +608,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           REDIGIR_LOG_BASE: ${{ runner.temp }}
         run: |
+          set -euo pipefail
           bash "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/preparar-artifact-deploy.sh"
 
       - name: Arquivar manifesto, atestado e smokes

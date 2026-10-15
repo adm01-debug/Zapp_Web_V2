@@ -255,7 +255,7 @@ export default function TalkXView() {
       // (antes: um texto solto, que parecia carga infinita ou tela vazia).
       return (
         <div
-          className="min-h-full w-full min-w-0 bg-background p-6"
+          className="min-h-full w-full min-w-0 bg-background"
           role="status" aria-live="polite" aria-busy="true" data-talkx-query="loading"
         >
           <span className="sr-only">Carregando conteúdo…</span>
