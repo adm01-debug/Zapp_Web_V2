@@ -1,46 +1,30 @@
-Especialista: iris
-Especialista: Íris (area-front-componentes)
+Especialista: semisenior (area-front-componentes)
 
-## O que mudou e por quê
+[refazer 1] fix(admin): Modo Treinamento — trata erro de perfil, encerra sessão abandonada e mostra resultados da equipe
 
-- `src/components/admin/TrainingMode.tsx`:
-  - `loadProfile` passa a usar `maybeSingle()` e a tratar os três casos (sem usuário, erro de leitura,
-    dado ausente) com aviso na tela em vez de `return` silencioso: sem o id do perfil o treino não grava nada,
-    então o atendente precisa ver o motivo.
-  - `startScenario` avisa quando o insert da sessão falha e deixa `activeSession` nulo (não finge sessão ativa);
-    `sendResponse` deixou de sair em silêncio sem sessão e o botão Enviar fica desabilitado sem sessão —
-    texto digitado não se perde no vazio.
-  - Nova `encerrarSessao` (botão "Sair"): grava `status: 'abandoned'` em `training_sessions` na mesma linha já
-    existente (coluna TEXT sem CHECK — nenhuma migration) e, se o update falhar, avisa na tela em vez de
-    deixar a sessão presa em "Em andamento".
-  - Lista de sessões anteriores passa a usar o mapa de rótulos `STATUS_SESSAO` (`in_progress`/`completed`/`abandoned`),
-    para o estado abandonado não aparecer como "Em andamento".
-  - A11y no cenário ativo: botão de envio com `aria-label="Enviar resposta"` e a lista de mensagens como
-    `role="log"` + `aria-live="polite"` (era um `div` mudo).
-  - Nova aba "Resultados da equipe" (`Tabs`), visível só com `isSupervisor` de `useUserRole` — o hook inclui
-    admin, que é exatamente quem a RLS de `training_sessions` já libera ler; a leitura acontece no clique da aba
-    (nada de efeito novo). Sem permissão a aba não é renderizada e o painel continua "Meus resultados".
-- `src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx`: só o mock — `maybeSingle` no chain (o
-  `loadProfile` mudou de método) e `useUserRole` mockado como atendente comum (papel sem aba de equipe). As
-  asserções existentes não foram tocadas.
-- `src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx` (novo): prova de comportamento
-  renderizando o componente REAL, sem mock do próprio alvo. Cobre erro de perfil, perfil ausente, falha no
-  início (botão desabilitado e texto não perdido), erro da lista, "Sair" gravando `abandoned` e o rótulo
-  "Abandonada", falha do abandono avisada, `role="log"` + `aria-label` do envio, aba da equipe escondida para
-  atendente, lista da equipe para supervisor com estado traduzido e sem "null/100".
+Commit do refazer: e92a55289f (sobre o trabalho anterior 078c825f5e, mesmos arquivos do cartão).
 
-## Prova
+Ponto 1 — `loadTeamSessions` sem `.limit()`, lendo a tabela inteira.
+O que mudei: `src/components/admin/TrainingMode.tsx` — a consulta da equipe agora termina com `.limit(50)` (antes sem limite; a lista pessoal já tinha `.limit(10)`).
+Teste: `limite-equipe-50` em `TrainingMode.erro-abandono.test.tsx` (mock registra cada `limit`; abre a aba da equipe e exige `{ tabela: 'training_sessions', n: 50 }`).
+Saída vermelha antes (componente antigo): FAIL — nenhum `limit` registrado para a consulta da equipe. Verde depois: passa.
 
-- vermelho antes (componente em `HEAD`, com o teste novo): `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx` → `Tests 9 failed | 1 passed (10)`
-- verde depois: `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`
-- pre-commit (git add + commit): `Lint ratchet (staged, 3 arquivo(s)): baseline=3, atual=3, novas=0 / OK: nenhuma nova divida de lint foi introduzida.`
-- verificação do repositório: `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations` e a linha final `VERIFY: VERDE SEM BANCO (196s)` (no modo rápido o banco local não é verificado — aviso esperado).
+Ponto 2 — busca fora da aba + "Nenhuma sessão" sem gate.
+O que mudei: `src/components/admin/TrainingMode.tsx` — (a) conferi no código que a busca já tem um único ponto de chamada, o `onValueChange` da aba (`setAba` + `loadTeamSessions` só quando `valor === 'equipe'`); nenhum `useEffect` a dispara, e o Radix não emite `onValueChange` na montagem (que abre em "meus"). Tentei um `useEffect` guiado pela aba e o pre-commit barrou (`react-hooks/set-state-in-effect`, ratchet: novas=0 exigido), então mantive o handler da aba com comentário documentando o ponto único; (b) novo estado `equipeCarregada` (inicia `false`, vira `true` no retorno com sucesso ou erro): antes do retorno a aba mostra "Carregando resultados da equipe…" em vez de afirmar o vazio.
+Teste: `equipe-carregando` (resposta da equipe adiada por promise controlada; exige `consultasEquipe === 0` após montar, "Carregando…" visível e "Nenhuma sessão…" ausente antes do retorno, e "Nenhuma sessão…" após resolver vazio).
+Saída vermelha antes: FAIL — exibia "Nenhuma sessão de treinamento registrada." antes do retorno e não havia "Carregando…". Verde depois: passa.
 
-## O que NÃO fiz e por quê
+Ponto 3 — conteúdo de /admin condicionado ao papel, testemunha `papel-*`.
+O que mudei: `src/components/admin/TrainingMode.tsx` — mesmo padrão do `AdminView` (Cartão 06-PGR-26): `const { isSupervisor, loading: papelCarregando } = useUserRole()` e padrão-negar na busca (`if (papelCarregando || !isSupervisor) return;` em `loadTeamSessions`). O atendente comum vê o que pode usar (cenários + aba "Meus resultados"); só supervisor vê a aba "Resultados da equipe".
+Teste: `papel-atendente-equipe` substitui o antigo `atendente comum não vê a aba da equipe` — com `isSupervisor=false` exige ausência da aba + presença dos cenários e de "Meus resultados"; após `unmount` e `isSupervisor=true` exige a aba presente (falha se o componente ignorar o hook para qualquer lado). Verde antes e depois (o código antigo já lia o hook; o teste testemunha a fiação nos dois sentidos).
 
-- Retomar sessão em andamento (a alternativa "ou retomar" do critério): escolhi o abandono, que já garante que a
-  sessão não fica presa em "Em andamento"; retomar exigiria reidratar `messages`/passo do cliente, outro cartão.
-- Persistir a conclusão/nota: é o cartão PJ-34 (`t_6653415c`, "conclusão da sessão pela RPC"), que depende deste —
-  não toquei em `evaluateResponse`/score.
-- Consulta "Resultados da equipe" sem LIMIT de propósito: truncar em silêncio esconderia sessões antigas da equipe;
-  o volume é de admins/supervisores e a leitura continua limitada pela RLS.
+Arquivos (`git diff --name-only 338a420d1e...HEAD`, colado do comando):
+.tmp/relato.md
+src/components/admin/TrainingMode.tsx
+src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx
+src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx
+
+Verificação:
+- `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` → Test Files 2 passed (2), Tests 17 passed (17).
+- Pre-commit lint ratchet no commit e92a55289f → baseline=3, atual=3, novas=0.
+- Nenhum teste existente removido, pulado ou afrouxado; `TrainingMode.avaliacao.test.tsx` intocado neste refazer (5/5 verdes).
