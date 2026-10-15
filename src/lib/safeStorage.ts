@@ -102,9 +102,13 @@ export function createSafeStorage(): StorageSeguro {
       return persistido !== null ? persistido : (memoria.get(key) ?? null);
     },
     setItem: (key, value) => {
-      // Storage cheio/bloqueado: mantém o token vivo em memória em vez de
-      // perder a sessão.
-      if (!safeSetItem(key, value)) memoria.set(key, value);
+      // Storage cheio/bloqueado: remove o valor antigo persistido antes de
+      // guardar o novo em memória — sem isso o getItem devolveria o token
+      // antigo (já rotacionado) e o próximo refresh derrubaria a sessão.
+      if (!safeSetItem(key, value)) {
+        safeRemoveItem(key);
+        memoria.set(key, value);
+      }
     },
     removeItem: (key) => {
       safeRemoveItem(key);

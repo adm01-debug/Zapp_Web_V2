@@ -49,4 +49,18 @@ describe('createSafeStorage', () => {
 
     expect(storage.getItem('zapp-sessao')).toBe('token-3');
   });
+
+  it('devolve o valor novo da memória quando a escrita falha e já havia valor persistido', () => {
+    localStorage.setItem('zapp-sessao', 'token-antigo');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    const storage = createSafeStorage();
+    storage.setItem('zapp-sessao', 'token-novo');
+
+    // Sem a correção, o getItem devolveria 'token-antigo' (persistido),
+    // mantendo o refresh token já rotacionado e derrubando a sessão.
+    expect(storage.getItem('zapp-sessao')).toBe('token-novo');
+  });
 });
