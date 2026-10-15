@@ -613,6 +613,9 @@ jobs:
   # auditoria de GitHub Actions (E64).
   mutation-mapa:
     name: 🧬 Mutação do mapa (não bloqueante)
+    # W10: em push/dispatch não há base de PR para filtrar caminhos e o runner de
+    # mutação falhava em todo commit da main (check ❌ fantasma no HEAD).
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
@@ -638,9 +641,18 @@ jobs:
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # W48: busca so' a base do PR com historico raso para o diff funcionar.
+          # W48: checkout raso + historico raso dos DOIS lados. So' a base com --depth nao
+          # basta: o HEAD (merge do PR) vem com 1 commit e `base...HEAD` falha com
+          # "no merge base" (visto no #1947: check vermelho em todo PR). Se ainda assim
+          # nao houver ancestral comum (PR muito antigo), o filtro falha para o lado
+          # seguro: roda a mutacao (o job e' nao bloqueante).
           git fetch origin "${BASE_REF}" --depth=50 --quiet
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          git fetch origin "${GITHUB_SHA}" --depth=50 --quiet
+          if ! changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"; then
+            echo "::warning::sem ancestral comum com ${BASE_REF} no historico raso; rodando a mutacao por seguranca."
+            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"

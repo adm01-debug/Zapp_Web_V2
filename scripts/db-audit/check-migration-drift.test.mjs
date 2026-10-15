@@ -132,6 +132,7 @@ function runGuard({
   psqlFailCount = 0,
   psqlFailMessage = 'connection refused (fake)',
   retryDelaysMs = null,
+  args = [],
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -180,7 +181,7 @@ function runGuard({
   else delete env.DESTINO_URL;
 
   try {
-    return spawnSync(process.execPath, [SCRIPT], {
+    return spawnSync(process.execPath, [SCRIPT, ...args], {
       cwd: ROOT,
       encoding: 'utf8',
       env,
@@ -1065,4 +1066,47 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
   assert.equal(result.status, 2);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
+});
+
+// W21: --classificar separa "apply pendente" (esperado entre o merge do lote e o
+// db-migrate) de drift real. Exit 2 = so apply pendente; exit 1 = drift real.
+const PENDENTE_FILE = '20260829060000_create_pendente.sql';
+
+test('W21: apply pendente sem --classificar continua sendo drift (exit 1, retrocompat)', () => {
+  const result = runGuard({ files: { [FILE]: SQL, [PENDENTE_FILE]: SQL } });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /20260829060000/);
+  assert.match(result.stderr, /Use --classificar/);
+});
+
+test('W21: apply pendente com --classificar sai com 2 e lista a version aguardando apply', () => {
+  const result = runGuard({ files: { [FILE]: SQL, [PENDENTE_FILE]: SQL }, args: ['--classificar'] });
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(result.stderr, /aguardando apply/);
+  assert.match(result.stderr, /20260829060000\s+20260829060000_create_pendente\.sql/);
+  assert.doesNotMatch(result.stderr, /FALHA/);
+});
+
+test('W21: ledger sem arquivo e drift real mesmo com --classificar (exit 1)', () => {
+  const result = runGuard({
+    ledger: [ledgerRecord(), ledgerRecord({ version: '20260829070000', name: 'so_no_banco' })],
+    args: ['--classificar'],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /20260829070000/);
+});
+
+test('W21: drift real prevalece sobre apply pendente quando os dois ocorrem (exit 1, nunca 2)', () => {
+  const result = runGuard({
+    files: { [FILE]: OTHER_SQL, [PENDENTE_FILE]: SQL },
+    args: ['--classificar'],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /aguardando apply/);
+  assert.match(result.stderr, /FALHA: drift de migrations detectado/);
+});
+
+test('W21: --classificar sem pendencia nem drift sai com 0', () => {
+  const result = runGuard({ args: ['--classificar'] });
+  assert.equal(result.status, 0, result.stderr);
 });

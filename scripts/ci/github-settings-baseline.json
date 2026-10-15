@@ -63,6 +63,7 @@
     "step-security/harden-runner"
   ],
   "environments": [
+    "banco-leitura",
     "copilot",
     "db-ledger-evidence",
     "legacy-import-destrutivo",
