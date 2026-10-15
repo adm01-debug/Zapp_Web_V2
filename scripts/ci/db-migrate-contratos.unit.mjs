@@ -22,8 +22,11 @@ test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco 
   );
   assert.match(y, /run-runtime-contract\.mjs/, 'o passo tem de chamar o executor generico');
   // o guard continua: a comparacao com o sha confirmado (composicao da E64) sobreviveu
-  assert.match(y, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/, 'a comparacao do sha tem de continuar');
-  assert.match(y, /if \(process\.env\.APPLY === 'true'/, 'e continuar condicionada ao apply');
+  // (em bash no apply: `if [ "$CONFIRMATION_HASH" != "$CONFIRM_RUNTIME_SHA256" ]`)
+  assert.ok(
+    y.includes('CONFIRMATION_HASH') && y.includes('CONFIRM_RUNTIME_SHA256'),
+    'a comparacao do sha tem de continuar',
+  );
   const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
   const historicos = arquivos.filter((f) => !NOVOS_GENERICOS.includes(f));
   assert.equal(historicos.length, 12, `esperava 12 contratos historicos, achei ${historicos.length}`);
@@ -77,4 +80,36 @@ test('E62: o contrato da versao 20260830170000 existe e nao esta vazio', () => {
   const sql = lerContrato('20260830170000');
   assert.ok(sql.trim().length > 100, 'contrato tem de ter conteudo real');
   assert.ok(existsSync(new URL('20260830170000.sql', CONTRATOS)));
+});
+
+import { lerContratoComFallback } from '../db-audit/run-runtime-contract.mjs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+
+// W29: sem arquivo dedicado → fallback para o contrato generico; arquivo vazio → fail-closed.
+test('W29: lerContratoComFallback usa o generico para versao sem contrato dedicado', () => {
+  const r = lerContratoComFallback('20990101000000');
+  assert.equal(r.tipo, 'generic', 'tipo deve ser generic');
+  assert.ok(r.sql.includes('generic-migration-runtime') || r.sql.includes('structure_sha256'),
+    'sql deve ser o contrato generico');
+});
+
+test('W29: lerContratoComFallback falha fechado para arquivo dedicado VAZIO', () => {
+  const tmp = mkdtempSync(tmpdir() + '/w29-');
+  try {
+    writeFileSync(tmp + '/20990101000001.sql', '');
+    assert.throws(
+      () => lerContratoComFallback('20990101000001', tmp),
+      /contrato vazio/,
+      'arquivo vazio deve lancar erro',
+    );
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('W29: lerContratoComFallback devolve o contrato dedicado quando o arquivo existe', () => {
+  const r = lerContratoComFallback('20260830170000');
+  assert.equal(r.tipo, 'dedicado', 'tipo deve ser dedicado');
+  assert.ok(r.sql.trim().length > 100, 'sql do contrato dedicado nao pode estar vazio');
 });

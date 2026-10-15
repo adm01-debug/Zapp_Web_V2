@@ -374,7 +374,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `scripts/db-audit/contracts/<versão>.expect.json`, lidas por `run-runtime-contract.mjs` (comparação `antes`/`depois`
   por `NEEDS_APPLY`). Verificação: `db-migrate-contratos.unit.mjs` prova equivalência por fixture para as 12 versions;
   YAML perde ≥ 600 linhas.
-- [ ] **W29** · C · N-08 · Provar o contrato **genérico**: hoje `run-runtime-contract.mjs` falha fechado (exit 2) sem
+- [x] **W29** · C · N-08 · Provar o contrato **genérico**: hoje `run-runtime-contract.mjs` falha fechado (exit 2) sem
   `contracts/<versão>.sql`, mas o YAML espera `proof.contract === 'generic'`. Decidir a semântica (recomendação: sem
   arquivo dedicado → executar `generic-migration-runtime.sql` e marcar `contract: generic`, mantendo fail-closed só para
   arquivo **vazio**) e cobrir com teste. Verificação: version nova sem contrato → dry-run passa pelo genérico; a regra 1
