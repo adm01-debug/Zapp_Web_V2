@@ -20,9 +20,10 @@ export function AutomationsManager() {
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Registro obsoleto (tipo que a tela não oferece mais) conta como inativo nos
-  // filtros e não pode ser ligado — o card já desabilita o controle, e esta
-  // guarda repete a checagem ANTES de gravar, para nenhum caminho reativar uma
-  // ação que não existe mais.
+  // filtros. No controle, só a ATIVAÇÃO é bloqueada: quem ainda está ativo no
+  // banco pode (e deve poder) ser DESLIGADO pela tela — a guarda abaixo repete
+  // a checagem ANTES de gravar, para nenhum caminho LIGAR uma ação que não
+  // existe mais.
   const filteredAutomations = useMemo(() => {
     return automations.filter(a => {
       const isActive = a.is_active && !isObsoleteAutomation(a);
@@ -33,7 +34,13 @@ export function AutomationsManager() {
   }, [automations, filter]);
 
   const handleToggle = (automation: AutomationRow) => {
-    if (isObsoleteAutomation(automation)) return;
+    if (isObsoleteAutomation(automation)) {
+      // Obsoleta ainda ativa: permite DESLIGAR (grava is_active=false).
+      // Obsoleta inativa: bloqueia LIGAR — a ação não existe mais.
+      if (!automation.is_active) return;
+      updateMutation.mutate({ id: automation.id, is_active: false } as Partial<AutomationRow> & { id: string });
+      return;
+    }
     updateMutation.mutate({ id: automation.id, is_active: !automation.is_active } as Partial<AutomationRow> & { id: string });
   };
 

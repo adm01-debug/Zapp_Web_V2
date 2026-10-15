@@ -8,14 +8,20 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 // desativadas, em vez de renderizar um badge vazio. Estes testes usam o
 // componente REAL (`AutomationsManager` + `AutomationCard`) com a persistência
 // do Supabase controlada pelo teste:
-//   1. o registro antigo continua na lista, com o rótulo "obsoleta" e o
-//      controle de ativação desabilitado;
+//   1. o registro antigo continua na lista, com o rótulo "obsoleta" (o
+//      controle só desabilita para QUEM JÁ ESTÁ inativo — item 5);
 //   2. nenhum DELETE é disparado só por ele estar na lista;
-//   3. a automação viva ao lado segue ativa e ligável (a marca não vaza).
+//   3. a automação viva ao lado segue ativa e ligável (a marca não vaza);
+//   4. a obsoleta AINDA ATIVA no banco aparece ligada e PODE ser desligada
+//      (só a ativação é bloqueada — nada impede o operador de desativar);
+//   5. a obsoleta já inativa continua com o controle desabilitado e nenhuma
+//      escrita acontece (ligar de novo é bloqueado).
 
 const hoisted = vi.hoisted(() => ({
   rows: [] as unknown[],
   deleteCalls: [] as unknown[],
+  updateCalls: [] as unknown[],
+  updateIds: [] as unknown[],
 }));
 
 const { mockToast } = vi.hoisted(() => ({ mockToast: { error: vi.fn(), success: vi.fn() } }));
@@ -27,7 +33,15 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       select: () => ({ order: () => Promise.resolve({ data: hoisted.rows, error: null }) }),
       insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
-      update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+      update: (payload: unknown) => {
+        hoisted.updateCalls.push(payload);
+        return {
+          eq: (_col: string, value: unknown) => {
+            hoisted.updateIds.push(value);
+            return Promise.resolve({ data: null, error: null });
+          },
+        };
+      },
       delete: () => {
         hoisted.deleteCalls.push('delete');
         return { eq: () => Promise.resolve({ error: null }) };
@@ -136,7 +150,8 @@ import { AutomationsManager } from '../AutomationsManager';
 import type { AutomationRow } from '../useAutomations';
 
 const ROTULO_OBSOLETA = 'Obsoleta (tag removida)';
-const SWITCH_OBSOLETA = 'Automação obsoleta: não pode ser ativada';
+const SWITCH_OBSOLETA_INATIVA = 'Automação obsoleta: não pode ser ativada';
+const SWITCH_OBSOLETA_ATIVA = 'Automação obsoleta ativa: pode ser desativada';
 
 function buildRow(overrides: Partial<AutomationRow> = {}): AutomationRow {
   return {
@@ -170,6 +185,8 @@ function renderManager() {
 describe('AutomationsManager — automação de tipo removido fica marcada e desativada (sem apagar)', () => {
   beforeEach(() => {
     hoisted.deleteCalls = [];
+    hoisted.updateCalls = [];
+    hoisted.updateIds = [];
     mockToast.error.mockReset();
     mockToast.success.mockReset();
   });
@@ -178,7 +195,7 @@ describe('AutomationsManager — automação de tipo removido fica marcada e des
     vi.restoreAllMocks();
   });
 
-  it('o registro antigo continua na lista, com o rótulo obsoleta e o controle desabilitado', async () => {
+  it('obsoleta ainda ativa no banco aparece ligada e PODE ser desligada (update com is_active:false)', async () => {
     hoisted.rows = [
       buildRow({ id: 'auto-obsoleta', name: 'Grupo antigo', trigger_type: 'gatilho_que_saiu', is_active: true }),
       buildRow({ id: 'auto-viva', name: 'Boas-vindas vive' }),
@@ -190,21 +207,44 @@ describe('AutomationsManager — automação de tipo removido fica marcada e des
     expect(await screen.findByText('Grupo antigo')).toBeInTheDocument();
     expect(screen.getByText(ROTULO_OBSOLETA)).toBeInTheDocument();
 
-    // 2. ele aparece desativado mesmo gravado como ativo, e o usuário não consegue ligar
-    const switchObsoleto = screen.getByRole('switch', { name: SWITCH_OBSOLETA });
-    expect(switchObsoleto).toBeDisabled();
-    expect(switchObsoleto).toHaveAttribute('aria-checked', 'false');
+    // 2. ele reflete o estado real (ligado) e o controle permite DESLIGAR
+    const switchObsoleto = screen.getByRole('switch', { name: SWITCH_OBSOLETA_ATIVA });
+    expect(switchObsoleto).toBeEnabled();
+    expect(switchObsoleto).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(switchObsoleto);
-    expect(switchObsoleto).toHaveAttribute('aria-checked', 'false');
 
-    // 3. a automação viva ao lado segue ativa e ligável (a marca não vaza)
+    // 3. desligar grava is_active:false — e só isso (sem DELETE)
+    await waitFor(() => expect(hoisted.updateCalls).toHaveLength(1));
+    expect(hoisted.updateCalls[0]).toEqual({ is_active: false });
+    expect(hoisted.updateIds[0]).toBe('auto-obsoleta');
+    expect(hoisted.deleteCalls).toHaveLength(0);
+
+    // 4. a automação viva ao lado segue ativa e ligável (a marca não vaza)
     const switchVivo = screen.getByRole('switch', { name: 'Ativar automação' });
     expect(switchVivo).toBeEnabled();
     expect(switchVivo).toHaveAttribute('aria-checked', 'true');
 
-    // 4. estar na lista não dispara DELETE nenhum
-    await waitFor(() => expect(hoisted.deleteCalls).toHaveLength(0));
-    expect(mockToast.success).not.toHaveBeenCalled();
+    // 5. estar na lista não dispara DELETE nenhum
+    expect(mockToast.success).not.toHaveBeenCalledWith('Automação removida!');
+  });
+
+  it('obsoleta já inativa NÃO pode ser ligada (nenhum update disparado)', async () => {
+    hoisted.rows = [
+      buildRow({ id: 'auto-obsoleta', name: 'Grupo antigo', trigger_type: 'gatilho_que_saiu', is_active: false }),
+    ];
+
+    renderManager();
+    await screen.findByText('Grupo antigo');
+
+    // o controle fica desabilitado e o clique não escreve nada
+    const switchObsoleto = screen.getByRole('switch', { name: SWITCH_OBSOLETA_INATIVA });
+    expect(switchObsoleto).toBeDisabled();
+    expect(switchObsoleto).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(switchObsoleto);
+
+    await waitFor(() => expect(screen.getByText('Grupo antigo')).toBeInTheDocument());
+    expect(hoisted.updateCalls).toHaveLength(0);
+    expect(hoisted.deleteCalls).toHaveLength(0);
   });
 
   it('o filtro "Inativas" acolhe o registro obsoleto e o "Ativas" não o mostra', async () => {

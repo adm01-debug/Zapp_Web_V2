@@ -28,10 +28,13 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
   const TriggerIcon = triggerInfo?.icon || Zap;
   const actions = (Array.isArray(automation.actions) ? automation.actions : []) as unknown as AutomationAction[];
   // Registro gravado antes da remoção da função de tags: o gatilho/ação dele não
-  // existe mais na lista atual. Ele continua na tela, marcado e desativado —
+  // existe mais na lista atual. Ele continua na tela, MARCADO como obsoleto —
   // nunca apagado — para o operador ver o que ficou para trás e decidir.
+  // O controle reflete o estado REAL do banco: quem ainda está ativo aparece
+  // ligado e pode ser DESLIGADO (só ligar de novo é bloqueado).
   const obsolete = isObsoleteAutomation(automation);
   const active = automation.is_active && !obsolete;
+  const obsoleteActive = obsolete && automation.is_active;
 
   return (
     <motion.div
@@ -71,11 +74,23 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Switch
-            checked={active}
-            disabled={obsolete}
+            checked={automation.is_active}
+            disabled={obsolete && !automation.is_active}
             onCheckedChange={onToggle}
-            aria-label={obsolete ? 'Automação obsoleta: não pode ser ativada' : 'Ativar automação'}
-            title={obsolete ? 'A função de tags foi removida do sistema' : undefined}
+            aria-label={
+              obsoleteActive
+                ? 'Automação obsoleta ativa: pode ser desativada'
+                : obsolete
+                  ? 'Automação obsoleta: não pode ser ativada'
+                  : 'Ativar automação'
+            }
+            title={
+              obsoleteActive
+                ? 'A função de tags foi removida; esta automação ainda está ativa e pode ser desativada'
+                : obsolete
+                  ? 'A função de tags foi removida do sistema'
+                  : undefined
+            }
           />
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label="Editar automação"><Edit2 className="w-4 h-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} aria-label="Duplicar automação"><Copy className="w-4 h-4" /></Button>
