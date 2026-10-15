@@ -328,3 +328,66 @@ describe('X017 — audiência resolvida pela RPC do motor (não mais no navegado
     expect(supabase.from).not.toHaveBeenCalledWith('contacts');
   });
 });
+
+// t_124005a8 ponto 1 — real_sector/real_uf vivem em companies/company_addresses,
+// nao em public.contacts: nunca geram filtro PostgREST (falha fechada) e ficam
+// fora da estimativa via splitRules, como os "em breve".
+describe('real_sector/real_uf fora da execucao (ponte Singu)', () => {
+  it('rulesToPostgrest falha fechado para real_sector e real_uf', () => {
+    for (const field of ['real_sector', 'real_uf']) {
+      expect(() => rulesToPostgrest({
+        groups: [{ id: 'g', match: 'and', rules: [
+          { id: 'r1', field, op: 'eq', value: 'x' },
+        ] }],
+      } as never)).toThrow('Regra de segmento inválida');
+    }
+  });
+
+  it('splitRules exclui real_* da estimativa e conta como incompleta', () => {
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'real_sector', op: 'eq', value: 'Varejo' },
+        { id: 'r2', field: 'real_uf', op: 'eq', value: 'SP' },
+      ] }],
+    } as never);
+    expect(incompleteCount).toBe(2);
+    expect(rulesToPostgrest(complete)).toBeNull();
+  });
+});
+
+// t_124005a8 ponto 2 — countAudience/resolveAudience enviam a separacao do
+// splitRules (só completas) com o join, nunca regra incompleta, "em breve" ou real_*.
+describe('audienceRulesPayload via splitRules', () => {
+  it('countAudience envia só completas com join (descarta incompleta/em-breve/real)', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    await countAudience({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'city', op: 'eq', value: '' },
+        { id: 'r3', field: 'lead_score', op: 'eq', value: '80' },
+        { id: 'r4', field: 'real_sector', op: 'eq', value: 'Varejo' },
+      ] }],
+      join: 'or',
+    } as never);
+    const payload = (rpc.mock.calls[0] as unknown[])[1] as { p_rules: { groups: { rules: { field: string }[] }[]; join: string } };
+    expect(payload.p_rules.join).toBe('or');
+    expect(payload.p_rules.groups).toHaveLength(1);
+    expect(payload.p_rules.groups[0].rules.map((r) => r.field)).toEqual(['company']);
+  });
+
+  it('resolveAudience envia só completas com join (descarta real_uf)', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    await resolveAudience({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'real_uf', op: 'eq', value: 'SP' },
+      ] }],
+      join: 'or',
+    } as never, 5);
+    const payload = (rpc.mock.calls[0] as unknown[])[1] as { p_rules: { groups: { rules: { field: string }[] }[]; join: string } };
+    expect(payload.p_rules.join).toBe('or');
+    expect(payload.p_rules.groups[0].rules.map((r) => r.field)).toEqual(['company']);
+  });
+});
