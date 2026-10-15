@@ -1,8 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Message, MessageInsert } from '@/types/chat';
+import type { Message, MessageInsert, MessageRow } from '@/types/chat';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
-import { INBOX_MESSAGE_COLUMNS } from './realtime.service';
+import { INBOX_MESSAGE_COLUMNS, asInboxRows } from './realtime.service';
 
 const log = getLogger('ChatService');
 
@@ -44,10 +44,11 @@ export class ChatService {
       .order('id', { ascending: false })
       .range(from, to);
 
+    const rows = asInboxRows<MessageRow>(result.data);
     return {
       ...result,
       // O ChatPanel consome a lista em ordem cronologica.
-      data: result.data ? [...result.data].reverse() : result.data,
+      data: result.data ? [...rows].reverse() : null,
     };
   }
 
@@ -70,9 +71,10 @@ export class ChatService {
       .order('id', { ascending: false })
       .limit(pageSize);
 
+    const rows = asInboxRows<MessageRow>(result.data);
     return {
       ...result,
-      data: result.data ? [...result.data].reverse() : result.data,
+      data: result.data ? [...rows].reverse() : null,
     };
   }
 

@@ -1,7 +1,7 @@
  import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
  import { useInboxUIState } from '@/hooks/inbox/useInboxUIState';
  import { ChatService } from '@/services/chat.service';
-import { INBOX_CONTACT_COLUMNS } from '@/services/realtime.service';
+import { INBOX_CONTACT_COLUMNS, asInboxRow } from '@/services/realtime.service';
 import { useOfflineCache } from '@/hooks/system/useOfflineCache';
 import { useMessages } from '@/hooks/chat/useMessages';
 import { useRealtimeMessages, ConversationWithMessages, ConversationContact } from '@/hooks/chat/useRealtimeMessages';
@@ -105,7 +105,7 @@ export function useRealtimeInbox() {
         .maybeSingle();
       if (cancelled) return;
       if (error) { log.error('Error loading selected fallback contact:', error); return; }
-      if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: data });
+      if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: asInboxRow<ConversationContact>(data) });
     };
     void loadSelectedContact();
     return () => { cancelled = true; };
