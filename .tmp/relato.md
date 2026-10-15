@@ -1,58 +1,71 @@
-Especialista: Edgar (area-edge-api) — cartão de VERIFICAÇÃO/fechamento do SL-010b: audita as 3 entregas de
-implementação e fecha o ciclo.
+Especialista: senior (area-edge-api)
 
-## Motivo da recusa e como foi resolvido
-Motivo (cartão t_94f7b826, [refazer 2]): "diff de 112910 caracteres é grande demais para revisão completa".
-Resolvido por decomposição em fatias pequenas: 1 cartão de decisão de chave (t_98090b40), 3 fatias de código
-por grupo de função (t_1266b773, t_7331ffdc, t_ff9692e4) e este cartão de verificação.
+Refazer 1 do cartão "Verificar kill switch de voz e fechar com relato".
+Fechamento com tipo `fix` (não `docs`): a entrega carrega código das 3 Edge
+Functions + 3 testes (ponto 4 da recusa).
 
-Tamanho do diff de código próprio de cada fatia (medido:
-`git diff 96dd72dc5f <commit> -- supabase/functions docs supabase/migrations | wc -c`):
-- t_98090b40 @ ec829898c = 9.506 chars
-- t_1266b773 @ bd510ae56 = 32.223 chars
-- t_7331ffdc @ 43be77195 = 18.244 chars
-- t_ff9692e4 @ 3c58cb8a0 = 20.311 chars
+Ponto 1 — contrato AI_DISABLED nas 3 funções (dialogue, voice-design,
+voice-changer). Decisão registrada: NÃO mantive o `enforceAiCapability`;
+troquei pelo padrão inline da família (`readCapabilityFlag` +
+`aiCapabilityFlagKey("voice")` + `jsonResponse` 503 com
+`{ error: { code: "AI_DISABLED", message } }`), igual a elevenlabs-tts/sts/
+sfx/agent-token. Motivo: o helper emite outro contrato
+(`AI_CAPABILITY_DISABLED` via `errorResponse`) e é usado por outros
+chamadores em `_shared` (ai-auth, ai-guards); mudar o helper seria
+comportamento a mais fora do título. Arquivos:
+supabase/functions/voice-changer/index.ts,
+supabase/functions/elevenlabs-dialogue/index.ts,
+supabase/functions/elevenlabs-voice-design/index.ts. Teste que prova
+(vermelho sem a correção, handlers de HEAD~1): os 3 testes de kill switch
+falham com `código inesperado no corpo:
+{"error":"AI capability disabled","code":"AI_CAPABILITY_DISABLED"}`
+(FAILED 3, 1 passed); verde com a correção: 24 passed, 0 failed.
+Nomes: "capacidade de voz desligada -> 503 AI_DISABLED..." (voice-changer,
+dialogue) e "capacidade desligada -> preview e create recusam 503
+AI_DISABLED..." (voice-design).
 
-Todos abaixo do limite duro de 90.000 chars que motivou a recusa do cartão antigo (112.910). O maior (32.223)
-fica acima da faixa de atenção de 25.000, mas não é recusa por regra. Cada fatia tem o seu teste Deno, um por
-função tocada.
+Ponto 2 — `withEnv` com restauração no teste do voice-changer. O `Deno.env.set`
+no topo do módulo foi trocado por helper `withEnv(ENV_OK, fn)` que salva e
+restaura SUPABASE_URL/SUPABASE_ANON_KEY/SUPABASE_SERVICE_ROLE_KEY/
+ELEVENLABS_API_KEY ao final de cada teste (mesmo padrão dos demais testes da
+família; voice-design usa o wrapper `teste()`). Prova: sonda
+`/tmp/probe_env_leak.ts` — antes: `LEAK: ELEVENLABS_API_KEY=*** após importar
+o módulo de teste`; depois: `OK: importar o modulo de teste nao tocou o
+Deno.env`. Arquivo: supabase/functions/voice-changer/index.test.ts
+(+ ajustes equivalentes de expectativa nos outros 2 testes).
 
-## O que verifiquei — CONCLUÍ
-Este branch de fechamento carrega as 3 fatias de código em 3 commits pequenos, um por grupo de função:
-- `f7d2eabc1c` (voz/áudio: elevenlabs-tts, elevenlabs-tts-stream, elevenlabs-sfx, elevenlabs-sts)
-- `411870d5bd` (tokens: elevenlabs-agent-token, elevenlabs-scribe-token)
-- `c77f45c4f7` (elevenlabs-dialogue, elevenlabs-voice-design, voice-changer + mapa em
-  `_shared/ai-feature-flags.ts`)
-A decisão de chave (t_98090b40 @ ec829898c) permanece na branch dela.
+Ponto 3 — posição do gate uniformizada. Nas 3 o gate estava ANTES do rate
+limit; agora é DEPOIS, igual às outras 6 (ordem auth → limite → gate →
+provedor). Os testes afirmam `consume_rate_limit` chamado 1x antes da recusa
+e zero fetch a api.elevenlabs.io. Valores de cota preservados (dialogue 20,
+voice-design 5, voice-changer 10 — conferido no diff: nenhuma linha
+`enforceRateLimit` alterada). Comentários dos testes e dos handlers
+descrevem a mesma regra da família.
 
-Verificação:
-- As 9 Edge do escopo ficam atrás do gate de voz lido no SERVIDOR antes de tocar o provedor pago. Mecanismo
-  real: `supabase/functions/_shared/ai-feature-flags.ts` (`readCapabilityFlag`/`aiCapabilityFlagKey`,
-  `enforceAiCapability`), chave única `ai.capability.voice` (decisão do t_98090b40, fiel ao §2.1 do IA-009).
-  O corpo do cartão citava `_shared/ai-kill-switch.ts` / `evaluateAiKillSwitch`, que NÃO existem na base
-  dia/2026-10-13 — desvio registrado pelos 3 cartões e coerente com a decisão do cartão 0.
-- Fail-closed: flag ausente/falsa/erro de leitura → 503 (nunca fail-open), zero chamada a
-  `api.elevenlabs.io` (o teste dubla o `fetch` global e afirma 0 POST ao provedor).
-- Vermelho antes comprovado por mim: com o gate do `elevenlabs-tts` desligado
-  (`if (voiceEnabled !== true)` → `if (false && voiceEnabled !== true)`) o teste daquela função falhou
-  ("esperado 503, veio 200"); restaurei o gate e ficou verde.
+Ponto 4 — só o relato. Tipo corrigido para `fix(ia)` no commit 961a9961da
+(6 arquivos, 176+/80-, ~28k chars). Os hashes f7d2eabc1c / 411870d5bd /
+c77f45c4f7 citados na recusa são os commits da entrega anterior reaplicados
+nesta branch (reaplicações de bd510ae56 / 43be77195 / 3c58cb8a0); tamanhos
+medidos do patch: 32.452 / 18.471 / 20.551 chars — todos revisáveis (< 90k).
+Meu commit novo tem ~28k chars, também revisável.
 
-## Achados registrados para o integrador / revisor (informação, não pendência deste cartão)
-1. hotspot `supabase/functions/_shared/ai-feature-flags.ts`: alterado em DOIS commits — o cartão 0
-   (ec829898c) mapeia as 9 funções para `voice`, e o t_ff9692e4 (3c58cb8a0) mapeia as 3 do seu escopo
-   (subconjunto). `git merge-tree 96dd72dc5f ec829898c 3c58cb8a0` acusa "changed in both". No merge, ficar com
-   o mapa completo do cartão 0 (o do filho é subconjunto), como o próprio t_ff9692e4 documentou.
-2. Código de resposta divergente dentro da família: 6 funções devolvem `{ error: { code: "AI_DISABLED" } }`
-   via `jsonResponse` (tts, tts-stream, sfx, sts, agent-token, scribe-token); 3 devolvem
-   `{ error: "AI capability disabled", code: "AI_CAPABILITY_DISABLED" }` via o `enforceAiCapability`
-   pré-existente (dialogue, voice-design, voice-changer). Nenhum consumidor em `src`/`e2e`/`tests` lê qualquer
-   um dos códigos (git grep vazio): não quebra hoje, mas a família deveria convergir num único código.
+Arquivos (git diff --name-only HEAD~1...HEAD, colado):
+supabase/functions/elevenlabs-dialogue/index.test.ts
+supabase/functions/elevenlabs-dialogue/index.ts
+supabase/functions/elevenlabs-voice-design/index.test.ts
+supabase/functions/elevenlabs-voice-design/index.ts
+supabase/functions/voice-changer/index.test.ts
+supabase/functions/voice-changer/index.ts
 
-## Prova (execuções reais, no HEAD deste branch)
-- verde: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1`
-  sobre os 9 `index.test.ts` do escopo → `ok | 46 passed | 0 failed (1s)`, exit 0
-- vermelho (meu): gate do tts desligado → `IA-009: flag de voz desligada -> 503 AI_DISABLED e ZERO chamada ao
-  provedor pago ... FAILED` / `error: esperado 503, veio 200` / `FAILED | 1 passed | 1 failed`
-- `zapp-verify . --rapido` → `EXIT=0` / `VERIFY: VERDE SEM BANCO (123s)` — `OK dependencias`, `OK db_guard`,
-  `OK tipos`, `OK lint`, `OK migrations`. Aviso esperado: `banco_local NÃO VERIFICADO: sem nome de conjunto`
-  (este cartão não toca banco).
+Verificações (resultado real):
+- deno test (3 arquivos, kill switch + regressão): ok | 24 passed | 0 failed
+- deno test ai-feature-flags (helper preservado p/ outros chamadores):
+  ok | 22 passed | 0 failed
+- vermelho-antes (handlers HEAD~1 + testes novos, --filter capacidade):
+  FAILED 3 (contrato AI_CAPABILITY_DISABLED) — prova que o teste pega o bug
+- lint ratchet no commit: baseline=0, atual=0, nenhuma dívida nova
+- zapp-verify . --rapido: VERDE SEM BANCO (19s) — db_guard OK, tipos OK,
+  lint OK, migrations OK; banco_local AVISO (sem nome de conjunto; sem
+  migration neste cartão). Obs: uma primeira execução falhou no db_guard
+  citando `.env` fantasma em `Zapp_Web_V2-anexos/.../caso-A-env` (caminho que
+  não existe na cópia); reexecução passou — `zapp-db-guard check` direto OK.
