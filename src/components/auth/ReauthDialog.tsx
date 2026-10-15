@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Lock, Eye, EyeOff, Loader2, KeyRound } from 'lucide-react';
 import {
@@ -233,12 +233,34 @@ interface ReauthGuardProps {
  *    (o `AuthService.signIn` antigo devolvia um token aal1 e o gate de MFA
  *    mandava o usuário para /2fa no meio da ação);
  *  - sem 2FA, pede a senha pelo `useReauthentication` (lockout-aware).
+ *  - se a consulta de fatores FALHAR, bloqueia a ação com alerta (nunca cai
+ *    em senha, que derrubaria o AAL2 de quem tem MFA) e oferece tentar de novo.
  * Depois de confirmado, roda `onConfirmed` exatamente uma vez.
  */
 export function ReauthGuard({ open, onOpenChange, actionLabel, onConfirmed }: ReauthGuardProps) {
   const { reauthenticate, isReauthenticating } = useReauthentication();
-  const { data: factors, isLoading: factorsLoading } = useMfaFactors(true);
+  const {
+    data: factors,
+    isLoading: factorsLoading,
+    isError: factorsError = false,
+    refetch: refetchFactors,
+  } = useMfaFactors(true);
   const { verifyTOTP, loading: verifyingMfa } = useMFA();
+
+  // Foco devolvido (critério do cartão, refazer 1 ponto 3): guarda o elemento
+  // que armou a ação ao abrir e devolve o foco a ele ao fechar ou cancelar —
+  // o gatilho pode ter sido desmontado junto com o diálogo de confirmação.
+  const triggerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const active = document.activeElement;
+    triggerRef.current = active instanceof HTMLElement ? active : null;
+    return () => {
+      const trigger = triggerRef.current;
+      triggerRef.current = null;
+      if (trigger && document.contains(trigger)) trigger.focus({ preventScroll: true });
+    };
+  }, [open]);
 
   const verifiedFactor = (factors ?? []).find((f) => f.status === 'verified');
 
@@ -263,6 +285,36 @@ export function ReauthGuard({ open, onOpenChange, actionLabel, onConfirmed }: Re
     onOpenChange(false);
     return null;
   };
+
+  // Erro ao listar os fatores (refazer 1 ponto 1): sem saber se a sessão tem
+  // MFA, cair no modo senha chamaria `AuthService.signIn` e derrubaria o AAL2
+  // de quem tem MFA — justo o risco do ponto 1 do cartão. A ação fica
+  // bloqueada, com alerta em pt-BR e botão de tentar de novo.
+  if (factorsError) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Confirmação de Segurança</DialogTitle>
+            <DialogDescription className="text-center">
+              Para realizar a ação <strong>{actionLabel}</strong>, confirme sua identidade.
+            </DialogDescription>
+          </DialogHeader>
+          <p role="alert" className="text-sm text-destructive">
+            Não foi possível verificar a autenticação de dois fatores. A ação foi bloqueada por segurança.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => { void refetchFactors?.(); }}>
+              Tentar de novo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <ReauthDialog

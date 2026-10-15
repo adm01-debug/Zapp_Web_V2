@@ -182,7 +182,9 @@ export default function RolesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
-            <Button onClick={() => setPending({ label: 'Atribuir papel', run: async () => { setShowAddDialog(false); await handleAddRole(); } })} disabled={!selectedUser || updating}>
+            {/* O diálogo só fecha no sucesso, dentro de `handleAddRole`: se a
+                atribuição falhar, ele continua aberto com a seleção intacta. */}
+            <Button onClick={() => setPending({ label: 'Atribuir papel', run: handleAddRole })} disabled={!selectedUser || updating}>
               {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}Atribuir
             </Button>
           </DialogFooter>

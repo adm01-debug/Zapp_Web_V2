@@ -37,19 +37,21 @@ vi.mock('@/pages/admin/useRolesPageState', async () => {
   return {
     useRolesPageState: () => {
       const [userToRemove, setUserToRemove] = ReactModule.useState<null | typeof agentUser>(null);
+      const [showAddDialog, setShowAddDialog] = ReactModule.useState(false);
+      const [selectedUser, setSelectedUser] = ReactModule.useState('u9');
       return {
         loading: false,
         loadError: null,
         retryLoad: vi.fn(),
         search: '',
         setSearch: vi.fn(),
-        showAddDialog: false,
-        setShowAddDialog: vi.fn(),
-        selectedUser: '',
-        setSelectedUser: vi.fn(),
+        showAddDialog,
+        setShowAddDialog,
+        selectedUser,
+        setSelectedUser,
         selectedRole: 'agent',
         setSelectedRole: vi.fn(),
-        availableUsers: [],
+        availableUsers: [{ user_id: 'u9', name: 'Beto', email: 'beto@test.local' }],
         userToRemove,
         setUserToRemove,
         updating: false,
@@ -100,5 +102,49 @@ describe('RolesPage — remover papel exige re-autenticação (t_5e689954)', () 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Senha incorreta');
     expect(mockHandleRemoveRole).not.toHaveBeenCalled();
+  });
+});
+
+describe('RolesPage — atribuir papel só fecha o diálogo no sucesso (ponto 2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockReauthenticate.mockResolvedValue({ success: true });
+  });
+
+  async function armarAtribuicao() {
+    render(<RolesPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Atribuir Role' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Atribuir$/ }));
+    await screen.findByLabelText('Senha Atual');
+  }
+
+  it('só atribui depois de confirmar a identidade', async () => {
+    await armarAtribuicao();
+
+    expect(mockHandleAddRole).not.toHaveBeenCalled();
+
+    await submitReauth();
+
+    await waitFor(() => expect(mockHandleAddRole).toHaveBeenCalledTimes(1));
+    // O `run` não fecha o diálogo: quem fecha no sucesso é o `handleAddRole`
+    // (o mock não fecha, então o botão interno continua montado — com o
+    // código recusado, `setShowAddDialog(false)` o desmontava antes do
+    // resultado).
+    expect(screen.getByRole('button', { name: /^Atribuir$/ })).toBeInTheDocument();
+  });
+
+  it('falha na re-autenticação não atribui e mantém o diálogo aberto com a seleção', async () => {
+    mockReauthenticate.mockResolvedValue({ success: false, error: 'Senha incorreta' });
+    await armarAtribuicao();
+
+    await submitReauth('errada');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Senha incorreta');
+    expect(mockHandleAddRole).not.toHaveBeenCalled();
+    // O diálogo de atribuir continua aberto (não fechou antes do resultado).
+    // `hidden: true` porque o Radix marca o conteúdo de trás como
+    // aria-hidden enquanto o guarda modal está por cima.
+    expect(screen.getByRole('button', { name: /^Atribuir$/, hidden: true })).toBeInTheDocument();
   });
 });
