@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { ArrowRight, Navigation, Search, MessageSquare, LayoutDashboard } from 'lucide-react';
 
 interface SkipLinkProps {
@@ -61,22 +61,35 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
 export function SkipLinks() {
   const [showIndicator, setShowIndicator] = useState(false);
   const [availableTargets, setAvailableTargets] = useState<Set<string>>(new Set());
+  const indicatorTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab' && !e.shiftKey) {
         setShowIndicator(true);
-        setTimeout(() => setShowIndicator(false), 3000);
+        // Um Tab em cima do outro reinicia o prazo em vez de empilhar temporizadores.
+        if (indicatorTimerRef.current !== null) window.clearTimeout(indicatorTimerRef.current);
+        indicatorTimerRef.current = window.setTimeout(() => {
+          indicatorTimerRef.current = null;
+          setShowIndicator(false);
+        }, 3000);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (indicatorTimerRef.current !== null) {
+        window.clearTimeout(indicatorTimerRef.current);
+        indicatorTimerRef.current = null;
+      }
+    };
   }, []);
 
   // Only render skip-links whose target actually exists in the DOM.
-  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
-  // and on a small interval to catch async-mounted regions.
+  // Targets vary per route (auth vs. dashboard) and can be montados depois (regiões
+  // assíncronas), então a detecção é dirigida por mutação do documento — nada de
+  // varredura por intervalo a sessão inteira.
   useEffect(() => {
     const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
     const detect = () => {
@@ -90,11 +103,15 @@ export function SkipLinks() {
       });
     };
     detect();
-    const t = window.setInterval(detect, 1500);
-    return () => window.clearInterval(t);
+    const observer = new MutationObserver(detect);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   const has = (id: string) => availableTargets.has(id);
+
+  // Sem alvo na tela não há atalho: não deixamos um <nav> vazio na árvore de acessibilidade.
+  if (availableTargets.size === 0) return null;
 
   return (
     <nav 

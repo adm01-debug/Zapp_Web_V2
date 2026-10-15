@@ -123,9 +123,20 @@ export function CommandPalette({
     return () => window.removeEventListener('keydown', h);
   }, [open, allItems, selectedIndex]);
 
+  // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
+  // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
+  // sem isso a paleta aberta e fechada em sequência rápida (ou desmontada) deixava o `setTimeout`
+  // vivo, mexendo em estado de componente desmontado.
+  const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   React.useEffect(() => {
-    if (!open) { setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
-    else setTimeout(() => inputRef.current?.focus(), 0);
+    if (!open) { resetTimerRef.current = setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
+    else focusTimerRef.current = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => {
+      if (resetTimerRef.current) { clearTimeout(resetTimerRef.current); resetTimerRef.current = null; }
+      if (focusTimerRef.current) { clearTimeout(focusTimerRef.current); focusTimerRef.current = null; }
+    };
   }, [open]);
 
   const categoryIcons: Record<CommandCategory, React.ReactNode> = {

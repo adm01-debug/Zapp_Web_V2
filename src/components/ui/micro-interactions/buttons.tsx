@@ -46,6 +46,17 @@ export function RippleButton({
   const [isPressed, setIsPressed] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   const controls = useAnimation();
+  // Cada ripple agenda a própria remoção; sem limpar no unmount o temporizador
+  // sobrevivia ao botão e chamava `setRipples` em componente desmontado.
+  const rippleTimersRef = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
+
+  React.useEffect(
+    () => () => {
+      rippleTimersRef.current.forEach((t) => clearTimeout(t));
+      rippleTimersRef.current = [];
+    },
+    []
+  );
 
   const rippleColor = rippleConfig.color || rippleVariants[variant];
   const rippleDuration = rippleConfig.duration || 600;
@@ -62,7 +73,7 @@ export function RippleButton({
     const id = Date.now();
     setRipples((prev) => [...prev, { x: e.clientX - rect.left, y: e.clientY - rect.top, id, size: rippleSize }]);
     triggerHaptic();
-    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), rippleDuration);
+    rippleTimersRef.current.push(setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), rippleDuration));
     onClick?.(e);
   };
 
