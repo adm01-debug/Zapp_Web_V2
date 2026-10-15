@@ -135,6 +135,16 @@ BEGIN
     ('R8 conexao 5 -> agente inativo',    v_p_inativo, v_c5,  0, true),   -- ct5: nada a fazer
     ('R9 conexao 2 INATIVA -> admin',     v_p_admin,   v_c2, 99, false);  -- ignorada
 
+  -- ------------------------------------------------------------- T1b (preparo)
+  -- Envelhece o updated_at dos contatos do teste. O gatilho de updated_at grava
+  -- now(), que é FIXO dentro da transação: sem envelhecer, não dá para distinguir
+  -- quem a RPC tocou. O gatilho é desligado só neste ato de preparo — e AQUI, ainda
+  -- como postgres (dono da tabela), porque trocar de papel vem logo abaixo.
+  ALTER TABLE public.contacts DISABLE TRIGGER update_contacts_updated_at;
+  UPDATE public.contacts SET updated_at = now() - interval '2 days'
+   WHERE id IN (v_ct1, v_ct2, v_ct3, v_ct4, v_ct5, v_ct6, v_ct7, v_ct8);
+  ALTER TABLE public.contacts ENABLE TRIGGER update_contacts_updated_at;
+
   -- Identidade de backend: service_role COM o claim e COM o papel de banco. É a
   -- identidade que os guards de public.contacts exigem para gravar; a RPC recusa
   -- qualquer outra (o caso "sem identidade" está no T8).
@@ -149,6 +159,18 @@ BEGIN
   SELECT assigned_to INTO v_assigned FROM public.contacts WHERE id = v_ct1;
   IF v_assigned IS DISTINCT FROM v_p_agent THEN
     RAISE EXCEPTION 'T1 FALHOU: assigned_to = % (esperado %)', v_assigned, v_p_agent;
+  END IF;
+  -- T1b: o UPDATE da RPC toca UMA linha (WHERE id = p_contact_id). O gatilho de
+  -- updated_at sobe a data SÓ do contato atribuído: se o UPDATE fosse em massa, os
+  -- oito contatos do teste apareceriam com data nova e este IF reprovaria.
+  SELECT count(*) INTO v_linhas FROM public.contacts
+   WHERE id IN (v_ct1, v_ct2, v_ct3, v_ct4, v_ct5, v_ct6, v_ct7, v_ct8)
+     AND updated_at > now() - interval '1 day';
+  IF v_linhas <> 1 THEN
+    RAISE EXCEPTION 'T1 FALHOU: % contato(s) com updated_at novo (esperado 1)', v_linhas;
+  END IF;
+  IF (SELECT updated_at FROM public.contacts WHERE id = v_ct1) <= now() - interval '1 day' THEN
+    RAISE EXCEPTION 'T1 FALHOU: contato atribuido ficou com updated_at antigo';
   END IF;
   v_ok := v_ok + 1;
 
