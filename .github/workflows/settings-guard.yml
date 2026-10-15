@@ -45,6 +45,10 @@ jobs:
         # Política esperada: strict=true, allow_auto_merge=true.
         # Se houver regressão: restaura via PATCH e abre/atualiza issue [settings-guard].
         # Se OK: fecha a issue [settings-guard] se estiver aberta.
+        # W04/W05 (14/10/2026): campo que o GITHUB_TOKEN nao consegue ler (403, ou
+        # 200 sem o campo) e PONTO CEGO, nao divergencia. So ponto cego = job verde
+        # com ::warning:: e 1 comentario por assinatura a cada 7 dias; divergencia
+        # real = job vermelho e comentario com dedupe de 6 h por causa.
         run: node scripts/ci/github-settings-guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
