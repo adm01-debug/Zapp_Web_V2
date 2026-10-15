@@ -19,7 +19,6 @@ type NotificacaoFalsa = {
   title: string;
   options?: NotificationOptions;
   onclick: (() => void) | null;
-  instancia: { onclick: (() => void) | null };
 };
 
 const h = vi.hoisted(() => ({
@@ -86,14 +85,9 @@ class FakeNotification {
   close = vi.fn();
 
   constructor(public title: string, public options?: NotificationOptions) {
-    const instancia = this;
-    (h.notificacoes as NotificacaoFalsa[]).push({
-      title,
-      options,
-      get onclick() { return instancia.onclick; },
-      set onclick(valor: (() => void) | null) { instancia.onclick = valor; },
-      instancia: this,
-    });
+    // A própria instância fica registrada: `showBrowserNotification` liga o `onclick`
+    // DEPOIS de construir, e o teste precisa do tratador de verdade.
+    (h.notificacoes as NotificacaoFalsa[]).push(this);
   }
 }
 
@@ -186,7 +180,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
     renderHook(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
-    act(() => { emitidas()[0].instancia.onclick?.(); });
+    act(() => { emitidas()[0].onclick?.(); });
 
     expect(h.focus).toHaveBeenCalled();
     expect(h.navigate).toHaveBeenCalledWith('team-chat');
