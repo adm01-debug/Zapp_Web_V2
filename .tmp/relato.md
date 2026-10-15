@@ -1,49 +1,20 @@
-Especialista: workertestes
-
+Especialista: semisenior (area-testes-do-produto)
 ## O que mudou e por quê
-- src/hooks/gamification/__tests__/levelUtils.test.ts (novo): prova o nível do cliente —
-  tabela canônica xp→nível (bordas 50/200/450), o cliente lendo a fórmula REAL do SQL
-  (supabase/migrations/20260927500000_gamification_bigint_and_daily_ratelimit.sql) e
-  exigindo o mesmo nível em toda a faixa 0..2000, além dos limites de levelProgress
-  (0..100) e do xpForNextLevel.
-- supabase/tests/gamification_nivel_paridade_rls.sql (novo): paridade do banco
-  (public.calculate_level contra a MESMA linha PARIDADE-NIVEL que o teste do cliente
-  lê — mexer num lado sem o outro fica vermelho) + RLS com o papel REAL
-  (SET LOCAL ROLE authenticated + request.jwt.claims): agente comum não altera
-  agent_stats nem insere em agent_achievements; o admin altera/insere na mesma linha
-  (a negação é policy, não tabela vazia/quebrada) + gatilhos de mensagem e de
-  encerramento incrementando, e a gamificação nunca derrubando o envio.
-  Roda em BEGIN…ROLLBACK: nenhuma fixture persiste.
+- `supabase/tests/gamification_nivel_paridade_rls.sql`: T7 agora afirma o efeito da falha (corpo do gatilho revertido) em vez de só afirmar que a mensagem persistiu; aviso do T6b renomeado para deixar claro que só o não-derrubar está OK. Motivo: recusa da rodada 1 (3 pontos, abaixo).
+- `.tmp/relato.md`: este relato do refazer, com a frase da prova por mutação reescrita (ponto 3 da recusa).
 
 ## Prova
-- vitest (verde, rodado agora): `Test Files  1 passed (1)` ; `Tests  9 passed (9)`.
-- vermelho antes (mutação no cliente, divisor 50 → 100 em levelUtils.ts, restaurado
-  depois): `npx vitest run src/hooks/gamification/__tests__/levelUtils.test.ts` →
-  `AssertionError: xp=50: expected 1 to be 2` ; `Tests  3 failed | 6 passed (9)`
-- vermelho no banco (mutação do divisor 50 → 100 dentro da transação, no próprio
-  calculate_level): `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < .tmp/mut_nivel_run.sql`
-  → `ERROR:  T1 FALHOU: tabela PARIDADE-NIVEL divergiu: 50->1(esperado 2), 51->1(esperado 2), 200->2(esperado 3), ...` (exit 3)
-- vermelho no banco (mutação da policy de UPDATE do agent_stats para USING (true)):
-  `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < .tmp/mut_rls2_run.sql`
-  → `ERROR:  T2 FALHOU: agente comum alterou agent_stats direto (1 linha(s))` (exit 3)
-- verde no banco: `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < supabase/tests/gamification_nivel_paridade_rls.sql`
-  → `NOTICE:  T1 OK` … `T2 OK` `T2b OK` `T2c OK` `T3 OK` `T3b OK` `T3c OK` `T4 OK`
-  `T5 OK` `T6 OK` `T6b OK` `T7 OK` e `ROLLBACK` (exit 0). O T2/T3 são o papel real:
-  `T2 OK: agente barrado em agent_stats (0 linhas afetadas)` e
-  `T3 OK: agente barrado em agent_achievements (42501 new row violates row-level security policy)`.
+- Verde depois: `zapp-db-local psql "$PWD" gamifpar1 -v ON_ERROR_STOP=1 < supabase/tests/gamification_nivel_paridade_rls.sql` → `EXIT=0`, com `NOTICE:  T7 OK: com a gamificação forçada a falhar, a mensagem continua gravada e o corpo do gatilho é revertido (messages_sent = 9, message_milestone = 1)` e `NOTICE:  T6b OK (só o não-derrubar): encerramento no marco 10 é gravado (a gamificação não derruba o encerramento)`, terminando em `ROLLBACK`. A linha `WARNING:  gamification error in handle_message_gamification (message_id=...): injecao de falha proposital (T7) [P0001]` mostra o stub no caminho.
+- Vermelho do T7 com o stub fora do caminho: cópia temporária do mesmo arquivo sem o bloco do stub (rotina real no lugar) → `EXIT=3` e `ERROR:  T7 FALHOU: a injeção não disparou (messages_sent = 10, esperado 9 = corpo do gatilho revertido)`. A cópia temporária (`.tmp/mut_t7_sem_stub.sql`) não entra no commit; a prova durável são as asserções do T7 no arquivo do commit, que falham sem a injeção.
+- Cliente intacto: `npx vitest run src/hooks/gamification/__tests__/levelUtils.test.ts` → `Test Files 1 passed (1); Tests 9 passed (9)` (arquivo não tocado neste refazer).
+- `zapp-verify full` no workspace: `VERIFY: VERMELHO em banco_local (151s)` / `EXIT=1` por `ESTRUTURA: 182 diferença(s) em relação ao retrato da produção` — deriva preexistente da branch (ex.: grants de `ai_usage_outbox` de migrations de outros cartões); zero diferenças em objetos de gamificação (`agent_stats`, `agent_achievements`, `calculate_level`, gatilhos). Ver item 1 de "O que NÃO fiz".
 
-## Pendência registrada (dono: worker sql / trilha de banco)
-- O marco 10 do encerramento ficou como PENDÊNCIA do dono da função, já em
-  kanban_comment neste cartão e com WARNING explícito no teste:
-  `handle_conversation_closure_gamification` chama
-  `grant_agent_achievement(uuid,text,text,text,integer)` com `LEAST(100, v_resolved)`
-  sendo v_resolved bigint → 42883; o EXCEPTION WHEN OTHERS engole e REVERTE o corpo, então
-  no marco `conversations_resolved` volta a 9 e nenhuma conquista entra (medido:
-  `WARNING: T6b PENDENCIA: marco 10 terminou com conversations_resolved=9 (esperado 10) e
-  conquista resolution_milestone=0`). É defeito real e PRÉ-EXISTENTE, fora do escopo de um
-  cartão de teste (não toco migration); o caminho não-marco do encerramento conta certo
-  (`T6 OK: 1 → 2`) e o "não derruba o encerramento" fica provado no T6b.
-- A prova por mutação tocou produção só dentro de transação e foi revertida (mutação do
-  cliente restaurada no mesmo arquivo; mutações de banco com rollback).
-- Não rodei a suíte inteira: só o arquivo de teste do cartão e o teste SQL no banco local
-  da tarefa, conforme o passo 5 do fluxo.
+## Pontos do revisor (recusa da rodada 1, commit 8d081c87d)
+- Ponto 1 (T7 não confirmava que o stub foi chamado): resolvido — `supabase/tests/gamification_nivel_paridade_rls.sql:428-447`: depois do INSERT o T7 lê `messages_sent` (linhas 433-437, `is distinct from 9` para não passar em vacuo com NULL) e conta `message_milestone` (linhas 439-445, esperado 1, só a do T4). Verde com o stub no caminho (saída acima); vermelho `T7 FALHOU: a injeção não disparou (messages_sent = 10, ...)` com o stub fora do caminho (saída acima).
+- Ponto 2 (aviso `T6b OK` dividia atenção com o defeito do marco 10): resolvido — `supabase/tests/gamification_nivel_paridade_rls.sql:395`: aviso agora é `T6b OK (só o não-derrubar)`; o `WARNING: T6b PENDENCIA` (marco 10 com `conversations_resolved=9`, esperado 10, `resolution_milestone=0`) continua como estava.
+- Ponto 3 (frase ambígua sobre mutação em produção): resolvido neste relato — as mutações da prova foram feitas só em código do workspace e no banco local da tarefa (`gamifpar1`), sempre dentro de transação com `ROLLBACK` (o stub do T7 existe só dentro do arquivo de teste; a mutação do cliente foi restaurada no mesmo arquivo); o banco de produção nunca foi tocado nem lido.
+
+## O que NÃO fiz e por quê
+- Não mexi na deriva de estrutura que deixa o `zapp-verify full` vermelho (182 diferenças de migrations de outros cartões da branch; corrigir o retrato é dos donos desses cartões e mexer em manifesto/gate fora do título já me reprovou antes).
+- Não alterei migration, código de produto, teste de cliente nem o defeito real do marco 10 (PENDÊNCIA do T6b, registrada em `kanban_comment` pelo cartão original; corrigir a função `grant_agent_achievement` é de outro cartão).
+- Não usei `git push`, `gh`, `supabase db push`/deploy nem banco de produção; scripts `hermes-tarefa-*`/`hermes-db-migrar` estão congelados (CONGELADO sem MODO_V2), então trabalhei no workspace da entrega anterior e fecho pelo kanban.

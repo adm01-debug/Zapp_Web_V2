@@ -392,7 +392,7 @@ begin
   -- defeito for corrigido por quem é dono da função.
   raise warning 'T6b PENDENCIA: marco 10 terminou com conversations_resolved=% (esperado 10) e conquista resolution_milestone=% — defeito real registrado em kanban_comment', v_res, v_ach;
 
-  raise notice 'T6b OK: encerramento no marco 10 é gravado (a gamificação não derruba o encerramento)';
+  raise notice 'T6b OK (só o não-derrubar): encerramento no marco 10 é gravado (a gamificação não derruba o encerramento)';
 end $$;
 
 -- ===== T7: gamificação quebrada NUNCA derruba o envio (injeção de falha) =====
@@ -414,6 +414,8 @@ end $$;
 do $$
 declare
   v_msg uuid := gen_random_uuid();
+  v_sent bigint;
+  v_ach integer;
 begin
   insert into public.messages (id, contact_id, sender, content, agent_id)
   values (v_msg, '00000000-0000-0000-0000-00000000f303', 'agent', 'Mensagem TG1 com gamificação quebrada',
@@ -422,7 +424,27 @@ begin
   if not exists (select 1 from public.messages where id = v_msg) then
     raise exception 'T7 FALHOU: gamificação quebrada DERRUBOU o envio da mensagem';
   end if;
-  raise notice 'T7 OK: com a gamificação forçada a falhar, a mensagem continua gravada (envio nunca cai)';
+
+  -- Efeito da falha: o EXCEPTION WHEN OTHERS do gatilho reverte o corpo dele
+  -- (o incremento 9 → 10 é desfeito), mas a mensagem persiste. Se a injeção NÃO
+  -- disparou (stub fora do caminho, rotina real no lugar), messages_sent seria
+  -- 10 e uma segunda message_milestone entraria — as duas asserções abaixo
+  -- ficariam vermelhas.
+  select messages_sent into v_sent
+    from public.agent_stats where profile_id = (select agente from tg1_ids);
+  if v_sent is distinct from 9 then
+    raise exception 'T7 FALHOU: a injeção não disparou (messages_sent = %, esperado 9 = corpo do gatilho revertido)', v_sent;
+  end if;
+
+  select count(*) into v_ach
+    from public.agent_achievements
+   where profile_id = (select agente from tg1_ids)
+     and achievement_type = 'message_milestone';
+  if v_ach <> 1 then
+    raise exception 'T7 FALHOU: a injeção não disparou (message_milestone = %, esperado 1, só a do T4)', v_ach;
+  end if;
+
+  raise notice 'T7 OK: com a gamificação forçada a falhar, a mensagem continua gravada e o corpo do gatilho é revertido (messages_sent = 9, message_milestone = 1)';
 end $$;
 
 rollback;
