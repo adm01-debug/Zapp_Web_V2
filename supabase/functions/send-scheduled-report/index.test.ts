@@ -64,6 +64,7 @@ function serviceMock(opts: {
   const fromCalls: string[] = [];
   const updates: Array<{ table: string; payload: Record<string, unknown> }> = [];
   const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  const orCalls: string[] = [];
   let currentTable = "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qb: any = {
@@ -73,6 +74,11 @@ function serviceMock(opts: {
     gte: () => (opts.slaRows === undefined ? qb : Promise.resolve({ data: opts.slaRows, error: null })),
     eq: () => qb,
     // PE-102 (lote): `.lte()` encadeia; `.limit()` é terminal do SELECT do dryRun.
+    // `.or()` registra o filtro de elegibilidade (prova do alinhamento com a RPC).
+    or: (f: string) => {
+      orCalls.push(f);
+      return qb;
+    },
     lte: () => qb,
     order: () => qb,
     limit: () => Promise.resolve({ data: opts.dueRows ?? [], error: opts.dueError ?? null }),
@@ -110,7 +116,7 @@ function serviceMock(opts: {
       return Promise.resolve({ data: null, error: null });
     },
   };
-  return { supabase, fromCalls, updates, rpcCalls };
+  return { supabase, fromCalls, updates, rpcCalls, orCalls };
 }
 
 Deno.test("auth: sem identidade → 401 e zero lookup/Resend/service-role", async () => {
@@ -658,9 +664,10 @@ Deno.test("lote: cron {} reivindica os vencidos e envia cada um só ao domínio 
   }
 });
 
-Deno.test("lote: provedor recusa tudo → status failed e next_send_at volta a vencer (sem last_sent_at)", async () => {
+Deno.test("lote: provedor recusa tudo → status failed e devolve o vencimento reivindicado (sem last_sent_at, sem now())", async () => {
+  const vencimento = "2026-10-20T09:00:00.000Z";
   const mock = serviceMock({
-    claimRows: [{ id: "r1", name: "Resumo", report_type: "dashboard_summary", frequency: "daily", recipients: ["a@promobrindes.com.br"] }],
+    claimRows: [{ id: "r1", name: "Resumo", report_type: "dashboard_summary", frequency: "daily", recipients: ["a@promobrindes.com.br"], next_send_at: vencimento }],
   });
   const resend = withResendStub([500]);
   try {
@@ -673,9 +680,12 @@ Deno.test("lote: provedor recusa tudo → status failed e next_send_at volta a v
       assert(res.status === 200, `esperado 200, recebido ${res.status}`);
       assert(body.failed === 1 && body.sent === 0 && body.partial === 0, `contagens inesperadas: ${JSON.stringify(body)}`);
       assert(body.results[0].status === "failed", `status inesperado: ${JSON.stringify(body.results[0])}`);
-      // Nada saiu: reagenda para a próxima rodada e NÃO confirma o ciclo.
+      // Nada saiu: devolve o vencimento reivindicado (ancorado, sem andar a
+      // cadência) e NÃO confirma o ciclo.
       assert(mock.updates.length === 1 && "next_send_at" in mock.updates[0].payload,
         `deveria reagendar: ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+      assert(mock.updates[0].payload.next_send_at === vencimento,
+        `reagendamento deve devolver o vencimento reivindicado (${vencimento}), recebido ${JSON.stringify(mock.updates[0].payload)}`);
       assert(!("last_sent_at" in mock.updates[0].payload), "falha total não pode gravar last_sent_at");
     });
   } finally {
@@ -741,6 +751,12 @@ Deno.test("lote: dryRun só lista por SELECT — não reivindica, não envia e n
     assert(mock.rpcCalls.length === 0, "dryRun não pode reivindicar (é escrita)");
     assert(resend.calls.length === 0, "dryRun não pode enviar");
     assert(mock.updates.length === 0, "dryRun não pode gravar");
+    // Elegibilidade igual à da RPC (coalesce(is_active, true)): NULL conta como
+    // ativo — falha se o filtro voltar a `.eq("is_active", true)`.
+    assert(mock.orCalls.length === 1
+      && mock.orCalls[0].includes("is_active.is.null")
+      && mock.orCalls[0].includes("is_active.eq.true"),
+      `dryRun precisa listar is_active true OU null: ${JSON.stringify(mock.orCalls)}`);
   } finally {
     resend.restore();
   }
@@ -781,4 +797,57 @@ Deno.test("lote: chamada manual sem reportId NÃO entra no lote (422, sem RPC)",
   );
   assert(res.status === 422, `esperado 422, recebido ${res.status}`);
   assert(mock.rpcCalls.length === 0, "o lote é só do cron; manual não pode reivindicar");
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// [refazer 1] ponto 4 — erro de configuração mantém o next_send_at da RPC (sem
+// loop de 15 min): nada é escrito, nada é enviado.
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("lote: acima do limite → failed SEM reagendar (mantém next_send_at da RPC, sem loop)", async () => {
+  const muitos = Array.from({ length: 51 }, (_, i) => `dest${i}@promobrindes.com.br`);
+  const mock = serviceMock({
+    claimRows: [{ id: "r1", name: "Lista", report_type: "dashboard_summary", frequency: "daily", recipients: muitos, next_send_at: "2026-10-21T09:00:00.000Z" }],
+  });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(body.failed === 1, `contagens inesperadas: ${JSON.stringify(body)}`);
+      assert(body.results[0].status === "failed", `status inesperado: ${JSON.stringify(body.results[0])}`);
+      assert(resend.calls.length === 0, "acima do limite não pode enviar");
+      assert(mock.updates.length === 0,
+        `erro de configuração não pode reescrever next_send_at (loop de 15 min): ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("lote: nenhum destinatário permitido → failed SEM reagendar (mantém next_send_at da RPC, sem loop)", async () => {
+  const mock = serviceMock({
+    claimRows: [{ id: "r1", name: "Lista", report_type: "dashboard_summary", frequency: "daily", recipients: ["cliente@gmail.com"], next_send_at: "2026-10-21T09:00:00.000Z" }],
+  });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(
+        makePost({ headers: { "x-cron-secret": "segredo" }, body: {} }),
+        { supabase: mock.supabase, cronSecret: "segredo" },
+      );
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(body.failed === 1, `contagens inesperadas: ${JSON.stringify(body)}`);
+      assert(resend.calls.length === 0, "sem destinatário permitido não pode enviar");
+      assert(mock.updates.length === 0,
+        `erro de configuração não pode reescrever next_send_at (loop de 15 min): ${JSON.stringify(mock.updates.map((u) => u.payload))}`);
+    });
+  } finally {
+    resend.restore();
+  }
 });

@@ -465,7 +465,11 @@ async function runBatchDryRun(
   const { data: due, error } = await supabase
     .from("scheduled_reports")
     .select("id, name, report_type, frequency, recipients, next_send_at")
-    .eq("is_active", true)
+    // Mesma elegibilidade da RPC claim_due_scheduled_reports
+    // (coalesce(is_active, true)): NULL conta como ativo no lote real, então o
+    // dryRun precisa listar NULL também — `.eq("is_active", true)` escondia
+    // esses relatórios do preview enquanto o lote os reivindicava.
+    .or("is_active.eq.true,is_active.is.null")
     .lte("next_send_at", new Date().toISOString())
     .order("next_send_at", { ascending: true })
     .limit(limit);
@@ -504,14 +508,16 @@ async function processClaimedReport(
   const name = typeof row.name === "string" ? row.name : "";
   const declared: string[] = Array.isArray(row.recipients) ? row.recipients : [];
 
-  // Acima do limite: NADA é enviado (falha fechada) e o ciclo volta a vencer.
+  // Acima do limite: NADA é enviado (falha fechada). Erro de configuração: o
+  // `next_send_at` já foi avançado pela RPC (ancorado no vencimento) e é
+  // mantido — reagendar para now() criaria um loop a cada 15 min até alguém
+  // corrigir a configuração. O ciclo volta a vencer no próximo período.
   if (declared.length > MAX_RECIPIENTS_PER_REPORT) {
     ctx.log.error("Relatório acima do limite de destinatários", {
       reportId,
       total: declared.length,
       limit: MAX_RECIPIENTS_PER_REPORT,
     });
-    await rescheduleForRetry(supabase, reportId, ctx.log, "acima do limite de destinatários");
     return {
       id: reportId, name, status: "failed", delivered: 0, failed: 0, total: 0, rejected: 0,
       error: "Relatório acima do limite de destinatários",
@@ -524,10 +530,9 @@ async function processClaimedReport(
     ctx.log.error("Destinatários recusados por domínio não confiável", { reportId, rejected, total: declared.length });
   }
 
-  // Havia destinatários, mas nenhum é permitido: não há o que enviar; deixa o
-  // ciclo vencer de novo para a configuração ser corrigida.
+  // Havia destinatários, mas nenhum é permitido: não há o que enviar. Erro de
+  // configuração: mantém o `next_send_at` avançado pela RPC (sem loop de 15 min).
   if (declared.length > 0 && allowed.length === 0) {
-    await rescheduleForRetry(supabase, reportId, ctx.log, "nenhum destinatário permitido");
     return {
       id: reportId, name, status: "failed", delivered: 0, failed: 0, total: 0, rejected,
       error: "Nenhum destinatário permitido (domínio não confiável)",
@@ -553,7 +558,12 @@ async function processClaimedReport(
   const status: BatchReportResult["status"] = delivered === total ? "sent" : delivered > 0 ? "partial" : "failed";
 
   if (status === "failed") {
-    await rescheduleForRetry(supabase, reportId, ctx.log, "falha total de envio");
+    // Falha total de provedor: nada saiu, então o ciclo não foi cumprido. Mas
+    // reagendar para now() ancoraria a cadência no horário da tentativa e a
+    // faria andar a cada falha. Em vez disso, devolve o vencimento reivindicado
+    // (row.next_send_at, já avançado pela RPC de forma ancorada no vencimento):
+    // a próxima rodada tenta de novo sem deslocar a cadência.
+    await rescheduleForRetry(supabase, reportId, String(row.next_send_at ?? ""), ctx.log, "falha total de envio");
     return {
       id: reportId, name, status, delivered, failed: failedCount, total, rejected,
       error: "Falha no envio para todos os destinatários",
@@ -567,20 +577,27 @@ async function processClaimedReport(
 }
 
 /**
- * Falha total: nada saiu, então o ciclo não foi cumprido. Devolve `next_send_at`
- * para agora para a próxima rodada do cron tentar de novo, em vez de esperar um
- * período inteiro (daily/weekly/monthly).
+ * Falha total de provedor: nada saiu, então o ciclo não foi cumprido. Devolve o
+ * vencimento reivindicado (alvo = row.next_send_at, ancorado no vencimento pela
+ * RPC) em vez de now(): reagendar para o horário da tentativa deslocaria a
+ * cadência a cada falha. Sem vencimento reivindicado válido, não há alvo
+ * seguro — mantém o da RPC e só registra.
  */
 async function rescheduleForRetry(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   reportId: string,
+  targetNextSendAt: string,
   log: Logger,
   reason: string,
 ): Promise<void> {
+  if (!targetNextSendAt) {
+    log.error("Sem vencimento reivindicado para reagendar o relatório", { reportId, reason });
+    return;
+  }
   const { data, error } = await supabase
     .from("scheduled_reports")
-    .update({ next_send_at: new Date().toISOString() })
+    .update({ next_send_at: targetNextSendAt })
     .eq("id", reportId)
     .select("id");
   if (error || !Array.isArray(data) || data.length === 0) {
