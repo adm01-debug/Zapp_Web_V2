@@ -95,8 +95,8 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     // mesma duracao. Sem base anterior nao ha variacao a afirmar -> 0 (nunca um
     // numero inventado).
     let trend = 0;
-    if (previousSurveys.length > 0) {
-      const previousAverage = previousSurveys.reduce((acc, s) => acc + s.rating, 0) / previousSurveys.length;
+    if (previous.length > 0) {
+      const previousAverage = previous.reduce((acc, s) => acc + s.rating, 0) / previous.length;
       if (previousAverage !== 0) trend = Math.round(((average - previousAverage) / previousAverage) * 100);
     }
 
