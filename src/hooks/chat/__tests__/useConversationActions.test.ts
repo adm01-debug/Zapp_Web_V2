@@ -31,6 +31,9 @@ const snoozeInsertCalls: unknown[] = [];
 let eventsInsertResult: Record<string, unknown> = { error: null };
 const eventsInsertCalls: Record<string, unknown>[] = [];
 let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
+// Fila opcional: cada resposta RPC é consumida em ordem (a chamada tolerante faz
+// duas tentativas). Vazia = devolve transferRpcResult sempre.
+let transferRpcResultsQueue: Record<string, unknown>[] = [];
 const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
@@ -45,7 +48,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
     rpc: vi.fn((name: string, args: Record<string, unknown>) => {
       transferRpcCalls.push({ name, args });
-      if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
+      if (name === 'transfer_conversation') {
+        if (transferRpcResultsQueue.length > 0) return Promise.resolve(transferRpcResultsQueue.shift());
+        return Promise.resolve(transferRpcResult);
+      }
       return Promise.resolve({ data: null, error: null });
     }),
     from: vi.fn((table: string) => {
@@ -133,6 +139,8 @@ vi.mock('@/lib/undoToast', () => ({ undoToast: vi.fn() }));
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
+import { queryClient } from '@/lib/queryClient';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 
 let activeUnmount: (() => void) | null = null;
 function renderActionsHook() {
@@ -164,6 +172,7 @@ describe('useConversationActions', () => {
     eventsInsertResult = { error: null };
     eventsInsertCalls.length = 0;
     transferRpcResult = { data: 'event-rpc-id', error: null };
+    transferRpcResultsQueue = [];
     transferRpcCalls.length = 0;
   });
 
@@ -321,6 +330,79 @@ describe('useConversationActions', () => {
       expect(eventsInsertCalls).toEqual([]);
       expect(toast.error).toHaveBeenCalledWith('Erro ao transferir conversa');
       expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('envia o dono esperado (p_expected_agent_id) quando a tela informa o assigned_to', async () => {
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'queue', 'queue-2', undefined, 'agent-original');
+      });
+
+      expect(transferRpcCalls).toEqual([
+        {
+          name: 'transfer_conversation',
+          args: {
+            p_contact_id: 'contact-1',
+            p_to_agent_id: null,
+            p_to_queue_id: 'queue-2',
+            p_note: null,
+            p_expected_agent_id: 'agent-original',
+          },
+        },
+      ]);
+      expect(toast.success).toHaveBeenCalledWith('Chat transferido para outra fila');
+    });
+
+    it('servidor ainda sem a RPC nova (PGRST202): refaz sem o parâmetro e transfere', async () => {
+      transferRpcResultsQueue = [
+        { data: null, error: { code: 'PGRST202', message: 'Could not find the function public.transfer_conversation' } },
+        { data: 'event-rpc-id', error: null },
+      ];
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'agent', 'agent-2', undefined, 'agent-original');
+      });
+
+      expect(transferRpcCalls).toHaveLength(2);
+      expect(transferRpcCalls[0].args).toHaveProperty('p_expected_agent_id', 'agent-original');
+      expect(transferRpcCalls[1].args).not.toHaveProperty('p_expected_agent_id');
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
+    });
+
+    it('conflito de dono (40001 do PK-03): avisa, invalida lista/contato e não rejeita', async () => {
+      transferRpcResult = { data: null, error: { code: '40001', message: 'dono mudou' } };
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue(undefined);
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'agent', 'agent-2', undefined, 'agent-velho');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Esta conversa mudou de responsável. Atualizamos a lista.');
+      expect(toast.success).not.toHaveBeenCalled();
+      const chaves = invalidateSpy.mock.calls.map(([filtro]) => JSON.stringify(filtro?.queryKey));
+      expect(chaves).toContain(JSON.stringify(['contact-sidebar', 'contact-1']));
+      expect(chaves).toContain(JSON.stringify(conversationTabCountsKey('contact-1')));
+      expect(chaves).toContain(JSON.stringify(['agents-active-chats']));
+      invalidateSpy.mockRestore();
+    });
+
+    it('conflito reconhecido pela mensagem (sem código) também vira aviso, não rejeição', async () => {
+      transferRpcResult = { data: null, error: { message: 'Contato ja foi transferido por outro atendente.' } };
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue(undefined);
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.transferContact('contact-1', 'queue', 'queue-2', undefined, 'agent-velho');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Esta conversa mudou de responsável. Atualizamos a lista.');
+      expect(toast.error).not.toHaveBeenCalledWith('Erro ao transferir conversa');
+      expect(invalidateSpy).toHaveBeenCalled();
+      invalidateSpy.mockRestore();
     });
   });
 
