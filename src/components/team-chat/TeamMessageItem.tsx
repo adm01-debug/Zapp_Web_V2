@@ -10,7 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { MarkdownPreview } from '@/components/inbox/chat/MarkdownPreview';
-import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
+import { TeamMessage, TeamConversationType } from '@/hooks/team-chat/teamChatTypes';
 import { formatTime, formatDateSep, MediaContent, MediaTypeIcon } from './teamChatParts';
 import { TeamReactionBar, TeamQuickReactionBarWrapper } from './TeamMessageReactionsWrapper';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
@@ -21,7 +21,9 @@ interface Props {
   msg: TeamMessage;
   isMine: boolean;
   showDate: boolean;
-  conversationType: 'direct' | 'group';
+  // Vocabulário do banco inteiro (inclui `department`): o painel passa o tipo da
+  // conversa direto, sem cast que apague a conversa de departamento.
+  conversationType: TeamConversationType;
   repliedMsg: TeamMessage | null;
   isEditing: boolean;
   editText: string;
