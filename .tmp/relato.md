@@ -1,36 +1,32 @@
-Especialista: iris
+Especialista: semisenior (area-front-componentes)
 ## O que mudou e por quê
-- `src/pages/Auth.tsx`: os dois avisos da tela de login deixaram de ser texto mudo para leitor de tela.
-  - Banner de bloqueio: o corpo do aviso virou região viva (`role="alert"`, `src/pages/Auth.tsx:124`) e agora diz a espera em minutos — "Muitas tentativas de login falhadas. Aguarde {lockMinutes} minutos antes de tentar novamente." (`src/pages/Auth.tsx:126`), com `lockMinutes = Math.max(1, Math.ceil(lockStatus.remainingTime / 60))` em `src/pages/Auth.tsx:29`. É UM anúncio, no início do bloqueio: esse texto é estável enquanto o bloqueio dura.
-  - A contagem mm:ss, que muda a cada segundo, ficou FORA da região viva: o span da contagem ganhou `aria-hidden="true"` (`src/pages/Auth.tsx:133`) e a barra de progresso idem (`src/pages/Auth.tsx:130`), para o leitor de tela não ler o relógio em laço. O ícone do bloqueio também virou `aria-hidden="true"` (`src/pages/Auth.tsx:121`).
-  - Banner de tentativas: o container ganhou `role="alert"` (`src/pages/Auth.tsx:145`) e o ícone decorativo `aria-hidden="true"` (`src/pages/Auth.tsx:146`) — cada mudança de "N tentativas restantes antes do bloqueio" é anunciada.
-- `src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` (novo): 4 testes que renderizam a PÁGINA real (`@/pages/Auth`) com o HOOK real (`@/hooks/auth/useAuthForm`), mockando só as fronteiras (useAuth/useWebAuthn/use-toast/loginAttempts/supabase) e dirigindo o submit de verdade.
+- `src/pages/Auth.tsx:26-43`: o valor de minutos dentro do `role="alert"` do bloqueio foi CONGELADO no início do bloqueio (`announcedLockMinutes`, via `useState` + `useRef` da transição `isLocked` false→true; zera ao desbloquear para um próximo bloqueio anunciar o valor novo). Antes, `lockMinutes = ceil(remainingTime/60)` era recalculado a cada segundo e o texto da região viva mudava 5→4→3… reanunciando em laço.
+- `src/pages/__tests__/Auth.avisos-bloqueio.test.tsx:114-138`: teste novo com fake timers — `remainingTime` 300→239 (`advanceTimersByTime(61_000)`) e o texto do `role="alert"` permanece idêntico; a contagem visual `3:59` continua fora da região viva. Também `afterEach` com `cleanup()` + `useRealTimers()`.
 ## Prova
-- vermelho antes (Auth.tsx da base, sem `role="alert"` e sem a espera em minutos): `npx vitest run src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` -> `Test Files 1 failed (1)` / `Tests 4 failed (4)`
-- verde depois: `npx vitest run src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` -> `Test Files 1 passed (1)` / `Tests 4 passed (4)`
-- vizinhos de Auth intactos: `npx vitest run src/pages/__tests__/Auth.coluna-v3.test.tsx src/pages/__tests__/Auth.fundo-mapa.test.tsx src/pages/__tests__/Auth.sem-cadastro.test.tsx src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` -> `Test Files 4 passed (4)` / `Tests 20 passed (20)`
-## CRITÉRIO DE PRONTO item a item
-1. Bloqueio e tentativas anunciados: `src/pages/Auth.tsx:124` (role="alert" do bloqueio) e `src/pages/Auth.tsx:145` (role="alert" das tentativas), provados pelos testes 1, 2 e 3 do arquivo novo.
-2. Sem enumeração de contas: o anúncio do bloqueio é o MESMO texto para qualquer e-mail e não contém o e-mail digitado (teste 4 do arquivo novo); nenhuma RPC nova entrou no diff de Auth.tsx (nada de `is_account_locked`).
-3. `zapp-verify . --rapido`: ver "[Verificação](#verificação)" abaixo — rodado por mim, RC=0.
-
+- vermelho antes (sem a correção, só com o teste novo): `npx vitest run src/pages/__tests__/Auth.avisos-bloqueio.test.tsx -t "congela o anúncio"` → `FAIL … expected '…Aguarde 5 minutos…' to be '…Aguarde 5 minutos…' // Object.is equality / Received: "…Aguarde 4 minutos antes de tentar novamente." / Test Files 1 failed (1), Tests 1 failed | 4 skipped (5)`
+- verde depois: `npx vitest run src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` → `Test Files 1 passed (1), Tests 5 passed (5)`
+- vizinhos de Auth intactos: `npx vitest run src/pages/__tests__/Auth.coluna-v3.test.tsx src/pages/__tests__/Auth.fundo-mapa.test.tsx src/pages/__tests__/Auth.sem-cadastro.test.tsx src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` → `Test Files 4 passed (4), Tests 21 passed (21)`
+- lint nos dois arquivos: `npx eslint src/pages/Auth.tsx src/pages/__tests__/Auth.avisos-bloqueio.test.tsx` → 0 errors (1 warning pré-existente em `src/pages/Auth.tsx:13`, import `GOOGLE_OAUTH_ENABLED` restrito, já estava na base e não é deste cartão)
+## Pontos do revisor ([refazer 1] da recusa do sha a55bf018af)
+- Ponto 1 (congelar o valor anunciado): resolvido — `src/pages/Auth.tsx:32-43` (`announcedLockMinutes` setado só na transição para bloqueado, zerado ao desbloquear; `lockMinutes` usa o valor congelado com fallback para o cálculo). Mantive o número no anúncio (opção 1 da recusa), então o teste 1 existente ("Aguarde 5 minutos") continua passando.
+- Ponto 2 (teste 300→239 com texto idêntico): resolvido — `src/pages/__tests__/Auth.avisos-bloqueio.test.tsx:114-138` (fake timers, `advanceTimersByTime(61_000)`); vermelho antes e verde depois acima.
+- Ponto 3 (corrigir a afirmação "texto estável enquanto o bloqueio dura"): corrigido — o relato anterior afirmava estabilidade que o diff desmentia; este relato afirma o congelamento implementado neste diff (linhas citadas acima), não estabilidade por construção do `remainingTime`.
+- Trecho da recusa "o restante está correto" (role="alert" nas tentativas, aria-hidden na contagem/barra, sem `is_account_locked`): não tocado, continua como estava.
+## FAIXA DO PAI
+FAIXA DO PAI: commits `4f00bb403b` (`src/lib/serverLogin.ts` + `src/lib/__tests__/serverLogin.test.ts`, 429 = "muitas tentativas") do cartão `t_48ac4716` — trazidos por ordem da seção DEPENDÊNCIA do cartão original, não são deste cartão. O MEU commit (`05cfb5344d`) toca só os 2 arquivos abaixo. A faixa do pai não é julgada aqui (a própria recusa diz).
+## Arquivos do MEU commit (`git diff --name-only HEAD~1..HEAD`, copiada do comando)
+```
+src/pages/Auth.tsx
+src/pages/__tests__/Auth.avisos-bloqueio.test.tsx
+```
+## O que NÃO fiz e por quê
+- Não implementei pré-checagem de bloqueio por e-mail (`is_account_locked`): o cartão original manda não implementar (enumeração de contas); a recusa confirma que a ausência está correta.
+- Não mexi em `src/hooks/auth/useAuthForm.ts` (o tick de 1s continua; só o anúncio foi congelado), nem em `src/components/ui/**`, nem em `serverLogin.ts` (faixa do pai).
 ## Verificação
 ```
-$ zapp-verify . --rapido
-OK      db_guard        0s
-OK      tipos         149s
-OK      lint            4s
-OK      migrations      1s
-AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
-VERIFY: VERDE SEM BANCO (154s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/7baa0e1f2b76
-RC=0
+$ npx vitest run src/pages/__tests__/Auth.avisos-bloqueio.test.tsx
+Test Files 1 passed (1), Tests 5 passed (5)
+$ npx vitest run src/pages/__tests__/Auth.coluna-v3.test.tsx src/pages/__tests__/Auth.fundo-mapa.test.tsx src/pages/__tests__/Auth.sem-cadastro.test.tsx src/pages/__tests__/Auth.avisos-bloqueio.test.tsx
+Test Files 4 passed (4), Tests 21 passed (21)
 ```
-(AVISO esperado: este cartão é só de tela, não mexe em banco/migration.)
-## FAIXA DO PAI
-FAIXA DO PAI: commit `cd211554c1` (e o `a2e02bca2` pulado) do cartão `t_48ac4716` — não são deste cartão. O trabalho do pai (429 = "muitas tentativas") não estava no meu workspace (`git merge-base --is-ancestor a2e02bca2 HEAD` era falso), então trouxe a faixa com o comando do cartão: `git cherry-pick cd211554c1 a2e02bca2`. O commit de código `cd211554c1` entrou em `4f00bb403b` e traz `src/lib/serverLogin.ts` + `src/lib/__tests__/serverLogin.test.ts` (dois arquivos do pai, não deste cartão). O segundo commit (`a2e02bca2`) só mexia no `.tmp/relato.md` do cartão pai, conflitava com o meu relato e foi pulado com `git cherry-pick --skip` — não é código.
-## O que NÃO fiz e por quê
-- Não implementei a pré-checagem de bloqueio por e-mail (`is_account_locked`): o cartão manda não implementar (risco de enumeração de contas).
-- Não mexi em `src/hooks/auth/useAuthForm.ts` nem em `src/components/ui/**`: fora da lista de arquivos do cartão; a mudança cabia inteira em `Auth.tsx`.
-## Pontos do juiz automático (não procedem)
-- "Um teste que já existia foi removido, pulado ou afrouxado": a única linha que o diff REMOVE é `['429', () => jsonResponse(429, { error: 'Rate limit exceeded' })]`, e ela é do commit do cartão PAI (`cd211554c1`). O pai tirou o 429 do caso genérico de erro/cliente e lhe deu um teste próprio ("429 vira muitas tentativas"), ou seja, REFORÇOU a cobertura. Nenhum teste foi removido ou pulado no MEU commit (`565f77aac9` só cria `Auth.avisos-bloqueio.test.tsx`).
-- "Arquivo que o cartão não lista": `src/lib/serverLogin.ts` e `src/lib/__tests__/serverLogin.test.ts` são a faixa do cartão PAI, trazida por ordem da seção DEPENDÊNCIA do cartão (seção FAIXA DO PAI acima). Não são trabalho deste cartão.
+Commit: `05cfb5344d` (`fix(auth): congela minutos anunciados no bloqueio para leitores de tela (refazer 1 t_ef4b7fab)`) no workspace `/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fix-auth-avisos-bloqueio-leitores-tela-26101407357830`, branch `v2/fix-auth-avisos-bloqueio-leitores-tela-26101407357830`. `hermes-tarefa-fechar` bloqueado nesta sessão (CONGELADO sem MODO_V2, RC=75): entrega pelo Kanban.
