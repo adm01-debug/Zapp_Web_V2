@@ -15,7 +15,7 @@ set -euo pipefail
 # database system is shutting down", ...), so match the whole class by its
 # common "connection to server on socket ... failed:" prefix instead of one
 # exact suffix — confirmed both suffixes on the same branch within minutes.
-BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:|Error response from daemon: toomanyrequests|registro de imagens indisponivel'
+BOOTSTRAP_FAILURE_PATTERN='FAIL: PostgreSQL de teste não iniciou|connection to server on socket .* failed:|Error response from daemon: toomanyrequests|registro de imagens indisponivel|PG nao subiu'
 # A última alternativa é a mensagem que o proprio teste do Talk X emite quando o
 # pre-pull esgota as tentativas: sem ela o wrapper nao reconheceria o flake (a
 # mensagem do teste substitui o texto original do docker) e nao repetiria o
