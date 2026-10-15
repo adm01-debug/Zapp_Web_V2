@@ -40,6 +40,7 @@ const NOW = new Date(2026, 9, 13, 12, 0, 0, 0);
 
 beforeEach(() => {
   resetSupabaseMock();
+  h.contatos = [{ id: 'c1', name: 'Ana Souza', phone: '11999998888', avatar_url: null }];
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};
@@ -120,6 +121,24 @@ describe('NewTaskDialog — prévia da tarefa (etapa 165)', () => {
     fireEvent.click(screen.getByTestId('new-task-contact'));
     fireEvent.click(screen.getByRole('option', { name: /Ana Souza/ }));
 
+    expect(within(previa()).getByText('Ana Souza')).toBeInTheDocument();
+  });
+
+  it('mantém na prévia o contato achado por busca e fora da lista padrão ([refazer 1] ponto 4)', () => {
+    montar();
+
+    fireEvent.click(screen.getByTestId('new-task-contact'));
+    fireEvent.click(screen.getByRole('option', { name: /Ana Souza/ }));
+    expect(within(previa()).getByText('Ana Souza')).toBeInTheDocument();
+
+    // A lista padrão muda (a busca que achou a Ana não é a lista padrão): a
+    // prévia lia uma segunda instância da busca e perdia o contato — agora o
+    // diálogo guarda o escolhido, então a troca de título (que remontou a
+    // tela) não tira a Ana da prévia.
+    h.contatos = [];
+    fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
+
+    expect(within(previa()).getByText('Ligar para Ana')).toBeInTheDocument();
     expect(within(previa()).getByText('Ana Souza')).toBeInTheDocument();
   });
 

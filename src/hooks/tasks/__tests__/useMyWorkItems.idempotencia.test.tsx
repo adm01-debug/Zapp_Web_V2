@@ -88,7 +88,7 @@ describe('useMyWorkItems — idempotência (IA-047)', () => {
     });
 
     expect(h.toast.error).not.toHaveBeenCalled();
-    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada');
+    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada', { id: 'tarefa-criada' });
   });
 
   it('erro que NÃO é 23505 continua sendo erro (toast genérico)', async () => {

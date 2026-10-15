@@ -10,6 +10,8 @@
  *  - o modal fecha antes do banco responder (captura otimista) e o "Desfazer"
  *    do toast cancela a tarefa recém-criada (D8) pelo MESMO caminho de update
  *    — o `onUndo` do toast é chamado de verdade, não conferido por presença;
+ *  - a troca do toast simples pelo com "Desfazer" dispensa SÓ o aviso da
+ *    criação (pelo id): outro toast aberto na hora continua vivo;
  *  - sem título nada vai ao banco: o campo mostra o erro inline.
  */
 import { resetSupabaseMock, setSelectResult, setWriteResult, makeTaskRow, supabaseMock } from '@/test/mocks/tarefas';
@@ -73,6 +75,8 @@ function sonda() {
 describe('NewTaskDialog — criação otimista (etapa 168)', () => {
   it('cria na Caixa de entrada, fecha o modal e deixa o Desfazer cancelar', async () => {
     montar();
+    // Um aviso de outra ação já está aberto quando a criação acontece.
+    supabaseMock.toast.success('aviso de outra ação');
     // O banco já devolve a linha criada na próxima leitura da lista — é o que a
     // Caixa de entrada veria depois do INSERT (o create invalida a consulta).
     setSelectResult({
@@ -97,8 +101,11 @@ describe('NewTaskDialog — criação otimista (etapa 168)', () => {
     // Captura otimista: o modal sai da frente assim que o INSERT é disparado.
     await waitFor(() => expect(sonda()).toHaveTextContent('fechado'));
 
-    // O aviso simples do hook dá lugar ao mesmo texto com "Desfazer".
-    expect(supabaseMock.toast.dismiss).toHaveBeenCalled();
+    // O aviso simples do hook dá lugar ao mesmo texto com "Desfazer" — e SÓ
+    // ele é dispensado (pelo id): a chamada sem id, que varreria o aviso de
+    // outra ação junto, nunca acontece.
+    expect(supabaseMock.toast.dismiss).toHaveBeenCalledWith('tarefa-criada');
+    expect(supabaseMock.toast.dismiss).not.toHaveBeenCalledWith();
     expect(supabaseMock.undoToast).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Tarefa criada', onUndo: expect.any(Function) }),
     );
@@ -124,7 +131,7 @@ describe('NewTaskDialog — criação otimista (etapa 168)', () => {
     expect(sonda()).toHaveTextContent('aberto');
   });
 
-  it('INSERT recusado não vira "Tarefa criada": o erro fica com o hook', async () => {
+  it('INSERT recusado não vira "Tarefa criada": o modal continua fechado e o erro fica com o hook', async () => {
     setWriteResult({ error: { message: 'permission denied' } });
     montar();
     fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
@@ -134,5 +141,8 @@ describe('NewTaskDialog — criação otimista (etapa 168)', () => {
     await waitFor(() => expect(supabaseMock.insert).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(supabaseMock.toast.error).toHaveBeenCalled());
     expect(supabaseMock.undoToast).not.toHaveBeenCalled();
+    // Captura otimista: o fechamento já aconteceu antes do banco responder,
+    // então a recusa não reabre o modal — o erro aparece em toast.
+    expect(sonda()).toHaveTextContent('fechado');
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -9,8 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import type { Priority } from '@/hooks/tasks/workItem.types';
-import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
-import { useContactsSearch } from '@/hooks/crm/useContactsSearch';
+import { TAREFA_CRIADA_TOAST_ID, useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import { undoToast } from '@/lib/undoToast';
 import { useTasksUiOptional } from './tasksUi';
 import { ContactCombobox, type ContactOption } from './ContactCombobox';
@@ -63,8 +62,9 @@ interface Props {
  * `useMyWorkItems`, a mesma mutation que o QuickAdd usa, com o item nascendo na
  * Caixa de entrada, e a chave idempotente por clique cuidando do duplo submit.
  * O aviso é o MESMO "Tarefa criada" do hook, só que na versão com "Desfazer":
- * o toast simples é dispensado (`toast.dismiss`) e o `undoToast` põe o mesmo
- * texto com a ação. Desfazer = cancelamento (D8) do item recém-criado, pelo
+ * o toast simples é dispensado PELO ID (`TAREFA_CRIADA_TOAST_ID`) e o
+ * `undoToast` põe o mesmo texto com a ação — outro toast aberto na hora
+ * (de outra ação) continua vivo. Desfazer = cancelamento (D8) do item recém-criado, pelo
  * `cancel` do próprio hook (o item vem da releitura da lista, porque o
  * cancelamento é por item e não há "cancelar por id"). A narração para leitor
  * de tela sai do próprio toast: o viewport do sonner (`App.tsx`) é região viva,
@@ -86,6 +86,17 @@ export function NewTaskDialog({
   const [title, setTitle] = useState('');
   const [touched, setTouched] = useState(false);
   const [contactId, setContactId] = useState<string | null>(defaultContactId);
+  /**
+   * Etapa 165 ([refazer 1] ponto 4): a prévia mostra o contato ESCOLHIDO aqui,
+   * não o que uma segunda leitura da busca devolver — o `ContactCombobox`
+   * devolve o `ContactOption` junto do id no `onChange`, então um contato
+   * achado por busca e fora da lista padrão continua na prévia.
+   */
+  const [contatoEscolhido, setContatoEscolhido] = useState<ContactOption | null>(defaultContact);
+  const trocarContato = (id: string | null, opt?: ContactOption | null) => {
+    setContactId(id);
+    setContatoEscolhido(opt ?? null);
+  };
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
   const [remindAt, setRemindAt] = useState<string | null>(defaultRemindAt);
@@ -95,25 +106,25 @@ export function NewTaskDialog({
   const podeCriar = title.trim().length > 0;
 
   /**
-   * Etapa 165: o `ContactCombobox` só devolve o id, então a prévia lê a busca
-   * que ele já faz (react-query dedupa a consulta pela mesma chave) e cai no
-   * `defaultContact` quando o modal já nasce a partir de um contato.
+   * Etapa 165: o `ContactCombobox` só devolvia o id, então a prévia lia a busca
+   * que ele já faz — uma instância própria que nunca recebia o termo digitado,
+   * e o contato achado por busca sumia da prévia. Agora o combobox devolve o
+   * `ContactOption` escolhido e a prévia lê DAQUI.
    */
-  const { contacts: contatosBuscados } = useContactsSearch();
-  const contatoDaPrevia: ContactOption | null = useMemo(() => {
-    if (!contactId) return null;
-    if (defaultContact?.id === contactId) return defaultContact;
-    const achado = contatosBuscados.find((c) => c.id === contactId);
-    return achado
-      ? { id: achado.id, name: achado.name, phone: achado.phone, avatarUrl: achado.avatar_url }
-      : null;
-  }, [contactId, defaultContact, contatosBuscados]);
+  const contatoDaPrevia: ContactOption | null =
+    contactId && contatoEscolhido?.id === contactId
+      ? contatoEscolhido
+      : contactId && defaultContact?.id === contactId
+        ? defaultContact
+        : null;
 
   /**
-   * Etapa 168: fecha o modal e avisa. O `closeModal()` sai ANTES do INSERT
-   * resolver de propósito — a captura é otimista, a Caixa de entrada recebe o
-   * item no `invalidate` do hook e, se o banco recusar, o próprio hook já
-   * mostra o erro.
+   * Etapa 168 ([refazer 1] ponto 1): captura de verdade otimista — o
+   * `closeModal()` sai ANTES do INSERT resolver, o modal já está fechado com
+   * o INSERT ainda pendente. Se o banco recusar, o modal CONTINUA fechado e o
+   * próprio hook já mostra o erro em toast ("Erro ao criar tarefa" / "O
+   * horario do aviso ja passou"); nada apareceu na lista, então não há o que
+   * desfazer nem "Tarefa criada".
    */
   const criar = async () => {
     const texto = title.trim();
@@ -121,6 +132,7 @@ export function NewTaskDialog({
     if (!texto || enviando) return;
 
     setEnviando(true);
+    closeModal();
     let id: string | null = null;
     try {
       id = await createAndGetId({
@@ -132,15 +144,12 @@ export function NewTaskDialog({
         remindAt,
       });
     } catch {
-      // O hook já avisa ("Erro ao criar tarefa" / "O horario do aviso ja passou").
-      setEnviando(false);
       return;
     }
 
-    closeModal();
     if (!id) return; // 23505: o pedido repetido caiu no índice único (já existe).
     // O hook já tocou "Tarefa criada" simples; aqui vai a versão com "Desfazer".
-    toast.dismiss();
+    toast.dismiss(TAREFA_CRIADA_TOAST_ID);
     undoToast({
       message: 'Tarefa criada',
       icon: '✅',
@@ -204,7 +213,7 @@ export function NewTaskDialog({
                   id="new-task-contact"
                   testId="new-task-contact"
                   value={contactId}
-                  onChange={setContactId}
+                  onChange={trocarContato}
                   selectedContact={defaultContact}
                   placeholder="Sem contato"
                 />
