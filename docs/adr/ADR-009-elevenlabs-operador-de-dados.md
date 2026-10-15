@@ -86,12 +86,15 @@ guarda **metadados de consumo, nunca o texto nem o áudio**.
   controlador.
 - **Retenção do lado do produto:** a transcrição do áudio do cliente é gravada na tabela
   `messages` (`ai-transcribe-audio/index.ts:495`) e segue a retenção de `messages` (§4.1:
-  2 anos, anonimizar). Os áudios continuam nos buckets (§4.5). As demais chamadas não persistem
-  conteúdo no produto — devolvem o áudio/transcrição e descartam.
+  2 anos, anonimizar). Os áudios continuam nos buckets (§4.5). As Edges não persistem conteúdo
+  por si — devolvem o áudio/transcrição e descartam.
+  O áudio sintetizado **persiste se enviado como mensagem (§4.5)** (botão "Enviar Áudio":
+  `TextToAudioButton.tsx:113-131` grava via `ChatService.uploadAudio`, `chat.service.ts:111`,
+  no bucket `audio-messages`).
 - **Retenção do lado do provedor:** **a confirmar com o dono**. O contrato/plano da ElevenLabs
-  (que define a retenção do provedor) não é verificável do repositório. A política adota como
-  premissa declarada a **retenção mínima** do provedor; a confirmação contratual é requisito
-  para que esta ADR passe de *Proposed* a *Accepted*.
+  (que define a retenção do provedor) não é verificável do repositório.
+  A política **não adota nenhuma premissa de retenção ou eliminação automática; registra apenas o estado atual**;
+  a confirmação contratual é requisito para que esta ADR passe de *Proposed* a *Accepted*.
 - **Transferência internacional:** o provedor não opera no Brasil — há transferência
   internacional de texto e áudio. A região de processamento e o instrumento contratual
   (DPA / cláusulas-padrão) também precisam ser confirmados no contrato.
