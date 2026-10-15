@@ -1,8 +1,26 @@
 # docs:
-#   gatilho: dispatch (manual; o cron foi desligado por rodar 100% skipped)
-#   prova: sincronizacao do CRM executada de ponta a ponta
-#   falha: o job fica vermelho e nada e sincronizado
+#   gatilho: dispatch (operacao manual; schedule desligado e nenhum job do pg_cron drena o outbox — W93)
+#   prova: health do CRM externo e um lote de 1..10 itens do crm_sync_outbox processado sem falha
+#   falha: o job fica vermelho e nada e sincronizado; os itens continuam no outbox para replay
 #   avisa: quem disparou
+# nao-e-bug:
+#   - schedule comentado: decisao pendente do dono (W93); religar exige vars.CRM_SYNC_WORKER_ENABLED=true e o roteiro em docs/runbooks/CRM_INTEGRATION_ROLLOUT.md
+# ==================================================================
+# W93 (2026-10-15) — quem drena o crm_sync_outbox hoje: NINGUEM de forma
+# automatica. Medido na producao (tnnnlkbymytvtqngbbqh, somente SELECT):
+#   - cron.job tem 13 jobs ativos e nenhum chama crm-integration/processOutbox
+#     nem claim_crm_sync_outbox (nenhuma funcao do banco cita o worker);
+#   - este workflow so' rodou por dispatch uma vez (2026-09-09, antes de o
+#     outbox ter linhas); o ultimo run agendado foi 2026-09-22 (skipped);
+#   - vars.CRM_SYNC_WORKER_ENABLED nao existe no repositorio;
+#   - outbox: 474 pending (o mais antigo de 2026-09-26), 6 failed e
+#     1 dead_letter, todos com CRM_NOT_SYNCED; 0 concluidos e 0 vinculos.
+# O unico consumidor ativo e' a acao `enqueueSync` da Edge crm-integration
+# (botao de sincronizacao manual), que processa apenas o item do contato.
+# Este workflow e' operacao MANUAL. Religar o schedule e' decisao do dono:
+# o roteiro (o que mudar e como verificar) esta em
+# docs/runbooks/CRM_INTEGRATION_ROLLOUT.md, secao "Estado operacional".
+# ==================================================================
 name: CRM Sync Worker
 
 on:
@@ -37,6 +55,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || vars.CRM_SYNC_WORKER_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    environment: producao-edge-functions
     steps:
       - name: Validar configuracao e processar lote
         env:

@@ -8,6 +8,8 @@
 # ==================================================================
 # Nao deleta nada. Publica um relatorio no Job Summary com:
 #   - branches remotos patch-equivalentes a main (candidatos a poda)
+#   - W98: bloco pronto `git push origin --delete` para as podaveis (> 7 dias,
+#     sem PR aberta, fora de main/protegidas); rodar e decisao do dono
 #   - branches sem commit ha mais de 30 dias
 #   - PRs abertos ha mais de 14 dias
 # Origem: docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md, etapa E45.
@@ -20,6 +22,10 @@ on:
     - cron: '56 7 * * 1' # segunda-feira, 07:56 UTC (fora do minuto 0)
   workflow_dispatch: {}
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
   pull-requests: read
@@ -38,6 +44,8 @@ jobs:
       contents: read # o passo de relatorio faz git fetch/cherry
       actions: read # listar os runs do proprio repositorio (KPI)
       issues: write # criar/atualizar a issue semanal [kpi-actions]
+      security-events: read # W83: SLA de Code Scanning
+      pull-requests: read # gh pr list: PRs paradas e o filtro "sem PR aberta" do W98
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -57,7 +65,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           JANELA_DIAS: '7'
         run: |
-          set -euo pipefail
           node scripts/ci/actions-kpi.mjs
 
       - name: Gerar relatorio
@@ -65,12 +72,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          set -euo pipefail
           git fetch origin main --quiet
 
           # $RUNNER_TEMP sobrevive entre passos (cada `run:` e' um shell novo);
           # `mktemp` sozinho nao — o caminho morreria com o shell do passo 1.
           RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
+          # W98: as patch-equivalentes tambem vao para um TSV `<branch>\t<epoch do
+          # ultimo commit>`, que o passo "Comando pronto para poda" le.
+          EQUIVALENTES="$RUNNER_TEMP/branch-equivalentes.tsv"
+          : > "$EQUIVALENTES"
           {
             echo "## Auditoria de branches — $(date -u +%Y-%m-%d)"
             echo
@@ -91,6 +101,8 @@ jobs:
               n=$(printf '%s\n' "$cherry" | awk '/^\+/ { c += 1 } END { print c + 0 }')
               if [ "$n" = "0" ]; then
                 echo "$b"
+                ts=$(git log -1 --format=%ct "$ref")
+                printf '%s\t%s\n' "$b" "$ts" >> "$EQUIVALENTES"
               fi
             done
             echo '```'
@@ -120,6 +132,61 @@ jobs:
 
           cat "$RELATORIO" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Comando pronto para poda (W98)
+        # W98: para as patch-equivalentes sem commit ha > 7 dias, sem PR aberta e fora
+        # de main/protegidas, escreve no relatorio (e na issue) um bloco pronto de
+        # `git push origin --delete`. NAO apaga nada: rodar o bloco e decisao do dono.
+        # A logica (e os testes) vivem em scripts/ci/branch-podaveis.mjs. Se a lista de
+        # PRs ou de protegidas nao puder ser lida, o script nao gera comando nenhum.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          LIMITE_PRS: '500'
+        run: |
+          # O resumo do job ja foi copiado no passo do relatorio: esta secao vai aos dois.
+          RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
+          PRS="$RUNNER_TEMP/prs-abertas.json"
+          PROTEGIDAS="$RUNNER_TEMP/branches-protegidas.txt"
+          if ! gh pr list --repo "$REPO" --state open --limit "$LIMITE_PRS" --json headRefName > "$PRS"; then
+            echo '{"erro":"falha ao listar PRs abertas"}' > "$PRS"
+          fi
+          if ! gh api --paginate "repos/$REPO/branches?protected=true&per_page=100" --jq '.[].name' > "$PROTEGIDAS"; then
+            rm -f "$PROTEGIDAS"
+          fi
+          node scripts/ci/branch-podaveis.mjs \
+            --equivalentes "$RUNNER_TEMP/branch-equivalentes.tsv" \
+            --prs "$PRS" \
+            --protegidas "$PROTEGIDAS" \
+            --limite-prs "$LIMITE_PRS" | tee -a "$RELATORIO" "$GITHUB_STEP_SUMMARY"
+
+      - name: SLA de Code Scanning (W83)
+        # W83: busca alertas abertos do Code Scanning e verifica SLA:
+        # high/critical → 14 dias; medium/low → 30 dias. Violação → exit 1.
+        # O relatório é anexado ao $RUNNER_TEMP/branch-hygiene.md.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
+          ARQUIVO="$RUNNER_TEMP/code-scanning-alerts.json"
+          # Ate 100 alertas abertos (o repo raramente tem mais). Falha de API vira um
+          # objeto de erro: o script avisa e nao bloqueia a auditoria de branches.
+          if ! gh api "repos/$REPO/code-scanning/alerts?state=open&per_page=100" > "$ARQUIVO" 2>/dev/null; then
+            echo '{"message":"falha ao consultar a API de code scanning"}' > "$ARQUIVO"
+          fi
+          # A logica (e os testes) vivem em scripts/ci/sla-code-scanning.mjs; o
+          # exit 1 em violacao de SLA atravessa o pipe por causa do pipefail.
+          # O resumo do job ja foi copiado no passo do relatorio: esta secao vai aos dois.
+          node scripts/ci/sla-code-scanning.mjs < "$ARQUIVO" | tee -a "$RELATORIO" "$GITHUB_STEP_SUMMARY"
+
+      - name: Verificar atualizações do toolchain (W40)
+        # W40: relata versões mais novas das ferramentas em .github/toolchain.json.
+        # Sempre exit 0 — informativo, não bloqueia.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/ci/bump-toolchain.mjs
+
       - name: Publicar na issue semanal [branch-hygiene]
         # E91: alem do Job Summary (efemero), mantem UMA issue aberta com a tabela,
         # para o historico ficar consultavel. Mesmo mecanismo do [kpi-actions] em
@@ -129,7 +196,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          set -euo pipefail
           # Cada `run:` e' um shell novo: a variavel do passo anterior nao existe
           # aqui. O ARQUIVO persiste (mesmo $RUNNER_TEMP), o nome dele nao — por
           # isso o caminho e' recalculado em vez de herdado.

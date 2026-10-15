@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseDryRunPlan, avaliarPlanoDoDryRun } from '../db-audit/dry-run-plan.mjs';
+import { parseDryRunPlan, avaliarPlanoDoDryRun, avaliarPlanoDoDryRunApplyAll } from '../db-audit/dry-run-plan.mjs';
 
 const CABECALHO = 'DRY RUN: migrations will *not* be pushed to the database.';
 const ALVO = '20261001120000';
@@ -111,4 +111,49 @@ test('E63: o passo do workflow le a saida do dry-run (pin)', () => {
   assert.match(passo, /dry-run-plan\.mjs/, 'o parser tem de ser chamado');
   assert.match(passo, /tee /, 'a saida do CLI precisa ir para arquivo, senao nao ha o que conferir');
   assert.match(passo, /set -euo pipefail/, 'e o pipe com tee exige pipefail (F-02)');
+});
+
+// W58: fixtures do modo apply_all_missing (W27) — lista ordenada, 1 faltando, 1 a mais.
+const ESPERADOS_W58 = ['20261010100000', '20261010110000', '20261010120000'];
+
+const SAIDA_APPLY_ALL = [
+  CABECALHO,
+  'Would push migration 20261010100000_a.sql...',
+  'Would push migration 20261010110000_b.sql...',
+  'Would push migration 20261010120000_c.sql...',
+  '',
+].join('\n');
+
+test('W58: apply_all_missing lista ordenada exata passa', () => {
+  const r = avaliarPlanoDoDryRunApplyAll({ texto: SAIDA_APPLY_ALL, esperados: ESPERADOS_W58 });
+  assert.equal(r.ok, true);
+  assert.equal(r.migracoes.length, 3);
+});
+
+test('W58: apply_all_missing com 1 arquivo faltando no dry-run recusa', () => {
+  const textoFaltando = [
+    CABECALHO,
+    'Would push migration 20261010100000_a.sql...',
+    'Would push migration 20261010120000_c.sql...',
+    '',
+  ].join('\n');
+  const r = avaliarPlanoDoDryRunApplyAll({ texto: textoFaltando, esperados: ESPERADOS_W58 });
+  assert.equal(r.ok, false);
+  assert.match(r.motivo, /faltando/, 'o motivo aponta o que falta');
+  assert.match(r.motivo, /20261010110000/, 'nomeia a versao ausente');
+});
+
+test('W58: apply_all_missing com 1 arquivo a mais no dry-run recusa', () => {
+  const textoExtra = [
+    CABECALHO,
+    'Would push migration 20261010100000_a.sql...',
+    'Would push migration 20261010110000_b.sql...',
+    'Would push migration 20261010115000_extra.sql...',
+    'Would push migration 20261010120000_c.sql...',
+    '',
+  ].join('\n');
+  const r = avaliarPlanoDoDryRunApplyAll({ texto: textoExtra, esperados: ESPERADOS_W58 });
+  assert.equal(r.ok, false);
+  assert.match(r.motivo, /extra/, 'o motivo aponta o que sobrou');
+  assert.match(r.motivo, /20261010115000/, 'nomeia a versao extra');
 });

@@ -23,30 +23,44 @@
 name: E2E logado
 
 on:
-  push:
+  # W71: dispara apos o CI/CD Pipeline concluir com sucesso na main (nao a cada
+  # push — so quando os 6 required checks ja passaram). O run herda o SHA do
+  # commit acionador via github.event.workflow_run.head_sha, garantindo que o
+  # Playwright teste exatamente o codigo que passou no CI.
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows: ['CI/CD Pipeline']
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
-# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
-# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
-# de push eram canceladas por push seguinte, varias delas a segundos de
-# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
-# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
-# chegarem enquanto a run atual roda, so o mais recente pendente roda em
-# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
-# commit mais novo", sem desperdicar runs quase completas.
+# cancel-in-progress: false enfileira ao inves de matar uma run em andamento.
+# W71: o sha do acionador e' usado como chave de concorrencia para que dois
+# pushes rapidos nao cancelem a run do primeiro antes de ela terminar.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  # W71: chave baseada no SHA do commit acionador (workflow_run) ou no ref
+  # (dispatch). Dois pushes ao mesmo SHA nao competem; dois SHAs diferentes
+  # enfileiram (cancel-in-progress: false).
+  group: e2e-logado-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # W06: o orcamento do JOB tem de caber setup (~1 min; ~3 min sem cache de browsers) +
+    # o --global-timeout do Playwright (13 min, no passo do Playwright) + os passos de
+    # falha (redacao, artifact, teardown, alerta). Com 15 min e sem global-timeout, os
+    # runs 38764055662 e 38771373068 foram CANCELADOS no meio da suite: cancelado nao e
+    # failure(), entao nao houve relatorio, nem lista de specs, nem issue -- 21 specs
+    # falharam sem ninguem saber quais.
+    timeout-minutes: 20
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -54,21 +68,52 @@ jobs:
       contents: read # checkout e leitura do repo
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
+      # W71: com workflow_run o gatilho e' o CI que passou — mas se alguem fizer
+      # um dispatch manual de uma branch que nao e' main, o guard ainda bloqueia.
+      # Para workflow_run, github.event.workflow_run.head_branch == 'main' e
+      # garantido pelo filtro `branches: [main]` no gatilho — aqui so protege
+      # o dispatch manual.
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        if: >-
+          github.event_name == 'workflow_dispatch' &&
+          github.ref != 'refs/heads/main'
+        env:
+          GH_REF: ${{ github.ref }}
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: $GH_REF)."
           exit 1
+
+      # W71: pular se o CI concluiu com falha (so interessa o success).
+      - name: ✋ Pular se CI falhou (W71)
+        if: >-
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion != 'success'
+        env:
+          WR_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          echo "CI/CD Pipeline concluiu com '$WR_CONCLUSION' — E2E logado nao roda."
+          exit 0
 
       - name: 📥 Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # W71: usar o SHA exato do commit que acionou o CI, nao o HEAD atual
+          # (pode ter mudado entre o fim do CI e o inicio deste job).
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: 🥖 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
 
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -85,11 +130,11 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install-deps chromium firefox webkit
 
       # Uma unica invocacao do Playwright, com os projetos listados
       # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
@@ -118,7 +163,6 @@ jobs:
         env:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
         run: |
-          set -euo pipefail
           if [ -n "$E2E_TEST_EMAIL" ]; then
             echo "::add-mask::$E2E_TEST_EMAIL"
             echo "e-mail do E2E mascarado no log"
@@ -126,8 +170,12 @@ jobs:
             echo "aviso: secret E2E_TEST_EMAIL vazio - nada a mascarar"
           fi
 
+      # W06: --global-timeout (13 min) fica ABAIXO do timeout-minutes do job. Estourado,
+      # o Playwright encerra a suite ele mesmo, grava o relatorio e sai com erro -- o passo
+      # FALHA e a redacao, o artifact e o alerta rodam. Sem ele, quem encerrava era o
+      # runner (job cancelado) e nada disso acontecia.
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+        run: bun run test:e2e -- --global-timeout=780000 --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
@@ -150,7 +198,6 @@ jobs:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: |
-          set -euo pipefail
           node scripts/ci/redigir-relatorio.mjs playwright-report \
             --segredo-env=E2E_TEST_EMAIL \
             --segredo-env=E2E_TEST_PASSWORD
@@ -164,54 +211,70 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
-      # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
-      # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
-      # A UNIQUE constraint (contact_id, dia) impede duplicatas no mesmo dia,
-      # mas a tabela cresce 1 row/CI-run sem este step.
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY (chave nao exposta ao publico).
-      # Se o secret nao estiver configurado, o step e ignorado (continue-on-error).
-      - name: 🧹 E2E teardown - limpar fixture de conversation_closures
+      # Teardown: apaga linhas de fixture geradas pelo E2E em producao
+      # (conversation_closures e catalog_send_events do contato
+      # 04dff4dc-c6b1-4283-ac22-bd8639804759). W74 (docs/ci/DECISOES_PENDENTES_2026-10-15.md):
+      # antes usava SUPABASE_SERVICE_ROLE_KEY (ignora todo o RLS de producao) so
+      # para isto. Agora loga como o proprio usuario de teste e chama a RPC
+      # SECURITY DEFINER e2e_cleanup() (migration 20261015200000), que so aceita
+      # esse usuario e so apaga as linhas do contato fixo -- a chave mestra deixa
+      # de ser necessaria neste workflow.
+      - name: 🧹 E2E teardown - limpar fixtures (conversation_closures + catalog_send_events)
         if: always()
         continue-on-error: true
         env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ] || [ -z "$E2E_TEST_EMAIL" ] || [ -z "$E2E_TEST_PASSWORD" ]; then
+            echo "credenciais ausentes - teardown pulado"
             exit 0
           fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+          ACCESS_TOKEN=$(curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X POST \
+            "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
+            -d "{\"email\":\"$E2E_TEST_EMAIL\",\"password\":\"$E2E_TEST_PASSWORD\"}" \
+            | jq -r '.access_token // empty')
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "login do usuario de teste falhou - teardown pulado"
+            exit 0
+          fi
+          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X POST \
+            "$SUPABASE_URL/rest/v1/rpc/e2e_cleanup" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
             && echo "teardown OK" \
             || echo "teardown falhou - nao bloqueia CI"
 
-      # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
-      # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar
-      # o que o CT-82 grava; a limpeza exige a service role. As mensagens do
-      # envio sao soft-deletadas (is_deleted=true) pelo afterEach do proprio spec.
-      # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
-      - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
-        if: always()
-        continue-on-error: true
-        env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # W77: captura as primeiras 20 linhas de stderr/stdout dos test-results antes
+      # do alerta -- evita round-trip ao artifact e garante o contexto imediato do erro.
+      - name: 📋 Capturar linhas de erro dos test-results (W77)
+        if: failure()
         run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
-            exit 0
+          ERRO_FILE="$RUNNER_TEMP/e2e-error-lines.txt"
+          # Percorre os diretorios de testes com falha e pega as primeiras 20 linhas
+          # do primeiro arquivo de erro disponivel (stderr, stdout, ou error.txt).
+          encontrou=0
+          for dir in test-results/*/; do
+            [ -d "$dir" ] || continue
+            for f in "${dir}stderr" "${dir}stdout" "${dir}error.txt"; do
+              if [ -f "$f" ] && [ -s "$f" ]; then
+                head -n 20 "$f" > "$ERRO_FILE"
+                encontrou=1
+                echo "::debug::erro capturado de $f"
+                break 2
+              fi
+            done
+          done
+          if [ "$encontrou" -eq 0 ]; then
+            touch "$ERRO_FILE"
+            echo "::debug::nenhum arquivo de erro encontrado em test-results/"
           fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            && echo "teardown catalog_send_events OK" \
-            || echo "teardown catalog_send_events falhou - nao bloqueia CI"
 
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
@@ -222,30 +285,70 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # W77: caminho do arquivo com as linhas de erro capturadas
+          ERRO_FILE: ${{ runner.temp }}/e2e-error-lines.txt
         with:
           script: |
-            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+            const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
               `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
             );
-            const titulo = process.env.TITULO;
-            const nomes = nomesDeTestResults('test-results');
+            const nomesDeTitulo = nomesDeTestResults('test-results');
+            // W80: título varia por causa — "login E2E falhou" vs "Suíte logada quebrada"
+            const titulo = tituloDe(nomesDeTitulo);
+            const nomes = nomesDeTitulo;
             const marcador = marcadorDe(nomes);
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+
+            // W77: inclui as primeiras 20 linhas de erro no corpo do alerta
+            let erroLinhas = '';
+            try {
+              const fs = require('fs');
+              const conteudo = fs.readFileSync(process.env.ERRO_FILE, 'utf8').trim();
+              if (conteudo) {
+                const linhas = conteudo.split('\n').slice(0, 20).join('\n');
+                erroLinhas = `\n\n**Primeiras linhas do erro:**\n\`\`\`\n${linhas}\n\`\`\``;
+              }
+            } catch { /* arquivo ausente ou vazio -- corpo sem bloco de erro */ }
 
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
             const issue = abertas.find((i) => i.title === titulo);
 
+            const runUrl = process.env.RUN_URL;
+            const rodape = `\n\n---\n[Log do run](${runUrl}) · [Artifact](${runUrl}#artifacts)`;
             if (!issue) {
               await github.rest.issues.create({
-                owner, repo, title: titulo, body: `${corpoDe(nomes)}\n\n${marcador}`,
+                owner, repo, title: titulo,
+                body: `${corpoDe(nomes)}${erroLinhas}${rodape}\n\n${marcador}`,
               });
               core.info(`issue aberta com ${nomes.length} teste(s) quebrado(s)`);
               return;
             }
 
+            // W91/E51: rotacionar issue apos 20 comentarios para manter legibilidade.
+            const primeiraContagem = await github.rest.issues.listComments({
+              owner, repo, issue_number: issue.number, per_page: 1,
+            });
+            const totalPaginasMatch = (primeiraContagem.headers?.link || '')
+              .match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+            const totalComentarios = totalPaginasMatch ? Number(totalPaginasMatch[1]) : (primeiraContagem.data.length);
+            if (totalComentarios > 20) {
+              const bodyRotacao = `${corpoDe(nomes)}${erroLinhas}${rodape}\n\n${marcador}`;
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issue.number,
+                body: `⚠️ Esta issue atingiu ${totalComentarios} comentários e está sendo rotacionada para manter legibilidade (política E51/W91).\n\nÚltimo alerta antes do fechamento:\n\n---\n\n${bodyRotacao}`,
+              });
+              await github.rest.issues.update({ owner, repo, issue_number: issue.number, state: 'closed', state_reason: 'completed' });
+              await github.rest.issues.create({
+                owner, repo, title: titulo,
+                body: `Continuação de #${issue.number} (fechada por atingir ${totalComentarios} comentários — E51/W91).\n\n---\n\n${bodyRotacao}`,
+              });
+              core.info(`issue #${issue.number} rotacionada (${totalComentarios} comentários)`);
+              return;
+            }
             // Mesma regra da E44: so comenta de novo quando a causa muda (o conjunto cresce
             // ou troca). Conjunto igual -- inclusive um a menos -- nao gera comentario novo.
             const { data: comentarios } = await github.rest.issues.listComments({
@@ -258,7 +361,7 @@ jobs:
             }
             await github.rest.issues.createComment({
               owner, repo, issue_number: issue.number,
-              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}\n\n${marcador}`,
+              body: `Falha nova, causa diferente:\n\n${corpoDe(nomes)}${erroLinhas}${rodape}\n\n${marcador}`,
             });
             core.info('comentario novo: a causa mudou');
 

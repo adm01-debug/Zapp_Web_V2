@@ -1,0 +1,8 @@
+{
+  "_comentario": "W61: origens exatas canonicas do CORS das Edge Functions. Mantida em sincronia com EXACT_ALLOWED_ORIGINS em supabase/functions/_shared/cors-origins.ts. O smoke testa cada origem desta lista.",
+  "exact": [
+    "https://zapp-web-v2.vercel.app",
+    "https://zappweb.app.br"
+  ],
+  "denied_example": "https://edge-smoke.invalid"
+}

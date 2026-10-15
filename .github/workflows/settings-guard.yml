@@ -27,6 +27,7 @@ jobs:
     name: Verificar branch protection e allow_auto_merge
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    environment: perimetro-leitura
     permissions:
       contents: read
       issues: write
@@ -52,5 +53,25 @@ jobs:
         run: node scripts/ci/github-settings-guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # W11/W12: PAT fine-grained (administration:read + metadata:read, so este repo,
+          # 90 dias) do environment perimetro-leitura, para eliminar o ponto cego de branch
+          # protection (403 com GITHUB_TOKEN). Fallback para github.token: sem o secret o
+          # guard roda como antes do W12 (campos administrativos = NAO VERIFICAVEL), nunca
+          # quebra. So LEITURA usa este token; issue e PATCH seguem com o GITHUB_TOKEN.
+          # Criacao/rotacao: docs/runbooks/migracao-segredos-environments.md.
+          ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
+          # W17: script salva snapshot JSON do perímetro em perimeter-snapshot.json
+          PERIMETER_SNAPSHOT_PATH: perimeter-snapshot.json
+
+      - name: 📦 Publicar snapshot do perímetro
+        # W17: artifact com o JSON do perímetro medido neste run.
+        # A próxima regressão de strict/allow_auto_merge ganha uma janela de 6h datada.
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: perimeter-snapshot-${{ github.run_id }}
+          path: perimeter-snapshot.json
+          if-no-files-found: ignore
+          retention-days: 14

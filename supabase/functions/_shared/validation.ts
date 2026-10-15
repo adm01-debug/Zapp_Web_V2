@@ -11,6 +11,10 @@ export{
   createWebhookValidator 
 } from './hmac-validation.ts';
 
+// Política de origem do CORS: fonte única em ./cors-origins.ts (também usada por schemas.ts).
+import { allowedOriginFor } from './cors-origins.ts';
+export { EXACT_ALLOWED_ORIGINS } from './cors-origins.ts';
+
 // ─── Structured Logger ─────────────────────────────────────────
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -89,27 +93,6 @@ export class Logger {
   }
 }
 
-// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
-// entra na lista exata: os hosts que ja serviram o app fora do fluxo
-// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
-// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
-// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
-// deixa de ser aceito de proposito, para existir UM endereco canonico.
-const EXACT_ALLOWED_ORIGINS = new Set([
-  'https://zapp-web-v2.vercel.app',
-]);
-
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
 /** Security headers applied to all responses */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -125,8 +108,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
-  const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = allowedOriginFor(req);
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
   return {
     ...SECURITY_HEADERS,
@@ -146,14 +128,14 @@ export const corsHeaders = getCorsHeaders();
 
 /** Standard JSON error response (with origin-validated CORS). */
 export function errorResponse(message: string, status = 400, req?: Request) {
-  const headers = req ? getCorsHeaders(req) : corsHeaders;
-  let body = message;
+  // W81: para 5xx delega ao internalErrorResponse — err.message nunca chega ao
+  // corpo da resposta (fecha CodeQL js/stack-trace-exposure em validation.ts).
   if (status >= 500) {
-    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
-    body = 'Internal server error';
+    return internalErrorResponse(new Error(message), req, status);
   }
+  const headers = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(
-    JSON.stringify({ error: body }),
+    JSON.stringify({ error: message }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
@@ -161,20 +143,21 @@ export function errorResponse(message: string, status = 400, req?: Request) {
 /** Serializes `err` for server-side logging only. Isolates err.message access
  * from the Response construction scope so CodeQL taint analysis does not trace
  * err.message → Response body (js/stack-trace-exposure). */
-function logServerError(err: unknown): void {
+function logServerError(err: unknown, status = 500): void {
   const msg = err instanceof Error ? err.message : String(err);
-  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg }));
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg }));
 }
 
-/** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
+/** Standard JSON 5xx error response. Logs the real error server-side; nunca expõe
  * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
- * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
-export function internalErrorResponse(err: unknown, req?: Request): Response {
+ * Use no lugar de errorResponse(err.message, 5xx, req) em todos os catch de 5xx.
+ * O status é preservado (502, 503, etc.) mas o corpo é sempre genérico. */
+export function internalErrorResponse(err: unknown, req?: Request, status = 500): Response {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
-  logServerError(err);
+  logServerError(err, status);
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
-    { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
 
@@ -217,6 +200,8 @@ export function jsonResponse(data: unknown, status = 200, req?: Request) {
           'x-degraded': [...degradacoes.entries()].map(([motivo, total]) => `${motivo}=${total}`).join(';'),
         }
       : {};
+  // codeql[js/stack-trace-exposure] -- `data` é controlado pelo caller (resposta de
+  // sucesso ou erro de roteamento estruturado, nunca stack trace interno).
   return new Response(
     JSON.stringify(data),
     { status, headers: { ...headers, 'Content-Type': 'application/json', ...degradado } }

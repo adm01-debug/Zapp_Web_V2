@@ -3,6 +3,11 @@
 #   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security e revisores do PR
+# nao-e-bug:
+#   - CodeQL nao e required check ainda: analise de ~3 min informativa; tornar
+#     required e decisao humana (W84) -- esta PR so remove o paths-ignore que
+#     bloqueava essa decisao (uma PR so de docs/migration nunca disparava o
+#     job, entao exigir o check travaria a fila para sempre nesse caso).
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
@@ -23,21 +28,26 @@ on:
   # NOTA: merge_group e inerte neste repo (conta User, nao Organization) —
   # ver CLAUDE.md:230-241. Os gatilhos merge_group ja existentes em ci.yml,
   # db-guard.yml e codeql.yml ficam presentes mas nao disparam (sem custo).
+  # W50: dispatch manual para reexecutar varredura completa apos triagem de alertas.
+  workflow_dispatch:
+
   pull_request:
     branches: [main]
-    # E78 (auditoria de 01/10/2026): 354 runs em 37 h, boa parte de PR que so mexe em
-    # docs, markdown ou SQL de migration. O CodeQL nao analisa nada disso -- ele cobre
-    # src/, scripts/, supabase/functions/ e os proprios workflows -- mas cada PR pagava
-    # a varredura inteira. Como o check NAO e required, ignorar esses caminhos nao trava
-    # merge nenhum. O `schedule` semanal segue sem filtro: o repositorio inteiro e
-    # varrido de qualquer forma, entao um PR so de docs nao escapa da analise.
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'supabase/migrations/**'
+    # W84 (docs/ci/DECISOES_PENDENTES_2026-10-15.md): o paths-ignore de E78 (docs/**,
+    # **/*.md, supabase/migrations/**) foi removido. Ele economizava runner em PR que
+    # so mexia nesses caminhos, mas como o check NAO era required isso nunca travava
+    # merge -- e travaria assim que virasse required: uma PR so de docs ou so de
+    # migration ficaria para sempre em "Expected — Waiting for status", e a fila (que
+    # so roda 1 PR por vez — R1 de docs/ci/ARQUITETURA_SEM_DESPERDICIO.md) pararia.
+    # Pre-requisito para tornar o check `CodeQL` obrigatorio; o `schedule` semanal
+    # continua cobrindo o repositorio inteiro sem filtro.
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
@@ -65,13 +75,15 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: javascript-typescript
           build-mode: none
+          # W82: ignora caminhos de teste para nao poluir alertas de codigo de producao.
+          config-file: .github/codeql/codeql-config.yml
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           category: '/language:javascript-typescript'
 
@@ -95,12 +107,12 @@ jobs:
           persist-credentials: false
 
       - name: 🧬 Initialize CodeQL
-        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: actions
           build-mode: none
 
       - name: 🔬 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           category: '/language:actions'

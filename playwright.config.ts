@@ -26,15 +26,15 @@ export default defineConfig({
   testIgnore: specsEmQuarentena(),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   // The Email fixture boots a full Vite app and captures visual artifacts. A
   // bounded local pool prevents cold-start starvation that made otherwise
   // independent specs observe the module-loading fallback after five seconds.
-  workers: process.env.CI ? 1 : 2,
+  workers: 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
   },
   // Screenshots de referência: caminho fixo pedido pela etapa 90 do
   // PLANO_CONTATOS_100_ETAPAS_2026-09-29 — `e2e/__screenshots__/contacts-*.png`
@@ -81,6 +81,7 @@ export default defineConfig({
       name: 'chromium-e2e-core',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -116,6 +117,7 @@ export default defineConfig({
       name: 'chromium-authenticated',
       testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -156,6 +158,7 @@ export default defineConfig({
       name: 'chromium-talkx',
       testMatch: /talkx\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
@@ -181,6 +184,7 @@ export default defineConfig({
       name: 'firefox-talkx',
       testMatch: /talkx\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'e2e/.auth/user.json',
@@ -192,6 +196,7 @@ export default defineConfig({
       name: 'webkit-talkx',
       testMatch: /talkx\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
@@ -247,6 +252,7 @@ export default defineConfig({
       name: 'firefox-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'e2e/.auth/user.json',
@@ -258,6 +264,7 @@ export default defineConfig({
       name: 'webkit-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
@@ -275,6 +282,7 @@ export default defineConfig({
       name: 'firefox-catalog',
       testMatch: /catalog\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'e2e/.auth/user.json',
@@ -285,6 +293,7 @@ export default defineConfig({
       name: 'webkit-catalog',
       testMatch: /catalog\.spec\.ts/,
       dependencies: ['setup'],
+      retries: 1,
       use: {
         ...devices['Desktop Safari'],
         storageState: 'e2e/.auth/user.json',
@@ -305,6 +314,7 @@ export default defineConfig({
       // Fixture tests exercise both sides of the runtime kill switch.  This is
       // test-server-only; production still requires the build env and the
       // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.  Without it, a complete CRM fixture can never reach the
       // panel and falsely validates only the disabled state.
       command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,

@@ -250,6 +250,18 @@ function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/**
+ * Classificação curta e segura de uma falha de rede para devolver ao cliente: o texto
+ * cru da exceção (URL, host, detalhes do runtime) fica só no log do servidor
+ * (js/stack-trace-exposure).
+ */
+function networkFailureDetail(err: unknown): string {
+  const nome = err instanceof Error ? err.name : '';
+  return nome === 'TimeoutError' || nome === 'AbortError'
+    ? 'Tempo esgotado ao chamar o provedor.'
+    : 'Falha de conexao com o provedor (detalhes no log do servidor).';
+}
+
 /** Corpo da resposta em texto; corpo já consumido não derruba a classificação. */
 async function bodyText(response: Response): Promise<string> {
   try {
@@ -457,7 +469,8 @@ async function runProviderTest(params: {
     response = await callFn();
   } catch (netErr) {
     // fetch lançou/abortou — o estouro do AbortController cai aqui.
-    return fail('NETWORK', 502, errorText(netErr));
+    log.warn('Provider network error', { provider: provider.name, error: errorText(netErr) });
+    return fail('NETWORK', 502, networkFailureDetail(netErr));
   }
 
   const body = await bodyText(response);

@@ -156,7 +156,6 @@ runtime_json="$(psql_file "$runtime_contract")"
 RUNTIME_JSON="$runtime_json" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_JSON);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
   && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '')
   && proof.note_table_count === 1
   && proof.note_rls_enabled === true

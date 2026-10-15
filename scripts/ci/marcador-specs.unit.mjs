@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { corpoDe, marcadorDe, nomesDeTestResults, PREFIXO } from './marcador-specs.mjs';
+import { corpoDe, eLoginFalhou, marcadorDe, nomesDeTestResults, PREFIXO, tituloDe } from './marcador-specs.mjs';
 
 test('E83: a ordem dos nomes nao muda o marcador -- o dedupe e pelo CONJUNTO', () => {
   const a = marcadorDe(['b-spec-chromium', 'a-spec-firefox']);
@@ -72,3 +72,29 @@ test('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam
   const recorteFecha = y.slice(fecha - 200);
   assert.match(recorteFecha, /if:\s*success\(\)/, 'o fechamento so roda quando a suite passa');
 });
+
+test('W80: eLoginFalhou detecta falha so de setup de auth', () => {
+  assert.equal(eLoginFalhou(['auth.setup.ts-login-chromium']), true);
+  assert.equal(eLoginFalhou(['auth.setup.ts-login', 'auth.setup.ts-2fa']), true);
+  assert.equal(eLoginFalhou(['setup-auth-chromium']), true);
+  assert.equal(eLoginFalhou([]), false, 'vazio nao e login falhou');
+  assert.equal(eLoginFalhou(['auth.setup.ts-login', 'catalog-spec-send']), false, 'misto nao e login falhou');
+  assert.equal(eLoginFalhou(['catalog-spec-fail']), false);
+});
+
+test('W80: tituloDe retorna titulo de login quando so setup falhou', () => {
+  assert.equal(
+    tituloDe(['auth.setup.ts-login-chromium']),
+    '[e2e-logado] login E2E falhou',
+  );
+  assert.equal(
+    tituloDe(['some-spec-chromium']),
+    '[e2e-logado] Suíte logada quebrada na main',
+  );
+  assert.equal(
+    tituloDe([]),
+    '[e2e-logado] Suíte logada quebrada na main',
+    'vazio (sem test-results) e suite quebrada, nao login',
+  );
+});
+

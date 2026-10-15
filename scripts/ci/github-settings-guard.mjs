@@ -34,12 +34,23 @@
  * Divergencia real continua saindo 1 e comentando (com dedupe de 6 h por causa).
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
+// W11/W12: PAT fine-grained com administration:read (secret `SETTINGS_GUARD_TOKEN` do
+// environment `perimetro-leitura`) para remover o ponto cego de branch protection.
+// `||`, NUNCA `??`: secret ausente chega ao processo como string VAZIA, nao `undefined`,
+// e com `??` o guard mandava `Authorization: Bearer ` (401, job vermelho) em vez de
+// cair no GITHUB_TOKEN. O workflow tambem passa `SETTINGS_GUARD_TOKEN || github.token`;
+// a comparacao com TOKEN distingue "dedicado" de "fallback" nos dois casos.
+const ADMIN_TOKEN_DEDICADO = (process.env.ADMIN_READ_TOKEN || '').trim();
+const TEM_ADMIN_DEDICADO = ADMIN_TOKEN_DEDICADO !== '' && ADMIN_TOKEN_DEDICADO !== TOKEN;
+let adminToken = TEM_ADMIN_DEDICADO ? ADMIN_TOKEN_DEDICADO : TOKEN;
+let adminRejeitado = false;
+const RUNBOOK_SEGREDOS = 'docs/runbooks/migracao-segredos-environments.md';
 const [OWNER, REPO_NAME] = REPO.split('/');
 
 const ISSUE_LABEL = 'settings-guard';
@@ -66,13 +77,6 @@ const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g,
 // ser a mesma em qualquer runner/locale; `localeCompare` muda com o ICU da máquina.
 const porCodigo = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
-const headers = {
-  Authorization: `Bearer ${TOKEN}`,
-  Accept: 'application/vnd.github+json',
-  'X-GitHub-Api-Version': '2022-11-28',
-  'User-Agent': 'settings-guard/2.0',
-};
-
 /** Erro de leitura por falta de escopo — não é regressão, é ponto cego. */
 class NaoVerificavel extends Error {
   constructor(caminho, status, motivo) {
@@ -82,13 +86,29 @@ class NaoVerificavel extends Error {
   }
 }
 
-async function gh(method, path, body) {
+/** 401: o token foi recusado (expirado, revogado ou malformado) — nao e falta de escopo. */
+class TokenRecusado extends Error {
+  constructor(caminho) {
+    super(`401 em ${caminho}: token recusado`);
+    this.caminho = caminho;
+  }
+}
+
+async function gh(method, path, body, overrideToken) {
+  const tok = overrideToken ?? TOKEN;
   const url = `https://api.github.com${path}`;
   const res = await fetch(url, {
     method,
-    headers: { ...headers, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: {
+      Authorization: `Bearer ${tok}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'settings-guard/2.0',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 401) throw new TokenRecusado(path);
   if (res.status === 403 || res.status === 404) {
     const text = await res.text().catch(() => '');
     // 404 aqui também costuma ser escopo, não ausência: a API esconde o recurso.
@@ -101,13 +121,38 @@ async function gh(method, path, body) {
   if (res.status === 204 || res.headers.get('content-length') === '0') return null;
   return res.json().catch(() => null);
 }
+// W11/W12: leituras administrativas usam o PAT fine-grained (administration:read);
+// escritas (issues, PATCH de restauracao) continuam com o GITHUB_TOKEN.
+// PAT recusado (401: expirou os 90 dias, foi revogado) nao derruba o guard: o resto do
+// run volta ao GITHUB_TOKEN — os campos administrativos reaparecem como NAO VERIFICAVEL,
+// que e o comportamento de antes do W12 — e o aviso pede a rotacao.
+async function ghAdmin(method, path, body) {
+  try {
+    return await gh(method, path, body, adminToken);
+  } catch (e) {
+    if (!(e instanceof TokenRecusado) || adminToken === TOKEN) throw e;
+    adminRejeitado = true;
+    adminToken = TOKEN;
+    console.log(
+      `::warning::SETTINGS_GUARD_TOKEN recusado (401) — expirado ou revogado. Leituras administrativas voltam ao GITHUB_TOKEN neste run; rotacionar conforme ${RUNBOOK_SEGREDOS}.`,
+    );
+    return gh(method, path, body, adminToken);
+  }
+}
+
+/** De onde vieram as leituras administrativas deste run (nunca o valor do token). */
+function fonteDaLeituraAdmin() {
+  if (adminRejeitado) return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN recusado com 401 — rotacionar)';
+  if (TEM_ADMIN_DEDICADO) return 'SETTINGS_GUARD_TOKEN (environment perimetro-leitura)';
+  return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN ausente — W11 pendente)';
+}
 
 // ---------------------------------------------------------------- checagens
 // Cada checagem devolve { campo, esperado, encontrado } ou lança NaoVerificavel.
 // `restauravel` diz se o guard sabe desfazer a divergência sozinho.
 
 async function checarBranchProtection() {
-  const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
+  const protection = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
   const esperado = baseline.branch_protection_main;
   const divergencias = [];
 
@@ -147,11 +192,22 @@ async function checarBranchProtection() {
       restauravel: false,
     });
   }
+
+  const linearHistory = protection?.required_linear_history?.enabled ?? null;
+  if (linearHistory !== (esperado.required_linear_history ?? null)) {
+    divergencias.push({ campo: 'branch_protection_main.required_linear_history', esperado: esperado.required_linear_history ?? null, encontrado: linearHistory, restauravel: false });
+  }
+
+  const allowForcePushes = protection?.allow_force_pushes?.enabled ?? null;
+  if (allowForcePushes !== (esperado.allow_force_pushes ?? null)) {
+    divergencias.push({ campo: 'branch_protection_main.allow_force_pushes', esperado: esperado.allow_force_pushes ?? null, encontrado: allowForcePushes, restauravel: false });
+  }
+
   return divergencias;
 }
 
 async function checarRepo() {
-  const repo = await gh('GET', `/repos/${OWNER}/${REPO_NAME}`);
+  const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const divergencias = [];
   const ausentes = [];
   for (const [campo, esperado] of Object.entries(baseline.merge)) {
@@ -173,11 +229,20 @@ async function checarRepo() {
   if (ausentes.length > 0) {
     return { divergencias, cego: `200 — campos nao expostos ao token: ${ausentes.join(', ')}`, campos: ausentes };
   }
+  // W14: security_and_analysis (secret_scanning*)
+  const blSec = baseline.security_and_analysis ?? {};
+  for (const [chave, valorEsperado] of Object.entries(blSec)) {
+    if (chave.startsWith('_')) continue; // skip JSON comment fields
+    const encontrado = repo?.security_and_analysis?.[chave]?.status ?? null;
+    if (encontrado !== valorEsperado) {
+      divergencias.push({ campo: `security_and_analysis.${chave}`, esperado: valorEsperado, encontrado, restauravel: false });
+    }
+  }
   return divergencias;
 }
 
 async function checarActions() {
-  const perms = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions`);
+  const perms = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions`);
   const divergencias = [];
   for (const [campo, esperado] of Object.entries(baseline.actions)) {
     const encontrado = perms?.[campo] ?? null;
@@ -188,8 +253,49 @@ async function checarActions() {
   return divergencias;
 }
 
+async function checarWorkflowPermissions() {
+  const perms = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/workflow`);
+  const divergencias = [];
+  const bl = baseline.workflow_permissions ?? {};
+  for (const [campo, esperado] of Object.entries(bl)) {
+    if (campo.startsWith('_')) continue; // skip JSON comment fields
+    const encontrado = perms?.[campo] ?? null;
+    if (encontrado !== esperado) {
+      divergencias.push({ campo: `workflow_permissions.${campo}`, esperado, encontrado, restauravel: false });
+    }
+  }
+  return divergencias;
+}
+
+async function checarSelectedActions() {
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const divergencias = [];
+  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
+    divergencias.push({
+      campo: 'selected_actions.patterns_allowed',
+      esperado: blPatterns.join(', '),
+      encontrado: encontradosPatterns.join(', ') || '(nenhum)',
+      restauravel: false,
+    });
+  }
+  return divergencias;
+}
+
+async function checarRulesets() {
+  const rulesets = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/rulesets`);
+  const divergencias = [];
+  const esperado = baseline.rulesets_count ?? 0;
+  const encontrado = (rulesets ?? []).length;
+  if (encontrado !== esperado) {
+    divergencias.push({ campo: 'rulesets.count', esperado, encontrado, restauravel: false });
+  }
+  return divergencias;
+}
+
 async function checarEnvironments() {
-  const dados = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
+  const dados = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
   const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();
   const esperados = [...baseline.environments].sort();
   const prefixosVercel = (baseline.environments_vercel_managed?.prefixos ?? []);
@@ -327,6 +433,7 @@ async function abrirOuAtualizarIssue(body, { assinatura, janelaMs, forcar = fals
   });
   console.log(`Issue #${semQuebra(issue.number)} aberta.`);
   return issue.number;
+
 }
 
 async function fecharIssue() {
@@ -349,10 +456,14 @@ async function main() {
     console.error('::error::GITHUB_TOKEN ausente');
     process.exit(1);
   }
+  console.log(`Leitura administrativa: ${fonteDaLeituraAdmin()}`);
   const checagens = [
     ['branch protection', checarBranchProtection],
     ['merge/repo', checarRepo],
     ['actions', checarActions],
+    ['workflow permissions', checarWorkflowPermissions],
+    ['selected actions', checarSelectedActions],
+    ['rulesets', checarRulesets],
     ['environments', checarEnvironments],
   ];
 
@@ -382,6 +493,19 @@ async function main() {
 
   for (const d of divergencias) {
     console.log(`divergencia: ${semQuebra(d.campo)} esperado=${semQuebra(d.esperado)} encontrado=${semQuebra(d.encontrado)}`);
+  }
+
+  // W17: salva snapshot do perimetro medido para artifact de diff.
+  const snapshotPath = process.env.PERIMETER_SNAPSHOT_PATH;
+  if (snapshotPath) {
+    const snapshot = {
+      medido_em: new Date().toISOString(),
+      run_id: process.env.GITHUB_RUN_ID ?? 'manual',
+      divergencias,
+      nao_verificaveis: naoVerificaveis,
+    };
+    writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
+    console.log(`Snapshot do perimetro salvo em ${snapshotPath}`);
   }
 
   if (divergencias.length === 0 && naoVerificaveis.length === 0) {
@@ -435,8 +559,10 @@ async function main() {
     linhas.push(
       '### Não verificável com o token do workflow',
       '',
-      'Estes campos **não puderam ser conferidos** — a API exige escopo que o `GITHUB_TOKEN` não tem.',
+      'Estes campos **não puderam ser conferidos** — a API exige escopo que o token usado não tem.',
       'Não é "está tudo certo": é "não consegui olhar".',
+      '',
+      `Leitura administrativa deste run: ${fonteDaLeituraAdmin()}. Credencial e rotação: \`${RUNBOOK_SEGREDOS}\`.`,
       '',
       '| Checagem | Motivo |',
       '|---|---|',

@@ -67,6 +67,14 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -82,17 +90,15 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium
+        run: ./node_modules/.bin/playwright install-deps chromium
 
-      - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
-        run: bun run test:e2e -- --project=chromium
-        env:
-          CI: true
-
+      # O antigo passo "--project=chromium" saiu em 15/10/2026: esse projeto roda so
+      # e2e/auth.spec.ts (testMatch em playwright.config.ts), nao o Talk X, e o
+      # ci.yml ja o executa em toda PR no check obrigatorio "E2E Tests (Playwright)".
       - name: 🖼️ Régua visual Talk X (17 telas, deslogado)
         run: bun run test:e2e -- --project=chromium-talkx-visual
         env:
@@ -104,9 +110,13 @@ jobs:
           CI: true
 
       - name: 📊 Gera régua lado a lado (mock vs captura)
+        # W46: so e util quando o teste falha; nao desperdicar tempo/storage em runs verdes.
+        if: failure()
         run: node scripts/talkx/lado-a-lado.mjs --out .tmp/regua
 
       - name: ⬆️ Upload régua visual
+        # W46: artifact de diagnostico — so faz sentido existir quando ha falha.
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: regua-visual-talkx

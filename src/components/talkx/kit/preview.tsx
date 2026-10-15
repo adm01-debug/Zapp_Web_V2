@@ -1,8 +1,20 @@
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
+/** W81: valida que a URL é http/https (corta fluxo de taint CodeQL js/xss). */
+function toSafeImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'https:' || u.protocol === 'http:') ? u.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Bolha de preview estilo WhatsApp (mensagem enviada). */
 export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = 'Sua Empresa', className }: { text: string; mediaUrl?: string | null; mediaType?: string | null; time?: string; senderName?: string; className?: string }) {
+  const safeImgUrl = mediaType === 'image' ? toSafeImageUrl(mediaUrl) : undefined;
   return (
     <div className={cn('rounded-2xl border border-border/60 bg-[hsl(240_5%_7%)] overflow-hidden', className)}>
       <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50 bg-card">
@@ -16,7 +28,7 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
         <div className="flex justify-center mb-2"><span className="text-3xs px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground">Hoje</span></div>
         <div className="flex justify-end">
           <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
-            {mediaUrl && mediaType === 'image' && /^https?:\/\//i.test(mediaUrl) && <img src={mediaUrl} alt="" className="rounded-lg mb-2 max-h-40 w-full object-cover" loading="lazy" decoding="async" />}
+            {safeImgUrl && <img src={safeImgUrl} alt="" className="rounded-lg mb-2 max-h-40 w-full object-cover" loading="lazy" decoding="async" />}
             {mediaUrl && mediaType && mediaType !== 'image' && (
               <div className="rounded-lg mb-2 px-2.5 py-2 bg-black/20 text-2xs text-muted-foreground">📎 {mediaType} anexado</div>
             )}
@@ -33,6 +45,7 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
 export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empresa' }: { text: string; mediaUrl?: string | null; mediaType?: string | null; senderName?: string }) {
   const now = format(new Date(), 'HH:mm');
   const initials = senderName.slice(0, 1).toUpperCase();
+  const safeImgUrl = mediaType === 'image' ? toSafeImageUrl(mediaUrl) : undefined;
   return (
     <div className="mx-auto flex-shrink-0" style={{ width: 272, height: 540 }}>
       <div className="relative w-full h-full rounded-[36px] border-[7px] border-[hsl(220_10%_14%)] bg-[hsl(220_10%_11%)] shadow-2xl overflow-hidden">
@@ -66,9 +79,7 @@ export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empres
           </div>
           <div className="flex justify-end">
             <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-[9px] text-foreground whitespace-pre-wrap leading-snug break-words">
-              {mediaUrl && mediaType === 'image' && (
-                /^https?:\/\//i.test(mediaUrl) && <img src={mediaUrl} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />
-              )}
+              {safeImgUrl && <img src={safeImgUrl} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />}
               {mediaUrl && mediaType && mediaType !== 'image' && (
                 <div className="rounded mb-1 px-1.5 py-0.5 bg-black/20 text-3xs text-muted-foreground">📎 {mediaType}</div>
               )}

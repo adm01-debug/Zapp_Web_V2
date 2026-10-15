@@ -6,6 +6,8 @@ import { z } from "https://esm.sh/zod@3.23.8";
 // E45: a lista de ações válidas do `evolution-api` NÃO é reescrita aqui — vem
 // dos conjuntos que o próprio handler usa para autorizar (fonte única).
 import { CONTROL_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";
+// Mesma política de origem do CORS de validation.ts (sem importá-lo: ver nota em validationErrorResponse).
+import { allowedOriginFor } from "./cors-origins.ts";
 
 export { z };
 
@@ -554,11 +556,12 @@ export function parseBody<T>(schema: z.ZodSchema<T>, data: unknown):
 /**
  * Resposta canônica de falha de validação — 422 Unprocessable Entity.
  * Corpo: { error: { code: 'VALIDATION_ERROR', message, fields: FieldError[] } }
- * Sem import de validation.ts (mantém o módulo importável em Node p/ testes).
+ * Sem import de validation.ts (mantém o módulo importável em Node p/ testes); a origem do
+ * CORS vem de cors-origins.ts, a mesma política de getCorsHeaders.
  */
 export function validationErrorResponse(
   source: { issues?: FieldError[]; error?: string } | z.ZodError | FieldError[],
-  _req?: Request,
+  req?: Request,
   contractVersion: 1 | 2 = 1,
 ): Response {
   let fields: FieldError[];
@@ -575,7 +578,7 @@ export function validationErrorResponse(
     status: 422,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': 'https://zapp-web-v2.vercel.app',
+      'Access-Control-Allow-Origin': allowedOriginFor(req),
       'x-contract-version': String(contractVersion),
       'Cache-Control': 'no-store',
       Vary: 'Origin',

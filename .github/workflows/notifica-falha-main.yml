@@ -1,0 +1,108 @@
+# docs:
+#   gatilho: workflow_run dos 5 workflows criticos da main (e2e-logado, db-live-guard, deploy-functions, db-migrate, settings-guard)
+#   prova: n/a (notificacao, nao guarda)
+#   falha: mensagem WhatsApp via N8N nao enviada se N8N_WEBHOOK_FALHA_MAIN ausente
+#   avisa: WhatsApp Evolution GO PRINCIPAL quando qualquer workflow critico falha na main (W97)
+name: Notificação de Falha na Main (WhatsApp)
+
+# W97: dispara após qualquer run de workflow critico na main concluir com falha.
+# Envia mensagem WhatsApp via N8N → Evolution GO PRINCIPAL.
+# Dedupe por hora: 1 notificacao por workflow por hora (evita spam em falha recorrente).
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows:
+      - 'E2E Tests (Logado)'
+      - 'Contrato DB vivo'
+      - 'Deploy Edge Functions'
+      - 'Database Migration'
+      - 'Settings Guard'
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      test_message:
+        description: 'Mensagem de teste (opcional)'
+        required: false
+
+concurrency:
+  # Uma notificacao por workflow por hora -- chave inclui hora UTC (AAAAMMDDHH).
+  group: notifica-falha-${{ github.event.workflow_run.name || 'manual' }}-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  notificar:
+    name: Enviar alerta WhatsApp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    # Pular se nao e' falha real (so workflow_run; workflow_dispatch e' sempre manual/teste).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: ✋ Verificar deduplicacao por hora (W97)
+        id: dedupe
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name || 'manual' }}
+          RUN_ID: ${{ github.event.workflow_run.id || github.run_id }}
+        run: |
+          # Chave de dedupe: workflow + hora UTC. Uma falha por hora por workflow.
+          hora_utc="$(date -u '+%Y%m%d%H')"
+          chave="notifica-${WORKFLOW_NAME// /-}-${hora_utc}"
+          echo "chave=${chave}" >> "$GITHUB_OUTPUT"
+          echo "Chave de dedupe: ${chave}"
+
+      - name: 🔑 Verificar cache de dedupe
+        id: cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /tmp/notifica-dedupe
+          key: ${{ steps.dedupe.outputs.chave }}
+
+      - name: ✋ Pular se ja notificado nesta hora
+        if: steps.cache.outputs.cache-hit == 'true'
+        env:
+          WF_NAME: ${{ github.event.workflow_run.name }}
+        run: |
+          echo "Dedupe ativo: ja notificado nesta hora para $WF_NAME."
+          exit 0
+
+      - name: 📨 Enviar notificação WhatsApp via N8N
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_FALHA_MAIN }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name || inputs.test_message || 'teste manual' }}
+          RUN_URL: ${{ github.event.workflow_run.html_url || github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion || 'manual' }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          if [ -z "$N8N_WEBHOOK_URL" ]; then
+            echo "::warning::N8N_WEBHOOK_FALHA_MAIN nao configurado — notificacao pulada."
+            exit 0
+          fi
+          MENSAGEM="❌ *Falha na main*: \`${WORKFLOW_NAME}\`
+          Conclusao: ${CONCLUSION}
+          Commit: \`${HEAD_SHA:0:7}\`
+          ${RUN_URL}"
+          PAYLOAD="$(printf '{"mensagem":"%s","workflow":"%s","run_url":"%s","head_sha":"%s"}' \
+            "$(echo "$MENSAGEM" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")" \
+            "$WORKFLOW_NAME" "$RUN_URL" "$HEAD_SHA")"
+          HTTP_CODE="$(curl --proto '=https' --tlsv1.2 \
+            --max-time 15 -s -o /dev/null -w '%{http_code}' \
+            -X POST "$N8N_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD")"
+          if [[ "$HTTP_CODE" =~ ^2 ]]; then
+            echo "Notificacao enviada (HTTP ${HTTP_CODE})."
+            mkdir -p /tmp/notifica-dedupe
+            touch /tmp/notifica-dedupe/sent
+          else
+            echo "::warning::N8N respondeu HTTP ${HTTP_CODE}; notificacao nao entregue."
+          fi

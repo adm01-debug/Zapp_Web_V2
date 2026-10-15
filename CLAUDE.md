@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md` (auditoria exaustiva dos 19 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -236,44 +236,80 @@ Estado dos achados após re-auditoria de 2026-09-17:
   disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
   com GitHub Enterprise Cloud para repositórios privados.
 
-## Perímetro do GitHub — estado canônico (2026-10-03)
+## Perímetro do GitHub — estado canônico (2026-10-15)
 
 **Regra:** qualquer mudança nos campos abaixo atualiza **esta tabela** e `scripts/ci/github-settings-baseline.json`
 **no mesmo PR** — o `settings-guard` compara a realidade com o baseline e divergência é regressão. Fonte: API do
-GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
+GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
 | Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
+| Branch protection — `required_linear_history` | `true` (W15, 2026-10-15: squash-only já é a política; fecha o gap de merge-commit acidental) | `settings-guard` ⚠ |
+| Branch protection — `allow_force_pushes` | `false` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
-| Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
-| Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
+| Workflow permissions | `default_workflow_permissions=read` (medido em 15/10 18:31; vale só para job sem bloco `permissions:`, e não há nenhum — contrato em `workflow-contracts.unit.mjs`) · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
+| Environments | **9** no baseline: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3), **+4 criados pela Vercel** (`Preview – *`/`Production – *`, reconhecidos pelo prefixo) = **13** na API | `settings-guard` |
+| Secrets (escopos) | repo (14, medido em 15/10) + `perimetro-leitura` (`SETTINGS_GUARD_TOKEN`) · `producao-ddl` · `producao-edge-functions` · `banco-leitura` · `db-ledger-evidence`. Os workflows já declaram o environment de cada secret; mover os **valores** é do Joaquim (`docs/runbooks/migracao-segredos-environments.md`) | `check-pr-workflow-secrets` · `secrets-environments.unit.mjs` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
+| Actions — `selected_actions_patterns` | 15 padrões (ver `scripts/ci/allowed-actions.json` e baseline) | `settings-guard` |
 | Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
+| Rulesets | `0` (merge queue indisponível em conta `User` — ver CLAUDE.md) | `settings-guard` |
+| Security — `secret_scanning` | `enabled` | `settings-guard` |
+| Security — `secret_scanning_push_protection` | `enabled` | `settings-guard` |
+| Security — `secret_scanning_validity_checks` | `disabled` (W16 bloqueado: requer plano pago, API ignora PATCH) | — |
+| Security — `secret_scanning_non_provider_patterns` | `disabled` (deliberado: requer plano pago — ver CLAUDE.md) | — |
 | GitHub Apps | **não auditado** — o token da sessão não lista instalações (E89 decide) | — |
 
 ⚠ Os campos de branch protection são lidos com o `GITHUB_TOKEN` de workflow, que **não** tem o escopo
 `administration`: a API responde **403** e o guard marca o campo como **"NÃO VERIFICÁVEL"** — não como regressão.
 **403 administrativo é limite de evidência**, nunca confirmação de configuração errada.
 
+## CI sem desperdício (2026-10-15) — regras protegidas por contrato
+
+Fonte: `docs/ci/ARQUITETURA_SEM_DESPERDICIO.md`. Contrato: `scripts/ci/arquitetura-sem-desperdicio.unit.mjs`
+(roda no check obrigatório `🔍 Lint & TypeCheck`; regressão deixa a CI vermelha). Medido antes: 100 runs de CI em
+~36 h, 8 de 9 pushes na `main` refazendo árvore já aprovada, 26 min de CI por merge (14 min só para rodar a suíte de
+novo pela cobertura).
+
+- **R1 — fila serial.** `auto-update-pr-branch.yml` atualiza **uma** PR por vez (`scripts/ci/fila-merge.mjs`): com
+  uma PR em voo, ninguém mais é atualizado; sem PR em voo, vai a próxima por ordem de auto-merge (FIFO). PR com
+  check obrigatório vermelho sai da fila até ser corrigida. **Não volte a atualizar todas as PRs BEHIND de uma vez.**
+- **R2 — reuso de árvore.** No push na `main`, `ci.yml` e `db-guard.yml` dispensam os jobs quando a árvore é a mesma
+  do head da PR e o último run da PR foi todo verde (`scripts/ci/reuso-arvore.mjs`; erro de API = roda tudo).
+  Job novo nesses workflows precisa de `needs: reuso` e do `if:` com `needs.reuso.outputs.reusar != 'true'`.
+- **R3 — a suíte de unidade roda uma vez.** 3 shards com cobertura em blob (`VITEST_SHARD_SEM_PISO=1`); o agregador
+  `🧪 Unit Tests` junta e aplica o piso **na PR**. Não reintroduza `test:coverage` no CI.
+- **R4 — nada espera o que não consome.** `Build`, `E2E` e `Security` não dependem dos testes.
+- **R5 — cancelado não é vermelho.** Agregadores usam `!cancelled()`, nunca `always()`.
+- **Relatório de E2E logado nunca sobe com credencial.** Em 15/10 o e-mail e a senha do usuário E2E estavam
+  em 4 artifacts públicos (passo `Fill` dentro do ZIP embutido no `index.html` e nos traces); o redator só
+  tratava texto solto. `scripts/ci/redigir-relatorio.mjs` agora abre ZIP embutido e aninhado e reprova o
+  upload se sobrar ocorrência. Os 4 artifacts foram apagados; trocar `E2E_TEST_PASSWORD` é do Joaquim.
+- **R6 — agente empurra lote validado.** Valide localmente (testes, lint, `actionlint`) e faça um push por lote:
+  cada push reinicia ~10 jobs, e 68 heads numa só branch em 36 h geraram 32 runs cancelados.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 18 workflows + 3 dinâmicos (21 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 15/10/2026:** são **17**
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
-`codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
-`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
-total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
+`codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`,
+`db-migrate.yml`, `deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `notifica-falha-main.yml`,
+`scorecard.yml`, `settings-guard.yml`, `talkx-status-regen.yml`,
+`targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **20 ao
+todo**. Em 15/10/2026 saíram `supabase-sync.yml` (desarmado, 0 runs em 30 dias) e
+`cleanup-artifacts.yml` (0 runs; a retenção de 14 dias do repo já expira os artifacts sozinha).
+A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
-`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
+`docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
 `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
@@ -284,17 +320,18 @@ sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não*
 **Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
 criados no repo; os dois primeiros passam a ser exigidos pelos workflows quando a PR #687 mergear:
 `producao-edge-functions` (deploy-functions.yml), `producao-ddl` (db-migrate.yml),
-`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com `branch_policy`).
+`legacy-import-destrutivo` (era do `supabase-sync.yml`, removido em 15/10/2026 — o environment ficou sem
+workflow e apagá-lo é decisão do Joaquim) e `db-ledger-evidence` (que existia só com `branch_policy`).
 **`required_reviewers` é campo administrativo:** com o `GITHUB_TOKEN` de workflow a API devolve **403** e o
 guard marca "NÃO VERIFICÁVEL" (`docs/audits/e95-perimetro-github-2026-10-03.md`) — não presuma aprovação que
 não foi medida; a medição de 03/10 registrou `producao-edge-functions` **sem** revisor obrigatório.
 Disparar qualquer um desses workflows pausa em `Waiting` no environment configurado.
 
-**`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
-(está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
-secret `LEGACY_IMPORT_UNLOCK` igual ao project-ref — secret que **não existe**, logo todo dispatch
-falha fechado. Para reativar: regerar o export a partir do banco oficial, criar o secret, removê-lo
-após o import. O export continua sendo um snapshot legado e defasado.
+**`supabase-sync.yml` foi removido em 15/10/2026.** Estava desarmado desde 25/09 (exigia aprovação
+no environment e o secret `LEGACY_IMPORT_UNLOCK`, que nunca existiu) e não teve nenhum run em 30 dias.
+Importava um snapshot legado e defasado (`supabase-export/`) por cima do banco oficial — não recrie
+esse caminho. Se um import legado for necessário um dia, regerar o export a partir do banco oficial e
+escrever um fluxo novo com o perímetro atual (`db-migrate.yml` é a referência).
 
 **CodeQL analisa os próprios workflows** (job `analyze-actions`, linguagem `actions`, check
 `🔬 CodeQL (actions)`). Deliberadamente um job separado: matrixar o job `analyze` renomearia o
@@ -419,7 +456,10 @@ pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar c
   como resolvido" → `CloseConversationDialog`, não um botão simples). Reescritos e habilitados no
   `e2e-logado.yml` (ver `e2e/README.md` e `e2e/fixtures/e2e-contact.ts`).
 - `vars.CRM_SYNC_WORKER_ENABLED` no crm-sync-worker: o schedule está comentado e a condição é
-  preparação deliberada para a reativação, não código morto.
+  preparação deliberada para a reativação, não código morto. **E nenhum `pg_cron` drena o
+  `crm_sync_outbox`** (W93, medido em 15/10: 474 pending desde 26/09, 0 concluídos, as 7 tentativas
+  falharam com `CRM_NOT_SYNCED`). Religar sem entender esse erro manda a fila para `dead_letter`;
+  roteiro em `docs/runbooks/CRM_INTEGRATION_ROLLOUT.md`.
 - `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
@@ -547,22 +587,28 @@ como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.l
 
 O shim intercepta os comandos Docker e os roteia para o container compartilhado.
 Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
-(isso causa passthrough para o Docker real). Os 11 passos com essa exceção hoje são:
+(isso causa passthrough para o Docker real). Os 15 passos com essa exceção hoje são (W51, 2026-10-15):
 
-1. `catalog-manifest.test.sh` — usa `docker logs` para aguardar readiness
-2. `inbox-contact-authorization.test.sh` — idem
-3. `cron-secret-l5-contract.test.sh` — idem
-4. `talkx-template-history-behavior.test.sh` — idem
-5. `talkx-transition-overload-postgrest.test.sh` — depende de PostgREST
-6. `message-delivery-phase1-behavior.test.sh` — idem
-7. `notification-delivery-atomicity.test.sh` — idem
-8. `generic-migration-runtime.test.sh` — idem
-9. `runtime-config.test.sh` — idem
-10. `psql-environment.integration.mjs` — idem
-11. `l11-departments-acl-escrita.test.sh` — idem
+1. `catalog-manifest.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
+2. `cron-secret-l5-contract.test.sh` — usa `docker exec createdb` e múltiplos bancos
+3. `talkx-template-history-behavior.test.sh` — cria dois bancos no mesmo container
+4. `talkx-transition-overload-postgrest.test.sh` — depende de container PostgREST separado
+5. `talkx-engine-provider.test.sh` — depende de PostgREST + containers de rede
+6. `message-delivery-phase1-behavior.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
+7. `psql-environment.integration.mjs` — conecta sem `-U` (usuário OS root); "role root does not exist" no serviço compartilhado
+8. `network-policy-rpc.test.sh` — sobe 2 containers simultâneos com `CREATE ROLE` globais conflitantes
+9. `runtime-config.test.sh` — `current_database()` deve devolver `'postgres'`; com o shim o banco isolado chama `shim_zapp-runtime-config-test-<PID>`, quebrando a asserção de identidade
+10. `l11-departments-acl-escrita.test.sh` — sobe seu próprio container postgres e usa `docker exec createdb` para 4 bancos (antes, depois, mut_a, mut_b); o shim encerra com exit 1 em `exec createdb`
+11. `ai-block03-vocabulary-contract.test.sh` — cria 3 containers (main, mut_a, mut_b), cada um executando `CREATE ROLE anon/authenticated/service_role`; roles globais colidem no cluster compartilhado
+12. `talkx-settings-rls.test.sh` — sobe container próprio e cria roles globais (`anon`, `authenticated`, `service_role`) incompatíveis com o shim
+13. `user-settings-sound-integrity-contract.test.sh` — sobe container próprio e cria roles globais incompatíveis com o shim
+14. `pg-cron-escalonamento.test.sh` — cria container próprio e executa `CREATE ROLE anon/authenticated/service_role`; roles globais colidem no cluster compartilhado
+15. `talkx-alerts-outcome-unknown-lote.test.sh` — cria container próprio e usa `docker logs` para readiness; sem o shim aplicaria as migrations ao serviço compartilhado, corrompendo o estado para steps seguintes
 
-Ao adicionar novo passo em `db-guard.yml`, verificar se o script usa `docker logs` para readiness
-ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`.
+Ao adicionar novo passo em `db-guard.yml`, verificar se o script: usa múltiplos bancos num
+container, depende de PostgREST, conecta sem `-U`, ou cria ROLEs globais conflitantes — se sim,
+adicionar `SKIP_DOCKER_SHIM: "1"`. O shim suporta `docker logs` (fake readiness), `docker exec psql`
+e `docker exec pg_isready` (W51); testes que só usam esses comandos são compatíveis.
 
 ## Talk X / Campanhas
 Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`

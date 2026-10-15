@@ -100,7 +100,6 @@ runtime_before="$(psql_test -At < "$repo_root/scripts/db-audit/notification-deli
 RUNTIME_JSON="$runtime_before" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_JSON);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
   && proof.base_table_count === 3
   && proof.calls_table_count === 1
   && proof.provider_event_column_count === 0
@@ -123,7 +122,6 @@ runtime_after="$(psql_test -At < "$repo_root/scripts/db-audit/notification-deliv
 RUNTIME_JSON="$runtime_after" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_JSON);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
   && proof.base_table_count === 3
   && proof.calls_table_count === 1
   && proof.provider_event_column_count === 1

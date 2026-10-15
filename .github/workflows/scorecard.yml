@@ -1,0 +1,59 @@
+# docs:
+#   gatilho: agendado (segunda 07:17 UTC) e dispatch
+#   prova: OpenSSF Scorecard mede praticas de segurança do repositório
+#   falha: SARIF publicado em Code Scanning; score visível em Security
+#   avisa: aba Security → Code scanning alerts
+# W86 (auditoria de GitHub Actions, 2026-10-14)
+name: OpenSSF Scorecard
+
+on:
+  schedule:
+    # Segunda-feira 07:17 UTC — sem colisão com outros agendamentos.
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+  # Publicar SARIF também quando a branch principal muda.
+  push:
+    branches: [main]
+
+# Nenhuma permissão no nível do workflow: a API do Scorecard recusa publicar com
+# qualquer `write` aqui ("global perm is set to write", run 38782461564; README
+# v2.4.1, "Global workflow restrictions"). As permissões ficam no job.
+permissions: {}
+
+concurrency:
+  group: scorecard
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: 📊 OpenSSF Scorecard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read  # checkout
+      security-events: write  # upload do SARIF para o Code Scanning
+      id-token: write  # assinatura do resultado publicado (só este job pode ter)
+    # Sem `defaults` nem `env`, nem no topo nem no job: o scorecard-action v2.4.1
+    # recusa publicar o resultado nos dois casos ("workflow contains global env
+    # vars or defaults", run 38773299007; README "Restrictions on the job").
+    # Não há passo `run:` aqui, então o W44 (bash estrito) não tem o que proteger;
+    # a exceção está travada em scripts/ci/workflow-contracts.unit.mjs.
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🔍 Run Scorecard analysis
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186 # v2.4.1
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          # Publica em ossf/scorecard-results para o badge; requer GITHUB_TOKEN.
+          publish_results: true
+
+      - name: 📤 Upload SARIF para Code Scanning
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: scorecard-results.sarif
+          wait-for-processing: true
