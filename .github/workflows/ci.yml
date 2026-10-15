@@ -130,13 +130,21 @@ jobs:
           node scripts/ci/render-workflow-docs.mjs --check
 
       - name: 🛡️ Audit workflow security (zizmor)
+        # W42: binario do release oficial pinado com sha256 (sem pip/Python).
         run: |
-          # --only-binary :all: impede o build de sdist (scripts de setup);
-          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
-          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
+          zizmor_version="1.30.1"
+          zizmor_asset="zizmor-x86_64-unknown-linux-gnu.tar.gz"
+          zizmor_sha256="e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
+          zizmor_dir="$RUNNER_TEMP/zizmor"
+          mkdir -p "$zizmor_dir"
+          curl --proto '=https' --tlsv1.2 -sSL -o "$zizmor_dir/$zizmor_asset" \
+            "https://github.com/zizmorcore/zizmor/releases/download/v${zizmor_version}/${zizmor_asset}"
+          echo "${zizmor_sha256}  ${zizmor_dir}/${zizmor_asset}" | sha256sum --check --strict
+          tar -xzf "$zizmor_dir/$zizmor_asset" -C "$zizmor_dir" zizmor
+          chmod +x "$zizmor_dir/zizmor"
           # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
           # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
-          zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
+          "$zizmor_dir/zizmor" --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
 
       - name: 🧾 Verify Edge deployment manifest freshness
         run: node scripts/edge-deploy/generate-manifest.mjs --check
