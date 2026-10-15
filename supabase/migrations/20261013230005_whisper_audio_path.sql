@@ -1,8 +1,10 @@
 -- whisper_audio_path
--- Rollback: remove a policy de SELECT nova do storage, o gatilho, a funcao de validacao, a constraint de formato e a coluna audio_path de public.whisper_messages.
+-- Rollback: remove a policy de SELECT nova do storage, o gatilho, o EXECUTE da
+-- funcao de validacao, a funcao, a constraint de formato e a coluna audio_path.
 -- Rollback (SQL executável, na ordem):
 --   drop policy if exists "Whisper audio readable by whisper member" on storage.objects;
 --   drop trigger if exists whisper_messages_valida_audio_path on public.whisper_messages;
+--   revoke execute on function public.whisper_messages_valida_audio_path() from public, anon, authenticated;
 --   drop function if exists public.whisper_messages_valida_audio_path();
 --   alter table public.whisper_messages drop constraint if exists whisper_messages_audio_path_formato;
 --   alter table public.whisper_messages drop column if exists audio_path;
@@ -52,6 +54,9 @@ alter table public.whisper_messages
 -- 3. Limite de tamanho/duracao e integridade do locator. SECURITY DEFINER porque o
 --    remetente nao enxerga o objeto pela RLS de storage.objects antes da linha do sussurro
 --    existir (a policy nova depende da propria linha); a funcao so LE metadata do objeto.
+--    Dispara em INSERT e em QUALQUER update da linha (nao so em update de audio_path):
+--    sem isso, um UPDATE de sender_id/target_agent_id trocava a titularidade da linha
+--    sem revalidar o objeto referenciado.
 --    search_path fixo; chamavel apenas como gatilho (retorna trigger), sem EXECUTE para
 --    PUBLIC/anon/authenticated (negado por padrao).
 create or replace function public.whisper_messages_valida_audio_path()
@@ -112,7 +117,7 @@ revoke execute on function public.whisper_messages_valida_audio_path() from publ
 
 drop trigger if exists whisper_messages_valida_audio_path on public.whisper_messages;
 create trigger whisper_messages_valida_audio_path
-  before insert or update of audio_path on public.whisper_messages
+  before insert or update on public.whisper_messages
   for each row execute function public.whisper_messages_valida_audio_path();
 
 -- 4. Leitura do audio do sussurro pelos mesmos membros que enxergam a linha: remetente,

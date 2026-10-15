@@ -1,7 +1,10 @@
 -- whisper_audio_path.sql
 -- Prova da nota de sussurro por audio: coluna audio_path (formato), leitura do objeto no
 -- bucket `audio-messages` pelos membros da linha de sussurro (remetente, agente destino,
--- admin/supervisor) e limites de tamanho/duracao/tipo.
+-- admin/supervisor) e limites de tamanho/duracao/tipo. Bloco 4 ancora o OR com a policy
+-- antiga (quando a antiga concede e a nova nega, o acesso continua aberto). Bloco 5 prova
+-- que o gatilho revalida em UPDATE de coluna fora de audio_path (5.6 barra referencia
+-- pendurada; 5.1 e o controle de que update legitimo passa).
 --
 -- COMO RODAR (banco local da tarefa, ja com a migration 20261013230005 aplicada):
 --   cat supabase/tests/whisper_audio_path.sql | zapp-db-local psql . <nome-do-banco>
@@ -183,6 +186,83 @@ begin
   if v_n <> 0 then raise exception 'FALHOU 3.5: anonimo enxergou o audio (%)', v_n; end if;
 
   raise notice 'OK 3 leitura (remetente, destino, admin) e negacao (nao membro, anonimo)';
+end $$;
+
+-- --------------------------------------- 4. sobreposicao com a policy antiga (OR soma)
+-- A policy antiga "Users can read assigned audio messages" concede SELECT quando existe
+-- mensagem com media_url terminando no objeto e o contato atribuido ao leitor. Abaixo o
+-- leitor (a3) nao e membro do sussurro nem admin: a policy nova NEGA, a antiga CONCEDE.
+-- Policies permissivas se SOMAM por OR, entao o acesso continua ABERTO pela antiga;
+-- este bloco ancora esse comportamento (contraste com o 3.4, que nega sem a mensagem).
+set local session_replication_role = replica;
+update public.contacts set assigned_to = '00000000-0000-4000-8000-0000000000b3'
+ where id = '00000000-0000-4000-8000-0000000000c1';
+insert into public.messages (id, contact_id, sender, content, message_type, media_url, is_edited, delivery_attempt_count, created_at, updated_at)
+values ('00000000-0000-4000-8000-0000000000e1', '00000000-0000-4000-8000-0000000000c1',
+  'agent', '', 'audio',
+  'audio/00000000-0000-4000-8000-0000000000a1/00000000-0000-4000-8000-0000000000c1/00000000-0000-4000-8000-0000000000d1',
+  false, 0, now(), now());
+set local session_replication_role = origin;
+
+do $$
+declare
+  v_path text := '00000000-0000-4000-8000-0000000000a1/00000000-0000-4000-8000-0000000000c1/00000000-0000-4000-8000-0000000000d1';
+  v_n int;
+begin
+  -- 4.1 policy antiga concede + policy nova nega = acesso ABERTO (OR das permissoes)
+  perform set_config('request.jwt.claims', json_build_object('sub','00000000-0000-4000-8000-0000000000a3','role','authenticated')::text, true);
+  execute 'set local role authenticated';
+  select count(*) into v_n from storage.objects where bucket_id='audio-messages' and name=v_path;
+  execute 'reset role';
+  if v_n <> 1 then raise exception 'FALHOU 4.1: sobreposicao com a policy antiga nao manteve o acesso aberto (%)', v_n; end if;
+
+  raise notice 'OK 4 sobreposicao (policy antiga concede + nova nega = acesso aberto)';
+end $$;
+
+-- --------------------------------------- 5. UPDATE de coluna fora de audio_path
+-- O gatilho dispara em QUALQUER update da linha. Hoje nao ha policy de UPDATE em
+-- whisper_messages; o grant temporario abaixo simula uma RLS futura mais permissiva
+-- para provar o gatilho como papel real (morre com o ROLLBACK do fim do teste). O 5.6
+-- invalida o objeto como admin (a policy de UPDATE do bucket permite a admin/supervisor;
+-- DELETE direto e proibido pelo storage) e mostra o UPDATE barrado.
+create policy tmp_whisper_update_prova on public.whisper_messages
+  for update to authenticated using (true) with check (true);
+
+do $$
+declare
+  v_path text := '00000000-0000-4000-8000-0000000000a1/00000000-0000-4000-8000-0000000000c1/00000000-0000-4000-8000-0000000000d1';
+  v_err text;
+begin
+  -- 5.1 controle (remetente): UPDATE fora de audio_path com objeto valido PASSA.
+  perform set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-4000-8000-0000000000a1', 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  update public.whisper_messages set content = 'editado' where audio_path = v_path;
+  raise notice 'OK 5.1 update fora de audio_path com objeto valido passa';
+  execute 'reset role';
+
+  -- Invalida o objeto como admin (papel real: a policy de UPDATE do bucket permite a
+  -- admin/supervisor; DELETE direto e proibido pelo storage, entao esvazia o metadata).
+  perform set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-4000-8000-0000000000a4', 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  update storage.objects set metadata = '{}'::jsonb
+   where bucket_id = 'audio-messages' and name = v_path;
+  execute 'reset role';
+
+  -- 5.6 (remetente): UPDATE de coluna fora de audio_path com referencia pendurada e
+  -- BARRADO (23514). Antes da correcao o gatilho nem disparava e o UPDATE passava.
+  perform set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-4000-8000-0000000000a1', 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  v_err := null;
+  begin
+    update public.whisper_messages set content = 'pendurado' where audio_path = v_path;
+  exception when others then
+    v_err := sqlstate;
+  end;
+  execute 'reset role';
+  if v_err is distinct from '23514' then
+    raise exception 'FALHOU 5.6: update fora de audio_path com referencia pendurada nao barrado (sqlstate=%)', coalesce(v_err, 'passou');
+  end if;
+  raise notice 'OK 5.6 update fora de audio_path com referencia pendurada barrado (23514)';
 end $$;
 
 select 'PASS whisper_audio_path' as resultado;
