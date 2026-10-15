@@ -68,3 +68,13 @@ test('o workflow chama o script com arquivo e não tem mais Node inline', () => 
   assert.doesNotMatch(wf, /NODE_EOF/);
   assert.doesNotMatch(wf, /node --input-type=module/);
 });
+
+test('caminho: só .json dentro das raízes permitidas', async () => {
+  const { caminhoPermitido } = await import('./sla-code-scanning.mjs');
+  const raiz = mkdtempSync(join(tmpdir(), 'raiz-'));
+  assert.equal(caminhoPermitido(join(raiz, 'a.json'), [raiz]), join(raiz, 'a.json'));
+  assert.equal(caminhoPermitido(join(raiz, '..', 'fora.json'), [raiz]), null);
+  assert.equal(caminhoPermitido(join(raiz, 'a.txt'), [raiz]), null);
+  assert.equal(caminhoPermitido('/etc/passwd', [raiz]), null);
+  assert.equal(caminhoPermitido(undefined, [raiz]), null);
+});

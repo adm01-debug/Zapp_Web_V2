@@ -34,10 +34,18 @@ function jobs(texto) {
   for (const parte of partes) {
     const m = /^ {2}([A-Za-z0-9_-]+):\s*$/m.exec(parte);
     if (!m) continue;
-    const needsLinha = /^ {4}needs:\s*(.+?)\s*$/m.exec(parte);
-    const needs = needsLinha ? needsLinha[1].replace(/[[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean) : [];
-    const se = /^ {4}if:\s*(.+?)\s*(#.*)?$/m.exec(parte);
-    saida[m[1]] = { bloco: parte, needs, if: se ? se[1] : null };
+    // Leitura por linha, sem regex com backtracking: valor = texto após "chave:",
+    // sem o comentário final (" # ...").
+    const valor = (chave) => {
+      const linha = parte.split('\n').find((l) => l.startsWith(`    ${chave}:`));
+      if (!linha) return null;
+      const bruto = linha.slice(`    ${chave}:`.length);
+      const comentario = bruto.indexOf(' #');
+      return (comentario >= 0 ? bruto.slice(0, comentario) : bruto).trim();
+    };
+    const needsBruto = valor('needs');
+    const needs = needsBruto ? needsBruto.replace(/[[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean) : [];
+    saida[m[1]] = { bloco: parte, needs, if: valor('if') };
   }
   return saida;
 }

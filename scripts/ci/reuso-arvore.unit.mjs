@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decidirReuso, JOB_REUSO } from './reuso-arvore.mjs';
+import { decidirReuso, JOB_REUSO, limparParaLog } from './reuso-arvore.mjs';
 
 const REPO = 'adm01-debug/Zapp_Web_V2';
-const SHA = 'aaaaaaaa1111';
-const HEAD = 'bbbbbbbb2222';
+const SHA = 'a'.repeat(40);
+const HEAD = 'b'.repeat(40);
 
 function apiFalsa(over = {}) {
   const dados = {
@@ -118,4 +118,23 @@ test('o job de reuso pulado no run da PR não impede o reuso; outro job pulado i
     { name: '🏗️ Build', conclusion: 'skipped' },
   ] } }) });
   assert.equal(outro.reusar, false);
+});
+
+test('entradas com formato inválido são recusadas antes de virar URL de API', async () => {
+  const api = apiFalsa();
+  await assert.rejects(decidirReuso({ ...base, repo: 'x/../../evil', api }), /GITHUB_REPOSITORY/);
+  await assert.rejects(decidirReuso({ ...base, sha: 'main', api }), /GITHUB_SHA/);
+  await assert.rejects(decidirReuso({ ...base, workflow: '../ci.yml?x=1', api }), /--workflow/);
+});
+
+test('head da PR com SHA inválido não é consultado', async () => {
+  const d = await decidirReuso({
+    ...base,
+    api: apiFalsa({ [`/repos/${REPO}/commits/${SHA}/pulls`]: [{ number: 10, merged_at: 'x', merge_commit_sha: SHA, base: { ref: 'main' }, head: { sha: '../x' } }] }),
+  });
+  assert.equal(d.reusar, false);
+});
+
+test('texto de log perde quebras de linha e caracteres de controle', () => {
+  assert.equal(limparParaLog('ok\n::error::forjado\r\x1b[31m'), 'ok ::error::forjado [31m');
 });

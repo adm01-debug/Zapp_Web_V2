@@ -45,6 +45,9 @@ concurrency:
 
 jobs:
   update-behind-branches:
+    # Run de CI vindo de fork nao aciona a fila (defesa extra: o checkout abaixo e
+    # sempre da main e o job so chama a API; nenhum codigo de PR e executado).
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

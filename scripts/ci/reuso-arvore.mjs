@@ -26,13 +26,31 @@ const NAO_BLOQUEANTE = /não bloqueante/i;
 // contrato da arquitetura.
 export const JOB_REUSO = '♻️ Reuso de árvore já testada';
 
+const REPO_RE = /^[\w.-]+\/[\w.-]+$/;
+const SHA_RE = /^[0-9a-f]{40}$/;
+const WORKFLOW_RE = /^[\w.-]+\.ya?ml$/;
+
+// As entradas vêm do runner (GITHUB_REPOSITORY, GITHUB_SHA) e do argv fixo do
+// workflow, mas entram em URL de API: formato inválido é recusado antes de virar
+// requisição (e o chamador cai em "roda tudo").
+export function validarEntrada({ sha, repo, workflow }) {
+  if (!REPO_RE.test(repo ?? '')) throw new Error('GITHUB_REPOSITORY com formato inválido');
+  if (!SHA_RE.test(sha ?? '')) throw new Error('GITHUB_SHA com formato inválido');
+  if (!WORKFLOW_RE.test(workflow ?? '')) throw new Error('--workflow com formato inválido');
+}
+
+// Texto que vai para log/summary sem quebra de linha nem caractere de controle.
+export const limparParaLog = (texto) => String(texto).replace(/[\u0000-\u001f\u007f]+/g, ' ');
+
 export async function decidirReuso({ evento, sha, repo, workflow, api }) {
   if (evento !== 'push') return { reusar: false, motivo: `evento ${evento}: roda tudo` };
+  validarEntrada({ sha, repo, workflow });
   const pulls = await api(`/repos/${repo}/commits/${sha}/pulls`);
   const pr = (pulls ?? []).find((p) => p.merged_at && p.merge_commit_sha === sha && p.base?.ref === 'main');
   if (!pr) return { reusar: false, motivo: 'commit sem PR mergeada correspondente: roda tudo' };
 
   const headSha = pr.head.sha;
+  if (!SHA_RE.test(headSha ?? '')) return { reusar: false, motivo: 'head da PR com SHA inválido: roda tudo' };
   const [commitMain, commitHead] = await Promise.all([
     api(`/repos/${repo}/git/commits/${sha}`),
     api(`/repos/${repo}/git/commits/${headSha}`),
@@ -89,10 +107,11 @@ async function main() {
   } catch (erro) {
     decisao = { reusar: false, motivo: `erro ao decidir (${erro.message}): roda tudo` };
   }
-  console.log(`reusar=${decisao.reusar} — ${decisao.motivo}`);
+  const motivo = limparParaLog(decisao.motivo);
+  console.log(`reusar=${decisao.reusar} — ${motivo}`);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `reusar=${decisao.reusar}\n`);
   if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Reuso de árvore\n\n${decisao.reusar ? '♻️ CI dispensada' : '▶️ CI completa'}: ${decisao.motivo}\n`);
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Reuso de árvore\n\n${decisao.reusar ? '♻️ CI dispensada' : '▶️ CI completa'}: ${motivo}\n`);
   }
 }
 

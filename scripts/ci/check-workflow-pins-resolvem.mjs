@@ -48,7 +48,7 @@ export function commitDaTag(saida, tag) {
 export async function verificarPins(pins, lsRemote) {
   const problemas = [];
   for (const pin of pins) {
-    const onde = [...pin.arquivos].sort().join(', ');
+    const onde = [...pin.arquivos].sort((a, b) => a.localeCompare(b)).join(', ');
     if (!pin.tag) {
       problemas.push(`${pin.repo}@${pin.sha} (${onde}): pin sem comentário "# vX.Y.Z" — não há tag para conferir`);
       continue;
