@@ -62,6 +62,17 @@ export interface UiPreferencesSnapshot {
 
 export const UI_PREFERENCES_CACHE_KEY = 'ui-preferences-cache';
 export const UI_PREFERENCES_TABLE = 'user_ui_preferences';
+/**
+ * Chave RESERVADA dentro de `prefs`: carimbo de tempo (ms desde a época) por
+ * chave de preferência. É o que implementa o "conflito = vence o mais recente"
+ * do cartão: cada `setPreference`/`clearPreference` carimba a chave com
+ * `Date.now()`, o carimbo viaja no cache e no `upsert` junto com o valor, e a
+ * leitura compara o carimbo local com o do servidor chave a chave. Nenhum hook
+ * consumidor lê esta chave (cada um lê só a sua).
+ */
+export const UI_PREFERENCES_TIMESTAMPS_KEY = '__atualizadoEm';
+
+/** Carimbos por chave (`UiPreferenceKey` -> ms). Tombstone: chave apagada localmente mantém o carimbo. */
 /** Agrupa rajadas de escrita (arrastar o slider de raio dispara vários `onChange`). */
 export const UI_PREFERENCES_DEBOUNCE_MS = 400;
 
@@ -124,6 +135,31 @@ function normalizarPrefs(valor: unknown): UiPreferences {
   return valor as UiPreferences;
 }
 
+/**
+ * Só carimbo finito vira carimbo: lixo de outra aba/versão (string, null,
+ * objeto) é ignorado e a chave passa a valer 0 (o servidor vence o empate).
+ */
+function normalizarCarimbos(valor: unknown): Record<string, number> {
+  if (valor === null || typeof valor !== 'object' || Array.isArray(valor)) return {};
+  const limpos: Record<string, number> = {};
+  for (const [chave, ts] of Object.entries(valor as Record<string, unknown>)) {
+    if (typeof ts === 'number' && Number.isFinite(ts)) limpos[chave] = ts;
+  }
+  return limpos;
+}
+
+/** Carimbos guardados no `prefs` vigente (a chave reservada nunca é preferência). */
+function carimbosLocais(): Record<string, number> {
+  return normalizarCarimbos((prefs as UiPreferences)[UI_PREFERENCES_TIMESTAMPS_KEY]);
+}
+
+/** Devolve `prefs` sem a chave reservada (é o que os hooks adotam como "cópia da conta"). */
+function semCarimbos(valor: UiPreferences): UiPreferences {
+  const copia = { ...valor };
+  delete copia[UI_PREFERENCES_TIMESTAMPS_KEY];
+  return copia;
+}
+
 function lerCache(): UiPreferences {
   try {
     const raw = localStorage.getItem(UI_PREFERENCES_CACHE_KEY);
@@ -138,6 +174,61 @@ function gravarCache(valor: UiPreferences): void {
   try {
     localStorage.setItem(UI_PREFERENCES_CACHE_KEY, JSON.stringify(valor));
   } catch { /* storage indisponível (modo restrito/quota): o servidor ainda é a fonte */ }
+}
+
+/**
+ * Conflito "vence o mais recente", chave a chave.
+ *
+ * Compara o carimbo local (do cache, que sobrevive ao recarregar a aba — ao
+ * contrário de `pendentes`, que é só memória) com o carimbo que veio na linha
+ * do servidor. Chave sem carimbo dos dois lados vale 0, e no empate o SERVIDOR
+ * vence (regra determinística para o cache antigo, que não tem carimbos).
+ *
+ * O que o local venceu — valor novo que a conta ainda não tem, edição offline
+ * recarregada antes de subir, ou remoção local (tombstone) mais nova que a
+ * cópia do servidor — volta para a fila (`pendentes`), então o fim do
+ * carregamento agenda o envio e a conta recebe sem o usuário mexer de novo.
+ */
+function mesclarPorRecencia(doServidor: UiPreferences): UiPreferences {
+  const tsServidor = normalizarCarimbos(doServidor[UI_PREFERENCES_TIMESTAMPS_KEY]);
+  const tsLocal = carimbosLocais();
+  const servidor = semCarimbos(doServidor);
+  const local = semCarimbos(prefs);
+  const mesclado: UiPreferences = {};
+  const tsMesclado: Record<string, number> = {};
+  const chaves = new Set([
+    ...Object.keys(servidor),
+    ...Object.keys(local),
+    ...Object.keys(tsServidor),
+    ...Object.keys(tsLocal),
+  ]);
+  chaves.forEach(chave => {
+    if (chave === '__proto__') return; // nunca vira chave própria (atribuição direta)
+    const noServidor = chave in servidor;
+    const noLocal = chave in local;
+    const tS = tsServidor[chave] ?? (noServidor ? 0 : -1);
+    const tL = tsLocal[chave] ?? (noLocal ? 0 : -1);
+    const localVence = noLocal && (!noServidor || tL > tS);
+    const remocaoVence = !noLocal && noServidor && tL > tS;
+    if (localVence) {
+      mesclado[chave] = local[chave];
+      tsMesclado[chave] = tL;
+      definirPendencia(
+        chave as UiPreferenceKey,
+        JSON.stringify(local[chave]),
+      );
+    } else if (remocaoVence) {
+      tsMesclado[chave] = tL;
+      definirPendencia(chave as UiPreferenceKey, REMOVIDO);
+    } else if (noServidor) {
+      mesclado[chave] = servidor[chave];
+      tsMesclado[chave] = tS;
+    } else {
+      tsMesclado[chave] = Math.max(tL, tS);
+    }
+  });
+  mesclado[UI_PREFERENCES_TIMESTAMPS_KEY] = tsMesclado;
+  return mesclado;
 }
 
 /**
@@ -231,7 +322,11 @@ function agendarEnvio(): void {
  */
 export function setUiPreference(key: UiPreferenceKey, value: unknown): void {
   if (value === undefined) { clearUiPreference(key); return; }
-  prefs = { ...prefs, [key]: value };
+  prefs = {
+    ...prefs,
+    [key]: value,
+    [UI_PREFERENCES_TIMESTAMPS_KEY]: { ...carimbosLocais(), [key]: Date.now() },
+  };
   definirPendencia(key, JSON.stringify(value));
   gravarCache(prefs);
   emit();
@@ -244,6 +339,10 @@ export function clearUiPreference(key: UiPreferenceKey): void {
     delete proximo[key];
     prefs = proximo;
   }
+  prefs = {
+    ...prefs,
+    [UI_PREFERENCES_TIMESTAMPS_KEY]: { ...carimbosLocais(), [key]: Date.now() },
+  };
   definirPendencia(key, REMOVIDO);
   gravarCache(prefs);
   emit();
@@ -270,9 +369,12 @@ async function loadFromServer(): Promise<void> {
       .maybeSingle();
     if (resposta?.error) throw resposta.error;
     const doServidor = normalizarPrefs((resposta?.data as { prefs?: unknown } | null)?.prefs);
-    // Só a leitura com sessão atualiza a "cópia da conta" que os hooks podem adotar.
-    serverPrefs = doServidor;
-    prefs = mesclarComPendentes(doServidor);
+    // Só a leitura com sessão atualiza a "cópia da conta" que os hooks podem adotar
+    // (sem a chave reservada de carimbos: ela é controle do motor, não preferência).
+    serverPrefs = semCarimbos(doServidor);
+    // Antes de aplicar as pendências em voo, resolve o conflito persistido:
+    // o que o cache tem de mais novo que a conta volta para a fila e sobe.
+    prefs = mesclarComPendentes(mesclarPorRecencia(doServidor));
     gravarCache(prefs);
     erro = null;
     status = 'ready';
@@ -295,8 +397,16 @@ export async function atualizarDoServidor(): Promise<void> {
 /** Envia agora o que está na fila, sem esperar o debounce. */
 export async function enviarPendentes(): Promise<void> {
   if (timer !== null) { clearTimeout(timer); timer = null; }
-  const uid = sessaoUserId;
+  let uid = sessaoUserId;
   if (!uid || pendentes.size === 0) return;
+  // Sem leitura bem-sucedida não há base da conta para mesclar: o objeto
+  // INTEIRO sairia do cache e apagaria da conta chaves nunca lidas. Tenta ler
+  // primeiro; se continuar sem leitura, a fila espera (nada é enviado).
+  if (serverPrefs === null) {
+    await loadFromServer();
+    uid = sessaoUserId;
+    if (!uid || serverPrefs === null || pendentes.size === 0) return;
+  }
 
   // Cópia de segurança: só sai da fila o que foi enviado E não mudou no meio do envio.
   const enviados = new Map(pendentes);

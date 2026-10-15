@@ -55,7 +55,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 import {
   UI_PREFERENCES_CACHE_KEY,
   UI_PREFERENCES_TABLE,
+  UI_PREFERENCES_TIMESTAMPS_KEY,
   __resetUiPreferencesParaTeste,
+  atualizarDoServidor,
   enviarPendentes,
   useUiPreferences,
 } from '@/hooks/ui/useUiPreferences';
@@ -93,10 +95,12 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
     expect(UI_PREFERENCES_TABLE).toBe('user_ui_preferences');
     expect(result.current.prefs.density).toBe('dense');
     expect(result.current.prefs.theme).toEqual({ preset: 'gx-hacker', borderRadius: 8 });
-    // O cache local acompanha a cópia que venceu (boot offline da próxima vez).
+    // O cache local acompanha a cópia que venceu (boot offline da próxima vez),
+    // junto com os carimbos (chave reservada: conta empate e tombstone por chave).
     expect(JSON.parse(localStorage.getItem(UI_PREFERENCES_CACHE_KEY) ?? '{}')).toEqual({
       density: 'dense',
       theme: { preset: 'gx-hacker', borderRadius: 8 },
+      [UI_PREFERENCES_TIMESTAMPS_KEY]: { density: 0, theme: 0 },
     });
   });
 
@@ -131,10 +135,16 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
 
     expect(h.upsert).toHaveBeenCalledTimes(1);
     expect(h.gravacoes[0].user_id).toBe('user-1');
-    expect(h.gravacoes[0].prefs).toEqual({
+    // O objeto inteiro viaja com os carimbos (cada escrita carimba a sua chave).
+    expect(h.gravacoes[0].prefs).toMatchObject({
       density: 'dense',
       signatureEnabled: false,
       shortcuts: { enviar: { key: 'e', modifiers: { ctrlKey: true } } },
+    });
+    expect(h.gravacoes[0].prefs[UI_PREFERENCES_TIMESTAMPS_KEY]).toMatchObject({
+      density: expect.any(Number),
+      signatureEnabled: expect.any(Number),
+      shortcuts: expect.any(Number),
     });
     expect(h.opcoes[0]).toEqual({ onConflict: 'user_id' });
   });
@@ -149,7 +159,7 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
     await esperarEnvio();
 
     expect(h.upsert).toHaveBeenCalledTimes(2);
-    expect(h.gravacoes[1].prefs).toEqual({
+    expect(h.gravacoes[1].prefs).toMatchObject({
       theme: { preset: 'navy', borderRadius: 4 },
       density: 'compact',
     });
@@ -214,7 +224,141 @@ describe('useUiPreferences — sincronização das preferências de UI com o ser
     act(() => { result.current.clearPreference('density'); });
     await esperarEnvio();
 
-    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs).toEqual({});
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs.density).toBeUndefined();
+    // Só sobra a chave reservada, com o carimbo da remoção (tombstone).
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs[UI_PREFERENCES_TIMESTAMPS_KEY]).toMatchObject({
+      density: expect.any(Number),
+    });
     expect(result.current.prefs.density).toBeUndefined();
+  });
+
+  it('conflito vence o mais recente por chave: local mais novo sobe, servidor mais novo é adotado', async () => {
+    localStorage.setItem(UI_PREFERENCES_CACHE_KEY, JSON.stringify({
+      density: 'compact',
+      theme: { preset: 'corporate', borderRadius: 14 },
+      [UI_PREFERENCES_TIMESTAMPS_KEY]: { density: 2000, theme: 1000 },
+    }));
+    h.estado.prefs = {
+      density: 'dense',
+      theme: { preset: 'sunset', borderRadius: 6 },
+      [UI_PREFERENCES_TIMESTAMPS_KEY]: { density: 1000, theme: 2000 },
+    };
+    __resetUiPreferencesParaTeste();
+
+    const { result } = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    // density: carimbo local (2000) > conta (1000) — fica o local...
+    expect(result.current.prefs.density).toBe('compact');
+    // theme: carimbo da conta (2000) > local (1000) — adota a conta.
+    expect(result.current.prefs.theme).toEqual({ preset: 'sunset', borderRadius: 6 });
+
+    // ...e o que o local venceu sobe para a conta sem o usuário mexer de novo.
+    await esperarEnvio();
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs).toMatchObject({
+      density: 'compact',
+      theme: { preset: 'sunset', borderRadius: 6 },
+    });
+  });
+
+  it('valor que só existe no cache (formato antigo, sem carimbos) é enviado à conta', async () => {
+    localStorage.setItem(UI_PREFERENCES_CACHE_KEY, JSON.stringify({ signatureEnabled: false }));
+    h.estado.prefs = {};
+    __resetUiPreferencesParaTeste();
+
+    const { result } = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    expect(result.current.prefs.signatureEnabled).toBe(false);
+
+    await esperarEnvio();
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs.signatureEnabled).toBe(false);
+  });
+
+  it('edição offline recarregada antes de subir não se perde (o carimbo do cache vence a conta)', async () => {
+    h.estado.prefs = {
+      density: 'dense',
+      [UI_PREFERENCES_TIMESTAMPS_KEY]: { density: 1000 },
+    };
+    h.estado.erroLeitura = new Error('offline');
+    __resetUiPreferencesParaTeste();
+
+    const offline = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(offline.result.current.ready).toBe(true));
+    act(() => { offline.result.current.setPreference('density', 'compact'); });
+    await esperarEnvio();
+    // Sem leitura, nada sai para a conta (a fila espera)...
+    expect(h.upsert).not.toHaveBeenCalled();
+    offline.unmount();
+
+    // ...recarrega a aba: o cache gravado (carimbado com a hora da edição) é relido...
+    h.estado.erroLeitura = null;
+    __resetUiPreferencesParaTeste();
+    const { result } = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    // ...o carimbo local (agora) é mais novo que o da conta (1000): fica o local e sobe.
+    expect(result.current.prefs.density).toBe('compact');
+    await esperarEnvio();
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs.density).toBe('compact');
+  });
+
+  it('sem leitura bem-sucedida o envio NÃO sai (não sobrescreve chaves da conta nunca lidas)', async () => {
+    h.estado.prefs = { theme: { preset: 'navy', borderRadius: 4 } };
+    h.estado.erroLeitura = new Error('offline');
+    __resetUiPreferencesParaTeste();
+
+    const { result } = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    act(() => { result.current.setPreference('density', 'compact'); });
+    await act(async () => { await enviarPendentes(); });
+    // A fila espera: nenhum upsert com o objeto do cache sai para a conta.
+    expect(h.upsert).not.toHaveBeenCalled();
+
+    // A rede volta: a releitura traz a base e SÓ então o objeto completo sobe, mesclado.
+    h.estado.erroLeitura = null;
+    await act(async () => { await atualizarDoServidor(); });
+    await esperarEnvio();
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs).toMatchObject({
+      density: 'compact',
+      theme: { preset: 'navy', borderRadius: 4 },
+    });
+  });
+
+  it('storage bloqueado na leitura: degrada para prefs vazio sem quebrar', async () => {
+    const leitura = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('bloqueado');
+    });
+    try {
+      __resetUiPreferencesParaTeste();
+      const { result } = renderHook(() => useUiPreferences());
+      await waitFor(() => expect(result.current.ready).toBe(true));
+      expect(result.current.prefs.density).toBeUndefined();
+    } finally {
+      leitura.mockRestore();
+    }
+  });
+
+  it('storage bloqueado na escrita: a conta continua recebendo a preferência', async () => {
+    const { result } = renderHook(() => useUiPreferences());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    const escrita = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    try {
+      act(() => { result.current.setPreference('density', 'dense'); });
+      await esperarEnvio();
+    } finally {
+      escrita.mockRestore();
+    }
+
+    expect(result.current.prefs.density).toBe('dense');
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs.density).toBe('dense');
   });
 });

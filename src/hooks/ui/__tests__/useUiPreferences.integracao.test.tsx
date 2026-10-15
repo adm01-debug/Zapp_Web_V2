@@ -76,7 +76,7 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
     await esperarEnvio();
 
     expect(h.gravacoes[h.gravacoes.length - 1]?.user_id).toBe('user-1');
-    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs).toEqual({ density: 'compact' });
+    expect(h.gravacoes[h.gravacoes.length - 1]?.prefs).toMatchObject({ density: 'compact' });
   });
 
   it('useDensity: ciclo de densidade continua funcionando e também é gravado', async () => {
@@ -139,5 +139,24 @@ describe('preferências de UI — os hooks falam com a conta (user_ui_preference
       'focus-input': { key: 'j', modifiers: { ctrlKey: true } },
       templates: { key: 'b', modifiers: { ctrlKey: true, shiftKey: true } },
     });
+  });
+
+  it('storage bloqueado: o consumidor continua funcionando e a conta recebe', async () => {
+    const { result } = renderHook(() => useDensity());
+    await waitFor(() => expect(result.current.density).toBe('comfortable'));
+
+    const escrita = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    try {
+      act(() => { result.current.setDensity('dense'); });
+      await esperarEnvio();
+    } finally {
+      escrita.mockRestore();
+    }
+
+    expect(result.current.density).toBe('dense');
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(h.gravacoes[0].prefs.density).toBe('dense');
   });
 });
