@@ -104,11 +104,32 @@ export async function syncContacts(
 
 // Evolution GO não expõe consulta de histórico (/chat/findMessages não existe;
 // mensagens chegam via webhook Message/HistorySync — GO_GAPS D6).
+// Feed de stories/status (find-status-messages) também não existe na GO: o
+// provedor não emite eventos de status (EVENT_IGNORE_STATUS=true; GO_GAPS D5).
+// Por isso `[]` seria MENTIRA — significaria "o contato não publicou status".
+// O retorno para find-status-messages é um ESTADO explícito
+// ('unavailable_in_provider'), distinguível de lista vazia, para o consumidor
+// escrever "indisponível neste provedor".
+export const STATUS_FEED_UNAVAILABLE_STATE = 'unavailable_in_provider';
+
 export function goHistoryNotSupported(actionName: string, corsHeaders: Record<string, string>): Response {
+  if (actionName === 'find-status-messages') {
+    return jsonRes({
+      success: false, notSupported: true,
+      state: STATUS_FEED_UNAVAILABLE_STATE,
+      provider: 'evolution-go',
+      message: 'Stories/status do WhatsApp não estão disponíveis na Evolution GO: o provedor não emite eventos de status nem expõe status@broadcast no histórico (GO_GAPS D5/D6).',
+    }, corsHeaders);
+  }
   return jsonRes({
     success: false, notSupported: true,
     message: `${actionName} não é suportado na Evolution GO: o histórico chega via webhook (Message/HistorySync). Use EVOLUTION_API_FLAVOR=v2 apenas com a Evolution API v2.`,
   }, corsHeaders);
+}
+
+/** Resposta do feed de status quando o provedor não o suporta (nunca lista vazia). */
+export function statusFeedUnavailable(corsHeaders: Record<string, string>): Response {
+  return goHistoryNotSupported('find-status-messages', corsHeaders);
 }
 
 export async function syncMessages(
