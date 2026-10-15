@@ -141,13 +141,11 @@ test('E98: o guarda vivo não dispara por mudança de Edge Function', () => {
   );
 });
 
-// Exceção conhecida e registrada: `supabase-sync.yml` (E98).
-// Ele importa `validarDestino` (comprova a identidade do banco) mas NÃO
-// `endurecerDestinoTls`. É um import MANUAL de snapshot LEGADO, desarmado desde
-// 28/08 e 25/09 (só roda por workflow_dispatch com confirmação de project-ref) —
-// mexer no fluxo de import para encaixar o endurecimento é risco maior que o
-// ganho, e não é desta etapa. Fica listado aqui para não sumir do radar.
-const EXCECOES_TLS = new Set(['supabase-sync.yml']);
+// Sem exceções desde 15/10/2026: o único workflow que recebia DESTINO_URL sem
+// `endurecerDestinoTls` era o `supabase-sync.yml` (E98), removido do repositório
+// por estar desarmado e sem nenhum run em 30 dias. Exceção nova precisa entrar
+// aqui com o motivo, não silenciosamente.
+const EXCECOES_TLS = new Set();
 
 test('E98: todo workflow que recebe DESTINO_URL endurece o TLS', () => {
   // DESTINO_URL é o segredo de conexão com o banco canônico. O endurecimento
@@ -170,7 +168,7 @@ test('E98: todo workflow que recebe DESTINO_URL endurece o TLS', () => {
 
 test('E98: a lista de exceções não cresce em silêncio', () => {
   // Se alguém acrescentar um workflow à exceção, este caso obriga a olhar.
-  assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
+  assert.equal(EXCECOES_TLS.size, 0, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
 // E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell

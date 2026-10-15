@@ -34,14 +34,10 @@ test('E74: o CLI e fail-closed quando o log nao existe', () => {
   assert.equal(r.status, 2, 'log ausente tem de sair com 2');
 });
 
-test('E74: supabase-sync retem 7 dias e o log do deploy e redigido antes de subir', () => {
-  const sync = ler('.github/workflows/supabase-sync.yml');
+test('E74: o log do deploy e redigido antes de subir e o artifact retem 14 dias', () => {
   const deploy = ler('.github/workflows/deploy-functions.yml');
 
-  // (1) o artifact do supabase-sync passa a ter retencao explicita de 7 dias
-  const blocoSync = sync.slice(sync.indexOf('Archive validation logs'));
-  assert.match(blocoSync, /retention-days: 7/, 'o artifact validation-logs precisa de retention-days: 7');
-
+  // (1) o artifact do supabase-sync (7 dias) saiu junto com o workflow, removido em 15/10/2026
   // (2) o artifact do deploy cai de 30 para 14 dias
   const blocoDeploy = deploy.slice(deploy.indexOf('Arquivar manifesto'));
   assert.match(blocoDeploy, /retention-days: 14/, 'o artifact do deploy precisa de retention-days: 14');

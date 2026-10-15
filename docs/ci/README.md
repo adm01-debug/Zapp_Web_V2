@@ -4,14 +4,13 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**19 workflows.**
+**17 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
 | Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main | PRs abertas ficam com a main e os checks saem de `action_required` | PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara | autor do PR | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main, merge_group e dispatch | lint, tipos, testes, build, security e E2E do codigo | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
-| Cleanup Old Artifacts | [`cleanup-artifacts.yml`](../../.github/workflows/cleanup-artifacts.yml) | dispatch e agendado (semanal, domingo) | apaga artifacts criados há mais de 14 dias; reporta contagem final | erros individuais de DELETE são contabilizados mas não travam (warning) | não | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | pull_request e agendado | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security e revisores do PR | — | — |
 | CRM Sync Worker | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | dispatch (manual; o cron foi desligado por rodar 100% skipped) | sincronizacao do CRM executada de ponta a ponta | o job fica vermelho e nada e sincronizado | quem disparou | — | — |
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
@@ -23,7 +22,6 @@
 | Notificação de Falha na Main (WhatsApp) | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run dos 5 workflows criticos da main (e2e-logado, db-live-guard, deploy-functions, db-migrate, settings-guard) | n/a (notificacao, nao guarda) | mensagem WhatsApp via N8N nao enviada se N8N_WEBHOOK_FALHA_MAIN ausente | WhatsApp Evolution GO PRINCIPAL quando qualquer workflow critico falha na main (W97) | — | — |
 | OpenSSF Scorecard | [`scorecard.yml`](../../.github/workflows/scorecard.yml) | agendado (segunda 07:17 UTC) e dispatch | OpenSSF Scorecard mede praticas de segurança do repositório | SARIF publicado em Code Scanning; score visível em Security | aba Security → Code scanning alerts | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
-| Supabase Sync & Validate | [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | dispatch (manual, com confirmacao de project-ref) | import de snapshot legado validado por identidade do destino | o import aborta antes de escrever | operador que disparou | — | — |
 | Talk X V4 placar regen (push) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
@@ -50,13 +48,6 @@
 - **O que prova:** lint, tipos, testes, build, security e E2E do codigo
 - **Quando falha:** PR fica vermelho e o merge e bloqueado pelos required checks
 - **Quem é avisado:** autor do PR e revisor, via checks do GitHub
-
-### Cleanup Old Artifacts (`cleanup-artifacts.yml`)
-
-- **Gatilho:** dispatch e agendado (semanal, domingo)
-- **O que prova:** apaga artifacts criados há mais de 14 dias; reporta contagem final
-- **Quando falha:** erros individuais de DELETE são contabilizados mas não travam (warning)
-- **Quem é avisado:** não
 
 ### CodeQL (`codeql.yml`)
 
@@ -135,13 +126,6 @@
 - **Quando falha:** issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio
 - **Quem é avisado:** issue de settings
 
-### Supabase Sync & Validate (`supabase-sync.yml`)
-
-- **Gatilho:** dispatch (manual, com confirmacao de project-ref)
-- **O que prova:** import de snapshot legado validado por identidade do destino
-- **Quando falha:** o import aborta antes de escrever
-- **Quem é avisado:** operador que disparou
-
 ### Talk X V4 placar regen (push) (`talkx-status-regen.yml`)
 
 - **Gatilho:** push
@@ -173,5 +157,4 @@
 | [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
 | [`codeql.yml`](../../.github/workflows/codeql.yml) | **CodeQL nao e required check** | analise de ~3 min informativa; tornar required e decisao humana (W84) |
 | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
-| [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | **desarmado por design** | o secret LEGACY_IMPORT_UNLOCK nao existe -- todo dispatch falha fechado antes de escrever qualquer coisa; reativar exige criar o secret + gerar novo export a partir do banco oficial |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |

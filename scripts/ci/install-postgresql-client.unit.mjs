@@ -7,7 +7,6 @@ const installer = await readFile(new URL('scripts/ci/install-postgresql-client.s
 const workflows = [
   '.github/workflows/db-live-guard.yml',
   '.github/workflows/db-migrate.yml',
-  '.github/workflows/supabase-sync.yml',
   '.github/workflows/targeted-ledger-evidence.yml',
   '.github/workflows/types-sync.yml',
 ];
