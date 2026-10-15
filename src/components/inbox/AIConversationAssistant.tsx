@@ -212,7 +212,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
     } finally {
       if (isMountedRef.current && isRequestCurrent(request)) setIsLoading(false);
     }
-  }, [analysisPeriod, analyses, beginRequest, canAnalyze, checkAndTriggerAlert, contactId, contactName, contextWindow, isRequestCurrent, periodDays, refetch]);
+  }, [analyses, beginRequest, canAnalyze, checkAndTriggerAlert, contactId, contactName, contextWindow, isRequestCurrent, periodDays, refetch]);
 
   useEffect(() => {
     isMountedRef.current = true;
