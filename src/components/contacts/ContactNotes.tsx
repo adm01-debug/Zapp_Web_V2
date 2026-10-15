@@ -34,13 +34,17 @@ interface ContactNotesProps {
   className?: string;
 }
 
-/** Fixadas primeiro; depois `created_at` desc (mesma ordem que o servidor entrega). */
+/** Fixadas primeiro; depois `created_at` desc e `id` desc no empate exato de
+ * instante — a MESMA ordem que o servidor entrega na paginação
+ * (`is_pinned` desc, `created_at` desc, `id` desc). Sem o desempate por `id`,
+ * duas notas do mesmo instante trocavam de lugar a cada render. */
 function orderNotes(notes: Note[]): Note[] {
   return [...notes].sort((a, b) => {
     const pin = Number(b.is_pinned === true) - Number(a.is_pinned === true);
     if (pin !== 0) return pin;
-    if (a.created_at === b.created_at) return 0;
-    return a.created_at < b.created_at ? 1 : -1;
+    if (a.created_at !== b.created_at) return a.created_at < b.created_at ? 1 : -1;
+    if (a.id !== b.id) return a.id < b.id ? 1 : -1;
+    return 0;
   });
 }
 
@@ -58,6 +62,14 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [pinBusyId, setPinBusyId] = useState<string | null>(null);
   const isMountedRef = useRef(true);
+  const editAreaRef = useRef<HTMLTextAreaElement | null>(null);
+  const editBtnRefs = useRef(new Map<string, HTMLButtonElement>());
+  /** Id da nota cujo botão "Editar nota" recebe o foco ao remontar: o editor
+   * desmonta ao salvar/cancelar/descartar e, sem isso, o foco caía no body. */
+  const pendingEditFocusRef = useRef<string | null>(null);
+  /** A confirmação de descarte acabou de abrir: o botão "Continuar editando"
+   * assume o foco ao montar. */
+  const confirmAbertaRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -65,11 +77,17 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   }, []);
 
   const fetchNotes = useCallback(async () => {
+    // Fixadas primeiro NO SERVIDOR, antes do limite: com `.order('created_at')`
+    // + `.limit(20)` e reordenação só no cliente, uma fixada mais antiga que as
+    // 20 recentes caía do `select` e sumia da ficha. `id` desc fecha o desempate
+    // (chave única: a página seguinte continua de onde a anterior parou).
     const { data } = await supabase
       .from('contact_notes')
       .select('id, content, created_at, author_id, is_pinned')
       .eq('contact_id', contactId)
+      .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(20);
 
     if (!isMountedRef.current) return;
@@ -186,7 +204,23 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
     setConfirmDiscard(false);
   };
 
-  const cancelarEdicao = () => {
+  /** Ref do botão "Editar nota" de cada cartão: guarda no mapa e, quando o
+   * editor acabou de fechar para esta nota, devolve o foco a ele. */
+  const refBotaoEditar = (noteId: string) => (el: HTMLButtonElement | null) => {
+    if (el) {
+      editBtnRefs.current.set(noteId, el);
+      if (pendingEditFocusRef.current === noteId) {
+        pendingEditFocusRef.current = null;
+        el.focus();
+      }
+    } else {
+      editBtnRefs.current.delete(noteId);
+    }
+  };
+
+  /** Fecha o editor devolvendo o foco ao "Editar nota" da mesma nota. */
+  const fecharEdicaoComFoco = (noteId: string) => {
+    pendingEditFocusRef.current = noteId;
     setConfirmDiscard(false);
     setEditingId(null);
   };
@@ -194,10 +228,25 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
   /** Só pede confirmação quando há alteração não salva de verdade. */
   const pedirDescartar = (note: Note) => {
     if (editDraft.trim() !== note.content.trim()) {
+      confirmAbertaRef.current = true;
       setConfirmDiscard(true);
       return;
     }
-    cancelarEdicao();
+    fecharEdicaoComFoco(note.id);
+  };
+
+  /** Ref do "Continuar editando": ao abrir a confirmação ele assume o foco. */
+  const refContinuarEditando = (el: HTMLButtonElement | null) => {
+    if (el && confirmAbertaRef.current) {
+      confirmAbertaRef.current = false;
+      el.focus();
+    }
+  };
+
+  /** "Continuar editando": fecha a confirmação e volta o foco à textarea. */
+  const continuarEditando = () => {
+    setConfirmDiscard(false);
+    editAreaRef.current?.focus();
   };
 
   const salvarEdicao = async (note: Note) => {
@@ -208,7 +257,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       await gravarNota(note.id, { content });
       if (!isMountedRef.current) return;
       setNotes(prev => prev.map(n => (n.id === note.id ? { ...n, content } : n)));
-      cancelarEdicao();
+      fecharEdicaoComFoco(note.id);
       toast.success('Nota atualizada');
     } catch {
       if (!isMountedRef.current) return;
@@ -351,6 +400,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                   <div className="space-y-1.5">
                     <Textarea
                       autoFocus
+                      ref={editAreaRef}
                       value={editDraft}
                       aria-label="Editar nota"
                       className="text-xs min-h-[60px] resize-none"
@@ -364,10 +414,10 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5">
                         <span className="text-2xs text-foreground">Descartar as alterações não salvas?</span>
                         <div className="flex gap-1.5">
-                          <Button variant="ghost" size="sm" className="h-6 text-2xs" onClick={() => setConfirmDiscard(false)}>
+                          <Button ref={refContinuarEditando} variant="ghost" size="sm" className="h-6 text-2xs" onClick={continuarEditando}>
                             Continuar editando
                           </Button>
-                          <Button variant="destructive" size="sm" className="h-6 text-2xs" onClick={cancelarEdicao}>
+                          <Button variant="destructive" size="sm" className="h-6 text-2xs" onClick={() => fecharEdicaoComFoco(note.id)}>
                             Descartar
                           </Button>
                         </div>
@@ -403,6 +453,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                       aria-label="Editar nota"
                       title="Editar nota"
                       className="w-6 h-6"
+                      ref={refBotaoEditar(note.id)}
                       onClick={() => iniciarEdicao(note)}
                     >
                       <Pencil className="w-3 h-3" />
