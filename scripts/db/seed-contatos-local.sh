@@ -40,12 +40,42 @@ while [ $# -gt 0 ]; do
     --url=*)    URL="${1#--url=}"; shift ;;
     --rollback) MODO="rollback"; shift ;;
     --verificar|--check) MODO="verificar"; shift ;;
+    --autoteste) MODO="autoteste"; shift ;;
     -h|--help)  uso; exit 0 ;;
     *) echo "opcao desconhecida: $1 (veja --help)" >&2; exit 2 ;;
   esac
 done
 
 [ -f "$SQL" ] || { echo "ERRO: nao achei $SQL" >&2; exit 2; }
+
+# ----------------------------------------------------------- AUTOTESTE DA TRAVA
+# `--autoteste` prova a trava da URL sem tocar em banco: chama este mesmo script com URLs de
+# desvio e confere o codigo de saida. Nasceu da recusa da rodada 2 (o libpq decodifica
+# percent-encoding no NOME do parametro, entao `?%68ost=` chegava como `host=` e passava pela
+# comparacao literal antiga) e trava a regressao: com a trava antiga os dois primeiros casos
+# abaixo passavam, e aqui eles reprovam.
+if [ "$MODO" = autoteste ]; then
+  FALHAS=0
+  caso() {  # caso <esperado> <descricao> <url>
+    local esperado="$1" desc="$2" url="$3" rc=0 saida=""
+    saida="$("$0" --url "$url" 2>&1)" || rc=$?
+    if [ "$rc" = "$esperado" ]; then
+      printf 'ok   %s (exit=%s)\n' "$desc" "$rc"
+    else
+      printf 'FALHA %s: esperava exit=%s, veio exit=%s\n      %s\n' "$desc" "$esperado" "$rc" "$(printf '%s' "$saida" | head -1)"
+      FALHAS=$((FALHAS+1))
+    fi
+  }
+  caso 3 "percent-encoding no nome do parametro (?%68ost=)" 'postgresql://postgres:x@127.0.0.1:54322/postgres?%68ost=10.1.2.3'
+  caso 3 "host= na query"                                   'postgresql://postgres:x@127.0.0.1:54322/postgres?host=10.1.2.3'
+  caso 3 "service= na query (fora da allow-list)"           'postgresql://postgres:x@127.0.0.1:54322/postgres?service=prod'
+  caso 3 "hostaddr= na query"                               'postgresql://postgres:x@127.0.0.1:54322/postgres?hostaddr=10.1.2.3'
+  caso 3 "host nao local"                                   'postgresql://postgres:x@10.1.2.3:5432/postgres'
+  caso 3 "varios hosts separados por virgula"               'postgresql://postgres:x@127.0.0.1:54322,10.1.2.3:5432/postgres'
+  caso 3 "URL de producao (supabase.co)"                    'postgresql://postgres:x@db.abcdefgh.supabase.co:5432/postgres'
+  if [ "$FALHAS" = 0 ]; then echo "AUTOTESTE: OK — 7 casos de desvio recusados com exit=3"; exit 0; fi
+  echo "AUTOTESTE: $FALHAS caso(s) nao recusado(s)"; exit 1
+fi
 
 # ---------------------------------------------------------------- descobre a URL
 if [ -z "$URL" ]; then
