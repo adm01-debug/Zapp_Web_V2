@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { rpc, invoke } = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
+const { rpc, invoke, from, update, eq } = vi.hoisted(() => {
+  const eq = vi.fn();
+  const update = vi.fn(() => ({ eq }));
+  const from = vi.fn(() => ({ update }));
+  return { rpc: vi.fn(), invoke: vi.fn(), from, update, eq };
+});
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc, functions: { invoke } },
+  supabase: { rpc, functions: { invoke }, from },
 }));
 
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
@@ -402,5 +407,71 @@ describe('sendOutboundMessage', () => {
 
     const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
     expect(ids).toEqual(['ttl-1', 'ttl-1', 'ttl-2']);
+  });
+
+  // PK-24 — prévia de link das mensagens ENVIADAS. O aceite é o enqueue; a partir
+  // dele o envio pede a prévia ao Edge (mesmo caminho do webhook nas recebidas) e
+  // grava em `messages.link_preview`. Nada disso pode atrasar ou derrubar o envio.
+  it('texto com link pede a prévia depois do aceite e grava no banco', async () => {
+    rpc.mockResolvedValue({ data: { id: 'msg-preview', status: 'sending', external_id: null }, error: null });
+    invoke.mockImplementation((name: string) =>
+      name === 'message-delivery'
+        ? Promise.resolve({
+          data: { messageId: 'msg-preview', status: 'sent', externalId: null, idempotent: false }, error: null,
+        })
+        : Promise.resolve({
+          data: { preview: { url: 'https://exemplo.com/materia', title: 'Matéria' } }, error: null,
+        }),
+    );
+    eq.mockResolvedValue({ error: null });
+    update.mockImplementation(() => ({ eq }));
+    from.mockImplementation(() => ({ update }));
+
+    await expect(sendOutboundMessage({
+      contactId: 'a9aed371-fb0a-4a8a-ae12-4f61bf1169e0',
+      content: 'veja https://exemplo.com/materia',
+    })).resolves.toMatchObject({ id: 'msg-preview', status: 'sent' });
+
+    expect(invoke).toHaveBeenCalledWith('fetch-link-preview', {
+      body: { url: 'https://exemplo.com/materia' },
+      signal: expect.any(AbortSignal),
+    });
+    await vi.waitFor(() => expect(from).toHaveBeenCalledWith('messages'));
+    expect(update).toHaveBeenCalledWith({
+      link_preview: { url: 'https://exemplo.com/materia', title: 'Matéria' },
+    });
+    expect(eq).toHaveBeenCalledWith('id', 'msg-preview');
+  });
+
+  it('texto sem link não pede prévia', async () => {
+    rpc.mockResolvedValue({ data: { id: 'msg-sem-link', status: 'sending', external_id: null }, error: null });
+    invoke.mockResolvedValue({
+      data: { messageId: 'msg-sem-link', status: 'sent', externalId: null, idempotent: false }, error: null,
+    });
+
+    await expect(sendOutboundMessage({ contactId: 'contato-sem-link', content: 'bom dia' }))
+      .resolves.toMatchObject({ id: 'msg-sem-link' });
+
+    const chamadasDePreview = invoke.mock.calls.filter(([nome]) => nome === 'fetch-link-preview');
+    expect(chamadasDePreview).toEqual([]);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('prévia indisponível não derruba o envio já aceito', async () => {
+    rpc.mockResolvedValue({ data: { id: 'msg-falha-preview', status: 'sending', external_id: null }, error: null });
+    invoke.mockImplementation((name: string) =>
+      name === 'message-delivery'
+        ? Promise.resolve({
+          data: { messageId: 'msg-falha-preview', status: 'sent', externalId: null, idempotent: false }, error: null,
+        })
+        : Promise.reject(new Error('edge fora do ar')),
+    );
+
+    await expect(sendOutboundMessage({
+      contactId: 'contato-falha-preview',
+      content: 'veja https://exemplo.com/materia',
+    })).resolves.toMatchObject({ id: 'msg-falha-preview', status: 'sent' });
+
+    expect(invoke).toHaveBeenCalledWith('fetch-link-preview', expect.anything());
   });
 });

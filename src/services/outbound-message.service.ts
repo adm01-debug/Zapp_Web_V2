@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import { drainOfflineQueueOnReconnect, offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { enrichSentMessageLinkPreview } from './link-preview.service';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -163,7 +164,17 @@ async function enqueueAndDispatch(
     throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem.');
   }
 
-  return dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+  const result = await dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+
+  // Prévia do link (PK-24): bônus DEPOIS do aceite, no caminho real de envio
+  // (`messageSender`/`ChatService` já passam por aqui). É o mesmo formato que o
+  // webhook grava nas mensagens recebidas. Nunca atrasa este retorno nem derruba
+  // o envio — uma falha só deixa a mensagem sem prévia.
+  if ((input.messageType ?? 'text') === 'text') {
+    void enrichSentMessageLinkPreview(queued.id, input.content);
+  }
+
+  return result;
 }
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
