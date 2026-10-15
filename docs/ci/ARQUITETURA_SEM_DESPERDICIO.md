@@ -33,8 +33,9 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   que ligou o auto-merge primeiro (FIFO por `enabledAt`), então **ninguém volta para o fim da fila**. PR com check
   obrigatório vermelho sai da fila até o autor corrigir (atualizá-la seria pagar para falhar de novo).
   PR de fork também fica fora (o `GITHUB_TOKEN` não escreve no repositório de origem). Se o `update-branch` da
-  primeira da fila for recusado (403/422), o workflow tenta a próxima na mesma execução e para no primeiro
-  aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada.
+  primeira da fila for recusado de forma permanente (HTTP 403/422), o workflow tenta a próxima na mesma execução
+  e para no primeiro aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada. Falha ambígua (rede,
+  5xx: o update é assíncrono e pode ter sido aceito) encerra a execução, para nunca haver duas PRs em voo.
 - **Gatilhos:** push na `main` (a vez abriu), fim de `CI/CD Pipeline` ou `DB Guard (offline)` (a PR em voo pode
   ter ficado vermelha e liberado a vez) e um agendamento a cada 30 min, para o caso de alguém ligar o auto-merge sem
   outro evento.

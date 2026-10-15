@@ -74,7 +74,10 @@ test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   // a próxima (sem travar a fila), sucesso encerra (no máximo uma PR por execução).
   const laco = t.slice(t.indexOf('for candidato in $FILA'), t.indexOf('done', t.indexOf('for candidato in $FILA')));
   assert.ok(laco.length > 0, 'o workflow itera sobre a fila ordenada');
-  assert.match(laco, /update-branch"[^\n]*\n\s*echo[^\n]*\n\s*continue/, 'update recusado pula para a próxima');
+  // Só a recusa permanente comprovada (403/422) avança; falha ambígua (update pode ter
+  // sido aceito com 202) encerra, senão duas PRs entram em voo na mesma execução.
+  assert.match(laco, /grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*echo[^\n]*\n\s*continue/, 'só 403/422 pula para a próxima');
+  assert.match(laco, /falha ambigua[^\n]*\n\s*exit 0/, 'falha ambígua encerra a execução');
   assert.match(laco, /PR="\$candidato"\n\s*break/, 'o primeiro update aceito encerra o laço');
   assert.match(t, /if: steps\.fila\.outputs\.pr != ''/, 'sem PR escolhida, nada é atualizado');
 });

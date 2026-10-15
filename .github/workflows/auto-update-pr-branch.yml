@@ -101,17 +101,24 @@ jobs:
           FILA: ${{ steps.fila.outputs.fila }}
         run: |
           # Tenta a fila em ordem e para no PRIMEIRO update-branch aceito: no maximo
-          # uma PR atualizada por execucao (R1). Um update recusado (403/422, ex.: sem
-          # permissao no head) nao trava a fila: a proxima e tentada nesta execucao.
+          # uma PR atualizada por execucao (R1). So uma recusa PERMANENTE comprovada
+          # (HTTP 403/422, ex.: sem permissao no head) avanca para a proxima; qualquer
+          # outra falha e ambigua (o update e assincrono e pode ter sido aceito com 202
+          # antes de a resposta se perder), entao a execucao para e a proxima reavalia:
+          # se o update aconteceu, a PR aparece "em voo" e a fila espera por ela.
           PR=""
           for candidato in $FILA; do
             if ! sha_antes=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha'); then
               echo "::warning::PR #$candidato: falha ao ler head atual via API; tentando a proxima da fila"
               continue
             fi
-            if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null; then
-              echo "::warning::PR #$candidato: update-branch recusado; tentando a proxima da fila"
-              continue
+            if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null 2>"$RUNNER_TEMP/update-branch.err"; then
+              if grep -Eq 'HTTP (403|422)' "$RUNNER_TEMP/update-branch.err"; then
+                echo "::warning::PR #$candidato: update-branch recusado (403/422); tentando a proxima da fila"
+                continue
+              fi
+              echo "::warning::PR #$candidato: falha ambigua no update-branch (sem 403/422); encerrando para nao atualizar duas PRs. A proxima execucao reavalia."
+              exit 0
             fi
             PR="$candidato"
             break
