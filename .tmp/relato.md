@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## O que mudou e por quê
 - src/components/contacts/useContactsViewState.ts: o modo de visualização deixou de ser `useState('grid')` e passou a ser lido/gravado no `localStorage` (chave `contacts:view-mode`, dentro de `try/catch`, só aceitando modos válidos) — reabrir a tela volta no modo escolhido. O contato do painel passou a ser DERIVADO da lista atual por id (`useMemo` sobre `filteredContacts`) em vez de uma cópia do clique: o painel não mostra mais nome/telefone antigos depois de editar pelo próprio painel e fecha quando o contato sai do filtro/tipo.
@@ -15,7 +15,7 @@ Especialista: Íris (area-front-componentes)
   `AssertionError: expected { id: 'b' } to be null`
   e os 3 casos de erro da timeline ficaram em timeout esperando `timeline-error`
   → resumo: `Test Files 3 failed (3)` / `Tests 8 failed | 29 passed (37)`
-- verde depois (mesmos 3 arquivos, fontes minhas recolocadas): `Test Files 3 passed (3)` / `Tests 37 passed (37)`
+- verde depois (mesmos 3 arquivos, fontes minhas recolocadas): `Test Files 3 passed (3)` / `Tests 38 passed (38)`
 - suíte da área: `npx vitest run src/components/contacts` → `Test Files 37 passed (37)` / `Tests 277 passed (277)`
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (188s)` (db_guard, tipos, lint, migrations OK; commit 83c4e9a58 passou o ratchet de lint sem dívida nova)
 
@@ -24,5 +24,5 @@ Especialista: Íris (area-front-componentes)
 - green depois da correção: `npx vitest run src/components/contacts/__tests__/useContactsCRUD.test.tsx` → `Test Files 1 passed (1)` / `Tests 20 passed (20)`
 
 ## O que NÃO fiz e por quê
-- Não toquei em ContactDetailPanel.tsx nem ContactsView.tsx (não estão nos arquivos do cartão): a assinatura que o hook devolve ficou a mesma (`detailContact`/`setDetailContact`), então nenhum consumidor precisou mudar.
+- Não toquei em ContactDetailPanel.tsx nem ContactsView.tsx (não estão nos arquivos do cartão): o retorno do hook ficou o mesmo (`detailContact`/`setDetailContact`), então nenhum consumidor precisou mudar.
 - `banco_local` aparece como NÃO VERIFICADO no zapp-verify (sem nome de conjunto); este cartão não tem migration nem SQL.
