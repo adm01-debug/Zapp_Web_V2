@@ -1040,8 +1040,8 @@ jobs:
       # criam a própria superfície de roles/tabelas e rodam numa transação que termina em
       # ROLLBACK, montando o repo somente-leitura; por isso rodam contra PostgreSQL 17
       # descartável pelo runner scripts/db-tests/run-suites-postgres.sh — as demais que
-      # precisam do schema completo rodam no passo do replay abaixo; resta na
-      # ALLOWLIST_SQL com justificativa só a indeterminate_optout_outbox.sql (t_6dafc78a).
+      # precisam do schema completo rodam no passo do replay abaixo; a
+      # ALLOWLIST_SQL ficou vazia (indeterminate removida, t_6dafc78a refazer 1).
       # SKIP_DOCKER_SHIM="1":
       # cada suíte faz CREATE ROLE anon/authenticated/service_role, globais ao cluster — no
       # docker-shim do E47 colidiriam com as roles do serviço.
@@ -1059,8 +1059,9 @@ jobs:
       # com o envelope de papel dentro das próprias suítes (SET ROLE + claims), após
       # prova vermelha→verde no replay: 02 compara changed_at ENTRE transações;
       # 01/04 com expectativas ajustadas ao schema que o replay produz; transfer,
-      # inbox e ai_jobs exercendo a RPC sob o papel real. Resta na allowlist só a
-      # indeterminate_optout_outbox.sql (migration 20261007095739 fora da branch).
+      # inbox e ai_jobs exercendo a RPC sob o papel real. Allowlist vazia: a
+      # indeterminate_optout_outbox.sql foi removida (migration 20261007095739 fora
+      # da branch; volta com o cartao t_89af1a99).
       - name: Provar suítes SQL de schema completo no replay (t_fceba6d5)
         env:
           SUITES_REPLAY_IMAGE: public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f

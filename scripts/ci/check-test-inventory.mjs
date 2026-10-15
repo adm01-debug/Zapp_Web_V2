@@ -243,18 +243,16 @@ const DIRS_SUITE_SQL = ['supabase/tests', 'scripts/db-tests'];
 const CAMINHO_SUITE_SQL = /(?:supabase\/tests|scripts\/db-tests)\/[A-Za-z0-9_./*-]+\.sql/g;
 
 // Suítes SQL conhecidas ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// t_6dafc78a (refazer 1): 13 das 14 suítes rodam no CI (auto-contidas via
-// run-suites-postgres.sh, schema completo via run-suites-replay.sh). Resta UMA:
-// indeterminate_optout_outbox.sql, que referencia a migration 20261007095739
-// (t_89af1a99) via `\i :mig` — medido em 14/10: o arquivo NÃO existe em
-// supabase/migrations/ (só 20261002581230_talkx_v4_x029_optout.sql), então o
-// runner falharia em `No such file`. A suíte já carrega o envelope de papel
-// (SET LOCAL ROLE service_role/authenticated) e o desenho vermelho→verde;
-// promover ao CI quando o integrador trouxer a migration (o teste 'entrada
-// morta' abaixo quebra se o arquivo sumir sem a remoção desta linha).
-export const ALLOWLIST_SQL = new Set([
-  'supabase/tests/indeterminate_optout_outbox.sql',
-]);
+// t_6dafc78a (refazer 1): 13 das 13 suítes rodam no CI (auto-contidas via
+// run-suites-postgres.sh, schema completo via run-suites-replay.sh). A
+// indeterminate_optout_outbox.sql foi REMOVIDA (git rm) em vez de ficar na
+// allowlist por tempo indeterminado: referencia a migration 20261007095739
+// (t_89af1a99) via `\i :mig` — medido em 15/10: o arquivo NÃO existe em
+// supabase/migrations/ (só 20261002581230_talkx_v4_x029_optout.sql) e o commit
+// 8163deed55 que a criou não é ancestral desta branch, então o runner falharia
+// em `No such file`. A suíte pertence à linhagem daquele cartão e volta com ele
+// quando o integrador trouxer a migration.
+export const ALLOWLIST_SQL = new Set([]);
 
 /** Suítes SQL sem nenhum bloco `run:` que as execute (fora da ALLOWLIST_SQL). */
 export function orfaosSql(suites, padroes, allowlist = ALLOWLIST_SQL) {

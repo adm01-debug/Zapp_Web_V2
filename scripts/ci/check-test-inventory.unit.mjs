@@ -175,9 +175,10 @@ test('t_fceba6d5: as suites SQL ligadas estao num bloco run: real do db-guard', 
 
 test('t_fceba6d5: nenhuma suite SQL de supabase/tests ou scripts/db-tests esta orfa', () => {
   assert.deepEqual(suitesSqlOrfas(), []);
-  // t_6dafc78a: 16 - 2 dashboards removidos (supersedidas pelo
-  // dashboard-rls-authorization.test.sh) = 14 no disco.
-  assert.ok(suitesSqlNoDisco().length >= 14, 'as 14 suites SQL do disco devem entrar no inventario');
+  // t_6dafc78a (refazer 1): 16 - 2 dashboards removidos (supersedidas pelo
+  // dashboard-rls-authorization.test.sh) - 1 indeterminate removida (migration
+  // 20261007095739 fora da branch, volta com o cartao t_89af1a99) = 13 no disco.
+  assert.ok(suitesSqlNoDisco().length >= 13, 'as 13 suites SQL do disco devem entrar no inventario');
 });
 
 test('t_fceba6d5: nenhum orfao restante do inventario e uma suite SQL', () => {
