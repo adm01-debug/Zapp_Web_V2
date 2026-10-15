@@ -91,10 +91,11 @@ export function initWebVitals() {
   if (_initialized) return;
   _initialized = true;
 
-  // PE-108/SL-231: sorteia a amostragem deste documento e já começa a ler o
-  // interruptor. Ler ANTES do unload é o que permite o lote sair no `pagehide`.
+  // PE-108/SL-231: sorteia a amostragem deste documento. Só documento amostrado
+  // lê o interruptor — fora do sorteio não há leitura alguma. Ler ANTES do
+  // unload é o que permite o lote sair no `pagehide`.
   _vitalsSampled = deveAmostrar();
-  void loadVitalsSwitch();
+  if (_vitalsSampled) void loadVitalsSwitch();
 
   // LCP - Largest Contentful Paint
   try {
@@ -378,7 +379,8 @@ const TEM_DIGITO = /\d/;
 
 /**
  * Rota normalizada: corta query string e fragmento, garante o `/` inicial, troca
- * identificador de linha por `:id` e respeita o teto de 200 caracteres do CHECK
+ * identificador de linha por `:id`, codifica espaços (`%20`, como exige o CHECK
+ * `^/[^?#[:space:]]*$` da tabela) e respeita o teto de 200 caracteres do CHECK
  * da tabela. Pathname inesperado vira `/` — nunca sobe URL completa.
  */
 export function normalizeVitalRoute(pathname: string | null | undefined): string {
@@ -389,6 +391,7 @@ export function normalizeVitalRoute(pathname: string | null | undefined): string
     .map((segmento) => (ID_SEGMENT.test(segmento) && TEM_DIGITO.test(segmento) ? ':id' : segmento))
     .join('/')
     .replace(/\/{2,}/g, '/')
+    .replace(/\s/g, '%20')
     .slice(0, ROUTE_MAX_LEN);
   return normalizada.startsWith('/') ? normalizada : '/';
 }

@@ -64,14 +64,21 @@ function setVisibility(state: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: state });
 }
 
-/** Sobe o módulo do zero, liga o coletor e espera o interruptor ser lido. */
-async function subirColetor() {
+/** Sobe o módulo do zero, liga o coletor e espera o interruptor ser lido
+ *  (só documentos amostrados leem o interruptor; fora do sorteio não há leitura). */
+async function subirColetor(opcoes?: { esperaLeituras?: boolean }) {
   vi.resetModules();
   const callbacks = installPerformanceObserver(['paint']);
   const mod = await import('../web-vitals');
   mod.initWebVitals();
-  // O interruptor é lido de forma assíncrona no init: só depois dele o lote pode sair.
-  await vi.waitFor(() => expect(estado.leituras).toBeGreaterThanOrEqual(2));
+  if (opcoes?.esperaLeituras === false) {
+    // Documento fora do sorteio: nenhuma leitura pode ter sido disparada.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(estado.leituras).toBe(0);
+  } else {
+    // O interruptor é lido de forma assíncrona no init: só depois dele o lote pode sair.
+    await vi.waitFor(() => expect(estado.leituras).toBeGreaterThanOrEqual(2));
+  }
   return { mod, callbacks };
 }
 
@@ -126,7 +133,8 @@ describe('rota normalizada (sem PII, sem parâmetro)', () => {
     expect(normalizeVitalRoute('/' + 'a'.repeat(400)).length).toBe(200);
     expect(normalizeVitalRoute('/faced')).toBe('/faced'); // letras 'a'-'f' sozinhas não são id
     // O CHECK da tabela exige ^/[^?#[:space:]]*$ — nada de espaço no resultado.
-    expect(normalizeVitalRoute('/a b/c d')).not.toMatch(/[[:space:]]/);
+    expect(normalizeVitalRoute('/a b/c d')).toBe('/a%20b/c%20d');
+    expect(normalizeVitalRoute('/a b/c d')).not.toMatch(/\s/);
   });
 });
 
@@ -231,11 +239,13 @@ describe('documento real: pagehide e visibilitychange', () => {
   it('não envia com o interruptor desligado (chave ausente) nem fora do sorteio', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.9); // documento fora dos 10%
     estado.linhas.feature_flags = [{ enabled: true }];
-    const primeiro = await subirColetor();
+    // Fora do sorteio o coletor nem lê o interruptor (prova: leituras fica em 0).
+    const primeiro = await subirColetor({ esperaLeituras: false });
     primeiro.callbacks.paint({ getEntries: () => [fcp(1000)] });
     window.dispatchEvent(new Event('pagehide'));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 10));
     expect(estado.rpc).not.toHaveBeenCalled();
+    expect(estado.leituras).toBe(0);
 
     vi.spyOn(Math, 'random').mockReturnValue(0); // agora amostrado, mas interruptor ausente
     estado.linhas.feature_flags = [];
