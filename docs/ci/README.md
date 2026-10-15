@@ -8,7 +8,7 @@
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
-| Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main | PRs abertas ficam com a main e os checks saem de `action_required` | PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara | autor do PR | — | — |
+| Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch | fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI | a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento | Job Summary com a fila (em voo, proxima, esperando, bloqueadas) | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main, merge_group e dispatch | lint, tipos, testes, build, security e E2E do codigo | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | pull_request e agendado | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security e revisores do PR | — | — |
@@ -30,10 +30,10 @@
 
 ### Auto Update PR Branches (`auto-update-pr-branch.yml`)
 
-- **Gatilho:** push na main
-- **O que prova:** PRs abertas ficam com a main e os checks saem de `action_required`
-- **Quando falha:** PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara
-- **Quem é avisado:** autor do PR
+- **Gatilho:** push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch
+- **O que prova:** fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI
+- **Quando falha:** a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento
+- **Quem é avisado:** Job Summary com a fila (em voo, proxima, esperando, bloqueadas)
 
 ### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
 

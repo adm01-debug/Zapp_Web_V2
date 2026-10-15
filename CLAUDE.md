@@ -269,6 +269,26 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 `administration`: a API responde **403** e o guard marca o campo como **"NÃO VERIFICÁVEL"** — não como regressão.
 **403 administrativo é limite de evidência**, nunca confirmação de configuração errada.
 
+## CI sem desperdício (2026-10-15) — regras protegidas por contrato
+
+Fonte: `docs/ci/ARQUITETURA_SEM_DESPERDICIO.md`. Contrato: `scripts/ci/arquitetura-sem-desperdicio.unit.mjs`
+(roda no check obrigatório `🔍 Lint & TypeCheck`; regressão deixa a CI vermelha). Medido antes: 100 runs de CI em
+~36 h, 8 de 9 pushes na `main` refazendo árvore já aprovada, 26 min de CI por merge (14 min só para rodar a suíte de
+novo pela cobertura).
+
+- **R1 — fila serial.** `auto-update-pr-branch.yml` atualiza **uma** PR por vez (`scripts/ci/fila-merge.mjs`): com
+  uma PR em voo, ninguém mais é atualizado; sem PR em voo, vai a próxima por ordem de auto-merge (FIFO). PR com
+  check obrigatório vermelho sai da fila até ser corrigida. **Não volte a atualizar todas as PRs BEHIND de uma vez.**
+- **R2 — reuso de árvore.** No push na `main`, `ci.yml` e `db-guard.yml` dispensam os jobs quando a árvore é a mesma
+  do head da PR e o último run da PR foi todo verde (`scripts/ci/reuso-arvore.mjs`; erro de API = roda tudo).
+  Job novo nesses workflows precisa de `needs: reuso` e do `if:` com `needs.reuso.outputs.reusar != 'true'`.
+- **R3 — a suíte de unidade roda uma vez.** 3 shards com cobertura em blob (`VITEST_SHARD_SEM_PISO=1`); o agregador
+  `🧪 Unit Tests` junta e aplica o piso **na PR**. Não reintroduza `test:coverage` no CI.
+- **R4 — nada espera o que não consome.** `Build`, `E2E` e `Security` não dependem dos testes.
+- **R5 — cancelado não é vermelho.** Agregadores usam `!cancelled()`, nunca `always()`.
+- **R6 — agente empurra lote validado.** Valide localmente (testes, lint, `actionlint`) e faça um push por lote:
+  cada push reinicia ~10 jobs, e 68 heads numa só branch em 36 h geraram 32 runs cancelados.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 18 workflows + 3 dinâmicos (21 total), da branch protection, dos secrets e dos environments. O que passou a
