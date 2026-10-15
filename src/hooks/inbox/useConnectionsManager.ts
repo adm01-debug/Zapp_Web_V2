@@ -47,6 +47,10 @@ export function useConnectionsManager() {
   const [qrCodeDialog, setQrCodeDialog] = useState<QrCodeDialogState>(INITIAL_QR_STATE);
   const [newConnection, setNewConnection] = useState({ name: '', phone_number: '' });
   const [isCreating, setIsCreating] = useState(false);
+  // Mensagem de erro da última tentativa de criar conexão, exibida DENTRO do
+  // diálogo (role=alert) além do toast — paridade V3→V2 (UI-07). Sem isso o
+  // diálogo só avisava por toast, fora do formulário.
+  const [addConnectionError, setAddConnectionError] = useState<string | null>(null);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -154,9 +158,23 @@ export function useConnectionsManager() {
     name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').slice(0, 30) +
     '_' + Date.now().toString().slice(-6);
 
+  // [refazer 1] P2: o erro da tentativa anterior ficava velho entre
+  // aberturas do diálogo. O diálogo limpa ao fechar, ao reabrir e ao editar
+  // nome/telefone chamando esta função.
+  const clearAddConnectionError = useCallback(() => {
+    setAddConnectionError(null);
+  }, []);
+
   const handleAddConnection = async () => {
-    if (!newConnection.name || !newConnection.phone_number) {
-      toast({ title: 'Erro', description: 'Preencha o nome e o número do telefone.', variant: 'destructive' });
+    setAddConnectionError(null);
+    // [refazer 1] P1: só o DDI ('+55'/dígitos '55') não é número válido — a
+    // checagem antiga (!phone_number) passava com o pré-preenchimento do
+    // foco. Rejeita sem dígitos além do DDI, com a mensagem original.
+    const phoneDigits = newConnection.phone_number.replace(/\D/g, '');
+    if (!newConnection.name || phoneDigits.length <= 2) {
+      const message = 'Preencha o nome e o número do telefone.';
+      setAddConnectionError(message);
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
       return;
     }
     setIsCreating(true);
@@ -173,12 +191,14 @@ export function useConnectionsManager() {
         is_default: connections.length === 0,
       });
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
+      setAddConnectionError(null);
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
       if (result?.connection) void handleShowQrCode(result.connection as unknown as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);
+      setAddConnectionError(errorMessage);
       toast({ title: 'Erro ao criar conexão', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsCreating(false);
@@ -379,6 +399,7 @@ export function useConnectionsManager() {
     qrCodeDialog,
     newConnection, setNewConnection,
     isCreating,
+    addConnectionError, clearAddConnectionError,
     syncingHistory, setSyncingHistory,
     evolutionLoading,
     handleAddConnection,
