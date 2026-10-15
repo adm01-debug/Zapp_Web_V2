@@ -1,18 +1,29 @@
-Especialista: Hugo (area-front-hooks)
-
+Especialista: senior (area-sql-banco)
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- supabase/migrations/20261013210005_outbound_sweeper_e_claim_por_papel.sql: varredor decide o motivo por linha com a mesma regra do fail_outbound_unclaimed (migration:152-168) e pula linha com POST iniciado (migration:172); claim soma a recusa PD-79 de POST iniciado + lease vencido ao lookup de papel (migration:400-407); guard soma delivery_post_started_at aos campos internos nos dois ramos (migration:466,477); rollback recria claim/guard com os corpos de 20261013210004 e é extraível por `grep '^--   '` (migration:4-14, só SQL executável).
+- supabase/tests/outbound_sweeper_e_claim_por_papel.sql: fixtures de linha presa por motivo (ea/eb) e ambíguas (ec/ed); T3 com motivo por linha + ambígua preservada; T4 resolve a ambígua ec pela fail RPC; T5 recusa ambígua ed a dono e admin; T6 barra carimbo de POST forjado; T7 novo (defaults + bandas).
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- verde depois: `psql -f /tmp/t.sql` (Postgres 17 descartável, migration aplicada verbatim) → `OK: outbound_sweeper_e_claim_por_papel — T1..T7 verdes`
+- vermelho antes (sem a migration, `-v sem_migration=1`) → `psql:/tmp/t.sql:171: ERROR: function public.guard_message_delivery_internal_fields() does not exist` (aborta antes de T1)
+- vermelho do teste novo contra o código antigo: com o claim sem a cláusula PD-79 → `FALHA: T5 o dono NAO deveria reivindicar linha ambigua (POST iniciado)` (o T5 novo pegou a regressão que eu mesmo tinha introduzido; corrigi e ficou verde)
+- rollback executado de verdade: extraí `grep '^--   '` → rb.sql (11 linhas), apliquei após o teste commitado → `RB-OK` em sweep sumiu, fail_ sumiu, eventos sumiram, coluna motivo sumiu, cron removido, claim sem papel (admin não reivindica), ambígua ainda recusada, post_started ainda protegido (10/10, sendo o último via NOTICE)
+- `zapp-verify <cópia> --rapido` → `VERIFY: VERDE SEM BANCO (6s)` (db_guard, tipos, lint, migrations OK; banco coberto pelo Postgres descartável acima)
+
+## Pontos do revisor
+- Ponto 1: resolvido sem mudar código — o contrato que a Edge chama no claim vazio é `public.fail_outbound_unclaimed(p_message_id uuid, p_agent_id uuid) RETURNS public.messages` (só service_role), documentado no cabeçalho da migration (migration:53-58); consumidora é o cartão t_ea8decbb, já concluído, cujo corpo diz "no claim vazio ... via RPC do PD-78" e cujo comentário traz a assinatura copiada pelo workersql. Nenhum código aqui muda por P1.
+- Ponto 2: resolvido documentando + testando — cadência `*/5` e defaults (900 s, lote 200) foram decididos NESTE cartão sob o pedido t_bc890f8a ("faça o varredor"), sem cartão dono de número (migration:59-63); o teste T7 chama `sweep_stale_outbound_sending()` sem argumentos e prova que executa (teste:552).
+- Ponto 3: resolvido documentando + testando — bandas 60..86400 s e lote 1..1000 decididas neste cartão (migration:59-63); T7 prova rejeição 22023 fora da banda (59, 86401, lote 0, 1001) e execução nos limites (teste:556-577).
+- Ponto 4: resolvido no código — o varredor decide o motivo por linha com a MESMA regra do fail_outbound_unclaimed (migration:152-168; contato ausente = nao_despachada, igual ao fail_); linha com POST iniciado NÃO é varrida, dona da Edge via fail_outbound_unclaimed (migration:172; teste T3/T4/T5: teste:330-395,449-454,485-494).
+- Ponto 5: resolvido executando — o teste roda apontando a MESMA migration aplicada (verbatim, `\i :mig`) e o rollback do cabeçalho foi extraído e executado num banco descartável com 10/10 RB-OK (comandos no COMO RODA do teste, teste:36-48).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não trouxe a Edge para este cartão: a consumidora (t_ea8decbb) existe e está concluída; P1 pedia contrato citável ou comentário+devolução — citei o contrato, sem mudar escopo.
+- Não removi o schedule `*/5`: sem ele o varredor nunca roda e o DEFEITO 1 do pedido ("faça o varredor") ficaria sem efeito; a decisão está documentada e testada (P2).
+- Não reenviei nem restaurei linhas no rollback: linha marcada `failed` não volta a `sending` por desenho (sem reenvio), declarado no cabeçalho da migration.
+
+## 2ª passada (defeito novo do meu diff)
+- Achei um de verdade: meu claim tinha só o comentário PD-79 sem o predicado e o T5 novo falhou; corrigi (migration:402-407) e o verde final cobre.
+- Merge PD-79: claim e guard desta migration agora são superconjuntos dos corpos de 20261013210004 (cláusula de ambígua + carimbo), então aplicar depois do 10004 não regride; o rollback restaura os corpos do 10004 (antes restaurava os de 202609092x, o que regrediria).
+- Chamadores: sweep/fail_ são novos (sem chamador); claim/fail_ são chamados pela Edge message-delivery — comportamento para linha não-ambígua inalterado (T5 dono/admin verdes); linha ambígua agora recusa no claim como no 10004.
+- Nenhum arquivo de guarda/manifesto/CI tocado; nenhum identificador de produção no diff ou relato.
