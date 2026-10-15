@@ -26,6 +26,13 @@ verify_jwt = false
 [functions.batch-fetch-avatars]
 verify_jwt = false
 
+# csat-dispatch: worker de cron que entrega os convites de CSAT vencidos. Quem
+# chama e o pg_cron com x-cron-secret (ou a service-role key no Bearer, para
+# rodada manual) — nunca um JWT de sessao. A guarda interna exige CRON_SECRET e
+# recusa tudo o mais ANTES de criar o cliente service role.
+[functions.csat-dispatch]
+verify_jwt = false
+
 [functions.elevenlabs-webhook]
 verify_jwt = false
 
