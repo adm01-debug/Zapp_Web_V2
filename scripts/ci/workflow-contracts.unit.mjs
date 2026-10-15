@@ -339,11 +339,19 @@ test('todo job declara permissões (no topo do workflow ou no próprio job)', ()
     const inicioJobs = texto.indexOf('\njobs:');
     const topo = texto.slice(0, inicioJobs);
     if (topo.split('\n').some((l) => l.startsWith('permissions:'))) continue;
-    for (const job of texto.slice(inicioJobs).split('\n').filter((l) => /^ {2}[A-Za-z0-9_-]+:\s*(?:#.*)?$/.test(l))) {
-      const id = job.trim().replace(/:.*$/, '');
-      const corpo = texto.slice(texto.indexOf(`\n  ${id}:`) + 1).split(/\n(?= {2}[A-Za-z0-9_-]+:)/)[0];
-      if (!corpo.split('\n').some((l) => l.startsWith('    permissions:'))) sem.push(`${nome}:${id}`);
+    // Varredura linha a linha: um job começa em linha com 2 espaços de indentação e termina no
+    // próximo; `    permissions:` (4 espaços) dentro dele conta.
+    const comPermissao = new Map();
+    let atual = null;
+    for (const linha of texto.slice(inicioJobs + 1).split('\n').slice(1)) {
+      if (/^ {2}\S/.test(linha) && !linha.trimStart().startsWith('#')) {
+        atual = linha.trim().split(':')[0];
+        comPermissao.set(atual, false);
+      } else if (atual && linha.startsWith('    permissions:')) {
+        comPermissao.set(atual, true);
+      }
     }
+    for (const [id, tem] of comPermissao) if (!tem) sem.push(`${nome}:${id}`);
   }
   assert.deepEqual(sem, [], `jobs sem permissões declaradas (herdariam o padrão do repositório): ${sem.join(', ')}`);
 });
