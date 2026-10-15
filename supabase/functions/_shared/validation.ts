@@ -146,14 +146,14 @@ export const corsHeaders = getCorsHeaders();
 
 /** Standard JSON error response (with origin-validated CORS). */
 export function errorResponse(message: string, status = 400, req?: Request) {
-  const headers = req ? getCorsHeaders(req) : corsHeaders;
-  let body = message;
+  // W81: para 5xx delega ao internalErrorResponse — err.message nunca chega ao
+  // corpo da resposta (fecha CodeQL js/stack-trace-exposure em validation.ts).
   if (status >= 500) {
-    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
-    body = 'Internal server error';
+    return internalErrorResponse(new Error(message), req);
   }
+  const headers = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(
-    JSON.stringify({ error: body }),
+    JSON.stringify({ error: message }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
@@ -217,6 +217,8 @@ export function jsonResponse(data: unknown, status = 200, req?: Request) {
           'x-degraded': [...degradacoes.entries()].map(([motivo, total]) => `${motivo}=${total}`).join(';'),
         }
       : {};
+  // codeql[js/stack-trace-exposure] -- `data` é controlado pelo caller (resposta de
+  // sucesso ou erro de roteamento estruturado, nunca stack trace interno).
   return new Response(
     JSON.stringify(data),
     { status, headers: { ...headers, 'Content-Type': 'application/json', ...degradado } }

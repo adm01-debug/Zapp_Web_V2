@@ -13,6 +13,9 @@
 
 /** Mesmo contrato de `Math.random()` (float em [0, 1)), com fonte criptografica. */
 export function secureRandomFloat(): number {
+  // lgtm[js/biased-cryptographic-random] codeql[js/biased-cryptographic-random]
+  // -- W81: viés máximo de 1 ULP (float64); aceitável para jitter/animação.
+  // Não é chave criptográfica — substitui Math.random() (S2245).
   return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
 }
 
