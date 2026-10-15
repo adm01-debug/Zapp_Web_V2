@@ -19,6 +19,13 @@
 --   B8  authenticated atualiza/upserta o PRÓPRIO avatar (o app usa upsert em `<uid>/avatar.<ext>`);
 --   B9  authenticated NÃO sobrescreve avatar alheio; B10 NÃO insere na pasta alheia (WITH CHECK);
 --   B11 insere na própria pasta; B12 os 3 buckets seguem public=true (URL direta continua servindo).
+--   C1  admin ATUALIZA figurinha do catálogo (outro dono, caminho de topo) — 1 linha;
+--   C2  admin ATUALIZA emoji do catálogo — 1 linha;
+--   C3  admin REMOVE figurinha da própria pasta — 1 linha (DELETE do dono + SELECT de admin);
+--   C3b admin NÃO remove figurinha do catálogo de topo (0 linhas, igual a antes: DELETE é owner-only);
+--   C4  authenticated comum segue sem LISTAR nem ATUALIZAR stickers/emojis (0 linhas);
+--   C5  anon segue sem listar stickers/emojis;
+--   D1  dono REMOVE o próprio avatar (1 linha); D2 dono NÃO remove avatar alheio (0 linhas).
 --
 -- COMO RODA. Postgres descartável, tudo numa transação que termina em ROLLBACK (zero efeito
 -- colateral, idempotente). A superfície do Supabase é criada à mão aqui; o estado ATUAL das
@@ -30,6 +37,8 @@
 --     -v mig_nova=/repo/supabase/migrations/20261013210001_storage_buckets_publicos_sem_listagem.sql \
 --     < supabase/tests/storage_buckets_publicos_sem_listagem.sql
 -- VERMELHO esperado sem a migration nova: B1..B4 falham (o bucket continua listável).
+-- VERMELHO esperado com a migration ANTIGA (sem os SELECTs de admin) + teste novo:
+-- C1, C2 e C3 falham (admin volta 0 linhas: sem SELECT o UPDATE/DELETE não enxerga a linha).
 
 \set ON_ERROR_STOP on
 
@@ -45,7 +54,10 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT COALESCE(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub', '')::uuid
 $$;
 
-CREATE FUNCTION public.is_admin_or_supervisor(uid uuid) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$ SELECT false $$;
+-- ADMIN_UID (9999...) é admin/supervisor; ALICE (1111...) e BOB (2222...) são comuns.
+CREATE FUNCTION public.is_admin_or_supervisor(uid uuid) RETURNS boolean LANGUAGE sql IMMUTABLE AS $$
+  SELECT uid = '99999999-9999-9999-9999-999999999999'::uuid
+$$;
 
 CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid);
 CREATE TABLE public.contacts (id uuid PRIMARY KEY, assigned_to uuid);
@@ -203,6 +215,78 @@ END $$;
 SELECT public._zapp_storage_assert(
   (SELECT count(*) FROM storage.buckets WHERE id IN ('avatars','stickers','custom-emojis') AND public IS TRUE) = 3,
   'B12 os 3 buckets seguem public=true (URL direta continua servindo)');
+
+\echo
+\echo '── BLOCO C: ADMIN/SUPERVISOR no catalogo (stickers/custom-emojis) ───────────────'
+-- linhas de trabalho do admin (pasta propria), inseridas como dono do banco
+INSERT INTO storage.objects (bucket_id, name, owner) VALUES
+  ('stickers','99999999-9999-9999-9999-999999999999/admin.webp','99999999-9999-9999-9999-999999999999'),
+  ('custom-emojis','99999999-9999-9999-9999-999999999999/admin.png','99999999-9999-9999-9999-999999999999');
+
+DO $$ DECLARE n int;
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims','{"sub":"99999999-9999-9999-9999-999999999999","role":"authenticated"}',false);
+  WITH u AS (UPDATE storage.objects SET owner=owner
+             WHERE bucket_id='stickers' AND name='22222222-2222-2222-2222-222222222222/figurinha.webp' RETURNING 1)
+  SELECT count(*) INTO n FROM u;
+  PERFORM public._zapp_storage_assert(n=1,'C1 admin ATUALIZA figurinha do catalogo (outro dono)');
+  WITH u AS (UPDATE storage.objects SET owner=owner
+             WHERE bucket_id='custom-emojis' AND name='emoji_1_abc.png' RETURNING 1)
+  SELECT count(*) INTO n FROM u;
+  PERFORM public._zapp_storage_assert(n=1,'C2 admin ATUALIZA emoji do catalogo');
+  WITH d AS (DELETE FROM storage.objects
+             WHERE bucket_id='stickers' AND name='99999999-9999-9999-9999-999999999999/admin.webp' RETURNING 1)
+  SELECT count(*) INTO n FROM d;
+  PERFORM public._zapp_storage_assert(n=1,'C3 admin REMOVE figurinha da propria pasta');
+  WITH d AS (DELETE FROM storage.objects
+             WHERE bucket_id='stickers' AND name='22222222-2222-2222-2222-222222222222/figurinha.webp' RETURNING 1)
+  SELECT count(*) INTO n FROM d;
+  PERFORM public._zapp_storage_assert(n=0,'C3b admin NAO remove figurinha do catalogo de topo (igual a antes: DELETE e owner-only)');
+  RESET ROLE;
+END $$;
+
+DO $$ DECLARE n int;
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims','{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}',false);
+  SELECT count(*) INTO n FROM storage.objects WHERE bucket_id='stickers';
+  PERFORM public._zapp_storage_assert(n=0,'C4 comum NAO lista stickers (SELECT de admin nao abre listagem)');
+  SELECT count(*) INTO n FROM storage.objects WHERE bucket_id='custom-emojis';
+  PERFORM public._zapp_storage_assert(n=0,'C4b comum NAO lista custom-emojis');
+  WITH u AS (UPDATE storage.objects SET owner=owner
+             WHERE bucket_id='stickers' AND name='22222222-2222-2222-2222-222222222222/figurinha.webp' RETURNING 1)
+  SELECT count(*) INTO n FROM u;
+  PERFORM public._zapp_storage_assert(n=0,'C4c comum NAO atualiza figurinha alheia');
+  RESET ROLE;
+END $$;
+
+DO $$ DECLARE n int;
+BEGIN
+  SET LOCAL ROLE anon;
+  SELECT count(*) INTO n FROM storage.objects WHERE bucket_id='stickers';
+  PERFORM public._zapp_storage_assert(n=0,'C5 anon segue sem listar stickers');
+  SELECT count(*) INTO n FROM storage.objects WHERE bucket_id='custom-emojis';
+  PERFORM public._zapp_storage_assert(n=0,'C5b anon segue sem listar custom-emojis');
+  RESET ROLE;
+END $$;
+
+\echo
+\echo '── BLOCO D: DONO remove o proprio avatar ────────────────────────────────────────'
+DO $$ DECLARE n int;
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims','{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}',false);
+  WITH d AS (DELETE FROM storage.objects
+             WHERE bucket_id='avatars' AND name='11111111-1111-1111-1111-111111111111/avatar.png' RETURNING 1)
+  SELECT count(*) INTO n FROM d;
+  PERFORM public._zapp_storage_assert(n=1,'D1 dono REMOVE o proprio avatar');
+  WITH d AS (DELETE FROM storage.objects
+             WHERE bucket_id='avatars' AND name='22222222-2222-2222-2222-222222222222/avatar.png' RETURNING 1)
+  SELECT count(*) INTO n FROM d;
+  PERFORM public._zapp_storage_assert(n=0,'D2 dono NAO remove avatar alheio');
+  RESET ROLE;
+END $$;
 
 ROLLBACK;
 
