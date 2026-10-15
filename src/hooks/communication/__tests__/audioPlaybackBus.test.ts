@@ -6,7 +6,7 @@
  * áudio que ainda não começou (o mesmo contrato do `toggleMuteActive` do V3).
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getActiveAudioId, toggleMuteActive } from '@/lib/audioPlaybackBus';
+import { getActiveAudioId, toggleMuteActive } from '@/hooks/communication/audioPlaybackBus';
 import { getPlayingAudioId, pauseExclusiveAudio, playExclusiveAudio } from '@/hooks/chat/useExclusiveAudio';
 import { DEFAULT_MEDIA_VOLUME_STATE, getSnapshot, setMuted, setVolume } from '@/lib/mediaVolumeStore';
 

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from '@/lib/lazyToast';
-import { toggleMuteActive } from '@/lib/audioPlaybackBus';
+import { toggleMuteActive } from '@/hooks/communication/audioPlaybackBus';
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { VOLUME_CONTROL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
