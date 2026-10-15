@@ -18,7 +18,7 @@ interface ReauthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   actionLabel: string;
-  onConfirm: (password: string) => Promise<ReauthOutcome>;
+  onConfirm: (password: string, codigo: string) => Promise<ReauthOutcome>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -32,30 +32,45 @@ export function ReauthDialog({
   isLoading = false,
 }: ReauthDialogProps) {
   const [password, setPassword] = useState('');
+  const [codigo, setCodigo] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  // O segundo fator só aparece quando a reautenticação pede o código (usuário
+  // com TOTP verificado). Quem decide é o servidor do hook, não o diálogo.
+  const [precisaCodigo, setPrecisaCodigo] = useState(false);
+
+  const limpar = () => {
+    setPassword('');
+    setCodigo('');
+    setError('');
+    setPrecisaCodigo(false);
+  };
 
   const handleConfirm = async () => {
     if (!password) {
       setError('Digite sua senha');
       return;
     }
+    if (precisaCodigo && !codigo.trim()) {
+      setError('Digite o código do autenticador');
+      return;
+    }
 
     setError('');
-    const outcome = await onConfirm(password);
+    const outcome = await onConfirm(password, codigo.trim());
 
     if (outcome.ok) {
-      setPassword('');
+      limpar();
     } else {
-      // Motivo real da falha (bloqueio, serviço indisponível, rede) — não mais
-      // 'Senha incorreta' para tudo.
+      // Motivo real da falha (bloqueio, serviço indisponível, rede, código do
+      // autenticador) — não mais 'Senha incorreta' para tudo.
       setError(outcome.mensagem || 'Senha incorreta');
+      setPrecisaCodigo(Boolean(outcome.precisaCodigo));
     }
   };
 
   const handleCancel = () => {
-    setPassword('');
-    setError('');
+    limpar();
     onCancel();
   };
 
@@ -63,10 +78,7 @@ export function ReauthDialog({
   // `handleCancel`: o rascunho de senha/erro ficava no state e voltava preenchido
   // ao reabrir. Limpar aqui cobre todo caminho de fechamento.
   const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setPassword('');
-      setError('');
-    }
+    if (!next) limpar();
     onOpenChange(next);
   };
 
@@ -131,6 +143,34 @@ export function ReauthDialog({
               </motion.p>
             )}
           </div>
+
+          {precisaCodigo && (
+            <div className="space-y-2">
+              <Label htmlFor="reauth-codigo">Código do autenticador</Label>
+              <Input
+                id="reauth-codigo"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                value={codigo}
+                onChange={(e) => {
+                  setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void handleConfirm();
+                  }
+                }}
+                disabled={isLoading}
+                aria-describedby={undefined}
+              />
+              <p className="text-xs text-muted-foreground">
+                Abra o aplicativo autenticador e informe o código de 6 dígitos.
+              </p>
+            </div>
+          )}
 
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
             <p>Esta verificação adicional protege sua conta contra acessos não autorizados.</p>
