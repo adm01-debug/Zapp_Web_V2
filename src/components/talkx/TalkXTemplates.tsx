@@ -15,10 +15,6 @@ import { TalkXQueryBoundary } from './kit/states';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { parseTalkXTemplateRoute, pushTalkXTemplateRoute, replaceTalkXTemplateRoute, type TalkXTemplateRoute } from './talkxTemplateRoute';
-import { SUGGESTION_MIN_SENT, type TalkXTemplateConversion, type TalkXTemplateConversionState } from '@/hooks/integrations/useTalkXTemplatesConversion';
-
-/** Estado do ranking quando o consumidor do hook não o fornece (ex.: mock de teste). */
-const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
