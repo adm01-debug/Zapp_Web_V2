@@ -74,7 +74,7 @@ export function SecurityOverview() {
   // são estados distintos (antes o overview tinha instância própria de useMFA que
   // nunca buscava os fatores e exibia 2FA desativado com TOTP verificado).
   const mfaQuery = useMfaFactors(!!user);
-  const { devices, sessions, loading: devicesLoading } = useDeviceDetection();
+  const { devices, sessions, loading: devicesLoading, sessionsError } = useDeviceDetection();
   const { hasRole } = useUserRole();
   const isAdmin = hasRole('admin');
 
@@ -157,10 +157,13 @@ export function SecurityOverview() {
       title: 'Sessões Ativas',
       description: devicesLoading
         ? 'Verificando sessões…'
-        : `${sessions.length} sessão(ões) ativa(s), ${otherSessions} além desta`,
+        : sessionsError
+          ? 'Não foi possível verificar as sessões'
+          : `${sessions.length} sessão(ões) ativa(s), ${otherSessions} além desta`,
       icon: Monitor,
-      status: devicesLoading ? 'loading' : otherSessions <= 3 ? 'on' : 'off',
-      score: devicesLoading ? null : otherSessions <= 3 ? 25 : 15,
+      // Erro de leitura não é medição: nunca vira ponto nem verde.
+      status: devicesLoading ? 'loading' : sessionsError ? 'error' : otherSessions <= 3 ? 'on' : 'off',
+      score: devicesLoading || sessionsError ? null : otherSessions <= 3 ? 25 : 15,
       maxScore: 25,
     },
     {
@@ -284,7 +287,7 @@ export function SecurityOverview() {
                   <Monitor className="w-5 h-5 text-success" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{devicesLoading ? '—' : sessions.length}</div>
+                  <div className="text-2xl font-bold">{devicesLoading || sessionsError ? '—' : sessions.length}</div>
                   <div className="text-xs text-muted-foreground">Sessões Ativas</div>
                 </div>
               </div>

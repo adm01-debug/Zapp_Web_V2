@@ -1,23 +1,54 @@
-Especialista: iris
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- src/hooks/ui/useDeviceDetection.ts: `fetchSessions` deixou de ler `user_sessions` e passou a chamar `supabase.rpc('my_active_sessions')` (a RPC do cartão pai, que só devolve sessões vivas do chamador e marca a atual pelo claim `session_id` do JWT); a interface `UserSession` passou a ter `is_current` (e a perder as colunas mortas `is_active`/`expires_at`/`ended_at`, que a RPC não devolve).
-- src/components/security/DevicesPanel.tsx: o selo "Sessão atual" (`isCurrentSession`) vem de `session.is_current` — antes era `session.device_id === currentDeviceId`, e dois logins no MESMO aparelho (mesmo `device_id`) apareciam os dois como atuais e nenhum podia ser encerrado.
-- src/components/security/SecurityOverview.tsx: o item "Sessões Ativas" passou a medir `sessions.filter(s => !s.is_current).length` no lugar de `sessions.length` — a sessão que o dono está usando não é acesso estranho à conta. A descrição diz quantas são além desta (`N sessão(ões) ativa(s), M além desta`). Estado vazio conferido: `0 sessão(ões) ativa(s), 0 além desta`.
-- Testes: hook (RPC chamada, `user_sessions` não lida no carregamento, duas sessões no mesmo aparelho), componente DevicesPanel real com o hook dublado (1 selo "Sessão atual" e 1 botão "Encerrar"; e nenhum selo quando ninguém é atual), SecurityOverview real (1 além desta → 25/25; 4 além desta → 15/25).
+Refazer 1 do PE-82 (painel de sessões pela RPC `my_active_sessions`, sessão atual pelo JWT).
+A recusa apontou 1 defeito real: `fetchSessions` engolia o erro da RPC e entregava
+`sessions = []`, e o SecurityOverview contava 0 sessões como "tudo certo" (verde falso).
+Correção: erro de leitura virou estado visível (`sessionsError`) nas 3 camadas.
 
-Nenhum mock entrega o resultado pronto: o hook é dublado, mas quem decide o selo e a contagem são os componentes verdadeiros.
+Ponto 1 — fetchSessions engolia o erro da RPC (único defeito da recusa):
+o que mudei: `src/hooks/ui/useDeviceDetection.ts` — novo estado `sessionsError`
+(retornado pelo hook); no `catch`, esvazia a lista (para não exibir dado velho
+como atual) e preenche `sessionsError` (mensagem do erro ou texto padrão em pt-BR);
+toda nova tentativa limpa o erro antes e o sucesso limpa depois. A chamada à RPC
+é tipada no próprio hook (cast local), sem depender do `types.ts` gerado, que
+chega pelo cartão pai (PE-81).
+teste que prova: `src/hooks/__tests__/useDeviceDetection.test.tsx` —
+"falha da RPC zera a lista E expõe sessionsError (sem verde falso)" e
+"sucesso após falha limpa sessionsError". Saída vermelha antes (2 falhas:
+`sessionsError` era `undefined`) e verde depois.
 
-## Prova
-- vermelho antes (com DevicesPanel e fetchSessions no código antigo, `npx vitest run src/hooks/__tests__/useDeviceDetection.test.tsx src/components/security/__tests__/DevicesPanel.sessao-atual.test.tsx src/components/security/__tests__/SecurityOverview.sessao-atual.test.tsx`):
-  `AssertionError: expected [ <div>, <div> ] to have a length of 1 but got 2` (dois selos "Sessão atual" no mesmo aparelho)
-  `AssertionError: expected "vi.fn()" to be called with arguments: [ 'my_active_sessions' ]`
-- verde depois (`npx vitest run src/components/security src/hooks/__tests__/useDeviceDetection.test.tsx`): `Test Files 22 passed (22); Tests 111 passed (111)`
-- types: `zapp-verify . --rapido` (passo `tipos`) é a prova de tipos; `tsc -p tsconfig.node.json` e `tsconfig.e2e.json` passaram sem erro; o `tsc` do app é o pesado e nas minhas tentativas isoladas ele foi morto por OOM do host (exit 137), não por erro de tipo — o diff não cria tipo novo (só lê `is_current`, que a RPC do cartão pai já tipa).
+Ponto 2 — DevicesPanel e SecurityOverview herdaram o problema (leitura
+indisponível parecia ausência de risco): o que mudei:
+`src/components/security/DevicesPanel.tsx` — com `sessionsError`, mostra alerta
+`role="alert"` ("Não foi possível carregar as sessões" + botão "Tentar novamente"
+via `refetch`, sem toast duplicado); o vazio "Nenhuma sessão ativa" só aparece
+sem erro. `src/components/security/SecurityOverview.tsx` — item Sessões Ativas
+com erro fica `status: 'error'`, `score: null` (fora da soma, pontuação mostra
+"—") e descrição "Não foi possível verificar as sessões"; o cartão de estatística
+também mostra "—". Mutações (`endSession`/`removeDevice`) e a regra de "atual só
+pelo JWT" não foram tocadas.
+teste que prova: `DevicesPanel.sessao-atual.test.tsx` — "falha de leitura das
+sessões: mostra erro em vez de Nenhuma sessão ativa"; `SecurityOverview.sessao-
+atual.test.tsx` — "falha de leitura das sessões: item fora do verde e pontuação
+indisponível". Saída vermelha antes (2 falhas: sem alerta, item verde com 25/25)
+e verde depois.
 
-## Arquivos fora da lista do cartão (aviso do juiz)
-`supabase/migrations/20261013230007_my_active_sessions.sql`, `supabase/tests/my_active_sessions.sql`, `src/integrations/supabase/types.ts` e `scripts/db-audit/pg-cron-jobs-baseline.json` entraram no diff por CHERRY-PICK da faixa do cartão pai (`dia/2026-10-13..f8ba2455341ec102797139a76f2e25b50329f8b8`, branch `v2/sessoes-reais-do-usuario-2610130558f3a3`), como o próprio cartão manda: sem a RPC `my_active_sessions` (e o tipo gerado que a conhece) não há o que chamar. Nenhum deles foi editado por mim.
+Ponto 3 — sem regressão no que já passava: os 20 testes anteriores dos 3 arquivos
+continuam verdes; suíte de segurança + hook: 22 arquivos, 115 testes, todos verdes.
 
-## O que NÃO fiz e por quê
-- `endSession` e `removeDevice` continuam lendo `user_sessions` via `fromTable` para achar `auth_session_id`: o cartão pede a RPC na LEITURA da lista; mexer nas mutações é outra trilha.
-- Não subi servidor nem rodei e2e autenticado (R1/E2E): produção fora de alcance.
+Arquivos (diff contra o merge-base com dia/2026-10-13, só o escopo do cartão):
+- src/hooks/ui/useDeviceDetection.ts
+- src/components/security/DevicesPanel.tsx
+- src/components/security/SecurityOverview.tsx
+- src/hooks/__tests__/useDeviceDetection.test.tsx
+- src/components/security/__tests__/DevicesPanel.sessao-atual.test.tsx
+- src/components/security/__tests__/SecurityOverview.sessao-atual.test.tsx
+- .tmp/relato.md (este arquivo)
+Fora do diff de propósito: migration, tipos gerados, baseline do cron e teste SQL
+da RPC são do cartão pai (PE-81), que entra antes na integração (ordem do cartão).
+
+Verificação (comandos rodados agora, neste workspace):
+- `npx vitest run src/hooks/__tests__/useDeviceDetection.test.tsx src/components/security/__tests__/DevicesPanel.sessao-atual.test.tsx src/components/security/__tests__/SecurityOverview.sessao-atual.test.tsx` → 3 arquivos, 24 testes, todos passaram (antes da correção: 4 falhas).
+- `npx vitest run src/components/security src/hooks/__tests__/useDeviceDetection.test.tsx` → 22 arquivos, 115 testes, todos passaram.
+- `npx tsc -b --force` → saída limpa (código não depende do types.ts do PE-81).
+- `npx eslint` nos 6 arquivos: só 1 erro + 1 aviso pré-existentes na base (set-state-in-effect no `useEffect` original e import restrito no overview); nada novo.

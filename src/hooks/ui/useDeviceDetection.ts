@@ -40,6 +40,9 @@ export function useDeviceDetection() {
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(true);
+  // Falha de leitura das sessões NÃO é "0 sessões": enquanto este erro estiver
+  // preenchido, as telas mostram indisponibilidade em vez de estado verde.
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 
   // Generate device fingerprint
@@ -148,16 +151,27 @@ export function useDeviceDetection() {
   const fetchSessions = useCallback(async () => {
     if (!user) return;
 
+    // Nova tentativa invalida o erro anterior; só o resultado desta leitura vale.
+    setSessionsError(null);
     try {
       // A lista vem do banco já saneada: só sessões com `auth.sessions` viva, e
       // `is_current` calculado pelo JWT (não por device_id, que é compartilhado
-      // entre logins no mesmo aparelho).
-      const { data, error } = await supabase.rpc('my_active_sessions');
+      // entre logins no mesmo aparelho). A chamada é tipada aqui (sem depender
+      // do types.ts gerado) porque a RPC chega pelo cartão pai (PE-81).
+      const rpcSessions = supabase.rpc as unknown as (
+        fn: 'my_active_sessions',
+      ) => Promise<{ data: UserSession[] | null; error: Error | null }>;
+      const { data, error } = await rpcSessions('my_active_sessions');
 
       if (error) throw error;
-      setSessions((data ?? []) as unknown as UserSession[]);
+      setSessions(data ?? []);
+      setSessionsError(null);
     } catch (error) {
       log.error('Error fetching sessions:', error);
+      // Leitura indisponível não é "nenhuma sessão": esvazia a lista para não
+      // exibir dado velho como atual e expõe o erro para as telas.
+      setSessions([]);
+      setSessionsError(error instanceof Error && error.message ? error.message : 'Não foi possível carregar as sessões');
     }
   }, [user]);
 
@@ -256,6 +270,7 @@ export function useDeviceDetection() {
     devices,
     sessions,
     loading,
+    sessionsError,
     currentDeviceId,
     trustDevice,
     removeDevice,

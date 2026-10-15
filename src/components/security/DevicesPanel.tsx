@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { SessionCard, DeviceCard } from './DeviceCard';
 
 export function DevicesPanel() {
-  const { devices, sessions, loading, currentDeviceId, trustDevice, removeDevice, endSession, endAllOtherSessions } = useDeviceDetection();
+  const { devices, sessions, loading, sessionsError, currentDeviceId, trustDevice, removeDevice, endSession, endAllOtherSessions, refetch } = useDeviceDetection();
   const [processingDevice, setProcessingDevice] = useState<string | null>(null);
   const [processingSession, setProcessingSession] = useState<string | null>(null);
 
@@ -56,7 +56,16 @@ export function DevicesPanel() {
           </div>
         </CardHeader>
         <CardContent>
-          {sessions.length === 0 ? (
+          {sessionsError ? (
+            <div role="alert" className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+              <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
+              <div>
+                <h4 className="font-medium text-destructive">Não foi possível carregar as sessões</h4>
+                <p className="text-sm text-muted-foreground mt-1">{sessionsError}</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => { void refetch(); }}>Tentar novamente</Button>
+              </div>
+            </div>
+          ) : sessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Monitor className="w-12 h-12 text-muted-foreground mb-3" /><h4 className="font-medium">Nenhuma sessão ativa</h4><p className="text-sm text-muted-foreground">Suas sessões aparecerão aqui</p>
             </div>

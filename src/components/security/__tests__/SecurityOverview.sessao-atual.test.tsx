@@ -24,7 +24,8 @@ const devicesState: {
   }>;
   sessions: SessaoFixture[];
   loading: boolean;
-} = { devices: [], sessions: [], loading: false };
+  sessionsError: string | null;
+} = { devices: [], sessions: [], loading: false, sessionsError: null };
 
 vi.mock('@/hooks/auth/useMFA', () => ({
   useMfaFactors: () => ({ data: [], isLoading: false, isError: false }),
@@ -56,6 +57,7 @@ describe('SecurityOverview — sessões medidas pelo JWT', () => {
     devicesState.devices = [];
     devicesState.sessions = [];
     devicesState.loading = false;
+    devicesState.sessionsError = null;
   });
 
   it('duas sessões no mesmo aparelho: só a outra conta — a atual não é risco', async () => {
@@ -90,5 +92,17 @@ describe('SecurityOverview — sessões medidas pelo JWT', () => {
     render(<SecurityOverview />);
 
     expect(await screen.findByText('0 sessão(ões) ativa(s), 0 além desta')).toBeInTheDocument();
+  });
+
+  it('falha de leitura das sessões: item fora do verde e pontuação indisponível', async () => {
+    devicesState.sessions = [];
+    devicesState.sessionsError = 'RPC indisponível';
+
+    render(<SecurityOverview />);
+
+    // O item admite que não mediu, em vez de contar 0 sessões como "tudo certo".
+    expect(await screen.findByText('Não foi possível verificar as sessões')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pontuação indisponível')).toBeInTheDocument();
+    expect(screen.queryByText('25/25')).toBeNull();
   });
 });

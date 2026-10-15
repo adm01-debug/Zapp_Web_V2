@@ -331,4 +331,32 @@ describe('useDeviceDetection', () => {
     // Sem auth_session_id, a revogação nunca é invocada.
     expect(mockFunctionsInvoke).not.toHaveBeenCalled();
   });
+
+  // ─── PE-82R: falha da RPC não pode virar "0 sessões" verde ───
+
+  it('falha da RPC zera a lista E expõe sessionsError (sem verde falso)', async () => {
+    mockRpc.mockRejectedValueOnce(new Error('RPC my_active_sessions indisponível'));
+
+    const { result } = renderHook(() => useDeviceDetection());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.sessions).toEqual([]);
+    expect(result.current.sessionsError).toBeTruthy();
+  });
+
+  it('sucesso após falha limpa sessionsError', async () => {
+    mockRpc.mockRejectedValueOnce(new Error('falha transitória'));
+
+    const { result } = renderHook(() => useDeviceDetection());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.sessionsError).toBeTruthy();
+
+    mockRpc.mockResolvedValueOnce({ data: [], error: null });
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    expect(result.current.sessions).toEqual([]);
+    expect(result.current.sessionsError).toBeNull();
+  });
 });

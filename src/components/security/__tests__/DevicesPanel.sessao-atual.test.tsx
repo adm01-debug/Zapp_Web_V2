@@ -12,22 +12,26 @@ interface HookState {
   devices: Array<Record<string, unknown>>;
   sessions: Array<Record<string, unknown>>;
   loading: boolean;
+  sessionsError: string | null;
   currentDeviceId: string | null;
   trustDevice: (id: string) => Promise<void>;
   removeDevice: (id: string) => Promise<void>;
   endSession: (id: string) => Promise<void>;
   endAllOtherSessions: () => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 const state: HookState = {
   devices: [],
   sessions: [],
   loading: false,
+  sessionsError: null,
   currentDeviceId: null,
   trustDevice: vi.fn().mockResolvedValue(undefined),
   removeDevice: vi.fn().mockResolvedValue(undefined),
   endSession: vi.fn().mockResolvedValue(undefined),
   endAllOtherSessions: vi.fn().mockResolvedValue(undefined),
+  refetch: vi.fn().mockResolvedValue(undefined),
 };
 
 vi.mock('@/hooks/ui/useDeviceDetection', () => ({
@@ -66,6 +70,7 @@ describe('DevicesPanel — sessão atual pelo JWT', () => {
     state.devices = [dispositivo];
     state.sessions = [];
     state.loading = false;
+    state.sessionsError = null;
     state.currentDeviceId = 'dev-1';
   });
 
@@ -86,5 +91,17 @@ describe('DevicesPanel — sessão atual pelo JWT', () => {
 
     expect(screen.queryByText('Sessão atual')).toBeNull();
     expect(screen.getAllByText('Encerrar')).toHaveLength(2);
+  });
+
+  it('falha de leitura das sessões: mostra erro em vez de "Nenhuma sessão ativa"', () => {
+    state.sessions = [];
+    state.sessionsError = 'RPC indisponível';
+
+    render(<DevicesPanel />);
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Não foi possível carregar as sessões')).toBeInTheDocument();
+    // Leitura indisponível não é ausência de sessão: o estado vazio não aparece.
+    expect(screen.queryByText('Nenhuma sessão ativa')).toBeNull();
   });
 });
