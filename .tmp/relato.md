@@ -1,4 +1,4 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
 
 ## O que mudou e por quê
 - src/components/gmail/GmailAccountSelector.tsx (novo): seletor da conta de email ativa, extraído do cabeçalho do EmailChatInbox. Cada opção passa a mostrar o estado de sincronização da conta (`precisa reconectar`, `falha ao sincronizar`, `sincronizando…`, `aguardando sincronização`), lido direto de `gmail_accounts.sync_status` — não é inferido no front. Conta saudável (`synced`) fica só com o endereço, sem ruído.
