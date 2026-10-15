@@ -822,7 +822,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       <TalkXConfirmDialog
         open={!!removing}
         onClose={() => setRemoving(null)}
-        onConfirm={() => (removing ? removeMutation.mutateAsync(removing.ids) : false)}
+        onConfirm={() => { if (removing) return removeMutation.mutateAsync(removing.ids); }}
         title={removingIsBulk ? `Remover ${removingEntries.length} contatos da lista?` : PRESETS_DO_MOCK.removerSupressao.title}
         subtitle={removingIsBulk ? `Remover ${removingEntries.length} contatos da lista` : PRESETS_DO_MOCK.removerSupressao.subtitle}
         description={removingIsBulk ? `Deseja remover ${removingEntries.length} contatos da lista de supressão?` : PRESETS_DO_MOCK.removerSupressao.description}
