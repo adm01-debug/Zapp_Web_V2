@@ -4,6 +4,15 @@ import { ContactToolbar } from '../ContactToolbar';
 import { canMergeContacts } from '../contactPermissions';
 import { noop } from './contactDeleteFixtures';
 
+// CT-011 — a barra lê a sub-chave `contacts.v2.toolbar` pelo hook compartilhado
+// de CT-005. Aqui a chave fica DESLIGADA (a barra é a atual): o arquivo segue
+// provando só o gate do botão "Mesclar", sem precisar de AuthProvider/QueryClient.
+vi.mock('@/hooks/contacts/useContactsV2Flags', () => ({
+  useContactsV2Flags: () => ({
+    toolbar: false, cards: false, detalhe: false, empresa: false, edicao: false, protecao: false,
+  }),
+}));
+
 /**
  * O botão "Mesclar" era o ÚLTIMO ponto do módulo de Contatos sem gate: aparecia
  * para qualquer usuário com 2+ contatos selecionados e a recusa só surgia no
