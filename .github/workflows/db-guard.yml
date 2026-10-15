@@ -42,8 +42,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  offline-contract:
-    name: Contrato DB offline
+
+  offline-contract-core:
+    name: Contrato DB offline (core)
     if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -452,6 +453,130 @@ jobs:
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
+      - name: "W55 — Resumo dos contratos pulados"
+        if: env.SKIP_CONTRACTS == 'true'
+        run: |
+          echo "::notice::contratos pulados: diff nao toca banco (supabase/, scripts/db-audit/, src/, tests/)"
+          echo "Todos os contratos Docker foram pulados porque este PR nao altera paths de banco."
+
+  offline-contract-talkx:
+    name: Contrato DB offline (talkx)
+    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
+    # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
+    # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,
+    # eliminando o overhead de inicialização individual de containers.
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_PASSWORD: shim_test_password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+      # W57: ghcr.io como primario (sem rate limit); ECR fica so como fallback no retry script.
+      POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9
+      # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
+      POSTGRES_SERVICE_HOST: localhost
+      POSTGRES_SERVICE_PORT: "5432"
+      POSTGRES_SERVICE_USER: postgres
+      POSTGRES_SERVICE_PASS: shim_test_password
+      DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
+    permissions:
+      contents: read
+      # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
+      # os arquivos do PR via API).
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # W55: detectar se o diff da PR toca paths de banco; PRs que so mexem em
+      # docs/infra nao precisam dos contratos Docker (economiza ~15 min).
+      # Em push, merge_group e workflow_dispatch: sempre roda tudo (full safety).
+      - name: "W55 — Detectar se diff toca paths de banco"
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const dbPattern = /^(supabase\/|scripts\/db-audit\/|src\/|tests\/)/;
+            const touchesDb = files.some(f => dbPattern.test(f.filename));
+            if (!touchesDb) {
+              core.exportVariable('SKIP_CONTRACTS', 'true');
+              core.notice('Diff nao toca paths de banco — contratos Docker serao pulados.');
+            }
+
+
+      # E49 (auditoria de GitHub Actions, 2026-09-26): ataca a causa raiz dos
+      # drifts documentados no CLAUDE.md (02/09, 04/09, 24-26/09) — um arquivo
+      # em supabase/migrations/ editado DEPOIS de já ter sido aplicado em
+      # produção (ou já mergeado) nunca deveria voltar a mudar; a regra 7 da
+      # seção 1 do CLAUDE.md já manda isso, mas nada impedia um PR de violá-la
+      # antes deste guard. Só roda em pull_request (a API de arquivos do PR
+      # não existe em push/schedule/dispatch).
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      # O guard de subscriptions usa a API AST do TypeScript para rejeitar
+      # nomes de tabela dinamicos sem recorrer a regex permissiva. O checkout
+      # limpo do runner nao possui essa devDependency ate o install frozen.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
+      - name: Instalar dependencias do guard AST
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # O teste de integracao da V02 fala com um PostgREST real e e escrito em
+      # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
+      # (o guard nao instala Deno em nenhum outro passo).
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: Instalar docker-shim (E47)
+        if: env.SKIP_CONTRACTS != 'true'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
+      # mesmo container e roda DDL identico em cada um. O shim mapeia um
+      # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo
+      # banco, causando "already exists" na segunda iteracao. O test acessa
+      # postgres via docker exec (socket Unix interno), nao via localhost:5432,
+      # entao nao colide com o servico compartilhado.
       - name: Simular histórico atômico de templates Talk X
         if: env.SKIP_CONTRACTS != 'true'
         env:
@@ -849,6 +974,130 @@ jobs:
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
+      - name: "W55 — Resumo dos contratos pulados"
+        if: env.SKIP_CONTRACTS == 'true'
+        run: |
+          echo "::notice::contratos pulados: diff nao toca banco (supabase/, scripts/db-audit/, src/, tests/)"
+          echo "Todos os contratos Docker foram pulados porque este PR nao altera paths de banco."
+
+  offline-contract-multiplix-ia-team:
+    name: Contrato DB offline (multiplix+ia+team)
+    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
+    # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
+    # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,
+    # eliminando o overhead de inicialização individual de containers.
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_PASSWORD: shim_test_password
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+      # W57: ghcr.io como primario (sem rate limit); ECR fica so como fallback no retry script.
+      POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9
+      # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
+      POSTGRES_SERVICE_HOST: localhost
+      POSTGRES_SERVICE_PORT: "5432"
+      POSTGRES_SERVICE_USER: postgres
+      POSTGRES_SERVICE_PASS: shim_test_password
+      DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
+    permissions:
+      contents: read
+      # pull-requests: read apenas para o passo de imutabilidade abaixo (lista
+      # os arquivos do PR via API).
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # W55: detectar se o diff da PR toca paths de banco; PRs que so mexem em
+      # docs/infra nao precisam dos contratos Docker (economiza ~15 min).
+      # Em push, merge_group e workflow_dispatch: sempre roda tudo (full safety).
+      - name: "W55 — Detectar se diff toca paths de banco"
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const dbPattern = /^(supabase\/|scripts\/db-audit\/|src\/|tests\/)/;
+            const touchesDb = files.some(f => dbPattern.test(f.filename));
+            if (!touchesDb) {
+              core.exportVariable('SKIP_CONTRACTS', 'true');
+              core.notice('Diff nao toca paths de banco — contratos Docker serao pulados.');
+            }
+
+
+      # E49 (auditoria de GitHub Actions, 2026-09-26): ataca a causa raiz dos
+      # drifts documentados no CLAUDE.md (02/09, 04/09, 24-26/09) — um arquivo
+      # em supabase/migrations/ editado DEPOIS de já ter sido aplicado em
+      # produção (ou já mergeado) nunca deveria voltar a mudar; a regra 7 da
+      # seção 1 do CLAUDE.md já manda isso, mas nada impedia um PR de violá-la
+      # antes deste guard. Só roda em pull_request (a API de arquivos do PR
+      # não existe em push/schedule/dispatch).
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      # O guard de subscriptions usa a API AST do TypeScript para rejeitar
+      # nomes de tabela dinamicos sem recorrer a regex permissiva. O checkout
+      # limpo do runner nao possui essa devDependency ate o install frozen.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
+      - name: Instalar dependencias do guard AST
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # O teste de integracao da V02 fala com um PostgREST real e e escrito em
+      # Deno, como os testes da edge. Mesma action e mesmo SHA pinado do ci.yml
+      # (o guard nao instala Deno em nenhum outro passo).
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: Instalar docker-shim (E47)
+        if: env.SKIP_CONTRACTS != 'true'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          cp scripts/db-audit/docker-shim "$HOME/.local/bin/docker"
+          chmod +x "$HOME/.local/bin/docker"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # E47: SKIP_DOCKER_SHIM=1 — este test cria dois bancos (db_a, db_b) no
+      # mesmo container e roda DDL identico em cada um. O shim mapeia um
+      # container a um unico banco; -d db_a e -d db_b roteariam para o mesmo
+      # banco, causando "already exists" na segunda iteracao. O test acessa
+      # postgres via docker exec (socket Unix interno), nao via localhost:5432,
+      # entao nao colide com o servico compartilhado.
       - name: Simular primitivas atômicas de mensagens e encerramento
         if: env.SKIP_CONTRACTS != 'true'
         env:
@@ -1052,3 +1301,25 @@ jobs:
         run: |
           echo "::notice::contratos pulados: diff nao toca banco (supabase/, scripts/db-audit/, src/, tests/)"
           echo "Todos os contratos Docker foram pulados porque este PR nao altera paths de banco."
+
+  offline-contract:
+    name: Contrato DB offline
+    needs: [offline-contract-core, offline-contract-talkx, offline-contract-multiplix-ia-team]
+    if: always() && !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Verificar resultado dos shards
+        run: |
+          result_core="${{ needs.offline-contract-core.result }}"
+          result_talkx="${{ needs.offline-contract-talkx.result }}"
+          result_multiplix="${{ needs.offline-contract-multiplix-ia-team.result }}"
+          echo "core: $result_core"
+          echo "talkx: $result_talkx"
+          echo "multiplix+ia+team: $result_multiplix"
+          if [[ "$result_core" != "success" || "$result_talkx" != "success" || "$result_multiplix" != "success" ]]; then
+            echo "::error::Um ou mais shards do Contrato DB offline falharam (core=$result_core talkx=$result_talkx multiplix+ia+team=$result_multiplix)."
+            exit 1
+          fi
