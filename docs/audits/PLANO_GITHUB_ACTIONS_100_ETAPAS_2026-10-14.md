@@ -370,7 +370,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   dry-run não roda sem aprovação e o aprovador decide às cegas. Verificação: fixture com 8 versions; editar um arquivo
   entre dry-run e apply → recusa; `remote-only` continua bloqueando; dispatch com `apply=false` termina sem pedir
   aprovação.
-- [ ] **W28** · B+C · N-08 · Mover as ~640 linhas de asserções inline por versão (`db-migrate.yml:264-900`) para
+- [x] **W28** · B+C · N-08 · **FEITO** — asserções inline movidas para `contracts/<versão>.expect.json` (12 arquivos); `lerExpect`/`testarCampo`/`avaliarContraExpect` adicionados a `run-runtime-contract.mjs`; YAML perdeu ~640 linhas. Mover as ~640 linhas de asserções inline por versão (`db-migrate.yml:264-900`) para
   `scripts/db-audit/contracts/<versão>.expect.json`, lidas por `run-runtime-contract.mjs` (comparação `antes`/`depois`
   por `NEEDS_APPLY`). Verificação: `db-migrate-contratos.unit.mjs` prova equivalência por fixture para as 12 versions;
   YAML perde ≥ 600 linhas.
@@ -447,7 +447,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 4 — `db-guard` sustentável (W51–W58)
 
-- [ ] **W51** · B+C · N-17 · Converter os 11 passos `SKIP_DOCKER_SHIM` para o shim: (a) readiness por `docker logs` →
+- [x] **W51** · B+C · N-17 · **FEITO 2026-10-15** — 11→8 passos SKIP_DOCKER_SHIM; shim ganhou `pg_isready`; `proof.database` removido de 4 arquivos. Converter os 11 passos `SKIP_DOCKER_SHIM` para o shim: (a) readiness por `docker logs` →
   o shim já emite "ready"; ajustar os `.test.sh` para `pg_isready`; (b) `proof.database === 'postgres'` → shim aceita
   `SHIM_DB_NAME` e os testes param de afirmar o nome; (c) só PostgREST e os 2 que criam roles globais ficam no Docker
   real. Verificação: ≤ 3 passos com `SKIP_DOCKER_SHIM`; job < 4 min.
