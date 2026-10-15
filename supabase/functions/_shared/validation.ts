@@ -148,7 +148,7 @@ export function errorResponse(message: string, status = 400, req?: Request) {
   // W81: para 5xx delega ao internalErrorResponse — err.message nunca chega ao
   // corpo da resposta (fecha CodeQL js/stack-trace-exposure em validation.ts).
   if (status >= 500) {
-    return internalErrorResponse(new Error(message), req);
+    return internalErrorResponse(new Error(message), req, status);
   }
   const headers = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(
@@ -160,20 +160,21 @@ export function errorResponse(message: string, status = 400, req?: Request) {
 /** Serializes `err` for server-side logging only. Isolates err.message access
  * from the Response construction scope so CodeQL taint analysis does not trace
  * err.message → Response body (js/stack-trace-exposure). */
-function logServerError(err: unknown): void {
+function logServerError(err: unknown, status = 500): void {
   const msg = err instanceof Error ? err.message : String(err);
-  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg }));
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg }));
 }
 
-/** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
+/** Standard JSON 5xx error response. Logs the real error server-side; nunca expõe
  * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
- * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
-export function internalErrorResponse(err: unknown, req?: Request): Response {
+ * Use no lugar de errorResponse(err.message, 5xx, req) em todos os catch de 5xx.
+ * O status é preservado (502, 503, etc.) mas o corpo é sempre genérico. */
+export function internalErrorResponse(err: unknown, req?: Request, status = 500): Response {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
-  logServerError(err);
+  logServerError(err, status);
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
-    { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
 
