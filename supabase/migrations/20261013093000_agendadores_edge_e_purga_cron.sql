@@ -1,9 +1,9 @@
 -- agendadores_edge_e_purga_cron
--- Rollback: desagenda os SEIS jobs criados por esta migration (somente do dono atual),
+-- Rollback: desagenda os CINCO jobs criados por esta migration (somente do dono atual),
 -- remove o indice e as funcoes que esta migration adicionou e devolve a base ao
 -- estado de 20261009000118, sem tocar em nenhum job de outro dono.
 -- Rollback (SQL executável, na ordem):
---   select cron.unschedule(jobid) from cron.job where username = current_user and jobname in ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details');
+--   select cron.unschedule(jobid) from cron.job where username = current_user and jobname in ('send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details');
 --   drop function if exists public.apply_zapp_agendadores_e_purga_cron();
 --   drop index if exists public.scheduled_reports_due_idx;
 --   drop function if exists public.purge_cron_job_run_details(integer, integer);
@@ -19,15 +19,20 @@
 -- O que estava errado
 -- -------------------
 -- A interface promete coisas que nenhum agendador cumpria:
---   * AutoCloseSettings (tela de auto-fechamento) -> a edge `auto-close-conversations`
---     nunca era chamada; conversa parada nunca fechava sozinha.
 --   * Relatorios agendados -> `scheduled_reports.next_send_at` era gravado pela tela,
 --     mas nenhum job vencia a linha; o relatorio nunca saia (a edge
 --     `send-scheduled-report` existia e nao tinha chamador).
 --   * `cleanup-rate-limit-logs` tambem nao tinha agendador.
 --   * `cron.job_run_details` crescendo sem fim: o log do pg_cron nunca era expurgado.
 -- Dos 13 jobs do pg_cron, estes tres nao existiam. Esta migration fecha a lacuna
--- criando SEIS jobs, cadencia decidida com o dono do card e registrada no relato.
+-- criando CINCO jobs, cadencia decidida com o dono do card e registrada no relato.
+--
+-- Auto-fechamento FORA deste agendamento (decisao da revisao PE-102, 13/10):
+-- a edge `auto-close-conversations` ainda seleciona todo contato com `updated_at`
+-- antigo, sem filtro de status/exclusao/limite (ver PK-01); agenda-la a cada 10 min
+-- poderia desatribuir milhares de contatos de uma vez. O job volta no PK-02,
+-- depois do PK-01. O `verify_jwt = false` dela ja fica no config.toml neste
+-- cartao para o PK-02 nao precisar de trilha de config.
 --
 -- Decisoes registradas (nao agendados aqui)
 -- ----------------------------------------
@@ -51,9 +56,10 @@
 -- Como o job roda
 -- ---------------
 --   * Jobs de Edge: net.http_post para /functions/v1/<edge> com `x-cron-secret` e
---     timeout > 0 (mesmo molde de 20260930250000). As tres edges precisam de
---     `verify_jwt = false` em supabase/config.toml para o gateway nao barrar o cron com
---     401 antes do x-cron-secret: registrado no relato (area deploy/edge).
+--     timeout > 0 (mesmo molde de 20260930250000). As edges de cron (`send-scheduled-
+--     report`, `cleanup-rate-limit-logs` e, no PK-02, `auto-close-conversations`) tem
+--     `verify_jwt = false` em supabase/config.toml (este cartao): sem isso o gateway
+--     barra o cron com 401 antes do x-cron-secret (recusa PE-102, ponto 2).
 --   * Jobs de SQL: `cron.schedule` com o comando SQL direto, chamando as funcoes de
 --     manutencao abaixo.
 --   * Nenhum DML direto em cron.job: só cron.schedule/unschedule/alter_job (licao do
@@ -299,47 +305,6 @@ declare
   v_criados     text[] := array[]::text[];
   v_alterados   text[] := array[]::text[];
 begin
-  -- ---- auto-close-conversations (a cada 10 min; a tela promete fechar sozinho) ----
-  select jobid into v_jobid from cron.job
-   where jobname = 'auto-close-conversations' and username = current_user;
-  if v_jobid is null then
-    select username into v_dono_alheio from cron.job
-     where jobname = 'auto-close-conversations' and username <> current_user limit 1;
-    if v_dono_alheio is not null then
-      raise exception 'cron_job_name_taken' using errcode = 'P0001',
-        hint = format('job auto-close-conversations pertence a %s', v_dono_alheio);
-    end if;
-    perform cron.schedule(
-      'auto-close-conversations',
-      '4-59/10 * * * *',
-      $cmd$SELECT net.http_post(
-        url := public.zapp_project_url() || '/functions/v1/auto-close-conversations',
-        headers := jsonb_build_object(
-          'Content-Type','application/json',
-          'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
-        ),
-        body := '{}'::jsonb,
-        timeout_milliseconds := 60000
-      ) AS request_id$cmd$
-    );
-    v_criados := array_append(v_criados, 'auto-close-conversations');
-  else
-    perform cron.alter_job(
-      v_jobid,
-      schedule := '4-59/10 * * * *',
-      command := $cmd$SELECT net.http_post(
-        url := public.zapp_project_url() || '/functions/v1/auto-close-conversations',
-        headers := jsonb_build_object(
-          'Content-Type','application/json',
-          'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name='gmail_cron_secret')
-        ),
-        body := '{}'::jsonb,
-        timeout_milliseconds := 60000
-      ) AS request_id$cmd$
-    );
-    v_alterados := array_append(v_alterados, 'auto-close-conversations');
-  end if;
-
   -- ---- send-scheduled-report (a cada 15 min; reivindica os vencidos pela RPC) ----
   select jobid into v_jobid from cron.job
    where jobname = 'send-scheduled-report' and username = current_user;
@@ -522,7 +487,7 @@ select public.apply_zapp_agendadores_e_purga_cron() as agendadores;
 
 
 -- ============================================================================
--- 9) Guarda de saida: os seis jobs existem, com a cadencia esperada, do dono atual
+-- 9) Guarda de saida: os cinco jobs existem, com a cadencia esperada, do dono atual
 -- ============================================================================
 do $guarda$
 declare
@@ -530,7 +495,6 @@ declare
 begin
   select string_agg(esperado.jobname, ', ') into v_faltando
     from (values
-      ('auto-close-conversations',   '4-59/10 * * * *'),
       ('send-scheduled-report',      '9-59/15 * * * *'),
       ('cleanup-rate-limit-logs',    '14 4 * * *'),
       ('purge-crm-sync-outbox',      '19 4 * * *'),

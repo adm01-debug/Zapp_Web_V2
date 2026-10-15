@@ -6,11 +6,14 @@
 # ESCUDO de DML direto em cron.job) e retry-disposable-postgres-test.sh (bootstrap).
 #
 # Defeito que o contrato prova (BLOCO A):
-#   * tres edges prometidas pela interface (auto-close-conversations,
-#     send-scheduled-report, cleanup-rate-limit-logs) nao tinham job no pg_cron;
+#   * duas edges prometidas pela interface (send-scheduled-report,
+#     cleanup-rate-limit-logs) nao tinham job no pg_cron;
 #   * cron.job_run_details nunca era expurgado.
+#   (auto-close-conversations NAO e agendado: decisao da revisao PE-102 de
+#   13/10 -- a edge ainda varre contato sem filtro de status/exclusao/limite
+#   (PK-01); o job volta no PK-02. A assercao A1a prova a ausencia.)
 # E prova que a emenda NAO tem efeito colateral:
-#   A1 os seis jobs nascem com a cadencia esperada, do dono atual;
+#   A1 os cinco jobs nascem com a cadencia esperada, do dono atual;
 #   A2 reaplicar nao duplica (IF cron.job -> alter_job), nao volta a "criar";
 #   A3 os jobs de Edge mandam x-cron-secret lido do Vault, sem Bearer/anon key, timeout > 0;
 #   A4 nenhum DML direto em cron.job (a 42501 de producao) -- acesso so por leitura;
@@ -272,23 +275,22 @@ SQL
 
 psql_file "$tmp_dir/pre.sql" >/dev/null
 
-# ── BLOCO A: os seis agendadores nascem, e reaplicar nao duplica ────────────────
+# ── BLOCO A: os cinco agendadores nascem, e reaplicar nao duplica ────────────────
 printf '[INFO] BLOCO A: agendadores\n'
 apply_out="$(psql_file "$migration" | tail -n1)"
 [[ "$apply_out" == *'"criados"'* ]] || fail "apply nao devolveu o resumo: $apply_out"
 
-expect_value 'A1a. auto-close-conversations com cadencia de 10 min' \
-  'auto-close-conversations|4-59/10 * * * *' \
-  "SELECT jobname || '|' || schedule FROM cron.job WHERE jobname = 'auto-close-conversations'"
+expect_value 'A1a. auto-close-conversations NAO esta agendado (volta no PK-02)' '0' \
+  "SELECT count(*) FROM cron.job WHERE jobname = 'auto-close-conversations'"
 expect_value 'A1b. send-scheduled-report com cadencia de 15 min' \
   'send-scheduled-report|9-59/15 * * * *' \
   "SELECT jobname || '|' || schedule FROM cron.job WHERE jobname = 'send-scheduled-report'"
 expect_value 'A1c. purge-cron-job-run-details diario' \
   'purge-cron-job-run-details|29 3 * * *' \
   "SELECT jobname || '|' || schedule FROM cron.job WHERE jobname = 'purge-cron-job-run-details'"
-expect_value 'A1d. exatamente 6 jobs novos, do dono atual' '6' \
+expect_value 'A1d. exatamente 5 jobs novos, do dono atual' '5' \
   "SELECT count(*) FROM cron.job WHERE username = current_user AND jobname IN
-   ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs',
+   ('send-scheduled-report','cleanup-rate-limit-logs',
     'purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details')"
 expect_value 'A1e. nenhum DML direto em cron.job: nenhum job ficou sem dono' '0' \
   "SELECT count(*) FROM cron.job WHERE username IS NULL"
@@ -296,21 +298,21 @@ expect_value 'A1e. nenhum DML direto em cron.job: nenhum job ficou sem dono' '0'
 # A2: reaplicar nao duplica.
 reapply_out="$(psql_file "$migration" | tail -n1)"
 [[ "$reapply_out" == *'"criados": []'* ]] || fail "reaplicar deveria alterar, nao criar: $reapply_out"
-expect_value 'A2. reaplicar nao duplica job' '6' \
-  "SELECT count(*) FROM cron.job WHERE jobname LIKE ANY (ARRAY['auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details'])"
+expect_value 'A2. reaplicar nao duplica job' '5' \
+  "SELECT count(*) FROM cron.job WHERE jobname LIKE ANY (ARRAY['send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details'])"
 
 expect_value 'A3a. job de Edge manda x-cron-secret do Vault (gmail_cron_secret)' '1' \
-  "SELECT count(*) FROM cron.job WHERE jobname = 'auto-close-conversations'
+  "SELECT count(*) FROM cron.job WHERE jobname = 'send-scheduled-report'
      AND command LIKE '%x-cron-secret%' AND command LIKE '%gmail_cron_secret%'"
 expect_value 'A3b. nenhum job novo manda Bearer/anon key' '0' \
-  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs')
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('send-scheduled-report','cleanup-rate-limit-logs')
      AND (command LIKE '%Bearer%' OR command LIKE '%apikey%')"
-expect_value 'A3c. todo job de Edge tem timeout > 0' '3' \
-  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs')
+expect_value 'A3c. todo job de Edge tem timeout > 0' '2' \
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('send-scheduled-report','cleanup-rate-limit-logs')
      AND command ~ 'timeout_milliseconds := [1-9]'"
 
 expect_value 'A3d. a URL base nao fica literal no comando (vem de public.zapp_project_url())' '0' \
-  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs') AND command LIKE '%://%'"
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('send-scheduled-report','cleanup-rate-limit-logs') AND command LIKE '%://%'"
 expect_value 'A3e. public.zapp_project_url() resolve do Vault quando o GUC nao existe' 'https://projeto-exemplo.invalid' \
   "SELECT public.zapp_project_url()"
 checa_sem_dml_direto "$migration" || fail "A4. $?"
@@ -378,8 +380,8 @@ mkdir -p .tmp
 awk '/Rollback \(SQL execut.{1,2}vel, na ordem\)/{f=1;next} f&&/^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration" > .tmp/rollback.sql
 [[ -s .tmp/rollback.sql ]] || fail 'D0. a secao de rollback do arquivo esta vazia'
 psql_file .tmp/rollback.sql >/dev/null
-expect_value 'D1. o rollback desagenda os 6 jobs' '0' \
-  "SELECT count(*) FROM cron.job WHERE jobname IN ('auto-close-conversations','send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details')"
+expect_value 'D1. o rollback desagenda os 5 jobs' '0' \
+  "SELECT count(*) FROM cron.job WHERE jobname IN ('send-scheduled-report','cleanup-rate-limit-logs','purge-crm-sync-outbox','purge-ai-rate-limits','purge-cron-job-run-details')"
 expect_value 'D2. o rollback remove a RPC de reivindicacao' 'true' \
   "SELECT (to_regprocedure('public.claim_due_scheduled_reports(integer)') IS NULL)::text"
 expect_value 'D3. o rollback remove o indice de vencimento' 'true' \

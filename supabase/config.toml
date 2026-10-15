@@ -82,3 +82,22 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# PE-102 refazer 1 (recusa do revisor 13/10, ponto 2): os jobs do pg_cron chamam
+# estas edges por net.http_post com `x-cron-secret` (segredo compartilhado do
+# Vault, `gmail_cron_secret`), sem JWT de sessao. Sem esta excecao o gateway
+# devolve 401 antes do codigo da funcao conferir o segredo e o job nao faz nada.
+# A autorizacao continua obrigatoria DENTRO de cada edge, ANTES de qualquer
+# leitura/escrita: cron com x-cron-secret valido (tempo constante, fail-closed
+# sem CRON_SECRET) OU JWT de admin/supervisor pela RPC is_admin_or_supervisor.
+# `auto-close-conversations` nao tem job neste cartao (volta no PK-02, depois
+# do PK-01), mas a excecao ja fica pronta para o PK-02 nao precisar de trilha
+# de config.
+[functions.send-scheduled-report]
+verify_jwt = false
+
+[functions.cleanup-rate-limit-logs]
+verify_jwt = false
+
+[functions.auto-close-conversations]
+verify_jwt = false
