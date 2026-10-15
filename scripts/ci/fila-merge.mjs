@@ -59,7 +59,11 @@ export function classificar(pr, obrigatorios) {
   if (pr.mergeStateStatus === 'DIRTY') return 'fora'; // conflito: só o autor resolve
   const estados = obrigatorios.map((n) => estadoDoCheck(pr.statusCheckRollup, n));
   if (estados.includes('falhou')) return 'bloqueada';
-  if (pr.mergeStateStatus === 'BEHIND') return 'aguardando';
+  // PR de fork ATRASADA fica fora: o GITHUB_TOKEN não escreve no repositório de
+  // origem, então o update-branch nunca funcionaria. Fork já em dia com a main
+  // continua contando como em voo (abaixo): ignorá-la deixaria outra PR ser
+  // atualizada junto, e essa outra ficaria velha assim que a fork entrasse.
+  if (pr.mergeStateStatus === 'BEHIND') return pr.isCrossRepository ? 'fora' : 'aguardando';
   // Atualizada com a main (CLEAN/BLOCKED/UNSTABLE/HAS_HOOKS/UNKNOWN): checks
   // rodando ou verde esperando o auto-merge — em ambos os casos ocupa a vez.
   return 'em-voo';
@@ -81,7 +85,9 @@ export function decidir(prs, obrigatorios) {
       return ea === eb ? a.number - b.number : ea < eb ? -1 : 1;
     });
   if (fila.length === 0) return { acao: 'nada', bloqueadas };
-  return { acao: 'atualizar', pr: fila[0].number, restantes: fila.slice(1).map((p) => p.number), bloqueadas };
+  // `fila` vai inteira, em ordem: se o update-branch da primeira for recusado
+  // (403/422), o workflow tenta a próxima na mesma execução em vez de travar.
+  return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas };
 }
 
 // `gh pr list` devolve mergeStateStatus=UNKNOWN enquanto o GitHub nao calculou a
@@ -114,7 +120,7 @@ async function main() {
   }
   const json = execFileSync(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
   ], { encoding: 'utf8' });
   const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
@@ -131,7 +137,11 @@ async function main() {
   if (decisao.bloqueadas.length) linhas.push(`Fora da fila até corrigir check obrigatório: #${decisao.bloqueadas.join(', #')}.`);
   for (const l of linhas) console.log(l);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Fila de merge\n\n${linhas.map((l) => `- ${l}`).join('\n')}\n`);
-  if (process.env.GITHUB_OUTPUT && decisao.acao === 'atualizar') appendFileSync(process.env.GITHUB_OUTPUT, `pr=${decisao.pr}\n`);
+  if (process.env.GITHUB_OUTPUT && decisao.acao === 'atualizar') {
+    // Só inteiros saem daqui: o workflow itera sobre esta lista no shell.
+    const fila = decisao.fila.filter((n) => Number.isInteger(n) && n > 0).join(' ');
+    appendFileSync(process.env.GITHUB_OUTPUT, `pr=${decisao.pr}\nfila=${fila}\n`);
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

@@ -67,8 +67,33 @@ test('parser enxerga os jobs reais (o contrato não passa por não achar nada)',
 test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   const t = semComentarios(AUTO_UPDATE);
   assert.match(t, /node scripts\/ci\/fila-merge\.mjs/, 'a escolha tem de passar pela fila testada');
-  assert.doesNotMatch(t, /for pr in/, 'laço sobre várias PRs = voltou o O(N²) de 15/10');
-  assert.equal((t.match(/update-branch"/g) ?? []).length, 1, 'uma única chamada de update-branch, para a PR escolhida');
+  assert.doesNotMatch(t, /for pr in \$prs/, 'laço sobre todas as PRs BEHIND = voltou o O(N²) de 15/10');
+  assert.doesNotMatch(t, /gh pr list/, 'a lista de PRs vem só da fila (fila-merge.mjs), nunca direto do workflow');
+  assert.equal((t.match(/update-branch"/g) ?? []).length, 1, 'uma única chamada de update-branch no laço da fila');
+  // O laço percorre a fila ordenada e PARA no primeiro update aceito: falha pula para
+  // a próxima (sem travar a fila), sucesso encerra (no máximo uma PR por execução).
+  const laco = t.slice(t.indexOf('for candidato in $FILA'), t.indexOf('done', t.indexOf('for candidato in $FILA')));
+  assert.ok(laco.length > 0, 'o workflow itera sobre a fila ordenada');
+  // Só a recusa permanente comprovada (403/422) avança; falha ambígua (update pode ter
+  // sido aceito com 202) encerra, senão duas PRs entram em voo na mesma execução.
+  assert.match(laco, /if ! grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*falha ambigua[^\n]*\n\s*exit 0/, 'sem 403/422, a falha é ambígua e encerra');
+  assert.match(laco, /falha ambigua[^\n]*\n\s*exit 0/, 'falha ambígua encerra a execução');
+  // 403/422 de rate limit ou "endpoint spam" é transitório: parar, não sondar a próxima (Codex, PR #1950).
+  const antesDoContinue = laco.slice(0, laco.indexOf('continue'));
+  assert.match(antesDoContinue, /grep -Eiq 'rate limit\|abuse\|spam'[^\n]*\n[^\n]*\n\s*exit 0/, 'rate limit/spam encerra antes de avançar');
+  // 422 também é "nada a atualizar" (PR atualizada por fora depois da leitura da fila):
+  // antes de avançar, relê a PR; se já está em dia com a main, ela é a PR em voo (Codex, PR #1950).
+  const ramo422 = laco.slice(laco.indexOf("grep -q 'HTTP 422'"), laco.indexOf('continue'));
+  assert.ok(ramo422.length > 0, 'o 422 é reconciliado antes do continue');
+  assert.match(ramo422, /compare\/main\.\.\.\$sha_agora"? --jq '\.behind_by'/, 'o 422 relê o quanto a PR está atrás da main');
+  assert.match(ramo422, /"\$atras" = "0" \][^\n]*\n[^\n]*\n\s*exit 0/, 'PR já em dia após 422 = em voo, encerra');
+  assert.match(ramo422, /falha ao reler[^\n]*\n\s*exit 0/, '422 sem confirmação do estado encerra');
+  // O 403/422 é o ÚNICO caminho que pula um candidato: falha ao ler o head (rede, 5xx)
+  // não prova nada sobre a PR, e pular a cabeça da fila deixaria uma posterior entrar
+  // antes dela, quebrando a ordem por enabledAt (Codex, PR #1950).
+  assert.equal((laco.match(/\bcontinue\b/g) ?? []).length, 1, 'só a recusa 403/422 do update-branch avança na fila');
+  assert.match(laco, /falha ao ler head[^\n]*\n\s*exit 0/, 'falha ao ler o head encerra a execução');
+  assert.match(laco, /PR="\$candidato"\n\s*break/, 'o primeiro update aceito encerra o laço');
   assert.match(t, /if: steps\.fila\.outputs\.pr != ''/, 'sem PR escolhida, nada é atualizado');
 });
 

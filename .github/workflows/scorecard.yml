@@ -15,10 +15,6 @@ on:
   push:
     branches: [main]
 
-defaults:
-  run:
-    shell: bash --noprofile --norc -euo pipefail {0}
-
 permissions:
   # Necessário para publicar SARIF em Code Scanning.
   security-events: write
@@ -38,6 +34,11 @@ jobs:
     name: 📊 OpenSSF Scorecard
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Sem `defaults` nem `env`, nem no topo nem no job: o scorecard-action v2.4.1
+    # recusa publicar o resultado nos dois casos ("workflow contains global env
+    # vars or defaults", run 38773299007; README "Restrictions on the job").
+    # Não há passo `run:` aqui, então o W44 (bash estrito) não tem o que proteger;
+    # a exceção está travada em scripts/ci/workflow-contracts.unit.mjs.
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

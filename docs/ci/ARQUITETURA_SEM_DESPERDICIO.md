@@ -32,12 +32,22 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   rodando, ou verde esperando o auto-merge), ninguém mais é atualizado. Sem PR em voo, só a próxima é atualizada: a
   que ligou o auto-merge primeiro (FIFO por `enabledAt`), então **ninguém volta para o fim da fila**. PR com check
   obrigatório vermelho sai da fila até o autor corrigir (atualizá-la seria pagar para falhar de novo).
+  PR de fork atrasada também fica fora (o `GITHUB_TOKEN` não escreve no repositório de origem); fork já em dia com
+  a `main` conta como em voo, como qualquer outra. Se o `update-branch` da
+  primeira da fila for recusado de forma permanente (HTTP 403/422), o workflow tenta a próxima na mesma execução
+  e para no primeiro aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada. Falha ambígua (rede,
+  5xx: o update é assíncrono e pode ter sido aceito) encerra a execução, para nunca haver duas PRs em voo; falha
+  ao ler o head do candidato também encerra, para uma PR posterior nunca passar à frente da cabeça da fila. Um 422
+  pode ser "nada a atualizar" (a PR foi atualizada por fora depois da leitura da fila): antes de avançar, a fila
+  relê a PR e, se ela já está em dia com a `main`, trata-a como em voo e encerra. 403/422 de rate limit ou "endpoint
+  spam" também encerra: é o GitHub pedindo para parar, não uma recusa daquela PR.
 - **Gatilhos:** push na `main` (a vez abriu), fim de `CI/CD Pipeline` ou `DB Guard (offline)` (a PR em voo pode
   ter ficado vermelha e liberado a vez) e um agendamento a cada 30 min, para o caso de alguém ligar o auto-merge sem
   outro evento.
 - **`mergeStateStatus: UNKNOWN`:** o GitHub calcula a mergeabilidade de forma assíncrona. A fila não trata UNKNOWN
   como "em voo" às cegas: compara `main...head` (`behind_by`) para saber se a PR está atrás.
-- **Contrato:** no máximo uma chamada de `update-branch`, sem laço sobre PRs, e a escolha sempre pela fila.
+- **Contrato:** a escolha sempre pela fila; o laço percorre a fila ordenada, pula o update recusado e para no
+  primeiro aceito (no máximo uma PR atualizada por execução).
 
 ### R2 — Reuso de árvore: o push na `main` não refaz o que a PR provou
 - Com `strict=true` + squash, a PR só entra atualizada, e o commit de squash tem a **mesma árvore** do head da PR.
@@ -107,3 +117,6 @@ o do job `reuso` diz por que dispensou ou rodou a CI.
 - Se a aprovação dos runs `action_required` do head atualizado falhar (`recusado pelo GITHUB_TOKEN`), a PR fica "em
   voo" sem checks e segura a fila até alguém aprovar na aba Actions. O log do passo avisa.
 - A fila só enxerga PRs com auto-merge ligado. PR sem auto-merge não entra na fila e não é atualizada.
+- PR de fork em voo que fica vermelha só libera a vez no próximo agendamento (até 30 min): o fim da CI de um fork
+  não aciona a fila de propósito, para nenhum evento disparado por fork rodar com token de escrita. O repositório
+  tem um colaborador e os agentes trabalham em branches do próprio repo, então o caso é raro e o atraso é limitado.

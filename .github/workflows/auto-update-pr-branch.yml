@@ -98,17 +98,58 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          PR: ${{ steps.fila.outputs.pr }}
+          FILA: ${{ steps.fila.outputs.fila }}
         run: |
-          echo "Atualizando PR #$PR (proxima da fila)"
-          if ! sha_antes=$(gh api "repos/$REPO/pulls/$PR" --jq '.head.sha'); then
-            echo "::warning::PR #$PR: falha ao ler head atual via API; a proxima execucao tenta de novo"
+          # Tenta a fila em ordem e para no PRIMEIRO update-branch aceito: no maximo
+          # uma PR atualizada por execucao (R1). So uma recusa PERMANENTE comprovada
+          # (HTTP 403/422, ex.: sem permissao no head) avanca para a proxima; qualquer
+          # outra falha e ambigua (o update e assincrono e pode ter sido aceito com 202
+          # antes de a resposta se perder), entao a execucao para e a proxima reavalia:
+          # se o update aconteceu, a PR aparece "em voo" e a fila espera por ela.
+          # Falha ao LER o head tambem encerra: nao prova nada sobre a PR, e pular a
+          # cabeca da fila deixaria uma posterior entrar antes (ordem por enabledAt).
+          PR=""
+          for candidato in $FILA; do
+            if ! sha_antes=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha'); then
+              echo "::warning::PR #$candidato: falha ao ler head atual via API; encerrando para manter a ordem da fila. A proxima execucao reavalia."
+              exit 0
+            fi
+            if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null 2>"$RUNNER_TEMP/update-branch.err"; then
+              if ! grep -Eq 'HTTP (403|422)' "$RUNNER_TEMP/update-branch.err"; then
+                echo "::warning::PR #$candidato: falha ambigua no update-branch (sem 403/422); encerrando para nao atualizar duas PRs. A proxima execucao reavalia."
+                exit 0
+              fi
+              # 403/422 transitorio (rate limit primario/secundario, "endpoint spam") nao
+              # e recusa da PR: o GitHub pede para parar e tentar depois, nao para sondar
+              # a proxima da fila.
+              if grep -Eiq 'rate limit|abuse|spam' "$RUNNER_TEMP/update-branch.err"; then
+                echo "::warning::PR #$candidato: update-branch limitado pelo GitHub (rate limit/spam); encerrando. A proxima execucao reavalia."
+                exit 0
+              fi
+              # 422 tambem e "nada a atualizar": alguem atualizou a PR depois da leitura
+              # da fila, e ela ja e a PR em voo. So avanca se ela continua ATRAS da main.
+              if grep -q 'HTTP 422' "$RUNNER_TEMP/update-branch.err"; then
+                if ! sha_agora=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha') \
+                  || ! atras=$(gh api "repos/$REPO/compare/main...$sha_agora" --jq '.behind_by'); then
+                  echo "::warning::PR #$candidato: 422 sem confirmacao do estado (falha ao reler); encerrando. A proxima execucao reavalia."
+                  exit 0
+                fi
+                if [ "$atras" = "0" ]; then
+                  echo "PR #$candidato: 422 porque ja esta em dia com a main (atualizada por fora); ela e a PR em voo."
+                  exit 0
+                fi
+              fi
+              echo "::warning::PR #$candidato: update-branch recusado (403/422) e a PR segue atras da main; tentando a proxima da fila"
+              continue
+            fi
+            PR="$candidato"
+            break
+          done
+          if [ -z "$PR" ]; then
+            echo "Nenhuma PR da fila aceitou update-branch nesta execucao."
             exit 0
           fi
-          if ! gh api -X PUT "repos/$REPO/pulls/$PR/update-branch" >/dev/null; then
-            echo "::warning::Falha ao atualizar PR #$PR; a proxima execucao tenta de novo"
-            exit 0
-          fi
+          echo "Atualizada PR #$PR (proxima da fila)"
           # update-branch e assincrono: o merge commit aparece alguns segundos depois.
           sha_depois="$sha_antes"
           for tentativa in 1 2 3 4 5 6; do
