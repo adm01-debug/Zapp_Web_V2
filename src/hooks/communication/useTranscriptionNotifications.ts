@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
-import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
+import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 interface TranscriptionNotificationOptions {
@@ -22,10 +22,10 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
   const { settings, isQuietHours } = useNotificationSettings();
   const processedIdsRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    // Request notification permission on mount
-    void requestNotificationPermission();
-  }, []);
+  // O pedido de permissão do navegador NÃO sai daqui: sem gesto do usuário o navegador nega (e
+  // penaliza o site). A porta é o clique do botão em
+  // `src/components/notifications/NotificationSettingsPanel.tsx`, e
+  // `showBrowserNotification` só mostra o aviso com `permission === 'granted'`.
 
   useEffect(() => {
     if (!enabled || !settings.transcriptionNotificationEnabled) return;
