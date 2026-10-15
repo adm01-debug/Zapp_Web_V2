@@ -32,8 +32,11 @@ export function useEvolutionInstance(
   const disconnectInstance = useCallback((instanceName: string) =>
     withToast('disconnect', { instanceName }, 'Instância desconectada', 'Erro ao desconectar'), [withToast]);
 
+  // Sem `withToast`: quem chama (handleDelete, no gerente de conexões) decide a
+  // mensagem e trata INSTANCE_GONE como "já removida". Um toast de erro
+  // automático aqui duplicaria o aviso e mentiria no caso reconciliado.
   const deleteInstance = useCallback((instanceName: string) =>
-    withToast('delete-instance', { instanceName }, 'Instância excluída', 'Erro ao excluir instância', 'DELETE'), [withToast]);
+    callApi('delete-instance', { instanceName }, 'DELETE'), [callApi]);
 
   const setPresence = useCallback((instanceName: string, presence: 'available' | 'unavailable' | 'composing' | 'recording' | 'paused') =>
     callApi('set-presence', { instanceName, presence }), [callApi]);

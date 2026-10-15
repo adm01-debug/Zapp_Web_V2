@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useConnectionsRealtime, type ConnectionsChange } from '@/hooks/inbox/useConnectionsRealtime';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,20 +33,37 @@ export function EvolutionDisconnectBanner() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão do banner, sem estado derivado de props para sincronizar.
     void fetchStatus();
-
-    // Real-time updates on connection status changes
-    const channel = supabase
-      .channel('disconnect-banner')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'whatsapp_connections' },
-        () => { void fetchStatus(); }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  // Real-time das mudanças de status. Antes o canal tinha nome FIXO
+  // ('disconnect-banner') e, como o gerente de conexões abria o mesmo tipo de
+  // canal, as duas telas brigavam pela assinatura; agora o tópico é único por
+  // montagem e o cleanup fecha o canal.
+  //
+  // Filtro por conexão ANTES do refetch: a faixa só exibe `status =
+  // 'disconnected'`, então INSERT/UPDATE de outra situação (ex.: 'connected',
+  // 'connecting', QR renovado) não disparam `fetchStatus` — sem tempestade de
+  // refetch a cada evento da tabela. UPDATE que ENTRA ou SAI de 'disconnected'
+  // refaz a leitura; DELETE só refaz quando era uma das conexões exibidas.
+  const desconectadasRef = useRef<DisconnectedInstance[]>([]);
+  useEffect(() => { desconectadasRef.current = disconnected; }, [disconnected]);
+  useConnectionsRealtime({
+    onChange: (payload: ConnectionsChange) => {
+      if (payload.eventType === 'INSERT') {
+        if ((payload.new as { status?: string } | null)?.status !== 'disconnected') return;
+      } else if (payload.eventType === 'UPDATE') {
+        const antes = (payload.old as { status?: string } | null)?.status;
+        const agora = (payload.new as { status?: string } | null)?.status;
+        if (agora !== 'disconnected' && antes !== 'disconnected') return;
+      } else {
+        const idRemovido = (payload.old as { id?: string } | null)?.id;
+        if (idRemovido && !desconectadasRef.current.some((d) => d.id === idRemovido)) return;
+      }
+      void fetchStatus();
+    },
+  });
 
   const handleReconnect = async (conn: DisconnectedInstance) => {
     setReconnecting(conn.instance_id);
