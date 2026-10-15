@@ -1,19 +1,25 @@
-Especialista: worker (geral)
+Especialista: senior (area-front-componentes)
 
-## O que mudou
-`src/components/ai/AutoTicketClassifier.tsx`: a lista de tickets classificados era lida de `ai_conversation_tags` (etiquetas automáticas de IA), fora do sistema pela ordem de 12/10/2026. Removi a leitura, as heurísticas locais que só existiam para consumir essas etiquetas (`classifyTag`, `derivePriority`) e o campo `tags` do tipo `ClassifiedTicket`. Sem fonte de classificação, `loadClassifiedTickets` devolve lista vazia e a tela mostra "Nenhum ticket classificado ainda". O componente continua exportado e compilando.
-
-`src/components/ai/__tests__/AutoTicketClassifier.test.tsx`: a fixture `mockTags` e os 6 testes do bloco de aplicação do servidor existiam só para exercitar a leitura das etiquetas — o cartão mandou remover o código junto com eles, e não há fonte para exercitá-los. Substituídos pelo bloco "Estado sem etiquetas" (2 testes): (a) nenhuma consulta a tabela é disparada (o `from` do mock lança e reprova a suíte se a leitura voltar); (b) o botão "Classificar em Lote" não anuncia sucesso com a lista vazia. A expectativa "handles empty tags list" virou o teste de estado vazio. Nenhum `it(...)` foi pulado (`.skip`/`.todo`).
+## O que mudou e por quê
+- `docs/DB-INVENTORY.md` (linha de `ai_conversation_tags`): troquei o consumidor `src/components/ai/AutoTicketClassifier.tsx` por `src/components/settings/__tests__/AIAutoTagsConfig.recentesErro.test.tsx`. Motivo: o pedido original tirou do classificador a leitura de `ai_conversation_tags`, então o inventário passou a listar um consumidor que não cita o objeto — o espelho do CI (`scripts/ci/db-inventory-doc.unit.mjs`, teste "docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir") acusava exatamente isso no empilhamento. Status segue `ativo` e o `…` segue verdadeiro (10 citantes no repositório). Toquei no doc porque o O QUE CORRIGIR da recusa manda corrigir a falha do espelho; fora isso, só os 2 arquivos do cartão.
+- `src/components/ai/AutoTicketClassifier.tsx` e `src/components/ai/__tests__/AutoTicketClassifier.test.tsx`: sem mudança nesta rodada — continuam como na entrega anterior (sem nenhuma leitura de `ai_conversation_tags`; `grep` nos dois arquivos retorna vazio).
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/ai/__tests__/AutoTicketClassifier.test.tsx` com a leitura reintroduzida de propósito → `Test Files 1 failed (1); Tests 2 failed | 43 passed (45)`.
-- verde depois: `npx vitest run src/components/ai/__tests__/AutoTicketClassifier.test.tsx` → `Test Files 1 passed (1); Tests 45 passed (45)`.
-- typecheck: `npx tsc -b --force` → exit 0, sem saída.
-- lint do escopo: `npx eslint` nos 2 arquivos → `1 problem (0 errors, 1 warning)`; o warning é pré-existente (import do client Supabase no componente).
-- critério 1 do cartão: `git grep -n "ai_conversation_tags\|ai-auto-tag\|etiqueta" -- src/components/ai/AutoTicketClassifier.tsx` → vazio.
+- vermelho antes (com a entrega anterior, sem o ajuste no doc): `node --test scripts/ci/db-inventory-doc.unit.mjs` → `✖ docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` com `"ai_conversation_tags" lista "src/components/ai/AutoTicketClassifier.tsx", mas esse arquivo não cita o objeto`.
+- verde depois: `node --test scripts/ci/db-inventory-doc.unit.mjs` → 15 testes passaram, 0 falharam, incluindo `✔ docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`.
+- tentativa intermediária que NÃO serviu (registro honesto): liste primeiro `src/components/docs/featuresSectionsData.ts`, mas o teste seguiu vermelho — o arquivo é espelho do schema (cita 30+ objetos) e não conta como consumidor. A lista final usa os 3 primeiros citantes reais do corpus (`citantesDe`): `AIAutoTagsConfig.tsx`, `AIAutoTagsConfig.recentesErro.test.tsx`, `useContactEnrichedData.test.tsx`.
+- comportamento do componente intacto: `bunx vitest run src/components/ai/__tests__/AutoTicketClassifier.test.tsx` → `Test Files 1 passed (1); Tests 45 passed (45)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (16s)`, EXIT=0 (`OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`; `AVISO banco_local NÃO VERIFICADO` — sem nome de conjunto, esperado).
 
-## Escopo e achados
-- Só os 2 arquivos do cartão. Nada de DDL, Edge, migration ou dependência nova.
-- O `invoke('ai-classify-tickets')` do botão "Classificar em Lote" fica: é outra trilha (Edge) e não está no critério. Com a lista vazia o botão avisa "Nenhum ticket carregado para aplicar as classificações do servidor." — coberto por teste.
-- Achado fora do escopo (registrado em comentário no cartão): `src/services/contact.service.ts` e `src/components/settings/AIAutoTagsConfig.tsx` ainda leem `ai_conversation_tags`.
-- Os blocos `classifyTag`, `derivePriority`, `Category config`, `Priority map`, `Contact grouping` e os dois edge cases são cópias locais já presentes no teste (nunca importam o componente) e seguem passando — deixados intactos para não aumentar o diff.
+## Pontos do revisor
+- Ponto 1 (único — espelho do CI no empilhamento): resolvido — `docs/DB-INVENTORY.md:68`, teste que prova acima (vermelho antes, verde depois).
+
+## O que NÃO fiz e por quê
+- Não reintroduzi leitura alguma de `ai_conversation_tags` no classificador (o critério 1 do cartão continua valendo; `grep` vazio nos 2 arquivos).
+- Não mexi em `src/services/contact.service.ts`, `src/components/settings/AIAutoTagsConfig.tsx` nem na Edge `ai-classify-tickets` (ainda leem a tabela): são outra trilha, fora do critério, e o achado já estava registrado como fora de escopo na entrega anterior.
+
+## Arquivos (`git diff --name-only 96dd72d...HEAD`, copiado do comando)
+.tmp/relato.md
+docs/DB-INVENTORY.md
+src/components/ai/AutoTicketClassifier.tsx
+src/components/ai/__tests__/AutoTicketClassifier.test.tsx
