@@ -42,17 +42,44 @@ vi.mock('@/lib/logger', () => ({
 
 import { notifyNewDeviceOnLogin, sessionGuardKey } from '@/hooks/ui/useDeviceDetection';
 
-const sessao = (token: string) => ({ data: { session: { access_token: token } }, error: null });
+/** JWT falso com claim session_id (só o payload importa: a guarda decodifica sem verificar). */
+const jwt = (sessionId: string | null, userId: string) => {
+  const b64 = (o: unknown) =>
+    btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const payload: Record<string, string> = { sub: userId };
+  if (sessionId !== null) payload.session_id = sessionId;
+  return `${b64({ alg: 'none' })}.${b64(payload)}.assinatura`;
+};
+
+const sessao = (sessionId: string | null, userId: string, token?: string) => ({
+  data: {
+    session: {
+      access_token: token ?? jwt(sessionId, userId),
+      user: { id: userId },
+    },
+  },
+  error: null,
+});
 const aal = (currentLevel: string, nextLevel: string) => ({
   data: { currentLevel, nextLevel },
   error: null,
 });
 
+/** Chaves da guarda marcadas no sessionStorage (prefixo do módulo). */
+const chavesDaGuarda = () => {
+  const chaves: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const chave = sessionStorage.key(i);
+    if (chave?.startsWith('zapp.device-check')) chaves.push(chave);
+  }
+  return chaves;
+};
+
 describe('notifyNewDeviceOnLogin — aviso de dispositivo novo no login (R2-AUTH-004)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    mocks.getSession.mockResolvedValue(sessao('token-sessao-a'));
+    mocks.getSession.mockResolvedValue(sessao('sessao-a', 'user-a'));
     mocks.getAssurance.mockResolvedValue(aal('aal1', 'aal1'));
     mocks.invoke.mockResolvedValue({ data: { device_id: 'dev-1' }, error: null });
   });
@@ -83,12 +110,40 @@ describe('notifyNewDeviceOnLogin — aviso de dispositivo novo no login (R2-AUTH
     expect(mocks.invoke).toHaveBeenCalledTimes(1);
   });
 
-  it('sessão Auth nova (outro token) avisa de novo', async () => {
+  it('sessão Auth nova (outro session_id e outro usuário) avisa de novo', async () => {
     await notifyNewDeviceOnLogin();
-    mocks.getSession.mockResolvedValue(sessao('token-sessao-b'));
+    mocks.getSession.mockResolvedValue(sessao('sessao-b', 'user-b'));
     await notifyNewDeviceOnLogin();
 
     expect(mocks.invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it('mesma sessão com access_token renovado NÃO chama a Edge de novo', async () => {
+    await notifyNewDeviceOnLogin();
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+
+    // Renovação (~1h): o access_token muda mas o session_id continua o mesmo;
+    // o supabase-js volta a emitir SIGNED_IN e o login chama de novo.
+    mocks.getSession.mockResolvedValue(
+      sessao('sessao-a', 'user-a', `${jwt('sessao-a', 'user-a')}-renovado`),
+    );
+    await notifyNewDeviceOnLogin();
+
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    // Sem acúmulo: continua uma única entrada da guarda no sessionStorage.
+    expect(chavesDaGuarda()).toHaveLength(1);
+  });
+
+  it('sem claim session_id a guarda usa o user.id (renovação não reenvia)', async () => {
+    mocks.getSession.mockResolvedValue(sessao(null, 'user-a'));
+    await notifyNewDeviceOnLogin();
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+
+    mocks.getSession.mockResolvedValue(sessao(null, 'user-a', 'token-opaco-renovado'));
+    await notifyNewDeviceOnLogin();
+
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    expect(chavesDaGuarda()).toHaveLength(1);
   });
 
   it('MFA pendente (aal1 com nextLevel aal2) NÃO chama a Edge', async () => {
@@ -137,12 +192,29 @@ describe('notifyNewDeviceOnLogin — aviso de dispositivo novo no login (R2-AUTH
     expect(mocks.invoke).not.toHaveBeenCalled();
   });
 
-  it('a guarda no sessionStorage não grava o token', async () => {
+  it('a guarda no sessionStorage não grava token, session_id nem user.id', async () => {
+    const token = jwt('sessao-a', 'user-a');
     await notifyNewDeviceOnLogin();
 
-    const chave = sessionGuardKey('token-sessao-a');
+    const chave = sessionGuardKey({ access_token: token, user: { id: 'user-a' } });
     expect(sessionStorage.getItem(chave)).toBe('1');
     expect(chave).toContain('zapp.device-check');
-    expect(chave).not.toContain('token-sessao-a');
+    expect(chave).not.toContain(token);
+    expect(chave).not.toContain('sessao-a');
+    expect(chave).not.toContain('user-a');
+  });
+
+  it('sessionGuardKey é estável na renovação e muda de sessão', () => {
+    const antes = sessionGuardKey({ access_token: jwt('sessao-a', 'user-a'), user: { id: 'user-a' } });
+    const renovado = sessionGuardKey({
+      access_token: `${jwt('sessao-a', 'user-a')}-renovado`,
+      user: { id: 'user-a' },
+    });
+    const outra = sessionGuardKey({ access_token: jwt('sessao-b', 'user-b'), user: { id: 'user-b' } });
+
+    expect(renovado).toBe(antes);
+    expect(outra).not.toBe(antes);
+    // Degenerado (sem JWT nem user.id): a chave cai no token, como antes.
+    expect(sessionGuardKey({ access_token: 'opaco' })).toBe(sessionGuardKey({ access_token: 'opaco' }));
   });
 });

@@ -44,14 +44,47 @@ interface SessionAuthIdRow {
 /** Prefixo da guarda no sessionStorage — uma entrada por sessão Auth. */
 const DEVICE_CHECK_GUARD_PREFIX = 'zapp.device-check';
 
+/** O mínimo da sessão Auth de que a guarda precisa (evita acoplar ao tipo do client). */
+interface SessaoAuthParaGuarda {
+  access_token?: string | null;
+  user?: { id?: string | null } | null;
+}
+
 /**
- * Chave de guarda derivada do access_token por hash curto e irreversível:
- * identifica a sessão Auth sem gravar token (nem pedaço dele) no navegador.
+ * Identificador estável da sessão Auth: o claim `session_id` do payload do JWT
+ * (decodificado sem verificar — serve só de chave, nunca de prova) ou, na
+ * falta dele, o `user.id`. Nenhum dos dois muda na renovação do access_token
+ * (~1h), então a mesma sessão não reenvia o aviso a cada refresh nem acumula
+ * uma entrada nova no sessionStorage por refresh.
  */
-export function sessionGuardKey(accessToken: string): string {
+function idEstavelDaSessao(session: SessaoAuthParaGuarda | null | undefined): string {
+  const token = session?.access_token ?? '';
+  const ponto1 = token.indexOf('.');
+  const ponto2 = token.indexOf('.', ponto1 + 1);
+  if (ponto1 > 0 && ponto2 > ponto1) {
+    try {
+      const base64 = token.slice(ponto1 + 1, ponto2).replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64)) as { session_id?: unknown };
+      if (typeof payload.session_id === 'string' && payload.session_id.length > 0) {
+        return payload.session_id;
+      }
+    } catch {
+      // JWT ilegível: cai nos fallbacks abaixo (user.id, depois o token).
+    }
+  }
+  return session?.user?.id ?? token;
+}
+
+/**
+ * Chave de guarda derivada do identificador estável da sessão por hash curto e
+ * irreversível: identifica a sessão Auth sem gravar token, session_id nem
+ * user.id (nem pedaço deles) no navegador.
+ */
+export function sessionGuardKey(session: SessaoAuthParaGuarda | null | undefined): string {
+  const estavel = idEstavelDaSessao(session);
   let hash = 0;
-  for (let i = 0; i < accessToken.length; i++) {
-    hash = ((hash << 5) - hash) + accessToken.charCodeAt(i);
+  for (let i = 0; i < estavel.length; i++) {
+    hash = ((hash << 5) - hash) + estavel.charCodeAt(i);
     hash &= hash;
   }
   return `${DEVICE_CHECK_GUARD_PREFIX}:${Math.abs(hash).toString(36)}`;
@@ -139,10 +172,9 @@ async function executarAvisoDeDispositivoNovo(): Promise<void> {
     if (typeof sessionStorage === 'undefined') return;
 
     const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.access_token;
-    if (!accessToken) return;
+    if (!session?.access_token) return;
 
-    const guardKey = sessionGuardKey(accessToken);
+    const guardKey = sessionGuardKey(session);
     if (sessionStorage.getItem(guardKey) === '1') return;
 
     // Com fator MFA cadastrado, o aviso só vale depois do desafio (aal2). Com o
