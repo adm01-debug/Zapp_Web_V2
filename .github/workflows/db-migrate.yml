@@ -921,6 +921,7 @@ jobs:
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
+          set -euo pipefail
           # O CLI 2.116 ignora SUPABASE_DB_URL e cai no projeto "linkado" ("Cannot find project ref"): --db-url explicito.
           supabase db push --db-url "$SUPABASE_DB_URL" --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
           if [ "$APPLY_BUNDLE" = "true" ]; then
