@@ -4,31 +4,50 @@
  * O componente REAL é montado; o reenvio é provado pelo `onSendMessage` (mensagem nova). A prova de
  * movimento instrumenta o framer-motion via `useReducedMotion`: com "reduzir movimento" o banner já
  * nasce no lugar, sem estado inicial de animação.
+ *
+ * Filtro por autor e idade (PK-23): o componente lê `profiles.id` do `useAuth`, por isso o mock
+ * fica no topo. Aqui a sessão é de um atendente comum (role 'agent') e as falhas do caso têm
+ * `agent_id` ausente — sem autoria registrada, a falha é do próprio usuário (RLS de insert em
+ * `messages` permite `agent_id IS NULL`). As provas de autoria/idade ficam em
+ * `SendErrorBanner.autor-idade.test.tsx`.
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/chat';
 import { SendErrorBanner } from '../SendErrorBanner';
 
-const controle = vi.hoisted(() => ({ reduzido: false }));
+const controle = vi.hoisted(() => ({
+  reduzido: false,
+  perfil: { id: 'p-atual', role: 'agent' } as { id: string; role: string } | null,
+}));
 
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
   return { ...actual, useReducedMotion: () => controle.reduzido };
 });
 
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'u-atual' }, profile: controle.perfil }),
+}));
+
 beforeEach(() => {
   controle.reduzido = false;
+  controle.perfil = { id: 'p-atual', role: 'agent' };
 });
+
+/** Data recente (há N segundos): falhas recém-criadas só pedem confirmação acima de 1 h. */
+function emSegundos(segundos: number): string {
+  return new Date(Date.now() - segundos * 1000).toISOString();
+}
 
 function msg(over: Partial<Message> = {}): Message {
   return {
     id: 'm-' + Math.random().toString(36).slice(2),
     content: '',
     sender: 'agent',
-    timestamp: new Date('2026-10-11T10:00:00.000Z'),
+    timestamp: new Date(),
     type: 'text',
-    created_at: '2026-10-11T10:00:00.000Z',
+    created_at: emSegundos(5),
     status: 'sending',
     ...over,
   } as Message;
@@ -45,8 +64,8 @@ describe('SendErrorBanner', () => {
     render(
       <SendErrorBanner
         messages={[
-          msg({ id: 'f1', status: 'failed', content: 'primeira', created_at: '2026-10-11T10:00:01.000Z' }),
-          msg({ id: 'f2', status: 'failed', content: 'segunda', created_at: '2026-10-11T10:00:02.000Z' }),
+          msg({ id: 'f1', status: 'failed', content: 'primeira', created_at: emSegundos(2) }),
+          msg({ id: 'f2', status: 'failed', content: 'segunda', created_at: emSegundos(1) }),
         ]}
         onSendMessage={onSendMessage}
       />,
@@ -76,8 +95,8 @@ describe('SendErrorBanner', () => {
     render(
       <SendErrorBanner
         messages={[
-          msg({ id: 'a1', status: 'failed', type: 'audio', content: '', created_at: '2026-10-11T10:00:01.000Z' }),
-          msg({ id: 'i1', status: 'failed', type: 'interactive', content: 'botao', created_at: '2026-10-11T10:00:02.000Z' }),
+          msg({ id: 'a1', status: 'failed', type: 'audio', content: '', created_at: emSegundos(2) }),
+          msg({ id: 'i1', status: 'failed', type: 'interactive', content: 'botao', created_at: emSegundos(1) }),
         ]}
         onSendMessage={vi.fn()}
       />,
@@ -93,8 +112,8 @@ describe('SendErrorBanner', () => {
     render(
       <SendErrorBanner
         messages={[
-          msg({ id: 'f1', status: 'failed', content: 'texto', created_at: '2026-10-11T10:00:01.000Z' }),
-          msg({ id: 'f2', status: 'failed', type: 'image', created_at: '2026-10-11T10:00:02.000Z' }),
+          msg({ id: 'f1', status: 'failed', content: 'texto', created_at: emSegundos(2) }),
+          msg({ id: 'f2', status: 'failed', type: 'image', created_at: emSegundos(1) }),
         ]}
         onSendMessage={vi.fn()}
       />,
@@ -183,14 +202,14 @@ describe('SendErrorBanner', () => {
   });
 
   it('outra falha depois de dispensar traz o banner de volta', async () => {
-    const primeira = msg({ id: 'f1', status: 'failed', content: 'oi', created_at: '2026-10-11T10:00:01.000Z' });
+    const primeira = msg({ id: 'f1', status: 'failed', content: 'oi', created_at: emSegundos(2) });
     const { rerender } = render(<SendErrorBanner messages={[primeira]} onSendMessage={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 
     rerender(
       <SendErrorBanner
-        messages={[primeira, msg({ id: 'f2', status: 'failed', content: 'nova', created_at: '2026-10-11T10:00:02.000Z' })]}
+        messages={[primeira, msg({ id: 'f2', status: 'failed', content: 'nova', created_at: emSegundos(1) })]}
         onSendMessage={vi.fn()}
       />,
     );
