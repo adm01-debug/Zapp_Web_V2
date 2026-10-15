@@ -87,13 +87,17 @@ describe('useRealtimeMessages — inicialização da lista sem piscar', () => {
     expect(result.current.initialLoading).toBe(false);
     expect(result.current.conversations).toHaveLength(1);
 
-    // Segunda busca (reconexão/refetch) fica EM VOO: `loading` volta a true para o
-    // RefreshCw, mas a lista NÃO volta ao esqueleto.
+    // Segunda busca (reconexão/refetch com lista): silenciosa — `loading` NÃO
+    // volta a true (a lista não volta ao esqueleto); quem sinaliza a busca em
+    // voo é o `refreshing` (o RefreshCw gira com ele). Ordem da recusa do
+    // revisor: "fetchConversations não deve fazer setError/setLoading(true)
+    // em refetch com lista".
     const messagesChannel = h.configs.find((c: RealtimeConfigProbe) => c.channelName === 'global-messages-realtime');
     expect(messagesChannel?.onReconnect).toBeTypeOf('function');
     messagesChannel?.onReconnect?.();
 
-    await waitFor(() => expect(result.current.loading).toBe(true));
+    await waitFor(() => expect(result.current.refreshing).toBe(true));
+    expect(result.current.loading).toBe(false);
     expect(result.current.initialLoading).toBe(false);
     expect(result.current.conversations).toHaveLength(1);
 

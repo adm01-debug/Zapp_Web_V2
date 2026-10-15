@@ -33,6 +33,7 @@ let agentsMapMock: Map<string, AgentLite> = new Map();
 
 const mockFrom = vi.fn();
 const mockRemoveChannel = vi.fn();
+const mockRpc = vi.fn();
 const realtimeHandlersByTopic: Record<string, (payload: MockRealtimePayload) => void> = {};
 
 const mockChannel = vi.fn((topic: string) => {
@@ -60,6 +61,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (...args: Parameters<typeof mockFrom>) => mockFrom(...args),
     channel: (...args: Parameters<typeof mockChannel>) => mockChannel(...args),
     removeChannel: (...args: Parameters<typeof mockRemoveChannel>) => mockRemoveChannel(...args),
+    rpc: (...args: Parameters<typeof mockRpc>) => mockRpc(...args),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
     },
@@ -271,21 +273,28 @@ describe('Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeL
     expect(rowAfter).toBe(rowBefore);
   });
 
-  it('ignora UPDATE de contato fora da lista carregada (sem crash, sem linha fantasma) na árvore completa', async () => {
+  it('UPDATE de contato fora da lista INSERE a conversa na árvore completa (entrada ao vivo)', async () => {
+    // Ordem da recusa do revisor (ponto 1): UPDATE de contato ainda fora da
+    // lista busca contato+resumo e insere a conversa ao vivo, em vez do
+    // `return prev` que este teste consagrava antes ("ignora UPDATE...").
     seededContacts = [makeContact({ id: 'contact-1', name: 'Maria Souza' })];
+    contactsById['contact-fantasma'] = makeContact({ id: 'contact-fantasma', name: 'Fantasma Novo' });
+    mockRpc.mockResolvedValue({ data: [], error: null });
 
     render(<InboxHarness />);
     expect(await screen.findByText('Maria')).toBeInTheDocument();
+    expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
 
     act(() => {
       emitRealtimeEvent('contacts', {
         eventType: 'UPDATE',
-        new: makeContact({ id: 'contact-fantasma', nickname: 'Fantasma' }),
+        new: makeContact({ id: 'contact-fantasma', name: 'Fantasma Novo' }),
         old: makeContact({ id: 'contact-fantasma' }),
       });
     });
 
-    expect(screen.queryByText('Fantasma')).not.toBeInTheDocument();
-    expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
+    // A conversa entra na lista sozinha, sem refetch e sem remontar a árvore.
+    expect(await screen.findByText('Fantasma')).toBeInTheDocument();
+    expect(screen.getAllByTestId('conversation-item')).toHaveLength(2);
   });
 });
