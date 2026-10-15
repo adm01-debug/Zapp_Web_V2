@@ -38,10 +38,11 @@ describe('ContactStatsStrip', () => {
     expect(strip).toHaveTextContent('3 avaliações');
   });
 
-  it('explicita que o tempo médio é amostra das 200 primeiras mensagens (SV-002/S26)', () => {
+  it('explicita que o tempo médio cobre todo o histórico (refazer 1, ponto 3: sem o corte das 200 primeiras)', () => {
     renderStrip();
     const strip = screen.getByTestId('contact-stats-strip');
-    expect(strip).toHaveTextContent('Resposta ao cliente · 200 primeiras msgs');
+    expect(strip).toHaveTextContent('Resposta ao cliente · todo o histórico');
+    expect(strip).not.toHaveTextContent('200 primeiras msgs');
   });
 
   it('90 minutos vira "1h30m"', () => {

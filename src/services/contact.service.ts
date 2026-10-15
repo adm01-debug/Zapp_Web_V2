@@ -233,11 +233,15 @@ export class ContactService {
    * do histórico. A RPC mede os pares contato→agente sobre TODO o histórico
    * (window function).
    *
-   * NOTA: o subtítulo da tira de estatísticas ainda diz "200 primeiras msgs"
-   * (ContactStatsStrip.tsx) — atualizar esse texto é de outro cartão; aqui o
-   * serviço deixou de impor o corte.
+   * NOTA (refazer 1, ponto 3 da recusa): o subtítulo da tira de estatísticas
+   * (ContactStatsStrip.tsx) agora diz "todo o histórico", acompanhando o que
+   * o serviço mede — sem corte de 200 linhas.
    *
-   * Contrato do retorno é o mesmo de antes. A RPC devolve CONJUNTO VAZIO quando
+   * Contrato do retorno: os 7 campos de antes MAIS `responseSampleCount`
+   * (tamanho da amostra, `response_samples` da RPC) e
+   * `medianResponseTimeMinutes` (mediana, `median_response_minutes` da RPC)
+   * — ponto 1 da recusa: a RPC devolve 13 colunas e o painel precisa saber
+   * o quanto confiar na média. A RPC devolve CONJUNTO VAZIO quando
    * o contato não é visível para o usuário (RLS explícita dentro da função);
    * esse caso responde zeros, como a versão anterior já respondia para um
    * contato sem dados.
@@ -260,6 +264,8 @@ export class ContactService {
         conversationsChangePercent: null as number | null,
         csatAverage: null,
         csatCount: 0,
+        responseSampleCount: 0,
+        medianResponseTimeMinutes: null,
       };
     }
 
@@ -275,6 +281,9 @@ export class ContactService {
       conversationsChangePercent: row.conversations_change_percent ?? null,
       csatAverage: row.csat_average ?? null,
       csatCount: row.csat_count ?? 0,
+      // Ponto 1 da recusa: a amostra e a mediana que a RPC já calculava.
+      responseSampleCount: row.response_samples ?? 0,
+      medianResponseTimeMinutes: row.median_response_minutes ?? null,
     };
   }
 }

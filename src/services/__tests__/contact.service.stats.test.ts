@@ -12,12 +12,14 @@
  *
  * O que se prova aqui:
  *  - a RPC é chamada UMA vez, com `p_contact_id`;
- *  - a linha devolvida vira o MESMO contrato de objeto de antes (7 campos);
+ *  - a linha devolvida vira o contrato de objeto (7 campos de antes + amostra
+ *    e mediana do tempo de resposta — refazer 1, ponto 1 da recusa);
  *  - nenhuma consulta PostgREST sobra em `messages`/`conversation_sla`/`csat_surveys`
  *    (em especial nenhum `.limit(200)` que recriasse o viés);
  *  - conjunto VAZIO (contato não visível para o usuário — RLS dentro da RPC)
  *    responde zeros, sem lançar;
- *  - erro da RPC é propagado (ìf error throw), não engolido;
+ *  - erro da RPC é propagado (ìf error throw), não engolido — a única consulta
+ *    que resta no fetchStats verifica `.error` (refazer 1, ponto 2 da recusa);
  *  - média/CSAT nulos viram 0 / null como antes.
  *
  * A fronteira dublada é o cliente Supabase (rede/banco), nunca o alvo.
@@ -74,7 +76,7 @@ describe('ContactService.fetchStats — uma RPC só', () => {
     expect(h.from).not.toHaveBeenCalled();
   });
 
-  it('mapeia a linha da RPC para o MESMO contrato de 7 campos de antes', async () => {
+  it('mapeia a linha da RPC para o contrato de 9 campos (7 de antes + amostra e mediana)', async () => {
     const stats = await ContactService.fetchStats(CONTACT_ID);
 
     expect(Object.keys(stats).sort()).toEqual(
@@ -83,7 +85,9 @@ describe('ContactService.fetchStats — uma RPC só', () => {
         'conversationsChangePercent',
         'csatAverage',
         'csatCount',
+        'medianResponseTimeMinutes',
         'messagesChangePercent',
+        'responseSampleCount',
         'totalConversations',
         'totalMessages',
       ].sort(),
@@ -97,6 +101,8 @@ describe('ContactService.fetchStats — uma RPC só', () => {
       conversationsChangePercent: -20,
       csatAverage: 4.6,
       csatCount: 31,
+      responseSampleCount: 987,
+      medianResponseTimeMinutes: 12.5,
     });
   });
 
@@ -119,6 +125,8 @@ describe('ContactService.fetchStats — uma RPC só', () => {
       conversationsChangePercent: null,
       csatAverage: null,
       csatCount: 0,
+      responseSampleCount: 0,
+      medianResponseTimeMinutes: null,
     });
   });
 
@@ -134,15 +142,24 @@ describe('ContactService.fetchStats — uma RPC só', () => {
     expect(stats.conversationsChangePercent).toBeNull();
   });
 
-  it('sem amostra de resposta (NULL) a média cai em 0 e o CSAT sem notas fica null', async () => {
+  it('sem amostra de resposta (NULL) a média cai em 0, a amostra em 0 e a mediana em null', async () => {
     h.rpc.mockResolvedValue({
-      data: [{ ...LINHA, avg_response_minutes: null, csat_average: null, csat_count: 0 }],
+      data: [{
+        ...LINHA,
+        response_samples: 0,
+        avg_response_minutes: null,
+        median_response_minutes: null,
+        csat_average: null,
+        csat_count: 0,
+      }],
       error: null,
     });
 
     const stats = await ContactService.fetchStats(CONTACT_ID);
 
+    expect(stats.responseSampleCount).toBe(0);
     expect(stats.avgResponseTimeMinutes).toBe(0);
+    expect(stats.medianResponseTimeMinutes).toBeNull();
     expect(stats.csatAverage).toBeNull();
     expect(stats.csatCount).toBe(0);
   });
