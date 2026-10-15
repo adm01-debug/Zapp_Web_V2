@@ -1,7 +1,7 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 ## O que mudou e por quê
-Arquivos desta entrega: a migration, a suíte de banco e este `.tmp/relato.md` (3 arquivos, 1 de teste).
+Arquivos desta entrega (nomes reais): `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql`, `supabase/tests/reabre_conversa_nova_mensagem.sql` e este `.tmp/relato.md` (3 arquivos, 1 de teste).
 - `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql`: conversa
   RESOLVED/ARQUIVADA volta a ativa quando o cliente escreve. Três peças:
   1. `reopen_conversation_core(contact_id, performed_by)` — núcleo interno (SECURITY DEFINER,
@@ -59,8 +59,18 @@ INSERT do evento a falhar: mensagem e estado desfazem juntos).
 - Não mexi no `ingest_inbound_message` (branch `v2/ingest-inbound-reabre-conversa-2610111149a58e`,
   t_79ca0cf1): o gatilho em `messages` cobre aquele caminho e substitui a mudança na RPC; se as duas
   entrarem, a da RPC fica idempotente (sem evento dobrado) — registrado em comentário no cartão.
-- Ações de front (`types.ts`/`useConversationLifecycle`, botão "Reabrir"), Edge e outros repositórios
+- Ações de front (botão "Reabrir"), Edge e outros repositórios
   não são da minha área: ficam para o cartão de tela/Edge. A RPC
   `public.reopen_conversation(p_contact_id uuid)` devolve
   `(contact_id, conversation_status, conversation_status_changed_at, event_id, reopened)`.
 - Sem tabela nova, sem tocar banco real, sem push.
+
+## Pontos da recusa (refazer 1)
+- Ponto 1: corrigido — removida do relato a menção a `types.ts`/`useConversationLifecycle` (o campo opcional não foi atualizado; `grep -c reopen_conversation src/integrations/supabase/types.ts` → 0). Arquivo: `.tmp/relato.md` (este).
+- Ponto 2: acrescentado — verificação do worker externo, seção "Worker externo" abaixo (n8n/cron/psql conferidos no código; nada quebrado). Arquivo: `.tmp/relato.md` (este).
+- Ponto 3: já atendido — o relato não contém "sem recarregar", "tempo real", "silenciosamente", "sem reload", "eventualmente", "eventual" nem "sincronização silenciosa" (conferido com `grep -i` neste arquivo); nada a remover.
+
+## Worker externo (n8n/cron/psql — verificação no código deste workspace)
+- Nenhuma Edge Function faz UPDATE direto em `contacts.conversation_status`: `grep -rln conversation_status supabase/functions/` retorna só `voice-copilot-action/index.ts`, e lá é filtro de leitura (`.eq('conversation_status', 'open')`, linhas ~245-252). `auto-close-conversations` não referencia `conversation_status`, `close_conversation_atomic` nem `set_conversation_status`.
+- A migration só CRIA objetos novos (3 funções via `CREATE OR REPLACE` + gatilho `trg_conversation_reopen_on_inbound`); nenhum `ALTER`/`DROP` em objeto existente e GRANTs só nas funções novas (núcleo → `service_role`; RPC → `authenticated, service_role`; função do gatilho revogada de todos). FSM, policies e GRANTs existentes seguem intactos.
+- Todo escritor externo (n8n, webhook, ingest, psql) que insere mensagem do contato em `public.messages` dispara o gatilho AFTER INSERT (`sender='contact'`, não deletada) — caminho coberto independente da origem. Escritor que dá UPDATE direto em `contacts` continua sob o FSM existente, inalterado por esta entrega. Crons agendados no repo (gmail sync, vacuum, tasks notify, presence TTL, searchbox alert) não tocam `conversation_status`.
