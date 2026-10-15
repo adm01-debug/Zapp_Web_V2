@@ -63,6 +63,19 @@ test('E91: o relatorio vai para a issue, alem do Job Summary', () => {
   assert.match(workflow, /startswith\("\[branch-hygiene\]"\)/, 'o upsert deve achar a issue aberta pelo marcador no titulo');
 });
 
+test('W83/W98: secoes geradas depois da copia do relatorio tambem vao para o Job Summary', () => {
+  // O passo do relatorio copia o arquivo para o Job Summary; quem acrescenta secao depois
+  // tem de escrever nos dois, senao a secao aparece na issue e some do summary (Codex, #1951).
+  for (const script of ['branch-podaveis.mjs', 'sla-code-scanning.mjs']) {
+    const inicio = workflow.indexOf(`node scripts/ci/${script}`);
+    assert.ok(inicio !== -1, `${script}: o workflow nao chama o script`);
+    // O `| tee` fica na linha do comando ou na continuacao (`\`) logo abaixo.
+    const linha = workflow.slice(inicio).split('\n').find((l) => l.includes('| tee -a'));
+    assert.ok(linha?.includes('"$RELATORIO"'), `${script}: saida nao vai para o relatorio`);
+    assert.ok(linha.includes('"$GITHUB_STEP_SUMMARY"'), `${script}: saida nao vai para o Job Summary`);
+  }
+});
+
 test('E91: o upsert e idempotente (procura a aberta antes de criar)', () => {
   const edicao = workflow.indexOf('gh issue edit');
   const criacao = workflow.indexOf('gh issue create');

@@ -91,11 +91,13 @@ export function decidir(prs, obrigatorios) {
 }
 
 // Depois de uma recusa 403/422, o laço do workflow só tenta o próximo candidato se uma
-// decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele ainda na fila. A
-// lista lida no início da execução pode estar velha — outra PR pode ter sido atualizada
-// por fora e entrado em voo (Codex, PR #1950).
-export function confirmarCandidato(decisao, numero) {
-  return decisao.acao === 'atualizar' && decisao.fila.includes(numero);
+// decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele é a PRIMEIRA da
+// fila recalculada que ainda não foi recusada nesta execução. A lista lida no início pode
+// estar velha: outra PR pode ter entrado em voo, ou uma PR mais antiga ter ficado elegível
+// e passado à frente (Codex, PRs #1950 e #1951).
+export function confirmarCandidato(decisao, numero, recusadas = []) {
+  if (decisao.acao !== 'atualizar') return false;
+  return decisao.fila.find((n) => !recusadas.includes(n)) === numero;
 }
 
 // `gh pr list` devolve mergeStateStatus=UNKNOWN enquanto o GitHub nao calculou a
@@ -138,8 +140,9 @@ async function main() {
     console.error('GITHUB_REPOSITORY ausente');
     process.exit(2);
   }
-  // `--confirmar N`: exit 0 se N ainda pode ser atualizada agora; 3 se não (alguém em voo,
-  // N fora da fila). Não escreve output nem summary.
+  // `--confirmar N [--recusadas "A B"]`: exit 0 se N é a próxima da fila recalculada,
+  // desconsideradas as já recusadas nesta execução; 3 se não (alguém em voo, outra PR à
+  // frente, N fora da fila). Não escreve output nem summary.
   const iConfirmar = process.argv.indexOf('--confirmar');
   if (iConfirmar !== -1) {
     const numero = Number(process.argv[iConfirmar + 1]);
@@ -147,9 +150,12 @@ async function main() {
       console.error('--confirmar exige o número da PR');
       process.exit(2);
     }
+    const iRecusadas = process.argv.indexOf('--recusadas');
+    const recusadas = iRecusadas === -1 ? [] : String(process.argv[iRecusadas + 1] ?? '')
+      .split(/\s+/).map(Number).filter((n) => Number.isInteger(n) && n > 0);
     const decisao = await decisaoAtual(repo);
-    if (confirmarCandidato(decisao, numero)) return;
-    const motivo = decisao.acao === 'esperar' ? `em voo: #${decisao.emVoo.join(', #')}` : `#${numero} não está mais na fila`;
+    if (confirmarCandidato(decisao, numero, recusadas)) return;
+    const motivo = decisao.acao === 'esperar' ? `em voo: #${decisao.emVoo.join(', #')}` : `#${numero} não é mais a próxima da fila`;
     console.log(`Fila recalculada não autoriza #${numero} (${motivo}).`);
     process.exit(3);
   }

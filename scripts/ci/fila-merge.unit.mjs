@@ -155,8 +155,12 @@ test('fork em dia com a main segura a fila; nenhuma interna é atualizada junto'
   assert.deepEqual(d.emVoo, [1]);
 });
 
-test('confirmarCandidato: só autoriza com ninguém em voo e o candidato ainda na fila', () => {
-  assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 1, fila: [1, 2], restantes: [2], bloqueadas: [] }, 2), true);
+test('confirmarCandidato: só autoriza o próximo não recusado, com ninguém em voo', () => {
+  const fila = { acao: 'atualizar', pr: 1, fila: [1, 2], restantes: [2], bloqueadas: [] };
+  assert.equal(confirmarCandidato(fila, 2, [1]), true);
+  assert.equal(confirmarCandidato(fila, 2), false, 'sem recusa, a 1 ainda está à frente');
+  // PR mais antiga ficou elegível no meio da execução: ela passa à frente da 2 (Codex, #1951).
+  assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 7, fila: [7, 1, 2], restantes: [1, 2], bloqueadas: [] }, 2, [1]), false);
   assert.equal(confirmarCandidato({ acao: 'esperar', emVoo: [9], bloqueadas: [] }, 2), false);
   assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 1, fila: [1], restantes: [], bloqueadas: [] }, 2), false);
   assert.equal(confirmarCandidato({ acao: 'nada', bloqueadas: [] }, 2), false);

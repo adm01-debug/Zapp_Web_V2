@@ -143,6 +143,7 @@ jobs:
           REPO: ${{ github.repository }}
           LIMITE_PRS: '500'
         run: |
+          # O resumo do job ja foi copiado no passo do relatorio: esta secao vai aos dois.
           RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
           PRS="$RUNNER_TEMP/prs-abertas.json"
           PROTEGIDAS="$RUNNER_TEMP/branches-protegidas.txt"
@@ -156,7 +157,7 @@ jobs:
             --equivalentes "$RUNNER_TEMP/branch-equivalentes.tsv" \
             --prs "$PRS" \
             --protegidas "$PROTEGIDAS" \
-            --limite-prs "$LIMITE_PRS" | tee -a "$RELATORIO"
+            --limite-prs "$LIMITE_PRS" | tee -a "$RELATORIO" "$GITHUB_STEP_SUMMARY"
 
       - name: SLA de Code Scanning (W83)
         # W83: busca alertas abertos do Code Scanning e verifica SLA:
@@ -175,7 +176,8 @@ jobs:
           fi
           # A logica (e os testes) vivem em scripts/ci/sla-code-scanning.mjs; o
           # exit 1 em violacao de SLA atravessa o pipe por causa do pipefail.
-          node scripts/ci/sla-code-scanning.mjs < "$ARQUIVO" | tee -a "$RELATORIO"
+          # O resumo do job ja foi copiado no passo do relatorio: esta secao vai aos dois.
+          node scripts/ci/sla-code-scanning.mjs < "$ARQUIVO" | tee -a "$RELATORIO" "$GITHUB_STEP_SUMMARY"
 
       - name: Verificar atualizações do toolchain (W40)
         # W40: relata versões mais novas das ferramentas em .github/toolchain.json.

@@ -109,15 +109,15 @@ jobs:
           # Falha ao LER o head tambem encerra: nao prova nada sobre a PR, e pular a
           # cabeca da fila deixaria uma posterior entrar antes (ordem por enabledAt).
           PR=""
-          tentou=""
+          recusadas=""
           for candidato in $FILA; do
             # Depois de uma recusa, a lista do inicio da execucao pode estar velha: outra
-            # PR pode ter entrado em voo. So segue se a fila recalculada agora autoriza.
-            if [ -n "$tentou" ] && ! node scripts/ci/fila-merge.mjs --confirmar "$candidato"; then
+            # PR pode ter entrado em voo ou uma mais antiga ter passado a frente. So segue
+            # se o candidato e a proxima da fila recalculada, tirando as ja recusadas.
+            if [ -n "$recusadas" ] && ! node scripts/ci/fila-merge.mjs --confirmar "$candidato" --recusadas "$recusadas"; then
               echo "PR #$candidato: a fila recalculada nao a autoriza mais; encerrando. A proxima execucao reavalia."
               exit 0
             fi
-            tentou=1
             if ! sha_antes=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha'); then
               echo "::warning::PR #$candidato: falha ao ler head atual via API; encerrando para manter a ordem da fila. A proxima execucao reavalia."
               exit 0
@@ -148,6 +148,7 @@ jobs:
                 fi
               fi
               echo "::warning::PR #$candidato: update-branch recusado (403/422) e a PR segue atras da main; tentando a proxima da fila"
+              recusadas="$recusadas $candidato"
               continue
             fi
             PR="$candidato"
