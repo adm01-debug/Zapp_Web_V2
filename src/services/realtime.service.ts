@@ -127,6 +127,17 @@ export class RealtimeService {
     return summaryByContact;
   }
 
+  static async fetchMessagesSince(sinceIso: string, limit = 200): Promise<RealtimeMessage[]> {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .gt('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []) as RealtimeMessage[];
+  }
+
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
