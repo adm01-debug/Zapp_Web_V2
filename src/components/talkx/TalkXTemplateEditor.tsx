@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -26,6 +26,7 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { useTalkXConfirm } from './kit/useTalkXConfirm';
+import { parseTalkXTemplateRoute, type TalkXTemplateTab } from './talkxTemplateRoute';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -63,9 +64,13 @@ interface Props {
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
+  /** X094 — sub-aba pedida no endereço: `ttab=conteudo|ab|historico`. */
+  initialTtab?: TalkXTemplateTab;
+  /** X094 — troca de template feita na biblioteca lateral chega ao endereço. */
+  onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor, initialTtab = 'conteudo', onActiveTemplateChange }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -100,9 +105,10 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(initialTtab === 'historico');
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  // X094 — a sub-aba do endereço abre o painel correspondente já carregado.
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -214,6 +220,9 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
+    // X094 — a ref sozinha não basta: o endereço da tela 05 é a fonte de verdade do
+    // template aberto e precisa acompanhar a troca feita aqui na biblioteca lateral.
+    onActiveTemplateChange?.(t.id);
     versionsTemplateIdRef.current = null;
     // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
     // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
@@ -225,6 +234,19 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
+
+    // X094 — se a troca veio enquanto uma sub-aba estava no endereço, a tela não
+    // pode mostrar Conteúdo enquanto a URL ainda diz `ttab=ab|historico`: mantém
+    // a mesma sub-aba no novo template e carrega os dados dela.
+    const nextTab = parseTalkXTemplateRoute(window.location.search).route?.ttab ?? initialTtab;
+    if (nextTab === 'ab') {
+      setShowVariants(true);
+      void loadVariants(t.id);
+    }
+    else if (nextTab === 'historico') {
+      setShowVersions(true);
+      void fetchVersions(t.id);
+    }
   };
 
   // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
@@ -359,6 +381,17 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
       if (isActiveOrigin(templateId)) setSavingVariant(false);
     }
   };
+
+  // X094 — a sub-aba pedida no endereço abre o painel correspondente já carregado:
+  // `ttab=ab` traz as variantes e `ttab=historico` traz as versões do template aberto.
+  // Só a sub-aba do endereço monta o painel; reabrir o mesmo template não recarrega.
+  useEffect(() => {
+    const templateId = activeTemplateIdRef.current;
+    if (!templateId) return;
+    if (initialTtab === 'ab') void loadVariants(templateId);
+    else if (initialTtab === 'historico') void fetchVersions(templateId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTtab]);
 
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = async (v: typeof versions[0]) => {
@@ -518,6 +551,15 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
           <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
         </div>
+        {/* X094 — trilha da tela 05: o editor é uma tela interna do módulo, no mesmo
+            desenho do breadcrumb do wizard. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Templates</span>
+        </nav>
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-wrap items-center gap-3">
           <button
@@ -594,6 +636,19 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* X094 — a descrição já existia no estado (e ia para o banco no save) mas
+              não tinha campo: não havia como escrevê-la em lugar nenhum. */}
+          <div>
+            <Label htmlFor="talkx-template-descricao" className="text-xs text-foreground-secondary">Descrição</Label>
+            <Input
+              id="talkx-template-descricao"
+              value={eDesc}
+              onChange={(e) => setEDesc(e.target.value)}
+              placeholder="Para que serve este template"
+              className="mt-1.5 h-10 bg-input/40 border-border/70"
+            />
           </div>
 
           {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
