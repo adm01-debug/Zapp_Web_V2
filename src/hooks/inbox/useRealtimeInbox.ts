@@ -18,6 +18,27 @@ import {
 
 const log = getLogger('useRealtimeInbox');
 
+/**
+ * Estado de retentativa de UMA gravação de áudio. Guarda o blob (identidade da
+ * gravação), o objeto já subido no bucket e o `client_message_id` daquela ação:
+ * enquanto a entrega não é confirmada, a retentativa reusa os dois últimos,
+ * então a mídia não sobe de novo e o servidor deduplica a nota de voz.
+ */
+interface EnvioDeAudioPendente {
+  blob: Blob;
+  contactId: string;
+  publicUrl: string;
+  clientMessageId: string;
+}
+
+/** Mesmo contrato do serviço de envio: sem id seguro, não há como deduplicar. */
+function criarIdDeEnvioDeAudio(): string {
+  if (typeof crypto?.randomUUID !== 'function') {
+    throw new Error('Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente.');
+  }
+  return crypto.randomUUID();
+}
+
 // Feature flag: use external evolution DB as data source
 const USE_EXTERNAL_DB = false;
 
@@ -43,6 +64,8 @@ export function useRealtimeInbox() {
    const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
    const uiState = useInboxUIState();
    const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
+   // Retentativa de áudio: vive enquanto a gravação não é aceita nem descartada.
+   const pendingAudioSendRef = useRef<EnvioDeAudioPendente | null>(null);
    const [selectedContactFallback, setSelectedContactFallback] = useState<{
      contactId: string;
      contact: ConversationContact;
@@ -203,6 +226,7 @@ export function useRealtimeInbox() {
    // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
    const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
      if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
+     const contactId = selectedContactId;
      const ptt = await validatePttBlob(blob);
      if (!ptt.ok) {
        const motivo = ptt.message ?? 'Áudio inválido.';
@@ -210,8 +234,32 @@ export function useRealtimeInbox() {
        throw new Error(motivo);
      }
      try {
-       const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
-       await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);
+       // Idempotência POR GRAVAÇÃO: a resposta de um despacho pode se perder
+       // depois de o POST já ter saído. Sem estado, a retentativa subia um
+       // arquivo novo (nome com `Date.now()`) e mandava outro
+       // `client_message_id` — duas notas de voz no WhatsApp do cliente. Aqui a
+       // MESMA gravação reenvia o objeto já subido e o mesmo id de entrega, e o
+       // `UNIQUE (contact_id, client_message_id)` do servidor deduplica.
+       const pendente = pendingAudioSendRef.current;
+       const mesmaGravacao = pendente && pendente.blob === blob && pendente.contactId === contactId;
+       if (!mesmaGravacao) {
+         // Outra gravação (ou outra conversa): a anterior não é mais retentável.
+         pendingAudioSendRef.current = null;
+       }
+       let envio = mesmaGravacao ? pendente : null;
+       if (!envio) {
+         const audioObjectUrl = await ChatService.uploadAudio(contactId, blob);
+         envio = {
+           blob,
+           contactId,
+           publicUrl: audioObjectUrl,
+           clientMessageId: criarIdDeEnvioDeAudio(),
+         };
+         pendingAudioSendRef.current = envio;
+       }
+       await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, null, envio.clientMessageId);
+       // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
+       pendingAudioSendRef.current = null;
        return true;
      } catch (err) {
        log.error('Error in handleSendAudio:', err);
@@ -226,6 +274,12 @@ export function useRealtimeInbox() {
        }
      }
    }, [selectedContactId, sendMessage, refreshActiveConversation]);
+
+  // Descarte explícito do estado de retentativa (o usuário cancelou a gravação):
+  // a próxima tentativa com o MESMO blob volta a subir e a gerar id novo.
+  const discardPendingAudioSend = useCallback(() => {
+    pendingAudioSendRef.current = null;
+  }, []);
 
   // Convert to legacy format using specialized adapter
   const legacyConversation: Conversation | null = useMemo(() => 
@@ -295,6 +349,7 @@ export function useRealtimeInbox() {
      handleNotificationView,
      handleSendMessage,
      handleSendAudio,
+     discardPendingAudioSend,
      refetch,
      setSelectedContact,
      markAsRead,
