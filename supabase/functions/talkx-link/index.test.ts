@@ -619,7 +619,10 @@ Deno.test("GET com token válido resolve o destinatário e registra o clique atr
   assert(click.args.p_slug === "promo", "o slug deve seguir para a RPC");
 });
 
-Deno.test("GET com token adulterado NÃO atribui a ninguém (segue anônimo, sem quebrar)", async () => {
+// 15/10 (rodada 2, recusa do revisor): token que NÃO resolve deixou de virar clique anônimo. Token
+// forjado não é prova, e clique anônimo ainda era uma ESCRITA sem prova (a RPC era chamada com
+// p_recipient null), contornando o 401 do portão. Agora é 401 e nenhuma escrita.
+Deno.test("GET com token adulterado devolve 401 e não registra clique", async () => {
   const valid = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_A);
   const tampered = valid.slice(0, -1) + (valid.endsWith("A") ? "B" : "A");
   const { supabase, seen } = makeTokenFake({
@@ -629,22 +632,36 @@ Deno.test("GET com token adulterado NÃO atribui a ninguém (segue anônimo, sem
   });
   const req = new Request(`https://example.com/talkx-link?s=promo&r=${tampered}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
-  assert(res.status === 302, `redirect não pode quebrar por token forjado, status ${res.status}`);
+  assert(res.status === 401, `token forjado nao e prova: esperado 401, status ${res.status}`);
   const click = seen.find((c) => c.fn === "record_talkx_link_click");
-  assert(click !== undefined, "o clique deveria ser registrado na RPC");
-  assert(click.args.p_recipient === null, `token forjado não pode atribuir clique a ninguém, recebido: ${JSON.stringify(click.args)}`);
+  assert(click === undefined, `token forjado nao pode registrar clique, recebido: ${JSON.stringify(click?.args)}`);
 });
 
-Deno.test("GET com r=UUID legado continua atribuindo direto (links já enviados)", async () => {
+// 15/10 (rodada 2, recusa do revisor): UUID cru NÃO atribui mais sozinho. O link legado passa pelo
+// mesmo HMAC `t` que a branch do dia exige — com `t` válido atribui, sem `t` é 401 e nada é escrito.
+// Manter link legado atribuindo sem prova seria decisão de negócio do dono, não do agente.
+Deno.test("GET com r=UUID legado e `t` válido atribui o clique", async () => {
+  const { supabase, seen } = makeTokenFake({
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const prova = await hmacHex(TRACKING_SECRET, TOKEN_UUID_A);
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${TOKEN_UUID_A}&t=${prova}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `UUID legado com prova deve redirecionar, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === TOKEN_UUID_A, `UUID legado com prova deve ir para a RPC, recebido: ${JSON.stringify(click.args)}`);
+});
+
+Deno.test("GET com r=UUID legado SEM `t` devolve 401 e não registra clique", async () => {
   const { supabase, seen } = makeTokenFake({
     clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
   });
   const req = new Request(`https://example.com/talkx-link?s=promo&r=${TOKEN_UUID_A}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
-  assert(res.status === 302, `UUID legado deve redirecionar, status ${res.status}`);
+  assert(res.status === 401, `UUID cru sem prova: esperado 401, status ${res.status}`);
   const click = seen.find((c) => c.fn === "record_talkx_link_click");
-  assert(click !== undefined, "o clique deveria ser registrado na RPC");
-  assert(click.args.p_recipient === TOKEN_UUID_A, `UUID legado deve ir direto para a RPC, recebido: ${JSON.stringify(click.args)}`);
+  assert(click === undefined, `sem prova nenhum clique pode ser registrado, recebido: ${JSON.stringify(click?.args)}`);
 });
 
 // 15/10: a expectativa deste caso MUDOU por decisão posterior da branch do dia. Quando este teste
@@ -713,10 +730,13 @@ Deno.test("token do teste == token real do talkx-send (contrato único)", async 
     assert(real === mirror, `contrato divergiu para ${uuid}: real=${real} espelho=${mirror}`);
   }
 });
-// O token é válido (MAC passa) mas o recipient pertence a camp-2 e o link é
-// da camp-1: o clique segue anônimo, nunca atribuído à campanha errada.
-// ── [refazer 2.2] token de OUTRA campanha: p_recipient null ──────────────────
-Deno.test("GET com token de outra campanha NÃO atribui (p_recipient null)", async () => {
+
+// ── [refazer 2.2] token de OUTRA campanha: 401, sem clique ───────────────────
+// O token é válido (o MAC passa) mas o recipient pertence a camp-2 e o link é da camp-1, então a
+// resolução falha de propósito. 15/10 (rodada 2, recusa do revisor): antes isso virava clique
+// anônimo com 302 — uma escrita sem prova, que contornava o 401 do portão. Agora é 401 e nada é
+// escrito; atribuir à campanha errada nunca foi possível, e agora nem o clique é contado.
+Deno.test("GET com token de outra campanha devolve 401 e não registra clique", async () => {
   const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_B);
   const { supabase, seen } = makeTokenFake({
     link: tokenLinkRow(),
@@ -725,8 +745,7 @@ Deno.test("GET com token de outra campanha NÃO atribui (p_recipient null)", asy
   });
   const req = new Request(`https://example.com/talkx-link?s=promo&r=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
-  assert(res.status === 302, `redirect não pode quebrar por campanha errada, status ${res.status}`);
+  assert(res.status === 401, `token de outra campanha: esperado 401, status ${res.status}`);
   const click = seen.find((c) => c.fn === "record_talkx_link_click");
-  assert(click !== undefined, "o clique deveria ser registrado na RPC");
-  assert(click.args.p_recipient === null, `token de outra campanha não pode atribuir, recebido: ${JSON.stringify(click.args)}`);
+  assert(click === undefined, `campanha errada nao pode registrar clique, recebido: ${JSON.stringify(click?.args)}`);
 });

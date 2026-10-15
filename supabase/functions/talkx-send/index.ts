@@ -45,13 +45,6 @@ async function deriveTestSendKey(parts: Array<string | null | undefined>): Promi
 }
 
 /**
- * Bytes do digest HMAC-SHA256 usados no token: 16 bytes em base64url dão
- * 22 caracteres — curto como pede o cartão, com 128 bits (sem colisão
- * prática entre destinatários). O talkx-link valida com o MESMO corte.
- */
-const TALKX_TRACKING_TOKEN_BYTES = 16;
-
-/**
  * Gera o token opaco do recipient_id (?r=<token>): UUID cifrado de forma
  * deterministica com chave derivada de TALKX_CONVERT_SECRET + MAC truncada
  * (ver _shared/talkx-tracking-token.ts - contrato UNICO entre send e link).

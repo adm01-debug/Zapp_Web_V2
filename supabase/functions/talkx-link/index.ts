@@ -11,7 +11,6 @@ import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_s
 import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
 import {
   decodeTalkxRecipientToken,
-  isTalkxRecipientUuid,
 } from "../_shared/talkx-tracking-token.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
@@ -104,17 +103,21 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     if (!recipientParam) {
       return new Response("Unauthorized", { status: 401 });
     }
-    // PORTÃO DO CLIQUE — três formas de `r`, nesta ordem, nenhuma escreve nada antes de provar:
-    //  1) UUID: link LEGADO, já enviado antes do token opaco (t_51bf1772) — atribui direto.
-    //  2) token opaco (24 bytes em base64url = 32 chars): a própria resolução é a prova, porque o
-    //     token é cifra + MAC do recipient_id conferida em tempo constante. Resolve → atribui;
-    //     não resolve (forjado, outra campanha) → clique ANÔNIMO, o redirect nunca quebra.
-    //  3) qualquer outro valor: exige o HMAC `t` (portão de clique da branch do dia), senão 401.
+    // PORTÃO DO CLIQUE — nada é escrito antes da prova, e NENHUMA via aceita `r` sem prova.
+    // Duas vias, nesta ordem:
+    //  1) `r` com forma de token opaco (24 bytes em base64url = 32 chars): a PRÓPRIA resolução é a
+    //     prova, porque o token é cifra + MAC do recipient_id conferida em tempo constante
+    //     (_shared/talkx-tracking-token.ts). Resolve → clique atribuído. NÃO resolve (forjado,
+    //     outra campanha, segredo trocado) → 401 e NENHUM clique: token que não resolve não é prova.
+    //  2) qualquer outro valor de `r`, inclusive UUID cru de link legado: exige o HMAC `t` do
+    //     portão de clique e responde 401 sem ele. Link legado sem `t` deixa de atribuir — isso é
+    //     a regra que a branch do dia já aplicava, não uma decisão deste cartão.
     let recipient: string | null = null;
-    if (isTalkxRecipientUuid(recipientParam)) {
-      recipient = recipientParam;
-    } else if (/^[A-Za-z0-9_-]{32}$/.test(recipientParam)) {
+    if (/^[A-Za-z0-9_-]{32}$/.test(recipientParam)) {
       recipient = await resolveTalkxLinkToken({ slug, token: recipientParam, supabase, env });
+      if (!recipient) {
+        return new Response("Unauthorized", { status: 401 });
+      }
     } else {
       const token = url.searchParams.get("t");
       if (!token) {
