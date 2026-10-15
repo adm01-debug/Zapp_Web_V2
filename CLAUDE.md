@@ -23,7 +23,7 @@ Regras que decorrem disso:
 
 1. **Git local, push quando o Joaquim pedir.** Commits entram numa branch local do dia
    (`dia/AAAA-MM-DD`); um PR por lote. Nenhum agente faz push, abre PR ou mergeia por conta própria.
-2. **Ordem do lote na produção:** push → PR → 6 checks → merge → deploy do código (Vercel e edge
+2. **Ordem do lote na produção:** push → PR → 7 checks (desde W84, 15/10/2026 noite) → merge → deploy do código (Vercel e edge
    functions) → `db-migrate.yml` com `apply=false` → aprovação do Joaquim no environment
    `producao-ddl` → `apply=true`. É a mesma ordem da regra 6 da seção 1; o que muda é que acontece
    uma vez por lote, e quem dispara é a sessão do Claude Code que fez o push, nunca um agente executor.
@@ -198,7 +198,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 6 required checks da seção abaixo — consolidado na tabela canônica "Perímetro do GitHub".
+  deleção, e os required checks da seção abaixo (6 até 15/10/2026 noite, 7 depois do W84) — consolidado na tabela canônica "Perímetro do GitHub".
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs) — HISTÓRICA,
   SUPERADA (b):**
@@ -244,7 +244,7 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — required checks | **7** (W84, 15/10/2026 noite): `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` · `CodeQL` (GitHub Advanced Security — "No new alerts in code changed by this pull request"; o job `🔬 CodeQL (javascript-typescript)` só prova que a análise rodou, não é este) | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — `required_linear_history` | `true` (W15, 2026-10-15: squash-only já é a política; fecha o gap de merge-commit acidental) | `settings-guard` ⚠ |
@@ -311,11 +311,12 @@ A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md`.
 
-**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
+**Required checks da `main`** (7 desde W84, 15/10/2026 noite; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`,
 `🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
-(não bloqueia merge).
+sem bloquear merge — e `CodeQL` (GitHub Advanced Security; W84 removeu o `paths-ignore` que travaria
+para sempre PR só de docs/migration). `🔬 CodeQL (javascript-typescript)` (o job, diferente do check
+acima) roda em CI mas **não** é required check (só prova que a análise rodou, não bloqueia merge).
 
 **Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
 criados no repo; os dois primeiros passam a ser exigidos pelos workflows quando a PR #687 mergear:

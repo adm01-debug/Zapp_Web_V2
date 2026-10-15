@@ -22,7 +22,7 @@ function pr(number, extra = {}) {
 
 test('os checks obrigatórios saem do baseline do settings-guard (fonte única)', () => {
   const lista = checksObrigatorios();
-  assert.equal(lista.length, 6);
+  assert.equal(lista.length, 7);
   assert.ok(lista.includes('Contrato DB offline'));
 });
 
@@ -69,7 +69,7 @@ test('classificar: atualizada com a main e rodando (ou verde) ocupa a vez', () =
   assert.equal(classificar(pr(1, { mergeStateStatus: 'UNKNOWN' }), OBRIG), 'em-voo');
 });
 
-test('decidir: com uma PR em voo, ninguém mais é atualizado (o desperdício O(N²) de 15/10)', () => {
+test('decidir: com uma PR em voo, ninguém mais é atualizado (o desperdicio O(N²) de 15/10)', () => {
   const prs = [pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }), pr(2), pr(3)];
   const d = decidir(prs, OBRIG);
   assert.equal(d.acao, 'esperar');
