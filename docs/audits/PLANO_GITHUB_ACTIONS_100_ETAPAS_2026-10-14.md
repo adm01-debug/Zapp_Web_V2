@@ -300,8 +300,9 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
-- [~] **W08** · C · N-05a · **PARCIAL 15/10:** o `deployment-manifest.json` é regenerado por commit (W41), mas a PR #1899
-  segue aberta, com conflito (`DIRTY`) e checks vermelhos — o merge é decisão do dono. PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
+- [x] **W08** · C · N-05a · **FEITO 15/10 (por outro caminho).** O domínio `zappweb.app.br` já está na lista de origens da `main`; o que a PR #1899 tinha de único
+  (testes de CORS de `public-api` e a linha do runbook) foi portado para a PR #1947. A #1899 fica redundante (conflito `DIRTY`, checks vermelhos) e pode ser
+  fechada pelo dono — não fechei, é PR dele. PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
   no branch, CI verde, e o dono decide merge; após o merge, `deploy-functions` dispara sozinho (push em `supabase/functions/**`).
   Verificação: 6 checks ✅ no head; Deployment registrado.
 - [x] **W09** · C · N-05b · **FEITO (PR #1923 mergeado).** Em 15/10 a PR #1918 do Dependabot passou a falhar em outro teste de documento (`E62/E76: os numeros citados conferem com o repositorio`) — mesma classe de problema, ainda aberta. (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
