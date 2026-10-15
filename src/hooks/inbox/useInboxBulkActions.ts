@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUndoableAction } from '@/hooks/system/useUndoableAction';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import {
+  archiveConversations,
+  restoreConversationStatuses,
+  type ConversationStatus,
+} from '@/hooks/inbox/conversationArchive';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -151,34 +156,21 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     const contactIds = Array.from(selectedIds);
-
-    const { data: originalContacts } = await supabase
-      .from('contacts')
-      .select('id, assigned_to')
-      .in('id', contactIds);
+    // Status anterior de cada conversa, preenchido pela ação: é o que o
+    // Desfazer restaura (uma escrita por valor anterior distinto).
+    let anteriores = new Map<string, ConversationStatus>();
 
     try {
       await executeUndoable({
         successMessage: `${contactIds.length} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
-          const { error } = await supabase
-            .from('contacts')
-            .update({ assigned_to: null })
-            .in('id', contactIds);
-          if (error) throw error;
+          anteriores = await archiveConversations(contactIds);
           clearSelection();
           refetch();
         },
         undoAction: async () => {
-          if (originalContacts) {
-            for (const contact of originalContacts) {
-              await supabase
-                .from('contacts')
-                .update({ assigned_to: contact.assigned_to })
-                .eq('id', contact.id);
-            }
-          }
+          await restoreConversationStatuses(anteriores);
           refetch();
         },
         onCommit: () => {},

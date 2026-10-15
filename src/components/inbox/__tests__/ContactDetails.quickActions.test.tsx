@@ -10,7 +10,11 @@ const h = vi.hoisted(() => {
     invokeError: null as { message: string } | null,
   };
   const eq = vi.fn(() => Promise.resolve({ error: state.error }));
-  const update = vi.fn(() => ({ eq }));
+  // O helper canônico de arquivamento escreve com `.update(payload).in('id', ids).select('id')`.
+  const updateIn = vi.fn(() => ({
+    select: () => Promise.resolve({ data: [{ id: 'c1' }], error: state.error }),
+  }));
+  const update = vi.fn(() => ({ eq, in: updateIn }));
   // select → eq → { maybeSingle | single | limit → maybeSingle }
   // (useChatMediaSending resolveInstance + archiveContact leem o estado real)
   let currentTable = '';
@@ -19,7 +23,16 @@ const h = vi.hoisted(() => {
     single: async () => ({ data: state.rows[currentTable] ?? null, error: null }),
     limit: () => terminal(),
   });
-  const select = vi.fn(() => ({ eq: vi.fn(() => terminal()) }));
+  const select = vi.fn(() => ({
+    eq: vi.fn(() => terminal()),
+    // Leitura do status atual (helper canônico): devolve a linha de contacts do estado.
+    in: vi.fn(() =>
+      Promise.resolve({
+        data: currentTable === 'contacts' && state.rows.contacts ? [state.rows.contacts] : [],
+        error: null,
+      }),
+    ),
+  }));
   const from = vi.fn((table: string) => {
     currentTable = table;
     return { update, select };
@@ -113,28 +126,37 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     h.state.error = null;
     h.state.invokeError = null;
     h.state.rows = {
-      contacts: { assigned_to: 'agent-9', whatsapp_connection_id: 'conn-1' },
+      contacts: { id: 'c1', assigned_to: 'agent-9', conversation_status: 'waiting', whatsapp_connection_id: 'conn-1' },
       whatsapp_connections: { instance_id: 'inst-1' },
     };
   });
 
-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
+  it('"Arquivar" grava o estado arquivada pelo helper canônico (sem tocar assigned_to); Desfazer restaura o status anterior', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
-    // A segunda implementação paralela está proibida: nunca escreve status.
+    await waitFor(() =>
+      expect(h.update).toHaveBeenCalledWith({
+        conversation_status: 'archived',
+        updated_at: expect.any(String),
+      }),
+    );
+    // Semântica única: NÃO zera o responsável (o antigo `assigned_to: null`
+    // devolvia a conversa à fila em vez de arquivar).
     expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
+      expect.objectContaining({ assigned_to: expect.anything() }),
     );
 
     await clickUndo();
-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
+    // Restaura o status lido antes da escrita ('waiting'), não força 'open'.
     await waitFor(() =>
-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
+      expect(h.update).toHaveBeenLastCalledWith({
+        conversation_status: 'waiting',
+        updated_at: expect.any(String),
+      }),
     );
     expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
+      expect.objectContaining({ assigned_to: expect.anything() }),
     );
   });
 

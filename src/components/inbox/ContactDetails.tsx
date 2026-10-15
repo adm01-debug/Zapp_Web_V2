@@ -65,10 +65,10 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
   const quickActions = useContactQuickActions(contact);
 
   // Bloquear grava via useContactQuickActions (bloqueio real na Evolution);
-  // Arquivar delega ao archiveContact (semântica única: zera assigned_to e o
-  // Desfazer restaura o valor anterior real — decisão do dono em 06/10,
-  // cartão #241). VIP não existe mais: a função de tags de contato foi
-  // removida (ordem de 12/10) e a coluna dedicada ainda não está na base.
+  // Arquivar delega ao archiveContact, que grava `conversation_status: 'archived'`
+  // pelo helper canônico (semântica única: NÃO mexe em assigned_to) e cujo
+  // Desfazer devolve o status anterior. VIP não existe mais: a função de tags de
+  // contato foi removida (ordem de 12/10) e a coluna dedicada ainda não está na base.
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'edit': setEditDialogOpen(true); break;

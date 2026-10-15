@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
+import {
+  archiveConversations,
+  restoreConversationStatuses,
+  type ConversationStatus,
+} from '@/hooks/inbox/conversationArchive';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -246,14 +251,20 @@ export function useConversationActions() {
   }, [profileId]);
 
   const archiveContact = useCallback(async (contactId: string) => {
-    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
-    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
-    if (error) { toast.error('Erro ao arquivar conversa'); return; }
+    let anteriores: Map<string, ConversationStatus>;
+    try {
+      anteriores = await archiveConversations([contactId]);
+    } catch {
+      toast.error('Erro ao arquivar conversa');
+      return;
+    }
     undoToast({
       message: 'Conversa arquivada',
       icon: '📦',
       onUndo: async () => {
-        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
+        // Desfazer devolve o conversation_status anterior (lido antes da
+        // escrita). `assigned_to` nunca é tocado por arquivar.
+        await restoreConversationStatuses(anteriores);
       },
     });
   }, []);

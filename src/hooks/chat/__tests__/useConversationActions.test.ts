@@ -174,14 +174,18 @@ describe('useConversationActions', () => {
   });
 
   describe('archiveContact', () => {
-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
+    it('grava o estado arquivada (sem tocar assigned_to) e o desfazer restaura o status anterior', async () => {
+      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'waiting' }], error: null };
+      contactsUpdateResult = { data: [{ id: 'contact-1' }], error: null };
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.archiveContact('contact-1');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
+      expect(contactsUpdateCalls).toEqual([
+        { conversation_status: 'archived', updated_at: expect.any(String) },
+      ]);
       expect(undoToast).toHaveBeenCalledTimes(1);
       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(undoArgs.message).toBe('Conversa arquivada');
@@ -190,14 +194,29 @@ describe('useConversationActions', () => {
         await undoArgs.onUndo();
       });
 
+      // O desfazer devolve o status LIDO antes (waiting), não o assigned_to.
       expect(contactsUpdateCalls).toEqual([
-        { assigned_to: null },
-        { assigned_to: 'agent-original' },
+        { conversation_status: 'archived', updated_at: expect.any(String) },
+        { conversation_status: 'waiting', updated_at: expect.any(String) },
       ]);
     });
 
     it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
+      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'open' }], error: null };
       contactsUpdateResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.archiveContact('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
+      expect(undoToast).not.toHaveBeenCalled();
+    });
+
+    it('update que afeta 0 linhas (RLS) é erro, não sucesso: nada de desfazer', async () => {
+      contactsSelectResult = { data: [{ id: 'contact-1', conversation_status: 'open' }], error: null };
+      contactsUpdateResult = { data: [], error: null };
       const { result } = await withProfileReady();
 
       await act(async () => {
