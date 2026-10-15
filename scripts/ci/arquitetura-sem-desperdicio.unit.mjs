@@ -78,6 +78,11 @@ test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   // sido aceito com 202) encerra, senão duas PRs entram em voo na mesma execução.
   assert.match(laco, /grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*echo[^\n]*\n\s*continue/, 'só 403/422 pula para a próxima');
   assert.match(laco, /falha ambigua[^\n]*\n\s*exit 0/, 'falha ambígua encerra a execução');
+  // O 403/422 é o ÚNICO caminho que pula um candidato: falha ao ler o head (rede, 5xx)
+  // não prova nada sobre a PR, e pular a cabeça da fila deixaria uma posterior entrar
+  // antes dela, quebrando a ordem por enabledAt (Codex, PR #1950).
+  assert.equal((laco.match(/\bcontinue\b/g) ?? []).length, 1, 'só a recusa 403/422 do update-branch avança na fila');
+  assert.match(laco, /falha ao ler head[^\n]*\n\s*exit 0/, 'falha ao ler o head encerra a execução');
   assert.match(laco, /PR="\$candidato"\n\s*break/, 'o primeiro update aceito encerra o laço');
   assert.match(t, /if: steps\.fila\.outputs\.pr != ''/, 'sem PR escolhida, nada é atualizado');
 });

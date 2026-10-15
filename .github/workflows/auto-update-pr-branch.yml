@@ -106,11 +106,13 @@ jobs:
           # outra falha e ambigua (o update e assincrono e pode ter sido aceito com 202
           # antes de a resposta se perder), entao a execucao para e a proxima reavalia:
           # se o update aconteceu, a PR aparece "em voo" e a fila espera por ela.
+          # Falha ao LER o head tambem encerra: nao prova nada sobre a PR, e pular a
+          # cabeca da fila deixaria uma posterior entrar antes (ordem por enabledAt).
           PR=""
           for candidato in $FILA; do
             if ! sha_antes=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha'); then
-              echo "::warning::PR #$candidato: falha ao ler head atual via API; tentando a proxima da fila"
-              continue
+              echo "::warning::PR #$candidato: falha ao ler head atual via API; encerrando para manter a ordem da fila. A proxima execucao reavalia."
+              exit 0
             fi
             if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null 2>"$RUNNER_TEMP/update-branch.err"; then
               if grep -Eq 'HTTP (403|422)' "$RUNNER_TEMP/update-branch.err"; then

@@ -36,7 +36,8 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   a `main` conta como em voo, como qualquer outra. Se o `update-branch` da
   primeira da fila for recusado de forma permanente (HTTP 403/422), o workflow tenta a próxima na mesma execução
   e para no primeiro aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada. Falha ambígua (rede,
-  5xx: o update é assíncrono e pode ter sido aceito) encerra a execução, para nunca haver duas PRs em voo.
+  5xx: o update é assíncrono e pode ter sido aceito) encerra a execução, para nunca haver duas PRs em voo; falha
+  ao ler o head do candidato também encerra, para uma PR posterior nunca passar à frente da cabeça da fila.
 - **Gatilhos:** push na `main` (a vez abriu), fim de `CI/CD Pipeline` ou `DB Guard (offline)` (a PR em voo pode
   ter ficado vermelha e liberado a vez) e um agendamento a cada 30 min, para o caso de alguém ligar o auto-merge sem
   outro evento.
