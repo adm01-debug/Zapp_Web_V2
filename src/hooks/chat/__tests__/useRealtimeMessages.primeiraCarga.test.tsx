@@ -8,7 +8,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 // sidebar usava `loading` e a lista piscava trocando por esqueletos em cada refetch.
 const h = vi.hoisted(() => ({
   configs: [] as Array<{ channelName: string; onReconnect?: () => void }>,
-  fetchInitialConversations: vi.fn(),
+  fetchConversationsPage: vi.fn(),
 }));
 
 type RealtimeConfigProbe = { channelName: string; onReconnect?: () => void };
@@ -21,7 +21,7 @@ vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({
 
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: {
-    fetchInitialConversations: h.fetchInitialConversations,
+    fetchConversationsPage: h.fetchConversationsPage,
     fetchContactsByIds: vi.fn().mockResolvedValue([]),
     markMessagesAsRead: vi.fn().mockResolvedValue(undefined),
   },
@@ -73,8 +73,10 @@ beforeEach(() => {
 describe('useRealtimeMessages — inicialização da lista sem piscar', () => {
   it('só fica em "primeira carga" até a 1ª busca resolver; refetch em voo mantém a lista', async () => {
     let resolverSegundaBusca: ((value: unknown) => void) | undefined;
-    h.fetchInitialConversations
-      .mockResolvedValueOnce(CONVERSA_CARREGADA)
+    // A primeira carga é a página 1 (fetchConversationsPage(null)): o mock
+    // devolve a página inteira, como o serviço.
+    h.fetchConversationsPage
+      .mockResolvedValueOnce({ conversations: CONVERSA_CARREGADA, hasMore: false, nextCursor: null })
       .mockImplementationOnce(() => new Promise((resolve) => { resolverSegundaBusca = resolve; }));
 
     const { result } = renderHook(() => useRealtimeMessages());
@@ -97,6 +99,6 @@ describe('useRealtimeMessages — inicialização da lista sem piscar', () => {
     expect(result.current.initialLoading).toBe(false);
     expect(result.current.conversations).toHaveLength(1);
 
-    resolverSegundaBusca?.(CONVERSA_CARREGADA);
+    resolverSegundaBusca?.({ conversations: CONVERSA_CARREGADA, hasMore: false, nextCursor: null });
   });
 });

@@ -8,7 +8,7 @@ import { RealtimeService, type ConversationsCursor } from '@/services/realtime.s
 import { useSupabaseRealtime } from '../realtime/useSupabaseRealtime';
 import { sendMessageToContact } from '../realtime/messageSender';
 import {
-  normalizeMessage, buildConversation, CONVERSATIONS_PAGE_SIZE,
+  normalizeMessage, buildConversation,
 } from '../realtime/realtimeUtils';
 import { useRealtimeNotifications } from '../realtime/useRealtimeNotifications';
 import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
@@ -32,19 +32,6 @@ export interface ConversationWithMessages {
   messages: RealtimeMessage[];
   unreadCount: number;
   lastMessage: RealtimeMessage | null;
-}
-
-/**
- * Cursor da próxima página a partir do último item já carregado. A lista chega
- * ordenada por `contacts.updated_at DESC, id DESC` (mesma chave do cursor no
- * serviço), então o último item é a borda da página.
- */
-function cursorFromConversations(
-  conversations: ConversationWithMessages[],
-): ConversationsCursor | null {
-  const last = conversations[conversations.length - 1];
-  if (!last?.contact?.id || !last.contact.updated_at) return null;
-  return { updatedAt: last.contact.updated_at, id: last.contact.id };
 }
 
 export function useRealtimeMessages() {
@@ -194,13 +181,19 @@ export function useRealtimeMessages() {
     try {
       setLoading(true);
       setError(null);
-      const builtConversations = await RealtimeService.fetchInitialConversations();
+      // A primeira carga é a página 1 da paginação: o serviço devolve as
+      // conversas junto com o cursor (último contato PAGINADO) e o hasMore
+      // reais. Derivar da lista exibida errava quando um extra (contato fora
+      // da página, mais antigo) caía no fim: o cursor pulava os contatos entre
+      // o fim da página e o extra, e o hasMore era um chute pelo tamanho.
+      const page = await RealtimeService.fetchConversationsPage(null);
+      const builtConversations = page.conversations;
       if (!mountedRef.current || generation !== fetchGenerationRef.current) return;
       // Um refetch/reconexão recarrega a lista do TOPO: a paginação recomeça da
-      // primeira página (não é "carregar mais"). O cursor sai do último item da
-      // primeira página (ordem updated_at DESC/id DESC vinda do serviço).
-      nextCursorRef.current = cursorFromConversations(builtConversations);
-      hasMoreRef.current = builtConversations.length >= CONVERSATIONS_PAGE_SIZE;
+      // primeira página (não é "carregar mais"); cursor e hasMore voltam aos da
+      // página 1 vindos do serviço.
+      nextCursorRef.current = page.nextCursor;
+      hasMoreRef.current = page.hasMore;
       setHasMore(hasMoreRef.current);
       if (liveRevisionRef.current === startingLiveRevision) {
         commitConversations(builtConversations);

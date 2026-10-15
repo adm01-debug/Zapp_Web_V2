@@ -215,18 +215,18 @@ describe('RealtimeService.fetchInitialConversations — janela global (R2-INB-00
     expect(b?.unreadCount).toBe(0);
   });
 
-  it('consulta o agregado em blocos de 200 contatos (uma página por vez)', async () => {
+  it('quebra a consulta do agregado em blocos de 200 contatos', async () => {
     const contatos = Array.from({ length: 205 }, (_, i) => ({
       ...CONTATO_B,
       id: `cccccccc-0000-0000-0000-${String(i).padStart(12, '0')}`,
     }));
-    montarCenario({ contatos, mensagens: [], resumos: [] });
+    montarCenario({ contatos, mensagens: AS_1000_DE_A, resumos: [] });
 
     await RealtimeService.fetchInitialConversations();
 
-    // a página tem 200 contatos → um único bloco de agregado
-    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledTimes(2);
     expect((rpc.mock.calls[0][1] as { p_contact_ids: string[] }).p_contact_ids).toHaveLength(200);
+    expect((rpc.mock.calls[1][1] as { p_contact_ids: string[] }).p_contact_ids).toHaveLength(5);
   });
 
   it('degradação: erro no agregado não derruba a carga da inbox', async () => {

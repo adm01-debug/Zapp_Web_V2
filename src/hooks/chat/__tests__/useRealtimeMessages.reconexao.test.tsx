@@ -7,7 +7,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 // callback fica coberto em useSupabaseRealtime.reconexao.test.tsx.
 const h = vi.hoisted(() => ({
   configs: [] as Array<{ channelName: string; onReconnect?: () => void }>,
-  fetchInitialConversations: vi.fn(),
+  fetchConversationsPage: vi.fn(),
 }));
 
 type RealtimeConfigProbe = { channelName: string; onReconnect?: () => void };
@@ -20,7 +20,7 @@ vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({
 
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: {
-    fetchInitialConversations: h.fetchInitialConversations,
+    fetchConversationsPage: h.fetchConversationsPage,
     fetchContactsByIds: vi.fn().mockResolvedValue([]),
     markMessagesAsRead: vi.fn().mockResolvedValue(undefined),
   },
@@ -58,13 +58,13 @@ import { useRealtimeMessages } from '@/hooks/chat/useRealtimeMessages';
 beforeEach(() => {
   vi.clearAllMocks();
   h.configs = [];
-  h.fetchInitialConversations.mockResolvedValue([]);
+  h.fetchConversationsPage.mockResolvedValue({ conversations: [], hasMore: false, nextCursor: null });
 });
 
 describe('useRealtimeMessages — revalidacao da lista apos reconexao', () => {
   it('liga mensagens e contatos ao mesmo callback de revalidacao da lista', async () => {
     renderHook(() => useRealtimeMessages());
-    await waitFor(() => expect(h.fetchInitialConversations).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(h.fetchConversationsPage).toHaveBeenCalledTimes(1));
 
     const messagesChannel = h.configs.find((c: RealtimeConfigProbe) => c.channelName === 'global-messages-realtime');
     const contactsChannel = h.configs.find((c: RealtimeConfigProbe) => c.channelName === 'global-contacts-realtime');
@@ -74,6 +74,6 @@ describe('useRealtimeMessages — revalidacao da lista apos reconexao', () => {
     expect(contactsChannel?.onReconnect).toBe(messagesChannel?.onReconnect);
 
     messagesChannel?.onReconnect?.();
-    await waitFor(() => expect(h.fetchInitialConversations).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(h.fetchConversationsPage).toHaveBeenCalledTimes(2));
   });
 });
