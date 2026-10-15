@@ -1,28 +1,27 @@
-# docs(paridade): grava a auditoria do doc 06 (3a passada) — partes 1 a 3 e o plano
+Especialista: workertestes
 
-Especialista: worker
+# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
 
-## O que mudou e por quê
-- docs/plans/PLANO_PARIDADE_V3_DOC_06_TERCEIRA_PASSADA_2026-10-13.md: plano da 3a passada da auditoria de paridade V3→V2 do doc 06 (hooks do inbox) — produto do cartão, entra em docs/plans.
-- docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE1_ENVIO.md: recorte envio.
-- docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE2_REALTIME.md: recorte realtime.
-- docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE3_FILTROS_LISTA.md: recorte filtros/lista.
+## O que já estava coberto (por isso NÃO reescrevi)
+Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
+- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
+- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
+- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
+- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
 
-Os 5 relatórios foram renomeados para o padrão `PARTE1..5` que o plano já cita (linha 7: `docs/audits/AUDITORIA_PARIDADE_V3_DOC_06_2026-10-13_PARTE1..5_*.md`). Cópia byte-a-byte da origem `~/arquitetura-v2/paridade-06/`; nenhum conteúdo técnico foi alterado.
-
-## Divisão da entrega (por que só 4 dos 6 arquivos aqui)
-O cartão pede 6 arquivos (~137 mil caracteres adicionados). O `hermes-tarefa-fechar` recusa diff de um único cartão acima de 90000 caracteres adicionados e manda dividir a entrega. Então:
-- este cartão entrega o plano + PARTE1..3 (~85 mil caracteres, abaixo do limite);
-- as PARTE4 (CONTATO_MIDIA) e PARTE5 (INVENTARIO_TESTES) vão no cartão filho `t_e67dda6e` (docs(paridade): grava as partes 4 e 5...), que fica em `todo` até este fechar.
-Os 6 arquivos continuam entrando versionados na `dia`, só que por dois cartões.
+## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
+- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
+- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
+- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
+- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
+- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
 
 ## Prova
-- tamanho conferido contra a origem: plan 3425 B; PARTE1 33296 B; PARTE2 27265 B; PARTE3 18873 B (iguais aos arquivos de origem).
-- varredura de segredo/dado pessoal nos 4 arquivos (`grep -nEi 'eyJ...|sk-...|anon_key|Bearer <tok>|<project-ref>|+55<fone>|<cpf>|...supabase.co'` e `grep -noE '<email>|[0-9]{10,}'`): nenhum telefone, token, chave, CPF, e-mail ou ref de produção. Os únicos casamentos de 10+ dígitos são timestamps de migration.
-- `git show --stat --oneline HEAD` → 4 arquivos novos, só adições; nenhum arquivo de código ou teste tocado.
-- `zapp-verify . --rapido` roda no fechar (ver linha de resultado).
+- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
+- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
+- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
+- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
 
 ## O que NÃO fiz e por quê
-- Não alterei conteúdo técnico de nenhum relatório nem do plano (como o cartão manda).
-- Não toquei em código, migration ou teste.
-- Não trouxe as PARTE4/5 para este cartão: estourariam o limite de 90000 do fechar; seguem no cartão filho `t_e67dda6e`.
+- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
+- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
