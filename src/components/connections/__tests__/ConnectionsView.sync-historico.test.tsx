@@ -11,6 +11,9 @@ import React from 'react';
  */
 const h = vi.hoisted(() => ({
   toast: vi.fn(),
+  success: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
   invoke: vi.fn(),
   connections: [] as Array<Record<string, unknown>>,
 }));
@@ -27,7 +30,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: h.invoke },
   },
 }));
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: h.toast }));
+// Padrão do app: sonner (a view não usa mais @/hooks/ui/use-toast).
+vi.mock('sonner', () => ({
+  toast: Object.assign(h.toast, { success: h.success, error: h.error, warning: h.warning }),
+}));
 
 vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
   useConnectionsManager: () => ({
@@ -99,6 +105,9 @@ const conexao = {
 beforeEach(() => {
   cleanup();
   h.toast.mockClear();
+  h.success.mockClear();
+  h.error.mockClear();
+  h.warning.mockClear();
   h.invoke.mockReset();
   h.connections = [{ ...conexao }];
 });
@@ -116,10 +125,11 @@ describe('ConnectionsView — histórico não suportado (Evolution GO)', () => {
     await waitFor(() => expect(h.invoke).toHaveBeenCalledWith('evolution-sync', expect.objectContaining({
       body: expect.objectContaining({ action: 'sync-all-messages', instanceName: 'inst-1' }),
     })));
-    await waitFor(() => expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Histórico não suportado', description: 'Histórico não é suportado na GO.' }),
+    await waitFor(() => expect(h.warning).toHaveBeenCalledWith(
+      'Histórico não suportado',
+      { description: 'Histórico não é suportado na GO.' },
     ));
-    expect(h.toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Sincronização concluída!' }));
+    expect(h.success).not.toHaveBeenCalled();
     // a ação some depois do aviso
     await waitFor(() => expect(screen.queryByText('Sincronizar Histórico')).toBeNull());
   });
@@ -130,9 +140,11 @@ describe('ConnectionsView — histórico não suportado (Evolution GO)', () => {
 
     fireEvent.click(await screen.findByText('Sincronizar Histórico'));
 
-    await waitFor(() => expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Sincronização concluída!', description: '12 mensagens sincronizadas de 3 contatos.' }),
+    await waitFor(() => expect(h.success).toHaveBeenCalledWith(
+      'Sincronização concluída!',
+      { description: '12 mensagens sincronizadas de 3 contatos.' },
     ));
+    expect(h.toast).toHaveBeenCalledWith('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     expect(screen.getByText('Sincronizar Histórico')).toBeTruthy();
   });
 });
@@ -145,6 +157,9 @@ describe('ConnectionsView — health check por conexão', () => {
     fireEvent.click(await screen.findByText('Checar agora'));
 
     await waitFor(() => expect(h.invoke).toHaveBeenCalledWith('connection-health-check', expect.objectContaining({ method: 'POST' })));
-    await waitFor(() => expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Health check concluído' })));
+    await waitFor(() => expect(h.success).toHaveBeenCalledWith(
+      'Health check concluído',
+      { description: '2 conexão(ões) verificada(s).' },
+    ));
   });
 });

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
@@ -69,7 +69,7 @@ export function ConnectionsView() {
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
-    toast({ title: 'Sincronizando histórico...', description: 'Isso pode levar alguns minutos.' });
+    toast('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     try {
       const { data, error } = await supabase.functions.invoke('evolution-sync', {
         body: { action: 'sync-all-messages', instanceName: connection.instance_id },
@@ -80,15 +80,14 @@ export function ConnectionsView() {
       // como se tivesse dado certo.
       if (data?.notSupported || data?.success === false) {
         setHistoryNotSupported(true);
-        toast({
-          title: 'Histórico não suportado',
+        toast.warning('Histórico não suportado', {
           description: data?.message || 'O provedor atual (Evolution GO) não suporta sincronização de histórico. Requer Evolution API v2.',
         });
         return;
       }
-      toast({ title: 'Sincronização concluída!', description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
+      toast.success('Sincronização concluída!', { description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
     } catch (e: unknown) {
-      toast({ title: 'Erro na sincronização', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+      toast.error('Erro na sincronização', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally { setSyncingHistory(null); }
   };
 
@@ -99,9 +98,9 @@ export function ConnectionsView() {
     try {
       const { data, error } = await supabase.functions.invoke('connection-health-check', { method: 'POST', body: {} });
       if (error) throw error;
-      toast({ title: 'Health check concluído', description: `${data?.connections?.length || 0} conexão(ões) verificada(s).` });
+      toast.success('Health check concluído', { description: `${data?.connections?.length || 0} conexão(ões) verificada(s).` });
     } catch (e: unknown) {
-      toast({ title: 'Erro no health check', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+      toast.error('Erro no health check', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally { setCheckingHealth(null); }
   };
 

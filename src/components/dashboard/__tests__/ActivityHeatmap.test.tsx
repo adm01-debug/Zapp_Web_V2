@@ -51,3 +51,24 @@ describe('ActivityHeatmap — acessibilidade', () => {
     expect(ids.filter((id) => id === 'button-name' || id === 'select-name')).toEqual([]);
   });
 });
+
+describe('ActivityHeatmap — o rótulo bate com o dado da consulta', () => {
+  it('cada célula expõe a contagem do dia como "mensagens"', () => {
+    render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
+
+    // a consulta do componente conta `messages`; o rótulo não pode prometer
+    // outra métrica (antes a prop `metric` trocava o texto sem trocar a query)
+    expect(screen.getByLabelText(/^5 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^25 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^60 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
+  });
+
+  it('não exibe rótulo de métrica que a consulta não entrega', () => {
+    const { container } = render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
+
+    expect(screen.queryByText(/conversas/i)).toBeNull();
+    expect(screen.queryByText(/resoluções/i)).toBeNull();
+    expect(container.querySelectorAll('[aria-label*="conversa"]').length).toBe(0);
+    expect(container.querySelectorAll('[aria-label*="resolu"]').length).toBe(0);
+  });
+});
