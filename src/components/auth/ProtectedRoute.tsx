@@ -171,7 +171,14 @@
 
       log.debug('[ProtectedRoute] Checking permission:', requiredPermission);
 
+      // A consulta pertence a ESTA identidade (usuário+permissão): se ela mudar
+      // com a consulta pendente, o timer de 5 s ou o `.then` velho não podem
+      // definir o estado da identidade nova — `cancelled` ignora o que chegar
+      // depois da troca e o retorno limpa o timer pendente.
+      let cancelled = false;
+
       const permTimeout = setTimeout(() => {
+        if (cancelled) return;
         // Sem resposta no prazo: NÃO é "sem permissão" — é leitura não
         // confirmada. Vira tela de erro (sem /access-denied, sem auditoria).
         log.warn('[ProtectedRoute] Permission check timed out');
@@ -180,17 +187,24 @@
 
       RoleService.checkPermission(user.id, requiredPermission)
         .then(result => {
+          if (cancelled) return;
           log.debug('[ProtectedRoute] Permission result:', requiredPermission, result);
           setPermissionReadFailed(false);
           setHasPermission(result);
         })
         .catch(err => {
+          if (cancelled) return;
           log.error('[ProtectedRoute] Permission error:', err);
           setPermissionReadFailed(true);
         })
         .finally(() => {
           clearTimeout(permTimeout);
         });
+
+      return () => {
+        cancelled = true;
+        clearTimeout(permTimeout);
+      };
     }, [loading, user, requiredPermission]);
 
    if (loading) {

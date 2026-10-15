@@ -17,7 +17,8 @@ export function useUserRole() {
     data: roles = [],
     isLoading,
     isError: rolesLoadError,
-    isPaused: rolesPaused,
+    isPaused: rolesPausedCru,
+    isPending: rolesPendentes,
     refetch,
   } = useQuery({
     queryKey: ['user-roles', user?.id],
@@ -74,11 +75,12 @@ export function useUserRole() {
     rolesLoadError,
     // Estado REAL da leitura de papéis, além de `rolesLoadError`: `isError` é o
     // próprio flag do React Query (mesmo valor, nome canônico) e `isPaused`
-    // cobre consulta sem rede (a query não roda, `roles` fica vazio sem ser
-    // "sem papel"). Quem consome o acesso (ProtectedRoute) usa os dois para não
-    // confundir falha de leitura com negação de acesso.
+    // cobre a consulta pausada sem rede SEM dados (pausa com papéis em cache —
+    // refetch de foco/reconexão — não é falha: `isPending` fica falso e a rota
+    // não cai na tela de erro). Quem consome o acesso (ProtectedRoute) usa os
+    // dois para não confundir falha de leitura com negação de acesso.
     isError: rolesLoadError,
-    isPaused: rolesPaused,
+    isPaused: rolesPausedCru && rolesPendentes,
     // Permissoes nomeadas da nav que o usuario possui + o loading delas
     // (separado de `loading` para nao mudar o tempo de espera do ProtectedRoute).
     permissions,
