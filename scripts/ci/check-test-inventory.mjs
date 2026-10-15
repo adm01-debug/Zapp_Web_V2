@@ -27,14 +27,53 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-// Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// W53: todos os itens anteriores promovidos — ALLOWLIST vazia.
-const ALLOWLIST = new Set([]);
+// ── Allowlist com prazo (W54) ─────────────────────────────────────────────────
+// Cada entrada tem `desde` (AAAA-MM-DD) e `motivo`. Falha se (hoje - desde) > 30 dias.
+// Regra idêntica à quarentena E87: allowlist sem prazo é um `skip` com outro nome.
+// W53: todos os itens anteriores promovidos; ambas as Metas vazias.
 
-// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
-// workflow nenhum. W53: todos os itens anteriores promovidos para o passo
-// "Test CI and Edge deployment guards" do lint-and-typecheck em ci.yml — ALLOWLIST_NODE vazia.
-export const ALLOWLIST_NODE = new Set([]);
+const FORMATO_DATA = /^\d{4}-\d{2}-\d{2}$/u;
+export const PRAZO_ALLOWLIST_DIAS = 30;
+
+/** Data de hoje em ISO (AAAA-MM-DD), sem depender de fuso do ambiente. */
+export function hojeISO(agora = new Date()) {
+  return agora.toISOString().slice(0, 10);
+}
+
+// .test.sh fora de db-guard.yml — Map<caminho, {desde, motivo}>.
+const ALLOWLIST_META = new Map([
+  // Exemplo: ['scripts/db-audit/foo.test.sh', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
+]);
+
+// Suites Node fora de qualquer bloco run: — Map<caminho, {desde, motivo}>.
+const ALLOWLIST_NODE_META = new Map([
+  // Exemplo: ['scripts/qa/foo.unit.mjs', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
+]);
+
+// Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
+const ALLOWLIST = new Set(ALLOWLIST_META.keys());
+export const ALLOWLIST_NODE = new Set(ALLOWLIST_NODE_META.keys());
+
+/**
+ * Verifica se alguma entrada da allowlist passou do prazo de 30 dias.
+ * Devolve lista de problemas (vazia = tudo dentro do prazo).
+ */
+export function verificarPrazosAllowlist(hoje = hojeISO()) {
+  const problemas = [];
+  for (const [arquivo, { desde, motivo }] of [...ALLOWLIST_META, ...ALLOWLIST_NODE_META]) {
+    if (!FORMATO_DATA.test(String(desde))) {
+      problemas.push(`${arquivo}: 'desde' "${desde}" não está em AAAA-MM-DD`);
+      continue;
+    }
+    const dias = (Date.parse(hoje) - Date.parse(desde)) / 86_400_000;
+    if (dias > PRAZO_ALLOWLIST_DIAS) {
+      problemas.push(
+        `${arquivo}: na allowlist desde ${desde} (${Math.floor(dias)} dias > ${PRAZO_ALLOWLIST_DIAS}) — promover para o CI ou remover (motivo: ${motivo})`,
+      );
+    }
+  }
+  return problemas;
+}
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
@@ -163,9 +202,10 @@ export function orfaosDoInventario() {
 // ── 5. Reportar ───────────────────────────────────────────────────────────────
 
 function principal() {
+  const prazos = verificarPrazosAllowlist();
   const orphans = orfaosDoInventario();
 
-  if (orphans.length === 0) {
+  if (prazos.length === 0 && orphans.length === 0) {
     const nodeMsg = `${suitesNodeNoDisco().length} suite(s) Node cobertas por bloco run: (${ALLOWLIST_NODE.size} na allowlist)`;
     if (ciUsesGlob) {
       console.log(`check-test-inventory: OK — ci.yml usa glob (${CI_TS_GLOB}); ${nodeMsg}; .test.sh verificados individualmente`);
@@ -175,12 +215,18 @@ function principal() {
     return 0;
   }
 
-  console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
-  for (const { file, yaml } of orphans) {
-    console.error(`  ${file}  (não encontrado em ${yaml})`);
+  if (prazos.length > 0) {
+    console.error('check-test-inventory: FALHOU — entrada(s) vencida(s) na allowlist:');
+    for (const p of prazos) console.error(`  ${p}`);
   }
-  console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
-  console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
+  if (orphans.length > 0) {
+    console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
+    for (const { file, yaml } of orphans) {
+      console.error(`  ${file}  (não encontrado em ${yaml})`);
+    }
+    console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
+    console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
+  }
   return 1;
 }
 
