@@ -252,7 +252,7 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
-| Workflow permissions | `default_workflow_permissions=write` · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
+| Workflow permissions | `default_workflow_permissions=read` (medido em 15/10 18:31; vale só para job sem bloco `permissions:`, e não há nenhum — contrato em `workflow-contracts.unit.mjs`) · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
 | Environments | **9** no baseline: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3), **+4 criados pela Vercel** (`Preview – *`/`Production – *`, reconhecidos pelo prefixo) = **13** na API | `settings-guard` |
 | Secrets (escopos) | repo (14, medido em 15/10) + `perimetro-leitura` (`SETTINGS_GUARD_TOKEN`) · `producao-ddl` · `producao-edge-functions` · `banco-leitura` · `db-ledger-evidence`. Os workflows já declaram o environment de cada secret; mover os **valores** é do Joaquim (`docs/runbooks/migracao-segredos-environments.md`) | `check-pr-workflow-secrets` · `secrets-environments.unit.mjs` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |

@@ -700,6 +700,8 @@ contrato que impede a volta.
 | **E-mail e senha do usuário E2E em artifacts públicos**: o redator só tratava arquivos de texto soltos; os valores digitados no setup iam no ZIP embutido no `index.html` e nos traces | artifacts `playwright-report-logado-*` de 38703841548, 38760211564 e 38773362900 (conferidos); 38654716402 gerado pelo mesmo redator | os 4 artifacts apagados em 15/10 17:45; `redigir-relatorio.mjs` abre ZIP embutido e aninhado e reprova o upload se sobrar ocorrência. **Falta o Joaquim trocar `E2E_TEST_PASSWORD`.** |
 | Fila serial: 6 casos de borda apontados pelo Codex na #1950 (fork em dia, falha ambígua, leitura do head, 422 "nada a atualizar", rate limit, lista velha após recusa) | threads da #1950 | cada um com ramo no laço e asserção no contrato R1; `fila-merge.mjs --confirmar N` recalcula a fila antes de avançar |
 | `scorecard.yml` com `defaults` no job: o scorecard-action recusa publicar (README v2.4.1) | Codex na #1950 | sem `defaults`/`env`; exceção do W44 travada por teste |
+| `scorecard.yml` com `write` no nível do workflow: a API do Scorecard recusa publicar ("global perm is set to write") | run 38782461564 (main pós-#1951) | `permissions: {}` no topo, `security-events`/`id-token` no job; contrato W86 em `workflow-contracts.unit.mjs` |
+| `default_workflow_permissions` passou de `write` para `read` entre as medições de ~15:00 e 18:31 (autor não identificável por API) | settings-guard 38786106562, primeiro run com o `SETTINGS_GUARD_TOKEN` (branch protection e Actions lidos de verdade) | baseline e `CLAUDE.md` adotam `read` (mais restrito, sem efeito: todo job declara permissões — contrato novo). Se não foi intencional, reverter é uma linha no baseline |
 
 ---
 
