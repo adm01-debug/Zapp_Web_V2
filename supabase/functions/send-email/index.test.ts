@@ -140,8 +140,12 @@ Deno.test("R2-API-022: CORS preflight continua livre (OPTIONS sem auth)", async 
 Deno.test("R2-API-022: sem bearer devolve 401 e não toca a rede", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([]);
-    // O limiter persistente roda ANTES da auth, mas com o client service-role
-    // descartado e sem SERVICE_ROLE_KEY ele cai no contador local — nenhum fetch.
+    // O limiter persistente roda ANTES da auth, mas este teste trava o caminho
+    // de queda: sem SERVICE_ROLE_KEY ele cai no contador local — nenhum fetch.
+    // A chave é zerada aqui (com restore) porque outros arquivos do mesmo
+    // processo `deno test` podem tê-la definido sem restaurar.
+    const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
     resetRateLimitServiceClient();
     try {
       const res = await handleSendEmailRequest(makeRequest({ email: "x@empresa.com" }, false));
@@ -149,6 +153,9 @@ Deno.test("R2-API-022: sem bearer devolve 401 e não toca a rede", async () => {
       assert(stub.seen.length === 0, `não deveria tocar a rede: ${stub.seen.join(",")}`);
     } finally {
       stub.restore();
+      resetRateLimitServiceClient();
+      if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+      else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
     }
   });
 });
