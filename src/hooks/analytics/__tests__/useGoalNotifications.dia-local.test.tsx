@@ -18,7 +18,7 @@ process.env.TZ = 'Europe/Berlin';
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { startOfDay } from 'date-fns';
+import { appDayStart } from '@/lib/localDay';
 
 vi.mock('@/lib/localDay', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/lib/localDay')>();
@@ -123,10 +123,8 @@ const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /** 30/09/2026 22:30 no relógio do usuário (Berlin, UTC+2 em outubro). */
 const AGORA = new Date(2026, 8, 30, 22, 30, 0);
-/** O dia do usuário nesse instante... */
+/** O dia do usuário (Berlin) nesse instante é o mesmo dia do app (SP) — 30/09. */
 const DIA_LOCAL = '2026-09-30';
-/** ...e o dia UTC do MESMO instante (o que a chave fatiava antes da correção). */
-const DIA_UTC_DO_MESMO_INSTANTE = '2026-09-29';
 
 const metaDiaria = {
   id: 'meta-1',
@@ -165,26 +163,27 @@ describe('useGoalNotifications — chave de conquista pelo dia local', () => {
     expect(espiao).toHaveBeenCalled();
     const inicio = espiao.mock.calls[0][0] as Date;
 
-    // O util recebeu o início do período (00:00 local de hoje)...
-    expect(inicio.getTime()).toBe(startOfDay(AGORA).getTime());
-    // ...cujo dia UTC é o ANTERIOR (era a chave antiga)...
-    expect(inicio.toISOString().split('T')[0]).toBe(DIA_UTC_DO_MESMO_INSTANTE);
-    // ...e cujo dia local é o dia do usuário (a chave correta).
+    // O util recebeu o início do período no fuso do APP (00:00 em São Paulo = 05:00 em Berlin)
+    // — o mesmo recorte dos painéis; antes era o relógio do aparelho (`startOfDay`).
+    expect(inicio.getTime()).toBe(appDayStart(0, AGORA).getTime());
+    // A chave é o dia local do INÍCIO do período (R3-07): em Berlin, 05:00 do dia 30 ainda é o
+    // dia 30, então o dia do app e o dia do usuário coincidem aqui.
     expect(espiao.mock.results[0].value).toBe(DIA_LOCAL);
   });
 
-  it('a conquista é anunciada uma vez por dia local e volta no dia seguinte', async () => {
+  it('a conquista é anunciada uma vez por dia do app e volta no dia seguinte', async () => {
     const { result } = renderHook(() => useGoalNotifications());
     await waitFor(() => expect(notificacoesEnviadas).toHaveLength(1));
 
-    // Mesma conquista, mesmo dia local: não repete.
+    // Mesma conquista, mesmo dia do app: não repete.
     await act(async () => {
       await result.current.checkGoalProgress();
     });
     expect(notificacoesEnviadas).toHaveLength(1);
 
-    // Vira o dia LOCAL: nova conquista do período diário é anunciada.
-    vi.setSystemTime(new Date(2026, 9, 1, 0, 30, 0));
+    // Vira o dia do APP (01/10 00:30 em São Paulo = 01/10 05:30 em Berlin): nova conquista do
+    // período diário é anunciada. O recorte do dia é o do app, o mesmo dos painéis.
+    vi.setSystemTime(new Date('2026-10-01T03:30:00.000Z'));
     await act(async () => {
       await result.current.checkGoalProgress();
     });

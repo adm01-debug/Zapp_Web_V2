@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { appDayStart, appDayKey, appDayKeyLabel, appShiftDayKey, appWeekStart, appMonthStart } from '@/lib/localDay';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 
@@ -24,21 +24,17 @@ export interface CSATStats {
 export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
   const queryClient = useQueryClient();
 
+  // Recorte no fuso do APP (America/Sao_Paulo) e com a semana começando na SEGUNDA — o mesmo
+  // recorte dos outros painéis. Antes era o relógio do aparelho e uma janela rolante de 7/30 dias.
   const getDateFilter = () => {
     const now = new Date();
     switch (period) {
       case 'today':
-        return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      case 'week': {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return weekAgo.toISOString();
-      }
-      case 'month': {
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        return monthAgo.toISOString();
-      }
+        return appDayStart(0, now).toISOString();
+      case 'week':
+        return appWeekStart(now).toISOString();
+      case 'month':
+        return appMonthStart(now).toISOString();
     }
   };
 
@@ -225,20 +221,28 @@ function csatPercentFromRatings(ratings: number[]): number {
  * values. Periods with zero surveys surface as `null`/empty arrays so the UI
  * can render an honest empty state instead of fabricated numbers.
  */
+/**
+ * Início (00:00 no fuso do app) da janela corrente de `periodDays` dias de calendário e da janela
+ * anterior do mesmo tamanho — as duas ancoradas no dia do APP (America/Sao_Paulo), para headline,
+ * distribuição e timeline cobrirem exatamente o mesmo intervalo.
+ */
+export function csatPeriodStarts(periodDays: number, now: Date = new Date()): { currentStart: Date; previousStart: Date } {
+  return {
+    currentStart: appDayStart(periodDays - 1, now),
+    previousStart: appDayStart(periodDays * 2 - 1, now),
+  };
+}
+
 export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
   return useQuery({
     queryKey: ['csat-breakdown', periodDays],
     queryFn: async (): Promise<SatisfactionBreakdown> => {
-      // Janela = os ultimos `periodDays` dias de calendario local, incluindo hoje.
-      // Ancorar no inicio do dia local mantem headline, distribuicao e timeline
-      // cobrindo exatamente o mesmo intervalo -- antes o dia mais antigo entrava
-      // nas metricas mas nao aparecia na Evolucao.
+      // Janela = os ultimos `periodDays` dias de calendario no fuso do APP, incluindo hoje.
+      // Ancorar no inicio do dia do app mantem headline, distribuicao e timeline cobrindo
+      // exatamente o mesmo intervalo -- antes o dia mais antigo entrava nas metricas mas nao
+      // aparecia na Evolucao, e a ancora era o relogio do aparelho (nao batia com os outros paineis).
       const now = new Date();
-      const currentStart = new Date(now);
-      currentStart.setDate(currentStart.getDate() - (periodDays - 1));
-      currentStart.setHours(0, 0, 0, 0);
-      const previousStart = new Date(currentStart);
-      previousStart.setDate(previousStart.getDate() - periodDays);
+      const { currentStart, previousStart } = csatPeriodStarts(periodDays, now);
 
       const [surveys, { data: queues, error: queuesError }] = await Promise.all([
         fetchSurveysSince(previousStart),
@@ -291,7 +295,7 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
           queueMap.set(queueId, entry);
         }
 
-        const day = format(new Date(r.created_at), 'yyyy-MM-dd');
+        const day = appDayKey(r.created_at);
         const dayRatings = dayMap.get(day) || [];
         dayRatings.push(r.rating);
         dayMap.set(day, dayRatings);
@@ -317,12 +321,10 @@ export function useSatisfactionBreakdown(periodDays: 7 | 30 | 90 = 30) {
 
       const timeline: CSATTimelinePoint[] = [];
       for (let i = periodDays - 1; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        const key = format(d, 'yyyy-MM-dd');
+        const key = appShiftDayKey(appDayKey(now), -i);
         const dayRatings = dayMap.get(key) || [];
         timeline.push({
-          date: format(d, 'dd/MM'),
+          date: appDayKeyLabel(key),
           csatPercent: dayRatings.length > 0 ? csatPercentFromRatings(dayRatings) : null,
           responses: dayRatings.length,
         });

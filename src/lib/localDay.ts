@@ -5,6 +5,11 @@
  * e nas Notas do contato.
  *
  * Este módulo só LÊ e agrupa: nada aqui altera o que está gravado nas tabelas.
+ *
+ * Exceção (15/10/2026): o recorte dos PAINÉIS (Metas, SLA, tempo real, CSAT) não pode depender de
+ * quem está olhando — usa `APP_TIMEZONE` (America/Sao_Paulo) e a semana começando na SEGUNDA
+ * (`appDayStart`/`appWeekStart`/`appMonthStart`). O mesmo usuário tem de ver o mesmo número em
+ * todos os painéis.
  */
 
 /**
@@ -220,16 +225,19 @@ export function appDayEndOfLocalDate(date: Date): Date {
 }
 
 /**
- * Domingo 00:00 da semana corrente no fuso do app — mesmo começo de semana que o `startOfWeek`
- * do date-fns com o locale ptBR (`weekStartsOn: 0`), só que ancorado no fuso do app.
+ * Segunda-feira 00:00 da semana corrente no fuso do app. A semana do produto começa na SEGUNDA
+ * (15/10/2026: um só recorte para todos os painéis) — o domingo fecha a semana que começou na
+ * segunda anterior, e depois da meia-noite de segunda a semana vira. Ancorado no fuso do app,
+ * nunca no relógio do aparelho.
  */
 export function appWeekStart(now: Date = new Date()): Date {
   const key = appDayKey(now);
-  const diaDaSemana = new Date(`${key}T00:00:00.000Z`).getUTCDay();
-  return appDayStartOfKey(appShiftDayKey(key, -diaDaSemana));
+  const diaDaSemana = new Date(`${key}T00:00:00.000Z`).getUTCDay(); // 0 = domingo
+  const desdeSegunda = (diaDaSemana + 6) % 7;
+  return appDayStartOfKey(appShiftDayKey(key, -desdeSegunda));
 }
 
-/** Sábado 23:59:59.999 da semana corrente no fuso do app. */
+/** Domingo 23:59:59.999 — fecha a semana corrente, que começa na segunda. */
 export function appWeekEnd(now: Date = new Date()): Date {
   const key = appShiftDayKey(appDayKey(appWeekStart(now)), 6);
   return appDayEndOfKey(key);

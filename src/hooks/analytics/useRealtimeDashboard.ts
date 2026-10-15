@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { appDayStart } from '@/lib/localDay';
 
 const log = getLogger('RealtimeDashboard');
 
@@ -96,8 +97,9 @@ export function useRealtimeDashboard(filters: RealtimeDashboardScope = {}) {
     const now = new Date();
     const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
+    // "Contatos de hoje" é o dia de calendário no fuso do APP (America/Sao_Paulo), como o resto
+    // dos painéis — `setHours(0,0,0,0)` cortava pelo relógio do aparelho.
+    const todayStart = appDayStart(0, now);
 
     // Watermark: os deltas que chegarem depois DESTE instante somam ao snapshot em vez de
     // serem sobrescritos por ele (leitura em voo não pode apagar o que o realtime já mostrou).

@@ -71,9 +71,9 @@ describe('recortes por dia de calendário no fuso do app', () => {
     expect(appDayEndOfLocalDate(escolhidoNoSeletor).toISOString()).toBe('2026-10-01T02:59:59.999Z');
   });
 
-  it('appWeekStart/appWeekEnd vão de domingo a sábado, como o ptBR do date-fns', () => {
-    expect(appWeekStart(AS_2230_SP).toISOString()).toBe('2026-09-27T03:00:00.000Z');
-    expect(appWeekEnd(AS_2230_SP).toISOString()).toBe('2026-10-04T02:59:59.999Z');
+  it('appWeekStart/appWeekEnd vão de segunda a domingo (semana do produto)', () => {
+    expect(appWeekStart(AS_2230_SP).toISOString()).toBe('2026-09-28T03:00:00.000Z');
+    expect(appWeekEnd(AS_2230_SP).toISOString()).toBe('2026-10-05T02:59:59.999Z');
   });
 
   it('appMonthStart/appMonthEnd cobrem o mês corrente em SP', () => {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
+import { appDayStart, appWeekStart, appMonthStart } from '@/lib/localDay';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import {
   firstResponseRatePctOrZero,
@@ -52,15 +52,16 @@ interface SLAMetricsRow extends FirstResponseFields {
 const SLA_PAGE_SIZE = 1000;
 
 /**
- * Início do recorte de cada período do seletor ("Hoje", "Esta Semana", "Este Mês", "Todos").
- * `null` = sem limite inferior — é o que o rótulo "Todos" promete (R2-SLA-002); antes o recorte
- * parava em 365 dias e os registros mais antigos sumiam do total anunciado.
+ * Início do recorte de cada período do seletor ("Hoje", "Esta Semana", "Este Mês", "Todos"), no
+ * fuso do APP (America/Sao_Paulo) e com a semana começando na SEGUNDA — o mesmo recorte do painel
+ * de Metas. `null` = sem limite inferior — é o que o rótulo "Todos" promete (R2-SLA-002); antes o
+ * recorte parava em 365 dias e os registros mais antigos sumiam do total anunciado.
  */
 export function getPeriodStart(period: PeriodFilter, now: Date = new Date()): Date | null {
   switch (period) {
-    case 'today': return startOfDay(now);
-    case 'week': return startOfWeek(now, { weekStartsOn: 1 });
-    case 'month': return startOfMonth(now);
+    case 'today': return appDayStart(0, now);
+    case 'week': return appWeekStart(now);
+    case 'month': return appMonthStart(now);
     case 'all': return null;
   }
 }

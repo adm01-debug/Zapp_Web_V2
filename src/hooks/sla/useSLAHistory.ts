@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, subDays, format, eachDayOfInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { appDayStart, appDayKey, appDayKeyLabel, appShiftDayKey } from '@/lib/localDay';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import {
   firstResponseRatePctOrZero,
@@ -73,7 +72,7 @@ interface SLAHistoryRow {
  * (R2-SLA-002 — "a janela histórica contém um dia extra").
  */
 export function historyWindowStart(period: HistoryPeriod, now: Date = new Date()): Date {
-  return startOfDay(subDays(now, PERIOD_DAYS[period] - 1));
+  return appDayStart(PERIOD_DAYS[period] - 1, now);
 }
 
 function calcTrend(
@@ -116,14 +115,17 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
     throw read.error ?? new Error('Leitura de conversation_sla excedeu o teto de paginação');
   }
 
-  const allDays = eachDayOfInterval({ start: startDate, end: new Date() });
+  // Dias civis da janela no fuso do APP: a chave e o rótulo saem do dia de calendário do app
+  // (`appDayKey`/`appDayKeyLabel`), não do `format` do date-fns sobre o relógio do aparelho — era
+  // o que fazia o eixo/contagem discordar do recorte lido. O rótulo (`dd/MM`) é o mesmo formato
+  // usado no resto do app.
   const dailyMap = new Map<string, DailyViolation>();
-
-  allDays.forEach(day => {
-    const dateKey = format(day, 'yyyy-MM-dd');
-    dailyMap.set(dateKey, {
-      date: dateKey,
-      dateLabel: format(day, 'dd MMM', { locale: ptBR }),
+  const primeiroDia = appDayKey(startDate);
+  const ultimoDia = appDayKey(new Date());
+  for (let key = primeiroDia; key <= ultimoDia; key = appShiftDayKey(key, 1)) {
+    dailyMap.set(key, {
+      date: key,
+      dateLabel: appDayKeyLabel(key),
       firstResponseBreaches: 0,
       totalBreaches: 0,
       totalConversations: 0,
@@ -131,13 +133,13 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
       pendingConversations: 0,
       slaRate: 0,
     });
-  });
+  }
 
   // Uma conta só (a de `slaFirstResponse`), a MESMA que o painel usa: cada linha do dia entra na
   // amostra pelo desfecho da 1ª resposta — respondida no prazo, violada ou pendente (R2-SLA-001).
   const rowsByDay = new Map<string, SLAHistoryRow[]>();
   for (const record of read.rows) {
-    const dateKey = format(new Date(record.created_at), 'yyyy-MM-dd');
+    const dateKey = appDayKey(record.created_at);
     if (!dailyMap.has(dateKey)) continue;
     const rows = rowsByDay.get(dateKey);
     if (rows) rows.push(record);
