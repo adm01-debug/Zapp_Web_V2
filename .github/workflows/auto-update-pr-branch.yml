@@ -115,12 +115,25 @@ jobs:
               exit 0
             fi
             if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null 2>"$RUNNER_TEMP/update-branch.err"; then
-              if grep -Eq 'HTTP (403|422)' "$RUNNER_TEMP/update-branch.err"; then
-                echo "::warning::PR #$candidato: update-branch recusado (403/422); tentando a proxima da fila"
-                continue
+              if ! grep -Eq 'HTTP (403|422)' "$RUNNER_TEMP/update-branch.err"; then
+                echo "::warning::PR #$candidato: falha ambigua no update-branch (sem 403/422); encerrando para nao atualizar duas PRs. A proxima execucao reavalia."
+                exit 0
               fi
-              echo "::warning::PR #$candidato: falha ambigua no update-branch (sem 403/422); encerrando para nao atualizar duas PRs. A proxima execucao reavalia."
-              exit 0
+              # 422 tambem e "nada a atualizar": alguem atualizou a PR depois da leitura
+              # da fila, e ela ja e a PR em voo. So avanca se ela continua ATRAS da main.
+              if grep -q 'HTTP 422' "$RUNNER_TEMP/update-branch.err"; then
+                if ! sha_agora=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha') \
+                  || ! atras=$(gh api "repos/$REPO/compare/main...$sha_agora" --jq '.behind_by'); then
+                  echo "::warning::PR #$candidato: 422 sem confirmacao do estado (falha ao reler); encerrando. A proxima execucao reavalia."
+                  exit 0
+                fi
+                if [ "$atras" = "0" ]; then
+                  echo "PR #$candidato: 422 porque ja esta em dia com a main (atualizada por fora); ela e a PR em voo."
+                  exit 0
+                fi
+              fi
+              echo "::warning::PR #$candidato: update-branch recusado (403/422) e a PR segue atras da main; tentando a proxima da fila"
+              continue
             fi
             PR="$candidato"
             break

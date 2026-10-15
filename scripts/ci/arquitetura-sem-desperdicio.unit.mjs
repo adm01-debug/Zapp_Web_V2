@@ -76,8 +76,15 @@ test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   assert.ok(laco.length > 0, 'o workflow itera sobre a fila ordenada');
   // Só a recusa permanente comprovada (403/422) avança; falha ambígua (update pode ter
   // sido aceito com 202) encerra, senão duas PRs entram em voo na mesma execução.
-  assert.match(laco, /grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*echo[^\n]*\n\s*continue/, 'só 403/422 pula para a próxima');
+  assert.match(laco, /if ! grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*falha ambigua[^\n]*\n\s*exit 0/, 'sem 403/422, a falha é ambígua e encerra');
   assert.match(laco, /falha ambigua[^\n]*\n\s*exit 0/, 'falha ambígua encerra a execução');
+  // 422 também é "nada a atualizar" (PR atualizada por fora depois da leitura da fila):
+  // antes de avançar, relê a PR; se já está em dia com a main, ela é a PR em voo (Codex, PR #1950).
+  const ramo422 = laco.slice(laco.indexOf("grep -q 'HTTP 422'"), laco.indexOf('continue'));
+  assert.ok(ramo422.length > 0, 'o 422 é reconciliado antes do continue');
+  assert.match(ramo422, /compare\/main\.\.\.\$sha_agora"? --jq '\.behind_by'/, 'o 422 relê o quanto a PR está atrás da main');
+  assert.match(ramo422, /"\$atras" = "0" \][^\n]*\n[^\n]*\n\s*exit 0/, 'PR já em dia após 422 = em voo, encerra');
+  assert.match(ramo422, /falha ao reler[^\n]*\n\s*exit 0/, '422 sem confirmação do estado encerra');
   // O 403/422 é o ÚNICO caminho que pula um candidato: falha ao ler o head (rede, 5xx)
   // não prova nada sobre a PR, e pular a cabeça da fila deixaria uma posterior entrar
   // antes dela, quebrando a ordem por enabledAt (Codex, PR #1950).
