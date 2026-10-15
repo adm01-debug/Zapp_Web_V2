@@ -9,6 +9,10 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
 import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import {
+  decodeTalkxRecipientToken,
+  isTalkxRecipientUuid,
+} from "../_shared/talkx-tracking-token.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -84,7 +88,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   // ── GET: clique + redirect ──────────────────────────────────────────────────
   if (method === "GET") {
     const slug      = url.searchParams.get("s");
-    const recipient = url.searchParams.get("r") ?? undefined;
+    const recipientParam = url.searchParams.get("r") ?? undefined;
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
@@ -97,13 +101,30 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     if (!convertSecret) {
       return new Response("Service unavailable", { status: 503 });
     }
-    const token = url.searchParams.get("t");
-    if (!token || !recipient) {
+    if (!recipientParam) {
       return new Response("Unauthorized", { status: 401 });
     }
-    const valid = await verifyHmacSignature(recipient, token, convertSecret);
-    if (!valid) {
-      return new Response("Unauthorized", { status: 401 });
+    // PORTÃO DO CLIQUE — três formas de `r`, nesta ordem, nenhuma escreve nada antes de provar:
+    //  1) UUID: link LEGADO, já enviado antes do token opaco (t_51bf1772) — atribui direto.
+    //  2) token opaco (24 bytes em base64url = 32 chars): a própria resolução é a prova, porque o
+    //     token é cifra + MAC do recipient_id conferida em tempo constante. Resolve → atribui;
+    //     não resolve (forjado, outra campanha) → clique ANÔNIMO, o redirect nunca quebra.
+    //  3) qualquer outro valor: exige o HMAC `t` (portão de clique da branch do dia), senão 401.
+    let recipient: string | null = null;
+    if (isTalkxRecipientUuid(recipientParam)) {
+      recipient = recipientParam;
+    } else if (/^[A-Za-z0-9_-]{32}$/.test(recipientParam)) {
+      recipient = await resolveTalkxLinkToken({ slug, token: recipientParam, supabase, env });
+    } else {
+      const token = url.searchParams.get("t");
+      if (!token) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      const valid = await verifyHmacSignature(recipientParam, token, convertSecret);
+      if (!valid) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      recipient = recipientParam;
     }
 
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
@@ -121,7 +142,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     const { data, error } = await supabase.rpc("record_talkx_link_click", {
       p_slug:      slug,
-      p_recipient: recipient ?? null,
+      p_recipient: recipient,
       p_ua:        ua ?? null,
       p_ip_hash:   ipHash ?? null,
     });
@@ -292,6 +313,43 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   }
 
   return new Response("Method not allowed", { status: 405 });
+}
+
+/**
+ * Resolve o token opaco de rastreamento (?r=<token>) para o recipient_id
+ * em O(1): decodifica local (MAC em tempo constante, 1 import de chave),
+ * depois 2 point lookups indexados (link por slug, recipient por id com
+ * checagem de campanha). Sem varredura, sem paginacao: o custo por clique
+ * nao depende do tamanho da campanha. Token forjado, de outra campanha ou
+ * sem TALKX_CONVERT_SECRET resulta em null (clique anonimo, nunca
+ * atribuicao indevida). `r=` aleatorio falha no decode antes de qualquer
+ * SELECT (sem amplificacao de custo por clique invalido).
+ */
+async function resolveTalkxLinkToken(params: {
+  slug: string;
+  token: string;
+  supabase: SupabaseClient;
+  env: TalkxLinkDeps["env"];
+}): Promise<string | null> {
+  const secret = params.env.get("TALKX_CONVERT_SECRET");
+  if (!secret) return null;
+  const recipientId = await decodeTalkxRecipientToken(params.token, secret);
+  if (!recipientId) return null;
+  const { data: link } = await params.supabase
+    .from("talkx_links")
+    .select("id,campaign_id")
+    .eq("slug", params.slug)
+    .maybeSingle();
+  const campaignId = (link as { campaign_id?: unknown } | null)?.campaign_id;
+  if (typeof campaignId !== "string" || campaignId.length === 0) return null;
+  const { data: recipient } = await params.supabase
+    .from("talkx_recipients")
+    .select("id,campaign_id")
+    .eq("id", recipientId)
+    .maybeSingle();
+  const row = recipient as { id?: unknown; campaign_id?: unknown } | null;
+  if (!row || row.id !== recipientId || row.campaign_id !== campaignId) return null;
+  return recipientId;
 }
 
 async function hashIp(ip: string, salt: string): Promise<string> {
