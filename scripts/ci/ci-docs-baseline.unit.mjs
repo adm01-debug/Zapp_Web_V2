@@ -7,12 +7,14 @@ import { dirname, join } from 'node:path';
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CLAUDE = join(RAIZ, 'CLAUDE.md');
 const PLANO = join(RAIZ, 'docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md');
+const PLANO_W = join(RAIZ, 'docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md');
 const BASELINE = join(RAIZ, 'scripts/ci/github-settings-baseline.json');
 const P006 = join(RAIZ, 'docs/reconciliation/tasks/P006.json');
 const README_CI = join(RAIZ, 'docs/ci/README.md');
 const DIR_WF = join(RAIZ, '.github', 'workflows');
 const DB_MIGRATE = join(DIR_WF, 'db-migrate.yml');
 const BUN_LOCK = join(RAIZ, 'bun.lock');
+const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
 
 const ETAPAS_TRA009 = ['E01', 'E11', 'E55', 'E56', 'E62', 'E76', 'E93', 'E95', 'E96'];
 
@@ -459,4 +461,40 @@ test('W32: fixture — secao sem termo obrigatorio e rejeitada', () => {
   // fixture completa passa
   const completa = TERMOS_LOTE.join('\n');
   assert.ok(TERMOS_LOTE.every((t) => completa.includes(t)));
+});
+
+// W95 — CONTRIBUTING.md reescrito
+const TERMOS_CONTRIBUTING = [
+  'bun install',
+  'dia/AAAA-MM-DD',
+  'Lint & TypeCheck',
+  'Unit Tests',
+  'Security Audit',
+  'Contrato DB offline',
+  'Playwright',
+  'CLAUDE.md',
+  'Zapp_Web_V2',
+];
+
+test('W95: CONTRIBUTING.md tem os termos obrigatorios (bun, fluxo lote, 6 required checks)', async () => {
+  const conteudo = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!conteudo.includes('npm install') || conteudo.includes('bun install'), 'deve usar bun, nao npm');
+  assert.ok(!/\bdevelop\b/.test(conteudo), 'nao deve mencionar branch develop');
+  for (const termo of TERMOS_CONTRIBUTING) {
+    assert.ok(conteudo.includes(termo), `termo obrigatorio ausente: ${termo}`);
+  }
+});
+
+// W100 — plano vigente (2026-10-14) coberto pelo baseline
+test('W100: plano vigente 2026-10-14 existe e referencia 18 YAML e o plano anterior', async () => {
+  const plano = await readFile(PLANO_W, 'utf8');
+  assert.match(plano, /\*\*18\*\*\s+arquivos/, 'plano deve mencionar 18 arquivos de workflows');
+  assert.ok(plano.includes('PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md'), 'plano deve referenciar o plano anterior');
+  assert.match(plano, /W0?1\b/, 'plano deve ter etapas W');
+  assert.match(plano, /W100\b/, 'plano deve ter etapa W100');
+});
+
+test('W100: CLAUDE.md aponta para o plano vigente 2026-10-14', async () => {
+  const claude = await readFile(CLAUDE, 'utf8');
+  assert.match(claude, /Plano vigente.*PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14/);
 });

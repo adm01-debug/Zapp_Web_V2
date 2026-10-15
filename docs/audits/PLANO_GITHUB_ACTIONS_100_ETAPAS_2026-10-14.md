@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-14 (18:50 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `3ddb52f`
 (`3ddb52fd04256361041973107935bb37d4b1a386`)
-**Escopo:** os **16** arquivos de `.github/workflows/` (5.923 linhas, lidos integralmente), os 3 workflows
+**Escopo:** os **18** arquivos de `.github/workflows/` (7.304 linhas, lidos integralmente), os 3 workflows
 dinâmicos (Dependabot Updates, Dependency Graph, Copilot reviewer), `dependabot.yml`, `toolchain.json`,
 `CODEOWNERS`, templates, os scripts que os workflows chamam (`scripts/ci/`, `scripts/db-audit/`,
 `scripts/edge-deploy/`, `scripts/talkx/`), `playwright.config.ts`, `vitest.config.ts`, `vercel.json`,
