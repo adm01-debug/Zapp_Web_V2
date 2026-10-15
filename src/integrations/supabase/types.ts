@@ -10888,6 +10888,10 @@ export type Database = {
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       delete_contact: { Args: { p_id: string }; Returns: string }
       delete_contacts: { Args: { p_ids: string[] }; Returns: number }
+      delete_queue: {
+        Args: { p_destino?: string | null; p_queue_id: string }
+        Returns: number
+      }
       delete_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: string
