@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 import { convertAudioToMp3 } from '@/utils/audioToMp3';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { requireUserStoragePath } from '@/lib/storage_object_upload';
 
 const log = getLogger('useAudioMemes');
 
@@ -154,6 +155,13 @@ export function useAudioMemes(open: boolean) {
     const epoch = ++uploadEpochRef.current;
     setUploading(true);
     try {
+      // PK-16: o bucket `audio-memes` tem policy por pasta (`(storage.foldername(name))[1] =
+      // auth.uid()`), então sem sessão não existe pasta do usuário para gravar.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        toast.error('Sessão expirada: entre novamente para enviar o áudio');
+        return;
+      }
       // Padroniza em MP3 (audio/mpeg) — reprodução universal iOS/Android/desktop.
       // Fallback: se o browser não decodificar o formato, usa o arquivo original.
       const converted = await convertAudioToMp3(file, file.name);
@@ -164,7 +172,7 @@ export function useAudioMemes(open: boolean) {
       const payload: File | Blob = converted.ok ? converted.blob : file;
       const contentType = converted.ok ? 'audio/mpeg' : (file.type || 'audio/mpeg');
       const ext = converted.ok ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
-      const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      const storagePath = requireUserStoragePath(user.id, `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`);
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')

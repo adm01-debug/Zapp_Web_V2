@@ -8,6 +8,7 @@ import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2, AlertCircle } from '
 import { toast } from 'sonner';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { requireUserStoragePath } from '@/lib/storage_object_upload';
 import { zappTransition } from '@/lib/motion';
 
 /** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
@@ -248,17 +249,29 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     try {
       const response = await fetch(transformedUrl);
       const blob = await response.blob();
-      const path = `voice-changer/${Date.now()}_${crypto.randomUUID()}.mp3`;
+      // PK-16/PK-17: a voz transformada é dado pessoal do atendente — vai para o bucket
+      // PRIVADO `voice-changer-tmp` (expurgo por TTL de 24h), na pasta do usuário. Sem
+      // sessão não há `<auth.uid()>/` e o Storage recusaria a chave.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) throw new Error('Sessão expirada');
+      const path = requireUserStoragePath(user.id, `voice_${Date.now()}_${crypto.randomUUID()}.mp3`);
       const { error: uploadError } = await supabase.storage
-        .from('audio-memes')
+        .from('voice-changer-tmp')
         .upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '31536000' });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(path);
+      // Bucket privado: `/object/public/` devolve 400 e o kernel do envio só assina
+      // `whatsapp-media`/`audio-messages`, então a URL vai assinada daqui (1h), que é o
+      // tempo de o Google baixar o áudio logo depois do envio.
+      const { data: urlData, error: signError } = await supabase.storage
+        .from('voice-changer-tmp')
+        .createSignedUrl(path, 3600);
+      if (signError) throw signError;
+      if (!urlData?.signedUrl) throw new Error('Não foi possível assinar a URL da voz');
       // O envio da mensagem pode ser síncrono ou assíncrono e pode falhar. Só
       // fecha o popover e limpa a prévia DEPOIS da confirmação de sucesso —
       // assim uma falha preserva `transformedUrl` para o usuário tentar de novo.
-      await onSendAudio(urlData.publicUrl);
+      await onSendAudio(urlData.signedUrl);
       setOpen(false);
       cleanup();
       toast.success('Áudio enviado! 🎤');

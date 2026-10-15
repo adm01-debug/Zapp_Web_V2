@@ -9,7 +9,7 @@ import { Loader2, Play, Music, Volume2, RefreshCw, Check, Wand2, Sparkles } from
 import { toast } from 'sonner';
 
 import { getLogger } from '@/lib/logger';
-import { removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
+import { removeStoredObjectBestEffort, requireUserStoragePath } from '@/lib/storage_object_upload';
 const log = getLogger('AIGenerateDialog');
 
 export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
@@ -47,11 +47,14 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
     setGenerating(true);
     try {
       const resp = await fetch(genPreviewUrl); const blob = await resp.blob();
-      const storagePath = `ai_gen_${Date.now()}_${crypto.randomUUID()}.mp3`;
+      // PK-16: o objeto precisa nascer em `<auth.uid()>/` — a policy de `audio-memes`
+      // reprova o caminho solto para o atendente comum.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) throw new Error('Sessão expirada: entre novamente para salvar o áudio');
+      const storagePath = requireUserStoragePath(user.id, `ai_gen_${Date.now()}_${crypto.randomUUID()}.mp3`);
       const { error: uploadError } = await supabase.storage.from('audio-memes').upload(storagePath, blob, { contentType: 'audio/mpeg', cacheControl: '31536000' });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(storagePath);
-      const { data: { user } } = await supabase.auth.getUser();
       let aiCategory = 'outros';
       try { const { data: classifyData } = await supabase.functions.invoke('classify-audio-meme', { body: { audio_url: urlData.publicUrl, file_name: genPrompt } }); if (classifyData?.category) aiCategory = classifyData.category; } catch (err) { log.error('Unexpected error in AIGenerateDialog:', err); }
       const { error: insertError } = await supabase.from('audio_memes').insert({ name: genPrompt.substring(0, 80), audio_url: urlData.publicUrl, category: aiCategory, is_favorite: false, use_count: 0, uploaded_by: user?.id || null });

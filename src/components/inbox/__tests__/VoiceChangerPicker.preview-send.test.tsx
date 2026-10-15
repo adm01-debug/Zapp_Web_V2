@@ -14,9 +14,12 @@ const popoverState = vi.hoisted(() => ({
 }));
 
 const storageState = vi.hoisted(() => ({
+  from: vi.fn(),
   upload: vi.fn(),
-  getPublicUrl: vi.fn(),
+  createSignedUrl: vi.fn(),
 }));
+
+const authState = vi.hoisted(() => ({ getUser: vi.fn() }));
 
 const toastMock = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
 
@@ -65,11 +68,11 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
+    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }), getUser: authState.getUser },
     storage: {
-      from: vi.fn(() => ({
-        upload: storageState.upload,
-        getPublicUrl: storageState.getPublicUrl,
+      from: vi.fn((bucket: string) => ({
+        upload: (path: string, blob: unknown, opts: unknown) => storageState.upload(bucket, path, blob, opts),
+        createSignedUrl: (path: string, expiresIn: number) => storageState.createSignedUrl(bucket, path, expiresIn),
       })),
     },
   },
@@ -131,7 +134,8 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     popoverState.onOpenChange = undefined;
     popoverState.open = undefined;
     storageState.upload.mockReset().mockResolvedValue({ error: null });
-    storageState.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+    storageState.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
+    authState.getUser.mockReset().mockResolvedValue({ data: { user: { id: 'u1' } } });
     toastMock.error.mockReset();
     toastMock.success.mockReset();
     getUserMedia.mockReset();
@@ -274,5 +278,12 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     expect(popoverState.open).toBe(false);
     expect(screen.queryByText('Enviar')).not.toBeInTheDocument();
     expect(toastMock.error).not.toHaveBeenCalled();
+
+    // PK-17: a voz transformada vai para o bucket privado, na pasta do usuário, e o
+    // que segue para o envio é a URL assinada desse objeto (1h).
+    const [bucket, path] = storageState.upload.mock.calls[0] as [string, string];
+    expect(bucket).toBe('voice-changer-tmp');
+    expect(path).toMatch(/^u1\/voice_\d+_[0-9a-f-]+\.mp3$/);
+    expect(storageState.createSignedUrl).toHaveBeenCalledWith('voice-changer-tmp', path, 3600);
   });
 });
