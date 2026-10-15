@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**16 workflows.**
+**17 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +19,7 @@
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | push na main e dispatch sobre main | o fluxo logado (Playwright com login real) contra producao | artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro | issue de E2E e autor do push | — | — |
 | E2E Talk X | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
+| OpenSSF Scorecard | [`scorecard.yml`](../../.github/workflows/scorecard.yml) | agendado (segunda 07:17 UTC) e dispatch | OpenSSF Scorecard mede praticas de segurança do repositório | SARIF publicado em Code Scanning; score visível em Security | aba Security → Code scanning alerts | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
 | Supabase Sync & Validate | [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | dispatch (manual, com confirmacao de project-ref) | import de snapshot legado validado por identidade do destino | o import aborta antes de escrever | operador que disparou | — | — |
 | Talk X V4 placar regen (push) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
@@ -104,6 +105,13 @@
 - **Quando falha:** PR fica vermelho com o artefato do Playwright
 - **Quem é avisado:** autor do PR
 
+### OpenSSF Scorecard (`scorecard.yml`)
+
+- **Gatilho:** agendado (segunda 07:17 UTC) e dispatch
+- **O que prova:** OpenSSF Scorecard mede praticas de segurança do repositório
+- **Quando falha:** SARIF publicado em Code Scanning; score visível em Security
+- **Quem é avisado:** aba Security → Code scanning alerts
+
 ### Settings Guard (`settings-guard.yml`)
 
 - **Gatilho:** agendado e dispatch
@@ -146,6 +154,5 @@
 
 | Workflow | Situação | Por quê não é bug |
 |---|---|---|
-| [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org) |
 | [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | **desarmado por design** | o secret LEGACY_IMPORT_UNLOCK nao existe -- todo dispatch falha fechado antes de escrever qualquer coisa; reativar exige criar o secret + gerar novo export a partir do banco oficial |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |

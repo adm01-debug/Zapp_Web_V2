@@ -80,38 +80,11 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: '2.9.5'
-
-      - name: 🦕 Typecheck das Edge Functions (deno check)
-        run: >-
-          deno check --config scripts/ci/deno.json --frozen
-          supabase/functions/*/index.ts
-
-      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
-      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
-      - name: 🧪 Run executable Edge handler contracts
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
-          $(git ls-files 'supabase/functions/**/*.test.ts')
-
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
-
-      - name: 🐹 Setup Go for egress-proxy contracts
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.24.x'
-          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
-
-      - name: 🧪 Run pinned egress-proxy contracts
-        working-directory: infrastructure/preview-egress-proxy
-        run: go test ./...
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
@@ -213,13 +186,51 @@ jobs:
           node scripts/talkx/v4-status.mjs --check --ref origin/main
 
   # ===========================================
+  # JOB 1b: Edge contracts & Go (W37 — não required por 7 d; entra via E100)
+  # ===========================================
+  edge-go-contracts:
+    name: 🦕 Edge contracts & Go
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
+      # E49: glob substitui lista hardcoded de ~45 arquivos.
+      - name: 🧪 Run executable Edge handler contracts
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🐹 Setup Go for egress-proxy contracts
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
+
+      - name: 🧪 Run pinned egress-proxy contracts
+        working-directory: infrastructure/preview-egress-proxy
+        run: go test ./...
+
+  # ===========================================
   # JOB 2: Unit Tests
   # ===========================================
   test:
     name: 🧪 Unit Tests
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -278,7 +289,7 @@ jobs:
     name: 🏗️ Build
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: [lint-and-typecheck, test]
+    needs: test
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -342,7 +353,7 @@ jobs:
     name: 🔒 Security Audit
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -408,7 +419,7 @@ jobs:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -510,7 +521,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
