@@ -51,6 +51,19 @@ on:
         required: false
         default: ''
         type: string
+      apply_all_missing:
+        description: >-
+          Aplicar TODAS as migrations ausentes em ordem (sem filtrar alvo).
+          Requer confirm_bundle_sha256 no lugar de confirm_runtime_sha256.
+        required: false
+        default: false
+        type: boolean
+      confirm_bundle_sha256:
+        description: 'Para apply_all_missing=true: SHA-256 do bundle exibido pelo dry-run.'
+        required: false
+        default: ''
+        type: string
+
 
 
 defaults:
@@ -68,11 +81,10 @@ env:
   OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'
 
 jobs:
-  migrate:
+  preflight:
     name: Migration oficial com preflight
     # Aprovacao humana obrigatoria antes de qualquer DDL tocar producao. Soma-se
     # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
-    environment: producao-ddl
     runs-on: ubuntu-24.04
     # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
     # apply + as validacoes de ledger/runtime do file completo.
@@ -80,7 +92,11 @@ jobs:
     # W33: actions:write somente neste job para disparar types-sync apos apply.
     permissions:
       contents: read
-      actions: write
+    outputs:
+      needs_apply: ${{ steps.preflight.outputs.needs_apply }}
+      apply_bundle: ${{ steps.preflight.outputs.apply_bundle }}
+      target_name: ${{ steps.preflight.outputs.target_name }}
+      confirmation_hash: ${{ steps.runtime.outputs.confirmation_hash }}
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -128,8 +144,6 @@ jobs:
           DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
-          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
-          APPLY: ${{ inputs.apply }}
         run: |
           if [ -z "$DESTINO_URL_RAW" ]; then
             echo "::error::DESTINO_URL ausente."
@@ -141,10 +155,6 @@ jobs:
           fi
           if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
             echo "::error::migration_version precisa ter exatamente 14 digitos."
-            exit 1
-          fi
-          if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
-            echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
             exit 1
           fi
           node --input-type=module <<'NODE'
@@ -256,8 +266,6 @@ jobs:
       - name: Provar estado runtime antes do push
         id: runtime
         env:
-          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
-          APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
@@ -899,10 +907,12 @@ jobs:
             commitSha: process.env.GITHUB_SHA,
             arquivo: arquivoAlvo,
           }));
-          if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
-            console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
-            process.exit(1);
+          // W27: emite confirmation_hash para o job apply verificar
+          if (process.env.GITHUB_OUTPUT) {
+            const { appendFileSync } = await import('node:fs');
+            appendFileSync(process.env.GITHUB_OUTPUT, `confirmation_hash=${confirmacao}\n`);
           }
+          console.log(`W27 confirmation_hash: ${confirmacao}`);
           NODE
 
       - name: Dry-run oficial do Supabase CLI
@@ -919,17 +929,149 @@ jobs:
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION"
           fi
 
+
+  apply:
+    name: Aplicar migration aprovada
+    needs: preflight
+    if: inputs.apply == true && needs.preflight.result == 'success'
+    environment: producao-ddl
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # W33: actions:write para disparar types-sync apos apply.
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: ✋ Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
+      # E47 (auditoria de GitHub Actions, 2026-09-26) — considerado e
+      # descartado: um passo dentro do job para detectar outro run
+      # waiting/queued nunca executaria de fato aqui. A concurrency (group:
+      # db-migrate-production, cancel-in-progress: false) ja impede um 2o job
+      # do mesmo grupo de rodar qualquer step enquanto o 1o estiver
+      # waiting/in_progress — o 2o dispatch fica preso em "queued" pelo
+      # proprio GitHub Actions ANTES de chegar a qualquer step, inclusive um
+      # de deteccao. Os runs 36247549783 (waiting) e 36263608943
+      # (queued/pending) em 26/09 foram exatamente isso: a concorrencia
+      # funcionou como desenhada, so ninguem cancelou o 1o "Waiting" antigo
+      # antes de disparar de novo. Mitigacao real: checar a aba Actions antes
+      # de um novo dispatch; um "Waiting" que nao vai mais ser aprovado deve
+      # ser cancelado, nao empilhado.
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Provar identidade, TLS e validar confirmacoes
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          if [ "$CONFIRM_PROJECT_REF" != "$OFFICIAL_PROJECT_REF" ]; then
+            echo "::error::Project-ref de confirmacao incorreto."
+            exit 1
+          fi
+          if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
+            echo "::error::migration_version precisa ter exatamente 14 digitos."
+            exit 1
+          fi
+          if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+            echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          // R2-INF-003: o CLI do Supabase le SUPABASE_DB_URL, que nao entra na
+          // lista de PG* tratada pelo withPsqlEnvironment. O `env:` dos passos
+          // redeclarava DESTINO_URL a partir do secret bruto e sobrescrevia o
+          // DSN endurecido do GITHUB_ENV; agora o mesmo DSN endurecido (ja
+          // mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.
+          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
+          NODE
+
+      - name: Verificar hash de confirmacao do dry-run
+        env:
+          CONFIRMATION_HASH: ${{ needs.preflight.outputs.confirmation_hash }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          CONFIRM_BUNDLE_SHA256: ${{ inputs.confirm_bundle_sha256 }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+        run: |
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            if ! printf '%s' "$CONFIRM_BUNDLE_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+              echo "::error::apply_all_missing exige confirm_bundle_sha256 completo e lowercase."
+              exit 1
+            fi
+            if [ "$CONFIRMATION_HASH" != "$CONFIRM_BUNDLE_SHA256" ]; then
+              echo "::error::confirm_bundle_sha256 nao corresponde ao hash emitido pelo dry-run."
+              exit 1
+            fi
+          else
+            if ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+              echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
+              exit 1
+            fi
+            if [ "$CONFIRMATION_HASH" != "$CONFIRM_RUNTIME_SHA256" ]; then
+              echo "::error::confirm_runtime_sha256 nao corresponde ao hash do dry-run; migration cancelada."
+              exit 1
+            fi
+          fi
+          echo "OK: hash de confirmacao verificado."
+
       - name: Aplicar alvo unico ou bundle ordenado autorizado
-        if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
+        if: inputs.apply == true && needs.preflight.outputs.needs_apply == 'true'
         run: >-
           supabase db push --db-url "$SUPABASE_DB_URL" --include-all
           --skip-vault --yes
 
       - name: Validar registro no ledger
-        if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
-          TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
+          TARGET_NAME: ${{ needs.preflight.outputs.target_name }}
         run: |
           LEDGER_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -v target_version="$TARGET_VERSION" -v target_name="$TARGET_NAME" -At <<'SQL'
@@ -952,9 +1094,7 @@ jobs:
           node scripts/db-audit/verify-ledger-statements.mjs "$LANCAMENTO"
 
       - name: Validar ledger completo do bundle de entrega atomica
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909270000'
+        if: inputs.migration_version == '20260909270000'
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
@@ -966,9 +1106,7 @@ jobs:
           echo "OK: ledger possui todas as tres migrations do contrato atomico."
 
       - name: Validar ledger completo do pacote do lote de 05/10
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20261004195051'
+        if: inputs.migration_version == '20261004195051'
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
@@ -989,9 +1127,7 @@ jobs:
           echo "OK: ledger possui as 8 migrations do lote de 05/10."
 
       - name: Validar ledger completo do bundle de recuperacao Talk X
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
+        if: (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
         run: |
           BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT count(*)
@@ -1008,9 +1144,7 @@ jobs:
           echo "OK: ledger possui as 11 migrations ordenadas da recuperacao Talk X."
 
       - name: Validar runtime atomico de chamadas e sentimento
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260922220000'
+        if: inputs.migration_version == '20260922220000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/notification-delivery-atomicity-runtime.sql)
@@ -1041,9 +1175,7 @@ jobs:
           NODE
 
       - name: Validar runtime completo do bundle Talk X
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
+        if: (inputs.migration_version == '20260912130000' || inputs.migration_version == '20260912140000')
         run: |
           RUNTIME=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-recovery-runtime.sql)
@@ -1079,9 +1211,7 @@ jobs:
           NODE
 
       - name: Validar policy restritiva da blacklist Talk X
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260910100000'
+        if: inputs.migration_version == '20260910100000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-blacklist-policy-runtime.sql)
@@ -1102,9 +1232,7 @@ jobs:
           NODE
 
       - name: Validar comportamento de get_team_profiles
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260830170000'
+        if: inputs.migration_version == '20260830170000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "
             SELECT json_build_object(
@@ -1125,17 +1253,13 @@ jobs:
           NODE
 
       - name: Validar ACL de webhook_failures
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260831120000'
+        if: inputs.migration_version == '20260831120000'
         run: >-
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1
           -f scripts/db-audit/check-webhook-failures-acl.sql
 
       - name: Validar remocao de URLs assinadas persistidas
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260831150000'
+        if: inputs.migration_version == '20260831150000'
         run: |
           LEGACY_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT sum(legacy_count)
@@ -1154,9 +1278,7 @@ jobs:
           echo "OK: nenhuma credencial temporaria de Storage permanece nas tabelas alvo."
 
       - name: Validar estrutura e privilegios da outbox CRM
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260908180000'
+        if: inputs.migration_version == '20260908180000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1190,9 +1312,7 @@ jobs:
           NODE
 
       - name: Validar fencing e maquina de estados da outbox CRM
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260908220000'
+        if: inputs.migration_version == '20260908220000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1229,9 +1349,7 @@ jobs:
           NODE
 
       - name: Validar rollout seguro, ACL e funcoes atomicas do CRM
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909120000'
+        if: inputs.migration_version == '20260909120000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             WITH expected_functions AS (
@@ -1314,9 +1432,7 @@ jobs:
           NODE
 
       - name: Validar kill switch persistente da API publica
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909180000'
+        if: inputs.migration_version == '20260909180000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'
             SELECT jsonb_build_object(
@@ -1340,9 +1456,7 @@ jobs:
           NODE
 
       - name: Validar autorizacao canonica do Inbox
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909200000'
+        if: inputs.migration_version == '20260909200000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/inbox-contact-authorization-runtime.sql)
@@ -1374,10 +1488,7 @@ jobs:
           NODE
 
       - name: Validar primitivas atomicas de mensagens e encerramento
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && (inputs.migration_version == '20260909220000'
-          || inputs.migration_version == '20260909240000')
+        if: (inputs.migration_version == '20260909220000' || inputs.migration_version == '20260909240000')
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
@@ -1426,9 +1537,7 @@ jobs:
           NODE
 
       - name: Validar entrega atomica de enquetes e contatos
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && inputs.migration_version == '20260909270000'
+        if: inputs.migration_version == '20260909270000'
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/message-delivery-phase1-runtime.sql)
@@ -1452,10 +1561,7 @@ jobs:
           NODE
 
       - name: Validar histórico canônico de templates Talk X
-        if: >-
-          (inputs.apply == true || steps.preflight.outputs.needs_apply == 'false')
-          && (inputs.migration_version == '20260909210000'
-          || inputs.migration_version == '20260909230000')
+        if: (inputs.migration_version == '20260909210000' || inputs.migration_version == '20260909230000')
         run: |
           RESULT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
             -f scripts/db-audit/talkx-template-history-runtime.sql)
@@ -1513,14 +1619,12 @@ jobs:
           NODE
 
       - name: Provar paridade integral apos aplicacao
-        if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Disparar types-sync apos apply bem-sucedido (W33)
         # W33: fecha o lote no mesmo dia sem esperar o push/schedule do types-sync.
         # Dispara apenas quando apply=true E os passos anteriores terminaram com exito.
         # Nao usa workflow_run (o gatilho nao expoe inputs do dispatch original).
-        if: inputs.apply == true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
