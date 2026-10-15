@@ -66,7 +66,8 @@ jobs:
           --health-retries 10
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
-      POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      # W57: ghcr.io como primario (sem rate limit); ECR fica so como fallback no retry script.
+      POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9
       # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
       POSTGRES_SERVICE_HOST: localhost
       POSTGRES_SERVICE_PORT: "5432"

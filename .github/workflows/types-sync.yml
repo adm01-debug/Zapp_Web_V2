@@ -89,13 +89,20 @@ jobs:
               core.setOutput('skip', 'false');
               return;
             }
-            const updatedAt = new Date(syncPr.updated_at);
-            const ageSec = Math.floor((Date.now() - updatedAt.getTime()) / 1000);
+            // W25: usa a data do head commit do PR (nao updated_at, que muda com comentarios).
+            // Criterio: se o commit mais recente tem < 20 min, o sync esta em andamento -- pular.
+            const { data: commit } = await github.rest.git.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: syncPr.head.sha,
+            });
+            const headDate = new Date(commit.committer.date);
+            const ageSec = Math.floor((Date.now() - headDate.getTime()) / 1000);
             if (ageSec < 1200) {
-              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s (<20min) — debounce ativo.`);
+              core.info(`PR #${syncPr.number} head commit há ${ageSec}s (<20min) — debounce ativo.`);
               core.setOutput('skip', 'true');
             } else {
-              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s — prosseguindo.`);
+              core.info(`PR #${syncPr.number} head commit há ${ageSec}s — prosseguindo.`);
               core.setOutput('skip', 'false');
             }
 
@@ -372,8 +379,10 @@ jobs:
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesma correção de pipefail do Gate 1.
+          # W24: --prune-obsolete poda entradas obsoletas do baseline (aviso, nao bloqueia);
+          # o arquivo atualizado entra no PR de sync via add-paths.
           set -o pipefail
-          if node scripts/db-audit/supabase-usage-guard.mjs 2>&1 | tee /tmp/guard.log; then
+          if node scripts/db-audit/supabase-usage-guard.mjs --prune-obsolete 2>&1 | tee /tmp/guard.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -560,6 +569,7 @@ jobs:
             supabase/schema-catalog.json
             supabase/schema-manifest.json
             scripts/db-audit/grants-baseline.json
+            scripts/db-audit/known-violations.json
 
       - name: Exigir PR criado ou atualizado
         if: >-

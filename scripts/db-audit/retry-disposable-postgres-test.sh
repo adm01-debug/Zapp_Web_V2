@@ -42,16 +42,20 @@ fi
 PRE_PULL_ATTEMPTS="${PRE_PULL_ATTEMPTS:-5}"
 PRE_PULL_BASE_WAIT="${PRE_PULL_BASE_WAIT:-15}"
 
-# O registro publico do ECR (public.ecr.aws) limita pull anonimo por IP e responde
-# `toomanyrequests: Rate exceeded` de forma SUSTENTADA -- nao e flake: medido em 30/09/2026,
-# 5 tentativas com backoff (~4 min) falharam seguidas e o job obrigatorio ficou vermelho por
-# motivo alheio ao diff. O mesmo projeto publica as imagens equivalentes no GHCR
-# (ghcr.io/supabase/<imagem>), que nao limita igual -- e o caminho que
-# .github/workflows/types-sync.yml ja usa. O espelho vem PRIMEIRO; o pull original continua
-# como reserva, com backoff, e o erro continua aparecendo se nada funcionar.
+# W57: POSTGREST_TEST_IMAGE agora aponta direto para ghcr.io (sem rate limit do ECR).
+# Para imagens ECR ainda existentes, o espelho ghcr.io vem primeiro.
+# Para imagens ghcr.io, o ECR e mantido so como fallback -- nenhuma mensagem de "espelho"
+# aparece em um run normal (criterio de verificacao do W57).
 espelho_do_ecr() {
   case "$1" in
     public.ecr.aws/supabase/*) printf 'ghcr.io/supabase/%s' "${1#public.ecr.aws/supabase/}" ;;
+    *) printf '' ;;
+  esac
+}
+# ECR como fallback quando o primario e ghcr.io (e o pull falha).
+ecr_fallback_do_ghcr() {
+  case "$1" in
+    ghcr.io/supabase/*) printf 'public.ecr.aws/supabase/%s' "${1#ghcr.io/supabase/}" ;;
     *) printf '' ;;
   esac
 }
@@ -62,7 +66,7 @@ pre_pull_images() {
     return 0
   fi
 
-  local var imagem tentativa espera espelho espelho_tag
+  local var imagem tentativa espera espelho espelho_tag fallback fallback_tag
   while read -r var; do
     imagem="${!var}"
     [[ -n "$imagem" ]] || continue
@@ -72,6 +76,7 @@ pre_pull_images() {
         printf 'INFO: imagem já local: %s\n' "$imagem"
         break
       fi
+      # Para imagens ECR: ghcr.io vem como espelho (W57 – evita rate limit do ECR no primario).
       espelho="$(espelho_do_ecr "$imagem")"
       espelho_tag="${espelho%%@*}"
       if [[ -n "$espelho_tag" ]] && docker pull "$espelho_tag" >/dev/null 2>&1; then
@@ -82,9 +87,20 @@ pre_pull_images() {
         fi
         printf 'WARN: espelho %s tem digest diferente do esperado; tentando ECR direto\n' "$espelho_tag" >&2
       fi
+      # Tenta o primario diretamente (ghcr.io quando W57 se aplica, ECR caso contrario).
       if docker pull "$imagem" >/dev/null 2>&1; then
         printf 'INFO: imagem baixada: %s\n' "$imagem"
         break
+      fi
+      # Para imagens ghcr.io: ECR como fallback de ultimo recurso (W57).
+      fallback="$(ecr_fallback_do_ghcr "${imagem%%@*}")"
+      fallback_tag="${fallback%%:*}"
+      if [[ -n "$fallback_tag" ]] && docker pull "${fallback%%@*}" >/dev/null 2>&1; then
+        docker tag "${fallback%%@*}" "${imagem%%@*}"
+        if docker image inspect "$imagem" >/dev/null 2>&1; then
+          printf 'WARN: ghcr.io falhou; imagem obtida do ECR como fallback: %s\n' "${fallback%%@*}" >&2
+          break
+        fi
       fi
       if [[ "$tentativa" -eq "$PRE_PULL_ATTEMPTS" ]]; then
         printf 'ERRO: registry não entregou %s em %s tentativas (rate limit ou imagem inexistente)\n' \
