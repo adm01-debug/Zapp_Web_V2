@@ -40,7 +40,7 @@ export async function runGenerateManifest({ repoRoot, output, check }) {
 
   if (check) {
     if (committed !== serialized) {
-      throw new Error(`Deployment manifest is stale: ${output}. Run generate-manifest.mjs.`);
+      throw new Error(`Deployment manifest is stale: ${output}. Run: node scripts/edge-deploy/generate-manifest.mjs && git add ${output} && git commit -m 'chore: regenerate edge-deploy manifest'`);
     }
     return manifest;
   }

@@ -3,6 +3,8 @@
 #   prova: import de snapshot legado validado por identidade do destino
 #   falha: o import aborta antes de escrever
 #   avisa: operador que disparou
+# nao-e-bug:
+#   - desarmado por design: o secret LEGACY_IMPORT_UNLOCK nao existe -- todo dispatch falha fechado antes de escrever qualquer coisa; reativar exige criar o secret + gerar novo export a partir do banco oficial
 name: Supabase Sync & Validate
 
 # [2026-08-28] Somente execucao MANUAL. Antes, qualquer push/PR tocando

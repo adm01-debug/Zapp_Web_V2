@@ -3,6 +3,8 @@
 #   prova: lint, tipos, testes, build, security e E2E do codigo
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
@@ -460,9 +462,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # Histórico completo: o filtro de caminhos compara com a base do PR
-          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
-          fetch-depth: 0
+          # W48: checkout raso; o fetch do BASE_REF abaixo traz só o ancestral necessário.
+          fetch-depth: 1
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
       - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
@@ -476,6 +477,8 @@ jobs:
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
+          git fetch origin "${BASE_REF}" --depth=50 --quiet
           changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
