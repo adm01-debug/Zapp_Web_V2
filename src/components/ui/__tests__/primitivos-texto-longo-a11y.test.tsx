@@ -89,6 +89,17 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(rotulo.className).not.toContain('leading-none');
   });
 
+  it('Label: rótulo curto e rótulo longo renderizam o mesmo className', () => {
+    const { container: curto } = render(<Label>Nome</Label>);
+    const { container: longo } = render(<Label>{TEXTO_120}</Label>);
+
+    // Nenhuma classe depende do tamanho do texto: a altura de um rótulo de uma linha
+    // vem só do token `text-sm` (1.25rem no tailwind.config.ts), e `leading-snug`
+    // (1.375 × 14px = 19,25px) é o valor mais próximo dele no tema.
+    expect(curto.firstElementChild?.className).toBe(longo.firstElementChild?.className);
+    expect(curto.firstElementChild?.className).toContain('text-sm');
+  });
+
   it('ilustrações de estado vazio são decorativas (aria-hidden) em todas as chaves', () => {
     const chaves = Object.keys(illustrations);
     expect(chaves.length).toBeGreaterThan(0);
