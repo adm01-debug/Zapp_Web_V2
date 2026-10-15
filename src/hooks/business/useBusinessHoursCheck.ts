@@ -15,12 +15,7 @@ export function useBusinessHoursCheck(connectionId: string | null | undefined) {
       const { data, error } = await supabase.rpc('is_within_business_hours', {
         connection_id: connectionId,
       });
-      // Falha de leitura NÃO é "sem dado": lança para a UI ver isError (antes, um erro de
-      // rede/RPC aparecia como ausência de horário comercial).
-      if (error) {
-        console.error('[useBusinessHoursCheck] falha ao verificar o horário comercial', error);
-        throw new Error(error.message || 'Falha ao verificar o horário comercial');
-      }
+      if (error) return null;
       return data as boolean;
     },
     enabled: !!connectionId,

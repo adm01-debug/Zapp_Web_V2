@@ -33,12 +33,7 @@ export function useLatestAnalysis(contactId: string | null | undefined) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      // Falha de leitura NÃO é "sem análise": lança para a UI ver isError (sem ela, um erro
-      // transitório de rede/RLS aparecia como contato sem análise).
-      if (error) {
-        console.error('[useLatestAnalysis] falha ao carregar a análise da conversa', error);
-        throw new Error(error.message || 'Falha ao carregar a análise da conversa');
-      }
+      if (error) return null;
       return data as LatestAnalysis | null;
     },
     enabled: !!contactId,
