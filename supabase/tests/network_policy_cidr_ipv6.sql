@@ -12,18 +12,28 @@
 --   E) famílias diferentes (IPv4 x IPv6) NUNCA se contêm;
 --   F) gravação inválida em ip_whitelist/blocked_ips é recusada (SQLSTATE 23514)
 --      e gravação válida passa;
+--   J) o ADMIN do painel (authenticated + RLS de is_admin, com as policies de
+--      escrita do PD-09) grava CIDR válido (INSERT e UPDATE passam — sem o
+--      42501 da recusa) e o inválido leva 23514 (não 42501); o SUPERVISOR
+--      continua negado pela RLS;
 --   G) NADA é apagado: linha legada inválida continua na tabela (constraint NOT
 --      VALID), a contagem não muda e a RPC não explode ao varrer a linha legada;
 --   H) o saneamento só tira espaços de IP válido e não colide com a UNIQUE;
---   I) NÃO afrouxei ACL: a RPC e os helpers seguem só para service_role; anon e
---      authenticated levam 42501.
+--   I) NÃO afrouxei ACL: a RPC e o helper ip_entry_matches seguem só para
+--      service_role; anon e authenticated levam 42501 na RPC; anon leva 42501
+--      no validador; authenticated EXECUTA o validador (GRANT da correção —
+--      sem ele o admin do painel levaria 42501 na CHECK).
 --
 -- COMO A PROTEÇÃO ENTRA NO TESTE: a superfície mínima (roles, schema auth, as
 -- tabelas reais) é criada à mão — é ambiente, não contrato. As colunas das
 -- tabelas são copiadas VERBATIM das migrations que as criam (20251231115910,
 -- 20251231130733, 20251231131019). O CONTRATO sob teste é aplicado VERBATIM dos
--- arquivos reais via `\i`: a RPC anterior (20261004182245) sempre, e a correção
--- (20261014120000_network_policy_cidr.sql) quando não há sem_guarda.
+-- arquivos reais via meta-comando de inclusao: a RPC anterior (20261004182245) sempre, a correção
+-- (20261014120000_network_policy_cidr.sql) quando não há sem_guarda, e as
+-- policies de escrita do PD-09 (20261013035213) sempre — estado do pai, não a
+-- correção. As policies de escrita de blocked_ips (admin-only, VERBATIM da
+-- gate16 20260830150000) e os papéis (auth.uid, user_roles, is_admin) são
+-- ambiente: reproduzem o caminho do painel (authenticated + JWT).
 --
 -- ENFORCEMENT exercido como PAPEL REAL: as chamadas rodam com `SET LOCAL ROLE
 -- service_role` (o caminho das Edge Functions) — nunca como postgres, que
@@ -60,6 +70,33 @@ CREATE SCHEMA auth;
 CREATE TABLE auth.users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+-- auth.uid() do PostgREST (ambiente, VERBATIM do teste-irmao admin_only).
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT nullif(coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
+  ), '')::uuid $$;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
+
+-- Papeis (ambiente, mesmo contrato das migrations reais).
+CREATE TYPE public.app_role AS ENUM ('admin','supervisor','agent');
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role public.app_role NOT NULL,
+  UNIQUE (user_id, role)
+);
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.user_roles TO anon, authenticated, service_role;
+CREATE FUNCTION public.is_admin(_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = 'admin'::app_role)
+$$;
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role IN ('admin','supervisor'))
+$$;
 
 -- Tabelas reais (colunas VERBATIM das migrations que as criam).
 CREATE TABLE public.rate_limit_configs (
@@ -126,10 +163,42 @@ INSERT INTO public.geo_blocking_settings (mode) VALUES ('disabled');
 -- ACL de tabela que o Supabase já entrega para service_role (BYPASSRLS + GRANT).
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 
+-- Caminho do painel (ambiente): RLS ligada nas duas listas e DML para
+-- authenticated — a barreira de QUEM escreve é a policy (is_admin), como em prod.
+ALTER TABLE public.ip_whitelist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blocked_ips ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ip_whitelist, public.blocked_ips
+  TO authenticated;
+
+-- blocked_ips: escrita admin-only (ambiente, VERBATIM da gate16
+-- 20260830150000 — em prod já é assim; aqui reproduz o papel gravador).
+CREATE POLICY "Admins can insert blocked IPs" ON public.blocked_ips
+  FOR INSERT TO authenticated WITH CHECK (public.is_admin(auth.uid()));
+CREATE POLICY "Admins can update blocked IPs" ON public.blocked_ips
+  FOR UPDATE TO authenticated
+  USING (public.is_admin(auth.uid()))
+  WITH CHECK (public.is_admin(auth.uid()));
+CREATE POLICY "Admins can delete blocked IPs" ON public.blocked_ips
+  FOR DELETE TO authenticated USING (public.is_admin(auth.uid()));
+
+-- Leitura da whitelist (ambiente, VERBATIM da 20251231115910 — sobrevive ao
+-- PD-09, que só derrubou a manage): sem ela o scan do UPDATE como
+-- authenticated não enxerga a linha (RLS) e o UPDATE casa 0 linhas, como em
+-- prod sem esta policy.
+CREATE POLICY "Authenticated can view IP whitelist" ON public.ip_whitelist
+FOR SELECT USING (true);
+
 -- Contrato anterior (RPC de 20261004182245) aplicado VERBATIM.
 \i :mig_dir/20261004182245_resolve_network_policy_rpc.sql
 
 -- ── Fixtures de dados ───────────────────────────────────────────────────────
+-- Usuários do JWT (ambiente): ADMIN grava, SUPERVISOR é negado pela RLS.
+INSERT INTO auth.users (id) VALUES
+  ('11111111-1111-1111-1111-11111111111a'),
+  ('44444444-4444-4444-4444-44444444444d');
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('11111111-1111-1111-1111-11111111111a', 'admin'),
+  ('44444444-4444-4444-4444-44444444444d', 'supervisor');
 -- Legado inválido (existe ANTES da correção; tem de SOBREVIVER à constraint NOT VALID).
 INSERT INTO public.ip_whitelist (ip_address, description) VALUES
   ('nao-e-ip-legado', 'linha legada invalida');
@@ -162,6 +231,30 @@ BEGIN
   IF v_user <> p_papel THEN
     RESET ROLE;
     RETURN 'ERRO papel efetivo ' || v_user;
+  END IF;
+  BEGIN
+    EXECUTE p_sql;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    v_out := 'OK ' || v_n::text;
+  EXCEPTION WHEN OTHERS THEN
+    v_out := 'ERRO ' || SQLSTATE || ' ' || SQLERRM;
+  END;
+  RESET ROLE;
+  RETURN v_out;
+END $$;
+
+-- Roda p_sql como authenticated com o JWT do usuário p_uid (caminho do painel/
+-- PostgREST): devolve 'OK <n>' ou 'ERRO <sqlstate> <mensagem>'.
+CREATE FUNCTION pg_temp.operacao_uid(p_uid uuid, p_sql text) RETURNS text
+LANGUAGE plpgsql AS $$
+DECLARE v_n bigint; v_out text;
+BEGIN
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+  SET LOCAL ROLE authenticated;
+  IF current_user <> 'authenticated' THEN
+    RESET ROLE;
+    RETURN 'ERRO papel efetivo ' || current_user;
   END IF;
   BEGIN
     EXECUTE p_sql;
@@ -214,6 +307,11 @@ $$;
   \i :mig_dir/20261014120000_network_policy_cidr.sql
 \endif
 
+-- Estado do cartao pai PD-09 (t_860cdff6), VERBATIM do arquivo real, nos dois
+-- modos: escrita em ip_whitelist passa a exigir is_admin. Sem ele o BLOCO J nao
+-- teria a policy que o painel usa em producao.
+\i :mig_dir/20261013035213_network_policy_tables_admin_only.sql
+
 \if :{?sem_guarda}
 -- ── BLOCO R — VERMELHO: exige o DEFEITO (sem a correção) ────────────────────
 SELECT pg_temp.conf('R-A faixa CIDR NAO bloqueia (defeito)',
@@ -222,6 +320,10 @@ SELECT pg_temp.conf('R-B gravacao invalida ACEITA (defeito)',
   pg_temp.operacao('service_role', $$INSERT INTO public.ip_whitelist (ip_address) VALUES ('10.0.0.0/33')$$), 'OK 1');
 SELECT pg_temp.afirma('R-C helper ip_entry_matches ausente',
   NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'ip_entry_matches'));
+SELECT pg_temp.conf('R-D admin grava invalido e PASSA (sem CHECK, defeito)',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$INSERT INTO public.ip_whitelist (ip_address) VALUES ('10.0.0.0/34')$$), 'OK 1');
+SELECT pg_temp.conf_erro('R-E validador ausente para authenticated (sem a correcao)',
+  pg_temp.operacao('authenticated', $$SELECT public.is_valid_ip_or_cidr('10.0.0.1')$$), '42883');
 \else
 -- ── BLOCO A — faixa CIDR na lista de BLOQUEIO ───────────────────────────────
 SELECT pg_temp.conf('A1 IP dentro da faixa bloqueado',
@@ -291,7 +393,31 @@ SELECT pg_temp.afirma('H2 par que colidiria foi preservado (guarda NOT EXISTS)',
   EXISTS (SELECT 1 FROM public.ip_whitelist WHERE ip_address = ' 203.0.113.99 ')
   AND EXISTS (SELECT 1 FROM public.ip_whitelist WHERE ip_address = '203.0.113.99'));
 
--- ── BLOCO I — ACL intacta: só service_role ──────────────────────────────────
+-- ── BLOCO J — admin do painel grava (PONTO 2 da recusa t_ab5db6ee) ──────────
+-- authenticated + JWT de admin, com as policies do PD-09: CIDR válido passa
+-- (INSERT e UPDATE, sem 42501) e inválido leva 23514 (não 42501). Supervisor
+-- negado pela RLS. Mesma cobertura em blocked_ips (PONTO 1: mesmo papel).
+SELECT pg_temp.conf('J1 admin INSERT CIDR valido em ip_whitelist',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$INSERT INTO public.ip_whitelist (ip_address) VALUES ('192.0.2.0/24')$$), 'OK 1');
+SELECT pg_temp.conf('J2 admin UPDATE para CIDR valido em ip_whitelist',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$UPDATE public.ip_whitelist SET ip_address = '198.51.100.0/24' WHERE ip_address = '192.0.2.0/24'$$), 'OK 1');
+SELECT pg_temp.conf_erro('J3 admin INSERT invalido leva 23514 (nao 42501)',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$INSERT INTO public.ip_whitelist (ip_address) VALUES ('10.0.0.0/33')$$), '23514');
+SELECT pg_temp.conf('J4 admin INSERT CIDR valido em blocked_ips',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$INSERT INTO public.blocked_ips (ip_address, reason) VALUES ('203.0.113.128/25', 'faixa admin')$$), 'OK 1');
+SELECT pg_temp.conf_erro('J5 admin INSERT invalido em blocked_ips leva 23514 (nao 42501)',
+  pg_temp.operacao_uid('11111111-1111-1111-1111-11111111111a', $$INSERT INTO public.blocked_ips (ip_address, reason) VALUES ('999.1.1.1', 'x')$$), '23514');
+SELECT pg_temp.afirma('J6 supervisor negado pela RLS em ip_whitelist',
+  pg_temp.operacao_uid('44444444-4444-4444-4444-44444444444d', $$INSERT INTO public.ip_whitelist (ip_address) VALUES ('198.51.101.0/24')$$)
+  LIKE 'ERRO 42501 %row-level security policy%');
+SELECT pg_temp.afirma('J7 supervisor negado pela RLS em blocked_ips',
+  pg_temp.operacao_uid('44444444-4444-4444-4444-44444444444d', $$INSERT INTO public.blocked_ips (ip_address, reason) VALUES ('198.51.102.0/24', 'x')$$)
+  LIKE 'ERRO 42501 %row-level security policy%');
+
+-- ── BLOCO I — ACL final (PONTO 3 da recusa t_ab5db6ee) ────────────────────────
+-- RPC e ip_entry_matches: só service_role. Validador: anon SEM acesso (I3
+-- mantida) e authenticated COM acesso (I6, o GRANT da correção — sem ele o
+-- admin levaria 42501 na CHECK).
 SELECT pg_temp.conf('I1 authenticated nao executa a RPC',
   pg_temp.policy('authenticated', '203.0.113.9', 'BR', '/login'), 'ERRO 42501');
 SELECT pg_temp.conf('I2 anon nao executa a RPC',
@@ -302,6 +428,8 @@ SELECT pg_temp.conf_erro('I4 anon nao executa ip_entry_matches',
   pg_temp.operacao('anon', $$SELECT public.ip_entry_matches('10.0.0.0/24', '10.0.0.1'::inet)$$), '42501');
 SELECT pg_temp.conf('I5 service_role executa os helpers',
   pg_temp.operacao('service_role', $$SELECT public.ip_entry_matches('10.0.0.0/24', '10.0.0.1'::inet)$$), 'OK 1');
+SELECT pg_temp.conf('I6 authenticated EXECUTA is_valid_ip_or_cidr (GRANT da correcao)',
+  pg_temp.operacao('authenticated', $$SELECT public.is_valid_ip_or_cidr('10.0.0.1')$$), 'OK 1');
 \endif
 
 -- ── Relatório ───────────────────────────────────────────────────────────────

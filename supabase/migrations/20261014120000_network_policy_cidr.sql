@@ -1,5 +1,5 @@
 -- network_policy_cidr_ipv6
--- Rollback: derruba as duas CHECKs de formato, recria public.resolve_network_policy com o corpo anterior (abaixo), derruba os helpers ip_entry_matches e is_valid_ip_or_cidr (nesta ordem). O UPDATE de saneamento so retira espacos em volta de IP valido (idempotente e semanticamente neutro: o valor logico nao muda, nao ha inverso). Nada e apagado.
+-- Rollback: derruba as duas CHECKs de formato, recria public.resolve_network_policy com o corpo anterior (abaixo), derruba os helpers ip_entry_matches e is_valid_ip_or_cidr (nesta ordem; os GRANTs somem com o DROP, sem REVOKE separado — volta a nao existir funcao nem grant). O UPDATE de saneamento so retira espacos em volta de IP valido (idempotente e semanticamente neutro: o valor logico nao muda, nao ha inverso). Nada e apagado.
 -- Rollback (SQL executável, na ordem):
 --   alter table public.ip_whitelist drop constraint if exists ip_whitelist_ip_address_valid;
 --   alter table public.blocked_ips drop constraint if exists blocked_ips_ip_address_valid;
@@ -78,8 +78,16 @@ exception when others then
 end;
 $$;
 
-revoke all on function public.is_valid_ip_or_cidr(text) from public, anon, authenticated;
-grant execute on function public.is_valid_ip_or_cidr(text) to service_role;
+revoke all on function public.is_valid_ip_or_cidr(text) from public, anon;
+-- EXECUTE a authenticated (PONTO 1 da recusa t_ab5db6ee): a CHECK
+-- ip_whitelist_ip_address_valid / blocked_ips_ip_address_valid chama esta funcao,
+-- e o Postgres exige EXECUTE do papel gravador (admin do painel = authenticated
+-- com RLS de is_admin). Sem este GRANT o admin levaria 42501 ao gravar CIDR
+-- valido. Funcao pura (sem leitura de tabela), entao o GRANT nao abre dado;
+-- anon continua sem acesso. O papel que grava blocked_ips e o mesmo
+-- authenticated/admin (policies "Admins can ... blocked IPs" com is_admin),
+-- logo este unico GRANT cobre as duas tabelas.
+grant execute on function public.is_valid_ip_or_cidr(text) to authenticated, service_role;
 
 -- Redefinicao: mesma assinatura, mesma semantica; so a comparacao de IP muda.
 create or replace function public.resolve_network_policy(
