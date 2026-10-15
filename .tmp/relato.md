@@ -27,4 +27,5 @@ src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx
 Verificação:
 - `npx vitest run src/components/admin/__tests__/TrainingMode.erro-abandono.test.tsx src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` → Test Files 2 passed (2), Tests 17 passed (17).
 - Pre-commit lint ratchet no commit e92a55289f → baseline=3, atual=3, novas=0.
+- `zapp-verify . --rapido` → VERDE (db_guard, tipos, lint, migrations OK; banco_local não se aplica — sem migration no cartão; unitários cobertos pelo vitest acima).
 - Nenhum teste existente removido, pulado ou afrouxado; `TrainingMode.avaliacao.test.tsx` intocado neste refazer (5/5 verdes).
