@@ -14,14 +14,19 @@ export interface SignInResult {
 }
 
 /**
- * Falha transitória de leitura (rede, 429 ou 5xx) — merece nova tentativa antes
- * de virar estado de erro na tela. Falha de autenticação NÃO entra aqui: ela
- * segue o caminho de refresh de sessão.
+ * Falha transitória de leitura: SÓ erro de rede e tempo limite. A Fetch API
+ * resolve 500 como resposta (não rejeita) e o PostgREST entrega 4xx/5xx como
+ * `{ error }` — nenhum status é "transitório por padrão": repetir um banco
+ * saturado dobraria a carga em vez de aliviar. O resto sobe na hora, sem
+ * repetir. `AbortError` (abort do chamador/descarregamento) também não repete.
  */
-const isTransientProfileFailure = (err: unknown): boolean => {
+export const isTransientProfileFailure = (err: unknown): boolean => {
   if (err instanceof TypeError) return true;
-  const status = (err as { status?: number } | null)?.status;
-  return typeof status === 'number' && (status === 429 || status >= 500);
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    (err as { name?: string }).name === 'TimeoutError'
+  );
 };
 
 /** Falha de autenticação (token expirado/negado) que justifica refresh da sessão. */
@@ -93,9 +98,10 @@ export class AuthService {
     };
 
     // Uma leitura do perfil não pode ser perdida por um blip de rede: repete só
-    // falha transitória, com backoff curto. As retentativas ficam aqui (além do
-    // retry de transporte do cliente) porque o perfil define identidade e
-    // permissões na tela — o custo de repetir é baixo e o de desistir é alto.
+    // falha transitória (rede/timeout), com backoff curto. As retentativas
+    // ficam aqui (além do retry de transporte do cliente) porque o perfil
+    // define identidade e permissões na tela — o custo de repetir é baixo e o
+    // de desistir é alto. 4xx/5xx do PostgREST sobem na hora, sem repetir.
     const buscarComRetentativa = async (): Promise<Profile | null> => {
       for (let tentativa = 0; ; tentativa += 1) {
         try {
@@ -120,12 +126,17 @@ export class AuthService {
           if (isTransientProfileFailure(refreshError)) throw refreshError;
           log.warn('[AuthService] Session recovery failed', refreshError);
         }
+        // Recuperação de sessão (401/PGRST301/jwt) esgotada sem sessão nova:
+        // `null` continua significando "não existe perfil", como antes.
+        return null;
       }
       log.warn('[AuthService] Failed to fetch profile', err);
       // Falha transitória esgotada: lança para o chamador marcar o perfil como
-      // indisponível. `null` continua significando "não existe perfil".
-      if (isTransientProfileFailure(err)) throw err;
-      return null;
+      // indisponível. Erro do PostgREST (4xx/5xx) também sobe — sem repetir —
+      // e quem decide se vira estado de erro é o chamador (só transitório vira
+      // `profileUnavailable`). Só `{ data: null, error: null }` (perfil
+      // inexistente) devolve `null`.
+      throw err;
     }
   }
 

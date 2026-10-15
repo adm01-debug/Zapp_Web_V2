@@ -78,15 +78,39 @@ export const boundedFetch: typeof fetch = async (input, init) => {
     SUPABASE_FETCH_TIMEOUT_MS
   );
 
-  const callerSignal = init?.signal ?? null;
+  // O signal do chamador pode vir no `init` ou no próprio `Request`. Sem ler
+  // o `input.signal`, um `Request` pronto (com body) ignorava o abort de quem
+  // chamou — e o timeout não valia para ele.
+  const requestInput =
+    typeof Request !== 'undefined' && input instanceof Request ? input : null;
+  const callerSignal = init?.signal ?? requestInput?.signal ?? null;
   const abortFromCaller = () => controller.abort(makeAbortReason(callerSignal?.reason));
   if (callerSignal?.aborted) abortFromCaller();
   else callerSignal?.addEventListener('abort', abortFromCaller, { once: true });
 
-  const { signal: _callerSignal, ...restInit } = init ?? {};
+  // Reemite o `Request` com o nosso signal (o timeout passa a valer) e
+  // encaminha método, URL, cabeçalhos e corpo do original; `duplex` é exigido
+  // para corpo em stream. O `Request` original é consumido — por isso
+  // `hasUnreplayableBody` já exclui esse caso do retry (uso único).
+  let outgoing: RequestInfo | URL = input;
+  let outgoingInit: RequestInit | undefined;
+  if (requestInput) {
+    outgoing = new Request(requestInput, {
+      signal: controller.signal,
+      ...(requestInput.body !== null ? { duplex: 'half' as const } : {}),
+    });
+    const { signal: _signalDoChamador, ...restanteInit } = init ?? {};
+    outgoingInit =
+      Object.keys(restanteInit).length > 0
+        ? { ...restanteInit, signal: controller.signal }
+        : undefined;
+  } else {
+    const { signal: _signalDoChamador, ...restanteInit } = init ?? {};
+    outgoingInit = { ...restanteInit, signal: controller.signal };
+  }
 
   try {
-    const response = await fetch(input, { ...restInit, signal: controller.signal });
+    const response = await fetch(outgoing, outgoingInit);
     // Alguns transports/mocks ignoram o AbortSignal: descarta o resultado que
     // chegou depois do abort em vez de devolvê-lo a quem já desistiu.
     if (controller.signal.aborted) {
@@ -123,7 +147,10 @@ const SUPABASE_RETRY_MAX_DELAY_MS = 900;
 
 /**
  * RPCs de LEITURA (sem efeito colateral) que podem ser repetidas. RPC de escrita
- * fora desta allowlist nunca entra no retry.
+ * fora desta allowlist nunca entra no retry. Auditoria das chamadas reais em
+ * `src` (`grep -rhoP "\.rpc\(\s*'...`): só getters/consultas entram aqui;
+ * `talkx_overview_stats` e `talkx_engine_window_open` ficam de fora (sem retry,
+ * como o resto das RPCs fora da lista) e `talk_me_list_waiting` já estava.
  */
 const READONLY_RPC_ALLOWLIST: ReadonlySet<string> = new Set([
   'has_role',
@@ -135,8 +162,7 @@ const READONLY_RPC_ALLOWLIST: ReadonlySet<string> = new Set([
   'my_calls_kpi',
   'talk_me_list_queues',
   'talk_me_list_waiting',
-  'talkx_overview_stats',
-  'talkx_engine_window_open',
+  'get_own_gmail_accounts',
   'search_knowledge_base',
 ]);
 

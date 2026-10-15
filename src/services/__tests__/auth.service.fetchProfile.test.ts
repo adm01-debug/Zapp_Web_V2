@@ -29,12 +29,15 @@ import { AuthService } from '@/services/auth.service';
 /**
  * `AuthService.fetchProfile` — retry e visibilidade da falha.
  *
- * Antes: qualquer erro virava `null`, indistinguível de "não existe perfil", e
- * um blip de rede apagava o perfil da tela sem explicação. Agora:
- *   - falha transitória (rede, 429, 5xx) repete com backoff curto;
+ * Antes: 429/5xx repetiam por padrão e qualquer erro virava `null`,
+ * indistinguível de "não existe perfil". Agora:
+ *   - SÓ falha transitória (rede `TypeError`, timeout `TimeoutError`) repete
+ *     com backoff curto; 4xx/5xx do PostgREST sobem na hora, sem repetir
+ *     (repetir banco saturado dobraria a carga);
  *   - esgotadas as retentativas, LANÇA — é isso que o AuthProvider usa para
- *     mostrar "perfil não carregou" com "Tentar de novo";
- *   - erro não transitório continua devolvendo `null` (não é falha de rede);
+ *     mostrar "perfil não carregou" com "Tentar de novo" (só transitório vira
+ *     `profileUnavailable`);
+ *   - `{ data: null, error: null }` (perfil inexistente) devolve `null`;
  *   - token expirado mantém o refresh de sessão.
  */
 const montarConsulta = (maybeSingle: ReturnType<typeof vi.fn>) => {
@@ -62,23 +65,37 @@ describe('AuthService.fetchProfile — retry e falha visível', () => {
     expect(authMocks.refreshSession).not.toHaveBeenCalled();
   });
 
-  it('esgota as retentativas e lança em 5xx (não devolve null)', async () => {
+  it('timeout é transitório: repete e, esgotado, lança', async () => {
+    const timeout = Object.assign(new Error('Supabase request timed out'), {
+      name: 'TimeoutError',
+    });
+    const maybeSingle = vi.fn().mockRejectedValue(timeout);
+    montarConsulta(maybeSingle);
+
+    await expect(AuthService.fetchProfile('user-1')).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+    expect(maybeSingle).toHaveBeenCalledTimes(3); // 1 + 2 retentativas
+    expect(authMocks.refreshSession).not.toHaveBeenCalled();
+  });
+
+  it('5xx sobe na hora sem repetir (1 chamada) e lança', async () => {
     const maybeSingle = vi
       .fn()
       .mockResolvedValue({ data: null, error: { status: 503, message: 'Service Unavailable' } });
     montarConsulta(maybeSingle);
 
     await expect(AuthService.fetchProfile('user-1')).rejects.toMatchObject({ status: 503 });
-    expect(maybeSingle).toHaveBeenCalledTimes(3); // 1 + 2 retentativas
+    expect(maybeSingle).toHaveBeenCalledTimes(1); // sem retry: repetir banco saturado dobraria a carga
   });
 
-  it('não repete erro de negócio (400) e devolve null', async () => {
+  it('erro de negócio (400) sobe na hora sem repetir (1 chamada)', async () => {
     const maybeSingle = vi
       .fn()
       .mockResolvedValue({ data: null, error: { status: 400, message: 'bad request' } });
     montarConsulta(maybeSingle);
 
-    await expect(AuthService.fetchProfile('user-1')).resolves.toBeNull();
+    await expect(AuthService.fetchProfile('user-1')).rejects.toMatchObject({ status: 400 });
     expect(maybeSingle).toHaveBeenCalledTimes(1);
   });
 

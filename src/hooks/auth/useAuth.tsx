@@ -2,7 +2,7 @@
  import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
- import { AuthService, type SignInResult } from '@/services/auth.service';
+ import { AuthService, isTransientProfileFailure, type SignInResult } from '@/services/auth.service';
  import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
@@ -14,7 +14,7 @@ interface AuthContextType {
   profile: Profile | null;
   /**
    * `true` quando a última busca do perfil falhou por motivo transitório
-   * (rede/5xx). Fica disponível para a camada de tela avisar ("perfil não
+   * (rede/timeout, esgotadas as retentativas). Fica disponível para a camada de tela avisar ("perfil não
    * carregou") e oferecer "Tentar de novo" chamando `refreshProfile`; a própria
    * tela continua utilizável porque o perfil não bloqueia a navegação. O estado
    * é só do hook: o aviso renderizado é do componente (area-front-componentes).
@@ -84,10 +84,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        } catch (err) {
        log.error('[AuthProvider] Failed to fetch profile:', err);
        // Mesma regra da resposta bem-sucedida: um erro atrasado de identidade que
-       // ja saiu nao pode marcar o perfil do usuario atual como indisponivel.
+       // já saiu não pode marcar o perfil do usuário atual como indisponível. E
+       // só falha TRANSITÓRIA (rede/timeout, esgotadas as retentativas) vira
+       // `profileUnavailable`: erro de negócio do PostgREST (4xx/5xx, que sobe
+       // sem repetir) é só registrado — perfil inexistente não é erro de rede.
        const respostaVigente =
          geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
-       if (respostaVigente) setProfileUnavailable(true);
+       if (respostaVigente && isTransientProfileFailure(err)) setProfileUnavailable(true);
        } finally {
        fetchingRef.current = false;
      }

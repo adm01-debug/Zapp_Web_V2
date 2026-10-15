@@ -1,18 +1,98 @@
-Especialista: hugo
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- `src/integrations/supabase/client.ts`: o cliente Supabase (oficial) passou a usar um `global.fetch` próprio. Todo request ganha `AbortController` de 12 s (`SUPABASE_FETCH_TIMEOUT_MS`) encadeado ao `signal` do chamador — o abort do chamador vence e nunca é retentado —, com abort também no `beforeunload`, e o resultado que chega depois do abort é descartado (transport que ignora o signal). Sobre isso roda um retry de transporte de no máximo 2 retentativas com backoff curto (300 ms/600 ms, teto 900 ms) que só vale para `GET`/`HEAD` e para `POST` em RPC de **leitura** de uma allowlist explícita (`search_contacts`, `search_my_calls`, `my_calls_kpi`, `get_team_profiles`, `user_has_permission`, `has_role`, `is_admin_or_supervisor`, `search_knowledge_base`, `talkx_overview_stats`, `get_own_gmail_accounts`, `talk_me_list_waiting`, `talk_me_list_queues`). POST de escrita, `/auth/v1/` e body em stream/`Request` com body passam direto (nunca repetem). Só 429/5xx é repetido; o **tempo limite não é retentado** (repetir banco saturado dobraria a carga) e, esgotadas as tentativas, a resposta final de 5xx volta resolvida para o app, preservando o contrato do `postgrest-js` — nenhum 5xx vira exceção nova.
-- `src/services/auth.service.ts`: `fetchProfile` ganhou retry e backoff em falha de rede (`TypeError`) e 5xx/429, com no máximo 2 retentativas. A recuperação de sessão (401/PGRST301/jwt) continua igual e, se o perfil falhar de forma transitória depois do refresh, a falha sobe em vez de virar `null`. Erro de negócio (4xx) e ausência de linha continuam devolvendo `null`, como antes da mudança.
-- `src/hooks/auth/useAuth.tsx`: novo estado `profileUnavailable` no contexto. Antes a falha de perfil era silenciosa (o `catch` só logava e o `profile` ficava `null` até o próximo evento de auth); agora a falha transitória que o `AuthService.fetchProfile` lança marca `profileUnavailable = true`, e `refreshProfile()` limpa o estado e refaz a busca — é o acionador do "Tentar de novo" que a tela usa. O estado respeita a mesma guarda de geração/identidade das respostas: falha atrasada de uma identidade que já saiu não pinta a tela do usuário atual, e trocar de identidade/logout limpa o estado. A tela continua utilizável porque `ProtectedRoute` depende de `user`/roles e não de `profile`.
-- testes: `src/integrations/supabase/__tests__/client.fetch.test.ts` (novo, 8 casos com fetch simulado: timeout aborta; GET repete em rede e em 429/5xx; POST de escrita, `/auth/v1/`, body em stream e abort do chamador não repetem; resposta final de 5xx chega resolvida), `src/services/__tests__/auth.service.fetchProfile.test.ts` (novo: repete rede e resolve, esgota 5xx e rejeita, 400 não repete e devolve `null`) e `src/hooks/auth/__tests__/useAuth.perfil-indisponivel.test.tsx` (novo: 3 tentativas falham e o estado fica visível; `refreshProfile` limpa o estado e traz o perfil; falha atrasada da identidade anterior não marca a nova). Nenhum teste existente foi alterado.
+Refazer 1 do cartão `fix-rede-cliente-supabase-timeout` — entrego sobre o
+trabalho anterior (commits `a4325ab252` + `f0325d7ca7`, já presentes neste
+workspace), ponto a ponto da recusa do revisor.
 
-## Prova
-- vermelho antes (os 3 arquivos novos rodados na base `dia/2026-10-13`, cópia descartável em `.tmp/base-dia`, já apagada): `npx vitest run <os 3 arquivos novos>` → `Test Files 3 failed (3)` / `Tests 13 failed | 2 passed (15)`. Os 2 que passam na base são as guardas de comportamento anterior (400 → `null` e a recuperação de JWT).
-- verde depois (3 novos + os 2 arquivos de auth que já existiam): `npx vitest run src/integrations/supabase/__tests__/client.fetch.test.ts src/services/__tests__/auth.service.fetchProfile.test.ts src/hooks/auth/__tests__/useAuth.perfil-indisponivel.test.tsx src/services/__tests__/auth.service.test.ts src/hooks/auth/__tests__/useAuth.perfil-identidade.test.tsx` → `Test Files 5 passed (5)` / `Tests 21 passed (21)`.
-- tipos: `npx tsc -b --force` → `rc=0`, sem saída (o `lint` do commit também não introduziu dívida nova).
+Ponto 1 — allowlist de RPC de leitura (`src/integrations/supabase/client.ts`):
+removi `talkx_overview_stats` e `talkx_engine_window_open` (voltam ao padrão
+seguro: sem retry) e incluí `get_own_gmail_accounts` (leitura real, usada em
+`useGmail.ts` e `GmailWebhookMonitor.tsx`). `talk_me_list_waiting` já estava
+na lista (nada a fazer). `falantes-query`, `home-lists` e `user-active-status`
+NÃO foram incluídos: não existem em `src/` nem `supabase/` (`grep -r`, zero
+resultados) e nem poderiam casar — o extrator só aceita `[a-z0-9_]` e hífen
+nunca casa; incluí-los seria entrada morta. Auditoria completa das RPCs reais
+via `grep -rhoP "\.rpc\(\s*'..."` (58 nomes distintos; escritas como
+`transfer_conversation`, `close_conversation_atomic`, `talk_me_claim` seguem
+fora da lista).
+Teste: `allowlist de RPC: get_own_gmail_accounts repete; talkx_* não repetem`
+(`client.fetch.test.ts`). Vermelha sem a correção (2 falhas nesse arquivo:
+`get_own_...` rejeitava em 1 chamada e as `talkx_*` repetiam); verde com ela
+(2 chamadas + resolve; `talkx_*` 1 chamada cada).
 
-## O que NÃO fiz e por quê
-- Ajuste pedido pelo juiz barato antes do fechar: o teste do cliente citava o ref do banco de produção na URL de origem; troquei por `https://sb-testref.supabase.co` (o domínio de teste que o próprio juiz indica). O diff não tem mais nenhum identificador de produção — os comentários de `client.ts` que já citavam o projeto são anteriores a esta entrega e não foram tocados.
-- Não portei o semáforo de 8 slots, o `safeClient` nem o pool da V3: pedido explícito do cartão (são contornos de VPS).
-- Não renderizei o aviso visual "perfil não carregou": o componente de aviso mora em `src/components/**` (area-front-componentes) e não está na lista de ARQUIVOS QUE PODE TOCAR deste cartão. Entreguei o estado (`profileUnavailable`) e o acionador do "Tentar de novo" (`refreshProfile`), que é a parte de hook/estado, e registrei o pedido do aviso em comentário no cartão.
-- Não toquei banco, Edge Function, migration, produção nem credenciais; sem dependência nova; sem log de telefone, token ou texto de mensagem.
+Ponto 2 — `boundedFetch` com `Request` com body (`client.ts`): o signal do
+chamador agora é lido de `init.signal ?? input.signal`, e um `Request` pronto
+é reemitido via `new Request(original, { signal, duplex: 'half' se há body })`
+— método, URL, cabeçalhos e corpo do original são encaminhados e o timeout de
+12s passa a valer para ele. O original é consumido (uso único), o que já é
+compatível com `hasUnreplayableBody` (esse caso nunca entra em retry).
+`duplex: 'half'` com corpo string/stream verificado em node 24 antes de
+escrever o código. Teste: `Request com body reutiliza o signal do chamador`
+— vermelha sem (abort ignorado; só `TimeoutError` após 12s), verde com
+(`AbortError` imediato, 1 chamada). Teste extra de caracterização: reemissão
+preserva método/URL/cabeçalhos, vale o timeout e não repete.
+
+Ponto 3 — `useAuth` (`src/hooks/auth/useAuth.tsx`): o `catch` agora só marca
+`profileUnavailable` em falha TRANSITÓRIA
+(`respostaVigente && isTransientProfileFailure(err)`, predicado exportado de
+`auth.service.ts`). A reserva por geração já existia na entrada (`++` antes do
+fetch) e nos dois gates (sucesso e erro checam geração + identidade); o teste
+3 pré-existente prova o descarte da resposta atrasada. Teste novo:
+`erro 5xx (sobe sem retry) não marca profileUnavailable` — vermelha sem
+(flag `true` após retries indevidos), verde com (flag `false`, `from` ×1,
+`profile` null). O teste do 400 continua verde (agora chega via throw e o
+gate segura a flag).
+
+Ponto 4 — retry do `fetchProfile` (`src/services/auth.service.ts`):
+transitório agora é SÓ `TypeError` de rede e `TimeoutError`; `AbortError` não
+repete; 4xx/5xx do PostgREST sobem (throw) na hora, sem repetir. Caminho de
+auth inalterado: 401/PGRST301/jwt tenta `refreshSession` e, sem sessão nova,
+devolve `null` como antes. Testes: `timeout é transitório` (novo — vermelha
+sem: devolvia `null` em 1 chamada; verde: 3 chamadas + lança); `5xx sobe na
+hora` e `400 sobe na hora` (atualizados de ×3/`null` para ×1 + throw —
+mudança mandada pela recusa: "o resto sobe na hora sem repetir").
+
+Ponto 5 — `window.location.href` no teste do `useAuth`: conferi — o arquivo
+NÃO contém nenhuma atribuição a `location` (`rg location` nos 3 arquivos de
+teste novos: zero resultados; o único `href = '/'` do `src` está em
+`ErrorBoundary.tsx`, fora deste cartão). Implementei mesmo assim o guard
+ordenado: `beforeEach` captura `window.location.href`, `afterEach` restaura
+se mudou.
+
+Regressão ao lado: `AuthService.fetchProfile` só é chamado por `useAuth.tsx`
+(`rg` confirma; os outros `fetchProfile` do repo são de Evolution/API e
+callbacks locais). `refreshProfile` é aguardado em `AvatarUpload.tsx` dentro
+de `withFeedback` (erro vira toast — comportamento pré-existente para
+transitórios, estendido a 4xx/5xx por ordem da recusa; sem defeito novo).
+`boundedFetch` com entrada não-`Request` gera byte a byte o mesmo `init` de
+antes. `isTransientProfileFailure` exportado é aditivo.
+
+Arquivos (`git diff --name-only`, exato):
+src/hooks/auth/__tests__/useAuth.perfil-indisponivel.test.tsx
+src/hooks/auth/useAuth.tsx
+src/integrations/supabase/__tests__/client.fetch.test.ts
+src/integrations/supabase/client.ts
+src/services/__tests__/auth.service.fetchProfile.test.ts
+src/services/auth.service.ts
+
+Verificação (resultado real, sem número à mão):
+- `npx vitest run` nos 3 arquivos do cartão + 2 suítes vizinhas
+  (`auth.service.test.ts`, `useAuth.perfil-identidade.test.tsx`): 5 passed,
+  26 passed.
+- Prova vermelho/verde: com o `src` escondido via `git stash push` (só os 3
+  arquivos de `src`, testes mantidos), 6 testes falham (allowlist,
+  caller-signal, timeout-transitório, 5xx-sem-retry, 400-sobe,
+  5xx-não-marca); com o `src` restaurado (`git stash pop stash@{0}` —
+  stashes de outros agentes intocados), os 26 passam.
+- `npx tsc -b --force`: rc=0. `npx eslint` nos 6 arquivos: 0 errors
+  (1 warning pré-existente `react-refresh/only-export-components` em
+  `useAuth.tsx:254`).
+- Diff do refazer: 6 arquivos, 19953 caracteres (teto 90k OK); sem
+  identificador de produção em linha adicionada.
+
+Nota de workspace: `hermes-tarefa-iniciar` responde CONGELADO e o guard
+proíbe `git worktree add` em `~/projetos`; trabalhei no workspace original
+do cartão (branch `v2/fix-rede-cliente-supabase-timeout-26101302457cf3`),
+cujos commits `a4325ab252`+`f0325d7ca7` já são o trabalho anterior — o
+`cherry-pick` ordenado era desnecessário. Commit novo só com os 6 arquivos
+acima, escopo = os 5 pontos da recusa.

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -77,7 +77,12 @@ const wrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 describe('useAuth — perfil indisponível', () => {
+  // Guarda de navegação do jsdom: este arquivo não troca `location`, mas se
+  // algum dia trocar (ex.: `window.location.href = '/'`), o valor é capturado
+  // aqui e restaurado no `afterEach` para a troca não vazar entre testes.
+  let hrefAntes: string;
   beforeEach(() => {
+    hrefAntes = window.location.href;
     vi.clearAllMocks();
     harness.fila.length = 0;
     harness.assinantes.length = 0;
@@ -85,6 +90,14 @@ describe('useAuth — perfil indisponível', () => {
       data: { session: sessao('u1') },
       error: null,
     } as never);
+  });
+
+  afterEach(() => {
+    // Restaura a navegação do jsdom se algum teste trocou `location`: sem
+    // isso a troca vaza para os testes seguintes do arquivo.
+    if (typeof window !== 'undefined' && window.location.href !== hrefAntes) {
+      window.location.href = hrefAntes;
+    }
   });
 
   it('marca profileUnavailable após esgotar as retentativas e limpa no "Tentar de novo"', async () => {
@@ -119,6 +132,25 @@ describe('useAuth — perfil indisponível', () => {
 
     expect(result.current.profileUnavailable).toBe(false);
     expect(result.current.profile).toBeNull();
+  });
+
+  it('erro 5xx (sobe sem retry) não marca profileUnavailable', async () => {
+    // 500 do PostgREST: sobe na hora, sem repetir — e NÃO é falha transitória,
+    // então o perfil segue `null` sem pintar erro de rede na tela.
+    harness.fila.push(() =>
+      Promise.resolve({ data: null, error: { status: 500, message: 'Internal Server Error' } })
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 5000 });
+    // Espera além do backoff (300ms + 600ms): se houvesse retry indevido, ele
+    // teria acontecido aqui — e a chamada extra quebraria o `toHaveBeenCalledTimes(1)`.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    expect(supabase.from).toHaveBeenCalledTimes(1);
+    expect(result.current.profile).toBeNull();
+    expect(result.current.profileUnavailable).toBe(false);
   });
 
   it('falha atrasada da identidade anterior não marca o perfil da identidade nova', async () => {

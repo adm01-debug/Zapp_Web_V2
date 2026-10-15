@@ -121,6 +121,100 @@ describe('supabaseFetch — tempo limite e retry seletivo', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('allowlist de RPC: get_own_gmail_accounts repete; talkx_* não repetem', async () => {
+    // `get_own_gmail_accounts` é leitura (lista contas do próprio usuário) e
+    // está na allowlist: blip de rede repete 1x.
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(new Response('', { status: 200 }));
+
+    const leitura = supabaseFetch(`${REST}/rest/v1/rpc/get_own_gmail_accounts`, {
+      method: 'POST',
+      body: '{}',
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    await expect(leitura).resolves.toMatchObject({ status: 200 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    // `talkx_overview_stats` e `talkx_engine_window_open` estão FORA da
+    // allowlist: voltam ao padrão seguro (sem retry).
+    for (const rpc of ['talkx_overview_stats', 'talkx_engine_window_open']) {
+      fetchMock.mockReset();
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+      await expect(
+        supabaseFetch(`${REST}/rest/v1/rpc/${rpc}`, { method: 'POST', body: '{}' })
+      ).rejects.toBeInstanceOf(TypeError);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('Request com body reutiliza o signal do chamador (abort chega)', async () => {
+    let signalVisto: AbortSignal | null = null;
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      signalVisto = (init?.signal ?? (input instanceof Request ? input.signal : null)) as AbortSignal | null;
+      return new Promise((_resolve, reject) => {
+        signalVisto?.addEventListener('abort', () =>
+          reject(signalVisto?.reason ?? new DOMException('abort', 'AbortError'))
+        );
+      });
+    });
+
+    const controleDoChamador = new AbortController();
+    const requisicao = new Request(`${REST}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"a":1}',
+      signal: controleDoChamador.signal,
+    });
+
+    const pendente = supabaseFetch(requisicao);
+    const rejeicao = expect(pendente).rejects.toMatchObject({ name: 'AbortError' });
+
+    controleDoChamador.abort();
+    // Sem o encadeamento, o abort do chamador seria ignorado e só o timeout
+    // (12s) abortaria — com outro motivo. Avançar o relógio prova qual abort
+    // venceu: se o do chamador chegou, já rejeitou como AbortError.
+    await vi.advanceTimersByTimeAsync(SUPABASE_FETCH_TIMEOUT_MS + 1);
+    await rejeicao;
+
+    expect(signalVisto).not.toBeNull();
+    expect(signalVisto!.aborted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // Request com body nunca repete
+  });
+
+  it('Request com body é reemitido com os campos do original e vale o timeout', async () => {
+    let signalVisto: AbortSignal | null = null;
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const reemitida = input as Request;
+      expect(reemitida.method).toBe('POST');
+      expect(reemitida.url).toBe(`${REST}/rest/v1/rpc/search_contacts`);
+      expect(reemitida.headers.get('content-type')).toContain('application/json');
+      signalVisto = (init?.signal ?? reemitida.signal) as AbortSignal | null;
+      return new Promise((_resolve, reject) => {
+        signalVisto?.addEventListener('abort', () =>
+          reject(signalVisto?.reason ?? new DOMException('abort', 'AbortError'))
+        );
+      });
+    });
+
+    const requisicao = new Request(`${REST}/rest/v1/rpc/search_contacts`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: 'k' },
+      body: '{"term":"ana"}',
+    });
+
+    const pendente = supabaseFetch(requisicao);
+    const rejeicao = expect(pendente).rejects.toMatchObject({ name: 'TimeoutError' });
+
+    await vi.advanceTimersByTimeAsync(SUPABASE_FETCH_TIMEOUT_MS + 1);
+    await rejeicao;
+
+    expect(signalVisto).not.toBeNull();
+    expect(signalVisto!.aborted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // Request com body nunca repete
+  });
+
   it('corpo em stream não é reenviado', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
