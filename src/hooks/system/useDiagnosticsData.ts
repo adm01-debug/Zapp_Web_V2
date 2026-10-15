@@ -84,8 +84,8 @@ function classifyHealth(
 function erroDeColeta(error: ProbeError | null): string {
   const code = String(error?.code ?? error?.statusCode ?? error?.status ?? '');
   return code
-    ? `A coleta de diagnósticos foi recusada ou falhou (código ${code}).`
-    : 'A coleta de diagnósticos falhou; os números exibidos podem estar desatualizados.';
+    ? `A coleta de diagnósticos foi recusada ou falhou (código ${code}). Os números exibidos são da última coleta bem-sucedida.`
+    : 'A coleta de diagnósticos falhou. Os números exibidos são da última coleta bem-sucedida.';
 }
 
 /** Realtime não se mede por latência de leitura: assina um canal e espera o ack do servidor.
@@ -395,6 +395,8 @@ export function useDiagnosticsData() {
         details: erroDeColeta(err as ProbeError),
         timestamp: new Date(),
       });
+      // Propaga para o refresh manual avisar o erro (o polling ignora: trata no `.catch`).
+      throw err;
     } finally {
       setRefreshing(false);
       setLoading(false);
@@ -406,8 +408,12 @@ export function useDiagnosticsData() {
 
   const handleRefresh = async () => {
     toast.info('Atualizando diagnósticos...');
-    await fetchAll();
-    toast.success('Diagnósticos atualizados!');
+    try {
+      await fetchAll();
+      toast.success('Diagnósticos atualizados!');
+    } catch {
+      toast.error('Falha ao atualizar os diagnósticos. Tente novamente.');
+    }
   };
 
   // A falha de coleta entra no topo (é a mais nova) e conta como erro crítico.

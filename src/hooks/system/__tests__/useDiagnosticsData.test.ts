@@ -53,6 +53,7 @@ const mocks = vi.hoisted(() => ({
   canaisRemovidos: [] as unknown[],
   toastInfo: vi.fn(),
   toastSuccess: vi.fn(),
+  toastError: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -101,7 +102,7 @@ vi.mock('sonner', () => ({
   toast: {
     info: (...args: unknown[]) => mocks.toastInfo(...args),
     success: (...args: unknown[]) => mocks.toastSuccess(...args),
-    error: vi.fn(),
+    error: (...args: unknown[]) => mocks.toastError(...args),
     warning: vi.fn(),
   },
 }));
@@ -792,5 +793,66 @@ describe('useDiagnosticsData — sonda leve, totais estimados e polling com aba 
     });
     expect(mocks.consultas.length).toBeGreaterThan(antes);
     expect(result.current.loading).toBe(false);
+  });
+});
+
+describe('useDiagnosticsData — [refazer 1] pontos da recusa', () => {
+  it('ponto 1: falha no refresh manual não mostra toast de sucesso e mostra toast de erro em pt-BR', async () => {
+    const { result } = await montar();
+    expect(result.current.collectionError).toBeNull();
+    mocks.toastInfo.mockClear();
+    mocks.toastSuccess.mockClear();
+    mocks.toastError.mockClear();
+
+    mocks.errosTabela = [
+      { table: 'messages', filtro: (c) => c.head, error: { code: '42501', message: 'permission denied' } },
+    ];
+    await act(async () => {
+      await result.current.handleRefresh();
+    });
+
+    expect(mocks.toastInfo).toHaveBeenCalledWith('Atualizando diagnósticos...');
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith('Falha ao atualizar os diagnósticos. Tente novamente.');
+    expect(result.current.collectionError).not.toBeNull();
+    expect(result.current.refreshing).toBe(false);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('ponto 2: ciclo ruim depois do bom mantém os números e avisa que são da última coleta bem-sucedida', async () => {
+    const { result } = await montar();
+    expect(result.current.collectionError).toBeNull();
+    const diagBom = result.current.messageDiag;
+    const saudeBoa = result.current.health;
+    expect(diagBom).not.toBeNull();
+
+    mocks.errosTabela = [
+      { table: 'messages', filtro: (c) => c.head, error: { code: '42501', message: 'permission denied' } },
+    ];
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    // Os agregados continuam exibindo a última coleta boa…
+    expect(result.current.messageDiag).toEqual(diagBom);
+    expect(result.current.health).toEqual(saudeBoa);
+    // …mas o painel diz com o código que estão velhos.
+    expect(result.current.collectionError).toContain('42501');
+    expect(result.current.collectionError).toContain('última coleta bem-sucedida');
+  });
+
+  it('ponto 3: a consulta de órfãos filtra `deleted_at IS NULL` e excluído sem conexão não gera alerta', async () => {
+    mocks.tabelas.contacts = [
+      ...mocks.tabelas.contacts,
+      { id: 'c9', name: 'Excluído', whatsapp_connection_id: null, deleted_at: minutosAtras(60) },
+    ];
+    const { result } = await montar();
+
+    const orfaos = consultasDe('contacts').find((c) => c.head && c.count === 'exact');
+    expect(orfaos?.filters).toContainEqual(['is', 'whatsapp_connection_id', null]);
+    expect(orfaos?.filters).toContainEqual(['is', 'deleted_at', null]);
+
+    const alerta = result.current.errorLogs.find((l) => l.id === 'orphan-contacts');
+    expect(alerta?.message).toBe('2 contato(s) sem conexão WhatsApp');
   });
 });
