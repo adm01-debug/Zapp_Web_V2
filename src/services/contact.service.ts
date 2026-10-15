@@ -265,7 +265,11 @@ export class ContactService {
     ]);
 
     const { data: csatData } = await supabase.from('csat_surveys').select('rating').eq('contact_id', contactId);
-    const csatAvg = csatData && csatData.length > 0 ? csatData.reduce((sum, s) => sum + s.rating, 0) / csatData.length : null;
+    // convite agendado ainda não tem nota (rating nulo): entra só a pesquisa respondida
+    const csatRatings = (csatData ?? [])
+      .map((s) => s.rating)
+      .filter((r): r is number => r !== null);
+    const csatAvg = csatRatings.length > 0 ? csatRatings.reduce((sum, r) => sum + r, 0) / csatRatings.length : null;
 
     const { data: agentMessages } = await supabase
       .from('messages')
