@@ -9,14 +9,17 @@
 --       service_role com EXECUTE (controle positivo);
 --   T3  contagens de mensagens por janela (total / recente / anterior) e a
 --       variação percentual (default p_days = 30);
---   T4  TEMPO DE RESPOSTA com LEAD sobre TODO o histórico — 300 pares, acima do
---       teto de 200 do código antigo: a média (3,67) e a amostra (300) provam que
---       a leitura não para no "começo da história" (o valor antigo seria 1,00 com
---       100 pares); a MEDIANA (5,00) vem no mesmo retorno;
+--   T4  TEMPO DE RESPOSTA com LEAD e filtro pela janela recente — 250 pares
+--       DENTRO da janela de 30 dias (500 mensagens, bem acima do teto de 200
+--       do código antigo) + 50 pares ANTIGOS a 90 dias (fora da janela, que a
+--       RPC tem de ignorar): amostra 250, média 5,20 e MEDIANA 6,00; a leitura
+--       antiga das 200 primeiras linhas daria 1,49 com 99 pares;
 --   T5  contato visível SEM dado devolve UMA linha zerada (não some do painel);
 --   T6  contagens de conversas por janela (conversation_sla.first_message_at) e
 --       média/contagem de CSAT;
---   T7  p_days é honrado (não ignorado).
+--   T7  p_days é honrado (não ignorado): muda as contagens E a amostra do tempo
+--       de resposta (20 dias = 200 pares); p_days=0 e p_days=NULL caem no
+--       default 30 (250 pares).
 --
 -- COMO RODAR (banco LOCAL da tarefa, nunca produção):
 --   zapp-db-local psql . <conjunto> -v ON_ERROR_STOP=1 < supabase/tests/contact_response_stats.sql
@@ -61,6 +64,13 @@ DECLARE
   v_pd_rec         bigint;
   v_pd_prev        bigint;
   v_pd_chg         numeric;
+  -- resposta por janela (T7, contato_resp)
+  v_r20_samp       bigint;
+  v_r20_avg        numeric;
+  v_r20_med        numeric;
+  v_r0_samp        bigint;
+  v_r0_avg         numeric;
+  v_rn_samp        bigint;
   -- vazio
   v_v_tot_m        bigint;
   v_v_c_tot        bigint;
@@ -96,20 +106,47 @@ BEGIN
     (v_contact_vazio,  'Contato A vazio',    '5511000000954', v_profile_a);
 
   -- 300 pares "mensagem do contato -> resposta do agente" (600 mensagens), bem
-  -- acima das 200 linhas que o código antigo lia. Pares 1..100 respondidos em
-  -- 1 minuto; pares 101..300 em 5 minutos. Tudo a 90 dias, fora das janelas.
+  -- acima das 200 linhas que o código antigo lia, em TRÊS grupos:
+  --   velhos: 50 pares a 90 dias (v_resp_base), respondidos em 1 minuto — FORA
+  --     de qualquer janela; a RPC tem de IGNORÁ-LOS no tempo de resposta;
+  --   externos: 50 pares de 27 a 25 dias atrás, respondidos em 2 minutos —
+  --     dentro da janela de 30 dias, fora da de 20;
+  --   internos: 200 pares de 10 dias atrás até ~2 dias atrás, respondidos em
+  --     6 minutos — dentro das duas janelas.
+  -- Espaçamento de 1h entre pares (resposta máxima 6 min): nenhum par se
+  -- sobrepõe, então todo contato é seguido IMEDIATAMENTE pela sua resposta.
   INSERT INTO public.messages (contact_id, sender, content, message_type, created_at)
   SELECT
     v_contact_resp,
     CASE WHEN g % 2 = 1 THEN 'contact' ELSE 'agent' END,
-    'resp ' || g,
+    'resp-old ' || g,
     'text',
     v_resp_base
       + make_interval(hours => (g - 1) / 2)
-      + CASE WHEN g % 2 = 0
-             THEN CASE WHEN (g - 1) / 2 < 100 THEN interval '1 minute' ELSE interval '5 minutes' END
-             ELSE interval '0' END
-  FROM generate_series(1, 600) AS g;
+      + CASE WHEN g % 2 = 0 THEN interval '1 minute' ELSE interval '0' END
+  FROM generate_series(1, 100) AS g;
+
+  INSERT INTO public.messages (contact_id, sender, content, message_type, created_at)
+  SELECT
+    v_contact_resp,
+    CASE WHEN g % 2 = 1 THEN 'contact' ELSE 'agent' END,
+    'resp-out ' || g,
+    'text',
+    (now() - interval '27 days')
+      + make_interval(hours => (g - 1) / 2)
+      + CASE WHEN g % 2 = 0 THEN interval '2 minutes' ELSE interval '0' END
+  FROM generate_series(1, 100) AS g;
+
+  INSERT INTO public.messages (contact_id, sender, content, message_type, created_at)
+  SELECT
+    v_contact_resp,
+    CASE WHEN g % 2 = 1 THEN 'contact' ELSE 'agent' END,
+    'resp-in ' || g,
+    'text',
+    (now() - interval '10 days')
+      + make_interval(hours => (g - 1) / 2)
+      + CASE WHEN g % 2 = 0 THEN interval '6 minutes' ELSE interval '0' END
+  FROM generate_series(1, 400) AS g;
 
   -- Duas mensagens do contato em sequência, sem resposta: não formam par
   -- (o "próximo" de uma mensagem do contato é outra do contato).
@@ -179,22 +216,27 @@ BEGIN
   IF v_tot_m <> 602 THEN
     RAISE EXCEPTION 'T4 FALHOU: total_messages esperava 602 (600 dos pares + 2 sem resposta), veio %', v_tot_m;
   END IF;
-  IF v_samp <> 300 THEN
-    RAISE EXCEPTION 'T4 FALHOU: response_samples esperava 300 (todo o historico), veio % — a leitura parou no comeco da historia', v_samp;
+  -- Janela de 30 dias: 250 pares (50 externos de 2 min + 200 internos de 6 min);
+  -- os 50 velhos (1 min, a 90 dias) ficam DE FORA. Média = 1300/250 = 5,20;
+  -- mediana = 6,00 (os 50 valores 2,0 perdem para os 200 valores 6,0).
+  IF v_samp <> 250 THEN
+    RAISE EXCEPTION 'T4 FALHOU: response_samples esperava 250 (só a janela recente), veio % — pares antigos fora da janela estão sendo contados', v_samp;
   END IF;
-  IF v_avg <> 3.67 THEN
-    RAISE EXCEPTION 'T4 FALHOU: avg_response_minutes esperava 3.67 (media dos 300 pares), veio %', v_avg;
+  IF v_avg <> 5.20 THEN
+    RAISE EXCEPTION 'T4 FALHOU: avg_response_minutes esperava 5.20 (media da janela), veio %', v_avg;
   END IF;
-  IF v_avg = 1.00 THEN
-    RAISE EXCEPTION 'T4 FALHOU: avg_response_minutes voltou 1.00, a media das 100 PRIMEIRAS respostas (o vies do limite de 200)';
+  IF v_avg = 1.49 THEN
+    RAISE EXCEPTION 'T4 FALHOU: avg_response_minutes voltou 1.49, a media das 200 PRIMEIRAS mensagens (o vies do limite de 200)';
   END IF;
-  IF v_med <> 5.00 THEN
-    RAISE EXCEPTION 'T4 FALHOU: median_response_minutes esperava 5.00, veio %', v_med;
+  IF v_med <> 6.00 THEN
+    RAISE EXCEPTION 'T4 FALHOU: median_response_minutes esperava 6.00, veio %', v_med;
   END IF;
 
   -- Vermelho do defeito: a leitura ANTIGA (200 mensagens mais antigas, em ordem
-  -- crescente) só enxergava 100 pares, todos de 1 minuto -> média 1.00. A RPC
-  -- tem de devolver um número DIFERENTE disso (o do histórico completo).
+  -- crescente) só enxergava 99 pares — 50 velhos de 1 min + 49 externos de
+  -- 2 min (as 2 "sem resposta", a 73 dias, ocupam 2 das 200 linhas e empurram
+  -- o 100º par para fora) -> média 148/99 = 1.49. A RPC tem de devolver um
+  -- número DIFERENTE disso (o da janela recente, 5.20).
   SELECT round(avg(minutos), 2) INTO v_avg_old FROM (
     SELECT extract(epoch FROM (lead(m.created_at) OVER (ORDER BY m.created_at) - m.created_at)) / 60.0 AS minutos,
            m.sender,
@@ -209,15 +251,16 @@ BEGIN
   ) x
   WHERE x.sender = 'contact' AND x.next_sender = 'agent';
 
-  IF v_avg_old <> 1.00 THEN
-    RAISE EXCEPTION 'fixture invalida: a leitura antiga (200 linhas) deveria dar 1.00 e deu %', v_avg_old;
+  IF v_avg_old <> 1.49 THEN
+    RAISE EXCEPTION 'fixture invalida: a leitura antiga (200 linhas) deveria dar 1.49 e deu %', v_avg_old;
   END IF;
   IF v_avg = v_avg_old THEN
     RAISE EXCEPTION 'T4 FALHOU: a RPC devolveu a media viesada das 200 primeiras mensagens (%)', v_avg;
   END IF;
-  -- Tudo a 90 dias: janelas zeradas e variacao NULL (nao inventa numero).
-  IF v_rec_m <> 0 OR v_prev_m <> 0 OR v_chg_m IS NOT NULL THEN
-    RAISE EXCEPTION 'T4 FALHOU: janelas do historico antigo deveriam ser 0/0/NULL, veio %/%/%', v_rec_m, v_prev_m, v_chg_m;
+  -- 500 mensagens na janela recente (250 pares), 0 na anterior e variacao NULL
+  -- (nao inventa numero). Os 100 velhos + 2 sem resposta ficam fora das janelas.
+  IF v_rec_m <> 500 OR v_prev_m <> 0 OR v_chg_m IS NOT NULL THEN
+    RAISE EXCEPTION 'T4 FALHOU: janelas deveriam ser 500/0/NULL, veio %/%/%', v_rec_m, v_prev_m, v_chg_m;
   END IF;
   v_ok := v_ok + 1;
 
@@ -256,6 +299,33 @@ BEGIN
 
   IF v_pd_rec <> 3 OR v_pd_prev <> 1 OR v_pd_chg <> 200 THEN
     RAISE EXCEPTION 'T7 FALHOU: p_days=20 esperava 3/1/200, veio %/%/%', v_pd_rec, v_pd_prev, v_pd_chg;
+  END IF;
+
+  -- p_days também move o tempo de resposta: com 20 dias só os 200 pares
+  -- internos (6 min) entram — amostra 200, média e mediana 6,00.
+  SELECT response_samples, avg_response_minutes, median_response_minutes
+    INTO v_r20_samp, v_r20_avg, v_r20_med
+    FROM public.contact_response_stats(v_contact_resp, 20);
+
+  IF v_r20_samp <> 200 OR v_r20_avg <> 6.00 OR v_r20_med <> 6.00 THEN
+    RAISE EXCEPTION 'T7 FALHOU: p_days=20 no tempo de resposta esperava 200/6.00/6.00, veio %/%/%', v_r20_samp, v_r20_avg, v_r20_med;
+  END IF;
+
+  -- p_days fora da faixa cai no default 30: 0 e NULL devolvem o mesmo que o
+  -- default (amostra 250, média 5,20).
+  SELECT response_samples, avg_response_minutes
+    INTO v_r0_samp, v_r0_avg
+    FROM public.contact_response_stats(v_contact_resp, 0);
+
+  IF v_r0_samp <> 250 OR v_r0_avg <> 5.20 THEN
+    RAISE EXCEPTION 'T7 FALHOU: p_days=0 deveria cair no default 30 (250/5.20), veio %/%', v_r0_samp, v_r0_avg;
+  END IF;
+
+  SELECT response_samples INTO v_rn_samp
+    FROM public.contact_response_stats(v_contact_resp, NULL);
+
+  IF v_rn_samp <> 250 THEN
+    RAISE EXCEPTION 'T7 FALHOU: p_days=NULL deveria cair no default 30 (250), veio %', v_rn_samp;
   END IF;
   v_ok := v_ok + 1;
 
