@@ -647,6 +647,8 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {
+      // PK-28: `location` é um tipo de envio como os outros — a citação pendente vai junto.
+      const replyTo = replyToMessageRef.current?.id ?? null;
       await sendOutboundMessage({
         contactId,
         content: JSON.stringify({
@@ -656,6 +658,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
           ...(location.address ? { address: location.address } : {}),
         }),
         messageType: 'location',
+        ...(replyTo ? { replyToId: replyTo } : {}),
       });
       toast({ title: 'Localização enviada!', description: location.name || 'Localização compartilhada' });
     } catch (error) {
@@ -668,7 +671,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   // R2-INB-022: só fecha o gravador quando o envio CONFIRMA. Em falha, mantém o AudioRecorder
   // montado — o blob vive no estado dele, então fechar descartaria uma gravação ainda recuperável.
   // Devolve true/false para o chamador (o ChatPanel hoje ignora; os testes pinam o contrato).
-  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<boolean>): Promise<boolean> => {
+  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob, replyToId?: string | null) => Promise<boolean>): Promise<boolean> => {
     if (!onSendAudio) {
       toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' });
       return false;
@@ -676,7 +679,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (isSendingAudioRef.current) return false;
     isSendingAudioRef.current = true;
     try {
-      const enviado = await onSendAudio(audioBlob);
+      // PK-28: a barra de resposta segue ativa durante a gravação; a citação pendente
+      // acompanha o áudio (é o mesmo caminho que `handleSend` já faz para o texto).
+      const replyPendente = replyToMessageRef.current?.id ?? null;
+      const enviado = replyPendente
+        ? await onSendAudio(audioBlob, replyPendente)
+        : await onSendAudio(audioBlob);
       // A ponte sinaliza falha com `false` (ela mesma já avisa o usuário); ausência de retorno
       // também conta como falha — o padrão seguro é NÃO descartar a gravação.
       if (enviado) {

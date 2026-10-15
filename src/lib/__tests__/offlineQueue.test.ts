@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createFakeIndexedDb } from '@/test/fakeIndexedDb';
+import { createCrossTabDrainLock } from '../crossTabDrainLock';
 import {
   createIndexedDbOfflineQueueDriver,
   createMemoryOfflineQueueDriver,
@@ -227,5 +228,76 @@ describe('drainOfflineQueueOnReconnect', () => {
 
     expect(await queue.drain(async () => {}, { onError })).toEqual({ sent: 0, remaining: 0 });
     expect(onError).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * PK-28 · paridade doc 06: a fila é o MESMO IndexedDB para todas as abas da
+ * origem e o evento `online` chega em todas elas. Sem coordenação, cada mensagem
+ * da fila saía uma vez por aba.
+ */
+describe('createOfflineQueue — drenagem entre abas (PK-28)', () => {
+  /** `LockManager` de mentira, só com a semântica de `ifAvailable`. */
+  function fakeLockManager() {
+    const tomadas = new Set<string>();
+    return {
+      request: async (
+        name: string,
+        options: { ifAvailable?: boolean } | undefined,
+        callback: (lock: { name: string } | null) => Promise<unknown>,
+      ) => {
+        if (options?.ifAvailable && tomadas.has(name)) return callback(null);
+        tomadas.add(name);
+        try {
+          return await callback({ name });
+        } finally {
+          tomadas.delete(name);
+        }
+      },
+    } as unknown as LockManager;
+  }
+
+  it('duas abas sobre a MESMA fila: só a dona da trava entrega; a outra vê a fila intocada', async () => {
+    const locks = fakeLockManager();
+    const driver = createMemoryOfflineQueueDriver();
+    const abaA = createOfflineQueue({ driver, lock: createCrossTabDrainLock({ locks, tabId: 'aba-a' }) });
+    const abaB = createOfflineQueue({ driver, lock: createCrossTabDrainLock({ locks, tabId: 'aba-b' }) });
+    await abaA.enqueue(mensagem(1));
+
+    let liberarA: () => void = () => {};
+    const Asegurou = new Promise<void>((resolve) => {
+      liberarA = resolve;
+    });
+    const entreguesA: string[] = [];
+    const entreguesB: string[] = [];
+
+    const drenagemA = abaA.drain(async (item) => {
+      entreguesA.push(item.content);
+      await Asegurou;
+    });
+    // Dá tempo da aba A entrar na trava antes da aba B tentar drenar.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const resultadoB = await abaB.drain(async (item) => {
+      entreguesB.push(item.content);
+    });
+
+    expect(resultadoB).toMatchObject({ sent: 0, outraAba: true });
+    expect(entreguesB).toEqual([]);
+
+    liberarA();
+    await expect(drenagemA).resolves.toEqual({ sent: 1, remaining: 0 });
+    expect(entreguesA).toEqual(['mensagem 1']);
+  });
+
+  it('sem trava injetada a drenagem segue o caminho de sempre (aba única)', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver(), lock: null });
+    await queue.enqueue(mensagem(1));
+
+    const entregues: string[] = [];
+    await expect(queue.drain(async (item) => {
+      entregues.push(item.content);
+    })).resolves.toEqual({ sent: 1, remaining: 0 });
+    expect(entregues).toEqual(['mensagem 1']);
   });
 });
