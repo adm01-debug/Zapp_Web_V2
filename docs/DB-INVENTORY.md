@@ -179,7 +179,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `sales_pipeline_stages` | Etapas do pipeline de vendas (ordem, cor e estado) | ativo | `src/hooks/crm/useContactCrm360.ts` |
 | `saved_filters` | Filtros salvos pelo usuário por tipo de entidade | ativo | `src/hooks/chat/useSavedFilters.ts` |
 | `scheduled_messages` | Mensagens agendadas (conteúdo, mídia e horário) | ativo | `src/hooks/chat/useScheduledMessages.ts`, `src/test/mocks/scheduledMessagesServer.ts`, `.github/workflows/db-migrate.yml` … |
-| `scheduled_report_configs` | Configuração de relatórios agendados pela tela (frequência e destinatários) | ativo | `src/components/reports/ScheduledReportConfigs.tsx`, `src/hooks/dashboard/useScheduledReportConfigs.ts`, `scripts/ci/dashboard-readme-drift.unit.mjs` |
+| `scheduled_report_configs` | Configuração de relatórios agendados pela tela (frequência e destinatários) | ativo | `src/hooks/dashboard/useScheduledReportConfigs.ts`, `scripts/ci/dashboard-readme-drift.unit.mjs` |
 | `scheduled_reports` | Relatórios agendados (tipo, frequência, destinatários e formato) | ativo | `src/hooks/chat/useScheduledReports.ts`, `supabase/functions/send-scheduled-report/index.test.ts`, `supabase/functions/send-scheduled-report/index.ts` |
 | `security_alerts` | Alertas de segurança (tipo, severidade e IP de origem) | ativo | `src/components/security/RateLimitRealtimeAlerts.tsx`, `src/components/security/SecurityOverview.tsx`, `src/hooks/system/useSecurityPushNotifications.ts` … |
 | `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | roadmap | — |

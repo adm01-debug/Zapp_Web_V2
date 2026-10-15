@@ -113,7 +113,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
 | `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
 | `send-rate-limit-alert` | E | — sem chamador no repositório — |
-| `send-scheduled-report` | A | `src/hooks/chat/useScheduledReports.ts:142` |
+| `send-scheduled-report` | A | `src/hooks/chat/useScheduledReports.ts:171` |
 | `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
 | `status` | E | — sem chamador no repositório — |
 | `sync-call-records` | D | `supabase/config.toml:73` |
