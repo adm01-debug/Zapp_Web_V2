@@ -1,0 +1,16 @@
+{
+  "before": {
+    "lease_column_count": 0,
+    "new_complete_count": 0,
+    "old_complete_count": 1,
+    "new_fail_count": 0,
+    "state_constraint_count": 0
+  },
+  "after": {
+    "lease_column_count": 1,
+    "new_complete_count": 1,
+    "old_complete_count": 0,
+    "new_fail_count": 1,
+    "state_constraint_count": 3
+  }
+}

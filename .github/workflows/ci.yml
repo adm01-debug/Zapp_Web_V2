@@ -4,7 +4,7 @@
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
-#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
+#   - merge_group inerte: gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org)
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
@@ -28,11 +28,15 @@ on:
   # E24: reexecutar a suite na main sem precisar de um push novo.
   workflow_dispatch:
 
-env:
-  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-  VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-  VITE_CRM_INTEGRATION_ENABLED: 'true'
+# W49: VITE_* removidos do env global — so o job "build" precisa deles (step-level
+# em "Build for production"). Os outros jobs (lint, test, e2e) nao chegam a usar
+# VITE_SUPABASE_URL/KEY; o e2e usa VITE_CRM_INTEGRATION_ENABLED inline no
+# playwright.config.ts (fallback 'true'). Reduz o escopo de exposicao dos secrets.
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
@@ -67,41 +71,28 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
-
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: '2.9.5'
-
-      - name: 🦕 Typecheck das Edge Functions (deno check)
-        run: >-
-          deno check --config scripts/ci/deno.json --frozen
-          supabase/functions/*/index.ts
-
-      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
-      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
-      - name: 🧪 Run executable Edge handler contracts
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
-          $(git ls-files 'supabase/functions/**/*.test.ts')
 
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
-
-      - name: 🐹 Setup Go for egress-proxy contracts
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.24.x'
-          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
-
-      - name: 🧪 Run pinned egress-proxy contracts
-        working-directory: infrastructure/preview-egress-proxy
-        run: go test ./...
+          scripts/catalog/validate-plan.test.mjs
+          scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/team-chat-db-validate.unit.mjs
+          scripts/ui-audit/*.unit.mjs
+          scripts/db-tests/run-all.unit.mjs
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
@@ -126,7 +117,6 @@ jobs:
           # actionlint vem do release oficial pinado (v1.7.7) com o sha256
           # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
           # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
-          set -euo pipefail
           actionlint_version="1.7.7"
           actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
           actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
@@ -138,7 +128,19 @@ jobs:
           tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
           chmod +x "$actionlint_dir/actionlint"
           echo "$actionlint_dir" >> "$GITHUB_PATH"
-          "$actionlint_dir/actionlint" -shellcheck ''
+          # W43: shellcheck pinado v0.10.0 para analise estatica de scripts inline.
+          shellcheck_version="0.10.0"
+          shellcheck_asset="shellcheck-v${shellcheck_version}.linux.x86_64.tar.xz"
+          shellcheck_sha256="6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87"
+          shellcheck_dir="$RUNNER_TEMP/shellcheck"
+          mkdir -p "$shellcheck_dir"
+          curl --proto '=https' --tlsv1.2 -sSL -o "$shellcheck_dir/$shellcheck_asset" \
+            "https://github.com/koalaman/shellcheck/releases/download/v${shellcheck_version}/${shellcheck_asset}"
+          echo "${shellcheck_sha256}  ${shellcheck_dir}/${shellcheck_asset}" | sha256sum --check --strict
+          tar -xJf "$shellcheck_dir/$shellcheck_asset" -C "$shellcheck_dir" --strip-components=1
+          chmod +x "$shellcheck_dir/shellcheck"
+          echo "Usando shellcheck $("$shellcheck_dir/shellcheck" --version | grep '^version:' | awk '{print $2}') em $shellcheck_dir/shellcheck"
+          "$actionlint_dir/actionlint" -shellcheck "$shellcheck_dir/shellcheck"
 
       - name: 📖 Verify workflow docs are fresh
         run: |
@@ -148,13 +150,21 @@ jobs:
           node scripts/ci/render-workflow-docs.mjs --check
 
       - name: 🛡️ Audit workflow security (zizmor)
+        # W42: binario do release oficial pinado com sha256 (sem pip/Python).
         run: |
-          # --only-binary :all: impede o build de sdist (scripts de setup);
-          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
-          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
+          zizmor_version="1.30.1"
+          zizmor_asset="zizmor-x86_64-unknown-linux-gnu.tar.gz"
+          zizmor_sha256="e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
+          zizmor_dir="$RUNNER_TEMP/zizmor"
+          mkdir -p "$zizmor_dir"
+          curl --proto '=https' --tlsv1.2 -sSL -o "$zizmor_dir/$zizmor_asset" \
+            "https://github.com/zizmorcore/zizmor/releases/download/v${zizmor_version}/${zizmor_asset}"
+          echo "${zizmor_sha256}  ${zizmor_dir}/${zizmor_asset}" | sha256sum --check --strict
+          tar -xzf "$zizmor_dir/$zizmor_asset" -C "$zizmor_dir" zizmor
+          chmod +x "$zizmor_dir/zizmor"
           # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
           # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
-          zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
+          "$zizmor_dir/zizmor" --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
 
       - name: 🧾 Verify Edge deployment manifest freshness
         run: node scripts/edge-deploy/generate-manifest.mjs --check
@@ -182,6 +192,10 @@ jobs:
       - name: 📋 Check test inventory (todo .test.ts/.test.sh tem passo no CI YAML)
         run: node scripts/ci/check-test-inventory.mjs
 
+      # W78: verifica prazos da quarentena da suíte E2E -- item vencido derruba o CI
+      - name: 🔒 Check E2E quarantine expiry
+        run: node scripts/ci/check-quarantine.mjs
+
       - name: 🧾 Verify Talk X V4 placar freshness (aviso)
         # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
         # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o
@@ -200,13 +214,59 @@ jobs:
           node scripts/talkx/v4-status.mjs --check --ref origin/main
 
   # ===========================================
-  # JOB 2: Unit Tests
+  # JOB 1b: Edge contracts & Go (W37 — não required por 7 d; entra via E100)
   # ===========================================
-  test:
-    name: 🧪 Unit Tests
+  edge-go-contracts:
+    name: 🦕 Edge contracts & Go
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    needs: lint-and-typecheck
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
+      # E49: glob substitui lista hardcoded de ~45 arquivos.
+      - name: 🧪 Run executable Edge handler contracts
+        run: |
+          # shellcheck disable=SC2046
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
+            $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🐹 Setup Go for egress-proxy contracts
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
+
+      - name: 🧪 Run pinned egress-proxy contracts
+        working-directory: infrastructure/preview-egress-proxy
+        run: go test ./...
+
+  # ===========================================
+  # JOB 2a: Unit Test Shards (paralelos, sem cobertura)
+  # ===========================================
+  unit-test-shard:
+    name: 🧪 Unit Tests (${{ matrix.shard }}/2)
+    # W45: PRs draft pulam os jobs pesados — o check fica verde (skipped) sem executar.
+    # ready_for_review no gatilho relança quando o draft é convertido.
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      matrix:
+        shard: [1, 2]
+      fail-fast: false
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -218,10 +278,68 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
+      - name: 🧪 Run Vitest shard ${{ matrix.shard }}/2
+        # W38: shard paralelo; cobertura desligada aqui — verificada no job agregador
+        # somente na main para nao duplicar o custo (cobertura ~2x mais lenta que teste puro).
+        run: bun vitest run --shard=${{ matrix.shard }}/2
+        env:
+          CI: true
+
+  # JOB 2: Unit Tests — agregador (required check) + contratos + cobertura na main
+  # ===========================================
+  test:
+    name: 🧪 Unit Tests
+    needs: unit-test-shard
+    # always() garante que o check aparece mesmo se o shard falhou (para reportar a falha).
+    # A segunda condicao preserva o comportamento W45: draft PRs nao executam.
+    if: always() && !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 🚫 Verificar resultado dos shards
+        run: |
+          result="${{ needs.unit-test-shard.result }}"
+          if [[ "$result" != "success" ]]; then
+            echo "::error::Unit test shards: $result"
+            exit 1
+          fi
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 📊 Verificar cobertura com piso (somente main)
+        # W38: cobertura so na main — PRs nao precisam do overhead de instrumentacao (~2x).
+        # O piso e' verificado em cada push na main; PRs nao podem fazer o piso regredir
+        # sem que o proximo merge na main o detecte.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: bun run test:coverage
         env:
           CI: true
@@ -255,9 +373,10 @@ jobs:
   # ===========================================
   build:
     name: 🏗️ Build
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: [lint-and-typecheck, test]
+    needs: test
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -268,6 +387,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -311,20 +438,31 @@ jobs:
   # ===========================================
   security:
     name: 🔒 Security Audit
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # gitleaks precisa do historico completo do PR para detectar segredos
+          # introduzidos em qualquer commit do range (nao so no HEAD).
           fetch-depth: 0
 
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -336,7 +474,6 @@ jobs:
       # registry, e o gate confere o codigo E o relatorio (R2-INF-009).
       - name: 🔎 Audit completo (informativo, inclui devDependencies)
         run: |
-          set -euo pipefail
           status=0
           bun audit --audit-level=low > audit-report.txt 2>&1 || status=$?
           echo "$status" > audit-status.txt
@@ -356,14 +493,24 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
+      - name: 🔒 Dependency review
+        # W85: falha em vulnerabilidade `high` nova introduzida no PR; lista licenças.
+        # Só faz sentido em pull_request (compara base↔head).
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4.7.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
   # ===========================================
   # JOB 5: E2E Tests (Playwright)
   # ===========================================
   e2e:
     name: 🎭 E2E Tests (Playwright)
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -374,6 +521,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -390,7 +545,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         # Só em cache miss. W09 (plano de 14/10/2026, achado N-05b): o binário vem
@@ -401,13 +556,13 @@ jobs:
         # testes à mão. Continua atendendo o SonarCloud githubactions:S8543: nada é
         # baixado fora do lockfile.
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: ./node_modules/.bin/playwright install-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install-deps chromium
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
@@ -419,8 +574,9 @@ jobs:
       # (installFakeSession) com REST/RPC e Mapbox mockados, logo executam sem secret
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
-      - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+      # W76: só Chromium no PR — firefox-*/webkit-* deslogados foram para e2e-logado.yml.
+      - name: 🧪 Run Playwright E2E (Chromium, sem autenticação)
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy
         env:
           CI: true
 
@@ -460,13 +616,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
-    needs: lint-and-typecheck
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # W48: checkout raso; o fetch do BASE_REF abaixo traz só o ancestral necessário.
+          # W48: fetch-depth 1 + fetch raso da base antes do diff reduz o
+          # checkout de ~15s (historico completo) para <3s. 50 commits de
+          # profundidade cobre PRs normais sem precisar do historico total.
           fetch-depth: 1
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
@@ -475,13 +633,12 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          set -euo pipefail
           if [ -z "${BASE_REF:-}" ]; then
             # push/dispatch/merge_group: sem base de PR, roda (fail-open).
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
+          # W48: busca so' a base do PR com historico raso para o diff funcionar.
           git fetch origin "${BASE_REF}" --depth=50 --quiet
           changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
@@ -496,6 +653,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

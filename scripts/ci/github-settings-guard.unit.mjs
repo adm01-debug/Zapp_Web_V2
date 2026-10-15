@@ -15,11 +15,14 @@ const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
   "['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)']";
-const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true } })`;
-const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true } })`;
+const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
-  "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE' })";
+  "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
+const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'write', can_approve_pull_request_reviews: true })";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action','step-security/harden-runner']";
+const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
 /**
@@ -57,12 +60,13 @@ function stub(
   const prot = {
     ok: PROT_OK,
     regressao: PROT_REGRESSAO,
-    semChecks: 'send({ required_status_checks: null, enforce_admins: { enabled: true } })',
+    semChecks: `send({ required_status_checks: null, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`,
     semEscopo: SEM_ESCOPO,
     tokenReal: SEM_ESCOPO,
     parcial: PROT_OK,
-    injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true } })",
+    injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })",
   }[modo];
+  const workflowPerms = modo === 'tokenReal' ? SEM_ESCOPO : WORKFLOW_PERMS_OK;
 
   // S3923: aqui havia `modo === 'injecao' ? A : B` com A e B IDENTICOS -- ramo morto,
   // o valor nao mudava com a condicao. A correcao NAO foi apagar a distincao: foi fazer
@@ -79,7 +83,7 @@ function stub(
 
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
-    "send({ environments: [{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
+    "send({ environments: [{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
 
   const criadoEm = new Date(Date.now() - idadeMs).toISOString();
   const totalComentarios = comentarioDepois ? 2 : 1;
@@ -114,7 +118,10 @@ function stub(
     "  if (p.indexOf('/issues?labels=') !== -1) return " + issues + ';',
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
+    "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
+    "  if (p.indexOf('/actions/selected-actions') !== -1) return " + SELECTED_OK + ';',
+    "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
     "  if (method === 'GET' && p === '/repos/o/r') return " + repo + ';',
     "  if (method === 'GET') return send({});",
@@ -147,6 +154,7 @@ const CEGOS_TOKEN_REAL = [
   { nome: 'branch protection', campos: ['403'] },
   { nome: 'merge/repo', campos: ['200'] },
   { nome: 'actions', campos: ['403'] },
+  { nome: 'workflow permissions', campos: ['403'] },
 ];
 const MARCADOR_TOKEN_REAL = `<!-- causa:${assinaturaDe([], CEGOS_TOKEN_REAL)} -->`;
 // Assinatura do caso `regressao`: strict=false lido, nada cego.
@@ -351,7 +359,7 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
+    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura', 'Preview',
     'producao-ddl', 'producao-edge-functions', 'Production',
     ...extras,
   ];

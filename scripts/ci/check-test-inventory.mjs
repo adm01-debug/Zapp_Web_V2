@@ -27,68 +27,53 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-// Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
-const ALLOWLIST = new Set([
-  // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
-  // X034: harness de integração do motor com o provedor falso (Postgres descartável + PostgREST +
-  // fake-evolution). Roda no passo Deno/harness da Fase 3; promover em db-guard.yml quando maduro.
-  'scripts/db-audit/talkx-engine-provider.test.sh',
-  'scripts/db-audit/talk-me-client-privileges.test.sh',
-  'scripts/db-audit/talkx-current-template-version.test.sh',
-  'scripts/db-audit/talkx-v23-draft-step.test.sh',
-  'scripts/db-audit/talkx-v25-owner.test.sh',
-  'scripts/db-audit/talkx-v26-template-version.test.sh',
-  // --- .test.sh — prova em container descartável (docker); passo de YAML
-  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
-  // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
-  // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
-  // docker descartável estiver disponível no runner do db-guard.yml.
-  'scripts/db-audit/reminders-migracao-identidade.test.sh',
-  'scripts/db-audit/pg-cron-escalonamento.test.sh',
-  'scripts/db-audit/talkx-optout.test.sh',
-  'scripts/db-audit/talkx-overview-stats.test.sh',
-  'scripts/db-audit/talkx-campaign-segments.test.sh',
-  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
-  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
-  'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
-  // IA-131 (item 133): cadeia real ia033→ia131 em PG 17 descartável (docker local) — prova que a
-  // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
-  // db-guard.yml — promover pelo dono do workflow.
-  'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
-  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
-  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
-  // junto de gen-types.test.sh; promover pelo dono do workflow.
-  'scripts/db-audit/replay-classify.test.sh',
-  // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
-  // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
-  // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
-  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
-  'scripts/db-audit/replay-local-harness.test.sh',
+// ── Allowlist com prazo (W54) ─────────────────────────────────────────────────
+// Cada entrada tem `desde` (AAAA-MM-DD) e `motivo`. Falha se (hoje - desde) > 30 dias.
+// Regra idêntica à quarentena E87: allowlist sem prazo é um `skip` com outro nome.
+// W53: todos os itens anteriores promovidos; ambas as Metas vazias.
+
+const FORMATO_DATA = /^\d{4}-\d{2}-\d{2}$/u;
+export const PRAZO_ALLOWLIST_DIAS = 30;
+
+/** Data de hoje em ISO (AAAA-MM-DD), sem depender de fuso do ambiente. */
+export function hojeISO(agora = new Date()) {
+  return agora.toISOString().slice(0, 10);
+}
+
+// .test.sh fora de db-guard.yml — Map<caminho, {desde, motivo}>.
+const ALLOWLIST_META = new Map([
+  // Exemplo: ['scripts/db-audit/foo.test.sh', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
 ]);
 
-// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
-// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
-// ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
-// primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
-// ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
-export const ALLOWLIST_NODE = new Set([
-  // Valida um plano de catálogo sintético contra o repositório (offline).
-  'scripts/catalog/validate-plan.test.mjs',
-  // Prova o resolvedor de executáveis usado por várias guardas (offline).
-  'scripts/lib/seguranca-processo.test.mjs',
-  // Prova os provadores de visão com `fetch` stubbed (offline).
-  'scripts/qa/prova-visao-classificadores.unit.mjs',
-  // Prova o log do validador de banco do team chat com `fetch` stubbed (offline).
-  'scripts/team-chat-db-validate.unit.mjs',
-  // Auditorias de layout/UI lidas do próprio repositório (offline).
-  'scripts/ui-audit/contacts-navy-header.unit.mjs',
-  'scripts/ui-audit/layout-guard.unit.mjs',
-  'scripts/ui-audit/view-container-padding.unit.mjs',
-  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
-  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
-  // `run:` de ci.yml é do dono do workflow.
-  'scripts/db-tests/run-all.unit.mjs',
+// Suites Node fora de qualquer bloco run: — Map<caminho, {desde, motivo}>.
+const ALLOWLIST_NODE_META = new Map([
+  // Exemplo: ['scripts/qa/foo.unit.mjs', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
 ]);
+
+// Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
+const ALLOWLIST = new Set(ALLOWLIST_META.keys());
+export const ALLOWLIST_NODE = new Set(ALLOWLIST_NODE_META.keys());
+
+/**
+ * Verifica se alguma entrada da allowlist passou do prazo de 30 dias.
+ * Devolve lista de problemas (vazia = tudo dentro do prazo).
+ */
+export function verificarPrazosAllowlist(hoje = hojeISO()) {
+  const problemas = [];
+  for (const [arquivo, { desde, motivo }] of [...ALLOWLIST_META, ...ALLOWLIST_NODE_META]) {
+    if (!FORMATO_DATA.test(String(desde))) {
+      problemas.push(`${arquivo}: 'desde' "${desde}" não está em AAAA-MM-DD`);
+      continue;
+    }
+    const dias = (Date.parse(hoje) - Date.parse(desde)) / 86_400_000;
+    if (dias > PRAZO_ALLOWLIST_DIAS) {
+      problemas.push(
+        `${arquivo}: na allowlist desde ${desde} (${Math.floor(dias)} dias > ${PRAZO_ALLOWLIST_DIAS}) — promover para o CI ou remover (motivo: ${motivo})`,
+      );
+    }
+  }
+  return problemas;
+}
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
@@ -217,9 +202,10 @@ export function orfaosDoInventario() {
 // ── 5. Reportar ───────────────────────────────────────────────────────────────
 
 function principal() {
+  const prazos = verificarPrazosAllowlist();
   const orphans = orfaosDoInventario();
 
-  if (orphans.length === 0) {
+  if (prazos.length === 0 && orphans.length === 0) {
     const nodeMsg = `${suitesNodeNoDisco().length} suite(s) Node cobertas por bloco run: (${ALLOWLIST_NODE.size} na allowlist)`;
     if (ciUsesGlob) {
       console.log(`check-test-inventory: OK — ci.yml usa glob (${CI_TS_GLOB}); ${nodeMsg}; .test.sh verificados individualmente`);
@@ -229,12 +215,18 @@ function principal() {
     return 0;
   }
 
-  console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
-  for (const { file, yaml } of orphans) {
-    console.error(`  ${file}  (não encontrado em ${yaml})`);
+  if (prazos.length > 0) {
+    console.error('check-test-inventory: FALHOU — entrada(s) vencida(s) na allowlist:');
+    for (const p of prazos) console.error(`  ${p}`);
   }
-  console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
-  console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
+  if (orphans.length > 0) {
+    console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
+    for (const { file, yaml } of orphans) {
+      console.error(`  ${file}  (não encontrado em ${yaml})`);
+    }
+    console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
+    console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
+  }
   return 1;
 }
 

@@ -67,6 +67,14 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
       - name: 📦 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -104,9 +112,13 @@ jobs:
           CI: true
 
       - name: 📊 Gera régua lado a lado (mock vs captura)
+        # W46: so e util quando o teste falha; nao desperdicar tempo/storage em runs verdes.
+        if: failure()
         run: node scripts/talkx/lado-a-lado.mjs --out .tmp/regua
 
       - name: ⬆️ Upload régua visual
+        # W46: artifact de diagnostico — so faz sentido existir quando ha falha.
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: regua-visual-talkx

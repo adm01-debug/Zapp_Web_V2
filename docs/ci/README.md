@@ -4,13 +4,14 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**16 workflows.**
+**19 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
 | Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main | PRs abertas ficam com a main e os checks saem de `action_required` | PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara | autor do PR | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main, merge_group e dispatch | lint, tipos, testes, build, security e E2E do codigo | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
+| Cleanup Old Artifacts | [`cleanup-artifacts.yml`](../../.github/workflows/cleanup-artifacts.yml) | dispatch e agendado (semanal, domingo) | apaga artifacts criados há mais de 14 dias; reporta contagem final | erros individuais de DELETE são contabilizados mas não travam (warning) | não | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | pull_request e agendado | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security e revisores do PR | — | — |
 | CRM Sync Worker | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | dispatch (manual; o cron foi desligado por rodar 100% skipped) | sincronizacao do CRM executada de ponta a ponta | o job fica vermelho e nada e sincronizado | quem disparou | — | — |
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
@@ -19,6 +20,8 @@
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | push na main e dispatch sobre main | o fluxo logado (Playwright com login real) contra producao | artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro | issue de E2E e autor do push | — | — |
 | E2E Talk X | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
+| Notificação de Falha na Main (WhatsApp) | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run dos 5 workflows criticos da main (e2e-logado, db-live-guard, deploy-functions, db-migrate, settings-guard) | n/a (notificacao, nao guarda) | mensagem WhatsApp via N8N nao enviada se N8N_WEBHOOK_FALHA_MAIN ausente | WhatsApp Evolution GO PRINCIPAL quando qualquer workflow critico falha na main (W97) | — | — |
+| OpenSSF Scorecard | [`scorecard.yml`](../../.github/workflows/scorecard.yml) | agendado (segunda 07:17 UTC) e dispatch | OpenSSF Scorecard mede praticas de segurança do repositório | SARIF publicado em Code Scanning; score visível em Security | aba Security → Code scanning alerts | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
 | Supabase Sync & Validate | [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | dispatch (manual, com confirmacao de project-ref) | import de snapshot legado validado por identidade do destino | o import aborta antes de escrever | operador que disparou | — | — |
 | Talk X V4 placar regen (push) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
@@ -47,6 +50,13 @@
 - **O que prova:** lint, tipos, testes, build, security e E2E do codigo
 - **Quando falha:** PR fica vermelho e o merge e bloqueado pelos required checks
 - **Quem é avisado:** autor do PR e revisor, via checks do GitHub
+
+### Cleanup Old Artifacts (`cleanup-artifacts.yml`)
+
+- **Gatilho:** dispatch e agendado (semanal, domingo)
+- **O que prova:** apaga artifacts criados há mais de 14 dias; reporta contagem final
+- **Quando falha:** erros individuais de DELETE são contabilizados mas não travam (warning)
+- **Quem é avisado:** não
 
 ### CodeQL (`codeql.yml`)
 
@@ -104,6 +114,20 @@
 - **Quando falha:** PR fica vermelho com o artefato do Playwright
 - **Quem é avisado:** autor do PR
 
+### Notificação de Falha na Main (WhatsApp) (`notifica-falha-main.yml`)
+
+- **Gatilho:** workflow_run dos 5 workflows criticos da main (e2e-logado, db-live-guard, deploy-functions, db-migrate, settings-guard)
+- **O que prova:** n/a (notificacao, nao guarda)
+- **Quando falha:** mensagem WhatsApp via N8N nao enviada se N8N_WEBHOOK_FALHA_MAIN ausente
+- **Quem é avisado:** WhatsApp Evolution GO PRINCIPAL quando qualquer workflow critico falha na main (W97)
+
+### OpenSSF Scorecard (`scorecard.yml`)
+
+- **Gatilho:** agendado (segunda 07:17 UTC) e dispatch
+- **O que prova:** OpenSSF Scorecard mede praticas de segurança do repositório
+- **Quando falha:** SARIF publicado em Code Scanning; score visível em Security
+- **Quem é avisado:** aba Security → Code scanning alerts
+
 ### Settings Guard (`settings-guard.yml`)
 
 - **Gatilho:** agendado e dispatch
@@ -146,6 +170,8 @@
 
 | Workflow | Situação | Por quê não é bug |
 |---|---|---|
-| [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org) |
+| [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
+| [`codeql.yml`](../../.github/workflows/codeql.yml) | **CodeQL nao e required check** | analise de ~3 min informativa; tornar required e decisao humana (W84) |
+| [`db-guard.yml`](../../.github/workflows/db-guard.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
 | [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | **desarmado por design** | o secret LEGACY_IMPORT_UNLOCK nao existe -- todo dispatch falha fechado antes de escrever qualquer coisa; reativar exige criar o secret + gerar novo export a partir do banco oficial |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |

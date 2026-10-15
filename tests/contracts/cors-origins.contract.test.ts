@@ -3,45 +3,54 @@ import { describe, expect, it } from 'vitest';
 
 const read = (path: string) => readFileSync(path, 'utf8');
 
-/**
- * Contrato do endereço canônico no CORS das edge functions.
- *
- * O projeto tem UM endereço de produção: `https://zapp-web-v2.vercel.app`
- * (ver `docs/runbooks/deploy.md`). Os demais endereços que já serviram o app
- * ficaram fora: eram publicados por fora do fluxo GitHub → Vercel e por isso
- * entregavam build velho (sem as correções mergeadas).
- *
- * Antes da correção estes testes falham: a allow-list aceitava os hosts antigos.
- */
-const CANONICO = 'https://zapp-web-v2.vercel.app';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import * as nodePath from 'node:path';
 
-describe('CORS das edge functions — um único endereço canônico', () => {
+const __dirname = nodePath.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+/**
+ * W61: Contrato dos endereços canônicos no CORS das edge functions.
+ *
+ * Os endereços de produção são definidos em EXACT_ALLOWED_ORIGINS
+ * (supabase/functions/_shared/validation.ts) e espelhados em
+ * scripts/edge-deploy/allowed-origins.json.
+ */
+const CANONICO_VERCEL = 'https://zapp-web-v2.vercel.app';
+const CANONICO_DOMINIO = 'https://zappweb.app.br';
+
+const allowedOriginsJson = require(
+  nodePath.resolve(__dirname, '../../scripts/edge-deploy/allowed-origins.json'),
+);
+
+describe('CORS das edge functions — endereços canônicos de produção', () => {
   const source = read('supabase/functions/_shared/validation.ts');
-  const allowList = source.slice(
-    source.indexOf('const EXACT_ALLOWED_ORIGINS'),
+  const allowListBlock = source.slice(
+    source.indexOf('export const EXACT_ALLOWED_ORIGINS'),
     source.indexOf('const ORIGIN_PATTERNS'),
   );
 
-  it('mantém o endereço canônico de produção na allow-list', () => {
-    expect(allowList).toContain(`'${CANONICO}'`);
+  it('mantém o endereço canônico Vercel na allow-list', () => {
+    expect(allowListBlock).toContain(`'${CANONICO_VERCEL}'`);
   });
 
-  it('tem exatamente um endereço exato na allow-list', () => {
-    const exatos = allowList.match(/'https?:\/\/[^']+'/g) ?? [];
-    expect(exatos).toEqual([`'${CANONICO}'`]);
+  it('mantém o domínio oficial de produção na allow-list (W61)', () => {
+    expect(allowListBlock).toContain(`'${CANONICO_DOMINIO}'`);
+  });
+
+  it('allowed-origins.json contém todos os canônicos (W61)', () => {
+    expect(allowedOriginsJson.exact).toContain(CANONICO_VERCEL);
+    expect(allowedOriginsJson.exact).toContain(CANONICO_DOMINIO);
   });
 
   it('não aceita nenhum host do Lovable na allow-list', () => {
-    expect(allowList).not.toMatch(/lovable/i);
+    expect(allowListBlock).not.toMatch(/lovable/i);
   });
 
-  it('não aceita o endereço antigo servido por nginx na allow-list', () => {
-    expect(allowList).not.toContain('zappweb.app.br');
-  });
-
-  it('usa o canônico como fallback quando a origem não é permitida', () => {
+  it('usa o Vercel canônico como fallback quando a origem não é permitida', () => {
     const getCors = source.slice(source.indexOf('export function getCorsHeaders'));
-    expect(getCors).toContain(`'${CANONICO}'`);
+    expect(getCors).toContain(`'${CANONICO_VERCEL}'`);
   });
 
   it('os padrões de origem seguem restritos a este projeto e ao local', () => {
@@ -60,15 +69,14 @@ describe('CORS das edge functions — um único endereço canônico', () => {
     ]);
   });
 
-  it('a segunda superfície de CORS (schemas.ts) aponta só para o canônico', () => {
+  it('a segunda superfície de CORS (schemas.ts) aponta só para o canônico Vercel', () => {
     const linhas = read('supabase/functions/_shared/schemas.ts')
       .split('\n')
       .filter((linha) => /Access-Control-Allow-Origin/i.test(linha));
     expect(linhas.length).toBeGreaterThan(0);
     for (const linha of linhas) {
       expect(linha).not.toMatch(/lovable/i);
-      expect(linha).not.toContain('zappweb.app.br');
-      expect(linha).toContain(CANONICO);
+      expect(linha).toContain(CANONICO_VERCEL);
     }
   });
 });

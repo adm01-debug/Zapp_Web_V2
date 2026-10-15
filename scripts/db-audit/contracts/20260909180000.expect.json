@@ -1,0 +1,15 @@
+{
+  "always": {
+    "relation_count": 1,
+    "legacy_token_count": {"$min": 0, "$max": 1}
+  },
+  "before": {
+    "constraint_count": 0,
+    "validated_constraint_count": 0
+  },
+  "after": {
+    "legacy_token_count": 0,
+    "constraint_count": 1,
+    "validated_constraint_count": 1
+  }
+}

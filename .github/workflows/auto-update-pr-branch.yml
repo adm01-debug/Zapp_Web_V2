@@ -19,6 +19,10 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 concurrency:
   group: auto-update-pr-branch
   cancel-in-progress: false
@@ -32,12 +36,28 @@ jobs:
       pull-requests: write
       actions: write
     steps:
+      - name: 🔍 Verificar allow_auto_merge
+        # W19: se allow_auto_merge estiver desligado, a premissa deste workflow nao vale.
+        # Falha visivel com ::error:: em vez de rodar e encontrar zero PRs.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ! auto_merge=$(gh api "repos/$REPO" --jq '.allow_auto_merge'); then
+            echo "::error::Nao foi possivel consultar allow_auto_merge via API"
+            exit 1
+          fi
+          if [ "$auto_merge" != "true" ]; then
+            echo "::error::allow_auto_merge esta desligado no repo ($auto_merge). Religue em W01 antes de usar este workflow."
+            exit 1
+          fi
+          echo "allow_auto_merge=true (ok)"
+
       - name: Atualizar PRs com auto-merge que ficaram behind
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          set -euo pipefail
           # Mesma protecao das leituras abaixo: sem o "if !", uma falha transitoria
           # aqui (rede/rate-limit) mata o job antes de processar qualquer PR do lote.
           if ! prs=$(gh pr list --repo "$REPO" --state open \

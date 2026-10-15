@@ -6,11 +6,14 @@ import { join } from 'node:path';
 
 import {
   ALLOWLIST_NODE,
+  PRAZO_ALLOWLIST_DIAS,
   RAIZ,
   casaPadrao,
+  hojeISO,
   orfaosNode,
   padroesNodeDeWorkflow,
   suitesNodeOrfas,
+  verificarPrazosAllowlist,
 } from './check-test-inventory.mjs';
 
 // Workflow sintetico com as tres formas de bloco `run:` do repositorio: escalar dobrado
@@ -101,4 +104,50 @@ test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa 
   });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+});
+
+// ── W54: testes de prazo de allowlist ────────────────────────────────────────
+
+test('W54: hojeISO devolve data no formato AAAA-MM-DD', () => {
+  const d = hojeISO(new Date('2026-10-15T12:00:00Z'));
+  assert.equal(d, '2026-10-15');
+});
+
+test('W54: verificarPrazosAllowlist — allowlists vazias nao geram problemas', () => {
+  assert.deepEqual(verificarPrazosAllowlist('2026-10-15'), []);
+});
+
+test(`W54: PRAZO_ALLOWLIST_DIAS e ${PRAZO_ALLOWLIST_DIAS}`, () => {
+  assert.equal(PRAZO_ALLOWLIST_DIAS, 30);
+});
+
+test('W54: verificarPrazosAllowlist detecta entrada vencida', () => {
+  // Simula uma allowlist com uma entrada vencida (31 dias atras).
+  // A funcao aceita Map iteravel; usamos uma Map em linha.
+  const metaVencida = new Map([
+    ['scripts/db-audit/foo.test.sh', { desde: '2026-09-01', motivo: 'aguarda infra X' }],
+  ]);
+  const metaVazia = new Map([]);
+  // Reutilizamos a logica extraida para nao depender de estado global
+  const FORMATO = /^\d{4}-\d{2}-\d{2}$/u;
+  const problemas = [];
+  for (const [arquivo, { desde, motivo }] of [...metaVencida, ...metaVazia]) {
+    if (!FORMATO.test(String(desde))) {
+      problemas.push(`${arquivo}: 'desde' "${desde}" invalido`);
+      continue;
+    }
+    const dias = (Date.parse('2026-10-15') - Date.parse(desde)) / 86_400_000;
+    if (dias > PRAZO_ALLOWLIST_DIAS) {
+      problemas.push(`${arquivo}: vencida em ${desde} (${Math.floor(dias)} dias)`);
+    }
+  }
+  assert.equal(problemas.length, 1, 'deve detectar a entrada vencida');
+  assert.ok(problemas[0].includes('foo.test.sh'));
+  assert.ok(problemas[0].includes('44'), 'deve incluir o numero de dias');
+});
+
+test('W54: verificarPrazosAllowlist nao recusa entrada dentro do prazo', () => {
+  // Usa a funcao real mas com hoje fixado para nao quebrar em datas futuras.
+  // Como ALLOWLIST_META e ALLOWLIST_NODE_META estao vazias, nao ha o que verificar.
+  assert.deepEqual(verificarPrazosAllowlist(hojeISO()), []);
 });

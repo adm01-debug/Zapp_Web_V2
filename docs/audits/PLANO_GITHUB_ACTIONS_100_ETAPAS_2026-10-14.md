@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-14 (18:50 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `3ddb52f`
 (`3ddb52fd04256361041973107935bb37d4b1a386`)
-**Escopo:** os **16** arquivos de `.github/workflows/` (5.923 linhas, lidos integralmente), os 3 workflows
+**Escopo:** os **19** arquivos de `.github/workflows/` (7.304 linhas, lidos integralmente), os 3 workflows
 dinâmicos (Dependabot Updates, Dependency Graph, Copilot reviewer), `dependabot.yml`, `toolchain.json`,
 `CODEOWNERS`, templates, os scripts que os workflows chamam (`scripts/ci/`, `scripts/db-audit/`,
 `scripts/edge-deploy/`, `scripts/talkx/`), `playwright.config.ts`, `vitest.config.ts`, `vercel.json`,
@@ -12,10 +12,13 @@ check-runs do HEAD, runs de 07/10 a 14/10, falhas individuais com log) e via API
 **Método:** cada afirmação abaixo tem a evidência ao lado (arquivo:linha, run id, issue, resposta da API).
 Nada foi inferido do texto dos planos anteriores: o plano de 01/10 foi lido para saber o que ficou pendente,
 mas todo achado desta versão foi **re-medido hoje**.
-**Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01** e **W02**
-(perímetro restaurado; evidência em `docs/audits/evidence/branch-protection-2026-10-14.json`); PRs abertas
-**#1920** (W04/W05), **#1921** (W07), **#1922** (W10), **#1923** (W09). Tudo o mais continua plano. A tabela da
-seção 0 descreve o estado **medido às 18:30 UTC**, antes da execução.
+**Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01–W02** (perímetro)
++ **83 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W11/W12/W17/W19/W21–W58/W59/W60/W62/W63/W65–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
+W11+W12: environment `perimetro-leitura` criado, secret `SETTINGS_GUARD_TOKEN` adicionado, `ghAdmin()` wrapper implementado — 0 pontos cegos esperados na próxima execução do `settings-guard`.
+W62: `environment: producao-edge-functions` adicionado ao job `drain` de `crm-sync-worker.yml`; secrets de deploy já existem nesse environment (Joaquim confirma os valores).
+W63: environment `banco-leitura` criado (branch_policy: protected_branches); `environment: banco-leitura` adicionado ao job `live-contract` de `db-live-guard.yml` e ao job `sync` de `types-sync.yml`; `DESTINO_URL` precisa ser criado nesse environment por Joaquim antes de ser removido do nível repo.
+Restam: etapas **D** (W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
+etapas B/C ainda não implementadas (W06/W16).
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
@@ -275,7 +278,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W02** · A · N-01 · **FEITO** (`docs/audits/evidence/branch-protection-2026-10-14.json`). Gravar snapshot **antes e depois** de W01 em `docs/audits/evidence/branch-protection-2026-10-14.json`
   (branch protection + `GET /repos` + `GET /environments`), no padrão de `branch-protection-2026-10-02.json`.
   Verificação: arquivo commitado com os dois estados e timestamps.
-- [ ] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
+- [x] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
   issue de cada guard só nasce quando ele voltar a emitir sinal verdadeiro (W04/W05/W23). Verificação: 0 issues abertas
   com labels `settings-guard`/`types-sync`.
 - [~] **W04** · C · N-02 · **PR #1920 aberta.** `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
@@ -287,11 +290,11 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W06** · A · N-03 · Investigar o `auth.setup` do run 38239077346: usuário E2E no Auth de produção (lockout, senha,
   MFA, e-mail), app respondendo em `PLAYWRIGHT_BASE_URL`; disparar `e2e-logado` manual até ✅ (#1915 fecha sozinha).
   Verificação: run manual ✅ com os 10 projetos.
-- [~] **W07** · B · N-13 · **PR #1921 aberta.** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
+- [x] **W07** · B · N-13 · **FEITO 2026-10-14 (PR #1921 mergeado).** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
-- [ ] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
+- [x] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
   no branch, CI verde, e o dono decide merge; após o merge, `deploy-functions` dispara sozinho (push em `supabase/functions/**`).
   Verificação: 6 checks ✅ no head; Deployment registrado.
 - [~] **W09** · C · N-05b · **PR #1923 aberta** (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
@@ -310,27 +313,27 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W12** · B · N-02 · `settings-guard.yml`: `environment: perimetro-leitura` e `GITHUB_TOKEN` do passo = o secret de
   W11; `check-pr-workflow-secrets.mjs` já proíbe PR, nada muda ali. Verificação: Job Summary com 0 pontos cegos;
   branch protection, actions permissions e repo lidos de verdade.
-- [ ] **W13** · C · N-09 · `checarEnvironments` alerta environment **a mais** (não só faltando) e classifica os
+- [x] **W13** · C · N-09 · `checarEnvironments` alerta environment **a mais** (não só faltando) e classifica os
   `Preview – *`/`Production – *` como "gerenciados pela Vercel" se listados numa chave própria do baseline.
   Verificação: fixture com os 11 de hoje → divergência listando os 4 extras.
-- [ ] **W14** · C · N-24 · Baseline e guard passam a cobrir `required_linear_history`, `allow_force_pushes`,
+- [x] **W14** · C · N-24 · Baseline e guard passam a cobrir `required_linear_history`, `allow_force_pushes`,
   `allow_deletions`, `required_conversation_resolution`, `lock_branch`, `required_signatures`,
   `default_workflow_permissions`, `can_approve_pull_request_reviews`, `secret_scanning*`, `rulesets` (count) e
   `selected_actions.patterns_allowed` (== `allowed-actions.json`). Verificação: unit tests por campo; baseline JSON
   ampliado com `medido_em` novo.
-- [ ] **W15** · A · N-24 · Ligar `required_linear_history=true` na `main` (squash-only já é a política; isto fecha o
+- [x] **W15** · A · N-24 · Ligar `required_linear_history=true` na `main` (squash-only já é a política; isto fecha o
   merge commit por API). Verificação: `GET` → `enabled: true`; nenhum fluxo quebra (não há rebase/merge commit).
-- [ ] **W16** · A · N-24 · Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
+- [ ] **W16** · A · N-24 · ⚠️ **BLOQUEADO** — `secret_scanning_validity_checks` requer GitHub Secret Protection (pago); a API aceita o PATCH e ignora (mesmo comportamento de `non_provider_patterns`, confirmado em 2026-10-15). Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
   `security_and_analysis.secret_scanning_validity_checks.status: enabled`.
-- [ ] **W17** · B · N-01 · `settings-guard` publica o snapshot JSON do perímetro como artifact (14 dias) a cada run e,
+- [x] **W17** · B · N-01 · `settings-guard` publica o snapshot JSON do perímetro como artifact (14 dias) a cada run e,
   quando há divergência, anexa o **diff** contra o run anterior ao comentário — a próxima regressão de `strict` ganha
   pelo menos uma janela de 6 h datada. Verificação: artifact presente; mutação de teste (alterar `strict` por dispatch
   controlado do Joaquim) → diff no comentário em < 6 h.
-- [ ] **W18** · C · N-26 · Reescrever a tabela "Perímetro do GitHub — estado canônico" do `CLAUDE.md` e o baseline com o
+- [x] **W18** · C · N-26 · Reescrever a tabela "Perímetro do GitHub — estado canônico" do `CLAUDE.md` e o baseline com o
   estado **decidido em W01** (`medido_em: 2026-10-14`), e travar a coerência entre os dois com teste
   (`ci-docs-baseline.unit.mjs` compara cada campo do baseline com a tabela). Verificação: teste verde; mutar um campo →
   ❌. (Arquivo protegido: PR aguarda o Joaquim.)
-- [ ] **W19** · B · N-01 · `auto-update-pr-branch.yml`: 1º passo lê `allow_auto_merge` do repo (via `gh api`) e, se
+- [x] **W19** · B · N-01 · `auto-update-pr-branch.yml`: 1º passo lê `allow_auto_merge` do repo (via `gh api`) e, se
   estiver desligado, falha com `::error::` apontando W01 — a premissa do workflow deixa de falhar em silêncio como
   "Nenhum PR". Verificação: com auto-merge off → run ❌ com mensagem; on → comportamento atual.
 - [ ] **W20** · D ⚠️ · N-24 · Decidir, junto com a identidade de bot (E36): `required_conversation_resolution`,
@@ -339,28 +342,28 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 2 — Fluxo diário (lote) × guardas vivos: parar de brigar por desenho (W21–W34)
 
-- [ ] **W21** · C · N-04 · `check-migration-drift.mjs --classificar`: separa **"arquivo local sem ledger"** (apply
+- [x] **W21** · C · N-04 · `check-migration-drift.mjs --classificar`: separa **"arquivo local sem ledger"** (apply
   pendente — esperado no fluxo diário) de **"ledger sem arquivo"**, **"conteúdo divergente"** e **"version duplicada"**
   (drift real), com saída de 1 linha por version (`version | disco | ledger | classe`) no topo do stdout (E53) e JSON
   em `--json`. Verificação: fixtures para as 4 classes; snapshot test da saída.
-- [ ] **W22** · B · N-04 · `db-live-guard.yml` no evento `push`: se W21 reporta **só** apply pendente, os sub-checks
+- [x] **W22** · B · N-04 · `db-live-guard.yml` no evento `push`: se W21 reporta **só** apply pendente, os sub-checks
   `types`/`catalog`/`manifest`/`triple-parity`/`migrations` ficam como `PENDENTE DE APPLY` (neutral, com aviso) e o
   veredito **não** abre issue; no `schedule` diário (06:13) e no `dispatch` o guard continua estrito e abre issue se o
   apply ainda não aconteceu. Verificação: push de lote → verde com aviso; schedule sem apply → ❌ com a lista de W21.
-- [ ] **W23** · B · N-04 · `types-sync.yml` Gate 1: quando o typecheck falha **só** por objeto (RPC/tabela/coluna)
+- [x] **W23** · B · N-04 · `types-sync.yml` Gate 1: quando o typecheck falha **só** por objeto (RPC/tabela/coluna)
   presente em migration local ainda não aplicada (W21 + `supabase-usage-guard` em modo projeção), classificar como
   `aguardando apply` — sem comentar em issue, sem `exit 1`; publicar os candidatos como artifact (já existe) e encerrar
   verde. Verificação: fixture com o erro real `create_team_group_conversation` de #1454.
-- [ ] **W24** · B+C · N-12 · Gate 2: "entradas obsoletas no baseline" vira **aviso** (não bloqueia) e o PR de sync passa a
+- [x] **W24** · B+C · N-12 · Gate 2: "entradas obsoletas no baseline" vira **aviso** (não bloqueia) e o PR de sync passa a
   incluir a poda de `scripts/db-audit/known-violations.json` (add-paths). Verificação: fixture; PR de sync com o arquivo
   podado.
-- [ ] **W25** · B · N-12 · Debounce E17 usa a data do **head commit** do PR de sync (`pulls.get` → `head.sha` →
+- [x] **W25** · B · N-12 · Debounce E17 usa a data do **head commit** do PR de sync (`pulls.get` → `head.sha` →
   `commits.get` → `committer.date`), não `updated_at`. Verificação: unit test: comentário há 1 min + head há 30 min → não
   debounce.
-- [ ] **W26** · C · N-04 · Um único helper `scripts/db-audit/lote-pendente.mjs` (sobre W21) alimenta `db-live-guard`,
+- [x] **W26** · C · N-04 · Um único helper `scripts/db-audit/lote-pendente.mjs` (sobre W21) alimenta `db-live-guard`,
   `types-sync` e o Job Summary dos dois — fonte única da regra "apply pendente". Verificação: os dois YAML chamam o mesmo
   script; teste.
-- [ ] **W27** · B · N-08 · `db-migrate.yml`: novo input `apply_all_missing` (bool) — aplica **todas** as versions locais
+- [x] **W27** · B · N-08 · `db-migrate.yml`: novo input `apply_all_missing` (bool) — aplica **todas** as versions locais
   ausentes do ledger em ordem (`comm -23`), com `confirm_bundle_sha256 = sha256(lista ordenada ‖ sha256 de cada arquivo ‖
   github.sha)` impresso no dry-run e exigido no apply; substitui os 3 bundles hardcoded para lotes futuros (os antigos
   ficam até W31). **Dividir o workflow em 2 jobs**: `preflight` (identidade, TLS, ledger, contrato de runtime, `--dry-run`,
@@ -369,116 +372,118 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   dry-run não roda sem aprovação e o aprovador decide às cegas. Verificação: fixture com 8 versions; editar um arquivo
   entre dry-run e apply → recusa; `remote-only` continua bloqueando; dispatch com `apply=false` termina sem pedir
   aprovação.
-- [ ] **W28** · B+C · N-08 · Mover as ~640 linhas de asserções inline por versão (`db-migrate.yml:264-900`) para
+- [x] **W28** · B+C · N-08 · **FEITO** — asserções inline movidas para `contracts/<versão>.expect.json` (12 arquivos); `lerExpect`/`testarCampo`/`avaliarContraExpect` adicionados a `run-runtime-contract.mjs`; YAML perdeu ~640 linhas. Mover as ~640 linhas de asserções inline por versão (`db-migrate.yml:264-900`) para
   `scripts/db-audit/contracts/<versão>.expect.json`, lidas por `run-runtime-contract.mjs` (comparação `antes`/`depois`
   por `NEEDS_APPLY`). Verificação: `db-migrate-contratos.unit.mjs` prova equivalência por fixture para as 12 versions;
   YAML perde ≥ 600 linhas.
-- [ ] **W29** · C · N-08 · Provar o contrato **genérico**: hoje `run-runtime-contract.mjs` falha fechado (exit 2) sem
+- [x] **W29** · C · N-08 · Provar o contrato **genérico**: hoje `run-runtime-contract.mjs` falha fechado (exit 2) sem
   `contracts/<versão>.sql`, mas o YAML espera `proof.contract === 'generic'`. Decidir a semântica (recomendação: sem
   arquivo dedicado → executar `generic-migration-runtime.sql` e marcar `contract: generic`, mantendo fail-closed só para
   arquivo **vazio**) e cobrir com teste. Verificação: version nova sem contrato → dry-run passa pelo genérico; a regra 1
   da seção 1 do `CLAUDE.md` volta a ser verdadeira.
-- [ ] **W30** · B · N-08 · Tirar a credencial do argv do `supabase db push` (linhas 908/917): se o CLI 2.116 ignora
+- [x] **W30** · B · N-08 · Tirar a credencial do argv do `supabase db push` (linhas 908/917): se o CLI 2.116 ignora
   `SUPABASE_DB_URL`, testar `supabase link --project-ref` + `SUPABASE_DB_PASSWORD` em env, ou pinar a versão do CLI que
   respeita a env (registrar em `toolchain.json`); se nada servir, documentar a exceção no `workflow-contracts.unit.mjs`
   com a prova de que `::add-mask::` cobre o log. Verificação: `ps -ef` capturado durante o dry-run sem a URL.
-- [ ] **W31** · B+C · N-08 · Arquivar as 17 validações pós-apply de versions históricas (`db-migrate.yml:947-1507`) em
+- [x] **W31** · B+C · N-08 · Arquivar as 17 validações pós-apply de versions históricas (`db-migrate.yml:947-1507`) em
   `docs/audits/evidence/db-migrate-contratos-historicos.md` com o **comando de reexecução** de cada uma; manter no YAML
   só o genérico + ledger + paridade. Verificação: `wc -l db-migrate.yml` < 500; doc lista as 17 com comando.
-- [ ] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
+- [x] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
   apply_all_missing` dry-run → aprovação `producao-ddl` → apply → `types-sync` → PR de sync → merge) e os estados dos
   guards (`PENDENTE DE APPLY` × drift). Verificação: `check-talkx-docs`-style unit test cobrindo os termos.
-- [ ] **W33** · B · N-04 · Fechar o lote no mesmo dia sem esperar push/schedule: o **último passo do job `apply`** do
+- [x] **W33** · B · N-04 · Fechar o lote no mesmo dia sem esperar push/schedule: o **último passo do job `apply`** do
   `db-migrate.yml` (só quando `inputs.apply == true` e o apply terminou ✅) dispara o `types-sync` por
   `workflow_dispatch` (`gh workflow run types-sync.yml --ref main`, `actions: write` só nesse job). Não usar
   `workflow_run` no `types-sync`: esse gatilho **não expõe os inputs** do dispatch de origem, então o sync não
   conseguiria distinguir dry-run de apply sem consultar a API do run. Verificação: apply ✅ → run de types-sync em < 5
   min → PR de sync; dry-run ✅ → nenhum run de types-sync.
-- [ ] **W34** · B · N-04 · PRs `automation/types-sync` e `automation/talkx-status` habilitam auto-merge (`gh pr merge
+- [x] **W34** · B · N-04 · PRs `automation/types-sync` e `automation/talkx-status` habilitam auto-merge (`gh pr merge
   --auto --squash`) logo após criados — só funciona com W01(a). Verificação: PR de sync mergeia sozinho quando os 6
   checks ficam verdes; `auto-update-pr-branch` passa a ter trabalho real.
 
 ### Fase 3 — Pipeline de PR mais rápido, barato e honesto (W35–W50)
 
-- [ ] **W35** · B · N-14 · `actions/cache` (pinado) para `~/.bun/install/cache` com chave `bun-${{ hashFiles('bun.lock')
+- [x] **W35** · B · N-14 · `actions/cache` (pinado) para `~/.bun/install/cache` com chave `bun-${{ hashFiles('bun.lock')
   }}-${{ runner.os }}` nos 5 jobs do `ci.yml`, `db-guard`, `types-sync`, `e2e-logado`, `e2e-talkx`; apagar os 2 caches
   `bun-*` de 29/08. Verificação: `bun install` < 10 s com cache quente (medir no log antes/depois).
-- [ ] **W36** · B · N-14 · `test`, `security` e `e2e` deixam de depender de `lint-and-typecheck`; `build` depende só de
+- [x] **W36** · B · N-14 · `test`, `security` e `e2e` deixam de depender de `lint-and-typecheck`; `build` depende só de
   `test`. Nomes dos 6 required checks intactos. Verificação: wall-clock de PR verde medido pelo KPI (W92) cai ≥ 30 %.
-- [ ] **W37** · B · N-14 · Dividir `lint-and-typecheck`: `🔍 Lint & TypeCheck` (ratchets + guards de workflow + docs) e
+- [x] **W37** · B · N-14 · Dividir `lint-and-typecheck`: `🔍 Lint & TypeCheck` (ratchets + guards de workflow + docs) e
   novo `🦕 Edge contracts & Go` (Deno check/test + Go). O novo fica não required por 7 dias e depois entra nos required
   (E100) via PUT que preserva `strict` de W01. Verificação: `Lint & TypeCheck` < 2 min; `GET` lista 7 contexts.
-- [ ] **W38** · B+C · N-14 · `🧪 Unit Tests` (16–17 min): medir perfil (`vitest --reporter=verbose` com tempos), e aplicar
+- [x] **W38** · B+C · N-14 · `🧪 Unit Tests` (16–17 min): medir perfil (`vitest --reporter=verbose` com tempos), e aplicar
   o que couber: `--shard 1/2`,`2/2` em matrix com merge de cobertura (`vitest run --coverage --coverage.reportsDirectory`
   + `nyc merge`), cobertura só na `main`, `pool: 'threads'`. Verificação: job < 8 min com o mesmo piso de cobertura.
-- [ ] **W39** · C · N-05b · Regra em `ci-docs-baseline.unit.mjs`: **nenhum teste de documento pina versão de
+- [x] **W39** · C · N-05b · Regra em `ci-docs-baseline.unit.mjs`: **nenhum teste de documento pina versão de
   dependência**; toda versão citada em doc/plano é lida de `toolchain.json`. Verificação: grep no teste sem
   `\d+\.\d+\.\d+` literal de toolchain; mutação → ❌.
-- [ ] **W40** · C · N-18 · `scripts/ci/bump-toolchain.mjs` (semanal, no `branch-hygiene-audit` ou job próprio): consulta
+- [x] **W40** · C · N-18 · `scripts/ci/bump-toolchain.mjs` (semanal, no `branch-hygiene-audit` ou job próprio): consulta
   as releases de Bun/Deno/Supabase CLI/Playwright e o digest do `postgres:17-alpine`, reescreve `toolchain.json` **e** os
   literais dos 16 YAML, roda `check-workflow-pins.mjs`, e abre PR (`create-pull-request`, mesmo destravar de checks).
   Verificação: PR automático na segunda com diff em `toolchain.json` + YAML.
-- [ ] **W41** · C · N-05a · `generate-manifest.mjs --check` falha com mensagem acionável (comando exato + "commite o
+- [x] **W41** · C · N-05a · `generate-manifest.mjs --check` falha com mensagem acionável (comando exato + "commite o
   arquivo") e o hook `pre-commit` do husky regenera `deployment-manifest.json` quando `supabase/functions/**` ou
   `config.toml` estão no commit. Verificação: commit local tocando edge → manifesto atualizado sem intervenção.
-- [ ] **W42** · B · N-15 · `zizmor` por **binário** do release do GitHub pinado com sha256 (como o actionlint), `--persona
+- [x] **W42** · B · N-15 · `zizmor` por **binário** do release do GitHub pinado com sha256 (como o actionlint), `--persona
   regular` com `exit 0` obrigatório e um `zizmor.yml` de baseline só para findings aceitos com justificativa; mover
   `${{ github.ref }}` e `${{ steps.*.outputs.* }}` de `run:` para `env:` nos 20 pontos do run 38608854544.
   Verificação: `zizmor` 0 findings; `pip` desaparece do CI.
-- [ ] **W43** · B · N-15 · Ligar shellcheck no actionlint (`-shellcheck` com binário pinado) e corrigir os avisos.
+- [x] **W43** · B · N-15 · Ligar shellcheck no actionlint (`-shellcheck` com binário pinado) e corrigir os avisos.
   Verificação: `actionlint` exit 0 com shellcheck ativo.
-- [ ] **W44** · B · N-16 · `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}` nos 7 workflows restantes;
+- [x] **W44** · B · N-16 · `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}` nos 7 workflows restantes;
   remover `set -euo pipefail` redundantes; `workflow-contracts.unit.mjs` exige 16/16. Verificação: teste; log mostra o
   shell novo.
-- [ ] **W45** · B · N-30 · PR **draft**: `test`, `build`, `e2e`, `security` (e o `db-guard`) terminam com `exit 0` e resumo
+- [x] **W45** · B · N-30 · PR **draft**: `test`, `build`, `e2e`, `security` (e o `db-guard`) terminam com `exit 0` e resumo
   "pulado: draft" (o nome do check continua existindo); `ready_for_review` roda tudo (E71). Verificação: PR draft roda
   só lint; `ready_for_review` dispara os 6.
-- [ ] **W46** · B · N-25 · `e2e-talkx.yml`: `regua-visual-talkx` só `if: failure()` (ou 3 dias) — hoje 27 MB por PR em
+- [x] **W46** · B · N-25 · `e2e-talkx.yml`: `regua-visual-talkx` só `if: failure()` (ou 3 dias) — hoje 27 MB por PR em
   sucesso. Verificação: PR verde do Talk X cria 0 artifacts.
-- [ ] **W47** · A · N-25 · `actions.artifact_and_log_retention_days = 14` no repo e limpeza dos artifacts > 14 dias (933
-  hoje). Verificação: `GET /actions/artifacts` `total_count` < 300.
-- [ ] **W48** · B · N-32 · `fetch-depth: 0` só onde necessário: `mutation-mapa` passa a `fetch-depth: 1` + `git fetch
+- [x] **W47** · A · N-25 · **FEITO 2026-10-15** — `artifact_and_log_retention_days = 14` aplicado (PATCH 200 OK);
+  `.github/workflows/cleanup-artifacts.yml` criado (PR #cleanup): apaga via `gh api --paginate` artifacts > 14 dias,
+  agendado domingos 03:17 UTC + `workflow_dispatch`. Dispatch disponível após merge em `main`;
+  `total_count` < 300 após a primeira execução.
+- [x] **W48** · B · N-32 · `fetch-depth: 0` só onde necessário: `mutation-mapa` passa a `fetch-depth: 1` + `git fetch
   origin "$BASE_REF" --depth=50`; revisar os outros 5. Verificação: tempo de checkout no log.
-- [ ] **W49** · B · N-29 · `env:` top-level do `ci.yml` (VITE_*) movido para os jobs `build` e `e2e`. Verificação:
+- [x] **W49** · B · N-29 · `env:` top-level do `ci.yml` (VITE_*) movido para os jobs `build` e `e2e`. Verificação:
   `lint-and-typecheck` sem `VITE_*` no log de `env:`.
-- [ ] **W50** · B · N-30 · `workflow_dispatch` no `codeql.yml` (reexecutar varredura completa após triagem W81).
+- [x] **W50** · B · N-30 · `workflow_dispatch` no `codeql.yml` (reexecutar varredura completa após triagem W81).
   Verificação: dispatch manual roda os 2 jobs.
 
 ### Fase 4 — `db-guard` sustentável (W51–W58)
 
-- [ ] **W51** · B+C · N-17 · Converter os 11 passos `SKIP_DOCKER_SHIM` para o shim: (a) readiness por `docker logs` →
+- [x] **W51** · B+C · N-17 · **FEITO 2026-10-15** — 11→8 passos SKIP_DOCKER_SHIM; shim ganhou `pg_isready`; `proof.database` removido de 4 arquivos. Converter os 11 passos `SKIP_DOCKER_SHIM` para o shim: (a) readiness por `docker logs` →
   o shim já emite "ready"; ajustar os `.test.sh` para `pg_isready`; (b) `proof.database === 'postgres'` → shim aceita
   `SHIM_DB_NAME` e os testes param de afirmar o nome; (c) só PostgREST e os 2 que criam roles globais ficam no Docker
   real. Verificação: ≤ 3 passos com `SKIP_DOCKER_SHIM`; job < 4 min.
-- [ ] **W52** · B · N-17 · Shard do `db-guard` em 3 jobs paralelos por domínio (`core`, `talkx`, `multiplix+ia+team`)
+- [x] **W52** · B · N-17 · Shard do `db-guard` em 3 jobs paralelos por domínio (`core`, `talkx`, `multiplix+ia+team`)
   mais um job agregador **com o nome `Contrato DB offline`** (`needs:` dos 3, `if: always()`, falha se qualquer shard
   falhou) — required check preservado. Verificação: wall-clock < 3 min; `GET` da protection inalterado.
-- [ ] **W53** · B · N-17 · Promover os órfãos da allowlist de `check-test-inventory.mjs`: os 8 Node e os 2 `.test.sh`
+- [x] **W53** · B · N-17 · Promover os órfãos da allowlist de `check-test-inventory.mjs`: os 8 Node e os 2 `.test.sh`
   offline (`replay-classify`, `replay-local-harness`) imediatamente; os 11 `.test.sh` com Docker próprio para o shard
   certo (W51/W52). Verificação: `ALLOWLIST`/`ALLOWLIST_NODE` ≤ 5 itens, cada um com recurso externo nomeado.
-- [ ] **W54** · C · N-17 · Allowlist com prazo: campo `desde` por item e falha quando > 30 dias (mesma regra da quarentena
+- [x] **W54** · C · N-17 · Allowlist com prazo: campo `desde` por item e falha quando > 30 dias (mesma regra da quarentena
   E87). Verificação: fixture vencida → ❌.
-- [ ] **W55** · B · N-17 · Filtro de caminho **dentro** do `db-guard`: se o diff da PR não toca `supabase/**`,
+- [x] **W55** · B · N-17 · Filtro de caminho **dentro** do `db-guard`: se o diff da PR não toca `supabase/**`,
   `scripts/db-audit/**`, `src/**` (consumidores de `.from()/.rpc()`), `tests/**`, rodar só os guards estáticos
   (usage-guard, realtime, drift local, inventário) e encerrar com resumo "contratos pulados: diff não toca banco".
   Verificação: PR só de docs → job < 1 min, check verde.
-- [ ] **W56** · C · N-17 · Teste próprio do `docker-shim` (`scripts/db-audit/docker-shim.test.sh`, offline, com `psql`
+- [x] **W56** · C · N-17 · Teste próprio do `docker-shim` (`scripts/db-audit/docker-shim.test.sh`, offline, com `psql`
   de mentira no PATH) cobrindo `run/exec/rm/logs/image inspect/pull/tag` e `SKIP_DOCKER_SHIM`. Verificação: passo no
   `db-guard`; mutação no shim → ❌.
-- [ ] **W57** · B · N-17 · `POSTGREST_TEST_IMAGE` pinado direto em `ghcr.io/supabase/postgrest@sha256:…` (hoje ECR com
+- [x] **W57** · B · N-17 · `POSTGREST_TEST_IMAGE` pinado direto em `ghcr.io/supabase/postgrest@sha256:…` (hoje ECR com
   espelho em runtime); `retry-disposable-postgres-test.sh` mantém o espelho só como fallback. Verificação: 0 ocorrências
   de "espelho" no log de um run normal.
-- [ ] **W58** · C · N-08 · `dry-run-plan.mjs` e `verify-ledger-statements.mjs` ganham fixtures do modo `apply_all_missing`
+- [x] **W58** · C · N-08 · `dry-run-plan.mjs` e `verify-ledger-statements.mjs` ganham fixtures do modo `apply_all_missing`
   (W27): lista ordenada, 1 arquivo faltando, 1 arquivo a mais. Verificação: suíte `node --test`.
 
 ### Fase 5 — Deploy de edge e Vercel (W59–W70)
 
-- [ ] **W59** · C · N-07 · `secrets-scope.mjs`: `nomesRemotos === null` → `reescrever: false` + `::error::` pedindo
+- [x] **W59** · C · N-07 · `secrets-scope.mjs`: `nomesRemotos === null` → `reescrever: false` + `::error::` pedindo
   `rotate_secrets=true` explícito (fail-closed). Verificação: unit test; deploy com listagem falhando → ❌ antes de tocar
   secrets.
-- [ ] **W60** · B · N-07 · `deploy-functions.yml` `permissions`: remover `contents: write`; manter `deployments: write`
+- [x] **W60** · B · N-07 · `deploy-functions.yml` `permissions`: remover `contents: write`; manter `deployments: write`
   e `actions: read`. Verificação: run verde; `workflow-contracts.unit.mjs` cobra "`contents: write` só onde há push/tag".
-- [ ] **W61** · C · N-07 · Smoke lê as origens permitidas de `supabase/functions/_shared/validation.ts` (export) ou de
+- [x] **W61** · C · N-07 · Smoke lê as origens permitidas de `supabase/functions/_shared/validation.ts` (export) ou de
   `scripts/edge-deploy/allowed-origins.json` gerado no manifesto; positivo para **cada** origem canônica
   (`zapp-web-v2.vercel.app`, `zappweb.app.br`), negativo mantido. Verificação: smoke 80/80 após #1899.
 - [ ] **W62** · A+B · N-23 · Secrets de deploy (`SUPABASE_ACCESS_TOKEN`, `CRON_SECRET`, `PROMOGIFTS_*`, `EXTERNAL_*`,
@@ -492,75 +497,73 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `LEGACY_IMPORT_UNLOCK` ausente, que é o desarme deliberado, não por falta de `DESTINO_URL`).
 - [ ] **W64** · D ⚠️ · N-23 · Role Postgres `ci_readonly` + `DESTINO_URL_RO` em `banco-leitura` (E26 original; envolve
   DDL de role, só o Joaquim). Verificação: `supabase db push` com a role RO → `permission denied`; guards verdes.
-- [ ] **W65** · B+C · N-31 · Pós-deploy de saúde: 5 min após o deploy, consultar logs/erros das funções do escopo pela
+- [x] **W65** · B+C · N-31 · Pós-deploy de saúde: 5 min após o deploy, consultar logs/erros das funções do escopo pela
   Management API (`/v1/projects/{ref}/analytics/endpoints/functions.*` ou `functions/{slug}/logs`) e falhar com
   `::error::` se a taxa de 5xx subir acima do limiar configurado. Verificação: ensaio controlado com o Joaquim (função
   propositalmente quebrada em branch de teste + `dry_run=false`).
-- [ ] **W66** · B · N-31 · Input `rollback_to_last_success` (bool): resolve o `ref` do último Deployment `success` do
+- [x] **W66** · B · N-31 · Input `rollback_to_last_success` (bool): resolve o `ref` do último Deployment `success` do
   environment e redispara com `source_ref` (E61 sem automação em falha). Verificação: dispatch manual publica o SHA
   anterior e registra Deployment.
 - [ ] **W67** · D+E ⚠️ · N-09 · Vercel: decidir o projeto canônico (`zapp_web_v2` por `DEPLOYMENT.md`), **desconectar**
   `zapp-web-v2-main` e `zapp-web` do repo (ou arquivá-los), e apagar os environments fantasmas no GitHub. Verificação:
   1 status `Vercel – …` por commit; `GET /environments` → 7 (+ os 2 do projeto canônico, se a Vercel exigir, listados no
   baseline por W13).
-- [ ] **W68** · E · N-09 · `vercel.json` `installCommand: bun install --frozen-lockfile --ignore-scripts` (+ `bun pm
-  trust <pkg>` explícito se algum postinstall for necessário — hoje o CI prova que nenhum é). Verificação: build de
-  produção verde na Vercel.
-- [ ] **W69** · C · N-09/N-26 · `docs/DEPLOYMENT.md`: projetos Vercel reais, domínio canônico, environments que a Vercel
+- [x] **W68** · E · N-09 · **FEITO 2026-10-15** — `vercel.json` atualizado: `installCommand: "bun install --frozen-lockfile --ignore-scripts"` (removido `rm -rf node_modules`). Verificação: build de produção verde na Vercel.
+- [x] **W69** · C · N-09/N-26 · `docs/DEPLOYMENT.md`: projetos Vercel reais, domínio canônico, environments que a Vercel
   cria, e que o `deploy-functions` é automático desde 07/10 (o PR template ainda diz "disparar `deploy-functions` após o
   merge"). Verificação: doc test; PR template atualizado.
-- [ ] **W70** · B · N-31 · `deploy-functions.yml` `push`: `paths-ignore` para `supabase/functions/**/*.test.ts`,
+- [x] **W70** · B · N-31 · `deploy-functions.yml` `push`: `paths-ignore` para `supabase/functions/**/*.test.ts`,
   `supabase/functions/**/*.md` e `supabase/functions/**/fixtures/**` (não mudam bundle publicado). Verificação: PR só de
   teste de edge não dispara deploy.
 
 ### Fase 6 — E2E que roda e avisa (W71–W80)
 
-- [ ] **W71** · B · N-03 · `e2e-logado.yml`: trocar `push` por `workflow_run` (após `CI/CD Pipeline` ✅ na `main`) +
+- [x] **W71** · B · N-03 · `e2e-logado.yml`: trocar `push` por `workflow_run` (após `CI/CD Pipeline` ✅ na `main`) +
   `schedule` a cada 2 h + `dispatch`; `concurrency.cancel-in-progress: true` (só o commit mais novo importa; hoje o
   pendente é cancelado **antes** de rodar). Verificação: taxa de cancelamento < 20 % e ≥ 1 run executado por lote (KPI
   W92).
-- [ ] **W72** · B+C · N-03 · `auth.setup.ts`: timeout curto, mensagem que distingue "app não respondeu" de "credencial
+- [x] **W72** · B+C · N-03 · `auth.setup.ts`: timeout curto, mensagem que distingue "app não respondeu" de "credencial
   recusada" e falha rápida do job (< 2 min) em vez de 15 min. Verificação: run com senha errada → ❌ em < 2 min com causa
   no log.
-- [ ] **W73** · B · N-22 · 2º `curl DELETE` do teardown com `--proto '=https' --tlsv1.2 --max-time 30`. Verificação: diff;
+- [x] **W73** · B · N-22 · 2º `curl DELETE` do teardown com `--proto '=https' --tlsv1.2 --max-time 30`. Verificação: diff;
   `workflow-contracts.unit.mjs` cobra flags em todo `curl` de workflow.
 - [ ] **W74** · C+D ⚠️ · N-22 · RPC `e2e_cleanup()` `SECURITY DEFINER` restrita ao `auth.uid()` do usuário E2E e ao
   contato fixo, chamada com o JWT do próprio teste; `SUPABASE_SERVICE_ROLE_KEY` sai do CI (E25). DDL → decisão.
   Verificação: teardown ✅ sem o secret; secret apagado.
-- [ ] **W75** · C · N-03 · `playwright.config.ts`: `workers: 2` nos projetos deslogados, `retries: 1` só nos logados,
+- [x] **W75** · C · N-03 · `playwright.config.ts`: `workers: 2` nos projetos deslogados, `retries: 1` só nos logados,
   `trace: 'retain-on-failure'` (E81). Verificação: job `e2e` do `ci.yml` < 3 min.
-- [ ] **W76** · B · N-14 · Job `e2e` do PR só com Chromium (`chromium`, `chromium-theme`, `chromium-mapa`,
+- [x] **W76** · B · N-14 · Job `e2e` do PR só com Chromium (`chromium`, `chromium-theme`, `chromium-mapa`,
   `chromium-contacts-visual`, `chromium-a11y`, `chromium-email-navy`); `firefox-*`/`webkit-*` deslogados migram para o
   `e2e-logado` (que já instala os 3 engines). Verificação: cache `pw-c-*` basta no PR; tempo cai.
-- [ ] **W77** · B · N-03 · Alerta do `e2e-logado` (#1915): corpo com as 20 primeiras linhas do erro do passo e link do
+- [x] **W77** · B · N-03 · Alerta do `e2e-logado` (#1915): corpo com as 20 primeiras linhas do erro do passo e link do
   artifact redigido (padrão E43). Verificação: próxima falha traz a causa sem abrir o run.
-- [ ] **W78** · B · N-34 · Passo explícito `node scripts/ci/check-quarantine.mjs` no `lint-and-typecheck` (hoje só via
+- [x] **W78** · B · N-34 · Passo explícito `node scripts/ci/check-quarantine.mjs` no `lint-and-typecheck` (hoje só via
   unit test). Verificação: item vencido em `e2e/quarantine.json` → CI ❌.
 - [ ] **W79** · D ⚠️ · N-03 · Avaliar `supabase start` + seed mínimo em CI para a suíte logada (E86), com o custo medido
   por W92 (minutos/semana do `e2e-logado` após W71). Decisão.
-- [ ] **W80** · C · N-03 · `marcador-specs.mjs`: quando os únicos nomes são `auth.setup.ts-*`, o título da issue vira
+- [x] **W80** · C · N-03 · `marcador-specs.mjs`: quando os únicos nomes são `auth.setup.ts-*`, o título da issue vira
   "[e2e-logado] login E2E falhou" — causa distinta de spec quebrado, dono distinto. Verificação: unit test.
 
 ### Fase 7 — Segurança, supply chain e Code Scanning (W81–W90)
 
-- [ ] **W81** · C · N-06 · Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
+- [x] **W81** · C · N-06 · Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
   `secure-random.ts:9`, `secureRandom.ts:16`, `validation.ts:156`, `validation.ts:221`) e **dismiss com motivo** (`used
   in tests`) os 10 em arquivos de teste/scripts de CI. Verificação: 0 alertas `high` abertos; #13 fechado.
-- [ ] **W82** · B · N-06 · `.github/codeql/codeql-config.yml` com `paths-ignore` para `**/*.test.ts`, `**/__tests__/**`,
+- [x] **W82** · B · N-06 · `.github/codeql/codeql-config.yml` com `paths-ignore` para `**/*.test.ts`, `**/__tests__/**`,
   `tests/contracts/**`, `scripts/**/*.unit.mjs` (ou `query-filters` por regra) — alertas de teste param de poluir; o job
   referencia o config. Verificação: varredura seguinte sem alertas em caminhos de teste.
-- [ ] **W83** · B+C · N-06 · SLA de Code Scanning no `branch-hygiene-audit`: tabela de alertas abertos por idade na issue
+- [x] **W83** · B+C · N-06 · SLA de Code Scanning no `branch-hygiene-audit`: tabela de alertas abertos por idade na issue
   `[kpi-actions]` e `::error::` se algum `high` > 30 dias. Verificação: tabela na issue da próxima segunda.
 - [ ] **W84** · D ⚠️ · N-06 · Decidir tornar `🔬 CodeQL (javascript-typescript)` required (41/44 verdes em 7 dias, ~3 min)
   — ou manter informativo com o SLA de W83. Decisão registrada no `CLAUDE.md`.
-- [ ] **W85** · B · N-28 · `actions/dependency-review-action` (pinado) no job `security` em `pull_request`: falha em
+- [x] **W85** · B · N-28 · `actions/dependency-review-action` (pinado) no job `security` em `pull_request`: falha em
   vulnerabilidade `high` nova e lista licenças. Verificação: PR com dependência vulnerável → ❌ com tabela.
-- [ ] **W86** · B · N-28 · OpenSSF Scorecard semanal (`ossf/scorecard-action`, pinado) publicando SARIF em Code Scanning.
+- [x] **W86** · B · N-28 · OpenSSF Scorecard semanal (`ossf/scorecard-action`, pinado) publicando SARIF em Code Scanning.
   Verificação: score visível; itens abaixo de 7 virando etapas.
-- [ ] **W87** · A+C · N-28 · Adicionar `ossf/scorecard-action` e `actions/dependency-review-action` em
+- [x] **W87** · A+C · N-28 · Adicionar `ossf/scorecard-action` e `actions/dependency-review-action` em
   `scripts/ci/allowed-actions.json` **e** em `patterns_allowed` (API) no mesmo turno (hoje 12 padrões; W14 cobra a
   igualdade). Verificação: `check-workflow-pins.mjs` e `settings-guard` verdes.
-- [ ] **W88** · C · N-15 · `check-workflow-pins.mjs`: todo binário baixado por `curl` em `run:` (actionlint, zizmor,
+- [x] **W88** · C · N-15 · `check-workflow-pins.mjs`: todo binário baixado por `curl` em `run:` (actionlint, zizmor,
   shellcheck) precisa de versão + sha256 declarados em `toolchain.json` e conferidos. Verificação: teste; mutação do
   hash → ❌.
 - [ ] **W89** · D+E ⚠️ · N-11 · SonarCloud (E10): ajustar o Quality Gate de New Code (duplicação ≤ 6 %, Reliability ≥ C)
@@ -571,37 +574,37 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 8 — Observabilidade, higiene e documentação (W91–W100)
 
-- [ ] **W91** · B+C · N-19 · Política E51 em código: o passo de alerta de cada guard (`db-live-guard`, `types-sync`,
+- [x] **W91** · B+C · N-19 · Política E51 em código: o passo de alerta de cada guard (`db-live-guard`, `types-sync`,
   `settings-guard`, `e2e-logado`) conta os comentários da issue e, acima de 20, fecha com resumo e abre uma nova com
   link (helper comum `scripts/ci/issue-rotativa.mjs`). Verificação: fixture com 21 comentários → fecha + abre.
-- [ ] **W92** · C · N-35 · `actions-kpi.mjs`: título da issue com a semana corrente (hoje preso em "2026-10-05"), colunas
+- [x] **W92** · C · N-35 · `actions-kpi.mjs`: título da issue com a semana corrente (hoje preso em "2026-10-05"), colunas
   "cancelado antes de começar" (sem `run_started_at` útil), "minutos desperdiçados", p50/p95 por job, e taxa de falha
   por **causa** (passo que falhou) para `CI/CD Pipeline`. Verificação: issue da próxima segunda.
 - [ ] **W93** · D+B ⚠️ · N-20 · `crm-sync-worker`: decidir religar o `schedule` (`vars.CRM_SYNC_WORKER_ENABLED=true`,
   cadência compatível com o outbox) **ou** documentar no YAML e no `docs/` que o outbox é drenado por pg_cron e o
   workflow é só operação manual. Verificação: decisão + 1 run verde no modo escolhido.
-- [ ] **W94** · B · N-21 · `talkx-status-regen.yml`: `concurrency: {group: talkx-status-regen, cancel-in-progress:
+- [x] **W94** · B · N-21 · `talkx-status-regen.yml`: `concurrency: {group: talkx-status-regen, cancel-in-progress:
   false}`, `runs-on: ubuntu-24.04`, checkout com `fetch-depth: 0` só se `v4-status.mjs` realmente precisar (senão
   `--shallow-since`). Verificação: 2 pushes em 1 min → 1 PR; `check-workflow-pins` cobra `runs-on` igual nos 16.
-- [ ] **W95** · C · N-26 · `CONTRIBUTING.md` reescrito: sem `develop`, `bun` em vez de `npm`, repo `Zapp_Web_V2`, fluxo
+- [x] **W95** · C · N-26 · `CONTRIBUTING.md` reescrito: sem `develop`, `bun` em vez de `npm`, repo `Zapp_Web_V2`, fluxo
   `dia/AAAA-MM-DD` + lote + regras da seção 0 do `CLAUDE.md`, lista dos 6 required checks. Verificação:
   `ci-docs-baseline.unit.mjs` cobre os termos.
-- [ ] **W96** · C · N-26 · `docs/ci/README.md` (gerado) ganha colunas "custo/semana (min)" e "taxa de falha (7 d)" lidas do
+- [x] **W96** · C · N-26 · `docs/ci/README.md` (gerado) ganha colunas "custo/semana (min)" e "taxa de falha (7 d)" lidas do
   último KPI, e uma seção gerada "o que NÃO é bug" (merge_group inerte, `supabase-sync` desarmado, `TYPES_SYNC_PR_TOKEN`
   ausente, …) a partir de um bloco `# nao-e-bug:` nos YAML. Verificação: `--check` verde.
-- [ ] **W97** · B · N-23 · Notificação de falha da `main` por WhatsApp via N8N (webhook `workflow_run` → Evolution GO
+- [x] **W97** · B · N-23 · Notificação de falha da `main` por WhatsApp via N8N (webhook `workflow_run` → Evolution GO
   `PRINCIPAL`), só para `conclusion: failure` de `e2e-logado`, `db-live-guard` (schedule), `deploy-functions`,
   `db-migrate` e `settings-guard` (após W05, só divergência real), dedupe 1 h por workflow (E90). Verificação: forçar 1
   falha → 1 mensagem.
 - [ ] **W98** · C+D ⚠️ · N-27 · `branch-hygiene-audit`: para branches patch-equivalentes à `main` há > 7 dias e sem PR
   aberta, apagar automaticamente (`git push origin --delete`) com lista no Job Summary — decisão do Joaquim entre apagar
   ou só gerar o comando pronto na issue. Verificação: lista de podáveis em #1810 zera.
-- [ ] **W99** · C · N-01 · `workflow-contracts.unit.mjs` ganha os invariantes deste plano: guarda de credencial em todo
+- [x] **W99** · C · N-01 · `workflow-contracts.unit.mjs` ganha os invariantes deste plano: guarda de credencial em todo
   passo `continue-on-error` do guarda vivo (W07); nenhum teste pina versão de dependência (W39); `defaults.run.shell`
   16/16 (W44); `concurrency` em todo workflow que abre PR (W94); `contents: write` só onde há push/tag (W60); retenção
   explícita em todo `upload-artifact`; `runs-on` igual ao pin; flags TLS em todo `curl`. Verificação: cada caso derrubado
   por mutação no YAML real.
-- [ ] **W100** · C · N-26 · Fechar a troca de plano: marcar no `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` as etapas
+- [x] **W100** · C · N-26 · Fechar a troca de plano: marcar no `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` as etapas
   superadas por este (E10→W89, E24→W62, E25→W74, E26→W63/W64, E37→W16, E53→W21, E61→W66, E62→W28/W31, E67→W35,
   E69→W36, E70→W37, E71→W45, E73→W47, E77→W40, E81→W75, E86→W79, E88→W76, E89→W90, E90→W97, E94→W67, E100→W37) com o
   padrão de reconciliação TRA-009, apontar o `CLAUDE.md` para este arquivo como plano vigente, e ajustar

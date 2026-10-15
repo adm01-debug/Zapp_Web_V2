@@ -180,6 +180,48 @@ export function loadAllowedOwnerRepos(root = process.cwd()) {
   return new Set(data.patterns);
 }
 
+/**
+ * W88: verifica que todo binário baixado por curl em run: steps tem versão e sha256
+ * declarados em toolchain.json e que os valores coincidem.
+ *
+ * Padrão detectado no YAML:
+ *   <tool>_version="X.Y.Z"   →  toolchain["<tool>-version"] deve ser "X.Y.Z"
+ *   <tool>_sha256="HASH"     →  toolchain["<tool>-sha256"]  deve ser "HASH"
+ */
+export function findCurlBinaryViolations(source, file = "workflow.yml", toolchain = {}) {
+  const violations = [];
+  const lines = source.replace(/\r\n?/gu, "\n").split("\n");
+  const versionRe = /^\s+([a-z][a-z0-9_]*)_version="([^"]+)"/u;
+  const sha256Re  = /^\s+([a-z][a-z0-9_]*)_sha256="([0-9a-f]{64})"/u;
+
+  for (const [index, line] of lines.entries()) {
+    const lineNumber = index + 1;
+    const vMatch = line.match(versionRe);
+    if (vMatch) {
+      const [, tool, value] = vMatch;
+      const key = `${tool.replace(/_/gu, "-")}-version`;
+      const expected = Object.hasOwn(toolchain, key) ? toolchain[key] : null;
+      if (expected === null) {
+        violations.push({ file, line: lineNumber, tool, field: "version", value, expected: null, motivo: "chave ausente em toolchain.json" });
+      } else if (value !== expected) {
+        violations.push({ file, line: lineNumber, tool, field: "version", value, expected });
+      }
+    }
+    const sMatch = line.match(sha256Re);
+    if (sMatch) {
+      const [, tool, value] = sMatch;
+      const key = `${tool.replace(/_/gu, "-")}-sha256`;
+      const expected = Object.hasOwn(toolchain, key) ? toolchain[key] : null;
+      if (expected === null) {
+        violations.push({ file, line: lineNumber, tool, field: "sha256", value, expected: null, motivo: "chave ausente em toolchain.json" });
+      } else if (value !== expected) {
+        violations.push({ file, line: lineNumber, tool, field: "sha256", value, expected });
+      }
+    }
+  }
+  return violations;
+}
+
 export function main(root = process.cwd()) {
   const workflowsDir = path.join(root, ".github", "workflows");
   const files = readdirSync(workflowsDir).filter((file) => /\.ya?ml$/u.test(file)).sort();
@@ -207,6 +249,10 @@ export function main(root = process.cwd()) {
   }
   const driftViolations = toolchain
     ? files.flatMap((file) => findToolchainDrift(sources.get(file), file, toolchain))
+    : [];
+
+  const binaryViolations = toolchain
+    ? files.flatMap((file) => findCurlBinaryViolations(sources.get(file), file, toolchain))
     : [];
 
   let exitCode = 0;
@@ -244,6 +290,16 @@ export function main(root = process.cwd()) {
       console.error(`  ${violation.file}:${violation.line} ${violation.tool}: ${violation.value} (fonte: ${violation.expected ?? "chave ausente"})`);
     }
     console.error(`Mude a versão em ${TOOLCHAIN_PATH} e propague para os workflows; nenhum valor fora da fonte é aceito.`);
+    exitCode = 1;
+  }
+
+  if (binaryViolations.length) {
+    console.error("FALHA: binário baixado por curl com versão/sha256 divergente de toolchain.json (W88):");
+    for (const v of binaryViolations) {
+      const motivo = v.motivo ?? `${v.value} (esperado: ${v.expected})`;
+      console.error(`  ${v.file}:${v.line} ${v.tool} ${v.field}: ${motivo}`);
+    }
+    console.error(`Atualize ${TOOLCHAIN_PATH} ou o YAML; os dois devem coincidir.`);
     exitCode = 1;
   }
 

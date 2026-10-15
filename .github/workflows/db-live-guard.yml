@@ -59,6 +59,7 @@ jobs:
     name: Contrato DB vivo
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    environment: banco-leitura
     # issues: write para abrir/comentar o alerta em falha e fechar apos
     # recuperacao; nenhum passo de auditoria usa o GITHUB_TOKEN.
     permissions:
@@ -83,8 +84,10 @@ jobs:
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
+        env:
+          GH_REF: ${{ github.ref }}
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: $GH_REF)."
           exit 1
 
       - name: Checkout confiavel da main
@@ -156,7 +159,17 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          node scripts/db-audit/check-migration-drift.mjs 2>&1 | tee /tmp/step-migrations.log
+          # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
+          # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
+          # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
+          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 2).
+          node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
+            exit 0
+          fi
+          exit "$rc"
 
       - name: Verificar ACL e contrato de mcp_exec
         id: acl-mcp-exec
@@ -416,6 +429,26 @@ jobs:
               const linkHeader = primeira.headers?.link || '';
               const ultimaPaginaMatch = linkHeader.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
               const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              // W91/E51: rotacionar issue apos 20 comentarios para manter legibilidade.
+              if (ultimaPagina > 20) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body: `⚠️ Esta issue atingiu ${ultimaPagina} comentários e está sendo rotacionada para manter legibilidade (política E51/W91).\n\nÚltimo alerta antes do fechamento:\n\n---\n\n${body}`,
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number, state: 'closed', state_reason: 'completed',
+                });
+                try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'db-live-guard', color: 'b60205', description: 'Contrato vivo do banco oficial quebrado' }); } catch {}
+                await github.rest.issues.create({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  title,
+                  body: `Continuação de #${existing.number} (fechada por atingir ${ultimaPagina} comentários — E51/W91).\n\n---\n\n${body}`,
+                  labels: ['db-live-guard'],
+                });
+                return;
+              }
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
