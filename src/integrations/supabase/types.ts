@@ -11714,6 +11714,31 @@ export type Database = {
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
+      queue_analytics_series: {
+        Args: {
+          p_from?: string
+          p_queue_id: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      queue_comparison: {
+        Args: {
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      queue_contact_message_stats: {
+        Args: { p_contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_at: string
+          last_message_id: string
+          messages_count: number
+        }[]
+      }
+      queue_waiting_counts: { Args: never; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
