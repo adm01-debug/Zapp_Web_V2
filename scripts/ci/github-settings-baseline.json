@@ -4,7 +4,7 @@
     "O github-settings-guard.mjs confere a realidade contra este arquivo; divergencia = regressao.",
     "Toda mudanca nestes campos atualiza ESTE arquivo E a tabela 'Perimetro do GitHub' no CLAUDE.md, no mesmo PR."
   ],
-  "medido_em": "2026-10-03",
+  "medido_em": "2026-10-15",
   "branch_protection_main": {
     "strict": true,
     "enforce_admins": true,
@@ -32,6 +32,33 @@
     "allowed_actions": "selected",
     "sha_pinning_required": true
   },
+  "workflow_permissions": {
+    "_comentario": "W14: permissoes padrao para workflows. can_approve_pull_request_reviews=true e necessario para types-sync/talkx-status PRs (ver CLAUDE.md 'NÃO desligue can_approve_pull_request_reviews').",
+    "default_workflow_permissions": "write",
+    "can_approve_pull_request_reviews": true
+  },
+  "security_and_analysis": {
+    "_comentario": "W14: campos de seguranca lidos de GET /repos/:owner/:repo (security_and_analysis.<chave>.status). secret_scanning_non_provider_patterns desligado por design (ver CLAUDE.md).",
+    "secret_scanning": "enabled"
+  },
+  "rulesets_count": 0,
+  "selected_actions_patterns": [
+    "oven-sh/setup-bun",
+    "denoland/setup-deno",
+    "supabase/setup-cli",
+    "peter-evans/create-pull-request",
+    "gitleaks/gitleaks-action",
+    "actions/cache",
+    "actions/checkout",
+    "actions/github-script",
+    "actions/setup-go",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "github/codeql-action",
+    "actions/dependency-review-action",
+    "ossf/scorecard-action",
+    "step-security/harden-runner"
+  ],
   "environments": [
     "copilot",
     "db-ledger-evidence",

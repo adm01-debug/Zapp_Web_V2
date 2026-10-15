@@ -125,6 +125,14 @@ async function checarRepo() {
       divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
     }
   }
+  // W14: security_and_analysis (secret_scanning*)
+  const blSec = baseline.security_and_analysis ?? {};
+  for (const [chave, valorEsperado] of Object.entries(blSec)) {
+    const encontrado = repo?.security_and_analysis?.[chave]?.status ?? null;
+    if (encontrado !== valorEsperado) {
+      divergencias.push({ campo: `security_and_analysis.${chave}`, esperado: valorEsperado, encontrado, restauravel: false });
+    }
+  }
   return divergencias;
 }
 
@@ -136,6 +144,46 @@ async function checarActions() {
     if (encontrado !== esperado) {
       divergencias.push({ campo: `actions.${campo}`, esperado, encontrado, restauravel: false });
     }
+  }
+  return divergencias;
+}
+
+async function checarWorkflowPermissions() {
+  const perms = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/workflow`);
+  const divergencias = [];
+  const bl = baseline.workflow_permissions ?? {};
+  for (const [campo, esperado] of Object.entries(bl)) {
+    const encontrado = perms?.[campo] ?? null;
+    if (encontrado !== esperado) {
+      divergencias.push({ campo: `workflow_permissions.${campo}`, esperado, encontrado, restauravel: false });
+    }
+  }
+  return divergencias;
+}
+
+async function checarSelectedActions() {
+  const sel = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const divergencias = [];
+  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
+    divergencias.push({
+      campo: 'selected_actions.patterns_allowed',
+      esperado: blPatterns.join(', '),
+      encontrado: encontradosPatterns.join(', ') || '(nenhum)',
+      restauravel: false,
+    });
+  }
+  return divergencias;
+}
+
+async function checarRulesets() {
+  const rulesets = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/rulesets`);
+  const divergencias = [];
+  const esperado = baseline.rulesets_count ?? 0;
+  const encontrado = (rulesets ?? []).length;
+  if (encontrado !== esperado) {
+    divergencias.push({ campo: 'rulesets.count', esperado, encontrado, restauravel: false });
   }
   return divergencias;
 }
@@ -213,6 +261,9 @@ async function main() {
     ['branch protection', checarBranchProtection],
     ['merge/repo', checarRepo],
     ['actions', checarActions],
+    ['workflow permissions', checarWorkflowPermissions],
+    ['selected actions', checarSelectedActions],
+    ['rulesets', checarRulesets],
     ['environments', checarEnvironments],
   ];
 
