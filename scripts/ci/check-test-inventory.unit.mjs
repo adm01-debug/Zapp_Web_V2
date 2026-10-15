@@ -161,6 +161,13 @@ test('t_fceba6d5: as suites SQL ligadas estao num bloco run: real do db-guard', 
     'supabase/tests/rls_conversation_tab_counts_files_total.sql',
     'scripts/db-tests/03-gamification-bounds.sql',
     'scripts/db-tests/05-rls-smoke.sql',
+    // t_6dafc78a (refazer 1): as 6 promovidas da allowlist para o replay.
+    'supabase/tests/transfer_conversation_atomicidade.sql',
+    'supabase/tests/inbox_agregado_por_contato.sql',
+    'supabase/tests/ai_jobs_lease_efeito_incerto.sql',
+    'scripts/db-tests/01-security-grants.sql',
+    'scripts/db-tests/02-fsm-transitions.sql',
+    'scripts/db-tests/04-schema-contracts.sql',
   ]) {
     assert.ok(padroes.includes(f), `${f} deveria estar num bloco run: do db-guard.yml`);
   }
@@ -168,7 +175,9 @@ test('t_fceba6d5: as suites SQL ligadas estao num bloco run: real do db-guard', 
 
 test('t_fceba6d5: nenhuma suite SQL de supabase/tests ou scripts/db-tests esta orfa', () => {
   assert.deepEqual(suitesSqlOrfas(), []);
-  assert.ok(suitesSqlNoDisco().length >= 16, 'as 16 suites SQL do disco devem entrar no inventario');
+  // t_6dafc78a: 16 - 2 dashboards removidos (supersedidas pelo
+  // dashboard-rls-authorization.test.sh) = 14 no disco.
+  assert.ok(suitesSqlNoDisco().length >= 14, 'as 14 suites SQL do disco devem entrar no inventario');
 });
 
 test('t_fceba6d5: nenhum orfao restante do inventario e uma suite SQL', () => {

@@ -17,6 +17,17 @@
 --
 -- Cria dados SINTÉTICOS (usuários, perfis, contatos e mensagens) e desfaz tudo no
 -- ROLLBACK final: não sobra linha no banco. Sem EXCEPTION = suíte verde.
+--
+-- ENVELOPE DE PAPEL (t_6dafc78a, refazer 1): T1/T3/T4/T6/T5 agora rodam com o
+-- papel authenticated DE VERDADE (SET ROLE + claims do chamador + os GUCs
+-- por-claim request.jwt.claim.sub / request.jwt.claim.role) — o mesmo envelope
+-- que o run-all.mjs recebe do mcp_exec em produção — em vez de rodar como
+-- postgres (superusuário, BYPASSRLS). Os por-claim são obrigatórios: nesta
+-- imagem o auth.uid() lê request.jwt.claim.sub (medido em 14/10: só com o JSON
+-- de claims, auth.uid() é NULL e a RPC não enxerga contato nenhum). Só as
+-- fixtures ficam como postgres; o T2 já chaveava papel sozinho. As asserções
+-- leem só a saída da RPC (SECURITY DEFINER), sem leitura direta de tabela sob
+-- RLS.
 BEGIN;
 
 DO $inbox_summaries$
@@ -86,7 +97,12 @@ BEGIN
 
   -- ---------------------------------------------------------------- T1
   -- Como A, pedindo o contato oculto junto com o visível: só o visível volta.
+  -- Papel real authenticated (envelope do mcp_exec): a partir daqui a RPC roda
+  -- sem BYPASSRLS até o T2 (que gerencia os próprios papéis).
+  PERFORM set_config('role', 'authenticated', true);
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_a)::text, true);
+  PERFORM set_config('request.jwt.claim.sub', v_user_a::text, true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   SELECT count(*) INTO v_linhas
     FROM public.get_inbox_contact_summaries(ARRAY[v_contact_vis, v_contact_oculto]);
   IF v_linhas <> 1 THEN
@@ -116,6 +132,8 @@ BEGIN
 
   -- Como B, o contato de A (visível para A) NÃO aparece.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_b)::text, true);
+  PERFORM set_config('request.jwt.claim.sub', v_user_b::text, true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   SELECT count(*) INTO v_linhas
     FROM public.get_inbox_contact_summaries(ARRAY[v_contact_vis]);
   IF v_linhas <> 0 THEN
@@ -125,6 +143,8 @@ BEGIN
   -- ---------------------------------------------------------------- T3/T4/T6
   -- Volta como A: agregado por contato do contato visível.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_a)::text, true);
+  PERFORM set_config('request.jwt.claim.sub', v_user_a::text, true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   SELECT unread_count, last_message_id, last_message_content
     INTO v_unread, v_last_id, v_last_content
     FROM public.get_inbox_contact_summaries(ARRAY[v_contact_vis]);
@@ -166,6 +186,9 @@ BEGIN
 
   -- A prova funcional: como anon a chamada é barrada de verdade.
   PERFORM set_config('role', 'anon', true);
+  PERFORM set_config('request.jwt.claims', '{"role":"anon"}', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', 'anon', true);
   v_barrado := false;
   BEGIN
     PERFORM 1 FROM public.get_inbox_contact_summaries(ARRAY[v_contact_vis]);
@@ -179,6 +202,8 @@ BEGIN
 
   -- Controle positivo: como authenticated a RPC responde (GRANT correto).
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_a)::text, true);
+  PERFORM set_config('request.jwt.claim.sub', v_user_a::text, true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   PERFORM set_config('role', 'authenticated', true);
   v_matou := false;
   BEGIN

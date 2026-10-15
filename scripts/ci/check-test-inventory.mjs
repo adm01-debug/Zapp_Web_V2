@@ -243,31 +243,17 @@ const DIRS_SUITE_SQL = ['supabase/tests', 'scripts/db-tests'];
 const CAMINHO_SUITE_SQL = /(?:supabase\/tests|scripts\/db-tests)\/[A-Za-z0-9_./*-]+\.sql/g;
 
 // Suítes SQL conhecidas ainda fora do CI; remover linha quando a etapa correspondente mergear.
-// Medições de t_fceba6d5 (PostgreSQL 17 descartável e replay do Supabase): o runner
-// scripts/db-tests/run-suites-postgres.sh (auto-contidas) e o run-suites-replay.sh (schema
-// completo) já executam as suítes ligadas ao CI; as demais seguem aqui com a razão medida.
+// t_6dafc78a (refazer 1): 13 das 14 suítes rodam no CI (auto-contidas via
+// run-suites-postgres.sh, schema completo via run-suites-replay.sh). Resta UMA:
+// indeterminate_optout_outbox.sql, que referencia a migration 20261007095739
+// (t_89af1a99) via `\i :mig` — medido em 14/10: o arquivo NÃO existe em
+// supabase/migrations/ (só 20261002581230_talkx_v4_x029_optout.sql), então o
+// runner falharia em `No such file`. A suíte já carrega o envelope de papel
+// (SET LOCAL ROLE service_role/authenticated) e o desenho vermelho→verde;
+// promover ao CI quando o integrador trouxer a migration (o teste 'entrada
+// morta' abaixo quebra se o arquivo sumir sem a remoção desta linha).
 export const ALLOWLIST_SQL = new Set([
-  // auto-contida, mas a migration sob teste (20261007095739, t_89af1a99) ainda não está na
-  // branch do dia: o runner a executa e falha só em `No such file`. Promover quando integrar.
   'supabase/tests/indeterminate_optout_outbox.sql',
-  // dependem do envelope `mcp_exec` (SET LOCAL ROLE + request.jwt.claims do PostgREST) para
-  // provar autorização; precisam do harness de sessão antes do passo no CI.
-  'supabase/tests/ai_jobs_lease_efeito_incerto.sql',
-  'supabase/tests/inbox_agregado_por_contato.sql',
-  'supabase/tests/transfer_conversation_atomicidade.sql',
-  // provam só ESTRUTURA sob service_role e AUTO-PULAM sem dados de produção (medido no
-  // replay): um passo no CI passaria sem provar nada. Supersedidas por
-  // scripts/db-audit/dashboard-rls-authorization.test.sh, que prova sob papéis REAIS.
-  'supabase/tests/dashboard_kpi_edge_cases.sql',
-  'supabase/tests/dashboard_rpc_filters.sql',
-  // harness legado pelo `mcp_exec`/service_role (run-all.mjs) contra o banco canônico; nunca
-  // pôde rodar no CI por design e dependem do schema completo.
-  //   01/04: no replay REAL emitem FAIL de drift de produção (correção fora deste cartão).
-  //   02:    roda no replay mas emite FAIL|02-FSM-02 — `changed_at` não muda dentro de UMA
-  //          transação (now() é transaction_timestamp); precisa comparar entre transações.
-  'scripts/db-tests/01-security-grants.sql',
-  'scripts/db-tests/02-fsm-transitions.sql',
-  'scripts/db-tests/04-schema-contracts.sql',
 ]);
 
 /** Suítes SQL sem nenhum bloco `run:` que as execute (fora da ALLOWLIST_SQL). */

@@ -1039,8 +1039,10 @@ jobs:
       # passo do CI as executava (o check-test-inventory nem as enxergava). As AUTO-CONTIDAS
       # criam a própria superfície de roles/tabelas e rodam numa transação que termina em
       # ROLLBACK, montando o repo somente-leitura; por isso rodam contra PostgreSQL 17
-      # descartável pelo runner scripts/db-tests/run-suites-postgres.sh — as demais dependem de
-      # bootstrap próprio e seguem na ALLOWLIST_SQL com justificativa. SKIP_DOCKER_SHIM="1":
+      # descartável pelo runner scripts/db-tests/run-suites-postgres.sh — as demais que
+      # precisam do schema completo rodam no passo do replay abaixo; resta na
+      # ALLOWLIST_SQL com justificativa só a indeterminate_optout_outbox.sql (t_6dafc78a).
+      # SKIP_DOCKER_SHIM="1":
       # cada suíte faz CREATE ROLE anon/authenticated/service_role, globais ao cluster — no
       # docker-shim do E47 colidiriam com as roles do serviço.
       - name: Provar suítes SQL auto-contidas de supabase/tests (t_fceba6d5)
@@ -1053,11 +1055,12 @@ jobs:
           supabase/tests/r2_db_022_provenance_trigger.sql
           supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql
 
-      # t_fceba6d5: as suítes que dependem do SCHEMA COMPLETO (não são auto-contidas) rodam
-      # aqui contra o replay descartável do Supabase (imagem fixada + bootstrap dos serviços +
-      # todas as migrations, tolerando as 21 falhas conhecidas do replay), pelo runner
-      # scripts/db-tests/run-suites-replay.sh. As travas de DNS/agendador são as mesmas do
-      # scripts/db-audit/replay-local.sh: nada aqui toca produção.
+      # t_6dafc78a (refazer 1 da recusa): as 6 promovidas da ALLOWLIST_SQL para cá,
+      # com o envelope de papel dentro das próprias suítes (SET ROLE + claims), após
+      # prova vermelha→verde no replay: 02 compara changed_at ENTRE transações;
+      # 01/04 com expectativas ajustadas ao schema que o replay produz; transfer,
+      # inbox e ai_jobs exercendo a RPC sob o papel real. Resta na allowlist só a
+      # indeterminate_optout_outbox.sql (migration 20261007095739 fora da branch).
       - name: Provar suítes SQL de schema completo no replay (t_fceba6d5)
         env:
           SUITES_REPLAY_IMAGE: public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f
@@ -1068,5 +1071,11 @@ jobs:
           supabase/tests/rls_dashboard.sql
           supabase/tests/rls_whatsapp_media_select_via_messages.sql
           supabase/tests/rls_conversation_tab_counts_files_total.sql
+          supabase/tests/transfer_conversation_atomicidade.sql
+          supabase/tests/inbox_agregado_por_contato.sql
+          supabase/tests/ai_jobs_lease_efeito_incerto.sql
           scripts/db-tests/03-gamification-bounds.sql
           scripts/db-tests/05-rls-smoke.sql
+          scripts/db-tests/01-security-grants.sql
+          scripts/db-tests/02-fsm-transitions.sql
+          scripts/db-tests/04-schema-contracts.sql

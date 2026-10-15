@@ -7,9 +7,18 @@
 -- sem 2ª cobrança). Contraste: job 'running' com lease vencido SEM marca volta
 -- para 'queued' (comportamento anterior preservado) e é arrancado normalmente.
 --
--- Roda como service_role via GUC (mesmo idioma das demais suítes de
--- supabase/tests): auth.role() lê request.jwt.claims -> 'role'.
+-- Roda com o papel service_role DE VERDADE (mesmo idioma das demais suítes de
+-- supabase/tests): SET ROLE service_role + request.jwt.claims -> auth.role()
+-- lê 'service_role'. T0 prova o negativo (authenticated/anon = 42501).
 -- Sem exceção = suite verde. Limpa as próprias linhas ao final.
+--
+-- ENVELOPE DE PAPEL (t_6dafc78a, refazer 1): antes, a sessão era postgres
+-- (superusuário, BYPASSRLS) com só os claims de service_role — a autorização
+-- nunca era exercida. Agora a sessão assume service_role de verdade, e T0
+-- prova que authenticated/anon são barrados com 42501. Inclui os GUCs por-claim
+-- (claim.sub/claim.role): nesta imagem o auth.role() lê claim.role e o
+-- auth.uid() lê claim.sub (medido em 14/10: só com o JSON, o enqueue falha com
+-- 'service_role_required' antes mesmo de operar).
 --
 -- A suíte inteira roda numa transação que termina em ROLLBACK: o claim dos
 -- workers A e C usa limite 100 e poderia arrendar jobs ALHEIOS no banco local;
@@ -32,7 +41,48 @@ DECLARE
   v_claimed_c     uuid;
   v_tentativas    int;
 BEGIN
+  -- Envelope: sessão assume service_role de verdade (sem BYPASSRLS de postgres).
+  -- auth.role() lê request.jwt.claim.role e auth.uid() lê request.jwt.claim.sub
+  -- nesta imagem — os três GUCs (claims JSON + por-claim) andam juntos.
+  PERFORM set_config('role', 'service_role', true);
   PERFORM set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+
+  -- T0: autorização — authenticated e anon NÃO operam a fila (42501).
+  -- Se um dia o GRANT abrir ou o cheque service_role cair, este bloco falha.
+  PERFORM set_config('role', 'authenticated', true);
+  PERFORM set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000099","role":"authenticated"}', true);
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000099', true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+  BEGIN
+    PERFORM public.claim_ai_jobs('t0_probe', 1, 30);
+    RAISE EXCEPTION 'T0 FALHOU: authenticated operou a fila de workers';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm LIKE '%operou a fila%' THEN RAISE; END IF;
+    IF sqlstate <> '42501' THEN
+      RAISE EXCEPTION 'T0 FALHOU: authenticated retornou % (%) em vez de 42501', sqlstate, sqlerrm;
+    END IF;
+    RAISE NOTICE 'T0 OK: authenticated barrado com 42501 (%)', sqlerrm;
+  END;
+  PERFORM set_config('role', 'anon', true);
+  PERFORM set_config('request.jwt.claims', '{"role":"anon"}', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', 'anon', true);
+  BEGIN
+    PERFORM public.claim_ai_jobs('t0_probe', 1, 30);
+    RAISE EXCEPTION 'T0 FALHOU: anon operou a fila de workers';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm LIKE '%operou a fila%' THEN RAISE; END IF;
+    IF sqlstate <> '42501' THEN
+      RAISE EXCEPTION 'T0 FALHOU: anon retornou % (%) em vez de 42501', sqlstate, sqlerrm;
+    END IF;
+    RAISE NOTICE 'T0 OK: anon barrado com 42501 (%)', sqlerrm;
+  END;
+  PERFORM set_config('role', 'service_role', true);
+  PERFORM set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
   -- ------------------------------------------------------------------------
   -- Preparação: o worker A arrenda os DOIS jobs num único claim; só o primeiro
@@ -131,7 +181,12 @@ BEGIN
       v_row.status, v_row.effect_started_at, v_row.lease_token, v_row.attempt_count;
   END IF;
 
-  -- Limpa as linhas do teste (inclusive o outcome_unknown terminal).
+  -- Limpa as linhas do teste (inclusive o outcome_unknown terminal) como
+  -- postgres (leitura/escrita direta, fora do papel de worker).
+  PERFORM set_config('role', 'none', true);
+  PERFORM set_config('request.jwt.claims', '', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', '', true);
   DELETE FROM public.ai_jobs WHERE id IN (v_job_efeito, v_job_sem_marca);
 
   RAISE NOTICE 'T202 OK: efeito incerto -> outcome_unknown (worker B não arranca), sem marca -> queued e arrancado de novo, marca idempotente e zerada por tentativa';

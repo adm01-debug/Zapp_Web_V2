@@ -20,6 +20,18 @@
 --   T6  argumentos inválidos (zero ou dois destinos): exception 22023;
 --   T7  ACL: EXECUTE concedido a authenticated/service_role e negado a
 --       anon/PUBLIC.
+--
+-- ENVELOPE DE PAPEL (t_6dafc78a, refazer 1): as chamadas à RPC em T1–T6 rodam
+-- com o mesmo envelope que o run-all.mjs recebe do mcp_exec em produção —
+-- SET ROLE de verdade (authenticated/anon) + request.jwt.claims + os GUCs
+-- por-claim request.jwt.claim.sub / request.jwt.claim.role — em vez de rodar
+-- como postgres (superusuário, BYPASSRLS). Os por-claim são obrigatórios: nesta
+-- imagem o auth.uid() lê request.jwt.claim.sub e o auth.role() lê
+-- request.jwt.claim.role (medido em 14/10: só com o JSON, auth.uid() é NULL e a
+-- RPC rejeita tudo com 'Sem sessao autenticada'). Só as fixtures e as asserções
+-- de leitura direta ficam como postgres; a operação sob teste (a RPC) executa
+-- sob o papel real, então GRANT negado ou predicado de autorização quebrado
+-- derruba a suíte. Cada bloco DO fixa o próprio envelope no início.
 
 begin;
 
@@ -36,6 +48,10 @@ values
 create temp table t88_ids on commit drop as
 select (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000a001') as admin_profile,
        (select id from public.profiles where user_id = '00000000-0000-0000-0000-00000000b002') as colega_profile;
+-- A RPC roda sob authenticated/anon (envelope do mcp_exec) e o restore do T3
+-- sob service_role: a leitura da temp de fixtures precisa de GRANT explícito,
+-- senão a chamada morre com permission denied antes de exercitar a autorização.
+grant select on t88_ids to authenticated, anon, service_role;
 
 insert into public.user_roles (user_id, role)
 values ('00000000-0000-0000-0000-00000000a001', 'admin');
@@ -48,8 +64,8 @@ values ('00000000-0000-0000-0000-00000000e005', 'Contato T88', '+5511900000088',
         (select admin_profile from t88_ids), '00000000-0000-0000-0000-00000000d004');
 
 -- ===== T1: feliz — transferir para agente (executor = admin autenticado) =====
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}';
-
+-- Envelope: a RPC roda como authenticated (papel real, sem BYPASSRLS); as
+-- asserções de leitura direta voltam a postgres.
 do $$
 declare
   v_event uuid;
@@ -57,12 +73,19 @@ declare
   v_queue uuid;
   v_evt record;
 begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}', true);
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000a001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   v_event := public.transfer_conversation(
     '00000000-0000-0000-0000-00000000e005',
     (select colega_profile from t88_ids),
     null,
     'Cliente pediu urgência'
   );
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
 
   select c.assigned_to, c.queue_id into v_assigned, v_queue
     from public.contacts c where c.id = '00000000-0000-0000-0000-00000000e005';
@@ -92,9 +115,16 @@ declare
   v_queue uuid;
   v_evt record;
 begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}', true);
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000a001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   v_event := public.transfer_conversation(
     '00000000-0000-0000-0000-00000000e005', null,
     '00000000-0000-0000-0000-00000000d004', 'Fila com contexto');
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
 
   select c.queue_id into v_queue
     from public.contacts c where c.id = '00000000-0000-0000-0000-00000000e005';
@@ -114,12 +144,26 @@ end $$;
 -- ===== T3: ATOMICIDADE — evento falha ⇒ contato permanece intacto ============
 -- Restaura o estado original do contato, instala um trigger que sempre falha o
 -- INSERT do evento e chama a RPC: a exceção desfaz o UPDATE junto.
+--
+-- O restore abaixo dispara trg_prevent_contact_assignee_hijack, cujo guard
+-- (resolve_contact_guard_actor) exige JWT de usuário ou o bypass service_role:
+-- postgres NÃO é superuser nesta imagem (rolsuper=f, medido em 15/10), então o
+-- restore roda com envelope service_role e volta a postgres em seguida — o
+-- CREATE TRIGGER mais abaixo roda como dono da tabela.
+set local role service_role;
+set local request.jwt.claims = '{"role":"service_role"}';
+set local request.jwt.claim.sub = '';
+set local request.jwt.claim.role = 'service_role';
 update public.contacts
    set assigned_to = (select admin_profile from t88_ids),
        queue_id    = '00000000-0000-0000-0000-00000000d004'
  where id = '00000000-0000-0000-0000-00000000e005';
 delete from public.conversation_events
  where contact_id = '00000000-0000-0000-0000-00000000e005';
+reset role;
+set local request.jwt.claims = '';
+set local request.jwt.claim.sub = '';
+set local request.jwt.claim.role = '';
 
 create or replace function pg_temp.t88_fail_event_insert()
 returns trigger language plpgsql as $f$
@@ -139,6 +183,10 @@ declare
   v_queue uuid;
   v_events integer;
 begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}', true);
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000a001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   begin
     perform public.transfer_conversation(
       '00000000-0000-0000-0000-00000000e005',
@@ -151,6 +199,9 @@ begin
     end if;
     raise notice 'T3: RPC falhou como esperado: %', v_err;
   end;
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
 
   select c.assigned_to, c.queue_id into v_assigned, v_queue
     from public.contacts c where c.id = '00000000-0000-0000-0000-00000000e005';
@@ -167,12 +218,19 @@ begin
   raise notice 'T3 OK: rollback real — evento falhou e o contato ficou intacto';
 end $$;
 
-drop trigger trg_t88_fail_event on public.conversation_events;
+-- Remove o fail-trigger via CASCADE da função pg_temp (criada por esta sessão,
+-- logo postgres é dono e pode derrubar): DROP TRIGGER direto exige ser dono da
+-- TABELA (supabase_admin no replay), e T4–T6 precisam do caminho real de insert.
+drop function pg_temp.t88_fail_event_insert() cascade;
 
 -- ===== T4: sem sessão ========================================================
-set local request.jwt.claims = '{}';
+-- Envelope: papel anon real + claims vazios (navegador deslogado via PostgREST).
 do $$
 begin
+  perform set_config('role', 'anon', true);
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', 'anon', true);
   begin
     perform public.transfer_conversation(
       '00000000-0000-0000-0000-00000000e005',
@@ -185,11 +243,16 @@ begin
 end $$;
 
 -- ===== T5: autenticado sem permissão =========================================
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000c003","role":"authenticated"}';
+-- Envelope: papel authenticated real + claims de quem não tem permissão; a
+-- verificação de que o contato ficou intacto volta a postgres (leitura direta).
 do $$
 declare
   v_assigned uuid;
 begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000c003","role":"authenticated"}', true);
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000c003', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   begin
     perform public.transfer_conversation(
       '00000000-0000-0000-0000-00000000e005',
@@ -199,6 +262,9 @@ begin
     if sqlerrm like '%sem permissao transferiu%' then raise; end if;
     raise notice 'T5: rejeitado como esperado: %', sqlerrm;
   end;
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
 
   select c.assigned_to into v_assigned
     from public.contacts c where c.id = '00000000-0000-0000-0000-00000000e005';
@@ -209,9 +275,14 @@ begin
 end $$;
 
 -- ===== T6: argumentos inválidos ==============================================
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}';
+-- Envelope: papel authenticated real; validação de argumentos independe do papel,
+-- mas a chamada precisa do envelope completo para não mascarar 42501 como 22023.
 do $$
 begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}', true);
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000a001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   begin
     perform public.transfer_conversation('00000000-0000-0000-0000-00000000e005', null, null, null);
     raise exception 'T6a FALHOU: sem destino passou';
@@ -231,8 +302,13 @@ begin
 end $$;
 
 -- ===== T7: ACL ===============================================================
+-- Checagem estática de GRANTs (independe de papel; fixa postgres por clareza).
 do $$
 begin
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('request.jwt.claims', '', true);
   if has_function_privilege('anon', 'public.transfer_conversation(uuid,uuid,uuid,text)', 'EXECUTE')
      or exists (
        select 1
