@@ -1,4 +1,7 @@
-# Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)
+# ~~Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)~~
+
+> **⚠️ SUBSTITUÍDO** — Este plano (v3) foi superado por `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md` (v4).
+> Não executar etapas deste arquivo; consultar o v4 para o estado atual. (W100, 2026-10-15)
 
 **Data:** 2026-10-01 (13:10 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `7d3117c`
 **Escopo:** os 14 arquivos que existiam em `.github/workflows/` no baseline (hoje são **16** — ver Reconciliação TRA-009), os 3 workflows dinâmicos (Dependabot Updates, Dependency Graph,

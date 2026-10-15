@@ -1,23 +1,26 @@
-# 🤝 Guia de Contribuição — ZAPP-WEB
+# 🤝 Guia de Contribuição — Zapp_Web_V2
 
-Obrigado pelo interesse em contribuir! Este guia explica como participar do desenvolvimento.
+Repositório: `adm01-debug/Zapp_Web_V2` · Branch principal: `main` · Runtime: **Bun**
+
+---
 
 ## 🚀 Quick Start
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/adm01-debug/zapp-web.git
-cd zapp-web
+git clone https://github.com/adm01-debug/Zapp_Web_V2.git
+cd Zapp_Web_V2
 
-# 2. Instale dependências
-npm install
+# 2. Instale dependências (bun, não npm)
+bun install
 
-# 3. Configure ambiente
-cp .env.example .env
-# Edite .env com suas credenciais Supabase
+# 3. Configure ambiente local
+cp .env.example .env.local
+# Edite .env.local com VITE_ZAPP_LOCAL_SUPABASE_URL e VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY
+# SEM essas variáveis, o servidor de dev aponta para a PRODUÇÃO — confira antes de testar.
 
 # 4. Rode em desenvolvimento
-npm run dev
+bun dev
 ```
 
 ## 📐 Stack Tecnológico
@@ -26,153 +29,107 @@ npm run dev
 |--------|------------|
 | Frontend | React 18 + TypeScript + Vite |
 | Estilo | Tailwind CSS + shadcn/ui |
-| Backend | Supabase (PostgreSQL + Auth + Realtime + Storage) |
+| Backend | Supabase (PostgreSQL 17 + Auth + Realtime + Storage) |
 | Edge Functions | Deno (Supabase Functions) |
-| WhatsApp | Evolution API |
-| Deploy | Vercel (front) + GitHub Actions (edge functions) |
-
-## 📁 Estrutura do Projeto
-
-```
-zapp-web/
-├── src/
-│   ├── components/     # Componentes React
-│   ├── hooks/          # Custom hooks
-│   ├── lib/            # Utilitários
-│   ├── pages/          # Páginas/rotas
-│   ├── integrations/   # Clientes Supabase
-│   └── types/          # Tipos TypeScript
-├── supabase/
-│   ├── functions/      # Edge Functions (Deno)
-│   └── migrations/     # Migrations SQL
-├── docs/               # Documentação
-└── public/             # Assets estáticos
-```
-
-## 🔀 Workflow de Desenvolvimento
-
-### Branches
-
-- `main` — Produção (protegida)
-- `develop` — Desenvolvimento
-- `feature/*` — Novas funcionalidades
-- `fix/*` — Correções
-- `hotfix/*` — Correções urgentes em produção
-
-### Fluxo
-
-1. Crie branch a partir de `develop`
-2. Desenvolva e teste localmente
-3. Commit com mensagem padronizada
-4. Abra PR para `develop`
-5. Aguarde review e CI passar
-6. Merge!
-
-## 📝 Padrão de Commits
-
-Usamos [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-<tipo>(<escopo>): <descrição>
-
-[corpo opcional]
-
-[rodapé opcional]
-```
-
-### Tipos
-
-| Tipo | Descrição |
-|------|----------|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de bug |
-| `docs` | Documentação |
-| `style` | Formatação (sem mudança de código) |
-| `refactor` | Refatoração |
-| `perf` | Performance |
-| `test` | Testes |
-| `chore` | Manutenção |
-| `ci` | CI/CD |
-
-### Exemplos
-
-```bash
-feat(chat): adicionar botão de anexar arquivo
-fix(auth): corrigir loop de redirect no login
-docs(readme): atualizar instruções de setup
-perf(messages): otimizar query de histórico
-```
-
-## ✅ Checklist de PR
-
-Antes de abrir um PR, verifique:
-
-- [ ] Código compila sem erros (`npm run build`)
-- [ ] Linter passa (`npm run lint`)
-- [ ] Tipos corretos (`npm run typecheck`)
-- [ ] Testes passam (`npm run test`)
-- [ ] Sem `console.log` ou debug code
-- [ ] Sem secrets hardcoded
-- [ ] Documentação atualizada (se necessário)
-- [ ] Screenshots para mudanças visuais
-
-## 🧪 Testes
-
-```bash
-# Rodar todos os testes
-npm run test
-
-# Rodar com coverage
-npm run test:coverage
-
-# Rodar em watch mode
-npm run test:watch
-```
-
-## 🎨 Padrões de Código
-
-### TypeScript
-
-- Sempre tipar props e retornos
-- Evitar `any` — usar `unknown` se necessário
-- Preferência por interfaces sobre types
-
-### React
-
-- Componentes funcionais com hooks
-- Preferência por composição sobre herança
-- Usar shadcn/ui components quando possível
-
-### CSS/Tailwind
-
-- Usar classes Tailwind, evitar CSS custom
-- Seguir design tokens do projeto
-- Mobile-first responsive design
-
-### Supabase
-
-- Sempre testar RLS policies
-- Usar prepared statements
-- Documentar migrations
-
-## 🔐 Segurança
-
-- **NUNCA** commitar secrets ou tokens
-- Usar `.env` para variáveis sensíveis
-- Reportar vulnerabilidades conforme `SECURITY.md`
-
-## 📚 Recursos
-
-- [Documentação Técnica](./docs/)
-- [Supabase Docs](https://supabase.com/docs)
-- [Evolution API Docs](https://doc.evolution-api.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-
-## 📧 Contato
-
-- **Issues:** Abra uma issue no GitHub
-- **Email:** dev@promobrindes.com.br
+| WhatsApp | Evolution GO (VPS Hostinger) |
+| Runtime | **Bun** (`bun.lock`; não usar `npm install`) |
 
 ---
 
-🙏 Obrigado por contribuir!
+## 🔄 Fluxo de trabalho — lote diário
+
+O trabalho acontece em **banco local** (Supabase local por cópia de trabalho), não contra produção.
+
+```
+branch dia/AAAA-MM-DD
+    ↓  commits + CI verde
+    PR  (6 checks obrigatórios)
+    ↓  merge (squash)
+    main
+    ↓  deploy automático (Vercel)
+    ↓  db-migrate.yml (dry-run + aprovação humana no environment producao-ddl)
+```
+
+**Regras essenciais (seção 0 do CLAUDE.md):**
+
+1. Trabalhar sempre em banco **local** — nunca testar contra produção.
+2. Um PR por lote; o nome da branch segue `dia/AAAA-MM-DD`.
+3. Migrations: arquivo em `supabase/migrations/` → PR → merge → apply (nunca DDL direto sem PR).
+4. Push só quando o Joaquim pedir — o CI cuida do merge via auto-merge quando os 6 checks ficam verdes.
+
+---
+
+## ✅ Os 6 required checks da `main`
+
+Todo PR precisa ter todos esses checks verdes antes do merge:
+
+| Check | Job |
+|-------|-----|
+| `🔍 Lint & TypeCheck` | lint-and-typecheck |
+| `🧪 Unit Tests` | test |
+| `🏗️ Build` | build |
+| `🔒 Security Audit` | security |
+| `Contrato DB offline` | db-guard |
+| `🎭 E2E Tests (Playwright)` | e2e |
+
+O `strict=true` na branch protection garante que o CI rode contra a versão mais recente da `main`.
+
+---
+
+## 🗄️ Migrations
+
+```bash
+# Verificar a versão mais recente (antes de criar arquivo)
+# SELECT max(version) FROM supabase_migrations.schema_migrations;
+
+# Registrar migration (gera SQL de INSERT, não aplica)
+node scripts/db-audit/register-migration.mjs supabase/migrations/<arquivo>.sql
+
+# Validar guard de uso
+node scripts/db-audit/supabase-usage-guard.mjs  # deve sair com "novas: 0"
+```
+
+Veja as regras completas na seção 1 do `CLAUDE.md`.
+
+---
+
+## 🧪 Rodando testes localmente
+
+```bash
+# Unit tests
+bun test
+
+# Lint + TypeCheck
+bun run lint
+bun run typecheck
+
+# Build de produção
+bun run build
+
+# E2E (requer banco local configurado)
+bun run e2e
+```
+
+---
+
+## 🔐 Secrets e segurança
+
+- **Nunca** commitar `.env*` ou credenciais.
+- Secrets vivem em GitHub Environments e nos cofres do Supabase.
+- Edge Functions não expõem secrets ao front — sempre via server-side.
+- Actions fixadas por SHA de 40 caracteres (verificado por `check-workflow-pins.mjs`).
+
+---
+
+## 📋 Antes de abrir um PR
+
+- [ ] `bun install --frozen-lockfile` sem erros
+- [ ] `bun run lint` sem erros novos (ratchet)
+- [ ] `bun test` verde
+- [ ] `bun run build` sem erros
+- [ ] Se mudou `supabase/migrations/`: arquivo registrado no ledger + `supabase-usage-guard.mjs` saindo com `novas: 0`
+- [ ] PR no modelo de lote (`dia/AAAA-MM-DD`) ou branch temática com CI verde
+
+---
+
+*Atualizado em 2026-10-15 (W95). Para dúvidas sobre infra, banco ou fluxo de deploy, veja o `CLAUDE.md`.*
