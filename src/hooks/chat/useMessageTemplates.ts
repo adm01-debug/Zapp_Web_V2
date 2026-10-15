@@ -98,10 +98,14 @@ export function useMessageTemplates() {
     }
   }, [toast, fetchTemplates, queryClient]);
 
-  // Contagem atômica no servidor (RPC do PH-10): soma no banco e só toca linha
-  // visível ao chamador (dono ou global).
+  // Contagem direta na tabela. A RPC atômica (`increment_quick_reply_use`) nasce
+  // na migration do cartão pai (t_32034c99) e não existe neste recorte: o guard
+  // de uso exige que o cartão só chame o que já está no catálogo.
   const incrementUseCount = useCallback(async (template: Template) => {
-    const { error } = await (supabase as any).rpc('increment_quick_reply_use', { p_id: template.id }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (PH-10, cartão pai t_32034c99), types.ts ainda não sincronizado
+    const { error } = await supabase
+      .from('message_templates')
+      .update({ use_count: template.use_count + 1 })
+      .eq('id', template.id);
     if (error) {
       toast({ title: "Erro ao registrar o uso", description: "Não foi possível contar o uso do template.", variant: "destructive" });
       log.error('Error incrementing template use:', error);

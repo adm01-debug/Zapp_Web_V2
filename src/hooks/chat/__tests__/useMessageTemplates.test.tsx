@@ -7,13 +7,13 @@ import type { ReactElement, ReactNode } from 'react';
 //  1. `fetchTemplates` gravava estado depois do unmount (resposta atrasada);
 //  2. criar/editar/excluir template não invalidava o cache `['quick-replies']`
 //     consumido pela tela de respostas rápidas;
-//  3. o uso era contado por `update` do cliente; agora vai pela RPC do PH-10.
+//  3. o uso era contado sem tratar erro. Conta por `update` direto com erro
+//     tratado; a RPC atômica do PH-10 nasce na migration do cartão pai
+//     (t_32034c99) e ainda não existe neste recorte (guard de uso exige
+//     auto-suficiência: só chama o que está no catálogo).
 
 const mocks = vi.hoisted(() => ({
   user: { id: 'user-a' } as { id: string } | null,
-  rpc: vi.fn<(name: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>>(
-    async () => ({ data: true, error: null }),
-  ),
   toast: vi.fn(),
   from: vi.fn(),
 }));
@@ -46,7 +46,6 @@ function chain(result: Record<string, unknown>) {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: mocks.from,
-    rpc: mocks.rpc,
   },
 }));
 
@@ -75,8 +74,6 @@ function renderHookWithWrapper() {
 
 beforeEach(() => {
   mocks.user = { id: 'user-a' };
-  mocks.rpc.mockReset();
-  mocks.rpc.mockResolvedValue({ data: true, error: null });
   mocks.toast.mockReset();
   mocks.from.mockReset();
   mocks.from.mockImplementation(() => chain({ data: DB_TEMPLATES, error: null }));
@@ -128,21 +125,25 @@ describe('useMessageTemplates — invalidação do cache de respostas rápidas',
   });
 });
 
-describe('useMessageTemplates — uso contado pela RPC do PH-10', () => {
-  it('chama a RPC com o id do template e invalida [quick-replies]', async () => {
+describe('useMessageTemplates — uso contado por update direto', () => {
+  it('soma 1 no use_count do template e invalida [quick-replies]', async () => {
     const { result, invalidate } = renderHookWithWrapper();
+    let last: ReturnType<typeof chain> | undefined;
+    mocks.from.mockImplementationOnce(() => (last = chain({ data: DB_TEMPLATES, error: null })));
 
     await act(async () => {
       await result.current.incrementUseCount({ ...DB_TEMPLATES[0] });
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith('increment_quick_reply_use', { p_id: 't1' });
+    expect(mocks.from).toHaveBeenCalledWith('message_templates');
+    expect(last?.update).toHaveBeenCalledWith({ use_count: 3 });
+    expect(last?.eq).toHaveBeenCalledWith('id', 't1');
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['quick-replies'] });
   });
 
-  it('erro da RPC vira aviso e não invalida o cache', async () => {
+  it('erro do update vira aviso e não invalida o cache', async () => {
     const { result, invalidate } = renderHookWithWrapper();
-    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+    mocks.from.mockImplementationOnce(() => chain({ data: null, error: { message: 'permission denied' } }));
 
     await act(async () => {
       await result.current.incrementUseCount({ ...DB_TEMPLATES[0] });
