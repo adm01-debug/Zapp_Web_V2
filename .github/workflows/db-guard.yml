@@ -464,6 +464,8 @@ jobs:
 
       - name: Provar escalonamento de pg_cron no PostgreSQL 17
         if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh supabase/migrations/20261002541230_pg_cron_escalonar_jobs.sql
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
