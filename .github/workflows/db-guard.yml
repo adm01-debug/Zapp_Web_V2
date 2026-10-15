@@ -45,9 +45,42 @@ concurrency:
 
 jobs:
 
+  # Regra R2 (docs/ci/ARQUITETURA_SEM_DESPERDICIO.md): no push na main, se a
+  # arvore e a mesma do head da PR e o ultimo run deste workflow na PR foi todo
+  # verde, os contratos nao rodam de novo. Em PR este job e pulado (sem runner).
+  reuso:
+    name: ♻️ Reuso de árvore já testada
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      reusar: ${{ steps.decidir.outputs.reusar }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Decidir se a arvore ja foi aprovada na PR
+        id: decidir
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/reuso-arvore.mjs --workflow db-guard.yml
+
   offline-contract-core:
     name: Contrato DB offline (core)
-    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45: PRs draft pulam este job
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
@@ -480,7 +513,8 @@ jobs:
 
   offline-contract-talkx:
     name: Contrato DB offline (talkx)
-    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45: PRs draft pulam este job
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
@@ -1049,7 +1083,8 @@ jobs:
 
   offline-contract-multiplix-ia-team:
     name: Contrato DB offline (multiplix+ia+team)
-    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45: PRs draft pulam este job
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
@@ -1371,8 +1406,10 @@ jobs:
 
   offline-contract:
     name: Contrato DB offline
-    needs: [offline-contract-core, offline-contract-talkx, offline-contract-multiplix-ia-team]
-    if: always() && !github.event.pull_request.draft
+    needs: [reuso, offline-contract-core, offline-contract-talkx, offline-contract-multiplix-ia-team]
+    # !cancelled() em vez de always(): run cancelado por push mais novo nao pinta
+    # o check obrigatorio de vermelho (era ruido em todo push sobreposto).
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions:

@@ -49,10 +49,51 @@ concurrency:
 
 jobs:
   # ===========================================
+  # JOB 0: Reuso de árvore já testada (só em push na main)
+  # ===========================================
+  # Arquitetura sem desperdício (docs/ci/ARQUITETURA_SEM_DESPERDICIO.md, regra R2):
+  # com strict=true + squash, o commit da main tem a MESMA árvore do head da PR
+  # que acabou de passar. Medido em 15/10/2026: 8 de 9 pushes na main refaziam
+  # uma árvore já aprovada (run 38759168550: 26 min). Se o último run deste
+  # workflow no head da PR foi todo verde, os jobs abaixo são dispensados.
+  # Em PR este job é pulado (sem runner, sem latência) e tudo roda normalmente;
+  # qualquer erro de API cai em "roda tudo".
+  reuso:
+    name: ♻️ Reuso de árvore já testada
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      reusar: ${{ steps.decidir.outputs.reusar }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: ♻️ Decidir se a árvore já foi aprovada na PR
+        id: decidir
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/reuso-arvore.mjs --workflow ci.yml
+
+  # ===========================================
   # JOB 1: Lint & Type Check
   # ===========================================
   lint-and-typecheck:
     name: 🔍 Lint & TypeCheck
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -96,6 +137,12 @@ jobs:
 
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
+
+      - name: 🔐 Verify Action pins resolve to the declared tag
+        # O check acima confere formato; este confere que o SHA e o commit REAL da
+        # tag do comentario (git ls-remote, sem token). Pegou os 2 pins inventados
+        # do scorecard.yml, que falhava no "Set up job" desde o lote #1942.
+        run: node scripts/ci/check-workflow-pins-resolvem.mjs
 
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
@@ -218,6 +265,8 @@ jobs:
   # ===========================================
   edge-go-contracts:
     name: 🦕 Edge contracts & Go
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -254,18 +303,24 @@ jobs:
         run: go test ./...
 
   # ===========================================
-  # JOB 2a: Unit Test Shards (paralelos, sem cobertura)
+  # JOB 2a: Unit Test Shards (paralelos, cobertura parcial em blob)
   # ===========================================
+  # Arquitetura sem desperdício (regra R3): a suíte roda UMA vez. Cada shard
+  # mede a cobertura da sua parte (sem piso: metade da suíte não alcança o piso)
+  # e entrega um blob; o agregador junta os blobs e aplica o piso uma única vez.
+  # Antes, a main rodava a suíte inteira de novo só para a cobertura (14 min
+  # em série no run 38759168550) e o PR nunca era barrado por cobertura.
   unit-test-shard:
-    name: 🧪 Unit Tests (${{ matrix.shard }}/2)
+    name: 🧪 Unit Tests (${{ matrix.shard }}/3)
+    needs: reuso
     # W45: PRs draft pulam os jobs pesados — o check fica verde (skipped) sem executar.
     # ready_for_review no gatilho relança quando o draft é convertido.
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     strategy:
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
       fail-fast: false
     steps:
       - name: 📥 Checkout code
@@ -289,23 +344,38 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧪 Run Vitest shard ${{ matrix.shard }}/2
-        # W38: shard paralelo; cobertura desligada aqui — verificada no job agregador
-        # somente na main para nao duplicar o custo (cobertura ~2x mais lenta que teste puro).
-        run: bun vitest run --shard=${{ matrix.shard }}/2
+      - name: 🧪 Run Vitest shard ${{ matrix.shard }}/3 (com cobertura parcial)
+        run: bun vitest run --shard=${{ matrix.shard }}/3 --coverage --reporter=default --reporter=blob
         env:
           CI: true
+          # Piso so no agregador (vitest.config.ts le esta variavel).
+          VITEST_SHARD_SEM_PISO: '1'
 
-  # JOB 2: Unit Tests — agregador (required check) + contratos + cobertura na main
+      - name: 📦 Entregar o blob do shard ao agregador
+        # Transferencia entre jobs do MESMO run (consumida pelo job "Unit Tests"),
+        # nao artifact de diagnostico; 1 dia de retencao.
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: vitest-blob-${{ matrix.shard }}
+          path: .vitest-reports/
+          retention-days: 1
+          if-no-files-found: error
+          include-hidden-files: true
+
+  # ===========================================
+  # JOB 2b: Unit Tests (agregador — nome exigido pela branch protection)
   # ===========================================
   test:
     name: 🧪 Unit Tests
-    needs: unit-test-shard
-    # always() garante que o check aparece mesmo se o shard falhou (para reportar a falha).
-    # A segunda condicao preserva o comportamento W45: draft PRs nao executam.
-    if: always() && !github.event.pull_request.draft
+    needs: [reuso, unit-test-shard]
+    # !cancelled() em vez de always(): run cancelado por push mais novo nao
+    # pinta "Unit Tests" de vermelho (era ruido em todo push sobreposto).
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: 🚫 Verificar resultado dos shards
         run: |
@@ -335,33 +405,39 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 📊 Verificar cobertura com piso (somente main)
-        # W38: cobertura so na main — PRs nao precisam do overhead de instrumentacao (~2x).
-        # O piso e' verificado em cada push na main; PRs nao podem fazer o piso regredir
-        # sem que o proximo merge na main o detecte.
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: bun run test:coverage
+      - name: 📥 Receber os blobs dos shards
+        # gh (ja instalado no runner) em vez de mais uma action de terceiros a pinar.
+        # Artifacts v4 ficam disponiveis assim que o job que os subiu termina.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh run download "$RUN_ID" --repo "$REPO" --pattern 'vitest-blob-*' --dir .tmp/blobs
+          mkdir -p .vitest-reports
+          find .tmp/blobs -name 'blob-*.json' -exec mv {} .vitest-reports/ \;
+          total=$(find .vitest-reports -name 'blob-*.json' | wc -l)
+          echo "blobs recebidos: $total"
+          if [ "$total" -ne 3 ]; then
+            echo "::error::esperava 3 blobs (um por shard), recebi $total"
+            exit 1
+          fi
+
+      - name: 📊 Juntar a cobertura dos shards e aplicar o piso (uma vez)
+        run: bun vitest run --merge-reports --coverage
         env:
           CI: true
 
-      # Config dedicado (vitest.contracts.config.ts): reescreve o import Deno
-      # "https://esm.sh/zod@3.23.8" de schemas.ts para o alias npm "zod3"
-      # (zod@3.23.8, ja no bun.lock). O vitest.config.ts principal nao tem
-      # esse rewrite e quebra em 3 dos 6 arquivos (Node nao resolve URL https
-      # no loader ESM padrao) — por isso a suite roda num config separado.
       - name: 🧪 Run Edge Function contract tests (tests/contracts)
         run: bun run test:contracts
         env:
           CI: true
 
       - name: 📊 Upload coverage report
-        # E72 (G-32): a cobertura so sobe da main. Num PR ninguem consome o
-        # relatorio (o piso de cobertura e verificado pelo proprio vitest) e cada
-        # PR deixava um artifact de varios MB — 2.333 acumulados em 01/10/2026.
-        # `always()` mantem o upload quando a suite falha na main, que e' justo
-        # quando a cobertura serve para diagnosticar; 7 dias pelo plano (E72).
+        # So quando o piso (ou um contrato) falha: e quando o relatorio serve para
+        # diagnosticar. PR e main verdes nao publicam nada (E72).
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: failure()
         with:
           name: coverage-report
           path: coverage/
@@ -373,10 +449,13 @@ jobs:
   # ===========================================
   build:
     name: 🏗️ Build
-    if: ${{ !github.event.pull_request.draft }} # W45
+    # Regra R4: sem `needs: test`. O build nao consome nada dos testes e levava
+    # 11 s, mas so comecava depois dos shards + agregador (run 38759168550:
+    # iniciou 26 min depois do push). Em paralelo, o check fica pronto em ~1 min.
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: test
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -438,7 +517,8 @@ jobs:
   # ===========================================
   security:
     name: 🔒 Security Audit
-    if: ${{ !github.event.pull_request.draft }} # W45
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
 
@@ -507,7 +587,8 @@ jobs:
   # ===========================================
   e2e:
     name: 🎭 E2E Tests (Playwright)
-    if: ${{ !github.event.pull_request.draft }} # W45
+    needs: reuso
+    if: ${{ !cancelled() && needs.reuso.outputs.reusar != 'true' && !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
 

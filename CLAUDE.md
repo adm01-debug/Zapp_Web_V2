@@ -269,19 +269,41 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 `administration`: a API responde **403** e o guard marca o campo como **"NÃO VERIFICÁVEL"** — não como regressão.
 **403 administrativo é limite de evidência**, nunca confirmação de configuração errada.
 
+## CI sem desperdício (2026-10-15) — regras protegidas por contrato
+
+Fonte: `docs/ci/ARQUITETURA_SEM_DESPERDICIO.md`. Contrato: `scripts/ci/arquitetura-sem-desperdicio.unit.mjs`
+(roda no check obrigatório `🔍 Lint & TypeCheck`; regressão deixa a CI vermelha). Medido antes: 100 runs de CI em
+~36 h, 8 de 9 pushes na `main` refazendo árvore já aprovada, 26 min de CI por merge (14 min só para rodar a suíte de
+novo pela cobertura).
+
+- **R1 — fila serial.** `auto-update-pr-branch.yml` atualiza **uma** PR por vez (`scripts/ci/fila-merge.mjs`): com
+  uma PR em voo, ninguém mais é atualizado; sem PR em voo, vai a próxima por ordem de auto-merge (FIFO). PR com
+  check obrigatório vermelho sai da fila até ser corrigida. **Não volte a atualizar todas as PRs BEHIND de uma vez.**
+- **R2 — reuso de árvore.** No push na `main`, `ci.yml` e `db-guard.yml` dispensam os jobs quando a árvore é a mesma
+  do head da PR e o último run da PR foi todo verde (`scripts/ci/reuso-arvore.mjs`; erro de API = roda tudo).
+  Job novo nesses workflows precisa de `needs: reuso` e do `if:` com `needs.reuso.outputs.reusar != 'true'`.
+- **R3 — a suíte de unidade roda uma vez.** 3 shards com cobertura em blob (`VITEST_SHARD_SEM_PISO=1`); o agregador
+  `🧪 Unit Tests` junta e aplica o piso **na PR**. Não reintroduza `test:coverage` no CI.
+- **R4 — nada espera o que não consome.** `Build`, `E2E` e `Security` não dependem dos testes.
+- **R5 — cancelado não é vermelho.** Agregadores usam `!cancelled()`, nunca `always()`.
+- **R6 — agente empurra lote validado.** Valide localmente (testes, lint, `actionlint`) e faça um push por lote:
+  cada push reinicia ~10 jobs, e 68 heads numa só branch em 36 h geraram 32 runs cancelados.
+
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
 Auditoria dos 18 workflows + 3 dinâmicos (21 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 15/10/2026:** são **19**
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 15/10/2026:** são **17**
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
-`cleanup-artifacts.yml`, `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`,
+`codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`,
 `db-migrate.yml`, `deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `notifica-falha-main.yml`,
-`scorecard.yml`, `settings-guard.yml`, `supabase-sync.yml`, `talkx-status-regen.yml`,
+`scorecard.yml`, `settings-guard.yml`, `talkx-status-regen.yml`,
 `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **22 no
-total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **20 ao
+todo**. Em 15/10/2026 saíram `supabase-sync.yml` (desarmado, 0 runs em 30 dias) e
+`cleanup-artifacts.yml` (0 runs; a retenção de 14 dias do repo já expira os artifacts sozinha).
+A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-14.md`.
 
@@ -294,17 +316,18 @@ sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não*
 **Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
 criados no repo; os dois primeiros passam a ser exigidos pelos workflows quando a PR #687 mergear:
 `producao-edge-functions` (deploy-functions.yml), `producao-ddl` (db-migrate.yml),
-`legacy-import-destrutivo` (supabase-sync.yml) e `db-ledger-evidence` (que existia só com `branch_policy`).
+`legacy-import-destrutivo` (era do `supabase-sync.yml`, removido em 15/10/2026 — o environment ficou sem
+workflow e apagá-lo é decisão do Joaquim) e `db-ledger-evidence` (que existia só com `branch_policy`).
 **`required_reviewers` é campo administrativo:** com o `GITHUB_TOKEN` de workflow a API devolve **403** e o
 guard marca "NÃO VERIFICÁVEL" (`docs/audits/e95-perimetro-github-2026-10-03.md`) — não presuma aprovação que
 não foi medida; a medição de 03/10 registrou `producao-edge-functions` **sem** revisor obrigatório.
 Disparar qualquer um desses workflows pausa em `Waiting` no environment configurado.
 
-**`supabase-sync.yml` está desarmado.** A única barreira era digitar o project-ref, que é público
-(está neste arquivo, num repo público). Agora exige, cumulativamente, aprovação no environment e o
-secret `LEGACY_IMPORT_UNLOCK` igual ao project-ref — secret que **não existe**, logo todo dispatch
-falha fechado. Para reativar: regerar o export a partir do banco oficial, criar o secret, removê-lo
-após o import. O export continua sendo um snapshot legado e defasado.
+**`supabase-sync.yml` foi removido em 15/10/2026.** Estava desarmado desde 25/09 (exigia aprovação
+no environment e o secret `LEGACY_IMPORT_UNLOCK`, que nunca existiu) e não teve nenhum run em 30 dias.
+Importava um snapshot legado e defasado (`supabase-export/`) por cima do banco oficial — não recrie
+esse caminho. Se um import legado for necessário um dia, regerar o export a partir do banco oficial e
+escrever um fluxo novo com o perímetro atual (`db-migrate.yml` é a referência).
 
 **CodeQL analisa os próprios workflows** (job `analyze-actions`, linguagem `actions`, check
 `🔬 CodeQL (actions)`). Deliberadamente um job separado: matrixar o job `analyze` renomearia o

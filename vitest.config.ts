@@ -27,7 +27,11 @@ export default defineConfig({
       exclude: ["**/*.{test,spec}.{ts,tsx}", "**/__tests__/**", "**/*.d.ts"],
       // Piso global medido em 2026-09-05 (src/lib + src/services): lines 37.7, stmts 36.1,
       // funcs 44.9, branches 32.7. Ratchet: so sobe, nunca desce.
-      thresholds: {
+      // Os shards do CI rodam com cobertura mas sem piso (cada shard ve so metade dos
+      // testes); o piso e aplicado uma vez, no `vitest --merge-reports --coverage` do
+      // job agregador. Sem isso a suite rodava duas vezes: shards + 14 min de
+      // `test:coverage` na main (run 38759168550).
+      thresholds: process.env.VITEST_SHARD_SEM_PISO === "1" ? undefined : {
         lines: 36,
         statements: 35,
         functions: 43,

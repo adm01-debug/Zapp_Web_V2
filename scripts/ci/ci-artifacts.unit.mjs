@@ -197,17 +197,24 @@ test('E72: `dist` so sai em workflow_dispatch', () => {
   assert.equal(retencao(bloco), 3);
 });
 
-test('E72: `coverage-report` so na main (push), com 7 dias', () => {
+test('E72 + R3: `coverage-report` so quando o piso falha, com 7 dias', () => {
+  // R3 (docs/ci/ARQUITETURA_SEM_DESPERDICIO.md): a cobertura agora e calculada no PR,
+  // juntando os blobs dos shards; o relatorio so tem uso quando o piso reprova.
   const { expr, rodaEm, bloco } = upload('Upload coverage report');
-  assert.equal(rodaEm(CENARIOS.prVerde), false, `PR nao consome cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.prVermelho), false, `PR vermelho tambem nao publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushOutraBranch), false, `so a main publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.dispatch), false, `dispatch tem de continuar sem artifact (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMain), true, `a main publica a cobertura (if: ${expr})`);
-  // `always()` combinado com os filtros mantem o upload quando a suite falha na
-  // main — que e' justamente quando a cobertura serve para diagnosticar.
-  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `suite vermelha na main ainda publica (if: ${expr})`);
+  assert.equal(rodaEm(CENARIOS.prVerde), false, `PR verde nao publica cobertura (if: ${expr})`);
+  assert.equal(rodaEm(CENARIOS.pushMain), false, `main verde nao publica cobertura (if: ${expr})`);
+  assert.equal(rodaEm(CENARIOS.prVermelho), true, `piso reprovado no PR publica o relatorio (if: ${expr})`);
+  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `piso reprovado na main publica o relatorio (if: ${expr})`);
+  assert.equal(rodaEm(CENARIOS.cancelado), false, `run cancelado nao publica (if: ${expr})`);
   assert.equal(retencao(bloco), 7);
+});
+
+test('R3: blob de shard e transferencia entre jobs do mesmo run — 1 dia, nunca diagnostico', () => {
+  const { bloco } = { bloco: blocoStep('Entregar o blob do shard ao agregador') };
+  assert.match(bloco, /uses:\s*actions\/upload-artifact@/u);
+  assert.match(bloco, /name:\s*vitest-blob-\$\{\{\s*matrix\.shard\s*\}\}/u);
+  assert.equal(retencao(bloco), 1, 'blob de transferencia nao pode viver mais de 1 dia');
+  assert.match(ci, /gh run download "\$RUN_ID"[^\n]*--pattern 'vitest-blob-\*'/u, 'o agregador tem de consumir os blobs');
 });
 
 test('E72: `playwright-report` so quando o E2E falha', () => {
@@ -221,8 +228,11 @@ test('E72: `playwright-report` so quando o E2E falha', () => {
   assert.equal(retencao(bloco), 3);
 });
 
-test('E72: PR verde cria 0 artifacts (a verificacao escrita no plano)', () => {
-  const uploads = todosOsUploads();
+// Transferencia entre jobs do mesmo run (R3): consumida no proprio run e expira em 1 dia.
+const TRANSFERENCIA = /^📦 Entregar o blob do shard ao agregador$/u;
+
+test('E72: PR verde cria 0 artifacts de diagnostico (a verificacao escrita no plano)', () => {
+  const uploads = todosOsUploads().filter(({ nome }) => !TRANSFERENCIA.test(nome));
   assert.ok(uploads.length >= 3, `esperava os 3 uploads do ci.yml, achei ${uploads.length}`);
   const ligados = uploads.filter(({ expr }) => avaliar(expr, CENARIOS.prVerde));
   assert.deepEqual(

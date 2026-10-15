@@ -31,7 +31,7 @@ const OVERRIDES = { E11: 'x', E24: ' ', E38: 'x', E39: 'x', E95: 'x' };
 const ESTADOS = ['CONCLUÍDA', 'AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO',
   'REVOGADA', 'PENDENTE', 'DECISÃO PENDENTE', 'BLOQUEIO TÉCNICO'];
 const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO']);
-const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i, /\b16\s+(workflow|arquivo)/i, /\b16\s+no\s+total/i];
+const CONTAGEM_ANTIGA = [/dos\s+19\s+workflows/i, /22\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i, /\b16\s+(workflow|arquivo)/i, /\b16\s+no\s+total/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
@@ -298,16 +298,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 19 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 17 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 19);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*19 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/16/17/18)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 19), []);
+test('CLAUDE.md: contagem atual e fonte canonica (sem 14/16/19/22)', async () => {
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {

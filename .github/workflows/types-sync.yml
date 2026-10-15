@@ -143,8 +143,10 @@ jobs:
       # E37 (auditoria de GitHub Actions, 2026-09-26): TLS verify-full + CA
       # Supabase pinada. Na epoca eram 3 workflows com DESTINO_URL (db-live-guard,
       # targeted-ledger-evidence, types-sync); este era o unico sem TLS verify-full.
-      # Hoje sao 6 workflows com DESTINO_URL: db-guard, db-migrate e supabase-sync
-      # ainda nao tem este endurecimento (ver G-37 no plano de 2026-10-01).
+      # Hoje sao 4 workflows com DESTINO_URL (db-live-guard, db-migrate,
+      # targeted-ledger-evidence e este; o supabase-sync saiu em 15/10/2026);
+      # o contrato E98 em scripts/ci/workflow-contracts.unit.mjs exige o
+      # endurecimento de TLS em todos eles.
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}

@@ -15,12 +15,11 @@ Usada em:
 - `db-live-guard.yml` (guarda vivo pós-merge e agendado)
 - `db-migrate.yml` (apply de migrations — **abre conexões de escrita**)
 - `types-sync.yml` (regeneração de tipos TypeScript)
-- `supabase-sync.yml` (import legado — **executa escrita destrutiva se ativado**)
 - `targeted-ledger-evidence.yml` (evidência de ledger)
 - `scripts/db-audit/check-migration-drift.mjs`
 - `scripts/db-audit/register-migration.mjs`
 
-**Antes de rotar:** confirme que nenhum run de `db-migrate.yml` ou `supabase-sync.yml` está em execução (Actions → em andamento). Esses workflows abrem conexões de escrita e podem falhar no meio da operação se a senha for invalidada durante o run.
+**Antes de rotar:** confirme que nenhum run de `db-migrate.yml` está em execução (Actions → em andamento). Esse workflow abre conexões de escrita e podem falhar no meio da operação se a senha for invalidada durante o run.
 
 Formato: `postgresql://postgres.tnnnlkbymytvtqngbbqh:SENHA@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
 

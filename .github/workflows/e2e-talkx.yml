@@ -96,11 +96,9 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: ./node_modules/.bin/playwright install-deps chromium
 
-      - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
-        run: bun run test:e2e -- --project=chromium
-        env:
-          CI: true
-
+      # O antigo passo "--project=chromium" saiu em 15/10/2026: esse projeto roda so
+      # e2e/auth.spec.ts (testMatch em playwright.config.ts), nao o Talk X, e o
+      # ci.yml ja o executa em toda PR no check obrigatorio "E2E Tests (Playwright)".
       - name: 🖼️ Régua visual Talk X (17 telas, deslogado)
         run: bun run test:e2e -- --project=chromium-talkx-visual
         env:

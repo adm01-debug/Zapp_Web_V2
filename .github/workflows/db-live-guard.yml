@@ -327,7 +327,9 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          node scripts/db-audit/check-triple-parity.mjs --require-live 2>&1 | tee /tmp/step-triple-parity.log
+          # --sem-migrations: a perna de migrations e provada (com a regra de apply
+          # pendente) no passo "Comparar migrations"; aqui ficam edges e grants.
+          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations 2>&1 | tee /tmp/step-triple-parity.log
 
       - name: Auditar configuracao runtime sem dados de clientes
         id: runtime-config

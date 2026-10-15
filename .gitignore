@@ -60,6 +60,7 @@ out/
 .vite/
 *.tsbuildinfo
 coverage/
+.vitest-reports/
 .nyc_output/
 test-results/
 playwright-report/

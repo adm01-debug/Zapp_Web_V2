@@ -132,77 +132,15 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           RELATORIO="$RUNNER_TEMP/branch-hygiene.md"
-          SLA_HIGH=14
-          SLA_LOW=30
-          NOW=$(date -u +%s)
-
-          # Busca todos os alertas abertos (até 100 por página — o repo raramente tem mais)
-          ALERTAS=$(gh api "repos/$REPO/code-scanning/alerts?state=open&per_page=100" 2>/dev/null || echo "[]")
-
-          # Se a API falhou ou retornou erro (objeto, não array), avisar e não bloquear
-          if ! echo "$ALERTAS" | grep -q '^\['; then
-            echo "::warning::W83: não foi possível consultar alertas de code scanning (API retornou não-array)"
-            printf '\n### ⚠️ Code Scanning — SLA (W83)\n\nNão foi possível consultar os alertas (permissão ou API).\n' >> "$RELATORIO"
-            exit 0
+          ARQUIVO="$RUNNER_TEMP/code-scanning-alerts.json"
+          # Ate 100 alertas abertos (o repo raramente tem mais). Falha de API vira um
+          # objeto de erro: o script avisa e nao bloqueia a auditoria de branches.
+          if ! gh api "repos/$REPO/code-scanning/alerts?state=open&per_page=100" > "$ARQUIVO" 2>/dev/null; then
+            echo '{"message":"falha ao consultar a API de code scanning"}' > "$ARQUIVO"
           fi
-
-          VIOLACOES=$(echo "$ALERTAS" | node --input-type=module - <<'NODE_EOF'
-        import { readFileSync } from 'node:fs';
-        const raw = [];
-        const input = [];
-        process.stdin.on('data', (d) => input.push(d));
-        process.stdin.on('end', () => {
-          const alertas = JSON.parse(input.join(''));
-          const NOW = Math.floor(Date.now() / 1000);
-          const SLA_HIGH = 14 * 86400;
-          const SLA_LOW = 30 * 86400;
-          const violacoes = [];
-          for (const a of alertas) {
-            const sev = (a.rule?.severity ?? 'low').toLowerCase();
-            const created = new Date(a.created_at).getTime() / 1000;
-            const age = NOW - created;
-            const sla = (sev === 'high' || sev === 'critical') ? SLA_HIGH : SLA_LOW;
-            if (age > sla) {
-              const dias = Math.floor(age / 86400);
-              violacoes.push(`${sev.toUpperCase()} (${dias}d) — #${a.number}: ${a.rule?.id ?? '?'} em ${a.most_recent_instance?.location?.path ?? '?'}`);
-            }
-          }
-          process.stdout.write(violacoes.join('\n'));
-        });
-        NODE_EOF
-          )
-
-          {
-            echo ''
-            echo '### 🔒 Code Scanning — SLA (W83)'
-            echo ''
-            echo "SLA: high/critical → ${SLA_HIGH}d · medium/low → ${SLA_LOW}d"
-            echo ''
-            TOTAL=$(echo "$ALERTAS" | node --input-type=module -e "
-        import { readFileSync } from 'node:fs';
-        const chunks = [];
-        process.stdin.on('data', d => chunks.push(d));
-        process.stdin.on('end', () => {
-          const a = JSON.parse(chunks.join(''));
-          process.stdout.write(String(a.length));
-        });
-        ")
-            echo "Alertas abertos: $TOTAL"
-            echo ''
-            if [ -n "$VIOLACOES" ]; then
-              echo '⚠️ **Violações de SLA:**'
-              echo '```'
-              echo "$VIOLACOES"
-              echo '```'
-            else
-              echo '✅ Nenhuma violação de SLA.'
-            fi
-          } >> "$RELATORIO"
-
-          if [ -n "$VIOLACOES" ]; then
-            echo "::error::W83: alertas de Code Scanning com SLA vencido:\n$VIOLACOES"
-            exit 1
-          fi
+          # A logica (e os testes) vivem em scripts/ci/sla-code-scanning.mjs; o
+          # exit 1 em violacao de SLA atravessa o pipe por causa do pipefail.
+          node scripts/ci/sla-code-scanning.mjs < "$ARQUIVO" | tee -a "$RELATORIO"
 
       - name: Verificar atualizações do toolchain (W40)
         # W40: relata versões mais novas das ferramentas em .github/toolchain.json.
