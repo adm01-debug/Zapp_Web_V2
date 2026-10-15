@@ -44,6 +44,8 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
   `ADR-009-elevenlabs-operador-de-dados.md:91`.
 - `git diff --stat dia/2026-10-15...HEAD` (só arquivos deste cartão, sem diff alheio): `.tmp/relato.md`,
   `docs/LGPD-RETENTION-POLICY.md`, `docs/adr/ADR-009-elevenlabs-operador-de-dados.md`.
+- `zapp-verify <cópia> --rapido` → VERDE SEM BANCO (305s; banco_local AVISO esperado — docs-only, sem
+  migration; dependencias/tipos/lint/migrations OK).
 
 ## O que NÃO fiz e por quê
 - **Sem alterar código** (o cartão manda). Divergência encontrada fora do escopo de documentação: `elevenlabs-sfx/
