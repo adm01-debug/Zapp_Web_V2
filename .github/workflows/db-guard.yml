@@ -464,7 +464,7 @@ jobs:
 
       - name: Provar escalonamento de pg_cron no PostgreSQL 17
         if: env.SKIP_CONTRACTS != 'true'
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh supabase/migrations/20261002541230_pg_cron_escalonar_jobs.sql
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp_talkx_history_<PID> e
@@ -1300,18 +1300,21 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           AI_VOCAB_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-block03-vocabulary-contract.test.sh
 
       - name: Provar RLS de escrita em talkx_settings — admin persiste, agente não (V06)
         if: env.SKIP_CONTRACTS != 'true'
         env:
           TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         if: env.SKIP_CONTRACTS != 'true'
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh
 
       - name: Provar grants e revogação das vozes do Multiplix (F64)
