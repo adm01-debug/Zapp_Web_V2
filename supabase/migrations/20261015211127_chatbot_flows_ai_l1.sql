@@ -1,11 +1,13 @@
 -- chatbot_flows_ai_l1
--- Rollback: desfaz o indice unico parcial e devolve o CHECK original (sem 'ai_l1'); como o CHECK antigo nao admite linhas 'ai_l1', os fluxos 'ai_l1' que existirem sao DESLIGADOS (is_active = false) e reclassificados como 'keyword' antes de a constraint voltar — sem isso o ADD CONSTRAINT falharia na validacao.
+-- Rollback: desfaz o indice unico parcial e devolve o CHECK original (sem 'ai_l1'). Como o CHECK antigo nao admite linhas 'ai_l1', os fluxos 'ai_l1' que existirem sao DESLIGADOS (is_active = false) e reclassificados como 'keyword' — sem isso o ADD CONSTRAINT falharia na validacao. O gatilho BEFORE UPDATE update_chatbot_flows_updated_at regrava updated_at em TODA linha tocada, entao ele fica desligado SO dentro desta transacao, para o rollback nao reescrever o updated_at dos fluxos.
 -- Rollback (SQL executável, na ordem):
 --   drop index if exists public.chatbot_flows_ai_l1_one_active_idx;
+--   alter table public.chatbot_flows disable trigger update_chatbot_flows_updated_at;
 --   update public.chatbot_flows set is_active = false where trigger_type = 'ai_l1';
 --   update public.chatbot_flows set trigger_type = 'keyword' where trigger_type = 'ai_l1';
 --   alter table public.chatbot_flows drop constraint if exists chatbot_flows_trigger_type_check;
 --   alter table public.chatbot_flows add constraint chatbot_flows_trigger_type_check check (trigger_type in ('keyword', 'first_message', 'menu', 'webhook', 'schedule'));
+--   alter table public.chatbot_flows enable trigger update_chatbot_flows_updated_at;
 --
 -- IA-L1 / auditoria de paridade V3->V2: a UI do Chatbot IA grava trigger_type = 'ai_l1'
 -- (src/components/settings/ChatbotL1Config.tsx:88) e o CHECK inline da tabela
