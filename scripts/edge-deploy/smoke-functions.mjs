@@ -1,11 +1,16 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { verifyManifestDigest } from './manifest-lib.mjs';
 
-const DEFAULT_ALLOWED_ORIGIN = 'https://zapp-web-v2.vercel.app';
-const DEFAULT_DENIED_ORIGIN = 'https://edge-smoke.invalid';
+// W61: origens canônicas lidas de allowed-origins.json (sincronizado com validation.ts)
+const _require = createRequire(import.meta.url);
+const _allowedOriginsConfig = _require('./allowed-origins.json');
+const CANONICAL_ORIGINS = _allowedOriginsConfig.exact;
+const DEFAULT_ALLOWED_ORIGIN = CANONICAL_ORIGINS[0]; // fallback para testes unitários
+const DEFAULT_DENIED_ORIGIN = _allowedOriginsConfig.denied_example ?? 'https://edge-smoke.invalid';
 // verify_jwt=false is required for cron callers that cannot mint a user JWT,
 // but these functions still enforce authentication inside their handler.
 const INTERNAL_AUTH_FUNCTIONS = new Set(['crm-integration', 'connection-health-check', 'batch-fetch-avatars']);
@@ -56,19 +61,27 @@ async function fetchWithRetry(url, init, { retries, expectedStatuses, fetchImpl 
   throw lastError;
 }
 
-export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch }) {
+export async function smokeFunction({ fn, baseUrl, retries, allowedOrigins = CANONICAL_ORIGINS, fetchImpl = fetch }) {
   const url = `${baseUrl.replace(/\/$/, '')}/${encodeURIComponent(fn.name)}`;
   try {
-    const allowed = await fetchWithRetry(url, {
-      method: 'OPTIONS',
-      headers: {
-        Origin: DEFAULT_ALLOWED_ORIGIN,
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'authorization,content-type',
-      },
-    }, { retries, expectedStatuses: [200, 204], fetchImpl });
-    const allowedOrigin = allowed.headers.get('access-control-allow-origin');
-    const availabilityOk = [200, 204].includes(allowed.status) && allowedOrigin === DEFAULT_ALLOWED_ORIGIN;
+    // W61: testar CORS para cada origem canônica
+    const originChecks = [];
+    for (const origin of allowedOrigins) {
+      const allowed = await fetchWithRetry(url, {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'authorization,content-type',
+        },
+      }, { retries, expectedStatuses: [200, 204], fetchImpl });
+      const returnedOrigin = allowed.headers.get('access-control-allow-origin');
+      originChecks.push({ origin, status: allowed.status, allow_origin: returnedOrigin, passed: [200, 204].includes(allowed.status) && returnedOrigin === origin });
+    }
+    const availabilityOk = originChecks.every((c) => c.passed);
+    // manter variável compatível com código abaixo (usa DEFAULT_ALLOWED_ORIGIN para POSTs)
+    const allowed = { status: originChecks[0]?.status ?? 200, headers: { get: (h) => originChecks[0]?.allow_origin } };
+    const allowedOrigin = originChecks[0]?.allow_origin;
 
     const denied = await fetchWithRetry(url, {
       method: 'OPTIONS',
@@ -112,6 +125,7 @@ export async function smokeFunction({ fn, baseUrl, retries, fetchImpl = fetch })
       passed,
       checks: {
         availability: { status: allowed.status, allow_origin: allowedOrigin, passed: availabilityOk },
+        canonical_origins: originChecks,
         denied_origin: { status: denied.status, allow_origin: deniedOrigin, passed: corsDenialOk },
         anonymous_gateway: anonymousGateway,
         disabled_endpoint: disabledEndpoint,
