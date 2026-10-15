@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeE164BR } from '@/lib/calls/phone';
 import { toast } from '@/hooks/ui/use-toast';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
@@ -55,6 +56,33 @@ export function ConnectionsView() {
   // existe para impedir.
   const openAddConnectionDialog = () => {
     if (multiConnectionEnabled) setIsAddDialogOpen(true);
+  };
+
+  // t_cce2f0f7: o diálogo mandava o número cru para a Evolution — "abc" ou um
+  // DDD sem assinante criavam uma instância inoperante. O normalizador BR do
+  // projeto decide o caso nacional; E.164 explícito com outro DDI segue aceito
+  // (decisão do cartão irmão t_1fb60ff8, que preserva número internacional).
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const PHONE_ERROR_MESSAGE = 'Informe o número com DDI 55 — ex.: +55 11 99999-0000.';
+
+  const validatePhone = (raw: string): string | null => {
+    const trimmed = raw.trim();
+    if (normalizeE164BR(trimmed)) return null;
+    if (/^\+[1-9]\d{7,14}$/.test(trimmed.replace(/[\s().-]/g, ''))) return null;
+    return PHONE_ERROR_MESSAGE;
+  };
+
+  const handleSubmitConnection = () => {
+    const erro = validatePhone(newConnection.phone_number);
+    setPhoneError(erro);
+    if (erro) return;
+    handleAddConnection();
+  };
+
+  const handleAddDialogOpenChange = (open: boolean) => {
+    // O erro é da tentativa, não do formulário: fechar (ou reabrir) limpa o motivo.
+    setPhoneError(null);
+    setIsAddDialogOpen(open);
   };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
@@ -112,7 +140,7 @@ export function ConnectionsView() {
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
@@ -126,11 +154,20 @@ export function ConnectionsView() {
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>Número do WhatsApp</Label>
+                  <Input
+                    placeholder="+55 11 99999-0000"
+                    value={newConnection.phone_number}
+                    aria-invalid={phoneError ? true : undefined}
+                    onChange={(e) => { setPhoneError(null); setNewConnection({ ...newConnection, phone_number: e.target.value }); }}
+                  />
+                  {phoneError && <p role="alert" className="text-sm text-destructive">{phoneError}</p>}
+                </div>
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
-                    {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
+                  <Button variant="outline" onClick={() => { setPhoneError(null); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
+                  <Button onClick={handleSubmitConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
+                    {isCreating ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>
               </div>
