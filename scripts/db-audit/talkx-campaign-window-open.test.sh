@@ -258,3 +258,138 @@ expect_error '(5) campanha inexistente -> P0002' 'talkx_campaign_not_found' 'P00
   "$admin_session SELECT * FROM public.talkx_campaign_window_open('b1000000-0000-0000-0000-0000000000ff', '2026-10-02T12:00:00Z');"
 
 printf 'PASS: N-118 talkx_campaign_window_open — fuso, meia-noite, business_hours com days, fail-closed e autorizacao\n'
+
+# ---------------------------------------------------------------------------
+# (N-102 fuso, cartao aplicar-at-time-zone-window-fixes): a janela passa a ser
+# avaliada no fuso DA CAMPANHA (defeito 2/4). Roda num container separado com
+# as MIGRATIONS REAIS da cadeia (fuso + base N-102 + correcao), porque o
+# contrato aqui e outro (boolean, send_weekdays + DND) e nao o TABLE(allowed,
+# reason) das secoes acima.
+#
+# Casos do criterio: SP domingo fora de {segunda}, SP dentro do DND, NY dentro
+# do DND (prova que o fuso e o DA campanha), fuso legado invalido (fallback
+# America/Sao_Paulo) e controle segunda 09:30 aberta. Com so a base (fase
+# VERMELHA) os 4 primeiros devolvem true; com a correcao (fase VERDE), false.
+# dnd_hours e regravado SEM as chaves holidays/sundays (NULL): a secao prova
+# que o NULL nao vira 0 por cast (sem erro, DND avaliado normalmente) e que a
+# ausencia e real (value ? 'holidays' = f). Bordas iguais nas duas fases: p_at
+# NULL -> true; campanha inexistente -> P0002. O Rollback do cabecalho da
+# correcao devolve o comportamento antigo e a reaplicacao volta ao corrigido.
+#
+# Overrides (mesmo padrao de WINDOW_OPEN_TEST_MIGRATION acima): N102_BASE_MIGRATION
+# (default: o arquivo da preparacao N-102 no repo integrado) e N102_FIX_MIGRATION
+# (default: a migration deste cartao). Servem a prova de mutacao (RED) e a
+# integracao, caso as correcoes do N-102 sejam juntadas num so arquivo.
+# ---------------------------------------------------------------------------
+n102_tz_migration="$repo_root/supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql"
+n102_base_migration="${N102_BASE_MIGRATION:-$repo_root/supabase/migrations/20261009203548_talkx_campaigns_send_weekdays_dnd.sql}"
+n102_fix_migration="${N102_FIX_MIGRATION:-$repo_root/supabase/migrations/20261013230015_talkx_n102_window_fixes.sql}"
+n102_container="talkx-n102-fuso-test-$$"
+
+cleanup_n102() { docker rm -f "$n102_container" >/dev/null 2>&1 || true; }
+trap 'cleanup; cleanup_n102' EXIT
+
+[[ -f "$n102_tz_migration" ]] || fail "N-102 fuso: migration de fuso ausente: $n102_tz_migration"
+[[ -f "$n102_base_migration" ]] || fail "N-102 fuso: base N-102 ausente: $n102_base_migration (preparacao ainda nao integrada? exporte N102_BASE_MIGRATION)"
+[[ -f "$n102_fix_migration" ]] || fail "N-102 fuso: correcao ausente: $n102_fix_migration"
+
+docker rm -f "$n102_container" >/dev/null 2>&1 || true
+docker run -d --name "$n102_container" -e POSTGRES_PASSWORD="$test_password" "$postgres_image" >/dev/null \
+  || fail 'N-102 fuso: PostgreSQL de teste nao iniciou'
+for _ in $(seq 1 15); do
+  if docker exec "$n102_container" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+docker exec "$n102_container" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1 \
+  || fail 'N-102 fuso: PostgreSQL de teste nao respondeu'
+
+n102_psql() { docker exec -i "$n102_container" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+n102_q() { n102_psql -Atqc "$1"; }
+
+# Esqueleto pre-existente (o que as migrations leem; nada da migracao sob teste).
+n102_psql >/dev/null <<'SQL'
+create role anon nologin;
+create role authenticated nologin;
+create role service_role nologin;
+create schema if not exists auth;
+create or replace function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
+create or replace function auth.role() returns text language sql stable as $$ select current_setting('request.jwt.claim.role', true) $$;
+create table public.profiles (id uuid primary key default gen_random_uuid(), user_id uuid, is_active boolean not null default true);
+create table public.talkx_campaigns (id uuid primary key default gen_random_uuid(), created_by uuid, name text, status text not null default 'draft', revision bigint not null default 1, send_window_start time, send_window_end time, updated_at timestamptz not null default now());
+create table public.talkx_settings (key text primary key, value jsonb not null, description text);
+create table public.talkx_campaign_events (id bigserial primary key, campaign_id uuid, event_type text, actor_id uuid, message text);
+SQL
+
+n102_psql < "$n102_tz_migration" >/dev/null
+n102_psql < "$n102_base_migration" >/dev/null
+pass 'N-102 fuso: migrations reais de fuso + base N-102 aplicadas'
+
+# c5 tem DND ligado e send_weekdays NULL: exercita o domingo com dnd_hours sem
+# 'sundays' (NULL) nos dois lados do DND. A constraint de fuso cai de proposito:
+# c4 e LINHA LEGADA gravada antes de a validacao existir.
+n102_psql >/dev/null <<'SQL'
+alter table public.talkx_campaigns drop constraint if exists talkx_campaigns_schedule_timezone_valid;
+insert into public.talkx_campaigns (id, name, schedule_timezone, send_weekdays, respect_dnd) values
+  ('11111111-1111-1111-1111-111111111111', 'c1 SP seg', 'America/Sao_Paulo', '{1}', false),
+  ('22222222-2222-2222-2222-222222222222', 'c2 SP dnd', 'America/Sao_Paulo', null, true),
+  ('33333333-3333-3333-3333-333333333333', 'c3 NY dnd', 'America/New_York', null, true),
+  ('44444444-4444-4444-4444-444444444444', 'c4 legado', 'Mars/Olympus', '{1}', false),
+  ('55555555-5555-5555-5555-555555555555', 'c5 SP dnd wknd', 'America/Sao_Paulo', null, true);
+update public.talkx_settings set value = '{"start":"22:00","end":"08:00"}'::jsonb where key = 'dnd_hours';
+SQL
+[[ "$(n102_q "select (value ? 'holidays')::text || '/' || (value ? 'sundays')::text from public.talkx_settings where key = 'dnd_hours';")" == 'false/false' ]] \
+  || fail 'N-102 fuso: dnd_hours deveria estar sem holidays/sundays (NULL)'
+pass 'N-102 fuso: fixture carregada com dnd_hours sem holidays/sundays (NULL)'
+
+n102_check() {
+  local label="$1" camp="$2" at="$3" want="$4" got
+  got="$(n102_q "set role authenticated; select public.talkx_campaign_window_open('$camp'::uuid, '$at'::timestamptz)::text;")"
+  [[ "$got" == "$want" ]] || fail "$label: esperado '$want', obtido '$got'"
+  pass "$label"
+}
+
+# Fase VERMELHA: so a base (dia/hora de p_at cru, sem fuso) — os 4 casos do
+# criterio devolvem true e o controle tambem.
+n102_check '(N-102 fuso) base: SP 11/10 23:30 dom e lido como segunda (true)' '11111111-1111-1111-1111-111111111111' '2026-10-12 02:30:00+00' 'true'
+n102_check '(N-102 fuso) base: SP 06:00 lida como 09:00, fora do DND (true)' '22222222-2222-2222-2222-222222222222' '2026-10-13 09:00:00+00' 'true'
+n102_check '(N-102 fuso) base: NY 07:30 lida como 11:30, fora do DND (true)' '33333333-3333-3333-3333-333333333333' '2026-10-13 11:30:00+00' 'true'
+n102_check '(N-102 fuso) base: fuso invalido nao existia, cai como segunda (true)' '44444444-4444-4444-4444-444444444444' '2026-10-12 02:30:00+00' 'true'
+n102_check '(N-102 fuso) base: controle segunda 09:30 SP abre (true)' '11111111-1111-1111-1111-111111111111' '2026-10-12 12:30:00+00' 'true'
+n102_check '(N-102 fuso) base: domingo 12:00 SP fora do DND abre (true)' '55555555-5555-5555-5555-555555555555' '2026-10-11 15:00:00+00' 'true'
+n102_check '(N-102 fuso) base: domingo 23:30 SP dentro do DND fecha (false)' '55555555-5555-5555-5555-555555555555' '2026-10-12 02:30:00+00' 'false'
+got_null_base="$(n102_q "set role authenticated; select public.talkx_campaign_window_open('11111111-1111-1111-1111-111111111111'::uuid, null)::text;")"
+[[ "$got_null_base" == 'true' ]] || fail "N-102 fuso base: p_at NULL deveria abrir, obteve '$got_null_base'"
+pass '(N-102 fuso) base: p_at NULL abre (true)'
+
+# Fase VERDE: aplica a correcao REAL e os 4 casos do criterio viram false.
+n102_psql < "$n102_fix_migration" >/dev/null
+pass 'N-102 fuso: correcao aplicada'
+n102_check '(N-102 fuso) fix: SP 11/10 23:30 dom fora de {segunda} (false)' '11111111-1111-1111-1111-111111111111' '2026-10-12 02:30:00+00' 'false'
+n102_check '(N-102 fuso) fix: SP 06:00 dentro do DND (false)' '22222222-2222-2222-2222-222222222222' '2026-10-13 09:00:00+00' 'false'
+n102_check '(N-102 fuso) fix: NY 07:30 dentro do DND, fuso DA campanha (false)' '33333333-3333-3333-3333-333333333333' '2026-10-13 11:30:00+00' 'false'
+n102_check '(N-102 fuso) fix: fuso legado invalido cai no default SP, domingo (false)' '44444444-4444-4444-4444-444444444444' '2026-10-12 02:30:00+00' 'false'
+n102_check '(N-102 fuso) fix: controle segunda 09:30 SP abre (true)' '11111111-1111-1111-1111-111111111111' '2026-10-12 12:30:00+00' 'true'
+n102_check '(N-102 fuso) fix: domingo 12:00 SP fora do DND abre, sundays NULL nao fecha (true)' '55555555-5555-5555-5555-555555555555' '2026-10-11 15:00:00+00' 'true'
+n102_check '(N-102 fuso) fix: domingo 23:30 SP dentro do DND fecha, holidays NULL nao abre (false)' '55555555-5555-5555-5555-555555555555' '2026-10-12 02:30:00+00' 'false'
+
+# Bordas iguais nas duas fases (mesmo comportamento antes e depois).
+got_null_fix="$(n102_q "set role authenticated; select public.talkx_campaign_window_open('11111111-1111-1111-1111-111111111111'::uuid, null)::text;")"
+[[ "$got_null_fix" == 'true' ]] || fail "N-102 fuso fix: p_at NULL deveria abrir, obteve '$got_null_fix'"
+pass '(N-102 fuso) fix: p_at NULL abre (true)'
+set +e
+out_n102="$(n102_psql -v VERBOSITY=verbose -c "set role authenticated; select * from public.talkx_campaign_window_open('b1000000-0000-0000-0000-0000000000ff', '2026-10-02T12:00:00Z');" 2>&1)"
+status_n102=$?
+set -e
+(( status_n102 != 0 )) || { printf '%s\n' "$out_n102" >&2; fail '(N-102 fuso) fix: campanha inexistente deveria falhar'; }
+[[ "$out_n102" == *'talkx_campaign_not_found'* ]] || { printf '%s\n' "$out_n102" >&2; fail '(N-102 fuso) fix: esperava talkx_campaign_not_found'; }
+[[ "$out_n102" == *'P0002'* ]] || { printf '%s\n' "$out_n102" >&2; fail '(N-102 fuso) fix: esperava SQLSTATE P0002'; }
+pass '(N-102 fuso) fix: campanha inexistente -> P0002'
+
+# Rollback do cabecalho da correcao devolve o comportamento antigo; reaplicar
+# volta ao corrigido.
+grep '^--   ' "$n102_fix_migration" | sed 's/^--   //' | n102_psql >/dev/null
+n102_check '(N-102 fuso) rollback: volta ao antigo, SP domingo lida como segunda (true)' '11111111-1111-1111-1111-111111111111' '2026-10-12 02:30:00+00' 'true'
+n102_psql < "$n102_fix_migration" >/dev/null
+n102_check '(N-102 fuso) reaplicada: SP domingo fora de {segunda} (false)' '11111111-1111-1111-1111-111111111111' '2026-10-12 02:30:00+00' 'false'
+
+printf 'PASS: N-102 fuso da campanha na janela — criterio, NULL sem cast, bordas e rollback\n'
