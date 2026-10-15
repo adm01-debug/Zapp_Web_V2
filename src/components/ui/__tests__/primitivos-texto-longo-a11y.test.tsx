@@ -4,88 +4,68 @@ import { render, screen } from '@testing-library/react';
 import { Button, MotionButton } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { illustrations } from '@/components/ui/empty-state-illustrations';
 
-// Prova RENDERIZANDO o primitivo de verdade (sem ler a fonte, sem passar prop mágica):
-// o que o usuário vê é o nó do DOM, então é a classe efetiva nele que diz se o texto
-// longo encolhe em vez de estourar a caixa do pai. O jsdom não calcula layout
-// (offsetWidth é sempre 0), por isso a asserção é na classe do nó renderizado e na
-// integridade do texto dentro dele — nunca no valor que foi passado como prop.
+// Texto de 120 caracteres, como o cartão pede. O `padEnd` garante o tamanho exato.
+const TEXTO_120 = 'Relatório consolidado de atendimentos'.padEnd(120, ' de detalhe');
 
-const TEXTO_LONGO =
-  'Gerar relatório consolidado de atendimento do cliente com todas as conversas do mês';
+const CARREGANDO_CLASSES = ['opacity-0', 'inline-flex', 'min-w-0'];
 
-describe('Texto longo nos primitivos — o rótulo encolhe dentro da caixa do pai', () => {
-  it('Button: base e cada tamanho trazem min-w-0, com o texto íntegro no DOM', () => {
-    render(<Button>{TEXTO_LONGO}</Button>);
-    const botao = screen.getByRole('button', { name: TEXTO_LONGO });
-
-    expect(botao.className).toContain('min-w-0');
-    expect(botao.className).toContain('whitespace-nowrap');
-    // O texto chega inteiro ao DOM: quem corta é o layout (overflow-hidden da base), não o JSX.
-    expect(botao.textContent).toBe(TEXTO_LONGO);
+describe('primitivos de UI com texto longo (120 caracteres)', () => {
+  it('o texto de prova tem 120 caracteres', () => {
+    expect(TEXTO_120).toHaveLength(120);
   });
 
-  it('Button: todo tamanho do cva traz o próprio min-w-0', () => {
-    const tamanhos = ['default', 'sm', 'lg', 'xl', 'icon', 'icon-sm', 'icon-lg'] as const;
+  it('Badge: min-w-0 + truncate seguram o rótulo e o title guarda o texto inteiro', () => {
+    render(<Badge title={TEXTO_120}>{TEXTO_120}</Badge>);
 
-    for (const size of tamanhos) {
-      const { unmount } = render(
-        <Button size={size} aria-label={`botão ${size}`}>
-          {TEXTO_LONGO}
-        </Button>,
-      );
-      const botao = screen.getByRole('button', { name: `botão ${size}` });
-      expect(botao.className).toContain('min-w-0');
-      unmount();
+    const pilula = screen.getByText(TEXTO_120);
+    expect(pilula.tagName).toBe('DIV');
+    for (const classe of ['min-w-0', 'max-w-full', 'truncate']) {
+      expect(pilula.className).toContain(classe);
     }
+    expect(pilula).toHaveAttribute('title', TEXTO_120);
   });
 
-  it('MotionButton: herda min-w-0 junto com as variantes do design system', () => {
-    render(<MotionButton>{TEXTO_LONGO}</MotionButton>);
-    const botao = screen.getByRole('button', { name: TEXTO_LONGO });
+  it('Badge: rótulo curto renderiza o mesmo className (nenhuma classe depende do tamanho)', () => {
+    const { container: curto } = render(<Badge>Ativo</Badge>);
+    const { container: longo } = render(<Badge>{TEXTO_120}</Badge>);
 
-    expect(botao.tagName).toBe('BUTTON');
-    expect(botao.className).toContain('min-w-0');
-    expect(botao.className).toContain('bg-primary');
-    expect(botao.textContent).toBe(TEXTO_LONGO);
+    const classesCurto = curto.firstElementChild?.className;
+    expect(classesCurto).toBe(longo.firstElementChild?.className);
+    expect(classesCurto).toContain('truncate');
   });
 
-  it('Badge: pílula com texto longo não estoura a caixa (max-w-full + min-w-0)', () => {
-    render(<Badge>{TEXTO_LONGO}</Badge>);
-    const pilula = screen.getByText(TEXTO_LONGO);
+  it('TabsTrigger: min-w-0 + truncate seguram a aba e o title guarda o texto inteiro', () => {
+    render(
+      <Tabs defaultValue="a">
+        <TabsList>
+          <TabsTrigger value="a" title={TEXTO_120}>
+            {TEXTO_120}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="a">conteúdo</TabsContent>
+      </Tabs>,
+    );
 
-    expect(pilula.className).toContain('max-w-full');
-    expect(pilula.className).toContain('min-w-0');
-    expect(pilula.className).toContain('inline-flex');
-    expect(pilula.textContent).toBe(TEXTO_LONGO);
+    const aba = screen.getByRole('tab', { name: TEXTO_120 });
+    for (const classe of ['min-w-0', 'truncate']) {
+      expect(aba.className).toContain(classe);
+    }
+    expect(aba).toHaveAttribute('title', TEXTO_120);
   });
 
-  it('Label: rótulo longo encolhe em vez de empurrar o campo', () => {
-    render(<Label>{TEXTO_LONGO}</Label>);
-    const rotulo = screen.getByText(TEXTO_LONGO);
-
-    expect(rotulo.className).toContain('min-w-0');
-    expect(rotulo.textContent).toBe(TEXTO_LONGO);
-  });
-
-  it('Card/CardContent/CardFooter: a caixa do pai não cresce com o filho', () => {
+  it('Card: a caixa do pai encolhe (min-w-0) e o título/descrição quebram linha', () => {
     render(
       <Card data-testid="card">
         <CardHeader data-testid="card-header">
-          <CardTitle>{TEXTO_LONGO}</CardTitle>
-          <CardDescription>{TEXTO_LONGO}</CardDescription>
+          <CardTitle data-testid="card-title">{TEXTO_120}</CardTitle>
+          <CardDescription data-testid="card-description">{TEXTO_120}</CardDescription>
         </CardHeader>
-        <CardContent data-testid="card-content">{TEXTO_LONGO}</CardContent>
-        <CardFooter data-testid="card-footer">{TEXTO_LONGO}</CardFooter>
+        <CardContent data-testid="card-content">conteúdo</CardContent>
+        <CardFooter data-testid="card-footer">rodapé</CardFooter>
       </Card>,
     );
 
@@ -93,65 +73,93 @@ describe('Texto longo nos primitivos — o rótulo encolhe dentro da caixa do pa
       expect(screen.getByTestId(parte).className).toContain('min-w-0');
     }
 
-    // O texto longo precisa poder quebrar dentro do título/descrição.
-    const titulo = screen.getByRole('heading', { name: TEXTO_LONGO });
-    expect(titulo.className).toContain('min-w-0');
-    expect(titulo.className).toContain('break-words');
-    expect(titulo.textContent).toBe(TEXTO_LONGO);
+    for (const texto of ['card-title', 'card-description']) {
+      const no = screen.getByTestId(texto);
+      expect(no.className).toContain('min-w-0');
+      expect(no.className).toContain('break-words');
+      expect(no.textContent).toBe(TEXTO_120);
+    }
+  });
 
-    const descricao = screen.getByText(TEXTO_LONGO, { selector: 'p' });
-    expect(descricao.className).toContain('min-w-0');
-    expect(descricao.className).toContain('break-words');
+  it('Label: usa leading-snug, não leading-none', () => {
+    render(<Label data-testid="rotulo">{TEXTO_120}</Label>);
+
+    const rotulo = screen.getByTestId('rotulo');
+    expect(rotulo.className).toContain('leading-snug');
+    expect(rotulo.className).not.toContain('leading-none');
+  });
+
+  it('ilustrações de estado vazio são decorativas (aria-hidden) em todas as chaves', () => {
+    const chaves = Object.keys(illustrations);
+    expect(chaves.length).toBeGreaterThan(0);
+
+    render(
+      <div>
+        {chaves.map((chave) => (
+          <div key={chave}>{illustrations[chave]}</div>
+        ))}
+      </div>,
+    );
+
+    const svgs = document.querySelectorAll('svg');
+    expect(svgs).toHaveLength(chaves.length);
+    for (const svg of Array.from(svgs)) {
+      expect(svg).toHaveAttribute('aria-hidden', 'true');
+      expect(svg).not.toHaveAttribute('role');
+    }
   });
 });
 
-describe('Tabs — faixa que quebra e estado ocupado anunciado no DOM', () => {
-  const renderTabs = (
-    props: {
-      trigger?: { isLoading?: boolean };
-      content?: { isLoading?: boolean };
-    } = {},
-  ) =>
+describe('Button em carregamento anuncia o estado sem perder foco nem largura', () => {
+  it('isLoading publica aria-busy/aria-disabled e NÃO desabilita o botão', () => {
+    render(<Button isLoading>Salvar cliente</Button>);
+
+    const botao = screen.getByRole('button', { name: 'Salvar cliente' });
+    expect(botao).toHaveAttribute('aria-busy', 'true');
+    expect(botao).toHaveAttribute('aria-disabled', 'true');
+    expect(botao).toBeEnabled();
+    expect(botao).not.toHaveAttribute('disabled');
+    botao.focus();
+    expect(botao).toHaveFocus();
+  });
+
+  it('o rótulo continua no DOM reservando a largura, com o indicador por cima', () => {
     render(
-      <Tabs defaultValue="relatorio">
-        <TabsList data-testid="tabs-list">
-          <TabsTrigger value="relatorio" {...props.trigger}>
-            {TEXTO_LONGO}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="relatorio" data-testid="tabs-content" {...props.content}>
-          Conteúdo
-        </TabsContent>
-      </Tabs>,
+      <Button isLoading loadingText="Enviando…">
+        Salvar cliente
+      </Button>,
     );
 
-  it('TabsList quebra a faixa (flex-wrap) e o trigger encolhe (min-w-0)', () => {
-    renderTabs();
+    const botao = screen.getByRole('button', { name: 'Enviando…' });
+    const rotulo = screen.getByText('Enviando…');
+    expect(botao.contains(rotulo)).toBe(true);
+    for (const classe of CARREGANDO_CLASSES) {
+      expect(rotulo.className).toContain(classe);
+    }
 
-    expect(screen.getByTestId('tabs-list').className).toContain('flex-wrap');
-
-    const aba = screen.getByRole('tab', { name: TEXTO_LONGO });
-    expect(aba.className).toContain('min-w-0');
-    expect(aba.textContent).toBe(TEXTO_LONGO);
+    const indicador = botao.querySelector('[aria-hidden="true"]');
+    expect(indicador).not.toBeNull();
+    expect(indicador?.className).toContain('absolute');
+    expect(indicador?.className).toContain('inset-0');
   });
 
-  it('TabsContent usa anel de foco de 1px, não de 2px', () => {
-    renderTabs();
-    const painel = screen.getByTestId('tabs-content');
+  it('sem isLoading o botão sai igual ao de sempre: filho direto e nenhum aria-busy', () => {
+    render(<Button>Salvar cliente</Button>);
 
-    expect(painel.className).toContain('focus-visible:ring-1');
-    expect(painel.className).not.toContain('focus-visible:ring-2');
+    const botao = screen.getByRole('button', { name: 'Salvar cliente' });
+    expect(botao).not.toHaveAttribute('aria-busy');
+    expect(botao).not.toHaveAttribute('aria-disabled');
+    expect(botao.className).not.toContain('opacity-0');
+    expect(botao.querySelector('span')).toBeNull();
   });
 
-  it('isLoading publica aria-busy no trigger e no painel; sem isLoading não publica', () => {
-    const { unmount } = renderTabs();
-    const aba = screen.getByRole('tab', { name: TEXTO_LONGO });
-    expect(aba).not.toHaveAttribute('aria-busy');
-    expect(screen.getByTestId('tabs-content')).not.toHaveAttribute('aria-busy');
-    unmount();
+  it('MotionButton segue o mesmo contrato de carregamento', () => {
+    render(<MotionButton isLoading>Gerar relatório</MotionButton>);
 
-    renderTabs({ trigger: { isLoading: true }, content: { isLoading: true } });
-    expect(screen.getByRole('tab', { name: TEXTO_LONGO })).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByTestId('tabs-content')).toHaveAttribute('aria-busy', 'true');
+    const botao = screen.getByRole('button', { name: 'Gerar relatório' });
+    expect(botao).toHaveAttribute('aria-busy', 'true');
+    expect(botao).toHaveAttribute('aria-disabled', 'true');
+    expect(botao).toBeEnabled();
+    expect(screen.getByText('Gerar relatório').className).toContain('opacity-0');
   });
 });

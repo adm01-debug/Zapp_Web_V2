@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center min-w-0 gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
   {
     variants: {
       variant: {
@@ -23,13 +23,13 @@ const buttonVariants = cva(
         success: "bg-success text-success-foreground hover:bg-success/90 hover:shadow-glow-success-md",
       },
       size: {
-        default: "min-w-0 h-10 px-4 py-2",
-        sm: "min-w-0 h-9 rounded-md px-3",
-        lg: "min-w-0 h-11 rounded-md px-8",
-        xl: "min-w-0 h-12 rounded-lg px-10 text-base",
-        icon: "min-w-0 h-10 w-10",
-        "icon-sm": "min-w-0 h-8 w-8",
-        "icon-lg": "min-w-0 h-12 w-12",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        xl: "h-12 rounded-lg px-10 text-base",
+        icon: "h-10 w-10",
+        "icon-sm": "h-8 w-8",
+        "icon-lg": "h-12 w-12",
       },
     },
     defaultVariants: {
@@ -47,25 +47,38 @@ export interface ButtonProps
   loadingText?: string;
 }
 
+// Estado de carregamento: o botão NÃO fica `disabled` (um botão desabilitado perde o
+// foco e o `title` deixa de aparecer) — o estado ocupado vai para o leitor de tela por
+// `aria-busy` + `aria-disabled`. O rótulo continua no DOM com `opacity-0`: isso
+// reserva a LARGURA (o botão não encolhe nem cresce ao carregar) e mantém o nome
+// acessível, já que `opacity-0` não sai da árvore de acessibilidade (sairia com
+// `invisible`/`hidden`). O giro do `Loader2` entra por cima, em posição absoluta.
+const rotuloCarregando = "inline-flex min-w-0 items-center justify-center gap-2 opacity-0";
+
+const indicadorCarregando = (
+  <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+    <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" />
+  </span>
+);
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, isLoading = false, loadingText, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    
+    // `asChild` entrega os filhos ao `Slot`, que exige UM filho: sem o par
+    // indicador/rótulo nesse caso (só o estado ocupado anunciado).
+    const carregando = isLoading && !asChild;
+
     return (
-      <Comp 
-        className={cn(buttonVariants({ variant, size, className }))} 
-        ref={ref} 
-        disabled={disabled || isLoading}
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled}
+        aria-busy={isLoading || undefined}
+        aria-disabled={isLoading || undefined}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {loadingText || children}
-          </>
-        ) : (
-          children
-        )}
+        {carregando && indicadorCarregando}
+        {carregando ? <span className={rotuloCarregando}>{loadingText || children}</span> : children}
       </Comp>
     );
   }
@@ -76,8 +89,9 @@ Button.displayName = "Button";
 // por JS, agora só com CSS do tema: o efeito é sutil, roda apenas com
 // `motion-safe:` (quem pede movimento reduzido não recebe hover/tap animado) e usa
 // `transition-transform`/`duration-200`, tokens já existentes em tailwind.config.ts.
-// Botão desabilitado (ou carregando) não anima: a base traz
-// `disabled:pointer-events-none`, então o hover/active nem chega ao elemento.
+// `disabled:pointer-events-none` (na base das variantes) tira o hover/active do botão
+// desabilitado; no estado de carregamento o botão segue focável de propósito (ver
+// `Button`), então o movimento continua leve e só com `motion-safe:`.
 const motionButtonClasses =
   "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]";
 
@@ -94,17 +108,13 @@ const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
       <button
         ref={ref}
         className={cn(buttonVariants({ variant, size }), motionButtonClasses, className)}
-        disabled={disabled || isLoading}
+        disabled={disabled}
+        aria-busy={isLoading || undefined}
+        aria-disabled={isLoading || undefined}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {loadingText || children}
-          </>
-        ) : (
-          children
-        )}
+        {isLoading && indicadorCarregando}
+        {isLoading ? <span className={rotuloCarregando}>{loadingText || children}</span> : children}
       </button>
     );
   }

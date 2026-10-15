@@ -4,7 +4,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const labelVariants = cva("text-sm font-medium leading-none min-w-0 peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
+// `leading-snug` (e não `leading-none`): o rótulo de duas linhas não cola uma na outra.
+const labelVariants = cva("text-sm font-medium leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
 
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,

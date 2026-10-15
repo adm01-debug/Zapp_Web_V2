@@ -27,12 +27,13 @@ describe('Button Component', () => {
     expect(button.className).toContain('border-input');
   });
 
-  it('renders in loading state and is disabled', () => {
+  it('renders in loading state anunciando o estado sem desabilitar o botão', () => {
     render(<Button isLoading loadingText="Loading...">Submit</Button>);
     const button = screen.getByRole('button');
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toBeEnabled();
     expect(screen.getByText(/loading../i)).toBeDefined();
-    // Lucide Loader2 should be present (aria-hidden by default usually, but we check for text)
   });
 
   it('handles click events', () => {
@@ -75,7 +76,8 @@ describe('MotionButton — hover/tap em CSS', () => {
         Salvar
       </MotionButton>,
     );
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button')).toBeEnabled();
     expect(screen.getByText(/enviando/i)).toBeDefined();
   });
 });
