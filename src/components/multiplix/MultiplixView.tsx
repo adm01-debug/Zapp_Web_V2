@@ -113,6 +113,11 @@ export default function MultiplixView() {
   const [uf, setUf] = useState('');
   const [term, setTerm] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // F75 (TL-041): exclusões EXPLÍCITAS do painel. Elas vencem a inclusão — a
+  // empresa marcada como excluída fica fora do disparo mesmo que também esteja
+  // marcada como selecionada. Conjunto próprio (não apaga `selected`) para a
+  // exclusão manual continuar valendo se a seleção for refeita depois.
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
   // F72: a composição vive na região 02 da própria tela (antes, só dentro do
   // MultiplixComposerDialog, que o Radix não montava fechado).
   const [name, setName] = useState('');
@@ -296,6 +301,22 @@ export default function MultiplixView() {
     });
   };
 
+  // F75 (TL-041): alterna a exclusão explícita da linha. Excluir não desmarca
+  // a seleção (os conjuntos são independentes) — quem tira do disparo é o
+  // `efetivos`, que subtrai as excluídas na hora de contar, pré-visualizar e
+  // enviar. Sem teto: excluir só remove, nunca adiciona.
+  const toggleExcluido = (companyId: string) => {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) {
+        next.delete(companyId);
+      } else {
+        next.add(companyId);
+      }
+      return next;
+    });
+  };
+
   // F74: "Selecionar todos" do cabecalho continua sendo "as linhas
   // carregadas" (o que o operador ve na tela). O conjunto inteiro do filtro tem
   // botao proprio (selectAllResults) com o N do servidor.
@@ -359,15 +380,20 @@ export default function MultiplixView() {
     }
   };
 
+  // F75 (TL-041): o disparo leva a seleção MENOS as exclusões (exclusão vence
+  // inclusão). `efetivos` é a única fonte para contagem, prévia, envio e
+  // confirmação — `selected` sozinho nunca decide destinatário.
+  const efetivos = useMemo(() => Array.from(selected).filter((id) => !excluded.has(id)), [selected, excluded]);
+
   const busy = createDispatch.isPending;
 
   // F78 (TL-010): a conta do disparo tem de ficar SEMPRE visivel —
-  // "N contatos x M blocos = N x M mensagens". N e a selecao da regiao 01 (cada
-  // empresa selecionada e um destino; o servidor devolve a contagem real de
+  // "N contatos x M blocos = N x M mensagens". N e o EFETIVO da regiao 01 (cada
+  // empresa selecionada e nao excluida e um destino; o servidor devolve a contagem real de
   // destinatarios depois de resolver o publico). M e o numero de blocos da
   // composicao: hoje so existe o bloco de texto da regiao 02, e ele so conta
   // quando tem conteudo — bloco vazio nao vira mensagem.
-  const contactCount = selected.size;
+  const contactCount = efetivos.length;
   const blockCount = messageTemplate.trim() ? 1 : 0;
   const messageCount = contactCount * blockCount;
   const messageCountLabel = messageCount === 1 ? '1 mensagem' : `${messageCount} mensagens`;
@@ -383,16 +409,17 @@ export default function MultiplixView() {
   // F78 (TL-010): a exigencia de titulo continua sobre o titulo EFETIVO
   // (digitado ou sugestao) — a edge exige `name` nao vazio.
   const tituloEfetivo = name.trim() || suggestedName;
-  const canSubmit = messageTemplate.trim().length > 0 && selected.size > 0 && tituloEfetivo.length > 0;
+  const canSubmit = messageTemplate.trim().length > 0 && efetivos.length > 0 && tituloEfetivo.length > 0;
 
   // F08: manda os company_ids; a edge re-resolve sob o JWT e cria na transacao.
+  // F75 (TL-041): manda os EFETIVOS (seleção menos exclusões), nunca `selected` puro.
   const submit = async (startNow: boolean, confirmOverLimit = false) => {
     if (!canSubmit) return;
     try {
       const result = await createDispatch.mutateAsync({
         name: tituloEfetivo,
         messageTemplate: messageTemplate.trim(),
-        companyIds: Array.from(selected),
+        companyIds: efetivos,
         startNow,
         confirmOverLimit,
       });
@@ -404,6 +431,7 @@ export default function MultiplixView() {
       setName('');
       setMessageTemplate('');
       setSelected(new Set());
+      setExcluded(new Set());
       dispatches.refetch();
       setMonitorId(result.id);
     } catch (e) {
@@ -418,8 +446,9 @@ export default function MultiplixView() {
 
   const insertPlaceholder = (token: string) => setMessageTemplate((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${token}`);
 
-  // Regiao 03: previa derivada da selecao (sem efeito de sincronizacao).
-  const selectedRows = useMemo(() => rows.filter((r) => selected.has(r.company_id)), [rows, selected]);
+  // Regiao 03: previa derivada dos EFETIVOS (F75: selecionadas menos excluidas,
+  // sem efeito de sincronizacao).
+  const selectedRows = useMemo(() => rows.filter((r) => selected.has(r.company_id) && !excluded.has(r.company_id)), [rows, selected, excluded]);
   const previewRow = selectedRows.find((r) => r.company_id === previewCompanyId) ?? selectedRows[0] ?? null;
   const previewText = messageTemplate.replace(/\{\{\s*empresa\s*\}\}/gi, previewRow?.company_name ?? '{{empresa}}');
 
@@ -620,12 +649,13 @@ export default function MultiplixView() {
                       <TableHead>UF</TableHead>
                       <TableHead>Destino</TableHead>
                       <TableHead>Escopo</TableHead>
+                      <TableHead className="w-16">Excluir</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paddingTop > 0 && (
                       <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
-                        <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
+                        <TableCell colSpan={7} style={{ height: `${paddingTop}px`, padding: 0 }} />
                       </TableRow>
                     )}
                     {virtualRows.map((virtualRow) => {
@@ -655,17 +685,24 @@ export default function MultiplixView() {
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">{row.motivo_inclusao}</TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={excluded.has(row.company_id)}
+                              onCheckedChange={() => toggleExcluido(row.company_id)}
+                              aria-label={`Excluir ${row.company_name}`}
+                            />
+                          </TableCell>
                         </TableRow>
                       );
                     })}
                     {paddingBottom > 0 && (
                       <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
-                        <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+                        <TableCell colSpan={7} style={{ height: `${paddingBottom}px`, padding: 0 }} />
                       </TableRow>
                     )}
                     {rows.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
                           Nenhuma empresa encontrada para este filtro.
                         </TableCell>
                       </TableRow>
@@ -696,7 +733,13 @@ export default function MultiplixView() {
           )}
 
           <div className="mt-auto border-t border-border p-4">
-            <p className="text-sm text-foreground"><strong>{selected.size}</strong> empresa(s) selecionada(s)</p>
+            {/* F75 (TL-041): conta o EFETIVO (selecionadas menos excluídas) e declara a regra da exclusão. */}
+            <p className="text-sm text-foreground"><strong>{efetivos.length}</strong> empresa(s) selecionada(s)</p>
+            {excluded.size > 0 && (
+              <p className="mt-1 text-xs text-amber-600">
+                <strong>{excluded.size}</strong> empresa(s) excluída(s) — a exclusão vence a seleção e fica fora do disparo.
+              </p>
+            )}
             <p className="mt-1 text-2xs text-muted-foreground">Seleção limitada a {fmtInt(POLICY_MAX_IDS)} empresas por disparo.</p>
           </div>
         </div>
@@ -842,7 +885,7 @@ export default function MultiplixView() {
           <AlertDialogHeader>
             <AlertDialogTitle>Iniciar disparo agora?</AlertDialogTitle>
             <AlertDialogDescription>
-              Isso envia mensagens reais no WhatsApp para {selected.size} empresa(s) — sem volta. Confirma?
+              Isso envia mensagens reais no WhatsApp para {efetivos.length} empresa(s) — sem volta. Confirma?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
