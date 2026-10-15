@@ -11,14 +11,16 @@ vi.mock('sonner', () => ({
 import { MediaMigrationTool } from '../MediaMigrationTool';
 
 describe('MediaMigrationTool — progresso durante a migração', () => {
-  it('usa indicador indeterminado, sem percentual fixo de 30%', () => {
+  it('usa progressbar indeterminado nomeado, sem percentual fixo de 30%', () => {
     render(<MediaMigrationTool />);
 
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
 
-    expect(screen.getByRole('status', { name: 'Migração em andamento' })).toBeInTheDocument();
+    // Mantém role progressbar com nome acessível (compatível com N-066).
+    const barra = screen.getByRole('progressbar', { name: 'Progresso da migração de mídia' });
+    expect(barra).toBeInTheDocument();
+    // Indeterminado: sem aria-valuenow (a barra antiga era <Progress value={30}>).
+    expect(barra).not.toHaveAttribute('aria-valuenow');
     expect(screen.getByText('Processando mídias...')).toBeInTheDocument();
-    // A barra antiga era um <Progress value={30}> — percentual inventado.
-    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 });

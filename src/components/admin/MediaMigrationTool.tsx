@@ -96,10 +96,14 @@ export function MediaMigrationTool() {
 
           {running && (
             <div className="space-y-2">
-              {/* Barra indeterminada: não há progresso real por mídia, então nada de percentual fixo. */}
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted" role="status" aria-label="Migração em andamento">
-                <div className="h-full w-1/3 rounded-full bg-primary motion-safe:animate-pulse" />
-              </div>
+              {/* Indeterminada (value ausente = sem aria-valuenow): não há progresso
+                  real por mídia, então nenhum percentual fixo. Mantém role progressbar
+                  com nome acessível (compatível com N-066). */}
+              <Progress
+                value={undefined}
+                className="h-2 motion-safe:animate-pulse"
+                aria-label="Progresso da migração de mídia"
+              />
               <p className="text-xs text-muted-foreground motion-safe:animate-pulse">Processando mídias...</p>
             </div>
           )}
