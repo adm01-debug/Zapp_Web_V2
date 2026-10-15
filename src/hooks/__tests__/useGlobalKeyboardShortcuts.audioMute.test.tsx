@@ -60,7 +60,7 @@ function montar({ botao = false, campo = false } = {}) {
   );
 }
 
-function teclar(key: string, extra: KeyboardEventInit = {}, alvo: EventTarget = window) {
+function teclar(key: string, extra: KeyboardEventInit = {}, alvo: Element | Window = window) {
   fireEvent.keyDown(alvo, { key, bubbles: true, ...extra });
 }
 
