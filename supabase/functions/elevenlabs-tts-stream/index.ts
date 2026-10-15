@@ -5,9 +5,20 @@ import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 // LAC P2 (doc 07, achado de voz): o streaming ao provedor PAGO não tinha teto —
 // uma rede travada deixava a request pendurada até o gateway cortar, e o consumo
 // pago só entrava no ledger quando havia resposta (no erro, sumia). O prazo
-// abaixo aborta a chamada, devolve 504 claro e registra o consumo no ledger
-// mesmo quando o provedor não responde.
-const ELEVENLABS_TTS_TIMEOUT_MS = 30_000;
+// abaixo vale SÓ até a resposta chegar (cabeçalhos): ele é desarmado assim que
+// o `fetch` resolve, para nunca cortar o áudio já em streaming — uma síntese
+// longa passaria do prazo com o corpo abortado no meio. Em erro, devolve 504
+// claro e registra o consumo no ledger mesmo quando o provedor não responde.
+const ELEVENLABS_TTS_TIMEOUT_PADRAO_MS = 30_000;
+
+/**
+ * Prazo em ms até os cabeçalhos chegarem. `ELEVENLABS_TTS_TIMEOUT_MS` (testes e
+ * ops) sobrescreve o padrão; valor ausente ou inválido usa o padrão.
+ */
+function ttsTimeoutMs(): number {
+  const cru = Number(Deno.env.get("ELEVENLABS_TTS_TIMEOUT_MS") ?? "");
+  return Number.isFinite(cru) && cru > 0 ? cru : ELEVENLABS_TTS_TIMEOUT_PADRAO_MS;
+}
 
 /** O estouro de prazo chega como `AbortError` ou `TimeoutError` — mesma causa. */
 function isTimeoutError(err: unknown): boolean {
@@ -62,29 +73,41 @@ export async function handleElevenLabsTtsStream(req: Request): Promise<Response>
     log.info(`Streaming TTS: ${text.length} caracteres, voice: ${selectedVoiceId}`);
 
     const iniciadoEm = Date.now();
-    const envio = await fetchComPrazo(
-      `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream?output_format=mp3_44100_128`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: selectedModel,
-          language_code: languageCode,
-          apply_text_normalization: applyTextNormalization || 'auto',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.3,
-            use_speaker_boost: true,
+    const prazoMs = ttsTimeoutMs();
+    // O prazo vale SÓ até os cabeçalhos chegarem: `await fetch` resolve na
+    // resposta, e o `clearTimeout` desarma o sinal antes do áudio (corpo) ser
+    // lido — o streaming segue sem teto. Sem isso, `AbortSignal.timeout`
+    // continuaria armado durante o corpo e cortaria sínteses longas no meio.
+    const ctrl = new AbortController();
+    const relogio = setTimeout(() => ctrl.abort(), prazoMs);
+    let envio: Awaited<ReturnType<typeof fetchComPrazo>>;
+    try {
+      envio = await fetchComPrazo(
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream?output_format=mp3_44100_128`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
           },
-        }),
-        signal: AbortSignal.timeout(ELEVENLABS_TTS_TIMEOUT_MS),
-      }
-    );
+          body: JSON.stringify({
+            text,
+            model_id: selectedModel,
+            language_code: languageCode,
+            apply_text_normalization: applyTextNormalization || 'auto',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.75,
+              style: 0.3,
+              use_speaker_boost: true,
+            },
+          }),
+          signal: ctrl.signal,
+        }
+      );
+    } finally {
+      clearTimeout(relogio);
+    }
     const response = "response" in envio ? envio.response : null;
     const prazoEstourou = "timedOut" in envio ? envio.timedOut : false;
 
@@ -103,7 +126,7 @@ export async function handleElevenLabsTtsStream(req: Request): Promise<Response>
       status: response?.ok ? "success" : "error",
       errorMessage: response === null
         ? (prazoEstourou
-          ? `ElevenLabs timeout (${ELEVENLABS_TTS_TIMEOUT_MS}ms)`
+          ? `ElevenLabs timeout (${prazoMs}ms)`
           : "ElevenLabs network error")
         : (response.ok ? null : `ElevenLabs HTTP ${response.status}`),
       usageUnknown: true,

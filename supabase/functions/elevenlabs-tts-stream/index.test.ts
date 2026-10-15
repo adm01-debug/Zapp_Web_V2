@@ -26,7 +26,7 @@ const USER_ID = "20000000-0000-0000-0000-00000000000f";
 // Texto com dado pessoal sintético: a prova de LGPD é NÃO ver isso no log.
 const TEXTO = "Ola, meu cpf e 111.222.333-44, pode confirmar o endereco?";
 
-type Route = { match: string; make: () => Response | Promise<Response> };
+type Route = { match: string; make: (init?: RequestInit) => Response | Promise<Response> };
 type Call = { url: string; init?: RequestInit };
 
 function jsonResp(body: unknown, status = 200): Response {
@@ -53,7 +53,7 @@ function withFetch(routes: Route[]) {
     }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
-    return Promise.resolve(route.make());
+    return Promise.resolve(route.make(init));
   }) as typeof fetch;
   return { calls, restore: () => { globalThis.fetch = original; } };
 }
@@ -102,8 +102,43 @@ const ROTA_AUDIO_OK: Route = {
   make: () =>
     new Response("audio-fake", { status: 200, headers: { "content-type": "audio/mpeg" } }),
 };
+// Áudio LENTO que respeita o sinal (como o `fetch` real): os cabeçalhos chegam
+// na hora, mas o corpo pinga em fatias de 30ms. Se o prazo continuasse armado
+// durante o corpo, o `abort` no meio do streaming cortaria o áudio.
+const AUDIO_LENTO_FATIAS = ["a-", "u-", "d-", "i-", "o-"];
+const ROTA_AUDIO_LENTO: Route = {
+  match: "api.elevenlabs.io",
+  make: (init) => {
+    const sinal = init?.signal as AbortSignal | null | undefined;
+    const corpo = new ReadableStream<Uint8Array>({
+      start(controlador) {
+        const cortar = () => {
+          try {
+            controlador.error(new DOMException("The operation was aborted.", "AbortError"));
+          } catch { /* já fechado */ }
+        };
+        if (sinal?.aborted) {
+          cortar();
+          return;
+        }
+        sinal?.addEventListener("abort", cortar, { once: true });
+        const codificar = new TextEncoder();
+        (async () => {
+          try {
+            for (const fatia of AUDIO_LENTO_FATIAS) {
+              await new Promise((r) => setTimeout(r, 30));
+              controlador.enqueue(codificar.encode(fatia));
+            }
+            controlador.close();
+          } catch { /* abortado no meio */ }
+        })();
+      },
+    });
+    return new Response(corpo, { status: 200, headers: { "content-type": "audio/mpeg" } });
+  },
+};
 
-const ENV_KEYS = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "ELEVENLABS_API_KEY"] as const;
+const ENV_KEYS = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_TTS_TIMEOUT_MS"] as const;
 const ENV_OK = {
   SUPABASE_URL: "https://stub.supabase.co",
   SUPABASE_ANON_KEY: "anon-key-de-teste",
@@ -182,6 +217,32 @@ Deno.test("erro de rede (não-prazo): 502 com código próprio e ledger em erro"
       assert(ledger, "o ledger precisa registrar a tentativa que falhou por rede");
       const linha = JSON.parse(String(ledger!.init!.body));
       assert(linha.status === "error", "erro de rede entra como status=error no ledger");
+    });
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("prazo vale ate os cabecalhos: audio lento em streaming chega completo (nao e cortado)", async () => {
+  // Prazo de 60ms com corpo que leva ~150ms (5 fatias de 30ms): se o sinal
+  // continuasse armado durante o corpo, o abort cortaria o audio no meio.
+  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_AUDIO_LENTO]);
+  try {
+    await withEnv({ ...ENV_OK, ELEVENLABS_TTS_TIMEOUT_MS: "60" }, async () => {
+      const res = await handleElevenLabsTtsStream(ttsRequest());
+      assert(res.status === 200, `esperava 200, veio ${res.status}`);
+      const audio = await res.text();
+      assert(
+        audio === AUDIO_LENTO_FATIAS.join(""),
+        `streaming foi cortado no meio do corpo: veio ${JSON.stringify(audio)}`,
+      );
+      const provedor = calls.find((c) => c.url.includes("api.elevenlabs.io"));
+      const sinal = provedor?.init?.signal as AbortSignal | undefined;
+      assert(sinal, "o fetch ao provedor precisa receber um sinal de prazo");
+      assert(
+        !sinal.aborted,
+        "o prazo vale ate a resposta chegar: depois dos cabecalhos o sinal nao pode ficar abortado",
+      );
     });
   } finally {
     restore();
