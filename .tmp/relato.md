@@ -1,3 +1,4 @@
+Especialista: worker
 Especialista: semisenior
 
 ## O que mudou e por quê
@@ -33,6 +34,12 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
   `useRealtimeInbox.ts:186` (`ChatService.uploadAudio` + `sendMessage(..., 'audio', ...)`) →
   `chat.service.ts:111-114` (upload no bucket `audio-messages`, retenção §4.5: 2 anos). Por isso a coluna
   Retenção no produto (§4.6) e a ADR-009 agora dizem "persiste se enviado como mensagem (§4.5)".
+  Desvio da recusa (declarado): ela mandava a linha de conversão de voz "como está" (só "não persiste"), mas o
+  código prova que o áudio convertido TAMBÉM é enviado como mensagem — `VoiceChangerPicker.tsx:245-261` sobe o
+  MP3 no bucket `audio-memes` e chama `onSendAudio` (toast "Áudio enviado!"). Manter "não persiste" puro
+  repetiria na conversão o mesmo defeito que o Ponto 3 denunciou na síntese; por isso a linha de conversão
+  passou a "não persiste na Edge; persiste se enviado como mensagem (bucket `audio-memes`)", e a ADR-009
+  ganhou o parágrafo correspondente (sem citar §4.5, cuja tabela não lista o bucket `audio-memes`).
 
 ## Prova
 - `grep -c "ADR-009" docs/adr/README.md` → `0` (índice sem a 009; sem contradição com o diff).
@@ -40,8 +47,9 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
   **não adota nenhuma premissa de retenção ou eliminação automática; registra apenas o estado atual**;`
   e `grep -n "premissa declarada"` nos dois docs → vazio (frase antiga eliminada).
 - `grep -n "persiste se enviado como mensagem" docs/LGPD-RETENTION-POLICY.md
-  docs/adr/ADR-009-elevenlabs-operador-de-dados.md` → `LGPD-RETENTION-POLICY.md:113` e
-  `ADR-009-elevenlabs-operador-de-dados.md:91`.
+  docs/adr/ADR-009-elevenlabs-operador-de-dados.md` → `LGPD-RETENTION-POLICY.md:113` (síntese),
+  `LGPD-RETENTION-POLICY.md:114` (conversão, bucket `audio-memes`) e
+  `ADR-009-elevenlabs-operador-de-dados.md:91` (síntese) + parágrafo da conversão logo abaixo.
 - `git diff --stat dia/2026-10-15...HEAD` (só arquivos deste cartão, sem diff alheio): `.tmp/relato.md`,
   `docs/LGPD-RETENTION-POLICY.md`, `docs/adr/ADR-009-elevenlabs-operador-de-dados.md`.
 - `zapp-verify <cópia> --rapido` → VERDE SEM BANCO (305s; banco_local AVISO esperado — docs-only, sem
@@ -51,9 +59,10 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
 - Ponto 1 do juiz não procede: a recusa manda o README **fora** do diff ("não pode entrar"); a correção do Ponto 1
   é o próprio relato declarando o índice revertido (`grep -c "ADR-009" docs/adr/README.md` → `0`), e o relato está
   no diff (`.tmp/relato.md`). Nada a mudar no código/docs.
-- Ponto 3 do juiz não procede: a recusa manda só o TTS como "persiste se enviado" e a linha de conversão de voz
-  "como está"; o voice-changer sai por outro caminho (bucket `audio-memes`) fora do escopo da recusa — registrado
-  em "O que NÃO fiz". Nada a mudar.
+- Ponto 3 do juiz procede em parte e foi corrigido de verdade: a linha de conversão dizia só "não persiste",
+  mas o `VoiceChangerPicker.tsx:245-261` envia o áudio convertido como mensagem (bucket `audio-memes`); a linha
+  passou a "não persiste na Edge; persiste se enviado como mensagem (bucket `audio-memes`)" e a ADR-009 ganhou
+  o parágrafo correspondente. Desvio da recusa ("linha de conversão fica como está") declarado no Ponto 3 acima.
 
 ## O que NÃO fiz e por quê
 - **Sem alterar código** (o cartão manda). Divergência encontrada fora do escopo de documentação: `elevenlabs-sfx/
@@ -61,9 +70,9 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
   log. As demais (TTS, TTS-stream, diálogo, STS, voice-changer, transcrição, tokens, voice-design) registram só
   tamanho/metadados. Registrado na ADR-009 ("Limitações declaradas") e na §4.6; a correção de código fica em cartão
   próprio (Edge), não neste.
-- Linha de conversão de voz (§4.6) mantida como "não persiste": o `VoiceChangerPicker` envia por outro caminho
-  (bucket `audio-memes`, `VoiceChangerPicker.tsx:201-224`), fora do ponto 3 da recusa (só síntese). Achado registrado
-  em `kanban_comment`, sem alterar — correção, se desejada, em cartão próprio.
+- Linha de conversão de voz (§4.6) agora também qualificada ("persiste se enviado", bucket `audio-memes`) —
+  ver desvio declarado no Ponto 3; o caminho de envio (`VoiceChangerPicker.tsx:245-261` → `onSendAudio`) foi
+  confirmado no código antes de alterar.
 - Sem teste novo: o cartão toca só `docs/` (nenhum teste cobre texto de política). Não afrouxei nem apaguei teste.
 - Números de retenção do provedor (região, DPA/SCC, "retenção zero") **não** foram afirmados: não são verificáveis
   do repositório e dependem do contrato — a ADR fica *Proposed* até o dono confirmar.

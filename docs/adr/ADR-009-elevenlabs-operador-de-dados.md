@@ -90,7 +90,10 @@ guarda **metadados de consumo, nunca o texto nem o áudio**.
   por si — devolvem o áudio/transcrição e descartam.
   O áudio sintetizado **persiste se enviado como mensagem (§4.5)** (botão "Enviar Áudio":
   `TextToAudioButton.tsx:113-131` grava via `ChatService.uploadAudio`, `chat.service.ts:111`,
-  no bucket `audio-messages`).
+  no bucket `audio-messages`). O mesmo vale para o áudio convertido: o `VoiceChangerPicker`
+  ("Enviar", `VoiceChangerPicker.tsx:245-261`) sobe o MP3 no bucket `audio-memes` e chama
+  `onSendAudio`, que envia como mensagem — portanto também **persiste se enviado** (sem prazo
+  de retenção declarado para o bucket `audio-memes`, que não consta da tabela do §4.5).
 - **Retenção do lado do provedor:** **a confirmar com o dono**. O contrato/plano da ElevenLabs
   (que define a retenção do provedor) não é verificável do repositório.
   A política **não adota nenhuma premissa de retenção ou eliminação automática; registra apenas o estado atual**;
