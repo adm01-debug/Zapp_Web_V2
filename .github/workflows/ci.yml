@@ -613,6 +613,9 @@ jobs:
   # auditoria de GitHub Actions (E64).
   mutation-mapa:
     name: 🧬 Mutação do mapa (não bloqueante)
+    # W10: em push/dispatch não há base de PR para filtrar caminhos e o runner de
+    # mutação falhava em todo commit da main (check ❌ fantasma no HEAD).
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true

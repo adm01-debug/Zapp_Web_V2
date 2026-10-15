@@ -3,9 +3,9 @@ import path from 'node:path';
 
 const AUTH_FILE = path.join(import.meta.dirname, '.auth', 'user.json');
 
-// W72: teto de 90 s para o setup — senha errada → ❌ em < 2 min sem esperar o
-// timeout de 15 min do job; login bem-sucedido costuma levar 10–20 s.
-setup.setTimeout(90_000);
+// W72: teto de 180 s para o setup — senha errada → ❌ em segundos (mensagem de recusa
+// ganha a corrida contra a sidebar); partida a frio do dev server pode levar > 30 s.
+setup.setTimeout(180_000);
 
 // Projeto Playwright "setup" (ver playwright.config.ts): roda antes de
 // "chromium-authenticated" via dependsOn, nunca antes de "chromium"
@@ -47,25 +47,44 @@ setup('authenticate', async ({ page }) => {
 
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
   //
-  // W06: aguarda #main-navigation diretamente (sem race condition .or()).
-  // A abordagem anterior usava shell.or(getByRole('alert')) que capturava
-  // alertas SIP/telefonia pos-login como falso positivo de credencial recusada.
-  // Agora: waitFor no #main-navigation; so se falhar verifica mensagem de erro
-  // especifica de autenticacao (sem getByRole('alert') generico).
+  // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa, o que vier
+  // primeiro. A recusa chega num toast que some em poucos segundos (useAuthForm),
+  // entao nao da' para esperar a sidebar por inteiro e so' depois procurar o erro.
+  // Nao usar getByRole('alert') generico: o app dispara toasts alheios ao login
+  // (ex.: "Erro ao conectar ao servidor SIP") que viravam falso "credencial recusada"
+  // (run 38703841548, W06).
+  //
+  // O teto de 120 s cobre a partida a frio do `vite dev` do CI: o otimizador de
+  // dependencias (`optimizeDeps.force`) re-empacota e recarrega a pagina uma vez, e a
+  // rota principal e' compilada sob demanda. Localmente isso leva ~12 s; no runner,
+  // varias vezes mais. Recusa de credencial continua falhando em segundos.
   const shell = page.locator('#main-navigation');
+  const erroLogin = page.getByText(
+    /erro ao entrar|e-?mail ou senha incorretos|conta bloqueada|invalid login|credenciais? inv[aá]lid|temporariamente indispon[ií]vel/i,
+  );
   try {
-    await shell.waitFor({ state: 'visible', timeout: 30_000 });
+    await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });
   } catch {
-    const erroLogin = page.getByText(
-      /inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel/i,
+    const carregando = await page
+      .getByRole('status', { name: /carregando p[aá]gina/i })
+      .isVisible()
+      .catch(() => false);
+    throw new Error(
+      carregando
+        ? '[E2E setup] Login aceito, mas a rota principal nao terminou de carregar em 120 s ' +
+            '(tela presa em "Carregando pagina..."). Provavel partida a frio do dev server ' +
+            'ou chunk da rota principal travado; veja o trace do Playwright.'
+        : '[E2E setup] Login nao concluiu e nao ha mensagem de recusa visivel em 120 s — ' +
+            'o app pode estar sem resposta apos o POST de autenticacao.',
     );
+  }
+
+  if (!(await shell.isVisible().catch(() => false))) {
     const resposta = ((await erroLogin.first().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();
-    const causa = resposta
-      ? `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
-        'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.'
-      : '[E2E setup] Login nao concluiu e nao ha mensagem visivel — ' +
-        'o app pode estar sem resposta apos o POST de autenticacao.';
-    throw new Error(causa);
+    throw new Error(
+      `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
+        'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.',
+    );
   }
 
   await page.context().storageState({ path: AUTH_FILE });
