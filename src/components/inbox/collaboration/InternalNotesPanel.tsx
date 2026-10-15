@@ -57,8 +57,21 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
 
   // O selo é montado a partir dos nomes ativos (não de uma regex de palavra):
   // assim `@Ana Maria` vira um selo inteiro em vez de só `@Ana`.
+  // Enquanto a lista ainda não está disponível (carregando ou erro na
+  // consulta auxiliar), cai no comportamento anterior (`@palavra` vira
+  // selo): a nota não pode perder os selos por causa de uma consulta que
+  // não é a dela.
   const renderNoteContent = (content: string) => {
-    return splitMentionText(content, mentionableNames ?? []).map((part, i) =>
+    if (mentionableNames === undefined) {
+      return content.split(/(@\w+)/g).map((part, i) =>
+        part.startsWith('@') ? (
+          <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      );
+    }
+    return splitMentionText(content, mentionableNames).map((part, i) =>
       part.isMention ? (
         <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part.text}</Badge>
       ) : (

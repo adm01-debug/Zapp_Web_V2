@@ -1,55 +1,19 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
+Refazer 1 — a entrega anterior (bd9357d3b) foi retirada pelo limpador porque quebrava `InternalNotesPanel.test.tsx` no empilhamento sobre dia/2026-10-14. Aproveitei o trabalho anterior (branch já estava neste workspace, sem cherry-pick novo) e corrigi só o apontado.
 
-# Menções de nota interna: colega ativo encontrável, selo com o nome completo
+Ponto 1 (único) da recusa — selo some quando a lista de nomes ativos está indisponível
+Causa conferida no código: `InternalNotesPanel.tsx` passou o selo para `splitMentionText(content, mentionableNames ?? [])`. O teste empilhado (de outro cartão, presente em dia/2026-10-14) mocka `from('profiles')` só com `.eq() -> .single()`; `useMentionableProfileNames` chama `.order().range()` nessa cadeia, a queryFn rejeita, `mentionableNames` fica `undefined` e, sem nomes, nada virava selo — `findByText('@ana')` falhava. Reproduzi o vermelho com o arquivo do teste empilhado copiado de `dia/2026-10-14` (temporário, removido antes do commit, não entra no diff): `Test Files 1 failed (1), Tests 1 failed | 7 passed (8)`, falha em `transforma @menção em destaque` na linha do `findByText('@ana')`.
+O que mudei (`src/components/inbox/collaboration/InternalNotesPanel.tsx`, +15/-1): em `renderNoteContent`, quando `mentionableNames === undefined` (lista ainda carregando ou com erro na consulta auxiliar), cai no comportamento anterior byte a byte (`content.split(/(@\w+)/g)`, selo em `part.startsWith('@')`); com a lista carregada (inclusive `[]`), usa `splitMentionText` como antes. Não mexi no teste do outro cartão nem no contrato do selo por nome ativo: segunda passada com `grep` confirmou que `splitMentionText` só tem este chamador e `useMentionableProfiles` só o `MentionInput`; nenhum toast, evento ou escrita duplicado; nenhum arquivo de guarda/manifesto/CI tocado.
+Teste que prova (novo, meu, chama o componente real): `src/components/inbox/collaboration/__tests__/InternalNotesPanel.mentionFallback.test.tsx` — caso 1 (nomes `undefined`, nota `Falar com @ana sobre o pedido`) exige o selo `@ana` e o texto em volta: VERMELHO antes (`Tests 1 failed | 1 passed (2)`, mesma falha no `findByText('@ana')`) e VERDE depois; caso 2 (nomes `['Ana Lima']`, nota `Falar com @Ana Lima sobre o pedido`) guarda o pedido original (selo com o nome inteiro) e passa antes e depois.
+Sobre t_e8894a7d: a correção proposta lá (mexer no mock/conteúdo do teste do outro cartão) não foi aplicada — o fallback em produção resolve sem tocar em arquivo alheio e sem afrouxar nenhuma asserção. Irmãos verificados em `~/.v2-fila/*.json`: nenhum refaz este selo (PO1/PD-86 cobrem `@` derrubando a tela, caminho não tocado aqui). Item 3 do pedido (aviso ao marcado): mantido o registrado na entrega anterior (sem canal no cliente; proposta de trilha de banco em uma linha, sem criar tabela).
 
-## O que mudou e por quê
-- `src/hooks/inbox/useMentionableProfiles.ts` (novo): a lista de mencionáveis agora
-  busca no servidor (`ilike` no `name`), ordenada (`name`, desempate `id`), limitada a
-  20 linhas por consulta e com debounce de 250 ms — era `select(...).limit(20)` sem
-  ordem e sem filtro, com o termo aplicado no cliente, então do 21º colega ativo para
-  cima ninguém aparecia para ser marcado (a linha nem chegava ao navegador). Traz
-  também `useMentionableProfileNames`, que lê TODOS os nomes ativos de forma paginada
-  por `id` (nunca uma amostra), para o selo das notas.
-- `src/components/inbox/collaboration/mentionText.ts` (novo): `splitMentionText` separa o texto da nota marcando
-  como selo a menção a um nome conhecido. Antes o selo saía de `/(@\w+)/g`, que não
-  cobre espaço: `@Ana Maria` virava selo só de `@Ana`. O reconhecimento é ancorado na
-  lista de nomes ativos (com o nome mais longo vencendo e fronteira de palavra), então
-  cobre nome composto e partícula minúscula (`@Ana da Silva`).
-- `src/components/inbox/collaboration/MentionInput.tsx`: passa a usar
-  `useMentionableProfiles` (fim do `useQuery` local) e deixa de filtrar no cliente — o
-  filtro é do servidor. A menção gravada continua no formato do sistema: `@` + nome do
-  perfil + espaço (`onChange(value.slice(0, lastAtIndex) + `@${agent.name} `)`).
-- `src/components/inbox/collaboration/InternalNotesPanel.tsx`: o selo de cada nota
-  passa a ser montado com `splitMentionText` + os nomes ativos, em vez da regex.
+Arquivos (git diff --name-only bd9357d3b2...HEAD, colado do comando):
+.tmp/relato.md
+src/components/inbox/collaboration/InternalNotesPanel.tsx
+src/components/inbox/collaboration/__tests__/InternalNotesPanel.mentionFallback.test.tsx
 
-## Prova
-- defeito (selo), antes, com a regex antiga: `node -e "'@Ana Maria veja'.split(/(@\w+)/g)"` → `["","@Ana"," Maria veja"]` (só `@Ana` viraria selo).
-- vermelho antes (módulos ainda inexistentes, testes presentes): `npx vitest run src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Failed to resolve import "../useMentionableProfiles" ... Test Files 2 failed (2)`.
-- verde depois: `npx vitest run src/components/inbox/collaboration/__tests__/mentionText.test.ts src/hooks/inbox/__tests__/useMentionableProfiles.test.tsx` → `Test Files 2 passed (2); Tests 15 passed (15)`.
-- sem regressão no consumidor: `npx vitest run src/components/inbox/collaboration/__tests__/MentionInput.a11y.test.tsx` → `Test Files 1 passed (1); Tests 2 passed (2)`.
-- os três juntos após mover o parser para junto do compositor: `Test Files 3 passed (3); Tests 17 passed (17)`.
-- tipos: `npx tsc -p tsconfig.app.json --noEmit` → nenhum erro nos arquivos tocados.
-
-## Arquivos: onde cada peça ficou (dentro do que o cartão lista)
-Todos os arquivos tocados estão em `src/hooks/` (mencionáveis) e `src/components/inbox/collaboration/`
-(MentionInput, InternalNotesPanel, o parser puro `mentionText.ts` e os testes). O parser puro
-nasceu em `src/lib/` e foi movido para junto do compositor: ele é detalhe do selo da nota, não
-utilidade geral, e assim o diff fica só no par componente+hook da menção.
-
-## Item 3 do cartão (aviso ao marcado): canal inexistente — registrado e proposto, como o cartão manda
-- O cartão diz: "se não houver canal, registre e proponha em uma linha no relato, sem
-  criar tabela". Não há canal no cliente: a tabela `notifications` tem a policy
-  `Block authenticated notification inserts` (`WITH CHECK (false)`,
-  `supabase/migrations/20260404174629_...sql`) — insert autenticado é proibido, só
-  escrita server-side — e não há trigger em `contact_notes` que gere notificação de
-  menção. Então registrei aqui e proponho: tratar numa trilha de banco (função/trigger
-  em `contact_notes`), que é do worker (sql), em cartão próprio. Sem tabela nova, sem
-  Edge.
-
-## O que NÃO fiz e por quê
-- Não toquei no compositor do chat (`components/inbox/chat/MentionAutocomplete.tsx`) nem
-  em `get_team_profiles` — são o PO1/PD-86, cartões que mexem no mesmo assunto em outro
-  componente (o chat), fora do meu diff.
-- Não mexi em quem pode ser mencionado (o próprio usuário continua aparecendo, como
-  antes): não está no critério do cartão.
-- Não criei notificação de menção (item 3, acima).
+Verificação:
+npx vitest run <5 arquivos: InternalNotesPanel.test (empilhado, temporário) + mentionFallback + mentionText + useMentionableProfiles + MentionInput.a11y> → Test Files 5 passed (5), Tests 27 passed (27)
+npx vitest run <os 4 arquivos do meu diff> → Test Files 4 passed (4), Tests 19 passed (19)
+npx eslint nos 2 arquivos do diff → 0 errors (1 warning pré-existente em import do client na linha 3, já estava na entrega anterior)
+zapp-verify . --rapido → VERIFY: VERDE SEM BANCO (OK db_guard 0s / OK tipos 15s / OK lint 2s / OK migrations 0s; sem banco porque não há migration — front-only)
