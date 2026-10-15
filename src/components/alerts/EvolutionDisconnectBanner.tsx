@@ -50,6 +50,9 @@ export function EvolutionDisconnectBanner() {
   const desconectadasRef = useRef<DisconnectedInstance[]>([]);
   useEffect(() => { desconectadasRef.current = disconnected; }, [disconnected]);
   useConnectionsRealtime({
+    // Sem o aviso "conectado": a faixa só precisa do refetch filtrado; o dono
+    // do aviso é o gerente de conexões (duas montagens anunciavam em dobro).
+    announce: false,
     onChange: (payload: ConnectionsChange) => {
       if (payload.eventType === 'INSERT') {
         if ((payload.new as { status?: string } | null)?.status !== 'disconnected') return;

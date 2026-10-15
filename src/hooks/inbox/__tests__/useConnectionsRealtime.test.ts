@@ -110,4 +110,46 @@ describe('useConnectionsRealtime — um aviso por transição para conectado', (
 
     expect(mocks.toast).toHaveBeenCalledTimes(2);
   });
+
+  it('via evento real: UPDATE sem transição (connected→connected) não anuncia', () => {
+    renderHook(() => useConnectionsRealtime());
+    const aoEvento = mocks.on.mock.calls[0][2] as (payload: unknown) => void;
+
+    act(() => {
+      aoEvento({ eventType: 'UPDATE', new: { id: 'c1', status: 'connected' }, old: { id: 'c1', status: 'disconnected' } });
+    });
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      aoEvento({ eventType: 'UPDATE', new: { id: 'c1', status: 'connected' }, old: { id: 'c1', status: 'connected' } });
+    });
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+
+  it('announce:false silencia o aviso mas mantém o onChange', () => {
+    const onChange = vi.fn();
+    renderHook(() => useConnectionsRealtime({ announce: false, onChange }));
+    const aoEvento = mocks.on.mock.calls[0][2] as (payload: unknown) => void;
+
+    act(() => {
+      aoEvento({ eventType: 'UPDATE', new: { id: 'c1', status: 'connected' }, old: { id: 'c1', status: 'disconnected' } });
+    });
+
+    expect(mocks.toast).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('dois consumidores (gerente + faixa) anunciam a transição uma vez só', () => {
+    renderHook(() => useConnectionsRealtime());
+    renderHook(() => useConnectionsRealtime({ announce: false }));
+    const gerente = mocks.on.mock.calls[0][2] as (payload: unknown) => void;
+    const faixa = mocks.on.mock.calls[1][2] as (payload: unknown) => void;
+    const transicao = { eventType: 'UPDATE', new: { id: 'c1', status: 'connected' }, old: { id: 'c1', status: 'disconnected' } };
+
+    act(() => { gerente(transicao); });
+    act(() => { faixa(transicao); });
+
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+    expect(titulosDeToast()).toEqual(['WhatsApp conectado!']);
+  });
 });
