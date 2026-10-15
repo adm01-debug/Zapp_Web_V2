@@ -7,13 +7,17 @@
 --   drop policy if exists "Users can view shared filters" on public.saved_filters;
 --   create policy "Users can view shared filters" on public.saved_filters for select to authenticated using (is_shared = true);
 --
--- FILTROS SALVOS DO INBOX — paridade de limites V3 -> V2 (três correções, só aditivas):
+-- FILTROS SALVOS DO INBOX — paridade de limites V3 -> V2 (três correções, só aditivas,
+-- todas SÓ para entity_type = 'inbox_filters'; os demais tipos seguem sem regra nova):
 --
---   1. Nome único por usuário e tipo de entidade, IGNORANDO maiúsculas/minúsculas:
---      índice único em (user_id, entity_type, lower(name)). O V3 tinha o defeito de
+--   1. Nome único por usuário SÓ no inbox, IGNORANDO maiúsculas/minúsculas: índice
+--      único PARCIAL em (user_id, entity_type, lower(name)) com
+--      WHERE entity_type = 'inbox_filters'. O V3 tinha o defeito de
 --      "sobrescrever outro preset" porque o upsert por nome usava ILIKE — e em ILIKE os
 --      caracteres '%' e '_' são CURINGA, não texto. O índice em lower(name) compara o nome
 --      literal (sem curinga) e o banco recusa a duplicata independentemente do caixa.
+--      Parcial de propósito: sem o filtro, a regra valeria para TODOS os entity_type
+--      (fora do escopo) e o CREATE falharia sobre nome repetido legado de outro tipo.
 --
 --   2. Teto de 20 presets do inbox por usuário: gatilho recusa a 21ª gravação com erro claro.
 --      Escopo: só entity_type = 'inbox_filters' (tipo NOVO, sem dado legado no banco) — os
@@ -25,9 +29,9 @@
 
 set search_path = public, pg_temp;
 
--- 1. Nome único por (usuário, entidade) ignorando caixa, sem curinga.
+-- 1. Nome único no inbox ignorando caixa, sem curinga — índice PARCIAL (só inbox_filters).
 create unique index if not exists saved_filters_user_entity_lower_name_key
-  on public.saved_filters (user_id, entity_type, lower(name));
+  on public.saved_filters (user_id, entity_type, lower(name)) where entity_type = 'inbox_filters';
 
 -- 2. Teto de 20 presets do inbox por usuário (recusa a 21ª linha).
 create or replace function public.enforce_saved_filters_inbox_limite()

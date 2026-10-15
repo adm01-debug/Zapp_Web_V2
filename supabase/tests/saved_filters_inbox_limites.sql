@@ -1,7 +1,9 @@
 -- saved_filters_inbox_limites.sql
--- Prova os limites dos presets de filtro do inbox (cartao t_66f0765c):
---   1) nome unico por usuario/entidade ignorando caixa;  2) teto de 20 presets do inbox
---   por usuario (recusa a 21a com erro claro);  3) preset de inbox NAO vaza para outro usuario.
+-- Prova os limites dos presets de filtro do inbox (só entity_type = 'inbox_filters'):
+--   1) nome unico no inbox ignorando caixa;  2) teto de 20 presets do inbox por usuario
+--   (recusa a 21a com erro claro);  3) preset de inbox NAO vaza para outro usuario;
+--   4) outro entity_type segue aceitando nome repetido em caixa diferente;
+--   5) anonimo (sem claims) conta 0 presets de inbox de A.
 --
 -- Roda no banco LOCAL da copia, como o proprio servidor (superusuario) que desce de nivel
 -- para os papeis REAIS com `set local role authenticated` + claims de JWT:
@@ -12,11 +14,18 @@
 \set ON_ERROR_STOP on
 begin;
 
--- Usuarios sinteticos (sem tocar em auth.users: saved_filters.user_id nao tem FK).
+-- Usuarios sinteticos em auth.users: a FK validada saved_filters_user_id_fkey exige a
+-- linha em auth.users (sem ela, todo INSERT falha antes mesmo das regras do cartao).
+-- Tudo fica nesta transacao e some no ROLLBACK final — padrao dos testes de banco do repo.
 -- A = dono dos presets; B = outro usuario; C = caso de nome repetido.
 \set uid_a '''11111111-1111-1111-1111-111111111111'''
 \set uid_b '''22222222-2222-2222-2222-222222222222'''
 \set uid_c '''33333333-3333-3333-3333-333333333333'''
+
+insert into auth.users (id, email) values
+  (:uid_a, 'sfl-a@teste.local'),
+  (:uid_b, 'sfl-b@teste.local'),
+  (:uid_c, 'sfl-c@teste.local');
 
 set local role authenticated;
 
@@ -36,6 +45,24 @@ begin
   exception when unique_violation then
     null;  -- esperado: o indice unico em lower(name) barra
   end;
+end
+$$;
+
+-- ============ 4) outro entity_type NAO e afetado: nome repetido em caixa diferente passa ============
+-- O indice parcial so vale para inbox_filters: 'contacts_filters' aceita os dois.
+insert into public.saved_filters (user_id, entity_type, name)
+values (:uid_c, 'contacts_filters', 'Filtro Y');
+
+insert into public.saved_filters (user_id, entity_type, name)
+values (:uid_c, 'contacts_filters', 'fILTRO y');
+
+do $$
+begin
+  if (select count(*) from public.saved_filters
+       where user_id = '33333333-3333-3333-3333-333333333333'
+         and entity_type = 'contacts_filters') <> 2 then
+    raise exception 'saved_filters_inbox_limites T5 FALHOU: outro entity_type deveria aceitar o nome repetido em caixa diferente';
+  end if;
 end
 $$;
 
@@ -119,7 +146,24 @@ begin
 end
 $$;
 
+-- ============ 5) anonimo (sem claims) conta 0 presets de inbox de A, inclusive o compartilhado ============
+set local role anon;
+
+do $$
+declare
+  v_anon int;
+begin
+  select count(*) into v_anon
+    from public.saved_filters
+   where user_id = '11111111-1111-1111-1111-111111111111' and entity_type = 'inbox_filters';
+
+  if v_anon <> 0 then
+    raise exception 'saved_filters_inbox_limites T6 FALHOU: anonimo enxergou % preset(s) de inbox de A', v_anon;
+  end if;
+end
+$$;
+
 reset role;
 rollback;
 
-\echo 'saved_filters_inbox_limites: OK (nome unico case-insensitive; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario)'
+\echo 'saved_filters_inbox_limites: OK (nome unico case-insensitive so no inbox; outro tipo aceita repetido; 20 ok / 21a recusada com erro claro; editar no teto ok; preset de inbox nao vaza para outro usuario nem para anonimo)'
