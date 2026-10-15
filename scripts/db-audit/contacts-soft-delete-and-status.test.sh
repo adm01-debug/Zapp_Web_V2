@@ -758,7 +758,7 @@ expect_value 'auditoria: trigger AFTER INSERT/UPDATE/DELETE por linha (tgtype 29
   "SELECT tgtype::int FROM pg_trigger WHERE tgrelid='public.contacts'::regclass AND tgname='trg_audit_contact_change'"
 expect_value 'auditoria: ACL do authenticated e SELECT puro (sem INSERT/UPDATE/DELETE)' 'true|false|false|false' \
   "SELECT has_table_privilege('authenticated','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','INSERT')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','UPDATE')::text||'|'||has_table_privilege('authenticated','public.contact_audit_log','DELETE')::text"
-expect_value 'auditoria: anon sem nada; service_role sem UPDATE/DELETE' 'false|true|true|false|false' \
+expect_value 'auditoria: anon sem nada; service_role so le (SELECT=true, INSERT=false, sem UPDATE/DELETE)' 'false|true|false|false|false' \
   "SELECT has_table_privilege('anon','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','SELECT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','INSERT')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','UPDATE')::text||'|'||has_table_privilege('service_role','public.contact_audit_log','DELETE')::text"
 expect_value 'auditoria: PUBLIC nao recebe privilegio nenhum na tabela' '0' \
   "SELECT count(*) FROM pg_class c, aclexplode(c.relacl) a WHERE c.oid='public.contact_audit_log'::regclass AND a.grantee=0"
@@ -813,6 +813,11 @@ expect_failure 'auditoria: authenticated nao reescreve a trilha' \
   'permission denied for table contact_audit_log'
 expect_failure 'auditoria: authenticated nao apaga a trilha' \
   "SET ROLE authenticated; DELETE FROM public.contact_audit_log" \
+  'permission denied for table contact_audit_log'
+# service_role tambem NAO escreve direto: so o trigger SECURITY DEFINER (dono) grava.
+# Sem este ponto, o GRANT de INSERT ao service_role voltaria sem nenhum teste acusar.
+expect_failure 'auditoria: service_role NAO escreve direto na trilha (so o trigger escreve)' \
+  "SET ROLE service_role; INSERT INTO public.contact_audit_log (contact_id, action, new_values, changed_fields) VALUES ('30000000-0000-0000-0000-000000000001','insert','{}'::jsonb,ARRAY['name'])" \
   'permission denied for table contact_audit_log'
 
 # INVARIANTES da tabela (defesa em profundidade, vale tambem para escrita futura).

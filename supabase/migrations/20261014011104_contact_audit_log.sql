@@ -110,8 +110,9 @@ REVOKE ALL ON TABLE public.contact_audit_log FROM PUBLIC, anon, authenticated, s
 -- as linhas). Nada de INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER: a trilha e append-only
 -- e quem escreve e o trigger SECURITY DEFINER (dono).
 GRANT SELECT ON TABLE public.contact_audit_log TO authenticated;
--- service_role: backoffice le e insere; UPDATE/DELETE ficam negados (nem ele reescreve a trilha).
-GRANT SELECT, INSERT ON TABLE public.contact_audit_log TO service_role;
+-- service_role: backoffice SO le (SELECT); sem INSERT/UPDATE/DELETE -- nem ele forja
+-- linha: quem escreve e o trigger SECURITY DEFINER, que roda como o dono.
+GRANT SELECT ON TABLE public.contact_audit_log TO service_role;
 
 -- Visibilidade: a MESMA regra do contato (o helper e o predicado da policy de SELECT de
 -- public.contacts). Quem nao enxerga o contato nao enxerga a trilha dele.
