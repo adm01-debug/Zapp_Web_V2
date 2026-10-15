@@ -90,6 +90,14 @@ export function decidir(prs, obrigatorios) {
   return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas };
 }
 
+// Depois de uma recusa 403/422, o laço do workflow só tenta o próximo candidato se uma
+// decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele ainda na fila. A
+// lista lida no início da execução pode estar velha — outra PR pode ter sido atualizada
+// por fora e entrado em voo (Codex, PR #1950).
+export function confirmarCandidato(decisao, numero) {
+  return decisao.acao === 'atualizar' && decisao.fila.includes(numero);
+}
+
 // `gh pr list` devolve mergeStateStatus=UNKNOWN enquanto o GitHub nao calculou a
 // mergeabilidade (calculo assincrono). Tratar UNKNOWN como "em voo" travaria a fila;
 // por isso, para PRs com auto-merge em UNKNOWN, a defasagem vem de uma comparacao
@@ -112,12 +120,7 @@ export async function resolverDesconhecidos(prs, behindBy) {
   return saida;
 }
 
-async function main() {
-  const repo = process.env.GITHUB_REPOSITORY;
-  if (!repo) {
-    console.error('GITHUB_REPOSITORY ausente');
-    process.exit(2);
-  }
+async function decisaoAtual(repo) {
   const json = execFileSync(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
     '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
@@ -126,7 +129,31 @@ async function main() {
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
   const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
-  const decisao = decidir(prs, checksObrigatorios());
+  return decidir(prs, checksObrigatorios());
+}
+
+async function main() {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo) {
+    console.error('GITHUB_REPOSITORY ausente');
+    process.exit(2);
+  }
+  // `--confirmar N`: exit 0 se N ainda pode ser atualizada agora; 3 se não (alguém em voo,
+  // N fora da fila). Não escreve output nem summary.
+  const iConfirmar = process.argv.indexOf('--confirmar');
+  if (iConfirmar !== -1) {
+    const numero = Number(process.argv[iConfirmar + 1]);
+    if (!Number.isInteger(numero) || numero <= 0) {
+      console.error('--confirmar exige o número da PR');
+      process.exit(2);
+    }
+    const decisao = await decisaoAtual(repo);
+    if (confirmarCandidato(decisao, numero)) return;
+    const motivo = decisao.acao === 'esperar' ? `em voo: #${decisao.emVoo.join(', #')}` : `#${numero} não está mais na fila`;
+    console.log(`Fila recalculada não autoriza #${numero} (${motivo}).`);
+    process.exit(3);
+  }
+  const decisao = await decisaoAtual(repo);
   const linhas = [];
   if (decisao.acao === 'esperar') linhas.push(`Em voo: #${decisao.emVoo.join(', #')} — ninguém mais é atualizado agora.`);
   if (decisao.acao === 'nada') linhas.push('Nenhuma PR com auto-merge esperando atualização.');

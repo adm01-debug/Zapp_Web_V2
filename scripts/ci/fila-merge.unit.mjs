@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos } from './fila-merge.mjs';
+import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato } from './fila-merge.mjs';
 
 const OBRIG = ['🧪 Unit Tests', 'Contrato DB offline'];
 const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z' });
@@ -153,4 +153,11 @@ test('fork em dia com a main segura a fila; nenhuma interna é atualizada junto'
   const d = decidir(prs, OBRIG);
   assert.equal(d.acao, 'esperar');
   assert.deepEqual(d.emVoo, [1]);
+});
+
+test('confirmarCandidato: só autoriza com ninguém em voo e o candidato ainda na fila', () => {
+  assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 1, fila: [1, 2], restantes: [2], bloqueadas: [] }, 2), true);
+  assert.equal(confirmarCandidato({ acao: 'esperar', emVoo: [9], bloqueadas: [] }, 2), false);
+  assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 1, fila: [1], restantes: [], bloqueadas: [] }, 2), false);
+  assert.equal(confirmarCandidato({ acao: 'nada', bloqueadas: [] }, 2), false);
 });
