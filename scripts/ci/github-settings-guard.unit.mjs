@@ -83,7 +83,7 @@ function stub(
 
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
-    "send({ environments: [{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
+    "send({ environments: [{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
 
   const criadoEm = new Date(Date.now() - idadeMs).toISOString();
   const totalComentarios = comentarioDepois ? 2 : 1;
@@ -359,7 +359,7 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
+    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura', 'Preview',
     'producao-ddl', 'producao-edge-functions', 'Production',
     ...extras,
   ];

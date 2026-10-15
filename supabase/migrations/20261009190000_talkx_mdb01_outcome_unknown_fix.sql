@@ -1,5 +1,4 @@
 -- 20261009190000_talkx_mdb01_outcome_unknown_fix
--- talkx_mdb01_objetos_ausentes
 --
 -- Corrige talkx_engine_alerts(): a view talkx_engine_health emite
 -- kind = 'outcome_unknown_24h', mas o CHECK talkx_alerts_kind_check
