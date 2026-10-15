@@ -36,6 +36,7 @@ vi.mock('../useMultiplixAudience', async (importOriginal) => ({
 }));
 
 import { supabase } from '@/integrations/supabase/client';
+import { MultiplixOverLimitError } from '@/hooks/integrations/useMultiplixAudience';
 import {
   invokeMultiplixDispatch,
   readMultiplixList,
@@ -210,6 +211,74 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
       name: 'MultiplixDispatchEdgeError',
       code: 'multiplix_dispatch_not_found',
     });
+  });
+
+  // Refazer 1 do leitor unico do corpo de erro: `toMultiplixDispatchError` nao
+  // pode perder o `instanceof MultiplixDispatchEdgeError` quando o corpo traz
+  // so `{ message }`, nem trocar a precedencia para `body.code`.
+  function dispatchEdgeError(status: number, body: unknown) {
+    return {
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: new Response(JSON.stringify(body), {
+          status,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      },
+    };
+  }
+
+  it('corpo so com { message } continua sendo MultiplixDispatchEdgeError (nao Error generico)', async () => {
+    functionsInvoke.mockResolvedValue(dispatchEdgeError(500, { message: 'Pane no provedor' }));
+
+    let err: unknown;
+    await invokeMultiplixDispatch('dispatch.list', {}).catch((e) => { err = e; });
+
+    expect(err).toBeInstanceOf(MultiplixDispatchEdgeError);
+    expect(err).toMatchObject({ code: 'Pane no provedor', message: 'Pane no provedor' });
+  });
+
+  it('{ error } plano vira MultiplixDispatchEdgeError com code e message do corpo', async () => {
+    functionsInvoke.mockResolvedValue(dispatchEdgeError(402, {
+      error: 'multiplix_conta_sem_credito',
+      message: 'Saldo insuficiente na conta',
+    }));
+
+    let err: unknown;
+    await invokeMultiplixDispatch('dispatch.list', {}).catch((e) => { err = e; });
+
+    expect(err).toBeInstanceOf(MultiplixDispatchEdgeError);
+    expect(err).toMatchObject({ code: 'multiplix_conta_sem_credito', message: 'Saldo insuficiente na conta' });
+  });
+
+  it('body.error vence body.code (precedencia anterior a migracao)', async () => {
+    functionsInvoke.mockResolvedValue(dispatchEdgeError(500, {
+      error: 'multiplix_lista_vazia',
+      code: 'CATALOG_UPSTREAM_DOWN',
+      message: 'Sem destinatarios elegiveis',
+    }));
+
+    let err: unknown;
+    await invokeMultiplixDispatch('dispatch.list', {}).catch((e) => { err = e; });
+
+    expect(err).toBeInstanceOf(MultiplixDispatchEdgeError);
+    expect(err).toMatchObject({ code: 'multiplix_lista_vazia', message: 'Sem destinatarios elegiveis' });
+  });
+
+  it('teto de destinatarios (F17) vira MultiplixOverLimitError com count/limit/mensagem reais', async () => {
+    functionsInvoke.mockResolvedValue(dispatchEdgeError(422, {
+      error: 'multiplix_over_recipient_limit',
+      count: 120,
+      limit: 100,
+      message: 'acima do teto do plano',
+    }));
+
+    let err: unknown;
+    await invokeMultiplixDispatch('dispatch.list', {}).catch((e) => { err = e; });
+
+    expect(err).toBeInstanceOf(MultiplixOverLimitError);
+    expect(err).toMatchObject({ count: 120, limit: 100, message: 'acima do teto do plano' });
   });
 
   it('readMultiplixList nao inventa total e falha alto num formato desconhecido', () => {

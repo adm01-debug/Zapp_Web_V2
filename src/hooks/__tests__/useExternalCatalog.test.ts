@@ -273,6 +273,65 @@ describe('useExternalCatalog', () => {
       }, { timeout: 5000 });
     });
 
+    // Refazer 1 do leitor unico: a traducao do erro da edge migrada para
+    // `parseEdgeError` — codigo/mensagem do corpo chegam a `error`/`errorCode`.
+    function edgeFailure(status: number, body: unknown) {
+      return {
+        data: null,
+        error: {
+          message: 'Edge Function returned a non-2xx status code',
+          context: new Response(JSON.stringify(body), {
+            status,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        },
+      };
+    }
+
+    it('envelope canonico vira error com a mensagem do servidor (codigo segue CATALOG_UNEXPECTED)', async () => {
+      mockInvoke.mockResolvedValue(edgeFailure(503, {
+        error: { code: 'CATALOGO_FORA', message: 'Banco externo indisponivel' },
+      }));
+
+      const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
+      act(() => { result.current.fetchProducts(); });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Banco externo indisponivel');
+      }, { timeout: 5000 });
+      // O codigo continua vindo do `code` de topo (igual ao pre-migracao);
+      // o que a migracao consertou aqui foi a mensagem (antes era o objeto).
+      expect(result.current.errorCode).toBe('CATALOG_UNEXPECTED');
+      expect(result.current.errorStatus).toBe(503);
+    });
+
+    it('{ error, code } plano usa a mensagem de error e o codigo de code', async () => {
+      mockInvoke.mockResolvedValue(edgeFailure(500, {
+        error: 'Falha no provedor',
+        code: 'CATALOG_UPSTREAM_DOWN',
+      }));
+
+      const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
+      act(() => { result.current.fetchProducts(); });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('Falha no provedor');
+      }, { timeout: 5000 });
+      expect(result.current.errorCode).toBe('CATALOG_UPSTREAM_DOWN');
+    });
+
+    it('429 sem codigo vira CATALOG_RATE_LIMITED', async () => {
+      mockInvoke.mockResolvedValue(edgeFailure(429, { error: 'Muitas requisicoes' }));
+
+      const { result } = renderHook(() => useExternalCatalog(), { wrapper: createWrapper() });
+      act(() => { result.current.fetchProducts(); });
+
+      await waitFor(() => {
+        expect(result.current.errorCode).toBe('CATALOG_RATE_LIMITED');
+      }, { timeout: 5000 });
+      expect(result.current.error).toBe('Muitas requisicoes');
+    });
+
     it('clears error on successful retry', async () => {
       mockInvoke.mockResolvedValue({
         data: { error: 'Timeout' },

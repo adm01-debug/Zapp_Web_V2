@@ -73,6 +73,26 @@ describe('ForceLogoutButton — revogação real via Edge Function', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
+  // Refazer 1 do leitor unico: a migracao trocou `throw error` pela mensagem
+  // lida do corpo (`parseEdgeError`). Este teste fixa que o toast mostra a
+  // mensagem do SERVIDOR, nao o "non-2xx" generico do SDK.
+  it('mostra a mensagem do corpo da edge (leitor unico) em vez do "non-2xx" generico', async () => {
+    mockInvoke.mockResolvedValue({
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: { clone: () => ({ json: async () => ({ message: 'Sessão já revogada pelo servidor' }) }) },
+      },
+    });
+    renderButton();
+    await openAndConfirm();
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Sessão já revogada pelo servidor');
+    });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
   it('trata rejeição (rede/exceção) sem anunciar sucesso', async () => {
     mockInvoke.mockRejectedValue(new Error('network down'));
     renderButton();

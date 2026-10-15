@@ -255,4 +255,26 @@ describe('useMultiplixAudience — traducao do erro da Edge', () => {
 
     expect((err as Error).message).toBe('Falha ao chamar multiplix-audience');
   });
+
+  // Refazer 1 do leitor unico: a migracao para `parseEdgeError` mudou o que
+  // chega a tela quando o corpo traz so `{ message }` ou o envelope canonico
+  // (antes caia na mensagem do SDK ou em string vazia). Estes testes fixam o
+  // comportamento novo no codigo migrado.
+  it('corpo so com { message } usa a mensagem do corpo (nao a do SDK)', async () => {
+    const err = await countError({
+      message: 'Edge Function returned a non-2xx status code',
+      context: contextWith({ message: 'Fila do provedor indisponivel' }),
+    });
+
+    expect((err as Error).message).toBe('Fila do provedor indisponivel');
+  });
+
+  it('envelope canonico usa a mensagem canonica (nao string vazia)', async () => {
+    const err = await countError({
+      message: 'Edge Function returned a non-2xx status code',
+      context: contextWith({ error: { code: 'MULTIPLIX_UPSTREAM_DOWN', message: 'Provedor fora do ar' } }),
+    });
+
+    expect((err as Error).message).toBe('Provedor fora do ar');
+  });
 });
