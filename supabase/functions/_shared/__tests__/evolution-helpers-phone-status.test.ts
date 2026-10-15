@@ -64,7 +64,9 @@ Deno.test("normalizePhone só rejeita o que é LID; telefone comum passa", () =>
 
 // ─── shouldUpdateStatus: status monotônico ──────────────────────────────────
 // Recibo de status fora de ordem (um `delivered` atrasado chegando depois do
-// `read`) não pode regredir a mensagem; `deleted`/`failed` são terminais.
+// `read`) não pode regredir a mensagem; `deleted` é terminal. `failed` NÃO é
+// mais passe livre: não apaga `delivered`/`read` já confirmado (só vale a
+// partir de `sending`/desconhecido, quando o erro realmente importa).
 
 Deno.test("shouldUpdateStatus não regride read → delivered/sent", () => {
   assertEquals(shouldUpdateStatus("read", "delivered"), false);
@@ -81,11 +83,17 @@ Deno.test("shouldUpdateStatus exige avanço estrito na prioridade", () => {
   assertEquals(shouldUpdateStatus(null, "sent"), true); // sem status, aplica
 });
 
-Deno.test("shouldUpdateStatus: deleted e failed sempre aplicam", () => {
+Deno.test("shouldUpdateStatus: deleted sempre aplica", () => {
   for (const atual of ["sending", "sent", "delivered", "read"]) {
     assertEquals(shouldUpdateStatus(atual, "deleted"), true);
-    assertEquals(shouldUpdateStatus(atual, "failed"), true);
   }
+});
+
+Deno.test("shouldUpdateStatus: failed nao regride delivered/read (so vale de sending)", () => {
+  assertEquals(shouldUpdateStatus("sending", "failed"), true);
+  assertEquals(shouldUpdateStatus("sent", "failed"), false);
+  assertEquals(shouldUpdateStatus("delivered", "failed"), false);
+  assertEquals(shouldUpdateStatus("read", "failed"), false);
 });
 
 // ─── checkRateLimit: 429 por IP no webhook (200/min) ────────────────────────
