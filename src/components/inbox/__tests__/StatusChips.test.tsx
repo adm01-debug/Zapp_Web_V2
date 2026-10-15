@@ -156,6 +156,33 @@ describe('StatusChips', () => {
     expect(onChipTabChange).toHaveBeenCalledWith('resolved');
   });
 
+  it('chama onChipTabChange com archived ao clicar no chip Arquivadas', () => {
+    const onChipTabChange = vi.fn();
+    render(<StatusChips counts={countsOf(conversations)} chipTab="all" onChipTabChange={onChipTabChange} />);
+    fireEvent.click(screen.getByTestId('status-chip-archived'));
+    expect(onChipTabChange).toHaveBeenCalledWith('archived');
+  });
+
+  it('aplica o mesmo estilo ativo dos demais chips em Arquivadas', () => {
+    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary/50', 'text-foreground'] as const;
+    render(<StatusChips counts={countsOf(conversations)} chipTab="archived" onChipTabChange={() => {}} />);
+
+    const archivedChip = screen.getByTestId('status-chip-archived');
+    for (const classToken of activeClassTokens) {
+      expect(archivedChip).toHaveClass(classToken);
+    }
+
+    const inactiveChipIds = ['all', 'unread', 'attending', 'waiting', 'resolved'] as const;
+    for (const chipId of inactiveChipIds) {
+      const inactiveChip = screen.getByTestId(`status-chip-${chipId}`);
+      expect(inactiveChip).not.toHaveClass('status-chip-active');
+      expect(inactiveChip).not.toHaveClass('bg-accent');
+      expect(inactiveChip).toHaveClass('bg-muted/40');
+      expect(inactiveChip).toHaveClass('border-border');
+      expect(inactiveChip).toHaveClass('text-muted-foreground');
+    }
+  });
+
   it('mostra o ícone Archive apenas no chip Arquivadas', () => {
     render(<StatusChips counts={countsOf(conversations)} chipTab="all" onChipTabChange={() => {}} />);
     const archiveIcon = screen.getByTestId('status-chip-archived').querySelector('svg');
