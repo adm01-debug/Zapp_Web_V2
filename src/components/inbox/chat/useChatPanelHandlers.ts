@@ -666,7 +666,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       toast({ title: 'Erro ao enviar localização', description: 'Tente novamente.', variant: 'destructive' });
       throw error;
     }
-  }, [contactId]);
+  }, [contactId, replyToMessageRef]);
 
   // R2-INB-022: só fecha o gravador quando o envio CONFIRMA. Em falha, mantém o AudioRecorder
   // montado — o blob vive no estado dele, então fechar descartaria uma gravação ainda recuperável.
@@ -699,7 +699,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     } finally {
       isSendingAudioRef.current = false;
     }
-  }, []);
+  }, [replyToMessageRef]);
 
   return {
     inputValue, setInputValue, isSending, isRecordingAudio, setIsRecordingAudio,
