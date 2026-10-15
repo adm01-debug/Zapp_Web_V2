@@ -18,6 +18,7 @@ Especialista: semisenior
 - verde depois: `npx vitest run ContactStatsCards.test.tsx useContactsKpi.test.ts useContactsKpi.pagination.test.ts useContactsKpi.query.test.tsx` → `Test Files 4 passed (4)` / `Tests 32 passed (32)`.
 - sem regressão ao lado: `ContactsView.v2Flags + CRM360ExplorerView.heading + ContactAnalyticsDashboard` → `Test Files 3 passed (3)` / `Tests 9 passed (9)`.
 - `rg -n "fornecedoresTotal" src supabase` → zero ocorrências (prova do Ponto 2).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (12s)` (gates OK; banco_local não verificado — o refazer não tem SQL; migrations da entrega anterior já auditadas pelos pais).
 
 ## O que NÃO fiz e por quê
 - Não liguei o clique à lista: `ContactsView.tsx` e o filtro da lista estão fora dos arquivos do cartão; a prop `onDuplicatesClick` está pronta e testada. Falta: `ContactsView` passar a prop aplicando o filtro de duplicados (a detecção é do CT-083; hoje nenhum filtro de duplicados existe na UI de contatos).
