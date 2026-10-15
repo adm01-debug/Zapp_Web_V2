@@ -253,8 +253,8 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
 | Workflow permissions | `default_workflow_permissions=write` · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
-| Environments | **9**: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
-| Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
+| Environments | **9** no baseline: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3), **+4 criados pela Vercel** (`Preview – *`/`Production – *`, reconhecidos pelo prefixo) = **13** na API | `settings-guard` |
+| Secrets (escopos) | repo (14, medido em 15/10) + `perimetro-leitura` (`SETTINGS_GUARD_TOKEN`) · `producao-ddl` · `producao-edge-functions` · `banco-leitura` · `db-ledger-evidence`. Os workflows já declaram o environment de cada secret; mover os **valores** é do Joaquim (`docs/runbooks/migracao-segredos-environments.md`) | `check-pr-workflow-secrets` · `secrets-environments.unit.mjs` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
 | Actions — `selected_actions_patterns` | 15 padrões (ver `scripts/ci/allowed-actions.json` e baseline) | `settings-guard` |
 | Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
@@ -286,6 +286,10 @@ novo pela cobertura).
   `🧪 Unit Tests` junta e aplica o piso **na PR**. Não reintroduza `test:coverage` no CI.
 - **R4 — nada espera o que não consome.** `Build`, `E2E` e `Security` não dependem dos testes.
 - **R5 — cancelado não é vermelho.** Agregadores usam `!cancelled()`, nunca `always()`.
+- **Relatório de E2E logado nunca sobe com credencial.** Em 15/10 o e-mail e a senha do usuário E2E estavam
+  em 4 artifacts públicos (passo `Fill` dentro do ZIP embutido no `index.html` e nos traces); o redator só
+  tratava texto solto. `scripts/ci/redigir-relatorio.mjs` agora abre ZIP embutido e aninhado e reprova o
+  upload se sobrar ocorrência. Os 4 artifacts foram apagados; trocar `E2E_TEST_PASSWORD` é do Joaquim.
 - **R6 — agente empurra lote validado.** Valide localmente (testes, lint, `actionlint`) e faça um push por lote:
   cada push reinicia ~10 jobs, e 68 heads numa só branch em 36 h geraram 32 runs cancelados.
 
@@ -452,7 +456,10 @@ pelo GITHUB_TOKEN", é regressão de permissão — investigar, não contornar c
   como resolvido" → `CloseConversationDialog`, não um botão simples). Reescritos e habilitados no
   `e2e-logado.yml` (ver `e2e/README.md` e `e2e/fixtures/e2e-contact.ts`).
 - `vars.CRM_SYNC_WORKER_ENABLED` no crm-sync-worker: o schedule está comentado e a condição é
-  preparação deliberada para a reativação, não código morto.
+  preparação deliberada para a reativação, não código morto. **E nenhum `pg_cron` drena o
+  `crm_sync_outbox`** (W93, medido em 15/10: 474 pending desde 26/09, 0 concluídos, as 7 tentativas
+  falharam com `CRM_NOT_SYNCED`). Religar sem entender esse erro manda a fila para `dead_letter`;
+  roteiro em `docs/runbooks/CRM_INTEGRATION_ROLLOUT.md`.
 - `secret_scanning_non_provider_patterns` desligado: a API aceita o PATCH e ignora — exige GitHub
   Secret Protection (pago). Enquanto estiver off, um vazamento acidental da `DESTINO_URL` (que não
   casa com padrão de provider) não dispara alerta neste repo público.
