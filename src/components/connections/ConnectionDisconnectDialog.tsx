@@ -1,13 +1,21 @@
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Confirmação do "Desconectar" (paridade V3 -> V2, t_a369905d): antes um clique
  * derrubava a sessão do WhatsApp direto, sem perguntar. O diálogo mostra o nome
  * da conexão e o número MASCARADO — a confirmação não precisa expor o telefone
  * inteiro — e só chama `onConfirm` na ação. Cancelar/Esc fecham sem chamar nada.
+ *
+ * t_cce2f0f7: a ação era um `AlertDialogAction`, que fecha o diálogo no
+ * clique mesmo quando a sessão NÃO caiu — o operador via o diálogo sumir como
+ * se tivesse desconectado. Agora quem fecha é o chamador (só no sucesso) e o
+ * fracasso aparece aqui: `pending` bloqueia as duas saídas enquanto a chamada
+ * corre e `errorMessage` mostra o motivo em `role="alert"`.
  */
 function maskPhoneNumber(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -21,10 +29,15 @@ interface ConnectionDisconnectDialogProps {
   connectionName: string;
   phoneNumber: string;
   onConfirm: () => void;
+  /** Desconexão em andamento: mostra "Desconectando…" e trava as saídas. */
+  pending?: boolean;
+  /** Motivo da última tentativa que falhou; o diálogo continua aberto. */
+  errorMessage?: string | null;
 }
 
 export function ConnectionDisconnectDialog({
   open, onOpenChange, connectionName, phoneNumber, onConfirm,
+  pending = false, errorMessage = null,
 }: ConnectionDisconnectDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -37,11 +50,25 @@ export function ConnectionDisconnectDialog({
             atender por este número é só ler um novo QR Code.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {errorMessage && (
+          <p role="alert" className="text-sm text-destructive">{errorMessage}</p>
+        )}
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">
-            Desconectar
-          </AlertDialogAction>
+          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={pending}
+            aria-busy={pending || undefined}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {pending ? (
+              <>
+                <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
+                Desconectando…
+              </>
+            ) : 'Desconectar'}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
