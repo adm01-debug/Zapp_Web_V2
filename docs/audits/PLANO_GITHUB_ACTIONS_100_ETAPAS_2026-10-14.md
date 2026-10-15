@@ -292,7 +292,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).
-- [ ] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
+- [x] **W08** · C · N-05a · PR #1899: regenerar `supabase/deployment-manifest.json` (`node scripts/edge-deploy/generate-manifest.mjs`)
   no branch, CI verde, e o dono decide merge; após o merge, `deploy-functions` dispara sozinho (push em `supabase/functions/**`).
   Verificação: 6 checks ✅ no head; Deployment registrado.
 - [~] **W09** · C · N-05b · **PR #1923 aberta** (resolve pela raiz: versão vem só do `bun.lock`, pin literal vira violação). `ci-docs-baseline.unit.mjs:355-360`: remover a asserção literal `playwright@1.63.0` do
@@ -311,17 +311,17 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W12** · B · N-02 · `settings-guard.yml`: `environment: perimetro-leitura` e `GITHUB_TOKEN` do passo = o secret de
   W11; `check-pr-workflow-secrets.mjs` já proíbe PR, nada muda ali. Verificação: Job Summary com 0 pontos cegos;
   branch protection, actions permissions e repo lidos de verdade.
-- [ ] **W13** · C · N-09 · `checarEnvironments` alerta environment **a mais** (não só faltando) e classifica os
+- [x] **W13** · C · N-09 · `checarEnvironments` alerta environment **a mais** (não só faltando) e classifica os
   `Preview – *`/`Production – *` como "gerenciados pela Vercel" se listados numa chave própria do baseline.
   Verificação: fixture com os 11 de hoje → divergência listando os 4 extras.
-- [ ] **W14** · C · N-24 · Baseline e guard passam a cobrir `required_linear_history`, `allow_force_pushes`,
+- [x] **W14** · C · N-24 · Baseline e guard passam a cobrir `required_linear_history`, `allow_force_pushes`,
   `allow_deletions`, `required_conversation_resolution`, `lock_branch`, `required_signatures`,
   `default_workflow_permissions`, `can_approve_pull_request_reviews`, `secret_scanning*`, `rulesets` (count) e
   `selected_actions.patterns_allowed` (== `allowed-actions.json`). Verificação: unit tests por campo; baseline JSON
   ampliado com `medido_em` novo.
-- [ ] **W15** · A · N-24 · Ligar `required_linear_history=true` na `main` (squash-only já é a política; isto fecha o
+- [x] **W15** · A · N-24 · Ligar `required_linear_history=true` na `main` (squash-only já é a política; isto fecha o
   merge commit por API). Verificação: `GET` → `enabled: true`; nenhum fluxo quebra (não há rebase/merge commit).
-- [ ] **W16** · A · N-24 · Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
+- [ ] **W16** · A · N-24 · ⚠️ **BLOQUEADO** — `secret_scanning_validity_checks` requer GitHub Secret Protection (pago); a API aceita o PATCH e ignora (mesmo comportamento de `non_provider_patterns`, confirmado em 2026-10-15). Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
   `security_and_analysis.secret_scanning_validity_checks.status: enabled`.
 - [x] **W17** · B · N-01 · `settings-guard` publica o snapshot JSON do perímetro como artifact (14 dias) a cada run e,
   quando há divergência, anexa o **diff** contra o run anterior ao comentário — a próxima regressão de `strict` ganha
@@ -386,7 +386,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W31** · B+C · N-08 · Arquivar as 17 validações pós-apply de versions históricas (`db-migrate.yml:947-1507`) em
   `docs/audits/evidence/db-migrate-contratos-historicos.md` com o **comando de reexecução** de cada uma; manter no YAML
   só o genérico + ledger + paridade. Verificação: `wc -l db-migrate.yml` < 500; doc lista as 17 com comando.
-- [ ] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
+- [x] **W32** · C · N-04 · `docs/MIGRATIONS.md`: seção "Fluxo diário (lote)" com a ordem real (merge → `db-migrate
   apply_all_missing` dry-run → aprovação `producao-ddl` → apply → `types-sync` → PR de sync → merge) e os estados dos
   guards (`PENDENTE DE APPLY` × drift). Verificação: `check-talkx-docs`-style unit test cobrindo os termos.
 - [x] **W33** · B · N-04 · Fechar o lote no mesmo dia sem esperar push/schedule: o **último passo do job `apply`** do
@@ -412,7 +412,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W38** · B+C · N-14 · `🧪 Unit Tests` (16–17 min): medir perfil (`vitest --reporter=verbose` com tempos), e aplicar
   o que couber: `--shard 1/2`,`2/2` em matrix com merge de cobertura (`vitest run --coverage --coverage.reportsDirectory`
   + `nyc merge`), cobertura só na `main`, `pool: 'threads'`. Verificação: job < 8 min com o mesmo piso de cobertura.
-- [ ] **W39** · C · N-05b · Regra em `ci-docs-baseline.unit.mjs`: **nenhum teste de documento pina versão de
+- [x] **W39** · C · N-05b · Regra em `ci-docs-baseline.unit.mjs`: **nenhum teste de documento pina versão de
   dependência**; toda versão citada em doc/plano é lida de `toolchain.json`. Verificação: grep no teste sem
   `\d+\.\d+\.\d+` literal de toolchain; mutação → ❌.
 - [x] **W40** · C · N-18 · `scripts/ci/bump-toolchain.mjs` (semanal, no `branch-hygiene-audit` ou job próprio): consulta

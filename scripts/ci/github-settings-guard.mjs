@@ -113,6 +113,17 @@ async function checarBranchProtection() {
       restauravel: false,
     });
   }
+
+  const linearHistory = protection?.required_linear_history?.enabled ?? null;
+  if (linearHistory !== (esperado.required_linear_history ?? null)) {
+    divergencias.push({ campo: 'branch_protection_main.required_linear_history', esperado: esperado.required_linear_history ?? null, encontrado: linearHistory, restauravel: false });
+  }
+
+  const allowForcePushes = protection?.allow_force_pushes?.enabled ?? null;
+  if (allowForcePushes !== (esperado.allow_force_pushes ?? null)) {
+    divergencias.push({ campo: 'branch_protection_main.allow_force_pushes', esperado: esperado.allow_force_pushes ?? null, encontrado: allowForcePushes, restauravel: false });
+  }
+
   return divergencias;
 }
 

@@ -236,24 +236,33 @@ Estado dos achados após re-auditoria de 2026-09-17:
   disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
   com GitHub Enterprise Cloud para repositórios privados.
 
-## Perímetro do GitHub — estado canônico (2026-10-03)
+## Perímetro do GitHub — estado canônico (2026-10-15)
 
 **Regra:** qualquer mudança nos campos abaixo atualiza **esta tabela** e `scripts/ci/github-settings-baseline.json`
 **no mesmo PR** — o `settings-guard` compara a realidade com o baseline e divergência é regressão. Fonte: API do
-GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
+GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
 | Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
+| Branch protection — `required_linear_history` | `true` (W15, 2026-10-15: squash-only já é a política; fecha o gap de merge-commit acidental) | `settings-guard` ⚠ |
+| Branch protection — `allow_force_pushes` | `false` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
+| Workflow permissions | `default_workflow_permissions=write` · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
 | Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
 | Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
+| Actions — `selected_actions_patterns` | 15 padrões (ver `scripts/ci/allowed-actions.json` e baseline) | `settings-guard` |
 | Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
+| Rulesets | `0` (merge queue indisponível em conta `User` — ver CLAUDE.md) | `settings-guard` |
+| Security — `secret_scanning` | `enabled` | `settings-guard` |
+| Security — `secret_scanning_push_protection` | `enabled` | `settings-guard` |
+| Security — `secret_scanning_validity_checks` | `disabled` (W16 bloqueado: requer plano pago, API ignora PATCH) | — |
+| Security — `secret_scanning_non_provider_patterns` | `disabled` (deliberado: requer plano pago — ver CLAUDE.md) | — |
 | GitHub Apps | **não auditado** — o token da sessão não lista instalações (E89 decide) | — |
 
 ⚠ Os campos de branch protection são lidos com o `GITHUB_TOKEN` de workflow, que **não** tem o escopo
