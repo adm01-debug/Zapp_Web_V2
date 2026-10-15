@@ -261,28 +261,31 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     expect(metaPorId(result.current.goals, 'messages-sent')?.current).toBe(0);
   });
 
-  it('conta os contatos atribuídos e arredonda a taxa de resolução só de "resolvido"', async () => {
+  it('conta os contatos atribuídos e tira a taxa dos desfechos, não das análises de IA', async () => {
     const d = agora();
     tabelas({
       contacts: [
-        { id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d) },
-        { id: 'c2', assigned_to: PERFIL, created_at: horaAPartirDe(d) },
+        { id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'resolved' },
+        { id: 'c2', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'open' },
       ],
+      // Análises de IA não entram na conta: nem todas as conversas são analisadas.
       conversation_analyses: [
         { id: 'a1', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) },
-        { id: 'a2', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) },
-        { id: 'a3', analyzed_by: PERFIL, status: 'pendente', created_at: horaAPartirDe(d) },
       ],
     });
 
     const { result } = await esperarMetas();
     expect(metaPorId(result.current.goals, 'contacts-handled')?.current).toBe(2);
-    expect(metaPorId(result.current.goals, 'resolution-rate')?.current).toBe(67);
+    const taxa = metaPorId(result.current.goals, 'resolution-rate');
+    expect(taxa?.current).toBe(50);
+    expect(taxa?.hasData).toBe(true);
   });
 
-  it('sem nenhuma análise a taxa de resolução fica em 0 (não vira NaN)', async () => {
+  it('sem atendimento no período a taxa fica sem dado (0, não NaN)', async () => {
     const { result } = await esperarMetas();
-    expect(metaPorId(result.current.goals, 'resolution-rate')?.current).toBe(0);
+    const taxa = metaPorId(result.current.goals, 'resolution-rate');
+    expect(taxa?.current).toBe(0);
+    expect(taxa?.hasData).toBe(false);
   });
 
   it('usuário deslogado: nenhuma leitura é disparada e as metas ficam zeradas', async () => {
@@ -418,12 +421,25 @@ describe('useGoalsDashboard — progresso e celebração', () => {
     expect(result.current.completedGoals).toBe(1);
   });
 
+  it('meta percentual sem denominador sai da média (não derruba o progresso)', async () => {
+    const d = agora();
+    tabelas({
+      messages: [{ id: 'm1', agent_id: PERFIL, sender: 'agent', created_at: horaAPartirDe(d) }],
+      goals_configurations: [meta('messages_sent', 1), meta('contacts_handled', 1), meta('resolution_rate', 80)],
+    });
+
+    const { result } = await esperarMetas();
+    expect(metaPorId(result.current.goals, 'resolution-rate')?.hasData).toBe(false);
+    // (100 + 0) / 2 = 50 — a taxa sem atendimento não entra como 0%.
+    expect(result.current.overallProgress).toBe(50);
+    expect(result.current.completedGoals).toBe(1);
+  });
+
   it('celebra quando todas as metas do período são alcançadas', async () => {
     const d = agora();
     tabelas({
       messages: [{ id: 'm1', agent_id: PERFIL, sender: 'agent', created_at: horaAPartirDe(d) }],
-      contacts: [{ id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d) }],
-      conversation_analyses: [{ id: 'a1', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) }],
+      contacts: [{ id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'resolved' }],
       goals_configurations: [meta('messages_sent', 1), meta('contacts_handled', 1), meta('resolution_rate', 80)],
     });
 

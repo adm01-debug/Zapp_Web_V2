@@ -16,6 +16,13 @@ export interface Goal {
   icon: React.ElementType;
   color: string;
   priority: 'high' | 'medium' | 'low';
+  /**
+   * `false` quando a meta é percentual e não há denominador no período (ex.: a
+   * Taxa de Resolução sem nenhum atendimento). Nesse caso `current` fica em 0
+   * apenas para exibição: a meta não entra na média do progresso geral e não
+   * conta como cumprida — um dado que não existe não é "0% feito".
+   */
+  hasData: boolean;
 }
 
 export const PERIOD_OPTIONS = [
@@ -115,20 +122,8 @@ export function useGoalsDashboard() {
     queryKey: ['goals-contacts', period, profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
-      const { data, error } = await supabase.from('contacts').select('id, created_at')
+      const { data, error } = await supabase.from('contacts').select('id, created_at, conversation_status')
         .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!profile?.id,
-  });
-
-  const { data: analysesData, isLoading: loadingAnalyses } = useQuery({
-    queryKey: ['goals-analyses', period, profile?.id],
-    queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('conversation_analyses').select('id, status, created_at')
-        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
       return data || [];
     },
@@ -149,9 +144,17 @@ export function useGoalsDashboard() {
   const goals = useMemo((): Goal[] => {
     const messagesSent = messagesData?.filter(m => m.sender === 'agent').length || 0;
     const contactsHandled = contactsData?.length || 0;
-    const totalAnalyses = analysesData?.length || 0;
-    const resolvedAnalyses = analysesData?.filter(a => a.status === 'resolvido').length || 0;
-    const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
+    // Taxa de Resolução: conversas encerradas / conversas atendidas no período,
+    // pelo campo canônico `contacts.conversation_status` (o mesmo usado por
+    // useQueueAnalytics/useWarRoomData). NÃO sai de `conversation_analyses`:
+    // aquele status é o parecer da análise de IA, que só existe para as
+    // conversas analisadas — contar por ali divergia do painel.
+    const resolvedContacts = contactsData?.filter(c => c.conversation_status === 'resolved').length || 0;
+    const resolutionRate = contactsHandled > 0 ? Math.round((resolvedContacts / contactsHandled) * 100) : 0;
+    // 0/0 não é 0%: sem atendimento no período não há taxa a medir. Guardamos o
+    // valor 0 só para exibição e marcamos `hasData:false` para não pesar no
+    // progresso geral.
+    const hasResolutionData = contactsHandled > 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
     // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
@@ -165,28 +168,32 @@ export function useGoalsDashboard() {
     if (isMessageGoalActive) {
       allGoals.push({ id: 'messages-sent', label: 'Mensagens Enviadas', description: 'Total de mensagens enviadas no período',
         target: getGoalTarget('messages_sent', period, customGoals), current: messagesSent, unit: 'mensagens',
-        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high' });
+        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high', hasData: true });
     }
     if (isContactGoalActive) {
       allGoals.push({ id: 'contacts-handled', label: 'Contatos Atendidos', description: 'Novos contatos atribuídos a você',
         target: getGoalTarget('contacts_handled', period, customGoals), current: contactsHandled, unit: 'contatos',
-        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high' });
+        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high', hasData: true });
     }
     if (isResolutionGoalActive) {
       allGoals.push({ id: 'resolution-rate', label: 'Taxa de Resolução', description: 'Percentual de conversas resolvidas',
         target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
+        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium', hasData: hasResolutionData });
     }
     return allGoals;
-  }, [messagesData, contactsData, analysesData, period, customGoals]);
+  }, [messagesData, contactsData, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    if (goals.length === 0) return 0;
-    return Math.round(goals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / goals.length);
+    // Metas sem dado no período (ex.: Taxa de Resolução sem atendimento) ficam
+    // FORA da média: contá-las como 0% derrubava o progresso geral por um dado
+    // que simplesmente não existe.
+    const mensuraveis = goals.filter(g => g.hasData);
+    if (mensuraveis.length === 0) return 0;
+    return Math.round(mensuraveis.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / mensuraveis.length);
   }, [goals]);
 
-  const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
+  const completedGoals = useMemo(() => goals.filter(g => g.hasData && g.current >= g.target).length, [goals]);
+  const isLoading = loadingMessages || loadingContacts;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
@@ -197,7 +204,7 @@ export function useGoalsDashboard() {
       previousOverallComplete.current = true;
     } else if (!allGoalsCompleted) { previousOverallComplete.current = false; }
 
-    const currentCompletedIds = new Set(goals.filter(g => g.current >= g.target).map(g => g.id));
+    const currentCompletedIds = new Set(goals.filter(g => g.hasData && g.current >= g.target).map(g => g.id));
     currentCompletedIds.forEach(id => {
       if (!previousCompletedGoals.current.has(id)) {
         const goal = goals.find(g => g.id === id);
