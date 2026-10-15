@@ -31,14 +31,18 @@ const carregando: Promise<Toast> = import('sonner').then((modulo) => {
 // A falha é tratada em cada chamada; aqui só não deixa a rejeição solta.
 carregando.catch(() => {});
 
-function disparar(tipo: Tipo, args: Args): void {
+function usarLib(usar: (toast: Toast) => void): void {
   if (carregado) {
-    carregado[tipo](...args);
+    usar(carregado);
     return;
   }
   void carregando
-    .then((toast) => { toast[tipo](...args); })
+    .then(usar)
     .catch((erro) => console.warn('[toast] não disparou:', erro));
+}
+
+function disparar(tipo: Tipo, args: Args): void {
+  usarLib((toast) => { toast[tipo](...args); });
 }
 
 export const toast = {
@@ -46,4 +50,18 @@ export const toast = {
   error: (...args: Args) => disparar('error', args),
   info: (...args: Args) => disparar('info', args),
   warning: (...args: Args) => disparar('warning', args),
+};
+
+/**
+ * t_a0562af3 — as duas peças que faltavam para o adaptador do toast legado
+ * (`@/hooks/ui/use-toast`) reaproveitar esta fachada em vez de importar
+ * 'sonner' de novo (o que devolveria a lib ao bundle inicial): a chamada
+ * neutra (sem cor de variante, o `default` do shadcn) e o `dismiss(id)`.
+ */
+export const toastNeutro = (...args: Args): void => {
+  usarLib((toast) => { toast(...args); });
+};
+
+export const fecharToast = (id?: string | number): void => {
+  usarLib((toast) => { toast.dismiss(id); });
 };

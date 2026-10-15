@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { getLogger } from "@/lib/logger";
-import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter } from "react-router-dom";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { SkipLinks } from "@/components/ui/skip-link";
@@ -153,7 +152,6 @@ function AppContent() {
             <DeferredHooks />
           </Suspense>
         </ErrorBoundary>
-        <Toaster />
         <AppRoutes />
       </GlobalKeyboardProvider>
     </BrowserRouter>

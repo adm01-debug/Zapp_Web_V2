@@ -1,198 +1,118 @@
 /**
- * Comportamento do store de toasts (`src/hooks/ui/use-toast.ts`). Estado de módulo:
- * cada teste monta o próprio hook e o `beforeEach` esvazia a fila com timers falsos.
+ * t_a0562af3 — adaptador do toast legado sobre o Sonner.
+ *
+ * O app tem UM sistema de toast: o viewport do Sonner (`src/components/ui/sonner.tsx`,
+ * montado lazy em `App.tsx`). Estes casos provam que a chamada antiga
+ * (`toast({ title, description, variant, duration, action })` e `useToast()`)
+ * chega ao Sonner com os mesmos campos e que id/update/dismiss continuam
+ * valendo sem a fila do Radix:
+ *  - `variant: 'default'` → chamada neutra; `'destructive'` → `toast.error`;
+ *  - `id` sai na hora (síncrono) e `update({ id, ... })` funde só o que veio;
+ *  - `dismiss(id)` fecha aquele; `useToast().dismiss()` fecha os abertos;
+ *  - `action` nas duas formas que existem no repositório: `{ label, onClick }`
+ *    e o `<ToastAction>` do Radix (children + onClick);
+ *  - `useToast()` não devolve mais a fila de toasts do Radix (o `<Toaster/>`
+ *    do Radix saiu do app).
+ *
+ * `@/lib/lazyToast` é dublado — é quem fala com a lib (contrato provado em
+ * `src/lib/__tests__/lazyToast.test.ts`), então nada aqui depende do bundle.
  */
-import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { reducer, toast, useToast } from '../use-toast';
+import * as React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const ATRASO_REMOCAO = 1_000_000;
+const sonner = vi.hoisted(() => ({
+  neutro: vi.fn(),
+  error: vi.fn(),
+  fechar: vi.fn(),
+}));
+
+vi.mock("@/lib/lazyToast", () => ({
+  toast: { success: vi.fn(), error: sonner.error, info: vi.fn(), warning: vi.fn() },
+  toastNeutro: sonner.neutro,
+  fecharToast: sonner.fechar,
+}));
+
+import { toast, useToast } from "../use-toast";
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  const { result, unmount } = renderHook(() => useToast());
-  act(() => {
-    result.current.dismiss();
-  });
-  act(() => {
-    vi.advanceTimersByTime(ATRASO_REMOCAO + 1);
-  });
-  unmount();
+  useToast().dismiss(); // fecha o que sobrou do caso anterior (antes de zerar os espiões)
+  vi.clearAllMocks();
 });
 
-describe('toast() + useToast()', () => {
-  it('registra o toast e o hook o enxerga aberto', () => {
-    const { result } = renderHook(() => useToast());
-    act(() => {
-      toast({ title: 'Mensagem enviada' });
+describe("use-toast — adaptador sobre o Sonner", () => {
+  it("variant default vai pela chamada neutra, com title/description/duration", () => {
+    toast({
+      title: "Sincronizando histórico...",
+      description: "Isso pode levar alguns minutos.",
+      duration: 3000,
     });
-    expect(result.current.toasts).toHaveLength(1);
-    expect(result.current.toasts[0].title).toBe('Mensagem enviada');
-    expect(result.current.toasts[0].open).toBe(true);
+
+    expect(sonner.neutro).toHaveBeenCalledTimes(1);
+    const [titulo, opcoes] = sonner.neutro.mock.calls[0];
+    expect(titulo).toBe("Sincronizando histórico...");
+    expect(opcoes).toMatchObject({ description: "Isso pode levar alguns minutos.", duration: 3000 });
+    expect(typeof opcoes.id).toBe("string");
+    expect(sonner.error).not.toHaveBeenCalled();
   });
 
-  it('devolve um id por chamada (não reaproveita id)', () => {
-    const primeiro = toast({ title: 'um' });
-    const segundo = toast({ title: 'dois' });
-    expect(primeiro.id).not.toBe(segundo.id);
+  it("variant destructive vira toast.error", () => {
+    toast({ title: "Erro na sincronização", description: "sem rede", variant: "destructive" });
+
+    expect(sonner.error).toHaveBeenCalledTimes(1);
+    expect(sonner.error.mock.calls[0][0]).toBe("Erro na sincronização");
+    expect(sonner.neutro).not.toHaveBeenCalled();
   });
 
-  it('respeita o limite de um toast na tela: o novo substitui o antigo', () => {
-    const { result } = renderHook(() => useToast());
-    act(() => {
-      toast({ title: 'primeiro' });
-    });
-    act(() => {
-      toast({ title: 'segundo' });
-    });
-    expect(result.current.toasts).toHaveLength(1);
-    expect(result.current.toasts[0].title).toBe('segundo');
+  it("id é síncrono e update funde só os campos informados, no MESMO id", () => {
+    const { id, update } = toast({ title: "Processando", description: "⟳ Processando 0 de 3..." });
+    expect(typeof id).toBe("string");
+
+    update({ id, description: "⟳ Processando 1 de 3..." });
+
+    expect(sonner.neutro).toHaveBeenCalledTimes(2);
+    const [titulo, opcoes] = sonner.neutro.mock.calls[1];
+    expect(titulo).toBe("Processando"); // título preservado
+    expect(opcoes.id).toBe(id); // mesma linha do Sonner, não um toast novo
+    expect(opcoes.description).toBe("⟳ Processando 1 de 3...");
   });
 
-  it('avisa todos os hooks montados (subscribe/notify)', () => {
-    const um = renderHook(() => useToast());
-    const dois = renderHook(() => useToast());
-    act(() => {
-      toast({ title: 'para os dois' });
-    });
-    expect(um.result.current.toasts[0].title).toBe('para os dois');
-    expect(dois.result.current.toasts[0].title).toBe('para os dois');
+  it("dismiss(id) fecha só aquele toast; useToast().dismiss() fecha os abertos", () => {
+    const a = toast({ title: "A" });
+    const b = toast({ title: "B" });
+
+    a.dismiss();
+    expect(sonner.fechar).toHaveBeenCalledTimes(1);
+    expect(sonner.fechar).toHaveBeenCalledWith(a.id);
+
+    useToast().dismiss();
+    expect(sonner.fechar).toHaveBeenCalledTimes(2);
+    expect(sonner.fechar).toHaveBeenLastCalledWith(b.id);
   });
 
-  it('deixa de avisar depois do unmount', () => {
-    const desmontado = renderHook(() => useToast());
-    const montado = renderHook(() => useToast());
-    let handle: { dismiss: () => void } | null = null;
-    act(() => {
-      handle = toast({ title: 'antes do unmount' });
-    });
-    expect(desmontado.result.current.toasts[0].open).toBe(true);
-    expect(montado.result.current.toasts[0].open).toBe(true);
+  it("toast que o Sonner fecha sozinho sai do registro e não é fechado de novo", () => {
+    toast({ title: "Some sozinho" });
+    const opcoes = sonner.neutro.mock.calls[0][1];
 
-    desmontado.unmount();
-    act(() => {
-      handle?.dismiss();
-    });
+    opcoes.onDismiss(); // o Sonner avisa que o toast saiu (autoClose)
 
-    expect(desmontado.result.current.toasts[0].open).toBe(true);
-    expect(montado.result.current.toasts[0].open).toBe(false);
-  });
-});
-
-describe('update / dismiss', () => {
-  it('update troca só os campos informados, mantendo o id', () => {
-    const { result } = renderHook(() => useToast());
-    let handle!: ReturnType<typeof toast>;
-    act(() => {
-      handle = toast({ title: 'novo', description: 'aguarde' });
-    });
-    act(() => {
-      handle.update({ id: handle.id, title: 'atualizado' });
-    });
-    expect(result.current.toasts).toHaveLength(1);
-    expect(result.current.toasts[0].id).toBe(handle.id);
-    expect(result.current.toasts[0].title).toBe('atualizado');
-    expect(result.current.toasts[0].description).toBe('aguarde');
+    useToast().dismiss();
+    expect(sonner.fechar).not.toHaveBeenCalled();
   });
 
-  it('dismiss(id) fecha o toast correspondente e ignora outro id', () => {
-    const { result } = renderHook(() => useToast());
-    let handle: { id: string; dismiss: () => void } | null = null;
-    act(() => {
-      handle = toast({ title: 'fechando' });
-    });
-    act(() => {
-      result.current.dismiss('outro-id');
-    });
-    expect(result.current.toasts[0].open).toBe(true);
+  it("action aceita { label, onClick } e o <ToastAction> do Radix", () => {
+    const onClick = vi.fn();
+    toast({ title: "Enviado", action: { label: "Desfazer", onClick } });
+    expect(sonner.neutro.mock.calls[0][1].action).toEqual({ label: "Desfazer", onClick });
 
-    act(() => {
-      handle?.dismiss();
-    });
-    expect(result.current.toasts[0].open).toBe(false);
+    const clicar = vi.fn();
+    toast({ title: "Enviado", action: <button onClick={clicar}>Desfazer</button> });
+    const acao = sonner.neutro.mock.calls[1][1].action;
+    expect(acao.label).toBe("Desfazer");
+    expect(acao.onClick).toBe(clicar);
   });
 
-  it('dismiss() sem id fecha todos (usado no reset da tela)', () => {
-    const { result } = renderHook(() => useToast());
-    act(() => {
-      toast({ title: 'um' });
-    });
-    act(() => {
-      result.current.dismiss();
-    });
-    expect(result.current.toasts.every((t) => t.open === false)).toBe(true);
-  });
-
-  it('onOpenChange(false) fecha o toast (é o que o Radix chama)', () => {
-    const { result } = renderHook(() => useToast());
-    act(() => {
-      toast({ title: 'clicável' });
-    });
-    act(() => {
-      result.current.toasts[0].onOpenChange?.(false);
-    });
-    expect(result.current.toasts[0].open).toBe(false);
-  });
-});
-
-describe('reducer', () => {
-  // `REMOVE_TOAST` sem id só é alcançável pelo reducer (o store sempre manda o
-  // id): é o caminho que esvazia a fila de uma vez.
-  type Acao = Parameters<typeof reducer>[1];
-
-  it('REMOVE_TOAST com id tira só aquele toast', () => {
-    const estado = reducer(
-      { toasts: [{ id: 'a', open: false }, { id: 'b', open: false }] as never },
-      { type: 'REMOVE_TOAST', toastId: 'a' } as unknown as Acao,
-    );
-    expect(estado.toasts.map((t) => t.id)).toEqual(['b']);
-  });
-
-  it('REMOVE_TOAST sem id esvazia a lista inteira', () => {
-    const estado = reducer(
-      { toasts: [{ id: 'a', open: false }, { id: 'b', open: false }] as never },
-      { type: 'REMOVE_TOAST' } as unknown as Acao,
-    );
-    expect(estado.toasts).toEqual([]);
-  });
-});
-
-describe('remoção da fila', () => {
-  it('remove o toast da lista só depois do atraso de remoção', () => {
-    const { result } = renderHook(() => useToast());
-    let handle: { id: string; dismiss: () => void } | null = null;
-    act(() => {
-      handle = toast({ title: 'temporário' });
-    });
-    act(() => {
-      handle?.dismiss();
-    });
-    expect(result.current.toasts).toHaveLength(1);
-
-    act(() => {
-      vi.advanceTimersByTime(ATRASO_REMOCAO - 1);
-    });
-    expect(result.current.toasts).toHaveLength(1);
-
-    act(() => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(result.current.toasts).toHaveLength(0);
-  });
-
-  it('fechar duas vezes não deixa o toast preso na lista', () => {
-    const { result } = renderHook(() => useToast());
-    let handle: { id: string; dismiss: () => void } | null = null;
-    act(() => {
-      handle = toast({ title: 'duas vezes' });
-    });
-    act(() => {
-      handle?.dismiss();
-      handle?.dismiss();
-    });
-    act(() => {
-      vi.advanceTimersByTime(ATRASO_REMOCAO);
-    });
-    expect(result.current.toasts).toHaveLength(0);
+  it("useToast() devolve só toast e dismiss — a fila do Radix saiu do app", () => {
+    expect(Object.keys(useToast()).sort()).toEqual(["dismiss", "toast"]);
+    expect(useToast().toast).toBe(toast);
   });
 });
