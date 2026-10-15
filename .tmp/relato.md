@@ -41,6 +41,10 @@ Migration aplicada no banco local da tarefa:
 `hermes-db-migrar supabase/migrations/20261013230006_monitoring_message_buckets.sql`
 → `BEGIN / CREATE FUNCTION / REVOKE / GRANT / COMMIT` · `APLICADA no banco LOCAL ... (produção não foi tocada)`
 
+Verificação do projeto (sem tocar código):
+`zapp-verify . --rapido`
+→ `OK db_guard / OK tipos / OK lint / OK migrations` · `VERIFY: VERDE SEM BANCO (98s)`
+
 Passada de efeitos colaterais (skill armadilhas-workersql): a RPC é `STABLE` e só lê `public.messages` — nenhum
 INSERT/UPDATE/DELETE, logo nenhum gatilho (updated_at, audit) dispara; é um único `RETURN QUERY` (atômico); a
 resposta/erro é igual para janela vazia ou cheia (sem oráculo de existência); nenhum GRANT/ACL de objeto existente
