@@ -210,6 +210,27 @@ test('E98: workflow disparado por pull_request não recebe segredo de banco', ()
   assert.deepEqual(infratores, [], `pull_request com DESTINO_URL: ${infratores.join(', ')}`);
 });
 
+// W07 (plano de 14/10/2026, achado N-13): no guarda vivo, todo sub-check que entra
+// no veredito (tem `id:` e `continue-on-error: true`) depende da credencial do
+// banco. Sem `if: steps.credencial.outcome == 'success'` o passo roda sem
+// credencial, falha por motivo alheio ao contrato e vira "causa" no alerta. Em
+// 14/10 o passo E85 (fixtures de E2E) era o unico dos 11 sem a guarda.
+test('W07: todo sub-check do guarda vivo exige a credencial do banco', () => {
+  const texto = wf['db-live-guard.yml'];
+  assert.ok(texto, 'db-live-guard.yml sumiu');
+  const semGuarda = [];
+  let subChecks = 0;
+  for (const p of passos(texto)) {
+    if (!/^ {8}continue-on-error:\s*true/m.test(p)) continue;
+    const id = /^ {8}id:\s*(\S+)/m.exec(p)?.[1];
+    if (!id || id === 'credencial') continue; // sem id nao entra no veredito (login/pre-pull)
+    subChecks += 1;
+    if (!/^ {8}if:\s*steps\.credencial\.outcome == 'success'/m.test(p)) semGuarda.push(id);
+  }
+  assert.ok(subChecks >= 10, `esperava >= 10 sub-checks com id, achei ${subChecks}`);
+  assert.deepEqual(semGuarda, [], `sub-check do guarda vivo sem a guarda de credencial: ${semGuarda.join(', ')}`);
+});
+
 // E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers do
 // Playwright (centenas de MB) volta a acontecer em todo job se o cache não
 // existir OU se a instalação rodar mesmo com cache quente. As duas metades
@@ -292,4 +313,44 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+// W99: novos invariantes de segurança de workflow
+
+test('W99: todo curl usa --proto e --tlsv1.2', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      const linha = linhas[i];
+      if (!/\bcurl\b/.test(linha)) continue;
+      if (/--proto\b/.test(linha) && /--tlsv1\.\d/.test(linha)) continue;
+      // linha de continuação: o curl pode estar na linha e as flags na próxima
+      const bloco = linhas.slice(i, i + 4).join(' ');
+      if (/--proto\b/.test(bloco) && /--tlsv1\.\d/.test(bloco)) continue;
+      infratores.push(`${nome}:${i + 1}: ${linha.trim()}`);
+    }
+  }
+  assert.deepEqual(infratores, [], `curl sem --proto='=https' --tlsv1.2:\n${infratores.join('\n')}`);
+});
+
+test('W99: todo upload-artifact declara retention-days', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const blocos = texto.split(/(?=\n[ \t]+-[ \t])/);
+    for (const bloco of blocos) {
+      if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
+      if (/retention-days:/.test(bloco)) continue;
+      // Encontrar a linha do uses: para reportar o número aproximado
+      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
+      infratores.push(`${nome}: upload-artifact sem retention-days`);
+    }
+  }
+  assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });

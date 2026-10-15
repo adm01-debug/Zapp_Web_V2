@@ -21,9 +21,22 @@
  * Agora: campo que não dá para ler vira **não verificável** (com o motivo e o
  * que fazer), nunca falha silenciosa — e a issue é aberta de qualquer forma,
  * porque "não consegui olhar" é justamente o que precisa de gente.
+ *
+ * W04/W05 (plano de 14/10/2026) — o que mudou, e por quê: medido em 14/10, o
+ * guard falhava 30 de 30 runs em 7 dias com "7 divergencia(s)" em `merge.*`,
+ * todas `encontrado=null`. O `GET /repos` com `GITHUB_TOKEN` responde 200 mas
+ * **omite** `allow_auto_merge`, `allow_squash_merge` etc. (campos que exigem
+ * permissao push/admin). Campo ausente nao e divergencia: e ponto cego, e passa
+ * a ser tratado como tal. E quando SO ha ponto cego (nada divergiu de fato), o
+ * run sai 0 com `::warning::` e a issue recebe UM comentario por assinatura
+ * (conjunto de campos cegos) a cada 7 dias — nao um a cada 6 h, que foi o que
+ * levou a issue #1854 a 39 comentarios de bot e a politica E51 a ser violada.
+ * Divergencia real continua saindo 1 e comentando (com dedupe de 6 h por causa).
  */
 
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -32,6 +45,12 @@ const [OWNER, REPO_NAME] = REPO.split('/');
 const ISSUE_LABEL = 'settings-guard';
 const ISSUE_TITLE = '[settings-guard] perimeter regression detected';
 const BRANCH = 'main';
+// W05: so comentarios escritos pelo proprio guard contam para o dedupe. Repo publico:
+// qualquer pessoa pode colar o marcador `<!-- causa:... -->` num comentario e, sem esta
+// checagem, silenciar o alerta por 6 h / 7 dias (achado do Codex na PR #1920). O GITHUB_TOKEN
+// de workflow comenta como `github-actions[bot]`; outro autor so via variavel explicita.
+const AUTOR_DO_GUARD = process.env.SETTINGS_GUARD_AUTOR ?? 'github-actions[bot]';
+const escritoPeloGuard = (registro) => registro?.user?.login === AUTOR_DO_GUARD;
 
 const baseline = JSON.parse(
   readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),
@@ -42,10 +61,10 @@ const baseline = JSON.parse(
 // esse conteúdo forje linhas de log. Valores normais (números, booleanos) ficam iguais.
 const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g, ' ');
 
-if (!TOKEN) {
-  console.error('::error::GITHUB_TOKEN ausente');
-  process.exit(1);
-}
+// javascript:S2871 — `.sort()` sem comparador. Ordem por código de caractere, deliberadamente
+// NÃO `localeCompare`: a assinatura da causa (`assinaturaDe`) é um hash desta ordem e precisa
+// ser a mesma em qualquer runner/locale; `localeCompare` muda com o ICU da máquina.
+const porCodigo = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 const headers = {
   Authorization: `Bearer ${TOKEN}`,
@@ -92,9 +111,25 @@ async function checarBranchProtection() {
   const esperado = baseline.branch_protection_main;
   const divergencias = [];
 
-  const strict = protection?.required_status_checks?.strict ?? null;
+  // W04: resposta 200 que nao e um objeto e ponto cego. Mas `required_status_checks`
+  // ausente/null NAO e ponto cego: a API usa `null` para DESLIGAR os checks
+  // obrigatorios (achado do Codex na PR #1920). Apagar os 6 checks tem de ser
+  // regressao, nunca "campo nao lido".
+  if (!protection || typeof protection !== 'object') {
+    throw new NaoVerificavel(`/branches/${BRANCH}/protection`, 200, 'resposta nao e um objeto de protecao');
+  }
+  const checks = protection.required_status_checks ?? null;
+  const checksDesligados = checks === null || typeof checks !== 'object';
+
+  const strict = checksDesligados ? null : (checks.strict ?? null);
   if (strict !== esperado.strict) {
-    divergencias.push({ campo: 'branch_protection_main.strict', esperado: esperado.strict, encontrado: strict, restauravel: true });
+    divergencias.push({
+      campo: 'branch_protection_main.strict',
+      esperado: esperado.strict,
+      encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
+      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
+      restauravel: !checksDesligados,
+    });
   }
 
   const enforceAdmins = protection?.enforce_admins?.enabled ?? null;
@@ -102,8 +137,8 @@ async function checarBranchProtection() {
     divergencias.push({ campo: 'branch_protection_main.enforce_admins', esperado: esperado.enforce_admins, encontrado: enforceAdmins, restauravel: false });
   }
 
-  const contexts = [...(protection?.required_status_checks?.contexts ?? [])].sort();
-  const esperados = [...esperado.required_status_checks].sort();
+  const contexts = checksDesligados ? [] : [...(checks.contexts ?? [])].sort(porCodigo);
+  const esperados = [...esperado.required_status_checks].sort(porCodigo);
   if (contexts.join('|') !== esperados.join('|')) {
     divergencias.push({
       campo: 'branch_protection_main.required_status_checks',
@@ -118,11 +153,25 @@ async function checarBranchProtection() {
 async function checarRepo() {
   const repo = await gh('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const divergencias = [];
+  const ausentes = [];
   for (const [campo, esperado] of Object.entries(baseline.merge)) {
-    const encontrado = repo?.[campo] ?? null;
+    // W04: o GET /repos so devolve os campos de merge para quem tem permissao
+    // push/admin. Com GITHUB_TOKEN eles simplesmente NAO vem — `null`/ausente
+    // aqui e "nao consegui ler", nunca "esta diferente".
+    if (!repo || typeof repo !== 'object' || !Object.hasOwn(repo, campo) || repo[campo] === null) {
+      ausentes.push(campo);
+      continue;
+    }
+    const encontrado = repo[campo];
     if (encontrado !== esperado) {
       divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
     }
+  }
+  if (ausentes.length === Object.keys(baseline.merge).length) {
+    throw new NaoVerificavel(`/repos (merge.*)`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los');
+  }
+  if (ausentes.length > 0) {
+    return { divergencias, cego: `200 — campos nao expostos ao token: ${ausentes.join(', ')}`, campos: ausentes };
   }
   return divergencias;
 }
@@ -143,15 +192,36 @@ async function checarEnvironments() {
   const dados = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
   const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();
   const esperados = [...baseline.environments].sort();
-  // Environment a mais é pendência da E94, não regressão de agora: só avisa.
+  const prefixosVercel = (baseline.environments_vercel_managed?.prefixos ?? []);
   const faltando = esperados.filter((e) => !encontrados.includes(e));
-  if (faltando.length === 0) return [];
-  return [{
-    campo: 'environments',
-    esperado: esperados.join(', '),
-    encontrado: encontrados.join(', ') || '(nenhum)',
-    restauravel: false,
-  }];
+  // W13: environments extras — podem ser gerenciados pela Vercel ou inesperados.
+  const extras = encontrados.filter((e) => !esperados.includes(e));
+  const extrasVercel = extras.filter((e) => prefixosVercel.some((p) => e.startsWith(p)));
+  const extrasInesperados = extras.filter((e) => !extrasVercel.includes(e));
+
+  const divergencias = [];
+  if (faltando.length > 0) {
+    divergencias.push({
+      campo: 'environments.faltando',
+      esperado: faltando.join(', '),
+      encontrado: '(ausente)',
+      restauravel: false,
+    });
+  }
+  if (extrasVercel.length > 0) {
+    // Aviso não bloqueante: Vercel cria/apaga automaticamente, não é regressão do perímetro.
+    // Emite annotation do Actions e também avisa no stderr.
+    console.error(`::warning::W13: environments gerenciados pela Vercel presentes (não é regressão): ${extrasVercel.join(', ')}`);
+  }
+  if (extrasInesperados.length > 0) {
+    divergencias.push({
+      campo: 'environments.extras_inesperados',
+      esperado: '(nenhum além dos do baseline)',
+      encontrado: extrasInesperados.join(', '),
+      restauravel: false,
+    });
+  }
+  return divergencias;
 }
 
 // ---------------------------------------------------------------- restauração
@@ -180,9 +250,67 @@ async function findIssue() {
   return Array.isArray(issues) ? issues.find((i) => i.title === ISSUE_TITLE) ?? null : null;
 }
 
-async function abrirOuAtualizarIssue(body) {
+/**
+ * Assinatura estavel da causa: campos divergentes (com o valor lido) + checagens cegas
+ * (nome + conjunto ordenado dos campos nao lidos, quando a cegueira e parcial — sem isso
+ * "faltou allow_auto_merge" e "faltou allow_squash_merge" davam a mesma assinatura e a
+ * mudanca de ponto cego ficava 7 dias suprimida; achado do Devin/Codex na PR #1920).
+ * Nunca entra: prosa de erro, timestamp, numero de run.
+ */
+export function assinaturaDe(divergencias, naoVerificaveis) {
+  const div = [...divergencias].map((d) => `${d.campo}=${String(d.encontrado)}`).sort(porCodigo);
+  const cegos = [...naoVerificaveis]
+    .map((n) => `${n.nome}:${[...(n.campos ?? [])].sort(porCodigo).join('|')}`)
+    .sort(porCodigo);
+  return createHash('sha256').update(JSON.stringify({ div, cegos })).digest('hex').slice(0, 16);
+}
+
+const MARCADOR = (assinatura) => `<!-- causa:${assinatura} -->`;
+const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
+const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Registro MAIS RECENTE da issue que carrega o marcador desta causa (comentario ou o
+ * proprio corpo), escrito PELO GUARD. Olha as 2 ultimas paginas (ate 200 comentarios): um
+ * comentario humano ou de outro bot depois do marcador nao pode zerar o dedupe, e um
+ * marcador colado por terceiros nao pode acioná-lo (achados do Codex na PR #1920).
+ * Devolve null quando a causa nunca foi registrada.
+ */
+async function registroMaisRecenteCom(issue, marcador) {
+  const total = Number(issue.comments ?? 0);
+  if (total > 0) {
+    const ultimaPagina = Math.max(1, Math.ceil(total / 100));
+    for (const pagina of [ultimaPagina, ultimaPagina - 1]) {
+      if (pagina < 1) continue;
+      const comentarios = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/issues/${issue.number}/comments?per_page=100&page=${pagina}`);
+      if (!Array.isArray(comentarios)) continue;
+      for (let i = comentarios.length - 1; i >= 0; i -= 1) {
+        const c = comentarios[i];
+        if (escritoPeloGuard(c) && (c.body ?? '').includes(marcador)) return { body: c.body, created_at: c.created_at };
+      }
+    }
+  }
+  if (escritoPeloGuard(issue) && (issue.body ?? '').includes(marcador)) return { body: issue.body, created_at: issue.created_at };
+  return null;
+}
+
+/**
+ * W05: dedupe por causa. Comenta de novo so se esta causa ainda nao foi registrada
+ * na janela (6 h com divergencia real, 7 dias so com ponto cego) ou se houve
+ * restauracao EFETIVA (que precisa ficar registrada sempre; tentativa que falhou
+ * nao forca — senao um PATCH 403 recorrente comentaria a cada 6 h).
+ */
+async function abrirOuAtualizarIssue(body, { assinatura, janelaMs, forcar = false } = {}) {
   const existing = await findIssue();
   if (existing) {
+    if (assinatura && !forcar) {
+      const registro = await registroMaisRecenteCom(existing, MARCADOR(assinatura));
+      const idadeMs = registro?.created_at ? Date.now() - new Date(registro.created_at).getTime() : Infinity;
+      if (registro && idadeMs < janelaMs) {
+        console.log(`Dedupe: mesma causa (${assinatura}) ha menos de ${Math.round(janelaMs / 3600000)} h; comentario suprimido (issue #${semQuebra(existing.number)}).`);
+        return existing.number;
+      }
+    }
     await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, { body });
     console.log(`Issue #${semQuebra(existing.number)} atualizada com novo comentario.`);
     return existing.number;
@@ -217,6 +345,10 @@ async function fecharIssue() {
 // ---------------------------------------------------------------- principal
 
 async function main() {
+  if (!TOKEN) {
+    console.error('::error::GITHUB_TOKEN ausente');
+    process.exit(1);
+  }
   const checagens = [
     ['branch protection', checarBranchProtection],
     ['merge/repo', checarRepo],
@@ -229,14 +361,19 @@ async function main() {
 
   for (const [nome, fn] of checagens) {
     try {
-      const encontradas = await fn();
+      const resultado = await fn();
+      const encontradas = Array.isArray(resultado) ? resultado : resultado.divergencias;
+      if (!Array.isArray(resultado) && resultado.cego) {
+        console.log(`::warning::${nome}: PARCIALMENTE VERIFICAVEL — ${semQuebra(resultado.cego)}`);
+        naoVerificaveis.push({ nome: `${nome} (parcial)`, motivo: resultado.cego, campos: resultado.campos ?? [] });
+      }
       console.log(`${nome}: ${encontradas.length === 0 ? 'OK' : `${encontradas.length} divergencia(s)`}`);
       divergencias.push(...encontradas);
     } catch (e) {
       if (e instanceof NaoVerificavel) {
         // Ponto cego declarado: não é regressão, mas precisa aparecer.
         console.log(`::warning::${nome}: NAO VERIFICAVEL — ${semQuebra(e.message)}`);
-        naoVerificaveis.push({ nome, motivo: `${e.status} — ${e.message.split(': ').slice(1).join(': ')}` });
+        naoVerificaveis.push({ nome, motivo: `${e.status} — ${e.message.split(': ').slice(1).join(': ')}`, campos: [String(e.status)] });
       } else {
         throw e;
       }
@@ -253,13 +390,16 @@ async function main() {
     return;
   }
 
-  // Restaura só o que o guard sabe restaurar; o resto vira alerta.
+  // Restaura só o que o guard sabe restaurar; o resto vira alerta. Sucesso e falha
+  // ficam em listas separadas: so o sucesso forca comentario (Devin, PR #1920).
   const restaurados = [];
+  const restauracoesEfetivas = [];
   for (const d of divergencias.filter((x) => x.restauravel)) {
     try {
       const feito = await restaurar(d.campo);
       if (feito) {
         restaurados.push(feito);
+        restauracoesEfetivas.push(d.campo);
         console.log(`Restaurado: ${semQuebra(d.campo)}`);
       }
     } catch (e) {
@@ -267,8 +407,11 @@ async function main() {
     }
   }
 
+  const soCegos = divergencias.length === 0;
+  const assinatura = assinaturaDe(divergencias, naoVerificaveis);
   const linhas = [
-    '## ⚠️ Divergência de perímetro detectada',
+    MARCADOR(assinatura),
+    soCegos ? '## 👁️ Ponto cego do perímetro (nada divergiu do que foi possível ler)' : '## ⚠️ Divergência de perímetro detectada',
     '',
     `Baseline: \`scripts/ci/github-settings-baseline.json\` (medido em ${baseline.medido_em})`,
     '',
@@ -311,11 +454,26 @@ async function main() {
     `Timestamp: ${new Date().toISOString()}`,
   );
 
-  await abrirOuAtualizarIssue(linhas.join('\n'));
+  await abrirOuAtualizarIssue(linhas.join('\n'), {
+    assinatura,
+    janelaMs: soCegos ? SETE_DIAS_MS : SEIS_HORAS_MS,
+    forcar: restauracoesEfetivas.length > 0,
+  });
+
+  if (soCegos) {
+    // W05: "nao consegui olhar" precisa de gente (a issue existe para isso), mas
+    // NAO e regressao — um run vermelho a cada 6 h por falta de escopo ensina a
+    // ignorar o vermelho. O job sai verde com aviso; a credencial de leitura
+    // administrativa (W11/W12) e o que fecha o ponto cego de verdade.
+    console.log(`::warning::Perimetro com ${naoVerificaveis.length} ponto(s) cego(s) e nenhuma divergencia lida. Ver issue [settings-guard].`);
+    return;
+  }
   process.exit(1);
 }
 
-main().catch((e) => {
-  console.error('::error::' + e.message);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => {
+    console.error('::error::' + e.message);
+    process.exit(1);
+  });
+}
