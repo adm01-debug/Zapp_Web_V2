@@ -1,4 +1,4 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: senior (area-testes-do-produto)
 
 ## O que mudou e por quê
 - `src/lib/__tests__/retry.politica.test.ts` (novo): cobre a POLÍTICA do `withRetry`/`withNetworkRetry` que os testes já existentes não cobrem — número de tentativas (`maxRetries=3` → 4 tentativas) e esgotamento, teto do backoff (`maxDelayMs`), `onRetry` recebendo a tentativa 1..N, e a CLASSIFICAÇÃO do `withNetworkRetry` (TypeError `Failed to fetch`, `status >= 500`, network/timeout, 4xx NÃO repete, fronteira de palavra `502`×`5024`, erro que não é `Error`, `AbortError`). Chama o módulo real (`../retry`); só a fonte do jitter é mockada.
