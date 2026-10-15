@@ -14,7 +14,14 @@ const MAX_REQUEST_BYTES = 64 * 1024;
 const MAX_RESPONSE_BYTES = 512_000;
 const MAX_BATCH_SIZE = 10;
 /** Teto das sugestões de nome (empresa/cargo) do formulário de contato. */
-export const MAX_NAME_SUGGESTIONS = 500;
+export const MAX_NAME_SUGGESTIONS = 300;
+// Erro do supabase externo que é culpa do chamador (4xx): sai 4xx em vez de
+// 502. Qualquer outro código continua 502 (rede) ou 504 (timeout).
+const CRM_CLIENT_ERROR_STATUS: Record<string, number> = {
+  PGRST116: 404,
+  '42501': 403,
+  '28P01': 401,
+};
 
 /**
  * Sentimento no domínio do CRM EXTERNO (inglês): a documentação do CRM 360°
@@ -345,19 +352,31 @@ function objectValue(value: unknown): Record<string, unknown> | null {
  * contato) sobrevive à projeção. O teto evita que a ação vire um exportador
  * da base do CRM.
  */
+/**
+ * Chave canônica de comparação dos nomes de sugestão (empresa/cargo): texto
+ * aparado em minúsculas. Mora DENTRO da projeção — e não no ponto de chamada
+ * — para que todo caminho da Edge (e a chave de qualquer cache futuro) dobre
+ * a mesma forma: 'ACME LTDA' e ' Acme Ltda ' contam como um nome só.
+ */
+export function normalizeNameKey(value: string): string {
+  return value.toLowerCase();
+}
+
 export function distinctNameSuggestions(
   rows: unknown,
   pick: (row: Record<string, unknown>) => unknown,
   max: number = MAX_NAME_SUGGESTIONS,
 ): string[] {
-  const seen = new Set<string>();
+  const seen = new Map<string, string>();
   for (const raw of Array.isArray(rows) ? rows : []) {
     const record = objectValue(raw);
     if (!record) continue;
     const name = nonEmptyText(pick(record));
-    if (name) seen.add(name);
+    if (!name) continue;
+    const key = normalizeNameKey(name);
+    if (!seen.has(key)) seen.set(key, name);
   }
-  return [...seen].sort((a, b) => a.localeCompare(b, 'pt-BR')).slice(0, Math.max(0, max));
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).slice(0, Math.max(0, max));
 }
 
 /** Nome da empresa pela mesma prioridade do contexto de Email (fantasia → CRM → razão). */
@@ -898,9 +917,26 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
         .order(companyNames ? 'nome_fantasia' : 'role', { ascending: true, nullsFirst: false })
         .limit(MAX_NAME_SUGGESTIONS));
       if (result.error) throw new Error(`CRM_NAMES:${result.error.code || 'unknown'}`);
-      data = companyNames
-        ? distinctCompanyNames(result.data)
-        : distinctNameSuggestions(result.data, (row) => row.role);
+      // Projeção sem teto para saber se houve corte; o cliente fixa a flag
+      // `nomes_truncados` e o `data` continua sendo só a lista de strings.
+      const todosNomes = companyNames
+        ? distinctCompanyNames(result.data, Number.MAX_SAFE_INTEGER)
+        : distinctNameSuggestions(result.data, (row) => row.role, Number.MAX_SAFE_INTEGER);
+      const nomes = todosNomes.slice(0, MAX_NAME_SUGGESTIONS);
+      const nomes_truncados = todosNomes.length > nomes.length;
+      const durationNames = Math.round(performance.now() - started);
+      console.warn(JSON.stringify({
+        event: 'crm_integration', action, user_id: userId, duration_ms: durationNames, ok: true,
+      }));
+      return jsonResponse({
+        data: nomes,
+        nomes_truncados,
+        meta: {
+          record_count: nomes.length,
+          duration_ms: durationNames,
+          severity: durationNames > 3000 ? 'slow' : 'ok',
+        },
+      }, 200, req);
     } else if (action === 'mutate') {
       const mutationAction = body.mutationAction;
       const validation = validateMutation(body.table, mutationAction, body.data, body.match);
@@ -981,10 +1017,16 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
     console.warn(JSON.stringify({ event: 'crm_integration', action, user_id: userId, duration_ms: duration, ok: true }));
     return jsonResponse({ data, meta: { record_count: Array.isArray(data) ? data.length : data == null ? 0 : 1, duration_ms: duration, severity: duration > 3000 ? 'slow' : 'ok' } }, 200, req);
   } catch (error) {
-    const code = error instanceof Error ? error.message.split(':')[0] : 'CRM_UNKNOWN';
-    const status = code === 'CRM_TIMEOUT' ? 504 : 502;
+    const raw = error instanceof Error ? error.message : 'CRM_UNKNOWN';
+    const cut = raw.indexOf(':');
+    const code = cut < 0 ? raw : raw.slice(0, cut);
+    const detail = cut < 0 ? '' : raw.slice(cut + 1);
+    const clientStatus = detail ? CRM_CLIENT_ERROR_STATUS[detail] : undefined;
+    const status = code === 'CRM_TIMEOUT' ? 504 : typeof clientStatus === 'number' ? clientStatus : 502;
     console.error(JSON.stringify({ event: 'crm_integration', action: body.action, user_id: userId, code, ok: false }));
-    return errorResponse(code === 'CRM_TIMEOUT' ? 'External CRM timed out' : 'External CRM request failed', status, req);
+    if (code === 'CRM_TIMEOUT') return errorResponse('External CRM timed out', status, req);
+    if (typeof clientStatus === 'number') return errorResponse('External CRM request was rejected', status, req);
+    return errorResponse('External CRM request failed', status, req);
   }
 }
 

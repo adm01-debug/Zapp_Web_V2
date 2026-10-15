@@ -676,13 +676,15 @@ const NAMES_ROTA_EMPRESAS: LinkRoute = {
     { nome_fantasia: 'ACME', nome_crm: 'ACME LTDA', razao_social: 'ACME LTDA' },
     { nome_fantasia: null, nome_crm: 'Beta', razao_social: 'Beta ME' },
     { nome_fantasia: '  ACME  ', nome_crm: null, razao_social: null },
+    // Dobra case-insensiva (refazer 1): mesmo nome em outra caixa não duplica.
+    { nome_fantasia: 'acme', nome_crm: null, razao_social: null },
     { nome_fantasia: 'Gama', nome_crm: null, razao_social: null },
   ],
 };
 const NAMES_ROTA_CARGOS: LinkRoute = {
   match: '/rest/v1/salespeople',
   body: [
-    { role: 'Vendedor' }, { role: 'Gerente' }, { role: ' Vendedor ' }, { role: null }, { role: '' },
+    { role: 'Vendedor' }, { role: 'Gerente' }, { role: ' Vendedor ' }, { role: 'vendedor' }, { role: null }, { role: '' },
   ],
 };
 
@@ -782,7 +784,7 @@ Deno.test('sugestões: parâmetro extra é recusado para a leitura estreita não
 
 Deno.test('sugestões: projeção deduplica, descarta vazio e respeita o teto (nunca devolve objeto)', () => {
   const cargos = distinctNameSuggestions(
-    [{ role: 'A' }, { role: ' A ' }, { role: '' }, { role: null }, { role: 'B' }],
+    [{ role: 'A' }, { role: ' A ' }, { role: 'a' }, { role: '' }, { role: null }, { role: 'B' }],
     (row) => row.role,
   );
   if (JSON.stringify([...cargos].sort()) !== JSON.stringify(['A', 'B'])) {
@@ -797,10 +799,196 @@ Deno.test('sugestões: projeção deduplica, descarta vazio e respeita o teto (n
 Deno.test('sugestões: nome da empresa usa fantasia → CRM → razão, sem campo vazio', () => {
   const nomes = distinctCompanyNames([
     { nome_fantasia: '', nome_crm: 'Só CRM', razao_social: 'Razao' },
+    { nome_fantasia: 'SÓ CRM', nome_crm: null, razao_social: null },
     { nome_fantasia: null, nome_crm: null, razao_social: 'Só Razao' },
     { nome_fantasia: '   ', nome_crm: ' ', razao_social: '   ' },
   ]);
   if (JSON.stringify([...nomes].sort()) !== JSON.stringify(['Só CRM', 'Só Razao'])) {
     throw new Error(`prioridade de nome falhou: ${JSON.stringify(nomes)}`);
   }
+});
+
+// ── refazer 1 · dobra case-insensiva, teto 300 + flag, 4xx do supabase ──────
+//
+// Os 4 pontos da recusa, provados no caminho REAL do handler (rede dublada na
+// fronteira `globalThis.fetch`), mais a dobra na unidade da projeção.
+
+function assertEquals(actual: unknown, expected: unknown, rotulo = 'assertEquals') {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`${rotulo}: esperado ${JSON.stringify(expected)}, veio ${JSON.stringify(actual)}`);
+  }
+}
+
+Deno.test('sugestões de empresa: dobra case-insensiva no caminho real (pontos 1+3)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA,
+      {
+        match: '/rest/v1/companies',
+        body: [
+          { nome_fantasia: 'Empresa Duplicada', nome_crm: null, razao_social: null },
+          { nome_fantasia: 'EMPRESA DUPLICADA', nome_crm: null, razao_social: null },
+          { nome_fantasia: ' empresa duplicada ', nome_crm: null, razao_social: null },
+          { nome_fantasia: 'Outra', nome_crm: null, razao_social: null },
+        ],
+      },
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      const body = await response.json() as { data: unknown; nomes_truncados: unknown };
+      assertStatus(response.status, 200);
+      assertEquals(body.data, ['Empresa Duplicada', 'Outra']);
+      assertEquals(body.nomes_truncados, false);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões de cargo: dobra case-insensiva no caminho real (pontos 1+3)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA,
+      {
+        match: '/rest/v1/salespeople',
+        body: [
+          { role: 'Vendedor' }, { role: 'VENDEDOR' }, { role: ' vendedor ' }, { role: 'Gerente' },
+        ],
+      },
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('roleNames'));
+      const body = await response.json() as { data: unknown; nomes_truncados: unknown };
+      assertStatus(response.status, 200);
+      assertEquals(body.data, ['Gerente', 'Vendedor']);
+      assertEquals(body.nomes_truncados, false);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões: projeção dobra ACME LTDA x Acme Ltda na unidade (ponto 1)', () => {
+  const nomes = distinctNameSuggestions(
+    [{ role: 'ACME LTDA' }, { role: ' Acme Ltda ' }, { role: 'ACME ltda' }],
+    (row) => row.role,
+  );
+  assertEquals(nomes.length, 1);
+});
+
+Deno.test('sugestões: acima de 300 nomes distintos corta em 300 e acende nomes_truncados (ponto 2)', async () => {
+  await withLinkEnv(async () => {
+    const muitas = Array.from({ length: 310 }, (_, index) => ({
+      nome_fantasia: `Empresa ${String(index).padStart(4, '0')}`,
+      nome_crm: null,
+      razao_social: null,
+    }));
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA,
+      { match: '/rest/v1/companies', body: muitas },
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      const body = await response.json() as { data: unknown[]; nomes_truncados: unknown };
+      assertStatus(response.status, 200);
+      assertEquals(body.nomes_truncados, true);
+      assertEquals(body.data.length, 300);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões: fixture pequena devolve nomes_truncados false (ponto 2)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA, NAMES_ROTA_EMPRESAS,
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      const body = await response.json() as { data: unknown[]; nomes_truncados: unknown };
+      assertStatus(response.status, 200);
+      assertEquals(body.nomes_truncados, false);
+      // Margem até o teto com a fixture pequena (3 nomes distintos).
+      assertEquals(300 - body.data.length, 297);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+async function statusSugestaoComErroNaTabela(
+  action: 'companyNames' | 'roleNames',
+  tabela: string,
+  statusRota: number,
+  codigo: string,
+): Promise<number> {
+  let http = 0;
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA,
+      {
+        match: `/rest/v1/${tabela}`,
+        status: statusRota,
+        body: { code: codigo, message: 'erro dublado do supabase externo', details: null, hint: null },
+      },
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest(action));
+      http = response.status;
+    } finally {
+      stub.restore();
+    }
+  });
+  return http;
+}
+
+Deno.test('sugestões: 42501 do supabase externo sai 403 (ponto 4)', async () => {
+  assertEquals(await statusSugestaoComErroNaTabela('companyNames', 'companies', 403, '42501'), 403);
+});
+
+Deno.test('sugestões: PGRST116 do supabase externo sai 404 (ponto 4)', async () => {
+  assertEquals(await statusSugestaoComErroNaTabela('roleNames', 'salespeople', 406, 'PGRST116'), 404);
+});
+
+Deno.test('sugestões: 28P01 do supabase externo sai 401 (ponto 4)', async () => {
+  assertEquals(await statusSugestaoComErroNaTabela('companyNames', 'companies', 401, '28P01'), 401);
+});
+
+Deno.test('sugestões: falha de rede no supabase externo sai 502 (ponto 4)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA]);
+    const redeBase = globalThis.fetch;
+    globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/rest/v1/companies')) return Promise.reject(new TypeError('fetch failed'));
+      return redeBase(input, init);
+    }) as typeof fetch;
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      assertStatus(response.status, 502);
+    } finally {
+      globalThis.fetch = redeBase;
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões: supabase externo pendurado sai 504 (ponto 4)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA]);
+    const redeBase = globalThis.fetch;
+    globalThis.fetch = ((input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/rest/v1/companies')) return new Promise<Response>(() => {});
+      return redeBase(input, init);
+    }) as typeof fetch;
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      assertStatus(response.status, 504);
+    } finally {
+      globalThis.fetch = redeBase;
+      stub.restore();
+    }
+  });
 });
