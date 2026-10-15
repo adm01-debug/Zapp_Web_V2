@@ -71,6 +71,8 @@ export function WarRoomDashboard({
 
   const globalMetrics = useWarRoomMetrics(agents, queues);
   const hasSatisfactionSample = agents.some(a => a.satisfaction !== null);
+  // Enquanto carrega, nenhum número foi medido: os cartões mostram '—', não zero.
+  const valorMedido = (v: number): number | string => (isLoading ? '—' : v);
 
   // Esc fecha a tela cheia: antes o estado local ficava preso no 'true'.
   useEffect(() => {
@@ -116,13 +118,13 @@ export function WarRoomDashboard({
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <WarRoomMetricCard icon={Users} label="Na Fila" value={globalMetrics.totalWaiting} trend={globalMetrics.totalWaiting > 30 ? 'up' : 'stable'} alert={globalMetrics.totalWaiting > 50} />
-            <WarRoomMetricCard icon={XCircle} label="SLA Violados" value={globalMetrics.totalBreaches} trend="up" alert={globalMetrics.totalBreaches > 5} critical={globalMetrics.totalBreaches > 10} />
+            <WarRoomMetricCard icon={Users} label="Na Fila" value={valorMedido(globalMetrics.totalWaiting)} trend={globalMetrics.totalWaiting > 30 ? 'up' : 'stable'} alert={globalMetrics.totalWaiting > 50} />
+            <WarRoomMetricCard icon={XCircle} label="SLA Violados" value={valorMedido(globalMetrics.totalBreaches)} trend="up" alert={globalMetrics.totalBreaches > 5} critical={globalMetrics.totalBreaches > 10} />
             <WarRoomMetricCard icon={AlertTriangle} label="Em Risco" value={globalMetrics.totalWarnings ?? '—'} trend={globalMetrics.totalWarnings === null ? undefined : 'up'} alert={(globalMetrics.totalWarnings ?? 0) > 10} />
-            <WarRoomMetricCard icon={Users} label="Agentes Online" value={globalMetrics.onlineAgents} suffix={`/${agents.length}`} trend="stable" />
-            <WarRoomMetricCard icon={CheckCircle} label="Resolvidos Hoje" value={globalMetrics.totalResolved} trend="up" positive />
-            {/* Sem nenhuma avaliação no dia, a média é ausência de amostra: '—', não '0.0/5'. */}
-            <WarRoomMetricCard icon={TrendingUp} label="Satisfação" value={hasSatisfactionSample ? globalMetrics.avgSatisfaction.toFixed(1) : '—'} suffix={hasSatisfactionSample ? '/5' : undefined} trend="stable" positive />
+            <WarRoomMetricCard icon={Users} label="Agentes Online" value={isLoading ? '—' : globalMetrics.onlineAgents} suffix={isLoading ? undefined : `/${agents.length}`} trend="stable" />
+            <WarRoomMetricCard icon={CheckCircle} label="Resolvidos Hoje" value={valorMedido(globalMetrics.totalResolved)} trend="up" positive />
+            {/* O RPC devolve satisfação em percentual (0-100, % de notas >= 4): '80%', nunca 'x.x/5'. */}
+            <WarRoomMetricCard icon={TrendingUp} label="Satisfação" value={hasSatisfactionSample ? `${Math.round(globalMetrics.avgSatisfaction)}%` : '—'} trend="stable" positive />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

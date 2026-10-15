@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { WarRoomAgent, WarRoomQueue } from '@/hooks/business/useWarRoomData';
 import { WarRoomAgentCard } from '../war-room/WarRoomAgentCard';
@@ -86,12 +86,17 @@ describe('WarRoomAgentCard — nenhum zero falso', () => {
 });
 
 describe('WarRoomDashboard — estados e atualização', () => {
-  it('carregando: mostra esqueleto e não crava zero na satisfação', () => {
+  it('carregando: mostra esqueleto e nenhum cartão de métrica crava zero falso', () => {
     payload({ isLoading: true });
     renderDash(<WarRoomDashboard />);
     expect(screen.getAllByTestId('warroom-loading').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0); // Satisfação/Em Risco sem amostra
-    expect(screen.queryByText(/0\.0/)).toBeNull();
+    // Nenhum número foi medido ainda: todo cartão de métrica mostra '—'.
+    for (const rotulo of ['Na Fila', 'SLA Violados', 'Em Risco', 'Agentes Online', 'Resolvidos Hoje', 'Satisfação']) {
+      const cartao = screen.getByText(rotulo).parentElement as HTMLElement;
+      expect(within(cartao).getByText('—')).toBeInTheDocument();
+    }
+    expect(screen.queryByText('/0')).toBeNull(); // sem '0/0' em Agentes Online
+    expect(screen.queryByText(/0\\.0/)).toBeNull();
   });
 
   it('erro: mostra aviso e "Tentar de novo" refaz a leitura', () => {
@@ -132,9 +137,10 @@ describe('WarRoomDashboard — estados e atualização', () => {
     expect(screen.queryByText('/5')).toBeNull();
     unmount();
 
-    payload({ agents: [agente({ satisfaction: 5 })], queues: [fila()] });
+    // O RPC devolve percentual (0-100, % de notas >= 4): 80 vira '80%', nunca 'x.x/5'.
+    payload({ agents: [agente({ satisfaction: 80 })], queues: [fila()] });
     renderDash(<WarRoomDashboard />);
-    expect(screen.getByText('5.0')).toBeInTheDocument();
+    expect(screen.getByText('80%')).toBeInTheDocument();
   });
 
   it('Esc sai da tela cheia', () => {
