@@ -27,6 +27,7 @@ jobs:
     name: Verificar branch protection e allow_auto_merge
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    environment: perimetro-leitura
     permissions:
       contents: read
       issues: write
@@ -52,6 +53,9 @@ jobs:
         run: node scripts/ci/github-settings-guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # W11/W12: PAT fine-grained (administration:read) do environment perimetro-leitura
+          # para eliminar o ponto cego de branch protection (403 com GITHUB_TOKEN).
+          ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           # W17: script salva snapshot JSON do perímetro em perimeter-snapshot.json

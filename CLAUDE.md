@@ -253,7 +253,7 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
 | Workflow permissions | `default_workflow_permissions=write` · `can_approve_pull_request_reviews=true` (não desligar — ver CLAUDE.md) | `settings-guard` |
-| Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
+| Environments | **8**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
 | Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
 | Actions — `selected_actions_patterns` | 15 padrões (ver `scripts/ci/allowed-actions.json` e baseline) | `settings-guard` |

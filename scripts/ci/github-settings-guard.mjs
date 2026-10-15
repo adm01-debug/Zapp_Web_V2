@@ -40,6 +40,9 @@ import { pathToFileURL } from 'node:url';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
+// W11/W12: PAT fine-grained com administration:read para remover o ponto cego de branch
+// protection. Quando ausente, usa o TOKEN normal (mesma limitacao de antes, mas sem quebrar).
+const ADMIN_TOKEN = process.env.ADMIN_READ_TOKEN ?? TOKEN;
 const [OWNER, REPO_NAME] = REPO.split('/');
 
 const ISSUE_LABEL = 'settings-guard';
@@ -66,13 +69,6 @@ const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g,
 // ser a mesma em qualquer runner/locale; `localeCompare` muda com o ICU da máquina.
 const porCodigo = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
-const headers = {
-  Authorization: `Bearer ${TOKEN}`,
-  Accept: 'application/vnd.github+json',
-  'X-GitHub-Api-Version': '2022-11-28',
-  'User-Agent': 'settings-guard/2.0',
-};
-
 /** Erro de leitura por falta de escopo — não é regressão, é ponto cego. */
 class NaoVerificavel extends Error {
   constructor(caminho, status, motivo) {
@@ -82,11 +78,18 @@ class NaoVerificavel extends Error {
   }
 }
 
-async function gh(method, path, body) {
+async function gh(method, path, body, overrideToken) {
+  const tok = overrideToken ?? TOKEN;
   const url = `https://api.github.com${path}`;
   const res = await fetch(url, {
     method,
-    headers: { ...headers, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: {
+      Authorization: `Bearer ${tok}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'settings-guard/2.0',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (res.status === 403 || res.status === 404) {
@@ -101,13 +104,16 @@ async function gh(method, path, body) {
   if (res.status === 204 || res.headers.get('content-length') === '0') return null;
   return res.json().catch(() => null);
 }
+// W11/W12: leituras administrativas usam o PAT fine-grained (administration:read);
+// escritas (issues, PATCH de restauracao) continuam com o GITHUB_TOKEN.
+const ghAdmin = (method, path, body) => gh(method, path, body, ADMIN_TOKEN);
 
 // ---------------------------------------------------------------- checagens
 // Cada checagem devolve { campo, esperado, encontrado } ou lança NaoVerificavel.
 // `restauravel` diz se o guard sabe desfazer a divergência sozinho.
 
 async function checarBranchProtection() {
-  const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
+  const protection = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
   const esperado = baseline.branch_protection_main;
   const divergencias = [];
 
@@ -162,7 +168,7 @@ async function checarBranchProtection() {
 }
 
 async function checarRepo() {
-  const repo = await gh('GET', `/repos/${OWNER}/${REPO_NAME}`);
+  const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const divergencias = [];
   const ausentes = [];
   for (const [campo, esperado] of Object.entries(baseline.merge)) {
@@ -197,7 +203,7 @@ async function checarRepo() {
 }
 
 async function checarActions() {
-  const perms = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions`);
+  const perms = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions`);
   const divergencias = [];
   for (const [campo, esperado] of Object.entries(baseline.actions)) {
     const encontrado = perms?.[campo] ?? null;
@@ -209,7 +215,7 @@ async function checarActions() {
 }
 
 async function checarWorkflowPermissions() {
-  const perms = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/workflow`);
+  const perms = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/workflow`);
   const divergencias = [];
   const bl = baseline.workflow_permissions ?? {};
   for (const [campo, esperado] of Object.entries(bl)) {
@@ -223,7 +229,7 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
   const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
@@ -239,7 +245,7 @@ async function checarSelectedActions() {
 }
 
 async function checarRulesets() {
-  const rulesets = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/rulesets`);
+  const rulesets = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/rulesets`);
   const divergencias = [];
   const esperado = baseline.rulesets_count ?? 0;
   const encontrado = (rulesets ?? []).length;
@@ -250,7 +256,7 @@ async function checarRulesets() {
 }
 
 async function checarEnvironments() {
-  const dados = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
+  const dados = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/environments`);
   const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();
   const esperados = [...baseline.environments].sort();
   const prefixosVercel = (baseline.environments_vercel_managed?.prefixos ?? []);
