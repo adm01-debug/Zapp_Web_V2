@@ -3,6 +3,8 @@
 #   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security e revisores do PR
+# nao-e-bug:
+#   - CodeQL nao e required check: analise de ~3 min informativa; tornar required e decisao humana (W84)
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================

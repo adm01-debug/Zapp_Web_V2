@@ -327,7 +327,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   quando há divergência, anexa o **diff** contra o run anterior ao comentário — a próxima regressão de `strict` ganha
   pelo menos uma janela de 6 h datada. Verificação: artifact presente; mutação de teste (alterar `strict` por dispatch
   controlado do Joaquim) → diff no comentário em < 6 h.
-- [ ] **W18** · C · N-26 · Reescrever a tabela "Perímetro do GitHub — estado canônico" do `CLAUDE.md` e o baseline com o
+- [x] **W18** · C · N-26 · Reescrever a tabela "Perímetro do GitHub — estado canônico" do `CLAUDE.md` e o baseline com o
   estado **decidido em W01** (`medido_em: 2026-10-14`), e travar a coerência entre os dois com teste
   (`ci-docs-baseline.unit.mjs` compara cada campo do baseline com a tabela). Verificação: teste verde; mutar um campo →
   ❌. (Arquivo protegido: PR aguarda o Joaquim.)
@@ -395,7 +395,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `workflow_run` no `types-sync`: esse gatilho **não expõe os inputs** do dispatch de origem, então o sync não
   conseguiria distinguir dry-run de apply sem consultar a API do run. Verificação: apply ✅ → run de types-sync em < 5
   min → PR de sync; dry-run ✅ → nenhum run de types-sync.
-- [ ] **W34** · B · N-04 · PRs `automation/types-sync` e `automation/talkx-status` habilitam auto-merge (`gh pr merge
+- [x] **W34** · B · N-04 · PRs `automation/types-sync` e `automation/talkx-status` habilitam auto-merge (`gh pr merge
   --auto --squash`) logo após criados — só funciona com W01(a). Verificação: PR de sync mergeia sozinho quando os 6
   checks ficam verdes; `auto-update-pr-branch` passa a ter trabalho real.
 
@@ -587,7 +587,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W95** · C · N-26 · `CONTRIBUTING.md` reescrito: sem `develop`, `bun` em vez de `npm`, repo `Zapp_Web_V2`, fluxo
   `dia/AAAA-MM-DD` + lote + regras da seção 0 do `CLAUDE.md`, lista dos 6 required checks. Verificação:
   `ci-docs-baseline.unit.mjs` cobre os termos.
-- [ ] **W96** · C · N-26 · `docs/ci/README.md` (gerado) ganha colunas "custo/semana (min)" e "taxa de falha (7 d)" lidas do
+- [x] **W96** · C · N-26 · `docs/ci/README.md` (gerado) ganha colunas "custo/semana (min)" e "taxa de falha (7 d)" lidas do
   último KPI, e uma seção gerada "o que NÃO é bug" (merge_group inerte, `supabase-sync` desarmado, `TYPES_SYNC_PR_TOKEN`
   ausente, …) a partir de um bloco `# nao-e-bug:` nos YAML. Verificação: `--check` verde.
 - [x] **W97** · B · N-23 · Notificação de falha da `main` por WhatsApp via N8N (webhook `workflow_run` → Evolution GO

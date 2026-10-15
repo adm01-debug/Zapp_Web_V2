@@ -3,6 +3,8 @@
 #   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
 #   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
 #   avisa: autor do PR e revisor
+# nao-e-bug:
+#   - merge_group inerte: gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org)
 # ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================

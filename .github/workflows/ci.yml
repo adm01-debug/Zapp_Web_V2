@@ -3,6 +3,8 @@
 #   prova: lint, tipos, testes, build, security e E2E do codigo
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group inerte: gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org)
 # =================================================
 # ZAPP-WEB CI/CD Pipeline
 # =================================================
