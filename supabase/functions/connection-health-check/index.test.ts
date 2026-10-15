@@ -71,11 +71,13 @@ interface Fake {
   bodies: string[];
   /** última mensagem recebida devolvida por messages (camada 3 / caixa muda) */
   lastInbound: Array<{ created_at: string }>;
-  /** linhas de connection_alert_preferences (opt-in por canal/tipo) */
+  /** linhas de opt-in por canal/tipo (formato da loja `connection_alert_preferences`
+   * da V3 — tabela ainda inexistente no schema V2; o handler NÃO consulta, e o
+   * mock serve as linhas só para provar o fail-closed sem loja) */
   prefs: Array<Record<string, unknown>>;
   /** admins (id + email) para o fan-out de e-mail */
   adminProfiles: Array<{ id: string; email: string }>;
-  /** pushes gravados em app_notifications */
+  /** pushes gravados em notifications (a tabela real da V2) */
   appNotifications: Array<unknown>;
   /** deletes em warroom_alerts (auto-resolve), com os filtros aplicados */
   alertDeletes: Array<Array<[string, string]>>;
@@ -159,12 +161,15 @@ function result(
     return { data: fake.lastInbound[0] ?? null, error: null };
   }
   if (op === 'select' && table === 'connection_alert_preferences') {
+    // A loja não existe no schema V2: o handler não consulta (fail-closed).
+    // O mock serve as linhas do formato para provar que, mesmo COM opt-ins
+    // cadastrados, nada é enviado sem a tabela real.
     return { data: fake.prefs, error: null };
   }
   if (op === 'select' && table === 'profiles') {
     return { data: fake.adminProfiles, error: null };
   }
-  if (op === 'insert' && table === 'app_notifications' && pending) {
+  if (op === 'insert' && table === 'notifications' && pending) {
     fake.appNotifications.push(pending);
     return { data: null, error: null };
   }
@@ -675,7 +680,10 @@ Deno.test('inboxSilenceDedupeKey: chave estável por conexão', () => {
   assert(inboxSilenceDedupeKey('c1') === 'inbox-silent:v1:c1', 'chave do episódio');
 });
 
-Deno.test('preferências: alerta dispara, push/e-mail só para quem optou pelo canal e tipo', async () => {
+Deno.test('preferências: sem a loja no schema V2, o alerta dispara e push/e-mail ficam retidos (fail-closed)', async () => {
+  // A loja `connection_alert_preferences` só existe na V3. Mesmo COM linhas de
+  // opt-in no formato da loja, o handler V2 não consulta tabela inexistente:
+  // o alerta da queda é criado e nada é enviado (sem spam, sem push fantasma).
   Deno.env.set('RESEND_API_KEY', 'test-resend-key');
   const fake = baseFake();
   fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: '5511999' }];
@@ -696,24 +704,16 @@ Deno.test('preferências: alerta dispara, push/e-mail só para quem optou pelo c
   const res = await run(fake);
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
 
+  // O alerta da queda continua sendo criado (a warroom é a vitrine do monitor).
   const alerts = fake.alerts.filter((a) => a.source === 'connection-health-check');
   assert(alerts.length === 1, `uma queda = um alerta: ${JSON.stringify(fake.alerts)}`);
 
-  // Push: só push_enabled e alert_on_disconnected=true.
-  assert(fake.appNotifications.length === 1, `um insert de push: ${JSON.stringify(fake.appNotifications)}`);
-  const pushRows = fake.appNotifications[0] as Array<Record<string, unknown>>;
-  const pushIds = pushRows.map((r) => r.user_id).sort();
-  assert(JSON.stringify(pushIds) === JSON.stringify(['u-push']), `push só para opt-in: ${JSON.stringify(pushIds)}`);
-  assert(pushRows.every((r) => r.type === 'connection_alert'), `tipo connection_alert: ${JSON.stringify(pushRows)}`);
+  // Sem a loja no schema, nenhum push é gravado — nem em `notifications`.
+  assert(fake.appNotifications.length === 0, `sem loja não há push: ${JSON.stringify(fake.appNotifications)}`);
 
-  // E-mail: só email_enabled e alert_on_disconnected=true.
+  // ...e nenhum e-mail sai, mesmo com opt-ins no formato da loja.
   const resend = fake.bodies.filter((b) => b.includes('"to"'));
-  assert(resend.length === 1, `um e-mail enviado: ${JSON.stringify(fake.bodies)}`);
-  assert(resend[0].includes('email@ex.com'), `o optante por e-mail recebe: ${resend[0]}`);
-  assert(
-    !resend[0].includes('push@ex.com') && !resend[0].includes('off@ex.com'),
-    `quem não optou não recebe e-mail: ${resend[0]}`,
-  );
+  assert(resend.length === 0, `sem loja não há e-mail: ${JSON.stringify(fake.bodies)}`);
 });
 
 Deno.test('caixa muda (PE-87): sem mensagem recebida no horário comercial ⇒ alerta idempotente', async () => {

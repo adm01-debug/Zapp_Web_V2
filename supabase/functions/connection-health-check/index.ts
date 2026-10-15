@@ -31,10 +31,12 @@ export interface OwnerLookup {
 
 export type HealthLevel = 'healthy' | 'degraded' | 'disconnected';
 
-/** Mínimo do logger injetado pelo bootEdge (evita acoplar ao tipo interno). */
+/** Mínimo do logger injetado pelo bootEdge (evita acoplar ao tipo interno). O
+ * contexto é `Record` (nunca um escalar): é a assinatura do Logger real e todo
+ * chamador daqui passa objeto — com `unknown` o `deno check` recusa o Logger. */
 type EdgeLog = {
-  warn: (message: string, meta?: unknown) => void;
-  error: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  error: (message: string, meta?: Record<string, unknown>) => void;
 };
 
 /**
@@ -436,21 +438,15 @@ export async function handleConnectionHealthCheck(
     // Deduplica alertas da mesma conexão (uma queda e um silêncio podem coincidir).
     const uniqueAlerts = dedupeAlerts(alertsToCreate);
 
-    // Preferências por usuário: `connection_alert_preferences` decide QUEM recebe e
-    // por QUAL canal (push/e-mail), e o tipo de alerta (degradada/desconectada).
-    // Leitura defensiva: tabela ausente/erro ⇒ nenhum destinatário (fail-closed —
-    // não spamamos todos os admins como antes; só quem optou recebe).
-    let prefs: Array<Record<string, unknown>> = [];
-    if (uniqueAlerts.length > 0) {
-      try {
-        const { data, error } = await supabase
-          .from('connection_alert_preferences')
-          .select('user_id, push_enabled, email_enabled, alert_on_degraded, alert_on_disconnected');
-        if (!error && Array.isArray(data)) prefs = data as Array<Record<string, unknown>>;
-      } catch (err) {
-        log.warn("Falha ao ler preferências de alerta de conexão", { error: err instanceof Error ? err.message : String(err) });
-      }
-    }
+    // Preferências por usuário: `connection_alert_preferences` decidiria QUEM recebe
+    // e por QUAL canal (push/e-mail). Essa loja só existe no schema da V3 — na V2
+    // ela nunca foi criada, e a guarda de catálogo
+    // (scripts/db-audit/supabase-usage-guard.mjs) recusa `.from()` em tabela
+    // inexistente. Sem loja, ninguém recebe push/e-mail (fail-closed, o mesmo
+    // comportamento da leitura defensiva de antes); o opt-in reativa quando a
+    // trilha de banco criar a tabela — basta voltar a ler as linhas aqui (o
+    // formato esperado está no mock do teste, campo `prefs`).
+    const prefs: Array<Record<string, unknown>> = [];
 
     for (const alert of uniqueAlerts) {
       const isDegraded = alert.kind === 'degraded';
@@ -601,8 +597,9 @@ async function syncInboxSilenceAlert(
 }
 
 /**
- * Notifica SÓ quem optou: push (app_notifications) e e-mail (Resend), cada canal
- * filtrado por `push_enabled`/`email_enabled` e pelo tipo (degradada/desconectada).
+ * Notifica SÓ quem optou: push (`notifications`, a tabela que o sino da UI lê) e
+ * e-mail (Resend), cada canal filtrado por `push_enabled`/`email_enabled` e
+ * pelo tipo (degradada/desconectada).
  */
 async function notifyOptedIn(
   supabase: SupabaseClient,
@@ -636,10 +633,10 @@ async function notifyOptedIn(
       },
     }));
     try {
-      const { error } = await supabase.from('app_notifications').insert(rows);
-      if (error) log.warn("app_notifications insert failed", { error: error.message });
+      const { error } = await supabase.from('notifications').insert(rows);
+      if (error) log.warn("notifications insert failed", { error: error.message });
     } catch (err) {
-      log.warn("app_notifications insert failed", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("notifications insert failed", { error: err instanceof Error ? err.message : String(err) });
     }
   }
 
