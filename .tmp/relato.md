@@ -1,3 +1,22 @@
+Especialista: semisenior (area-front-componentes)
+
+Refazer 1 do t_617eb090. A entrega anterior (7388d83e7b) já está na branch; meu diff sobre ela tem 2 arquivos, 3 inserções, 1 remoção.
+
+Ponto 1 — clique no diálogo de confirmação borbulhava para o card e disparava onSelect: conferi em `src/components/inbox/quick-replies/QuickReplyCardList.tsx:81` que o card tem `onClick={() => onSelect(template)}` e que o `AlertDialogContent` (portal Radix, mas dentro da árvore React do card) não tinha `stopPropagation`. Mudança: `AlertDialogContent onClick={(e) => e.stopPropagation()}` no mesmo arquivo, linha 121. Não usei `onOpenChange` porque o defeito é o clique dentro do conteúdo, não o fechar do diálogo; o `stopPropagation` no content cobre Cancelar, Excluir e qualquer clique interno sem mudar o comportamento de abrir/fechar.
+
+Ponto 2 — teste não afirmava que onSelect não era chamado: o mock `onSelect: vi.fn()` já existia no `renderizar()` do teste e era passado ao componente real; faltavam as asserções. Mudança: `expect(props.onSelect).not.toHaveBeenCalled()` nos dois testes de exclusão (`src/components/inbox/quick-replies/__tests__/QuickReplyCardList.confirmacao-exclusao.test.tsx`, linhas 56 e 64).
+
+Prova (vermelho antes, verde depois), comando `npx vitest run src/components/inbox/quick-replies/__tests__/QuickReplyCardList.confirmacao-exclusao.test.tsx`: sem a correção (linha revertida temporariamente) → `Test Files 1 failed (1); Tests 2 failed | 1 passed (3)` (falha em `expect(props.onSelect).not.toHaveBeenCalled()` — `Number of calls: 1`); com a correção → `Test Files 1 passed (1); Tests 3 passed (3)`. Regressão: `npx vitest run src/components/inbox/quick-replies` → `Test Files 2 passed (2); Tests 7 passed (7)`.
+
+Segunda passada (defeito novo do meu diff): único chamador é `src/components/inbox/QuickRepliesManager.tsx:130` (props inalteradas; para ele só muda que clique no diálogo não seleciona mais — o comportamento pedido); sem toast/log/escrita duplicados; nenhum arquivo de guarda, manifesto ou CI tocado; sem mudança visível fora do título.
+
+Arquivos (`git diff --name-only`, working tree sobre 93eab04778):
+src/components/inbox/quick-replies/QuickReplyCardList.tsx
+src/components/inbox/quick-replies/__tests__/QuickReplyCardList.confirmacao-exclusao.test.tsx
+
+---
+## Relato da entrega anterior (preservado)
+
 Especialista: Íris (area-front-componentes)
 
 ## Arquivo do cartão com caminho trocado — por que toquei QuickReplyCardList.tsx

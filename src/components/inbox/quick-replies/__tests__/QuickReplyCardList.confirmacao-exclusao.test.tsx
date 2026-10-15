@@ -53,6 +53,7 @@ describe('QuickReplyCardList — nomes acessíveis e confirmação de exclusão'
     expect(screen.getByText('Excluir resposta rápida?')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
     expect(props.onDelete).toHaveBeenCalledWith('t1');
+    expect(props.onSelect).not.toHaveBeenCalled();
   });
 
   it('cancelar não exclui', () => {
@@ -60,5 +61,6 @@ describe('QuickReplyCardList — nomes acessíveis e confirmação de exclusão'
     fireEvent.click(screen.getByRole('button', { name: 'Excluir Boas-vindas' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(props.onDelete).not.toHaveBeenCalled();
+    expect(props.onSelect).not.toHaveBeenCalled();
   });
 });

@@ -118,7 +118,7 @@ export function QuickReplyCardList({
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
                               <AlertDialogDescription>
