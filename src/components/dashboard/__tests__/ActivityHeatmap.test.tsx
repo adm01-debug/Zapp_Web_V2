@@ -13,6 +13,7 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
@@ -49,5 +50,32 @@ describe('ActivityHeatmap — acessibilidade', () => {
     const ids = results.violations.map((v) => v.id);
     expect(ids.filter((id) => id === 'scrollable-region-focusable')).toEqual([]);
     expect(ids.filter((id) => id === 'button-name' || id === 'select-name')).toEqual([]);
+  });
+});
+
+describe('ActivityHeatmap — célula acessível e streak', () => {
+  // Datas em horário local: `new Date('2026-10-02')` é meia-noite UTC e, no
+  // fuso de Brasília, o rótulo sairia como 1º de outubro.
+  const diasLocais = [
+    { date: new Date(2026, 9, 1), count: 5, level: 1 as const },
+    { date: new Date(2026, 9, 2), count: 25, level: 2 as const },
+    { date: new Date(2026, 9, 3), count: 60, level: 3 as const },
+  ];
+
+  it('cada célula tem nome acessível com o dia e o valor e recebe foco pelo teclado', () => {
+    render(<ActivityHeatmap data={diasLocais} />, { wrapper });
+    const celula = screen.getByLabelText('2 de outubro de 2026: 25 mensagens');
+    expect(celula).toHaveAttribute('tabindex', '0');
+    expect(celula).toHaveAttribute('role', 'img');
+  });
+
+  it('streak conta até ontem quando hoje ainda não tem atividade', () => {
+    const comHojeZerado = [
+      { date: new Date(2026, 9, 1), count: 5, level: 1 as const },
+      { date: new Date(2026, 9, 2), count: 25, level: 2 as const },
+      { date: new Date(2026, 9, 3), count: 0, level: 0 as const },
+    ];
+    render(<ActivityHeatmap data={comHojeZerado} />, { wrapper });
+    expect(screen.getByText('2 dias')).toBeInTheDocument();
   });
 });

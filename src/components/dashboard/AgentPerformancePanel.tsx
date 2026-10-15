@@ -224,7 +224,11 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
               <div className="text-center py-6 text-muted-foreground text-[13px]"><Users className="w-8 h-8 mx-auto mb-2 opacity-30" />Sem agentes</div>
             ) : (
               <div className="flex items-center gap-5">
-                <div className="relative w-[110px] h-[110px] shrink-0">
+                <div
+                  className="relative w-[110px] h-[110px] shrink-0"
+                  role="img"
+                  aria-label={`Distribuição da equipe: ${agents.length} agentes`}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={donutData} dataKey="value" cx="50%" cy="50%" innerRadius={38} outerRadius={52} strokeWidth={0} startAngle={90} endAngle={-270}>

@@ -10,6 +10,7 @@ vi.mock('framer-motion', () => ({
     div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
       <div {...props}>{children}</div>,
   },
+  useReducedMotion: () => false,
 }));
 
 const mockData = [
@@ -67,6 +68,12 @@ describe('ConversationHeatmap', () => {
     const secondButton = buttons[1];
     secondButton.click();
     expect(screen.getByRole('region', { name: /mapa de calor/i })).toBeInTheDocument();
+  });
+
+  it('célula do mapa tem nome acessível com dia, hora e valor e recebe foco', () => {
+    renderWithProviders(<ConversationHeatmap data={mockData} />);
+    const cell = screen.getByLabelText('Domingo, 10:00: 12 msgs');
+    expect(cell).toHaveAttribute('tabindex', '0');
   });
 
   it('nenhum aria-controls aponta para id inexistente', () => {

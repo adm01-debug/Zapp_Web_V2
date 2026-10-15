@@ -92,7 +92,11 @@ export function DemandPrediction({ data: externalData, currentCapacity = 35, cla
             alert={insights.capacityRisk} />
         </div>
 
-        <div className="h-64">
+        <div
+          className="h-64"
+          role="img"
+          aria-label={`Previsão de demanda: ${data.length} pontos, com dados reais, média e intervalo de confiança`}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>

@@ -177,9 +177,15 @@ export function DashboardView() {
 
       <div className="space-y-2.5">
         <DashboardHeader
-          filters={(
-            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
-          )}
+          // L6: os filtros do topo (período, fila, agente) alimentam
+          // useDashboardData/useDashboardKpi e o volume da Visão Geral. Nas
+          // outras abas a barra não mudava nada e só confundia: fica visível
+          // apenas onde vale.
+          filters={
+            tab === OVERVIEW_TAB ? (
+              <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
+            ) : null
+          }
         />
 
         <Tabs value={tab} onValueChange={setTab}>
