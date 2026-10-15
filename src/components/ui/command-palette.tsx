@@ -104,13 +104,16 @@ export function CommandPalette({
     setQuery(v); setSelectedIndex(0); debouncedSearch(v);
   };
 
-  const executeCommand = (item: CommandItem) => {
+  // Sem `useCallback` o handler do teclado capturava a versão antiga de `executeCommand`
+  // (fechamento velho de `onNavigate`/`onOpenChange`) — era o aviso de
+  // `react-hooks/exhaustive-deps` no efeito abaixo.
+  const executeCommand = React.useCallback((item: CommandItem) => {
     if (item.disabled) return;
     if (item.action) item.action();
     else if (item.href) window.location.href = item.href;
     else if (item.id.startsWith('nav-')) onNavigate?.(item.id.replace('nav-', ''));
     onOpenChange(false); setQuery('');
-  };
+  }, [onNavigate, onOpenChange]);
 
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -121,7 +124,7 @@ export function CommandPalette({
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [open, allItems, selectedIndex]);
+  }, [open, allItems, selectedIndex, executeCommand]);
 
   // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
   // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
