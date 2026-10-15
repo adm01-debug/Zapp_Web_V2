@@ -374,6 +374,29 @@ jobs:
             echo "::warning::Gate 1 falhou: novos erros de TypeScript introduzidos pelo novo types.ts."
           fi
 
+      - name: Gate 1b — W23 — verificar se falha e apply-pendente
+        # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
+        # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
+        # e nao abre issue — o problema some quando a migration entrar no banco.
+        # check-migration-drift --classificar: exit 0 = sem drift, exit 1 = drift real,
+        # exit 2 = so apply-pendente.
+        id: gate1b
+        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
+        env:
+          DESTINO_URL: ${{ env.DESTINO_URL }}
+          PGSSLMODE: ${{ env.PGSSLMODE }}
+        run: |
+          set +e
+          node scripts/db-audit/check-migration-drift.mjs --classificar > /tmp/drift.log 2>&1
+          drift_exit=$?
+          set -e
+          if [ "$drift_exit" -eq 2 ]; then
+            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
+          else
+            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Gate 2 — usage-guard
         id: gate2
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
@@ -434,6 +457,7 @@ jobs:
       - name: Registrar falha dos gates
         if: >-
           steps.diff.outputs.schema_changed == 'true' &&
+          steps.gate1b.outputs.awaiting_apply != 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
