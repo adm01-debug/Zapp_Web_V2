@@ -15,10 +15,6 @@ on:
   push:
     branches: [main]
 
-defaults:
-  run:
-    shell: bash --noprofile --norc -euo pipefail {0}
-
 permissions:
   # Necessário para publicar SARIF em Code Scanning.
   security-events: write
@@ -38,6 +34,13 @@ jobs:
     name: 📊 OpenSSF Scorecard
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # `defaults` no JOB, nao no topo: a verificacao do scorecard-action recusa
+    # workflow com env/defaults globais ("workflow contains global env vars or
+    # defaults", run 38773299007) e nao publica o resultado. O W44 (bash estrito)
+    # continua atendido aqui.
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
