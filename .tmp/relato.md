@@ -55,14 +55,22 @@ Prova (comandos rodados agora, neste workspace):
 - `npx vitest run src/lib/__tests__/web-vitals-` →
   `Test Files 6 passed (6); Tests 44 passed (44)` (sem regressão nos
   vizinhos CLS/INP/FCP/TTI/coleta/orçamento).
-- `zapp-verify . --rapido` → ver resultado abaixo em "Fechamento".
+- `zapp-verify . --rapido` (rodado na cópia, após a correção) →
+  `OK db_guard (1s)`, `OK tipos (7s)`, `OK lint (1s)`, `OK migrations (1s)` →
+  `VERIFY: VERDE SEM BANCO (10s)` (o aviso `banco_local NÃO VERIFICADO: sem
+  nome de conjunto` é o comportamento padrão do `--rapido` sem conjunto; este
+  refazer não tem migration — a única migration do diff é a do cartão pai,
+  já aceita).
+  Nota: duas tentativas anteriores falharam em `db_guard` porque o comando foi
+  disparado com o diretório errado (a cópia resolvida foi `~/projetos`, e o
+  guard barrou um `.env` de fixture em `Zapp_Web_V2-anexos/.../guard/caso-A-env/`,
+  fora do meu diff e fora do meu alcance); com o `cd` explícito na cópia da
+  tarefa, o guard passa (`zapp-db-guard check` na cópia: ok).
 
 O que NÃO fiz e por quê:
 - Não criei linha de interruptor nem mexi na migration do cartão pai: fora
   do escopo (a recusa diz que a migration herdada está correta) e a lista de
   arquivos que posso tocar só permite o coletor e seus testes.
-- Não alterei chamadores: `rg initWebVitals` mostra só `src/main.tsx` (chama
-  sem argumento, comportamento para amostrados inalterado) e os testes.
-
-Fechamento: `hermes-tarefa-fechar` está CONGELADO neste ambiente (modo V1
-suspenso); registrarei a conclusão pelo Kanban com este relato.
+- Não alterei chamadores: `rg initWebVitals|normalizeVitalRoute` mostra só
+  `src/main.tsx` (chama sem argumento, comportamento para amostrados
+  inalterado) e os testes; 2ª passada sem defeito novo no diff.
