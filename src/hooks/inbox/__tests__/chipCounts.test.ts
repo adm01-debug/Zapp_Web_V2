@@ -21,7 +21,7 @@ import { createElement, type ReactNode } from 'react';
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
 
 import { useInboxFilters } from '../useInboxFilters';
-import { countByChip } from '../chipCounts';
+import { countByChip, canonicalPhoneDigits } from '../chipCounts';
 import type { ChipTab } from '@/components/inbox/TicketTabs';
 
 const PROFILE_ID = 'p1';
@@ -343,6 +343,20 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
     expect(result.current.chipCounts.all).toBe(ids.length);
   });
 
+  it('busca por telefone com ZERO DE TRONCO colado da tela também acha (t_82388172)', () => {
+    // [refazer 1] ponto 2: quem COLA o número como aparece na tela —
+    // "(011) 99999-9999", com o 0 de tronco interurbano — continuava sem achar
+    // nada, porque os dígitos da query ("011999999999") não são substring dos
+    // dígitos gravados ("5511999999999"). Normalizar os dois lados resolve.
+    const { result } = montarMatriz();
+    aplicarCombo(result, { nome: 'telefone tronco zero', search: '(011) 99999-9999' });
+    act(() => result.current.setChipTab('all'));
+
+    const ids = result.current.filteredConversations.map((c) => c.contact.id);
+    expect(ids).toContain('silvestre');
+    expect(result.current.chipCounts.all).toBe(ids.length);
+  });
+
   it('busca acha o trecho da última mensagem (t_8e895114)', () => {
     const { result } = montarMatriz();
     aplicarCombo(result, { nome: 'última mensagem', search: 'brinde do catálogo' });
@@ -377,5 +391,18 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
       act(() => result.current.setChipTab(chip));
       expect(counts[chip]).toBe(result.current.filteredConversations.length);
     }
+  });
+});
+
+describe('canonicalPhoneDigits — os dois lados viram o mesmo valor (t_82388172)', () => {
+  it('tronco zero, DDD puro e DDI gravado convergem', () => {
+    expect(canonicalPhoneDigits('(011) 99999-9999')).toBe('11999999999');
+    expect(canonicalPhoneDigits('(11) 99999-9999')).toBe('11999999999');
+    expect(canonicalPhoneDigits('5511999999999')).toBe('11999999999');
+    expect(canonicalPhoneDigits('+55 (11) 99999-9999')).toBe('11999999999');
+  });
+
+  it('trecho parcial sem DDD continua valendo como substring', () => {
+    expect(canonicalPhoneDigits('99999-9999')).toBe('999999999');
   });
 });

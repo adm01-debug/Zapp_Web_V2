@@ -28,6 +28,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
 import { useSavedFilters, type SavedFilter } from '@/hooks/chat/useSavedFilters';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
+import { savedFilterToState } from './savedFilterToState';
 
 export interface InboxFiltersState {
   status: string[];
@@ -65,24 +66,6 @@ const DATE_PRESETS = [
   { label: '30 dias', getValue: () => ({ from: appDayStart(30), to: appDayEnd(0) }) },
   { label: 'Mês', getValue: () => ({ from: appMonthStart(), to: appDayEnd(0) }) },
 ];
-
-/**
- * Converte o JSON gravado em `saved_filters.filters` para o estado que a lista
- * entende. As datas vão como ISO (o JSON do banco não guarda `Date`) e voltam
- * como `Date` na leitura — sem isso o filtro salvo nunca reaplicava o período.
- */
-function savedFilterToState(filters: Record<string, unknown>): InboxFiltersState {
-  const range = (filters.dateRange ?? {}) as { from?: string | null; to?: string | null };
-  return {
-    status: Array.isArray(filters.status) ? (filters.status as string[]) : [],
-    tags: Array.isArray(filters.tags) ? (filters.tags as string[]) : [],
-    agentId: typeof filters.agentId === 'string' ? filters.agentId : null,
-    dateRange: {
-      from: range.from ? new Date(range.from) : null,
-      to: range.to ? new Date(range.to) : null,
-    },
-  };
-}
 
 export function InboxFilters({
   filters, onFiltersChange,
@@ -214,7 +197,7 @@ export function InboxFilters({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Bookmark className="h-3 w-3" /> Filtros salvos
+                  <Bookmark className="h-3 w-3" /> Filtros personalizados
                 </Label>
                 {!isNamingFilter && (
                   <Button

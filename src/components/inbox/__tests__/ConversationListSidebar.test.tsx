@@ -28,6 +28,7 @@ vi.mock('@/components/errors/ErrorBoundary', () => ({
 }));
 vi.mock('@/components/inbox/BulkActionsToolbar', () => ({ BulkActionsToolbar: () => null }));
 vi.mock('@/components/inbox/InboxFilters', () => ({ InboxFilters: () => null }));
+vi.mock('@/components/inbox/SavedFilterChips', () => ({ SavedFilterChips: () => null }));
 vi.mock('@/components/inbox/conversation-list/StatusChips', () => ({ StatusChips: () => null }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
 

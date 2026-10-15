@@ -77,4 +77,16 @@ describe('etapa 84 — painel de ajuda exibe os rótulos de Tarefas', () => {
     expect(screen.getAllByText('1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('?').length).toBeGreaterThan(0);
   });
+
+  it('[refazer 1] ponto 3 (t_82388172): não anuncia sequências G,* sem tratador', () => {
+    // O rodapé "Atalhos Globais" anunciava G,H / G,I / G,S ("Ir para Home",
+    // "Ir para Inbox", "Ir para Configurações") que nenhum listener executa —
+    // o registry não tem tecla 'g' nem suporte a sequência, e a recusa
+    // classificou esse anúncio sem ação como o defeito. 'Ir para Home' e
+    // 'Ir para Configurações' só existiam nessa lista fixa.
+    abrirPainel();
+
+    expect(screen.queryByText('Ir para Home')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ir para Configurações')).not.toBeInTheDocument();
+  });
 });

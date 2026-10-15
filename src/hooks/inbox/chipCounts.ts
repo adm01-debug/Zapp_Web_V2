@@ -80,6 +80,22 @@ export const isArchived = (c: ConversationWithMessages): boolean =>
 export const isInQueue = (c: ConversationWithMessages, queueId: string): boolean =>
   c.contact.queue_id === queueId;
 
+/**
+ * Dígitos canônicos para comparar telefones na busca.
+ *
+ * [refazer 1] ponto 2 (t_82388172): strip non-digits SOZINHO não resolve — quem
+ * COLA o número como aparece na tela ("(011) 99999-9999") traz o 0 de tronco
+ * interurbano, e o contato guarda com DDI ("5511999999999"). Só tirar a
+ * pontuação dos dois lados mantém "011999999999" vs "5511999999999", que não
+ * casam. Por isso os dois lados passam pela MESMA canonização: só dígitos, sem
+ * zeros de tronco à esquerda e sem o DDI 55 — "(011) 99999-9999",
+ * "(11) 99999-9999" e "5511999999999" viram o mesmo valor.
+ */
+export function canonicalPhoneDigits(value: string): string {
+  const digits = value.replace(/\D/g, '').replace(/^0+/, '');
+  return digits.length > 11 && digits.startsWith('55') ? digits.slice(2) : digits;
+}
+
 const CHIPS: ChipTab[] = ['all', 'unread', 'attending', 'waiting', 'resolved', 'archived'];
 
 /**
@@ -104,16 +120,20 @@ export function passesExtraFilters(
   // "(11) 99999-8888" achava nada porque o contato guarda "5511999998888"), e o
   // trecho da última mensagem entrou na busca — era o único campo que o usuário
   // vê na lista e não conseguia procurar.
+  //
+  // [refazer 1] ponto 2 (t_82388172): os DOIS lados passam pela mesma
+  // canonização (canonicalPhoneDigits) — o `phone.includes(rawSearch)` antigo
+  // casava a query contra o telefone bruto e a comparação de dígitos pura não
+  // cobria o 0 de tronco de "(011) 99999-9999" colado da tela.
   const rawSearch = ctx.search ?? '';
   if (rawSearch.trim()) {
     const searchLower = rawSearch.toLowerCase();
-    const searchDigits = rawSearch.replace(/\D/g, '');
+    const searchDigits = canonicalPhoneDigits(rawSearch);
     const nome = c.contact.name?.toLowerCase() ?? '';
     const email = c.contact.email?.toLowerCase() ?? '';
     const phone = c.contact.phone ?? '';
     const phoneOk =
-      phone.includes(rawSearch) ||
-      (searchDigits.length > 0 && phone.replace(/\D/g, '').includes(searchDigits));
+      searchDigits.length > 0 && canonicalPhoneDigits(phone).includes(searchDigits);
     const lastMessage = (c.lastMessage?.content ?? '').toLowerCase();
     if (
       !nome.includes(searchLower) &&

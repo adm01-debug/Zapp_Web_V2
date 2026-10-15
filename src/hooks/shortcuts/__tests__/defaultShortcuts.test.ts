@@ -108,3 +108,32 @@ describe('conflitos de combinação dentro do mesmo escopo', () => {
     expect([...new Set(compartilhadas)].sort()).toEqual(['none:delete']);
   });
 });
+
+describe('transfer-chat não ocupa tecla simples (t_82388172)', () => {
+  it("transfer-chat fica no Ctrl+Shift+T e nenhum global usa 'g'/'t' puros", () => {
+    // [refazer 1] ponto 3: a recusa descrevia `transfer-chat` com keys
+    // ['g','t'] colidindo com o prefixo 'g' das sequências go-* e com o
+    // 'toggle-read' — nada disso existe neste registry (não há campo `keys`,
+    // nem `toggle-read`, nem sequências go-*; os go-to-* são Ctrl+1/2). Este
+    // teste fixa o estado real para a forma temida falhar alto se um dia
+    // aparecer: nenhum atalho GLOBAL usa tecla simples sem modificador, e o
+    // transfer-chat mantém o Ctrl+Shift+T (sem colidir com o Alt+T do
+    // open-tasks-tab — combinações distintas, cobertas pelo teste acima).
+    const transfer = DEFAULT_SHORTCUTS.find((s) => s.id === 'transfer-chat');
+    expect(transfer, 'transfer-chat existe').toBeDefined();
+    expect(transfer!.defaultKey).toBe('t');
+    expect(transfer!.defaultModifiers).toEqual({ ctrlKey: true, shiftKey: true });
+    expect(transfer!.scope, 'transfer-chat é global').toBeUndefined();
+    expect(transfer!.alternateKeys ?? [], 'sem teclas alternativas').toEqual([]);
+
+    const globaisTeclaPura = DEFAULT_SHORTCUTS.filter(
+      (s) =>
+        !s.scope &&
+        s.defaultKey.length === 1 &&
+        !s.defaultModifiers.ctrlKey &&
+        !s.defaultModifiers.altKey &&
+        !['Escape', 'Delete'].includes(s.defaultKey),
+    ).map((s) => s.id);
+    expect(globaisTeclaPura, 'globais com tecla simples pura').toEqual([]);
+  });
+});

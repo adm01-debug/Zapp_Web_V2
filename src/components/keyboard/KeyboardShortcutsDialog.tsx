@@ -55,9 +55,10 @@ const additionalShortcuts = [
   { keys: ['?'], description: 'Mostrar esta ajuda', category: 'global' },
   { keys: ['Esc'], description: 'Fechar diálogos e modais', category: 'global' },
   { keys: ['Ctrl', 'K'], description: 'Busca global', category: 'global' },
-  { keys: ['G', 'H'], description: 'Ir para Home', category: 'navigation' },
-  { keys: ['G', 'I'], description: 'Ir para Inbox', category: 'navigation' },
-  { keys: ['G', 'S'], description: 'Ir para Configurações', category: 'navigation' },
+  // [refazer 1] ponto 3 (t_82388172): G,H / G,I / G,S ("Ir para Home/Inbox/
+  // Configurações") saíram — eram anunciados aqui sem nenhum tratador (o
+  // registry não tem tecla 'g' nem suporte a sequência); anunciar tecla que
+  // não faz nada é o defeito que este cartão elimina.
 ];
 
 function ShortcutKey({ children }: { children: React.ReactNode }) {

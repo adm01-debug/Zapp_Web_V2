@@ -31,6 +31,7 @@ vi.mock('@/components/inbox/InboxFilters', () => ({
     return <button type="button" data-testid="filtros">Filtros</button>;
   },
 }));
+vi.mock('@/components/inbox/SavedFilterChips', () => ({ SavedFilterChips: () => null }));
 vi.mock('@/components/inbox/conversation-list/StatusChips', () => ({
   StatusChips: () => <div data-testid="status-chips" />,
 }));

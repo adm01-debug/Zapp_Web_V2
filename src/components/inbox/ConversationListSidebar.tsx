@@ -6,6 +6,7 @@ import { VirtualizedRealtimeList } from './VirtualizedRealtimeList';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { InboxFilters } from './InboxFilters';
+import { SavedFilterChips } from './SavedFilterChips';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
 import { StatusChips } from './conversation-list/StatusChips';
 import type { useConversationActions } from '@/hooks/chat/useConversationActions';
@@ -223,6 +224,15 @@ export function ConversationListSidebar({
             />
           </div>
         )}
+        {/* [refazer 1] ponto 1 (t_82388172): filtros salvos como linha de chips
+            rápidos sempre visível acima da lista (desktop e mobile). Sem filtro
+            salvo, o componente retorna null — sem bloco vazio no layout. */}
+        <SavedFilterChips
+          onFiltersChange={inboxFilters.setFilters}
+          onContactTypeChange={inboxFilters.handleContactTypeChange}
+          onQueueChange={inboxFilters.setSelectedQueueId}
+          onShowAllChange={inboxFilters.setShowAll}
+        />
       </div>
 
       {isMobile && (
