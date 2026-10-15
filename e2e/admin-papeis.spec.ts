@@ -178,14 +178,9 @@ async function linhaDoAlvo(page: Page) {
 }
 
 test.describe('Administração: papéis, desativação e forçar logout', () => {
-  // O aquecimento abaixo abre/navega um browser frio: sob carga da máquina ele
-  // passa dos 30 s padrão e derrubava o `beforeAll` (medido: 1 falha + 1 "did not
-  // run" antes de o teto subir). O teto maior vale para os testes e para os hooks.
+  // Teto de 90 s porque cada navegação via `irPara` pode fazer até 3 recargas
+  // (guard "Falha ao inicializar o app" sob carga) com esperas de 20 s cada.
   test.describe.configure({ timeout: 90_000 });
-
-  // Sem `beforeAll` de aquecimento de propósito: sob carga da máquina o hook de 30 s
-  // estourava (o browser frio demora mais que isso) e derrubava testes que passam.
-  // O `irPara` cobre o mesmo caso com recarga, sem depender de tempo de hook.
   test('trocar o papel de um usuário grava pela RPC admin_set_role e recarrega a lista', async ({ page }) => {
     const { captura } = await prepararAdmin(page, 'admin');
     await abrirAdministracao(page);

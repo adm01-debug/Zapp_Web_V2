@@ -21,11 +21,15 @@ Especialista: workertestes
   devolver o que a V2 já faz.
 
 ## Dependência (faixa do cartão pai, t_7055f245)
-- O diff contra a base do dia traz também `src/integrations/supabase/types.ts`,
-  `supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql` e `supabase/tests/user_roles_add_remove_role.sql`:
-  são do cartão PAI (commit `0b764774c` e a faixa `94b81c2e5` + `7d9004a3e`), que estava `done` mas NÃO integrado —
-  trouxe por cherry-pick porque sem as RPCs `admin_add_role`/`admin_remove_role` o meu teste 7 não teria o que provar.
-  Não editei nenhum desses três; os commits meus são só o spec novo e o `playwright.config.ts`.
+- O diff contra a base do dia inclui a faixa do pai trazida por cherry-pick (2 commits):
+  `418cda85a7` (RPCs `admin_add_role`/`admin_remove_role`: `src/integrations/supabase/types.ts`,
+  `supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql`,
+  `supabase/tests/user_roles_add_remove_role.sql`) e `0b764774c9` (roles passa a usar as RPCs:
+  `src/pages/admin/useRolesPageState.ts` — INSERT/DELETE trocados por RPC — e
+  `src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx`). Trouxe porque sem as RPCs
+  `admin_add_role`/`admin_remove_role` o meu teste 7 não teria o que provar. Não editei nenhum
+  desses cinco; os commits PRÓPRIOS deste cartão são só o spec novo (`e2e/admin-papeis.spec.ts`),
+  o `playwright.config.ts` e este `.tmp/relato.md`.
 
 ## Prova
 - Vermelho antes (mutação 1 — revertida SÓ a produção do cartão pai):
@@ -44,9 +48,15 @@ Especialista: workertestes
   `node scripts/ci/playwright-config-e81.unit.mjs` → `pass 6, fail 0`.
 - Verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (`db_guard`, `tipos`, `lint`, `migrations` OK).
 
+## Pontos do revisor (refazer 1)
+- Ponto 1: relato listava só 3 arquivos do pai com sha errado; corrigido em `## Dependência` e em `## O que NÃO fiz`: faixa do pai agora lista os 5 arquivos com os shas `418cda85a7` e `0b764774c9`, e as frases passam a dizer que os commits PRÓPRIOS são só spec + `playwright.config.ts` + relato.
+- Ponto 2: comentário acima de `test.describe.configure({ timeout: 90_000 })` em `e2e/admin-papeis.spec.ts` reescrito para o motivo real (até 3 recargas do `irPara` sob carga); removidas as menções ao `beforeAll`/aquecimento inexistente e a contradição entre os dois comentários.
+
 ## O que NÃO fiz e por quê
-- Nenhuma linha de código de produção foi alterada (o cartão proíbe): as duas mutações acima foram desfeitas e o diff
-  do cartão tem só o spec novo, o `playwright.config.ts` e este `.tmp/relato.md` (documento, não código).
+- Nenhuma linha de código de produção foi alterada NESTE cartão (o cartão proíbe): as duas mutações acima foram desfeitas e os
+  commits PRÓPRIOS deste cartão têm só o spec novo, o `playwright.config.ts` e este `.tmp/relato.md` (documento, não código);
+  o diff contra a base inclui além disso a faixa do pai listada acima (`useRolesPageState.ts` e seu teste, `types.ts`,
+  a migration e o teste SQL).
 - Servidor de teste: subi o MEU Vite em `127.0.0.1:5193` (`--strictPort`) porque a porta padrão pode ser de outro
   workspace (`reuseExistingServer`) — testar o servidor alheio mediria o código errado.
 - Sob carga alta da máquina (load ~70) o guard de montagem de 8 s do app ("Falha ao inicializar o app") apareceu 2×
