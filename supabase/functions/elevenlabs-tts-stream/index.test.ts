@@ -186,7 +186,7 @@ function ttsRequest(): Request {
 }
 
 Deno.test("prazo estourado: 504 claro, signal de prazo, ledger em erro e log sem o texto", async () => {
-  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_TIMEOUT], ROTA_FLAG_ON]);
+  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_TIMEOUT, ROTA_FLAG_ON]);
   const captura = capturarConsole();
   try {
     await withEnv(ENV_OK, async () => {
@@ -221,7 +221,7 @@ Deno.test("prazo estourado: 504 claro, signal de prazo, ledger em erro e log sem
 });
 
 Deno.test("erro de rede (não-prazo): 502 com código próprio e ledger em erro", async () => {
-  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_REDE], ROTA_FLAG_ON]);
+  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_REDE, ROTA_FLAG_ON]);
   try {
     await withEnv(ENV_OK, async () => {
       const res = await handleElevenLabsTtsStream(ttsRequest());
@@ -242,7 +242,7 @@ Deno.test("erro de rede (não-prazo): 502 com código próprio e ledger em erro"
 Deno.test("prazo vale ate os cabecalhos: audio lento em streaming chega completo (nao e cortado)", async () => {
   // Prazo de 60ms com corpo que leva ~150ms (5 fatias de 30ms): se o sinal
   // continuasse armado durante o corpo, o abort cortaria o audio no meio.
-  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_AUDIO_LENTO], ROTA_FLAG_ON]);
+  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_AUDIO_LENTO, ROTA_FLAG_ON]);
   try {
     await withEnv({ ...ENV_OK, ELEVENLABS_TTS_TIMEOUT_MS: "60" }, async () => {
       const res = await handleElevenLabsTtsStream(ttsRequest());
@@ -266,7 +266,7 @@ Deno.test("prazo vale ate os cabecalhos: audio lento em streaming chega completo
 });
 
 Deno.test("provedor responde audio: 200 e ledger em sucesso com a unidade de cobrança", async () => {
-  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_AUDIO_OK], ROTA_FLAG_ON]);
+  const { calls, restore } = withFetch([ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_AUDIO_OK, ROTA_FLAG_ON]);
   const captura = capturarConsole();
   try {
     await withEnv(ENV_OK, async () => {
