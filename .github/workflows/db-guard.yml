@@ -44,6 +44,7 @@ concurrency:
 jobs:
   offline-contract:
     name: Contrato DB offline
+    if: ${{ !github.event.pull_request.draft }} # W45: PRs draft pulam este job
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.

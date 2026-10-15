@@ -229,6 +229,9 @@ jobs:
   # ===========================================
   test:
     name: 🧪 Unit Tests
+    # W45: PRs draft pulam os jobs pesados — o check fica verde (skipped) sem executar.
+    # ready_for_review no gatilho relança quando o draft é convertido.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -287,6 +290,7 @@ jobs:
   # ===========================================
   build:
     name: 🏗️ Build
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: test
@@ -351,6 +355,7 @@ jobs:
   # ===========================================
   security:
     name: 🔒 Security Audit
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
 
@@ -417,6 +422,7 @@ jobs:
   # ===========================================
   e2e:
     name: 🎭 E2E Tests (Playwright)
+    if: ${{ !github.event.pull_request.draft }} # W45
     runs-on: ubuntu-24.04
     timeout-minutes: 20
 
