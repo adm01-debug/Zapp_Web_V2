@@ -146,3 +146,71 @@ describe('chunkReload — orcamento e cooldown', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 });
+
+describe('chunkReload — guarda de navegacao de documento', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    resetChunkReloadGuard();
+    reload.mockClear();
+    // jsdom nao navega: troca o location por um duble observavel.
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { reload },
+    });
+    // estado conhecido de partida: nenhuma navegacao em curso
+    window.dispatchEvent(new Event('pageshow'));
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    window.dispatchEvent(new Event('pageshow'));
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('nao recarrega enquanto uma navegacao de documento esta em curso (beforeunload)', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('nao recarrega enquanto uma navegacao de documento esta em curso (pagehide)', () => {
+    window.dispatchEvent(new Event('pagehide'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('pageshow (volta do bfcache) libera a guarda e a recarga volta a acontecer', () => {
+    window.dispatchEvent(new Event('pagehide'));
+    expect(triggerChunkReload()).toBe(false);
+    // bfcache: a pagina volta pelo pageshow, sem recarregar o modulo
+    window.dispatchEvent(new Event('pageshow'));
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('beforeunload cancelado libera a guarda no proximo tick', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    vi.advanceTimersByTime(0);
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('com navegacao em curso o orcamento nao e gasto e, terminada, teto e cooldown valem', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY)).toBeNull();
+
+    vi.advanceTimersByTime(0);
+    expect(triggerChunkReload()).toBe(true);
+    sessionStorage.setItem(CHUNK_RELOAD_AT_KEY, '0');
+    expect(triggerChunkReload()).toBe(true);
+    sessionStorage.setItem(CHUNK_RELOAD_AT_KEY, '0');
+    expect(triggerChunkReload()).toBe(false);
+
+    expect(reload).toHaveBeenCalledTimes(MAX_CHUNK_RELOADS);
+    expect(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY)).toBe(String(MAX_CHUNK_RELOADS));
+  });
+});
