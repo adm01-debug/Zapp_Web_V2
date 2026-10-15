@@ -22,6 +22,10 @@
 --      p_merged_fields continua com prioridade.
 --   3. Secundario vira SOFT-DELETE (deleted_at=now(), deletion_reason='merged', merged_into_id=principal)
 --      -- NAO ha mais DELETE fisico, logo a auditoria nao grava mais 'purge' nesta operacao.
+--      O tombstone roda ANTES do UPDATE do principal: contacts.phone e UNIQUE total, entao
+--      aplicar phone de p_merged_fields com o secundario ainda dono do numero abortaria com
+--      23505; os COALESCEs do item 2 leem os demais campos das linhas ja tombstoned (o
+--      tombstone so troca phone/deleted_at/rastro), vendo os valores originais.
 --   4. phone do secundario e liberado: o original (ja normalizado para digitos) fica em merged_phone e
 --      phone recebe uma sentinela SO digitos, unica e de 21 digitos ('9'+20 digitos da sequencia),
 --      porque o gatilho trg_normalize_contact_phone reduz phone a [0-9] em todo INSERT/UPDATE.
@@ -73,7 +77,7 @@ COMMENT ON COLUMN public.contacts.merged_at IS
 COMMENT ON COLUMN public.contacts.deletion_reason IS
   'Motivo do soft-delete: ''merged'' = mesclado em outro contato; NULL = exclusao normal/ativo.';
 COMMENT ON COLUMN public.contacts.merged_phone IS
-  'Telefone ORIGINAL preservado quando a linha foi mesclada (o phone recebe ''merged:<uuid>'' para liberar o numero).';
+  'Telefone ORIGINAL (normalizado para digitos) preservado quando a linha foi mesclada; o phone recebe uma sentinela numerica unica de 21 digitos (''9'' + 20 digitos da sequencia) para liberar o numero.';
 
 -- 2) Trilha append-only da mesclagem (sem FK: sobrevive ao expurgo fisico) ---------------------
 CREATE TABLE IF NOT EXISTS public.contact_merge_audit (
@@ -250,6 +254,27 @@ BEGIN
     WHERE id = v_secondary_link.id;
   END IF;
 
+  -- Soft-delete do secundario ANTES do UPDATE do principal: contacts.phone e UNIQUE total,
+  -- entao aplicar phone de p_merged_fields com o secundario ainda dono do numero aborta a
+  -- mesclagem com 23505. O original (ja normalizado para digitos) fica em merged_phone e o
+  -- phone recebe a sentinela unica de 21 digitos, liberando o numero. NAO ha mais DELETE
+  -- fisico (nao grava mais 'purge'). Os COALESCEs abaixo leem os DEMAIS campos das linhas
+  -- tombstoned (name/email/empresa/... nao sao tocados pelo tombstone, que so troca
+  -- phone/deleted_at/rastro), portanto enxergam os valores originais do secundario.
+  UPDATE public.contacts
+  SET deleted_at = now(),
+      deletion_reason = 'merged',
+      merged_into_id = p_primary_id,
+      merged_at = now(),
+      merged_phone = COALESCE(merged_phone, phone),
+      phone = '9' || lpad(nextval('public.contact_merge_phone_tombstone_seq')::text, 20, '0'),
+      updated_at = now()
+  WHERE id = ANY(v_active_ids);
+  GET DIAGNOSTICS v_affected = ROW_COUNT;
+  IF v_affected <> cardinality(v_active_ids) THEN
+    RAISE EXCEPTION 'contact_merge_softdelete_failed' USING ERRCODE = 'P0002';
+  END IF;
+
   -- Preenche campos vazios do principal com o do secundario (COALESCE por campo); p_merged_fields vence.
   UPDATE public.contacts
   SET
@@ -339,7 +364,11 @@ BEGIN
     END LOOP;
 
     -- Sem duplicar: apaga no secundario as linhas que ja existem no principal sob o MESMO
-    -- indice unico que inclui a coluna de FK (ex.: favorite_contacts, contact_tags, conversation_memory).
+    -- indice unico que inclui a coluna de FK (ex.: favorite_contacts, contact_tags,
+    -- conversation_memory por ser UNIQUE por contato, contact_custom_fields pela mesma chave).
+    -- A linha descartada e sempre a do SECUNDARIO; a do principal prevalece (o valor do
+    -- principal vence e nada do principal e apagado). O rastro da mesclagem fica em
+    -- contact_merge_audit.
     FOR v_uq IN
       SELECT ARRAY(
                SELECT a.attname
@@ -392,22 +421,6 @@ BEGIN
   END LOOP;
 
   PERFORM set_config('app.contact_merge_identity', 'off', true);
-
-  -- Soft-delete do secundario com rastro: NAO ha mais DELETE fisico (nao grava mais 'purge').
-  -- phone original vai para merged_phone; phone recebe sentinela unica para liberar o numero.
-  UPDATE public.contacts
-  SET deleted_at = now(),
-      deletion_reason = 'merged',
-      merged_into_id = p_primary_id,
-      merged_at = now(),
-      merged_phone = COALESCE(merged_phone, phone),
-      phone = '9' || lpad(nextval('public.contact_merge_phone_tombstone_seq')::text, 20, '0'),
-      updated_at = now()
-  WHERE id = ANY(v_active_ids);
-  GET DIAGNOSTICS v_affected = ROW_COUNT;
-  IF v_affected <> cardinality(v_active_ids) THEN
-    RAISE EXCEPTION 'contact_merge_softdelete_failed' USING ERRCODE = 'P0002';
-  END IF;
 
   -- Trilha duravel (sobrevive ao expurgo fisico futuro): sobrevivente + cada mesclado.
   INSERT INTO public.contact_merge_audit (primary_id, merged_id, performed_by)

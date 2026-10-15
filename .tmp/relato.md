@@ -1,64 +1,63 @@
 Especialista: workersql
 
-O que fiz
-- Migration 20261013051239 (ADITIVA) reescreve public.merge_contacts_atomic: preenche cada campo VAZIO do
-  principal com o do secundario (COALESCE por campo; p_merged_fields continua com prioridade). Antes o
-  secundario era APAGADO e os campos dele (e-mail, empresa, cargo, tags...) sumiam junto.
-- O secundario deixa de ser DELETE fisico e vira SOFT-DELETE: deleted_at=now(), deletion_reason='merged',
-  merged_into_id e merged_at. Por isso a auditoria nao grava mais 'purge' nesta operacao.
-- phone do secundario e liberado sem quebrar o ingest (escolha registrada, item 2 do cartao): o original
-  (ja normalizado para digitos) vai para a nova coluna merged_phone e phone recebe uma sentinela SO
-  digitos, unica e de 21 digitos, gerada por sequencia. O gatilho trg_normalize_contact_phone reduz phone
-  a [0-9] em todo INSERT/UPDATE, entao a sentinela tem de ser numerica e unica; 21 digitos (acima do
-  maximo E.164, 15) nunca casa com telefone real. O ingest_inbound_message busca por phone_variants SEM
-  filtrar deleted_at: como o telefone real deixa de existir na linha mesclada, um inbound novo cria um
-  contato NOVO vivo em vez de ressuscitar o mesclado.
-- As FKs (mensagens, notas, campos personalizados, conversas, etc.) sao movidas para o principal SEM
-  duplicar: para cada indice unico que inclui contact_id, as linhas do secundario que ja existem no
-  principal sob a mesma chave sao descartadas antes do UPDATE (cobre conversation_memory e talkx_blacklist,
-  unicos por contato, alem de contact_custom_fields, contact_tags, favorite_contacts, message_reactions...).
-  Durante a realocacao o gatilho update_*_updated_at da tabela filha e DESLIGADO (so ele) e reabilitado no
-  fim: mover o contato NAO e editar o registro, entao a data de atividade das linhas movidas e preservada
-  (ponto 2 do juiz / efeito colateral de 06/10). Se algo falhar, o rollback desfaz o DISABLE.
-- Nova tabela append-only public.contact_merge_audit (primary_id, merged_id, merged_at, performed_by,
-  performed_by_db_role) SEM chave estrangeira: o rastro "quem foi mesclado em quem" sobrevive a um expurgo
-  fisico posterior (CT-086, t_49a0faab) que ainda nao existe no repo. RLS ligada, REVOKE de anon/PUBLIC,
-  SELECT so para admin/supervisor, INSERT/UPDATE/DELETE bloqueados por policy.
-- src/services/contact-merge.service.ts: contrato tipado do retorno (merged_contacts, already_merged,
-  moved_relations). Assinatura da RPC inalterada.
-- Idempotencia: chamada repetida com o mesmo par vira no-op (retorna already_merged, nao reescreve
-  merged_phone). Secundario ja mesclado em OUTRO principal (ou soft-deleted sem ser mesclagem) e recusado
-  com 22023 (fail-closed); o principal soft-deleted tambem e recusado.
+Refazer 1 do merge de contatos (entrega 45a42f15b recusada; 5 pontos resolvidos abaixo, na ordem da recusa).
 
-Como provei (banco LOCAL v2-2610130206b4f6, migrations reais, como o papel real)
-- VERMELHO ANTES: com a RPC antiga (20261006205100) o secundario e apagado e o e-mail dele nao chega ao
-  principal -> secundario_ainda_existe=0, email_no_principal=NULL.
-- VERDE DEPOIS (supabase/tests/contact_merge_preserva_dados.sql, commitado, tudo em BEGIN..ROLLBACK,
-  como service_role/authenticated): T1 dados preservados + soft-delete com rastro + phone liberado + FKs
-  movidas sem duplicar + auditoria gravada; T2 idempotente; T3 agente comum negado (42501); T4 EXECUTE so
-  authenticated/service_role; T5 recusa fail-closed; T6 updated_at preservado nas linhas movidas e no
-  contato alheio, com o gatilho reabilitado. Rollback: linhas '-- Rollback:' no topo da migration.
-- Commit: 4 arquivos, 1 de teste:
-  supabase/migrations/20261013051239_merge_contacts_preserva_dados.sql,
-  supabase/tests/contact_merge_preserva_dados.sql (o unico de teste),
-  src/services/contact-merge.service.ts, .tmp/relato.md.
+Ponto 1 — RPC atualizava o principal antes de liberar o phone do secundario (23505).
+Mudei: supabase/migrations/20261013051239_merge_contacts_preserva_dados.sql — o soft-delete do
+secundario (tombstone com sentinela + merged_phone) agora roda ANTES do UPDATE do principal
+(o bloco foi movido de apos o movimento de FKs para logo apos o vínculo CRM). Os COALESCEs dos
+demais campos continuam lendo os valores originais: o tombstone so troca phone/deleted_at/rastro
+(name/email/empresa/etc. ficam intactos nas linhas tombstoned, lidas por id sem filtro de
+deleted_at). Ordem nova: validacoes -> lock -> CRM -> tombstone -> UPDATE principal -> FKs -> audit.
+Teste: T7 em supabase/tests/contact_merge_preserva_dados.sql (p_merged_fields com o phone DO
+SECUNDARIO). Vermelho antes (RPC antiga): ERROR duplicate key value violates unique constraint
+"contacts_phone_key". Verde depois: NOTICE T7 OK.
 
-Juiz (2 pontos): (1) contagem de arquivos — corrigida aqui (4 arquivos, 1 de teste). (2) updated_at: ATENDIDO,
-e nao era alarme falso — o gatilho update_*_updated_at das tabelas filhas foi desligado durante o movimento
-(reabilitado no fim) e o T6 prova linha antes/depois (mensagem movida e contato nao envolvido mantem
-'2001-01-01'; gatilho reabilitado). O UPDATE em contacts toca SO as linhas do merge (WHERE id = ANY(...)),
-por desenho — nao ha backfill em massa.
+Ponto 2 — faltava positivo de mesclagem autenticada real (admin/supervisor); so havia positivo
+service_role e negativo authenticated.
+Mudei: supabase/tests/contact_merge_preserva_dados.sql — T8 cria auth.users + user_roles(admin),
+chama a RPC como authenticated com JWT sub do admin e confere soft-delete + performed_by = admin.
+Verde: NOTICE T8 OK: admin authenticated mesclou e gravou performed_by. (T7 acima cobre a outra
+metade do ponto.)
 
-Fora do meu escopo (registrado, nao bloqueia): o expurgo e do CT-086 (t_49a0faab), que deve manter a
-trilha via contact_merge_audit. A tela de mesclagem (CT-085) nao precisa mudar: a assinatura da RPC nao
-mudou. NOTA para t_0ded8fb1: ja existe a suite contact_merge_preserva_dados.sql; a dele (merge_contacts_*.sql)
-nao precisa repetir estes casos.
+Ponto 3 — COMMENT de contacts.merged_phone dizia que phone recebia 'merged:<uuid>'.
+Mudei: mesma migration — COMMENT corrigido para sentinela numerica unica de 21 digitos
+('9' + 20 digitos da sequencia). Sem teste de comportamento (metadado); conferido via
+\d+ e pelo assert de sentinela do T7 (so digitos, 21 chars, distinta de merged_phone).
 
-Prova (saida real de `zapp-db-local psql . v2-2610130206b4f6 < supabase/tests/contact_merge_preserva_dados.sql`):
-ROLLBACK
-NOTICE:  T1 OK: dados preservados, soft-delete com rastro, phone liberado, FKs movidas sem duplicar, auditoria gravada
-NOTICE:  T2 OK: 2a chamada no-op, trilha e telefone original intactos
-NOTICE:  T3 OK: agente comum negado (42501)
-NOTICE:  T4 OK: EXECUTE restrito a authenticated + service_role
-NOTICE:  T5 OK: recusado como esperado (contact_merge_secondary_not_active)
-NOTICE:  T6 OK: updated_at preservado (mensagem movida e contato alheio) e gatilho reabilitado
+Ponto 4 — cabecalho do teste listava T1–T5 mas o arquivo rodava T6, com vars nao usadas (v_err).
+Mudei: supabase/tests/contact_merge_preserva_dados.sql — cabecalho reescrito listando T1–T8 com a
+descricao real de cada caso; removidos os 3 `v_err text` nao usados (bloco T1, T3 e T5).
+Verde: suite inteira T1–T8 sem EXCEPTION (listagem abaixo).
+
+Ponto 5 — deixar explicito no relato que o DELETE de dedup descarta do secundario a linha em
+conflito (ex.: conversation_memory, contact_custom_fields com mesma chave), mantendo o valor
+do principal.
+Explicito: sim — na deduplicacao por indice unico que inclui a FK, a linha descartada (DELETE) e
+sempre a do SECUNDARIO; a do principal prevalece e nada do principal e apagado. Casos medidos:
+conversation_memory e UNIQUE por contato (desempata 1x1, fica a do principal) e
+contact_custom_fields tem UNIQUE (contact_id, field_name) (mesma chave: fica a do principal;
+chave so do secundario migra). Prova: asserts T1e/T1f (count origem=1, plano migrou, memoria=1)
+verdes; comentario equivalente adicionado na propria RPC (bloco de dedup). O rastro da mesclagem
+fica em contact_merge_audit.
+
+Arquivos do MEU commit (git diff 45a42f15b...HEAD --name-only):
+supabase/migrations/20261013051239_merge_contacts_preserva_dados.sql
+supabase/tests/contact_merge_preserva_dados.sql
+.tmp/relato.md
+(Diff total do cartao vs base 96dd72dc5f inclui ainda src/services/contact-merge.service.ts, vindo
+da entrega anterior 45a42f15b e mantido sem alteracao. Diff do meu commit: 12.286 chars.)
+
+Comandos e resultados reais (banco local v2-mergerefazer1, stack propria deste refazer):
+- Suite antes da correcao (RPC antiga + T7 novo): T1–T6 OK, T7 ERROR duplicate key contacts_phone_key.
+- Suite apos a correcao: T1 OK, T2 OK, T3 OK (42501), T4 OK, T5 OK
+  (contact_merge_secondary_not_active), T6 OK, T7 OK, T8 OK, ROLLBACK (nada persiste).
+- Rollback da migration executado de verdade (DROPs + reaplicacao da 20261006205100): audit=0
+  tabelas, colunas merged_*=0, RPC antiga sem merged_into_id; depois reapliquei a migration
+  corrigida e a suite voltou a T1–T8 OK.
+- Chamadores de merge_contacts_atomic (service + telas de permissao): contrato inalterado
+  (args e retorno merged_contacts/already_merged/moved_relations), nenhum ajuste necessario.
+
+Nota de ambiente: hermes-tarefa-iniciar/fechar e worktree estao bloqueados (modo V1 CONGELADO sem
+MODO_V2; guard proibe worktree/branch nova), entao trabalhei sobre a branch existente do cartao
+(v2/merge-contatos-preserva-dados-2610130206b4f6) e entrego via kanban com o sha do commit.

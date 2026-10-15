@@ -3,12 +3,18 @@
 -- Prova: (1) dado que so existia no secundario sobrevive no principal; (2) secundario vira soft-delete
 -- com rastro (deleted_at, deletion_reason='merged', merged_into_id, merged_at, merged_phone) e telefone
 -- liberado; (3) FKs (mensagens, notas, campos personalizados, conversas) movidas sem duplicar; (4)
--- trilha append-only em contact_merge_audit; (5) idempotencia; (6) agente comum negado; (7) ACL.
+-- trilha append-only em contact_merge_audit; (5) idempotencia; (6) updated_at preservado;
+-- (7) phone do secundario via p_merged_fields; (8) admin/supervisor authenticated positivo.
 -- Roda em transacao unica (BEGIN..ROLLBACK): nada persiste. Sem EXCEPTION = suite verde.
 -- Casos: (T1) campo so do secundario sobrevive + soft-delete com rastro + phone liberado +
---        mensagens/notas/campos personalizados/conversas movidos sem duplicar + auditoria;
+--        mensagens/notas/campos personalizados/conversas movidos sem duplicar + auditoria
+--        (na deduplicacao a linha descartada e sempre a do SECUNDARIO; a do principal prevalece);
 --        (T2) mescla repetida idempotente; (T3) agente comum negado; (T4) anon sem EXECUTE;
---        (T5) secundario ja mesclado em OUTRO principal recusado (fail-closed).
+--        (T5) secundario ja mesclado em OUTRO principal recusado (fail-closed);
+--        (T6) updated_at preservado no movimento + gatilho de updated_at reabilitado;
+--        (T7) p_merged_fields com o phone DO SECUNDARIO: mescla completa sem 23505, principal
+--        assume o numero e secundario guarda merged_phone + sentinela;
+--        (T8) admin/supervisor authenticated mescla com sucesso e grava performed_by.
 
 \set ON_ERROR_STOP on
 
@@ -74,7 +80,6 @@ declare
   v_aud integer;
   v_ing integer;
   v_novo uuid;
-  v_err text;
 begin
   select * into v_p from public.contacts where id = '00000000-0000-0000-0000-0000000c0001';
   select * into v_s from public.contacts where id = '00000000-0000-0000-0000-0000000c0002';
@@ -178,7 +183,6 @@ end $$;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000e0001","role":"authenticated"}';
 do $$
-declare v_err text;
 begin
   begin
     perform public.merge_contacts_atomic(
@@ -214,7 +218,6 @@ values ('00000000-0000-0000-0000-0000000c0003','Outro principal','+5511900000003
 set local role service_role;
 set local request.jwt.claims = '{"role":"service_role"}';
 do $$
-declare v_err text;
 begin
   begin
     perform public.merge_contacts_atomic(
@@ -246,6 +249,86 @@ begin
     raise exception 'T6 FALHOU: gatilho de updated_at nao foi reabilitado (%)', v_enabled;
   end if;
   raise notice 'T6 OK: updated_at preservado (mensagem movida e contato alheio) e gatilho reabilitado';
+end $$;
+
+-- ===== T7: p_merged_fields com o phone DO SECUNDARIO ==========================
+-- Regressao do 23505: o tombstone (soft-delete + sentinela) roda ANTES do UPDATE do
+-- principal, entao o numero ja esta livre quando o principal o assume.
+insert into public.contacts (id, name, phone, conversation_status) values
+  ('00000000-0000-0000-0000-0000000c0010','Principal T7','+55117770001','open'),
+  ('00000000-0000-0000-0000-0000000c0011','Secundario T7','+55117770002','open');
+
+set local role service_role;
+set local request.jwt.claims = '{"role":"service_role"}';
+select public.merge_contacts_atomic(
+  '00000000-0000-0000-0000-0000000c0010',
+  array['00000000-0000-0000-0000-0000000c0011']::uuid[],
+  '{"phone": "+55117770002"}'::jsonb
+) as t7_retorno;
+reset role;
+set local request.jwt.claims = '{}';
+
+do $$
+declare v_p record; v_s record; v_aud integer;
+begin
+  select * into v_p from public.contacts where id = '00000000-0000-0000-0000-0000000c0010';
+  select * into v_s from public.contacts where id = '00000000-0000-0000-0000-0000000c0011';
+  if v_p.phone is distinct from '55117770002' then
+    raise exception 'T7 FALHOU: principal nao assumiu o phone do secundario (%)', v_p.phone;
+  end if;
+  if v_s.merged_phone is distinct from '55117770002' then
+    raise exception 'T7 FALHOU: merged_phone nao guardou o original (%)', v_s.merged_phone;
+  end if;
+  if v_s.phone !~ '^[0-9]+$' or length(v_s.phone) <> 21
+     or v_s.phone is not distinct from v_s.merged_phone then
+    raise exception 'T7 FALHOU: sentinela do secundario invalida (%)', v_s.phone;
+  end if;
+  if v_s.deleted_at is null or v_s.deletion_reason is distinct from 'merged'
+     or v_s.merged_into_id is distinct from '00000000-0000-0000-0000-0000000c0010'
+     or v_s.merged_at is null then
+    raise exception 'T7 FALHOU: soft-delete/rastro incorreto';
+  end if;
+  select count(*) into v_aud from public.contact_merge_audit
+   where primary_id = '00000000-0000-0000-0000-0000000c0010'
+     and merged_id = '00000000-0000-0000-0000-0000000c0011';
+  if v_aud <> 1 then raise exception 'T7 FALHOU: trilha de auditoria ausente (%)', v_aud; end if;
+  raise notice 'T7 OK: phone do secundario aplicado no principal sem 23505, rastro e trilha corretos';
+end $$;
+
+-- ===== T8: admin/supervisor authenticated mescla com sucesso ==================
+insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+values ('00000000-0000-0000-0000-0000000e0002','authenticated','authenticated','merge.admin@test.local','',now(),now(),now());
+insert into public.user_roles (user_id, role) values ('00000000-0000-0000-0000-0000000e0002','admin');
+
+insert into public.contacts (id, name, phone, conversation_status) values
+  ('00000000-0000-0000-0000-0000000c0012','Principal T8','+55117770003','open'),
+  ('00000000-0000-0000-0000-0000000c0013','Secundario T8','+55117770004','open');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000e0002","role":"authenticated"}';
+select public.merge_contacts_atomic(
+  '00000000-0000-0000-0000-0000000c0012',
+  array['00000000-0000-0000-0000-0000000c0013']::uuid[],
+  '{}'::jsonb
+) as t8_retorno;
+reset role;
+set local request.jwt.claims = '{}';
+
+do $$
+declare v_s record; v_by uuid;
+begin
+  select * into v_s from public.contacts where id = '00000000-0000-0000-0000-0000000c0013';
+  if v_s.deleted_at is null or v_s.deletion_reason is distinct from 'merged'
+     or v_s.merged_into_id is distinct from '00000000-0000-0000-0000-0000000c0012' then
+    raise exception 'T8 FALHOU: mescla autenticada (admin) nao concluiu';
+  end if;
+  select performed_by into v_by from public.contact_merge_audit
+   where primary_id = '00000000-0000-0000-0000-0000000c0012'
+     and merged_id = '00000000-0000-0000-0000-0000000c0013';
+  if v_by is distinct from '00000000-0000-0000-0000-0000000e0002' then
+    raise exception 'T8 FALHOU: performed_by nao e o admin (%)', v_by;
+  end if;
+  raise notice 'T8 OK: admin authenticated mesclou e gravou performed_by';
 end $$;
 
 rollback;
