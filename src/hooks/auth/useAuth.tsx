@@ -8,6 +8,7 @@ import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { offlineSendQueue } from '@/lib/offlineQueue';
+import { drenarFilaDoUsuarioAtual } from '@/services/outbound-message.service';
 
 interface AuthContextType {
   user: User | null;
@@ -101,6 +102,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         if (session?.user) {
           definirIdentidade(session.user.id);
           void fetchProfile(session.user.id);
+          // Boot com sessão existente (reload já conectado): tenta entregar o que
+          // ficou na fila offline deste usuário. Chamada daqui — e não no topo do
+          // serviço — para a importação do serviço continuar sem efeito colateral.
+          drenarFilaDoUsuarioAtual();
         } else {
           definirIdentidade(null);
         }
@@ -139,6 +144,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
       if (event === 'SIGNED_IN') {
         log.info('[AUTH] User signed in');
+        // A fila offline esperou este login: tenta entregar o que é deste usuário.
+        // (Antes a assinatura ficava no topo do serviço e quebrava a importação
+        // onde o cliente Supabase é mockado sem `auth`.)
+        drenarFilaDoUsuarioAtual();
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Sessão renovada com o mesmo usuário: a rede pode ter voltado junto.
+        drenarFilaDoUsuarioAtual();
       } else if (event === 'SIGNED_OUT') {
         log.info('[AUTH] User signed out');
         // O QueryClient e singleton e o app roda com refetchOnMount desligado:

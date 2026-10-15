@@ -9,6 +9,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { useAuth, AuthProvider } from '../useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { offlineSendQueue, type OfflineQueueInput } from '@/lib/offlineQueue';
 
 const harness = vi.hoisted(() => ({
@@ -74,5 +75,74 @@ describe('AuthProvider — fila de envio offline no logout', () => {
     });
 
     await waitFor(async () => expect(await offlineSendQueue.list()).toEqual([]));
+  });
+
+  it('drena a fila do usuário atual quando o Supabase emite SIGNED_IN', async () => {
+    window.localStorage.setItem(
+      'sb-teste-auth-token',
+      JSON.stringify({ access_token: 'token-de-teste', user: { id: 'atendente-b' } }),
+    );
+    const drenagem = vi
+      .spyOn(offlineSendQueue, 'drain')
+      .mockResolvedValue({ sent: 0, remaining: 0 });
+    try {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryClientProvider>
+      );
+
+      renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(harness.assinantes.length).toBeGreaterThan(0));
+
+      await act(async () => {
+        harness.assinantes.forEach((cb) => cb('SIGNED_IN', null));
+      });
+
+      await waitFor(() =>
+        expect(drenagem).toHaveBeenCalledWith(
+          expect.any(Function),
+          expect.objectContaining({ userId: 'atendente-b' }),
+        ),
+      );
+    } finally {
+      drenagem.mockRestore();
+    }
+  });
+
+  it('drena a fila do usuário atual no boot quando já existe sessão', async () => {
+    window.localStorage.setItem(
+      'sb-teste-auth-token',
+      JSON.stringify({ access_token: 'token-de-teste', user: { id: 'atendente-b' } }),
+    );
+    vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
+      data: { session: { user: { id: 'atendente-b' } } },
+      error: null,
+    } as never);
+    vi.mocked(supabase.from).mockReturnValue({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+    } as never);
+    const drenagem = vi
+      .spyOn(offlineSendQueue, 'drain')
+      .mockResolvedValue({ sent: 0, remaining: 0 });
+    try {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryClientProvider>
+      );
+
+      renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() =>
+        expect(drenagem).toHaveBeenCalledWith(
+          expect.any(Function),
+          expect.objectContaining({ userId: 'atendente-b' }),
+        ),
+      );
+    } finally {
+      drenagem.mockRestore();
+      vi.mocked(supabase.from).mockReset();
+    }
   });
 });

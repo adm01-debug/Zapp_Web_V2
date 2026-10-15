@@ -163,8 +163,13 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
   });
 }
 
-/** Drena a fila do usuário logado agora, se houver: boot, login e volta da rede. */
-function drenarFilaDoUsuarioAtual(): void {
+/**
+ * Drena a fila do usuário logado agora, se houver. Chamada pelo AuthProvider no
+ * boot (sessão existente) e a cada login — nunca no topo deste módulo, para a
+ * importação continuar sem efeito colateral (assinatura no topo quebrava a
+ * importação onde o cliente Supabase é mockado sem `auth`).
+ */
+export function drenarFilaDoUsuarioAtual(): void {
   if (semRede()) return;
   const userId = readAuthenticatedUserId();
   // Sem usuário não há fila para drenar — o que está no disco pode ser de outro
@@ -179,11 +184,9 @@ drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
 });
 
 // O evento `online` não cobre um reload que já começa conectado nem a fila que
-// esperou o usuário voltar a entrar: drena no boot e a cada novo login.
-drenarFilaDoUsuarioAtual();
-supabase.auth.onAuthStateChange((event) => {
-  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') drenarFilaDoUsuarioAtual();
-});
+// esperou o usuário voltar a entrar: o AuthProvider chama
+// `drenarFilaDoUsuarioAtual()` no boot (sessão existente) e a cada login, para
+// este módulo não tocar no cliente Supabase na importação.
 
 async function enqueueOffline(
   input: SendOutboundMessageInput,
