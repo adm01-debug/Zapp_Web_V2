@@ -225,7 +225,9 @@ describe('useSentimentData — falha visível, período e paginação', () => {
     expect(h.analyses).not.toHaveBeenCalled();
   });
 
-  it('lê TODAS as páginas das análises (1500 linhas, teto de 1000 por resposta)', async () => {
+  // timeout por teste maior que o default: na suíte inteira (dezenas de arquivos
+  // em paralelo) o worker fica sem CPU e a espera pelo fim do fetch passa de 12s.
+  it('lê TODAS as páginas das análises (1500 linhas, teto de 1000 por resposta)', { timeout: 60000 }, async () => {
     const pagina = (from: number, to: number) => {
       const rows: Array<Record<string, unknown>> = [];
       for (let i = from; i < Math.min(to + 1, 1500); i += 1) {
@@ -235,9 +237,7 @@ describe('useSentimentData — falha visível, período e paginação', () => {
     };
     h.analyses.mockImplementation((from: number, to: number) => Promise.resolve(pagina(from, to)));
     const { result } = renderHook(() => useSentimentData('7'));
-    // timeout generoso: na suíte completa (dezenas de arquivos em paralelo) o
-    // default de 1s do waitFor já flocou aqui por carga da máquina.
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 12000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 45000 });
     expect(h.analyses).toHaveBeenCalledWith(0, 999);
     expect(h.analyses).toHaveBeenCalledWith(1000, 1999);
     expect(result.current.stats.totalAnalyses).toBe(1500);
@@ -245,7 +245,7 @@ describe('useSentimentData — falha visível, período e paginação', () => {
     expect(result.current.incomplete).toBe(false);
   });
 
-  it('lê TODAS as páginas dos alertas da RPC (1200 alertas, teto de 1000 por resposta)', async () => {
+  it('lê TODAS as páginas dos alertas da RPC (1200 alertas, teto de 1000 por resposta)', { timeout: 60000 }, async () => {
     const pagina = (from: number, to: number) => {
       const rows: Array<Record<string, unknown>> = [];
       for (let i = from; i < Math.min(to + 1, 1200); i += 1) {
@@ -256,7 +256,7 @@ describe('useSentimentData — falha visível, período e paginação', () => {
     h.rpc.mockImplementation((_nome: string, _params: unknown, from: number, to: number) =>
       Promise.resolve(pagina(from, to)));
     const { result } = renderHook(() => useSentimentData('7'));
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 12000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 45000 });
     expect(h.rpc).toHaveBeenCalledWith('dashboard_sentiment_alerts', expect.anything(), 1000, 1999);
     expect(result.current.stats.totalAlerts).toBe(1200);
     expect(result.current.stats.criticalAlerts).toBe(1200);

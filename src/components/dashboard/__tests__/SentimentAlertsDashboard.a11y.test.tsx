@@ -80,11 +80,11 @@ describe('SentimentAlertsDashboard — acessibilidade', () => {
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
   });
 
-  it('falha de leitura mostra o erro com "Tentar de novo" em vez de fingir vazio', async () => {
+  it('falha de leitura mostra o erro com "Tentar de novo" em vez de fingir vazio', { timeout: 60000 }, async () => {
     h.analyses.mockResolvedValue({ data: null, error: { message: 'permission denied for table conversation_analyses' } });
     render(<SentimentAlertsDashboard />);
 
-    const alerta = await screen.findByTestId('sentiment-error', {}, { timeout: 12000 });
+    const alerta = await screen.findByTestId('sentiment-error', {}, { timeout: 45000 });
     expect(alerta).toHaveAttribute('role', 'alert');
     expect(alerta).toHaveTextContent('Não foi possível carregar os dados de sentimento');
     expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument();
