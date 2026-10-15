@@ -373,7 +373,15 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
       expect(screen.queryByText('Variante A')).toBeNull();
     });
 
-    it('não mostra o bloco A/B quando a amostra ainda não atingiu ab_min_sample', async () => {
+    it('some o bloco A/B quando a amostra cai abaixo de ab_min_sample', async () => {
+      // Primeiro com amostra suficiente o bloco existe (falha na base: nunca existe)...
+      state.campaignList = [abCampaign];
+      state.abStats = { variants: VARIANTS_AB };
+      const first = renderView();
+      fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+      expect(await screen.findByText('Teste A/B')).toBeTruthy();
+      first.unmount();
+      // ...depois, com a amostra abaixo do mínimo, o bloco some.
       const smallCampaign = { ...abCampaign, ab_min_sample: 100 };
       state.campaignList = [smallCampaign];
       state.abStats = {
@@ -392,7 +400,15 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
       expect(screen.queryByText('Vencedora')).toBeNull();
     });
 
-    it('não mostra o bloco A/B quando ab_enabled é false', async () => {
+    it('some o bloco A/B quando ab_enabled é false', async () => {
+      // Primeiro habilitado o bloco existe (falha na base: nunca existe)...
+      state.campaignList = [abCampaign];
+      state.abStats = { variants: VARIANTS_AB };
+      const first = renderView();
+      fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+      expect(await screen.findByText('Teste A/B')).toBeTruthy();
+      first.unmount();
+      // ...depois, desabilitado, o bloco some.
       const disabledCampaign = { ...mockCampaign, ab_enabled: false };
       state.campaignList = [disabledCampaign];
       state.abStats = null;

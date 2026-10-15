@@ -283,7 +283,6 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     duplicateCampaign: { mutateAsync: vi.fn() },
     updateCampaign: { mutateAsync: vi.fn() },
     updateCampaignLimits: { mutateAsync: vi.fn() },
-    setSelectedCampaignId: vi.fn(),
   }),
 }));
 

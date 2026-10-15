@@ -761,7 +761,9 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     refetchCampaigns, isLoading: campaignsLoading, isFetching: campaignsFetching,
     isError: campaignsIsError, error: campaignsError,
     abStats,
-    setSelectedCampaignId,
+    // Refazer 1 (t_d1e6c205): mocks parciais do hook podem não prover o setter
+    // (era `TypeError` no mount); em produção o hook sempre provê.
+    setSelectedCampaignId = () => {},
   } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
 
