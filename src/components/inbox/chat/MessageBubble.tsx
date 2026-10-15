@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatMessageTime, MessageStatusIcon } from './messageUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
-import { MessageBubbleAguardandoRede, STATUS_AGUARDANDO_REDE } from './MessageBubbleAguardandoRede';
+import { MessageBubbleAguardandoRede, STATUS_AGUARDANDO_REDE, STATUS_FALHA_ENVIO } from './MessageBubbleAguardandoRede';
 import { QuarantineBadge } from '@/components/security/QuarantineBadge';
 import { LinkPreviewCard } from './LinkPreviewCard';
 import {
@@ -158,8 +158,10 @@ export const MessageBubble = memo(function MessageBubble({
   // t_fa2f8515 / PD-63: a bolha de uma mensagem parada na fila offline não é uma bolha de
   // envio — é um item aguardando rede. Delega para o balão dedicado (com "Aguardando rede" e
   // "Cancelar") antes de montar o resto, que afirmaria entrega.
-  if (message.status === STATUS_AGUARDANDO_REDE) {
-    return <MessageBubbleAguardandoRede message={message} />;
+  // [refazer 1] ponto 1: o item com tentativas esgotadas usa o mesmo balão
+  // dedicado, com o selo "Não enviada" e o mesmo "Cancelar".
+  if (message.status === STATUS_AGUARDANDO_REDE || message.status === STATUS_FALHA_ENVIO) {
+    return <MessageBubbleAguardandoRede message={message} falhou={message.status === STATUS_FALHA_ENVIO} />;
   }
   const isSent = message.sender === 'agent';
   const tentativas = tentativasDeEnvio(message);

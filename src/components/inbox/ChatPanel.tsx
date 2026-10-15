@@ -31,7 +31,7 @@ import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
 import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 import { paraMensagemAguardandoRede } from './chat/MessageBubbleAguardandoRede';
-import { offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
+import { offlineSendQueue, readAuthenticatedUserId, type OfflineQueuedMessage } from '@/lib/offlineQueue';
 import type { TransferTargetType } from './TransferDialog';
 import { cn } from '@/lib/utils';
 import { Clock } from 'lucide-react';
@@ -204,6 +204,12 @@ type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | '
  * representa, então o painel precisa LÊ-LA para mostrar o que está pendente. O
  * `subscribe` da própria fila avisa enqueue/remoção/drenagem: a bolha aparece ao
  * enfileirar e some sozinha quando o envio sai (item removido da fila).
+ *
+ * [refazer 1] ponto 1: mostra também o item `failed` (tentativas esgotadas) — sem
+ * isso, esgotar as 5 tentativas apagava a mensagem da tela sem deixar rastro.
+ * [refazer 1] ponto 4: a fila é do usuário — só entra o item do usuário logado
+ * (`readAuthenticatedUserId`), a mesma régua da drenagem. Sem isso, o painel
+ * mostrava item órfão de outro atendente que nunca seria entregue ali.
  */
 function useFilaOfflineDoContato(contactId: string): OfflineQueuedMessage[] {
   const [itens, setItens] = useState<OfflineQueuedMessage[]>([]);
@@ -214,7 +220,15 @@ function useFilaOfflineDoContato(contactId: string): OfflineQueuedMessage[] {
         .list()
         .then((todos) => {
           if (!vivo) return;
-          setItens(todos.filter((item) => item.contactId === contactId && item.status === 'pending'));
+          const meuId = readAuthenticatedUserId();
+          setItens(
+            todos.filter(
+              (item) =>
+                item.contactId === contactId &&
+                item.userId === meuId &&
+                (item.status === 'pending' || item.status === 'failed'),
+            ),
+          );
         })
         .catch(() => {
           if (vivo) setItens([]);

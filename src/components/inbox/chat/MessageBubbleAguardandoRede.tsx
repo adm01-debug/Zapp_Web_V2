@@ -15,6 +15,13 @@ import { offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue'
 export const STATUS_AGUARDANDO_REDE = 'aguardando-rede';
 
 /**
+ * [refazer 1] ponto 1: sentinela local do item que esgotou as tentativas
+ * (`OfflineQueuedMessage.status === 'failed'`). Como o outro valor, NUNCA vem do
+ * servidor — é gravado pelo próprio painel em `paraMensagemAguardandoRede`.
+ */
+export const STATUS_FALHA_ENVIO = 'falha-envio';
+
+/**
  * Converte um item da fila offline num `Message` para o virtualizador do chat.
  * `id` e `client_message_id` recebem o `clientMessageId`: é a chave estável que a
  * linha no servidor também carrega (`messages.client_message_id`, item 024), então
@@ -30,7 +37,9 @@ export function paraMensagemAguardandoRede(item: OfflineQueuedMessage): Message 
     timestamp: new Date(item.enqueuedAt),
     type: item.messageType as Message['type'],
     mediaUrl: item.mediaUrl ?? undefined,
-    status: STATUS_AGUARDANDO_REDE,
+    // [refazer 1] ponto 1: o item com tentativas esgotadas vira o balão
+    // "Não enviada" em vez de sumir da tela sem rastro.
+    status: item.status === 'failed' ? STATUS_FALHA_ENVIO : STATUS_AGUARDANDO_REDE,
     client_message_id: item.clientMessageId,
     contact_id: item.contactId,
   };
@@ -40,6 +49,11 @@ interface MessageBubbleAguardandoRedeProps {
   message: Message;
   /** Remoção do item na fila; por padrão cancela no próprio outbox offline. */
   onCancel?: (clientMessageId: string) => void;
+  /**
+   * [refazer 1] ponto 1: item com tentativas esgotadas — o selo diz "Não enviada"
+   * em vez de "Aguardando rede". O "Cancelar" é o mesmo.
+   */
+  falhou?: boolean;
 }
 
 /**
@@ -50,6 +64,7 @@ interface MessageBubbleAguardandoRedeProps {
 export const MessageBubbleAguardandoRede = memo(function MessageBubbleAguardandoRede({
   message,
   onCancel,
+  falhou = false,
 }: MessageBubbleAguardandoRedeProps) {
   const cancelar = () => {
     if (onCancel) {
@@ -75,7 +90,7 @@ export const MessageBubbleAguardandoRede = memo(function MessageBubbleAguardando
         <div className="mt-1 flex items-center justify-end gap-2">
           <span className="flex items-center gap-1 text-2xs font-medium">
             <Clock className="w-3 h-3 motion-safe:animate-pulse" aria-hidden="true" />
-            Aguardando rede
+            {falhou ? 'Não enviada' : 'Aguardando rede'}
           </span>
           <button
             type="button"

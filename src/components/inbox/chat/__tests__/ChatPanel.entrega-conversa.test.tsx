@@ -329,12 +329,29 @@ function itemDaFila(over: Partial<Record<string, unknown>> = {}) {
 }
 
 describe('ChatPanel — fila offline visível como "Aguardando rede"', () => {
+  // [refazer 1] ponto 4: o painel filtra pelo usuário logado — a sessão de teste
+  // usa o mesmo cofre que `readAuthenticatedUserId` lê (`sb-*-auth-token`).
+  const CHAVE_SESSAO_TESTE = 'sb-teste-auth-token';
+  function logarComo(userId: string) {
+    window.localStorage.setItem(
+      CHAVE_SESSAO_TESTE,
+      JSON.stringify({ access_token: 'token-teste', user: { id: userId } }),
+    );
+  }
   beforeEach(async () => {
     await offlineSendQueue.clear();
+    logarComo('user-1');
   });
   afterEach(async () => {
     await offlineSendQueue.clear();
+    window.localStorage.removeItem(CHAVE_SESSAO_TESTE);
   });
+  function bolhas() {
+    return screen.getAllByTestId('bubble');
+  }
+  function temBolha(id: string) {
+    return bolhas().some((b) => b.getAttribute('data-message-id') === id);
+  }
 
   it('mostra a bolha do item na fila e o anúncio acessível', async () => {
     await offlineSendQueue.enqueue(itemDaFila());
@@ -354,24 +371,69 @@ describe('ChatPanel — fila offline visível como "Aguardando rede"', () => {
     await offlineSendQueue.enqueue(itemDaFila());
     renderPanel([msg({ id: 'linha-real', status: 'sending', client_message_id: 'cm-fila-1' })]);
 
-    // Sem bolha sintética: a linha real já representa a mensagem.
-    await waitFor(() =>
-      expect(
-        screen.getAllByTestId('bubble').some((b) => b.getAttribute('data-message-id') === 'cm-fila-1'),
-      ).toBe(false),
-    );
-    expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('');
+    // [refazer 1] ponto 2: primeiro o sinal positivo (a linha real renderizou),
+    // SÓ então a negativa — `waitFor(some === false)` puro passa no vermelho inicial.
+    await waitFor(() => expect(temBolha('linha-real')).toBe(true));
+    expect(temBolha('cm-fila-1')).toBe(false);
+    expect(screen.getByTestId('anuncio-fila-offline').textContent).toBe('');
   });
 
   it('item de OUTRO contato não aparece nesta conversa', async () => {
     await offlineSendQueue.enqueue(itemDaFila({ clientMessageId: 'cm-outro', contactId: 'contato-2' }));
     renderPanel([msg({ id: 'ok', status: 'delivered' })]);
 
-    await waitFor(() => {
-      expect(
-        screen.getAllByTestId('bubble').some((b) => b.getAttribute('data-message-id') === 'cm-outro'),
-      ).toBe(false);
+    // [refazer 1] ponto 2: sinal positivo antes da negativa.
+    await waitFor(() => expect(temBolha('ok')).toBe(true));
+    expect(temBolha('cm-outro')).toBe(false);
+    expect(screen.getByTestId('anuncio-fila-offline').textContent).toBe('');
+  });
+
+  it('[refazer 1] ponto 1: item com tentativas esgotadas aparece como "falha-envio"', async () => {
+    await offlineSendQueue.enqueue(itemDaFila({ clientMessageId: 'cm-falhou', content: 'não saiu' }));
+    // Esgota as tentativas pelo caminho real (5 drenagens com entrega falhando).
+    for (let tentativa = 0; tentativa < 5; tentativa += 1) {
+      await offlineSendQueue.drain(
+        async () => {
+          throw new Error('sem rede');
+        },
+        { userId: 'user-1' },
+      );
+    }
+    renderPanel([msg({ id: 'ok', status: 'delivered' })]);
+
+    await waitFor(() => expect(temBolha('cm-falhou')).toBe(true));
+    const bolha = bolhas().find((b) => b.getAttribute('data-message-id') === 'cm-falhou');
+    expect(bolha?.getAttribute('data-status')).toBe('falha-envio');
+    await waitFor(() =>
+      expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('1 mensagem(ns) aguardando rede'),
+    );
+  });
+
+  it('[refazer 1] ponto 3: quando o envio sai, a bolha e o contador somem', async () => {
+    await offlineSendQueue.enqueue(itemDaFila({ clientMessageId: 'cm-saiu', content: 'vai sair' }));
+    renderPanel([msg({ id: 'ok', status: 'delivered' })]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('1 mensagem(ns) aguardando rede'),
+    );
+    await waitFor(() => expect(temBolha('cm-saiu')).toBe(true));
+
+    // O envio saiu: item removido da fila pelo caminho real.
+    await act(async () => {
+      await offlineSendQueue.remove('cm-saiu');
     });
-    expect(screen.getByTestId('anuncio-fila-offline')).toHaveTextContent('');
+
+    await waitFor(() => expect(temBolha('cm-saiu')).toBe(false));
+    await waitFor(() => expect(screen.getByTestId('anuncio-fila-offline').textContent).toBe(''));
+  });
+
+  it('[refazer 1] ponto 4: item de OUTRO usuário não aparece nesta sessão', async () => {
+    await offlineSendQueue.enqueue(itemDaFila({ clientMessageId: 'cm-outro-user', userId: 'user-2' }));
+    renderPanel([msg({ id: 'ok', status: 'delivered' })]);
+
+    // Sinal positivo antes da negativa: o painel renderizou, e o item alheio segue fora.
+    await waitFor(() => expect(temBolha('ok')).toBe(true));
+    expect(temBolha('cm-outro-user')).toBe(false);
+    expect(screen.getByTestId('anuncio-fila-offline').textContent).toBe('');
   });
 });

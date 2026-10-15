@@ -18,7 +18,7 @@ vi.mock('@/components/inbox/chat/LinkPreviewCard', () => ({ LinkPreviewCard: () 
 vi.mock('@/components/security/QuarantineBadge', () => ({ QuarantineBadge: () => null }));
 
 import { MessageBubble } from '../MessageBubble';
-import { STATUS_AGUARDANDO_REDE } from '../MessageBubbleAguardandoRede';
+import { STATUS_AGUARDANDO_REDE, STATUS_FALHA_ENVIO } from '../MessageBubbleAguardandoRede';
 
 const baseProps = {
   isFirstInGroup: true,
@@ -56,5 +56,14 @@ describe('MessageBubble — status da fila offline desvia para o balão dedicado
     expect(screen.getByText('Aguardando rede')).toBeInTheDocument();
     expect(screen.queryByText('Você')).toBeNull();
     expect(screen.queryByText(/enviad/i)).toBeNull();
+  });
+
+  it('[refazer 1] ponto 1: item com tentativas esgotadas mostra "Não enviada" com o mesmo "Cancelar"', () => {
+    render(<MessageBubble message={mensagem({ id: 'cm-falhou', status: STATUS_FALHA_ENVIO })} {...baseProps} />);
+
+    expect(screen.getByTestId('bolha-aguardando-rede')).toBeInTheDocument();
+    expect(screen.getByText('Não enviada')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelar envio desta mensagem' })).toBeInTheDocument();
+    expect(screen.queryByText('Aguardando rede')).toBeNull();
   });
 });
