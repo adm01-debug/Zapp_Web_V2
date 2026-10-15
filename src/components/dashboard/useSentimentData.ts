@@ -5,6 +5,8 @@ import { format, isWithinInterval } from 'date-fns';
 import { appDayEndOfKey, appDayKey, appDayKeyLabel, appDayStart, appDayStartOfKey, appShiftDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 import { normalizeScore, aggregateScores } from '@/lib/ai-values';
+import { classifySentiment } from '@/lib/sentiment-classes';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 
 /**
  * Score de sentimento (0-100) ou `null` quando ausente/inválido (IA-023).
@@ -12,6 +14,20 @@ import { normalizeScore, aggregateScores } from '@/lib/ai-values';
  */
 function sentimentScoreValue(raw: unknown): number | null {
   return normalizeScore(raw, { min: 0, max: 100, scale: 'percent' }).value;
+}
+
+/** Teto de linhas por resposta do PostgREST — a leitura pagina em blocos deste tamanho. */
+export const SENTIMENT_PAGE_SIZE = 1000;
+
+/**
+ * Dias do período a partir do valor do filtro; `null` quando não é inteiro > 0.
+ * Antes `Number.parseInt(period)` devolvia `NaN` e `appDayStart(NaN)` uma data
+ * inválida: a consulta voltava VAZIA e sem erro, então um filtro quebrado
+ * aparecia como "não há dados no período" em vez de falha.
+ */
+export function parsePeriodDays(period: string): number | null {
+  const days = Number.parseInt(period, 10);
+  return Number.isFinite(days) && days > 0 ? days : null;
 }
 
 export interface SentimentAlert {
@@ -25,6 +41,14 @@ export interface SentimentAlert {
   agent_name?: string;
   message?: string;
   email_sent?: boolean;
+}
+
+/** Linha crua devolvida por `dashboard_sentiment_alerts` antes do mapeamento. */
+interface RawSentimentAlert {
+  id: string;
+  entity_id: string | null;
+  created_at: string;
+  details: Record<string, unknown> | null;
 }
 
 export interface ConversationAnalysis {
@@ -61,11 +85,28 @@ export function useSentimentData(period: string) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  /** Falha de leitura VISÍVEL: a tela mostra erro com botão de tentar de novo. */
+  const [error, setError] = useState<Error | null>(null);
+  /** Leitura que não cobriu o período inteiro (erro no meio ou teto de páginas). */
+  const [incomplete, setIncomplete] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const daysAgo = Number.parseInt(period);
+    setError(null);
+
+    const daysAgo = parsePeriodDays(period);
+    if (daysAgo === null) {
+      // Período quebrado vira falha VISÍVEL: com `NaN` a data era inválida e a
+      // consulta voltava vazia, o que a tela mostrava como "sem dados".
+      setIncomplete(false);
+      setError(new Error(`Período inválido: "${period}" não é um número de dias maior que zero.`));
+      setLoading(false);
+      return;
+    }
+
     const startDate = appDayStart(daysAgo).toISOString();
+    const falhas: string[] = [];
+    let truncado = false;
 
     try {
       // E39: RPC dedicada (SECURITY DEFINER, guard is_admin_or_supervisor
@@ -76,37 +117,59 @@ export function useSentimentData(period: string) {
       // mesmo shape (id/entity_id/created_at/details), escopada só a
       // action='sentiment_alert'. Cast local via 'any' até o types.ts
       // (gerado, não sincronizado no self-hosted) conhecer essa RPC.
-      const { data: alertData, error: alertError } = await (supabase as any).rpc('dashboard_sentiment_alerts', { p_since: startDate }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
-
-      if (alertError) throw alertError;
-
-      const formattedAlerts = ((alertData ?? []) as Array<{ id: string; entity_id: string | null; created_at: string; details: Record<string, unknown> | null }>).map(entry => ({
+      //
+      // A leitura é PAGINADA: uma resposta do PostgREST traz no máximo
+      // `SENTIMENT_PAGE_SIZE` linhas, e o alerta fora da primeira página
+      // desaparecia em silêncio. A ordem é total (created_at + id) para o
+      // `.range()` não repetir nem perder alerta empatado no mesmo instante.
+      const alertasRes = await fetchAllRows<RawSentimentAlert>((from, to) =>
+        (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
+          .rpc('dashboard_sentiment_alerts', { p_since: startDate })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to),
+      );
+      setAlerts(alertasRes.rows.map(entry => ({
         id: entry.id,
         contactId: entry.entity_id,
         createdAt: entry.created_at,
         ...((entry.details || {}) as Record<string, unknown>),
-      })) as SentimentAlert[];
+      }) as SentimentAlert));
+      if (alertasRes.error) falhas.push(`alertas: ${alertasRes.error.message}`);
+      truncado = truncado || alertasRes.incomplete;
 
-      setAlerts(formattedAlerts);
-
-      const { data: analysisData, error: analysisError } = await supabase
-        .from('conversation_analyses')
-        .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
-        .gte('created_at', startDate)
-        .order('created_at', { ascending: false });
-
-      if (analysisError) throw analysisError;
-      setAnalyses((analysisData || []) as ConversationAnalysis[]);
+      // Mesma paginação para as análises: sem ela, "taxa de negativos" e as
+      // médias saíam de uma amostra (a primeira página) e mentiam.
+      const analysesRes = await fetchAllRows<ConversationAnalysis>(async (from, to) => {
+        const res = await supabase
+          .from('conversation_analyses')
+          .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
+          .gte('created_at', startDate)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to);
+        return { data: res.data as ConversationAnalysis[] | null, error: res.error };
+      }, { pageSize: SENTIMENT_PAGE_SIZE });
+      setAnalyses(analysesRes.rows);
+      if (analysesRes.error) falhas.push(`análises: ${analysesRes.error.message}`);
+      truncado = truncado || analysesRes.incomplete;
 
       const { data: agentsData, error: agentsError } = await supabase
         .from('profiles')
         .select('id, name, avatar_url')
         .eq('is_active', true);
 
-      if (agentsError) throw agentsError;
-      setAgents((agentsData || []) as AgentProfile[]);
+      if (agentsError) falhas.push(`agentes: ${agentsError.message}`);
+      else setAgents((agentsData || []) as AgentProfile[]);
+
+      setIncomplete(truncado);
+      // Falha em qualquer das três leituras vira erro do hook: o que deu para
+      // ler fica na tela, mas o consumidor sabe que o número está incompleto.
+      if (falhas.length > 0) throw new Error(`Falha ao carregar os dados de sentimento (${falhas.join('; ')})`);
     } catch (error) {
-      log.error('Error fetching sentiment data:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.error('Error fetching sentiment data:', err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -119,9 +182,15 @@ export function useSentimentData(period: string) {
 
   const stats = useMemo(() => {
     const totalAnalyses = analyses.length;
-    const negativeAnalyses = analyses.filter(a => a.sentiment === 'negativo').length;
-    const positiveAnalyses = analyses.filter(a => a.sentiment === 'positivo').length;
-    const neutralAnalyses = analyses.filter(a => a.sentiment === 'neutro').length;
+    // IA-SENTIMENT-001: a contagem usa a classe canônica (pt-BR + legado EN
+    // traduzido na leitura). Antes comparava com o literal pt-BR e TODA
+    // análise gravada em inglês (positive/negative/neutral/critical) zerava.
+    const negativo = (a: ConversationAnalysis) => classifySentiment(a.sentiment) === 'negativo';
+    const positivo = (a: ConversationAnalysis) => classifySentiment(a.sentiment) === 'positivo';
+    const neutro = (a: ConversationAnalysis) => classifySentiment(a.sentiment) === 'neutro';
+    const negativeAnalyses = analyses.filter(negativo).length;
+    const positiveAnalyses = analyses.filter(positivo).length;
+    const neutralAnalyses = analyses.filter(neutro).length;
     // Média que EXCLUI ausente/inválido (IA-023): sem amostra válida é `null`,
     // nunca 50; nota 0 continua 0.
     const avgSentiment = aggregateScores(analyses.map(a => a.sentiment_score)).average;
@@ -141,7 +210,7 @@ export function useSentimentData(period: string) {
   }, [analyses, alerts]);
 
   const dailyData = useMemo(() => {
-    const days = Number.parseInt(period);
+    const days = parsePeriodDays(period) ?? 0;
     const data: { date: string; positive: number; neutral: number; negative: number; avgScore: number | null }[] = [];
 
     for (let i = days - 1; i >= 0; i--) {
@@ -152,9 +221,9 @@ export function useSentimentData(period: string) {
 
       data.push({
         date: appDayKeyLabel(key),
-        positive: dayAnalyses.filter(a => a.sentiment === 'positivo').length,
-        neutral: dayAnalyses.filter(a => a.sentiment === 'neutro').length,
-        negative: dayAnalyses.filter(a => a.sentiment === 'negativo').length,
+        positive: dayAnalyses.filter(a => classifySentiment(a.sentiment) === 'positivo').length,
+        neutral: dayAnalyses.filter(a => classifySentiment(a.sentiment) === 'neutro').length,
+        negative: dayAnalyses.filter(a => classifySentiment(a.sentiment) === 'negativo').length,
         // Dia sem amostra válida é `null` (não 0 nem 50) — não entra no histograma.
         avgScore: aggregateScores(dayAnalyses.map(a => a.sentiment_score)).average,
       });
@@ -163,15 +232,15 @@ export function useSentimentData(period: string) {
   }, [analyses, period]);
 
   const agentData = useMemo((): AgentSentimentData[] => {
-    const days = Number.parseInt(period);
+    const days = parsePeriodDays(period) ?? 0;
     const halfPeriod = Math.floor(days / 2);
 
     return agents.map(agent => {
       const agentAnalyses = analyses.filter(a => a.analyzed_by === agent.id);
       const totalAnalyses = agentAnalyses.length;
-      const positive = agentAnalyses.filter(a => a.sentiment === 'positivo').length;
-      const neutral = agentAnalyses.filter(a => a.sentiment === 'neutro').length;
-      const negative = agentAnalyses.filter(a => a.sentiment === 'negativo').length;
+      const positive = agentAnalyses.filter(a => classifySentiment(a.sentiment) === 'positivo').length;
+      const neutral = agentAnalyses.filter(a => classifySentiment(a.sentiment) === 'neutro').length;
+      const negative = agentAnalyses.filter(a => classifySentiment(a.sentiment) === 'negativo').length;
       // Média do agente que exclui ausente/inválido; `null` sem amostra válida.
       const avgScore = aggregateScores(agentAnalyses.map(a => a.sentiment_score)).average;
 
@@ -194,7 +263,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, error, isError: error !== null, incomplete, stats, dailyData, agentData, fetchData };
 }
 
 export function getSentimentColor(score: number | null) {

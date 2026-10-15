@@ -100,7 +100,7 @@ export function OverviewTab({ dailyData, alerts, onViewAllAlerts }: {
         <CardContent>
           <ScrollArea className="h-48">
             {alerts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><Bell className="h-8 w-8 mb-2 opacity-50" /><p className="text-sm">Nenhum alerta no período</p></div>
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><Bell className="h-8 w-8 mb-2 opacity-50" /><p className="text-sm">Sem alertas no período</p></div>
             ) : (
               <div className="space-y-3">
                 {alerts.slice(0, 5).map((alert) => {
@@ -209,7 +209,7 @@ export function AlertsTab({ alerts }: { alerts: Alert[] }) {
         <ScrollArea className="h-[400px]">
           {alerts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-              <AlertTriangle className="h-12 w-12 mb-4 opacity-30" /><p>Nenhum alerta registrado no período</p><p className="text-sm">Os alertas aparecem quando o sentimento cai abaixo de 30%</p>
+              <AlertTriangle className="h-12 w-12 mb-4 opacity-30" /><p>Sem alertas no período</p><p className="text-sm">Os alertas aparecem quando o sentimento cai abaixo de 30%</p>
             </div>
           ) : (
             <div className="space-y-3">
