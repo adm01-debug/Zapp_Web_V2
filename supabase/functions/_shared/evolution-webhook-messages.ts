@@ -728,6 +728,32 @@ export async function handleIncomingMessage(
     console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
     return;
   }
+
+  // PK-09: carteira por regra no contato que CHEGA. A tela da carteira promete
+  // "quando um novo contato chega, o sistema verifica as regras na ordem de
+  // prioridade" — o gatilho BEFORE INSERT sozinho não cobria o caso: aqui a RPC
+  // pública `apply_client_wallet` (migration 20261015213324) aplica as MESMAS
+  // regras (prioridade/conexão, só agente ativo), só age em contato SEM
+  // atendente (idempotente) e grava a atribuição na trilha de auditoria.
+  // Chamada no contato recém-criado (contact_created) ou na 1ª mensagem de um
+  // contato ainda sem atendente. A atribuição é efeito secundário: a mensagem
+  // recebida já está gravada, então falha aqui é registrada e o webhook segue
+  // (mesma política do resto do pipeline). Nunca é a nossa própria mensagem.
+  if (!key.fromMe && (tx.contact_created || !tx.assigned_to)) {
+    try {
+      const { data: walletAgent, error: walletErr } = await supabase.rpc('apply_client_wallet', {
+        p_contact_id: tx.contact_id,
+      });
+      if (walletErr) {
+        console.warn('[WALLET] apply_client_wallet failed:', walletErr.code, walletErr.message);
+      } else if (walletAgent) {
+        console.log('[WALLET] contato atribuido por regra da carteira:', tx.contact_id);
+      }
+    } catch (walletThrew) {
+      console.warn('[WALLET] apply_client_wallet threw:', walletThrew instanceof Error ? walletThrew.message : String(walletThrew));
+    }
+  }
+
   if (messageType === 'audio' && mediaUrl) await handleAudioTranscription(supabase, tx.contact_id, tx.message_id, mediaUrl, supabaseUrl, supabaseServiceKey);
   if (tx.outcome === 'inserted' && messageType === 'text' && content) {
     void enrichIncomingLinkPreview(supabase, tx.message_id, content, supabaseUrl, supabaseServiceKey);
