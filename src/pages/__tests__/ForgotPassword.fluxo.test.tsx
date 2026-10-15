@@ -1,6 +1,8 @@
 /**
  * ForgotPassword — solicitação de reset (t_62a7ee39).
  *
+ * self-acceptance: cobre recusa 2615f548-e7c6-4210-b722-138400d1dcd8 (P2).
+ *
  * O ponto de segurança da tela é não revelar se o email existe: usa banco e
  * banco quando o usuário NÃO existe. O teste prova isso comparando o efeito
  * real (insert não chamado / chamado) nos dois ramos.
