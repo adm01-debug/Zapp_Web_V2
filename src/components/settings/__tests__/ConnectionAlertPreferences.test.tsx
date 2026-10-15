@@ -123,6 +123,17 @@ describe('ConnectionAlertPreferences (tela de Configuracoes)', () => {
     expect(screen.queryByText('Salvando…')).not.toBeInTheDocument();
   });
 
+  it('explica que o e-mail depende do envio configurado (PK-15)', () => {
+    render(<ConnectionAlertPreferences />);
+    expect(screen.getByText(/PK-15/)).toBeInTheDocument();
+  });
+
+  it('nao oferece nenhum controle de exportar', () => {
+    render(<ConnectionAlertPreferences />);
+    expect(screen.queryByRole('button', { name: /exportar|baixar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /exportar/i })).not.toBeInTheDocument();
+  });
+
   it('nao tem violacao de acessibilidade', async () => {
     const { container } = render(<ConnectionAlertPreferences />);
     expect(await axe(container)).toHaveNoViolations();
