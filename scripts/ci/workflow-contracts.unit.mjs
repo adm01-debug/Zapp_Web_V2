@@ -265,7 +265,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
     // Localiza o cache de BROWSERS do Playwright (path ms-playwright), não o bun cache.
@@ -303,14 +303,14 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const miss = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install\s+--with-deps\b/.test(p),
     );
     if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
 
     const hit = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install-deps\b/.test(p),
     );
     if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
   }
@@ -324,6 +324,49 @@ test('W44: todos os workflows declaram defaults.run.shell com bash strict', () =
   const SHELL = /defaults:\s*\n\s+run:\s*\n\s+shell:\s*bash\s+--noprofile\s+--norc\s+-euo\s+pipefail\s+\{0\}/s;
   const faltando = nomes.filter((nome) => !SHELL.test(wf[nome]));
   assert.deepEqual(faltando, [], `workflows sem defaults.run.shell strict: ${faltando.join(', ')}`);
+});
+
+// W09 (plano de 14/10/2026, achado N-05b): a versão do Playwright tem UMA fonte, o
+// bun.lock. `bunx playwright@1.63.0` nos workflows duplicava a versão em 6 lugares e o
+// bump do Dependabot (#1918) nascia vermelho até alguém editar YAML e teste à mão.
+// Vale para QUALQUER invocação, não só `install`: `bunx playwright@latest test` resolve o
+// pacote fora do lockfile do mesmo jeito (Codex, PR #1923).
+test('W09: workflows invocam o Playwright do lockfile, sem bunx nem seletor playwright@…', () => {
+  const problemas = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/\bplaywright\b/.test(texto)) continue;
+    if (/(?:@playwright\/[\w.-]+|\bplaywright)@[^\s"'`]+/.test(texto)) problemas.push(`${nome}: seletor playwright@… literal`);
+    // Por linha e com qualquer coisa entre `bunx`/`bun x` e o pacote: `bunx --bun playwright test`
+    // e `bun x playwright test` resolvem fora do lockfile do mesmo jeito (Codex, PR #1923).
+    if (/^.*\b(?:bunx|bun\s+x)\b.*\b(?:@playwright\/[\w.-]+|playwright)\b/m.test(texto)) problemas.push(`${nome}: usa bunx/bun x playwright (resolve fora do bun.lock)`);
+    if (/\bplaywright\s+install/.test(texto) && !/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) {
+      problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
+    }
+  }
+  assert.deepEqual(problemas, [], problemas.join('\n'));
+});
+
+// W99: novos invariantes de segurança de workflow
+
+test('W99: todo curl usa --proto e --tlsv1.2', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      const linha = linhas[i];
+      if (!/\bcurl\b/.test(linha)) continue;
+      if (/--proto\b/.test(linha) && /--tlsv1\.\d/.test(linha)) continue;
+      // linha de continuação: o curl pode estar na linha e as flags na próxima
+      const bloco = linhas.slice(i, i + 4).join(' ');
+      if (/--proto\b/.test(bloco) && /--tlsv1\.\d/.test(bloco)) continue;
+      infratores.push(`${nome}:${i + 1}: ${linha.trim()}`);
+    }
+  }
+  assert.deepEqual(infratores, [], `curl sem --proto='=https' --tlsv1.2:\n${infratores.join('\n')}`);
 });
 
 // W99: todo passo upload-artifact deve declarar retention-days explicitamente.

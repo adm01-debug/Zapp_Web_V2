@@ -124,11 +124,11 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: ./node_modules/.bin/playwright install-deps chromium firefox webkit
 
       # Uma unica invocacao do Playwright, com os projetos listados
       # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:

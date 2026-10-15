@@ -11,14 +11,20 @@ const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 // string EXATA usada no YAML (por exemplo "24", "1.24.x"), para a comparação ser de
 // igualdade e não de faixa.
 export const TOOLCHAIN_PATH = ".github/toolchain.json";
-export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "playwright", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
+export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
 
 const SCALAR = /^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u;
 const TOOLCHAIN_VERSION_INPUT = /^\s*(?:-\s*)?["']?(bun|deno|node|go)-version["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_ENV = /^\s*["']?SUPABASE_CLI_VERSION["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_VERSION_INPUT = /^\s*["']?version["']?\s*:\s*(.*)$/u;
 const IMAGE_LINE = /^\s*(?:-\s*)?(?:["']?image["']?|["']?[A-Za-z][A-Za-z0-9_]*_IMAGE["']?)\s*:\s*(.*)$/u;
-const PLAYWRIGHT_PIN = /playwright@([0-9][0-9A-Za-z.-]*)/gu;
+// W09: a versão do Playwright vem SÓ do bun.lock (`./node_modules/.bin/playwright`).
+// Qualquer seletor `playwright@…` ou `@playwright/<pacote>@…` num workflow — número,
+// `latest`, `next`, `v1.63.0` — faz o `bunx` resolver o pacote fora do lockfile e
+// reintroduz a duplicação que deixava o bump do Dependabot vermelho por construção — é
+// violação, sempre (Codex, PR #1923: o escopo `@playwright/test` expõe o mesmo binário).
+const PLAYWRIGHT_PIN = /(?:@playwright\/[\w.-]+|\bplaywright)@([^\s"'`]+)/gu;
+export const PLAYWRIGHT_ESPERADO = "(sem pin: ./node_modules/.bin/playwright, versão do bun.lock)";
 // W88: padrões para binários baixados via curl e pip em scripts de workflow
 const ACTIONLINT_VERSION_LINE = /^\s*actionlint_version=["']?([0-9][^\s"']*)["']?/u;
 const ACTIONLINT_SHA256_LINE = /^\s*actionlint_sha256=["']?([0-9a-f]{64})["']?/u;
@@ -114,7 +120,8 @@ export function loadToolchain(root = process.cwd()) {
 /**
  * Compara cada versão de toolchain literalizada no workflow com a fonte única.
  * Cobre: bun/deno/node/go em `*-version`, `SUPABASE_CLI_VERSION` (e o `version:` do passo
- * supabase/setup-cli), `playwright@X` em `run:` e a imagem do serviço Postgres.
+ * supabase/setup-cli) e a imagem do serviço Postgres; `playwright@X` literal em `run:` é
+ * sempre violação (W09: a versão do Playwright é a do bun.lock).
  */
 export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}) {
   const violations = [];
@@ -150,7 +157,9 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
     const image = line.match(IMAGE_LINE);
     if (image && image[1].trim().startsWith("postgres")) { report("postgres-image", scalarValue(image[1])); continue; }
 
-    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) { report("playwright", pin[1]); }
+    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) {
+      violations.push({ file, line: lineNumber, tool: "playwright", value: pin[1], expected: PLAYWRIGHT_ESPERADO });
+    }
 
     // W88: binários baixados via curl (actionlint) e pip (zizmor)
     const actionlintVer = line.match(ACTIONLINT_VERSION_LINE);

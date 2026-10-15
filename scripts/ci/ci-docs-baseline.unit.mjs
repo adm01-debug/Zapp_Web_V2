@@ -360,21 +360,22 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.ok(e62.linha.includes(`${linhasDb.length} linhas`));
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
-  const pwRe = new RegExp(PW_VERSION.replace(/\./g, '\\.'));
+  // W09 (14/10/2026): este teste afirmava `playwright@1.63.0` no bun.lock e nos 3
+  // workflows — um teste de DOCUMENTO pinando versão de devDependency; o bump do
+  // Dependabot (#1918) falhava aqui por construção. O que se afirma agora: o lock
+  // tem o Playwright (qualquer versão) e os workflows instalam DO lockfile, sem pin.
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(new RegExp(`playwright@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
-  assert.ok(new RegExp(`playwright-core@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
-  assert.ok(new RegExp(`@playwright/test@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
-
+  assert.match(lock, /"@playwright\/test@\d+\.\d+\.\d+"/);
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes(`playwright@${PW_VERSION}`));
+    assert.ok(wf.includes('./node_modules/.bin/playwright install'), `${f} deve instalar o Playwright do lockfile`);
+    assert.doesNotMatch(wf, /playwright@\d/, `${f} não pode pinar versão do Playwright`);
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, pwRe);
+  // A linha da E76 é registro histórico (versão de 05/10); o que vale hoje é o invariante acima.
   assert.match(e76.linha, /não há mismatch/i);
 });
 
