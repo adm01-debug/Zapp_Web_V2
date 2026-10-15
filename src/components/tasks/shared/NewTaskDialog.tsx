@@ -34,6 +34,16 @@ export function NewTaskDialog({
 }: NewTaskDialogProps) {
   const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
 
+  // O prazo inicial acompanha o contexto: se o pai trocar o
+  // `defaultDueDate` com o modal aberto, o campo sincroniza. Ajuste durante
+  // a renderização (padrão do React para estado derivado de prop), em vez de
+  // setState dentro de useEffect (barrado pelo lint react-hooks/set-state-in-effect).
+  const [prevDefaultDueDate, setPrevDefaultDueDate] = useState(defaultDueDate);
+  if (prevDefaultDueDate !== defaultDueDate) {
+    setPrevDefaultDueDate(defaultDueDate);
+    setDueDate(defaultDueDate);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent

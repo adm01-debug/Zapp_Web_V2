@@ -60,13 +60,14 @@ export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProp
             data-testid="new-task-prazo-data"
             aria-label="Data do prazo"
             value={value ? diaLocal(value) : ''}
-            onChange={(e) =>
-              onChange(
-                e.target.value
-                  ? comporLocal(e.target.value, value ? horaLocal(value) : '23:59')
-                  : null,
-              )
-            }
+            onChange={(e) => {
+              // Data apagada zera o prazo: sempre null, nunca recompõe.
+              if (!e.target.value) {
+                onChange(null);
+                return;
+              }
+              onChange(comporLocal(e.target.value, value ? horaLocal(value) : '23:59'));
+            }}
             className="h-10 bg-input pl-9"
           />
         </div>
@@ -76,9 +77,13 @@ export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProp
           data-testid="new-task-prazo-hora"
           aria-label="Hora do prazo"
           value={value ? horaLocal(value) : ''}
-          onChange={(e) =>
-            onChange(comporLocal(value ? diaLocal(value) : diaLocal(now.toISOString()), e.target.value))
-          }
+          onChange={(e) => {
+            // Sem data anterior a hora sozinha não cria prazo; hora apagada
+            // segura a anterior (não recompõe). Input controlado: ignorar a
+            // troca mantém o texto anterior na tela.
+            if (!value || !e.target.value) return;
+            onChange(comporLocal(diaLocal(value), e.target.value));
+          }}
           className="h-10 w-28 shrink-0 bg-input"
         />
 

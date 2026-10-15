@@ -33,9 +33,9 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
-function renderDialog() {
+function renderDialog(defaultDueDate?: string | null) {
   return render(
-    <NewTaskDialog open onOpenChange={vi.fn()} now={NOW} />,
+    <NewTaskDialog open onOpenChange={vi.fn()} now={NOW} defaultDueDate={defaultDueDate} />,
   );
 }
 
@@ -118,5 +118,59 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
     expect(dataInput().value).toBe('');
     expect(horaInput().value).toBe('');
     expect(limparBtn()).toBeDisabled();
+  });
+
+  it('hora sozinha sem data anterior não cria prazo (ignora a troca)', () => {
+    renderDialog();
+
+    fireEvent.change(horaInput(), { target: { value: '08:30' } });
+
+    expect(dataInput().value).toBe('');
+    expect(horaInput().value).toBe('');
+    expect(limparBtn()).toBeDisabled();
+  });
+
+  it('apagar a hora segura o horário anterior (não recompõe)', () => {
+    renderDialog();
+
+    fireEvent.change(dataInput(), { target: { value: '2026-11-05' } });
+    fireEvent.change(horaInput(), { target: { value: '08:30' } });
+    expect(horaInput().value).toBe('08:30');
+
+    fireEvent.change(horaInput(), { target: { value: '' } });
+
+    expect(dataInput().value).toBe('2026-11-05');
+    expect(horaInput().value).toBe('08:30');
+  });
+
+  it('apagar a data resulta null, mesmo com prazo anterior', () => {
+    renderDialog();
+
+    fireEvent.click(screen.getByTestId('new-task-prazo-hoje'));
+    expect(dataInput().value).not.toBe('');
+
+    fireEvent.change(dataInput(), { target: { value: '' } });
+
+    expect(dataInput().value).toBe('');
+    expect(horaInput().value).toBe('');
+    expect(limparBtn()).toBeDisabled();
+  });
+
+  it('defaultDueDate novo acompanha o contexto (sincroniza)', () => {
+    const { rerender } = renderDialog(comporLocal('2026-11-05', '08:30'));
+    expect(dataInput().value).toBe('2026-11-05');
+    expect(horaInput().value).toBe('08:30');
+
+    rerender(
+      <NewTaskDialog
+        open
+        onOpenChange={vi.fn()}
+        now={NOW}
+        defaultDueDate={comporLocal('2026-12-01', '09:15')}
+      />,
+    );
+
+    expect(dataInput().value).toBe('2026-12-01');
+    expect(horaInput().value).toBe('09:15');
   });
 });
