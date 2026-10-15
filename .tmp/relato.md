@@ -1,64 +1,52 @@
-Especialista: workersql
+Especialista: senior (area-sql-banco)
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013230002_contact_response_stats.sql` (NOVO, aditivo): cria a RPC
-  `public.contact_response_stats(p_contact_id uuid, p_days integer DEFAULT 30)`, que devolve numa
-  única chamada as contagens e o tempo de resposta do painel do contato — e tira o viés do defeito.
-  * Tempo de resposta: par "mensagem do contato → a resposta do agente seguinte", casado com `lead()`
-    sobre o histórico INTEIRO ordenado por `(created_at, id)`; devolve `response_samples`,
-    `avg_response_minutes` e `median_response_minutes` (`percentile_cont(0.5)`). A leitura antiga
-    (`order created_at asc` + `limit 200`) só enxergava as 200 mensagens mais antigas.
-  * Contagens: `total_messages`/`total_conversations` e os pares recente/anterior de cada um, com
-    `*_change_percent` (janela = últimos `p_days`; anterior = os `p_days` anteriores). Janela anterior
-    zerada devolve NULL (não inventa número).
-  * CSAT: `csat_average` e `csat_count`.
-  * Visibilidade: a função é `SECURITY DEFINER` e age em nome do usuário, então a barreira é
-    `public.is_contact_visible_to_user(p_contact_id, auth.uid())`. Contato invisível OU inexistente
-    devolve o MESMO resultado (0 linhas) — sem oráculo.
-- ACL: `REVOKE ALL ... FROM PUBLIC, anon` pela assinatura exata e `GRANT EXECUTE` só a
-  `authenticated, service_role`; `SET search_path = public, pg_temp`.
-- `src/integrations/supabase/types.ts`: assinatura da função nova (regra da área: RETURNS novo vai
-  junto).
-- Sem DML, sem gatilho e nenhuma ACL/policy de objeto EXISTENTE foi tocada; é um único
-  `CREATE OR REPLACE FUNCTION` (atômico). O cartão é de banco e a única linha de migration é esta.
+- `supabase/migrations/20261015013000_contact_response_stats_janela.sql` (NOVA): `CREATE OR REPLACE` da
+  `public.contact_response_stats` sem tocar em assinatura, colunas, visibilidade nem ACL —
+  a única mudança de comportamento está no CTE `pares`, que agora cruza `params` e exige a mensagem do
+  contato dentro de `[agora - p_days, agora)`. O `lead()` continua sobre o histórico inteiro e o filtro
+  vem depois, para não perder a resposta de um par da borda. Comentários da migration atualizados.
+- `supabase/tests/contact_response_stats.sql`: fixture T4 com três grupos (50 pares velhos a 90 dias fora
+  da janela + 250 pares recentes dentro: 50 externos de 2 min e 200 internos de 6 min, 500 mensagens
+  recentes — acima do teto de 200 do código antigo); T4 exige amostra da janela e difere da leitura
+  antiga; T7 exige `p_days=20` mudando a amostra do tempo de resposta e `p_days=0`/`NULL` caindo no
+  default 30.
 
 ## Prova
-- verde (papel real): `zapp-db-local psql . v2-2610130414ff44 -v ON_ERROR_STOP=1 < supabase/tests/contact_response_stats.sql`
-  → `BEGIN / DO / ROLLBACK` + `NOTICE: contact_response_stats: suite OK — 7 grupo(s) verificado(s)`.
-  A suíte roda as chamadas como `authenticated` (e o caso negativo como `anon`), e usa as migrations
-  reais do banco da tarefa.
-- vermelho do defeito (dentro da própria suíte): com 300 pares (100 de 1 min + 200 de 5 min), a
-  leitura ANTIGA das 200 primeiras linhas dá média 1.00; a RPC devolve 3.67 do histórico completo
-  (`response_samples`=300, mediana 5.00). O assert exige `avg <> media_antiga`.
-- rollback executável: `BEGIN; drop function if exists public.contact_response_stats(uuid, integer); ROLLBACK;`
-  → `DROP FUNCTION`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (112s)` (`OK tipos 108s`, `OK migrations`,
-  `OK db_guard`).
+- vermelho antes (suíte nova contra a função antiga, banco local):
+  `zapp-db-local psql . v2-crs-refazer1 -v ON_ERROR_STOP=1 < supabase/tests/contact_response_stats.sql` →
+  `ERROR: T4 FALHOU: response_samples esperava 250 (só a janela recente), veio 300 — pares antigos fora da janela estão sendo contados`
+- verde depois (mesmo comando, com a migration nova aplicada) →
+  `NOTICE: contact_response_stats: suite OK — 7 grupo(s) verificado(s)`
+- rollback de verdade: rodei a linha `-- Rollback:` (restaura a v1; único delta para a v1 é o comentário
+  interno `-- Portão...`, que não colapsa numa linha sem virar comentário do resto — comportamento
+  idêntico) → a suíte voltou a reprovar com `veio 300` (comportamento v1 restaurado) → reapliquei a
+  migration nova → suíte verde de novo.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (15s)` (tipos, lint e migrations OK;
+  banco_local AVISO sem conjunto, como prevê o fechar). Com conjunto, o `check` lista este cartão só nas
+  linhas do objeto novo (função + EXECUTEs, ainda fora do retrato de produção); o restante do diff é
+  drift de outros cartões (whatsapp_connections, ai_usage_outbox), sem relação com este diff.
 
-## Passada de efeito colateral
-1. Gatilhos: não há INSERT/UPDATE/DELETE — nenhum gatilho dispara.
-2. Tudo ou nada: uma instrução, uma transação.
-3. Sem oráculo: invisível e inexistente devolvem 0 linhas (testado nos dois).
-4. Permissão só a pedida: REVOKE/GRANT apenas no objeto NOVO.
-5. Entrada inválida: `p_contact_id` inexistente e `p_days` fora da faixa (cai no default 30) testados.
-6. Teste por comportamento com papel real; sem `pg_policies`/deparse.
+## Pontos do revisor
+- Ponto 1: resolvido — `pares` filtra `created_at >= p.agora - p.janela AND created_at < p.agora` com
+  `lead()` sobre o histórico inteiro (`supabase/migrations/20261015013000_contact_response_stats_janela.sql`,
+  CTE `pares`); prova T4 (amostra da janela) + T7 (janelas 20/0/NULL).
+- Ponto 2: resolvido — T4/T7 reescritos (`supabase/tests/contact_response_stats.sql`): 500 mensagens
+  recentes (> 200, sem viés), 50 pares velhos fora da janela ignorados, `p_days=20` altera a amostra
+  do tempo de resposta.
+- Ponto 3: resolvido — T7 tem `p_days=0` e `p_days=NULL` comparados ao default 30 (a afirmação do relato
+  anterior agora é verdadeira e executada).
+- Ponto 4: resolvido — comentários da migration nova (cabeçalho, SEMÂNTICA, SOLUÇÃO) dizem janela recente;
+  `types.ts` não muda porque assinatura e colunas são as mesmas da v1.
 
-## O que NÃO fiz
-- Não toquei `src/services/contact.service.ts#fetchStats`: quem troca a chamada é o cartão vizinho
-  t_17d80b67 (hugo). A RPC já devolve tudo que o `fetchStats` monta hoje, mais a mediana.
-- Não criei `scripts/db-audit/*.test.sh` novo (proibido pela área): a prova vive em `supabase/tests/`
-  e roda com papel real.
-
-## Arquivos do diff (3)
-- `supabase/migrations/20261013230002_contact_response_stats.sql`
-- `supabase/tests/contact_response_stats.sql`
-- `src/integrations/supabase/types.ts`
-
-Obs.: os FATOS dirão "nenhum arquivo de teste alterado" — a suíte nova é `supabase/tests/*.sql`, que o
-classificador do fechar não conta como "teste" (é suíte SQL, não vitest). É a mesma suíte citada na prova.
-
-SAÍDA DA PROVA:
-BEGIN
-DO
-ROLLBACK
-NOTICE:  contact_response_stats: suite OK — 7 grupo(s) verificado(s)
+## O que NÃO fiz e por quê
+- Não mexi em `src/integrations/supabase/types.ts`: assinatura e colunas idênticas às da v1 (conferido no
+  diff da v1 e no corpo da v2) — nada para atualizar.
+- Não mexi em `fetchStats`/front: é do cartão vizinho; a RPC mantém o contrato, nenhum chamador quebra
+  (nenhum `.ts`/`.tsx` fora de `types.ts` referencia a função — grep vazio).
+- Não incluí par exato na borda do timestamp (contato em `agora - janela` cravado): a técnica exigida
+  (lead integral + filtro posterior) está no código e os dois lados da fronteira estão na fixture com
+  dias de margem; borda cravada dependeria de relógio e não foi pedida.
+- `hermes-db-migrar` está congelado (aplica no banco canônico): no modo V2 a migration nasceu como arquivo
+  no workspace e foi aplicada com `zapp-db-local psql` no conjunto `v2-crs-refazer1` (o conjunto do cartão
+  não subiu — estado quebrado; baixei o que restava e segui num conjunto novo). Nada em produção.
