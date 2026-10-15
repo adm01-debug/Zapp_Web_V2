@@ -29,7 +29,7 @@ import {
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
 } from './tracking/talkxCampaignRules';
 import { TalkXRateChart } from './tracking/TalkXRateChart';
-import { buildRateSeries, forecastFromCampaign, type TalkXRatePoint, type TalkXRateRow, type TalkXRateWindow } from './tracking/talkxRatePanel';
+import { buildRateSeries, forecastFromCampaign, isRateSeriesTruncated, type TalkXRatePoint, type TalkXRateRow, type TalkXRateWindow } from './tracking/talkxRatePanel';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -710,8 +710,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   // minutos consecutivos de sempre (R2-MOD-033).
   const { data: history, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
-    queryFn: async (): Promise<{ rows: TalkXRateRow[]; at: number; buckets: MinuteBucket[]; replyGrowthPct: number | null }> => {
-      if (!selectedId) return { rows: [], at: 0, buckets: [], replyGrowthPct: null };
+    queryFn: async (): Promise<{ rows: TalkXRateRow[]; at: number; buckets: MinuteBucket[]; replyGrowthPct: number | null; truncated: boolean }> => {
+      if (!selectedId) return { rows: [], at: 0, buckets: [], replyGrowthPct: null, truncated: false };
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
       const { data, error } = await fromTable('talkx_recipients')
@@ -723,7 +723,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       // X047: sem isto a falha virava "sem envios" (o `if (!data?.length)` curto engolia o erro).
       if (error) throw error;
       const rows = (data ?? []) as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
-      if (rows.length === 0) return { rows: [], at: Date.now(), buckets: [], replyGrowthPct: null };
+      if (rows.length === 0) return { rows: [], at: Date.now(), buckets: [], replyGrowthPct: null, truncated: false };
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
       const buckets = recentMinuteSeries(rows, { minutes: 20 });
       // Pico de Respostas: heurística explícita sobre as respostas do período —
@@ -734,6 +734,9 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         at: Date.now(),
         buckets,
         replyGrowthPct: replyGrowthPct(replyTimes, Date.now()),
+        // O truncado sai do MESMO retorno que alimenta o card (as linhas lidas),
+        // nunca da releitura da contagem em outra variável.
+        truncated: isRateSeriesTruncated(rows.length),
       };
     },
     enabled: !!selectedId,
@@ -962,7 +965,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                         limitPerMinute={rateLimit}
                         query={historyQuery}
                         onRetry={handleRetryHistory}
-                        truncated={historyRows.length >= 2000}
+                        truncated={history?.truncated === true}
                       />
                     )}
                   />

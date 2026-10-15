@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { isRateSeriesTruncated } from '@/components/talkx/tracking/talkxRatePanel';
 
 export interface RatePoint { label: string; Enviadas: number; Entregues: number }
 
@@ -59,6 +60,8 @@ export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all',
     isFetching: query.isFetching,
     isError: query.isError,
     rateByMinute: buildRateByMinute(query.data ?? []),
+    // Sai do MESMO retorno que alimenta o card: a consulta voltou cheia (teto).
+    truncated: isRateSeriesTruncated((query.data ?? []).length),
     refetch: query.refetch,
   };
 }

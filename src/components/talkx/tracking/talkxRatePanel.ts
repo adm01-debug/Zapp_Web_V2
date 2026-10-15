@@ -19,6 +19,21 @@ import { fmtRelativeDay } from '../kit/format';
 
 /** Janelas oferecidas pelo seletor do card ("Últimos 60 / 30 / 15 minutos"). */
 export type TalkXRateWindow = 15 | 30 | 60;
+
+/**
+ * Teto de linhas da consulta que alimenta o card de ritmo (telas 11 e 12).
+ * Quando a consulta volta CHEIA (atingiu o teto), a série pode estar
+ * incompleta e o card mostra o aviso "Série limitada…".
+ */
+export const TALKX_RATE_ROW_LIMIT = 2000;
+
+/**
+ * O aviso de truncado só aparece quando a consulta volta CHEIA: com menos
+ * linhas que o teto, a série está completa e o aviso some.
+ */
+export function isRateSeriesTruncated(rowCount: number): boolean {
+  return !(rowCount < TALKX_RATE_ROW_LIMIT);
+}
 export const TALKX_RATE_WINDOWS: readonly TalkXRateWindow[] = [60, 30, 15];
 
 /** Linha de `talkx_recipients` que alimenta a série. */

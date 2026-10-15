@@ -125,6 +125,9 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
     isLoading: rateLoading,
     isFetching: rateFetching,
     isError: rateError,
+    // O truncado sai do MESMO retorno que alimenta o card (a consulta cheia),
+    // nunca da releitura da contagem de linhas em outra variável.
+    truncated: rateTruncated,
     refetch: refetchRate,
   } = useTalkXMonitor(campaignId);
   // A janela é recalculada quando chegam linhas novas ou quando o usuário troca a janela
@@ -253,7 +256,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
             limitPerMinute={rateLimit}
             query={{ isLoading: rateLoading, isFetching: rateFetching, isError: rateError, error: null }}
             onRetry={() => { void refetchRate(); }}
-            truncated={(rateRows?.length ?? 0) >= 2000}
+            truncated={rateTruncated}
           />
           <TalkXHealthCard
             status={campaign.status}
