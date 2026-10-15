@@ -466,6 +466,7 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           SKIP_DOCKER_SHIM: "1"
+          PG_CRON_ESCALONAMENTO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh supabase/migrations/20261002541230_pg_cron_escalonar_jobs.sql
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
@@ -1004,6 +1005,9 @@ jobs:
 
       - name: "Versão atual de template Talk X"
         if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+          TALKX_CTV_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-current-template-version.test.sh
 
       - name: "V23: passo de rascunho Talk X"
