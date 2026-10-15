@@ -3189,31 +3189,46 @@ export type Database = {
       }
       csat_surveys: {
         Row: {
-          agent_id: string
+          agent_id: string | null
           contact_id: string
+          conversation_id: string | null
           conversation_resolved_at: string | null
           created_at: string
           feedback: string | null
           id: string
-          rating: number
+          message_text: string | null
+          rating: number | null
+          responded_at: string | null
+          send_at: string
+          status: string
         }
         Insert: {
-          agent_id: string
+          agent_id?: string | null
           contact_id: string
+          conversation_id?: string | null
           conversation_resolved_at?: string | null
           created_at?: string
           feedback?: string | null
           id?: string
-          rating: number
+          message_text?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          send_at?: string
+          status?: string
         }
         Update: {
-          agent_id?: string
+          agent_id?: string | null
           contact_id?: string
+          conversation_id?: string | null
           conversation_resolved_at?: string | null
           created_at?: string
           feedback?: string | null
           id?: string
-          rating?: number
+          message_text?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          send_at?: string
+          status?: string
         }
         Relationships: [
           {
