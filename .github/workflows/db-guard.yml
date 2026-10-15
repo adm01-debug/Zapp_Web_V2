@@ -264,6 +264,12 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         run: bash scripts/db-audit/gen-types.test.sh
 
+      # W56: teste offline do docker-shim (sem Docker real, sem Postgres real).
+      # Usa stubs no PATH para cobrir run/exec/rm/logs/image inspect/pull/tag
+      # e SKIP_DOCKER_SHIM. Sempre roda (nao depende de contracts Docker).
+      - name: "W56 — Testar docker-shim (offline)"
+        run: bash scripts/db-audit/docker-shim.test.sh
+
       # Sem DESTINO_URL: valida nomes, duplicatas e conteudo local das
       # migrations, mas nao consulta schema_migrations.
       - name: Validar migrations localmente

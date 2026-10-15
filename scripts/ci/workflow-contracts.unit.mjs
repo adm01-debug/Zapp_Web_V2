@@ -362,3 +362,64 @@ test('W99: todo curl usa --proto =https e --tlsv1.2/3', () => {
   }
   assert.deepEqual(problemas, [], `curl sem flags TLS:\n${problemas.join('\n')}`);
 });
+
+// W99 (W60): `contents: write` só em workflows que realmente fazem push de código
+// ou chamam a API update-branch. Um workflow de deploy ou CI com essa permissão
+// pode commitar acidentalmente em caso de comprometimento de supply-chain.
+test('W99/W60: contents:write apenas em workflows que fazem push', () => {
+  // Lista de workflows autorizados (justificativa):
+  //   auto-update-pr-branch: gh api PUT .../update-branch → push no branch da PR
+  //   talkx-status-regen:    git push (branch de status) + gh pr create
+  //   types-sync:            git push (branch de sync)   + gh pr create
+  const PERMITIDOS = new Set([
+    'auto-update-pr-branch.yml',
+    'talkx-status-regen.yml',
+    'types-sync.yml',
+  ]);
+  const infratores = nomes.filter((nome) => {
+    if (PERMITIDOS.has(nome)) return false;
+    // Remove linhas de comentário antes de checar (evita falso positivo em
+    // "# contents:write foi removido" que é texto de documentação, não permissão).
+    const semComentarios = wf[nome].split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+    return /\bcontents:\s*write\b/.test(semComentarios);
+  });
+  assert.deepEqual(
+    infratores,
+    [],
+    `contents:write fora dos workflows autorizados:\n${infratores.join('\n')}\n` +
+      '(adicione à lista PERMITIDOS com justificativa, ou remova a permissão)',
+  );
+});
+
+// W99 (W94): todo workflow que abre PR deve ter `concurrency` para não abrir
+// duplicatas em runs concorrentes do mesmo evento.
+test('W99/W94: todo workflow que cria PR tem concurrency', () => {
+  // Detecta workflows que usam a ação create-pull-request ou chamam gh pr create.
+  const abrePR = nomes.filter(
+    (nome) =>
+      /peter-evans\/create-pull-request@|gh\s+pr\s+create\b/.test(wf[nome]),
+  );
+  const semConcurrency = abrePR.filter((nome) => !/\bconcurrency:\s*$/m.test(wf[nome]));
+  assert.deepEqual(
+    semConcurrency,
+    [],
+    `workflow que cria PR sem concurrency: ${semConcurrency.join(', ')}`,
+  );
+});
+
+// W99 (W55): db-guard.yml deve conter o mecanismo SKIP_CONTRACTS — um passo
+// que exporta a variável e ao menos um passo condicional que a consulta.
+// Sem isso o path filter de PR não existe mais e db-guard.yml roda os contratos Docker
+// em toda PR, mesmo as que não tocam banco.
+test('W99/W55: db-guard.yml tem mecanismo SKIP_CONTRACTS', () => {
+  const texto = wf['db-guard.yml'];
+  assert.ok(texto, 'db-guard.yml sumiu');
+  assert.ok(
+    /core\.exportVariable\s*\(\s*['"]SKIP_CONTRACTS['"]/.test(texto),
+    'db-guard.yml não exporta SKIP_CONTRACTS via core.exportVariable',
+  );
+  assert.ok(
+    /env\.SKIP_CONTRACTS\s*!=\s*['"]true['"]/.test(texto),
+    "db-guard.yml não tem passos condicionais em env.SKIP_CONTRACTS != 'true'",
+  );
+});
