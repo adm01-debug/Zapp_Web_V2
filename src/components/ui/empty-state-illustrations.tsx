@@ -163,6 +163,8 @@ const desenhos: Record<string, React.ReactNode> = {
 export const illustrations: Record<string, React.ReactNode> = Object.fromEntries(
   Object.entries(desenhos).map(([nome, desenho]) => [
     nome,
-    isValidElement(desenho) ? cloneElement(desenho as ReactElement, { 'aria-hidden': 'true' }) : desenho,
+    isValidElement(desenho)
+      ? cloneElement(desenho as ReactElement<{ 'aria-hidden'?: string }>, { 'aria-hidden': 'true' })
+      : desenho,
   ]),
 );
