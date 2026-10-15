@@ -1,5 +1,15 @@
 Especialista: iris (telas e componentes; retomada: o trabalho anterior veio do senior/area-front-hooks)
 
+## Refazer 1 — resposta ponto a ponto à recusa (commit c6716f5b3d)
+
+Ponto 1 — teste 'aplica o mesmo estilo ativo dos demais chips em Arquivadas' apagado: RECOLOCADO em `src/components/inbox/__tests__/StatusChips.test.tsx`, idêntico ao do pai, só com a assinatura nova (`counts={countsOf(conversations)}`, `chipTab="archived"`). Cobre `StatusChips.tsx:59-61` (classes `status-chip-active bg-accent border-primary/50 text-foreground` no chip ativo + `bg-muted/40 border-border text-muted-foreground` nos inativos), trecho que o diff não toca.
+
+Ponto 2 — teste 'chama onChipTabChange com archived ao clicar no chip Arquivadas' apagado: RECOLOCADO no mesmo arquivo, idêntico ao do pai, só com a assinatura nova (`counts={countsOf(conversations)}`). Cobre `StatusChips.tsx:56` (`onClick={() => onChipTabChange(chip.id)}` vale para qualquer chip, inclusive Arquivadas). O teste novo 'mostra o ícone Archive apenas no chip Arquivadas' continua existindo, mas ele só confere o `<svg>` — não o clique — então não cobria este ponto.
+
+Prova dos 2 testes (nome da suite, vermelho sem a correção e verde com ela): com o componente mutado de propósito (clique de Arquivadas ignorado + classe ativa trocada), `bunx vitest run StatusChips.test.tsx -t "Arquivadas"` -> 2 failed | 3 passed | 12 skipped; com o componente real, `bunx vitest run StatusChips.test.tsx` -> 1 passed, 17 passed (15 + 2 recolocados). Vizinhos sem regressão: 3 arquivos StatusChips* -> 3 passed, 28 passed.
+
+Diff desta rodada (`git diff --stat b2016b140...HEAD`): só `src/components/inbox/__tests__/StatusChips.test.tsx` (+27 linhas, 0 remoções) + `.tmp/relato.md` (esta seção). Nenhum teste existente foi removido, pulado ou afrouxado nesta rodada.
+
 ## O que mudou e por quê
 - src/components/inbox/conversation-list/StatusChips.tsx: StatusChips passou a exibir os números recebidos por prop (`counts: ChipCounts`); saiu o `countByChip`/`useMemo` que contava sozinho a partir de todas as conversas. Mantive `data-testid="status-chip-<id>"` e o `aria-label` passou a dizer a contagem filtrada com singular/plural ("Todas, 1 conversa" / "Todas, 3 conversas"). Visual inalterado.
 - src/components/inbox/ConversationListSidebar.tsx: único encanamento — saiu `conversations={inbox.conversations}` e entrou `counts={inboxFilters.chipCounts}`. `RealtimeInboxView.tsx` não foi tocado: ele já passa o objeto `inboxFilters` inteiro ao sidebar, então `chipCounts` já chega sem mudança.
