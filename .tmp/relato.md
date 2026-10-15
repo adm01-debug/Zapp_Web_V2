@@ -7,7 +7,7 @@ Versionei na `dia` os relatórios da auditoria de paridade V3->V2 do doc 26 (hoo
 - docs/plans/PLANO_PARIDADE_V3_DOC_26_2026-10-13.md (de `PLANO_PARIDADE_V3_DOC_26_2026-10-13.md`)
 Origem: `~/hermes-workspaces/.assets/paridade-hooks26/`. Não toquei em código, migrations nem em índice de docs.
 
-Por que não os 6: o conjunto completo tem 149820 caracteres adicionados e o `hermes-tarefa-fechar` recusa acima de 90000 ("o revisor recusa por regra acima de 90000"), como já ocorreu nos cartões irmãos (`t_d3d3f389` versionou 5 de 6, `t_87779b15` versionou 4 de 6). Então mantive aqui as 3 peças acima (78526 caracteres adicionados, abaixo do teto) e criei o cartão filho `t_7e0dcbc6` para versionar as PARTE1, PARTE2 e PARTE4 (69758 caracteres adicionados somados), a partir das mesmas fontes em `.assets`. Cópia de trabalho das 3 restantes ficou em `.tmp/` (ignorado pelo git) para não sujar o status da branch.
+Por que não os 6: o conjunto completo tem 149820 caracteres adicionados e o `hermes-tarefa-fechar` recusa acima de 90000 ("o revisor recusa por regra acima de 90000"), como já ocorreu nos cartões irmãos (`t_d3d3f389` versionou 5 de 6, `t_87779b15` versionou 4 de 6). Então mantive aqui as 3 peças acima (79195 caracteres adicionados, abaixo do teto) e criei o cartão filho `t_7e0dcbc6` para versionar as PARTE1, PARTE2 e PARTE4 (69758 caracteres adicionados somados), a partir das mesmas fontes em `.assets`. Cópia de trabalho das 3 restantes ficou em `.tmp/` (ignorado pelo git) para não sujar o status da branch.
 
 ## Prova
 - Integridade byte a byte origem x destino (`md5sum` nos 3 pares, todos idênticos; hashes conferidos no terminal e não impressos neste relato para não espalhar sequências hexadecimais longas no diff).
