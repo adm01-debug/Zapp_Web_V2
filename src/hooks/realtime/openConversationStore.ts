@@ -2,10 +2,10 @@
  * A "conversa aberta na tela" tem UMA fonte, fora do React.
  *
  * Antes ela vivia num `useRef` de `useRealtimeNotifications` — um ref por
- * instância. Com o aviso global (montado no AppShell) passaram a existir DUAS
- * instâncias decidindo se devem avisar, e cada uma tinha a sua cópia da
- * seleção: o aviso global não sabia qual conversa estava aberta e avisava (som
- * + notificação) por cima do que o usuário já estava lendo.
+ * instância. Com o aviso global (montado em `App.tsx`/DeferredProviders)
+ * passaram a existir DUAS instâncias decidindo se devem avisar, e cada uma
+ * tinha a sua cópia da seleção: o aviso global não sabia qual conversa estava
+ * aberta e avisava (som + notificação) por cima do que o usuário já estava lendo.
  *
  * Módulo (e não contexto) porque o leitor é chamado de dentro de um callback de
  * Realtime, que precisa do valor no INSTANTE do evento — sem re-render no meio.
