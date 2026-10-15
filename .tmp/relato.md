@@ -1,36 +1,63 @@
-Especialista: edgar
+Especialista: semisenior
 
-## O que mudou e por quê (recusa do revisor, [refazer])
-Corrige o fail-open apontado: em `collectReferencedPaths` o teto `MAX_REFERENCE_ROWS` cortava a leitura de referências em silêncio, e um objeto cuja linha estava além do teto podia ser apagado como órfão.
+## O que mudou e por quê (recusa do revisor, rodada 1 do PE-101/etapa 086)
+
+A entrega anterior cortava a leitura de referências no teto `maxRows` em silêncio
+(fail-open: objeto referenciado além do teto podia ser apagado como órfão). Esta
+rodada separa os dois fins de laço e fecha no teto (fail-closed).
 
 - `supabase/functions/cleanup-storage-orphans/index.ts`
-  - laço de referências: separado o fim normal (`rows.length < pageSize` = última página) da borda de teto. Ao atingir `maxRows` com página cheia, sonda UMA linha além do lido (`range(offset+rows.length, offset+rows.length)`); se houver linha (ou erro de sonda), devolve `{ paths, failed: true }` — o bucket é pulado e o erro `reference-read-failed` é reportado (fail-closed). Se a sonda vier vazia, a leitura está completa e segue normal.
-  - `CleanupInjected.maxReferenceRows`: seam de teste para injetar o teto e provar a borda no handler real (default de produção inalterado).
-  - `MAX_SCAN_PER_BUCKET`: mantido como `truncated` (aviso + só apaga o que foi listado e comparado) — seguro, como o revisor autorizou; não vale para referências.
-- `supabase/config.toml`: comentário alinhado ao código/relato — `x-cron-secret` conferido contra o env `CRON_SECRET` (antes dizia "dedicado no Vault").
-- `ESTADO.md` e `docs/migration/MATRIZ_EDGE_TABELA.md`: INDISPENSÁVEIS, não são escopo extra — são o registro/índice derivado das Edge Functions (contagem 81→82 e a linha do novo `cleanup-storage-orphans`), atualizados no commit de implementação `1636c5da07` desta mesma entrega. Sem eles a guarda de documentação reprova. Não os toquei nesta correção.
+  - `collectReferencedPaths`: `rows.length < pageSize` = última página (leitura
+    completa). Com página cheia E `scanned >= maxRows`, sonda UMA linha além do
+    lido (`range(offset + rows.length, offset + rows.length)`, mesmos filtros da
+    consulta); havendo linha além ou erro na sonda, devolve `{ paths, failed: true }`
+    e o handler pula o bucket (`<bucket>:reference-read-failed`, nada removido).
+    Sonda vazia = leitura completa, segue normal.
+  - `CleanupInjected.maxReferenceRows`: seam para injetar o teto no handler real
+    (default de produção inalterado). Docblock atualizado com a regra da sonda.
+- `supabase/functions/cleanup-storage-orphans/index.test.ts`: 3 testes novos
+  (17 `Deno.test` no total; `wc -l` = 464).
+- `supabase/config.toml`: comentário alinhado — `x-cron-secret` conferido contra o
+  env `CRON_SECRET` (antes dizia "dedicado no Vault").
 
-## Números reais do diff (base `453e6b69f9..HEAD`)
-- 6 arquivos: `index.ts`, `index.test.ts`, `config.toml`, `ESTADO.md`, `MATRIZ_EDGE_TABELA.md`, `.tmp/relato.md`.
-- 1 arquivo de teste: `cleanup-storage-orphans/index.test.ts`. Casos `Deno.test`: 12 no commit de implementação `1636c5da07` → 17 agora (5 somados nesta correção).
-- Justificativa (ponto 2 do juiz): `ESTADO.md` e `docs/migration/MATRIZ_EDGE_TABELA.md` NÃO podem ser revertidos — são o índice/registro derivado das Edge Functions e a guarda de documentação exige a atualização ao criar uma edge. Não foram tocados nesta correção; vieram no commit de implementação desta mesma entrega.
+## Prova (comandos rodados nesta rodada, mesmo workspace)
 
-## Critério de pronto
-1. Nenhum objeto órfão acumulado: demonstrado pelo teste de drenagem "cron: órfão antigo é apagado; referenciado e jovem ficam" (o órfão elegível sai) e pelo teste de teto (o lote corta e o resto fica para a próxima passada); a função remove os órfãos elegíveis por invocação do cron.
-2. Nada referenciado é apagado: testes de referência (referenciado fica, fail-closed em URL ilegível/erro de leitura, e agora teto de referências → bucket preservado).
-3. `zapp-verify . --rapido` VERDE nesta rodada.
+- vermelho antes (index.ts da entrega recusada `96019d6530` + testes novos):
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/cleanup-storage-orphans/index.test.ts`
+  → `FAILED | 15 passed | 2 failed`, erro:
+  `removeu com referência truncada (fail-open): [{"bucket":"whatsapp-media","paths":["contato-1/image/orfa.jpg","contato-1/image/fixa.jpg"]}]`
+  (o 3º teste novo — total exatamente igual ao teto — passa antes e depois por
+  desenho: é guarda contra overcorrection, não prova do defeito).
+- verde depois (correção restaurada + 3 linhas de docblock):
+  mesmo comando → `ok | 17 passed | 0 failed`.
+- Critério 3 (`zapp-verify . --rapido` verde): executado pelo `hermes-tarefa-fechar`
+  nesta rodada; o resultado está na saída do fechar abaixo. Sem OOM nesta árvore.
 
 ## Pontos do revisor
-- Ponto 1: feito. `collectReferencedPaths` separa os casos e devolve `failed: true` quando há linha além do teto; teste unitário (`maxRows: 2`, 5 linhas → `failed === true`). Teto de scan de bucket mantido como aviso, como autorizado.
-- Ponto 2: feito. Teste Deno com `maxRows` pequeno → `failed === true`; teste do handler (`maxReferenceRows: 1` injetado) → `ctx.removes.length === 0` e `whatsapp-media:reference-read-failed` em `errors`. Borda extra: total EXATAMENTE igual ao teto, sem linha além, NÃO vira `failed`.
-- Ponto 3: feito. Comentário do `config.toml` agora diz env `CRON_SECRET`.
-- Ponto 4: `wc -l` do teste = 464 (a contagem 407 do relato anterior estava errada; o revisor já apontou 409). `zapp-verify . --rapido` ficou VERDE nesta rodada (tipos OK) — não houve OOM; a ressalva anterior não se aplica.
 
-## Prova
-- vermelho antes: `deno test ... cleanup-storage-orphans/index.test.ts` (com o laço antigo) → `FAILED | 15 passed | 2 failed (135ms)`; erro: `teto de referências não marcou failed: ["c/r0.jpg","c/r1.jpg"]` e o handler removeu com referência truncada.
-- verde depois: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/cleanup-storage-orphans/index.test.ts` → `ok | 17 passed | 0 failed (101ms)`.
-- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (228s)`.
+- Ponto 1: feito. `index.ts` (`collectReferencedPaths`): casos separados; teto com
+  página cheia → sonda → `{ paths, failed: true }` quando há linha além.
+  `MAX_SCAN_PER_BUCKET` mantido como aviso (`truncated`), como autorizado.
+- Ponto 2: feito. `index.test.ts`: `maxRows: 2` com 5 linhas → `failed === true`;
+  handler com `maxReferenceRows: 1` → `ctx.removes` vazio e
+  `whatsapp-media:reference-read-failed` em `errors`; borda total == teto sem linha
+  além → NÃO vira `failed`. Todos chamam o código real.
+- Ponto 3: feito. `config.toml` agora diz env `CRON_SECRET`.
+- Ponto 4: feito. Teste com `wc -l` = 464 (medido agora, não à mão); verificação
+  registrada pelo fechar, sem ressalva herdada.
+
+## Arquivos do diff (base `96019d6530..HEAD`, colado do comando)
+
+- `.tmp/relato.md`
+- `supabase/config.toml`
+- `supabase/functions/cleanup-storage-orphans/index.test.ts`
+- `supabase/functions/cleanup-storage-orphans/index.ts`
 
 ## O que NÃO fiz e por quê
-- Não mexi em `listBucketObjects`/`MAX_SCAN_PER_BUCKET` (aviso, não fail-closed): só limita o que já foi lido e comparado.
-- Sem migration, sem deploy, sem produção.
+
+- Não mexi em `listBucketObjects`/`MAX_SCAN_PER_BUCKET` (só limita o já lido e
+  comparado — seguro como aviso, autorizado pelo revisor).
+- Não trouxe commit de outro cartão: os 5 commits após `96019d6530` nesta branch são
+  todos deste refazer (correção + relato + docblock). Sem migration, sem deploy,
+  sem produção. Nenhum chamador fora do módulo (`rg` por `collectReferencedPaths` /
+  `maxReferenceRows` só acha o módulo e seu teste).
