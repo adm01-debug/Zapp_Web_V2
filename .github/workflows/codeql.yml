@@ -4,10 +4,7 @@
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security e revisores do PR
 # nao-e-bug:
-#   - CodeQL e required check desde W84 (15/10/2026 noite, github-settings-baseline.json
-#     e CLAUDE.md "Perimetro do GitHub"). O job `analyze` (~3 min) continua so informativo;
-#     o check required e o do GitHub Advanced Security ("No new alerts in code changed by
-#     this pull request"), publicado pelo app `github-advanced-security`, nao por este job.
+#   - CodeQL e required desde W84: o check `CodeQL` da branch protection e publicado pelo app `github-advanced-security`, nao pelo job `analyze` deste arquivo (que e so informativo, ~3 min).
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
