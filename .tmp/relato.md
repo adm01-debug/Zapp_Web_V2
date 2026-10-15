@@ -19,9 +19,10 @@ guarda (`invoke('edge')` / `/functions/v1/edge` em `src/`; chamada de outra edge
 - commit final do cartão: `a89758e2a7`
 
 ## Ponto 1 (partir do commit f50ef67ad com cherry-pick)
-Não procede: a entrega já está na base deste workspace. Conferi por conteúdo que
-`supabase/functions/_shared/away-message-webhook.test.ts` e o trecho de ausência em
-`evolution-webhook-messages.ts` já estão aqui — o cherry-pick seria vazio, não recomecei nada.
+Ponto 1 NÃO PROCEDE — rodei este MESMO comando de novo sem mudar o diff. Motivo: a entrega já está na base deste
+workspace; o `cherry-pick` seria vazio. Conferi por conteúdo: `supabase/functions/_shared/away-message-webhook.test.ts`
+e o trecho de ausência em `evolution-webhook-messages.ts` já estão aqui (por isso o diff do cartão aparece só em
+`ESTADO.md`: é o arquivo que o cartão manda corrigir — a tabela que a entrega desalinhou).
 
 ## Ponto 2 (reproduzir e corrigir a causa)
 Feito. Reproduzi (`not ok 2`) e corrijo a causa: as âncoras/grupos velhos do ESTADO.md. Medido 26 âncoras
