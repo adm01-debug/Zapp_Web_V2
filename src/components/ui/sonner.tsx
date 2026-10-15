@@ -14,9 +14,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       expand={false}
       richColors
       closeButton
+      // rótulos em pt-BR (o padrão do sonner é inglês: "Notifications"/"Close")
+      containerAriaLabel="Notificações"
       duration={4000}
       gap={8}
       toastOptions={{
+        closeButtonAriaLabel: "Fechar notificação",
         classNames: {
           toast:
             'group toast group-[.toaster]:bg-card/98 group-[.toaster]:backdrop-blur-xl group-[.toaster]:text-foreground group-[.toaster]:border-border/60 group-[.toaster]:shadow-[0_8px_30px_-8px_hsl(var(--foreground)/0.12)] group-[.toaster]:rounded-xl',
