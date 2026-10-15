@@ -76,6 +76,8 @@ export interface ResumoDoDia {
   viraODia: boolean;
   /** `HH:MM - HH:MM` quando há janela válida; `null` nos demais estados. */
   intervalo: string | null;
+  /** De quem é a janela em vigor: a linha de hoje ou a madrugada herdada de ontem. */
+  origem: 'hoje' | 'ontem';
 }
 
 export interface LinhaDeHorario {
@@ -94,15 +96,33 @@ export function resumoDoDia(
   agoraMinutos: number,
 ): ResumoDoDia {
   if (!dia) {
-    return { isOpen: true, motivo: 'sem-configuracao', viraODia: false, intervalo: null };
+    return {
+      isOpen: true,
+      motivo: 'sem-configuracao',
+      viraODia: false,
+      intervalo: null,
+      origem: 'hoje',
+    };
   }
   if (!dia.is_open) {
-    return { isOpen: false, motivo: 'fechado-hoje', viraODia: false, intervalo: null };
+    return {
+      isOpen: false,
+      motivo: 'fechado-hoje',
+      viraODia: false,
+      intervalo: null,
+      origem: 'hoje',
+    };
   }
 
   const tipo = classificarJanela(dia.open_time, dia.close_time);
   if (tipo === 'incompleta' || tipo === 'igual') {
-    return { isOpen: false, motivo: 'horario-invalido', viraODia: false, intervalo: null };
+    return {
+      isOpen: false,
+      motivo: 'horario-invalido',
+      viraODia: false,
+      intervalo: null,
+      origem: 'hoje',
+    };
   }
 
   const abre = (dia.open_time ?? '').slice(0, 5);
@@ -114,6 +134,38 @@ export function resumoDoDia(
     motivo: dentro ? 'dentro' : 'fora',
     viraODia: tipo === 'noturna',
     intervalo: `${abre} - ${fecha}`,
+    origem: 'hoje',
+  };
+}
+
+/**
+ * A madrugada pertence ao dia anterior: uma janela noturna da véspera
+ * (22:00→06:00 de sexta) mantém a conexão aberta no sábado cedo. A linha de
+ * hoje decide primeiro; ontem só entra quando hoje não abre agora.
+ */
+export function resumoDoHorario(
+  hoje: LinhaDeHorario | null | undefined,
+  agoraMinutos: number,
+  ontem: LinhaDeHorario | null | undefined = null,
+): ResumoDoDia {
+  const resultadoDeHoje = resumoDoDia(hoje, agoraMinutos);
+  if (resultadoDeHoje.isOpen || !hoje) return resultadoDeHoje;
+
+  const fimDeOntem = minutosDoHorario(ontem?.close_time);
+  const madrugadaDeOntem =
+    ontem?.is_open &&
+    classificarJanela(ontem.open_time, ontem.close_time) === 'noturna' &&
+    fimDeOntem !== null &&
+    agoraMinutos <= fimDeOntem;
+
+  if (!madrugadaDeOntem) return resultadoDeHoje;
+
+  return {
+    isOpen: true,
+    motivo: 'dentro',
+    viraODia: true,
+    intervalo: `${(ontem.open_time ?? '').slice(0, 5)} - ${(ontem.close_time ?? '').slice(0, 5)}`,
+    origem: 'ontem',
   };
 }
 
@@ -129,16 +181,17 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<ResumoDoD
   const currentDay = brazilTime.getDay();
   const agoraMinutos = minutosAgoraEmSaoPaulo();
 
-  // limit(1) em vez de single(): single() força o header
-  // "Accept: application/vnd.pgrst.object+json", que faz o PostgREST
-  // responder 406 sempre que não existe configuração para o dia atual
-  // (caso normal, não um erro).
+  // Duas linhas (hoje e ontem): a janela noturna de ontem vale para a
+  // madrugada de hoje. Nada de single(): o header
+  // "Accept: application/vnd.pgrst.object+json" faria o PostgREST responder
+  // 406 sempre que não existe configuração para o dia (caso normal, não erro).
+  const diaAnterior = (currentDay + 6) % 7;
   const { data: rows, error } = await supabase
     .from('business_hours')
     .select('*')
     .eq('whatsapp_connection_id', connectionId)
-    .eq('day_of_week', currentDay)
-    .limit(1);
+    .in('day_of_week', [diaAnterior, currentDay])
+    .limit(2);
 
   // Lança o erro em vez de engolir: só assim o retry com backoff do
   // QueryClient global (AppProviders.tsx) entra em ação. Retornar um
@@ -149,7 +202,11 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<ResumoDoD
     throw error;
   }
 
-  return resumoDoDia(rows?.[0] ?? null, agoraMinutos);
+  return resumoDoHorario(
+    rows?.find((linha) => linha.day_of_week === currentDay) ?? null,
+    agoraMinutos,
+    rows?.find((linha) => linha.day_of_week === diaAnterior) ?? null,
+  );
 }
 
 function textoDoTooltip(resumo: ResumoDoDia): string {
@@ -161,7 +218,9 @@ function textoDoTooltip(resumo: ResumoDoDia): string {
     case 'horario-invalido':
       return 'Horário de hoje inválido: início e fim iguais — ajuste em Horário de Atendimento';
     default:
-      return `Horário hoje: ${resumo.intervalo}${resumo.viraODia ? ' (vira o dia)' : ''}`;
+      return resumo.origem === 'ontem'
+        ? `Janela de ontem: ${resumo.intervalo} (vira o dia)`
+        : `Horário hoje: ${resumo.intervalo}${resumo.viraODia ? ' (vira o dia)' : ''}`;
   }
 }
 
