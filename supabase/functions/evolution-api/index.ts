@@ -26,33 +26,45 @@ import {
  *
  * No registro de status o `remoteJid` é sempre `status@broadcast`; o autor está
  * em `participant` (e, conforme o flavor, em `remoteJidAlt`/`key.participant`).
- * A comparação é por DÍGITOS significativos (com/sem DDI 55, com/sem o 9 extra),
- * a mesma regra de buildPhoneNeedles/matchesPhone do hook.
+ *
+ * REGRA ESTRITA [refazer 1]: só valem variantes COM DDD (com/sem DDI 55,
+ * com/sem o 9 extra). A forma local de 8 dígitos (sem DDD) foi REMOVIDA das
+ * agulhas: ela casava por `endsWith` com o status de OUTRO contato de DDD
+ * diferente e mesmo final. Candidato com menos de 10 dígitos nunca casa
+ * (antes, `needle.endsWith(digits)` aceitava candidato curto como "9").
+ * Sem agulha válida, nada é devolvido (negação por padrão).
  */
 export function statusPhoneNeedles(phone: string): string[] {
   const digits = String(phone ?? "").replace(/\D/g, "");
   if (!digits) return [];
-  const values = new Set<string>([digits]);
-  const withoutCountry = digits.startsWith("55") ? digits.slice(2) : digits;
-  values.add(withoutCountry);
-  if (withoutCountry.length >= 10) {
-    const areaCode = withoutCountry.slice(0, 2);
-    const localNumber = withoutCountry.slice(2);
-    values.add(localNumber);
-    if (localNumber.length === 9 && localNumber.startsWith("9")) {
-      values.add(localNumber.slice(1));
-      values.add(`${areaCode}${localNumber.slice(1)}`);
-      values.add(`55${areaCode}${localNumber.slice(1)}`);
-    }
+  const values = new Set<string>();
+  const push = (value: string) => {
+    if (value.length >= 10) values.add(value);
+  };
+  // Forma nacional (DDD + local), com e sem o DDI 55 da entrada.
+  const national = digits.startsWith("55") ? digits.slice(2) : digits;
+  push(digits);
+  push(national);
+  push(`55${national}`);
+  if (national.length === 11) {
+    // DDD + 9 + 8 dígitos: vale também sem o 9, com e sem DDI.
+    const sem9 = `${national.slice(0, 2)}${national.slice(3)}`;
+    push(sem9);
+    push(`55${sem9}`);
+  } else if (national.length === 10) {
+    // DDD + 8 dígitos: vale também com o 9, com e sem DDI.
+    const com9 = `${national.slice(0, 2)}9${national.slice(2)}`;
+    push(com9);
+    push(`55${com9}`);
   }
-  return Array.from(values).filter((value) => value.length >= 8);
+  return Array.from(values);
 }
 
 function statusMatchesPhone(candidate: unknown, needles: string[]): boolean {
   if (typeof candidate !== "string" || !candidate) return false;
   const digits = candidate.replace(/\D/g, "");
-  if (!digits) return false;
-  return needles.some((needle) => digits.endsWith(needle) || needle.endsWith(digits));
+  if (digits.length < 10) return false;
+  return needles.some((needle) => needle.length >= 10 && digits.endsWith(needle));
 }
 
 /** O status/stories é do contato pedido (exclui o que é da própria conta). */
