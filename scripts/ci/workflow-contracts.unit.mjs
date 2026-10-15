@@ -423,3 +423,43 @@ test('W99/W55: db-guard.yml tem mecanismo SKIP_CONTRACTS', () => {
     "db-guard.yml não tem passos condicionais em env.SKIP_CONTRACTS != 'true'",
   );
 });
+
+// W30: `supabase db push --db-url "$SUPABASE_DB_URL"` expõe a URL na argv do processo
+// (visível via `ps -ef`). O CLI 2.116.0 ignora `SUPABASE_DB_URL` como variável de
+// ambiente e cai no projeto "linkado" ("Cannot find project ref") — por isso `--db-url`
+// explícito é necessário. Exceção documentada: o valor já está mascarado via
+// `::add-mask::` ANTES de qualquer chamada ao CLI, então a URL nunca aparece em
+// claro nos logs do GitHub Actions. Restrição residual: `ps -ef` de outro processo no
+// MESMO runner veria a URL — mitigação natural é que o runner do GitHub Actions é
+// efêmero e isolado por job (sem acesso externo ao PID table durante a execução).
+// Resolução futura: quando o CLI suportar `SUPABASE_DB_URL` ou `PGPASSFILE`, remover
+// `--db-url` explícito e este comentário.
+test('W30: SUPABASE_DB_URL é mascarada antes de qualquer `supabase db push`', () => {
+  const texto = wf['db-migrate.yml'];
+  assert.ok(texto, 'db-migrate.yml sumiu');
+
+  // Prova 1: ::add-mask:: ocorre pelo menos duas vezes (preflight + apply)
+  const masks = (texto.match(/::add-mask::/g) ?? []).length;
+  assert.ok(masks >= 2, `esperava >= 2 ::add-mask:: em db-migrate.yml, achei ${masks}`);
+
+  // Prova 2: o valor mascarado é gravado em GITHUB_ENV como SUPABASE_DB_URL
+  // (o mesmo DSN endurecido, já mascarado, exportado pelo passo de identidade)
+  assert.ok(
+    /SUPABASE_DB_URL=\$\{tls\.connectionString\}/.test(texto) ||
+    /SUPABASE_DB_URL=\$\{tls\.connectionString\}|appendFileSync[^}]*SUPABASE_DB_URL/.test(texto),
+    'db-migrate.yml não exporta SUPABASE_DB_URL a partir do connectionString endurecido',
+  );
+
+  // Prova 3: `supabase db push --db-url` usa a variável de ambiente, não o secret bruto
+  const pushLines = texto.split('\n').filter((l) => l.includes('supabase db push'));
+  for (const l of pushLines) {
+    assert.ok(
+      !/--db-url\s+"?\$\{\{\s*secrets\./.test(l),
+      `supabase db push usa secret direto no argv (não mascarado): ${l.trim()}`,
+    );
+    assert.ok(
+      /--db-url\s+"?\$SUPABASE_DB_URL/.test(l),
+      `supabase db push não usa SUPABASE_DB_URL como fonte: ${l.trim()}`,
+    );
+  }
+});

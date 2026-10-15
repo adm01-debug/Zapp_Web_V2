@@ -276,7 +276,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W02** · A · N-01 · **FEITO** (`docs/audits/evidence/branch-protection-2026-10-14.json`). Gravar snapshot **antes e depois** de W01 em `docs/audits/evidence/branch-protection-2026-10-14.json`
   (branch protection + `GET /repos` + `GET /environments`), no padrão de `branch-protection-2026-10-02.json`.
   Verificação: arquivo commitado com os dois estados e timestamps.
-- [ ] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
+- [x] **W03** · A · N-19 · Fechar #1854 (39 comentários) e #1454 (62) com comentário-resumo e link para este plano; a nova
   issue de cada guard só nasce quando ele voltar a emitir sinal verdadeiro (W04/W05/W23). Verificação: 0 issues abertas
   com labels `settings-guard`/`types-sync`.
 - [~] **W04** · C · N-02 · **PR #1920 aberta.** `github-settings-guard.mjs`: campo **ausente/`null`** na resposta = ponto cego (NÃO
@@ -379,7 +379,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   arquivo dedicado → executar `generic-migration-runtime.sql` e marcar `contract: generic`, mantendo fail-closed só para
   arquivo **vazio**) e cobrir com teste. Verificação: version nova sem contrato → dry-run passa pelo genérico; a regra 1
   da seção 1 do `CLAUDE.md` volta a ser verdadeira.
-- [ ] **W30** · B · N-08 · Tirar a credencial do argv do `supabase db push` (linhas 908/917): se o CLI 2.116 ignora
+- [x] **W30** · B · N-08 · Tirar a credencial do argv do `supabase db push` (linhas 908/917): se o CLI 2.116 ignora
   `SUPABASE_DB_URL`, testar `supabase link --project-ref` + `SUPABASE_DB_PASSWORD` em env, ou pinar a versão do CLI que
   respeita a env (registrar em `toolchain.json`); se nada servir, documentar a exceção no `workflow-contracts.unit.mjs`
   com a prova de que `::add-mask::` cobre o log. Verificação: `ps -ef` capturado durante o dry-run sem a URL.
@@ -479,7 +479,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   secrets.
 - [x] **W60** · B · N-07 · `deploy-functions.yml` `permissions`: remover `contents: write`; manter `deployments: write`
   e `actions: read`. Verificação: run verde; `workflow-contracts.unit.mjs` cobra "`contents: write` só onde há push/tag".
-- [ ] **W61** · C · N-07 · Smoke lê as origens permitidas de `supabase/functions/_shared/validation.ts` (export) ou de
+- [x] **W61** · C · N-07 · Smoke lê as origens permitidas de `supabase/functions/_shared/validation.ts` (export) ou de
   `scripts/edge-deploy/allowed-origins.json` gerado no manifesto; positivo para **cada** origem canônica
   (`zapp-web-v2.vercel.app`, `zappweb.app.br`), negativo mantido. Verificação: smoke 80/80 após #1899.
 - [ ] **W62** · A+B · N-23 · Secrets de deploy (`SUPABASE_ACCESS_TOKEN`, `CRON_SECRET`, `PROMOGIFTS_*`, `EXTERNAL_*`,
