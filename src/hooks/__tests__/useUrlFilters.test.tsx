@@ -21,7 +21,6 @@ describe('useUrlFilters', () => {
   it('returns empty filters by default', () => {
     const { result } = renderHook(() => useUrlFilters());
     expect(result.current.filters.status).toEqual([]);
-    expect(result.current.filters.tags).toEqual([]);
     expect(result.current.filters.agentId).toBeNull();
     expect(result.current.filters.dateFrom).toBeNull();
     expect(result.current.filters.dateTo).toBeNull();
@@ -39,10 +38,11 @@ describe('useUrlFilters', () => {
     expect(result.current.hasActiveFilters).toBe(true);
   });
 
-  it('parses tags from URL', () => {
+  it('ignora ?tags= de link antigo sem erro e sem filtro ativo', () => {
     mockSearchParams.set('tags', 'vip,urgent');
     const { result } = renderHook(() => useUrlFilters());
-    expect(result.current.filters.tags).toEqual(['vip', 'urgent']);
+    expect(result.current.filters).not.toHaveProperty('tags');
+    expect(result.current.hasActiveFilters).toBe(false);
   });
 
   it('parses agentId from URL', () => {

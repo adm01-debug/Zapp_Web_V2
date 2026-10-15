@@ -10,7 +10,7 @@ import type { VoiceAgentAction } from './types';
  * que o aplica (hooks/voice/useVoiceAgent) e o teste falam do mesmo contrato.
  *
  * O estado real que as listas leem é a query string da URL (convenção do app:
- * `?q=`, `?status=`, `?tags=`, `?agent=`, `?from=`, `?to=`, `?type=` — ver
+ * `?q=`, `?status=`, `?agent=`, `?from=`, `?to=`, `?type=` — ver
  * `hooks/system/useUrlFilters.ts`, `hooks/tasks/workItemFilters.ts` e
  * `hooks/calls/useTelefoniaFilters.ts`). Por isso o plano devolve params, não
  * setters de componente.
@@ -23,7 +23,7 @@ import type { VoiceAgentAction } from './types';
 export type VoiceActionLevel = 'success' | 'info' | 'warning';
 
 /** Params de busca/filtro que as views leem (o que o "Limpar" apaga). */
-export const FILTER_PARAM_KEYS = ['q', 'status', 'tags', 'agent', 'from', 'to', 'type'] as const;
+export const FILTER_PARAM_KEYS = ['q', 'status', 'agent', 'from', 'to', 'type'] as const;
 
 /** Status que o filtro do inbox realmente entende (`hooks/inbox/useInboxFilters.ts`). */
 const INBOX_STATUS = new Set(['unread', 'read', 'pending', 'resolved']);
