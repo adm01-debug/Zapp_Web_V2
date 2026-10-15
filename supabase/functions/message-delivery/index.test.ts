@@ -380,3 +380,244 @@ Deno.test('PD-78: claim vazio com lease VIVO não pisa na linha (RPC recusa 4250
   assertEquals(failure.code, '42501');
   assertEquals(failure.reason, null);
 });
+
+// ---------------------------------------------------------------------------
+// PD-78/PD-79 NO HANDLER: wiring real via handleMessageDeliveryRequest com
+// service falso. Sem isso, a marca ANTES do POST, o 409 da marca recusada, o
+// 502 + fail_outbound_message do POST ambíguo e o 409 do claim vazio existiam
+// no código mas nenhum teste passava por eles.
+// ---------------------------------------------------------------------------
+
+const MSG_ID_HANDLER = '123e4567-e89b-12d3-a456-426614174000';
+
+function claimTextoHandler(token = 'tok-claim-1') {
+  return {
+    message_id: MSG_ID_HANDLER, contact_id: 'c1', agent_id: 'a1', content: 'olá',
+    message_type: 'text', media_url: null, caption: null, media_filename: null,
+    media_mimetype: null, reply_external_id: null, whatsapp_instance_name: 'principal',
+    contact_phone: '5511999998888', claim_token: token,
+  };
+}
+
+function servicoEntregaHandler(opcoes: {
+  perfis?: Record<string, { id: string; is_active: boolean }>;
+  mensagens?: Record<string, Record<string, unknown>>;
+  linhasClaim?: unknown[] | null;
+  rpcFixas?: Record<string, { data?: unknown; error?: { code?: string } | null }>;
+} = {}) {
+  const rpcChamadas: { fn: string; args?: Record<string, unknown> }[] = [];
+  const rpc = (fn: string, args?: Record<string, unknown>) => {
+    rpcChamadas.push({ fn, args });
+    const fixa = opcoes.rpcFixas?.[fn];
+    if (fixa) return Promise.resolve({ data: fixa.data ?? null, error: fixa.error ?? null });
+    if (fn === 'claim_outbound_message') {
+      return Promise.resolve({ data: opcoes.linhasClaim ?? null, error: null });
+    }
+    if (fn === 'enqueue_ai_job') return Promise.resolve({ data: 'job-1', error: null });
+    return Promise.resolve({ data: null, error: null });
+  };
+  const from = (tabela: string) => ({
+    select: (_colunas: string) => ({
+      eq: (_coluna: string, valor: unknown) => ({
+        maybeSingle: async () => {
+          if (tabela === 'profiles') {
+            return { data: opcoes.perfis?.[String(valor)] ?? null, error: null };
+          }
+          return { data: opcoes.mensagens?.[String(valor)] ?? null, error: null };
+        },
+      }),
+    }),
+  });
+  return { rpcChamadas, rpc, from };
+}
+
+function authEntregaHandler(userId = 'user-1') {
+  return {
+    getUser: (_authHeader: string) =>
+      Promise.resolve({ data: { user: { id: userId } }, error: null }),
+    policyRpc: {
+      rpc: (_fn: string, _args: Record<string, unknown>) =>
+        Promise.resolve({
+          data: { allowed: true, rate_limit_max_requests: 60, rate_limit_window_seconds: 60 },
+          error: null,
+        }),
+    },
+  };
+}
+
+function requisicaoEntregaHandler() {
+  return new Request('https://edge.local/functions/v1/message-delivery', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer tok-teste', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messageId: MSG_ID_HANDLER }),
+  });
+}
+
+function baseEntregaHandler(service: ReturnType<typeof servicoEntregaHandler>) {
+  return {
+    auth: authEntregaHandler(),
+    checkRate: (_key: string) => Promise.resolve({ allowed: true }),
+    service,
+  };
+}
+
+const ENV_ENTREGA_HANDLER = {
+  SUPABASE_URL: 'https://supabase.local',
+  SUPABASE_SERVICE_ROLE_KEY: 'sr-teste',
+  SUPABASE_ANON_KEY: 'anon-teste',
+  EVOLUTION_API_URL: 'https://evo.local',
+  EVOLUTION_API_KEY: 'ek-teste',
+};
+
+Deno.test('PD-79 handler: marca recusada => 409 e NENHUM POST sai (linha segue retomável)', async () => {
+  await comEnv(ENV_ENTREGA_HANDLER, async () => {
+    const service = servicoEntregaHandler({
+      perfis: { 'user-1': { id: 'a1', is_active: true } },
+      linhasClaim: [claimTextoHandler('tok-1')],
+      rpcFixas: { mark_outbound_post_started: { error: { code: 'P0002' } } },
+    });
+    let postsDisparados = 0;
+    const resposta = await handleMessageDeliveryRequest(requisicaoEntregaHandler(), {
+      ...baseEntregaHandler(service),
+      deliverPost: (_signal) => {
+        postsDisparados += 1;
+        return Promise.resolve(new Response('{}', { status: 200 }));
+      },
+    });
+    assertEquals(resposta.status, 409);
+    assertEquals(postsDisparados, 0);
+    const corpo = await resposta.json() as { error?: string };
+    if (!corpo.error || !corpo.error.includes('nothing was sent')) {
+      throw new Error(`409 sem a frase de nada-enviado: ${JSON.stringify(corpo)}`);
+    }
+    const nomes = service.rpcChamadas.map((c) => c.fn);
+    assertEquals(nomes[0], 'claim_outbound_message');
+    assertEquals(nomes[1], 'mark_outbound_post_started');
+    if (nomes.includes('fail_outbound_message')) {
+      throw new Error('marca recusada não pode falhar a linha (ela segue retomável)');
+    }
+  });
+});
+
+Deno.test('PD-79 handler: caminho feliz carimba ANTES do POST e devolve 200 com externalId', async () => {
+  await comEnv(ENV_ENTREGA_HANDLER, async () => {
+    const ordem: string[] = [];
+    const base = servicoEntregaHandler({
+      perfis: { 'user-1': { id: 'a1', is_active: true } },
+      linhasClaim: [claimTextoHandler('tok-1')],
+      rpcFixas: { complete_outbound_message: { data: { id: MSG_ID_HANDLER, status: 'sent' } } },
+    });
+    const service = {
+      ...base,
+      rpc: (fn: string, args?: Record<string, unknown>) => {
+        ordem.push(fn);
+        return base.rpc(fn, args);
+      },
+    };
+    const resposta = await handleMessageDeliveryRequest(requisicaoEntregaHandler(), {
+      ...baseEntregaHandler(service),
+      deliverPost: (signal) => {
+        ordem.push('post');
+        if (signal.aborted) throw new Error('POST disparado com sinal já abortado');
+        return Promise.resolve(new Response(JSON.stringify({ key: { id: 'wa-123' } }), { status: 200 }));
+      },
+    });
+    assertEquals(resposta.status, 200);
+    const corpo = await resposta.json() as { externalId?: string };
+    assertEquals(corpo.externalId, 'wa-123');
+    const marca = ordem.indexOf('mark_outbound_post_started');
+    const post = ordem.indexOf('post');
+    const conclusao = ordem.indexOf('complete_outbound_message');
+    if (!(marca >= 0 && post > marca && conclusao > post)) {
+      throw new Error(`ordem errada (marca < POST < conclusão): ${ordem.join(' > ')}`);
+    }
+  });
+});
+
+Deno.test('PD-79 handler: abort OU erro de rede no POST => 502 + fail_outbound_message p_retryable=false (nunca reenvio)', async () => {
+  const cenarios: { nome: string; falha: () => Promise<Response> }[] = [
+    {
+      nome: 'abort',
+      falha: () => {
+        const erro = new Error('POST abortado pelo timeout');
+        erro.name = 'AbortError';
+        return Promise.reject(erro);
+      },
+    },
+    { nome: 'rede', falha: () => Promise.reject(new Error('connection reset')) },
+  ];
+  for (const cenario of cenarios) {
+    await comEnv(ENV_ENTREGA_HANDLER, async () => {
+      const service = servicoEntregaHandler({
+        perfis: { 'user-1': { id: 'a1', is_active: true } },
+        linhasClaim: [claimTextoHandler('tok-1')],
+      });
+      const resposta = await handleMessageDeliveryRequest(requisicaoEntregaHandler(), {
+        ...baseEntregaHandler(service),
+        deliverPost: cenario.falha,
+      });
+      assertEquals(resposta.status, 502);
+      const falhaGravada = service.rpcChamadas.find((c) => c.fn === 'fail_outbound_message');
+      if (!falhaGravada) throw new Error(`[${cenario.nome}] fail_outbound_message não foi chamada`);
+      assertEquals(falhaGravada.args?.p_retryable, false);
+      assertEquals(falhaGravada.args?.p_claim_token, 'tok-1');
+      if (!service.rpcChamadas.some((c) => c.fn === 'enqueue_ai_job')) {
+        throw new Error(`[${cenario.nome}] reconciliação somente-leitura não foi enfileirada`);
+      }
+    });
+  }
+});
+
+Deno.test('PD-78 handler: claim vazio devolve 409 com o reason gravado pela RPC', async () => {
+  await comEnv(ENV_ENTREGA_HANDLER, async () => {
+    const service = servicoEntregaHandler({
+      perfis: { 'user-1': { id: 'a1', is_active: true } },
+      mensagens: {
+        [MSG_ID_HANDLER]: { agent_id: 'a1', sender: 'agent', status: 'sending', external_id: null },
+      },
+      linhasClaim: [],
+      rpcFixas: {
+        fail_outbound_unclaimed: { data: { delivery_failure_reason: 'sem_conexao_conectada' } },
+      },
+    });
+    let postsDisparados = 0;
+    const resposta = await handleMessageDeliveryRequest(requisicaoEntregaHandler(), {
+      ...baseEntregaHandler(service),
+      deliverPost: (_signal) => {
+        postsDisparados += 1;
+        return Promise.resolve(new Response('{}', { status: 200 }));
+      },
+    });
+    assertEquals(resposta.status, 409);
+    assertEquals(postsDisparados, 0);
+    const corpo = await resposta.json() as { reason?: string; error?: string };
+    assertEquals(corpo.reason, 'sem_conexao_conectada');
+    if (!corpo.error || !corpo.error.includes('sem_conexao_conectada')) {
+      throw new Error(`409 sem o reason no error: ${JSON.stringify(corpo)}`);
+    }
+  });
+});
+
+Deno.test('PD-78 handler: claim vazio com lease VIVO => 409 in progress sem tocar na linha', async () => {
+  await comEnv(ENV_ENTREGA_HANDLER, async () => {
+    const service = servicoEntregaHandler({
+      perfis: { 'user-1': { id: 'a1', is_active: true } },
+      mensagens: {
+        [MSG_ID_HANDLER]: { agent_id: 'a1', sender: 'agent', status: 'sending', external_id: null },
+      },
+      linhasClaim: [],
+      rpcFixas: { fail_outbound_unclaimed: { error: { code: '42501' } } },
+    });
+    const resposta = await handleMessageDeliveryRequest(
+      requisicaoEntregaHandler(),
+      baseEntregaHandler(service),
+    );
+    assertEquals(resposta.status, 409);
+    const corpo = await resposta.json() as { error?: string };
+    assertEquals(corpo.error, 'Message delivery is already in progress');
+    const nomes = service.rpcChamadas.map((c) => c.fn);
+    if (nomes.includes('fail_outbound_message') || nomes.includes('enqueue_ai_job')) {
+      throw new Error(`lease vivo não pode tocar na linha: ${nomes.join(',')}`);
+    }
+  });
+});

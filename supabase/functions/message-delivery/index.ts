@@ -8,6 +8,7 @@ import {
   jsonResponse,
   requireAuth,
   requireEnv,
+  type RequireAuthOptions,
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
@@ -22,7 +23,7 @@ const MAX_REQUEST_BYTES = 8 * 1024;
 const WORKER_NAME = 'edge:message-delivery';
 // Lease que a Edge pede ao claim_outbound_message (30..300 por contrato da RPC).
 export const CLAIM_LEASE_SECONDS = 90;
-// PD-79 (t_ea8decbb): o POST ao provedor TI M tem de terminar antes do lease de
+// PD-79 (t_ea8decbb): o POST ao provedor tem de terminar antes do lease de
 // CLAIM_LEASE_SECONDS vencer. Com o timeout >= lease, a linha ficaria com POST
 // iniciado e lease vencido -> resultado AMBIGUO (o re-claim recusa e ela vira
 // 'failed' pela varredura). 45 s cabem com folga nos 90 s do lease.
@@ -60,6 +61,29 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
     : null;
+}
+
+/** Client de serviço com as consultas que o handler usa (profiles/messages) + RPC. */
+export interface MessageDeliveryService {
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{ data: any; error: { code?: string; message?: string } | null }>;
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+/** Costuras de teste do handler (produção usa os padrões: auth real, rate
+ *  persistente, client service_role e POST pela conexão do claim). */
+export interface MessageDeliveryDeps {
+  /** Opções de requireAuth (getUser/policyRpc injetáveis p/ rodar offline). */
+  auth?: RequireAuthOptions;
+  /** Rate limit injetável (padrão: enforceRateLimit persistente). */
+  checkRate?: (key: string) => PromiseLike<{ allowed: boolean }>;
+  /** Client de serviço injetável (padrão: createClient com service_role). */
+  service?: MessageDeliveryService;
+  /** POST ao provedor injetável (padrão: deliverOutbound da conexão do claim). */
+  deliverPost?: (signal: AbortSignal) => Promise<Response>;
 }
 
 async function readMessageId(req: Request): Promise<string | null> {
@@ -415,14 +439,17 @@ async function enqueueDeliveryReconciliation(
   }
 }
 
-export async function handleMessageDeliveryRequest(req: Request): Promise<Response> {
+export async function handleMessageDeliveryRequest(req: Request, deps: MessageDeliveryDeps = {}): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
 
-  const auth = await requireAuth(req);
+  const auth = await requireAuth(req, deps.auth ?? {});
   if (auth instanceof Response) return auth;
-  const rate = await enforceRateLimit(`message-delivery:${auth.userId}:${getClientIP(req)}`, 60, 60_000);
+  const rateKey = `message-delivery:${auth.userId}:${getClientIP(req)}`;
+  const rate = deps.checkRate
+    ? await deps.checkRate(rateKey)
+    : await enforceRateLimit(rateKey, 60, 60_000);
   if (!rate.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   const messageId = await readMessageId(req);
@@ -443,7 +470,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     return errorResponse('Message delivery is not configured', 503, req);
   }
 
-  const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const service: MessageDeliveryService = deps.service ?? (createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } }) as unknown as MessageDeliveryService);
   const caller = createClient(supabaseUrl, anonKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: req.headers.get('authorization') || req.headers.get('Authorization') || '' } },
@@ -537,11 +564,15 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
 
     providerPostAttempted = true;
-    const post = await dispatchProviderPost((signal) =>
-      deliverOutbound(
-        service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
-        undefined, signal,
-      )
+    // PD-79: o POST ao provedor tem de terminar (com sucesso ou falha) DENTRO do
+    // lease do claim, senão o lease expira no meio do POST e outro worker reenvia.
+    const post = await dispatchProviderPost(
+      deps.deliverPost ??
+        ((signal) =>
+          deliverOutbound(
+            service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+            undefined, signal,
+          )),
     );
     if (!post.ok || !post.response) {
       // Timeout/aborto/rede DEPOIS do POST: a mensagem pode ter saído. Resultado
@@ -613,4 +644,4 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   }
 }
 
-if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
+if (import.meta.main) Deno.serve((req) => handleMessageDeliveryRequest(req));
