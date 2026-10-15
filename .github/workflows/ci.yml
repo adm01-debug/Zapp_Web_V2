@@ -461,6 +461,14 @@ jobs:
     timeout-minutes: 15
     continue-on-error: true
     needs: lint-and-typecheck
+    # W10 (plano de 14/10/2026, achado N-10): só em pull_request. Em push na
+    # main não há base de PR para filtrar, o passo abaixo caía no fail-open
+    # (`map_changed=true`), o runner de mutação rodava inteiro e o check
+    # "🧬 Mutação do mapa (não bloqueante)" aparecia ❌ em TODO commit da main
+    # (check-run do HEAD 3ddb52f em 14/10). Vermelho permanente que ninguém
+    # trata esconde vermelho real; o job é informativo e só faz sentido onde há
+    # um diff para avaliar.
+    if: github.event_name == 'pull_request'
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -477,8 +485,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${BASE_REF:-}" ]; then
-            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
-            echo "map_changed=true" >> "$GITHUB_OUTPUT"
+            # Só alcançável fora de pull_request; o job já tem `if:` para isso
+            # (W10). Mantido como rede de segurança: sem base, não há o que medir.
+            echo "::notice::sem base de PR; mutação do mapa não se aplica"
+            echo "map_changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
