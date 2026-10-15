@@ -47,19 +47,19 @@ setup('authenticate', async ({ page }) => {
 
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
   //
-  // Espera o DESFECHO, nao so' o sucesso: sem isso, um login RECUSADO vira
-  // "timeout aguardando #main-navigation" e nao diz nada sobre a causa (medido
-  // em 02/10: senha invalida reproduz exatamente essa mensagem muda).
+  // W06: aguarda #main-navigation diretamente (sem race condition .or()).
+  // A abordagem anterior usava shell.or(getByRole('alert')) que capturava
+  // alertas SIP/telefonia pos-login como falso positivo de credencial recusada.
+  // Agora: waitFor no #main-navigation; so se falhar verifica mensagem de erro
+  // especifica de autenticacao (sem getByRole('alert') generico).
   const shell = page.locator('#main-navigation');
-  const erroLogin = page
-    .getByRole('alert')
-    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel|tente novamente|sem resposta|timeout/i));
-  await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 30_000 });
-
-  const entrou = await shell.isVisible().catch(() => false);
-  if (!entrou) {
-    const resposta = ((await erroLogin.first().textContent().catch(() => null)) ?? '').trim();
-    // W72: distingue "credencial recusada" (mensagem visível) de "app não respondeu"
+  try {
+    await shell.waitFor({ state: 'visible', timeout: 30_000 });
+  } catch {
+    const erroLogin = page.getByText(
+      /inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel/i,
+    );
+    const resposta = ((await erroLogin.first().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();
     const causa = resposta
       ? `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
         'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.'
@@ -67,7 +67,6 @@ setup('authenticate', async ({ page }) => {
         'o app pode estar sem resposta apos o POST de autenticacao.';
     throw new Error(causa);
   }
-  await shell.waitFor({ state: 'visible', timeout: 10_000 });
 
   await page.context().storageState({ path: AUTH_FILE });
 });
