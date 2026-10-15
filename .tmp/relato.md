@@ -30,8 +30,9 @@ rodada separa os dois fins de laço e fecha no teto (fail-closed).
   desenho: é guarda contra overcorrection, não prova do defeito).
 - verde depois (correção restaurada + 3 linhas de docblock):
   mesmo comando → `ok | 17 passed | 0 failed`.
-- Critério 3 (`zapp-verify . --rapido` verde): executado pelo `hermes-tarefa-fechar`
-  nesta rodada; o resultado está na saída do fechar abaixo. Sem OOM nesta árvore.
+- Critério 3 (`zapp-verify . --rapido` verde): `zapp-verify . --rapido` nesta rodada →
+  `VERIFY: VERDE SEM BANCO (9s)` (db_guard/tipos/lint/migrations OK; sem banco
+  porque o cartão não tem migration). Sem OOM nesta árvore.
 
 ## Pontos do revisor
 
