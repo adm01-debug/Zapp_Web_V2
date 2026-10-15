@@ -213,6 +213,11 @@ export function useCustomEmojis(open: boolean) {
   }, [fetchEmojis]);
 
   const handleCancelUpload = useCallback(async () => {
+    // Item 226 (refazer 1): fechar o popover (Escape/clique fora) durante o Salvar
+    // chamava esta limpeza com o insert ainda em voo e apagava o objeto que a linha
+    // recém-criada referencia (órfão invertido). A trava é o ref (síncrono): o estado
+    // `saving` só reflete no próximo render e não fecha a corrida do mesmo tick.
+    if (savingRef.current) return;
     if (pendingUpload) {
       await supabase.storage.from('custom-emojis').remove([pendingUpload.storagePath]);
     }

@@ -81,7 +81,14 @@ beforeEach(() => {
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.rpc.mockResolvedValue({ data: 4, error: null });
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
+    // A leitura pagina por `.order().order().range()` (CART retry/paginação): o mock
+    // precisa da mesma cadeia, senão `fetchEmojis` quebra sem erro visível.
+    select: () => {
+      const builder: Record<string, (...args: unknown[]) => unknown> = {};
+      builder.order = () => builder;
+      builder.range = () => Promise.resolve({ data: [emoji()], error: null });
+      return builder;
+    },
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: insertError });
@@ -258,5 +265,59 @@ describe('CustomEmojiPicker — fechar com prévia pendente não deixa órfão (
     fireEvent.keyDown(document, { key: 'Escape' });
 
     await waitFor(() => expect(mocks.storageRemove).toHaveBeenCalledWith(BUCKET, [path]));
+  });
+
+  it('Escape durante o Salvar não remove o objeto: a linha criada aponta para o objeto existente', async () => {
+    // O insert fica preso até o teste liberar: simula o Escape com o insert em voo.
+    let liberarInsert!: (valor: { error: null }) => void;
+    const insertPreso = new Promise<{ error: null }>((resolver) => { liberarInsert = resolver; });
+    mocks.tableFrom.mockImplementation(() => ({
+      select: () => {
+        const montador: Record<string, (...args: unknown[]) => unknown> = {};
+        montador.order = () => montador;
+        montador.range = () => Promise.resolve({ data: [emoji()], error: null });
+        return montador;
+      },
+      insert: (payload: Record<string, unknown>) => {
+        inserted.push(payload);
+        return insertPreso;
+      },
+      update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+      delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
+    }));
+
+    render(createElement(TooltipProvider, null, createElement(CustomEmojiPicker, { onSendEmoji: vi.fn() })));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Emojis Personalizados' }));
+    fireEvent.click(await screen.findByText('Customizados'));
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(input, { target: { files: fileList('festa.png') } });
+    });
+
+    await waitFor(() => expect(mocks.storageUpload).toHaveBeenCalledTimes(1));
+    const path = mocks.storageUpload.mock.calls[0][1] as string;
+    await screen.findByPlaceholderText('Nome do emoji');
+
+    // Inicia o Salvar e espera o estado `saving` renderizado (botão desabilitado).
+    const salvar = screen.getByRole('button', { name: 'Salvar' }) as HTMLButtonElement;
+    fireEvent.click(salvar);
+    await waitFor(() => expect(salvar.disabled).toBe(true));
+    expect(inserted).toHaveLength(1);
+
+    // Escape com o insert ainda em voo: o fechamento é ignorado, nada é removido.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await act(async () => { await Promise.resolve(); });
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
+    // Não é vacuidade: a prévia continua aberta (o fechamento foi ignorado).
+    expect(screen.queryByPlaceholderText('Nome do emoji')).not.toBeNull();
+
+    // O insert conclui: a linha aponta para o objeto, que continua existindo.
+    await act(async () => { liberarInsert({ error: null }); });
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledTimes(1));
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]).toMatchObject({ image_url: `${BASE}${path}` });
+    expect(mocks.storageRemove).not.toHaveBeenCalled();
   });
 });

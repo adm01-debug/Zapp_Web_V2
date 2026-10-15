@@ -100,7 +100,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
 
   return (
     <Tooltip>
-      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v && pendingUpload) handleCancelUpload(); }}>
+      <Popover open={open} onOpenChange={(v) => { if (!v && saving) return; setOpen(v); if (!v && pendingUpload) handleCancelUpload(); }}>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" disabled={disabled} aria-label="Emojis Personalizados">
