@@ -53,9 +53,13 @@ jobs:
         run: node scripts/ci/github-settings-guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # W11/W12: PAT fine-grained (administration:read) do environment perimetro-leitura
-          # para eliminar o ponto cego de branch protection (403 com GITHUB_TOKEN).
-          ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN }}
+          # W11/W12: PAT fine-grained (administration:read + metadata:read, so este repo,
+          # 90 dias) do environment perimetro-leitura, para eliminar o ponto cego de branch
+          # protection (403 com GITHUB_TOKEN). Fallback para github.token: sem o secret o
+          # guard roda como antes do W12 (campos administrativos = NAO VERIFICAVEL), nunca
+          # quebra. So LEITURA usa este token; issue e PATCH seguem com o GITHUB_TOKEN.
+          # Criacao/rotacao: docs/runbooks/migracao-segredos-environments.md.
+          ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           # W17: script salva snapshot JSON do perímetro em perimeter-snapshot.json

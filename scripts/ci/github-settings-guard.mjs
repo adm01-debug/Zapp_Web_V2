@@ -40,9 +40,17 @@ import { pathToFileURL } from 'node:url';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
-// W11/W12: PAT fine-grained com administration:read para remover o ponto cego de branch
-// protection. Quando ausente, usa o TOKEN normal (mesma limitacao de antes, mas sem quebrar).
-const ADMIN_TOKEN = process.env.ADMIN_READ_TOKEN ?? TOKEN;
+// W11/W12: PAT fine-grained com administration:read (secret `SETTINGS_GUARD_TOKEN` do
+// environment `perimetro-leitura`) para remover o ponto cego de branch protection.
+// `||`, NUNCA `??`: secret ausente chega ao processo como string VAZIA, nao `undefined`,
+// e com `??` o guard mandava `Authorization: Bearer ` (401, job vermelho) em vez de
+// cair no GITHUB_TOKEN. O workflow tambem passa `SETTINGS_GUARD_TOKEN || github.token`;
+// a comparacao com TOKEN distingue "dedicado" de "fallback" nos dois casos.
+const ADMIN_TOKEN_DEDICADO = (process.env.ADMIN_READ_TOKEN || '').trim();
+const TEM_ADMIN_DEDICADO = ADMIN_TOKEN_DEDICADO !== '' && ADMIN_TOKEN_DEDICADO !== TOKEN;
+let adminToken = TEM_ADMIN_DEDICADO ? ADMIN_TOKEN_DEDICADO : TOKEN;
+let adminRejeitado = false;
+const RUNBOOK_SEGREDOS = 'docs/runbooks/migracao-segredos-environments.md';
 const [OWNER, REPO_NAME] = REPO.split('/');
 
 const ISSUE_LABEL = 'settings-guard';
@@ -78,6 +86,14 @@ class NaoVerificavel extends Error {
   }
 }
 
+/** 401: o token foi recusado (expirado, revogado ou malformado) — nao e falta de escopo. */
+class TokenRecusado extends Error {
+  constructor(caminho) {
+    super(`401 em ${caminho}: token recusado`);
+    this.caminho = caminho;
+  }
+}
+
 async function gh(method, path, body, overrideToken) {
   const tok = overrideToken ?? TOKEN;
   const url = `https://api.github.com${path}`;
@@ -92,6 +108,7 @@ async function gh(method, path, body, overrideToken) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 401) throw new TokenRecusado(path);
   if (res.status === 403 || res.status === 404) {
     const text = await res.text().catch(() => '');
     // 404 aqui também costuma ser escopo, não ausência: a API esconde o recurso.
@@ -106,7 +123,29 @@ async function gh(method, path, body, overrideToken) {
 }
 // W11/W12: leituras administrativas usam o PAT fine-grained (administration:read);
 // escritas (issues, PATCH de restauracao) continuam com o GITHUB_TOKEN.
-const ghAdmin = (method, path, body) => gh(method, path, body, ADMIN_TOKEN);
+// PAT recusado (401: expirou os 90 dias, foi revogado) nao derruba o guard: o resto do
+// run volta ao GITHUB_TOKEN — os campos administrativos reaparecem como NAO VERIFICAVEL,
+// que e o comportamento de antes do W12 — e o aviso pede a rotacao.
+async function ghAdmin(method, path, body) {
+  try {
+    return await gh(method, path, body, adminToken);
+  } catch (e) {
+    if (!(e instanceof TokenRecusado) || adminToken === TOKEN) throw e;
+    adminRejeitado = true;
+    adminToken = TOKEN;
+    console.log(
+      `::warning::SETTINGS_GUARD_TOKEN recusado (401) — expirado ou revogado. Leituras administrativas voltam ao GITHUB_TOKEN neste run; rotacionar conforme ${RUNBOOK_SEGREDOS}.`,
+    );
+    return gh(method, path, body, adminToken);
+  }
+}
+
+/** De onde vieram as leituras administrativas deste run (nunca o valor do token). */
+function fonteDaLeituraAdmin() {
+  if (adminRejeitado) return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN recusado com 401 — rotacionar)';
+  if (TEM_ADMIN_DEDICADO) return 'SETTINGS_GUARD_TOKEN (environment perimetro-leitura)';
+  return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN ausente — W11 pendente)';
+}
 
 // ---------------------------------------------------------------- checagens
 // Cada checagem devolve { campo, esperado, encontrado } ou lança NaoVerificavel.
@@ -417,6 +456,7 @@ async function main() {
     console.error('::error::GITHUB_TOKEN ausente');
     process.exit(1);
   }
+  console.log(`Leitura administrativa: ${fonteDaLeituraAdmin()}`);
   const checagens = [
     ['branch protection', checarBranchProtection],
     ['merge/repo', checarRepo],
@@ -519,8 +559,10 @@ async function main() {
     linhas.push(
       '### Não verificável com o token do workflow',
       '',
-      'Estes campos **não puderam ser conferidos** — a API exige escopo que o `GITHUB_TOKEN` não tem.',
+      'Estes campos **não puderam ser conferidos** — a API exige escopo que o token usado não tem.',
       'Não é "está tudo certo": é "não consegui olhar".',
+      '',
+      `Leitura administrativa deste run: ${fonteDaLeituraAdmin()}. Credencial e rotação: \`${RUNBOOK_SEGREDOS}\`.`,
       '',
       '| Checagem | Motivo |',
       '|---|---|',
