@@ -18,8 +18,11 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 - **W74 e W84: PR mergeada, faltam os 2 passos pós-merge.** [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953)
   (`ci: W74 (tira service_role do E2E) + W84 (destrava CodeQL required)`) mergeada em `main` (commit `2e9b808`). O
   código já está na `main`: `e2e-logado.yml` não usa mais `SUPABASE_SERVICE_ROLE_KEY` e o `paths-ignore` saiu do
-  `codeql.yml`. Dois cliques ainda faltam para fechar de fato: apagar o secret `SUPABASE_SERVICE_ROLE_KEY` (depois
-  do primeiro `e2e-logado` verde na `main`) e adicionar `CodeQL` aos required checks em Settings → Branches.
+  `codeql.yml`. Para fechar de fato faltam: apagar o secret `SUPABASE_SERVICE_ROLE_KEY` (depois do primeiro
+  `e2e-logado` verde na `main`); e, para o W84, não é só clicar em Settings → Branches — depois de adicionar
+  `CodeQL` aos required checks (6→7), precisa de uma PR atualizando `scripts/ci/github-settings-baseline.json` e a
+  tabela "Perímetro do GitHub" do `CLAUDE.md` no mesmo PR, senão o `settings-guard` acusa o 7º check como
+  regressão (achado do Codex na PR #1954, correto).
 - **W89 (parte SonarCloud): causa raiz da nota de SEGURANÇA (E) encontrada — a de CONFIABILIDADE (D) é outra
   coisa.** As **2 issues BLOCKER** (`json:S6418`, "possível segredo hard-coded") em `docs/reconciliation/evidence/
   publication-harness-hardening.json:568` e `docs/reconciliation/evidence/skins-probe-results.json:9` são
@@ -46,7 +49,7 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 | 1 | **W90** | Quais bots ficam no repositório | Ficar com **Codex, SonarCloud e Vercel** (mais o app Claude, que é como os agentes acessam o repo). Remover os outros 12 | ~10 min de cliques | **Sim**: só o dono da conta remove apps |
 | 2 | **W89** | Supabase for GitHub e SonarCloud | **Remover o app Supabase. Manter o SonarCloud.** Os 2 cliques do Sonar resolvem só a nota E (segurança) — a nota D (confiabilidade) é código, não clique (ver atualização acima) | 2 min (+1 min opcional) | **Sim** para o Supabase e para os 2 cliques do Security Rating |
 | 3 | **W67** | Qual projeto Vercel é o oficial | **`zapp_web_v2`**. Desconectar `zapp-web-v2-main` do Git e apagar os 2 environments dele | ~5 min | **Sim**: painel da Vercel e configurações do repo |
-| 4 | **W84** | Tornar o CodeQL obrigatório | ✅ **PR mergeada** ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), commit `2e9b808`). Falta só adicionar o check `CodeQL` aos required checks | 1 clique | Sim para a regra |
+| 4 | **W84** | Tornar o CodeQL obrigatório | ✅ **PR mergeada** ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), commit `2e9b808`). Faltam o clique (adicionar `CodeQL` aos required checks) **e** uma PR atualizando `scripts/ci/github-settings-baseline.json` (6→7 checks) e a tabela "Perímetro do GitHub" do `CLAUDE.md` no mesmo PR — sem isso o `settings-guard` acusa o 7º check como regressão (achado do Codex na PR #1954, correto) | 1 clique + 1 PR pequena | Sim para a regra |
 | 5 | **W20** | Revisão obrigatória, `prevent_self_review`, conversas resolvidas | **Não ligar nenhum dos três agora.** Registrar o motivo no `CLAUDE.md` | 0 min (só confirmar) | Só confirmar: a recomendação é deixar como está |
 | 6 | **W74** | Tirar a chave `service_role` do CI | ✅ **PR mergeada** ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), commit `2e9b808`). Falta só apagar o secret após 1º `e2e-logado` verde | 1 clique | Só apagar o secret no fim |
 | 7 | **W64** | Credencial somente-leitura para os guardas | **Sim, mas depois do W63.** Role própria `ci_readonly`, não a interna do Supabase | ~15 min | **Sim**: senha de role e secret são só seus (seção 0 do `CLAUDE.md`) |
