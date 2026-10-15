@@ -9,7 +9,7 @@
 //   supabase/functions/_shared/__tests__/evolution-sync-actions.test.ts
 
 import { assertEquals, assertObjectMatch, assertStringIncludes } from "https://deno.land/std@0.224.0/testing/asserts.ts";
-import { syncContacts, goHistoryNotSupported } from "../evolution-sync-actions.ts";
+import { syncContacts, goHistoryNotSupported, statusFeedUnavailable, STATUS_FEED_UNAVAILABLE_STATE } from "../evolution-sync-actions.ts";
 
 // Força modo v2 para que evoFetch não traduza o path para GO.
 Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
@@ -102,6 +102,33 @@ Deno.test("goHistoryNotSupported devolve status 200 com notSupported=true", asyn
   const body = await response.json();
   assertObjectMatch(body, { success: false, notSupported: true });
   assertStringIncludes(body.message, "sync-messages não é suportado na Evolution GO");
+});
+
+// ===========================================================================
+// 1b. statusFeedUnavailable — feed de status na GO é ESTADO, nunca lista vazia
+// ===========================================================================
+
+Deno.test("statusFeedUnavailable devolve estado 'unavailable_in_provider' e NUNCA lista vazia", async () => {
+  const corsHeaders = { "Access-Control-Allow-Origin": "*" };
+  const response = statusFeedUnavailable(corsHeaders);
+
+  assertEquals(response.status, 200, "status deve ser 200");
+  assertEquals(response.headers.get("Content-Type"), "application/json");
+
+  const body = await response.json();
+  assertObjectMatch(body, {
+    success: false,
+    notSupported: true,
+    state: STATUS_FEED_UNAVAILABLE_STATE,
+    provider: "evolution-go",
+  });
+  assertEquals(STATUS_FEED_UNAVAILABLE_STATE, "unavailable_in_provider");
+  assertStringIncludes(body.message, "não estão disponíveis na Evolution GO");
+
+  // O contrato essencial: um objeto de estado, não um array. `[]` significaria
+  // "o contato não publicou status" — falso, já que o provedor não tem o feed.
+  assertEquals(Array.isArray(body), false, "retorno não pode ser lista (nem vazia)");
+  assertEquals(body.state, "unavailable_in_provider");
 });
 
 // ===========================================================================

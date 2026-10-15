@@ -643,3 +643,32 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     await c.stop();
   }
 });
+
+// GU2 (WS2): na Evolution GO o feed de stories/status não existe (GO_GAPS D5/D6).
+// A ação find-status-messages precisa devolver um ESTADO explícito
+// ('unavailable_in_provider') — nunca um array vazio, que a UI leria como
+// "o contato não tem status" (falso vazio). E não pode produzir I/O no provedor.
+Deno.test("WS2: find-status-messages na GO devolve estado 'unavailable_in_provider' e não chama o provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", page: 1, offset: 200 }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      },
+    );
+
+    assertEquals(res.status, 200, "feed indisponível é resposta normal (200)");
+    const body = await res.json();
+    assertEquals(Array.isArray(body), false, "GO não pode devolver lista (nem vazia)");
+    assertEquals(body.state, "unavailable_in_provider");
+    assertEquals(body.notSupported, true);
+    assertEquals(body.provider, "evolution-go");
+    assertEquals(fake.posts.length, 0, "a GO não expõe feed de status — zero I/O ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
