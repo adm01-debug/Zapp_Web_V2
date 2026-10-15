@@ -94,7 +94,7 @@ function MultiplixDeadLetters() {
   const lista = useMultiplixDeadLetters(20, aberto);
 
   return (
-    <div className="w-full space-y-1">
+    <div className="w-full space-y-1" data-testid="multiplix-dlq-bloco">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-muted-foreground">DLQ Multiplix:</span>
         {contagem.isLoading ? <Skeleton className="h-4 w-6" /> : (
@@ -121,11 +121,11 @@ function MultiplixDeadLetters() {
       {aberto && (
         lista.isLoading ? <Skeleton className="h-10 w-64" /> : lista.isError ? (
           <p className="text-muted-foreground">Dados não disponíveis</p>
-        ) : (lista.data?.length ?? 0) === 0 ? (
+        ) : (lista.data ?? []).length === 0 ? (
           <p className="text-muted-foreground">Nenhum item sem entrega.</p>
         ) : (
           <ul className="space-y-0.5 pl-0 list-none">
-            {lista.data.map((item) => (
+            {(lista.data ?? []).map((item) => (
               <li key={item.item_id} className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-mono text-muted-foreground">#{item.item_id.slice(0, 8)}</span>
                 <span className="text-muted-foreground">

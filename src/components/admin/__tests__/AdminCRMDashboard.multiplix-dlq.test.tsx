@@ -129,7 +129,7 @@ describe('AdminCRMDashboard — dead letter do Multiplix', () => {
     expect(within(lista).queryByText(/payload recusado pelo provedor/)).toBeNull();
   });
 
-  it('sem violações de acessibilidade (contador + lista abertos)', async () => {
+  it('sem violações de acessibilidade e sem cor literal em tema claro e escuro', async () => {
     estado.contagem = 1;
     estado.itens = [ITEM];
     const { container } = renderizar();
@@ -138,6 +138,23 @@ describe('AdminCRMDashboard — dead letter do Multiplix', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ver últimos itens/ }));
     await screen.findByText('whatsapp_400_invalid_payload');
 
+    // Tema claro.
     expect(await axe(container)).toHaveNoViolations();
+
+    // Tema escuro: o mesmo bloco, agora sob a classe `dark` do root.
+    document.documentElement.classList.add('dark');
+    try {
+      expect(await axe(container)).toHaveNoViolations();
+
+      // Claro/escuro aqui só trocam por token: nenhuma cor literal no bloco novo.
+      const bloco = screen.getByTestId('multiplix-dlq-bloco');
+      const classes = [
+        bloco.className,
+        ...Array.from(bloco.querySelectorAll<HTMLElement>('*')).map((el) => el.className),
+      ].join(' ');
+      expect(classes).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|bg-\[|text-\[/i);
+    } finally {
+      document.documentElement.classList.remove('dark');
+    }
   });
 });
