@@ -115,6 +115,13 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // team-chat-realtime-politicas (14/10): prova em Postgres 17 descartável (docker) que a migration
+  // 20261014101843 publica `team_message_reactions` no `supabase_realtime`, devolve REPLICA IDENTITY
+  // FULL às duas tabelas do realtime, tira do EX-MEMBRO o UPDATE/DELETE da própria mensagem em
+  // team_messages e deixa uma policy por comando em team_message_reactions — e que a linha
+  // `-- Rollback:` restaura o estado anterior. Passo de uma linha em db-guard.yml
+  // (`bash scripts/db-audit/team-chat-realtime-membership-guards.test.sh`) — promover pelo dono do workflow.
+  'scripts/db-audit/team-chat-realtime-membership-guards.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
