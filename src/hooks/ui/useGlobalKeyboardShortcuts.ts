@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from '@/lib/lazyToast';
+import { toggleMuteActive } from '@/lib/audioPlaybackBus';
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -80,6 +81,16 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     },
     'toggle-notifications': () => {
       document.dispatchEvent(new CustomEvent('toggle-notifications'));
+    },
+    // Mudo do áudio EM REPRODUÇÃO (paridade com o app antigo, doc 06). Sem áudio
+    // tocando a ação é inerte — melhor nem anunciar nada, como no V3.
+    'audio-toggle-mute': () => {
+      const resultado = toggleMuteActive();
+      if (!resultado) return;
+      toast.info(
+        resultado.muted ? '🔇 Áudio silenciado' : `🔊 Volume em ${resultado.volume}%`,
+        { duration: 1500 },
+      );
     },
     // Etapa 77 — 7 atalhos do módulo de Tarefas (escopo em `defaultShortcuts`).
     // O registry só recorta escopo/guarda de input e avisa a tela; quem sabe o
