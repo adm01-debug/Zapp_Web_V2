@@ -32,12 +32,16 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   rodando, ou verde esperando o auto-merge), ninguém mais é atualizado. Sem PR em voo, só a próxima é atualizada: a
   que ligou o auto-merge primeiro (FIFO por `enabledAt`), então **ninguém volta para o fim da fila**. PR com check
   obrigatório vermelho sai da fila até o autor corrigir (atualizá-la seria pagar para falhar de novo).
+  PR de fork também fica fora (o `GITHUB_TOKEN` não escreve no repositório de origem). Se o `update-branch` da
+  primeira da fila for recusado (403/422), o workflow tenta a próxima na mesma execução e para no primeiro
+  aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada.
 - **Gatilhos:** push na `main` (a vez abriu), fim de `CI/CD Pipeline` ou `DB Guard (offline)` (a PR em voo pode
   ter ficado vermelha e liberado a vez) e um agendamento a cada 30 min, para o caso de alguém ligar o auto-merge sem
   outro evento.
 - **`mergeStateStatus: UNKNOWN`:** o GitHub calcula a mergeabilidade de forma assíncrona. A fila não trata UNKNOWN
   como "em voo" às cegas: compara `main...head` (`behind_by`) para saber se a PR está atrás.
-- **Contrato:** no máximo uma chamada de `update-branch`, sem laço sobre PRs, e a escolha sempre pela fila.
+- **Contrato:** a escolha sempre pela fila; o laço percorre a fila ordenada, pula o update recusado e para no
+  primeiro aceito (no máximo uma PR atualizada por execução).
 
 ### R2 — Reuso de árvore: o push na `main` não refaz o que a PR provou
 - Com `strict=true` + squash, a PR só entra atualizada, e o commit de squash tem a **mesma árvore** do head da PR.

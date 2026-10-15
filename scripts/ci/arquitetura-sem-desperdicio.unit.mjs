@@ -67,8 +67,15 @@ test('parser enxerga os jobs reais (o contrato não passa por não achar nada)',
 test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   const t = semComentarios(AUTO_UPDATE);
   assert.match(t, /node scripts\/ci\/fila-merge\.mjs/, 'a escolha tem de passar pela fila testada');
-  assert.doesNotMatch(t, /for pr in/, 'laço sobre várias PRs = voltou o O(N²) de 15/10');
-  assert.equal((t.match(/update-branch"/g) ?? []).length, 1, 'uma única chamada de update-branch, para a PR escolhida');
+  assert.doesNotMatch(t, /for pr in \$prs/, 'laço sobre todas as PRs BEHIND = voltou o O(N²) de 15/10');
+  assert.doesNotMatch(t, /gh pr list/, 'a lista de PRs vem só da fila (fila-merge.mjs), nunca direto do workflow');
+  assert.equal((t.match(/update-branch"/g) ?? []).length, 1, 'uma única chamada de update-branch no laço da fila');
+  // O laço percorre a fila ordenada e PARA no primeiro update aceito: falha pula para
+  // a próxima (sem travar a fila), sucesso encerra (no máximo uma PR por execução).
+  const laco = t.slice(t.indexOf('for candidato in $FILA'), t.indexOf('done', t.indexOf('for candidato in $FILA')));
+  assert.ok(laco.length > 0, 'o workflow itera sobre a fila ordenada');
+  assert.match(laco, /update-branch"[^\n]*\n\s*echo[^\n]*\n\s*continue/, 'update recusado pula para a próxima');
+  assert.match(laco, /PR="\$candidato"\n\s*break/, 'o primeiro update aceito encerra o laço');
   assert.match(t, /if: steps\.fila\.outputs\.pr != ''/, 'sem PR escolhida, nada é atualizado');
 });
 

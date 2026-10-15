@@ -53,6 +53,7 @@ test('classificar: draft, sem auto-merge, outra base e conflito ficam fora da fi
   assert.equal(classificar(pr(1, { autoMergeRequest: null }), OBRIG), 'fora');
   assert.equal(classificar(pr(1, { baseRefName: 'outra' }), OBRIG), 'fora');
   assert.equal(classificar(pr(1, { mergeStateStatus: 'DIRTY' }), OBRIG), 'fora');
+  assert.equal(classificar(pr(1, { isCrossRepository: true }), OBRIG), 'fora');
 });
 
 test('classificar: BEHIND com checks verdes aguarda; com check obrigatório vermelho fica bloqueada', () => {
@@ -82,6 +83,7 @@ test('decidir: sem PR em voo, atualiza só UMA — a que habilitou o auto-merge 
   const d = decidir(prs, OBRIG);
   assert.equal(d.acao, 'atualizar');
   assert.equal(d.pr, 4);
+  assert.deepEqual(d.fila, [4, 5, 7]);
   assert.deepEqual(d.restantes, [5, 7]);
 });
 
@@ -129,4 +131,14 @@ test('PR sem auto-merge ou draft não gasta chamada de API', async () => {
     async () => { chamadas += 1; return 1; },
   );
   assert.equal(chamadas, 0);
+});
+
+test('PR de fork na frente não trava a fila: fica fora e a próxima é escolhida', () => {
+  const prs = [
+    pr(1, { isCrossRepository: true, autoMergeRequest: { enabledAt: '2026-10-15T01:00:00Z' } }),
+    pr(2, { autoMergeRequest: { enabledAt: '2026-10-15T02:00:00Z' } }),
+  ];
+  const d = decidir(prs, OBRIG);
+  assert.equal(d.acao, 'atualizar');
+  assert.deepEqual(d.fila, [2]);
 });

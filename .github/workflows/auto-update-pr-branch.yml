@@ -98,17 +98,29 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          PR: ${{ steps.fila.outputs.pr }}
+          FILA: ${{ steps.fila.outputs.fila }}
         run: |
-          echo "Atualizando PR #$PR (proxima da fila)"
-          if ! sha_antes=$(gh api "repos/$REPO/pulls/$PR" --jq '.head.sha'); then
-            echo "::warning::PR #$PR: falha ao ler head atual via API; a proxima execucao tenta de novo"
+          # Tenta a fila em ordem e para no PRIMEIRO update-branch aceito: no maximo
+          # uma PR atualizada por execucao (R1). Um update recusado (403/422, ex.: sem
+          # permissao no head) nao trava a fila: a proxima e tentada nesta execucao.
+          PR=""
+          for candidato in $FILA; do
+            if ! sha_antes=$(gh api "repos/$REPO/pulls/$candidato" --jq '.head.sha'); then
+              echo "::warning::PR #$candidato: falha ao ler head atual via API; tentando a proxima da fila"
+              continue
+            fi
+            if ! gh api -X PUT "repos/$REPO/pulls/$candidato/update-branch" >/dev/null; then
+              echo "::warning::PR #$candidato: update-branch recusado; tentando a proxima da fila"
+              continue
+            fi
+            PR="$candidato"
+            break
+          done
+          if [ -z "$PR" ]; then
+            echo "Nenhuma PR da fila aceitou update-branch nesta execucao."
             exit 0
           fi
-          if ! gh api -X PUT "repos/$REPO/pulls/$PR/update-branch" >/dev/null; then
-            echo "::warning::Falha ao atualizar PR #$PR; a proxima execucao tenta de novo"
-            exit 0
-          fi
+          echo "Atualizada PR #$PR (proxima da fila)"
           # update-branch e assincrono: o merge commit aparece alguns segundos depois.
           sha_depois="$sha_antes"
           for tentativa in 1 2 3 4 5 6; do
