@@ -45,7 +45,7 @@ beforeEach(() => {
 });
 
 /**
- * TL-122 refazer 2 — o editor SEMPRE passa `contentOverride` (`eContent`).
+ * TL-122 [refazer 1] t_c8e7e187 — o editor SEMPRE passa `contentOverride` (`eContent`).
  * Portanto a janela decide o override pela PRESENÇA da prop, não pelo texto ter
  * caracteres: editor vazio testa VAZIO e não cai no conteúdo salvo do template.
  */
@@ -68,6 +68,7 @@ describe('TL-122 — editor vazio testa vazio, não o template salvo', () => {
 
     expect(await screen.findByText('Template vazio')).toBeTruthy();
     expect(f.testTemplate).not.toHaveBeenCalled();
+    expect(screen.queryByRole('combobox')).toBeNull();
     expect(f.fetchVariants).not.toHaveBeenCalled();
   });
 
