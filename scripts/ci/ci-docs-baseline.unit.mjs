@@ -298,16 +298,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 18 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 19 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 18);
+  assert.equal(arquivos.length, 19);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*18 workflows\.\*\*/);
+  assert.match(readme, /\*\*19 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/16/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 18), []);
+test('CLAUDE.md: contagem atual e fonte canonica (sem 14/16/17/18)', async () => {
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 19), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -503,9 +503,9 @@ test('W39: ci-docs-baseline nao contem versoes de toolchain hardcoded como liter
 });
 
 // W100 — plano vigente (2026-10-14) coberto pelo baseline
-test('W100: plano vigente 2026-10-14 existe e referencia 18 YAML e o plano anterior', async () => {
+test('W100: plano vigente 2026-10-14 existe e referencia 19 YAML e o plano anterior', async () => {
   const plano = await readFile(PLANO_W, 'utf8');
-  assert.match(plano, /\*\*18\*\*\s+arquivos/, 'plano deve mencionar 18 arquivos de workflows');
+  assert.match(plano, /\*\*19\*\*\s+arquivos/, 'plano deve mencionar 19 arquivos de workflows');
   assert.ok(plano.includes('PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md'), 'plano deve referenciar o plano anterior');
   assert.match(plano, /W0?1\b/, 'plano deve ter etapas W');
   assert.match(plano, /W100\b/, 'plano deve ter etapa W100');

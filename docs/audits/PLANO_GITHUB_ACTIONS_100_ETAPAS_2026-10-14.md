@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-14 (18:50 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `3ddb52f`
 (`3ddb52fd04256361041973107935bb37d4b1a386`)
-**Escopo:** os **18** arquivos de `.github/workflows/` (7.304 linhas, lidos integralmente), os 3 workflows
+**Escopo:** os **19** arquivos de `.github/workflows/` (7.304 linhas, lidos integralmente), os 3 workflows
 dinâmicos (Dependabot Updates, Dependency Graph, Copilot reviewer), `dependabot.yml`, `toolchain.json`,
 `CODEOWNERS`, templates, os scripts que os workflows chamam (`scripts/ci/`, `scripts/db-audit/`,
 `scripts/edge-deploy/`, `scripts/talkx/`), `playwright.config.ts`, `vitest.config.ts`, `vercel.json`,
@@ -287,7 +287,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [ ] **W06** · A · N-03 · Investigar o `auth.setup` do run 38239077346: usuário E2E no Auth de produção (lockout, senha,
   MFA, e-mail), app respondendo em `PLAYWRIGHT_BASE_URL`; disparar `e2e-logado` manual até ✅ (#1915 fecha sozinha).
   Verificação: run manual ✅ com os 10 projetos.
-- [~] **W07** · B · N-13 · **PR #1921 aberta.** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
+- [x] **W07** · B · N-13 · **FEITO 2026-10-14 (PR #1921 mergeado).** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
   credencial" (mutação: remover o `if` → teste ❌).

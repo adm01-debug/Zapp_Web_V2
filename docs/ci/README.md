@@ -4,13 +4,14 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**18 workflows.**
+**19 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
 | Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main | PRs abertas ficam com a main e os checks saem de `action_required` | PR atualizado fica esperando aprovacao na aba Actions e o auto-merge nunca dispara | autor do PR | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main, merge_group e dispatch | lint, tipos, testes, build, security e E2E do codigo | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
+| Cleanup Old Artifacts | [`cleanup-artifacts.yml`](../../.github/workflows/cleanup-artifacts.yml) | dispatch e agendado (semanal, domingo) | apaga artifacts criados há mais de 14 dias; reporta contagem final | erros individuais de DELETE são contabilizados mas não travam (warning) | não | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | pull_request e agendado | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security e revisores do PR | — | — |
 | CRM Sync Worker | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | dispatch (manual; o cron foi desligado por rodar 100% skipped) | sincronizacao do CRM executada de ponta a ponta | o job fica vermelho e nada e sincronizado | quem disparou | — | — |
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
@@ -49,6 +50,13 @@
 - **O que prova:** lint, tipos, testes, build, security e E2E do codigo
 - **Quando falha:** PR fica vermelho e o merge e bloqueado pelos required checks
 - **Quem é avisado:** autor do PR e revisor, via checks do GitHub
+
+### Cleanup Old Artifacts (`cleanup-artifacts.yml`)
+
+- **Gatilho:** dispatch e agendado (semanal, domingo)
+- **O que prova:** apaga artifacts criados há mais de 14 dias; reporta contagem final
+- **Quando falha:** erros individuais de DELETE são contabilizados mas não travam (warning)
+- **Quem é avisado:** não
 
 ### CodeQL (`codeql.yml`)
 
