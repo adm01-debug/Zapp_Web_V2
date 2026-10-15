@@ -61,6 +61,11 @@ export function useFilesActions({ contactId, onRemoved }: FilesActionsParams): F
         queryClient.invalidateQueries({ queryKey: contactMediaCountsKey(contactId) });
         toast.success('Mensagem removida');
         return true;
+      } catch {
+        // A RPC pode lancar (rede/offline): PostgREST so devolve `{ error }`
+        // quando responde. Sem este catch a falha escapa sem toast e sem retorno.
+        toast.error('Erro ao apagar mensagem');
+        return false;
       } finally {
         setIsDeleting(false);
       }

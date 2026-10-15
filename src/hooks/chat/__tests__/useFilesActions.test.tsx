@@ -89,6 +89,21 @@ describe('useFilesActions.deleteMessage (etapa 35)', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
+  it('falha de rede (a RPC lanca) → toast de erro, sem remoção e sem invalidar', async () => {
+    h.rpc.mockRejectedValue(new Error('rede fora'));
+    const { result, invalidateSpy, onRemoved } = renderActions();
+
+    let outcome = true;
+    await act(async () => { outcome = await result.current.deleteMessage(ITEM); });
+
+    expect(outcome).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith('Erro ao apagar mensagem');
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(onRemoved).not.toHaveBeenCalled();
+    expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
   // #144 / OTH-002: a exclusão muda o universo de mídia contada pelos chips (etapa 42). Sem
   // invalidar `contactMediaCountsKey`, o chip "Todos"/"Docs" mantém o número antigo após apagar.
   it('#144/OTH-002: excluir mídia invalida os chips por tipo (contactMediaCountsKey)', async () => {
