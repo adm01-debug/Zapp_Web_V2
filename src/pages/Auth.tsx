@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,10 +24,23 @@ export default function Auth() {
   // Movimento reduzido: a marca entra sem deslocar nada.
   const prefersReducedMotion = useReducedMotion() ?? false;
 
-  // Espera do bloqueio em minutos (arredonda para cima). A região viva do bloqueio
-  // anuncia UMA vez, com esse valor; a contagem mm:ss que muda a cada segundo fica
-  // fora dela (aria-hidden), para o leitor de tela não ler em laço.
-  const lockMinutes = Math.max(1, Math.ceil(lockStatus.remainingTime / 60));
+  // Espera anunciada no bloqueio, em minutos (arredonda para cima). É CONGELADA no
+  // início do bloqueio: `remainingTime` cai a cada segundo e `ceil(/60)` mudaria
+  // 5→4→3… reanunciando a região viva em laço. A contagem mm:ss que muda a cada
+  // segundo fica fora dela (aria-hidden), para o leitor de tela não ler em laço.
+  // Zera ao desbloquear, para um próximo bloqueio anunciar o valor novo.
+  const [announcedLockMinutes, setAnnouncedLockMinutes] = useState<number | null>(null);
+  const wasLockedRef = useRef(false);
+  useEffect(() => {
+    if (lockStatus.isLocked && !wasLockedRef.current) {
+      setAnnouncedLockMinutes(Math.max(1, Math.ceil(lockStatus.remainingTime / 60)));
+    } else if (!lockStatus.isLocked && wasLockedRef.current) {
+      setAnnouncedLockMinutes(null);
+    }
+    wasLockedRef.current = lockStatus.isLocked;
+  }, [lockStatus.isLocked, lockStatus.remainingTime]);
+  const lockMinutes =
+    announcedLockMinutes ?? Math.max(1, Math.ceil(lockStatus.remainingTime / 60));
 
   return (
     <main

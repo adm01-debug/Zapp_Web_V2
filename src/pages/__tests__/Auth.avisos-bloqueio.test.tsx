@@ -14,7 +14,7 @@
  * Vermelho antes (Auth.tsx da base não tem role="alert" nem a espera em minutos);
  * verde depois.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -61,6 +61,11 @@ describe('Auth — avisos de bloqueio e de tentativas anunciados', () => {
     signIn.mockReset();
   });
 
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
   it('anuncia o bloqueio numa região viva, já com a espera em minutos', async () => {
     signIn.mockResolvedValueOnce({
       error: { message: 'Muitas tentativas de login. Aguarde alguns minutos.' },
@@ -104,6 +109,31 @@ describe('Auth — avisos de bloqueio e de tentativas anunciados', () => {
 
     const alerta = screen.getByRole('alert');
     expect(alerta).toHaveTextContent('2 tentativas restantes antes do bloqueio');
+  });
+
+  it('congela o anúncio do bloqueio quando a contagem regressiva avança (300s → 239s)', async () => {
+    vi.useFakeTimers();
+    signIn.mockResolvedValueOnce({
+      error: { message: 'Muitas tentativas de login. Aguarde alguns minutos.' },
+      via: 'edge',
+      lock: { isLocked: true, remainingTime: 300, attempts: 5 },
+    });
+
+    await submeterLogin('alguem@promobrindes.com.br');
+
+    const antes = screen.getByRole('alert').textContent ?? '';
+    expect(antes).toContain('5 minutos');
+
+    await act(async () => {
+      vi.advanceTimersByTime(61_000);
+    });
+
+    const depois = screen.getByRole('alert').textContent ?? '';
+    expect(depois).toBe(antes);
+    expect(depois).toContain('5 minutos');
+
+    // A contagem visual continua andando, fora da região viva.
+    expect(screen.getByTestId('auth-bloqueio-contagem')).toHaveTextContent('3:59');
   });
 
   it('não revela se a conta existe: o anúncio não muda com o e-mail', async () => {
