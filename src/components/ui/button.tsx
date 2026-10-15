@@ -57,7 +57,7 @@ const rotuloCarregando = "inline-flex min-w-0 items-center justify-center gap-2 
 
 const indicadorCarregando = (
   <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
-    <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" />
+    <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
   </span>
 );
 
