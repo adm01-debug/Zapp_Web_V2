@@ -24,6 +24,7 @@ vi.mock('@/components/inbox/summary/useSummaryTts', () => ({
 }));
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children, ...props }: Record<string, unknown> & { children?: ReactNode }) => <div {...(props as Record<string, never>)}>{children}</div> },
+  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
 const CONTATO = '11111111-1111-4111-8111-111111111111';
