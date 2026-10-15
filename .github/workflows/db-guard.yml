@@ -383,6 +383,18 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      # PG-08 (cartao t_a6400eda): public.playbooks le para authenticated e so admin/supervisor
+      # escreve — a policy de UPDATE filtra por is_admin_or_supervisor(auth.uid()) SEM levantar
+      # erro, entao a escrita de agente comum volta como 0 linhas com { error: null }: e o caso
+      # que src/hooks/admin/usePlaybooksData.ts (setPlaybookActive) passou a tratar como erro.
+      # O passo prova, em PostgreSQL 17 descartavel com JWT por papel: sem a policy de UPDATE a
+      # escrita e descartada em silencio (red-first), o texto das tres policies copiadas bate com
+      # a migration 20260409014536, admin persiste, agente comum nao persiste e agente le.
+      - name: Simular RLS de playbooks por papel (PG-08)
+        env:
+          PLAYBOOKS_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/playbooks-rls.test.sh
+
       # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
       # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
       # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
