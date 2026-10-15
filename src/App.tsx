@@ -8,6 +8,8 @@ import { LiveRegion } from "@/components/ui/visually-hidden";
 import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
 import { AppProviders } from "@/providers/AppProviders";
 import { AppRoutes } from "@/routes/AppRoutes";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useGlobalIncomingMessageAlerts } from "@/hooks/realtime/useGlobalIncomingMessageAlerts";
 
 const log = getLogger('App');
 
@@ -65,6 +67,14 @@ const Sonner = lazy(() =>
  * AppProviders (src/providers/AppProviders.tsx), not here.
  */
 function DeferredProviders() {
+  // Aviso de mensagem nova em QUALQUER tela (aba oculta ou view fora da inbox).
+  // Vive aqui como os outros listeners globais (TeamChatNotificationsListener):
+  // é side-effect, self-render (toast) e precisa de AuthProvider + QueryClient,
+  // que estão acima (AppProviders). `profile.id` é o valor de
+  // `contacts.assigned_to` — nunca o auth user id.
+  const { profile } = useAuth();
+  useGlobalIncomingMessageAlerts({ myProfileId: profile?.id ?? null });
+
   return (
     // ARCH-3 FIX: fallback={null} is intentional for side-effect providers —
     // the app must remain usable even if a non-critical overlay fails to load.
