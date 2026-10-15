@@ -15,9 +15,12 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 
 ## Atualização de 15/10/2026 (noite) — progresso desta sessão
 
-- **W74 e W84: feitos.** PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953) (`ci: W74 (tira service_role do E2E) + W84 (destrava CodeQL required)`),
-  com auto-merge (squash) ligado pelo Joaquim. Depois do merge faltam os 2 passos manuais que já eram só clique:
-  apagar `SUPABASE_SERVICE_ROLE_KEY` (após o primeiro `e2e-logado` verde) e adicionar `CodeQL` aos required checks.
+- **W74 e W84: código pronto, ainda não concluídos.** PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953)
+  (`ci: W74 (tira service_role do E2E) + W84 (destrava CodeQL required)`) com auto-merge (squash) **enfileirado**
+  pelo Joaquim — ainda não mergeou. Enquanto não mergear, a `main` continua com `SUPABASE_SERVICE_ROLE_KEY` em uso
+  no `e2e-logado.yml` e o `paths-ignore` no `codeql.yml`. Depois do merge faltam os 2 passos manuais que já eram só
+  clique: apagar `SUPABASE_SERVICE_ROLE_KEY` (após o primeiro `e2e-logado` verde) e adicionar `CodeQL` aos required
+  checks — só aí os dois itens contam como concluídos de fato (achado do Codex na PR #1954, correto).
 - **W89 (parte SonarCloud): causa raiz encontrada, correção ainda não aplicada.** A nota D/E do código novo vem de
   **2 issues BLOCKER** (`json:S6418`, "possível segredo hard-coded") em `docs/reconciliation/evidence/
   publication-harness-hardening.json:568` e `docs/reconciliation/evidence/skins-probe-results.json:9` — confirmado
@@ -42,9 +45,9 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 | 1 | **W90** | Quais bots ficam no repositório | Ficar com **Codex, SonarCloud e Vercel** (mais o app Claude, que é como os agentes acessam o repo). Remover os outros 12 | ~10 min de cliques | **Sim**: só o dono da conta remove apps |
 | 2 | **W89** | Supabase for GitHub e SonarCloud | **Remover o app Supabase. Manter o SonarCloud** sem afrouxar o portão | 2 min (+1 min opcional) | **Sim** para o Supabase. Sonar: 2 cliques — causa raiz já achada (ver atualização acima) |
 | 3 | **W67** | Qual projeto Vercel é o oficial | **`zapp_web_v2`**. Desconectar `zapp-web-v2-main` do Git e apagar os 2 environments dele | ~5 min | **Sim**: painel da Vercel e configurações do repo |
-| 4 | **W84** | Tornar o CodeQL obrigatório | ✅ **Feito** — PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953). Falta só adicionar o check `CodeQL` aos required checks | 1 clique, depois do merge | Sim para a regra. A PR já está pronta |
+| 4 | **W84** | Tornar o CodeQL obrigatório | 🔶 **Código pronto, não concluído** — PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), auto-merge enfileirado (ainda não mergeou). Depois do merge, falta adicionar o check `CodeQL` aos required checks | 1 clique, depois do merge | Sim para a regra. A PR já está pronta |
 | 5 | **W20** | Revisão obrigatória, `prevent_self_review`, conversas resolvidas | **Não ligar nenhum dos três agora.** Registrar o motivo no `CLAUDE.md` | 0 min (só confirmar) | Só confirmar: a recomendação é deixar como está |
-| 6 | **W74** | Tirar a chave `service_role` do CI | ✅ **Feito** — PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), auto-merge ligado. Falta apagar o secret após 1º `e2e-logado` verde | 1 clique, depois do merge | Só apagar o secret no fim. O código já foi |
+| 6 | **W74** | Tirar a chave `service_role` do CI | 🔶 **Código pronto, não concluído** — PR [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), auto-merge enfileirado (ainda não mergeou; `SUPABASE_SERVICE_ROLE_KEY` segue em uso na `main` até lá). Depois do merge, falta apagar o secret após 1º `e2e-logado` verde | 1 clique, depois do merge | Só apagar o secret no fim. O código já foi |
 | 7 | **W64** | Credencial somente-leitura para os guardas | **Sim, mas depois do W63.** Role própria `ci_readonly`, não a interna do Supabase | ~15 min | **Sim**: senha de role e secret são só seus (seção 0 do `CLAUDE.md`) |
 | 8 | **W79** | Supabase local para a suíte logada | **Não agora.** A suíte não falha por causa do banco: estoura o limite de 15 min e o login oscila. Corrigir isso primeiro, com código | 0 min | **Não**: o próximo passo é código, não política |
 
