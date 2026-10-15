@@ -175,6 +175,7 @@ function finalizeResponse(
  * Envelope de erro com o correlation id. Mesmo contrato de `errorResponse` (campo
  * `error`, 5xx nunca vaza a mensagem interna) acrescido de `requestId` — é o eco que
  * fecha o item 034 sem tocar em `_shared/validation.ts` (usado por toda edge).
+ * O trace-id do `traceparent` entra só no log, nunca no corpo.
  */
 export function errorResponseWithRequestId(
   message: string,
@@ -195,7 +196,6 @@ export function errorResponseWithRequestId(
       // Nome canônico do front (mesmo valor de `requestId`) — é o id que o cliente
       // casa com a linha de log da Edge.
       correlationId: requestId,
-      ...(traceId !== null ? { traceId } : {}),
     }),
     {
       status,

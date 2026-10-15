@@ -179,7 +179,7 @@ Deno.test("withRequestId: id canônico volta em X-Correlation-Id e no log", asyn
 });
 
 Deno.test("withRequestId: trace-id do traceparent entra no log como traceId", async () => {
-  const handler = withRequestId("metrics", (_req, ctx) => {
+  const handler = withRequestId("metrics", (_req, _ctx) => {
     return Promise.resolve(new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }));
   });
 
@@ -195,7 +195,7 @@ Deno.test("withRequestId: trace-id do traceparent entra no log como traceId", as
   assert((linha as string).includes('"traceId":"4bf92f3577b34da6a3ce929d0e0e4736"'), `traceId ausente: ${linha}`);
 });
 
-Deno.test("errorResponseWithRequestId: devolve X-Correlation-Id e correlationId, com traceId quando há traceparent", async () => {
+Deno.test("errorResponseWithRequestId: devolve X-Correlation-Id e correlationId, sem ecoar traceId no corpo", async () => {
   const res = errorResponseWithRequestId(
     "Unauthorized",
     401,
@@ -205,7 +205,7 @@ Deno.test("errorResponseWithRequestId: devolve X-Correlation-Id e correlationId,
   assert(res.headers.get("x-correlation-id") === "corr-401-abc", "envelope sem o cabeçalho X-Correlation-Id");
   const body = await res.json();
   assert(body.correlationId === "corr-401-abc", `envelope sem correlationId: ${JSON.stringify(body)}`);
-  assert(body.traceId === "4bf92f3577b34da6a3ce929d0e0e4736", `envelope sem traceId: ${JSON.stringify(body)}`);
+  assert(body.traceId === undefined, `traceId não pode ser ecoado no corpo (só no log): ${JSON.stringify(body)}`);
 });
 
 Deno.test("errorResponseWithRequestId: sem traceparent não inventa traceId", async () => {
