@@ -3,7 +3,10 @@
  * resolve o prazo de 1a resposta — resolve_applicable_sla — na MESMA hierarquia
  * do cliente (contato > empresa > cargo > tipo > fila > agente >
  * sla_configurations.is_default > 5 min) e que register_first_response_internal
- * passa a usar esse prazo, no lugar do `interval '5 minutes'` fixo.
+ * usa o prazo configurado (via o resolvedor canonico granular
+ * resolve_applicable_first_response_minutes, fonte unica dos minutos — a RPC
+ * nova serve de API de leitura com nivel + regra), no lugar do
+ * `interval '5 minutes'` fixo.
  *
  * Antes da migration a funcao resolve_applicable_sla nao existe: o caso de 30
  * min com resposta aos 10 min estoura o padrao de 5 min (first_response_breached
@@ -40,6 +43,7 @@ const MIGRATION_FILE = '20261013012747_sla_resolve_applicable.sql';
 const T = '2026-10-12 12:00:00+00';
 
 const RESOLVER_FN = 'resolve_applicable_sla';
+const GRANULAR_FN = 'resolve_applicable_first_response_minutes';
 const REGISTER_FN = 'register_first_response_internal';
 const TRIGGER_FN = 'messages_sla_first_response_trigger';
 const DEPS = ['is_admin_or_supervisor', 'get_profile_id_for_user', 'get_visible_agent_ids', 'is_contact_visible_to_user'];
@@ -232,13 +236,14 @@ CREATE UNIQUE INDEX ux_conversation_sla_open_per_contact
   ON public.conversation_sla (contact_id) WHERE first_response_at IS NULL;
   `);
 
-  // Aplica as dependencias reais (extraidas das migrations) e a RPC nova.
-  const names = [RESOLVER_FN, REGISTER_FN, TRIGGER_FN, ...DEPS];
+  // Aplica as dependencias reais (extraidas das migrations), o resolvedor
+  // canonico granular (fonte dos minutos do register), a RPC nova e o gatilho.
+  const names = [RESOLVER_FN, GRANULAR_FN, REGISTER_FN, TRIGGER_FN, ...DEPS];
   const defs = lastFunctionDefs(names);
   for (const name of names) {
     assert.ok(defs.has(name), `nenhuma migration define public.${name}`);
   }
-  for (const name of [...DEPS, RESOLVER_FN, REGISTER_FN, TRIGGER_FN]) {
+  for (const name of [...DEPS, GRANULAR_FN, RESOLVER_FN, REGISTER_FN, TRIGGER_FN]) {
     psql(defs.get(name).sql);
   }
   psql(resolverAcl());
@@ -433,6 +438,21 @@ SELECT 'min', first_response_minutes::text FROM public.resolve_applicable_sla('$
   );
 });
 
+test('register usa o resolvedor canonico granular (trava do empilhamento R2-SLA-003)', () => {
+  // O contrato granular aplica na fixture SO o resolvedor canonico + o
+  // register: se o register (ultima definicao) chamar outra funcao, o
+  // empilhamento quebra com undefined_function. Este teste fica VERMELHO com
+  // a 20261013012747 como ultima definicao e VERDE com a migration de
+  // correcao. Checa o CORPO aplicado de verdade, nao comentario.
+  const defs = lastFunctionDefs([REGISTER_FN]);
+  assert.ok(defs.has(REGISTER_FN), 'nenhuma migration define o register');
+  assert.match(
+    defs.get(REGISTER_FN).sql,
+    /public\.resolve_applicable_first_response_minutes\s*\(/,
+    'o register (ultima definicao) tem de chamar o resolvedor canonico',
+  );
+});
+
 test('rollback do cabecalho: some a RPC nova e o prazo fixo de 5 min volta', () => {
   psql(rollbackSql());
 
@@ -451,9 +471,9 @@ SELECT 'mark_fixo', (pg_get_functiondef('public.mark_first_response(uuid)'::regp
   assert.equal(rows.get('mark_fixo'), 'true', 'o rollback devolve o mark com o 5 min fixo');
 
   // Reaplica (idempotencia) e confere que a RPC volta.
-  const names = [RESOLVER_FN, REGISTER_FN, TRIGGER_FN];
+  const names = [RESOLVER_FN, GRANULAR_FN, REGISTER_FN, TRIGGER_FN];
   const defs = lastFunctionDefs(names);
-  for (const name of [RESOLVER_FN, REGISTER_FN, TRIGGER_FN]) psql(defs.get(name).sql);
+  for (const name of [GRANULAR_FN, RESOLVER_FN, REGISTER_FN, TRIGGER_FN]) psql(defs.get(name).sql);
   psql(resolverAcl());
   const deNovo = psql(`SELECT 'rpc_existe', (to_regprocedure('public.resolve_applicable_sla(uuid)') IS NOT NULL)::text;`);
   assert.match(deNovo, /rpc_existe\|true/, 'reaplicar a migration recria a RPC');
