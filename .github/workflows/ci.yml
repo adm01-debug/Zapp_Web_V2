@@ -447,7 +447,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # W48: bun audit nao precisa de historico git; fetch-depth padrao (1) e suficiente.
+          # gitleaks precisa do historico completo do PR para detectar segredos
+          # introduzidos em qualquer commit do range (nao so no HEAD).
+          fetch-depth: 0
 
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -495,7 +497,7 @@ jobs:
         # W85: falha em vulnerabilidade `high` nova introduzida no PR; lista licenças.
         # Só faz sentido em pull_request (compara base↔head).
         if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@ce3cf9537a52e8119d91fd484ab5957752996a68 # v4.7.0
+        uses: actions/dependency-review-action@38ecb5b593bf0eb19e335c03f97670f792489a8b # v4.7.0
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure

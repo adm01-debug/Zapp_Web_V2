@@ -4,14 +4,14 @@ import test from 'node:test';
 
 function returnedDivClasses(file) {
   const source = readFileSync(file, 'utf8');
-  return [...source.matchAll(/\breturn\s*(?:\(\s*)?<div(?:\s+className="([^"]*)")?[\s>]/g)].map((match) => match[1] ?? '');
+  return [...source.matchAll(/\breturn\s*(?:\(\s*)?<div(?:\s+className="([^"]*)")? [\s>]/g)].map((match) => match[1] ?? '');
 }
 
 const cases = [
   {
     name: 'TalkX',
     file: 'src/components/talkx/TalkXView.tsx',
-    expectedRoots: 4,
+    expectedRoots: 5,
   },
   {
     name: 'Multiplix',
