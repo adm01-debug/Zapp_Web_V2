@@ -229,8 +229,14 @@ describe('WarRoomDashboard — nomes acessíveis e movimento', () => {
     const { container } = renderizar({ agents: [agente], queues: [{ ...fila, slaBreaches: 2 }], alerts: [alertaCritico] });
 
     expect(await screen.findByText('Alertas')).toBeInTheDocument();
-    expect(container.querySelectorAll('.animate-pulse').length).toBe(0);
-    expect(container.querySelectorAll('.motion-safe\\:animate-pulse').length).toBeGreaterThan(0);
+    // Toda animação da tela tem de vir com a guarda de "reduzir movimento": nenhuma
+    // classe de animação solta (nome da animação sem o prefixo `motion-safe:`).
+    const animados = Array.from(container.querySelectorAll<HTMLElement>('[class*="animate-"]'));
+    expect(animados.length).toBeGreaterThan(0);
+    const semGuarda = animados.filter((el) =>
+      Array.from(el.classList).some((classe) => classe.startsWith('animate-')),
+    );
+    expect(semGuarda.map((el) => el.className)).toEqual([]);
     expect(container.querySelector('.motion-safe\\:animate-pulse-subtle')).not.toBeNull();
   });
 });
