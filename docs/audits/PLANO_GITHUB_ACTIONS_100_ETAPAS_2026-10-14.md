@@ -666,6 +666,21 @@ W99 por último na Fase 8; W100 ao final de tudo.
 
 ---
 
+## 6b. Achados de 15/10/2026 fora das 100 etapas (corrigidos no lote pós-#1947)
+
+Encontrados ao validar ao vivo o que o lote #1942 entregou e ao medir desperdício de CI. Cada um tem teste ou
+contrato que impede a volta.
+
+| Achado | Evidência | Correção |
+|---|---|---|
+| CI refazia trabalho: 8 de 9 pushes na `main` repetiam árvore já aprovada; 26 min por merge (14 de `test:coverage`); auto-update atualizava todas as PRs BEHIND (O(N²)) | runs 38759168550; `tree_id` dos commits (#1945, #1947: árvores idênticas) | `docs/ci/ARQUITETURA_SEM_DESPERDICIO.md`, regras R1–R6; contrato `scripts/ci/arquitetura-sem-desperdicio.unit.mjs` |
+| `branch-hygiene-audit.yml` com YAML inválido (heredoc menos indentado que o `run: \|`); o actionlint não acusou | runs 38765371137, 38767163745 (nome = caminho do arquivo) | heredoc removido; SLA em `scripts/ci/sla-code-scanning.mjs` (que também corrigiu stdin perdido e severidade lida do campo errado) |
+| `scorecard.yml` com 2 pins de SHA inexistentes (32 de 40 caracteres certos no do scorecard) | run 38767166568: `unable to find version` | pins reais + `scripts/ci/check-workflow-pins-resolvem.mjs` no Lint (SHA tem de ser o commit real da tag do comentário) |
+| Paridade tripla do `db-live-guard` acusava "apply pendente" como contrato quebrado (refazia a perna de migrations sem a regra W22/W26) | run 38767166343: 816 arquivos × 815 no ledger | `check-triple-parity.mjs --sem-migrations` (perna delegada ao drift classificado) |
+| `supabase-sync.yml` e `cleanup-artifacts.yml` sem uso (0 runs em 30 dias) | API de Actions | removidos (19 → 17 workflows) |
+
+---
+
 ## 7. Anexo — como as medições foram feitas (reprodutível)
 
 - Workflows: `wc -l .github/workflows/*.yml` (5.923); leitura integral dos 16 arquivos; `grep` de `uses:`, versões,
