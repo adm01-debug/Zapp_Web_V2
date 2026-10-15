@@ -76,7 +76,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `detect-new-device` | A | `src/hooks/ui/useDeviceDetection.ts:112` |
 | `elevenlabs-agent-token` | E | — sem chamador no repositório — |
 | `elevenlabs-dialogue` | A | `src/components/voice/ElevenLabsDialogue.tsx:63` |
-| `elevenlabs-scribe-token` | A | `src/hooks/communication/useVoiceAgent.ts:223` · `src/components/inbox/RealtimeTranscription.tsx:62` |
+| `elevenlabs-scribe-token` | A | `src/hooks/communication/useVoiceAgent.ts:239` · `src/components/inbox/RealtimeTranscription.tsx:62` |
 | `elevenlabs-sfx` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:31` |
 | `elevenlabs-sts` | A | `src/components/inbox/VoiceChanger.tsx:54` |
 | `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:65` · `src/components/inbox/VoiceSelector.tsx:84` |
