@@ -17,7 +17,8 @@
       "🏗️ Build",
       "🔒 Security Audit",
       "Contrato DB offline",
-      "🎭 E2E Tests (Playwright)"
+      "🎭 E2E Tests (Playwright)",
+      "CodeQL"
     ]
   },
   "merge": {
