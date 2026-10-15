@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ListChecks, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, ListChecks, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
@@ -120,8 +120,14 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-4 text-muted-foreground">
-          <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-label="Carregando campos" />
+        <div
+          className="space-y-1.5"
+          role="status"
+          aria-label="Carregando campos"
+          data-testid="custom-fields-loading"
+        >
+          <div className="h-12 rounded-lg bg-muted/40 motion-safe:animate-pulse" />
+          <div className="h-12 rounded-lg bg-muted/40 motion-safe:animate-pulse" />
         </div>
       ) : fields.length === 0 ? (
         <p className="px-1 py-2 text-xs text-muted-foreground">
@@ -282,7 +288,7 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
               onClick={() => void handleAdd()}
               className="h-7 text-xs"
             >
-              {savingAdd ? <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" /> : 'Salvar'}
+              {savingAdd ? 'Salvando…' : 'Salvar'}
             </Button>
           </div>
         </div>
@@ -312,7 +318,7 @@ function CustomFieldsBody({ contactId }: CustomFieldsSectionProps) {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin" /> : 'Remover'}
+              {deleting ? 'Removendo…' : 'Remover'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -340,7 +346,7 @@ export function CustomFieldsSection({ contactId }: CustomFieldsSectionProps) {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-foreground leading-tight">Campos personalizados</div>
-            <div data-testid="sidebar-section-subtitle" className="text-xs text-muted-foreground truncate">
+            <div data-testid="custom-fields-subtitle" className="text-xs text-muted-foreground truncate">
               Informações extras usadas no atendimento
             </div>
           </div>

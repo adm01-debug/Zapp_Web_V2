@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useState } from 'react';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { Accordion } from '@/components/ui/accordion';
 import { CustomFieldsSection } from '../CustomFieldsSection';
+import { getStoredSidebarState } from '../sidebar/sidebarSections';
 
 /**
  * Estes testes renderizam a seção REAL com o hook REAL
@@ -22,13 +24,14 @@ const h = vi.hoisted(() => {
     updateIds: [] as string[],
     deleteIds: [] as string[],
     deletePromise: null as Promise<Res> | null,
+    selectPromise: null as Promise<Res> | null,
   };
 
   const from = (_table: string) => {
     const builder: Record<string, unknown> = {
       select: () => builder,
       eq: () => builder,
-      order: () => Promise.resolve({ data: state.rows, error: state.selectError }),
+      order: () => state.selectPromise ?? Promise.resolve({ data: state.rows, error: state.selectError }),
       upsert: (payload: Record<string, unknown>) => {
         state.upsertPayloads.push(payload);
         return Promise.resolve({ error: state.writeError });
@@ -91,6 +94,7 @@ beforeEach(() => {
   state.updateIds = [];
   state.deleteIds = [];
   state.deletePromise = null;
+  state.selectPromise = null;
 });
 
 describe('CustomFieldsSection — campos personalizados no painel do contato', () => {
@@ -225,5 +229,57 @@ describe('CustomFieldsSection — campos personalizados no painel do contato', (
     expect(screen.queryByRole('button', { name: /Adicionar campo/ })).not.toBeInTheDocument();
     // o valor continua visível em leitura
     expect(screen.getByText('123.456.789-00')).toBeInTheDocument();
+  });
+
+  it('refazer-1 ponto 1: com a fiação do ContactDetails (Accordion controlado pelo storage), a seção abre por padrão', async () => {
+    localStorage.clear();
+    function Wired() {
+      const [value, setValue] = useState<string[]>(getStoredSidebarState());
+      return (
+        <Accordion type="multiple" value={value} onValueChange={setValue}>
+          <CustomFieldsSection contactId="c1" />
+        </Accordion>
+      );
+    }
+    render(<Wired />);
+    // sem a chave persistida, o valor controlado não contém 'customFields' e o
+    // conteúdo do AccordionItem nunca monta
+    expect(await screen.findByText('CPF')).toBeInTheDocument();
+  });
+
+  it('refazer-1 ponto 2: carregando mostra shimmer com animate-pulse e nenhum animate-spin', async () => {
+    let resolveSelect: (value: Res) => void = () => {};
+    state.selectPromise = new Promise<Res>((resolve) => {
+      resolveSelect = resolve;
+    });
+    const { container } = renderSection();
+
+    expect(await screen.findByTestId('custom-fields-loading')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Carregando campos' })).toBeInTheDocument();
+    expect(container.querySelector('[class*="animate-pulse"]')).not.toBeNull();
+    expect(container.querySelector('[class*="animate-spin"]')).toBeNull();
+
+    resolveSelect({ data: state.rows, error: null });
+    expect(await screen.findByText('CPF')).toBeInTheDocument();
+  });
+
+  it('refazer-1 ponto 3: subtítulo usa testid próprio, sem duplicar sidebar-section-subtitle', async () => {
+    const { container } = renderSection();
+    await screen.findByText('CPF');
+    expect(screen.getByTestId('custom-fields-subtitle')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="sidebar-section-subtitle"]')).toBeNull();
+  });
+
+  it('refazer-1 ponto 4: cancelar a exclusão fecha o diálogo sem apagar', async () => {
+    renderSection();
+    await screen.findByText('CPF');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remover CPF' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(state.deleteIds).toHaveLength(0);
+    expect(screen.getByText('CPF')).toBeInTheDocument();
   });
 });

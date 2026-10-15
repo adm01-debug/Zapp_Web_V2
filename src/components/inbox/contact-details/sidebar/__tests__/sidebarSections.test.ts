@@ -7,9 +7,9 @@ const OLD_KEY = 'contact-details-accordion-state';
 describe('sidebarSections — migração do localStorage (etapa 44)', () => {
   beforeEach(() => localStorage.clear());
 
-  it('storage antigo só com seções que não existem mais → default (3 abertas)', () => {
+  it('storage antigo só com seções que não existem mais → default (todas abertas)', () => {
     localStorage.setItem(OLD_KEY, JSON.stringify(['info', 'tags']));
-    expect(getStoredSidebarState()).toEqual(['professional', 'personal', 'singu']);
+    expect(getStoredSidebarState()).toEqual(['professional', 'personal', 'singu', 'customFields']);
   });
 
   it('storage antigo com valor válido sobrevive e migra para a chave nova', () => {
@@ -49,6 +49,11 @@ describe('sidebarSections — migração do localStorage (etapa 44)', () => {
     });
     expect(getStoredSidebarState()).toEqual(DEFAULT_OPEN_SECTIONS);
     getItem.mockRestore();
+  });
+
+  it('refazer-1 ponto 1: chave customFields sobrevive ao round-trip do storage', () => {
+    saveSidebarState(['professional', 'customFields']);
+    expect(getStoredSidebarState()).toEqual(['professional', 'customFields']);
   });
 
   it('saveSidebarState grava na chave nova e não explode sem storage', () => {
