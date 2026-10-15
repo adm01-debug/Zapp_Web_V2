@@ -1,24 +1,25 @@
-Especialista: hugo
+Especialista: semisenior
+
+FAIXA DA ENTREGA ANTERIOR: a branch já contém os commits 7933c912f9..9d32236dae do cartão t_e9a1cfe7 (remoção do hook, guarda novo, relato) — não são deste refazer. O commit deste refazer muda só `docs/DB-INVENTORY.md:126` e este relato.
 
 ## O que mudou e por quê
-- `src/hooks/system/useVersions.ts` (removido): o hook não tinha consumidor fora do próprio teste e o `restoreVersion` fazia `UPDATE` cego de snapshot em qualquer tabela via `fromTable(entityType)` — podia regravar `role`/`is_active`/`access_level` fora da trava das RPCs de papel (PD-10/11). Sem ele, não existe restore cego de snapshot no front.
-- `src/hooks/system/index.ts`: removida a linha `export * from './useVersions';` do barrel.
-- `src/hooks/__tests__/useVersions.test.tsx` (removido): era o único consumidor do hook. O cartão mandou remover o código junto com o teste — "O QUE FAZER", item 1: *"Remova o hook, o export de hooks/system/index.ts e o teste"*. Sem o sujeito o teste não roda; a regressão passou a ser coberta pelo guarda novo abaixo.
-- `src/hooks/system/__tests__/useVersionsAusente.test.ts` (novo, 2 casos): guarda de remoção. Falha se o arquivo do hook voltar (`existsSync`) ou se o barrel voltar a exportar `useVersions` (`@/hooks/system`).
+- `docs/DB-INVENTORY.md:126` (`entity_versions`): status `ativo` → `roadmap`, consumidor `` `src/hooks/system/useVersions.ts` `` → `—`. O arquivo do hook foi removido pela entrega anterior, então a linha citava um consumidor que não existe e um status que o repositório não sustenta mais (ninguém em `src/` ou `supabase/functions/` cita `entity_versions`; só a tipagem gerada, que a guarda ignora). Era exatamente o achado fora de escopo que a entrega anterior registrou.
 
 ## Prova
-- vermelho (o teste novo contra o estado anterior): restaurando a linha `export * from './useVersions';` no barrel, `npx vitest run src/hooks/system/__tests__/useVersionsAusente.test.ts` →
-  `FAIL src/hooks/system/__tests__/useVersionsAusente.test.ts > ... > o barrel de hooks/system não exporta useVersions` / `Error: Failed to resolve import "./useVersions" from "src/hooks/system/index.ts". Does the file exist?` / `Test Files 1 failed (1); Tests 1 failed | 1 passed (2)`. A linha foi revertida em seguida e `git diff` de `index.ts` ficou vazio.
-- verde depois: `npx vitest run src/hooks/system` → `Test Files 10 passed (10); Tests 90 passed | 3 expected fail (93)`; exit 0.
-- consumidores ANTES (base `dia/2026-10-13`): `git grep -l useVersions dia/2026-10-13 -- src` → `src/hooks/__tests__/useVersions.test.tsx`, `src/hooks/system/index.ts`, `src/hooks/system/useVersions.ts`.
-- consumidores DEPOIS: `git grep -l useVersions -- src tests` → apenas o novo guarda `src/hooks/system/__tests__/useVersionsAusente.test.ts`; `git grep -E "from ['\"].*useVersions|import\(.*useVersions" -- src tests` → `0 imports do modulo`. Nenhum código importa o hook; nenhum bloqueio.
-- verificação do cartão: `zapp-verify . --rapido` → `OK db_guard / OK tipos / OK lint / OK migrations` e `VERIFY: VERDE SEM BANCO (197s)` (exit 0), após `bun install` no workspace.
+- vermelho antes (com a linha antiga, neste workspace): `node --test scripts/ci/db-inventory-doc.unit.mjs` → `✖ docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` / `actual: [ '"entity_versions" está como "ativo", mas o repositório diz "roadmap"', '"entity_versions" não é citada por nenhum arquivo, então a coluna é "—"' ]` / `expected: []`.
+- verde depois (mesmo comando, só com a linha 126 corrigida): `ℹ tests 15` / `ℹ pass 15` / `ℹ fail 0`.
+- sem regressão no módulo: `npx vitest run src/hooks/system` → `Test Files 10 passed (10)` / `Tests 90 passed | 3 expected fail (93)`.
+- verificação: `zapp-verify . --rapido` → `OK db_guard` / `OK tipos` / `OK lint` / `OK migrations` e `VERIFY: VERDE SEM BANCO (16s)`.
 
-## Observação sobre o guarda automático
-O aviso "um teste que já existia foi removido" corresponde exatamente ao pedido do cartão (item 1 do "O QUE FAZER"): o teste do hook sai junto com o hook e a cobertura da regressão passa para `src/hooks/system/__tests__/useVersionsAusente.test.ts`, citado acima.
+## Pontos do revisor
+- Ponto 1 (espelho do CI quebra no empilhamento em `docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`): resolvido — `docs/DB-INVENTORY.md:126`; prova verde acima. Nenhuma asserção da guarda foi afrouxada (a guarda `scripts/ci/db-inventory-doc.unit.mjs` não foi tocada).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `entity_versions` nem em migration: fora do escopo do cartão (ele só pede a remoção do hook) e migration é trilha separada.
-- Achado fora do escopo (registrado em `kanban_comment`): `docs/DB-INVENTORY.md:126` ainda aponta `src/hooks/system/useVersions.ts` como consumidor de `entity_versions`; o arquivo agora está obsoleto.
+- Não mexi no hook, no barrel nem nos testes da entrega anterior: já estavam certos e o revisor não os contestou.
+- Não mexi em `entity_versions` no banco nem em migration: fora do escopo, migration é trilha separada.
+- Não rodei `zapp-verify full .`: o item reprovado é o teste node acima (rodado vermelho→verde); o `--rapido` cobre tipos/lint/migrations e está verde.
 
-Concluído: hook e export removidos, teste antigo substituído pelo guarda, verificação verde.
+## Ressalva de processo (não é pendência de código)
+O `hermes-tarefa-fechar` está bloqueado neste momento (guarda CONGELADO sem o marcador MODO_V2 — incidente já registrado nas decisões de 14/10), então não houve fechamento pelo script oficial. O trabalho está commitado na branch `v2/remover-hook-versoes-entidade-sem-uso-26101310457a72`; o cartão foi concluído pelo quadro com o sha no handoff para o operador reenfileirar.
+
+Concluído: inventário alinhado ao repositório, espelho verde, verificação verde.
