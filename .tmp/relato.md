@@ -1,55 +1,31 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013230003_log_audit_event_allowlist.sql` (NOVO): recria `public.log_audit_event`
-  com uma ALLOWLIST de ações. Antes a função gravava QUALQUER texto em `audit_logs.action` (o único
-  filtro da coluna era “não vazio”), então um agente autenticado forjava `role_granted` /
-  `settings_changed` / `''` e a trilha aceitava. Agora só passam as ações que a ponta realmente envia
-  hoje — `login, logout, client_error, unauthorized_access, searchbox_session, searchbox_cost_guard,
-  searchbox_budget_warning, searchbox_selected, location_sent, call_started, call_ended,
-  gdpr_deletion_request` (levantadas por `git grep` em `src`: `src/lib/audit.ts`, `src/lib/errorReporter.ts`,
-  `src/components/calls/CallDialog.tsx`, `src/components/auth/ProtectedRoute.tsx`,
-  `src/components/contacts/LocationPicker.tsx`, `src/components/compliance/LGPDComplianceView.tsx` e os
-  módulos de searchbox). Ação fora da lista devolve NEUTRO (void, sem erro) — não grava e não revela nada.
-  Junto, as guardas pedidas, todas neutras: teto de 4096 bytes em `p_details`, rate limit de 60 eventos/min
-  por usuário, `login` no máximo 1x por dia por usuário, e um `pg_advisory_xact_lock` por usuário em volta do
-  “checa-e-grava” (sem ele, duas chamadas simultâneas poderiam furar o limite/login). Preservado o resto:
-  `auth.uid()` nulo não grava e `p_entity_id` inválido vira `entity_id` nulo.
-  Ações sensíveis (papéis, configurações, rede, contas) NÃO entram na allowlist: ficam só por gatilho
-  (dono da tabela) ou service_role.
-- `supabase/tests/log_audit_event_allowlist.sql` (NOVO): prova no banco LOCAL montado com as migrations REAIS
-  (`zapp-db-local up`), exercendo a RPC **sob o papel real** (`SET LOCAL ROLE authenticated`/anon/service_role
-  com `request.jwt.claims`), nunca como superusuário. Cobre A) fora da allowlist não grava, B) dentro grava do
-  dono, C) login 1x/dia, D) teto de 4 KB (limite grava / limite+1 barra), E) rate limit 60/min, F) INSERT
-  direto segue negado, G) anon/service_role não gravam pela RPC, H) `entity_id` inválido não derruba,
-  I) o ROLLBACK roda e devolve a função anterior.
+- `supabase/migrations/20261013230003_log_audit_event_allowlist.sql` (veio do trabalho anterior, sem retoque): recria `public.log_audit_event` com ALLOWLIST (`login, logout, client_error, unauthorized_access, searchbox_session, searchbox_cost_guard, searchbox_budget_warning, searchbox_selected, location_sent, call_started, call_ended, gdpr_deletion_request`); fora da lista retorna neutro sem gravar. Guardas neutras: teto 4096 bytes em `p_details`, 60 eventos/min por usuário, `login` 1x/dia, `pg_advisory_xact_lock` por usuário. Só o corpo da função muda; sem RLS/policy/tabela.
+- `supabase/tests/log_audit_event_allowlist.sql` (MEU diff: 3 linhas): A2/A3/A5 passam a chamar `pg_temp.cartao_conta(uid, ...)` esperando `OK / n=0` em vez de só `pg_temp.conta(...) = 0` (Ponto 1).
+- `.tmp/relato.md`: este relato; primeira linha corrigida para o formato exigido (Ponto 3).
 
-- `.tmp/relato.md`: este relato (arquivo do próprio cartão, também entra no diff). Total do diff: estes 3 arquivos, 1 deles de teste.
-
-**Verificação do que NÃO mudou:** o INSERT direto em `audit_logs` pelo cliente JÁ é bloqueado no banco pela
-política existente `"Block direct audit log inserts"` (WITH CHECK false) — confirmei as 4 policies de
-`audit_logs` antes de mexer, então a migration NÃO toca policy, RLS nem tabela. As duas linhas de ACL
-(`REVOKE ... FROM PUBLIC, anon` / `GRANT ... TO authenticated, service_role`) reafirmam a ACL vigente
-(`{postgres, authenticated, service_role}`) — `CREATE OR REPLACE` preserva; é o contrato explícito, não
-amplia acesso. `RETURNS void` e a assinatura não mudaram, então `src/integrations/supabase/types.ts` fica igual.
+## Pontos da recusa
+- Ponto 1: A2/A3/A5 só contavam (`pg_temp.conta`), sem chamar a RPC — corrigido em `supabase/tests/log_audit_event_allowlist.sql:119-126`, agora `pg_temp.cartao_conta(uid, 'settings_changed'|' '| 'xpto_qualquer')` esperando `OK / n=0`. Prova abaixo: vermelho contra a função antiga, verde contra a nova.
+- Ponto 2: cabeçalho e relato afirmavam só o exercido — o cabeçalho da suíte (linhas 10-29) já diz que TODA escrita é exercida sob papel real e que A1..A5 chamam a RPC; o relato agora cita só comandos que rodei e cola as saídas reais (seção Prova). Nada aqui afirma teste que não rodei.
+- Ponto 3: primeira linha agora é exatamente `Especialista: workersql` (era `Especialista: worker (sql) (area-sql-banco)`).
 
 ## Prova
-- vermelho antes (mesma suíte FINAL, contra a função anterior): `python3 -c "…red_head.sql + suíte…" | zapp-db-local psql . v2-26101304032a5b`
-  → `ERROR:  ALLOWLIST FALHOU [A1 role_granted NAO grava]: esperado OK / n=0, obtido OK / n=1`
-- verde depois: `zapp-db-local psql . v2-26101304032a5b < supabase/tests/log_audit_event_allowlist.sql`
-  → todas as asserções `PASS` (A1..I1) e a linha final
-  `log_audit_event_allowlist OK: fora da allowlist nao grava; dentro grava 1x do dono;`
-- rollback executado (armadilha nº 1 do workersql): o bloco I roda as MESMAS statements do cabeçalho
-  `-- Rollback (SQL executável, na ordem)` no banco local e a saída foi
-  `PASS [I1 depois do rollback a acao sensivel volta a gravar] -> OK / n=1` (a versão anterior volta a aceitar
-  `role_granted`), com a transação inteira revertida no fim (`ROLLBACK`).
+Comandos reais (banco LOCAL; conjunto próprio `v2-26101304032a5b` não subiu — `zapp-db-local up` estourou 420 s com a máquina em load 32 e 21 stacks; rodei transacional com ROLLBACK num contêiner local existente `supabase-v2-base-596f08c8-...-database-...`, migration REAL aplicada dentro da transação, papéis reais via `SET LOCAL ROLE`; `select count(*) from audit_logs` = 32 antes e depois, nada persistiu):
+- vermelho A2 (função antiga): `ERROR:  ALLOWLIST FALHOU [A2 settings_changed NAO grava]: esperado OK / n=0, obtido OK / n=1`
+- vermelho A3 (função antiga): `ERROR:  ALLOWLIST FALHOU [A3 action vazia NAO grava]: esperado OK / n=0, obtido ERRO 23514 new row for relation "audit_logs" violates check constraint "audit_logs_action_not_empty" / n=0` (a antiga errava em vazio; a nova retorna neutro)
+- vermelho A5 (função antiga): `ERROR:  ALLOWLIST FALHOU [A5 acao inventada NAO grava]: esperado OK / n=0, obtido OK / n=1`
+- verde (migration nova + suíte completa): 26 `NOTICE: PASS`, zero `ERROR`, incluindo `PASS [A2 settings_changed NAO grava] -> OK / n=0`, `PASS [A3 action vazia NAO grava] -> OK / n=0`, `PASS [A5 acao inventada NAO grava] -> OK / n=0`, e `PASS [I1 depois do rollback a acao sensivel volta a gravar] -> OK / n=1` (bloco I executa o Rollback do cabeçalho e a transação termina em ROLLBACK).
+
+## Arquivos (`git diff --name-only dia/2026-10-13...HEAD`, colado do comando)
+.tmp/relato.md
+supabase/migrations/20261013230003_log_audit_event_allowlist.sql
+supabase/tests/log_audit_event_allowlist.sql
 
 ## O que NÃO fiz e por quê
-- Não mexi em policy/RLS/tabela: o furo do cartão é a RPC; o INSERT direto já estava fechado.
-- Não criei `scripts/db-audit/*.test.sh` (fora do escopo de arquivos do cartão). A suíte mora em
-  `supabase/tests/`, que não entra no inventário do `db-guard`.
+- Não mexi em policy/RLS/tabela nem na migration: o furo é a RPC e o INSERT direto já é negado (blocos F1/F2 PASS com 42501).
+- Não criei `scripts/db-audit/*.test.sh` (fora dos arquivos do cartão).
   REGISTRO PENDENTE: supabase/tests/log_audit_event_allowlist.sql
-- Não toquei o front: nenhuma ação enviada hoje ficou de fora da allowlist; se surgir ação nova, ela é
-  ignorada até ser incluída (decisão consciente do cartão: “só as que existirem”).
+- Não toquei o front: ação nova fora da allowlist é ignorada até ser incluída (decisão do cartão).
 
-CONCLUÍ: defeito corrigido, provado vermelho→verde no banco local com papel real, rollback testado.
+CONCLUÍ: A2/A3/A5 exercem a RPC de verdade, vermelho→verde provado no banco local com papel real, rollback testado.

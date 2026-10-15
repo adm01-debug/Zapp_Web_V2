@@ -117,13 +117,13 @@ DELETE FROM public.audit_logs
 SELECT pg_temp.espera('A1 role_granted NAO grava',
   pg_temp.cartao_conta('aaaaaaaa-0000-0000-0000-00000000000a', 'role_granted'), 'OK / n=0');
 SELECT pg_temp.espera('A2 settings_changed NAO grava',
-  pg_temp.conta('aaaaaaaa-0000-0000-0000-00000000000a', 'settings_changed')::text, '0');
+  pg_temp.cartao_conta('aaaaaaaa-0000-0000-0000-00000000000a', 'settings_changed'), 'OK / n=0');
 SELECT pg_temp.espera('A3 action vazia NAO grava',
-  pg_temp.conta('aaaaaaaa-0000-0000-0000-00000000000a', '')::text, '0');
+  pg_temp.cartao_conta('aaaaaaaa-0000-0000-0000-00000000000a', ''), 'OK / n=0');
 SELECT pg_temp.espera('A4 action nula NAO grava',
   pg_temp.cartao_conta('aaaaaaaa-0000-0000-0000-00000000000a', NULL), 'OK / n=0');
 SELECT pg_temp.espera('A5 acao inventada NAO grava',
-  pg_temp.conta('aaaaaaaa-0000-0000-0000-00000000000a', 'xpto_qualquer')::text, '0');
+  pg_temp.cartao_conta('aaaaaaaa-0000-0000-0000-00000000000a', 'xpto_qualquer'), 'OK / n=0');
 SELECT pg_temp.espera('A6 o retorno e neutro (sem erro) para acao barrada',
   pg_temp.cartao('aaaaaaaa-0000-0000-0000-00000000000a', 'role_granted'), 'OK');
 SELECT pg_temp.espera('A7 nenhuma linha de A1..A6 sobrou',
