@@ -140,7 +140,7 @@ jobs:
           fi
           # A logica (e os testes) vivem em scripts/ci/sla-code-scanning.mjs; o
           # exit 1 em violacao de SLA atravessa o pipe por causa do pipefail.
-          node scripts/ci/sla-code-scanning.mjs "$ARQUIVO" | tee -a "$RELATORIO"
+          node scripts/ci/sla-code-scanning.mjs < "$ARQUIVO" | tee -a "$RELATORIO"
 
       - name: Verificar atualizações do toolchain (W40)
         # W40: relata versões mais novas das ferramentas em .github/toolchain.json.

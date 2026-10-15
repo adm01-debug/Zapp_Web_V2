@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decidirReuso, JOB_REUSO, limparParaLog } from './reuso-arvore.mjs';
+import { decidirReuso, JOB_REUSO, limparParaLog, urlDaApi, WORKFLOWS_COM_REUSO } from './reuso-arvore.mjs';
 
 const REPO = 'adm01-debug/Zapp_Web_V2';
 const SHA = 'a'.repeat(40);
@@ -125,6 +125,7 @@ test('entradas com formato inválido são recusadas antes de virar URL de API', 
   await assert.rejects(decidirReuso({ ...base, repo: 'x/../../evil', api }), /GITHUB_REPOSITORY/);
   await assert.rejects(decidirReuso({ ...base, sha: 'main', api }), /GITHUB_SHA/);
   await assert.rejects(decidirReuso({ ...base, workflow: '../ci.yml?x=1', api }), /--workflow/);
+  await assert.rejects(decidirReuso({ ...base, workflow: 'deploy-functions.yml', api }), /--workflow/);
 });
 
 test('head da PR com SHA inválido não é consultado', async () => {
@@ -137,4 +138,12 @@ test('head da PR com SHA inválido não é consultado', async () => {
 
 test('texto de log perde quebras de linha e caracteres de controle', () => {
   assert.equal(limparParaLog('ok\n::error::forjado\r\x1b[31m'), 'ok ::error::forjado [31m');
+});
+
+test('a URL da API fica presa à origem api.github.com e ao prefixo /repos', () => {
+  assert.equal(urlDaApi('/repos/o/r/commits/x/pulls').href, 'https://api.github.com/repos/o/r/commits/x/pulls');
+  assert.throws(() => urlDaApi('//evil.example/repos/x'));
+  assert.throws(() => urlDaApi('https://evil.example/repos/x'));
+  assert.throws(() => urlDaApi('/user'));
+  assert.deepEqual(WORKFLOWS_COM_REUSO, ['ci.yml', 'db-guard.yml']);
 });

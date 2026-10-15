@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { avaliarSla, nivel, relatorio } from './sla-code-scanning.mjs';
 
 const AGORA = Date.parse('2026-10-15T12:00:00Z');
@@ -37,44 +35,30 @@ test('relatório: sem violação diz isso; com violação lista em bloco', () =>
   assert.match(relatorio({ total: 1, violacoes: ['HIGH x'] }), /Violações de SLA[\s\S]*HIGH x/);
 });
 
-test('CLI: lê o JSON de arquivo (não do stdin), sai 1 com violação e 0 sem', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'sla-'));
-  const com = join(dir, 'com.json');
-  const sem = join(dir, 'sem.json');
-  writeFileSync(com, JSON.stringify([{ number: 9, rule: { id: 'js/z', security_severity_level: 'high' }, created_at: '2020-01-01T00:00:00Z' }]));
-  writeFileSync(sem, '[]');
-  const script = new URL('./sla-code-scanning.mjs', import.meta.url).pathname;
-  const r1 = spawnSync(process.execPath, [script, com], { encoding: 'utf8' });
+const SCRIPT = new URL('./sla-code-scanning.mjs', import.meta.url).pathname;
+const cli = (entrada) => spawnSync(process.execPath, [SCRIPT], { encoding: 'utf8', input: entrada });
+
+test('CLI: lê o JSON do stdin, sai 1 com violação e 0 sem', () => {
+  const r1 = cli(JSON.stringify([{ number: 9, rule: { id: 'js/z', security_severity_level: 'high' }, created_at: '2020-01-01T00:00:00Z' }]));
   assert.equal(r1.status, 1);
   assert.match(r1.stdout, /#9: js\/z/);
   assert.match(r1.stderr, /::error::W83/);
-  const r0 = spawnSync(process.execPath, [script, sem], { encoding: 'utf8' });
+  const r0 = cli('[]');
   assert.equal(r0.status, 0);
   assert.match(r0.stdout, /Nenhuma violação/);
 });
 
-test('CLI: resposta que não é lista (erro de permissão) avisa e não bloqueia', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'sla-'));
-  const f = join(dir, 'erro.json');
-  writeFileSync(f, JSON.stringify({ message: 'Resource not accessible by integration' }));
-  const r = spawnSync(process.execPath, [new URL('./sla-code-scanning.mjs', import.meta.url).pathname, f], { encoding: 'utf8' });
-  assert.equal(r.status, 0);
-  assert.match(r.stderr, /::warning::W83/);
+test('CLI: resposta que não é lista (erro de permissão) ou JSON inválido avisa e não bloqueia', () => {
+  for (const entrada of [JSON.stringify({ message: 'Resource not accessible by integration' }), 'não é json', '']) {
+    const r = cli(entrada);
+    assert.equal(r.status, 0, entrada);
+    assert.match(r.stderr, /::warning::W83/);
+  }
 });
 
-test('o workflow chama o script com arquivo e não tem mais Node inline', () => {
+test('o workflow passa os alertas pelo stdin e não tem mais Node inline', () => {
   const wf = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
-  assert.match(wf, /node scripts\/ci\/sla-code-scanning\.mjs "\$ARQUIVO"/);
+  assert.match(wf, /node scripts\/ci\/sla-code-scanning\.mjs < "\$ARQUIVO"/);
   assert.doesNotMatch(wf, /NODE_EOF/);
   assert.doesNotMatch(wf, /node --input-type=module/);
-});
-
-test('caminho: só .json dentro das raízes permitidas', async () => {
-  const { caminhoPermitido } = await import('./sla-code-scanning.mjs');
-  const raiz = mkdtempSync(join(tmpdir(), 'raiz-'));
-  assert.equal(caminhoPermitido(join(raiz, 'a.json'), [raiz]), join(raiz, 'a.json'));
-  assert.equal(caminhoPermitido(join(raiz, '..', 'fora.json'), [raiz]), null);
-  assert.equal(caminhoPermitido(join(raiz, 'a.txt'), [raiz]), null);
-  assert.equal(caminhoPermitido('/etc/passwd', [raiz]), null);
-  assert.equal(caminhoPermitido(undefined, [raiz]), null);
 });

@@ -9,11 +9,9 @@
 // JSON se perdia; e a severidade vinha de `rule.severity` (error/warning/note),
 // que nunca vale "high" — nenhum alerta recebia o SLA de 14 dias.
 //
-// Uso: node scripts/ci/sla-code-scanning.mjs <alertas.json>  (markdown no stdout)
+// Uso: node scripts/ci/sla-code-scanning.mjs < alertas.json  (markdown no stdout)
 
 import { readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const SLA_DIAS = { alto: 14, baixo: 30 };
@@ -55,25 +53,15 @@ export function relatorio({ total, violacoes }) {
   return `${linhas.join('\n')}\n`;
 }
 
-// O arquivo vem do workflow ($RUNNER_TEMP/code-scanning-alerts.json); mesmo assim só
-// se aceita .json dentro do diretório de trabalho, do RUNNER_TEMP ou do temporário.
-export function caminhoPermitido(arquivo, raizes = [process.cwd(), process.env.RUNNER_TEMP, tmpdir()]) {
-  if (!arquivo || path.extname(arquivo) !== '.json') return null;
-  const absoluto = path.resolve(arquivo);
-  const dentro = raizes.filter(Boolean).some((raiz) => {
-    const relativo = path.relative(path.resolve(raiz), absoluto);
-    return relativo !== '' && !relativo.startsWith('..') && !path.isAbsolute(relativo);
-  });
-  return dentro ? absoluto : null;
-}
-
+// Lê o JSON do stdin (`node sla-code-scanning.mjs < alertas.json`): o script não
+// recebe caminho nenhum, então não há caminho a validar.
 function main() {
-  const arquivo = caminhoPermitido(process.argv[2]);
-  if (!arquivo) {
-    console.error('uso: sla-code-scanning.mjs <alertas.json> (dentro do diretório de trabalho, RUNNER_TEMP ou temporário)');
-    process.exit(2);
+  let alertas;
+  try {
+    alertas = JSON.parse(readFileSync(0, 'utf8'));
+  } catch {
+    alertas = null;
   }
-  const alertas = JSON.parse(readFileSync(arquivo, 'utf8'));
   if (!Array.isArray(alertas)) {
     console.error('::warning::W83: a API não devolveu uma lista de alertas');
     process.stdout.write('\n### ⚠️ Code Scanning — SLA (W83)\n\nNão foi possível consultar os alertas (permissão ou API).\n');

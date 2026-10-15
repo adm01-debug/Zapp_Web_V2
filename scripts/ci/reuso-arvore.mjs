@@ -28,7 +28,10 @@ export const JOB_REUSO = '♻️ Reuso de árvore já testada';
 
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
-const WORKFLOW_RE = /^[\w.-]+\.ya?ml$/;
+// Lista fechada: só estes workflows têm o job de reuso. O valor usado na URL é a
+// constante daqui, nunca o texto recebido no argv.
+export const WORKFLOWS_COM_REUSO = Object.freeze(['ci.yml', 'db-guard.yml']);
+const API = 'https://api.github.com';
 
 // As entradas vêm do runner (GITHUB_REPOSITORY, GITHUB_SHA) e do argv fixo do
 // workflow, mas entram em URL de API: formato inválido é recusado antes de virar
@@ -36,7 +39,7 @@ const WORKFLOW_RE = /^[\w.-]+\.ya?ml$/;
 export function validarEntrada({ sha, repo, workflow }) {
   if (!REPO_RE.test(repo ?? '')) throw new Error('GITHUB_REPOSITORY com formato inválido');
   if (!SHA_RE.test(sha ?? '')) throw new Error('GITHUB_SHA com formato inválido');
-  if (!WORKFLOW_RE.test(workflow ?? '')) throw new Error('--workflow com formato inválido');
+  if (!WORKFLOWS_COM_REUSO.includes(workflow)) throw new Error('--workflow fora da lista de workflows com reuso');
 }
 
 // Texto que vai para log/summary sem quebra de linha nem caractere de controle.
@@ -80,9 +83,18 @@ export async function decidirReuso({ evento, sha, repo, workflow, api }) {
   };
 }
 
+// URL montada sobre a origem fixa e conferida antes da requisição: nenhum caminho
+// consegue apontar o fetch (e o token) para outro host.
+export function urlDaApi(caminho) {
+  const url = new URL(caminho, API);
+  if (url.origin !== API || !caminho.startsWith('/repos/')) throw new Error('caminho de API fora de /repos em api.github.com');
+  return url;
+}
+
 function criarApi(token) {
   return async (caminho) => {
-    const r = await fetch(`https://api.github.com${caminho}`, {
+    const url = urlDaApi(caminho);
+    const r = await fetch(url, {
       headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' },
       signal: AbortSignal.timeout(20_000),
     });
@@ -93,7 +105,8 @@ function criarApi(token) {
 
 async function main() {
   const i = process.argv.indexOf('--workflow');
-  const workflow = i > 0 ? process.argv[i + 1] : '';
+  const pedido = i > 0 ? process.argv[i + 1] : '';
+  const workflow = WORKFLOWS_COM_REUSO.find((w) => w === pedido) ?? '';
   let decisao;
   try {
     if (!workflow) throw new Error('--workflow ausente');
