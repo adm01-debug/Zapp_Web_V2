@@ -257,7 +257,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
                     placeholder={`Opção ${i + 1}`}
                   />
                   {pollOptions.length > 2 && (
-                    <Button variant="ghost" size="icon" onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
+                    <Button variant="ghost" size="icon" aria-label={`Remover opção ${i + 1}`} onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   )}

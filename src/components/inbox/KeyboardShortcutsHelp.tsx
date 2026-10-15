@@ -34,6 +34,7 @@ export function KeyboardShortcutsHelp() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-muted-foreground hover:text-foreground"
+                aria-label="Atalhos de teclado"
               >
                 <Keyboard className="w-4 h-4" />
               </Button>

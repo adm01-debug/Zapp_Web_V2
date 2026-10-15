@@ -138,7 +138,7 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" disabled className="w-9 h-9 opacity-50 border-border/30">
+          <Button variant="outline" size="icon" aria-label="Contato não encontrado no CRM" disabled className="w-9 h-9 opacity-50 border-border/30">
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
           </Button>
         </TooltipTrigger>
@@ -159,6 +159,7 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
         <Button
           variant="outline"
           size="icon"
+          aria-label="Sincronizar com CRM externo"
           onClick={handleSync}
           disabled={isSyncing}
           className="w-9 h-9 border-border/30 hover:border-primary/50 hover:bg-primary/10"
