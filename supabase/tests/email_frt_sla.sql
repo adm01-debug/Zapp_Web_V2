@@ -1,11 +1,13 @@
--- email_frt_sla — T1–T9 sobre o SLA de primeira resposta de e-mail (cartão t_f8f1c412,
--- migration 20261012122708_email_frt_sla.sql).
+-- email_frt_sla — T1–T10 sobre o SLA de primeira resposta de e-mail (cartão t_f8f1c412,
+-- migration 20261015190039_email_frt_sla.sql).
 --
 -- O QUE PROVA. A superfície mínima do Supabase é criada à mão aqui (roles
 -- anon/authenticated/service_role, schema auth com auth.uid()/auth.role(),
 -- e as tabelas de e-mail/horário/SLA nas formas REAIS do repositório, com RLS
--- ligada e as policies de "conta própria"). Papel de usuário sempre por
--- SET LOCAL ROLE dentro de DO $$ ... $$, nunca superusuário/dono:
+-- ligada e as policies de "conta própria"). O stub de papel imita a função real
+-- public.is_admin_or_supervisor(uuid): o usuário A é staff, o B não é.
+-- Papel de usuário sempre por SET LOCAL ROLE dentro de DO $$ ... $$,
+-- nunca superusuário/dono:
 --   T1 minutos úteis: só o horário comercial da conexão padrão conta
 --      (17:00→10:00 do dia seguinte = 120; fim de semana fechado = 30);
 --   T2 limite: vem de sla_configurations.first_response_minutes (120 na fixture)
@@ -15,19 +17,23 @@
 --   T4 violação: resposta tardia grava 'violado';
 --   T5 idempotência: segundo envio não reescreve a primeira resposta;
 --   T6 sem mensagem recebida: nada é marcado;
---   T7 permissão: anon NÃO executa o resumo nem as funções internas;
---      authenticated executa SÓ o resumo (as internas ficam revogadas);
---   T8 escopo RLS: o resumo de cada usuário conta apenas as threads das
---      contas dele (A conta 3, violado 1; B conta 1, violado 1);
+--   T7 permissão (3 casos): staff (A) chama o resumo e recebe a contagem;
+--      authenticated sem papel (B) é negado com 42501; anon é negado com 42501.
+--      As 3 funções auxiliares e a de gatilho são internas: nem staff as executa
+--      diretamente (42501), porque não têm GRANT a nenhum papel;
+--   T8 resumo de staff: visão global (todas as threads: total 4, risco 0,
+--      violados 2) e authenticated sem papel é negado;
 --   T9 efeito controlado: o UPDATE do gatilho toca só a thread respondida —
 --      updated_at das demais intacto (nenhum backfill em massa).
+--   T10 reaplicação e rollback: aplicar a migration uma segunda vez não quebra e o
+--      rollback do cabeçalho devolve o estado anterior (nada fica).
 --
 -- COMO RODA. Em Postgres descartável; fixtures e asserções numa transação que
 -- termina em ROLLBACK — zero efeito colateral e idempotente:
 --   docker run --rm -d --name zapp-v2-emailfrt-$$ -e POSTGRES_PASSWORD=test_only postgres:17-alpine
 --   docker exec -i zapp-v2-emailfrt-$$ psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
---     -v mig=supabase/migrations/20261012122708_email_frt_sla.sql < supabase/tests/email_frt_sla.sql
--- VERMELHO esperado sem a migration: o mesmo comando com -v sem_migration=1 falha já em T3.
+--     -v mig=supabase/migrations/20261015190039_email_frt_sla.sql < supabase/tests/email_frt_sla.sql
+-- VERMELHO esperado sem a migration: o mesmo comando com -v sem_migration=1 falha já em T1.
 
 \set ON_ERROR_STOP on
 
@@ -35,7 +41,7 @@
 \else
   \if :{?mig}
   \else
-    \set mig 'supabase/migrations/20261012122708_email_frt_sla.sql'
+    \set mig 'supabase/migrations/20261015190039_email_frt_sla.sql'
   \endif
 \endif
 
@@ -61,8 +67,10 @@ CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
   )::text $$;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 
+-- Imita a public.is_admin_or_supervisor(uuid) real: só o usuário A é staff.
 CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
-  LANGUAGE sql STABLE AS $$ SELECT false $$;
+  LANGUAGE sql STABLE AS
+  $$ SELECT _user_id = 'aaaaaaaa-0000-0000-0000-00000000000a'::uuid $$;
 
 CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
   LANGUAGE plpgsql AS $$ BEGIN new.updated_at := now(); RETURN new; END $$;
@@ -189,7 +197,8 @@ INSERT INTO public.email_messages (thread_id, gmail_account_id, direction, inter
 \endif
 
 -- ---------------------------------------------------------------------------
--- T1 — minutos úteis só no horário comercial
+-- T1 — minutos úteis só no horário comercial (chamada direta como dono;
+--      em produção a função é interna, sem GRANT — o teste T7 prova a negação)
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE v_cross integer; v_weekend integer;
@@ -208,7 +217,7 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- T2 — limite vem da config de SLA do V2, com fallback
+-- T2 — limite vem da config de SLA do V2, com fallback (idem T1: via dono)
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE v_min integer;
@@ -325,29 +334,75 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- T7 — permissão: anon fora de tudo; authenticated só no resumo
+-- T7 — permissão em 3 casos: staff (A) recebe a contagem; authenticated sem
+--      papel (B) é negado; anon é negado. As auxiliares e a função de gatilho
+--      são internas: 42501 até para staff (sem GRANT a nenhum papel).
 -- ---------------------------------------------------------------------------
 DO $$
+DECLARE v_s record;
 BEGIN
+  -- caso 1: staff chama o resumo e recebe a contagem (TA ok, TB violado,
+  -- TC ok sem âncora, TD violado em aberto → total 4, risco 0, violados 2)
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub','aaaaaaaa-0000-0000-0000-00000000000a','role','authenticated')::text, true);
+  SET LOCAL ROLE authenticated;
+  SELECT * INTO v_s FROM public.email_sla_summary();
+  IF v_s.total_threads <> 4 OR v_s.em_risco <> 0 OR v_s.violados <> 2 THEN
+    RAISE EXCEPTION 'T7 FALHOU: resumo staff = (%, %, %), esperado (4, 0, 2)',
+      v_s.total_threads, v_s.em_risco, v_s.violados;
+  END IF;
+  RESET ROLE;
+
+  -- caso 2: authenticated sem papel é negado no resumo (falha fechada 42501)
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub','bbbbbbbb-0000-0000-0000-00000000000b','role','authenticated')::text, true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    PERFORM * FROM public.email_sla_summary();
+    RAISE EXCEPTION 'T7 FALHOU: authenticated sem papel executou email_sla_summary';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;                               -- esperado: 42501 do gate de staff
+  END;
+  RESET ROLE;
+
+  -- caso 3: anon é negado em tudo (sem GRANT: 42501 já na chamada)
   SET LOCAL ROLE anon;
   BEGIN
     PERFORM * FROM public.email_sla_summary();
     RAISE EXCEPTION 'T7 FALHOU: anon executou email_sla_summary';
   EXCEPTION WHEN insufficient_privilege THEN
-    NULL;                               -- esperado: 42501
+    NULL;
   END;
-
   BEGIN
     PERFORM public.email_business_minutes(now(), now() + interval '1 hour');
     RAISE EXCEPTION 'T7 FALHOU: anon executou email_business_minutes';
   EXCEPTION WHEN insufficient_privilege THEN
     NULL;
   END;
+  BEGIN
+    PERFORM public.email_sla_threshold_minutes();
+    RAISE EXCEPTION 'T7 FALHOU: anon executou email_sla_threshold_minutes';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
   RESET ROLE;
 
+  -- internas: authenticated (mesmo staff) não executa auxiliar nem gatilho direto
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub','aaaaaaaa-0000-0000-0000-00000000000a','role','authenticated')::text, true);
   SET LOCAL ROLE authenticated;
+  BEGIN
+    PERFORM public.email_business_minutes(now(), now() + interval '1 hour');
+    RAISE EXCEPTION 'T7 FALHOU: authenticated executou email_business_minutes';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  BEGIN
+    PERFORM public.email_sla_threshold_minutes();
+    RAISE EXCEPTION 'T7 FALHOU: authenticated executou email_sla_threshold_minutes';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
   BEGIN
     PERFORM public.register_email_first_reply_internal(
       '11110000-0000-0000-0000-000000000001', now());
@@ -357,14 +412,14 @@ BEGIN
   END;
   RESET ROLE;
 
-  RAISE NOTICE 'T7 OK: anon e authenticated não chamam o que é interno; resumo é liberado só a authenticated';
+  RAISE NOTICE 'T7 OK: staff recebe o resumo; sem papel e anon negados (42501); auxiliares internas';
 END $$;
 
 -- ---------------------------------------------------------------------------
--- T8 — resumo respeita a RLS: cada usuário conta só as threads das contas dele
+-- T8 — resumo de staff tem visão global; sem papel continua negado
 -- ---------------------------------------------------------------------------
 DO $$
-DECLARE v_a record; v_b record;
+DECLARE v_a record;
 BEGIN
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub','aaaaaaaa-0000-0000-0000-00000000000a','role','authenticated')::text, true);
@@ -372,22 +427,24 @@ BEGIN
   SELECT * INTO v_a FROM public.email_sla_summary();
   RESET ROLE;
 
+  -- global: TA ok + TB violado + TC ok + TD violado (thread de B inclusa: é staff)
+  IF v_a.total_threads <> 4 OR v_a.violados <> 2 OR v_a.em_risco <> 0 THEN
+    RAISE EXCEPTION 'T8 FALHOU: resumo staff = (%, %, %), esperado (4, 0, 2)',
+      v_a.total_threads, v_a.em_risco, v_a.violados;
+  END IF;
+
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub','bbbbbbbb-0000-0000-0000-00000000000b','role','authenticated')::text, true);
   SET LOCAL ROLE authenticated;
-  SELECT * INTO v_b FROM public.email_sla_summary();
+  BEGIN
+    PERFORM * FROM public.email_sla_summary();
+    RAISE EXCEPTION 'T8 FALHOU: authenticated sem papel executou email_sla_summary';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
   RESET ROLE;
 
-  IF v_a.total_threads <> 3 OR v_a.violados <> 1 OR v_a.em_risco <> 0 THEN
-    RAISE EXCEPTION 'T8 FALHOU: conta A = (%, %, %), esperado (3, 0, 1)',
-      v_a.total_threads, v_a.em_risco, v_a.violados;
-  END IF;
-  IF v_b.total_threads <> 1 OR v_b.violados <> 1 THEN
-    RAISE EXCEPTION 'T8 FALHOU: conta B = (%, %, %), esperado (1, ?, 1)',
-      v_b.total_threads, v_b.em_risco, v_b.violados;
-  END IF;
-
-  RAISE NOTICE 'T8 OK: resumo escopado pela RLS (A=3/0/1, B=1/?/1)';
+  RAISE NOTICE 'T8 OK: resumo global de staff (4/0/2) e negação sem papel';
 END $$;
 
 -- ---------------------------------------------------------------------------
@@ -432,9 +489,64 @@ BEGIN
   RAISE NOTICE 'T9 OK: o UPDATE toca só a thread respondida; updated_at das demais intacto';
 END $$;
 
+-- ---------------------------------------------------------------------------
+-- T10 — reaplicacao e rollback de verdade: aplicar o MESMO arquivo da migration
+--      uma segunda vez nao quebra (a constraint e guardada por pg_constraint) e o
+--      SQL de rollback do cabecalho devolve o estado anterior (nada fica para tras).
+--      O bloco de rollback abaixo espelha, na mesma ordem, as linhas de rollback
+--      do cabecalho da migration.
+-- ---------------------------------------------------------------------------
+\i :mig
+
+DO $$
+DECLARE n integer;
+BEGIN
+  SELECT count(*) INTO n FROM pg_constraint WHERE conname = 'email_threads_sla_status_check';
+  IF n <> 1 THEN RAISE EXCEPTION 'T10 FALHOU: % constraint(s) com o nome esperado (1)', n; END IF;
+  SELECT count(*) INTO n FROM pg_trigger WHERE tgname = 'email_messages_register_first_reply';
+  IF n <> 1 THEN RAISE EXCEPTION 'T10 FALHOU: % gatilho(s) com o nome esperado (1)', n; END IF;
+  SELECT count(*) INTO n FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+   WHERE ns.nspname = 'public'
+     AND p.proname IN ('email_sla_threshold_minutes','email_business_minutes',
+                       'register_email_first_reply_internal','trg_email_thread_first_reply',
+                       'email_sla_summary');
+  IF n <> 5 THEN RAISE EXCEPTION 'T10 FALHOU: % funcoes apos reaplicar (5)', n; END IF;
+  RAISE NOTICE 'T10 OK (1/2): segunda aplicacao da migration nao quebra';
+END $$;
+
+-- Rollback executavel (espelha o cabecalho da migration, na mesma ordem):
+drop trigger if exists email_messages_register_first_reply on public.email_messages;
+drop function if exists public.trg_email_thread_first_reply();
+drop function if exists public.register_email_first_reply_internal(uuid, timestamptz);
+drop function if exists public.email_sla_summary();
+drop function if exists public.email_business_minutes(timestamptz, timestamptz);
+drop function if exists public.email_sla_threshold_minutes();
+alter table public.email_threads drop constraint if exists email_threads_sla_status_check;
+alter table public.email_threads drop column if exists first_reply_at, drop column if exists frt_minutes, drop column if exists sla_status;
+
+DO $$
+DECLARE n integer;
+BEGIN
+  SELECT count(*) INTO n FROM pg_trigger WHERE tgname = 'email_messages_register_first_reply';
+  IF n <> 0 THEN RAISE EXCEPTION 'T10 FALHOU: o gatilho sobreviveu ao rollback'; END IF;
+  SELECT count(*) INTO n FROM pg_proc p JOIN pg_namespace ns ON ns.oid = p.pronamespace
+   WHERE ns.nspname = 'public'
+     AND p.proname IN ('email_sla_threshold_minutes','email_business_minutes',
+                       'register_email_first_reply_internal','trg_email_thread_first_reply',
+                       'email_sla_summary');
+  IF n <> 0 THEN RAISE EXCEPTION 'T10 FALHOU: % funcao(oes) sobreviveu ao rollback', n; END IF;
+  SELECT count(*) INTO n FROM pg_constraint WHERE conname = 'email_threads_sla_status_check';
+  IF n <> 0 THEN RAISE EXCEPTION 'T10 FALHOU: a constraint sobreviveu ao rollback'; END IF;
+  SELECT count(*) INTO n FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = 'email_threads'
+     AND column_name IN ('first_reply_at','frt_minutes','sla_status');
+  IF n <> 0 THEN RAISE EXCEPTION 'T10 FALHOU: % coluna(s) sobreviveu ao rollback', n; END IF;
+  RAISE NOTICE 'T10 OK (2/2): o rollback do cabecalho remove gatilho, 5 funcoes, constraint e as 3 colunas';
+END $$;
+
 DO $$
 BEGIN
-  RAISE NOTICE 'email_frt_sla: TODAS as asserções passaram (T1-T9)';
+  RAISE NOTICE 'email_frt_sla: TODAS as asserções passaram (T1-T10)';
 END $$;
 
 ROLLBACK;

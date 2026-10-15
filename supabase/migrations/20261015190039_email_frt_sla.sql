@@ -1,5 +1,5 @@
 -- email_frt_sla
--- Rollback: dropa o gatilho e as 4 funções novas, e remove as 3 colunas de SLA de email_threads.
+-- Rollback: dropa o gatilho e as 5 funções novas, e remove as 3 colunas de SLA de email_threads.
 -- Rollback (SQL executável, na ordem):
 --   drop trigger if exists email_messages_register_first_reply on public.email_messages;
 --   drop function if exists public.trg_email_thread_first_reply();
@@ -24,10 +24,21 @@
 --     o mesmo comportamento de is_within_business_hours — não inventamos janela nova.
 --   * fuso do cálculo: America/Sao_Paulo (fuso do negócio; o Brasil não tem mais DST).
 --
--- Escopo desta migration: 3 colunas em email_threads (aditivas), 1 gatilho em
--- email_messages (AFTER INSERT, só direction='outbound') e 4 funções. Nada de DROP,
--- nada de GRANT/papel mudado, nenhum dado existente reescrito (as colunas nascem NULL
--- e o gatilho só escreve em linha de thread do próprio evento).
+-- Escopo desta migration: 3 colunas NOVAS em email_threads (first_reply_at,
+-- frt_minutes, sla_status — aditivas, nascem NULL, nenhum dado existente é
+-- reescrito), 1 gatilho em email_messages (AFTER INSERT, só direction='outbound',
+-- recriado com DROP IF EXISTS + CREATE para a migration ser reaplicável) e
+-- 5 funções. Nada de GRANT/papel mudado além do resumo de staff, nenhum backfill.
+--
+-- Permissão (refazer 1, exigência do cartão: resumo "para staff", regra de banco
+-- "GRANT só ao papel necessário" + checagem de auth.uid()):
+--   * email_sla_summary() é SECURITY DEFINER com search_path fixo e só responde a
+--     staff — qualquer outro chamador recebe erro 42501 (falha fechada). Por ser
+--     DEFINER, enxerga todas as threads (visão de gestor); atendente comum não chama.
+--   * as 3 funções auxiliares (threshold, business_minutes, register_internal) e a
+--     função de gatilho são INTERNAS: sem GRANT a nenhum papel (só o dono as executa,
+--     via gatilho ou via o resumo DEFINER). Nenhuma função SECURITY DEFINER fica
+--     chamável por authenticated sem checagem de papel.
 
 -- ---------------------------------------------------------------------------
 -- 1) Colunas aditivas em public.email_threads
@@ -37,12 +48,22 @@ alter table public.email_threads
   add column if not exists frt_minutes integer,
   add column if not exists sla_status text;
 
-alter table public.email_threads
-  add constraint email_threads_sla_status_check
-  check (sla_status is null or sla_status in ('ok', 'risco', 'violado'));
+-- A criação da constraint é guardada por pg_constraint: reaplicar a migration
+-- não quebra (ADD CONSTRAINT puro falharia na segunda aplicação).
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'email_threads_sla_status_check'
+  ) then
+    alter table public.email_threads
+      add constraint email_threads_sla_status_check
+      check (sla_status is null or sla_status in ('ok', 'risco', 'violado'));
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
--- 2) Limite de primeira resposta: a config de SLA que o V2 já tem
+-- 2) Limite de primeira resposta: a config de SLA que o V2 já tem (INTERNA:
+--    sem GRANT — só o resumo DEFINER e o gatilho a alcançam)
 -- ---------------------------------------------------------------------------
 create or replace function public.email_sla_threshold_minutes()
 returns integer
@@ -67,6 +88,7 @@ end $$;
 -- ---------------------------------------------------------------------------
 -- 3) Minutos dentro do horário comercial, pela config de horários do V2
 --    (business_hours da conexão padrão; sem config = aberto, como is_within_business_hours)
+--    INTERNA: sem GRANT — só o resumo DEFINER e o registro interno a alcançam.
 -- ---------------------------------------------------------------------------
 create or replace function public.email_business_minutes(p_from timestamptz, p_to timestamptz)
 returns integer
@@ -141,7 +163,7 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 4) Marca a primeira resposta da thread (idempotente, atômica)
+-- 4) Marca a primeira resposta da thread (idempotente, atômica; INTERNA)
 -- ---------------------------------------------------------------------------
 create or replace function public.register_email_first_reply_internal(
   p_thread_id uuid,
@@ -213,6 +235,7 @@ end $$;
 
 -- ---------------------------------------------------------------------------
 -- 5) Gatilho: dispara no INSERT de mensagem enviada (direction='outbound')
+--    (DROP IF EXISTS + CREATE: idempotente por construção)
 -- ---------------------------------------------------------------------------
 create or replace function public.trg_email_thread_first_reply()
 returns trigger
@@ -234,17 +257,26 @@ create trigger email_messages_register_first_reply
   execute function public.trg_email_thread_first_reply();
 
 -- ---------------------------------------------------------------------------
--- 6) Resumo para o gestor: quantas threads em risco e violadas
---    SECURITY INVOKER de propósito: a RLS de email_threads limita o resultado
---    às contas do próprio chamador (sem SECURITY DEFINER e sem checagem de papel
---    nova — quem não enxerga a thread não conta a thread).
+-- 6) Resumo para o gestor: quantas threads em risco e violadas (PARA STAFF)
+--    SECURITY DEFINER com search_path fixo + checagem de papel: só quem passa
+--    em is_admin_or_supervisor(auth.uid()) recebe a contagem; qualquer outro
+--    authenticated recebe erro 42501 (falha fechada). Por ser DEFINER, a visão
+--    é global (todas as threads) — é o painel do gestor, não o do atendente.
 -- ---------------------------------------------------------------------------
 create or replace function public.email_sla_summary()
 returns table (total_threads integer, em_risco integer, violados integer)
-language sql
+language plpgsql
 stable
+security definer
 set search_path = pg_catalog, public
 as $$
+begin
+  if not public.is_admin_or_supervisor(auth.uid()) then
+    raise exception 'email_sla_summary: restrito a staff'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  return query
   with base as (
     select
       case
@@ -273,20 +305,17 @@ as $$
     (count(*) filter (where status = 'risco'))::integer,
     (count(*) filter (where status = 'violado'))::integer
   from base;
-$$;
+end $$;
 
 -- ---------------------------------------------------------------------------
--- 7) Permissões: só o resumo é chamável; o resto é interno
+-- 7) Permissões: SÓ o resumo é chamável (por authenticated, com gate de staff
+--    dentro da função); as 3 auxiliares e a função de gatilho são INTERNAS,
+--    sem GRANT a nenhum papel — nem authenticated as executa diretamente.
 -- ---------------------------------------------------------------------------
-revoke all on function public.email_sla_threshold_minutes() from public, anon;
-grant execute on function public.email_sla_threshold_minutes() to authenticated;
--- email_business_minutes e email_sla_threshold_minutes são cálculo/config puros (não
--- leem dado de cliente): ficam liberados a authenticated porque o resumo é SECURITY
--- INVOKER (para a RLS de email_threads valer) e precisa poder chamá-los.
-revoke all on function public.email_business_minutes(timestamptz, timestamptz) from public, anon;
-grant execute on function public.email_business_minutes(timestamptz, timestamptz) to authenticated;
-revoke all on function public.register_email_first_reply_internal(uuid, timestamptz) from public, anon, authenticated;
-revoke all on function public.trg_email_thread_first_reply() from public, anon, authenticated;
-
 revoke all on function public.email_sla_summary() from public, anon;
 grant execute on function public.email_sla_summary() to authenticated;
+
+revoke all on function public.email_sla_threshold_minutes() from public, anon, authenticated;
+revoke all on function public.email_business_minutes(timestamptz, timestamptz) from public, anon, authenticated;
+revoke all on function public.register_email_first_reply_internal(uuid, timestamptz) from public, anon, authenticated;
+revoke all on function public.trg_email_thread_first_reply() from public, anon, authenticated;
