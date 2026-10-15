@@ -106,6 +106,13 @@ export function useContactsCRUD() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  /**
+   * Telefone como veio do banco ao abrir a edição. A normalização/validação
+   * da EDIÇÃO só roda quando o operador mudou o telefone: contato que o
+   * webhook gravou com número estrangeiro ou fora do padrão continua
+   * editável (nome/empresa salvam e o phone vai como está).
+   */
+  const originalEditPhoneRef = useRef<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [isCRMSearchOpen, setIsCRMSearchOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -194,11 +201,18 @@ export function useContactsCRUD() {
   const handleEditContact = async () => {
     if (!editingContact) return;
     const contact = editingContact;
-    // Mesmo formato do cadastro/webhook: dígitos com DDI 55.
-    const phone = normalizeContactPhone(contact.phone);
-    if (phone.phone === null) {
-      feedback.warning(phone.error);
-      return;
+    // Edição: o telefone só é normalizado/validado quando o operador o mudou.
+    // Intocado, vai como está gravado — contato que o webhook gravou com
+    // número estrangeiro ou fora do padrão continua editável, e número que
+    // já casa com o JID não é reescrito.
+    let phoneToSave = contact.phone;
+    if (contact.phone !== originalEditPhoneRef.current) {
+      const phone = normalizeContactPhone(contact.phone);
+      if (phone.phone === null) {
+        feedback.warning(phone.error);
+        return;
+      }
+      phoneToSave = phone.phone;
     }
     setIsSubmitting(true);
     await feedback.withFeedback(
@@ -209,7 +223,7 @@ export function useContactsCRUD() {
           surname: contact.surname,
           job_title: contact.job_title,
           company: contact.company,
-          phone: phone.phone,
+          phone: phoneToSave,
           email: contact.email?.trim() || null,
           contact_type: contact.contact_type,
         };
@@ -246,6 +260,7 @@ export function useContactsCRUD() {
         onSuccess: () => {
           setIsEditDialogOpen(false);
           setEditingContact(null);
+          originalEditPhoneRef.current = null;
           searchHook.refetch();
           invalidateContactAggregates();
         },
@@ -294,13 +309,16 @@ export function useContactsCRUD() {
       const { data, error } = await ContactService.getById(contact.id);
       if (error) throw error;
       if (data) {
-        setEditingContact({
+        const loaded = {
           ...data,
           latitude: coordinateToForm(data.latitude),
           longitude: coordinateToForm(data.longitude),
-        } as Contact);
+        } as Contact;
+        setEditingContact(loaded);
+        originalEditPhoneRef.current = loaded.phone;
       } else {
         setEditingContact(withoutAddressFields(contact));
+        originalEditPhoneRef.current = contact.phone;
         feedback.warning('Endereço não carregado — os campos de endereço não serão alterados.');
       }
     } catch {

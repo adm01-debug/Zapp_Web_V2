@@ -372,8 +372,15 @@ describe('normalizeContactPhone — padrão de gravação do contato (DDI 55)', 
     ['123', 'Telefone inválido — informe DDD + número (ex.: (11) 99999-9999)'],
     ['+1 415 555 2671', 'Apenas números do Brasil (DDI +55)'],
     ['+34 600 123 456', 'Apenas números do Brasil (DDI +55)'],
+    ['(20) 99999-9999', 'Telefone inválido — DDD 20 não existe'],
+    ['(30) 3333-4444', 'Telefone inválido — DDD 30 não existe'],
   ])('entrada %s → erro "%s"', (entrada, erro) => {
     expect(normalizeContactPhone(entrada)).toEqual({ phone: null, error: erro });
+  });
+
+  it('validatePhone barra DDD inexistente mesmo na faixa 11–99', () => {
+    expect(validatePhone('(20) 99999-9999')).toBe(false);
+    expect(validatePhone('(11) 99999-9999')).toBe(true);
   });
 
   it('validatePhone aceita só o que dá para gravar', () => {

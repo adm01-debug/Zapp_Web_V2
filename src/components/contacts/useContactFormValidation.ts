@@ -8,6 +8,22 @@ export const validateEmail = (email: string): boolean => {
 };
 
 /**
+ * DDDs válidos do Brasil (ANATEL). A faixa 11–99 aceita dezenas que não
+ * existem (20, 30, 50, 70, 80, 90…); só a lista barra de verdade.
+ */
+const DDD_VALIDOS_BR = new Set([
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '24', '27', '28',
+  '31', '32', '33', '34', '35', '37', '38',
+  '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '51', '53', '54', '55',
+  '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '71', '73', '74', '75', '77', '79',
+  '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '91', '92', '93', '94', '95', '96', '97', '98', '99',
+]);
+
+/**
  * Formato canônico de gravação em `contacts.phone`: só dígitos, com DDI 55 —
  * exatamente o que o webhook grava (`jidToPhone` sobre o JID do WhatsApp,
  * ex.: `5511999999999@s.whatsapp.net` → `5511999999999`). Sem o DDI, o cadastro
@@ -35,9 +51,9 @@ export function normalizeContactPhone(
   }
 
   const local = e164.slice(3); // DDD + assinante (10 ou 11 dígitos)
-  const ddd = Number(local.slice(0, 2));
-  if (!(ddd >= 11 && ddd <= 99)) {
-    return { phone: null, error: `Telefone inválido — DDD ${local.slice(0, 2)} não existe` };
+  const ddd = local.slice(0, 2);
+  if (!DDD_VALIDOS_BR.has(ddd)) {
+    return { phone: null, error: `Telefone inválido — DDD ${ddd} não existe` };
   }
 
   return { phone: e164.slice(1), error: null };

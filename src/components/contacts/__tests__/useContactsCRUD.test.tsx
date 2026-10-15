@@ -130,6 +130,20 @@ async function openAndEditName(contact: Record<string, unknown>, newName = 'Fula
   return { hook, payload: last(mocks.updatePayloads) ?? {} };
 }
 
+async function openAndEditPhone(contact: Record<string, unknown>, newPhone: string) {
+  const hook = mountHook();
+  await act(async () => {
+    await hook.result.current.openEditDialog(contact as never);
+  });
+  await act(async () => {
+    hook.result.current.handleEditContactChange('phone', newPhone);
+  });
+  await act(async () => {
+    await hook.result.current.handleEditContact();
+  });
+  return { hook, payload: last(mocks.updatePayloads) ?? {} };
+}
+
 describe('useContactsCRUD — edição não apaga endereço (C1)', () => {
   beforeEach(() => {
     mocks.updatePayloads = [];
@@ -483,11 +497,12 @@ describe('useContactsCRUD — telefone gravado no padrão do webhook (DDI 55)', 
     expect(stored).toBe('5511999999999');
   });
 
-  it('edição normaliza o telefone digitado à mão', async () => {
+  it('trocar o telefone para número digitado à mão salva com DDI 55', async () => {
     mocks.getById.mockResolvedValue({ data: { ...FULL_ROW, phone: '1188887777' }, error: null });
 
-    const { payload } = await openAndEditName(LIST_ROW);
+    const { payload } = await openAndEditPhone({ ...LIST_ROW, phone: '1188887777' }, '(11) 98888-7777');
 
+    expect(mocks.updatePayloads).toHaveLength(1);
     expect(payload).toHaveProperty('phone', '5511988887777');
   });
 
@@ -509,13 +524,25 @@ describe('useContactsCRUD — telefone gravado no padrão do webhook (DDI 55)', 
     expect(mocks.warning).toHaveBeenCalled();
   });
 
-  it('edição com número inválido não grava e avisa a razão', async () => {
-    mocks.getById.mockResolvedValue({ data: { ...FULL_ROW, phone: '+1 415 555 2671' }, error: null });
+  it('editar só o nome de contato com telefone estrangeiro salva sem tocar no phone', async () => {
+    const FOREIGN_ROW = { ...LIST_ROW, phone: '+14155552671' };
+    mocks.getById.mockResolvedValue({ data: { ...FULL_ROW, phone: '+14155552671' }, error: null });
 
-    const { payload } = await openAndEditName(LIST_ROW);
+    const { payload } = await openAndEditName(FOREIGN_ROW);
 
-    expect(payload).toEqual({});
+    expect(mocks.updatePayloads).toHaveLength(1);
+    expect(payload).toHaveProperty('phone', '+14155552671');
+    expect(mocks.warning).not.toHaveBeenCalled();
+  });
+
+  it('trocar o telefone para número inválido não salva e avisa a razão', async () => {
+    mocks.getById.mockResolvedValue({ data: FULL_ROW, error: null });
+
+    await openAndEditPhone(LIST_ROW, '123');
+
     expect(mocks.updatePayloads).toHaveLength(0);
-    expect(mocks.warning).toHaveBeenCalled();
+    expect(mocks.warning).toHaveBeenCalledWith(
+      'Telefone inválido — informe DDD + número (ex.: (11) 99999-9999)',
+    );
   });
 });
