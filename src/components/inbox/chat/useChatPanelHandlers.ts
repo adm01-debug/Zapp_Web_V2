@@ -343,12 +343,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
     // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
     // devolve o rascunho em vez de perdê-lo.
-    const entrega = sendQueue.enqueue(conversationId, () =>
-      onSendMessage(messageContent, wasReply?.id ?? null)
-    );
-
     try {
-      await entrega;
+      // `enqueue` pode rejeitar de forma SÍNCRONA (o transporte aceita `void`): a
+      // chamada vive DENTRO do try para que o rascunho volte em vez de se perder.
+      await sendQueue.enqueue(conversationId, () =>
+        onSendMessage(messageContent, wasReply?.id ?? null)
+      );
       // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
@@ -360,9 +360,10 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      // O rascunho volta ao editor. Se o agente já digitou outra coisa, o texto
-      // novo fica — o que falhou não sobrescreve o que ele está escrevendo.
-      setInputValue((atual) => (atual === '' ? originalText : atual));
+      // O rascunho volta ao editor SEM perder nada: sem texto novo, volta o que
+      // falhou; com texto novo digitado durante o voo, o que falhou volta ACIMA do
+      // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
+      setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
       if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
     }

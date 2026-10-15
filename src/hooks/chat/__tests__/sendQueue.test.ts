@@ -58,6 +58,21 @@ describe('fila serial de envio por conversa (PK-21)', () => {
     expect(fila.isBusy('conv-1')).toBe(false);
   });
 
+  it('uma tarefa que lança de forma SÍNCRONA vira rejeição e libera a fila (isBusy não mente)', async () => {
+    const fila = createSerialSendQueue();
+    const tarefa = vi.fn((): void => { throw new Error('boom síncrono'); });
+
+    const primeira = fila.enqueue('conv-1', tarefa);
+
+    // Chamada síncrona preservada, mas o lançamento vira rejeição — não escapa.
+    expect(tarefa).toHaveBeenCalledTimes(1);
+    await expect(primeira).rejects.toThrow('boom síncrono');
+    expect(fila.isBusy('conv-1')).toBe(false);
+
+    // A chave realmente voltou: a próxima tarefa da mesma conversa roda.
+    await expect(fila.enqueue('conv-1', () => 'depois')).resolves.toBe('depois');
+  });
+
   it('a fila de um contato não espera pela de outro', async () => {
     const fila = createSerialSendQueue();
     const ordem: string[] = [];

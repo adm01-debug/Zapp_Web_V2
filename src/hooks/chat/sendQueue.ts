@@ -32,7 +32,15 @@ export function createSerialSendQueue(): SerialSendQueue {
       let execucao: Promise<T>;
       if (!ocupadas.has(key)) {
         ocupadas.add(key);
-        execucao = Promise.resolve(task());
+        // `task()` roda no MESMO tick (o Enter aciona o transporte dentro do evento),
+        // mas um lançamento SÍNCRONO vira rejeição: sem isso a exceção escaparia do
+        // `enqueue` e a chave nunca sairia de `ocupadas` — `isBusy` mentiria até o
+        // próximo envio.
+        try {
+          execucao = Promise.resolve(task());
+        } catch (erro) {
+          execucao = Promise.reject(erro);
+        }
       } else {
         const anterior = caudas.get(key) ?? Promise.resolve();
         execucao = anterior.then(() => task());

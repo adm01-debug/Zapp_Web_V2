@@ -138,7 +138,20 @@ describe('useChatPanelHandlers — envio em fila serial por conversa (PK-21)', (
     expect(mocks.toast).toHaveBeenCalledTimes(1);
   });
 
-  it('a falha não sobrescreve um rascunho novo digitado enquanto a mensagem estava em voo', async () => {
+  it('transporte que lança de forma SÍNCRONA preserva o rascunho, avisa e não anuncia enviado', async () => {
+    const onSendMessage = vi.fn((): void => { throw new Error('transporte síncrono'); });
+    const { result } = montarHook(onSendMessage);
+
+    act(() => { result.current.setInputValue('texto síncrono'); });
+    await act(async () => { await result.current.handleSend(); });
+
+    expect(result.current.inputValue).toBe('texto síncrono');
+    expect(mocks.undoToast).not.toHaveBeenCalled();
+    expect(mocks.logError).toHaveBeenCalledTimes(1);
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+
+  it('a falha preserva os DOIS textos: o que falhou e o rascunho novo digitado durante o voo', async () => {
     let rejeitar!: (erro: Error) => void;
     const onSendMessage = vi.fn(() => new Promise<void>((_resolve, reject) => { rejeitar = reject; }));
     const { result } = montarHook(onSendMessage);
@@ -150,8 +163,10 @@ describe('useChatPanelHandlers — envio em fila serial por conversa (PK-21)', (
     act(() => { result.current.setInputValue('nova'); });
     await act(async () => { rejeitar(new Error('sem rede')); await Promise.resolve(); });
 
-    expect(result.current.inputValue).toBe('nova');
+    // Nenhum dos dois some: o que falhou volta acima do texto novo.
+    expect(result.current.inputValue).toBe('antiga\nnova');
     expect(mocks.undoToast).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
   });
 
   it('a fila é por conversa: outro contato não espera a mensagem em voo do primeiro', async () => {
