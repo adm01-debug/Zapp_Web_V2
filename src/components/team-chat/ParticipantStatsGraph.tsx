@@ -47,9 +47,9 @@ export function ParticipantStatsGraph({ conversationId, simulationMode = false }
               <YAxis axisLine={false} tickLine={false} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="sent" name="Enviadas" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="delivered" name="Entregues" fill="hsl(var(--primary) / 0.6)" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="read" name="Lidas" fill="hsl(var(--primary) / 0.3)" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="sent" name="Enviadas" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="delivered" name="Entregues" fill="hsl(var(--primary) / 0.6)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="read" name="Lidas" fill="hsl(var(--primary) / 0.3)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         )}

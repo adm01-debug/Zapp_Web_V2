@@ -8,8 +8,10 @@ import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AddMembersDialog } from './AddMembersDialog';
+import { ParticipantStatsGraph } from './ParticipantStatsGraph';
 import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
+import { TeamPerformancePanel } from './TeamPerformancePanel';
 import { TeamMessageItem } from './TeamMessageItem';
 import { useTeamChatPanel } from './useTeamChatPanel';
 
@@ -102,7 +104,8 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         showSearch={s.showSearch} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
         onToggleSearch={() => { s.setShowSearch(!s.showSearch); if (s.showSearch) s.setSearchQuery(''); }}
         onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
-        onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })} />
+        onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })}
+        showStats={s.showStats} onToggleStats={() => s.setShowStats(!s.showStats)} />
 
       <AnimatePresence>
         {s.showSearch && (
@@ -118,6 +121,20 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* E70/E72/E78 — os dois painéis de estatística existiam órfãos. O slot
+          abaixo do cabeçalho é o único lugar que os monta, e ele só aparece
+          quando `showStats` está ligado pelo botão do próprio cabeçalho. */}
+      {s.showStats && (
+        <section
+          data-testid="team-chat-stats"
+          aria-label="Estatísticas da conversa"
+          className="shrink-0 max-h-[45%] overflow-y-auto border-b border-border bg-muted/5"
+        >
+          <ParticipantStatsGraph conversationId={conversation.id} />
+          <TeamPerformancePanel conversationId={conversation.id} />
+        </section>
+      )}
 
       <div ref={s.scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-muted/5" onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite">
         {s.isLoading ? (

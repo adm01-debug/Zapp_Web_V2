@@ -1,10 +1,12 @@
 /**
  * Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — gate de download nos caminhos fora do
  * catálogo, chamando o HELPER REAL por dentro de cada componente/hook:
- *  - JSON de performance da equipe (`TeamPerformancePanel`);
  *  - anexo de e-mail (`useGmail.downloadAttachment`);
  *  - exceção declarada: códigos de backup MFA do PRÓPRIO usuário continuam
  *    baixando (`MFABackupCodes`).
+ * O JSON de performance da equipe NÃO é mais um desses caminhos: a regra do
+ * dono de 07/10/2026 ("nenhuma informação pode sair do sistema") tirou a porta
+ * de exportação do `TeamPerformancePanel` — o painel deixou de montar blob.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
@@ -51,7 +53,7 @@ vi.mock('@/lib/gmailOAuth', () => ({
 
 import { useGmail } from '@/hooks/integrations/useGmail';
 
-describe('Y29 — JSON de performance da equipe (TeamPerformancePanel)', () => {
+describe('Y29 — painel de performance não exporta mais (regra do dono)', () => {
   const createObjectURL = vi.fn(() => 'blob:y29-team');
   const click = vi.fn();
 
@@ -76,25 +78,25 @@ describe('Y29 — JSON de performance da equipe (TeamPerformancePanel)', () => {
     vi.clearAllMocks();
   });
 
-  it('sem permissão o exportar não grava nada', async () => {
-    permissao.valor = false;
-    renderPanel();
+  it('não oferece botão de exportar nem monta blob (com permissão ligada)', () => {
+    permissao.valor = true;
+    const { container } = renderPanel();
 
-    fireEvent.click(screen.getByTitle('Exportar JSON'));
+    expect(screen.queryByTitle('Exportar JSON')).toBeNull();
+    expect(container.querySelectorAll('a[download]')).toHaveLength(0);
+    container.querySelectorAll('button').forEach((botao) => fireEvent.click(botao));
 
-    await waitFor(() => expect(toastMock.error).toHaveBeenCalled());
     expect(createObjectURL).not.toHaveBeenCalled();
     expect(click).not.toHaveBeenCalled();
   });
 
-  it('com permissão grava o JSON como antes', () => {
-    permissao.valor = true;
+  it('continua mostrando os KPIs do painel', () => {
+    permissao.valor = false;
     renderPanel();
 
-    fireEvent.click(screen.getByTitle('Exportar JSON'));
-
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Performance (últimos 30 min)')).toBeInTheDocument();
+    expect(screen.getByText('Mensagens')).toBeInTheDocument();
+    expect(screen.getByText('Ativos')).toBeInTheDocument();
   });
 });
 
