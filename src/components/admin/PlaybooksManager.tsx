@@ -34,23 +34,7 @@ import { BookOpen, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Json } from '@/integrations/supabase/types';
-
-interface PlaybookStep {
-  order: number;
-  title: string;
-  description: string;
-  tips: string;
-}
-
-interface Playbook {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string;
-  steps: PlaybookStep[];
-  is_active: boolean;
-  created_at: string;
-}
+import { fetchPlaybooks, type Playbook, type PlaybookStep } from '@/hooks/admin/usePlaybooksData';
 
 const CATEGORIES = [
   { value: 'sales', label: 'Vendas' },
@@ -88,20 +72,14 @@ export function PlaybooksManager() {
   const loadPlaybooks = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    const { data, error } = await supabase
-      .from('playbooks')
-      .select('*')
-      .order('category', { ascending: true });
+    const { data, error } = await fetchPlaybooks();
     if (error) {
       setPlaybooks([]);
       setLoadError(ERRO_CARGA);
       setLoading(false);
       return;
     }
-    setPlaybooks((data ?? []).map(p => ({
-      ...p,
-      steps: Array.isArray(p.steps) ? (p.steps as unknown as PlaybookStep[]) : [],
-    })));
+    setPlaybooks(data ?? []);
     setLoading(false);
   }, []);
 

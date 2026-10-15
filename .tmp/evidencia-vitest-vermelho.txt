@@ -1,12 +1,29 @@
-== mutacao: componentes revertidos (Voltar/Excluir e aria-labelledby do Select) ==
-$ npx vitest run src/components/gmail/__tests__/EmailThreadView.test.tsx src/components/gmail/__tests__/GmailInboxView.test.tsx src/components/gmail/__tests__/GmailStatusFilter.a11y.test.tsx
 
-revertido (mutacao)
-     × o combobox tem o rótulo próprio "Filtro de status" 593ms
-     × axe: nenhuma violação no controle do filtro real 192ms
-     × filtro de status: o controle tem rótulo próprio (aria-label) 23ms
-     × botão Voltar chama onBack 78ms
-     × botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem 118ms
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
- Test Files  3 failed (3)
-      Tests  5 failed | 30 passed (35)
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/playbooks-ativos-atendente-2610151413a821
+
+ ❯ src/hooks/admin/__tests__/usePlaybooksAtivos.test.tsx (8 tests | 1 failed) 499ms
+     × agente comum: update filtrado pela RLS (0 linhas) é erro visível, não sucesso 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/admin/__tests__/usePlaybooksAtivos.test.tsx > useSetPlaybookActive (PG-08) > agente comum: update filtrado pela RLS (0 linhas) é erro visível, não sucesso
+AssertionError: expected "vi.fn()" to be called with arguments: [ Array(1) ]
+
+Number of calls: 0
+
+ ❯ src/hooks/admin/__tests__/usePlaybooksAtivos.test.tsx:213:25
+    211|     expect(h.updates).toEqual([{ is_active: false }]);
+    212|     expect(h.consultas[0].filtros).toContainEqual(['id', 'pb-1']);
+    213|     expect(toast.error).toHaveBeenCalledWith(
+       |                         ^
+    214|       'Playbook não alterado — nenhuma linha mudou (permissão de admin…
+    215|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  14:26:24
+   Duration  3.09s (transform 337ms, setup 430ms, import 278ms, tests 499ms, environment 1.31s)
+
