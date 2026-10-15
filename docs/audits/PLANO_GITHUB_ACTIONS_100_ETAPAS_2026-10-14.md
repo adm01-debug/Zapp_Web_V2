@@ -13,14 +13,15 @@ check-runs do HEAD, runs de 07/10 a 14/10, falhas individuais com log) e via API
 Nada foi inferido do texto dos planos anteriores: o plano de 01/10 foi lido para saber o que ficou pendente,
 mas todo achado desta versão foi **re-medido hoje**.
 **Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01–W02** (perímetro)
-+ **83 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W11/W12/W17/W19/W21–W58/W59/W60/W62/W63/W65–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
-W11+W12: environment `perimetro-leitura` criado, secret `SETTINGS_GUARD_TOKEN` adicionado, `ghAdmin()` wrapper implementado — 0 pontos cegos esperados na próxima execução do `settings-guard`.
-W62: `environment: producao-edge-functions` adicionado ao job `drain` de `crm-sync-worker.yml`; secrets de deploy já existem nesse environment (Joaquim confirma os valores).
-W63: environment `banco-leitura` criado (branch_policy: protected_branches); `environment: banco-leitura` adicionado ao job `live-contract` de `db-live-guard.yml` e ao job `sync` de `types-sync.yml`; `DESTINO_URL` precisa ser criado nesse environment por Joaquim antes de ser removido do nível repo.
-Restam: etapas **D** (W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana),
-W62/W63 migração de secrets (Joaquim — medido em 15/10 16:00 UTC: os 14 secrets seguem no repo; `producao-edge-functions`
-e `banco-leitura` com 0 secrets) e W16 (plano pago GitHub).
-W06 **em aberto**: o PR #1945 removeu a race condition do `auth.setup.ts`, mas o login real **não** é a causa — ver W06.
++ etapas de código mergeadas (#1942, #1947, #1949, #1950) e o lote pós-#1950 (W06 diagnóstico, W12, W81, W93, W98).
+Estado por etapa nas linhas de cada uma; resumo de 15/10 17:45 UTC:
+- **Feito em código:** tudo de categoria A/B/C exceto o abaixo. **W81:** 0 alertas abertos (varredura 38774827821).
+- **Aguarda só o Joaquim (valores/decisão):** W11 (PAT), W62/W63 (mover os valores dos secrets — o código já declara os
+  environments; roteiro em `docs/runbooks/migracao-segredos-environments.md`), troca de `E2E_TEST_PASSWORD` (vazou em
+  artifacts, ver 6b), e as decisões D — dossiê com recomendação e esforço em `docs/ci/DECISOES_PENDENTES_2026-10-15.md`
+  (W20/W64/W67/W74/W79/W84/W89/W90; W93 religar ou não; W98 apagar sozinho ou não).
+- **Bloqueado por plano pago:** W16.
+- **W06 em aberto:** diagnóstico novo (edge `auth-login` lenta + suíte maior que o job) — ver W06.
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
@@ -289,7 +290,13 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W05** · B+C · N-02 · **FEITO (PR #1920 mergeado).** `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
   **uma** issue "ponto cego do perímetro" com dedupe pela assinatura dos campos não verificáveis (comenta só se o conjunto
   mudar ou a cada 7 dias). Verificação: 4 runs seguidos → 1 comentário; run deixa de ser ❌ sem divergência real.
-- [~] **W06** · A · N-03 · **PARCIAL 2026-10-15.** PR #1945 (mergeado) trocou `shell.or(getByRole('alert'))` por
+- [~] **W06** · A · N-03 · **DIAGNÓSTICO 15/10 17:30 (lote pós-#1950).** A premissa "a `Index` não carrega" não se
+  confirmou: o snapshot de 38760211564 era de 2 s após o login, e os runs 38764055662/38771373068 logaram (sessões em
+  `auth.sessions`). Duas causas reais: (1) a edge `auth-login` levou ~20 s no run 38773362900 e o front desiste em 12 s
+  (`AUTH_LOGIN_TIMEOUT_MS`), toast "temporariamente indisponível" — `auth.setup.ts` agora tenta de novo (até 3×) só
+  nesse caso; (2) a suíte (~137 de 173 testes em 12,5 min, 21 falhas) estoura o job de 15 min, e cancelado não gera
+  relatório nem issue — `--global-timeout=780000` + job de 20 min fazem o Playwright fechar a suíte e publicar o
+  relatório. Próximo passo: o 1º run na `main` após este lote dá os nomes das 21 specs. **Histórico (PARCIAL 15/10):** PR #1945 (mergeado) trocou `shell.or(getByRole('alert'))` por
   `shell.waitFor()` — o alerta de SIP deixava a mensagem de erro enganosa ("credencial recusada"). **A causa real segue
   aberta:** o snapshot do run 38760211564 mostra o toast "Login realizado com sucesso" e a tela presa em
   "Carregando página..." (fallback do `Suspense` em `src/routes/AppRoutes.tsx`) por > 30 s — o login funciona, a página
@@ -315,11 +322,16 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 1 — Perímetro verificável de verdade (W11–W20)
 
-- [ ] **W11** · D ⚠️ · N-02 · Criar credencial de **leitura administrativa** para o guard: PAT fine-grained (ou GitHub
+- [ ] **W11** · D ⚠️ · N-02 · **Aguarda o Joaquim** (15/10): o `SETTINGS_GUARD_TOKEN` atual foi gravado por uma sessão de
+  agente às 11:13 UTC, origem e escopo desconhecidos — sobrescrever com o PAT do passo 1 do runbook
+  `migracao-segredos-environments.md`. Criar credencial de **leitura administrativa** para o guard: PAT fine-grained (ou GitHub
   App) restrito a este repo com `administration: read` + `metadata: read`, guardado como secret do environment novo
   `perimetro-leitura` (branch policy `main`; o workflow só roda por `schedule`/`dispatch`, nunca em PR). Decisão: o
   Joaquim cria o token e define a rotação (90 dias).
-- [ ] **W12** · B · N-02 · `settings-guard.yml`: `environment: perimetro-leitura` e `GITHUB_TOKEN` do passo = o secret de
+- [x] **W12** · B · N-02 · **FEITO 15/10 (lote pós-#1950).** `ADMIN_READ_TOKEN: secrets.SETTINGS_GUARD_TOKEN ||
+  github.token`; `??` → `||` no guard (secret ausente chega como string vazia — com `??` o job ficava vermelho com 401);
+  PAT recusado (401) cai no `GITHUB_TOKEN` com aviso de rotação; contrato `secrets-environments.unit.mjs`. Texto original:
+  `settings-guard.yml`: `environment: perimetro-leitura` e `GITHUB_TOKEN` do passo = o secret de
   W11; `check-pr-workflow-secrets.mjs` já proíbe PR, nada muda ali. Verificação: Job Summary com 0 pontos cegos;
   branch protection, actions permissions e repo lidos de verdade.
 - [x] **W13** · C · N-09 · `checarEnvironments` alerta environment **a mais** (não só faltando) e classifica os
@@ -332,7 +344,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   ampliado com `medido_em` novo.
 - [x] **W15** · A · N-24 · Ligar `required_linear_history=true` na `main` (squash-only já é a política; isto fecha o
   merge commit por API). Verificação: `GET` → `enabled: true`; nenhum fluxo quebra (não há rebase/merge commit).
-- [ ] **W16** · A · N-24 · ⚠️ **BLOQUEADO** — `secret_scanning_validity_checks` requer GitHub Secret Protection (pago); a API aceita o PATCH e ignora (mesmo comportamento de `non_provider_patterns`, confirmado em 2026-10-15). Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
+- [ ] **W16** · A · N-24 · ⚠️ **BLOQUEADO** (re-medido 15/10 17:08: `validity_checks=disabled`) — `secret_scanning_validity_checks` requer GitHub Secret Protection (pago); a API aceita o PATCH e ignora (mesmo comportamento de `non_provider_patterns`, confirmado em 2026-10-15). Ligar `secret_scanning_validity_checks` (E37, grátis). Verificação: `GET /repos` →
   `security_and_analysis.secret_scanning_validity_checks.status: enabled`.
 - [x] **W17** · B · N-01 · `settings-guard` publica o snapshot JSON do perímetro como artifact (14 dias) a cada run e,
   quando há divergência, anexa o **diff** contra o run anterior ao comentário — a próxima regressão de `strict` ganha
@@ -495,10 +507,12 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W61** · C · N-07 · Smoke lê as origens permitidas de `supabase/functions/_shared/validation.ts` (export) ou de
   `scripts/edge-deploy/allowed-origins.json` gerado no manifesto; positivo para **cada** origem canônica
   (`zapp-web-v2.vercel.app`, `zappweb.app.br`), negativo mantido. Verificação: smoke 80/80 após #1899.
-- [ ] **W62** · A+B · N-23 · Secrets de deploy (`SUPABASE_ACCESS_TOKEN`, `CRON_SECRET`, `PROMOGIFTS_*`, `EXTERNAL_*`,
+- [~] **W62** · A+B · N-23 · **Código pronto; falta o Joaquim gravar os valores** (runbook
+  `migracao-segredos-environments.md`, passos 2–4; nunca `rotate_secrets=true` durante a migração). Secrets de deploy (`SUPABASE_ACCESS_TOKEN`, `CRON_SECRET`, `PROMOGIFTS_*`, `EXTERNAL_*`,
   `PREVIEW_EGRESS_*`) criados no environment `producao-edge-functions` e apagados do nível repo; `crm-sync-worker` passa
   a usar o mesmo environment para `CRON_SECRET`. Verificação: `GET /actions/secrets` sem eles; deploy e worker verdes.
-- [ ] **W63** · A+B · N-23 · `DESTINO_URL` movido para os environments que cada consumidor **já declara**:
+- [~] **W63** · A+B · N-23 · **Código pronto; falta o Joaquim gravar os valores** (runbook, passo 5). O
+  `supabase-sync` foi removido, então `legacy-import-destrutivo` não precisa mais do secret. `DESTINO_URL` movido para os environments que cada consumidor **já declara**:
   `producao-ddl` (db-migrate), `legacy-import-destrutivo` (supabase-sync, que roda nesse environment — não em
   `producao-ddl`), `db-ledger-evidence` (targeted-ledger-evidence) e um environment novo `banco-leitura` (db-live-guard,
   types-sync, que hoje não têm environment) — mesmo valor por enquanto, blast radius por environment. Verificação: 0
@@ -555,7 +569,9 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 
 ### Fase 7 — Segurança, supply chain e Code Scanning (W81–W90)
 
-- [~] **W81** · C · N-06 · Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
+- [x] **W81** · C · N-06 · **FEITO 15/10.** Varredura completa na `main` (run 38774827821, `8d990fdb9`): `GET
+  /code-scanning/alerts?state=open` = `[]`. O #7 (`TeamFileUploader.tsx`) ainda aparece no SARIF e segue dispensado
+  como falso positivo (o arquivo vira `blob:` usado só em `<img src>`). Texto original: Triagem dos 15 alertas: **corrigir** os 5 em código de produção (`preview.tsx:70`,
   `secure-random.ts:9`, `secureRandom.ts:16`, `validation.ts:156`, `validation.ts:221`) e **dismiss com motivo** (`used
   in tests`) os 10 em arquivos de teste/scripts de CI. Verificação: 0 alertas `high` abertos; #13 fechado.
   **Estado 15/10:** os dois XSS (`preview.tsx`, `TeamFileUploader.tsx`) já estão neutralizados no código (`toSafeImageUrl`, guarda `blob:`) e só fecham na próxima varredura
@@ -593,7 +609,9 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W92** · C · N-35 · `actions-kpi.mjs`: título da issue com a semana corrente (hoje preso em "2026-10-05"), colunas
   "cancelado antes de começar" (sem `run_started_at` útil), "minutos desperdiçados", p50/p95 por job, e taxa de falha
   por **causa** (passo que falhou) para `CI/CD Pipeline`. Verificação: issue da próxima segunda.
-- [ ] **W93** · D+B ⚠️ · N-20 · `crm-sync-worker`: decidir religar o `schedule` (`vars.CRM_SYNC_WORKER_ENABLED=true`,
+- [~] **W93** · D+B ⚠️ · N-20 · **Documentado 15/10; religar é decisão do Joaquim.** Nenhum job do `pg_cron` drena o
+  `crm_sync_outbox` (474 pending desde 26/09, 0 concluídos, 7 tentativas com `CRM_NOT_SYNCED`): o YAML e o runbook
+  `CRM_INTEGRATION_ROLLOUT.md` dizem isso e trazem o roteiro para religar. Texto original: `crm-sync-worker`: decidir religar o `schedule` (`vars.CRM_SYNC_WORKER_ENABLED=true`,
   cadência compatível com o outbox) **ou** documentar no YAML e no `docs/` que o outbox é drenado por pg_cron e o
   workflow é só operação manual. Verificação: decisão + 1 run verde no modo escolhido.
 - [x] **W94** · B · N-21 · `talkx-status-regen.yml`: `concurrency: {group: talkx-status-regen, cancel-in-progress:
@@ -609,7 +627,8 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `PRINCIPAL`), só para `conclusion: failure` de `e2e-logado`, `db-live-guard` (schedule), `deploy-functions`,
   `db-migrate` e `settings-guard` (após W05, só divergência real), dedupe 1 h por workflow (E90). Verificação: forçar 1
   falha → 1 mensagem.
-- [ ] **W98** · C+D ⚠️ · N-27 · `branch-hygiene-audit`: para branches patch-equivalentes à `main` há > 7 dias e sem PR
+- [x] **W98** · C+D ⚠️ · N-27 · **FEITO 15/10 no modo "comando pronto"** (`scripts/ci/branch-podaveis.mjs`; recusa nome
+  inseguro, falha fechada se PRs/protegidas não forem lidas). Apagar sozinho continua decisão do Joaquim. Texto original: `branch-hygiene-audit`: para branches patch-equivalentes à `main` há > 7 dias e sem PR
   aberta, apagar automaticamente (`git push origin --delete`) com lista no Job Summary — decisão do Joaquim entre apagar
   ou só gerar o comando pronto na issue. Verificação: lista de podáveis em #1810 zera.
 - [x] **W99** · C · N-01 · `workflow-contracts.unit.mjs` ganha os invariantes deste plano: guarda de credencial em todo
@@ -678,6 +697,9 @@ contrato que impede a volta.
 | `scorecard.yml` com 2 pins de SHA inexistentes (32 de 40 caracteres certos no do scorecard) | run 38767166568: `unable to find version` | pins reais + `scripts/ci/check-workflow-pins-resolvem.mjs` no Lint (SHA tem de ser o commit real da tag do comentário) |
 | Paridade tripla do `db-live-guard` acusava "apply pendente" como contrato quebrado (refazia a perna de migrations sem a regra W22/W26) | run 38767166343: 816 arquivos × 815 no ledger | `check-triple-parity.mjs --sem-migrations` (perna delegada ao drift classificado) |
 | `supabase-sync.yml` e `cleanup-artifacts.yml` sem uso (0 runs em 30 dias) | API de Actions | removidos (19 → 17 workflows) |
+| **E-mail e senha do usuário E2E em artifacts públicos**: o redator só tratava arquivos de texto soltos; os valores digitados no setup iam no ZIP embutido no `index.html` e nos traces | artifacts `playwright-report-logado-*` de 38703841548, 38760211564 e 38773362900 (conferidos); 38654716402 gerado pelo mesmo redator | os 4 artifacts apagados em 15/10 17:45; `redigir-relatorio.mjs` abre ZIP embutido e aninhado e reprova o upload se sobrar ocorrência. **Falta o Joaquim trocar `E2E_TEST_PASSWORD`.** |
+| Fila serial: 6 casos de borda apontados pelo Codex na #1950 (fork em dia, falha ambígua, leitura do head, 422 "nada a atualizar", rate limit, lista velha após recusa) | threads da #1950 | cada um com ramo no laço e asserção no contrato R1; `fila-merge.mjs --confirmar N` recalcula a fila antes de avançar |
+| `scorecard.yml` com `defaults` no job: o scorecard-action recusa publicar (README v2.4.1) | Codex na #1950 | sem `defaults`/`env`; exceção do W44 travada por teste |
 
 ---
 

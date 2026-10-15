@@ -38,13 +38,6 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
-  // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: tab "Entrar",
-  // campo de e-mail, campo de senha, botao "Entrar".
-  await page.getByRole('tab', { name: /^entrar$/i }).click();
-  await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.getByRole('button', { name: /^entrar$/i }).click();
-
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
   //
   // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa, o que vier
@@ -62,25 +55,70 @@ setup('authenticate', async ({ page }) => {
   const erroLogin = page.getByText(
     /erro ao entrar|e-?mail ou senha incorretos|conta bloqueada|invalid login|credenciais? inv[aá]lid|temporariamente indispon[ií]vel/i,
   );
-  try {
-    await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });
-  } catch {
-    const carregando = await page
-      .getByRole('status', { name: /carregando p[aá]gina/i })
-      .isVisible()
-      .catch(() => false);
-    throw new Error(
-      carregando
-        ? '[E2E setup] Login aceito, mas a rota principal nao terminou de carregar em 120 s ' +
-            '(tela presa em "Carregando pagina..."). Provavel partida a frio do dev server ' +
-            'ou chunk da rota principal travado; veja o trace do Playwright.'
-        : '[E2E setup] Login nao concluiu e nao ha mensagem de recusa visivel em 120 s — ' +
-            'o app pode estar sem resposta apos o POST de autenticacao.',
-    );
-  }
+  // "Login temporariamente indisponivel" NAO e recusa de credencial: e o caminho
+  // `unavailable` do AuthService.signIn -- a edge `auth-login` nao respondeu dentro de
+  // AUTH_LOGIN_TIMEOUT_MS (12 s, src/lib/serverLogin.ts) ou devolveu 5xx/429. Medido no
+  // run 38773362900 (W06): clique as 17:00:35.7, o front desistiu as 17:00:48.4 (12,4 s),
+  // a edge so gravou o primeiro rate limit as 17:00:52.4 e o GoTrue criou a sessao as
+  // 17:00:55.9 -- a edge levou ~20 s, e a credencial estava certa. A propria tela manda
+  // "Tente novamente em instantes"; o setup faz o que o usuario faria, com teto de
+  // tentativas. Tentativa `unavailable` nao conta para o lockout (a edge so registra
+  // falha quando o GoTrue RECUSA a credencial -- R2-AUTH-021).
+  const indisponivel = page.getByText(/temporariamente indispon[ií]vel/i);
+  const TENTATIVAS = 3;
+  const ESPERA_ENTRE_TENTATIVAS_MS = 5_000;
 
-  if (!(await shell.isVisible().catch(() => false))) {
-    const resposta = ((await erroLogin.first().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();
+  for (let tentativa = 1; ; tentativa += 1) {
+    if (tentativa > 1) {
+      // Recarrega /auth: zera o toast anterior (senao ele mesmo "responderia" a proxima
+      // espera) e o formulario, que limpa a senha depois de qualquer erro.
+      await page.waitForTimeout(ESPERA_ENTRE_TENTATIVAS_MS);
+      await page.goto('/auth', { timeout: 15_000 });
+    }
+
+    // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: tab "Entrar",
+    // campo de e-mail, campo de senha, botao "Entrar".
+    await page.getByRole('tab', { name: /^entrar$/i }).click();
+    await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
+    await page.locator('input[type="password"]').fill(password);
+    await page.getByRole('button', { name: /^entrar$/i }).click();
+
+    try {
+      await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });
+    } catch {
+      const carregando = await page
+        .getByRole('status', { name: /carregando p[aá]gina/i })
+        .isVisible()
+        .catch(() => false);
+      throw new Error(
+        carregando
+          ? '[E2E setup] Login aceito, mas a rota principal nao terminou de carregar em 120 s ' +
+              '(tela presa em "Carregando pagina..."). Provavel partida a frio do dev server ' +
+              'ou chunk da rota principal travado; veja o trace do Playwright.'
+          : '[E2E setup] Login nao concluiu e nao ha mensagem de recusa visivel em 120 s — ' +
+              'o app pode estar sem resposta apos o POST de autenticacao.',
+      );
+    }
+
+    if (await shell.isVisible().catch(() => false)) break;
+
+    if (await indisponivel.first().isVisible().catch(() => false)) {
+      if (tentativa < TENTATIVAS) {
+        console.warn(
+          `[E2E setup] tentativa ${tentativa}/${TENTATIVAS}: "Login temporariamente indisponivel" ` +
+            '(edge auth-login sem resposta em 12 s, ou 5xx/429) -- tentando de novo.',
+        );
+        continue;
+      }
+      throw new Error(
+        `[E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao ` +
+          'respondeu em 12 s (AUTH_LOGIN_TIMEOUT_MS) ou devolveu 5xx/429. NAO e credencial ' +
+          'errada -- verifique os logs da edge auth-login no Supabase.',
+      );
+    }
+
+    // `last()`: o toast tem titulo ("Erro ao entrar") e descricao; a descricao diz o motivo.
+    const resposta = ((await erroLogin.last().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();
     throw new Error(
       `[E2E setup] Credencial recusada — o app mostrou: "${resposta}". ` +
         'Verifique E2E_TEST_EMAIL/E2E_TEST_PASSWORD ou se o usuario de teste esta ativo.',

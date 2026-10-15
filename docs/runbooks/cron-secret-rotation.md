@@ -3,6 +3,10 @@
 **Última atualização:** 2026-09-28
 **Scope:** `adm01-debug/Zapp_Web_V2` (Supabase Cloud `tnnnlkbymytvtqngbbqh`)
 
+> **W62 (out/2026):** a cópia 1 está migrando do nível repo para o environment
+> `producao-edge-functions` (`docs/runbooks/migracao-segredos-environments.md`). Depois da migração,
+> o passo "Actions secret" deste runbook é `gh secret set CRON_SECRET --env producao-edge-functions`.
+
 ---
 
 ## O que é

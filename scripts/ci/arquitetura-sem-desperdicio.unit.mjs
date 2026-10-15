@@ -93,6 +93,11 @@ test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   // antes dela, quebrando a ordem por enabledAt (Codex, PR #1950).
   assert.equal((laco.match(/\bcontinue\b/g) ?? []).length, 1, 'só a recusa 403/422 do update-branch avança na fila');
   assert.match(laco, /falha ao ler head[^\n]*\n\s*exit 0/, 'falha ao ler o head encerra a execução');
+  // Depois de uma recusa, a lista velha não basta: a fila é recalculada e, se outra PR
+  // entrou em voo (ou o candidato saiu da fila), a execução encerra (Codex, PR #1950).
+  assert.match(laco, /if \[ -n "\$recusadas" \] && ! node scripts\/ci\/fila-merge\.mjs --confirmar "\$candidato" --recusadas "\$recusadas"; then[^\n]*\n[^\n]*\n\s*exit 0/, 'candidato depois de recusa só segue se for o próximo da fila recalculada');
+  assert.match(laco, /recusadas="\$recusadas \$candidato"\n\s*continue/, 'a recusa entra na lista antes de avançar');
+  assert.ok(laco.indexOf('--confirmar') < laco.indexOf('update-branch'), 'a confirmação vem antes do update-branch');
   assert.match(laco, /PR="\$candidato"\n\s*break/, 'o primeiro update aceito encerra o laço');
   assert.match(t, /if: steps\.fila\.outputs\.pr != ''/, 'sem PR escolhida, nada é atualizado');
 });

@@ -90,6 +90,16 @@ export function decidir(prs, obrigatorios) {
   return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas };
 }
 
+// Depois de uma recusa 403/422, o laço do workflow só tenta o próximo candidato se uma
+// decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele é a PRIMEIRA da
+// fila recalculada que ainda não foi recusada nesta execução. A lista lida no início pode
+// estar velha: outra PR pode ter entrado em voo, ou uma PR mais antiga ter ficado elegível
+// e passado à frente (Codex, PRs #1950 e #1951).
+export function confirmarCandidato(decisao, numero, recusadas = []) {
+  if (decisao.acao !== 'atualizar') return false;
+  return decisao.fila.find((n) => !recusadas.includes(n)) === numero;
+}
+
 // `gh pr list` devolve mergeStateStatus=UNKNOWN enquanto o GitHub nao calculou a
 // mergeabilidade (calculo assincrono). Tratar UNKNOWN como "em voo" travaria a fila;
 // por isso, para PRs com auto-merge em UNKNOWN, a defasagem vem de uma comparacao
@@ -112,12 +122,7 @@ export async function resolverDesconhecidos(prs, behindBy) {
   return saida;
 }
 
-async function main() {
-  const repo = process.env.GITHUB_REPOSITORY;
-  if (!repo) {
-    console.error('GITHUB_REPOSITORY ausente');
-    process.exit(2);
-  }
+async function decisaoAtual(repo) {
   const json = execFileSync(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
     '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
@@ -126,7 +131,35 @@ async function main() {
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
   const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
-  const decisao = decidir(prs, checksObrigatorios());
+  return decidir(prs, checksObrigatorios());
+}
+
+async function main() {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo) {
+    console.error('GITHUB_REPOSITORY ausente');
+    process.exit(2);
+  }
+  // `--confirmar N [--recusadas "A B"]`: exit 0 se N é a próxima da fila recalculada,
+  // desconsideradas as já recusadas nesta execução; 3 se não (alguém em voo, outra PR à
+  // frente, N fora da fila). Não escreve output nem summary.
+  const iConfirmar = process.argv.indexOf('--confirmar');
+  if (iConfirmar !== -1) {
+    const numero = Number(process.argv[iConfirmar + 1]);
+    if (!Number.isInteger(numero) || numero <= 0) {
+      console.error('--confirmar exige o número da PR');
+      process.exit(2);
+    }
+    const iRecusadas = process.argv.indexOf('--recusadas');
+    const recusadas = iRecusadas === -1 ? [] : String(process.argv[iRecusadas + 1] ?? '')
+      .split(/\s+/).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+    const decisao = await decisaoAtual(repo);
+    if (confirmarCandidato(decisao, numero, recusadas)) return;
+    const motivo = decisao.acao === 'esperar' ? `em voo: #${decisao.emVoo.join(', #')}` : `#${numero} não é mais a próxima da fila`;
+    console.log(`Fila recalculada não autoriza #${numero} (${motivo}).`);
+    process.exit(3);
+  }
+  const decisao = await decisaoAtual(repo);
   const linhas = [];
   if (decisao.acao === 'esperar') linhas.push(`Em voo: #${decisao.emVoo.join(', #')} — ninguém mais é atualizado agora.`);
   if (decisao.acao === 'nada') linhas.push('Nenhuma PR com auto-merge esperando atualização.');

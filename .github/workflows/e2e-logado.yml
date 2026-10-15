@@ -54,7 +54,13 @@ jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # W06: o orcamento do JOB tem de caber setup (~1 min; ~3 min sem cache de browsers) +
+    # o --global-timeout do Playwright (13 min, no passo do Playwright) + os passos de
+    # falha (redacao, artifact, teardown, alerta). Com 15 min e sem global-timeout, os
+    # runs 38764055662 e 38771373068 foram CANCELADOS no meio da suite: cancelado nao e
+    # failure(), entao nao houve relatorio, nem lista de specs, nem issue -- 21 specs
+    # falharam sem ninguem saber quais.
+    timeout-minutes: 20
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -164,8 +170,12 @@ jobs:
             echo "aviso: secret E2E_TEST_EMAIL vazio - nada a mascarar"
           fi
 
+      # W06: --global-timeout (13 min) fica ABAIXO do timeout-minutes do job. Estourado,
+      # o Playwright encerra a suite ele mesmo, grava o relatorio e sai com erro -- o passo
+      # FALHA e a redacao, o artifact e o alerta rodam. Sem ele, quem encerrava era o
+      # runner (job cancelado) e nada disso acontecia.
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+        run: bun run test:e2e -- --global-timeout=780000 --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}

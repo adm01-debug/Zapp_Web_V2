@@ -3,6 +3,11 @@
 **Última atualização:** 2026-09-28
 **Scope:** `adm01-debug/Zapp_Web_V2` (Supabase Cloud `tnnnlkbymytvtqngbbqh`)
 
+> **W62/W63 (out/2026):** `DESTINO_URL` e os secrets de deploy estão migrando do nível repo para
+> environments (`docs/runbooks/migracao-segredos-environments.md`). Depois da migração, "atualizar o
+> secret no GitHub Actions" significa `gh secret set NOME --env AMBIENTE`: `DESTINO_URL` em
+> `banco-leitura`, `producao-ddl` e `db-ledger-evidence`; os demais em `producao-edge-functions`.
+
 ---
 
 ## DESTINO\_URL (string de conexão PostgreSQL do CI)

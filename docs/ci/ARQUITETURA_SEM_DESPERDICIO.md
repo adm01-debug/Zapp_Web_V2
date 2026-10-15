@@ -41,6 +41,9 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   pode ser "nada a atualizar" (a PR foi atualizada por fora depois da leitura da fila): antes de avançar, a fila
   relê a PR e, se ela já está em dia com a `main`, trata-a como em voo e encerra. 403/422 de rate limit ou "endpoint
   spam" também encerra: é o GitHub pedindo para parar, não uma recusa daquela PR.
+  Depois de uma recusa, o próximo candidato só é tentado se for **o primeiro da fila recalculada naquele momento**,
+  tirando as já recusadas na execução (`fila-merge.mjs --confirmar N --recusadas "..."`): a lista do início pode
+  estar velha, com outra PR em voo ou uma mais antiga que ficou elegível e deve passar à frente.
 - **Gatilhos:** push na `main` (a vez abriu), fim de `CI/CD Pipeline` ou `DB Guard (offline)` (a PR em voo pode
   ter ficado vermelha e liberado a vez) e um agendamento a cada 30 min, para o caso de alguém ligar o auto-merge sem
   outro evento.
