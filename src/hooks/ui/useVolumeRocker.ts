@@ -10,6 +10,16 @@ const LONG_PRESS_MS = 400;
  */
 export const VOLUME_PANEL_ATTRIBUTE = 'data-volume-panel';
 
+/**
+ * Marca do GATILHO do controle de volume (alertas e mídias). O atalho global `M`
+ * (mudo do áudio em reprodução) cede o toque quando o foco já está aqui: neste
+ * controle quem responde ao `M` é o `useVolumeRocker` (E16) — e no gatilho dos
+ * ALERTAS ele muda o mudo dos ALERTAS, não o das mídias. Como o registry captura
+ * na janela e faz `stopPropagation`, sem esta marca o `M` local ficaria
+ * inalcançável.
+ */
+export const VOLUME_CONTROL_ATTRIBUTE = 'data-volume-control';
+
 /** O nó está no controle (gatilho) ou dentro do painel montado em portal. */
 function dentroDoControle(node: EventTarget | null, root: HTMLElement | null): boolean {
   if (!(node instanceof Element)) return false;

@@ -19,10 +19,25 @@ vi.mock('@/lib/lazyToast', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 
+const { updateSettingsSpy, settingsDeAlerta } = vi.hoisted(() => ({
+  updateSettingsSpy: vi.fn(),
+  settingsDeAlerta: { soundEnabled: true, soundVolume: 70 },
+}));
+
+vi.mock('@/hooks/system/useNotificationSettings', () => ({
+  useNotificationSettings: () => ({
+    settings: settingsDeAlerta,
+    updateSettings: updateSettingsSpy,
+    isSaving: false,
+  }),
+}));
+
 import { useGlobalKeyboardShortcuts } from '@/hooks/ui/useGlobalKeyboardShortcuts';
 import { toast } from '@/lib/lazyToast';
 import { MediaVolumeControl } from '@/components/inbox/MediaVolumeControl';
-import { MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED } from '@/lib/volumeLabels';
+import { SoundVolumeControl } from '@/components/notifications/SoundVolumeControl';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED, SOUND_VOLUME_LABEL } from '@/lib/volumeLabels';
 import { DEFAULT_MEDIA_VOLUME_STATE, getSnapshot, setMuted, setVolume } from '@/lib/mediaVolumeStore';
 import { getPlayingAudioId, pauseExclusiveAudio, playExclusiveAudio } from '@/hooks/chat/useExclusiveAudio';
 
@@ -115,5 +130,23 @@ describe('atalho M — mudo do áudio em reprodução', () => {
     teclar('m');
     expect(getSnapshot().muted).toBe(false);
     expect(toast.info).not.toHaveBeenCalled();
+  });
+
+  it('com o foco no gatilho de volume o M global cede o toque ao controle (o M dos ALERTAS segue vivo)', () => {
+    montar();
+    playExclusiveAudio(AUDIO);
+    render(
+      <TooltipProvider>
+        <SoundVolumeControl />
+      </TooltipProvider>,
+    );
+
+    const gatilhoDosAlertas = screen.getByLabelText(`${SOUND_VOLUME_LABEL}: 70%`);
+    fireEvent.keyDown(gatilhoDosAlertas, { key: 'm', bubbles: true });
+
+    // Quem respondeu foi o controle dos ALERTAS (`useVolumeRocker`, E16)...
+    expect(updateSettingsSpy).toHaveBeenCalledWith({ soundEnabled: false });
+    // ...e o mudo das MÍDIAS ficou intacto: era ele que a captura na janela roubaria.
+    expect(getSnapshot().muted).toBe(false);
   });
 });
