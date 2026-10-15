@@ -48,6 +48,8 @@ vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
     newConnection: { name: '', phone_number: '' },
     setNewConnection: vi.fn(),
     isCreating: false,
+    addConnectionError: null,
+    clearAddConnectionError: vi.fn(),
     syncingHistory: null,
     setSyncingHistory: vi.fn(),
     evolutionLoading: false,
