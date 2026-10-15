@@ -1,18 +1,29 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: semisenior (area-edge-api)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- `docs/audits/edge-functions-authz-coverage.md`: regenerado pela rota oficial do próprio gerador (`REGENERAR_EDGE_AUTHZ_COV=1`, a mesma que a régua N217 usa). A entrega `e4fc7620d` alterou `supabase/functions/_shared/cron-secret-auth.ts` (29→48 linhas cobertas, 30→51 totais; agregado 83.6%→84.0%) e deixou este doc derivado stale, reprovando o espelho do CI. O restante do diff é a entrega anterior intacta (`e4fc7620d`: cron-secret-auth, batch-fetch-avatars, webauthn + testes + manifesto).
+- Nenhuma asserção da régua nem o gerador foram tocados; nenhum código de produção alterado por mim.
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- vermelho antes: `node --test scripts/ci/edge-coverage-authz.unit.mjs` → `fail 1` em `N217: docs bate com medição fresca e segunda execução é idêntica` (disco 255/305/83.6% vs medição fresca 274/326/84.0%).
+- verde depois: `node --test scripts/ci/edge-coverage-authz.unit.mjs` → `tests 8; pass 8; fail 0` (inclui a 2ª execução idêntica, que o próprio teste confere).
+- doc regenerado byte-idêntico à correção oficial (`a4d6049576`, blob `090bb803da`).
+- `deno test` do webauthn da entrega: `3 passed | 0 failed`.
+- `zapp-verify full .` → `VERIFY: VERMELHO em testes`: 1 failed em `RuleValueInput.test.tsx` (talkx) + 1 erro de worker em `RealtimeInboxView.selectedMessagesError.test.tsx` (inbox). Ambos fora do meu diff (`git diff 96dd72dc5f HEAD --stat -- src/components/talkx/ src/components/inbox/` vazio); `jev-juiz falha` → `pre_existing (0.99)`; o RuleValueInput falha igual isolado (1 failed | 4 passed) e o RealtimeInboxView passa isolado (3 passed). Não mexi fora do escopo. Demais etapas do full verdes (dependencias, db_guard, tipos, lint, migrations).
+
+## Pontos da recusa ([refazer 1])
+- Ponto 1 (único: espelho do CI quebrado no empilhamento, nó N217; correção em t_e3beeacb): resolvido — reproduzi com a régua N217 (fail 1 antes), regenerei o doc pela rota oficial (pass 8/8 depois), idêntico à correção de referência. Sem recomeçar: parti da entrega `e4fc7620d` sobre a base `96dd72dc5f` e somei 1 commit (`0faabb3d7e`).
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não alterei `supabase/deployment-manifest.json` além do que a entrega já trouxe (o integrador regenera).
+- Não corrigi as 2 falhas do `zapp-verify full` (talkx/inbox): pré-existentes, fora do escopo deste cartão.
+- Não toquei em guarda, CI, migration, banco ou produção.
+
+## Arquivos (`git diff --name-only 96dd72dc5f...HEAD`)
+- docs/audits/edge-functions-authz-coverage.md (minha correção)
+- supabase/deployment-manifest.json (entrega anterior)
+- supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts (entrega anterior)
+- supabase/functions/_shared/cron-secret-auth.ts (entrega anterior)
+- supabase/functions/batch-fetch-avatars/index.ts (entrega anterior)
+- supabase/functions/webauthn/index.test.ts (entrega anterior)
+- supabase/functions/webauthn/index.ts (entrega anterior)
