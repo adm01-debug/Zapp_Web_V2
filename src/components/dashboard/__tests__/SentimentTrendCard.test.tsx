@@ -21,6 +21,8 @@ describe('SentimentTrendCard', () => {
     ]);
     render(<SentimentTrendCard />);
     expect(screen.getByTestId('sentiment-plot')).toBeInTheDocument();
+    // Gráfico exposto ao leitor de tela como imagem com resumo.
+    expect(screen.getByRole('img', { name: 'Tendência de sentimento: 2 dias, com as linhas de positivo, neutro e negativo' })).toBeInTheDocument();
     expect(screen.getByText('Positivo')).toBeInTheDocument();
     expect(screen.getByText('Neutro')).toBeInTheDocument();
     expect(screen.getByText('Negativo')).toBeInTheDocument();
