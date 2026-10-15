@@ -1,26 +1,22 @@
 Especialista: workertestes
 
-## O que mudou e por quê
-O cartão pede testes para "adicionar conexão (6.2), realtime (6.3) e sincronização (6.4)" sobre os dois cartões pai que ainda não estavam na base; trouxe a faixa inteira deles por cherry-pick (obrigatório, senão os testes não compilam) e acrescentei o teste que faltava. O diff contra a base tem 16 arquivos, todos listados abaixo.
+## Ponto 1 (único) da recusa — quebra no empilhamento em `useConnectionsManager.novaConexao.test.ts`
+Causa conferida no código (não adivinhei): a pilha junta a base `dia/2026-10-14` (que já contém o teste integrado do cartão t_9b483886) com esta entrega, que traz dos cartões pai a validação de telefone no gerente (`src/hooks/inbox/useConnectionsManager.ts`, `validarTelefoneConexao` + `normalizeE164BR`). O gerente passou a enviar `phone_number` normalizado em E.164 (com +55) no payload do `createConnection`, mas o teste integrado esperava os dígitos crus digitados. Reproduzi a pilha sem trocar de branch (a guarda proíbe): `git merge-tree` da entrega sobre `dia/2026-10-14` aplica limpo (só o runtime diverge) e, com o arquivo do dia materializado no workspace, `npx vitest run src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts` deu VERMELHO exatamente como o limpador apontou: `Test Files 1 failed (1); Tests 1 failed | 5 passed | 1 todo (7)` — só o teste "sucesso cria a conexão como padrão" cai, no `toMatchObject` do payload (esperava dígitos crus, o gerente entrega E.164).
 
-Dos cartões pai (t_b8ea21c0 @ ee32a1d54 e t_b41eed0b @ 01123b06b), trazidos por cherry-pick:
-- src/hooks/inbox/useConnectionsRealtime.ts, src/hooks/inbox/useConnectionsManager.ts, src/hooks/evolution/useEvolutionApiCore.ts, src/hooks/evolution/useEvolutionInstance.ts: canal único de realtime, telefone validado/E.164, INSTANCE_GONE e histórico não suportado (produção dos pais, não é minha autoria).
-- src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts, src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts: testes dos pais para realtime e INSTANCE_GONE/telefone.
-- src/components/alerts/EvolutionDisconnectBanner.tsx, src/components/connections/ConnectionCard.tsx, src/components/connections/ConnectionsView.tsx, src/components/monitoring/MonitoringHealthLogs.tsx: produção dos pais (toast único do banner, saúde da conexão, sync).
-- src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx, src/components/connections/__tests__/ConnectionCard.saude.test.tsx, src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx, src/components/monitoring/__tests__/MonitoringHealthLogs.status.test.tsx: testes dos pais.
-- .tmp/relato.md: relato dos pais.
+O que mudei (só teste, zero produção): em `src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts`, a expectativa do payload passou a exigir o E.164 normalizado (valor exato, sem afrouxar: continua `toMatchObject` com nome, telefone e `is_default: true`), com comentário de 2 linhas citando `validarTelefoneConexao`/`normalizeE164BR`. É o comportamento pretendido dos cartões pai (o hook documenta que a Edge grava o E.164); o teste agora fixa isso em vez de congelar o formato antigo. Não mexi no `it.todo` do UI-07 nem em nenhum outro teste — diff mínimo (1 linha útil + comentário). O arquivo no meu commit é idêntico ao integrado no dia, exceto esse hunk (conferido com `diff` contra `dia/2026-10-14`).
 
-Meu (commit 28cae097c):
-- src/hooks/inbox/__tests__/useConnectionsManager.adicionar-conexao.test.ts (novo): 7 testes que chamam o hook REAL `useConnectionsManager` e cobrem a lacuna do 6.2 — adicionar conexão com sucesso (E.164 normalizado, nome de instância único, fecha o diálogo, limpa o formulário e abre o QR da conexão devolvida pela Edge), formulário sem nome/telefone, erro da Edge sem criar linha local (o front nunca insere em `whatsapp_connections`), conexão sem `instance_id`, exclusão com sucesso, falha ao apagar o vínculo local ("Exclusão pendente") e falha da Edge ao desconectar.
-- Nenhuma linha de produção alterada por mim: a mutação usada como prova foi revertida com `git checkout` e o `git status` só mostra arquivos dos pais + o meu teste.
+Teste que prova (chama o hook real, fronteira dublada como antes):
+- vermelho antes (pilha sem a correção): `Test Files 1 failed (1); Tests 1 failed | 5 passed | 1 todo (7)`.
+- verde depois, 3 rodadas seguidas: `Test Files 1 passed (1); Tests 6 passed | 1 todo (7)` nas três.
+- prova por mutação (a correção fixa comportamento, não formato): reverti só a linha de produção `phone_number: telefone.e164` para os dígitos crus (cópia de segurança em /tmp, sem `git stash`, restaurada com `cp`) → `Test Files 1 failed (1); Tests 1 failed | 5 passed | 1 todo (7)`; restaurei → `Test Files 1 passed (1); Tests 6 passed | 1 todo (7)`. `git status` confirma produção intacta.
 
-## Prova
-- verde depois: `npx vitest run src/hooks/inbox/__tests__/useConnectionsManager.adicionar-conexao.test.ts` — 3 rodadas, `Test Files 1 passed (1); Tests 7 passed (7)` nas três.
-- vermelho antes (prova por mutação): revertidas 7 linhas de produção em `useConnectionsManager.ts` (reset de diálogo/formulário no sucesso; título "Erro ao criar conexão"; descrição do "não possui uma instância configurada"; título "Exclusão pendente"; descrição "excluída com sucesso"; título "Erro ao desconectar"; descrição "Preencha o nome...") → `Test Files 1 failed (1); Tests 7 failed (7)`, cada mutação derrubando exatamente o teste que a fixa. Restaurado com `git checkout --` → verde.
-- vizinhança (sem regressão): `npx vitest run src/hooks/inbox/__tests__ src/components/connections/__tests__ src/components/monitoring/__tests__ src/components/alerts/__tests__` → `Test Files 42 passed (42); Tests 235 passed | 1 expected fail (236)`.
-- verificação do cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Sem regressão na vizinhança
+- `npx vitest run` nos 7 arquivos do gerente + realtime (`adicionar-conexao`, `novaConexao`, `b2`, `setDefault`, `qrIdentity`, `tra005`, `useConnectionsRealtime`): `Test Files 7 passed (7); Tests 36 passed | 1 todo (37)`.
+- `npx vitest run src/components/connections src/components/alerts`: `Test Files 14 passed (14); Tests 62 passed (62)`.
 
-## O que NÃO fiz e por quê
-- Não dupliquei realtime (canal único por montagem, cleanup, toast único), exclusão `INSTANCE_GONE`, telefone inválido e histórico não suportado/suportada: já têm teste dos cartões pai e passam na vizinhança acima. O cartão manda não devolver o que já existe.
-- Não toquei código de produção nem encontrei defeito no caminho coberto.
-- Ambiente (não é defeito do cartão): a verificação `tipos` falhou na 1ª rodada com "TypeScript local nao encontrado"; rodei `bun install` (instrução do próprio iniciar) e a verificação ficou verde.
+## Arquivos do meu commit neste refazer (o resto do diff vs a base são os pais, trazidos por cherry-pick como o cartão manda)
+- src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts (alinhado ao E.164; conteúdo = dia/2026-10-14 + hunk acima)
+- .tmp/relato.md (este relato)
+
+## Verificação
+- `zapp-verify full .` → (rodando em segundo plano; resultado abaixo antes de fechar)
