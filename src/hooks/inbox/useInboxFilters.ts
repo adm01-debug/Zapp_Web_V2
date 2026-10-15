@@ -154,6 +154,21 @@ export function resolveInitialInboxFilters(search: string): PersistedInboxFilter
   };
 }
 
+/**
+ * Regrava um parâmetro de filtro na URL preservando os demais. A leitura dá
+ * prioridade à URL, então a escolha só sobrevive à recarga se a URL acompanhar
+ * o estado (o mesmo que `handleContactTypeChange` já fazia com `type`).
+ */
+function syncUrlParam(key: 'chip' | 'queue', value: string | null): void {
+  const params = new URLSearchParams(window.location.search);
+  if (value) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
+  window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
+}
+
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
   profileId: string | undefined;
@@ -174,26 +189,42 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const [chipTab, setChipTabState] = useState<ChipTab>(initialChipTab);
   const [mainTab, setMainTab] = useState<MainTab>(mainTabForChip(initialChipTab));
   const [subTab, setSubTab] = useState<SubTab | null>(subTabForChip(initialChipTab));
-
   // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
   // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
   // de contato pendente, fora do ciclo de vida dos chips.
   const setChipTab = useCallback((tab: ChipTab) => {
     setChipTabState(tab);
-    setMainTab(mainTabForChip(tab));
-    setSubTab(subTabForChip(tab));
+    setMainTab(tab === 'resolved' ? 'resolved' : 'open');
+    setSubTab(tab === 'attending' ? 'attending' : tab === 'waiting' ? 'waiting' : null);
+    // A URL tem prioridade na leitura: sem regravar `chip` aqui, quem abre
+    // `?chip=waiting`, troca para Resolvidas e recarrega volta para Aguardando.
+    syncUrlParam('chip', tab);
   }, []);
   const [showAll, setShowAll] = useState(false);
-  const [selectedQueueId, setSelectedQueueId] = useState<string | null>(initialFilters.queueId);
+  const [selectedQueueId, setSelectedQueueIdState] = useState<string | null>(initialFilters.queueId);
+  // A fila segue o mesmo ciclo do chip: a escolha é regravada em `?queue=`.
+  // A assinatura continua `(v: string | null) => void`, como os chamadores
+  // (ConversationListSidebar via onQueueChange) já usam.
+  const setSelectedQueueId = useCallback((value: string | null) => {
+    setSelectedQueueIdState(value);
+    syncUrlParam('queue', value);
+  }, []);
   const [selectedContactType, setSelectedContactType] = useState<string | null>(
     initialFilters.contactType
   );
 
-  const {
-    filters: urlFilters,
-    setFilters: setUrlFilters,
-    clearFilters: clearUrlFilters,
-  } = useUrlFilters();
+  const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
+
+  const handleContactTypeChange = useCallback((value: string | null) => {
+    setSelectedContactType(value);
+    const params = new URLSearchParams(window.location.search);
+    if (value && value !== 'all') {
+      params.set('type', value);
+    } else {
+      params.delete('type');
+    }
+    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
+  }, []);
 
   // Aba, fila e tipo são persistidos a cada escolha — recarregar mantém o que o
   // usuário estava vendo. A busca fica de fora (pode conter dado do contato).
@@ -218,56 +249,35 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     );
   }, []);
 
-  const handleContactTypeChange = useCallback((value: string | null) => {
-    setSelectedContactType(value);
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(
-      null,
-      '',
-      params.toString() ? `?${params}` : window.location.pathname + window.location.hash
-    );
-  }, []);
-
   // Convert URL filters to InboxFiltersState
-  const filters = useMemo<InboxFiltersState>(
-    () => ({
-      status: urlFilters.status,
-      tags: urlFilters.tags,
-      agentId: urlFilters.agentId,
-      dateRange: {
-        from: urlFilters.dateFrom ? parseISO(urlFilters.dateFrom) : null,
-        to: urlFilters.dateTo ? parseISO(urlFilters.dateTo) : null,
-      },
-    }),
-    [urlFilters]
-  );
+  const filters = useMemo<InboxFiltersState>(() => ({
+    status: urlFilters.status,
+    tags: urlFilters.tags,
+    agentId: urlFilters.agentId,
+    dateRange: {
+      from: urlFilters.dateFrom ? parseISO(urlFilters.dateFrom) : null,
+      to: urlFilters.dateTo ? parseISO(urlFilters.dateTo) : null,
+    },
+  }), [urlFilters]);
 
   // Busca só em memória: telefone/nome digitado não pode ir para a URL.
   const [search, setSearch] = useState('');
 
-  const setFilters = useCallback(
-    (newFilters: InboxFiltersState) => {
-      setUrlFilters({
-        status: newFilters.status,
-        tags: newFilters.tags,
-        agentId: newFilters.agentId,
-        dateFrom: localDayKey(newFilters.dateRange.from),
-        dateTo: localDayKey(newFilters.dateRange.to),
-      });
-    },
-    [setUrlFilters]
-  );
+  const setFilters = useCallback((newFilters: InboxFiltersState) => {
+    setUrlFilters({
+      status: newFilters.status,
+      tags: newFilters.tags,
+      agentId: newFilters.agentId,
+      dateFrom: localDayKey(newFilters.dateRange.from),
+      dateTo: localDayKey(newFilters.dateRange.to),
+    });
+  }, [setUrlFilters]);
 
   // Contexto dos filtros extras (busca, tipo, painel) — o MESMO objeto alimenta
   // a lista e o countByChip, para os dois nunca usarem regras diferentes.
   const extraFilterContext = useMemo(
     () => ({ search, selectedContactType, filters }),
-    [search, selectedContactType, filters]
+    [search, selectedContactType, filters],
   );
 
   const filteredConversations = useMemo(() => {
@@ -276,7 +286,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer.
     // `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de
     // origem a remove do conjunto e ela volta a aparecer sem recarregar a lista.
-    result = result.filter((c) => !isSnoozed(c, snoozedIds));
+    result = result.filter(c => !isSnoozed(c, snoozedIds));
 
     // Tab-based filtering — ADR-005 (passo 3): o estado da conversa vem do campo
     // persistido `contacts.conversation_status`, e não mais da derivação por
@@ -292,7 +302,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       // é replicado aqui.
       result = result.filter(isArchived);
       if (selectedQueueId) {
-        result = result.filter((c) => isInQueue(c, selectedQueueId));
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'open') {
       // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
@@ -301,13 +311,13 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       result = result.filter(isOpenActive);
       if (subTab === 'attending') {
         if (!showAll) {
-          result = result.filter((c) => isAttending(c, profileId));
+          result = result.filter(c => isAttending(c, profileId));
         }
       } else if (subTab === 'waiting') {
         result = result.filter(isWaiting);
       }
       if (selectedQueueId) {
-        result = result.filter((c) => isInQueue(c, selectedQueueId));
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'resolved') {
       result = result.filter(isResolved);
@@ -329,27 +339,13 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     result.sort((a, b) => {
       if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
       if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-      const aTime = a.lastMessage
-        ? new Date(a.lastMessage.created_at).getTime()
-        : new Date(a.contact.updated_at).getTime();
-      const bTime = b.lastMessage
-        ? new Date(b.lastMessage.created_at).getTime()
-        : new Date(b.contact.updated_at).getTime();
+      const aTime = a.lastMessage ? new Date(a.lastMessage.created_at).getTime() : new Date(a.contact.updated_at).getTime();
+      const bTime = b.lastMessage ? new Date(b.lastMessage.created_at).getTime() : new Date(b.contact.updated_at).getTime();
       return bTime - aTime;
     });
 
     return result;
-  }, [
-    conversations,
-    extraFilterContext,
-    mainTab,
-    subTab,
-    chipTab,
-    showAll,
-    selectedQueueId,
-    profileId,
-    snoozedIds,
-  ]);
+  }, [conversations, extraFilterContext, mainTab, subTab, chipTab, showAll, selectedQueueId, profileId, snoozedIds]);
 
   // Contadores dos chips com o contexto atual — a tela só lê o número. Memoizado
   // pelos mesmos insumos da lista; cada tecla da busca recalcula UMA varredura
@@ -362,7 +358,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
         selectedQueueId,
         ...extraFilterContext,
       }),
-    [conversations, profileId, snoozedIds, showAll, selectedQueueId, extraFilterContext]
+    [conversations, profileId, snoozedIds, showAll, selectedQueueId, extraFilterContext],
   );
 
   // Fallback de primeira carga: a aba restaurada pode estar vazia (o dado mudou
@@ -376,22 +372,14 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   }
 
   return {
-    chipTab,
-    setChipTab,
-    mainTab,
-    setMainTab,
-    subTab,
-    setSubTab,
-    showAll,
-    setShowAll,
-    selectedQueueId,
-    setSelectedQueueId,
-    selectedContactType,
-    handleContactTypeChange,
-    filters,
-    setFilters,
-    search,
-    setSearch,
+    chipTab, setChipTab,
+    mainTab, setMainTab,
+    subTab, setSubTab,
+    showAll, setShowAll,
+    selectedQueueId, setSelectedQueueId,
+    selectedContactType, handleContactTypeChange,
+    filters, setFilters,
+    search, setSearch,
     filteredConversations,
     chipCounts,
     clearUrlFilters,

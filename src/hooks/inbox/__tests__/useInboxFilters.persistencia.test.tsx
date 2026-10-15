@@ -166,6 +166,30 @@ describe('useInboxFilters — persistência da aba, fila e tipo (inbox_filters_v
     expect(result.current.chipTab).toBe<ChipTab>('waiting');
   });
 
+  it('escolha de chip e fila é regravada na URL e sobrevive à recarga (URL velha não vence)', () => {
+    definirUrl('?chip=waiting');
+    const { result } = montar();
+    expect(result.current.chipTab).toBe<ChipTab>('waiting');
+
+    act(() => result.current.setChipTab('resolved'));
+    act(() => result.current.setSelectedQueueId(FILA));
+    expect(window.location.search).toContain('chip=resolved');
+    expect(window.location.search).toContain(`queue=${FILA}`);
+
+    // recarrega: monta de novo com a mesma URL — a escolha continua valendo.
+    const { result: recarregado } = montar();
+    expect(recarregado.current.chipTab).toBe<ChipTab>('resolved');
+    expect(recarregado.current.selectedQueueId).toBe(FILA);
+  });
+
+  it('fallback: Não lidas restaurada e vazia com Abertos volta para Em atendimento', () => {
+    guardar({ chipTab: 'unread' });
+
+    const { result } = montar(SO_ABERTAS);
+
+    expect(result.current.chipTab).toBe<ChipTab>('attending');
+  });
+
   it('fallback preserva a escolha manual depois da primeira carga', () => {
     const { result } = montar(SO_ABERTAS);
 
