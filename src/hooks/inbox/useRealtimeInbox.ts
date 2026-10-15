@@ -1,6 +1,7 @@
  import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
  import { useInboxUIState } from '@/hooks/inbox/useInboxUIState';
  import { ChatService } from '@/services/chat.service';
+import { INBOX_CONTACT_COLUMNS } from '@/services/realtime.service';
 import { useOfflineCache } from '@/hooks/system/useOfflineCache';
 import { useMessages } from '@/hooks/chat/useMessages';
 import { useRealtimeMessages, ConversationWithMessages, ConversationContact } from '@/hooks/chat/useRealtimeMessages';
@@ -99,7 +100,7 @@ export function useRealtimeInbox() {
     const loadSelectedContact = async () => {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*')
+        .select(INBOX_CONTACT_COLUMNS)
         .eq('id', selectedContactId)
         .maybeSingle();
       if (cancelled) return;

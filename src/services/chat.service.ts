@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Message, MessageInsert } from '@/types/chat';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
+import { INBOX_MESSAGE_COLUMNS } from './realtime.service';
 
 const log = getLogger('ChatService');
 
@@ -35,7 +36,7 @@ export class ChatService {
 
     const result = await supabase
       .from('messages')
-      .select('*')
+      .select(INBOX_MESSAGE_COLUMNS)
       .eq('contact_id', contactId)
       // Paginar no banco a partir do fim da conversa. Ordenar ASC antes do
       // range fazia a primeira pagina conter as mensagens mais antigas.
@@ -62,7 +63,7 @@ export class ChatService {
   ) {
     const result = await supabase
       .from('messages')
-      .select('*')
+      .select(INBOX_MESSAGE_COLUMNS)
       .eq('contact_id', contactId)
       .or(`created_at.lt.${before.createdAt},and(created_at.eq.${before.createdAt},id.lt.${before.id})`)
       .order('created_at', { ascending: false })
