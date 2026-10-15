@@ -267,7 +267,9 @@ export interface ReferenceResult {
  * Fail-closed nas duas pontas: erro de leitura → `failed`. E se uma linha CASOU
  * com o LIKE do bucket mas o caminho não pôde ser extraído (formato de URL
  * desconhecido), o bucket inteiro é dado como `failed` — melhor não limpar do que
- * arriscar apagar um objeto que essa linha referencia.
+ * arriscar apagar um objeto que essa linha referencia. Teto `maxRows` atingido com
+ * página cheia: sonda UMA linha além do lido; havendo linha além (ou erro na
+ * sonda), devolve `failed: true` — sem a sonda o corte seria silencioso (fail-open).
  */
 export async function collectReferencedPaths(
   client: SupabaseLike,
