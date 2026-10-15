@@ -130,3 +130,74 @@ describe('useMessageUpdateBatcher — hidrata contato fora da lista', () => {
     expect(contexto.commitConversations).not.toHaveBeenCalled();
   });
 });
+
+describe('useMessageUpdateBatcher — mescla o payload do UPDATE', () => {
+  it('campo ausente no payload (coluna grande/TOAST) mantém o valor em memória', () => {
+    const contexto = setup([
+      conversaCom(
+        msg({
+          id: 'm1',
+          content: 'conteúdo completo',
+          media_url: 'https://cdn.exemplo/x.ogg',
+          status: 'sent',
+          status_updated_at: '2026-10-11T10:00:05.000Z',
+        }),
+      ),
+    ]);
+
+    act(() => {
+      // UPDATE como o Realtime entrega: só as colunas pequenas; `content` e
+      // `media_url` podem vir ausentes (TOAST).
+      const parcial = {
+        id: 'm1',
+        contact_id: 'c1',
+        status: 'read',
+      } as unknown as RealtimeMessage;
+      contexto.result.current.handleMessageUpdate({ new: parcial } as never);
+      vi.advanceTimersByTime(100);
+    });
+
+    const atual = contexto.conversationsRef.current[0].messages[0];
+    expect(atual.status).toBe('read');
+    expect(atual.content).toBe('conteúdo completo');
+    expect(atual.media_url).toBe('https://cdn.exemplo/x.ogg');
+    expect(atual.status_updated_at).toBe('2026-10-11T10:00:05.000Z');
+  });
+});
+
+describe('useMessageUpdateBatcher — `played` não espera a janela do lote', () => {
+  it('áudio ouvido aparece no mesmo tick, sem os 100 ms', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'read' }))]);
+
+    act(() => {
+      contexto.result.current.handleMessageUpdate({
+        new: msg({ id: 'm1', status: 'played' }),
+      } as never);
+    });
+
+    expect(contexto.commitConversations).toHaveBeenCalledTimes(1);
+    expect(contexto.conversationsRef.current[0].messages[0].status).toBe('played');
+
+    // Nada reprogramado para depois.
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(contexto.commitConversations).toHaveBeenCalledTimes(1);
+  });
+
+  it('a transição pendente do mesmo id não volta o status depois', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'delivered' }))]);
+
+    act(() => {
+      contexto.result.current.handleMessageUpdate({
+        new: msg({ id: 'm1', status: 'read' }),
+      } as never);
+      contexto.result.current.handleMessageUpdate({
+        new: msg({ id: 'm1', status: 'played' }),
+      } as never);
+      vi.advanceTimersByTime(200);
+    });
+
+    expect(contexto.conversationsRef.current[0].messages[0].status).toBe('played');
+  });
+});

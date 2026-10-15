@@ -40,6 +40,16 @@ interface SharedChannelEntry {
 const sharedChannels = new Map<string, SharedChannelEntry>();
 const CHANNEL_RELEASE_GRACE_MS = 250;
 
+/**
+ * Janela em que uma queda de canal é tratada como transitória: o canal acabou de
+ * conectar e o supabase-js já está reconectando sozinho (restart curto do Kong,
+ * por exemplo). Dentro dela o log desce para `debug`, para não poluir Sentry.
+ */
+export const TRANSIENT_CHANNEL_WINDOW_MS = 30_000;
+
+/** Quedas seguidas sem nenhum SUBSCRIBED que promovem o log de volta para `warn`. */
+export const PERSISTED_CHANNEL_ERRORS = 3;
+
 // Uma queda de rede entrega varios sinais ao mesmo tempo (online mais o SUBSCRIBED
 // do canal de mensagens e o do canal de contatos, por exemplo). O limite e por
 // identidade do callback de reconexao (estavel via useCallback), entao canais
@@ -127,6 +137,10 @@ function acquireSharedChannel(
     // Estado anterior do canal, para distinguir o SUBSCRIBED inicial (nada a
     // revalidar) do SUBSCRIBED que segue uma queda.
     let lastStatus: string | null = null;
+    // Nível do log de queda: canal recém-conectado ou aparelho sem rede é ruído
+    // (o supabase-js reconecta sozinho); `warn` só quando o erro persiste.
+    let lastSubscribedAt: number | null = null;
+    let consecutiveChannelErrors = 0;
     const physicalTopic = `zapp:${key}`;
     const channel: RealtimeChannel = supabase
       .channel(physicalTopic)
@@ -145,6 +159,8 @@ function acquireSharedChannel(
       .subscribe((status, error) => {
         if (status === 'SUBSCRIBED') {
           log.debug(`Realtime subscribed: ${channelName}`);
+          lastSubscribedAt = Date.now();
+          consecutiveChannelErrors = 0;
           if (
             lastStatus === 'CHANNEL_ERROR' ||
             lastStatus === 'TIMED_OUT' ||
@@ -153,12 +169,29 @@ function acquireSharedChannel(
             for (const reconnectHandler of [...reconnectHandlers]) reconnectHandler();
           }
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          log.warn(`Realtime temporarily unavailable (${channelName}); native retry active`, {
+          consecutiveChannelErrors += 1;
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          // Recém-conectado e já caiu: o supabase-js está reconectando sozinho —
+          // é ruído, não erro de negócio. Só sobe para `warn` se persistir.
+          const transient =
+            !offline &&
+            lastSubscribedAt !== null &&
+            Date.now() - lastSubscribedAt < TRANSIENT_CHANNEL_WINDOW_MS &&
+            consecutiveChannelErrors < PERSISTED_CHANNEL_ERRORS;
+          const message = `Realtime temporarily unavailable (${channelName}); native retry active`;
+          const context = {
             status,
             error: error?.message,
             online: typeof navigator === 'undefined' ? undefined : navigator.onLine,
             visibility: typeof document === 'undefined' ? undefined : document.visibilityState,
-          });
+          };
+          if (offline) {
+            log.info(message, context);
+          } else if (transient) {
+            log.debug(message, context);
+          } else {
+            log.warn(message, context);
+          }
         } else if (status === 'CLOSED') {
           log.debug(`Realtime channel closed: ${channelName}`);
         }

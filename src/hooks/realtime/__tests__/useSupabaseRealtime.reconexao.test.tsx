@@ -30,7 +30,8 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
-import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
+import { useSupabaseRealtime, PERSISTED_CHANNEL_ERRORS, TRANSIENT_CHANNEL_WINDOW_MS } from '@/hooks/realtime/useSupabaseRealtime';
+import { log } from '@/lib/logger';
 
 function mount(channelName: string) {
   const onReconnect = vi.fn();
@@ -180,5 +181,58 @@ describe('useSupabaseRealtime — revalidacao apos queda', () => {
     });
 
     expect(onReconnect).not.toHaveBeenCalled();
+  });
+});
+
+// Queda de canal: o supabase-js reconecta sozinho, então `warn` a cada queda
+// curtíssima enchia o Sentry de ruído. O nível agora depende de o erro persistir.
+describe('useSupabaseRealtime — nível do log de queda de canal', () => {
+  const logDeQueda = (nivel: 'warn' | 'info' | 'debug') => {
+    const fn = (log as unknown as Record<'warn' | 'info' | 'debug', { mock: { calls: unknown[][] } }>)[nivel];
+    return fn.mock.calls.some((c) => typeof c[0] === 'string' && c[0].includes('temporarily unavailable'));
+  };
+
+  it('queda logo depois do SUBSCRIBE é transitória: desce para debug', () => {
+    const { view } = mount('log-transiente');
+
+    status('SUBSCRIBED');
+    act(() => vi.advanceTimersByTime(1_000));
+    status('CHANNEL_ERROR');
+
+    expect(logDeQueda('debug')).toBe(true);
+    expect(logDeQueda('warn')).toBe(false);
+    view.unmount();
+  });
+
+  it('queda fora da janela transitória é erro real: warn', () => {
+    const { view } = mount('log-real');
+
+    status('SUBSCRIBED');
+    act(() => vi.advanceTimersByTime(TRANSIENT_CHANNEL_WINDOW_MS + 1_000));
+    status('CHANNEL_ERROR');
+
+    expect(logDeQueda('warn')).toBe(true);
+    view.unmount();
+  });
+
+  it('quedas seguidas sem nenhum SUBSCRIBED promovem para warn (persistiu)', () => {
+    const { view } = mount('log-persistente');
+
+    status('SUBSCRIBED');
+    for (let i = 0; i < PERSISTED_CHANNEL_ERRORS; i += 1) status('CHANNEL_ERROR');
+
+    expect(logDeQueda('warn')).toBe(true);
+    view.unmount();
+  });
+
+  it('aparelho sem rede é infra: info, nunca warn', () => {
+    const { view } = mount('log-offline');
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, get: () => false });
+
+    status('CHANNEL_ERROR');
+
+    expect(logDeQueda('info')).toBe(true);
+    expect(logDeQueda('warn')).toBe(false);
+    view.unmount();
   });
 });

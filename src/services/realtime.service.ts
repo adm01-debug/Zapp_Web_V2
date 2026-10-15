@@ -25,6 +25,40 @@ const CONTACT_FETCH_CHUNK_SIZE = 200;
 // o lote anda em paralelo com CONTACT_FETCH_CHUNK_SIZE sem inflar a resposta.
 const CONTACT_SUMMARY_CHUNK_SIZE = 200;
 
+/**
+ * Colunas realmente consumidas nas consultas do inbox (sem `select('*')`).
+ *
+ * O `select('*')` trazia as colunas internas junto com as usadas: em `messages`,
+ * os tokens do claim do worker (`delivery_claim_token`, `delivery_claimed_by`) e
+ * `audio_meme_id`; em `contacts`, os rastros internos de projeção de IA e de
+ * avatar (`ai_projection_analysis_id`, `ai_projection_updated_at`,
+ * `avatar_fetch_attempted_at`). Cada coluna mantida tem leitor na interface — as
+ * `delivery_attempt_count`/`delivery_claimed_at`/`delivery_claim_expires_at`/
+ * `delivery_last_claim_token` alimentam a linha do tempo de envio
+ * (`components/inbox/chat/messageSendTimeline.ts`); cada coluna removida não tem
+ * leitor em `src` fora do adaptador de escrita.
+ */
+export const INBOX_MESSAGE_COLUMNS = [
+  'id', 'contact_id', 'sender', 'content', 'message_type', 'created_at', 'updated_at',
+  'is_read', 'external_id', 'status', 'status_updated_at', 'agent_id', 'is_deleted',
+  'is_edited', 'link_preview', 'channel_type', 'channel_connection_id',
+  'whatsapp_connection_id', 'client_message_id', 'media_url', 'media_type',
+  'media_filename', 'media_mimetype', 'media_size', 'media_meta', 'caption', 'ptt',
+  'reply_to_id', 'transcription', 'transcription_status', 'delivery_attempt_count',
+  'delivery_claimed_at', 'delivery_claim_expires_at', 'delivery_last_claim_token',
+].join(', ');
+
+/** Colunas de `contacts` usadas pela inbox (ver {@link INBOX_MESSAGE_COLUMNS}). */
+export const INBOX_CONTACT_COLUMNS = [
+  'id', 'name', 'surname', 'nickname', 'phone', 'email', 'company', 'job_title', 'notes',
+  'tags', 'avatar_url', 'conversation_status', 'conversation_status_changed_at',
+  'assigned_to', 'queue_id', 'created_at', 'updated_at', 'deleted_at', 'channel_type',
+  'channel_connection_id', 'whatsapp_connection_id', 'contact_type', 'group_category',
+  'lead_origin', 'lead_score', 'risk_score', 'ai_priority', 'ai_sentiment',
+  'consent_status', 'is_lid_legacy', 'address', 'address_number', 'neighborhood', 'city',
+  'state', 'postal_code', 'latitude', 'longitude',
+].join(', ');
+
 /** Linha da RPC get_inbox_contact_summaries (última mensagem + não lidas por contato). */
 interface InboxContactSummaryRow {
   contact_id: string;
@@ -49,7 +83,7 @@ export class RealtimeService {
     for (const idsChunk of chunkArray(uniqueIds, CONTACT_FETCH_CHUNK_SIZE)) {
       const { data, error } = await supabase
         .from('contacts')
-        .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+        .select(`${INBOX_CONTACT_COLUMNS}, conversation_sla(first_response_at, first_message_at, first_response_breached)`)
         .in('id', idsChunk);
         
       if (error) {
@@ -130,7 +164,7 @@ export class RealtimeService {
   static async fetchInitialConversations(): Promise<ConversationWithMessages[]> {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+      .select(`${INBOX_CONTACT_COLUMNS}, conversation_sla(first_response_at, first_message_at, first_response_breached)`)
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       
@@ -141,7 +175,7 @@ export class RealtimeService {
     // e nao devem aparecer na inbox nem inflar o indice do virtualizer.
     const { data: recentMessages, error: messagesError } = await supabase
       .from('messages')
-      .select('*')
+      .select(INBOX_MESSAGE_COLUMNS)
       .not('contact_id', 'is', null)
       .order('created_at', { ascending: false })
       .limit(RECENT_MESSAGES_LIMIT);
