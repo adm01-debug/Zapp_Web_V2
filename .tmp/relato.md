@@ -1,28 +1,31 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
-## O que mudou e por quê
-- Arquivos no commit: `supabase/migrations/20261013235905_reassign_agents_only_open_conversations.sql`, `supabase/tests/reassign_agents_only_open_conversations.sql`, `src/integrations/supabase/types.ts` e o proprio `.tmp/relato.md`.
-- `supabase/migrations/20261013235905_reassign_agents_only_open_conversations.sql` (nova): redefine `public.reassign_overloaded_agents` e `public.reassign_absent_agents` para (a) contar e mover SO contatos `conversation_status='open'` e `deleted_at IS NULL`; (b) so entregar a candidato com capacidade livre medida por abertas (`abertas < profiles.max_chats`); (c) ordenar pela conversa em espera ha mais tempo (`COALESCE(conversation_status_changed_at, created_at)` ASC, nunca `updated_at`); (d) aceitar `p_dry_run boolean DEFAULT false` (devolve a contagem prevista sem mover nem gravar evento); (e) manter a mesma guarda de papel (admin/supervisor ou service_role), o `search_path` fixo e o registro em `conversation_events`. Assinaturas antigas (`()` e `(integer)`) saem com DROP antes do CREATE — com `p_dry_run` default, `()`/`(integer)` e a nova assinatura coexistiriam e a chamada sem argumento (a tela usa `reassign_overloaded_agents()`) ficaria AMBIGUA. Sem TR1/RPC de atribuicao auditada no repo, preservo o INSERT manual existente em `conversation_events` (nao ha funcao auditada para chamar).
-- `supabase/tests/reassign_agents_only_open_conversations.sql` (novo): prova as duas RPCs no banco LOCAL, dentro de `BEGIN…ROLLBACK`, com `request.jwt.claims` para simular os papeis e checagem de ACL por `has_function_privilege`/`aclexplode`.
-- `src/integrations/supabase/types.ts`: atualiza `Args` das duas RPCs para o novo argumento `p_dry_run?` (o cartao autoriza tipos.ts).
+Ponto 1 — dry-run impreciso (contava além da capacidade real).
+O que mudei: supabase/migrations/20261014120000_reassign_dry_run_capacity_counter.sql (nova, aditiva; a anterior intocada). Nas duas RPCs o filtro de capacidade e o ORDER BY passaram a somar a carga simulada em memória (jsonb v_sim por substituto, incrementado só no ensaio): `(abertas + sim) < max_chats`. No modo real nada muda (sim nunca incrementa, +0; corpo do ELSE idêntico).
+Teste que prova: R1 em supabase/tests/reassign_agents_only_open_conversations.sql (O com 2 excedentes, S com 1 vaga: ensaio e real têm de devolver 1, e o ensaio não move nada).
+Vermelho (funções antigas): exit=3, `R1 FALHOU: dry-run deveria contar 1 (1 vaga), veio 2` (.tmp/prova-red.log).
+Verde (com a correção): exit=0, `R1 OK: ensaio == real (1) com vaga limitada; ensaio nao moveu` (.tmp/prova-green2.log).
 
-## Prova
-- vermelho antes (functions antigas restauradas pelo rollback da migration): `zapp-db-local psql . v2-… -v ON_ERROR_STOP=1 < supabase/tests/reassign_agents_only_open_conversations.sql` → `ERROR: function public.reassign_overloaded_agents(boolean) does not exist` (rc 3).
-- verde depois (migration reaplicada): mesmo comando → `T1..T10 OK` e `ROLLBACK` (rc 0). Casos: T1 dry-run conta 2 sem mover nem gravar evento; T2 move 2 abertas e deixa resolvida e soft-deleted intactas; T3 ordem por espera mais antiga ignorando `updated_at`; T4 candidato lotado de resolvidas ainda recebe (capacidade = abertas) e o lotado de abertas nao recebe; T5 ausencia move so abertas, dry-run nao move; T6 `authenticated` sem admin negado; T7 `inactive_minutes` negativo rejeitado (22023); T8 falha no evento desfaz o movimento (atomico); T9 EXECUTE restrito a authenticated+service_role e assinaturas antigas removidas; T10 `updated_at` so muda nas movidas (antes/depois).
-- migration aplicada no banco LOCAL: `hermes-db-migrar supabase/migrations/20261013235905_…sql` → `APLICADA no banco LOCAL 'v2-…' (producao nao foi tocada)`.
+Ponto 2 — testes que faltavam (4 lacunas, todas cobertas em blocos novos R0–R4 no mesmo arquivo de teste).
+(a) R2: agente com 3 abertas + 40 resolvidas e max_chats=3 retorna 0 e nada move; agente com max_chats NULL e 10 abertas é ignorado (NULL ajustado no próprio bloco, sem depender do seed). Verde antes e depois: `R2 OK` (trava de regressão).
+(b) Incluído no R2 acima (NULL explícito no bloco).
+(c) R3: authenticated comum também é negado em reassign_overloaded_agents (exceção "requer perfil admin ou supervisor"). Verde antes e depois: `R3 OK`.
+(d) R4: ausente com 1 aberta válida + 1 aberta apagada (deleted_at) retorna 1, move só a válida para C e a apagada fica com B. Verde no novo: `R4 OK` (não rodou no antigo porque o R1 interrompe o arquivo antes — arquivo com ON_ERROR_STOP).
+R0: re-isolamento (max_chats NULL global) após T4/T10 para os blocos R não herdarem sobrecarga alheia.
 
-## Efeitos colaterais conferidos
-- Atomicidade: uma chamada = uma transacao; T8 prova que a falha no meio desfaz tudo.
-- Gatilhos: o `UPDATE contacts` dispara `trg_log_assignment_change` (evento 'transfer'), comportamento PRE-existente, preservado; nao criei nem silenciei gatilho.
-- `updated_at`: o `UPDATE` dispara `update_contacts_updated_at` (BEFORE UPDATE, regrava `NEW.updated_at = now()`). Ele regrava SO as linhas movidas — e a data DEVE mudar nelas (a linha mudou). Aviso do juiz sobre "regrava em todas as linhas tocadas": nao ha backfill nem UPDATE amplo aqui, so `WHERE id = v_contact.id`. Prova antes/depois na T10: a movida muda de data e a resolvida da mesma agente e o contato de outra agente ficam intactos (nao desligo o gatilho porque a semantica de `contacts.updated_at` nao esta no escopo do cartao).
-- Capacidade so por abertas: resolvidas e soft-deleted nao contam nem se movem (T2/T4).
-- ACL: REVOKE de PUBLIC/anon e GRANT a authenticated/service_role reproduz o ACL vigente do manifesto (postgres, service_role, authenticated); nada alem disso.
-- Entrada invalida: negativo rejeitado com SQLSTATE 22023.
+Ponto 3 — formato do relato.
+Primeira linha exata `Especialista: workersql` acima. Verificações abaixo no formato pedido (comando + resultado real). Correção da afirmação: o teste supabase/tests/reassign_agents_only_open_conversations.sql foi CRIADO na entrega anterior (commit b64ff0524) e ESTENDIDO neste refazer (blocos R0–R4); nenhum teste existente foi removido, pulado ou afrouxado — T1..T10 passam iguais antes e depois (lista no verde abaixo).
+Ajustes de compatibilidade no arquivo de teste, sem mudar nenhuma asserção: (a) removido email_confirmed_at dos INSERTs em auth.users (coluna só do GoTrue novo; o trigger handle_new_user não a usa); (b) sub espelhado em request.jwt.claim.sub junto a cada request.jwt.claims (GoTrue antigo lê auth.uid() do formato singular; o novo ignora essa GUC).
 
-## O que NAO fiz e por que
-- `supabase/schema-manifest.json` e `schema-catalog.json` nao foram regerados (nao estao no cartao; sao snapshots do db-live-guard). O guard `.rpc()` casa por NOME, nao por aridade, entao o rename nao quebra.
-- `useAgentReassignment.ts` nao foi tocado: as chamadas atuais (`reassign_overloaded_agents()`, `reassign_absent_agents({inactive_minutes})`) seguem validas com os defaults.
-- Nao criei `.test.sh` em `scripts/db-audit/` (precisaria de passo no db-guard.yml); a prova ficou na suite `supabase/tests/` que o cartao lista.
+Verificações (prova real no banco local; nada persiste — o arquivo termina em ROLLBACK).
+Comando: psql -h 127.0.0.1 -p 35432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/reassign_agents_only_open_conversations.sql
+T1 OK, T2 OK, T3 OK, T5 OK, T4 OK, T6 OK, T7 OK, T8 OK, T9 OK, T10 OK, R2 OK, R3 OK, R1 OK, R4 OK, rc 0
+Desvio de ambiente (1 linha): o `zapp-db-local up/psql` não sustentou o conjunto nesta sessão (contêiner morria em ~2 min com 24 stacks na máquina e o `psql` dizia "não está de pé"); subi o postgres da mesma imagem (ghcr.io/supabase/cli/postgres:17.11.0.002-r0) via docker run, apliquei as 832 migrations do workspace e rodei a prova pelo psql local — mesmo esquema, mesmas funções.
+Migration: aplicada com rc 0 (CREATE FUNCTION x2 + REVOKE/GRANT).
+Rollback: extraído do próprio arquivo (linhas `|--`, sem redigitar), aplicado com rc 0; v_sim some das 2 funções; a prova volta a falhar no R1 com `veio 2` (defeito restaurado, demais blocos passam); reaplicação volta ao verde acima.
+Chamadores: src/hooks/crm/useAgentReassignment.ts chama as duas RPCs em modo real (assinaturas inalteradas, sem impacto); supabase/functions sem uso; types.ts inalterado.
 
-## Conclusao
-Conclui. Diferente da sonda: o modo `--nova=` do hermes-db-migrar retorna rc 2 sem criar arquivo nesta sessao (a rotina interna chama git por caminho absoluto, barrado); criei o arquivo com a versao que a propria ferramenta calculou (20261013235905) e apliquei por `hermes-db-migrar <arquivo>`, que funcionou.
+Arquivos (git show --name-only HEAD):
+.tmp/relato.md
+supabase/migrations/20261014120000_reassign_dry_run_capacity_counter.sql
+supabase/tests/reassign_agents_only_open_conversations.sql
