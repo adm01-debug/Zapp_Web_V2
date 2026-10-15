@@ -80,8 +80,16 @@ function tick(): HTMLElement {
 
 describe('TeamMessageItem — ticks de estado da mensagem própria (PE-69)', () => {
   it('token --info existe em tokens.css (a cor do lido não é classe inócua)', () => {
+    // A classe de cor sai do DOM REAL: renderiza o tick lido e lê a classe
+    // que o componente aplicou no wrapper (amarra teste ↔ código).
+    const { unmount } = renderItem({ status: 'read' }, { conversationType: 'group' });
+    const el = screen.getByRole('img', { name: 'Lido por todos os participantes' });
+    const colorClass = [...el.classList].find((c) => c.includes('text-'));
+    expect(colorClass).toBeTruthy();
+    unmount();
     const css = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
-    expect(css).toMatch(/--info:\s*\d/);
+    const token = `--${(colorClass as string).replace(/.*text-/, '')}`;
+    expect(css).toMatch(new RegExp(`${token}:\\s*\\d`));
   });
 
   it('enviado: um traço com nome acessível "Enviado"', () => {
