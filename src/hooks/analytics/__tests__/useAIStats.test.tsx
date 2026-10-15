@@ -237,14 +237,17 @@ describe('useAIStats — janela de leitura', () => {
     expect(hook.result.current.data).toBeUndefined();
   });
 
-  it.fails('erro na leitura da janela ANTERIOR não pode virar "alta de 100%"', async () => {
-    // O hook ignora o erro da janela anterior: a falha vira "crescimento".
+  it('erro na leitura da janela ANTERIOR não vira "alta de 100%"', async () => {
+    // CSAT-ERRO-ZERO: antes o hook ignorava o erro da janela anterior — a
+    // base zerava e a comparação anunciava um crescimento que nunca houve.
+    // Agora o erro sobe (consulta em erro), em vez de virar número inventado.
     tabelas(
       { conversation_analyses: [{ id: 'a1', sentiment: 'positivo', sentiment_score: 80, created_at: instante(0) }] },
       { conversation_analyses: [null, { message: 'timeout' }] },
     );
 
     const { result } = await esperarStats(7);
+    expect(result.current.isError).toBe(true);
     expect(result.current.data?.trends.analyses.direction).not.toBe('up');
   });
 });

@@ -31,6 +31,9 @@ describe('CSATDashboard', () => {
       stats: mockStats,
       surveys: [],
       isLoading: false,
+      error: null,
+      isError: false,
+      refetch: vi.fn(),
       submitSurvey: vi.fn() as unknown as UseMutationResult<void, Error, { contact_id: string; agent_id?: string; rating: number; feedback?: string }>,
     });
   });
@@ -86,5 +89,27 @@ describe('CSATDashboard', () => {
       const targetId = control.getAttribute('aria-controls');
       expect(document.getElementById(targetId!)).not.toBeNull();
     });
+  });
+
+  // CSAT-ERRO-ZERO: falha de leitura não pode virar "0 avaliações".
+  it('erro na leitura mostra o aviso e o botão Tentar de novo', () => {
+    const refetch = vi.fn();
+    mockUseCSAT.mockReturnValue({
+      stats: { average: 0, total: 0, distribution: {}, trend: 0 } as CSATStats,
+      surveys: [],
+      isLoading: false,
+      error: new Error('permission denied'),
+      isError: true,
+      refetch,
+      submitSurvey: vi.fn() as unknown as UseMutationResult<void, Error, { contact_id: string; agent_id?: string; rating: number; feedback?: string }>,
+    });
+
+    render(<CSATDashboard />);
+
+    expect(screen.getByText('Não foi possível carregar as avaliações.')).toBeInTheDocument();
+    expect(screen.queryByText('0 avaliações')).not.toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Tentar de novo' }).click();
+    expect(refetch).toHaveBeenCalled();
   });
 });

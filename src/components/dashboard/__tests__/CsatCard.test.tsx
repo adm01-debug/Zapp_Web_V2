@@ -39,4 +39,17 @@ describe('CsatCard', () => {
     render(<CsatCard period="today" onPeriodChange={vi.fn()} />);
     expect(screen.getByText('-8%')).toBeInTheDocument();
   });
+
+  // CSAT-ERRO-ZERO: falha de leitura não pode virar "Sem avaliações no período".
+  it('erro na leitura mostra o aviso, não o estado vazio', () => {
+    const refetch = vi.fn();
+    mockUseCSAT.mockReturnValue({ stats: { average: 0, total: 0, distribution: {}, trend: 0 }, error: new Error('timeout'), refetch });
+    render(<CsatCard period="month" onPeriodChange={vi.fn()} />);
+
+    expect(screen.getByText('Não foi possível carregar as avaliações.')).toBeInTheDocument();
+    expect(screen.queryByText('Sem avaliações no período')).not.toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Tentar de novo' }).click();
+    expect(refetch).toHaveBeenCalled();
+  });
 });

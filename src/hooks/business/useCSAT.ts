@@ -28,16 +28,16 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     const now = new Date();
     switch (period) {
       case 'today':
-        return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
       case 'week': {
         const weekAgo = new Date(now);
         weekAgo.setDate(weekAgo.getDate() - 7);
-        return weekAgo.toISOString();
+        return weekAgo;
       }
       case 'month': {
         const monthAgo = new Date(now);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
-        return monthAgo.toISOString();
+        return monthAgo;
       }
     }
   };
@@ -45,14 +45,21 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
   const surveysQuery = useQuery({
     queryKey: ['csat-surveys', period],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('csat_surveys')
-        .select('*')
-        .gte('created_at', getDateFilter())
-        .order('created_at', { ascending: false });
+      const now = new Date();
+      const currentStart = getDateFilter();
+      // Mesma duracao da janela atual, imediatamente antes dela: e a base
+      // honesta da tendencia. Sem isso o `trend` do card era um 0 cravado.
+      const previousStart = new Date(currentStart.getTime() - (now.getTime() - currentStart.getTime()));
 
-      if (error) throw error;
-      return data as CSATSurvey[];
+      // Leitura paginada (keyset). O teto de linhas do PostgREST cortaria a
+      // consulta e o card mostraria media/total sobre uma amostra silenciosa.
+      const rows = await fetchSurveysKeyset<CSATSurvey>('*', previousStart);
+
+      const currentStartMs = currentStart.getTime();
+      return {
+        current: rows.filter((r) => new Date(r.created_at).getTime() >= currentStartMs),
+        previous: rows.filter((r) => new Date(r.created_at).getTime() < currentStartMs),
+      };
     },
   });
 
@@ -63,8 +70,15 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
   // permanecendo no snapshot anterior depois de surveys ja trazer as avaliacoes
   // novas (a key de stats nao mudava, entao nao havia novo recalculo). Derivando,
   // media/total/distribuicao mudam sempre junto com a lista.
+  // Fatia estavel do resultado (mesma referencia entre renders): o React
+  // Compiler exige que as dependencias do useMemo batam com as expressoes lidas
+  // no corpo, por isso derivamos antes em vez de ler `surveysQuery.data` no deps.
+  const currentSurveys = surveysQuery.data?.current;
+  const previousSurveys = surveysQuery.data?.previous;
+
   const stats = useMemo<CSATStats>(() => {
-    const surveys = surveysQuery.data || [];
+    const surveys = currentSurveys || [];
+    const previous = previousSurveys || [];
     if (surveys.length === 0) {
       return { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, trend: 0 };
     }
@@ -75,14 +89,24 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
       distribution[s.rating] = (distribution[s.rating] || 0) + 1;
       sum += s.rating;
     });
+    const average = sum / surveys.length;
+
+    // Tendencia real: variacao percentual da media contra a janela anterior de
+    // mesma duracao. Sem base anterior nao ha variacao a afirmar -> 0 (nunca um
+    // numero inventado).
+    let trend = 0;
+    if (previousSurveys.length > 0) {
+      const previousAverage = previousSurveys.reduce((acc, s) => acc + s.rating, 0) / previousSurveys.length;
+      if (previousAverage !== 0) trend = Math.round(((average - previousAverage) / previousAverage) * 100);
+    }
 
     return {
-      average: sum / surveys.length,
+      average,
       total: surveys.length,
       distribution,
-      trend: 0,
+      trend,
     };
-  }, [surveysQuery.data]);
+  }, [currentSurveys, previousSurveys]);
 
   const submitSurvey = useMutation<void, Error, { contact_id: string; agent_id?: string; rating: number; feedback?: string }>({
     mutationFn: async (data) => {
@@ -106,9 +130,14 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
   });
 
   return {
-    surveys: surveysQuery.data || [],
+    surveys: currentSurveys || [],
     stats,
     isLoading: surveysQuery.isLoading,
+    // Erro exposto de proposito: sem isso a tela so via `total: 0` e anunciava
+    // "Sem avaliacoes no periodo" para uma falha de leitura (erro virava zero).
+    error: surveysQuery.error,
+    isError: surveysQuery.isError,
+    refetch: surveysQuery.refetch,
     submitSurvey,
   };
 }
@@ -163,17 +192,20 @@ const CSAT_MAX_PAGES = 50;
 
 /**
  * PostgREST corta a resposta no teto de linhas do projeto (db-max-rows). Sem
- * paginar, uma janela com mais surveys que o teto devolveria apenas as linhas
- * mais antigas e o dashboard perderia silenciosamente as respostas recentes.
+ * paginar, uma janela com mais linhas que o teto devolveria apenas as mais
+ * antigas e a tela perderia silenciosamente as recentes.
  *
  * Paginacao keyset por (created_at, id): offset com .range() dependeria de o
  * teto do servidor ser exatamente CSAT_PAGE_SIZE e, sem desempate estavel,
- * repetiria ou pularia linhas quando varias surveys compartilham o mesmo
+ * repetiria ou pularia linhas quando varias linhas compartilham o mesmo
  * created_at. O cursor avanca pela ultima linha lida e o loop para quando a
  * pagina volta vazia, qualquer que seja o teto real.
  */
-async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
-  const rows: CSATBreakdownRow[] = [];
+async function fetchSurveysKeyset<T extends { id: string; created_at: string }>(
+  select: string,
+  start: Date
+): Promise<T[]> {
+  const rows: T[] = [];
   let cursor: { createdAt: string; id: string } | null = null;
 
   // <= e nao <: com exatamente CSAT_MAX_PAGES paginas cheias, a iteracao extra
@@ -182,9 +214,7 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
   for (let page = 0; page <= CSAT_MAX_PAGES; page++) {
     let query = supabase
       .from('csat_surveys')
-      .select(
-        'id, agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
-      )
+      .select(select)
       .gte('created_at', start.toISOString())
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
@@ -200,7 +230,7 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
     const { data, error } = await query;
     if (error) throw error;
 
-    const batch = (data || []) as unknown as CSATBreakdownRow[];
+    const batch = (data || []) as unknown as T[];
     if (batch.length === 0) return rows;
 
     rows.push(...batch);
@@ -211,6 +241,13 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
   // Devolver o que deu tempo de ler seria a mesma perda silenciosa que esta
   // funcao existe para evitar: o erro sobe e o card mostra estado de falha.
   throw new Error(`[useCSAT] paginacao excedeu ${CSAT_MAX_PAGES} paginas (${rows.length} linhas)`);
+}
+
+const CSAT_BREAKDOWN_SELECT =
+  'id, agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)';
+
+function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
+  return fetchSurveysKeyset<CSATBreakdownRow>(CSAT_BREAKDOWN_SELECT, start);
 }
 
 function csatPercentFromRatings(ratings: number[]): number {
