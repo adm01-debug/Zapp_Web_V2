@@ -26,11 +26,17 @@ docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run -d --name "$NAME" -e POSTGRES_PASSWORD=teste -e POSTGRES_DB=teste "$IMG" >/dev/null
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT
 
-for _ in $(seq 1 60); do
-  docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1 && break
+consec=0
+for _ in $(seq 1 90); do
+  if docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1; then
+    consec=$((consec + 1))
+    [[ "$consec" -ge 3 ]] && break
+  else
+    consec=0
+  fi
   sleep 1
 done
-docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1 || { echo "PG nao subiu"; exit 2; }
+[[ "$consec" -ge 3 ]] || { echo "PG nao subiu"; exit 2; }
 
 q() { docker exec -i -e PGPASSWORD=teste "$NAME" psql -U postgres -d teste -X -q -A -t -v ON_ERROR_STOP=1 "$@"; }
 aplica() { docker exec -i -e PGPASSWORD=teste "$NAME" psql -U postgres -d teste -X -q -v ON_ERROR_STOP=1 < "$MIG" >/dev/null; }
