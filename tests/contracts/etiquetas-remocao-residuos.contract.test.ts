@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -22,18 +22,26 @@ const BARREIS_EMPTY_STATE = [
   'src/components/ui/empty-states.tsx',
   'src/components/ui/contextual-empty-states.tsx',
   'src/components/ui/empty-states/ConvenienceExports.tsx',
+  'src/components/ui/empty-states/ContextualEmptyState.tsx',
+  'src/components/ui/empty-states/contextConfigs.tsx',
 ];
+
+const CANONICO_EMPTY_STATE = 'src/components/ui/empty-state.tsx';
 
 describe('resíduos da remoção de Etiquetas (TRA-010)', () => {
   it('não define nem reexporta TagsEmptyState', () => {
     for (const file of BARREIS_EMPTY_STATE) {
-      expect(read(file), file).not.toMatch(/TagsEmptyState/);
+      // Os barris legados de empty-state foram removidos na consolidação
+      // (t_5b60e125): não há mais onde residir um TagsEmptyState.
+      expect(existsSync(file), file).toBe(false);
     }
+    expect(read(CANONICO_EMPTY_STATE)).not.toMatch(/TagsEmptyState/);
   });
 
   it('o contexto "tags" dos empty-states foi embora', () => {
-    expect(read('src/components/ui/empty-states/ContextualEmptyState.tsx')).not.toMatch(/'tags'/);
-    expect(read('src/components/ui/empty-states/contextConfigs.tsx')).not.toMatch(/^\s{2}tags: \{/m);
+    expect(existsSync('src/components/ui/empty-states/ContextualEmptyState.tsx')).toBe(false);
+    expect(existsSync('src/components/ui/empty-states/contextConfigs.tsx')).toBe(false);
+    expect(read(CANONICO_EMPTY_STATE)).not.toMatch(/'tags'/);
   });
 
   it('o barril de hooks/crm não ensina hook removido (useTags)', () => {

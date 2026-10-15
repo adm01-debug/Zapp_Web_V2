@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Plus, Search, Trash2, Edit2, X, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -124,11 +125,12 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhum template encontrado</p>
-                <p className="text-sm">Crie seu primeiro template clicando em "Novo"</p>
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="Nenhum template encontrado"
+                helpText='Crie seu primeiro template clicando em "Novo"'
+                size="sm"
+              />
             )}
           </div>
         </DialogContent>

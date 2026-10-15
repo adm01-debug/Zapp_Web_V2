@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EmptyState } from '@/components/ui/empty-state';
-import { AgentsEmptyState } from '@/components/ui/contextual-empty-states';
 import { InviteAgentDialog } from '@/components/agents/InviteAgentDialog';
 import { ConfigurePermissionsDialog } from '@/components/agents/ConfigurePermissionsDialog';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -28,6 +27,7 @@ import {
   RefreshCw,
   Clock,
   SendHorizontal,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
@@ -186,9 +186,15 @@ export function AgentsView() {
 
       {/* Agents Grid */}
       {filteredAgents.length === 0 ? (
-        <AgentsEmptyState
-          onInviteAgent={() => setInviteOpen(true)}
-          onConfigurePermissions={() => setPermissionsOpen(true)}
+        <EmptyState
+          icon={Users}
+          title="Nenhum agente na equipe"
+          description="Convide membros da sua equipe para atender conversas."
+          actionLabel="Convidar agente"
+          onAction={() => setInviteOpen(true)}
+          secondaryActionLabel="Configurar permissões"
+          onSecondaryAction={() => setPermissionsOpen(true)}
+          helpText="Agentes podem atender conversas nas filas que você atribuir."
         />
       ) : (
         <StaggeredList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

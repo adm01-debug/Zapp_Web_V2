@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, CheckCircle2, XCircle, Loader2, History } from 'lucide-react';
-import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -36,7 +36,7 @@ export function FollowUpExecutionsHistory() {
     return (
       <Card className="bg-card/50 border-border/50">
         <CardContent className="py-0">
-          <GenericEmptyState icon={History} title="Sem execuções" description="Nenhuma execução de follow-up registrada" className="py-8" />
+          <EmptyState icon={History} title="Sem execuções" description="Nenhuma execução de follow-up registrada" className="py-8" />
         </CardContent>
       </Card>
     );

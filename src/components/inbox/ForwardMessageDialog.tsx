@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Forward, Search, Users, User, Check, MessageSquare, Phone, Send, Loader2, Paperclip, AlertTriangle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -150,7 +151,7 @@ export function ForwardMessageDialog({
                 {fwd.isLoading ? (
                   <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
                 ) : fwd.filteredContacts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground"><User className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-sm">Nenhum contato encontrado</p></div>
+                  <EmptyState icon={User} title="Nenhum contato encontrado" size="sm" />
                 ) : (
                   <div className="space-y-1">
                     <AnimatePresence>
@@ -184,7 +185,7 @@ export function ForwardMessageDialog({
               <TabsContent value="groups" className="mt-2">
                 <ScrollArea className="h-[300px]">
                   {fwd.filteredGroups.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground"><Users className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-sm">Nenhum grupo encontrado</p></div>
+                    <EmptyState icon={Users} title="Nenhum grupo encontrado" size="sm" />
                   ) : (
                     <div className="space-y-1">
                       <AnimatePresence>

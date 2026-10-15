@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Mail, Search, RefreshCw, Pencil, Inbox, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
@@ -100,7 +100,7 @@ export default function GmailInboxView() {
     }
     if (accountsError) {
       return (
-        <GenericEmptyState
+        <EmptyState
           icon={AlertTriangle}
           title="Não foi possível verificar suas contas Gmail"
           description="A consulta de contas falhou. Isso não quer dizer que a conta foi desconectada — tente carregar de novo."
@@ -155,7 +155,7 @@ export default function GmailInboxView() {
           <ScrollArea className="flex-1 min-h-0">
             {threadsLoading ? <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             : threadsFailedWithoutData ? (
-              <GenericEmptyState
+              <EmptyState
                 icon={AlertTriangle}
                 title="Não foi possível carregar os emails"
                 description="A consulta falhou. Isso não significa que a caixa esteja vazia — tente carregar de novo."

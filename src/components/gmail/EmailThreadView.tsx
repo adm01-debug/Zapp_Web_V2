@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { sanitizeEmailHtml } from '@/lib/emailHtml';
-import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -266,7 +266,7 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
           ) : messagesError && threadMessages.length === 0 ? (
             // Consulta fracassada nao e thread vazia: o array padrao vazio nao pode
             // virar "Sem mensagens" (R2-API-059). Aqui a saida e recuperacao.
-            <GenericEmptyState
+            <EmptyState
               icon={AlertTriangle}
               title="Não foi possível carregar as mensagens"
               description="A consulta falhou. Isso não indica que a conversa esteja vazia — tente carregar de novo."
@@ -275,7 +275,7 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
               className="py-8"
             />
           ) : threadMessages.length === 0 ? (
-            <GenericEmptyState icon={Mail} title="Sem mensagens" description="Nenhuma mensagem encontrada nesta thread" className="py-8" />
+            <EmptyState icon={Mail} title="Sem mensagens" description="Nenhuma mensagem encontrada nesta thread" className="py-8" />
           ) : (
             threadMessages.map((msg, i) => (
               <EmailMessageCard

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,7 +29,7 @@ export function QueueContactsTable({ contacts }: { contacts: QueueContact[] }) {
       <CardContent>
         <ScrollArea className="h-[400px]">
           {contacts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground"><User className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum contato nesta fila ainda</p></div>
+            <EmptyState icon={User} title="Nenhum contato nesta fila ainda" size="sm" />
           ) : (
             <Table>
               <TableHeader>
