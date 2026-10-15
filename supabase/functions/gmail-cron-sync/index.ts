@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, selectGmailAccountsDue, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, gmailFailureSummary, selectGmailAccountsDue, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
@@ -79,14 +79,18 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
+          const attempts = (account.error_count ?? 0) + 1;
           try {
             // token revogado/expirado vira 'reauth_required'; o resto 'error',
             // com a espera crescente contada a partir das falhas seguidas.
-            await recordGmailAccountFailure(supabase, account.id, err, (account.error_count ?? 0) + 1);
+            await recordGmailAccountFailure(supabase, account.id, err, attempts);
           } catch (recordErr) {
             log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
           }
-          return { id: account.id, error: sanitizeGmailErrorMessage(msg) };
+          // O detalhe cru (ex.: corpo do Google) fica só no log do servidor;
+          // a resposta carrega o mesmo texto reduzido gravado no last_error.
+          log.error("Falha na sincronização da conta Gmail", { accountId: account.id, error: msg });
+          return { id: account.id, error: gmailFailureSummary(err, attempts).lastError };
         }
       }));
       for (const r of batchResults) results.push(r.status === "fulfilled" ? r.value : { id: "unknown", error: String(r.reason) });

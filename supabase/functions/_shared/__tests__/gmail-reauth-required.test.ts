@@ -1,8 +1,11 @@
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   ensureValidToken,
+  extractGmailHttpStatus,
   GMAIL_REAUTH_MESSAGE,
+  gmailFailureSummary,
   isGmailReauthError,
+  isGmailRefreshError,
   recordGmailAccountFailure,
   sanitizeGmailErrorMessage,
 } from "../gmail-helpers.ts";
@@ -44,9 +47,11 @@ Deno.test("token revogado (invalid_grant) vira reauth_required sem vazar e-mail 
   assertEquals(updates[0].valores.sync_status, "reauth_required");
   assertEquals(updates[0].eq, [["id", "conta-1"]]);
   const lastError = String(updates[0].valores.last_error);
-  assertEquals(lastError.startsWith(GMAIL_REAUTH_MESSAGE), true);
+  assertEquals(lastError, GMAIL_REAUTH_MESSAGE);
   assertEquals(lastError.includes("joaquim@empresa.com"), false);
   assertEquals(lastError.includes("ya29."), false);
+  assertEquals(lastError.includes("invalid_grant"), false);
+  assertEquals(lastError.includes("error_description"), false);
 });
 
 Deno.test("falha transitória fica em error com a contagem de tentativas", async () => {
@@ -61,7 +66,59 @@ Deno.test("falha transitória fica em error com a contagem de tentativas", async
 
   assertEquals(status, "error");
   assertEquals(updates[0].valores.sync_status, "error");
-  assertEquals(String(updates[0].valores.last_error).startsWith("3 tentativa(s) de sincronização falharam"), true);
+  assertEquals(String(updates[0].valores.last_error), "3 tentativa(s) de sincronização falharam (HTTP 503)");
+});
+
+Deno.test("falha transitória sem HTTP conhecido grava só a contagem, nunca o corpo", async () => {
+  const updates: Update[] = [];
+  const corpoCru = '{"error":{"code":503,"message":"backendError sentidoidentificador-xyz"}}';
+
+  const status = await recordGmailAccountFailure(
+    supabaseParaFalha(updates),
+    "conta-3",
+    new Error(`History API: ${corpoCru}`),
+    1,
+  );
+
+  assertEquals(status, "error");
+  const lastError = String(updates[0].valores.last_error);
+  assertEquals(lastError, "1 tentativa(s) de sincronização falharam");
+  assertEquals(lastError.includes("backendError"), false);
+  assertEquals(lastError.includes("sentidoidentificador-xyz"), false);
+});
+
+Deno.test("isGmailRefreshError/isGmailReauthError/extractGmailHttpStatus classificam sem olhar o corpo", () => {
+  const transitoria = new Error('Gmail token refresh rejected (503): {"error":"temporarily_unavailable"}');
+  assertEquals(isGmailRefreshError(transitoria), true);
+  assertEquals(isGmailReauthError(transitoria), false);
+  assertEquals(extractGmailHttpStatus(transitoria), 503);
+
+  const revogado = new Error('Gmail token refresh rejected (400): {"error":"invalid_grant"}');
+  assertEquals(isGmailRefreshError(revogado), true);
+  assertEquals(isGmailReauthError(revogado), true);
+  assertEquals(extractGmailHttpStatus(revogado), 400);
+
+  // Corpo que imita o prefixo no MEIO da mensagem não vira status: só o
+  // prefixo no início (emitido pelo próprio helper) conta.
+  assertEquals(extractGmailHttpStatus(new Error("History API: Gmail API error (503): x")), null);
+  assertEquals(isGmailRefreshError(new Error("outro erro qualquer")), false);
+  assertEquals(isGmailRefreshError(undefined), false);
+  assertEquals(extractGmailHttpStatus(undefined), null);
+});
+
+Deno.test("gmailFailureSummary é a fonte única do texto reduzido", () => {
+  assertEquals(
+    gmailFailureSummary(new Error('Gmail token refresh rejected (400): {"error":"invalid_grant"}'), 1),
+    { status: "reauth_required", lastError: GMAIL_REAUTH_MESSAGE },
+  );
+  assertEquals(
+    gmailFailureSummary(new Error("Gmail API error (503): upstream indisponível"), 3),
+    { status: "error", lastError: "3 tentativa(s) de sincronização falharam (HTTP 503)" },
+  );
+  assertEquals(
+    gmailFailureSummary(new Error("Failed to persist Gmail history cursor"), 2),
+    { status: "error", lastError: "2 tentativa(s) de sincronização falharam" },
+  );
 });
 
 Deno.test("isGmailReauthError reconhece token revogado e não confunde falha transitória", () => {

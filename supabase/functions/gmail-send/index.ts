@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildGmailMimeMessage, encodeBase64Url } from "../_shared/gmail-mime.ts";
 import {
@@ -7,6 +7,7 @@ import {
   GMAIL_REAUTH_HTTP_STATUS,
   gmailReauthErrorPayload,
   isGmailReauthError,
+  isGmailRefreshError,
   persistGmailMessageLabels,
   recordGmailAccountFailure,
 } from "../_shared/gmail-helpers.ts";
@@ -325,6 +326,9 @@ export async function handleGmailSend(req: Request): Promise<Response> {
       log.done(GMAIL_REAUTH_HTTP_STATUS);
       return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
     }
+    // Erro do refresh (ex.: 503 com corpo cru do Google): a resposta precisa
+    // ser genérica — internalErrorResponse registra o detalhe só no servidor.
+    if (isGmailRefreshError(error)) return internalErrorResponse(error, req);
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);

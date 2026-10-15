@@ -86,3 +86,68 @@ Deno.test("envio com token revogado devolve 409 reauth_required e marca a conta"
     }
   }
 });
+
+// Falha TRANSITÓRIA no refresh (503 com corpo JSON do Google): o envio não
+// pode devolver o corpo cru — responde 500 genérico ('Internal server error',
+// mascarado por errorResponse para todo 5xx) e o envio NÃO é tentado.
+// Teste-guarda do contrato: verde antes e depois do refazer (o mascaramento
+// já existia em _shared/validation.ts); o refazer troca a construção para
+// internalErrorResponse para não depender do mascaramento implícito.
+Deno.test("envio com refresh transitório devolve 500 genérico sem o corpo do Google", async () => {
+  const capturas: Captura[] = [];
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const req = input instanceof Request ? input : new Request(input as RequestInfo, init);
+    const url = new URL(req.url);
+    const metodo = req.method.toUpperCase();
+    let corpo: unknown;
+    try { corpo = await req.clone().json(); } catch { corpo = undefined; }
+    capturas.push({ method: metodo, url: req.url, body: corpo });
+
+    if (url.pathname.endsWith("/auth/v1/user")) return resposta({ id: USER_ID, email: "usuario@teste.invalid" });
+    if (url.pathname.endsWith("/rest/v1/gmail_accounts") && metodo === "GET") {
+      return resposta({ id: CONTA_ID, email_address: "conta@teste.invalid", is_active: true, token_expires_at: PASSADO, user_id: USER_ID });
+    }
+    if (url.pathname.endsWith("/rest/v1/gmail_accounts") && metodo === "PATCH") return resposta([{ id: CONTA_ID }]);
+    if (url.pathname.endsWith("/rest/v1/rpc/get_gmail_tokens")) {
+      return resposta([{ access_token: "access-antigo", refresh_token: "refresh-1" }]);
+    }
+    if (url.hostname === "oauth2.googleapis.com") {
+      // Google instável: corpo cru que NÃO pode vazar na resposta.
+      return resposta({ error: "temporarily_unavailable", error_description: "backend down, tente de novo" }, 503);
+    }
+    if (url.hostname === "gmail.googleapis.com") {
+      return resposta({ id: "msg-1", threadId: "thread-1" });
+    }
+    throw new Error(`fetch não roteado no teste: ${metodo} ${req.url}`);
+  }) as typeof fetch;
+  Deno.env.set("SUPABASE_URL", SUPABASE_URL);
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", SERVICE_KEY);
+  Deno.env.set("SUPABASE_ANON_KEY", ANON_KEY);
+  Deno.env.set("GOOGLE_CLIENT_ID", "client-id-teste");
+  Deno.env.set("GOOGLE_CLIENT_SECRET", "client-secret-teste");
+
+  try {
+    const res = await handleGmailSend(new Request(`${SUPABASE_URL}/functions/v1/gmail-send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: TOKEN_VALIDO },
+      body: JSON.stringify({ action: "send", account_id: CONTA_ID, to: "destino@teste.invalid", subject: "Oi" }),
+    }));
+
+    const corpo = await res.text();
+    assertEquals(res.status, 500);
+    assertEquals(corpo.includes("temporarily_unavailable"), false);
+    assertEquals(corpo.includes("backend down"), false);
+    assertEquals(corpo.includes("token refresh rejected"), false);
+    const body = JSON.parse(corpo);
+    assertEquals(body.error, "Internal server error");
+
+    // O envio NÃO é tentado com o token velho.
+    assertEquals(capturas.filter((c) => c.url.includes("/messages/send")).length, 0);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+    for (const chave of ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]) {
+      Deno.env.delete(chave);
+    }
+  }
+});

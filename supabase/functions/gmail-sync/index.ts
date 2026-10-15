@@ -2,8 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
+import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 
@@ -133,7 +133,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
 
     const { data: account } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, sync_status, token_expires_at, history_id, user_id")
+      .select("id, email_address, is_active, sync_status, token_expires_at, history_id, user_id, error_count")
       .eq("id", body.account_id).eq("user_id", user.id).eq("is_active", true).single();
 
     if (!account) throw new Error("Gmail account not found or inactive");
@@ -159,8 +159,9 @@ export async function handleGmailSync(req: Request): Promise<Response> {
           return jsonResponse({ success: true, ...result }, 200, req);
         } catch (err: unknown) {
           try {
-            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
+            // token revogado/expirado vira 'reauth_required'; o resto 'error',
+            // com a contagem real de falhas seguidas (sem zerar o backoff do cron).
+            await recordGmailAccountFailure(supabase, account.id, err, (account.error_count ?? 0) + 1);
           } catch (recordErr) {
             log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
           }
@@ -219,7 +220,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
   } catch (error) {
     log.error("Gmail Sync error", { error: error instanceof Error ? error.message : String(error) });
     log.done(500);
-    return errorResponse(error instanceof Error ? sanitizeGmailErrorMessage(error.message) : "Internal server error", 500, req);
+    return internalErrorResponse(error, req);
   }
 }
 

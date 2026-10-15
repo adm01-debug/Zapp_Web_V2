@@ -48,7 +48,7 @@ export async function requestGmailTokenRefresh(refreshToken: string, clientId: s
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ refresh_token: refreshToken, client_id: clientId, client_secret: clientSecret, grant_type: "refresh_token" }),
   });
-  if (!response.ok) throw new Error(`Gmail token refresh rejected (${response.status}): ${await response.text()}`);
+  if (!response.ok) throw new Error(`${GMAIL_REFRESH_REJECTED_PREFIX} (${response.status}): ${await response.text()}`);
   return await response.json() as GmailRefreshedTokens;
 }
 
@@ -356,6 +356,15 @@ export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a c
 // mostrar um erro genérico de envio.
 export const GMAIL_REAUTH_CODE = "reauth_required";
 export const GMAIL_REAUTH_HTTP_STATUS = 409;
+// Resposta genérica para falha TRANSITÓRIA no refresh (ex.: 503 do Google):
+// nunca carrega o corpo cru do provedor, só diz que dá para tentar de novo.
+export const GMAIL_REFRESH_TRANSIENT_MESSAGE =
+  "Não foi possível renovar a sessão do Gmail. Tente novamente em instantes.";
+
+// Prefixo fixo NOSSO da falha de refresh. O corpo cru do Google vem DEPOIS
+// desse prefixo — por isso a detecção abaixo usa startsWith/ancoragem no
+// início e nunca casa com texto vindo do corpo.
+const GMAIL_REFRESH_REJECTED_PREFIX = "Gmail token refresh rejected";
 
 export function gmailReauthErrorPayload(): { error: string; code: string } {
   return { error: GMAIL_REAUTH_MESSAGE, code: GMAIL_REAUTH_CODE };
@@ -366,6 +375,46 @@ const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired o
 export function isGmailReauthError(error: unknown): boolean {
   const message = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
   return GMAIL_REAUTH_MARKERS.some(marker => message.includes(marker));
+}
+
+// O erro veio do refresh do token (transitório ou não)? Casa SÓ com o nosso
+// prefixo fixo no início da mensagem — o corpo cru do Google vem depois.
+export function isGmailRefreshError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.startsWith(GMAIL_REFRESH_REJECTED_PREFIX);
+}
+
+// Extrai o status HTTP SÓ dos nossos prefixos fixos (`Gmail token refresh
+// rejected (NNN)` / `Gmail API error (NNN)`), ancorados no início. Qualquer
+// outra coisa — inclusive corpo cru do Google — devolve null, e o chamador
+// grava só a contagem, sem detalhe.
+const GMAIL_HTTP_STATUS_RE = /^Gmail (?:token refresh rejected|API error) \((\d{3})\)/;
+
+export function extractGmailHttpStatus(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const match = message.match(GMAIL_HTTP_STATUS_RE);
+  if (!match) return null;
+  const status = Number(match[1]);
+  return status >= 400 && status <= 599 ? status : null;
+}
+
+// Texto reduzido ÚNICO da falha de conta, usado em `last_error` E nas
+// respostas das Edges: reauth grava SÓ a mensagem fixa; erro grava só a
+// contagem de tentativas mais o status HTTP (quando conhecido). O corpo cru
+// do Google nunca entra aqui.
+export function gmailFailureSummary(
+  error: unknown,
+  attempts: number,
+): { status: GmailAccountFailure; lastError: string } {
+  if (isGmailReauthError(error)) {
+    return { status: "reauth_required", lastError: GMAIL_REAUTH_MESSAGE };
+  }
+  const count = Math.max(1, Math.floor(Number(attempts) || 1));
+  const httpStatus = extractGmailHttpStatus(error);
+  const lastError = httpStatus === null
+    ? `${count} tentativa(s) de sincronização falharam`
+    : `${count} tentativa(s) de sincronização falharam (HTTP ${httpStatus})`;
+  return { status: "error", lastError };
 }
 
 // ── Espera crescente entre tentativas (falha transitória) ──────────────────
@@ -416,17 +465,14 @@ export async function recordGmailAccountFailure(
   error: unknown,
   attempts: number,
 ): Promise<GmailAccountFailure> {
-  const status: GmailAccountFailure = isGmailReauthError(error) ? "reauth_required" : "error";
-  const detail = sanitizeGmailErrorMessage(error instanceof Error ? error.message : String(error ?? ""));
-  const base = status === "reauth_required"
-    ? GMAIL_REAUTH_MESSAGE
-    : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
-  const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
+  const novasTentativas = Math.max(1, Math.floor(Number(attempts) || 1));
+  // Texto reduzido único: reauth grava SÓ a mensagem fixa; transitória grava
+  // contagem + status HTTP — nunca o corpo cru do Google.
+  const { status, lastError } = gmailFailureSummary(error, novasTentativas);
   const valores: Record<string, unknown> = { sync_status: status, last_error: lastError };
   if (status === "error") {
     // Registra a espera crescente junto do estado: a conta só volta a ser
     // tentada pelo cron depois de `next_attempt_at` (ver selectGmailAccountsDue).
-    const novasTentativas = Math.max(1, Math.floor(Number(attempts) || 1));
     valores.error_count = novasTentativas;
     valores.next_attempt_at = new Date(Date.now() + gmailBackoffMs(novasTentativas)).toISOString();
   }

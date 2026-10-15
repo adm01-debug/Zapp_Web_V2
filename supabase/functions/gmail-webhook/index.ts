@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
-import { extractAttachments, ensureValidToken, isGmailReauthError, recordGmailAccountFailure, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
+import { extractAttachments, ensureValidToken, GMAIL_REFRESH_TRANSIENT_MESSAGE, isGmailReauthError, isGmailRefreshError, recordGmailAccountFailure, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -295,7 +295,12 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
   } catch (error) {
     log.error("Gmail Webhook error", { error: error instanceof Error ? error.message : String(error) });
     log.done(200);
-    return jsonResponse({ acknowledged: true, error: error instanceof Error ? error.message : "Unknown error" }, 200, req);
+    // Falha transitória no refresh (ex.: 503 com corpo cru do Google): confirma
+    // o push sem reentregar, mas com texto genérico em vez do corpo cru.
+    const publicError = isGmailRefreshError(error)
+      ? GMAIL_REFRESH_TRANSIENT_MESSAGE
+      : error instanceof Error ? error.message : "Unknown error";
+    return jsonResponse({ acknowledged: true, error: publicError }, 200, req);
   }
 }
 

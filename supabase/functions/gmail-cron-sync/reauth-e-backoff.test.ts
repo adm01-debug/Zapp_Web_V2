@@ -134,5 +134,15 @@ Deno.test("falha transitória conta a espera crescente e agenda next_attempt_at"
     const lastError = String(valores.last_error ?? "");
     assertFalse(/[^\s@]+@[^\s@]+/.test(lastError), "last_error não pode carregar e-mail");
     assertFalse(/(ya29\.|1\/\/)[A-Za-z0-9._-]+/.test(lastError), "last_error não pode carregar token");
+    assertEquals(lastError, "2 tentativa(s) de sincronização falharam (HTTP 503)");
+
+    // O `error` da resposta usa o mesmo texto reduzido: o corpo cru do Google
+    // (temporarily_unavailable/backend down) não pode vazar nele.
+    const erros = body.results as Array<{ id: string; error?: string }>;
+    assertEquals(erros.length, 1);
+    assertEquals(erros[0].id, CONTA_DEVida);
+    assertEquals(erros[0].error, "2 tentativa(s) de sincronização falharam (HTTP 503)");
+    assertEquals(erros[0].error?.includes("temporarily_unavailable"), false);
+    assertEquals(erros[0].error?.includes("backend down"), false);
   });
 });
