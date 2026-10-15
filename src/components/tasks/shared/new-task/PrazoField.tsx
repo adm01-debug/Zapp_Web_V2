@@ -28,9 +28,9 @@ export interface PrazoFieldProps {
 }
 
 const ATALHOS: ReadonlyArray<{ preset: DuePreset; label: string; testId: string }> = [
-  { preset: 'today', label: 'Hoje', testId: 'new-task-prazo-hoje' },
-  { preset: 'tomorrow', label: 'Amanhã', testId: 'new-task-prazo-amanha' },
-  { preset: 'nextWeek', label: 'Próx. semana', testId: 'new-task-prazo-prox-semana' },
+  { preset: 'today', label: 'Hoje', testId: 'nt-prazo-hoje' },
+  { preset: 'tomorrow', label: 'Amanhã', testId: 'nt-prazo-amanha' },
+  { preset: 'nextWeek', label: 'Próx. semana', testId: 'nt-prazo-prox-semana' },
 ];
 
 const CLASSE_ATALHO =
@@ -40,9 +40,9 @@ const CLASSE_ATALHO =
 
 export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProps) {
   return (
-    <div data-testid="new-task-prazo" className="flex flex-col gap-2">
+    <div data-testid="nt-prazo" className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor="new-task-prazo-data" className="text-xs font-medium text-foreground">
+        <Label htmlFor="nt-prazo-data" className="text-xs font-medium text-foreground">
           Prazo
         </Label>
         <span className="text-2xs text-muted-foreground">Até quando concluir</span>
@@ -55,9 +55,9 @@ export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProp
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            id="new-task-prazo-data"
+            id="nt-prazo-data"
             type="date"
-            data-testid="new-task-prazo-data"
+            data-testid="nt-prazo-data"
             aria-label="Data do prazo"
             value={value ? diaLocal(value) : ''}
             onChange={(e) =>
@@ -73,7 +73,7 @@ export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProp
 
         <Input
           type="time"
-          data-testid="new-task-prazo-hora"
+          data-testid="nt-prazo-hora"
           aria-label="Hora do prazo"
           value={value ? horaLocal(value) : ''}
           onChange={(e) =>
@@ -84,7 +84,7 @@ export function PrazoField({ value, onChange, now = new Date() }: PrazoFieldProp
 
         <button
           type="button"
-          data-testid="new-task-prazo-limpar"
+          data-testid="nt-prazo-limpar"
           aria-label="Limpar prazo"
           disabled={!value}
           onClick={() => onChange(null)}

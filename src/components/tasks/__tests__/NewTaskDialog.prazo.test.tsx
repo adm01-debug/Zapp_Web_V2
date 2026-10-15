@@ -40,13 +40,13 @@ function renderDialog() {
 }
 
 function dataInput() {
-  return screen.getByTestId('new-task-prazo-data') as HTMLInputElement;
+  return screen.getByTestId('nt-prazo-data') as HTMLInputElement;
 }
 function horaInput() {
-  return screen.getByTestId('new-task-prazo-hora') as HTMLInputElement;
+  return screen.getByTestId('nt-prazo-hora') as HTMLInputElement;
 }
 function limparBtn() {
-  return screen.getByTestId('new-task-prazo-limpar') as HTMLButtonElement;
+  return screen.getByTestId('nt-prazo-limpar') as HTMLButtonElement;
 }
 
 describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
@@ -55,9 +55,9 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
 
     expect(screen.getByText('Prazo')).toBeInTheDocument();
     expect(screen.getByText('Até quando concluir')).toBeInTheDocument();
-    expect(screen.getByTestId('new-task-prazo-hoje')).toHaveTextContent('Hoje');
-    expect(screen.getByTestId('new-task-prazo-amanha')).toHaveTextContent('Amanhã');
-    expect(screen.getByTestId('new-task-prazo-prox-semana')).toHaveTextContent('Próx. semana');
+    expect(screen.getByTestId('nt-prazo-hoje')).toHaveTextContent('Hoje');
+    expect(screen.getByTestId('nt-prazo-amanha')).toHaveTextContent('Amanhã');
+    expect(screen.getByTestId('nt-prazo-prox-semana')).toHaveTextContent('Próx. semana');
   });
 
   it('nasce sem prazo: data e hora vazias e o limpar desabilitado', () => {
@@ -70,7 +70,7 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
 
   it('atalho "Hoje" grava o prazo de hoje (duePresetISO), no dia local 13/10', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-prazo-hoje'));
+    fireEvent.click(screen.getByTestId('nt-prazo-hoje'));
 
     expect(diaLocal(duePresetISO('today', NOW))).toBe('2026-10-13');
     expect(dataInput().value).toBe('2026-10-13');
@@ -80,7 +80,7 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
 
   it('atalho "Amanhã" grava o dia seguinte (14/10)', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-prazo-amanha'));
+    fireEvent.click(screen.getByTestId('nt-prazo-amanha'));
 
     expect(diaLocal(duePresetISO('tomorrow', NOW))).toBe('2026-10-14');
     expect(dataInput().value).toBe('2026-10-14');
@@ -88,7 +88,7 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
 
   it('atalho "Próx. semana" grava sete dias à frente (20/10)', () => {
     renderDialog();
-    fireEvent.click(screen.getByTestId('new-task-prazo-prox-semana'));
+    fireEvent.click(screen.getByTestId('nt-prazo-prox-semana'));
 
     expect(diaLocal(duePresetISO('nextWeek', NOW))).toBe('2026-10-20');
     expect(dataInput().value).toBe('2026-10-20');
@@ -110,7 +110,7 @@ describe('NewTaskDialog — campo Prazo (etapa 159)', () => {
   it('limpar apaga o valor e volta a desabilitar o botão', () => {
     renderDialog();
 
-    fireEvent.click(screen.getByTestId('new-task-prazo-hoje'));
+    fireEvent.click(screen.getByTestId('nt-prazo-hoje'));
     expect(dataInput().value).not.toBe('');
 
     fireEvent.click(limparBtn());

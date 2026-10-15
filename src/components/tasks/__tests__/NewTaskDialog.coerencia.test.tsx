@@ -63,8 +63,8 @@ function parDeTexto(): 'success' | 'warning' | 'destructive' | null {
 
 /** Define o prazo pelo campo real (data assume 23:59 locais). */
 function definirPrazo(dia: string, hora?: string) {
-  fireEvent.change(screen.getByTestId('new-task-prazo-data'), { target: { value: dia } });
-  if (hora) fireEvent.change(screen.getByTestId('new-task-prazo-hora'), { target: { value: hora } });
+  fireEvent.change(screen.getByTestId('nt-prazo-data'), { target: { value: dia } });
+  if (hora) fireEvent.change(screen.getByTestId('nt-prazo-hora'), { target: { value: hora } });
 }
 
 /** Define o lembrete pelo campo real (data assume 09:00 locais). */
