@@ -358,3 +358,129 @@ describe('useSupervisorQueue — falhas', () => {
     }); // ...mas não é engolido em silêncio
   });
 });
+
+describe('useSupervisorQueue — nomes indisponíveis', () => {
+  it('falha nos perfis marca `namesUnavailable` (e a recuperação limpa a marca)', async () => {
+    h.contactsData = [contato({ id: 'c1', assigned_to: 'agent-1' })];
+    h.profilesData = [{ id: 'agent-1', name: 'Bruno', role: 'agent', is_active: true }];
+
+    const { result } = renderHook(() => useSupervisorQueue({ refreshMs: 0 }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.namesUnavailable).toBe(false);
+    expect(result.current.rows[0].agentName).toBe('Bruno');
+
+    h.rpcError = { message: 'perfis fora do ar' };
+    tabelaComErro = 'profiles';
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    // A fila continua na tela, sem nome — e a tela sabe que o nome faltou.
+    expect(result.current.rows.map((r) => r.id)).toEqual(['c1']);
+    expect(result.current.rows[0].agentName).toBeNull();
+    expect(result.current.namesUnavailable).toBe(true);
+    expect(result.current.error).toBeNull(); // erro de acessório não vira erro da fila
+
+    h.rpcError = null;
+    tabelaComErro = null;
+    await act(async () => {
+      await result.current.reload();
+    });
+    expect(result.current.namesUnavailable).toBe(false);
+    expect(result.current.rows[0].agentName).toBe('Bruno');
+  });
+
+  it('falha nas filas também marca `namesUnavailable` (nome da fila ausente não é silêncio)', async () => {
+    h.contactsData = [contato({ id: 'c1', queue_id: 'q1' })];
+    h.queuesData = [{ id: 'q1', name: 'Comercial' }];
+
+    const { result } = renderHook(() => useSupervisorQueue({ refreshMs: 0 }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.rows[0].queueName).toBe('Comercial');
+    expect(result.current.namesUnavailable).toBe(false);
+
+    h.rpcError = { message: 'filas fora do ar' };
+    tabelaComErro = 'queues';
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.rows[0].queueName).toBeNull();
+    expect(result.current.namesUnavailable).toBe(true);
+    expect(h.logError).toHaveBeenCalledWith('Falha ao carregar nomes das filas', {
+      message: 'filas fora do ar',
+    });
+  });
+});
+
+describe('useSupervisorQueue — visibilidade da aba', () => {
+  let oculta = false;
+
+  function definirOculta(valor: boolean) {
+    oculta = valor;
+  }
+
+  beforeEach(() => {
+    oculta = false;
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => oculta });
+  });
+
+  afterEach(() => {
+    delete (document as unknown as Record<string, unknown>).hidden;
+  });
+
+  it('aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling', async () => {
+    h.contactsData = [contato({ id: 'c1' })];
+    definirOculta(true);
+
+    const { result } = renderHook(() => useSupervisorQueue({ refreshMs: 25 }));
+
+    // Oculta: nem a carga inicial consulta o banco.
+    await new Promise((r) => setTimeout(r, 80));
+    expect(buildersDa('contacts')).toHaveLength(0);
+    expect(result.current.loading).toBe(true);
+
+    // Voltou para a aba: recarrega na hora (o polling de 25 ms pode somar mais rodadas).
+    definirOculta(false);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(buildersDa('contacts').length).toBeGreaterThanOrEqual(1);
+
+    // Ficou oculta de novo: o relógio para.
+    definirOculta(true);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    const antes = buildersDa('contacts').length;
+    await new Promise((r) => setTimeout(r, 90));
+    expect(buildersDa('contacts')).toHaveLength(antes);
+
+    // Voltou: recarrega outra vez (a fila pode ter andado enquanto a aba estava oculta).
+    definirOculta(false);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitFor(() => expect(buildersDa('contacts').length).toBeGreaterThanOrEqual(antes + 1));
+  });
+
+  it('com o polling desligado (refreshMs 0) voltar para a aba ainda recarrega uma vez', async () => {
+    h.contactsData = [contato({ id: 'c1' })];
+    definirOculta(true);
+
+    const { result } = renderHook(() => useSupervisorQueue({ refreshMs: 0 }));
+    await new Promise((r) => setTimeout(r, 40));
+    expect(buildersDa('contacts')).toHaveLength(0);
+
+    definirOculta(false);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(buildersDa('contacts')).toHaveLength(1);
+
+    await new Promise((r) => setTimeout(r, 60));
+    expect(buildersDa('contacts')).toHaveLength(1);
+  });
+});

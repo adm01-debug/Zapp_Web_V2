@@ -80,6 +80,12 @@ export interface UseSupervisorQueueResult {
   loading: boolean;
   /** Erro da última consulta que falhou (a fila anterior permanece na tela). */
   error: Error | null;
+  /**
+   * `true` quando a rodada mais recente não conseguiu ler os nomes (perfis ou filas):
+   * a linha da fila aparece sem nome, e a tela avisa "nomes indisponíveis" em vez de
+   * exibir um nome ausente como se o atendente/fila não existisse.
+   */
+  namesUnavailable: boolean;
   refreshedAt: Date | null;
   reload: () => Promise<void>;
 }
@@ -95,6 +101,7 @@ export function useSupervisorQueue(
   const [truncated, setTruncated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [namesUnavailable, setNamesUnavailable] = useState(false);
   const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
 
   // Identificador da rodada: só a ÚLTIMA resposta pode publicar. Sem isso uma
@@ -136,10 +143,12 @@ export function useSupervisorQueue(
       // `contacts` é a fonte da fila: erro aqui não pode virar fila vazia na tela.
       if (contactsRes.error) throw contactsRes.error;
 
-      // Perfis/filas são cosméticos (nomes). Falha entra no log e a fila segue
-      // com o nome ausente — nunca engolida em silêncio.
+      // Perfis/filas são cosméticos (nomes). Falha entra no log, a fila segue
+      // com o nome ausente — nunca engolida em silêncio — e a tela é avisada
+      // por `namesUnavailable`.
       if (profilesRes.error) log.error('Falha ao carregar perfis da fila', profilesRes.error);
       if (queuesRes.error) log.error('Falha ao carregar nomes das filas', queuesRes.error);
+      const semNomes = Boolean(profilesRes.error || queuesRes.error);
       if (!mountedRef.current) return;
 
       const agentMap = new Map<string, string>(
@@ -176,6 +185,7 @@ export function useSupervisorQueue(
       setRows(sortByPriority(enriched));
       setTotal(contacts.length);
       setTruncated(contacts.length >= SUPERVISOR_PAGE_SIZE);
+      setNamesUnavailable(semNomes);
       setError(null);
       setRefreshedAt(now);
     } catch (err) {
@@ -200,22 +210,47 @@ export function useSupervisorQueue(
 
   useEffect(() => {
     mountedRef.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
-    void load();
 
-    if (refreshMs <= 0) {
-      return () => {
-        mountedRef.current = false;
-      };
+    // Aba oculta não consulta: o supervisor deixa o painel aberto em segundo plano,
+    // e ficar batendo no banco com a tela invisível é consulta sem leitor.
+    if (!document.hidden) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
+      void load();
     }
 
-    const interval = setInterval(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      // `refreshMs <= 0` desliga o polling (a tela chama `reload`), mas voltar para a
+      // aba continua recarregando uma vez.
+      if (refreshMs > 0 && interval === null) {
+        interval = setInterval(() => { void load(); }, refreshMs);
+      }
+    };
+    const stopPolling = () => {
+      if (interval !== null) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+        return;
+      }
+      // Voltou para a aba: recarrega uma vez (a fila pode ter andado) e retoma o relógio.
       void load();
-    }, refreshMs);
+      startPolling();
+    };
+
+    if (!document.hidden) startPolling();
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      stopPolling();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [load, refreshMs]);
 
@@ -225,5 +260,5 @@ export function useSupervisorQueue(
     return counts;
   }, [rows]);
 
-  return { rows, summary, total, truncated, loading, error, refreshedAt, reload: load };
+  return { rows, summary, total, truncated, loading, error, namesUnavailable, refreshedAt, reload: load };
 }
