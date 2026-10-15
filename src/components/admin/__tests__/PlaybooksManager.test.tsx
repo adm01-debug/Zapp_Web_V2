@@ -155,4 +155,22 @@ describe('PlaybooksManager (PG-08)', () => {
 
     expect(await screen.findByText('Passo um')).toBeInTheDocument();
   });
+
+  it('Enter/Espaço nos botões de ação não abre o detalhe (o evento do card não engole o botão)', async () => {
+    h.state.list = { data: [playbook()], error: null };
+    render(<PlaybooksManager />);
+
+    const excluir = await screen.findByRole('button', { name: 'Excluir playbook' });
+    const editar = screen.getByRole('button', { name: 'Editar playbook' });
+
+    fireEvent.keyDown(excluir, { key: 'Enter' });
+    fireEvent.keyDown(excluir, { key: ' ' });
+    fireEvent.keyDown(editar, { key: 'Enter' });
+
+    // o detalhe (só o card abre) não apareceu...
+    expect(screen.queryByText('Passo um')).not.toBeInTheDocument();
+    // ...e os botões do card seguem funcionando pelo clique
+    fireEvent.click(excluir);
+    expect(await screen.findByRole('button', { name: 'Remover' })).toBeInTheDocument();
+  });
 });
