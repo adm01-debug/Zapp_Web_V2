@@ -104,24 +104,39 @@ describe('offline-indicator — contrato (UK-14)', () => {
 
 describe('ConnectionToast — contrato (UK-14)', () => {
   it('aparece ao reconectar e desaparece após 3 s (timeout do useOfflineStatus)', async () => {
-    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
-    definirOnline(false);
-    render(<ConnectionToast />);
-    expect(screen.queryByText('Conexão restaurada')).toBeNull();
+    // Relógio falso: o atraso de 3 s é coberto sem espera real (sem flaky).
+    vi.useFakeTimers();
+    try {
+      const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+      definirOnline(false);
+      render(<ConnectionToast />);
+      expect(screen.queryByText('Conexão restaurada')).toBeNull();
 
-    act(() => {
-      definirOnline(true);
-      window.dispatchEvent(new Event('online'));
-    });
-    expect(screen.getByText('Conexão restaurada')).toBeInTheDocument();
+      act(() => {
+        definirOnline(true);
+        window.dispatchEvent(new Event('online'));
+      });
+      expect(screen.getByText('Conexão restaurada')).toBeInTheDocument();
 
-    // O atraso do toast é exatamente 3 s (setTimeout do useOfflineStatus).
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
+      // O atraso do toast é exatamente 3 s (setTimeout do useOfflineStatus).
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
-    // E o nó sai de fato depois disso (a saída do AnimatePresence roda de verdade
-    // aqui, com timers reais: por isso a espera de até 5 s).
-    await waitFor(() => expect(screen.queryByText('Conexão restaurada')).toBeNull(), { timeout: 5000 });
-    setTimeoutSpy.mockRestore();
+      // Com 2999 ms o toast ainda está visível; com 3000 ms o estado cai.
+      act(() => {
+        vi.advanceTimersByTime(2999);
+      });
+      expect(screen.getByText('Conexão restaurada')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      // A saída do AnimatePresence roda com timers reais.
+      vi.useRealTimers();
+      await waitFor(() => expect(screen.queryByText('Conexão restaurada')).toBeNull());
+      setTimeoutSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('não aparece já conectado (só depois de uma queda)', () => {

@@ -81,12 +81,12 @@ describe('variants — contrato do movimento (UK-14)', () => {
     expect((talkxStagger().visible as { transition?: { staggerChildren?: number } }).transition?.staggerChildren).toBe(0.04);
   });
 
-  // O "reduzir movimento" entra pela prefer├¬ncia do sistema (`matchMedia`) e o
-  // app l├¬ isso pelo seam do framer. Prova que o seam enxerga a prefer├¬ncia no
+  // O "reduzir movimento" entra pela preferência do sistema (`matchMedia`) e o
+  // app lê isso pelo seam do framer. Prova que o seam enxerga a preferência no
   // ambiente do produto; somado ao teste acima (todo deslocamento volta a zero
-  // no estado final), garante que neutralizar o movimento n├úo deixa nada
+  // no estado final), garante que neutralizar o movimento não deixa nada
   // deslocado na tela.
-  it('o seam useReducedMotion responde ├á prefer├¬ncia do sistema', () => {
+  it('o seam useReducedMotion responde à preferência do sistema', () => {
     window.matchMedia = ((query: string) => ({
       matches: query.includes('prefers-reduced-motion'),
       media: query,

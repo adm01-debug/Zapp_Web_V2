@@ -80,14 +80,19 @@ describe('dialog — contrato do primitivo (UK-14)', () => {
     await waitFor(() => expect(gatilho).toHaveFocus());
   });
 
-  it('o gatilho de fechar traz o ícone dentro de um nome acessível', () => {
+  it('o botão X fecha o diálogo e é distinto do "Cancelar" do rodapé', async () => {
     render(<Exemplo />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir diálogo' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    // Existe um botão de fechar separado do "Cancelar" do rodapé.
-    const fechar = screen.getAllByRole('button').filter((b) => b !== screen.getByRole('button', { name: 'Cancelar' }));
-    expect(fechar.length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+    // Gatilho + X + Cancelar: o X é o botão que não é nem o gatilho nem o Cancelar.
+    const botoes = screen.getAllByRole('button');
+    const cancelar = screen.getByRole('button', { name: 'Cancelar' });
+    const x = botoes.find((b) => b.textContent !== 'Abrir diálogo' && b !== cancelar);
+    expect(x).toBeDefined();
+
+    fireEvent.click(x!);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it.fails(
