@@ -3,7 +3,6 @@ import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
 import { ThemeSync } from "@/hooks/ui/useTheme";
 import { HighContrastProvider } from "@/components/theme/HighContrastToggle";
-import { AccessibleToastProvider } from "@/components/ui/accessible-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
@@ -124,17 +123,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <HighContrastProvider>
-            <AccessibleToastProvider>
-              <TooltipProvider delayDuration={300}>
-                <ThemeSync />
-                <ThemeInitializer />
-                <QuarantineMonitorProvider>
-                  <CallSessionProvider>
-                    {children}
-                  </CallSessionProvider>
-                </QuarantineMonitorProvider>
-              </TooltipProvider>
-            </AccessibleToastProvider>
+            <TooltipProvider delayDuration={300}>
+              <ThemeSync />
+              <ThemeInitializer />
+              <QuarantineMonitorProvider>
+                <CallSessionProvider>
+                  {children}
+                </CallSessionProvider>
+              </QuarantineMonitorProvider>
+            </TooltipProvider>
           </HighContrastProvider>
         </AuthProvider>
       </QueryClientProvider>
