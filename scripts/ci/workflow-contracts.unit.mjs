@@ -265,7 +265,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
     const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
@@ -300,19 +300,40 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const miss = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install\s+--with-deps\b/.test(p),
     );
     if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
 
     const hit = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install-deps\b/.test(p),
     );
     if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+// W09 (plano de 14/10/2026, achado N-05b): a versão do Playwright tem UMA fonte, o
+// bun.lock. `bunx playwright@1.63.0` nos workflows duplicava a versão em 6 lugares e o
+// bump do Dependabot (#1918) nascia vermelho até alguém editar YAML e teste à mão.
+// Vale para QUALQUER invocação, não só `install`: `bunx playwright@latest test` resolve o
+// pacote fora do lockfile do mesmo jeito (Codex, PR #1923).
+test('W09: workflows invocam o Playwright do lockfile, sem bunx nem seletor playwright@…', () => {
+  const problemas = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/\bplaywright\b/.test(texto)) continue;
+    if (/(?:@playwright\/[\w.-]+|\bplaywright)@[^\s"'`]+/.test(texto)) problemas.push(`${nome}: seletor playwright@… literal`);
+    // Por linha e com qualquer coisa entre `bunx`/`bun x` e o pacote: `bunx --bun playwright test`
+    // e `bun x playwright test` resolvem fora do lockfile do mesmo jeito (Codex, PR #1923).
+    if (/^.*\b(?:bunx|bun\s+x)\b.*\b(?:@playwright\/[\w.-]+|playwright)\b/m.test(texto)) problemas.push(`${nome}: usa bunx/bun x playwright (resolve fora do bun.lock)`);
+    if (/\bplaywright\s+install/.test(texto) && !/\.\/node_modules\/\.bin\/playwright\s+install/.test(texto)) {
+      problemas.push(`${nome}: não usa ./node_modules/.bin/playwright`);
+    }
+  }
+  assert.deepEqual(problemas, [], problemas.join('\n'));
 });
 
 // W99: novos invariantes de segurança de workflow
