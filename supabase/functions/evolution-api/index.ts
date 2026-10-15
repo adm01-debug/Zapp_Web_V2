@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
-import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
+import { Logger, enforceRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { proxyToEvolution, resolvePrivateBucketUrl, type BreakerStore } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
@@ -35,7 +35,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
   const corsHeaders = getCorsHeaders(req);
 
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`evolution:${ip}`, 120, 60_000);
+  // E22/OB1: o limite passa a ser o persistente (tabela edge_rate_limits, RPC
+  // consume_rate_limit) — antes era um contador por isolate da função.
+  // enforceRateLimit já cai no contador local se o banco não responder.
+  const rl = await enforceRateLimit(`evolution:${ip}`, 120, 60_000);
   if (!rl.allowed) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
       status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -182,9 +185,36 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // nem a key global. Sem token resolvido, o proxy falha fechado (exceto a
     // instância padrão, que ainda pode cair no fallback de transição
     // EVOLUTION_INSTANCE_TOKEN, dentro do proxy).
+    // E22/OB1: o disjuntor da Evolution deixa de viver na memória do isolate. A
+    // fonte de verdade passa a ser a tabela evolution_breaker_state + as RPCs
+    // atômicas (migration 20261014120001_evolution_breaker_state). Se o banco
+    // não responder, o proxy cai no contador em memória do isolate — proteção
+    // degradada, nunca ausente.
+    const lerBreakerRow = (data: unknown) => {
+      const row = (Array.isArray(data) ? data[0] : data) as { failures?: unknown; open_until?: unknown } | null | undefined;
+      if (!row) return null;
+      const openUntil = row.open_until ? Date.parse(String(row.open_until)) : NaN;
+      return { failures: Number(row.failures) || 0, openUntil: Number.isNaN(openUntil) ? 0 : openUntil };
+    };
+    const breakerStore: BreakerStore = {
+      async read(key: string) {
+        const { data, error } = await supabase.rpc('evolution_breaker_state', { p_key: key });
+        if (error) throw new Error(error.message);
+        return lerBreakerRow(data);
+      },
+      async record(key: string, success: boolean, threshold: number, openMs: number) {
+        const { data, error } = await supabase.rpc('evolution_breaker_record', {
+          p_key: key, p_success: success, p_threshold: threshold, p_open_ms: openMs,
+        });
+        if (error) throw new Error(error.message);
+        const state = lerBreakerRow(data);
+        if (!state) throw new Error('evolution_breaker_record não devolveu estado');
+        return state;
+      },
+    };
     const proxy = async (path: string, method = 'POST', body?: unknown) =>
       proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',
-        instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined);
+        instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined, breakerStore);
 
     // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
     // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a
