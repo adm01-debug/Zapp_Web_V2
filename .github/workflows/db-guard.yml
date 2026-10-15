@@ -986,6 +986,7 @@ jobs:
       - name: Provar lote de alertas Talk X com outcome_unknown_24h (item 33)
         if: env.SKIP_CONTRACTS != 'true'
         env:
+          SKIP_DOCKER_SHIM: "1"
           TALKX_LOTE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh
 

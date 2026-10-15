@@ -557,7 +557,7 @@ como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.l
 
 O shim intercepta os comandos Docker e os roteia para o container compartilhado.
 Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
-(isso causa passthrough para o Docker real). Os 14 passos com essa exceção hoje são (W51, 2026-10-15):
+(isso causa passthrough para o Docker real). Os 15 passos com essa exceção hoje são (W51, 2026-10-15):
 
 1. `catalog-manifest.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
 2. `cron-secret-l5-contract.test.sh` — usa `docker exec createdb` e múltiplos bancos
@@ -573,6 +573,7 @@ Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env
 12. `talkx-settings-rls.test.sh` — sobe container próprio e cria roles globais (`anon`, `authenticated`, `service_role`) incompatíveis com o shim
 13. `user-settings-sound-integrity-contract.test.sh` — sobe container próprio e cria roles globais incompatíveis com o shim
 14. `pg-cron-escalonamento.test.sh` — cria container próprio e executa `CREATE ROLE anon/authenticated/service_role`; roles globais colidem no cluster compartilhado
+15. `talkx-alerts-outcome-unknown-lote.test.sh` — cria container próprio e usa `docker logs` para readiness; sem o shim aplicaria as migrations ao serviço compartilhado, corrompendo o estado para steps seguintes
 
 Ao adicionar novo passo em `db-guard.yml`, verificar se o script: usa múltiplos bancos num
 container, depende de PostgREST, conecta sem `-U`, ou cria ROLEs globais conflitantes — se sim,
