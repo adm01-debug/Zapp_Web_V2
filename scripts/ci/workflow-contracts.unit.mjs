@@ -521,3 +521,16 @@ test('W30: SUPABASE_DB_URL é mascarada antes de qualquer `supabase db push`', (
     );
   }
 });
+
+test('W06: e2e-logado encerra a suite pelo Playwright antes de o runner cancelar o job', () => {
+  const y = wf['e2e-logado.yml'];
+  const job = Number(/^    timeout-minutes: (\d+)$/m.exec(y)?.[1]);
+  const global = Number(/--global-timeout=(\d+)/.exec(y)?.[1]);
+  assert.ok(global > 0, 'sem --global-timeout, quem encerra a suite e o runner (job cancelado, sem relatorio)');
+  // Margem de 5 min: setup sem cache de browsers (~3 min) + passos de falha (~1-2 min).
+  assert.ok(
+    global / 60_000 <= job - 5,
+    `--global-timeout (${global / 60_000} min) precisa ficar >= 5 min abaixo do job (${job} min): ` +
+      'cancelado nao e failure(), e a redacao/artifact/alerta so rodam em failure()',
+  );
+});
