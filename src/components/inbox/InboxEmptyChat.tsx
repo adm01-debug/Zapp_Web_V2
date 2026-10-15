@@ -2,12 +2,18 @@ import { useMemo } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';
+import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
 
 /**
- * Atalhos que fazem sentido para quem ainda não escolheu uma conversa: navegar
- * pela lista, abrir a busca global e ver a ajuda completa. Os rótulos e as
- * teclas vêm do `useCustomShortcuts`, então refletem o remapeamento feito em
- * Configurações → Atalhos (nada de `kbd` fixo que mente depois).
+ * Atalhos que fazem sentido para quem ainda não escolheu uma conversa: abrir a
+ * busca global (e, quando tiverem executor, navegar pela lista com Alt+↑/↓).
+ * Os rótulos e as teclas vêm do `useCustomShortcuts`, então refletem o
+ * remapeamento feito em Configurações → Atalhos (nada de `kbd` fixo que mente
+ * depois).
+ *
+ * `listarAtalhosEditaveis` (t_3d996237) corta o que não tem executor: hoje
+ * `prev-conversation`/`next-conversation` (Alt+↑/↓) não são executados por
+ * ninguém, então a barra mostra só o que a pessoa pode apertar de verdade.
  *
  * As dicas entram pelo slot `action` do `ConversationEmptyState` de propósito:
  * o componente compartilhado (decisão t_fced78b2) continua sem atalhos — quem
@@ -19,7 +25,7 @@ export function InboxEmptyChat() {
   const { shortcuts, formatShortcut } = useCustomShortcuts();
 
   const atalhos = useMemo(
-    () => shortcuts.filter((shortcut) => INBOX_EMPTY_SHORTCUT_IDS.includes(shortcut.id)),
+    () => listarAtalhosEditaveis(shortcuts).filter((shortcut) => INBOX_EMPTY_SHORTCUT_IDS.includes(shortcut.id)),
     [shortcuts],
   );
 
