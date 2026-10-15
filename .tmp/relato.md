@@ -1,31 +1,20 @@
-Especialista: iris
-
-# feat(auth): exige re-autenticacao nas acoes destrutivas de admin
-
+Especialista: semisenior
 ## O que mudou e por quê
-- src/components/auth/ReauthDialog.tsx: o diálogo ganhou o modo MFA (código TOTP) e um `ReauthGuard` reutilizável (senha ou código, conforme o usuário). O erro passou a sair com `role="alert"`, com trava síncrona contra duplo clique e foco no campo. É o único mecanismo de confirmação de identidade que as telas usam agora.
-- src/components/admin/AdminUsersTable.tsx: trocar papel (Select) e ativar/desativar usuário (Switch) só executam depois da re-autenticação.
-- src/components/admin/ForceLogoutButton.tsx: o confirmar do diálogo passou a apenas armar a ação; a revogação das sessões só acontece após a identidade confirmada.
-- src/pages/admin/RolesPage.tsx: remover papel só executa após a re-autenticação; o botão da lixeira ganhou nome acessível (`Remover role de <nome>`).
-- src/components/connections/ConnectionDeleteDialog.tsx: digitar o nome exato libera o diálogo, mas a exclusão ainda espera a re-autenticação.
-- testes: 4 arquivos novos (ReauthGuard, AdminUsersTable.reauth, RolesPage.reauth, ConnectionDeleteDialog.reauth) e 2 ajustados (ForceLogoutButton e ConnectionCard.confirmacao) para o novo passo.
-
-## Ponto 1 do cartão — MFA / AAL2 (provar antes de ligar)
-- O hook real `useReauthentication` faz `AuthService.signIn` → `setSession`: para usuário com TOTP a sessão volta em aal1 e o gate de MFA manda para /2fa no meio da ação — ou seja, o novo login DERRUBA o AAL2.
-- Por isso o `ReauthGuard` não usa novo login quando o usuário tem fator TOTP verificado: pede o código e usa `mfa.challenge/verify` (`useMFA.verifyTOTP`) — a sessão continua aal2, sem re-login. Sem fator verificado, usa a senha (`reauthenticate`).
-- O caminho de challenge em sessão já aal2 não foi exercitado no banco local (sem usuário MFA sintético nesta tarefa); está coberto por teste unitário com os hooks mockados.
-
+- `src/components/auth/ReauthDialog.tsx` (`ReauthGuard`): se a consulta de fatores MFA falha, a ação é bloqueada com alerta em pt-BR e botão "Tentar de novo" em vez de cair no modo senha (que chamaria `AuthService.signIn` e derrubaria o AAL2); foco do gatilho guardado ao abrir e devolvido ao fechar/cancelar.
+- `src/pages/admin/RolesPage.tsx`: fluxo Atribuir passa `run: handleAddRole` — o diálogo de atribuir só fecha no sucesso, dentro de `handleAddRole`, como antes; falha mantém diálogo aberto com a seleção.
+- Testes: `src/components/auth/__tests__/ReauthGuard.test.tsx` (+5: bloqueio sem fatores, código TOTP inválido, `onConfirmed` que lança, foco no cancelar e no sucesso), `src/pages/admin/__tests__/RolesPage.reauth.test.tsx` (+2: atribuir só depois de confirmar; falha não atribui e mantém o diálogo aberto).
 ## Prova
-- vermelho antes: `git show HEAD~1:src/components/admin/ForceLogoutButton.tsx > <arquivo>` e `npx vitest run src/components/admin/__tests__/ForceLogoutButton.test.tsx` (componente da BASE) → `Test Files 1 failed (1); Tests 6 failed (6)`, todos com `Unable to find a label with the text of: Senha Atual`: na base a ação destrutiva executava sem confirmar identidade.
-- verde depois (arquivo restaurado, commit 0d6cefe7b):
-  - `npx vitest run src/components/admin/__tests__/ForceLogoutButton.test.tsx src/components/auth/__tests__/ReauthGuard.test.tsx src/components/admin/__tests__/AdminUsersTable.reauth.test.tsx src/pages/admin/__tests__/RolesPage.reauth.test.tsx src/components/connections/__tests__/ConnectionDeleteDialog.reauth.test.tsx` → todas passam.
-  - `npx vitest run src/components/admin/__tests__ src/pages/admin/__tests__ src/components/connections/__tests__ src/components/security/__tests__ src/hooks/__tests__/useReauthentication.test.tsx` → mantém os existentes verdes.
-- `npx tsc --noEmit` → sem saída (0 erros).
-- `npx eslint <arquivos alterados>` → 0 errors (1 warning pré-existente: import do client do Supabase em ForceLogoutButton, baseline de lint mantido: novas=0).
-
-## Arquivos tocados fora da lista 'ARQUIVOS QUE PODE TOCAR' (indispensáveis)
-- src/components/admin/ForceLogoutButton.tsx: É INDISPENSÁVEL. O cartão pede re-autenticação no "forçar logout", mas o botão que executa a revogação das sessões mora neste arquivo (AdminUsersTable apenas o renderiza); sem tocá-lo, a ação ficaria sem guarda. O arquivo é do módulo do título (components/admin).
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx: teste existente do fluxo de exclusão de conexão; passou a exigir o passo de identidade (não afrouxei: passou a provar que a exclusão NÃO executa antes da re-autenticação).
-
+- vermelho antes (fonte revertido via `git checkout --`, teste novo mantido): `bun run vitest run src/components/auth/__tests__/ReauthGuard.test.tsx` → `Tests 3 failed | 5 passed (8)` (ponto 1 + 2 de foco); `bun run vitest run src/pages/admin/__tests__/RolesPage.reauth.test.tsx` → `Tests 1 failed | 3 passed (4)` (atribuir fecha antes do resultado).
+- verde depois: `bun run vitest run` nos 6 arquivos de reauth (ReauthGuard, RolesPage.reauth, AdminUsersTable.reauth, ForceLogoutButton, ConnectionDeleteDialog.reauth, ConnectionCard.confirmacao) → `Test Files 6 passed (6); Tests 31 passed (31)`.
+- `bunx tsc --noEmit -p tsconfig.json` → saída vazia, exit 0.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos, lint, migrations OK; sem migrations no cartão, banco local N/A).
+## Pontos do revisor
+- Ponto 1: `ReauthDialog.tsx` (ramo `factorsError` com `role="alert"` + retry via `refetch`); prova no teste "falha na consulta de fatores bloqueia a ação em vez de cair em senha", que também afirma `reauthenticate` não chamado e campo de senha ausente (vermelho→verde acima).
+- Ponto 2: `RolesPage.tsx` (`run: handleAddRole`); prova nos 2 testes novos de atribuir (vermelho→verde acima; o mock de `handleAddRole` não fecha o diálogo, então o botão interno montado após o sucesso prova que o `run` não fecha mais).
+- Ponto 3: `ReauthDialog.tsx` (efeito que guarda `document.activeElement` e devolve com `contains`); prova nos 2 testes de foco (vermelho→verde acima).
+- Ponto 4: sem mudança de produto (os textos "Código inválido" e "Não foi possível concluir a ação" já existiam); cobertura adicionada nos testes "código TOTP inválido mostra alerta" e "falha no `onConfirmed` mostra alerta" — passam com e sem este commit (regressão), pedido da recusa era a existência deles.
+- Ponto 5: prova estática + pendência explícita (ver "O que NÃO fiz").
 ## O que NÃO fiz e por quê
-- Não toquei em src/hooks/auth/useReauthentication.ts, src/services/auth.service.ts nem src/lib: são do worker (hooks)/auth, fora da minha área.
+- NÃO FIZ a prova com usuário MFA de verdade no banco local: este workspace não tem stack local em execução (`supabase status` → sem contêiner do banco da tarefa) e subir stack + matricular TOTP + gerar código válido estouraria o tempo do cartão. Fundamento estático verificado no código: o caminho senha chama `AuthService.signIn` (`src/hooks/auth/useReauthentication.ts`, que faz password sign-in e emite sessão nova), enquanto o caminho MFA chama `verifyTOTP` (challenge+verify, sem trocar a sessão); o teste "usa TOTP quando há fator verificado" afirma `reauthenticate` não chamado. PENDÊNCIA EXPLÍCITA: teste E2E com usuário MFA real validando AAL2 preservado após ação destrutiva.
+- Não toquei em `ForceLogoutButton.tsx`, `AdminUsersTable.tsx` nem `ConnectionDeleteDialog.tsx` (fluxos já ligados e aprovados nos pontos; sem defeito apontado neles).
+- Base: branch do dia `dia/2026-10-13` (merge-base `96dd72dc5f`); commit novo `93f485fe8b` sobre a entrega anterior `857eba1c9`, sem cherry-pick de outro cartão (FAIXA DO PAI não se aplica). O dia `2026-10-14` integrou 3 commits irmãos nos mesmos arquivos (`d6fa083dcd`, `dd1448ebbf`, `38d73cc2e5`); meu diff não sobrepõe as linhas deles (erro `role="alert"` convergiu para o mesmo padrão), fusão a cargo do integrador.
