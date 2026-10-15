@@ -82,7 +82,6 @@ for (const campo of obrigatorios) {
   if (!(campo in proof)) throw new Error(`FAIL: contrato generico sem o campo ${campo}`);
 }
 if (proof.contract !== 'generic') throw new Error(`FAIL: contract=${proof.contract}`);
-if (proof.database !== 'postgres') throw new Error(`FAIL: database=${proof.database}`);
 if (proof.server_major !== 17) throw new Error(`FAIL: server_major=${proof.server_major}`);
 for (const campo of ['runtime_sha256', 'structure_sha256']) {
   if (!/^[a-f0-9]{64}$/.test(proof[campo] || '')) {

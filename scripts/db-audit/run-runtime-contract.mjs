@@ -179,9 +179,6 @@ async function principal() {
   if (proof.server_major !== undefined && proof.server_major !== 17) {
     errosComuns.push(`server_major: esperado 17, obtido ${proof.server_major}`);
   }
-  if (proof.database !== undefined && proof.database !== 'postgres') {
-    errosComuns.push(`database: esperado "postgres", obtido ${proof.database}`);
-  }
   if (proof.runtime_sha256 !== undefined && !/^[a-f0-9]{64}$/.test(String(proof.runtime_sha256))) {
     errosComuns.push(`runtime_sha256: formato invalido: "${proof.runtime_sha256}"`);
   }

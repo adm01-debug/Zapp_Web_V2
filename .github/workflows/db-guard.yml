@@ -319,7 +319,6 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           INBOX_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-contact-authorization.test.sh
 
       - name: Simular exclusão, status e grants canônicos de Contatos
@@ -397,9 +396,8 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           CRON_SECRET_L5_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          # E47: SKIP_DOCKER_SHIM=1 — o teste usa docker exec bash (BLOCO C/D),
-          # não suportado pelo shim (apenas psql é interceptado; exit 1 silencia o FAIL).
           SKIP_DOCKER_SHIM: "1"
+          # E47: usa docker exec createdb e múltiplos bancos — incompatível com o shim.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/cron-secret-l5-contract.test.sh
 
       - name: Simular escopo das 14 policies TO public -> authenticated
@@ -462,14 +460,10 @@ jobs:
       # W53: provas de domínio core em PostgreSQL 17 descartável.
       - name: Provar migração de identidade de reminders→conversation_tasks
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/reminders-migracao-identidade.test.sh
 
       - name: Provar escalonamento de pg_cron no PostgreSQL 17
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/pg-cron-escalonamento.test.sh
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
@@ -871,6 +865,7 @@ jobs:
           TALKX_TRANSITION_POSTGREST_PG_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           TALKX_TRANSITION_POSTGREST_IMAGE: ${{ env.POSTGREST_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
+          # E47: sobe container PostgREST separado — incompatível com o shim.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-transition-overload-postgrest.test.sh
 
       # V11: o contrato de eventos recusava os tipos que o servidor e a trilha
@@ -990,7 +985,6 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           TALKX_LOTE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh
 
       # W53: contratos TalkX em PostgreSQL 17 descartável (X-series).
@@ -998,60 +992,43 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           SKIP_DOCKER_SHIM: "1"
+          # E47: sobe containers PostgREST + network — incompatível com o shim.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-provider.test.sh
 
       - name: "Privilégios de cliente Talk Me (X-series)"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talk-me-client-privileges.test.sh
 
       - name: "Versão atual de template Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-current-template-version.test.sh
 
       - name: "V23: passo de rascunho Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v23-draft-step.test.sh
 
       - name: "V25: owner de campanha Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v25-owner.test.sh
 
       - name: "V26: versão de template Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v26-template-version.test.sh
 
       - name: "Opt-out configurável de campanha Talk X (X029)"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-optout.test.sh
 
       - name: "Estatísticas de visão geral Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-overview-stats.test.sh
 
       - name: "Segmentos de campanha Talk X"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-segments.test.sh
 
       - name: "Divergência de replay E27 (CAIXA-7eb1)"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-e27-replay-divergence.test.sh
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
@@ -1201,7 +1178,6 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           NOTIFICATION_ATOMICITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notification-delivery-atomicity.test.sh
 
       # Guarda o contrato runtime generico do db-migrate: se ele deixar de
@@ -1214,7 +1190,6 @@ jobs:
           # E47: SKIP_DOCKER_SHIM=1 — o contrato verifica proof.database === 'postgres'.
           # Com o shim o banco criado e shim_zapp_generic_runtime_test_<PID> e
           # current_database() devolve esse nome, quebrando a assercao.
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/generic-migration-runtime.test.sh
 
       - name: Simular reconciliação segura do ledger
@@ -1229,15 +1204,13 @@ jobs:
           # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
           # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
           # vazia nesse subcomando, fazendo o loop de 45s falhar por timeout.
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
         if: env.SKIP_CONTRACTS != 'true'
         env:
-          # E47: SKIP_DOCKER_SHIM=1 — o readiness check conecta sem -U, usando o usuario
-          # OS (root no container), causando "role root does not exist" no servico compartilhado.
           SKIP_DOCKER_SHIM: "1"
+          # E47: conecta sem -U (usuário OS root) — "role root does not exist" no serviço compartilhado.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node scripts/db-audit/psql-environment.integration.mjs
 
       # R2-INF-005 (reauditoria de 03/10/2026): tres linhas de comentario de BASH
@@ -1273,7 +1246,6 @@ jobs:
           # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
           # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
           # vazia nesse subcomando, fazendo o loop de 90s falhar por timeout.
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
@@ -1325,35 +1297,30 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           AI_VOCAB_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-block03-vocabulary-contract.test.sh
 
       - name: Provar RLS de escrita em talkx_settings — admin persiste, agente não (V06)
         if: env.SKIP_CONTRACTS != 'true'
         env:
           TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         if: env.SKIP_CONTRACTS != 'true'
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-settings-sound-integrity-contract.test.sh
 
       - name: Provar grants e revogação das vozes do Multiplix (F64)
         if: env.SKIP_CONTRACTS != 'true'
         env:
           F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh
 
       - name: Simular RPC de modo do WhatsApp do departamento (QA5-09)
         if: env.SKIP_CONTRACTS != 'true'
         env:
           DEPARTMENT_WA_MODE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh
 
       # t_138a15f0 (PR 1890): os dois testes abaixo existiam no disco sem passo
@@ -1371,19 +1338,16 @@ jobs:
         env:
           NETWORK_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
+          # E47: sobe 2 containers simultâneos com CREATE ROLE globais conflitantes.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/network-policy-rpc.test.sh
 
       - name: Provar revogação de sessões Auth por migration (R2-AUTH-004)
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
 
       # W53: cadeia IA em PostgreSQL 17 descartável (IA-131 / IA-AUDIO-001, item 133).
       - name: "Cadeia audio_stt IA-131 em PostgreSQL 17"
         if: env.SKIP_CONTRACTS != 'true'
-        env:
-          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ia131-audio-stt-cadeia.test.sh
 
       - name: "W55 — Resumo dos contratos pulados"

@@ -557,22 +557,21 @@ como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.l
 
 O shim intercepta os comandos Docker e os roteia para o container compartilhado.
 Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
-(isso causa passthrough para o Docker real). Os 11 passos com essa exceção hoje são:
+(isso causa passthrough para o Docker real). Os 8 passos com essa exceção hoje são (W51, 2026-10-15):
 
-1. `catalog-manifest.test.sh` — usa `docker logs` para aguardar readiness
-2. `inbox-contact-authorization.test.sh` — idem
-3. `cron-secret-l5-contract.test.sh` — idem
-4. `talkx-template-history-behavior.test.sh` — idem
-5. `talkx-transition-overload-postgrest.test.sh` — depende de PostgREST
-6. `message-delivery-phase1-behavior.test.sh` — idem
-7. `notification-delivery-atomicity.test.sh` — idem
-8. `generic-migration-runtime.test.sh` — idem
-9. `runtime-config.test.sh` — idem
-10. `psql-environment.integration.mjs` — idem
-11. `l11-departments-acl-escrita.test.sh` — idem
+1. `catalog-manifest.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
+2. `cron-secret-l5-contract.test.sh` — usa `docker exec createdb` e múltiplos bancos
+3. `talkx-template-history-behavior.test.sh` — cria dois bancos no mesmo container
+4. `talkx-transition-overload-postgrest.test.sh` — depende de container PostgREST separado
+5. `talkx-engine-provider.test.sh` — depende de PostgREST + containers de rede
+6. `message-delivery-phase1-behavior.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
+7. `psql-environment.integration.mjs` — conecta sem `-U` (usuário OS root); "role root does not exist" no serviço compartilhado
+8. `network-policy-rpc.test.sh` — sobe 2 containers simultâneos com `CREATE ROLE` globais conflitantes
 
-Ao adicionar novo passo em `db-guard.yml`, verificar se o script usa `docker logs` para readiness
-ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: "1"`.
+Ao adicionar novo passo em `db-guard.yml`, verificar se o script: usa múltiplos bancos num
+container, depende de PostgREST, conecta sem `-U`, ou cria ROLEs globais conflitantes — se sim,
+adicionar `SKIP_DOCKER_SHIM: "1"`. O shim suporta `docker logs` (fake readiness), `docker exec psql`
+e `docker exec pg_isready` (W51); testes que só usam esses comandos são compatíveis.
 
 ## Talk X / Campanhas
 Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
