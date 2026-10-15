@@ -1,22 +1,55 @@
 Especialista: iris
 
-## O que mudou e por quê
-- src/components/contacts/ContactNotes.tsx (a FICHA do contato: ContactDetailPanel → ContactNotes, citado em docs/design/MODULO_CONTATOS_CRM360_SALESVIEW.md:480): o `select` da lista passou a trazer `is_pinned` e a lista é ordenada com as fixadas primeiro (`orderNotes`, fixadas → `created_at` desc); a nota própria ganhou editar em linha (Textarea com `autoFocus`, Esc cancela, Ctrl/Cmd+Enter salva) e botão fixar/desafixar com `aria-pressed` + destaque (`data-pinned`, borda/fundo primário e selo "Fixada"); editar/fixar/excluir só aparecem quando `author_id === profile.id` (a mesma regra da policy de UPDATE/DELETE do banco). "Descartar as alterações não salvas?" só aparece quando o rascunho difere do texto salvo. O UPDATE pede a linha de volta (`update(...).eq(...).select('id')`) e, se voltar vazia (RLS não alcançou a nota), não mexe na tela e avisa.
-- src/components/contacts/__tests__/ContactNotes.editarFixar.test.tsx (novo): prova a tela real com o cliente Supabase mockado — própria nota tem editar/fixar, nota do colega e usuário sem perfil não têm; Ctrl+Enter grava; Esc sem alteração fecha direto; Esc com alteração pede confirmação (Continuar editando × Descartar); fixar grava `is_pinned:true`, sobe ao topo, destaca e vira `aria-pressed=true`; desafixar grava `false` e some o destaque; UPDATE com zero linhas (nota de outro autor) mantém o texto e mostra erro.
-- src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx (ajuste): a nota própria agora tem 3 botões (editar + fixar + excluir) em vez de 1; a asserção passou a conferir os 3 e a buscar o botão por `name: 'Excluir nota'` (o teste de segurança — nota do colega não tem botão nenhum — segue igual).
+Refazer 1 do cartão de editar/fixar nota na ficha do contato. Os 4 pontos da
+recusa estão resolvidos em 2 arquivos, todos dentro da lista do cartão
+(`ContactNotes.tsx` + testes). Nenhum outro arquivo foi tocado.
 
-Contexto: a FAIXA do pai (t_4092de45) foi trazida por cherry-pick para esta branch antes do trabalho (migration `is_pinned`, hook `useContactNotes` com `editNote`/`togglePin`, `contact.service.ts`), como o cartão pede. Os arquivos do diff que vieram dessa faixa e não são meus: `supabase/migrations/20261013002758_contact_notes_pinned.sql` (coluna `is_pinned` + índice parcial), `supabase/tests/contact_notes_pinned.sql`, `src/integrations/supabase/types.ts` (tipo da coluna), `scripts/db-audit/inbox-contact-authorization.test.sh` (auditoria RLS), `src/hooks/crm/useContactNotes.ts` e `src/hooks/crm/useContactNotes.pinned.test.tsx` (hook e teste do pai), `src/services/contact.service.ts` (`updateNote`/`is_pinned`).
+Ponto 1 — fixada antiga sumia: em `src/components/contacts/ContactNotes.tsx`
+(`fetchNotes`), a consulta passou a ordenar no servidor antes do limite:
+`.order('is_pinned', { ascending: false }).order('created_at',
+{ ascending: false }).order('id', { ascending: false }).limit(20)`. Antes era
+só `.order('created_at').limit(20)` com reordenação no cliente, e a fixada mais
+antiga que as 20 recentes caía do `select`. Teste que prova:
+`ContactNotes.ordemFoco.test.tsx >
+fixada mais antiga que as 20 recentes segue visível no topo` (mock honra
+`.order()` + `.limit()` como o PostgREST, 21 recentes + 1 fixada antiga):
+vermelha antes (`Unable to find an element with the text: Nota fixada antiga`,
+5 failed), verde depois (fixada no topo com `data-pinned="true"`, 5 passed).
 
-## Prova
-- vermelho antes: `npx vitest run src/components/contacts/__tests__/ContactNotes.editarFixar.test.tsx` com o ContactNotes da base (sem a minha mudança) → `Test Files 1 failed, Tests 7 failed` (nenhum `Editar nota`/`Fixar nota` existia).
-- verde depois: `npx vitest run src/components/contacts/__tests__/ContactNotes.editarFixar.test.tsx src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx` → `Test Files 2 passed, Tests 13 passed`.
-- regressão da área: `npx vitest run src/components/contacts src/hooks/crm/useContactNotes.pinned.test.tsx src/hooks/__tests__/useContactNotes.test.tsx src/hooks/crm/useContactNotes.error-pagination.test.tsx` → `Test Files 40 passed, Tests 292 passed`.
-- `npx eslint` nos arquivos tocados: `0 errors` (o warning `@/integrations/supabase/client` já existia no arquivo — import pré-existente, não adicionei ocorrência nova).
+Ponto 2 — foco gerenciado: adicionados refs por id do botão `Editar nota`
+(`refBotaoEditar`, com `pendingEditFocusRef` que foca o botão ao remontar),
+`refContinuarEditando` (foca `Continuar editando` ao abrir a confirmação via
+`confirmAbertaRef`), `continuarEditando` (fecha a confirmação e foca a
+textarea) e `fecharEdicaoComFoco` (salvar, esc-sem-alteração e descartar
+devolvem o foco ao `Editar nota` da mesma nota). Testes que provam (mesmo
+arquivo, `document.activeElement`): `salvar devolve o foco ao Editar nota`,
+`esc sem alteração fecha e devolve o foco ao Editar`, `esc com alteração foca
+Continuar editando; continuar volta à textarea; descartar volta ao Editar`.
+Vermelha antes (`expected <body> to be <button>`, foco caía no body), verde
+depois (5 passed).
 
-Estados da tela: carregando (esqueleto), vazio ("Nenhuma nota ainda"), salvando (spinner no botão Salvar / fixar) e erro (toast com "A nota é de outro autor ou já não existe", sem mexer na lista) — todos conferidos nos testes acima. Movimento: os spinners novos usam `motion-safe:animate-spin` (respeita reduzir movimento).
+Ponto 3 — desempate por id: `orderNotes` ganhou o desempate final por `id`
+desc, igual ao `compareContactNotes` do hook, e o comentário acima dela registra
+a ordem do servidor. Teste que prova: `empate de created_at rende ordem
+determinística por id desc` (duas notas no mesmo instante, inseridas [A, B]):
+vermelha antes (primeiro cartão com `Texto A`), verde depois (`Texto B`
+primeiro, `Texto A` depois). Sem `export` no componente: a primeira versão
+exportava `orderNotes` e o lint acusou `react-refresh/only-export-components`;
+voltei a função para privada e o teste virou ponta a ponta via render.
 
-## O que NÃO fiz e por quê
-- Arquivos fora da lista de "ARQUIVOS QUE PODE TOCAR" que aparecem no diff (scripts/db-audit/inbox-contact-authorization.test.sh, src/hooks/crm/useContactNotes.ts, src/integrations/supabase/types.ts, src/services/contact.service.ts, supabase/migrations/20261013002758_contact_notes_pinned.sql, supabase/tests/contact_notes_pinned.sql): NÃO foram editados por mim — vieram por cherry-pick da FAIXA do pai (t_4092de45 → t_aae31a96), que o O QUE FAZER deste cartão manda trazer para esta branch antes do trabalho. Meu commit próprio mexe só em src/components/contacts/ContactNotes.tsx e nos dois testes citados.
-- NotesTab.tsx (aba Notas do inbox): o cartão o cita como lugar sem editar/fixar, mas o título é "na ficha do contato" e a ficha é o ContactNotes.tsx. O NotesTab é outra superfície (notas por categoria: privadas/fatos/objeções/promessas) e o mecanismo de editar em linha + fixar dentro de cada categoria com uma ordem própria seria outra entrega; o hook já expõe `editNote`/`togglePin`, então a aba pode receber isso num cartão próprio.
-- Nenhum SQL/policy: `is_pinned`, índice parcial e as policies UPDATE/DELETE vieram da faixa do pai (worker sql / hugo); a tela só consome.
-- Sem exportar/importar/edição em massa, sem cor nova (tokens existentes: `primary`, `muted`, `border`, `foreground`).
+Ponto 4 — prova do verde com os testes novos (comando e linha de resultado):
+`bun x vitest run src/components/contacts/__tests__/ContactNotes.ordemFoco.test.tsx`
+→ `Test Files 1 passed (1)` + `Tests 5 passed (5)` (antes: `1 failed (1)` /
+`5 failed (5)`).
+
+Arquivos desta entrega (commit c451d8e27c):
+- src/components/contacts/ContactNotes.tsx
+- src/components/contacts/__tests__/ContactNotes.ordemFoco.test.tsx
+
+Verificações reais, todas verdes:
+- `bun x vitest run src/components/contacts src/hooks/crm` →
+  `Test Files 54 passed (54)` + `Tests 378 passed | 1 expected fail (379)`
+- `bun x tsc --noEmit -p tsconfig.json` → sem saída (limpo)
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (9s)` (exit 0; sem
+  banco porque o cartão não tem migration minha)
+- hook de commit (lint ratchet): `OK: nenhuma nova divida de lint foi introduzida.`
