@@ -124,6 +124,35 @@ describe('useApplicableSLA — hierarquia de resolução', () => {
     expect(result.current.data?.resolutionMinutes).toBe(120);
   });
 
+  it('duas regras no mesmo nível: a primeira da lista (maior prioridade) vence', async () => {
+    // O mock devolve a lista já ordenada por prioridade, como a consulta real faz.
+    rulesData = [
+      rule({ company: 'Acme', first_response_minutes: 5, name: 'Primeira' }),
+      rule({ company: 'Acme', first_response_minutes: 9, name: 'Segunda' }),
+    ];
+    const result = await run({ company: 'Acme' });
+    expect(result.current.data?.ruleName).toBe('Primeira');
+    expect(result.current.data?.firstResponseMinutes).toBe(5);
+  });
+
+  it('regra de contato de outro contato não impede o match de empresa', async () => {
+    rulesData = [
+      rule({ contact_id: 'outro', name: 'OutroContato' }),
+      rule({ company: 'Acme', first_response_minutes: 5, name: 'Empresa' }),
+    ];
+    const result = await run({ contactId: 'c1', company: 'Acme' });
+    expect(result.current.data?.ruleName).toBe('Empresa');
+  });
+
+  it('regra de contato de outro contato não impede o match de fila', async () => {
+    rulesData = [
+      rule({ contact_id: 'outro', name: 'OutroContato' }),
+      rule({ queue_id: 'q1', first_response_minutes: 9, name: 'Fila' }),
+    ];
+    const result = await run({ contactId: 'c1', queueId: 'q1' });
+    expect(result.current.data?.ruleName).toBe('Fila');
+  });
+
   it('não casa regra mista (contact_id + empresa) no nível de empresa', async () => {
     rulesData = [rule({ contact_id: 'outro', company: 'Acme', name: 'Mista' })];
     const result = await run({ company: 'Acme', contactId: 'sem-match' });

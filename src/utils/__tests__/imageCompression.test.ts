@@ -59,6 +59,60 @@ describe('imageCompression — compressImage (imagem já pequena)', () => {
   });
 });
 
+describe('imageCompression — compressImage (caminho real de compressão)', () => {
+  const close = vi.fn();
+  const drawImage = vi.fn();
+  const OffscreenCtor = vi.fn();
+  const convertToBlob = vi.fn();
+
+  beforeEach(() => {
+    close.mockClear();
+    drawImage.mockClear();
+    OffscreenCtor.mockClear();
+    convertToBlob.mockReset();
+    // Blob de 100KB: abaixo do alvo de 0.8MB, então há um único passe de compressão.
+    convertToBlob.mockResolvedValue(new Blob([new Uint8Array(100 * 1024)]));
+    OffscreenCtor.mockImplementation(function (this: unknown, w: number, h: number) {
+      return { width: w, height: h, getContext: () => ({ drawImage }), convertToBlob };
+    });
+    // Foto 3000x2000: acima das dimensões máximas (1280x1280).
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 3000, height: 2000, close })));
+    vi.stubGlobal('OffscreenCanvas', OffscreenCtor);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('comprime imagem acima das dimensões máximas, com resize e arquivo menor', async () => {
+    const foto = makeFile('foto-grande.jpg', 'image/jpeg', 2 * MB);
+    const result = await compressImage(foto);
+    expect(result.wasCompressed).toBe(true);
+    expect(result.width).toBe(1280);
+    expect(result.height).toBe(853);
+    expect(result.compressedSize).toBe(100 * 1024);
+    expect(result.compressionRatio).toBeLessThan(1);
+    expect(result.file.type).toBe('image/webp');
+    expect(result.file.name).toBe('foto-grande.webp');
+    expect(OffscreenCtor).toHaveBeenCalledWith(1280, 853);
+    expect(drawImage).toHaveBeenCalled();
+    expect(convertToBlob).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled(); // ImageBitmap liberado
+  });
+
+  it('comprime imagem acima do tamanho máximo mesmo sem precisar de resize', async () => {
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 100, height: 100, close })));
+    const foto = makeFile('foto-pesada.jpg', 'image/jpeg', 2 * MB);
+    const result = await compressImage(foto);
+    expect(result.wasCompressed).toBe(true);
+    expect(result.width).toBe(100);
+    expect(result.height).toBe(100);
+    expect(result.compressedSize).toBe(100 * 1024);
+    expect(result.compressionRatio).toBeLessThan(1);
+    expect(OffscreenCtor).toHaveBeenCalledWith(100, 100);
+  });
+});
+
 describe('imageCompression — createImagePreview', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {
