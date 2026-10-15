@@ -120,15 +120,17 @@ export async function handleGroupsUpdate(
 
   const nome = groupName(d);
   if (!nome) return; // sem nome no payload não há o que atualizar
-  const descricao = txt(d.desc) ?? txt(d.description) ?? txt(d.Topic) ?? txt(d.topic) ?? null;
+  const descricao = txt(d.desc) ?? txt(d.description) ?? txt(d.Topic) ?? txt(d.topic);
   const tamanhoPayload = typeof d.size === 'number' && Number.isFinite(d.size) ? d.size : groupMembers(d);
 
   await supabase.from('whatsapp_groups').upsert({
     group_id: gid,
     name: nome,
-    description: descricao,
     whatsapp_connection_id: connectionId,
     updated_at: agora,
+    // Sem descricao no payload nao se apaga a descricao gravada (mesmo
+    // padrao do participant_count: so vai o que o payload trouxe).
+    ...(descricao !== undefined ? { description: descricao } : {}),
     // Sem tamanho no payload não se sobrescreve o contador com 0.
     ...(tamanhoPayload !== undefined ? { participant_count: tamanhoPayload } : {}),
   }, { onConflict: 'group_id' });

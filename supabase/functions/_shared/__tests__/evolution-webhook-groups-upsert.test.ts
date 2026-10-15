@@ -209,6 +209,30 @@ Deno.test("grupos: rename sem tamanho no payload não zera participant_count", a
   }
 });
 
+Deno.test("grupos: rename sem descricao no payload nao apaga description gravada", async () => {
+  const falso = iniciarSupabaseFalso({ conexoes: [{ id: CONEXAO_ID }] });
+  try {
+    await withEnv(ambiente(falso.url), async () => {
+      await despachar(falso.url, {
+        event: "group.update",
+        instance: "INST-GRUPOS-6",
+        instanceToken: TOKEN,
+        data: { id: GRUPO, subject: "Só o nome mudou de novo", size: 5 },
+      });
+
+      const corpo = corpoUnico(escritaEmGrupos(falso.escritas, "POST"));
+      assertEquals(corpo.name, "Só o nome mudou de novo");
+      assertEquals(corpo.participant_count, 5);
+      assert(
+        !("description" in corpo),
+        `rename sem descricao apagou description: ${JSON.stringify(corpo)}`,
+      );
+    });
+  } finally {
+    await falso.parar();
+  }
+});
+
 Deno.test("grupos: group.participants.update recalcula participant_count e não mexe no nome", async () => {
   const falso = iniciarSupabaseFalso({
     conexoes: [{ id: CONEXAO_ID }],
