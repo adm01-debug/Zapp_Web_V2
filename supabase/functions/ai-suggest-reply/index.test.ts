@@ -434,3 +434,48 @@ Deno.test("sem mensagem do cliente o RPC nem é chamado", async () => {
     banco.desligar();
   }
 });
+
+// LGPD (doc 07 / mesmo achado do log de voz): o nome do contato é dado pessoal
+// vindo do CORPO do pedido e não pode sair no log da Edge (retenção fora do
+// nosso controle). O `Logger` escreve por `console.log/warn/error` (uma string
+// JSON por linha), então o teste captura as três saídas e varre cada uma.
+Deno.test("LGPD: o nome do contato não aparece em nenhuma linha de log", async () => {
+  const { generate } = fakeProvider(TRES_VALIDAS);
+  const linhas: string[] = [];
+  const original = { log: console.log, warn: console.warn, error: console.error };
+  const capturar = (...args: unknown[]) => {
+    linhas.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
+  };
+  console.log = capturar as typeof console.log;
+  console.warn = capturar as typeof console.warn;
+  console.error = capturar as typeof console.error;
+  let res: Response | null = null;
+  try {
+    res = await handleAiSuggestReply(
+      pedido(corpo({ contactName: "Ana Paula Souza — CPF 123.456.789-00" })),
+      { ...SEM_DONO, generate },
+    );
+  } finally {
+    console.log = original.log;
+    console.warn = original.warn;
+    console.error = original.error;
+  }
+
+  assertEquals(res?.status ?? 0, 200);
+  const tudo = linhas.join("\n");
+  assert(!tudo.includes("Ana Paula"), "o log não pode conter o nome do contato");
+  assert(!tudo.includes("123.456.789-00"), "o log não pode conter CPF");
+
+  const entrada = linhas
+    .map((l) => {
+      try {
+        return JSON.parse(l) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    })
+    .find((e) => e?.msg === "Generating reply suggestions");
+  assert(entrada, "o log da geração precisa existir");
+  assertEquals(entrada.hasContactName, true, "o log diz que o nome veio, sem o texto");
+  assert(!("contactName" in entrada), "o log NÃO pode ter a chave `contactName`");
+});

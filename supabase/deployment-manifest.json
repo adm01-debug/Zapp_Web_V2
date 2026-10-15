@@ -426,8 +426,8 @@
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
-      "bytes": 12663,
-      "sha256": "115d453f6e6ba0923566b65cc744837f36ed9e0cd8863cdab3ed245244a17dbe"
+      "bytes": 12932,
+      "sha256": "49c75d0d47b590001ef9a3572b4d9eaa8532749416025345f1fde2d57e3c4e4c"
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
@@ -526,8 +526,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-sfx/index.ts",
-      "bytes": 3894,
-      "sha256": "f36d67fdde77a8fc99d072f0b2ced874c8433ba910d8a37216a0c16217b9c7d8"
+      "bytes": 4402,
+      "sha256": "9a8ff0da7a4023e991d4b610c51ba0a13098a850b9ec966de259dec49ad446b0"
     },
     {
       "path": "supabase/functions/elevenlabs-sfx/request.ts",
@@ -1052,7 +1052,7 @@
       "name": "ai-suggest-reply",
       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "74b9d910d35768d879c17fb3b30e2d8b0692bfbacef2f212ebb4fb3b08dcd647",
+      "source_sha256": "a8eb3bb210adb65f7ac5303cbcc1c308f792bd62c75f26d249c55bb21aa63482",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1431,7 +1431,7 @@
       "name": "elevenlabs-sfx",
       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
       "verify_jwt": true,
-      "source_sha256": "36311c4a37e8c25341557a6ea67d016ead1324f93c0c7cc1f5646992950ee70f",
+      "source_sha256": "b72e40135ff65523cbb531d2b91984f9af1cc2812c0ca1adb446a27fa26ed303",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -2332,5 +2332,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d6433a049884b0d242b6b10c47cf7b20180d0f2afd0195aa89d94d8bc40f7379"
+  "manifest_sha256": "e802de1d844ac7a7f6f54d76a2cd7ca8311cf886b6ff289e2ccdf36261887463"
 }
