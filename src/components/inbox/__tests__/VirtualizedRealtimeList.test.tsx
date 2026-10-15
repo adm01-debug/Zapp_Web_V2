@@ -459,3 +459,24 @@ describe('VirtualizedRealtimeList — prioridade de não lidas definida pelos fi
     expect(linhas[1]).toContain('DeltaLida');
   });
 });
+
+describe('VirtualizedRealtimeList — base canonica por linha ([refazer 1] P3)', () => {
+  it('duas conversas com ciclos diferentes recebem firstMessageAt distintos (uma base por linha)', () => {
+    // Mesmo created_at de contato nas duas: bases iguais so seriam possiveis se
+    // a lista calculasse UMA base e repassasse igual para todas as linhas.
+    const c1 = withConversationSla(makeConversation({ id: 'c1' }), [
+      { first_message_at: '2026-09-24T11:00:00Z', first_response_at: null },
+    ]);
+    const c2 = withConversationSla(makeConversation({ id: 'c2' }), [
+      { first_message_at: '2026-06-02T14:00:00Z', first_response_at: null },
+    ]);
+
+    renderList([c1, c2]);
+
+    expect(mocks.slaIndicator).toHaveBeenCalledTimes(2);
+    const bases = mocks.slaIndicator.mock.calls
+      .map((call) => (call[0] as { firstMessageAt: Date }).firstMessageAt.toISOString())
+      .sort();
+    expect(bases).toEqual(['2026-06-02T14:00:00.000Z', '2026-09-24T11:00:00.000Z']);
+  });
+});

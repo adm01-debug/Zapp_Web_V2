@@ -380,4 +380,37 @@ describe('ChatPanelHeader', () => {
     const results = await axe(container, { runOnly: { type: 'rule', values: ['heading-order'] } });
     expect(results).toHaveNoViolations();
   });
+
+  // ── [refazer 1] P4: base canonica no cabecalho ──────────────────────────
+  it('P4: linha aberta recente com agregado da ultima mensagem atrasado: a base e o inicio do ciclo (nao o createdAt)', () => {
+    // O agregado lastMessage ainda mostra a resposta das 11:10; o adapter (que
+    // ve o historico completo) ja viu a mensagem das 11:20 do cliente e carrega
+    // o ciclo em slaCycleStartAt. Sem a base canonica, o cabecalho voltaria ao
+    // createdAt do contato (2026-01-01) e prenderia o timer no atendimento antigo.
+    const conversation = {
+      ...mockConversation,
+      createdAt: '2026-01-01T00:00:00Z',
+      slaCycleStartAt: new Date('2026-09-24T11:20:00Z'),
+      firstResponseAt: null,
+      lastMessage: {
+        content: 'Respondido', timestamp: new Date('2026-09-24T11:10:00Z'), sender: 'agent',
+        created_at: '2026-09-24T11:10:00Z',
+      },
+      contact: {
+        ...mockConversation.contact,
+        conversation_sla: [{ first_message_at: '2026-09-24T11:00:00Z', first_response_at: null }],
+      },
+    } as unknown as Conversation;
+
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} conversation={conversation} />
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('sla-indicator')).toHaveAttribute(
+      'data-first-message-at',
+      '2026-09-24T11:20:00.000Z'
+    );
+  });
 });

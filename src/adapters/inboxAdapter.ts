@@ -144,7 +144,9 @@ export function resolveFirstResponseCycleStart(input: {
 export function mapRealtimeConversationToConversation(rc: ConversationWithMessages): Conversation {
   // SLA de 1a resposta: prioridade para o canônico do banco (conversation_sla),
   // que existe mesmo quando a janela de mensagens veio vazia; fallback no
-  // derivado da primeira mensagem do atendente efetivamente enviada.
+  // derivado da ULTIMA mensagem do atendente efetivamente enviada (P2: com 2+
+  // respostas humanas, a primeira e a penultima) — e so quando existe mensagem
+  // do cliente (P1c: contato sozinho nao cria timer nem carrega resposta).
   const slaRows = (rc.contact as RealtimeContact & {
     conversation_sla?: SlaCycleRow[] | null;
   }).conversation_sla;
@@ -159,9 +161,16 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
         .sort((a, b) => (a.first_response_at ?? '').localeCompare(b.first_response_at ?? ''))
         .pop() ?? null;
 
-  const firstAgentMessage = rc.messages
+  const hasInbound = rc.messages.some(m => !m.is_deleted && m.sender === 'contact');
+  const lastAgentMessage = rc.messages
     .filter(m => m.sender === 'agent' && m.status !== 'failed' && m.status !== 'sending')
-    .sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .pop();
+  // Resposta registrada: a linha respondida do banco; sem ela, a ultima resposta
+  // humana das mensagens (mesmo predicado do resolvedor).
+  const recordedResponseAt = slaAnswered?.first_response_at
+    ? new Date(slaAnswered.first_response_at)
+    : hasInbound && lastAgentMessage ? new Date(lastAgentMessage.created_at) : null;
 
   const operationalPriority = normalizeOperationalPriority(
     (rc.contact as { ai_priority?: string | null }).ai_priority,
@@ -185,9 +194,10 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     updatedAt: new Date(rc.contact.updated_at),
     firstResponseAt: cycleStart
       ? null // ciclo aberto (mensagem do cliente ainda sem resposta humana): cronometro conta
-      : slaAnswered?.first_response_at
-        ? new Date(slaAnswered.first_response_at)
-        : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
+      : recordedResponseAt,
+    // P1a: a base canonica do timer viaja na conversa (o cabecalho nao tem as
+    // mensagens e nao pode derivar o ciclo sozinho); null = sem ciclo aberto.
+    slaCycleStartAt: cycleStart,
     assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
     sentiment: rc.contact.ai_sentiment,
   };

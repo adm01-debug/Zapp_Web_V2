@@ -108,6 +108,13 @@ export interface Conversation {
   createdAt: Date;
   updatedAt: Date;
   firstResponseAt?: Date | null;
+  /**
+   * Inicio do ciclo ABERTO de 1a resposta, canonico do adapter
+   * (`resolveFirstResponseCycleStart` com o historico completo); null = sem
+   * ciclo aberto. O cabecalho usa como base do cronometro porque nao tem as
+   * mensagens para derivar o ciclo sozinho.
+   */
+  slaCycleStartAt?: Date | null;
   assignedTo?: AssignedAgentInfo | null;
   queue?: { id: string; name: string; color?: string } | null;
   sentiment?: string | null;

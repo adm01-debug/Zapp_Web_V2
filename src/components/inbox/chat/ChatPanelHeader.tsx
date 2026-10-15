@@ -77,15 +77,18 @@ function ChatPanelHeaderBase({
     agentId: conversation.assignedTo?.id ?? null,
   });
   const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
-  // PB-34: a base do cronometro e o INICIO DO CICLO ABERTO (linha aberta do
-  // conversation_sla ou a ultima mensagem do cliente ainda sem resposta) — o
-  // createdAt do contato prendia o timer num atendimento antigo ja resolvido.
-  // Sem ciclo aberto, mantem a base anterior (o selo nao aparece respondido).
+  // PB-34 (+[refazer 1] P4): a base do cronometro e o INICIO DO CICLO ABERTO.
+  // Fonte primaria: slaCycleStartAt, calculado no adapter com o historico
+  // completo (o cabecalho so ve a ultima mensagem, cujo agregado pode estar
+  // atrasado). Sem ele, deriva local (linha aberta ou ultima mensagem do
+  // cliente sem resposta); sem ciclo, mantem a base anterior.
   const slaRows = (conversation.contact as unknown as { conversation_sla?: SlaCycleRow[] | null }).conversation_sla;
-  const cycleStartedAt = resolveFirstResponseCycleStart({
-    slaRows,
-    messages: conversation.lastMessage ? [conversation.lastMessage] : [],
-  });
+  const cycleStartedAt = conversation.slaCycleStartAt
+    ?? resolveFirstResponseCycleStart({
+      slaRows,
+      messages: conversation.lastMessage ? [conversation.lastMessage] : [],
+    })
+    ?? conversation.createdAt;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
@@ -157,7 +160,7 @@ function ChatPanelHeaderBase({
             {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
             {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
             <SLAIndicator
-              firstMessageAt={cycleStartedAt ?? conversation.createdAt}
+              firstMessageAt={cycleStartedAt}
               firstResponseAt={conversation.firstResponseAt ?? null}
               firstResponseMinutes={firstResponseMinutes}
             />
