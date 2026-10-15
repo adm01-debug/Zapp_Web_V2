@@ -16,6 +16,10 @@
 --      (provado por has_table_privilege) — sem RLS a escrita passaria;
 --   G) inventário: não sobra nenhuma policy FOR ALL nas duas tabelas e existem
 --      exatamente 3 de escrita (INSERT/UPDATE/DELETE com is_admin) + 1 de leitura.
+--   H) `resolve_network_policy` (20261004182245, aplicada VERBATIM via `\i`)
+--      continua lendo `ip_whitelist` depois da correção: IP da whitelist é
+--      permitido, IP bloqueado é negado, whitelist isenta o bloqueio de IP e
+--      EXECUTE segue fechado para authenticated (só service_role chama).
 --
 -- COMO A PROTEÇÃO ENTRA NO TESTE (nada de copiar policy para dentro do arquivo):
 -- a superfície mínima (roles, schema auth, enum app_role, user_roles, helpers,
@@ -363,6 +367,62 @@ SELECT pg_temp.espera('F3 geo_blocking_settings = 3 escrita + 1 leitura',
   (SELECT string_agg(policyname || '=' || cmd || '=' || array_to_string(roles,','), '; ' ORDER BY policyname)
      FROM pg_policies WHERE schemaname='public' AND tablename='geo_blocking_settings'),
   'Admins can delete geo settings=DELETE=authenticated; Admins can insert geo settings=INSERT=authenticated; Admins can update geo settings=UPDATE=authenticated; Geo blocking visible to admins only=SELECT=authenticated');
+
+\echo
+\echo '── BLOCO G: resolve_network_policy continua lendo ip_whitelist ──────────'
+-- Tabelas companheiras que a RPC lê (ambiente mínimo, só as colunas do contrato;
+-- o seed de ip_whitelist/geo_blocking_settings acima continua valendo).
+CREATE TABLE public.blocked_ips (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ip_address text NOT NULL,
+  reason text NOT NULL DEFAULT 'bloqueio de teste',
+  expires_at timestamptz NULL
+);
+CREATE TABLE public.rate_limit_configs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL DEFAULT 'padrao de teste',
+  endpoint_pattern text NOT NULL,
+  max_requests integer NOT NULL,
+  window_seconds integer NOT NULL,
+  block_duration_minutes integer NOT NULL DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.allowed_countries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  country_code text NOT NULL,
+  country_name text NOT NULL DEFAULT 'Pais de teste'
+);
+CREATE TABLE public.blocked_countries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  country_code text NOT NULL,
+  country_name text NOT NULL DEFAULT 'Pais de teste'
+);
+INSERT INTO public.blocked_ips (ip_address) VALUES ('9.9.9.9');
+\echo '── aplicando a RPC REAL (20261004182245) ──'
+\i :mig_dir/20261004182245_resolve_network_policy_rpc.sql
+SELECT pg_temp.espera('G1 RPC permite IP da whitelist (le ip_whitelist apos a correcao)',
+  pg_temp.valor('service_role', '00000000-0000-0000-0000-000000000000',
+    $sql$SELECT allowed::text || '|' || coalesce(reason,'NULL') || '|' || rate_limit_max_requests::text || '|' || rate_limit_window_seconds::text FROM public.resolve_network_policy('10.0.0.1','BR','/login',100,60)$sql$),
+  'true|NULL|100|60');
+SELECT pg_temp.espera('G2 RPC nega IP bloqueado (le blocked_ips)',
+  pg_temp.valor('service_role', '00000000-0000-0000-0000-000000000000',
+    $sql$SELECT allowed::text || '|' || coalesce(reason,'NULL') || '|' || rate_limit_max_requests::text || '|' || rate_limit_window_seconds::text FROM public.resolve_network_policy('9.9.9.9','BR','/login',100,60)$sql$),
+  'false|ip_blocked|100|60');
+SELECT pg_temp.espera('G3 EXECUTE da RPC negado a authenticated (so service_role chama)',
+  pg_temp.valor('authenticated', '11111111-1111-1111-1111-11111111111a',
+    $sql$SELECT allowed::text FROM public.resolve_network_policy('10.0.0.1','BR','/login',100,60)$sql$),
+  'ERRO 42501');
+SELECT pg_temp.espera('G4a whitelist recebe o IP bloqueado (seed do G4)',
+  pg_temp.operacao('service_role', '00000000-0000-0000-0000-000000000000',
+    $sql$INSERT INTO public.ip_whitelist (ip_address, description, added_by)
+         VALUES ('9.9.9.9', 'excecao de teste', '11111111-1111-1111-1111-11111111111a')$sql$),
+  'OK 1');
+SELECT pg_temp.espera('G4b whitelist isenta o bloqueio de IP (le as duas tabelas)',
+  pg_temp.valor('service_role', '00000000-0000-0000-0000-000000000000',
+    $sql$SELECT allowed::text || '|' || coalesce(reason,'NULL') FROM public.resolve_network_policy('9.9.9.9','BR','/login',100,60)$sql$),
+  'true|NULL');
 \endif
 
 \echo
