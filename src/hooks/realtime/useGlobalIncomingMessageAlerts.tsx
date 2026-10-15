@@ -4,8 +4,9 @@
  * Até aqui o único lugar que avisava era a inbox: quem estava em outra view
  * (dashboard, contatos, configurações) com a aba em segundo plano não recebia
  * som nem notificação de uma conversa que estava esperando resposta. Este hook
- * é montado uma vez no AppShell (ao lado de `useAgentPresenceJoin`) e escuta a
- * mesma tabela `messages` que a inbox.
+ * é montado uma vez em `App.tsx` (`DeferredProviders`, ao lado de
+ * `TeamChatNotificationsListener`) e escuta a mesma tabela `messages` que a
+ * inbox.
  *
  * Quem avisa, se a conversa é minha, se a aba está visível e se a mensagem já
  * foi avisada por outro consumidor é decidido em UM lugar só —
@@ -41,8 +42,8 @@ export interface GlobalIncomingMessageAlertsOptions {
   enabled?: boolean;
   /**
    * `profiles.id` de quem está logado — o mesmo valor de `contacts.assigned_to`.
-   * Vem do shell, que já recebe `profile` como prop: assim este hook não exige
-   * AuthProvider (o AppShell é montado em testes de contrato sem provider).
+   * Quem monta o consumidor passa o valor que já tem em mãos (`App.tsx` o lê de
+   * `useAuth()`): assim este hook não exige AuthProvider nem contexto próprio.
    */
   myProfileId?: string | null;
 }
