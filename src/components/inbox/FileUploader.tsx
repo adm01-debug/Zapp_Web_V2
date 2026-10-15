@@ -134,7 +134,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
   const {
     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
-    uploading, uploadProgress, uploadStage, currentQueueIndex,
+    uploading, uploadProgress, uploadStage, currentQueueIndex, uploadIndeterminate,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
@@ -233,11 +233,21 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
               )}
               <AnimatePresence>
                 {uploading && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-                    <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
-                    <p className="text-xs text-muted-foreground text-center">
-                      {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
-                    </p>
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2" aria-busy={uploading}>
+                    {/* Sem evento de bytes no navegador a barra fica indeterminada: melhor
+                        dizer "enviando" do que cravar 0% enquanto o arquivo sobe. */}
+                    {uploadIndeterminate ? (
+                      <p className="text-xs text-muted-foreground text-center" data-testid="upload-indeterminado">
+                        {uploadStage === 'uploading' ? 'Fazendo upload...' : 'Enviando via WhatsApp...'}
+                      </p>
+                    ) : (
+                      <>
+                        <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
+                        <p className="text-xs text-muted-foreground text-center">
+                          {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
+                        </p>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
