@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -31,6 +31,9 @@ export function useNewConversation(
   const [connections, setConnections] = useState<{ id: string; name: string }[]>([]);
   const [connectionsLoaded, setConnectionsLoaded] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState('');
+  // Escolha do usuário antes de travar num contato com conexão própria — para
+  // restaurar em `selectContact(null)` em vez de voltar a `connections[0]`.
+  const previousUserConnection = useRef<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -84,16 +87,48 @@ export function useNewConversation(
 
   const resetForm = () => {
     setSearchQuery(''); setSelectedContact(null); setNewPhone(''); setNewName('');
-    setMessageText(''); setMode('search');
+    setMessageText(''); setMode('search'); previousUserConnection.current = null;
   };
+
+  // O contato existente trava o número: a mensagem sai pela conexão dele e o
+  // seletor da tela precisa mostrar esse número (nunca outro sem avisar).
+  const connectionLocked = Boolean(selectedContact?.whatsapp_connection_id);
+  // Espelhos: os callbacks abaixo dependem do contato/da conexão atual
+  // (deps do useCallback) para nunca ler valor obsoleto.
+  // Troca vinda do seletor da tela. Com contato travado ela é ignorada com
+  // aviso — sem isso a tela mostra B e o envio sai por A.
+  const changeSelectedConnection = useCallback((next: string) => {
+    if (selectedContact?.whatsapp_connection_id) {
+      if (next !== selectedContact.whatsapp_connection_id) {
+        toast.error('Este contato já tem um número próprio. A mensagem sai por ele.');
+      }
+      return;
+    }
+    previousUserConnection.current = null;
+    setSelectedConnection(next);
+  }, [selectedContact]);
 
   // O modal mostra o seletor "Conexão WhatsApp"; ao escolher um contato existente ele
   // precisa refletir de qual número a mensagem sai — a conexão do contato (o seletor
   // da tela não troca o número de um contato que já tem o dele).
+  // Só sobrescreve o seletor quando o contato tem conexão própria; ao sair de um
+  // contato travado (trocar de contato ou desselecionar) restaura a escolha anterior
+  // do usuário em vez de voltar a connections[0].
   const selectContact = useCallback((contact: ContactResult | null) => {
+    if (contact?.whatsapp_connection_id) {
+      if (!selectedContact?.whatsapp_connection_id) {
+        previousUserConnection.current = selectedConnection;
+      }
+      setSelectedContact(contact);
+      setSelectedConnection(contact.whatsapp_connection_id);
+      return;
+    }
     setSelectedContact(contact);
-    setSelectedConnection(contact?.whatsapp_connection_id ?? connections[0]?.id ?? '');
-  }, [connections]);
+    if (selectedContact?.whatsapp_connection_id && previousUserConnection.current) {
+      setSelectedConnection(previousUserConnection.current);
+      if (contact === null) previousUserConnection.current = null;
+    }
+  }, [selectedContact, selectedConnection]);
 
   const handleSend = async () => {
     if (!messageText.trim()) { toast.error('Digite uma mensagem'); return; }
@@ -153,6 +188,6 @@ export function useNewConversation(
     searchQuery, setSearchQuery, contacts, selectedContact, setSelectedContact: selectContact,
     newPhone, setNewPhone, newName, setNewName, messageText, setMessageText,
     isLoading, isSending, mode, setMode, connections, selectedConnection,
-    setSelectedConnection, handleSend, resetForm,
+    setSelectedConnection: changeSelectedConnection, connectionLocked, handleSend, resetForm,
   };
 }

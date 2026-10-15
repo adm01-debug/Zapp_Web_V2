@@ -191,4 +191,96 @@ describe('useNewConversation — conexão de um contato existente', () => {
       whatsappConnectionId: 'conexao-a',
     }));
   });
+
+  it('trava o seletor no número do contato: trocar para B é ignorado com aviso e o envio sai por A', async () => {
+    mocks.connections = [{ id: 'conexao-b', name: 'Conexão B' }, { id: 'conexao-a', name: 'Conexão A' }];
+    mocks.searchResults = [
+      { id: 'contato-1', name: 'Ana', phone: '5511999990000', avatar_url: null, whatsapp_connection_id: 'conexao-a' },
+    ];
+
+    const { result } = renderHook(() => useNewConversation(true, vi.fn(), vi.fn()));
+    await act(async () => {});
+
+    await buscar(result, 'Ana');
+    act(() => {
+      result.current.setSelectedContact(result.current.contacts[0]);
+    });
+    expect(result.current.selectedConnection).toBe('conexao-a');
+    expect(result.current.connectionLocked).toBe(true);
+
+    // usuário tenta trocar o seletor para B depois de escolher o contato
+    act(() => {
+      result.current.setSelectedConnection('conexao-b');
+    });
+
+    // a troca é ignorada: a tela continua mostrando A (nunca B sem avisar)
+    expect(result.current.selectedConnection).toBe('conexao-a');
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'Este contato já tem um número próprio. A mensagem sai por ele.',
+    );
+
+    act(() => {
+      result.current.setMessageText('Olá');
+    });
+    await act(async () => { await result.current.handleSend(); });
+
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledWith(expect.objectContaining({
+      contactId: 'contato-1',
+      whatsappConnectionId: 'conexao-a',
+    }));
+  });
+
+  it('desselecionar restaura a escolha anterior em vez de voltar a connections[0]', async () => {
+    mocks.connections = [{ id: 'conexao-b', name: 'Conexão B' }, { id: 'conexao-c', name: 'Conexão C' }];
+    mocks.searchResults = [
+      { id: 'contato-1', name: 'Ana', phone: '5511999990000', avatar_url: null, whatsapp_connection_id: 'conexao-a' },
+    ];
+
+    const { result } = renderHook(() => useNewConversation(true, vi.fn(), vi.fn()));
+    await act(async () => {});
+    expect(result.current.selectedConnection).toBe('conexao-b');
+
+    // usuário escolhe C antes de selecionar qualquer contato
+    act(() => {
+      result.current.setSelectedConnection('conexao-c');
+    });
+    expect(result.current.selectedConnection).toBe('conexao-c');
+
+    // ao escolher o contato travado, o seletor vai a A…
+    await buscar(result, 'Ana');
+    act(() => {
+      result.current.setSelectedContact(result.current.contacts[0]);
+    });
+    expect(result.current.selectedConnection).toBe('conexao-a');
+
+    // …e ao desselecionar volta a C (a escolha anterior), não a B (connections[0])
+    act(() => {
+      result.current.setSelectedContact(null);
+    });
+    expect(result.current.selectedConnection).toBe('conexao-c');
+    expect(result.current.connectionLocked).toBe(false);
+  });
+
+  it('contato sem conexão própria não sobrescreve a escolha da tela', async () => {
+    mocks.connections = [{ id: 'conexao-b', name: 'Conexão B' }, { id: 'conexao-c', name: 'Conexão C' }];
+    mocks.searchResults = [
+      { id: 'contato-2', name: 'Bruno', phone: '5511888880000', avatar_url: null, whatsapp_connection_id: null },
+    ];
+
+    const { result } = renderHook(() => useNewConversation(true, vi.fn(), vi.fn()));
+    await act(async () => {});
+
+    act(() => {
+      result.current.setSelectedConnection('conexao-c');
+    });
+
+    await buscar(result, 'Bruno');
+    act(() => {
+      result.current.setSelectedContact(result.current.contacts[0]);
+    });
+
+    // sem conexão própria, o seletor preserva a escolha do usuário (C)
+    expect(result.current.selectedConnection).toBe('conexao-c');
+    expect(result.current.connectionLocked).toBe(false);
+  });
 });
