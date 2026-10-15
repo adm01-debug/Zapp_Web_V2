@@ -152,6 +152,8 @@ describe('Button em carregamento anuncia o estado sem perder foco nem largura', 
     expect(indicador).not.toBeNull();
     expect(indicador?.className).toContain('absolute');
     expect(indicador?.className).toContain('inset-0');
+    // Movimento só com `prefers-reduced-motion: no-preference` (regra do sistema).
+    expect(indicador?.querySelector('svg')?.getAttribute('class')).toContain('motion-safe:animate-spin');
   });
 
   it('sem isLoading o botão sai igual ao de sempre: filho direto e nenhum aria-busy', () => {
