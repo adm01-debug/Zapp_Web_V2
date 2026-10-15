@@ -85,9 +85,14 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
   const [showFavorites, setShowFavorites] = useState(false);
   const [activeTab, setActiveTab] = useState<'native' | 'custom'>('native');
   const [nativeCategoryId, setNativeCategoryId] = useState<string>('smileys');
+  // Ponto 3 da recusa: exclusão em dois toques — o primeiro arma a confirmação
+  // curta, o segundo confirma. Sem temporizador: desarma ao confirmar, cancelar,
+  // trocar de emoji ou fechar o seletor (nada de estado velho por timeout).
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const {
     emojis, loading, uploading, saving, pendingUpload, fileInputRef,
+    uploadError, clearUploadError, hasMore, loadingMore, loadMore,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
     handleSend, toggleFavorite, handleCategoryChange, handleDelete, setPendingUpload,
   } = useCustomEmojis(open);
@@ -106,7 +111,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
 
   return (
     <Tooltip>
-      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v && pendingUpload) handleCancelUpload(); }}>
+      <Popover open={open} onOpenChange={(v) => { setOpen(v); setConfirmDeleteId(null); if (!v && pendingUpload) handleCancelUpload(); }}>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" disabled={disabled} aria-label="Emojis Personalizados">
@@ -162,6 +167,15 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
           ) : (
             <>
               <AnimatePresence>{pendingUpload && (<div className="px-3 py-2 border-b border-border/50"><UploadPreview pending={pendingUpload} saving={saving} onConfirm={handleConfirmUpload} onCancel={handleCancelUpload} /></div>)}</AnimatePresence>
+              {uploadError && (
+                <div role="alert" className="mx-3 mt-2 p-2.5 rounded-lg border border-destructive/40 bg-destructive/10 space-y-2">
+                  <p className="text-xs text-foreground">{uploadError}</p>
+                  <div className="flex items-center gap-2 justify-end">
+                    <button onClick={() => clearUploadError()} aria-label="Fechar erro de envio" className="p-1 rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="w-3.5 h-3.5" /></button>
+                    <Button size="sm" className="h-7 text-xs" onClick={() => { clearUploadError(); fileInputRef.current?.click(); }}>Tentar novamente</Button>
+                  </div>
+                </div>
+              )}
               <div className="px-3 py-2 border-b border-border/50">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -200,10 +214,20 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                             title={`${emoji.name} • ${CATEGORY_LABELS[emoji.category]?.label || emoji.category}`}>
                             <img src={emoji.image_url} alt={emoji.name} className="w-full h-full object-contain p-1" loading="lazy" />
                             <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex flex-col items-center justify-between p-0.5">
-                              <div className="flex items-center justify-between w-full">
-                                <button onClick={(e) => toggleFavorite(e, emoji)} aria-label="Favoritar" className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><Star className={cn('w-3 h-3 transition-colors', emoji.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} /></button>
-                                <button onClick={(e) => handleDelete(e, emoji)} aria-label="Excluir" className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"><Trash2 className="w-3 h-3 text-destructive" /></button>
-                              </div>
+                              {confirmDeleteId === emoji.id ? (
+                                <div className="flex items-center justify-between w-full" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-3xs font-medium text-foreground px-0.5">Excluir?</span>
+                                  <div className="flex items-center gap-0.5">
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(e, emoji); setConfirmDeleteId(null); }} aria-label={`Confirmar exclusão de ${emoji.name}`} className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"><Check className="w-3 h-3 text-destructive" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }} aria-label="Cancelar exclusão" className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="w-3 h-3 text-muted-foreground" /></button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between w-full">
+                                  <button onClick={(e) => toggleFavorite(e, emoji)} aria-label="Favoritar" className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><Star className={cn('w-3 h-3 transition-colors', emoji.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(emoji.id); }} aria-label="Excluir" className="p-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                                </div>
+                              )}
                               <div onClick={(e) => e.stopPropagation()}><CategorySelector value={emoji.category} onChange={(cat) => handleCategoryChange(emoji, cat)} size="xs" /></div>
                             </div>
                           </motion.button>
@@ -215,6 +239,11 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
               </ScrollArea>
               <div className="px-3 py-2 border-t border-border/30 flex items-center justify-between">
                 <span className="text-3xs text-muted-foreground">{filtered.length}/{emojis.length} emojis · IA + edição manual</span>
+                {hasMore && !loading && (
+                  <Button variant="ghost" size="sm" className="h-6 text-2xs" onClick={() => loadMore()} disabled={loadingMore}>
+                    {loadingMore && <Loader2 className="w-3 h-3 mr-1 motion-safe:animate-spin" />}Carregar mais
+                  </Button>
+                )}
               </div>
             </>
           )}

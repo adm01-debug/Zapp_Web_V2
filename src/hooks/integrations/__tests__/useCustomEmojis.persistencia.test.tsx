@@ -69,7 +69,7 @@ const click = { stopPropagation: vi.fn() } as unknown as React.MouseEvent;
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: LISTA, error: null }) }) }),
+    select: () => ({ order: () => ({ order: () => ({ range: () => Promise.resolve({ data: LISTA, error: null }) }) }) }),
     update: (payload: Record<string, unknown>) => ({
       eq: (column: string, value: string) => mocks.updateEq(payload, column, value),
     }),

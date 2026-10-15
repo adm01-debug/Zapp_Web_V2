@@ -8,12 +8,32 @@ const emojis = [
   { id: 'e2', name: 'Foguete', category: 'diversos', image_url: 'https://x/foguete.png', is_favorite: true, use_count: 1, uploaded_by: null },
 ];
 
-const hookState = {
+const hookState: {
+  emojis: typeof emojis;
+  loading: boolean; uploading: boolean; saving: boolean;
+  pendingUpload: null;
+  uploadError: string | null; clearUploadError: () => void;
+  hasMore: boolean; loadingMore: boolean; loadMore: () => void;
+  fileInputRef: { current: { click: () => void } | null };
+  handleFileSelect: () => void;
+  handleConfirmUpload: () => void;
+  handleCancelUpload: () => void;
+  handleSend: () => void;
+  toggleFavorite: () => void;
+  handleCategoryChange: () => void;
+  handleDelete: () => void;
+  setPendingUpload: () => void;
+} = {
   emojis,
   loading: false,
   uploading: false,
   saving: false,
   pendingUpload: null,
+  uploadError: null,
+  clearUploadError: vi.fn(),
+  hasMore: false,
+  loadingMore: false,
+  loadMore: vi.fn(),
   fileInputRef: { current: null },
   handleFileSelect: vi.fn(),
   handleConfirmUpload: vi.fn(),
@@ -54,16 +74,19 @@ describe('CustomEmojiPicker — acessibilidade e busca sem acento', () => {
     vi.clearAllMocks();
   });
 
-  it('abre e fecha o popover com o Tooltip junto, sem loop de render', async () => {
+  it('abre e fecha o popover com o Tooltip junto, sem montar o painel em duplicidade', async () => {
     renderPicker();
     const gatilho = screen.getByRole('button', { name: 'Emojis Personalizados' });
-    // Tooltip + Popover no mesmo gatilho: abre, fecha (Esc) e reabre sem travar o render.
+    // Tooltip + Popover no mesmo gatilho: abre, fecha (Esc) e reabre.
+    // O que este teste mostra: o painel monta exatamente uma vez por ciclo
+    // (sem duplicar por loop de render). Não afirma nada além disso.
     fireEvent.click(gatilho);
     expect(await screen.findByText('Customizados')).toBeTruthy();
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByText('Customizados')).toBeNull());
     fireEvent.click(gatilho);
     expect(await screen.findByText('Customizados')).toBeTruthy();
+    expect(screen.getAllByText('Customizados')).toHaveLength(1);
   });
 
   it('busca acha "Coração" digitando sem acento e em caixa alta', async () => {
@@ -112,5 +135,55 @@ describe('CustomEmojiPicker — acessibilidade e busca sem acento', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }));
     expect(await screen.findByAltText('Coração')).toBeTruthy();
     expect(contador()).toContain('2/2');
+  });
+
+  it('erro de envio aparece na tela com "Tentar novamente" que limpa e reabre a escolha', async () => {
+    hookState.uploadError = 'Erro ao enviar arquivo';
+    try {
+      await openCustomTab();
+
+      const alerta = screen.getByRole('alert');
+      expect(alerta.textContent).toContain('Erro ao enviar arquivo');
+
+      // o input real assume a ref na montagem; espiona o clique nele
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const cliqueArquivo = vi.spyOn(input, 'click').mockImplementation(() => {});
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+      expect(hookState.clearUploadError).toHaveBeenCalledTimes(1);
+      expect(cliqueArquivo).toHaveBeenCalledTimes(1);
+    } finally {
+      hookState.uploadError = null;
+    }
+  });
+
+  it('excluir pede confirmação curta: um clique arma, o segundo exclui, cancelar desarma', async () => {
+    await openCustomTab();
+
+    // primeiro clique arma a confirmação e NÃO exclui
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir' })[0]);
+    expect(hookState.handleDelete).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Confirmar exclusão de Coração' })).toBeTruthy();
+
+    // cancelar desarma sem excluir
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar exclusão' }));
+    expect(hookState.handleDelete).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Confirmar exclusão de Coração' })).toBeNull();
+
+    // armar de novo e confirmar exclui uma vez
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão de Coração' }));
+    expect(hookState.handleDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('mostra "Carregar mais" quando há mais páginas e chama o carregamento', async () => {
+    hookState.hasMore = true;
+    try {
+      await openCustomTab();
+      fireEvent.click(screen.getByRole('button', { name: 'Carregar mais' }));
+      expect(hookState.loadMore).toHaveBeenCalledTimes(1);
+    } finally {
+      hookState.hasMore = false;
+    }
   });
 });

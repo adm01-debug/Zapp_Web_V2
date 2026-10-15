@@ -81,7 +81,7 @@ beforeEach(() => {
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.rpc.mockResolvedValue({ data: 4, error: null });
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
+    select: () => ({ order: () => ({ order: () => ({ range: () => Promise.resolve({ data: [emoji()], error: null }) }) }) }),
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: insertError });
