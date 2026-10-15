@@ -1,6 +1,15 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
-## O que mudou e por quê
+## Esta rodada (refazer 1: só relato, por ordem do cartão)
+- Nenhum código novo: o commit desta rodada altera SÓ `.tmp/relato.md`. Todo o código (migration de extras, RPC com escopo, types, teste) é o da entrega anterior `568150c18`, que o revisor declarou correta.
+
+## Pontos do revisor
+- Ponto 1: primeira linha agora é exatamente `Especialista: workersql` (só relato).
+- Ponto 2: removida a frase que punha na boca do cartão o que ele nunca disse; a dependência SD1 está descrita abaixo como foi feita de verdade (só relato).
+- Ponto 3: as três saídas que negam estão coladas abaixo em "Prova que nega", mais o contraste que passa (só relato).
+- Ponto 4: o teste alterado é `scripts/db-audit/sla-delivery-rules.test.sh` porque a máquina de FATOS não reconhece `.test.sh`.
+
+## O que mudou e por quê (entrega anterior, mantida)
 
 - `supabase/migrations/20261013030417_sla_delivery_rules_extras.sql` (NOVO): a regra de atraso de
   ENTREGA ganha o que a V3 tinha — `name text` (rótulo próprio, CHECK 1..120 após trim),
@@ -35,11 +44,11 @@ Especialista: worker (sql) (area-sql-banco)
 
 ## Dependência (SD1) e fora do escopo
 
-- O cartão diz que o commit do SD1 (`d1ead1b2e`) já está no meu percurso. Não estava: o HEAD da
-  base não continha o commit (`git merge-base --is-ancestor` → fora). Recuperei pela via que o
-  cartão manda — `git cherry-pick` do range `dia/2026-10-11..d1ead1b2e` no meu workspace (um
-  commit, conflito só no inventário `scripts/ci/check-test-inventory.mjs`, resolvido mantendo as
-  duas entradas). São 2 commits na branch: o do SD1 e o meu.
+- FAIXA DO PAI: o SD1 (`d1ead1b2e`, cartão `t_5db4faa7`) não estava na minha base:
+  `git merge-base --is-ancestor d1ead1b2e HEAD` → saída 1 (falso). Trouxe com `git cherry-pick`
+  a faixa `dia/2026-10-11..d1ead1b2e` do JSON da fila (1 commit; conflito só no inventário
+  `scripts/ci/check-test-inventory.mjs`, resolvido mantendo as duas entradas). Na branch há o
+  commit do SD1 cherry-pickado (`77c416f12`) e o meu (`568150c18`).
 - O glob do cartão traz `supabase/tests/**`, mas a prova de banco deste repositório mora em
   `scripts/db-audit/*.test.sh` (é o caminho que o inventário e o `db-guard` conhecem). Estendi o
   arquivo existente; nenhum arquivo novo de CI, nenhum GRANT/papel alterado fora do que a própria
@@ -51,14 +60,27 @@ Especialista: worker (sql) (area-sql-banco)
   `bash scripts/db-audit/sla-delivery-rules.test.sh` → assertiva "extras: ausentes antes da
   migration" confirma `0` colunas novas e `to_regprocedure('public.resolve_sla_delivery_rule(uuid,text)')`
   nulo.
-- verde depois: `bash scripts/db-audit/sla-delivery-rules.test.sh` →
+- verde depois (rodado de novo nesta rodada): `bash scripts/db-audit/sla-delivery-rules.test.sh` →
   `SLA delivery rules PostgreSQL 17 behavioral contract: PASS` (todas as linhas `[PASS]`, zero
   falha; a suíte cobre SD1 + extras).
-- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261011140925_sla_delivery_rules.sql`
-  e depois `hermes-db-migrar supabase/migrations/20261013030417_sla_delivery_rules_extras.sql` →
-  `APLICADA no banco LOCAL 'v2-2610122358f38d' (produção não foi tocada)`. Conferência como papel
-  real `authenticated` no banco local: `resolve_sla_delivery_rule(NULL,'inst-1')` →
-  `30|60|<sem nome>|global`.
+- verificação: `zapp-verify . --rapido` →
+  `VERIFY: VERDE SEM BANCO (7s)` (banco_local não verificado sem nome de conjunto; a prova de
+  banco é a suíte acima).
+- Prova que nega (Ponto 3): na entrega anterior as duas migrations foram aplicadas no banco local
+  da tarefa (v2-2610122358f38d, APLICADA_LOCAL em `.hermes-tarefa`) com a conferência que passa
+  como `authenticated`. Nesta rodada o conjunto não está mais de pé
+  (`zapp-db-local psql . v2-2610122358f38d` → "conjunto v2-2610122358f38d não está de pé") e o
+  `zapp-db-local up` não sobe agora (`Stack host is draining`, `ERRO: o conjunto não subiu`).
+  Por isso as três negações foram reproduzidas em PostgreSQL 17 descartável, aplicando os mesmos
+  dois arquivos de migration na mesma ordem e com os mesmos papéis reais (anon/authenticated — a
+  mesma técnica da suíte):
+  - anon executa `resolve_sla_delivery_rule(uuid,text)` →
+    `ERROR:  permission denied for function resolve_sla_delivery_rule` (saída 1);
+  - anon lê `sla_delivery_rules` →
+    `ERROR:  permission denied for table sla_delivery_rules` (saída 1);
+  - agente (authenticated não-staff) insere regra →
+    `ERROR:  new row violates row-level security policy for table "sla_delivery_rules"` (saída 1);
+  - contraste que passa (agente lê e executa): `1` e `30|60|global` (saída 0).
 
 ## Arquivos fora da lista do cartão (por que foram indispensáveis)
 
@@ -83,3 +105,4 @@ Especialista: worker (sql) (area-sql-banco)
   `updated_at`) — o campo é opcional e NULL = a tela usa o rótulo padrão.
 - Não toquei tela/hook que consuma a RPC (não há nenhum em `src/**` hoje); quando houver, o
   contrato novo tem `p_applies_to` opcional e os 3 campos no retorno.
+- Nesta rodada (refazer 1), por ordem do cartão: nenhum código novo, só o relato.
