@@ -44,7 +44,7 @@ export function PriorityPill({ priority, compact = false, className = '' }: Prop
       data-priority={p}
       title={`Prioridade: ${texto}`}
       {...(compact ? { role: 'img', 'aria-label': texto } : {})}
-      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[p]} ${className}`}
+      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-semibold leading-none ${PRIORITY_STYLES[p]} ${className}`}
     >
       {compact ? texto[0] : texto}
     </span>

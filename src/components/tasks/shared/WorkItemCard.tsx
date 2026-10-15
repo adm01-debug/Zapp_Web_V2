@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { agingDays } from '@/hooks/tasks/workItemMachine';
 import { isOverdue } from '@/hooks/tasks/workItemAggregates';
+import { formatWorkItemDate } from '@/hooks/tasks/workItemFormat';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { TaskCheckbox }   from './TaskCheckbox';
 import { useTasksUiOptional } from './tasksUi';
@@ -81,6 +82,18 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // Etapa 086: a tag "Atrasada" acompanha o prazo vencido (regra única de
   // atraso — `isOverdue`, a mesma do badge e do `bucketByDue`).
   const atrasada = !!item.due_date && !isDone && isOverdue(item.due_date);
+  // E10: o nome acessível do card fala estado e prazo em pt-BR — nunca o
+  // código do banco ("doing") nem o ISO cru ("prazo 2026-10-20T14:00:00.000Z").
+  // A data usa a regra única (`formatWorkItemDate`, a mesma do `DateLabel`).
+  const ROTULO_STATUS: Record<WorkItemStatus, string> = {
+    backlog: 'Caixa de entrada',
+    todo: 'A fazer',
+    doing: 'Fazendo',
+    waiting: 'Aguardando',
+    done: 'Concluído',
+    cancelled: 'Cancelada',
+  };
+  const prazoFalado = formatWorkItemDate(item.due_date, { format: 'datetime' });
   // Etapas 087/088: no card em "Fazendo" (ou no card selecionado, etapa 090) o
   // prazo e o lembrete ganham rótulos em duas colunas e a descrição curta aparece.
   const detalhado = !isAgenda && (item.status === 'doing' || selecionado);
@@ -111,7 +124,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // Etapa 084 (D16): checkbox CIRCULAR em todas as superfícies, pela mesma peça
   // (`TaskCheckbox`) da Lista, do Quadro, da Agenda, do painel e do modal.
   // REGRA DE TELA (alvo ≥ 40 px): o próprio `TaskCheckbox` já entrega o alvo de
-  // 40x40 (`h-10 w-10`) com o círculo VISÍVEL de 18 px dentro, então o card não
+  // 40x40 (`h-10 w-10`) com o círculo VISÍVEL de 20 px dentro, então o card não
   // amplia mais nada — só alinha a peça (nada de pseudo-elemento extra, que
   // criaria uma área clicável de 62 px por cima do título).
   const checkbox = (
@@ -137,7 +150,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
       {atrasada && (
         <span
           data-testid="overdue-tag"
-          className="inline-flex items-center gap-0.5 text-2xs font-semibold text-[hsl(var(--destructive-text))]"
+          className="inline-flex items-center gap-0.5 text-xs font-semibold text-[hsl(var(--destructive-text))]"
         >
           <AlertCircle className="h-3 w-3" aria-hidden />
           Atrasada
@@ -201,7 +214,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
         <button
           type="button"
           onClick={(e) => e.stopPropagation()}
-          className={`${isAgenda ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'} h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center`}
+          className={`${isAgenda ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto'} h-6 w-6 shrink-0 rounded-md hover:bg-muted transition-opacity flex items-center justify-center`}
           aria-label="Mais opções"
         >
           <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
@@ -268,7 +281,9 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // conversa"), o que criava botão-dentro-de-botão: o leitor de tela anunciava
   // widget e o axe acusava nested-interactive + aria-allowed-role, já que
   // role="button" não é permitido no elemento <article>. Com o role="article"
-  // por cima, o card segue article e a alça continua focável pelo tabIndex.
+  // por cima, o card segue article. O tabIndex é -1 (refazer t_60dae663): o
+  // card SAI da ordem de Tab (só botões internos são tabuláveis), mas o foco
+  // programático da seleção 090 (`cardRef.current?.focus()`) continua valendo.
   return (
     <article
       ref={cardRef}
@@ -278,8 +293,8 @@ export const WorkItemCard = React.memo(function WorkItemCard({
       {...(selecionado ? { 'data-selected': 'true' } : {})}
       {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       role="article"
-      tabIndex={0}
-      aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
+      tabIndex={-1}
+      aria-label={`${item.title}, ${ROTULO_STATUS[item.status]}${prazoFalado ? `, prazo ${prazoFalado}` : ', sem prazo'}`}
       onKeyDown={handleKeyDown}
       onClick={onOpen}
       className={[
@@ -375,7 +390,11 @@ export const WorkItemCard = React.memo(function WorkItemCard({
               // opacity-0 + pointer-events-none deixavam o botão inalcançável. A
               // variante [@media(hover:none)] o deixa sempre visível e clicável ali,
               // sem mudar nada em quem usa mouse (a media query não casa lá).
-              className="absolute bottom-2 right-2 flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-md bg-muted/80 hover:bg-primary/20 opacity-0 pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto group-hover:pointer-events-auto focus-visible:pointer-events-auto group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              // Refazer t_60dae663 (P1): o teclado SOZINHO também revela — o
+              // `group-focus-within` mostra o botão quando o foco está em QUALQUER
+              // controle do card (ex.: no checkbox), sem precisar tabular até ele
+              // às cegas. O `focus-visible` fica (guarda do E16), redundante aqui.
+              className="absolute bottom-2 right-2 flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-md bg-muted/80 hover:bg-primary/20 opacity-0 pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto group-hover:pointer-events-auto focus-visible:pointer-events-auto group-focus-within:pointer-events-auto group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >

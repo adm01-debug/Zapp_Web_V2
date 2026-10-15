@@ -101,8 +101,14 @@ const regiaoViva = () => screen.getByTestId('tasks-live');
  * arrasto ligado a lib de DnD põe `role="button"` nele; com o arrasto desligado
  * (ponteiro grosso) sobra o `role="article"` do próprio card. O nome, não.
  */
-const acharCard = (titulo: string, status: string) =>
-  screen.findByLabelText(`${titulo}, ${status}`);
+const acharCard = (titulo: string, rotuloStatus: string) =>
+  // Refazer t_60dae663 (P5): o nome acessível agora fala o estado por extenso
+  // ("A fazer", nunca "todo") e termina com o prazo — casa pelo prefixo.
+  screen.findByLabelText(
+    new RegExp(
+      `^${titulo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}, ${rotuloStatus.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+    ),
+  );
 
 beforeEach(() => {
   cleanup();
@@ -129,7 +135,7 @@ describe('E22 — o Quadro anuncia a movimentação na região viva', () => {
     const devolverMidia = fingirMidia(PONTEIRO_GROSSO);
     try {
       renderQuadro();
-      const card = await acharCard('Ligar para o cliente', 'todo');
+      const card = await acharCard('Ligar para o cliente', 'A fazer');
 
       expect(regiaoViva()).toHaveAttribute('aria-live', 'polite');
       expect(regiaoViva().textContent).toBe('');
@@ -157,7 +163,7 @@ describe('E22 — o menu "Mover para" do card opera só com teclado', () => {
     const devolverMidia = fingirMidia(PONTEIRO_GROSSO);
     try {
       renderQuadro();
-      const card = await acharCard('Ligar para o cliente', 'todo');
+      const card = await acharCard('Ligar para o cliente', 'A fazer');
       const gatilho = within(card).getByTestId('move-to-menu');
 
       // Está na ordem de tabulação: é um <button> habilitado e visível ao foco.

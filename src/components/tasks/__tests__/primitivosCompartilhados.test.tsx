@@ -90,7 +90,7 @@ describe('TaskCheckbox — um checkbox circular para o módulo inteiro', () => {
     expect(doCard).not.toHaveBeenCalled();
   });
 
-  it('tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela)', () => {
+  it('tem alvo de toque de 40 px com o círculo visual de 20 px dentro (regra de tela)', () => {
     render(<TaskCheckbox done={false} onToggle={() => {}} />);
     const botao = screen.getByTestId('task-checkbox'); // o elemento interativo
     const circulo = screen.getByTestId('task-checkbox-circle'); // só o desenho
@@ -102,9 +102,15 @@ describe('TaskCheckbox — um checkbox circular para o módulo inteiro', () => {
     expect(botao.className).not.toContain('h-[18px]');
     expect(botao.className).not.toContain('w-[18px]');
 
-    // o desenho encolheu para 18 px e é decorativo (não é o alvo, não tem nome)
-    expect(circulo.className).toContain('h-[18px]');
-    expect(circulo.className).toContain('w-[18px]');
+    // sem margem negativa: a caixa de 40 px ocupa o próprio espaço em vez de
+    // estender a área clicável por cima do título/vizinhos (refazer t_60dae663)
+    expect(botao.className).not.toContain('-m-[');
+
+    // o desenho é 20 px e é decorativo (não é o alvo, não tem nome)
+    expect(circulo.className).toContain('h-5');
+    expect(circulo.className).toContain('w-5');
+    expect(circulo.className).not.toContain('h-[18px]');
+    expect(circulo.className).not.toContain('w-[18px]');
     expect(circulo.getAttribute('aria-hidden')).toBe('true');
     expect(circulo.getAttribute('role')).toBeNull();
   });

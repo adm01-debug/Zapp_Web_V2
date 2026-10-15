@@ -246,10 +246,12 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
 
     // A alça de arrasto NÃO é um widget com controles dentro: o role do card
     // continua article (a lib não o converte em "button") e o foco se mantém.
+    // Refazer t_60dae663 (P3): o card SAIU da ordem de Tab (tabindex -1 em vez
+    // de 0) — o foco programático da seleção 090 continua funcionando.
     const alca = card();
     expect(alca.getAttribute('role')).toBe('article');
     expect(alca.getAttribute('role')).not.toBe('button');
-    expect(alca.getAttribute('tabindex')).toBe('0');
+    expect(alca.getAttribute('tabindex')).toBe('-1');
 
     const resultado = await axe(container, {
       runOnly: { type: 'rule', values: ['nested-interactive', 'aria-allowed-role'] },
@@ -471,7 +473,7 @@ describe('etapas 084–090 — card redesenhado', () => {
     expect(document.activeElement).toBe(document.body);
   });
 
-  it('alvo ≥ 40 px: o botão do checkbox mede 40x40 e o círculo visível segue 18 px', () => {
+  it('alvo ≥ 40 px: o botão do checkbox mede 40x40 e o círculo visível segue 20 px', () => {
     render(<WorkItemCard item={item()} mode="list" onToggleDone={vi.fn()} />);
     const check = screen.getByTestId('task-checkbox');
 
@@ -479,13 +481,86 @@ describe('etapas 084–090 — card redesenhado', () => {
     expect(check.className).toContain('h-10');
     expect(check.className).toContain('w-10');
 
-    // O círculo VISÍVEL é o desenho interno e não muda: segue 18 px (o D16).
+    // Refazer t_60dae663 (P2): sem margem negativa — a caixa de 40 px ocupa o
+    // próprio espaço (respiro pelo gap do flex) em vez de avançar sobre o título.
+    expect(check.className).not.toContain('-m-[');
+
+    // O círculo VISÍVEL é o desenho interno: 20 px (era 18 px).
     const circle = within(check).getByTestId('task-checkbox-circle');
-    expect(circle.className).toContain('h-[18px]');
-    expect(circle.className).toContain('w-[18px]');
+    expect(circle.className).toContain('h-5');
+    expect(circle.className).toContain('w-5');
 
     // O alvo já vem do botão: o card não acrescenta pseudo-elemento, que
     // estenderia a área clicável (~62 px) por cima do título.
     expect(check.className).not.toContain('before:-inset');
+  });
+
+  it('P1 — teclado sozinho revela o "Abrir conversa": o botão aparece com o foco em QUALQUER controle do card', () => {
+    render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+      />,
+    );
+
+    // group-focus-within: basta o foco estar dentro do card (ex.: no checkbox)
+    // para o botão aparecer — sem mouse e sem precisar tabular até ele às cegas.
+    const btn = screen.getByRole('button', { name: 'Abrir conversa' }) as HTMLElement;
+    expect(btn.className).toContain('group-focus-within:opacity-100');
+    expect(btn.className).toContain('group-focus-within:pointer-events-auto');
+  });
+
+  it('P1 — o kebab da Lista também aparece com o foco dentro do card', () => {
+    render(<WorkItemCard item={item()} mode="list" onToggleDone={vi.fn()} />);
+    const kebab = screen.getByRole('button', { name: 'Mais opções' }) as HTMLElement;
+    expect(kebab.className).toContain('group-focus-within:opacity-100');
+    expect(kebab.className).toContain('group-focus-within:pointer-events-auto');
+  });
+
+  it('P2 — urgente e atraso sobem para text-xs (era text-2xs)', () => {
+    render(<WorkItemCard item={item({ priority: 'urgent', due_date: '2020-01-01T10:00:00.000Z' })} mode="board" />);
+
+    // pílula de urgente no header do título
+    const header = screen.getByText('Ligar para o cliente').parentElement as HTMLElement;
+    const urgente = within(header).getByTestId('priority-pill');
+    expect(urgente.className).toContain('text-xs');
+    expect(urgente.className).not.toContain('text-2xs');
+
+    // etiqueta de atraso na linha de contexto
+    const atraso = screen.getByTestId('overdue-tag');
+    expect(atraso.className).toContain('text-xs');
+    expect(atraso.className).not.toContain('text-2xs');
+  });
+
+  it('P5 — o nome acessível do card fala estado e prazo em pt-BR (E10)', () => {
+    const vencimentoLocal = new Date(2030, 4, 4, 14, 0); // 4/mai/2030 14:00, TZ-seguro
+    render(<WorkItemCard item={item({ status: 'doing', due_date: vencimentoLocal.toISOString() })} mode="list" />);
+
+    const rotulo = card().getAttribute('aria-label') ?? '';
+    // estado por extenso, nunca o código do banco
+    expect(rotulo).toContain('Fazendo');
+    expect(rotulo).not.toContain('doing');
+    // prazo formatado pela regra única de datas ("04 mai., 14:00"), nunca o ISO cru
+    expect(rotulo).toContain('prazo 04 mai., 14:00');
+    expect(rotulo).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('P5 — sem prazo, o nome acessível diz "sem prazo" quando não há data', () => {
+    render(<WorkItemCard item={item({ status: 'todo', due_date: null })} mode="list" />);
+    const rotulo = card().getAttribute('aria-label') ?? '';
+    expect(rotulo).toContain('A fazer');
+    expect(rotulo).toContain('sem prazo');
+    expect(rotulo).not.toContain('null');
+  });
+
+  it('P5 — todos os estados têm rótulo pt-BR (inclui Caixa de entrada e Cancelada)', () => {
+    render(<WorkItemCard item={item({ status: 'backlog', due_date: null })} mode="list" />);
+    expect(card().getAttribute('aria-label')).toContain('Caixa de entrada');
+    cleanup();
+    render(<WorkItemCard item={item({ status: 'cancelled', due_date: null })} mode="list" />);
+    const rotulo = card().getAttribute('aria-label') ?? '';
+    expect(rotulo).toContain('Cancelada');
+    expect(rotulo).not.toContain('cancelled');
   });
 });
