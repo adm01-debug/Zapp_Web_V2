@@ -32,7 +32,8 @@ job só espera outro se consome o que o outro produz; uma PR só gasta CI quando
   rodando, ou verde esperando o auto-merge), ninguém mais é atualizado. Sem PR em voo, só a próxima é atualizada: a
   que ligou o auto-merge primeiro (FIFO por `enabledAt`), então **ninguém volta para o fim da fila**. PR com check
   obrigatório vermelho sai da fila até o autor corrigir (atualizá-la seria pagar para falhar de novo).
-  PR de fork também fica fora (o `GITHUB_TOKEN` não escreve no repositório de origem). Se o `update-branch` da
+  PR de fork atrasada também fica fora (o `GITHUB_TOKEN` não escreve no repositório de origem); fork já em dia com
+  a `main` conta como em voo, como qualquer outra. Se o `update-branch` da
   primeira da fila for recusado de forma permanente (HTTP 403/422), o workflow tenta a próxima na mesma execução
   e para no primeiro aceito: a fila nunca trava atrás de uma PR que não pode ser atualizada. Falha ambígua (rede,
   5xx: o update é assíncrono e pode ter sido aceito) encerra a execução, para nunca haver duas PRs em voo.

@@ -57,12 +57,13 @@ export function estadoDoCheck(rollup, nome) {
 export function classificar(pr, obrigatorios) {
   if (pr.isDraft || !pr.autoMergeRequest || (pr.baseRefName && pr.baseRefName !== 'main')) return 'fora';
   if (pr.mergeStateStatus === 'DIRTY') return 'fora'; // conflito: só o autor resolve
-  // PR de fork: o GITHUB_TOKEN não escreve no repositório de origem, então o
-  // update-branch nunca funcionaria e a PR seguraria a fila para sempre.
-  if (pr.isCrossRepository) return 'fora';
   const estados = obrigatorios.map((n) => estadoDoCheck(pr.statusCheckRollup, n));
   if (estados.includes('falhou')) return 'bloqueada';
-  if (pr.mergeStateStatus === 'BEHIND') return 'aguardando';
+  // PR de fork ATRASADA fica fora: o GITHUB_TOKEN não escreve no repositório de
+  // origem, então o update-branch nunca funcionaria. Fork já em dia com a main
+  // continua contando como em voo (abaixo): ignorá-la deixaria outra PR ser
+  // atualizada junto, e essa outra ficaria velha assim que a fork entrasse.
+  if (pr.mergeStateStatus === 'BEHIND') return pr.isCrossRepository ? 'fora' : 'aguardando';
   // Atualizada com a main (CLEAN/BLOCKED/UNSTABLE/HAS_HOOKS/UNKNOWN): checks
   // rodando ou verde esperando o auto-merge — em ambos os casos ocupa a vez.
   return 'em-voo';

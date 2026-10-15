@@ -54,6 +54,8 @@ test('classificar: draft, sem auto-merge, outra base e conflito ficam fora da fi
   assert.equal(classificar(pr(1, { baseRefName: 'outra' }), OBRIG), 'fora');
   assert.equal(classificar(pr(1, { mergeStateStatus: 'DIRTY' }), OBRIG), 'fora');
   assert.equal(classificar(pr(1, { isCrossRepository: true }), OBRIG), 'fora');
+  // Fork em dia com a main e rodando checks ocupa a vez como qualquer outra.
+  assert.equal(classificar(pr(1, { isCrossRepository: true, mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }), OBRIG), 'em-voo');
 });
 
 test('classificar: BEHIND com checks verdes aguarda; com check obrigatório vermelho fica bloqueada', () => {
@@ -141,4 +143,14 @@ test('PR de fork na frente não trava a fila: fica fora e a próxima é escolhid
   const d = decidir(prs, OBRIG);
   assert.equal(d.acao, 'atualizar');
   assert.deepEqual(d.fila, [2]);
+});
+
+test('fork em dia com a main segura a fila; nenhuma interna é atualizada junto', () => {
+  const prs = [
+    pr(1, { isCrossRepository: true, mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }),
+    pr(2),
+  ];
+  const d = decidir(prs, OBRIG);
+  assert.equal(d.acao, 'esperar');
+  assert.deepEqual(d.emVoo, [1]);
 });
