@@ -1,4 +1,4 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 ## O que mudou e por quê
 - supabase/migrations/20261013050848_templates_global_e_save_business_hours.sql (novo) — dois defeitos de banco, um arquivo:
