@@ -78,7 +78,7 @@ export function selecionarPodaveis({ equivalentes, prsAbertas, protegidas, agora
     }
     elegiveis.push(branch);
   }
-  elegiveis.sort();
+  elegiveis.sort((a, b) => a.localeCompare(b));
   return { elegiveis, fora };
 }
 

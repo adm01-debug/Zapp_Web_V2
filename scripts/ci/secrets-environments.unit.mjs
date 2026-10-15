@@ -136,21 +136,24 @@ test('W63: cada job que le DESTINO_URL declara o environment esperado', () => {
   );
 });
 
+const ENV_DE_DEPLOY = new Set(['producao-edge-functions']);
+const porNome = (a, b) => a.localeCompare(b);
+
 test('W62: cada job que le segredo de deploy declara producao-edge-functions', () => {
   const fora = [];
   const jobsVistos = new Set();
   for (const nome of SEGREDOS_DE_DEPLOY) {
     for (const c of consumidores(nome)) {
       jobsVistos.add(`${c.arquivo}:${c.job}`);
-      if (c.environment !== 'producao-edge-functions') {
+      if (!ENV_DE_DEPLOY.has(c.environment)) {
         fora.push(`${c.arquivo}:${c.job} le ${nome} com environment=${c.environment ?? '(nenhum)'}`);
       }
     }
   }
   assert.deepEqual(fora, [], fora.join('\n'));
   assert.deepEqual(
-    [...jobsVistos].sort(),
-    [...JOBS_DE_DEPLOY].sort(),
+    [...jobsVistos].sort(porNome),
+    [...JOBS_DE_DEPLOY].sort(porNome),
     'conjunto de jobs que leem segredos de deploy mudou — atualizar JOBS_DE_DEPLOY e o runbook',
   );
 });
@@ -170,15 +173,15 @@ test('W12: SETTINGS_GUARD_TOKEN so e lido pelo settings-guard, no environment pe
 });
 
 test('W12: settings-guard le com o token administrativo e cai no github.token sem ele', () => {
-  const texto = wf['settings-guard.yml'];
-  assert.match(
-    texto,
-    /^\s+ADMIN_READ_TOKEN: \$\{\{ secrets\.SETTINGS_GUARD_TOKEN \|\| github\.token \}\}\s*$/m,
+  // Linha a linha (trim), sem regex multilinha (Sonar S5852).
+  const linhas = wf['settings-guard.yml'].split('\n').map((l) => l.trim());
+  assert.ok(
+    linhas.includes('ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}'),
     'sem o fallback, apagar/expirar o PAT faz o guard mandar "Bearer " vazio',
   );
   // As escritas (issue, PATCH de restauracao) continuam com o token do workflow, que
   // comenta como github-actions[bot] — o dedupe do guard depende desse autor.
-  assert.match(texto, /^\s+GITHUB_TOKEN: \$\{\{ secrets\.GITHUB_TOKEN \}\}\s*$/m);
+  assert.ok(linhas.includes('GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}'));
 });
 
 test('environments usados por segredo existem no baseline do perimetro', () => {

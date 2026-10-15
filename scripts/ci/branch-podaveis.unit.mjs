@@ -164,7 +164,8 @@ test('o workflow chama o script e nunca executa a poda', () => {
   const wf = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
   assert.match(wf, /node scripts\/ci\/branch-podaveis\.mjs/);
   assert.match(wf, /branch-equivalentes\.tsv/);
-  const executaveis = wf.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
-  assert.doesNotMatch(executaveis, /^\s*git push\b/m, 'o workflow não pode apagar branch (W98 = só comando pronto)');
+  const linhasExecutaveis = wf.split('\n').map((l) => l.trim()).filter((l) => !l.startsWith('#'));
+  const executaveis = linhasExecutaveis.join('\n');
+  assert.ok(!linhasExecutaveis.some((l) => /^git push\b/.test(l)), 'o workflow não pode apagar branch (W98 = só comando pronto)');
   assert.doesNotMatch(executaveis, /git\/refs\/heads[^\n]*-X\s*DELETE|--method\s+DELETE/, 'nem pela API');
 });
