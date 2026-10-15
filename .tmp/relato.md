@@ -1,26 +1,31 @@
-Especialista: Íris (area-front-componentes)
-
+Especialista: senior (area-front-componentes)
 ## O que mudou e por quê
-- `src/components/inbox/contact-details/CustomFieldsSection.tsx` (novo): seção "Campos personalizados" que lista nome+valor de `contact_custom_fields`, cria, edita na linha (Enter salva / Esc cancela) e exclui com confirmação. O corpo só monta com a seção aberta (Radix desmonta `AccordionContent` fechado), então abrir uma conversa não dispara consulta extra.
-- `src/components/inbox/ContactDetails.tsx`: registra a seção no acordeão do painel (`<CustomFieldsSection contactId={contact.id} />`), ao lado das seções já existentes.
-- `src/hooks/crm/useContactCustomFields.ts`: faltava a operação de editar — adiciono `updateField(fieldId, fieldValue)` (`update ... eq('id')`, espelhando o `delete` que já existia). O `upsert` antigo só serve para criar; editar por ele colidiria com o índice único `(contact_id, field_name)`.
-- `src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx` (novo): prova pela seção REAL + hook REAL, mockando só a borda do Supabase.
-
-## RLS / somente leitura
-A tela não duplica a regra de permissão: espelha a resposta do servidor. Quando o PostgREST recusa a escrita por RLS (`42501` / "row-level security"), a seção vira somente leitura (some com Adicionar/Editar/Remover e mostra o aviso), mantendo os valores em leitura — exatamente o caso "agente que vê o contato por fila sem poder editar" (PB-26). A tela nunca confirma antes do servidor: o sucesso/remoção só acontecem depois do retorno; o diálogo de exclusão fica aberto até o servidor responder.
+- `src/components/inbox/contact-details/sidebar/sidebarSections.ts`: `customFields` entra em `SIDEBAR_SECTIONS` e `DEFAULT_OPEN_SECTIONS` — a seção já era um `AccordionItem` dentro do `Accordion` controlado do `ContactDetails`, mas a chave não era conhecida/persistida (filtro `KNOWN` descartava), então ela nunca abria por padrão nem mantinha o estado entre reloads.
+- `src/components/inbox/contact-details/CustomFieldsSection.tsx`: loading virou shimmer (`role="status"`, `motion-safe:animate-pulse`, sem `animate-spin`); `Loader2` removido (import e 3 usos); botões mostram `Salvando…`/`Removendo…` em vez de spinner; subtítulo com `data-testid="custom-fields-subtitle"`.
+- Testes: 4 novos em `CustomFieldsSection.test.tsx` (pontos 1–4) + 1 novo e 1 expectativa atualizada em `sidebarSections.test.ts`.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx -t "não some da lista antes"` com uma remoção otimista temporária no hook → `Tests 1 failed | 8 skipped (9)` na linha 198 (`expect(screen.getByText('CPF')).toBeInTheDocument()` — a linha sumia antes do servidor).
-- verde depois: `npx vitest run src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`.
-- regressão (arquivos vizinhos): `npx vitest run src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx src/hooks/__tests__/useContactCustomFields.test.tsx src/components/inbox/contact-details/sidebar/__tests__/` → `Test Files 13 passed (13); Tests 89 passed (89)`.
+- vermelho antes (fontes em 8973786de8, testes novos mantidos): `bun run vitest run src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts` → `Tests 5 failed | 18 passed (23)` (falham exatamente: default antigo, round-trip customFields, seção abre por padrão, shimmer sem spin, testid próprio)
+- verde depois: mesmo comando → `Test Files 2 passed (2); Tests 23 passed (23)`
+- regressão vizinha: `bun run vitest run src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx src/components/inbox/contact-details/sidebar/__tests__/` → `Test Files 12 passed (12); Tests 84 passed (84)`
+- `bunx eslint` nos 4 arquivos → exit 0
 
-## Cobertura dos critérios (testes nomeados no arquivo novo)
-listar; vazio + Adicionar; criar (payload exato ao servidor); editar Enter; editar Esc (não grava); editar pelo check; excluir com confirmação; sem sumir antes do servidor; RLS → somente leitura.
+## Pontos do revisor
+- Ponto 1: `customFields` registrado como chave conhecida e default-aberta em `sidebarSections.ts`; a seção (já `AccordionItem value="customFields"` dentro do `Accordion` controlado por `accordionValue` no `ContactDetails`) agora abre por padrão e persiste. Prova: `refazer-1 ponto 1` (componente com a fiação do ContactDetails) + `chave customFields sobrevive ao round-trip do storage`.
+- Ponto 2: shimmer interno com `motion-safe:animate-pulse`, nenhum `animate-spin` na seção (`Loader2` removido). Prova: `refazer-1 ponto 2`.
+- Ponto 3: subtítulo agora `custom-fields-subtitle`; nenhum `sidebar-section-subtitle` na seção. Prova: `refazer-1 ponto 3`.
+- Ponto 4: confirmação de exclusão continua nos primitivos `AlertDialog` do Design System (sem overlay próprio). Prova: `refazer-1 ponto 4` (Cancelar fecha sem apagar; Remover confirmado só apaga após resposta do servidor — teste pré-existente).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `src/services/contact.service.ts` nem em migration/policy: a permissão é decidida pela RLS existente na tabela; o cartão limita o SQL a outra trilha.
-- Não usei nem criei etiqueta/tag.
-- Não coloquei a seção entre as 3 do `sidebarSections` (professional/personal/singu): aquela config é de outro plano e o teste dela fixa o default nas 3; segui o precedente da seção já montada direto no acordeão.
+- Não rebaseei para a `dia/2026-10-14` (o `ContactDetails.tsx` foi refatorado lá): traria ~100 linhas alheias ao diff; a integração resolve o conflito. O encaixe (AccordionItem + chave persistida) vale nas duas versões.
+- Não alterei `useContactCustomFields.ts`, `ContactService` nem o `updateField` direto no `supabase`: fora dos 4 pontos da recusa.
+- Teste existente ajustado 1x: `sidebarSections.test.ts` (`default (todas abertas)` agora inclui `customFields`) — exigido pelo ponto 1 da recusa, citado aqui.
 
-## Ajuste pós-checagem do portão
-- Os 3 spinners usavam `animate-spin` sem `motion-safe:`; troquei por `motion-safe:animate-spin` (regra de movimento). Teste verde de novo (9 passed).
+## Arquivos (`git diff --name-only 8973786de8..HEAD`)
+- src/components/inbox/contact-details/CustomFieldsSection.tsx
+- src/components/inbox/contact-details/__tests__/CustomFieldsSection.test.tsx
+- src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts
+- src/components/inbox/contact-details/sidebar/sidebarSections.ts
+
+## Fechamento
+- `hermes-tarefa-fechar` está congelado para agentes nesta máquina (modo V1 suspenso, sem `MODO_V2`); por isso não houve `FATOS MEDIDOS PELO FECHAR`. Trabalho committado na branch do cartão (`91bfe311ce`) e entregue via conclusão do cartão com este relato.
