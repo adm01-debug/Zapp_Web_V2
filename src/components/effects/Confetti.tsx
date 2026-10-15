@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { secureRandomFloat } from '../../lib/secureRandom';
 
@@ -40,6 +40,9 @@ export function Confetti({
 }: ConfettiProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
+  // Acessibilidade: com `prefers-reduced-motion: reduce` nada de confete —
+  // ainda avisamos o chamador no fim da janela de celebração.
+  const reduzirMovimento = useReducedMotion() ?? false;
 
   const createParticles = useCallback(() => {
     const newParticles: Particle[] = [];
@@ -76,14 +79,15 @@ export function Confetti({
     }
   }, [isActive, duration, createParticles, onComplete]);
 
-  if (!showCelebration) return null;
+  if (reduzirMovimento || !showCelebration) return null;
 
   return createPortal(
-    <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+    <div data-testid="confetti-layer" className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
       <AnimatePresence>
         {particles.map((particle) => (
           <motion.div
             key={particle.id}
+            data-testid="confetti-particle"
             initial={{
               x: `${particle.x}vw`,
               y: `${particle.y}vh`,
@@ -150,6 +154,9 @@ export function CelebrationOverlay({
   onComplete
 }: CelebrationOverlayProps) {
   const [show, setShow] = useState(false);
+  // Acessibilidade: com movimento reduzido a mensagem aparece parada — sem
+  // confete, sem brilho pulsante, sem faíscas e sem escala/rotação de entrada.
+  const reduzirMovimento = useReducedMotion() ?? false;
 
   useEffect(() => {
     if (isActive) {
@@ -165,19 +172,22 @@ export function CelebrationOverlay({
   return (
     <>
       <Confetti isActive={isActive} />
-      <AnimatePresence>
-        {show && createPortal(
+      {show && createPortal(
+        // O AnimatePresence precisa ficar DENTRO da porta: um filho-porta dentro
+        // dele é descartado (provado em teste), e o overlay nunca aparecia.
+        <AnimatePresence>
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            data-testid="celebration-overlay"
+            initial={reduzirMovimento ? false : { opacity: 0 }}
+            animate={reduzirMovimento ? undefined : { opacity: 1 }}
+            exit={reduzirMovimento ? undefined : { opacity: 0 }}
             className="fixed inset-0 z-[9998] flex items-center justify-center pointer-events-none"
           >
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180, opacity: 0 }}
-              transition={{ 
+              initial={reduzirMovimento ? false : { scale: 0, rotate: -180 }}
+              animate={reduzirMovimento ? undefined : { scale: 1, rotate: 0 }}
+              exit={reduzirMovimento ? undefined : { scale: 0, rotate: 180, opacity: 0 }}
+              transition={reduzirMovimento ? { duration: 0 } : { 
                 type: 'spring', 
                 stiffness: 200, 
                 damping: 15,
@@ -186,15 +196,18 @@ export function CelebrationOverlay({
               className="relative"
             >
               {/* Glow effect */}
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5]
-                }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="absolute inset-0 bg-primary/30 rounded-full blur-3xl"
-                style={{ transform: 'scale(2)' }}
-              />
+              {!reduzirMovimento && (
+                <motion.div
+                  data-testid="celebration-glow"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 0.8, 0.5]
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute inset-0 bg-primary/30 rounded-full blur-3xl"
+                  style={{ transform: 'scale(2)' }}
+                />
+              )}
               
               {/* Main content */}
               <motion.div
@@ -204,7 +217,7 @@ export function CelebrationOverlay({
                 }}
               >
                 <motion.div
-                  animate={{ 
+                  animate={reduzirMovimento ? undefined : { 
                     scale: [1, 1.2, 1],
                     rotate: [0, 10, -10, 0]
                   }}
@@ -215,8 +228,8 @@ export function CelebrationOverlay({
                 </motion.div>
                 
                 <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={reduzirMovimento ? false : { opacity: 0, y: 20 }}
+                  animate={reduzirMovimento ? undefined : { opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                   className="font-display text-2xl font-bold text-foreground mb-2 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent"
                 >
@@ -224,8 +237,8 @@ export function CelebrationOverlay({
                 </motion.h2>
                 
                 <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={reduzirMovimento ? false : { opacity: 0, y: 20 }}
+                  animate={reduzirMovimento ? undefined : { opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                   className="text-muted-foreground"
                 >
@@ -233,9 +246,10 @@ export function CelebrationOverlay({
                 </motion.p>
 
                 {/* Sparkles around */}
-                {[...Array(8)].map((_, i) => (
+                {!reduzirMovimento && [...Array(8)].map((_, i) => (
                   <motion.div
                     key={i}
+                    data-testid="celebration-sparkle"
                     className="absolute w-2 h-2 bg-secondary rounded-full"
                     style={{
                       top: '50%',
@@ -257,10 +271,10 @@ export function CelebrationOverlay({
                 ))}
               </motion.div>
             </motion.div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
