@@ -86,9 +86,11 @@ Deno.test("classifyEvolutionAction - leituras SEM tela consumidora viram control
     assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
     assert(!READ_ACTIONS.has(action), `${action} não pode estar em READ_ACTIONS`);
     // Agente sem papel: 403. Admin/supervisor: conserva a operação.
+    // `assert(!denied.allowed)` vem ANTES de ler `.status`: só o estreitamento
+    // da união (asserts expr) torna o campo visível para o type-check do deno.
     const denied = decideControlAuthz(false);
-    assertEquals(denied.status, 403);
     assert(!denied.allowed, `${action}: agent deve ser negado`);
+    assertEquals(denied.status, 403);
     assert(decideControlAuthz(true).allowed, `${action}: admin deve passar`);
   }
 });
@@ -99,7 +101,9 @@ Deno.test("classifyEvolutionAction - reconcile-instances é control (admin 200, 
   assertEquals(classifyEvolutionAction("reconcile-instances"), "control");
   assert(CONTROL_ACTIONS.has("reconcile-instances"));
   assert(!READ_ACTIONS.has("reconcile-instances"));
-  assertEquals(decideControlAuthz(false).status, 403);
+  const denied = decideControlAuthz(false);
+  assert(!denied.allowed);
+  assertEquals(denied.status, 403);
   assert(decideControlAuthz(true).allowed);
 });
 
