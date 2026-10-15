@@ -10441,6 +10441,7 @@ export type Database = {
         }
         Returns: Json
       }
+      app_bootstrap: { Args: never; Returns: Json }
       apply_pg_cron_escalonamento: {
         Args: { p_reverter?: boolean }
         Returns: number
