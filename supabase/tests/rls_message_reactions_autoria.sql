@@ -6,13 +6,15 @@
 --   zapp-db-local psql . < supabase/tests/rls_message_reactions_autoria.sql
 --
 -- Esperado: só linhas [PASS]; qualquer [FAIL] provoca exceção e aborta.
+-- Casos de UPDATE (refazer 1): A9 mover a própria reação p/ mensagem de contato alheio é negado;
+-- A10 trocar o emoji da própria reação funciona; A11 mexer em reação de mensagem fora do alcance não afeta nada.
 
 SET client_min_messages TO notice;
 
 -- ------------------------------------------------------------------ carga mínima
 SET session_replication_role = replica;
 DELETE FROM public.message_reactions
-  WHERE id IN ('e0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000002');
+  WHERE id IN ('e0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000002','e0000000-0000-0000-0000-000000000003');
 DELETE FROM public.messages
   WHERE id IN ('d0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002');
 DELETE FROM public.contacts
@@ -149,6 +151,58 @@ BEGIN
   PERFORM public._t_assert('A6 apagar reação de TERCEIRO não apaga nada (0 linhas)', n = 0);
 END $$;
 
+-- A9 mover a PRÓPRIA reação para a mensagem do contato do B (contact_id coerente) -> NEGADO.
+-- Sem a visibilidade no WITH CHECK, o UPDATE passava (USING só olha a linha antiga).
+DO $$
+DECLARE n int; ok boolean := false;
+BEGIN
+  BEGIN
+    UPDATE public.message_reactions
+      SET message_id = 'd0000000-0000-0000-0000-000000000002',
+          contact_id = 'c0000000-0000-0000-0000-000000000002',
+          emoji = '😈'
+      WHERE id = 'e0000000-0000-0000-0000-000000000001';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    ok := (n = 1);
+  EXCEPTION WHEN others THEN ok := false; END;
+  PERFORM public._t_assert('A9 mover a própria reação p/ mensagem de contato alheio é negado', NOT ok);
+END $$;
+
+-- A10 upsert legítimo: mesmo message_id, emoji novo -> PASSA (1 linha)
+DO $$
+DECLARE n int;
+BEGIN
+  UPDATE public.message_reactions SET emoji = '🎉'
+    WHERE id = 'e0000000-0000-0000-0000-000000000001';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  PERFORM public._t_assert('A10 trocar o emoji da PRÓPRIA reação funciona (1 linha)', n = 1);
+EXCEPTION WHEN others THEN
+  PERFORM public._t_assert('A10 trocar o emoji da PRÓPRIA reação — negado por engano: ' || SQLERRM, false);
+END $$;
+
+-- A11 reação própria numa mensagem que NÃO vejo mais (linha antiga fora do alcance) -> 0 linhas.
+-- A fileira e3 é plantada como postgres (bypass) simulando reatribuição do contato ao B.
+RESET ROLE;
+INSERT INTO public.message_reactions (id, message_id, user_id, contact_id, emoji)
+  VALUES ('e0000000-0000-0000-0000-000000000003',
+          'd0000000-0000-0000-0000-000000000002',
+          'a0000000-0000-0000-0000-000000000001',
+          'c0000000-0000-0000-0000-000000000002', '😀');
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', false);
+DO $$
+DECLARE n int; ok boolean := false;
+BEGIN
+  BEGIN
+    UPDATE public.message_reactions SET emoji = '💥'
+      WHERE id = 'e0000000-0000-0000-0000-000000000003';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    ok := (n = 1);
+  EXCEPTION WHEN others THEN ok := false; END;
+  PERFORM public._t_assert('A11 mexer em reação de mensagem fora do alcance afeta 0 linhas', NOT ok);
+END $$;
+
 -- A7 reação própria: apagar -> PASSA (1 linha)
 DO $$
 DECLARE n int;
@@ -238,7 +292,7 @@ END $$;
 -- ------------------------------------------------------------------ limpeza
 SET session_replication_role = replica;
 DELETE FROM public.message_reactions
-  WHERE id IN ('e0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000002');
+  WHERE id IN ('e0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000002','e0000000-0000-0000-0000-000000000003');
 DELETE FROM public.messages
   WHERE id IN ('d0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002');
 DELETE FROM public.contacts

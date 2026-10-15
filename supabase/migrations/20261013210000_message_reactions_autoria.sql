@@ -60,13 +60,28 @@ CREATE POLICY "message_reactions_insert_policy" ON public.message_reactions
     )
   );
 
--- UPDATE: só o autor (ou admin/supervisor). O WITH CHECK impede repassar a reação para outro autor/contato.
+-- UPDATE: só o autor (ou admin/supervisor), e só em mensagem visível a ele. O USING mantém a
+-- visibilidade da linha ANTIGA (como na policy anterior); o WITH CHECK exige a visibilidade da mensagem
+-- NOVA — sem isso o autor moveria a própria reação para a mensagem de contato alheio ajustando o
+-- contact_id junto (no WITH CHECK `message_id` é o novo; no USING, o antigo).
 DROP POLICY IF EXISTS "message_reactions_update_policy" ON public.message_reactions;
 CREATE POLICY "message_reactions_update_policy" ON public.message_reactions
   FOR UPDATE TO authenticated
   USING (
-    user_id = public.get_profile_id_for_user(auth.uid())
-    OR public.is_admin_or_supervisor(auth.uid())
+    public.is_admin_or_supervisor(auth.uid())
+    OR (
+      user_id = public.get_profile_id_for_user(auth.uid())
+      AND EXISTS (
+        SELECT 1 FROM public.messages m
+        JOIN public.contacts c ON c.id = m.contact_id
+        WHERE m.id = message_id
+          AND (
+            public.is_admin_or_supervisor(auth.uid())
+            OR c.assigned_to = public.get_profile_id_for_user(auth.uid())
+            OR c.assigned_to IS NULL
+          )
+      )
+    )
   )
   WITH CHECK (
     public.is_admin_or_supervisor(auth.uid())
@@ -74,6 +89,16 @@ CREATE POLICY "message_reactions_update_policy" ON public.message_reactions
       user_id = public.get_profile_id_for_user(auth.uid())
       AND contact_id IS NOT DISTINCT FROM (
         SELECT m.contact_id FROM public.messages m WHERE m.id = message_id
+      )
+      AND EXISTS (
+        SELECT 1 FROM public.messages m
+        JOIN public.contacts c ON c.id = m.contact_id
+        WHERE m.id = message_id
+          AND (
+            public.is_admin_or_supervisor(auth.uid())
+            OR c.assigned_to = public.get_profile_id_for_user(auth.uid())
+            OR c.assigned_to IS NULL
+          )
       )
     )
   );
