@@ -133,9 +133,19 @@ export function ContactsTable({
                 transition={{ delay: index * 0.015 }}
                 className={cn(
                   "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50",
                   selectedIds.includes(contact.id) && "ring-1 ring-primary border-primary/60 bg-primary/5"
                 )}
                 onClick={() => onOpenDetails(contact.id)}
+                tabIndex={0}
+                aria-label={`Abrir ficha de ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onOpenDetails(contact.id);
+                  }
+                }}
               >
                 <td className="p-3" onClick={(e) => e.stopPropagation()}>
                   <Checkbox

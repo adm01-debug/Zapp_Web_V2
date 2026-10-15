@@ -30,10 +30,21 @@ export function ContactListItem({
   // inacessivel. No ponteiro grosso ela nasce visivel; no desktop segue no hover e no
   // foco de teclado (`focus-within`).
   const ponteiroGrosso = usePointerCoarse();
+  const displayName = `${contact.name}${contact.surname ? ' ' + contact.surname : ''}`.trim();
 
   return (
     <div
       data-testid="contact-list-item"
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir ficha de ${displayName}`}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpenDetails(contact.id);
+        }
+      }}
       className={cn(
         // Grid com template definido por breakpoint: cada largura tem o mesmo número de
         // trilhas para TODAS as linhas, então as colunas ficam alinhadas (fr/auto resolvem
@@ -45,6 +56,7 @@ export function ContactListItem({
         "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",       // lg: + telefone, tags
         "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]", // xl: + email
         "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
       onClick={() => onOpenDetails(contact.id)}

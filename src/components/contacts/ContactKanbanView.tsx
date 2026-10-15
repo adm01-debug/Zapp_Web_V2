@@ -215,9 +215,20 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                       "w-full text-left p-3 rounded-lg border border-border/30",
                                       "bg-card hover:bg-muted/40 hover:border-primary/20",
                                       "transition-all duration-150 cursor-pointer group",
+                                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                                       dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30 rotate-1"
                                     )}
                                     onClick={() => !dragSnapshot.isDragging && onContactClick(contact.id)}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`Abrir ficha de ${contact.name}${contact.surname ? ` ${contact.surname}` : ''}`}
+                                    onKeyDown={(e) => {
+                                      if (e.target !== e.currentTarget) return;
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onContactClick(contact.id);
+                                      }
+                                    }}
                                   >
                                     <div className="flex items-center gap-2.5">
                                       <div

@@ -36,6 +36,7 @@ export function ContactCard({
   const footerLabel = contact.last_message_at
     ? `Último contato em ${format(new Date(contact.last_message_at), 'dd MMM yyyy', { locale: ptBR })}`
     : `Cadastrado em ${format(new Date(contact.created_at), 'dd MMM yyyy', { locale: ptBR })}`;
+  const fichaLabel = `Abrir ficha de ${displayName}`;
 
   return (
     <div
@@ -43,11 +44,22 @@ export function ContactCard({
       className={cn(
         "card-lift card-glow group relative flex flex-col min-h-[164px] rounded-[14px] bg-card p-4 cursor-pointer",
         "transition-[transform,border-color,box-shadow] duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
         isSelected
           ? "ring-1 ring-primary border-primary/60 bg-primary/5"
           : "border-border/70"
       )}
       onClick={() => onOpenDetails(contact.id)}
+      role="button"
+      tabIndex={0}
+      aria-label={fichaLabel}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpenDetails(contact.id);
+        }
+      }}
     >
       {/* Selection checkbox — revelado no hover (desktop) e sempre visivel no toque */}
       <div
