@@ -17,6 +17,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const PIN = /uses:\s*([\w.-]+\/[\w.-]+)(?:\/[^@\s]+)?@([0-9a-f]{40})(?:\s*#\s*(\S+))?/g;
 
@@ -72,7 +73,7 @@ function lsRemoteGit(repo, tag) {
   let ultimoErro;
   for (let tentativa = 1; tentativa <= 2; tentativa += 1) {
     try {
-      return execFileSync('git', args, { encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
+      return execFileSync(resolverExecutavel('git'), args, { encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'] });
     } catch (erro) {
       ultimoErro = erro;
     }

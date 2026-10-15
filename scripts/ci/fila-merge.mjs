@@ -22,6 +22,7 @@
 import { readFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
@@ -111,11 +112,11 @@ async function main() {
     console.error('GITHUB_REPOSITORY ausente');
     process.exit(2);
   }
-  const json = execFileSync('gh', [
+  const json = execFileSync(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
     '--json', 'number,isDraft,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
   ], { encoding: 'utf8' });
-  const behindBy = async (head) => Number(execFileSync('gh', [
+  const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
   const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
