@@ -23,7 +23,7 @@ import { join, resolve } from 'node:path';
 // (ex.: `git archive dia/<data> | tar -x -C .tmp/base-dia`) e provar que a guarda
 // REPROVA a árvore anterior à correção. Ausente, varre o `src` do projeto.
 const RAIZ = resolve(process.cwd(), process.env.CANAIS_REALTIME_RAIZ ?? 'src');
-const DIRETORIOS = [join(RAIZ, 'hooks'), join(RAIZ, 'services'), join(RAIZ, 'lib')];
+const DIRETORIOS = [join(RAIZ, 'hooks'), join(RAIZ, 'services'), join(RAIZ, 'lib'), join(RAIZ, 'components')];
 
 // Nomes fixos intencionais (com o porquê). Tudo que não estiver aqui é violação.
 const PERMITIDOS = new Map<string, string>([

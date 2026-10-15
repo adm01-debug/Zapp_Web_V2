@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useRealtimeReconnect } from '@/hooks/realtime/useRealtimeReconnect';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,12 +33,17 @@ export function EvolutionDisconnectBanner() {
     }
   };
 
+  // Depois de uma queda o canal volta, mas um "disconnected" gravado durante o
+  // silêncio não é reentregue: recarrega o status para o aviso não ficar
+  // escondido até o próximo UPDATE ou uma recarga manual.
+  useRealtimeReconnect(() => { void fetchStatus(); });
+
   useEffect(() => {
     void fetchStatus();
 
     // Real-time updates on connection status changes
     const channel = supabase
-      .channel('disconnect-banner')
+      .channel(uniqueRealtimeTopic('disconnect-banner'))
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'whatsapp_connections' },
