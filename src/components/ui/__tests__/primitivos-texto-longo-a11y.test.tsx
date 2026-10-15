@@ -134,26 +134,45 @@ describe('Button em carregamento anuncia o estado sem perder foco nem largura', 
     expect(botao).toHaveFocus();
   });
 
-  it('o rótulo continua no DOM reservando a largura, com o indicador por cima', () => {
+  it('o texto de carregamento fica visível e o rótulo escondido reserva a largura', () => {
     render(
       <Button isLoading loadingText="Enviando…">
         Salvar cliente
       </Button>,
     );
 
+    // O nome do botão é o texto de carregamento, e ele aparece de verdade na tela.
     const botao = screen.getByRole('button', { name: 'Enviando…' });
-    const rotulo = screen.getByText('Enviando…');
-    expect(botao.contains(rotulo)).toBe(true);
-    for (const classe of CARREGANDO_CLASSES) {
-      expect(rotulo.className).toContain(classe);
-    }
+    expect(botao.textContent).toContain('Enviando…');
+    const textoVisivel = screen.getByText('Enviando…');
+    expect(textoVisivel.className).not.toContain('opacity-0');
 
-    const indicador = botao.querySelector('[aria-hidden="true"]');
-    expect(indicador).not.toBeNull();
-    expect(indicador?.className).toContain('absolute');
-    expect(indicador?.className).toContain('inset-0');
-    // Movimento só com `prefers-reduced-motion: no-preference` (regra do sistema).
-    expect(indicador?.querySelector('svg')?.getAttribute('class')).toContain('motion-safe:animate-spin');
+    // O rótulo de repouso fica invisível no lugar (mede a largura) e fora da fala do leitor.
+    const repouso = screen.getByText('Salvar cliente');
+    expect(botao.contains(repouso)).toBe(true);
+    for (const classe of CARREGANDO_CLASSES) {
+      expect(repouso.className).toContain(classe);
+    }
+    expect(repouso).toHaveAttribute('aria-hidden', 'true');
+
+    // O indicador fica em cima, em absoluto (não empurra o layout) e só gira com
+    // `prefers-reduced-motion: no-preference`.
+    const giro = botao.querySelector('svg');
+    expect(giro).toHaveAttribute('aria-hidden', 'true');
+    expect(giro?.getAttribute('class')).toContain('motion-safe:animate-spin');
+    const camada = giro?.closest('span');
+    expect(camada?.className).toContain('absolute');
+    expect(camada?.className).toContain('inset-0');
+  });
+
+  it('sem loadingText o nome acessível do botão continua sendo o rótulo', () => {
+    render(<Button isLoading>Salvar cliente</Button>);
+
+    const botao = screen.getByRole('button', { name: 'Salvar cliente' });
+    const repouso = screen.getByText('Salvar cliente');
+    expect(botao.textContent).toContain('Salvar cliente');
+    expect(repouso.className).toContain('opacity-0');
+    expect(repouso).not.toHaveAttribute('aria-hidden');
   });
 
   it('sem isLoading o botão sai igual ao de sempre: filho direto e nenhum aria-busy', () => {

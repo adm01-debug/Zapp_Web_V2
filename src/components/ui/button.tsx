@@ -48,17 +48,25 @@ export interface ButtonProps
 }
 
 // Estado de carregamento: o botão NÃO fica `disabled` (um botão desabilitado perde o
-// foco e o `title` deixa de aparecer) — o estado ocupado vai para o leitor de tela por
-// `aria-busy` + `aria-disabled`. O rótulo continua no DOM com `opacity-0`: isso
-// reserva a LARGURA (o botão não encolhe nem cresce ao carregar) e mantém o nome
-// acessível, já que `opacity-0` não sai da árvore de acessibilidade (sairia com
-// `invisible`/`hidden`). O giro do `Loader2` entra por cima, em posição absoluta.
-const rotuloCarregando = "inline-flex min-w-0 items-center justify-center gap-2 opacity-0";
-
-const indicadorCarregando = (
-  <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
-    <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
-  </span>
+// foco) — o estado ocupado vai para o leitor de tela por `aria-busy` + `aria-disabled`.
+// O rótulo de repouso continua no DOM com `opacity-0`: isso reserva a LARGURA (o botão
+// não encolhe nem cresce ao carregar) e mantém o nome acessível, já que `opacity-0` não
+// sai da árvore de acessibilidade (sairia com `invisible`/`hidden`). O indicador entra em
+// posição absoluta, por cima, sem mexer no layout; quando o chamador passa `loadingText`,
+// esse texto aparece visível no lugar do rótulo escondido (e vira o nome do botão).
+const ConteudoCarregando = ({ loadingText, children }: { loadingText?: string; children: React.ReactNode }) => (
+  <>
+    <span className="absolute inset-0 flex items-center justify-center gap-2">
+      <Loader2 aria-hidden="true" className="w-4 h-4 motion-safe:animate-spin" />
+      {loadingText}
+    </span>
+    <span
+      aria-hidden={loadingText ? true : undefined}
+      className="inline-flex min-w-0 items-center justify-center gap-2 opacity-0"
+    >
+      {children}
+    </span>
+  </>
 );
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -77,8 +85,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={isLoading || undefined}
         {...props}
       >
-        {carregando && indicadorCarregando}
-        {carregando ? <span className={rotuloCarregando}>{loadingText || children}</span> : children}
+        {carregando ? <ConteudoCarregando loadingText={loadingText}>{children}</ConteudoCarregando> : children}
       </Comp>
     );
   }
@@ -113,8 +120,7 @@ const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
         aria-disabled={isLoading || undefined}
         {...props}
       >
-        {isLoading && indicadorCarregando}
-        {isLoading ? <span className={rotuloCarregando}>{loadingText || children}</span> : children}
+        {isLoading ? <ConteudoCarregando loadingText={loadingText}>{children}</ConteudoCarregando> : children}
       </button>
     );
   }
