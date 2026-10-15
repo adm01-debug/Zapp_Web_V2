@@ -118,7 +118,7 @@ jobs:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          # W48: sem git log nem merge-base; fetch-depth padrao (1) e suficiente.
           persist-credentials: false
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
