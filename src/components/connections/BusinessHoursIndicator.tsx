@@ -7,23 +7,127 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
-interface BusinessHoursIndicatorProps {
-  connectionId: string;
-  className?: string;
-  showLabel?: boolean;
+/*
+ * Helpers de janela de horário — puros, sem React e sem rede. Vivem aqui
+ * (arquivo leve do par) porque o `BusinessHoursDialog` valida com as mesmas
+ * regras que o selo usa: uma regra só, dois consumidores.
+ */
+
+/** Minutos desde a meia-noite para `HH:MM` (aceita `HH:MM:SS`). `null` = inválido. */
+export function minutosDoHorario(valor: string | null | undefined): number | null {
+  if (typeof valor !== 'string') return null;
+  const m = /^(\d{1,2}):(\d{2})/.exec(valor.trim());
+  if (!m) return null;
+  const horas = Number(m[1]);
+  const minutos = Number(m[2]);
+  if (horas > 23 || minutos > 59) return null;
+  return horas * 60 + minutos;
 }
 
-interface BusinessHoursStatus {
+export type TipoJanela = 'incompleta' | 'igual' | 'normal' | 'noturna';
+
+/**
+ * Classifica a janela do dia pelo par início/fim:
+ * - `noturna`: o fim é menor que o início (22:00 → 06:00), então a janela vira o dia;
+ * - `igual`: início e fim no mesmo minuto não é janela — é erro de cadastro;
+ * - `incompleta`: falta um dos dois horários ou o formato é inválido.
+ */
+export function classificarJanela(
+  abre: string | null | undefined,
+  fecha: string | null | undefined,
+): TipoJanela {
+  const inicio = minutosDoHorario(abre);
+  const fim = minutosDoHorario(fecha);
+  if (inicio === null || fim === null) return 'incompleta';
+  if (inicio === fim) return 'igual';
+  return fim < inicio ? 'noturna' : 'normal';
+}
+
+/**
+ * O horário atual (`agoraMinutos`, em minutos desde a meia-noite no fuso da
+ * conexão) cai na janela do dia? Na janela noturna — início > fim — a
+ * comparação atravessa a meia-noite: aberto de `abre` até 23:59 **e** de 00:00
+ * até `fecha`. Extremos são inclusivos, como o selo sempre fez.
+ */
+export function estaNaJanela(
+  agoraMinutos: number,
+  abre: string | null | undefined,
+  fecha: string | null | undefined,
+): boolean {
+  const tipo = classificarJanela(abre, fecha);
+  if (tipo === 'incompleta' || tipo === 'igual') return false;
+  const inicio = minutosDoHorario(abre)!;
+  const fim = minutosDoHorario(fecha)!;
+  if (tipo === 'normal') return agoraMinutos >= inicio && agoraMinutos <= fim;
+  return agoraMinutos >= inicio || agoraMinutos <= fim;
+}
+
+export type MotivoDoDia =
+  | 'sem-configuracao'
+  | 'fechado-hoje'
+  | 'horario-invalido'
+  | 'dentro'
+  | 'fora';
+
+export interface ResumoDoDia {
   isOpen: boolean;
-  todayHours: string | null;
+  motivo: MotivoDoDia;
+  /** início > fim: a janela vira o dia. */
+  viraODia: boolean;
+  /** `HH:MM - HH:MM` quando há janela válida; `null` nos demais estados. */
+  intervalo: string | null;
 }
 
-async function fetchBusinessHoursStatus(connectionId: string): Promise<BusinessHoursStatus> {
-  // Get current time in Brazil timezone
-  const now = new Date();
-  const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+export interface LinhaDeHorario {
+  is_open: boolean;
+  open_time?: string | null;
+  close_time?: string | null;
+}
+
+/**
+ * Traduz a linha de `business_hours` do dia em estado do selo. Sem linha para
+ * hoje não há configuração: a conexão é tratada como aberta (comportamento da
+ * V2). Início igual ao fim é cadastro inválido — o selo não inventa "aberto".
+ */
+export function resumoDoDia(
+  dia: LinhaDeHorario | null | undefined,
+  agoraMinutos: number,
+): ResumoDoDia {
+  if (!dia) {
+    return { isOpen: true, motivo: 'sem-configuracao', viraODia: false, intervalo: null };
+  }
+  if (!dia.is_open) {
+    return { isOpen: false, motivo: 'fechado-hoje', viraODia: false, intervalo: null };
+  }
+
+  const tipo = classificarJanela(dia.open_time, dia.close_time);
+  if (tipo === 'incompleta' || tipo === 'igual') {
+    return { isOpen: false, motivo: 'horario-invalido', viraODia: false, intervalo: null };
+  }
+
+  const abre = (dia.open_time ?? '').slice(0, 5);
+  const fecha = (dia.close_time ?? '').slice(0, 5);
+  const dentro = estaNaJanela(agoraMinutos, dia.open_time, dia.close_time);
+
+  return {
+    isOpen: dentro,
+    motivo: dentro ? 'dentro' : 'fora',
+    viraODia: tipo === 'noturna',
+    intervalo: `${abre} - ${fecha}`,
+  };
+}
+
+/** Minutos desde a meia-noite no fuso America/Sao_Paulo. */
+function minutosAgoraEmSaoPaulo(agora: Date = new Date()): number {
+  const brasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  return brasil.getHours() * 60 + brasil.getMinutes();
+}
+
+async function fetchBusinessHoursStatus(connectionId: string): Promise<ResumoDoDia> {
+  // Dia e hora atuais no fuso da operação (America/Sao_Paulo).
+  const brazilTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   const currentDay = brazilTime.getDay();
-  const currentTimeStr = brazilTime.toTimeString().slice(0, 5); // HH:MM
+  const agoraMinutos = minutosAgoraEmSaoPaulo();
 
   // limit(1) em vez de single(): single() força o header
   // "Accept: application/vnd.pgrst.object+json", que faz o PostgREST
@@ -45,23 +149,26 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<BusinessH
     throw error;
   }
 
-  const data = rows?.[0] ?? null;
+  return resumoDoDia(rows?.[0] ?? null, agoraMinutos);
+}
 
-  if (!data) {
-    // No configuration = assume open
-    return { isOpen: true, todayHours: null };
+function textoDoTooltip(resumo: ResumoDoDia): string {
+  switch (resumo.motivo) {
+    case 'sem-configuracao':
+      return 'Sem horário configurado';
+    case 'fechado-hoje':
+      return 'Horário hoje: Fechado hoje';
+    case 'horario-invalido':
+      return 'Horário de hoje inválido: início e fim iguais — ajuste em Horário de Atendimento';
+    default:
+      return `Horário hoje: ${resumo.intervalo}${resumo.viraODia ? ' (vira o dia)' : ''}`;
   }
+}
 
-  if (!data.is_open) {
-    return { isOpen: false, todayHours: 'Fechado hoje' };
-  }
-
-  // Check if current time is within business hours
-  const openTime = (data.open_time ?? '').slice(0, 5);
-  const closeTime = (data.close_time ?? '').slice(0, 5);
-  const isWithinHours = currentTimeStr >= openTime && currentTimeStr <= closeTime;
-
-  return { isOpen: isWithinHours, todayHours: `${openTime} - ${closeTime}` };
+interface BusinessHoursIndicatorProps {
+  connectionId: string;
+  className?: string;
+  showLabel?: boolean;
 }
 
 export function BusinessHoursIndicator({
@@ -84,7 +191,7 @@ export function BusinessHoursIndicator({
     return null;
   }
 
-  const { isOpen, todayHours } = data;
+  const { isOpen } = data;
 
   return (
     <TooltipProvider>
@@ -116,11 +223,7 @@ export function BusinessHoursIndicator({
         <TooltipContent side="bottom" className="text-xs">
           <div className="flex items-center gap-2">
             <Clock className="w-3 h-3" />
-            {todayHours ? (
-              <span>Horário hoje: {todayHours}</span>
-            ) : (
-              <span>Sem horário configurado</span>
-            )}
+            <span>{textoDoTooltip(data)}</span>
           </div>
         </TooltipContent>
       </Tooltip>

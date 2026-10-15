@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { Loader2, Clock, MessageSquare, Save, Copy } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useBusinessHours, BusinessHour, AwayMessage } from '@/hooks/business/useBusinessHours';
+import { classificarJanela } from './BusinessHoursIndicator';
 
 interface BusinessHoursDialogProps {
   open: boolean;
@@ -34,6 +35,45 @@ const DAYS_OF_WEEK = [
   { value: 5, label: 'Sexta-feira', short: 'Sex' },
   { value: 6, label: 'Sábado', short: 'Sáb' },
 ];
+
+/**
+ * Coluna do PL-04 (`away_messages.enabled`), a trava do envio automático.
+ * Enquanto a migration do PL-04 não estiver integrada, a linha lida do banco
+ * não traz a coluna: o interruptor aparece desabilitado, com "Disponível em
+ * breve" — a tela não promete envio que ainda não existe.
+ */
+export const COLUNA_ENVIO_AUTOMATICO = 'enabled';
+
+export function envioAutomaticoDisponivel(awayMessage: unknown): boolean {
+  return (
+    typeof awayMessage === 'object' &&
+    awayMessage !== null &&
+    COLUNA_ENVIO_AUTOMATICO in awayMessage &&
+    (awayMessage as Record<string, unknown>)[COLUNA_ENVIO_AUTOMATICO] !== undefined
+  );
+}
+
+/** O PL-04 acrescenta `enabled` ao que o hook já salva. */
+export type AwayMessageComEnvio = AwayMessage & { enabled?: boolean };
+
+/** A mensagem como o cliente a recebe, com as variáveis preenchidas de exemplo. */
+export function resolverVariaveisExemplo(
+  texto: string,
+  valores: { nome: string; abertura: string; fechamento: string },
+): string {
+  return texto
+    .replace(/\{nome\}/g, valores.nome)
+    .replace(/\{horario_abertura\}/g, valores.abertura)
+    .replace(/\{horario_fechamento\}/g, valores.fechamento);
+}
+
+/** Erro de cadastro da janela do dia (`null` = janela válida). */
+export function erroDaJanela(abre: string, fecha: string): string | null {
+  const tipo = classificarJanela(abre, fecha);
+  if (tipo === 'igual') return 'Início e fim não podem ser iguais — ajuste o horário deste dia.';
+  if (tipo === 'incompleta') return 'Informe início e fim no formato HH:MM.';
+  return null;
+}
 
 export function BusinessHoursDialog({
   open,
@@ -56,6 +96,36 @@ export function BusinessHoursDialog({
     is_enabled: true 
   });
 
+  // Envio automático: só existe quando a coluna do PL-04 está na linha lida.
+  const envioDisponivel = envioAutomaticoDisponivel(fetchedAway);
+  const [envioRascunho, setEnvioRascunho] = useState<boolean | null>(null);
+  const envioAutomatico = envioDisponivel
+    ? envioRascunho ?? Boolean((fetchedAway as Record<string, unknown>)[COLUNA_ENVIO_AUTOMATICO])
+    : false;
+
+  // Jornada inválida (início igual ao fim) não pode ser salva: o selo ao lado da
+  // conexão mostraria "Fechado" com um horário que o usuário acha que cadastrou.
+  const errosPorDia = useMemo(
+    () =>
+      localHours
+        .filter((h) => h.is_open)
+        .map((h) => ({ day: h.day_of_week, erro: erroDaJanela(h.open_time, h.close_time) }))
+        .filter((item): item is { day: number; erro: string } => item.erro !== null),
+    [localHours],
+  );
+  const temJornadaInvalida = errosPorDia.length > 0;
+
+  // Prévia: a mensagem como o cliente a recebe, com as variáveis preenchidas
+  // pelo horário do primeiro dia aberto (valores de exemplo).
+  const diaExemplo =
+    localHours.find((h) => h.is_open && classificarJanela(h.open_time, h.close_time) === 'normal') ??
+    localHours.find((h) => h.is_open && classificarJanela(h.open_time, h.close_time) === 'noturna');
+  const previa = resolverVariaveisExemplo(localAway.content, {
+    nome: 'Ana',
+    abertura: diaExemplo?.open_time ?? '--:--',
+    fechamento: diaExemplo?.close_time ?? '--:--',
+  });
+
   // Sync local state when data is fetched
   useEffect(() => {
     if (fetchedHours.length > 0) {
@@ -70,7 +140,12 @@ export function BusinessHoursDialog({
   }, [fetchedAway]);
 
   const handleSave = async () => {
-    await saveSettings(localHours, localAway);
+    // O `enabled` (coluna do PL-04) entra no que já é salvo; enquanto a coluna
+    // não existir, o interruptor fica desabilitado e nada extra é enviado.
+    const away: AwayMessageComEnvio = envioDisponivel
+      ? { ...localAway, enabled: envioAutomatico }
+      : localAway;
+    await saveSettings(localHours, away);
     onOpenChange(false);
   };
 
@@ -196,6 +271,13 @@ export function BusinessHoursDialog({
                                 className="w-28"
                               />
                             </div>
+                            {errosPorDia.find((e) => e.day === hour.day_of_week)?.erro ? (
+                              <p role="alert" className="text-xs text-destructive ml-auto">
+                                {errosPorDia.find((e) => e.day === hour.day_of_week)?.erro}
+                              </p>
+                            ) : classificarJanela(hour.open_time, hour.close_time) === 'noturna' ? (
+                              <span className="text-xs text-muted-foreground ml-auto">vira o dia</span>
+                            ) : null}
                             <Button variant="ghost" size="icon" className="ml-auto" onClick={() => copyToAllDays(hour.day_of_week)} title="Copiar para todos os dias">
                               <Copy className="w-4 h-4" />
                             </Button>
@@ -211,17 +293,26 @@ export function BusinessHoursDialog({
             </TabsContent>
 
             <TabsContent value="message" className="space-y-4 mt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <Label>Mensagem automática fora do horário</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Esta mensagem será enviada automaticamente quando clientes entrarem em contato fora do expediente.
+                  <Label htmlFor="envio-automatico-ausencia">Enviar mensagem de ausência</Label>
+                  <p id="regra-envio-ausencia" className="text-xs text-muted-foreground">
+                    No máximo 1 mensagem por contato a cada 24 h, somente quando a conversa estiver
+                    fora do horário de atendimento.
                   </p>
+                  {!envioDisponivel && (
+                    <p className="text-xs text-muted-foreground">
+                      Disponível em breve: o envio automático ainda não está ligado nesta versão.
+                    </p>
+                  )}
                 </div>
                 <Switch
-                  checked={localAway.is_enabled}
-                  onCheckedChange={(checked) => setLocalAway((prev) => ({ ...prev, is_enabled: checked }))}
-                  aria-label="Ativar mensagem automática fora do horário"
+                  id="envio-automatico-ausencia"
+                  checked={envioAutomatico}
+                  disabled={!envioDisponivel}
+                  onCheckedChange={(checked) => setEnvioRascunho(checked)}
+                  aria-label="Enviar mensagem de ausência"
+                  aria-describedby="regra-envio-ausencia"
                 />
               </div>
 
@@ -229,7 +320,6 @@ export function BusinessHoursDialog({
                 placeholder="Digite a mensagem de ausência..."
                 value={localAway.content}
                 onChange={(e) => setLocalAway((prev) => ({ ...prev, content: e.target.value }))}
-                disabled={!localAway.is_enabled}
                 className="min-h-[150px]"
               />
 
@@ -243,13 +333,26 @@ export function BusinessHoursDialog({
                   ))}
                 </div>
               </div>
+
+              <div className="p-4 rounded-lg border border-border">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Prévia com valores de exemplo (nome "Ana" e o horário cadastrado):
+                </p>
+                {localAway.content.trim().length > 0 ? (
+                  <p className="text-sm whitespace-pre-wrap">{previa}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Digite a mensagem para ver como o cliente vai recebê-la.
+                  </p>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={isSaving || isLoading}>
+          <Button onClick={handleSave} disabled={isSaving || isLoading || temJornadaInvalida}>
             {isSaving ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</>
             ) : (
