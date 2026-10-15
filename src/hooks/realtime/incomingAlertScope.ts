@@ -69,18 +69,14 @@ export function setTeamAlertsEnabled(enabled: boolean): void {
  * Preferência "avisar também da equipe", para o interruptor do painel.
  *
  * Devolve o valor atual e um setter que mantém o módulo e a tela em sincronia.
- * Na montagem relê o valor salvo: se outra aba (ou outra montagem) tiver mudado,
- * o interruptor não fica mostrando o valor velho.
+ * O valor inicial sai do módulo (`incomingAlertScope`), que já nasce com a
+ * escolha salva — não há efeito relendo depois da montagem.
  */
 export function useTeamAlertsPreference(): {
   teamAlertsEnabled: boolean;
   setTeamAlertsEnabled: (enabled: boolean) => void;
 } {
   const [teamAlertsEnabled, setEnabled] = useState(() => getIncomingAlertScope().teamAlerts);
-
-  useEffect(() => {
-    setEnabled(getIncomingAlertScope().teamAlerts);
-  }, []);
 
   const update = useCallback((enabled: boolean) => {
     setTeamAlertsEnabled(enabled);
@@ -98,9 +94,9 @@ export function resetIncomingAlertScope(): void {
  * Publica a identidade de quem está logado — `profile.id`, que é o valor de
  * `contacts.assigned_to` (nunca o auth user id).
  *
- * Quem TEM o dado publica: o shell recebe `profile` como prop e é renderizado
- * também em testes de contrato SEM AuthProvider — pedir o contexto aqui
- * derrubaria a tela inteira por causa do aviso.
+ * Quem TEM o dado publica: quem monta o consumidor global já tem `profile` em
+ * mãos (`App.tsx`, via `useAuth()`) — pedir o AuthProvider aqui derrubaria a
+ * tela inteira por causa do aviso em telas que não o têm.
  *
  * Sem ninguém publicado, `shouldAlertIncomingMessage` NÃO filtra (falha
  * aberta): avisar a mais é melhor que emudecer o aviso do app inteiro.
