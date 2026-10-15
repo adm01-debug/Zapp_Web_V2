@@ -122,10 +122,49 @@ describe('SSOCallback — erros do provedor em pt-BR (t_f7e0f50f)', () => {
     ).toBeTruthy();
   });
 
+  it('traduz error_code=server_error', () => {
+    renderComQuery('?error_code=server_error');
+
+    expect(
+      screen.getByText('O servidor de autenticação falhou. Tente novamente em instantes.'),
+    ).toBeTruthy();
+  });
+
   it('anuncia o erro com role=alert', () => {
     renderComQuery('?error_code=signup_disabled');
 
     expect(screen.getByRole('alert').textContent).toContain('Sua conta não está liberada');
+  });
+});
+
+describe('SSOCallback — error_code desconhecido nunca aparece cru (t_0ffae93f)', () => {
+  it('mostra a descrição sanitizada quando há error_description', () => {
+    renderComQuery(
+      '?error_code=unexpected_failure&error_description=' +
+        encodeURIComponent('Falha "temporária" no provedor'),
+    );
+
+    expect(screen.getByText('Falha temporária no provedor')).toBeTruthy();
+    expect(screen.queryByText(/unexpected_failure/)).toBeNull();
+  });
+
+  it('prefere a tradução do error ao código desconhecido (cenário da recusa)', () => {
+    renderComQuery(
+      '?error=server_error&error_code=unexpected_failure&error_description=' +
+        encodeURIComponent('Database error'),
+    );
+
+    expect(
+      screen.getByText('O servidor de autenticação falhou. Tente novamente em instantes.'),
+    ).toBeTruthy();
+    expect(screen.queryByText(/unexpected_failure/)).toBeNull();
+  });
+
+  it('cai no texto genérico quando só há error_code desconhecido', () => {
+    renderComQuery('?error_code=unexpected_failure');
+
+    expect(screen.getByText('Ocorreu um erro durante a autenticação')).toBeTruthy();
+    expect(screen.queryByText(/unexpected_failure/)).toBeNull();
   });
 });
 

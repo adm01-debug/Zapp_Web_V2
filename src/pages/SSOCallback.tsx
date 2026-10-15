@@ -27,10 +27,21 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
 };
 
 // PKCE flow returns error params in the query string, not the hash fragment.
-// `error_code` vem primeiro: é o identificador estável que o provedor usa.
+// Ordem de resolução: traduz `error_code`, depois `error`, depois
+// `error_description`. Código desconhecido nunca aparece cru: sem tradução,
+// cai na descrição (ou no `error`) sanitizada e só então no texto genérico.
 function getUrlError(): string | null {
   const p = new URLSearchParams(window.location.search);
-  return p.get('error_code') || p.get('error_description') || p.get('error');
+  const errorCode = p.get('error_code');
+  const error = p.get('error');
+  const description = p.get('error_description');
+  if (errorCode && traduzirErroAuth(errorCode)) return errorCode;
+  if (error && traduzirErroAuth(error)) return error;
+  if (description && traduzirErroAuth(description)) return description;
+  if (description || error) return description || error;
+  // Só há um código desconhecido: ele nunca aparece cru — cai no genérico.
+  if (errorCode) return GENERIC_ERROR;
+  return null;
 }
 
 // Mensagem conhecida do provedor vira pt-BR; desconhecida segue para sanitização.

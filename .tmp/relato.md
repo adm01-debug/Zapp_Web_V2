@@ -1,36 +1,47 @@
 Especialista: iris
 
 ## O que mudou e por quê
-- src/pages/SSOCallback.tsx: erros do provedor viram pt-BR. `traduzirErroAuth` mapeia
-  `error_code`/`error` conhecidos (`signup_disabled`, `signups not allowed`, `user_banned`,
-  `access_denied`, `server_error`) para texto em português; `sanitizeAuthError` mantém o corte
-  de 200 caracteres e a remoção de caracteres de marcação para o que não é reconhecido.
-  `getUrlError` passa a ler `error_code` antes de `error_description`/`error`.
-- src/pages/SSOCallback.tsx: um único redirecionamento e um único toast. `concluirLogin` usa
-  `loginConcluidoRef` para não repetir quando `getSession().then` e `onAuthStateChange(SIGNED_IN)`
-  chegam os dois; o `setTimeout(navigate, 1500)` fica guardado em `redirecionamentoRef`.
-- src/pages/SSOCallback.tsx: timers limpos ao desmontar — o cleanup do efeito limpa o timer de
-  timeout e o de redirecionamento, com um flag `ativo` contra `setState` após desmontar.
-- src/pages/SSOCallback.tsx: acessibilidade — wrapper passa a ser `<main>`; loading e sucesso com
-  `role="status"`/`aria-live="polite"`, erro com `role="alert"`/`aria-live="assertive"`.
-- src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx: provas novas renderizando a TELA real
-  (sem exportar helper): tradução de `error_code=signup_disabled`, `user_banned`, `access_denied` e
-  de 'Signups not allowed for this instance' por `error_description`; `role="alert"` no erro;
-  sucesso com `role="status"`; navegação e toast de sucesso contados UMA vez quando `getSession` e
-  `SIGNED_IN` disparam juntos; timer limpo ao desmontar (não navega depois do unmount).
+- src/pages/SSOCallback.tsx (`getUrlError`): ordem de resolução vira traduzir
+  `error_code`, depois `error`, depois `error_description`; sem tradução conhecida,
+  cai na `error_description` (ou no `error`) sanitizada; só com um código
+  desconhecido sozinho cai no texto genérico — código desconhecido nunca aparece
+  cru. Motivo: ponto 1 da recusa (regressão visível com `unexpected_failure`).
+- src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx: 4 testes novos
+  renderizando a TELA real — `error_code=server_error` traduzido; código
+  desconhecido + descrição mostra a descrição sanitizada; cenário da recusa
+  (`error=server_error` + code desconhecido) mostra a tradução do `error`;
+  código desconhecido sozinho mostra o genérico. Motivo: ponto 2 da recusa.
 
 ## Prova
-- vermelho antes: `git show HEAD~1:src/pages/SSOCallback.tsx > src/pages/SSOCallback.tsx && npx vitest run src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx`
-  → `Test Files 1 failed (1); Tests 8 failed | 3 passed (11)` (os 3 antigos passam porque a
-  sanitização já existia; os testes novos falham sem a correção).
-- verde depois: `npx vitest run src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx`
-  → `Test Files 1 passed (1); Tests 11 passed (11)`.
+- vermelho antes (só os testes novos, código sem a correção):
+  `npx vitest run src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx`
+  → `Test Files 1 failed (1); Tests 3 failed | 12 passed (15)`
+- verde depois (com a correção):
+  `npx vitest run src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx`
+  → `Test Files 1 passed (1); Tests 15 passed (15)`
 
-## Critério de pronto
-1. Erros em pt-BR: `traduzirErroAuth` em src/pages/SSOCallback.tsx + testes de tradução (signup_disabled, user_banned, access_denied, 'Signups not allowed').
-2. Uma navegação só: `loginConcluidoRef`/`redirecionamentoRef` em src/pages/SSOCallback.tsx + teste 'navega e avisa uma vez só quando getSession e SIGNED_IN chegam juntos'.
-3. Anunciado a leitores de tela: `<main>` e `role="status"/"alert"` em src/pages/SSOCallback.tsx + testes de `role="alert"` e `role="status"`.
-4. `zapp-verify . --rapido` verde: rodado pelo `hermes-tarefa-fechar`.
+## Pontos do revisor
+- Ponto 1: resolvido — src/pages/SSOCallback.tsx (`getUrlError`): tenta traduzir
+  `error_code`, depois `error`, depois `error_description`; fallback é a descrição
+  (ou o `error`) sanitizada e só então o GENERIC_ERROR; código desconhecido
+  sozinho retorna o genérico em vez do código cru. Prova: os 3 testes novos do
+  bloco `error_code desconhecido nunca aparece cru (t_0ffae93f)` falham sem a
+  correção e passam com ela.
+- Ponto 2: resolvido — testes novos em
+  src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx: descrição sanitizada
+  com code desconhecido, genérico sem descrição, `error_code=server_error`
+  traduzido, mais o cenário exato da recusa. Prova: mesma execução acima.
 
 ## O que NÃO fiz e por quê
-- Nada fora dos dois arquivos listados no cartão.
+- Tradução, redirecionamento único, limpeza de timers e role/main da entrega
+  anterior: mantidos sem tocar (a recusa diz que estão corretos e provados).
+- Workspace: trabalhei na branch do cartão
+  (`v2/sso-callback-ptbr-2610140725f4b9`, base 338a420d1e + commit f8f1945547
+  deste cartão, sem commit alheio) porque o `hermes-tarefa-iniciar` está
+  congelado e a guarda bloqueia `git worktree add`; nada foi trazido de outro
+  cartão. Arquivos no diff contra a base: só os 3 listados abaixo.
+
+## Arquivos (`git diff --name-only 338a420d1e...HEAD`)
+- .tmp/relato.md
+- src/pages/SSOCallback.tsx
+- src/pages/__tests__/SSOCallback.erro-sanitizado.test.tsx
