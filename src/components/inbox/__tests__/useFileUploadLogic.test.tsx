@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getPublicUrl: vi.fn(),
   remove: vi.fn(),
   tableFrom: vi.fn(),
+  scanInvoke: vi.fn(),
   sendOutboundMessage: vi.fn(),
   toastInfo: vi.fn(),
   toastSuccess: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     storage: { from: mocks.storageFrom },
     from: mocks.tableFrom,
+    functions: { invoke: mocks.scanInvoke },
   },
 }));
 
@@ -95,6 +97,11 @@ beforeEach(() => {
   mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: LOCATOR_URL } });
   mocks.remove.mockResolvedValue({ error: null });
   mocks.sendOutboundMessage.mockResolvedValue({ id: 'msg-1', status: 'sent', externalId: 'ext-1', idempotent: false });
+  // O envio passa pelo `file-security-scanner` antes de gravar: padrão = varreu e passou.
+  mocks.scanInvoke.mockResolvedValue({
+    data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-1', message: 'Arquivo verificado.' },
+    error: null,
+  });
   // Padrao conservador: nenhuma linha encontrada so quando o teste provar isso.
   mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
 });

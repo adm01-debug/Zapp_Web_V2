@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   tableFrom: vi.fn(),
   sendOutboundMessage: vi.fn(),
+  scanInvoke: vi.fn(),
   toastInfo: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -40,6 +41,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     storage: { from: mocks.storageFrom },
     from: mocks.tableFrom,
+    functions: { invoke: mocks.scanInvoke },
   },
 }));
 
@@ -105,6 +107,11 @@ beforeEach(() => {
   mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: LOCATOR_URL } });
   mocks.remove.mockResolvedValue({ error: null });
   mocks.sendOutboundMessage.mockResolvedValue(sentOk);
+  // O envio passa pelo `file-security-scanner` antes de gravar: padrão = varreu e passou.
+  mocks.scanInvoke.mockResolvedValue({
+    data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-1', message: 'Arquivo verificado.' },
+    error: null,
+  });
   // Linha persistida: o cache de upload pendente é mantido para o retry (R2-INB-006).
   mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
 });

@@ -20,6 +20,7 @@ import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { parseScanInvocation, ScanBlockedError } from '@/lib/scanResponse';
 
 /** Bucket privado do Talk X (CAP-059/X061). */
 export const TALKX_MEDIA_BUCKET = 'talkx-media';
@@ -200,6 +201,26 @@ export function useTalkXMediaUpload(): TalkXMediaUpload {
     // Sem perfil não há prefixo do contrato `<profile_id>/<uuid>-<arquivo>`:
     // recusa ANTES de qualquer chamada ao Storage.
     if (!profileId) throw new Error('Seu perfil não foi identificado. Entre novamente para enviar a mídia.');
+
+    // Varredura de segurança ANTES de gravar no bucket (HZ1-02: a mídia vai para o
+    // cliente). Bloqueio e falha de varredura lançam: nada é gravado e o dropzone mostra
+    // a mensagem no alerta em linha (por isso não há toast aqui — evita aviso duplicado).
+    const scanForm = new FormData();
+    scanForm.append('file', file, file.name);
+    const scan = await (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('file-security-scanner', {
+          body: scanForm,
+        });
+        return await parseScanInvocation({
+          data: data as Record<string, unknown> | null | undefined,
+          error,
+        });
+      } catch (err) {
+        return await parseScanInvocation({ data: null, error: err });
+      }
+    })();
+    if (scan.status === 'error') throw new ScanBlockedError(scan);
 
     const dimensions = mediaType === 'image' || mediaType === 'video' ? await readMediaDimensions(file) : null;
     const objectPath = talkxMediaObjectPath(profileId, file.name);
