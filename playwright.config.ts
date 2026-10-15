@@ -173,10 +173,6 @@ export default defineConfig({
       // dedicado porque o catch-all `chromium-authenticated` depende de `setup`.
       name: 'chromium-skins',
       testMatch: /skins-[a-z0-9-]*\.spec\.ts/,
-      // A spec roda contra o dev server (Vite) e a máquina de trabalho vive a load alto: um
-      // boot de página que não baixa o módulo derruba o teste por motivo de infraestrutura,
-      // não por comportamento. Uma repetição absorve isso sem afrouxar asserção nenhuma.
-      retries: 1,
       use: { ...devices['Desktop Chrome'] },
     },
     {
