@@ -131,4 +131,71 @@ describe('useAgentPresence', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
     expect(h.query.upsert.mock.calls.length).toBe(callsAfterUnmount);
   });
+
+  it('vira away após 10 min sem interação e volta a online na primeira interação', async () => {
+    const mod = await load();
+    const { result } = renderHook(() => {
+      mod.useAgentPresenceJoin('u1');
+      return mod.useMyPresenceStatus();
+    });
+    await flush();
+    expect(result.current).toBe('online');
+
+    // 10 min sem mouse/teclado/toque: publica 'away'
+    await act(async () => { await vi.advanceTimersByTimeAsync(10 * 60_000); });
+    expect(result.current).toBe('away');
+    expect(h.query.upsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ user_id: 'u1', status: 'away' })
+    );
+
+    // primeira interação: volta a 'online'
+    act(() => { window.dispatchEvent(new Event('mousemove')); });
+    expect(result.current).toBe('online');
+    expect(h.query.upsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ user_id: 'u1', status: 'online' })
+    );
+  });
+
+  it('escolha manual de away/offline não é sobrescrita pela inatividade nem pela interação', async () => {
+    const mod = await load();
+    const { result } = renderHook(() => {
+      mod.useAgentPresenceJoin('u1');
+      return mod.useMyPresenceStatus();
+    });
+    await flush();
+
+    act(() => mod.setMyPresenceStatus('offline'));
+    expect(result.current).toBe('offline');
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60_000); });
+    expect(result.current).toBe('offline');
+    expect(h.query.upsert.mock.calls.filter((c) => c[0]?.status === 'away')).toHaveLength(0);
+
+    act(() => { window.dispatchEvent(new Event('keydown')); });
+    expect(result.current).toBe('offline');
+  });
+
+  it('registra os listeners de interação como passivos e os remove no desmontar', async () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const mod = await load();
+    const { unmount } = renderHook(() => mod.useAgentPresenceJoin('u1'));
+    await flush();
+
+    const registered = addSpy.mock.calls.filter(([t]) =>
+      ['mousemove', 'keydown', 'touchstart'].includes(t as string)
+    );
+    expect(registered).toHaveLength(3);
+    for (const [, , opts] of registered) {
+      expect(opts).toMatchObject({ passive: true });
+    }
+
+    unmount();
+
+    for (const [t, fn] of registered) {
+      expect(removeSpy).toHaveBeenCalledWith(t, fn);
+    }
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
 });
