@@ -43,7 +43,16 @@ Verificacao:
 - node --test scripts/ci/edge-coverage-authz.unit.mjs -> pass 8, fail 0
 - node --test scripts/ci/docs-estado-registry-convention.unit.mjs -> pass 11, fail 0
 - node --test scripts/ci/evolution-edge-fixes.unit.mjs -> pass 14, fail 0
-- zapp-verify full <ws>: em andamento no fechamento; resultado no comentario do cartao
+- zapp-verify full <ws> (02:00-02:19): db_guard OK, tipos OK (14s),
+  lint OK (117s), migrations OK; testes: 11901 passed, 1 falha
+  PRE-EXISTENTE e alheia ao diff em
+  src/components/talkx/__tests__/RuleValueInput.test.tsx
+  ("em breve": botao "Novo segmento" nao encontrado) + erro
+  serializado em RealtimeInboxView.selectedMessagesError.test.tsx.
+  Prova de independencia: meus commits tocam so .md; o teste TalkX
+  falha isolado (bun x vitest run no arquivo: 1 failed, 4 passed).
+  Base do WS esta 236 commits atras do dia/2026-10-14 — falha e da
+  base velha, fora do escopo (nao corrigida).
 - git diff --stat do meu commit: 2 files changed, 3 insertions, 3 deletions (2971 chars)
 
 O que NAO fiz e por que:
