@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
@@ -67,7 +67,7 @@ interface WarRoomAgentBase {
 export function useWarRoomData() {
   const presence = useAgentPresenceMap();
 
-  const { data: agentsBase = [] } = useQuery({
+  const { data: agentsBase = [], isLoading: carregandoAgentes, error: erroDosAgentes, refetch: recarregarAgentes } = useQuery({
     queryKey: ['warroom-agents'],
     queryFn: async (): Promise<WarRoomAgentBase[]> => {
       const { data: profiles, error } = await supabase
@@ -134,7 +134,7 @@ export function useWarRoomData() {
     };
   }), [agentsBase, presence]);
 
-  const { data: queues = [] } = useQuery({
+  const { data: queues = [], isLoading: carregandoFilas, error: erroDasFilas, refetch: recarregarFilas } = useQuery({
     queryKey: ['warroom-queues'],
     queryFn: async (): Promise<WarRoomQueue[]> => {
       const { data: dbQueues, error } = await supabase
@@ -184,7 +184,24 @@ export function useWarRoomData() {
     refetchInterval: 30000,
   });
 
-  return { agents, queues, alerts: [] as WarRoomAlert[] };
+  // A tela precisa distinguir "ainda carregando" e "a leitura falhou" de "medido e
+  // deu zero": sem isso o War Room mostrava 0 em tudo (e cobrava ação) enquanto as
+  // duas consultas ainda estavam no ar ou tinham falhado.
+  const recarregar = useCallback(() => {
+    void recarregarAgentes();
+    void recarregarFilas();
+  }, [recarregarAgentes, recarregarFilas]);
+
+  const isLoading = carregandoAgentes || carregandoFilas;
+
+  return {
+    agents,
+    queues,
+    alerts: [] as WarRoomAlert[],
+    isLoading,
+    error: (isLoading ? null : (erroDosAgentes ?? erroDasFilas ?? null)) as { message?: string } | null,
+    refetch: recarregar,
+  };
 }
 
 export interface WarRoomMetrics {

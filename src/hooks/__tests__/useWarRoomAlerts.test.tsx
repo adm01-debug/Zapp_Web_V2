@@ -346,3 +346,63 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
     expect(erroNoConsole).toHaveBeenCalled();
   });
 });
+
+// P2-B: `dismissAlert` fazia `await ...` e engolia o `error`. A tela marcava o alerta
+// como dispensado (some da lista) mesmo quando o UPDATE era recusado — RLS, rede, etc.
+describe('useWarRoomAlerts — dispensar alerta devolve o que o banco respondeu', () => {
+  let erroDoUpdate: { message: string } | null = null;
+
+  beforeEach(() => {
+    erroDoUpdate = null;
+    mockFrom.mockImplementation((tabela: string) => {
+      if (tabela === 'warroom_alerts') {
+        return {
+          select: () => ({
+            eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+          }),
+          update: () => ({ eq: () => Promise.resolve({ error: erroDoUpdate }) }),
+          insert: () => Promise.resolve({ error: null }),
+        };
+      }
+      if (tabela === 'conversation_sla') {
+        return {
+          select: () => ({ eq: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }) }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => Promise.resolve({ data: [], error: null }),
+          or: () => Promise.resolve({ data: [], error: null }),
+        }),
+        insert: () => Promise.resolve({ error: null }),
+        update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+      };
+    });
+  });
+
+  it('devolve o erro do banco e NÃO invalida a lista (o alerta não sai da tela por engano)', async () => {
+    erroDoUpdate = { message: 'new row violates row-level security policy' };
+
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.alerts).toBeDefined());
+    const invalidar = vi.spyOn(cliente!, 'invalidateQueries');
+
+    let retorno: { error: unknown } | undefined;
+    await act(async () => { retorno = await result.current.dismissAlert('a1'); });
+
+    expect(retorno?.error).toEqual({ message: 'new row violates row-level security policy' });
+    expect(invalidar).not.toHaveBeenCalled();
+  });
+
+  it('sucesso devolve erro nulo e invalida a lista', async () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.alerts).toBeDefined());
+    const invalidar = vi.spyOn(cliente!, 'invalidateQueries');
+
+    let retorno: { error: unknown } | undefined;
+    await act(async () => { retorno = await result.current.dismissAlert('a1'); });
+
+    expect(retorno?.error).toBeNull();
+    expect(invalidar).toHaveBeenCalled();
+  });
+});
