@@ -16,6 +16,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+const roleState = vi.hoisted(() => ({
+  isAdmin: true,
+  isSupervisor: true,
+  loading: false,
+}));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
+
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
@@ -23,8 +30,17 @@ vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.
 import { IntegrationKeysSection } from '@/components/settings/IntegrationKeysSection';
 import { toast } from 'sonner';
 
+const CHAVE_REGISTRADA = 'xi-chave-registrada';
+
 const settingsIniciais = [
-  { id: 's1', key: 'elevenlabs_api_key', value: 'xi-chave-registrada', description: null },
+  {
+    id: 's1',
+    key: 'elevenlabs_api_key',
+    value: CHAVE_REGISTRADA,
+    description: null,
+    created_at: '2026-09-01T12:00:00.000Z',
+    updated_at: '2026-10-01T12:00:00.000Z',
+  },
 ];
 
 async function salvarNovaChave() {
@@ -35,6 +51,9 @@ async function salvarNovaChave() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  roleState.isAdmin = true;
+  roleState.isSupervisor = true;
+  roleState.loading = false;
   mockSelectAposUpsert.mockReturnValue({ single: mockSingle });
   mockOrder.mockResolvedValue({ data: settingsIniciais, error: null });
   mockSingle.mockResolvedValue({ data: settingsIniciais[0], error: null });
@@ -77,26 +96,52 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     });
     expect(toast.error).not.toHaveBeenCalled();
   });
+});
 
-  it('o botão olho alterna aria-label entre "Mostrar chave" e "Ocultar chave" com aria-pressed', async () => {
-    render(<IntegrationKeysSection />);
+describe('IntegrationKeysSection — seção só para admin', () => {
+  it('o supervisor (não admin) não vê a seção de chaves de integração', async () => {
+    roleState.isAdmin = false;
 
-    const botaoOlho = await screen.findByRole('button', {
-      name: /^Mostrar chave ElevenLabs API Key$/i,
+    const { container } = render(<IntegrationKeysSection />);
+
+    await waitFor(() => {
+      expect(mockOrder).toHaveBeenCalled();
     });
-    expect(botaoOlho).toBeInTheDocument();
-    expect(botaoOlho).toHaveAttribute('aria-pressed', 'false');
-
-    fireEvent.click(botaoOlho);
-
-    expect(screen.getByRole('button', { name: /^Ocultar chave ElevenLabs API Key$/i })).toBeInTheDocument();
-    expect(botaoOlho).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('Chaves de Integração')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Nova chave para substituir...')).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('axe não aponta violações no botão olho', async () => {
+  it('o admin não tem botão para revelar o valor e o segredo não vai para a tela', async () => {
     render(<IntegrationKeysSection />);
-    const botaoOlho = await screen.findByRole('button', { name: /^Mostrar chave ElevenLabs API Key$/i });
-    const results = await axe(botaoOlho);
-    expect(results).toHaveNoViolations();
+
+    expect(await screen.findByText(/Registrada \(não usada pelo TTS\)/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Mostrar chave/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ocultar chave/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/visib/i)).not.toBeInTheDocument();
+
+    const html = document.body.innerHTML;
+    expect(html).not.toContain(CHAVE_REGISTRADA);
+    expect(screen.queryByDisplayValue(CHAVE_REGISTRADA)).not.toBeInTheDocument();
+  });
+
+  it('o admin vê a data em que a chave foi registrada e segue podendo substituí-la', async () => {
+    render(<IntegrationKeysSection />);
+
+    const registrada = await screen.findByTestId('chave-elevenlabs_api_key-registrada');
+    expect(registrada).toHaveTextContent('Configurada em 01/10/2026');
+    expect(registrada).not.toHaveTextContent(CHAVE_REGISTRADA);
+
+    const campo = screen.getByPlaceholderText('Nova chave para substituir...');
+    expect(campo).toHaveAttribute('type', 'password');
+    fireEvent.change(campo, { target: { value: 'xi-nova-chave' } });
+    expect(screen.getByRole('button', { name: /salvar/i })).toBeEnabled();
+  });
+
+  it('axe não aponta violações de label na seção do admin', async () => {
+    render(<IntegrationKeysSection />);
+    await screen.findByTestId('chave-elevenlabs_api_key-registrada');
+    const results = await axe(document.body, { rules: { region: { enabled: false } } });
+    expect(results.violations.filter((v) => v.id === 'label')).toEqual([]);
   });
 });
