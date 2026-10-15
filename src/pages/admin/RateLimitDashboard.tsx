@@ -5,12 +5,14 @@ import {
   TrendingUp, TrendingDown, Clock, RefreshCw,
   BarChart3
 } from 'lucide-react';
-import { useRateLimitLogs } from '@/hooks/system/useRateLimitLogs';
+import { useRateLimitLogs, type RateLimitSortKey } from '@/hooks/system/useRateLimitLogs';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BlockedIPsPanel } from '@/components/security/BlockedIPsPanel';
 import { IPWhitelistPanel } from '@/components/security/IPWhitelistPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -27,8 +29,14 @@ import { ptBR } from 'date-fns/locale';
 
 export default function RateLimitDashboard() {
   const { isAdmin, isSupervisor } = useUserRole();
-  const { logs, stats, loading, refetch } = useRateLimitLogs(isAdmin || isSupervisor);
+  const {
+    logs, stats, loading, refetch,
+    filters, setFilters, resetFilters,
+    total, totalPages, error,
+  } = useRateLimitLogs(isAdmin || isSupervisor);
   const [activeTab, setActiveTab] = useState('overview');
+  const [ipBusca, setIpBusca] = useState('');
+  const [endpointBusca, setEndpointBusca] = useState('');
 
   if (!isAdmin && !isSupervisor) {
     return (
@@ -244,9 +252,103 @@ export default function RateLimitDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Logs de Rate Limiting</CardTitle>
-              <CardDescription>Últimas 100 requisições monitoradas</CardDescription>
+              <CardDescription>
+                {total === 0 ? 'Nenhum registro encontrado' : `Total de ${total} registros`}
+              </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="flex flex-wrap items-end gap-3 mb-4">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="rl-ip">Filtrar por IP</Label>
+                  <Input
+                    id="rl-ip"
+                    placeholder="Trecho do IP"
+                    value={ipBusca}
+                    onChange={e => setIpBusca(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="rl-endpoint">Filtrar por endpoint</Label>
+                  <Input
+                    id="rl-endpoint"
+                    placeholder="Trecho do endpoint"
+                    value={endpointBusca}
+                    onChange={e => setEndpointBusca(e.target.value)}
+                  />
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => setFilters({ ip: ipBusca, endpoint: endpointBusca })}
+                >
+                  Aplicar filtros
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => { setIpBusca(''); setEndpointBusca(''); resetFilters(); }}
+                >
+                  Limpar
+                </Button>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    aria-label="Somente bloqueados"
+                    checked={filters.blockedOnly}
+                    onChange={e => setFilters({ blockedOnly: e.target.checked })}
+                  />
+                  Somente bloqueados
+                </label>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="rl-ordem">Ordenar por</Label>
+                  <select
+                    id="rl-ordem"
+                    aria-label="Ordenar por"
+                    value={filters.sortBy}
+                    onChange={e => setFilters({ sortBy: e.target.value as RateLimitSortKey })}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    <option value="created_at">Data</option>
+                    <option value="ip_address">IP</option>
+                    <option value="endpoint">Endpoint</option>
+                    <option value="request_count">Requisições</option>
+                    <option value="blocked">Status</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="rl-direcao">Direção</Label>
+                  <select
+                    id="rl-direcao"
+                    aria-label="Direção da ordenação"
+                    value={filters.sortDir}
+                    onChange={e => setFilters({ sortDir: e.target.value as 'asc' | 'desc' })}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    <option value="desc">Decrescente</option>
+                    <option value="asc">Crescente</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="rl-pagina-tamanho">Itens por página</Label>
+                  <select
+                    id="rl-pagina-tamanho"
+                    aria-label="Itens por página"
+                    value={filters.pageSize}
+                    onChange={e => setFilters({ pageSize: Number(e.target.value) })}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+              {error && (
+                <p role="alert" className="mb-3 text-sm text-destructive">
+                  Não foi possível carregar os logs: {error}{' '}
+                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    Tentar de novo
+                  </Button>
+                </p>
+              )}
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -259,7 +361,7 @@ export default function RateLimitDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {logs.slice(0, 20).map((log) => (
+                    {logs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell>
                           <code className="font-mono text-sm">{log.ip_address}</code>
@@ -283,7 +385,14 @@ export default function RateLimitDashboard() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {logs.length === 0 && (
+                    {loading && logs.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          Carregando logs…
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {!loading && !error && logs.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           Nenhum log disponível
@@ -292,6 +401,27 @@ export default function RateLimitDashboard() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  Página {filters.page} de {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setFilters({ page: filters.page - 1 })}
+                    disabled={filters.page <= 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setFilters({ page: filters.page + 1 })}
+                    disabled={filters.page >= totalPages}
+                  >
+                    Próxima
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

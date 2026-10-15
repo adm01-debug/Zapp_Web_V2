@@ -24,22 +24,34 @@ const mockLogs = [
   { id: '3', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 30, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-02' },
 ];
 
-function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
-  const result = Promise.resolve({ data, error });
-  return Object.assign(result, { abortSignal: vi.fn(() => result) });
+/**
+ * Cadeia do PostgREST no formato novo do hook: `select()` com filtros
+ * opcionais (`ilike`/`eq`), ordem dupla e dois terminais — `range()` para a
+ * página da listagem (com `count`) e `limit()` para a janela de estatística.
+ */
+function novaCadeia(
+  dados: typeof mockLogs | null,
+  contagem: number,
+  erro: Error | null = null,
+) {
+  const resultado = Promise.resolve({ data: dados, count: contagem, error: erro });
+  const terminal = { abortSignal: vi.fn(() => resultado) };
+  const cadeia: Record<string, () => unknown> = {
+    ilike: () => cadeia,
+    eq: () => cadeia,
+    order: () => cadeia,
+    range: () => terminal,
+    limit: () => terminal,
+    abortSignal: () => resultado,
+  };
+  return { select: vi.fn(() => cadeia) };
 }
 
 describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => novaCadeia(mockLogs, mockLogs.length));
   });
 
   it('fetches logs on mount', async () => {
@@ -81,13 +93,7 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles empty logs', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult([])),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => novaCadeia([], 0));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -97,16 +103,11 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles fetch error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => novaCadeia(null, 0, new Error('fail')));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBe('fail');
   });
 
   it('refreshes logs without an unpublished realtime subscription', async () => {
@@ -114,9 +115,10 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(result.current.loading).toBe(false);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    // Cada ciclo faz 2 consultas: a página da listagem e a janela de estatística.
     expect(mockFrom).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(4);
     expect(mockChannel).not.toHaveBeenCalled();
   });
 
@@ -126,7 +128,7 @@ describe('useRateLimitLogs', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     unmount();
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('updates statistics together with refreshed rows', async () => {
@@ -134,7 +136,7 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)) })) })) });
+    mockFrom.mockImplementation(() => novaCadeia(updated, updated.length));
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(result.current.logs).toEqual(updated);
     expect(result.current.stats?.totalRequests).toBe(900);

@@ -1,12 +1,19 @@
-Especialista: hugo
-
-O QUE MUDOU
-- `src/hooks/system/useRateLimitLogs.ts`: a listagem passou a ser resolvida no servidor — `.select('*', { count: 'exact' })` + `.range(from, to)` (página/tamanho, padrão 25), filtros por IP e endpoint via `.ilike` com `escapeOrFilterValue` e "só bloqueados" via `.eq('blocked', true)`, ordenação por campo/direção com desempate por `id`. O hook devolve `total`, `totalPages`, `error`, `filters`/`setFilters`/`resetFilters`; trocar filtro, ordem ou tamanho de página volta para a página 1 e só um `page` explícito mantém a página pedida. O erro da consulta deixou de ser engolido: sobe para o estado `error` que o chamador lê.
-- Corrida: a resposta da consulta antiga é descartada depois de um `await` (sinal de aborto checado) e não sobrescreve o resultado novo nem prende o `loading`. Todos os canais do hook (poll de visibilidade e `refetch` manual) usam a mesma consulta filtrada e paginada, porque ambos passam pelo mesmo `refresh`.
-- A janela recente que alimenta os cartões de estatística continua separada da listagem paginada (`.limit(100)`), preservando o comportamento anterior da tela.
-- Teste novo `src/hooks/system/__tests__/useRateLimitLogs.test.ts`, com 7 casos: recorte de página no servidor (`range` + `count: 'exact'`), filtros com o escape de `escapeOrFilterValue`, ordem com desempate por `id`, volta à página 1 ao mudar filtro, erro exposto ao chamador, resposta obsoleta descartada quando o filtro muda no meio da consulta e a janela de estatística separada.
-
-PROVA
-- `npx vitest run src/hooks/system/__tests__/useRateLimitLogs.test.ts` — Test Files 1 passed, Tests 7 passed.
-- Vermelho antes: com o hook da base `dia/2026-10-13`, o mesmo teste dá Test Files 1 failed, Tests 6 failed | 1 passed.
-- `zapp-verify . --rapido` — resultado nos FATOS MEDIDOS abaixo.
+Especialista: senior (area-front-hooks)
+## O que mudou e por quê
+- src/pages/admin/RateLimitDashboard.tsx: a aba Logs passa a consumir filtros, setFilters, resetFilters, total, totalPages e error do hook; acabou o slice no cliente; filtros por IP/endpoint/somente-bloqueados, ordenação, tamanho da página, paginação Anterior/Próxima e alerta de erro com botão de tentar de novo (ponto 1)
+- src/pages/admin/__tests__/RateLimitDashboard.logs.test.tsx: novo; prova página inteira sem corte, total e paginação do servidor, erro com retry, aplicação de filtros e troca de ordenação/página/limpar (ponto 1)
+- src/hooks/system/__tests__/useRateLimitLogs.test.ts: novo teste que resolve a página (deferred) com as estatísticas pendentes e exige o carregando apagado (ponto 2)
+- src/hooks/__tests__/useRateLimitLogs.test.tsx: mock atualizado para a cadeia nova do hook (ordem dupla, range com count, limit da janela); contagens por ciclo 1 para 2 e 2 para 4 porque cada ciclo faz as duas consultas; adicionada asserção de erro na falha de busca
+- src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx: mock do hook completado com os campos novos (a tela nova quebra sem eles)
+## Prova
+- vermelho antes (tela antiga, teste novo): `vitest run src/pages/admin/__tests__/RateLimitDashboard.logs.test.tsx` → `Test Files 1 failed (1); Tests 3 failed (3)`
+- vermelho antes (mutação: carregando liberado só após as estatísticas): teste novo do ponto 2 → `Tests 1 failed | 7 skipped (8)`
+- verde depois: `vitest run` nos 4 arquivos → `Test Files 4 passed (4); Tests 32 passed (32)`
+- `eslint` nos 5 arquivos alterados → limpo
+## Pontos do revisor
+- Ponto 1: resolvido — a tela agora pagina, filtra e ordena a listagem pelo servidor e exibe erro com retry; prova no teste novo da tela (vermelho na tela antiga, verde na nova). Nota: o caminho citado na recusa não existe no repo; a tela real da listagem é src/pages/admin/RateLimitDashboard.tsx, aba Logs.
+- Ponto 2: resolvido — teste novo trava que o carregando apaga quando a página resolve com estatísticas pendentes; a liberação já ocorria no finally da página e a mutação provou que o teste falha sem essa garantia.
+- Ponto 3: verificado — `git diff --name-only dia/2026-10-13...HEAD` lista só arquivos deste cartão; os commits citados já estão na base do dia e nenhum arquivo deles foi tocado aqui.
+## O que NÃO fiz e por quê
+- Não alterei o hook useRateLimitLogs (o range do servidor com count exato já estava correto e coberto); não toquei em manifesto de deploy, Export Auto nem nas outras abas da tela.
+Concluí o refazer 1 sem pendências.

@@ -12,7 +12,12 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock('@/hooks/system/useRateLimitLogs', () => ({
-  useRateLimitLogs: vi.fn(() => ({ logs: [], stats: null, loading: false, refetch: vi.fn() })),
+  useRateLimitLogs: vi.fn(() => ({
+    logs: [], stats: null, loading: false, refetch: vi.fn(),
+    filters: { ip: '', endpoint: '', blockedOnly: false, sortBy: 'created_at', sortDir: 'desc', page: 1, pageSize: 25 },
+    setFilters: vi.fn(), resetFilters: vi.fn(),
+    total: 0, totalPages: 1, error: null,
+  })),
 }));
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: vi.fn(() => ({ isAdmin: true, isSupervisor: false })),

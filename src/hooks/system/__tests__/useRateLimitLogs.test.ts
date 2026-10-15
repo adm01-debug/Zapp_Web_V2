@@ -268,6 +268,32 @@ describe('useRateLimitLogs', () => {
     expect(ultimaPagina().ilike).toEqual([['ip_address', '"%10.0.0.1%"']]);
   });
 
+  it('apaga o carregando quando a página resolve mesmo com as estatísticas pendentes', async () => {
+    const pagina = deferred<Resposta>();
+    const estatisticas = deferred<Resposta>();
+    mocks.pagina.push({ deferred: pagina });
+    mocks.stats.push({ deferred: estatisticas });
+
+    const { result } = renderHook(() => useRateLimitLogs(true));
+
+    await waitFor(() => expect(mocks.consultas.filter(c => c.range !== null)).toHaveLength(1));
+    expect(result.current.loading).toBe(true);
+
+    // A página (listagem) resolve enquanto a janela de estatística segue em voo:
+    // o carregando da listagem não pode ficar preso às estatísticas lentas.
+    await act(async () => {
+      pagina.resolve({ data: [log('a')], count: 1 });
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.logs).toHaveLength(1);
+
+    await act(async () => {
+      estatisticas.resolve({ data: [log('a')] });
+    });
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
+  });
+
   it('mantém a janela recente de estatística (limit) separada da listagem paginada', async () => {
     mocks.pagina.push({ data: [log('a', { request_count: 3 })], count: 1 });
     mocks.stats.push({
