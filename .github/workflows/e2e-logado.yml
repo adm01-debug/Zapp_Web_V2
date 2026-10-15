@@ -211,54 +211,45 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
-      # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
-      # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
-      # A UNIQUE constraint (contact_id, dia) impede duplicatas no mesmo dia,
-      # mas a tabela cresce 1 row/CI-run sem este step.
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY (chave nao exposta ao publico).
-      # Se o secret nao estiver configurado, o step e ignorado (continue-on-error).
-      - name: 🧹 E2E teardown - limpar fixture de conversation_closures
+      # Teardown: apaga linhas de fixture geradas pelo E2E em producao
+      # (conversation_closures e catalog_send_events do contato
+      # 04dff4dc-c6b1-4283-ac22-bd8639804759). W74 (docs/ci/DECISOES_PENDENTES_2026-10-15.md):
+      # antes usava SUPABASE_SERVICE_ROLE_KEY (ignora todo o RLS de producao) so
+      # para isto. Agora loga como o proprio usuario de teste e chama a RPC
+      # SECURITY DEFINER e2e_cleanup() (migration 20261015200000), que so aceita
+      # esse usuario e so apaga as linhas do contato fixo -- a chave mestra deixa
+      # de ser necessaria neste workflow.
+      - name: 🧹 E2E teardown - limpar fixtures (conversation_closures + catalog_send_events)
         if: always()
         continue-on-error: true
         env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ] || [ -z "$E2E_TEST_EMAIL" ] || [ -z "$E2E_TEST_PASSWORD" ]; then
+            echo "credenciais ausentes - teardown pulado"
             exit 0
           fi
-          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+          ACCESS_TOKEN=$(curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X POST \
+            "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
+            -d "{\"email\":\"$E2E_TEST_EMAIL\",\"password\":\"$E2E_TEST_PASSWORD\"}" \
+            | jq -r '.access_token // empty')
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "login do usuario de teste falhou - teardown pulado"
+            exit 0
+          fi
+          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X POST \
+            "$SUPABASE_URL/rest/v1/rpc/e2e_cleanup" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
             && echo "teardown OK" \
             || echo "teardown falhou - nao bloqueia CI"
-
-      # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
-      # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar
-      # o que o CT-82 grava; a limpeza exige a service role. As mensagens do
-      # envio sao soft-deletadas (is_deleted=true) pelo afterEach do proprio spec.
-      # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
-      - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
-        if: always()
-        continue-on-error: true
-        env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
-            exit 0
-          fi
-          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            && echo "teardown catalog_send_events OK" \
-            || echo "teardown catalog_send_events falhou - nao bloqueia CI"
 
       # W77: captura as primeiras 20 linhas de stderr/stdout dos test-results antes
       # do alerta -- evita round-trip ao artifact e garante o contexto imediato do erro.
