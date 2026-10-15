@@ -119,6 +119,13 @@ jobs:
                 echo "::warning::PR #$candidato: falha ambigua no update-branch (sem 403/422); encerrando para nao atualizar duas PRs. A proxima execucao reavalia."
                 exit 0
               fi
+              # 403/422 transitorio (rate limit primario/secundario, "endpoint spam") nao
+              # e recusa da PR: o GitHub pede para parar e tentar depois, nao para sondar
+              # a proxima da fila.
+              if grep -Eiq 'rate limit|abuse|spam' "$RUNNER_TEMP/update-branch.err"; then
+                echo "::warning::PR #$candidato: update-branch limitado pelo GitHub (rate limit/spam); encerrando. A proxima execucao reavalia."
+                exit 0
+              fi
               # 422 tambem e "nada a atualizar": alguem atualizou a PR depois da leitura
               # da fila, e ela ja e a PR em voo. So avanca se ela continua ATRAS da main.
               if grep -q 'HTTP 422' "$RUNNER_TEMP/update-branch.err"; then

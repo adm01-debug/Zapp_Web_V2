@@ -78,6 +78,9 @@ test('R1: o auto-update escolhe pela fila e atualiza no máximo uma PR', () => {
   // sido aceito com 202) encerra, senão duas PRs entram em voo na mesma execução.
   assert.match(laco, /if ! grep -Eq 'HTTP \(403\|422\)'[^\n]*\n[^\n]*falha ambigua[^\n]*\n\s*exit 0/, 'sem 403/422, a falha é ambígua e encerra');
   assert.match(laco, /falha ambigua[^\n]*\n\s*exit 0/, 'falha ambígua encerra a execução');
+  // 403/422 de rate limit ou "endpoint spam" é transitório: parar, não sondar a próxima (Codex, PR #1950).
+  const antesDoContinue = laco.slice(0, laco.indexOf('continue'));
+  assert.match(antesDoContinue, /grep -Eiq 'rate limit\|abuse\|spam'[^\n]*\n[^\n]*\n\s*exit 0/, 'rate limit/spam encerra antes de avançar');
   // 422 também é "nada a atualizar" (PR atualizada por fora depois da leitura da fila):
   // antes de avançar, relê a PR; se já está em dia com a main, ela é a PR em voo (Codex, PR #1950).
   const ramo422 = laco.slice(laco.indexOf("grep -q 'HTTP 422'"), laco.indexOf('continue'));
