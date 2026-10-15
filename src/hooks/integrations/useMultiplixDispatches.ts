@@ -99,19 +99,27 @@ async function toMultiplixDispatchError(error: unknown): Promise<Error> {
   // copiado em 4 arquivos. Aqui fica so a traducao para os erros de dominio.
   const parsed = await parseEdgeError(error, 'Falha ao chamar multiplix-dispatch');
   const raw = (parsed.raw && typeof parsed.raw === 'object' ? parsed.raw : {}) as {
-    count?: number; limit?: number; message?: string;
+    error?: unknown; count?: number; limit?: number; message?: string;
   };
   // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
   // o numero real (`{error, count, limit}`). Traduzir para o erro que o
-  // composer ja captura mantem a confirmacao explicita funcionando — sem este
-  // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
-  // botao de confirmar.
-  if (parsed.code === 'multiplix_over_recipient_limit') {
+  // composer ja captura mantem a confirmacao explicita funcionando. Lido do
+  // corpo cru, como antes da migracao para o leitor unico (o code traduzido
+  // pode vir de body.code, que nao carrega o teto).
+  if (raw.error === 'multiplix_over_recipient_limit') {
     return new MultiplixOverLimitError(raw.count ?? 0, raw.limit ?? null, raw.message);
   }
-  if (parsed.code !== EDGE_ERROR_UNKNOWN && parsed.code !== EDGE_ERROR_NETWORK) {
-    return new MultiplixDispatchEdgeError(parsed.code, parsed.message);
-  }
+  // Comportamento anterior a migracao: code = body.error ?? body.message.
+  // body.error (string) vence body.code — o leitor unico prefere code, entao
+  // a precedencia antiga e recomposta aqui a partir do corpo cru. Sem isso,
+  // corpo so com { message } caia em Error generico (perdia o instanceof
+  // MultiplixDispatchEdgeError que o composer captura).
+  const rawError = typeof raw.error === 'string' && raw.error !== '' ? raw.error : null;
+  const rawMessage = typeof raw.message === 'string' && raw.message !== '' ? raw.message : null;
+  const code = rawError
+    ?? (parsed.code !== EDGE_ERROR_UNKNOWN && parsed.code !== EDGE_ERROR_NETWORK ? parsed.code : null)
+    ?? rawMessage;
+  if (code) return new MultiplixDispatchEdgeError(code, rawMessage ?? rawError ?? parsed.message);
   return new Error(parsed.message);
 }
 

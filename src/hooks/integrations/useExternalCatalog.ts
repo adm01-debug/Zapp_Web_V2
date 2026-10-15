@@ -192,7 +192,7 @@ async function invokeAction<T = unknown>(action: string, params: Record<string, 
     // `code` (o `error` é uma frase), e é o status que define o rate limit.
     const code = typeof raw.code === 'string' && raw.code !== ''
       ? raw.code
-      : (parsed.status === 429 ? 'CATALOG_RATE_LIMITED' : null);
+      : (parsed.status === 429 ? 'CATALOG_RATE_LIMITED' : 'CATALOG_UNEXPECTED');
     throw new CatalogEdgeError(parsed.message, code, parsed.status);
   }
   if (data?.error) {
