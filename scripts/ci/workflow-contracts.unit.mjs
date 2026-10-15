@@ -333,9 +333,11 @@ test('W44: a exceção do scorecard.yml só vale enquanto ele não tiver passo r
   for (const nome of SEM_DEFAULTS_POR_RESTRICAO_UPSTREAM) {
     const texto = wf[nome];
     assert.ok(texto, `${nome} não existe: remova a exceção`);
-    assert.doesNotMatch(texto, /^\s*(?:-\s+)?run:/m, `${nome} ganhou passo run: — sem defaults strict ele roda sem -euo pipefail`);
-    assert.doesNotMatch(texto, /^\s*defaults:/m, `${nome}: o scorecard-action recusa defaults no workflow e no job`);
-    assert.doesNotMatch(texto, /^\s*env:/m, `${nome}: o scorecard-action recusa env no workflow e no job`);
+    // Linha a linha, sem `\s*` multilinha (Sonar S5852: backtracking super-linear).
+    const chaves = texto.split('\n').map((l) => l.trimStart().replace(/^-[ \t]+/, ''));
+    assert.ok(!chaves.some((l) => l.startsWith('run:')), `${nome} ganhou passo run: — sem defaults strict ele roda sem -euo pipefail`);
+    assert.ok(!chaves.some((l) => l.startsWith('defaults:')), `${nome}: o scorecard-action recusa defaults no workflow e no job`);
+    assert.ok(!chaves.some((l) => l.startsWith('env:')), `${nome}: o scorecard-action recusa env no workflow e no job`);
   }
 });
 
