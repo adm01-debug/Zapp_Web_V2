@@ -178,6 +178,50 @@ describe('TemplatesWithVariables — editor mostra o template certo', () => {
   });
 });
 
+describe('TemplatesWithVariables — editor reinicia a cada abertura (refazer 1)', () => {
+  it('reabrir o mesmo template depois de Cancelar mostra os valores gravados', async () => {
+    renderPainel();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar template Boas-vindas' }));
+    expect(screen.getByPlaceholderText(TITULO_INPUT)).toHaveValue('Boas-vindas');
+    // Edita mas descarta.
+    fireEvent.change(screen.getByPlaceholderText(TITULO_INPUT), { target: { value: 'Rascunho descartado' } });
+    fireEvent.change(screen.getByPlaceholderText(CONTEUDO_INPUT), { target: { value: 'Lixo descartado' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByPlaceholderText(TITULO_INPUT)).toBeNull());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar template Boas-vindas' }));
+    expect(screen.getByPlaceholderText(TITULO_INPUT)).toHaveValue('Boas-vindas');
+    expect(screen.getByPlaceholderText(CONTEUDO_INPUT)).toHaveValue('Olá {{nome}}');
+  });
+
+  it("'Novo' depois de criar um template abre com o formulário vazio", async () => {
+    renderPainel();
+    abrirNovo();
+    preencherEditor('Template que será salvo', 'Conteúdo salvo');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() => expect(db.inserted).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByPlaceholderText(TITULO_INPUT)).toBeNull());
+
+    abrirNovo();
+    expect(screen.getByPlaceholderText(TITULO_INPUT)).toHaveValue('');
+    expect(screen.getByPlaceholderText(CONTEUDO_INPUT)).toHaveValue('');
+  });
+
+  it("'Novo' depois de editar um existente abre com o formulário vazio", async () => {
+    renderPainel();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar template Boas-vindas' }));
+    preencherEditor('Boas-vindas v2', 'Olá {{nome}}, tudo bem?');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() => expect(db.updated).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByPlaceholderText(TITULO_INPUT)).toBeNull());
+
+    abrirNovo();
+    expect(screen.getByPlaceholderText(TITULO_INPUT)).toHaveValue('');
+    expect(screen.getByPlaceholderText(CONTEUDO_INPUT)).toHaveValue('');
+  });
+});
+
 describe('TemplatesWithVariables — atalho e exclusão', () => {
   it('avisa quando o atalho já é de outro template', () => {
     renderPainel();

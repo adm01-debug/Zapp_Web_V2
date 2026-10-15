@@ -51,6 +51,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData, 
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TemplateItem | null>(null);
+  const [editorSeq, setEditorSeq] = useState(0);
   const [templateToDelete, setTemplateToDelete] = useState<TemplateItem | null>(null);
 
   const { user } = useAuth();
@@ -79,6 +80,13 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData, 
     [availableTemplates, editingTemplate?.id],
   );
 
+  const openNovo = () => { setEditingTemplate(null); setEditorSeq((s) => s + 1); setEditorOpen(true); };
+  const openEdicao = (template: TemplateItem) => { setEditingTemplate(template); setEditorSeq((s) => s + 1); setEditorOpen(true); };
+  const handleEditorOpenChange = (open: boolean) => {
+    setEditorOpen(open);
+    // Zera a seleção ao fechar: o próximo 'Novo' não herda o template editado.
+    if (!open) setEditingTemplate(null);
+  };
   const handleUseTemplate = (template: TemplateItem) => {
     const processedContent = replaceVariables(template.content, contactData);
     onUseTemplate(processedContent, {});
@@ -126,7 +134,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData, 
             <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Templates com Variáveis</CardTitle>
             <CardDescription>Mensagens dinâmicas com dados do contato</CardDescription>
           </div>
-          <Button size="sm" onClick={() => { setEditingTemplate(null); setEditorOpen(true); }}><Plus className="w-4 h-4 mr-1" />Novo</Button>
+          <Button size="sm" onClick={openNovo}><Plus className="w-4 h-4 mr-1" />Novo</Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -156,7 +164,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData, 
                       <div className="mt-1 text-xs text-muted-foreground line-clamp-2"><VariableHighlighter text={template.content} /></div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template ${template.title}`} onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template ${template.title}`} onClick={() => openEdicao(template)}><Edit2 className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Usar template ${template.title}`} onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Excluir template ${template.title}`} onClick={() => setTemplateToDelete(template)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
@@ -170,15 +178,17 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData, 
           </div>
         </ScrollArea>
       </CardContent>
+      {editorOpen && (
       <TemplateEditorDialog
-        key={editingTemplate?.id ?? 'novo'}
+        key={`${editingTemplate?.id ?? 'novo'}:${editorSeq}`}
         open={editorOpen}
-        onOpenChange={setEditorOpen}
+        onOpenChange={handleEditorOpenChange}
         template={editingTemplate}
         contactData={contactData}
         takenShortcuts={takenShortcuts}
         onSave={handleSave}
       />
+      )}
       <AlertDialog open={!!templateToDelete} onOpenChange={(open) => { if (!open) setTemplateToDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

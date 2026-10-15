@@ -88,6 +88,10 @@ export function TemplateEditorDialog({ open, onOpenChange, template, contactData
   const [isSaving, setIsSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // O formulário reinicia a cada abertura porque o pai remonta este diálogo
+  // (key com contador de aberturas + montagem só com editorOpen): o useState
+  // inicial lê o template da vez, sem herdar digitação anterior (recusa r1).
+
   const handleInsertVariable = (variable: string) => {
     if (textareaRef.current) {
       const start = textareaRef.current.selectionStart;
