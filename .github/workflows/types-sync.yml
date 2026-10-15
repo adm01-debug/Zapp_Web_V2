@@ -3,6 +3,8 @@
 #   prova: os tipos gerados batem com o banco oficial (Gates 1 e 2)
 #   falha: PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
 #   avisa: PR de types e issue de gate
+# nao-e-bug:
+#   - TYPES_SYNC_PR_TOKEN ausente: esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario
 # ==================================================================
 # ZAPP-WEB · Sincronizacao assistida dos artefatos do banco
 # ==================================================================
@@ -637,6 +639,14 @@ jobs:
             if (recusados.length > 0) {
               core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
             }
+
+      - name: Habilitar auto-merge no PR de sincronizacao
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
 
       - name: Job summary
         if: always()
