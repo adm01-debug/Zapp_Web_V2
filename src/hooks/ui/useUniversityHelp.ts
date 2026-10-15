@@ -195,7 +195,7 @@ export function useUniversityHelp(contactId: string, contactName: string | undef
       inFlightRef.current = Math.max(0, inFlightRef.current - 1);
       if (isRequestCurrent(request) || inFlightRef.current === 0) setLoading(false);
     }
-  }, [beginRequest, isRequestCurrent, selectedIds, selectedInOrder, selectedTone, contactName]);
+  }, [beginRequest, isRequestCurrent, selectedIds, selectedTone, contactName, selectedLines, selectedWindow]);
 
   const handleRegenerate = useCallback(() => {
     setResponse(null);
