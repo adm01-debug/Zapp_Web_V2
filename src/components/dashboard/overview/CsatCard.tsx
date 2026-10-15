@@ -18,7 +18,7 @@ const BAR_COLOR: Record<number, string> = {
 };
 
 export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
-  const { stats } = useCSAT(period);
+  const { stats, error, refetch } = useCSAT(period);
   const reducedMotion = useReducedMotion();
 
   const total = stats?.total ?? 0;
@@ -42,7 +42,14 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
           />
         )}
       />
-      {total === 0 ? (
+      {error ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground min-h-[100px]">
+          <span>Não foi possível carregar as avaliações.</span>
+          <button type="button" className="text-xs font-semibold text-primary underline" onClick={() => refetch()}>
+            Tentar de novo
+          </button>
+        </div>
+      ) : total === 0 ? (
         <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground min-h-[100px]">
           Sem avaliações no período
         </div>

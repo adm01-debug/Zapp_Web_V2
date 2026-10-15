@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Progress } from '@/components/ui/progress';
 import { Star, TrendingUp, MessageSquareHeart, BarChart3 } from 'lucide-react';
@@ -17,7 +18,7 @@ const ratingColors: Record<number, string> = {
 
 export function CSATDashboard() {
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('month');
-  const { stats, surveys, isLoading } = useCSAT(period);
+  const { stats, surveys, isLoading, error, refetch } = useCSAT(period);
 
   if (isLoading) {
     return (
@@ -27,6 +28,27 @@ export function CSATDashboard() {
             <div className="h-4 bg-muted rounded w-1/3" />
             <div className="h-20 bg-muted rounded" />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Falha de leitura NAO vira "0 avaliações": sem isso o card anunciava uma
+  // satisfação zerada que nunca foi medida.
+  if (error) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageSquareHeart className="w-5 h-5 text-primary" />
+            Satisfação do Cliente (CSAT)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">Não foi possível carregar as avaliações.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Tentar de novo
+          </Button>
         </CardContent>
       </Card>
     );

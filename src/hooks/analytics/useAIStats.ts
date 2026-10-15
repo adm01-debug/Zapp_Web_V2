@@ -74,11 +74,14 @@ export function useAIStats(selectedPeriod: PeriodOption) {
         .order('created_at', { ascending: true });
       if (error) throw error;
 
-      const { data: previousAnalyses } = await supabase
+      const { data: previousAnalyses, error: previousError } = await supabase
         .from('conversation_analyses')
         .select('sentiment, sentiment_score, created_at')
         .gte('created_at', previousPeriodStart.toISOString())
         .lt('created_at', periodStart.toISOString());
+      // Sem checar o erro, a janela anterior vinha `null`: tudo zerava e a
+      // comparacao afirmava "alta de 100%" sobre uma leitura que falhou.
+      if (previousError) throw previousError;
 
       const totalAnalyses = currentAnalyses?.length || 0;
       // Média que EXCLUI ausente/inválido em vez de tratá-lo como 0 (IA-023):
