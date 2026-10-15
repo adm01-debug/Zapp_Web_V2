@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   cobreComando,
   comandoProtegido,
-  normSql,
   paridadeDeNomes,
   policiesOn,
   predicadoEfetivo,
@@ -52,12 +51,19 @@ describe('RLS real: whatsapp_groups (schema resolvido das migrations)', () => {
     checaManifest(policies, 'whatsapp_groups');
   });
 
-  it('SELECT e aberto a todo usuario autenticado', () => {
-    const select = policies.filter((p) => p.command === 'SELECT');
+  it('SELECT exige papel em user_roles — conta sem papel nao le', () => {
+    const select = policies.filter((p) => cobreComando(p, 'SELECT'));
     expect(select.length).toBeGreaterThan(0);
     for (const p of select) {
       expect(p.roles).toContain('authenticated');
-      expect(normSql(p.using)).toBe('true');
+      // Migration 20261012151545 trocou o USING(true) pelo gate de papel:
+      // qualquer autenticado sem linha em user_roles nao le. Aceita os dois
+      // gates de papel da casa (membro ou admin/supervisor), nunca 'true'.
+      const predicado = predicadoEfetivo(p, 'SELECT');
+      expect(predicado, `${p.name} abriu SELECT para todos`).not.toBe('true');
+      expect(predicado, p.name).toMatch(
+        /user_has_any_app_role|is_admin_or_supervisor/,
+      );
     }
   });
 
