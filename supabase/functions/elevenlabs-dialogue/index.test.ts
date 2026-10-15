@@ -406,11 +406,13 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
 // ── IA-009 / SL-010b: kill switch da família de voz (chave ai.capability.voice) ──
 //
 // Caso NEGADO: com a capacidade de voz DESLIGADA no servidor, o diálogo responde
-// 503 e NÃO chama o provedor pago — e a recusa acontece ANTES de reservar limite
-// (`consume_rate_limit` não é chamado). Antes da correção o handler ignorava a
-// flag: chamava a ElevenLabs e devolvia 200, mesmo com a capacidade desligada.
+// 503 `AI_DISABLED` (contrato único da família, via `jsonResponse`) e NÃO chama
+// o provedor pago. O gate fica DEPOIS do rate limit (posição uniforme da
+// família: auth → limite → gate → provedor), então o limite é reservado antes
+// da recusa. Antes da correção o handler ignorava a flag: chamava a ElevenLabs
+// e devolvia 200, mesmo com a capacidade desligada.
 
-Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, zero chamada ao provedor e sem consumir limite", async () => {
+Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503 AI_DISABLED, zero chamada ao provedor (gate depois do limite)", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([
       ROTA_AUTH,
@@ -426,18 +428,20 @@ Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, zero chamada ao p
       );
 
       assert(res.status === 503, `capacidade desligada deveria recusar com 503, veio ${res.status}`);
-      const payload = await res.json() as { code?: string };
+      const payload = await res.json() as { error?: { code?: string; message?: string } };
       assert(
-        payload.code === "AI_CAPABILITY_DISABLED",
+        payload.error?.code === "AI_DISABLED",
         `código inesperado no corpo: ${JSON.stringify(payload)}`,
       );
       assert(
         callsTo(stub.calls, "api.elevenlabs.io").length === 0,
         `capacidade desligada NÃO pode tocar o provedor: ${stub.calls.map((c) => c.url).join(", ")}`,
       );
+      // Posição uniforme da família (auth → limite → validação → gate → provedor):
+      // o limite é reservado antes da recusa, igual às outras 6 funções.
       assert(
-        callsTo(stub.calls, "/rest/v1/rpc/consume_rate_limit").length === 0,
-        "capacidade desligada NÃO pode consumir rate limit (gate vem antes do limite)",
+        callsTo(stub.calls, "/rest/v1/rpc/consume_rate_limit").length === 1,
+        "o limite deveria ser reservado antes do gate",
       );
       // A chave lida é a ÚNICA da família de voz (decisão SL-010b).
       const flags = callsTo(stub.calls, "/rest/v1/feature_flags");

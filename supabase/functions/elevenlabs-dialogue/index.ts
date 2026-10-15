@@ -1,7 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
-import { enforceAiCapability } from "../_shared/ai-feature-flags.ts";
+import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
 
 /**
  * R2-API-024 (P2) — Diálogo ElevenLabs envia `script` e omite `inputs`.
@@ -50,16 +50,25 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
   const auth = await requireAuth(req);
   if (auth instanceof Response) return auth;
 
-  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR e ANTES de
-  // reservar limite e de tocar o provedor pago. A família de voz/áudio da
-  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
-  // Capacidade desligada → 503 e NÃO consome rate limit; leitura não confiável
-  // fecha (fail-closed) — mesmo mecanismo já usado pelos outros caminhos de IA.
-  const capability = await enforceAiCapability({ functionName: "elevenlabs-dialogue", req });
-  if (capability) return capability;
-
   const rl = await enforceRateLimit(`elevenlabs-dialogue:${auth.userId}`, 20, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+
+  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR, DEPOIS do
+  // rate limit e ANTES de tocar o provedor pago. A família de voz/áudio da
+  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
+  // Contrato único da família: `jsonResponse` 503 com
+  // `{ error: { code: "AI_DISABLED", message } }` (nunca `errorResponse` em 5xx:
+  // acima de 500 o corpo vira "Internal server error" e o consumidor perderia o
+  // código). Leitura não confiável fecha (fail-closed).
+  const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
+  if (voiceEnabled !== true) {
+    log.warn("IA de voz desativada por flag — provedor nao chamado");
+    return jsonResponse(
+      { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
+      503,
+      req,
+    );
+  }
 
   try {
     const parsed = parseBody(ElevenLabsDialogueSchema, await req.json());

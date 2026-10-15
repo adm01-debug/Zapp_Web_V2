@@ -76,11 +76,41 @@ function withFetch(routes: Route[]) {
   return { calls, seen, restore: () => { globalThis.fetch = original; } };
 }
 
-// ── ambiente: cada teste usa um usuário próprio (o rate limit local é por chave) ─
-Deno.env.set('SUPABASE_URL', 'https://stub.supabase.co');
-Deno.env.set('SUPABASE_ANON_KEY', 'anon-key-de-teste');
-Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'service-key-de-teste');
-Deno.env.set('ELEVENLABS_API_KEY', 'xi-api-key-de-teste');
+// ── ambiente: via `withEnv` (restaura ao final, sem contaminar a rodada) ─────
+/** Chaves de ambiente que o handler exige (restauradas ao final de cada teste). */
+const ENV_KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'ELEVENLABS_API_KEY'] as const;
+/** Valores válidos de ambiente (nunca fixados no topo: sem contaminar a rodada). */
+const ENV_OK: Record<string, string> = {
+  SUPABASE_URL: 'https://stub.supabase.co',
+  SUPABASE_ANON_KEY: 'anon-key-de-teste',
+  SUPABASE_SERVICE_ROLE_KEY: 'service-key-de-teste',
+  ELEVENLABS_API_KEY: 'xi-api-key-de-teste',
+};
+
+/** Roda `fn` com o env ajustado e restaura tudo ao final (nunca vaza para a rodada). */
+async function withEnv(env: Record<string, string>, fn: () => Promise<void>): Promise<void> {
+  const anteriores = new Map<string, string | undefined>();
+  for (const chave of ENV_KEYS) {
+    anteriores.set(chave, Deno.env.get(chave));
+    const valor = env[chave];
+    if (valor === undefined) Deno.env.delete(chave);
+    else Deno.env.set(chave, valor);
+  }
+  try {
+    await fn();
+  } finally {
+    for (const chave of ENV_KEYS) {
+      const anterior = anteriores.get(chave);
+      if (anterior === undefined) Deno.env.delete(chave);
+      else Deno.env.set(chave, anterior);
+    }
+  }
+}
+
+/** Todo teste deste arquivo roda com o env válido e restaurado (`withEnv`). */
+function teste(nome: string, fn: () => Promise<void>): void {
+  Deno.test(nome, () => withEnv(ENV_OK, fn));
+}
 
 /**
  * Rotas mínimas de autenticação/limite. `papel` controla a resposta da RPC canônica de papel
@@ -95,8 +125,9 @@ function rotasDeAuth(
   const rotas: Route[] = [
     { match: '/auth/v1/user', body: { id: userId, aud: 'authenticated' } },
     { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 4 }] },
-    // IA-009 / SL-010b — o kill switch lê `ai.capability.voice` no servidor, ANTES
-    // do limite e do provedor. Caminho feliz destes casos: capacidade ligada.
+    // IA-009 / SL-010b — o kill switch lê `ai.capability.voice` no servidor, DEPOIS
+    // do limite e ANTES do provedor (posição uniforme da família). Caminho feliz
+    // destes casos: capacidade ligada.
     { match: '/rest/v1/feature_flags', body: { enabled: true } },
   ];
   rotas.push(
@@ -130,7 +161,7 @@ const PAYLOAD_GERAR_VOZ = {
 /** Resposta de listagem: o que o ramo antigo devolvia no lugar de uma prévia. */
 const LISTAGEM_DE_VOZES = { voices: [{ voice_id: 'voz-1' }, { voice_id: 'voz-2' }] };
 
-Deno.test('R2-MOD-070: a action "generate" da tela é RECUSADA com 400 e não vira listagem de vozes', async () => {
+teste('R2-MOD-070: a action "generate" da tela é RECUSADA com 400 e não vira listagem de vozes', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-generate'),
     { match: ELEVENLABS_LISTAGEM, body: LISTAGEM_DE_VOZES },
@@ -153,7 +184,7 @@ Deno.test('R2-MOD-070: a action "generate" da tela é RECUSADA com 400 e não vi
   }
 });
 
-Deno.test('R2-MOD-070: action fora do contrato (inclusive não-string) recusa 400, sem tocar o provedor', async () => {
+teste('R2-MOD-070: action fora do contrato (inclusive não-string) recusa 400, sem tocar o provedor', async () => {
   for (const body of [{ action: 'list' }, { action: 'LIST' }, { action: 42 }, { action: 'gerar' }]) {
     const stub = withFetch([
       ...rotasDeAuth(`user-fora-do-contrato-${String(body.action)}`),
@@ -174,7 +205,7 @@ Deno.test('R2-MOD-070: action fora do contrato (inclusive não-string) recusa 40
   }
 });
 
-Deno.test('R2-MOD-070: sem bearer devolve 401 e não chama ninguém', async () => {
+teste('R2-MOD-070: sem bearer devolve 401 e não chama ninguém', async () => {
   const stub = withFetch([]);
   try {
     const res = await handleVoiceDesignRequest(makeRequest(PAYLOAD_GERAR_VOZ, false));
@@ -185,7 +216,7 @@ Deno.test('R2-MOD-070: sem bearer devolve 401 e não chama ninguém', async () =
   }
 });
 
-Deno.test('R2-MOD-070: preview continua alcançando create-previews (e nunca a listagem)', async () => {
+teste('R2-MOD-070: preview continua alcançando create-previews (e nunca a listagem)', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-preview'),
     { match: ELEVENLABS_PREVIEW, body: { previews: [{ generated_voice_id: 'previa-1', audio_base_64: 'QUJD' }] } },
@@ -208,7 +239,7 @@ Deno.test('R2-MOD-070: preview continua alcançando create-previews (e nunca a l
   }
 });
 
-Deno.test('R2-MOD-070: create usa o generated_voice_id da prévia e não lista vozes', async () => {
+teste('R2-MOD-070: create usa o generated_voice_id da prévia e não lista vozes', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-create'),
     { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-criada-1' } },
@@ -237,7 +268,7 @@ Deno.test('R2-MOD-070: create usa o generated_voice_id da prévia e não lista v
   }
 });
 
-Deno.test('R2-MOD-070: sem action o corpo continua sendo tratado como preview (contrato do schema)', async () => {
+teste('R2-MOD-070: sem action o corpo continua sendo tratado como preview (contrato do schema)', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-sem-action'),
     { match: ELEVENLABS_PREVIEW, body: { previews: [] } },
@@ -266,7 +297,7 @@ const PAYLOAD_CRIAR_VOZ = {
   generated_voice_id: 'previa-1',
 };
 
-Deno.test('SL-007: create sem papel admin/supervisor é 403 e não toca a conta compartilhada', async () => {
+teste('SL-007: create sem papel admin/supervisor é 403 e não toca a conta compartilhada', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-sem-papel', { isAdmin: false }),
     { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-que-nao-podia-existir' } },
@@ -287,7 +318,7 @@ Deno.test('SL-007: create sem papel admin/supervisor é 403 e não toca a conta 
   }
 });
 
-Deno.test('SL-007: falha da RPC de papel FECHA (não cria voz nem audita)', async () => {
+teste('SL-007: falha da RPC de papel FECHA (não cria voz nem audita)', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-rpc-fora', { papelErro: true }),
     { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-orfa' } },
@@ -308,7 +339,7 @@ Deno.test('SL-007: falha da RPC de papel FECHA (não cria voz nem audita)', asyn
   }
 });
 
-Deno.test('SL-007: admin cria voz e a autoria vai para audit_logs', async () => {
+teste('SL-007: admin cria voz e a autoria vai para audit_logs', async () => {
   const userId = 'user-admin';
   const stub = withFetch([
     ...rotasDeAuth(userId, { isAdmin: true }),
@@ -346,7 +377,7 @@ Deno.test('SL-007: admin cria voz e a autoria vai para audit_logs', async () => 
   }
 });
 
-Deno.test('SL-007: falha da auditoria NÃO responde 200 (voz criada sem rastro é erro visível)', async () => {
+teste('SL-007: falha da auditoria NÃO responde 200 (voz criada sem rastro é erro visível)', async () => {
   const stub = withFetch([
     // Rota de erro ANTES: o stub casa a primeira rota que casa.
     { match: AUDIT_LOGS, body: { message: 'permission denied for table audit_logs' }, status: 403 },
@@ -365,7 +396,7 @@ Deno.test('SL-007: falha da auditoria NÃO responde 200 (voz criada sem rastro �
   }
 });
 
-Deno.test('SL-007: preview segue aberto a qualquer autenticado (o gate é só da criação)', async () => {
+teste('SL-007: preview segue aberto a qualquer autenticado (o gate é só da criação)', async () => {
   const stub = withFetch([
     ...rotasDeAuth('user-preview-sem-papel', { isAdmin: false }),
     { match: ELEVENLABS_PREVIEW, body: { previews: [{ generated_voice_id: 'previa-x' }] } },
@@ -385,11 +416,13 @@ Deno.test('SL-007: preview segue aberto a qualquer autenticado (o gate é só da
 // ── IA-009 / SL-010b: kill switch da família de voz (chave ai.capability.voice) ──
 //
 // Caso NEGADO: com a capacidade de voz DESLIGADA no servidor, o laboratório de
-// voz responde 503 e NÃO chama o provedor pago — nem reserva limite. Antes da
-// correção a flag era ignorada: preview/create alcançavam a ElevenLabs com a
-// capacidade desligada.
+// voz responde 503 `AI_DISABLED` (contrato único da família, via `jsonResponse`)
+// e NÃO chama o provedor pago. O gate fica DEPOIS do rate limit (posição uniforme
+// da família: auth → limite → gate → provedor), então o limite é reservado antes
+// da recusa. Antes da correção a flag era ignorada: preview/create alcançavam a
+// ElevenLabs com a capacidade desligada.
 
-Deno.test('IA-009/SL-010b: capacidade desligada -> preview e create recusam 503, sem tocar o provedor nem consumir limite', async () => {
+teste('IA-009/SL-010b: capacidade desligada -> preview e create recusam 503 AI_DISABLED, sem tocar o provedor (gate depois do limite)', async () => {
   for (const body of [
     { action: 'preview', description: 'Tom calmo' },
     PAYLOAD_CRIAR_VOZ,
@@ -405,18 +438,20 @@ Deno.test('IA-009/SL-010b: capacidade desligada -> preview e create recusam 503,
     try {
       const res = await handleVoiceDesignRequest(makeRequest(body));
       assert(res.status === 503, `capacidade desligada deveria ser 503 em ${String(body.action)}, veio ${res.status}`);
-      const payload = await res.json() as { code?: string };
+      const payload = await res.json() as { error?: { code?: string; message?: string } };
       assert(
-        payload.code === 'AI_CAPABILITY_DISABLED',
+        payload.error?.code === 'AI_DISABLED',
         `código inesperado: ${JSON.stringify(payload)}`,
       );
       assert(
         !stub.seen().some((u) => u.includes('api.elevenlabs.io')),
         `capacidade desligada NÃO pode tocar o provedor: ${stub.seen().join(', ')}`,
       );
+      // Posição uniforme da família (auth → limite → gate → provedor): o limite é
+      // reservado antes da recusa, igual às outras 6 funções.
       assert(
-        !stub.seen().some((u) => u.includes('/rest/v1/rpc/consume_rate_limit')),
-        'capacidade desligada NÃO pode consumir rate limit (gate vem antes do limite)',
+        stub.seen().filter((u) => u.includes('/rest/v1/rpc/consume_rate_limit')).length === 1,
+        'o limite deveria ser reservado antes do gate',
       );
     } finally {
       stub.restore();

@@ -3,8 +3,10 @@
 // O voice-changer (speech-to-speech) é uma chamada PAGA ao provedor. A decisão
 // SL-010b (cartão de decisão t_98090b40) define UMA chave por família:
 // `ai.capability.voice`. Este teste prova o caso NEGADO: com a capacidade
-// DESLIGADA no servidor, o handler responde 503 e NÃO toca o provedor — e a
-// recusa acontece ANTES de reservar limite (`consume_rate_limit` não é chamado).
+// DESLIGADA no servidor, o handler responde 503 `AI_DISABLED` (contrato único
+// da família, via `jsonResponse`) e NÃO toca o provedor. O gate fica DEPOIS do
+// rate limit (posição uniforme da família: auth → limite → gate → provedor),
+// então o limite é reservado antes da recusa.
 // Antes da correção o handler ignorava a flag: chamava a ElevenLabs e devolvia
 // o áudio mesmo com a capacidade desligada.
 //
@@ -58,10 +60,35 @@ function withFetch(routes: Route[]) {
   return { calls, seen, restore: () => { globalThis.fetch = original; } };
 }
 
-Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
-Deno.env.set("SUPABASE_ANON_KEY", "anon-key-de-teste");
-Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-key-de-teste");
-Deno.env.set("ELEVENLABS_API_KEY", "xi-api-key-de-teste");
+/** Chaves de ambiente que o handler exige (restauradas ao final de cada teste). */
+const ENV_KEYS = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "ELEVENLABS_API_KEY"] as const;
+/** Valores válidos de ambiente (nunca fixados no topo: sem contaminar a rodada). */
+const ENV_OK: Record<string, string> = {
+  SUPABASE_URL: "https://stub.supabase.co",
+  SUPABASE_ANON_KEY: "anon-key-de-teste",
+  SUPABASE_SERVICE_ROLE_KEY: "service-key-de-teste",
+  ELEVENLABS_API_KEY: "xi-api-key-de-teste",
+};
+
+/** Roda `fn` com o env ajustado e restaura tudo ao final (nunca vaza para a rodada). */
+async function withEnv(env: Record<string, string>, fn: () => Promise<void>): Promise<void> {
+  const anteriores = new Map<string, string | undefined>();
+  for (const chave of ENV_KEYS) {
+    anteriores.set(chave, Deno.env.get(chave));
+    const valor = env[chave];
+    if (valor === undefined) Deno.env.delete(chave);
+    else Deno.env.set(chave, valor);
+  }
+  try {
+    await fn();
+  } finally {
+    for (const chave of ENV_KEYS) {
+      const anterior = anteriores.get(chave);
+      if (anterior === undefined) Deno.env.delete(chave);
+      else Deno.env.set(chave, anterior);
+    }
+  }
+}
 
 const ROTA_AUTH: Route = { match: "/auth/v1/user", body: { id: USER_ID, aud: "authenticated" } };
 const ROTA_RATE_LIMIT: Route = {
@@ -87,7 +114,8 @@ function makeRequest(withAuth = true): Request {
   });
 }
 
-Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, sem provedor e sem consumir limite", async () => {
+Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503 AI_DISABLED, sem provedor (gate depois do limite)", () =>
+  withEnv(ENV_OK, async () => {
   const stub = withFetch([
     ROTA_AUTH,
     flagsRoute(false),
@@ -98,19 +126,19 @@ Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, sem provedor e se
     const res = await handleVoiceChanger(makeRequest());
 
     assert(res.status === 503, `capacidade desligada deveria recusar com 503, veio ${res.status}`);
-    const payload = await res.json() as { code?: string };
+    const payload = await res.json() as { error?: { code?: string; message?: string } };
     assert(
-      payload.code === "AI_CAPABILITY_DISABLED",
+      payload.error?.code === "AI_DISABLED",
       `código inesperado no corpo: ${JSON.stringify(payload)}`,
     );
     assert(
       !stub.seen().some((u) => u.includes("api.elevenlabs.io")),
       `capacidade desligada NÃO pode tocar o provedor: ${stub.seen().join(", ")}`,
     );
-    assert(
-      !stub.seen().some((u) => u.includes("/rest/v1/rpc/consume_rate_limit")),
-      "capacidade desligada NÃO pode consumir rate limit (o gate vem antes do limite)",
-    );
+    // Posição uniforme da família (auth → limite → gate → provedor): o limite é
+    // reservado antes da recusa, igual às outras 6 funções.
+    const limites = stub.seen().filter((u) => u.includes("/rest/v1/rpc/consume_rate_limit"));
+    assert(limites.length === 1, `o limite deveria ser reservado antes do gate, veio ${limites.length}`);
     const flags = stub.seen().filter((u) => u.includes("/rest/v1/feature_flags"));
     assert(flags.length === 1, `esperado 1 leitura da flag, veio ${flags.length}`);
     assert(
@@ -120,9 +148,10 @@ Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, sem provedor e se
   } finally {
     stub.restore();
   }
-});
+  }));
 
-Deno.test("IA-009/SL-010b: capacidade de voz LIGADA -> caminho feliz alcança o provedor (o gate não é bloqueio geral)", async () => {
+Deno.test("IA-009/SL-010b: capacidade de voz LIGADA -> caminho feliz alcança o provedor (o gate não é bloqueio geral)", () =>
+  withEnv(ENV_OK, async () => {
   const stub = withFetch([
     ROTA_AUTH,
     flagsRoute(true),
@@ -156,9 +185,10 @@ Deno.test("IA-009/SL-010b: capacidade de voz LIGADA -> caminho feliz alcança o 
     globalThis.fetch = originalFetch;
     stub.restore();
   }
-});
+  }));
 
-Deno.test("IA-009/SL-010b: sem bearer -> 401 e nada de rede", async () => {
+Deno.test("IA-009/SL-010b: sem bearer -> 401 e nada de rede", () =>
+  withEnv(ENV_OK, async () => {
   const stub = withFetch([ROTA_AUTH, flagsRoute(true)]);
   try {
     const res = await handleVoiceChanger(makeRequest(false));
@@ -167,4 +197,4 @@ Deno.test("IA-009/SL-010b: sem bearer -> 401 e nada de rede", async () => {
   } finally {
     stub.restore();
   }
-});
+  }));

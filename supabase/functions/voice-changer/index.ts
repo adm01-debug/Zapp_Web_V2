@@ -1,5 +1,5 @@
-import { handleCors, errorResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
-import { enforceAiCapability } from "../_shared/ai-feature-flags.ts";
+import { handleCors, errorResponse, jsonResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
 
 const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   // Masculinas
@@ -42,16 +42,25 @@ export async function handleVoiceChanger(req: Request): Promise<Response> {
   const auth = await requireAuth(req);
   if (auth instanceof Response) return auth;
 
-  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR e ANTES de
-  // reservar limite e de tocar o provedor pago. A família de voz/áudio da
-  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
-  // Capacidade desligada → 503 e NÃO consome rate limit; leitura não confiável
-  // fecha (fail-closed) — mesmo mecanismo já usado pelos outros caminhos de IA.
-  const capability = await enforceAiCapability({ functionName: "voice-changer", req });
-  if (capability) return capability;
-
   const rl = await enforceRateLimit(`voice-changer:${auth.userId}`, 10, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+
+  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR, DEPOIS do
+  // rate limit e ANTES de tocar o provedor pago. A família de voz/áudio da
+  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
+  // Contrato único da família: `jsonResponse` 503 com
+  // `{ error: { code: "AI_DISABLED", message } }` (nunca `errorResponse` em 5xx:
+  // acima de 500 o corpo vira "Internal server error" e o consumidor perderia o
+  // código). Leitura não confiável fecha (fail-closed).
+  const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
+  if (voiceEnabled !== true) {
+    log.warn("IA de voz desativada por flag — provedor nao chamado");
+    return jsonResponse(
+      { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
+      503,
+      req,
+    );
+  }
 
   try {
     const elevenlabsKey = requireEnv('ELEVENLABS_API_KEY');
