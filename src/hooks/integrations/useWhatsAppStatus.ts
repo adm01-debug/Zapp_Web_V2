@@ -130,6 +130,9 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   const [error, setError] = useState<string | null>(null);
   const [instanceName, setInstanceName] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  /** Geração da busca: cada troca/refresh de telefone invalida as respostas em voo. */
+  const generationRef = useRef(0);
+  const lastPhoneRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -141,59 +144,67 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   const getConnectionInfo = useCallback(async (contactPhone: string): Promise<ContactConnectionInfo> => {
     const cleanPhone = normalizeDigits(contactPhone);
 
-    const contactQuery = supabase
+    const { data: contact, error: contactError } = await supabase
       .from('contacts')
       .select('name, whatsapp_connection_id')
       .eq('phone', contactPhone)
       .maybeSingle();
 
-    let { data: contact } = await contactQuery;
+    if (contactError) throw contactError;
 
-    if (!contact && cleanPhone && cleanPhone !== contactPhone) {
-      const fallback = await supabase
+    let resolvedContact = contact;
+
+    if (!resolvedContact && cleanPhone && cleanPhone !== contactPhone) {
+      const { data: fallbackContact, error: fallbackError } = await supabase
         .from('contacts')
         .select('name, whatsapp_connection_id')
         .eq('phone', cleanPhone)
         .maybeSingle();
 
-      contact = fallback.data;
+      if (fallbackError) throw fallbackError;
+      resolvedContact = fallbackContact;
     }
 
-    let connectionId = contact?.whatsapp_connection_id;
-
-    if (!connectionId) {
-      const { data: connection } = await supabase
-        .from('whatsapp_connections')
-        .select('id')
-        .eq('status', 'connected')
-        .limit(1)
-        .maybeSingle();
-
-      connectionId = connection?.id;
-    }
+    const connectionId = resolvedContact?.whatsapp_connection_id;
 
     if (!connectionId) {
       return {
-        contactName: contact?.name ?? null,
+        contactName: resolvedContact?.name ?? null,
         instanceName: null,
       };
     }
 
-    const { data: connection } = await supabase
+    // Só a conexão `connected` do próprio contato atende o status: usar outra
+    // conexão apontaria a busca para um número que não fala com este contato.
+    const { data: connection, error: connectionError } = await supabase
       .from('whatsapp_connections')
       .select('instance_id')
       .eq('id', connectionId)
+      .eq('status', 'connected')
       .maybeSingle();
 
+    if (connectionError) throw connectionError;
+
     return {
-      contactName: contact?.name ?? null,
+      contactName: resolvedContact?.name ?? null,
       instanceName: connection?.instance_id ?? null,
     };
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!phone) {
+    const generation = ++generationRef.current;
+
+    if (lastPhoneRef.current !== phone) {
+      // Trocou de contato: o que estava na tela era do telefone anterior.
+      lastPhoneRef.current = phone;
+      setStatusMessages([]);
       setInstanceName(null);
+      setError(null);
+      setPresence({ isOnline: false, lastSeen: null, loading: true });
+    }
+
+    if (!phone) {
+      setLoading(false);
       return;
     }
 
@@ -203,7 +214,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
     try {
       const { instanceName: resolvedInstance, contactName } = await getConnectionInfo(phone);
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current) return;
       setInstanceName(resolvedInstance);
 
       if (!resolvedInstance) {
@@ -211,21 +222,22 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
         return;
       }
 
-      const [statusResult] = await Promise.allSettled([
-        supabase.functions.invoke('evolution-api/find-status-messages', {
+      // Abrir o status é só leitura: nenhuma presença é enviada ao contato.
+      const { data: statusData, error: statusError } = await supabase.functions.invoke(
+        'evolution-api/find-status-messages',
+        {
           method: 'POST',
-          body: { instanceName: resolvedInstance, page: 1, offset: 200 },
-        }),
-        supabase.functions.invoke('evolution-api/send-chat-presence', {
-          method: 'POST',
-          body: { instanceName: resolvedInstance, number: phone, presence: 'paused', delay: 0 },
-        }),
-      ]);
+          body: { instanceName: resolvedInstance, number: phone, page: 1, offset: 200 },
+        },
+      );
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || generation !== generationRef.current) return;
 
-      if (statusResult.status === 'fulfilled') {
-        const allStatuses = extractStatusRecords(statusResult.value.data);
+      if (statusError) {
+        log.error('WhatsApp status invoke error:', statusError);
+        setStatusMessages([]);
+      } else {
+        const allStatuses = extractStatusRecords(statusData);
         const phoneNeedles = buildPhoneNeedles(phone);
         const normalizedContactName = contactName?.trim().toLowerCase() ?? null;
 
@@ -262,18 +274,16 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
           .sort((left, right) => toTimestampNumber(right.messageTimestamp) - toTimestampNumber(left.messageTimestamp));
 
         setStatusMessages(contactStatuses);
-      } else {
-        setStatusMessages([]);
       }
 
       setPresence({ isOnline: false, lastSeen: null, loading: false });
     } catch (err) {
       log.error('WhatsApp status fetch error:', err);
-      if (mountedRef.current) {
+      if (mountedRef.current && generation === generationRef.current) {
         setError(err instanceof Error ? err.message : 'Erro ao buscar status');
       }
     } finally {
-      if (mountedRef.current) {
+      if (mountedRef.current && generation === generationRef.current) {
         setLoading(false);
       }
     }
