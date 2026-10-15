@@ -1,80 +1,38 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql (nova):
-  * ingest_inbound_message passa a REATIVAR o contato soft-deleted (deleted_at = NULL) quando
-    chega mensagem nova, em vez de escrever no registro oculto. Os lookups passam a preferir o
-    registro VIVO (ORDER BY (deleted_at IS NOT NULL), created_at) quando coexistem as variantes
-    do 9o digito — assim o recadastro do mesmo telefone não acorda um duplicado antigo nem cria
-    contato novo. A reativação entra na trilha real public.contact_deletion_audit ('restore')
-    pelo trigger trg_audit_contact_deletion_change (já existente, não alterado, e que só dispara
-    quando deleted_at muda de fato).
-  * contacts_select_policy passa a exigir deleted_at IS NULL, EXCETO para admin/supervisor, que
-    continuam vendo os excluídos (lixeira/restaurar). A Inbox lê contacts direto sob RLS, então
-    era por aqui que o excluído reaparecia. O UPDATE (restaurar) não muda — a policy de UPDATE
-    não filtra deleted_at — e o purge físico (job/service_role, BYPASSRLS) não passa por policy.
-  * Assinatura, RETURNS, LANGUAGE e search_path de ingest_inbound_message seguem idênticos, e
-    CREATE OR REPLACE preserva a ACL (EXECUTE para service_role): src/integrations/supabase/types.ts
-    continua válido e nenhum GRANT/papel foi tocado.
-- scripts/db-audit/contacts-deleted-inbox-ingest.test.sh (novo): prova em PostgreSQL 17
-  descartável, com os papéis reais (authenticated e service_role). O estado ANTERIOR (a policy de
-  SELECT vigente e as versões anteriores de phone_variants e ingest_inbound_message) é extraído por
-  awk dos próprios arquivos de migration reais, não copiado à mão; a versão sob prova é a do arquivo
-  da migration do cartão.
-- scripts/ci/check-test-inventory.mjs: registra o .test.sh novo na ALLOWLIST (a promoção ao
-  db-guard.yml é do dono do workflow; o agente não edita workflow).
+Refazer 1 dos 4 pontos recusados. O diff contra a entrega anterior tem 2 arquivos (migration + teste); nada fora dos pontos.
 
-## Prova
-- vermelho antes: `bash scripts/db-audit/contacts-deleted-inbox-ingest.test.sh` (estado anterior à
-  migration do cartão) →
-  `R.1 estado anterior: o DONO (nao-admin) LE o contato excluido pela policy de SELECT` PASS e
-  `R.3 estado anterior: a mensagem nova NAO reativa o contato (deleted_at segue preenchido)` PASS —
-  a falha fica provada antes; sem a migration o bloco GREEN não passa (exige deleted_at = NULL).
-- verde depois: `bash scripts/db-audit/contacts-deleted-inbox-ingest.test.sh` →
-  `[OK] contrato do contato excluido no inbound/Inbox: RED->GREEN->rollback, todos os passos passaram`
-  (todos os passos PASS, nenhum pulado), incluindo:
-  `G.1 mensagem nova REATIVA o contato excluido (deleted_at = NULL)`,
-  `G.2 a reativacao entrou na trilha como restore, com de/para coerentes`,
-  `G.6 a Inbox (dono, nao-admin) NAO ve mais o contato excluido`,
-  `G.7 admin/supervisor CONTINUA vendo o excluido (lixeira/restaurar)`,
-  `G.8 contraponta: o contato VIVO do dono segue visivel`,
-  `G.9 contraponta: outro agente NAO passa a ver contato alheio`,
-  `G.13 o purge fisico continua funcionando e deixa rastro (purge)`,
-  `C.1/C.2/C.3` a linha `-- Rollback:` do próprio arquivo executa e devolve o ingest e a policy
-  anteriores.
-- banco local da tarefa: `hermes-db-migrar supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql`
-  registrou `APLICADA_LOCAL`; conferi por `pg_policy`/`pg_proc` que a policy nova (com
-  `deleted_at IS NULL`) e a versão nova de ingest_inbound_message estão no banco local.
-- `node scripts/ci/check-test-inventory.mjs`: o .test.sh novo não aparece entre os órfãos (a
-  ALLOWLIST o cobre); os órfãos listados são pré-existentes de outros cartões.
+## Ponto 1 — reativação sem updated_at (e deleted_by)
+Mudei `supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql` (linha 100): a reativação passou de `SET deleted_at = NULL` para `SET deleted_at = NULL, updated_at = now()`, na mesma escrita e só na linha reativada (`WHERE id = v_contact.id`).
+Fiz diferente numa parte, e digo por quê: zerar `deleted_by` NÃO procede — essa coluna não existe. Provei: `schema-catalog.json` lista em contacts só `deleted_at` (sem `deleted_by`); `grep deleted_by` em `supabase/migrations/`, `src/**` e `supabase/tests/` retorna zero. `SET deleted_by = NULL` quebraria a migration ("column does not exist"). O único marcador real de exclusão é `deleted_at` (migration 20260929370000), e é ele que zero, mais `updated_at = now()`.
+Teste que prova (bloco D novo, teste linhas 332-349): derruba o gatilho `update_contacts_updated_at`, reativa contato com `updated_at` retroativo em 2h e cobra a FUNÇÃO (não o gatilho).
+- Vermelha antes (migration recusada): `[FAIL] D.2 sem gatilho: a FUNCAO anda updated_at da linha reativada: esperado '1', obtido '0'` (exit 1).
+- Verde depois: `[PASS] D.1/D.2/D.3/D.4` (reativa, anda updated_at, nenhuma outra linha andou, gatilho recriado e funcionando).
 
-## Arquivos fora da lista do cartão (indispensável)
-O cartão pede "supabase/migrations/<ts>_...sql (novo) + supabase/tests/". A prova de RLS/ACL do
-projeto NÃO pode viver em supabase/tests/: os scripts/*.sql de lá rodam como service_role
-(BYPASSRLS) e não exercitam policy nenhuma — a própria skill da área manda provar com os papéis
-reais (authenticated/service_role) em Postgres descartável. Por isso a prova ficou em
-scripts/db-audit/contacts-deleted-inbox-ingest.test.sh. E todo .test.sh novo no disco é reprovado
-por scripts/ci/check-test-inventory.mjs como órfão até ser registrado: a ALLOWLIST desse script é
-o registro (a promoção ao passo do db-guard.yml é do dono do workflow — agente não edita workflow).
-Os dois arquivos foram indispensáveis para a prova existir e ser aceita pela verificação.
+## Ponto 2 — caminho INSERT com deleted_at viciado
+Mudei a migration (linha 76): o `RETURNING` do INSERT passou a incluir `contacts.deleted_at`, lido do banco — `v_contact.deleted_at` nunca mais nasce viciado em NULL.
+Achado da prova, maior que o descrito: no código recusado o caminho INSERT não devolvia NULL — QUEBRAVA. `RETURNING` de 4 colunas redefinia o record `v_contact` sem o campo `deleted_at` e o `IF v_contact.deleted_at` seguinte abortava a transação. Ou seja: toda mensagem de contato realmente novo dava erro no `ingest_inbound_message` (500 no webhook).
+Teste que prova (bloco E novo, teste linhas 323-330): telefone inédito, passa pelo INSERT, lê `deleted_at` do banco.
+- Vermelha antes (migration recusada): `ERROR: record "v_contact" has no field "deleted_at"` (contexto: `IF v_contact.deleted_at IS NOT NULL`), script aborta antes de E.1.
+- Verde depois: `[PASS] E.1/E.2 caminho INSERT: outcome=inserted e contact_created=true`, `[PASS] E.3 caminho INSERT: deleted_at = NULL lido do banco`, `[PASS] E.4 caminho INSERT: updated_at preenchido na linha nova`.
 
-## O que NÃO fiz e por que
-- Não toquei src/**: o filtro explícito de deleted_at na consulta da Inbox é do cartão filho
-  t_d0f7873a (perfil de telas/hooks). A migration entrega a defesa no banco (RLS), que é a minha área.
-- Não mexi em GRANT, papel ou ACL: a migration só recria a função e a policy; nenhum acesso foi
-  removido além do filtro de excluídos pedido no cartão.
-- Não alterei migrations existentes: correção é migration nova, como manda a regra da área.
-- O rodapé de regras do cartão traz a linha genérica "não edite este arquivo com DDL/migration" —
-  é do template do plano; o próprio cartão pede migration nova em supabase/migrations/**.
+## Ponto 3 — updated_at só na linha reativada (12 x 13 dígitos)
+O `ORDER BY (deleted_at IS NOT NULL)` escolhe o vivo; o que prova o escopo do UPDATE são asserções de `updated_at` por linha, que faltavam no caso sem gatilho: D.2 (a reativada andou — vermelha antes, verde depois, vide Ponto 1) + D.3 (nenhuma outra linha andou) + G.14/G.15 já existentes (com gatilho). Nenhuma mudança de código além do Ponto 1 — o `WHERE id = v_contact.id` já restringe a uma linha.
+- Vermelha antes: a mesma de D.2 acima (zero linhas andavam sem o gatilho).
+- Verde depois: `[PASS] D.3 sem gatilho: nenhuma outra linha andou`, `[PASS] G.14 ... SO da linha reativada`, `[PASS] G.15 ... nenhum outro contato teve updated_at reescrito`.
 
-## Conferência do juiz (updated_at) — NÃO PROCEDE
-- O aviso fala de UPDATE em `messages`. Esta migration NÃO altera nenhum UPDATE em messages: o
-  único UPDATE novo é `UPDATE public.contacts SET deleted_at = NULL WHERE id = v_contact.id`
-  (uma linha, a do contato reativado). O gatilho `update_contacts_updated_at` (BEFORE UPDATE em
-  contacts) regrava updated_at SÓ nessa linha — efeito desejado (a conversa reativada sobe na
-  Inbox, que ordena por updated_at). Nada é tocado em massa.
-- O UPDATE em `messages` do ingest (`WHERE id = v_existing.id`) é pré-existente e não foi alterado.
-- Provado no teste: `R.7 estado anterior: o contato excluido nao teve updated_at reescrito` PASS
-  (antes), e depois `G.14 a reativacao reescreve updated_at SO da linha reativada` PASS com a
-  contraponta `G.15 contraponta: nenhum outro contato teve updated_at reescrito` PASS.
+## Ponto 4 — rollback: NÃO PROCEDE como defeito (provado por execução)
+Verifiquei antes de obedecer: a linha 2 recusada JÁ restaurava os dois objetos. Extraí e comparei byte a byte com o anterior real (`20260905070000` função, `20260929810000` policy): corpo da função idêntico; a policy restaurada é a anterior (USING `can_edit_contact(...)` sem filtro de `deleted_at`) — só o case das keywords difere (`drop/create` vs `DROP/CREATE`, sem efeito no Postgres). Prova comportamental: rodei o teste novo contra a migration RECUSADA e `C.4` (corpo anterior, sem `deleted_at`) e `C.5` (USING anterior, sem `deleted_at`) PASSARAM — se o rollback recriasse a policy nova, C.5 falharia.
+O que mudei mesmo assim (linha 2): normalizei para a forma canônica dos arquivos de origem (keywords em maiúsculas), risco zero, e travei com C.4/C.5 (teste linhas 369-372), que agora provam a restauração exata em toda execução.
+- Verde: `[PASS] C.1 a linha -- Rollback: executou sem erro`, `[PASS] C.4 o rollback devolveu o CORPO anterior do ingest`, `[PASS] C.5 o rollback devolveu a USING anterior da policy` (C.2/C.3 inalterados, continuam passando).
 
+## Arquivos (`git diff --name-only HEAD`, colado)
+scripts/db-audit/contacts-deleted-inbox-ingest.test.sh
+supabase/migrations/20261013051305_contato_excluido_inbox_ingest.sql
+.tmp/relato.md (este arquivo)
+
+## Verificação (resultado real)
+- `bash scripts/db-audit/contacts-deleted-inbox-ingest.test.sh` (código corrigido): `EXIT=0`, `[OK] contrato do contato excluido no inbound/Inbox: RED->GREEN->rollback, todos os passos passaram` (R.1-R.7, G.0-G.15, E.1-E.4, D.1-D.4, C.1-C.5, todos PASS, nenhum pulado).
+- Mesmo teste contra a migration recusada: aborta no bloco E com `ERROR: record "v_contact" has no field "deleted_at"`; sem o bloco E, `[FAIL] D.2 ... esperado '1', obtido '0'` (exit 1).
+- `node scripts/ci/check-test-inventory.mjs`: este teste segue registrado (não está entre os 6 órfãos, todos pré-existentes de outros cartões; nenhum arquivo novo criado).
+- Chamadores (`supabase/functions/**/evolution-webhook-messages.ts`, `whatsapp-webhook/index.ts`): RETURNS da função inalterado (7 colunas); nenhum chamador precisou mudar. Efeito colateral positivo: inbound de contato novo parava em erro 500 no código recusado; agora insere.

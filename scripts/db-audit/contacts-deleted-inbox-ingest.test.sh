@@ -320,6 +320,35 @@ expect_value 'G.14 a reativacao reescreve updated_at SO da linha reativada' '1' 
 expect_value 'G.15 contraponta: nenhum outro contato teve updated_at reescrito' '1' \
   "SELECT (c.updated_at = p.updated_at)::int FROM public.contacts c JOIN public._probe_updated_at p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000006'"
 
+printf '\n============ BLOCO E — caminho INSERT (contato novo de verdade) ============\n'
+ingest_new="$(sql_as service_role '' "SELECT outcome || '|' || contact_created::text FROM public.ingest_inbound_message('aaaaaaaa-0000-0000-0000-000000000001','5511999990010','Contato Novo','ola','text',NULL,'green-ext-3',now())")"
+[[ "$ingest_new" == 'inserted|true' ]] || fail "E.1/E.2 caminho INSERT: esperado 'inserted|true', obtido '$ingest_new'"
+printf '[PASS] E.1/E.2 caminho INSERT: outcome=inserted e contact_created=true\n'
+expect_value 'E.3 caminho INSERT: deleted_at = NULL lido do banco' '1' \
+  "SELECT (deleted_at IS NULL)::int FROM public.contacts WHERE phone='5511999990010'"
+expect_value 'E.4 caminho INSERT: updated_at preenchido na linha nova' '1' \
+  "SELECT (updated_at IS NOT NULL)::int FROM public.contacts WHERE phone='5511999990010'"
+
+printf '\n============ BLOCO D — a FUNCAO anda updated_at sozinha (sem o gatilho) ============\n'
+psql_sql "DROP TRIGGER update_contacts_updated_at ON public.contacts;" >/dev/null
+psql_sql "INSERT INTO public.contacts (id, name, phone, assigned_to, whatsapp_connection_id, created_at)
+          VALUES ('cccccccc-0000-0000-0000-000000000009','Contato Sem Gatilho','5511999990009','22222222-2222-2222-2222-222222222201','aaaaaaaa-0000-0000-0000-000000000001', now());
+        UPDATE public.contacts SET deleted_at = now(), updated_at = now() - interval '2 hours'
+          WHERE id='cccccccc-0000-0000-0000-000000000009';" >/dev/null
+psql_sql "CREATE TABLE public._probe_d AS SELECT id, updated_at FROM public.contacts
+          WHERE id IN ('cccccccc-0000-0000-0000-000000000009','cccccccc-0000-0000-0000-000000000006')" >/dev/null
+sql_as service_role '' "SELECT outcome FROM public.ingest_inbound_message('aaaaaaaa-0000-0000-0000-000000000001','5511999990009','Contato Sem Gatilho','oi','text',NULL,'green-ext-4',now())" >/dev/null
+expect_value 'D.1 sem gatilho: a FUNCAO reativa (deleted_at = NULL)' '1' \
+  "SELECT (deleted_at IS NULL)::int FROM public.contacts WHERE id='cccccccc-0000-0000-0000-000000000009'"
+expect_value 'D.2 sem gatilho: a FUNCAO anda updated_at da linha reativada' '1' \
+  "SELECT (c.updated_at > p.updated_at)::int FROM public.contacts c JOIN public._probe_d p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000009'"
+expect_value 'D.3 sem gatilho: nenhuma outra linha andou' '1' \
+  "SELECT (c.updated_at = p.updated_at)::int FROM public.contacts c JOIN public._probe_d p ON p.id=c.id WHERE c.id='cccccccc-0000-0000-0000-000000000006'"
+psql_sql "CREATE TRIGGER update_contacts_updated_at BEFORE UPDATE ON public.contacts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+        UPDATE public.contacts SET name = name WHERE id='cccccccc-0000-0000-0000-000000000009';" >/dev/null
+expect_value 'D.4 o gatilho de updated_at voltou a funcionar' '1' \
+  "SELECT (updated_at >= (SELECT max(updated_at) FROM public._probe_d WHERE id='cccccccc-0000-0000-0000-000000000009'))::int FROM public.contacts WHERE id='cccccccc-0000-0000-0000-000000000009'"
+
 printf '\n============ BLOCO C — o rollback do proprio arquivo ============\n'
 sed -n '1,5p' "$migration" | sed -n 's/^-- Rollback: //p' > "$tmp_dir/rollback.sql"
 [[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem a linha -- Rollback: executavel'
@@ -337,5 +366,9 @@ expect_value 'C.2 o rollback devolveu o ingest anterior (nao reativa mais)' '1' 
 expect_value_as 'C.3 o rollback devolveu a policy que lia o excluido (vazamento de volta)' \
   authenticated '11111111-1111-1111-1111-111111111101' '1' \
   "SELECT count(*) FROM public.contacts WHERE id='cccccccc-0000-0000-0000-000000000002'"
+expect_value 'C.4 o rollback devolveu o CORPO anterior do ingest (sem reativacao)' '1' \
+  "SELECT count(*) FROM pg_proc WHERE proname='ingest_inbound_message' AND prosrc NOT LIKE '%deleted_at%'"
+expect_value 'C.5 o rollback devolveu a USING anterior da policy (sem filtro de deleted_at)' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='contacts' AND policyname='contacts_select_policy' AND qual NOT LIKE '%deleted_at%'"
 
 printf '\n[OK] contrato do contato excluido no inbound/Inbox: RED->GREEN->rollback, todos os passos passaram\n'
