@@ -1,16 +1,16 @@
 /**
  * Canais realtime por instância — nome único (postgres_changes).
  *
- * Antes: `AudioMessagePlayer`, `useMessageReactions`, `WhisperMode` e
- * `useMessageStatus` abriam o canal com nome FIXO (`transcription-<id>`,
- * `reactions:<id>`, `whisper-<id>`, `message-status-<id>`). Desde a realtime-js
+ * Antes: `AudioMessagePlayer`, `useMessageReactions` e `WhisperMode` abriam o
+ * canal com nome FIXO (`transcription-<id>`, `reactions:<id>`, `whisper-<id>`).
+ * Desde a realtime-js
  * 2.101, `supabase.channel(nome)` devolve o canal JÁ existente quando o nome se
  * repete e `.on()` nesse canal inscrito lança — dois componentes/mensagens
  * vivos com o mesmo id (ex.: a lista e o painel montando o mesmo balão de
  * áudio) derrubavam a tela. Com canal compartilhado, o unmount de um consumidor
  * também fazia `removeChannel` e cortava o realtime do outro.
  *
- * Depois: os quatro canais de `postgres_changes` usam `uniqueRealtimeTopic`, que
+ * Depois: os três canais de `postgres_changes` usam `uniqueRealtimeTopic`, que
  * acrescenta um sufixo por instância. Este teste emula o comportamento da
  * realtime-js (canal repetido + `.on()` duplicado lança) e prova que, ao montar
  * dois consumidores do mesmo id, cada um recebe o SEU canal, nenhum `.on()`
@@ -145,7 +145,6 @@ vi.mock('framer-motion', async (importOriginal) => ({
   },
 }));
 
-import { useMessageStatus } from '@/hooks/chat/useMessageStatus';
 import { useMessageReactions } from '@/hooks/chat/useMessageReactions';
 import { WhisperMode } from '@/components/inbox/WhisperMode';
 import { AudioMessagePlayer } from '@/components/inbox/AudioMessagePlayer';
@@ -170,23 +169,7 @@ describe('uniqueRealtimeTopic — sufixo por instância', () => {
 });
 
 describe('canais fixos virados canais por instância', () => {
-  it('(2) useMessageStatus: dois hooks do mesmo contato pedem canais distintos e cada unmount remove o seu', () => {
-    const primeiro = renderHook(() => useMessageStatus('c1'));
-    const segundo = renderHook(() => useMessageStatus('c1'));
-
-    const nomes = h.nomesComPrefixo('message-status-c1');
-    expect(nomes).toHaveLength(2);
-    expect(new Set(nomes).size).toBe(2);
-
-    primeiro.unmount();
-    expect(h.removidos).toContain(nomes[0]);
-    expect(h.removidos).not.toContain(nomes[1]); // o canal do outro segue vivo
-
-    segundo.unmount();
-    expect(h.removidos).toEqual(expect.arrayContaining(nomes));
-  });
-
-  it('(3) useMessageReactions: dois hooks da mesma mensagem pedem canais distintos', () => {
+  it('(2) useMessageReactions: dois hooks da mesma mensagem pedem canais distintos', () => {
     const primeiro = renderHook(() => useMessageReactions('m1'));
     const segundo = renderHook(() => useMessageReactions('m1'));
 
@@ -198,7 +181,7 @@ describe('canais fixos virados canais por instância', () => {
     segundo.unmount();
   });
 
-  it('(4) WhisperMode: duas montagens do mesmo contato pedem canais distintos', () => {
+  it('(3) WhisperMode: duas montagens do mesmo contato pedem canais distintos', () => {
     const primeiro = render(<WhisperMode contactId="c1" targetAgentId="a1" />);
     const segundo = render(<WhisperMode contactId="c1" targetAgentId="a1" />);
 
@@ -210,7 +193,7 @@ describe('canais fixos virados canais por instância', () => {
     segundo.unmount();
   });
 
-  it('(5) AudioMessagePlayer: duas montagens da mesma mensagem pedem canais distintos', () => {
+  it('(4) AudioMessagePlayer: duas montagens da mesma mensagem pedem canais distintos', () => {
     const primeiro = render(<AudioMessagePlayer audioUrl="https://exemplo/a.ogg" messageId="m1" isSent={false} />);
     const segundo = render(<AudioMessagePlayer audioUrl="https://exemplo/a.ogg" messageId="m1" isSent={false} />);
 
