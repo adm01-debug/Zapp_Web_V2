@@ -35,7 +35,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
+  // `useAuth` (via `useOfflineCache`) resolve `getLogger` no import do módulo; sem ele o painel
+  // nem monta. Mesmo mock que `ChatPanel.typing-presence.test.tsx` já usa.
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
