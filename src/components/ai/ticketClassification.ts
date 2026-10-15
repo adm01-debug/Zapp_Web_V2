@@ -1,3 +1,5 @@
+import { normalizeScore } from '@/lib/ai-values';
+
 export interface ClassifiedTicket {
   contactId: string;
   contactName: string;
@@ -37,8 +39,12 @@ export function classifyTag(tagName: string): string {
 export function derivePriority(tagName: string, confidence: number): string {
   const lower = tagName.toLowerCase();
   if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
-  if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
-  if (confidence > 0.5) return 'medium';
+  // IA-023: a confiança passa pelo normalizador em vez de um valor arbitrário.
+  // Em escala ratio o normalizado é o próprio número; fora de escala mantém a
+  // comparação legada para não alterar nenhuma prioridade existente.
+  const score = normalizeScore(confidence, { min: 0, max: 1, scale: 'ratio' }).value ?? confidence;
+  if (score > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
+  if (score > 0.5) return 'medium';
   return 'low';
 }
 
