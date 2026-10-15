@@ -4,7 +4,7 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
-import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
@@ -242,37 +242,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
     // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
     // possam usar sem depender de criar-connection ter rodado antes.
-    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey', 'hash'];
+    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
     const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
     const stripInstanceToken = (value: unknown): unknown => {
-      // Listas de instância (ex.: GET /instance/fetchInstances devolve array de
-      // objetos) precisam ser percorridas — sem isso o token do item escaparia.
-      if (Array.isArray(value)) return value.map(stripInstanceToken);
-      if (!value || typeof value !== 'object') return value;
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
       const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
       for (const key of TOKEN_KEYS) delete clone[key];
       for (const key of TOKEN_CONTAINER_KEYS) {
-        if (clone[key] !== undefined) clone[key] = stripInstanceToken(clone[key]);
+        if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+          clone[key] = stripInstanceToken(clone[key]);
+        }
       }
       return clone;
-    };
-
-    // R2EXT-AGENDA: higieniza o corpo de leitura de instância (instance-info /
-    // list-instances) em QUALQUER variante (GO e v2). O proxy só limpa a rota
-    // GO /instance/all; a variante v2 e a rota /instance/info passariam o
-    // token/hash adiante (com ele + a URL pública da GO se opera a instância
-    // fora do app). Resposta não-JSON é devolvida intacta.
-    const sanitizeInstanceResponse = async (response: Response): Promise<Response> => {
-      let body: unknown;
-      try {
-        body = await response.json();
-      } catch {
-        return response;
-      }
-      return new Response(JSON.stringify(stripInstanceToken(body)), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     };
 
     // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
@@ -504,7 +485,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       });
     }
 
-    if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
+    if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
@@ -807,9 +788,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
         if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        return await sanitizeInstanceResponse(await proxy(`/instance/info/${goId}`, 'GET'));
+        return await proxy(`/instance/info/${goId}`, 'GET');
       }
-      return await sanitizeInstanceResponse(await proxy(`/instance/info/${instance}`, 'GET'));
+      return await proxy(`/instance/info/${instance}`, 'GET');
     }
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
@@ -911,52 +892,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'send-poll') return await proxy(`/message/sendPoll/${instance}`, 'POST', { number: body.number, name: body.name || body.question, selectableCount: body.selectableCount || 1, values: body.values || body.options });
     if (action === 'send-list') return await proxy(`/message/sendList/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttonText: body.buttonText, sections: body.sections });
     if (action === 'send-buttons') return await proxy(`/message/sendButtons/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttons: body.buttons });
-    if (action === 'send-status') {
-      // R2EXT-STATUS: publicar Status/Story é ação de CONTROLE (gate
-      // admin/supervisor acima). O corpo deixa de ir inteiro ao provedor: passa
-      // pela allowlist (tipo, texto, mídia, cor), o texto ganha teto e a lista
-      // de destinatários é reduzida aos contatos da empresa. A trilha grava ator
-      // e tipo, nunca o conteúdo nem telefone — e falha fechada: sem trilha, o
-      // status não é publicado.
-      const { data: statusConn } = await supabase
-        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
-      const companyJids = new Set<string>();
-      if (statusConn?.id) {
-        const { data: contactRows } = await supabase
-          .from('contacts').select('phone').eq('whatsapp_connection_id', statusConn.id).limit(5000);
-        for (const row of (contactRows ?? []) as { phone?: string | null }[]) {
-          const digits = jidToDigits(row.phone);
-          if (digits) companyJids.add(digits);
-        }
-      }
-      const sanitized = sanitizeStatusPayload(body, companyJids);
-      if (sanitized.emptyTargetList) {
-        return new Response(JSON.stringify({ error: true, message: 'A lista de destinatários do status não pertence a esta empresa.' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const { error: auditError } = await supabase.from('audit_logs').insert({
-        user_id: callerUserId,
-        action: 'evolution_status_published',
-        entity_type: 'whatsapp_connection',
-        entity_id: statusConn?.id ?? null,
-        details: {
-          instance,
-          type: typeof sanitized.payload.type === 'string' ? sanitized.payload.type : null,
-          has_media: typeof sanitized.payload.media === 'string' && sanitized.payload.media.length > 0,
-          recipients: Array.isArray(sanitized.payload.statusJidList) ? sanitized.payload.statusJidList.length : 0,
-          dropped_fields: sanitized.droppedFields,
-          dropped_jids: sanitized.droppedJids,
-        },
-      });
-      if (auditError) {
-        new Logger('evolution-api').error('send-status: falha ao registrar a auditoria', { error: auditError.message, instance });
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a auditoria do status.' }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
-    }
+    if (action === 'send-status') return await proxy(`/message/sendStatus/${instance}`, 'POST', body);
     if (action === 'send-template') return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
     if (action === 'mark-unread') return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
