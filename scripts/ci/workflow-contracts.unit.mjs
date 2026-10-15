@@ -314,3 +314,43 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
 });
+
+// W99: novos invariantes de segurança de workflow
+
+test('W99: todo curl usa --proto e --tlsv1.2', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      const linha = linhas[i];
+      if (!/\bcurl\b/.test(linha)) continue;
+      if (/--proto\b/.test(linha) && /--tlsv1\.\d/.test(linha)) continue;
+      // linha de continuação: o curl pode estar na linha e as flags na próxima
+      const bloco = linhas.slice(i, i + 4).join(' ');
+      if (/--proto\b/.test(bloco) && /--tlsv1\.\d/.test(bloco)) continue;
+      infratores.push(`${nome}:${i + 1}: ${linha.trim()}`);
+    }
+  }
+  assert.deepEqual(infratores, [], `curl sem --proto='=https' --tlsv1.2:\n${infratores.join('\n')}`);
+});
+
+test('W99: todo upload-artifact declara retention-days', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const blocos = texto.split(/(?=\n[ \t]+-[ \t])/);
+    for (const bloco of blocos) {
+      if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
+      if (/retention-days:/.test(bloco)) continue;
+      // Encontrar a linha do uses: para reportar o número aproximado
+      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
+      infratores.push(`${nome}: upload-artifact sem retention-days`);
+    }
+  }
+  assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
