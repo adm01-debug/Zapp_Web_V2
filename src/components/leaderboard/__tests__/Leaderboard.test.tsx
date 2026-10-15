@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   agents: [] as LeaderboardAgent[],
   isLoading: false,
   isRefreshing: false,
+  error: null as unknown,
   timeRange: 'week' as 'today' | 'week' | 'month',
 }));
 
@@ -19,6 +20,7 @@ vi.mock('@/hooks/gamification/useLeaderboard', () => ({
     agents: state.agents,
     isLoading: state.isLoading,
     isRefreshing: state.isRefreshing,
+    error: state.error,
     timeRange: state.timeRange,
     setTimeRange,
     handleRefresh,
@@ -53,6 +55,7 @@ describe('Leaderboard — controles acessiveis e sem botao morto', () => {
     state.agents = [];
     state.isLoading = false;
     state.isRefreshing = false;
+    state.error = null;
     state.timeRange = 'week';
     setTimeRange.mockReset();
     handleRefresh.mockReset();
@@ -84,5 +87,25 @@ describe('Leaderboard — controles acessiveis e sem botao morto', () => {
     render(<Leaderboard />);
 
     expect(screen.queryByRole('button', { name: /Ver ranking completo/i })).toBeNull();
+  });
+
+  it('quando a leitura falha, mostra alerta em pt-BR com "Tentar de novo" que chama o refresh', () => {
+    state.agents = [];
+    state.error = new Error('permission denied');
+    render(<Leaderboard />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/N.o foi poss.vel carregar o ranking/);
+    const tentar = screen.getByRole('button', { name: 'Tentar de novo' });
+    fireEvent.click(tentar);
+    expect(handleRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('sem erro nao mostra alerta nem "Tentar de novo"', () => {
+    state.agents = [];
+    state.error = null;
+    render(<Leaderboard />);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).toBeNull();
   });
 });

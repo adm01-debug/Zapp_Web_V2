@@ -359,6 +359,31 @@ describe('useLeaderboard — resposta superada (corrida)', () => {
   });
 });
 
+describe('useLeaderboard — erro exposto para a tela', () => {
+  beforeEach(() => estado());
+
+  it('falha da RPC aparece em `error` (a tela usa no estado de erro)', async () => {
+    estado();
+    h.rpcError = { message: 'permission denied', code: '42501' };
+
+    const { result } = await montar();
+    expect(result.current.error).toBeTruthy();
+    expect(result.current.agents).toEqual([]);
+  });
+
+  it('leitura seguinte que dá certo limpa o erro', async () => {
+    estado();
+    h.rpcError = { message: 'permission denied', code: '42501' };
+    const { result } = await montar();
+    expect(result.current.error).toBeTruthy();
+
+    h.rpcError = null;
+    await act(async () => { result.current.handleRefresh(); });
+    await waitFor(() => expect(result.current.error).toBeNull());
+    expect(result.current.agents).toHaveLength(1);
+  });
+});
+
 describe('useLeaderboard — atualização manual e realtime', () => {
   beforeEach(() => estado());
 

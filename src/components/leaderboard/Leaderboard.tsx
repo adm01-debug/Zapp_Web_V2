@@ -23,7 +23,7 @@ function LeaderboardSkeleton() {
 }
 
 export function Leaderboard() {
-  const { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
+  const { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
 
   return (
     <div className="rounded-2xl p-5 border border-border/30 bg-card relative overflow-hidden">
@@ -50,14 +50,24 @@ export function Leaderboard() {
         </div>
       </div>
 
-      {isLoading ? <LeaderboardSkeleton /> : agents.length > 0 ? (
-        <div className="space-y-2">{agents.map((agent, index) => <LeaderboardRow key={agent.id} agent={agent} index={index} />)}</div>
-      ) : (
-        <div className="text-center py-8">
-          <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
-          <p className="text-xs text-muted-foreground mt-1">Os agentes aparecerão aqui conforme ganham XP</p>
-        </div>
+      {isLoading ? <LeaderboardSkeleton /> : (
+        <>
+          {error !== null && (
+            <div role="alert" className="mb-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 flex items-center gap-3">
+              <p className="flex-1 text-sm text-destructive">Não foi possível carregar o ranking.</p>
+              <Button size="sm" variant="outline" onClick={handleRefresh} disabled={isRefreshing}>Tentar de novo</Button>
+            </div>
+          )}
+          {agents.length > 0 ? (
+            <div className="space-y-2">{agents.map((agent, index) => <LeaderboardRow key={agent.id} agent={agent} index={index} />)}</div>
+          ) : error === null && (
+            <div className="text-center py-8">
+              <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+              <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
+              <p className="text-xs text-muted-foreground mt-1">Os agentes aparecerão aqui conforme ganham XP</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

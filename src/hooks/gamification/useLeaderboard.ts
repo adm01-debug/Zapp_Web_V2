@@ -45,6 +45,9 @@ export function useLeaderboard() {
   const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Falha da última leitura: a tela usa para o estado de erro ("Tentar de novo").
+  // Só a requisição atual escreve aqui; erro de período superado é descartado.
+  const [error, setError] = useState<unknown>(null);
   // Geração da requisição: só a requisição ATUAL escreve no estado. A resposta de um
   // período que já não é o atual (chegou depois da nova) é descartada, em vez de
   // voltar com a tela para o recorte anterior.
@@ -67,6 +70,8 @@ export function useLeaderboard() {
       // Resposta superada pelo período novo: descarta sem tocar no estado.
       if (requisicao !== requisicaoRef.current) return;
       if (error) throw error;
+      // Leitura atual ok: limpa a falha anterior (o "Tentar de novo" sumiu porque deu certo).
+      setError(null);
       const rows = (data || []) as unknown as LeaderboardRpcRow[];
       if (rows.length === 0) { setAgents([]); return; }
 
@@ -100,8 +105,10 @@ export function useLeaderboard() {
         achievementsCount: row.achievements_count,
         isOnline: row.is_online ?? false,
       })));
-    } catch (error) {
-      log.error('Error fetching leaderboard:', error);
+    } catch (err) {
+      log.error('Error fetching leaderboard:', err);
+      // Só a requisição atual marca a falha; a obsoleta não mexe na tela.
+      if (requisicao === requisicaoRef.current) setError(err);
     } finally {
       // Só a requisição atual encerra o carregamento; a obsoleta não mexe na tela.
       if (requisicao === requisicaoRef.current) {
@@ -129,5 +136,5 @@ export function useLeaderboard() {
     fetchLeaderboard(timeRange);
   }, [fetchLeaderboard, timeRange]);
 
-  return { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh };
+  return { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh };
 }
