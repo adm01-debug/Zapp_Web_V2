@@ -10,7 +10,7 @@ name: Notificação de Falha na Main (WhatsApp)
 # Dedupe por hora: 1 notificacao por workflow por hora (evita spam em falha recorrente).
 
 on:
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows:
       - 'E2E Tests (Logado)'
       - 'Contrato DB vivo'
@@ -68,8 +68,10 @@ jobs:
 
       - name: ✋ Pular se ja notificado nesta hora
         if: steps.cache.outputs.cache-hit == 'true'
+        env:
+          WF_NAME: ${{ github.event.workflow_run.name }}
         run: |
-          echo "Dedupe ativo: ja notificado nesta hora para ${{ github.event.workflow_run.name }}."
+          echo "Dedupe ativo: ja notificado nesta hora para $WF_NAME."
           exit 0
 
       - name: 📨 Enviar notificação WhatsApp via N8N

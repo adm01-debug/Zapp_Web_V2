@@ -83,8 +83,10 @@ jobs:
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
+        env:
+          GH_REF: ${{ github.ref }}
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: $GH_REF)."
           exit 1
 
       - name: Checkout confiavel da main
