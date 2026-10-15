@@ -23,9 +23,9 @@
 --      tambem negado (23505): nao adianta burlar por UPDATE.
 --   T6 PASSA — 'ai_l1' ativo SEM whatsapp_connection_id (o fluxo que a UI cria) aceito.
 --   T7 ESTRUTURA — o indice existe, e UNICO e PARCIAL com o predicado exigido.
---   T8 ROLLBACK executavel — as linhas do cabecalho da migration rodam: o indice cai,
---      os 'ai_l1' ficam DESLIGADOS/reclassificados e o CHECK antigo volta (INSERT de
---      'ai_l1' volta a ser negado por 23514).
+--   T8 ROLLBACK executavel — as 7 linhas do cabecalho da migration rodam: o indice cai,
+--      os 'ai_l1' ficam DESLIGADOS/reclassificados SEM reescrever updated_at (gatilho BEFORE
+--      UPDATE desligado na transacao) e o CHECK antigo volta (INSERT de 'ai_l1' → 23514).
 --
 -- PAPEL REAL: as assercoes rodam com SET LOCAL ROLE service_role (BYPASSRLS) — o alvo
 -- aqui e a CONSTRAINT e o INDICE, que valem para todos os papeis; nao se prova RLS aqui.
@@ -149,6 +149,16 @@ BEGIN
 END $$;
 RESET ROLE;
 
+-- Setup do T8 (papel dono): carimba um updated_at CONHECIDO nos fluxos de prova, com o gatilho
+-- desligado so nesta hora, para o valor nao virar now(). Sem isso o T8 seria tautologico:
+-- INSERT e UPDATE na MESMA transacao veem o mesmo now(), e a comparacao passaria mesmo com o
+-- gatilho ligado durante o rollback.
+ALTER TABLE public.chatbot_flows DISABLE TRIGGER update_chatbot_flows_updated_at;
+UPDATE public.chatbot_flows
+   SET updated_at = timestamptz '2020-01-01 00:00:00+00'
+ WHERE name LIKE 'prova-ai-l1-%';
+ALTER TABLE public.chatbot_flows ENABLE TRIGGER update_chatbot_flows_updated_at;
+
 -- T7 — ESTRUTURA -------------------------------------------------------------------
 \echo 'T7: indice UNICO e PARCIAL com o predicado exigido'
 DO $$
@@ -172,16 +182,20 @@ BEGIN
 END $$;
 
 -- T8 — ROLLBACK executavel ----------------------------------------------------------
-\echo 'T8: as linhas do cabecalho da migration rodam e o CHECK antigo volta'
+\echo 'T8: as 7 linhas do cabecalho da migration rodam, o CHECK antigo volta e o updated_at NAO e reescrito'
+CREATE TEMP TABLE t_antes AS
+  SELECT name, updated_at FROM public.chatbot_flows WHERE name LIKE 'prova-ai-l1-%';
 DROP INDEX IF EXISTS public.chatbot_flows_ai_l1_one_active_idx;
+ALTER TABLE public.chatbot_flows DISABLE TRIGGER update_chatbot_flows_updated_at;
 UPDATE public.chatbot_flows SET is_active = false WHERE trigger_type = 'ai_l1';
 UPDATE public.chatbot_flows SET trigger_type = 'keyword' WHERE trigger_type = 'ai_l1';
 ALTER TABLE public.chatbot_flows DROP CONSTRAINT IF EXISTS chatbot_flows_trigger_type_check;
 ALTER TABLE public.chatbot_flows
   ADD CONSTRAINT chatbot_flows_trigger_type_check
   CHECK (trigger_type IN ('keyword', 'first_message', 'menu', 'webhook', 'schedule'));
+ALTER TABLE public.chatbot_flows ENABLE TRIGGER update_chatbot_flows_updated_at;
 DO $$
-DECLARE v_idx int; v_sobrou int;
+DECLARE v_idx int; v_sobrou int; v_reescrito int;
 BEGIN
   SELECT count(*) INTO v_idx FROM pg_class WHERE relname = 'chatbot_flows_ai_l1_one_active_idx';
   IF v_idx <> 0 THEN
@@ -192,12 +206,21 @@ BEGIN
   IF v_sobrou <> 0 THEN
     RAISE EXCEPTION 'T8 FALHOU: % fluxo(s) de prova continuam ATIVOS apos o rollback', v_sobrou;
   END IF;
+  -- o gatilho BEFORE UPDATE regrava updated_at em toda linha tocada: desligado na transacao,
+  -- o rollback NAO pode mexer no carimbo dos fluxos (recusa real de 06/10).
+  SELECT count(*) INTO v_reescrito
+    FROM public.chatbot_flows f JOIN t_antes a USING (name)
+   WHERE f.updated_at IS DISTINCT FROM a.updated_at;
+  IF v_reescrito <> 0 THEN
+    RAISE EXCEPTION 'T8 FALHOU: o rollback reescreveu updated_at de % linha(s)', v_reescrito;
+  END IF;
   BEGIN
     INSERT INTO public.chatbot_flows (name, is_active, trigger_type)
     VALUES ('prova-pos-rollback', true, 'ai_l1');
     RAISE EXCEPTION 'T8 FALHOU: apos o rollback o CHECK ainda aceita ai_l1';
   EXCEPTION WHEN check_violation THEN
-    RAISE NOTICE 'T8 OK: indice caiu, ai_l1 desligado e CHECK antigo restaurado (23514)';
+    RAISE NOTICE 'T8 OK: indice caiu, ai_l1 desligado, updated_at preservado em % linha(s) e CHECK antigo restaurado (23514)',
+      (SELECT count(*) FROM t_antes);
   END;
 END $$;
 
