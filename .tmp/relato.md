@@ -1,3 +1,23 @@
+Especialista: senior (area-front-hooks)
+
+## Refazer 1 (t_ce7b3b81) — branch andou depois do fechar: full rodado de novo no HEAD atual
+
+Ponto 1: reproduzir a falha com `zapp-verify full .`, corrigir e fechar de novo — reproduzido; a única falha é pré-existente e fora do escopo, então nenhum arquivo de código muda neste refazer (só este relato).
+- `zapp-verify full .` no HEAD atual → `FALHOU testes (ver .../testes.log)` / `VERIFY: VERMELHO em testes`; etapas anteriores OK: `OK db_guard`, `OK tipos 17s`, `OK lint 147s`, `OK migrations 1s`.
+- Linha-resumo da suíte: `Test Files 1 failed | 1332 passed (1333)` / `Tests 1 failed | 11938 passed | 25 expected fail | 14 todo (11978)`.
+- O 1 teste que falha é `src/components/talkx/__tests__/RuleValueInput.test.tsx > "em breve": Lead score e Risco de churn ficam desabilitados no catálogo` → `TestingLibraryElementError: Unable to find role="button" and name "Novo segmento"`.
+- Prova de que não é deste cartão: `git diff --name-only dia/2026-10-13...HEAD` lista só `src/hooks/sla/useContactSlaTimeline.ts`, `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx`, `src/lib/slaTimeline.ts`, `src/lib/__tests__/slaTimeline.test.ts` e este relato; busca por `slaTimeline|useContactSlaTimeline|useApplicableSLA` em `src/components/talkx` retorna 0 ocorrências; só os 4 arquivos do cartão importam `slaTimeline`.
+- Prova de pré-existência/interferência entre casos: o arquivo isolado falha (`Tests 1 failed | 4 passed (5)`), mas o caso sozinho passa (`bun run vitest run ... -t "desabilitados no cat"` → `Tests 1 passed | 4 skipped (5)`); o caso anterior deixa `?view=talkx&tab=segments&mode=new` na URL do jsdom e o caso seguinte nunca vê a biblioteca.
+- A correção já existe em outra trilha: commit `67d58a177a` (`test(talkx): isola a URL entre os casos do RuleValueInput`, cartão 2610130110be20) no `dia/2026-10-14`, ausente nesta branch (base `dia/2026-10-13`); trazê-lo seria código de outro cartão no meu diff, então não trouxe.
+- Erro não tratado no log (`RealtimeInboxView.selectedMessagesError`, `WebSocket.dispatchEvent` vs jsdom `Event`) é da mesma natureza: fora do escopo, sem relação com SLA.
+- Escopo deste cartão continua verde: `bun run vitest run src/lib/__tests__/slaTimeline.test.ts src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` → `Test Files 2 passed (2); Tests 35 passed (35)`; `bun run test:contracts` → `Test Files 89 passed (89); Tests 1379 passed (1379)`; `bun run tsc --noEmit` → saída 0.
+
+## O que NÃO fiz e por quê
+- Não corrigi o teste do TalkX nem o erro do RealtimeInboxView: fora do escopo (achado registrado em comentário no cartão com arquivo, sintoma e a correção upstream existente); mexer ali seria "diff maior que o título".
+- Não fiz rebase para o dia/2026-10-14 nem cherry-pick do commit de outro cartão: a base da tarefa está fixada no dia/2026-10-13 e trazer código alheio é o meu erro nº 1 medido.
+
+---
+
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
