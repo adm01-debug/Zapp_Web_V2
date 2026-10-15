@@ -2,7 +2,7 @@ import { memo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, Reply, Copy, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Reply, Copy, Volume2, VolumeX, Loader2, Check, CheckCheck, Clock, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import {
@@ -14,8 +14,17 @@ import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { formatTime, formatDateSep, MediaContent, MediaTypeIcon } from './teamChatParts';
 import { TeamReactionBar, TeamQuickReactionBarWrapper } from './TeamMessageReactionsWrapper';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
-import { MessageStatus } from '@/components/inbox/MessageStatus';
 import { normalizeTeamMessageStatus } from '@/hooks/team-chat/teamMessageStatus';
+
+/** Rótulo do tick por estado — o nome que o leitor de tela anuncia. */
+const TICK_LABEL: Record<'sent' | 'delivered' | 'read' | 'failed' | 'pending', string> = {
+  pending: 'Enviando mensagem',
+  sent: 'Enviado',
+  delivered: 'Entregue',
+  read: 'Lido',
+  failed: 'Falha no envio',
+};
+
 
 interface Props {
   msg: TeamMessage;
@@ -28,6 +37,9 @@ interface Props {
   ttsIsPlaying: boolean;
   ttsIsLoading: boolean;
   reactions?: ReactionGroup[];
+  /** Nomes de quem já leu (grupo). Opcional: quando o hook/view expuser os
+   *  leitores, o tick e o tooltip passam a listá-los. */
+  readBy?: string[];
   onReply: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -42,7 +54,7 @@ interface Props {
 export const TeamMessageItem = memo(function TeamMessageItem({
   msg, isMine, showDate, conversationType, repliedMsg,
   isEditing, editText, ttsIsPlaying, ttsIsLoading,
-  reactions = [], onReply, onEdit, onDelete, onCopy, onTtsToggle,
+  reactions = [], readBy, onReply, onEdit, onDelete, onCopy, onTtsToggle,
   onSaveEdit, onCancelEdit, setEditText, onToggleReaction,
 }: Props) {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -56,6 +68,25 @@ export const TeamMessageItem = memo(function TeamMessageItem({
     rawStatus === 'sending' ? 'pending'
     : rawStatus === 'deleted' ? null
     : rawStatus;
+
+  // Nome acessível do tick. "Lido" numa conversa em grupo é "lido por todos"
+  // (o estado `read` só vem do all_read da view): dizer só "Lido" esconderia
+  // que outro participante ainda não leu. Quando o hook/view expuser os
+  // leitores (prop opcional `readBy`), o nome e o tooltip listam quem leu.
+  const readers = (readBy ?? []).map(n => n.trim()).filter(Boolean);
+  const tickLabel = displayStatus === 'read' && readers.length > 0
+    ? `Lido por ${readers.join(', ')}`
+    : displayStatus === 'read' && conversationType === 'group'
+    ? 'Lido por todos os participantes'
+    : displayStatus
+      ? TICK_LABEL[displayStatus]
+      : null;
+
+  const TickIcon =
+    displayStatus === 'read' || displayStatus === 'delivered' ? CheckCheck
+    : displayStatus === 'sent' ? Check
+    : displayStatus === 'pending' ? Clock
+    : AlertCircle;
 
   return (
     <>
@@ -180,11 +211,28 @@ export const TeamMessageItem = memo(function TeamMessageItem({
                         <span className={cn('text-3xs tabular-nums opacity-70 font-medium', isMine ? 'text-primary-foreground' : 'text-muted-foreground')}>
                           {formatTime(msg.created_at)}{msg.is_edited && ' · editado'}
                         </span>
-                        {isMine && displayStatus && (
-                          <MessageStatus
-                            status={displayStatus}
-                            className={cn('opacity-70', isMine && 'text-primary-foreground')}
-                          />
+                        {isMine && displayStatus && tickLabel && (
+                          <span
+                            role="img"
+                            aria-label={tickLabel}
+                            title={tickLabel}
+                            className={cn(
+                              'inline-flex items-center opacity-70',
+                              // O ícone é filho DIRETO deste wrapper (o seletor
+                              // '[&>svg]' só recolore assim). Antes o tick vinha
+                              // do MessageStatus, cujo svg nasce aninhado
+                              // (Tooltip > span > svg) e com classe de cor
+                              // própria — o seletor nunca alcançava o ícone.
+                              // Lido usa a cor 'info' do sistema; os demais
+                              // estados usam a cor do texto do balão próprio
+                              // (o mesmo par do MessageBubble do inbox).
+                              displayStatus === 'read'
+                                ? '[&>svg]:text-info'
+                                : '[&>svg]:text-primary-foreground',
+                            )}
+                          >
+                            <TickIcon className="h-3.5 w-3.5" aria-hidden />
+                          </span>
                         )}
                       </div>
                     </div>
