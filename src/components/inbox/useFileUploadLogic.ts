@@ -260,8 +260,7 @@ export function useFileUploadLogic(opts: {
     setIsMultiMode(false);
     setCaption('');
     setCurrentQueueIndex(0);
-    // Sem isso um envio anterior deixava `uploading`/`uploadStage` presos e a barra
-    // reaparecia no proximo arquivo com o valor antigo.
+    // Zera o estado da barra: o envio seguinte não herda estágio nem percentual.
     setUploading(false);
     setUploadStage(null);
     setUploadProgress(0);
