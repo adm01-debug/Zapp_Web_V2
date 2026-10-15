@@ -246,15 +246,19 @@ jobs:
         run: go test ./...
 
   # ===========================================
-  # JOB 2: Unit Tests
+  # JOB 2a: Unit Test Shards (paralelos, sem cobertura)
   # ===========================================
-  test:
-    name: 🧪 Unit Tests
+  unit-test-shard:
+    name: 🧪 Unit Tests (${{ matrix.shard }}/2)
     # W45: PRs draft pulam os jobs pesados — o check fica verde (skipped) sem executar.
     # ready_for_review no gatilho relança quando o draft é convertido.
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 12
+    strategy:
+      matrix:
+        shard: [1, 2]
+      fail-fast: false
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -277,7 +281,57 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
+      - name: 🧪 Run Vitest shard ${{ matrix.shard }}/2
+        # W38: shard paralelo; cobertura desligada aqui — verificada no job agregador
+        # somente na main para nao duplicar o custo (cobertura ~2x mais lenta que teste puro).
+        run: bun vitest run --shard=${{ matrix.shard }}/2
+        env:
+          CI: true
+
+  # JOB 2: Unit Tests — agregador (required check) + contratos + cobertura na main
+  # ===========================================
+  test:
+    name: 🧪 Unit Tests
+    needs: unit-test-shard
+    # always() garante que o check aparece mesmo se o shard falhou (para reportar a falha).
+    # A segunda condicao preserva o comportamento W45: draft PRs nao executam.
+    if: always() && !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 🚫 Verificar resultado dos shards
+        run: |
+          result="${{ needs.unit-test-shard.result }}"
+          if [[ "$result" != "success" ]]; then
+            echo "::error::Unit test shards: $result"
+            exit 1
+          fi
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 📊 Verificar cobertura com piso (somente main)
+        # W38: cobertura so na main — PRs nao precisam do overhead de instrumentacao (~2x).
+        # O piso e' verificado em cada push na main; PRs nao podem fazer o piso regredir
+        # sem que o proximo merge na main o detecte.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: bun run test:coverage
         env:
           CI: true
