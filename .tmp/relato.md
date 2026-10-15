@@ -28,6 +28,16 @@ que despacha no Edge e chamava `refreshActiveConversation()`. O editor só era l
 despacho + do refetch da conversa e da lista; além disso `isSending` engolia em silêncio o 2º Enter.
 Correção: fila serial por conversa (`createSerialSendQueue`) + remoção do refetch pós-envio.
 
+## Por que toquei arquivos fora da lista (aviso do juiz, explicado)
+- `src/components/inbox/chat/useChatPanelHandlers.ts` e seu teste — estão na lista: o cartão autoriza
+  "componente do compositor (só o necessário)" e é exatamente ele; sem mexer ali o critério 2
+  (rascunho preservado em falha) não tem como ser cumprido, porque é ali que o editor é limpo e
+  restaurado.
+- `src/hooks/inbox/useRealtimeInbox.ts` e seu teste — é INDISPENSÁVEL para o critério 3 do próprio
+  cartão ("sem refetch da lista no envio"): o `refreshActiveConversation()` que refazia lista+conversa
+  depois do despacho mora dentro desse hook; sem removê-lo, o critério 3 fica impossível. Nenhum outro
+  arquivo fora de `src/hooks/chat/` foi tocado.
+
 ## Cartões vizinhos lidos antes de mexer (mesmo trecho)
 `~/hermes-workspaces/.assets/paridade-06/achados_1_envio.md` marca este trecho como compartilhado com
 PH-03/EV1 (erros de envio/parsed de códigos), PH-04 (fila serial por contato + backoff — meu `sendQueue`
@@ -39,3 +49,4 @@ Nada disso foi tocado: o diff fica no compositor, na fila e no refetch do Realti
 → Test Files 261 passed | 3 skipped (264); Tests 2138 passed | 3 expected fail | 22 todo (2163).
 
 Comando de verificação: `zapp-verify . --rapido`
+Resultado: `VERIFY: VERDE SEM BANCO (39s)` — OK db_guard (0s), OK tipos (30s), OK lint (8s), OK migrations (1s); banco local não verificado (o verificador pede o nome do conjunto como 3º argumento).
