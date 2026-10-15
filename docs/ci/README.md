@@ -155,7 +155,6 @@
 | Workflow | Situação | Por quê não é bug |
 |---|---|---|
 | [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
-| [`codeql.yml`](../../.github/workflows/codeql.yml) | **CodeQL nao e required check ainda** | analise de ~3 min informativa; tornar |
 | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | **schedule comentado** | decisao pendente do dono (W93); religar exige vars.CRM_SYNC_WORKER_ENABLED=true e o roteiro em docs/runbooks/CRM_INTEGRATION_ROLLOUT.md |
 | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | **merge_group inerte** | gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org) |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |
