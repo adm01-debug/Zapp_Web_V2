@@ -9,7 +9,7 @@ Especialista: worker
 - segredos: grep -rEc por JWT/sk-/Bearer/sbp_/SERVICE_ROLE_KEY nos 3 arquivos → 0/0/0.
 - zapp-verify . --rapido → VERIFY: VERDE SEM BANCO (8s).
 ## Ponto 1 (recusa: diff de 90762 caracteres é grande demais)
-- Os 5 arquivos juntos foram recusados pelo portão (139361 adicionados > 90000). Divisão: 3 arquivos aqui (partes 1, 2 e plano) e 2 no cartão filho t_5d53ca14 (partes 3 e 4). Refazer enxugou este relato para o diff total ficar abaixo de 90000: `git diff dia/2026-10-13...HEAD | wc -c` → 89284.
+- Os 5 arquivos juntos foram recusados pelo portão (139361 adicionados > 90000). Divisão: 3 arquivos aqui (partes 1, 2 e plano) e 2 no cartão filho t_5d53ca14 (partes 3 e 4). Refazer enxugou este relato para o diff total ficar abaixo de 90000: `git diff dia/2026-10-13...HEAD | wc -c` → 89378.
 ## O que NÃO fiz e por quê
 - Não integrei UI-01..UI-10 nem toquei em docs/estado/13-components-ui.md: fora do escopo.
 - Não alterei o conteúdo técnico (cartão proíbe).
@@ -21,4 +21,4 @@ docs/plans/PLANO_PARIDADE_V3_DOC_13_SEGUNDA_PASSADA_2026-10-13.md
 ## Comandos
 - sha256sum origem=destino: iguais (ver Prova).
 - zapp-verify . --rapido → VERDE SEM BANCO (8s).
-- git diff dia/2026-10-13...HEAD | wc -c → 89284 (< 90000).
+- git diff dia/2026-10-13...HEAD | wc -c → 89378 (< 90000).
