@@ -82,7 +82,7 @@ vi.mock('@/components/inbox/TransferDialog', () => ({
 
 import { ConversationListSidebar } from '@/components/inbox/ConversationListSidebar';
 
-function baseProps(filteredConversations: Array<{ contact: { id: string } }>) {
+function baseProps(filteredConversations: Array<{ contact: { id: string; assigned_to?: string | null } }>) {
   return {
     inbox: {
       selectedContactId: null,
@@ -196,7 +196,7 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
     const onTransfer = transferDialogOnTransfer.current;
     expect(onTransfer).toBeTypeOf('function');
     await expect(onTransfer?.('queue', 'q1', 'nota de teste')).rejects.toBe(eventError);
-    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste');
+    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste', undefined);
 
     // Alvo e diálogo continuam abertos; nada de refetch.
     rerender(<ConversationListSidebar {...props} />);
@@ -210,6 +210,33 @@ describe('ConversationListSidebar — diálogo de Resolver/Transferir some com a
       expect(screen.queryByTestId('transfer-dialog')).not.toBeInTheDocument()
     );
     expect(props.inbox.refetch).toHaveBeenCalled();
+  });
+
+  it('passa o assigned_to visível como dono esperado (compare-and-set do PK-03)', async () => {
+    const transferContact = vi.fn().mockResolvedValue(undefined);
+    const props = baseProps([{ contact: { id: 'c1', assigned_to: 'agent-9' } }]);
+    props.conversationActions = {
+      pinnedIds: new Set(),
+      favoriteIds: new Set(),
+      isPinned: vi.fn(() => false),
+      isFavorite: vi.fn(() => false),
+      pinConversation: vi.fn(),
+      unpinConversation: vi.fn(),
+      favoriteContact: vi.fn(),
+      unfavoriteContact: vi.fn(),
+      snoozeConversation: vi.fn(),
+      archiveContact: vi.fn(),
+      transferContact,
+      profileId: 'me',
+    } as unknown as typeof props.conversationActions;
+    render(<ConversationListSidebar {...props} />);
+
+    fireEvent.click(screen.getByText('abrir-transferir-c1'));
+    const onTransfer = transferDialogOnTransfer.current;
+    expect(onTransfer).toBeTypeOf('function');
+    await onTransfer?.('queue', 'q1', 'nota de teste');
+
+    expect(transferContact).toHaveBeenCalledWith('c1', 'queue', 'q1', 'nota de teste', 'agent-9');
   });
 
   it('conversa continua na lista filtrada: diálogo permanece aberto entre re-renders', () => {

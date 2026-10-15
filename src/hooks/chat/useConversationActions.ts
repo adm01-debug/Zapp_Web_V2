@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
+import { queryClient } from '@/lib/queryClient';
+import { CHAVES_AFETADAS_POR_REATRIBUICAO } from '@/hooks/crm/useAgentReassignment';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -19,6 +22,65 @@ interface SnoozeChange {
 
 interface FavoriteContact {
   contact_id: string;
+}
+
+/** Erro devolvido pelo PostgREST: `code` traz o SQLSTATE, `message` o texto. */
+type RpcError = { code?: string | null; message?: string | null } | null;
+
+interface TransferArgs {
+  p_contact_id: string;
+  p_to_agent_id: string | null;
+  p_to_queue_id: string | null;
+  p_note: string | null;
+  /** Só existe a partir do PK-03 (compare-and-set do dono). */
+  p_expected_agent_id?: string | null;
+}
+
+/**
+ * O tipo gerado em `types.ts` ainda não conhece `p_expected_agent_id` — quem o
+ * adiciona é a migration do PK-03 e ela ainda não foi integrada neste workspace.
+ * O cast sai quando o `types.ts` for regenerado do banco com a migration
+ * aplicada (mesmo padrão de src/hooks/analytics/useAIUsageDashboard.ts).
+ */
+const transferRpc = supabase.rpc as unknown as (
+  fn: 'transfer_conversation',
+  args: TransferArgs,
+) => PromiseLike<{ data: string | null; error: RpcError }>;
+
+/**
+ * Servidor antigo (sem o PK-03) recusa a assinatura nova com PGRST202 /
+ * "Could not find the function": a chamada tolerante refaz sem o parâmetro em vez
+ * de perder a transferência por causa da versão do banco.
+ */
+function assinaturaSemDonoEsperado(error: RpcError): boolean {
+  if (!error) return false;
+  if (error.code === 'PGRST202') return true;
+  return /could not find the function/i.test(error.message ?? '');
+}
+
+/**
+ * Compare-and-set do PK-03: 40001 quando o dono do contato já mudou de mãos.
+ * O código é o sinal estável (a mensagem 'Contato ja foi transferido por outro
+ * atendente.' pode ser reescrita).
+ */
+function conflitoDeDono(error: RpcError): boolean {
+  if (!error) return false;
+  if (error.code === '40001') return true;
+  return /j[áa] foi transferido/i.test(error.message ?? '');
+}
+
+/**
+ * O dono mudou (ou pode ter mudado): invalida a lista e o painel do contato para
+ * a tela não continuar mostrando o responsável antigo. Mesmas chaves REAIS da
+ * reatribuição de agentes (src/hooks/crm/useAgentReassignment.ts), que é o outro
+ * caminho que mexe em `contacts.assigned_to`, mais a chave por contato.
+ */
+function invalidarListaEContato(contactId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['contact-sidebar', contactId] });
+  void queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
+  for (const queryKey of CHAVES_AFETADAS_POR_REATRIBUICAO) {
+    void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+  }
 }
 
 export function useConversationActions() {
@@ -258,11 +320,18 @@ export function useConversationActions() {
     });
   }, []);
 
+  /**
+   * Transfere a conversa. `expectedAgentId` é o `assigned_to` que a tela conhece
+   * quando o diálogo abre: a RPC do PK-03 compara com o dono atual e recusa se
+   * outro atendente transferiu no meio do caminho. `undefined` = servidor antigo /
+   * chamador que não passa o dono (aí a RPC roda sem o compare-and-set).
+   */
   const transferContact = useCallback(async (
     contactId: string,
     type: 'agent' | 'queue' | 'connection',
     targetId: string,
     note?: string,
+    expectedAgentId?: string | null,
   ) => {
     if (type === 'connection') {
       toast.error('Transferência por conexão ainda não é suportada');
@@ -270,17 +339,38 @@ export function useConversationActions() {
     }
 
     const trimmedNote = note?.trim();
-    const { error } = await supabase.rpc('transfer_conversation', {
+    const args: TransferArgs = {
       p_contact_id: contactId,
       p_to_agent_id: type === 'agent' ? targetId : null,
       p_to_queue_id: type === 'queue' ? targetId : null,
       p_note: trimmedNote || null,
-    });
+    };
 
-    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
-    // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
-    // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
-    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+    let { error } = expectedAgentId === undefined
+      ? await transferRpc('transfer_conversation', args)
+      : await transferRpc('transfer_conversation', { ...args, p_expected_agent_id: expectedAgentId });
+
+    // Chamada tolerante: o banco da tarefa pode ainda não ter a migration do
+    // PK-03. Sem o parâmetro a transferência segue como antes (sem o CAS).
+    if (error && expectedAgentId !== undefined && assinaturaSemDonoEsperado(error)) {
+      ({ error } = await transferRpc('transfer_conversation', args));
+    }
+
+    if (error) {
+      // Conflito de dono: não é falha de rede nem permissão — a conversa só saiu
+      // de mãos. Avisa e devolve a lista atualizada; rejeitar só manteria aberto um
+      // diálogo cujo alvo já não faz sentido (e quem chamou não refaria o refetch).
+      if (conflitoDeDono(error)) {
+        toast.error('Esta conversa mudou de responsável. Atualizamos a lista.');
+        invalidarListaEContato(contactId);
+        return;
+      }
+      // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
+      // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
+      // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
+      toast.error('Erro ao transferir conversa');
+      throw error;
+    }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 

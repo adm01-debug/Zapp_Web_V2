@@ -204,14 +204,22 @@ export function ConversationListSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- inbox é `any` (tipo de useRealtimeInbox()), então o linter não vê inbox.refetch como estável; dep no objeto inteiro reproduziria o bug do #810 (inbox é novo a cada render).
   }, [conversationActions, inbox.refetch]);
 
-  const handleListTransfer = useCallback(async (type: TransferTargetType, targetId: string, note?: string) => {
+  const handleListTransfer = useCallback(async (
+    type: TransferTargetType,
+    targetId: string,
+    note?: string,
+    expectedAgentId?: string | null,
+  ) => {
     if (!transferTarget) return;
     if (!conversationActions) {
       toast.error('Ação indisponível — tente recarregar a página');
       // Rejeita pra quem chamou não fechar o diálogo como se tivesse dado certo.
       throw new Error('Ações de conversa indisponíveis');
     }
-    await conversationActions.transferContact(transferTarget, type, targetId, note);
+    // `expectedAgentId` é o dono que a tela mostra ao abrir o diálogo: a RPC do
+    // PK-03 compara com o dono atual e recusa se outro atendente transferiu nesse
+    // meio-tempo (o conflito vira aviso + lista atualizada dentro do hook).
+    await conversationActions.transferContact(transferTarget, type, targetId, note, expectedAgentId);
     inbox.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mesmo motivo acima.
   }, [transferTarget, conversationActions, inbox.refetch]);
@@ -229,7 +237,7 @@ export function ConversationListSidebar({
   const activeTransferContact = useMemo(
     () => (activeTransferTarget
       ? (inboxFilters.filteredConversations ?? []).find(
-          (c: { contact: { id: string; queue_id?: string | null } }) => c.contact.id === activeTransferTarget
+          (c: { contact: { id: string; queue_id?: string | null; assigned_to?: string | null } }) => c.contact.id === activeTransferTarget
         )
       : null),
     [activeTransferTarget, inboxFilters.filteredConversations]
@@ -566,7 +574,7 @@ export function ConversationListSidebar({
         <TransferDialog
           open={!!activeTransferTarget}
           onOpenChange={(open) => !open && setTransferTarget(null)}
-          onTransfer={async (type, targetId, message) => { await handleListTransfer(type, targetId, message); setTransferTarget(null); }}
+          onTransfer={async (type, targetId, message) => { await handleListTransfer(type, targetId, message, activeTransferContact?.contact?.assigned_to); setTransferTarget(null); }}
           queueId={activeTransferContact?.contact?.queue_id ?? null}
         />
       )}
