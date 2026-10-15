@@ -172,7 +172,13 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
         // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
         // calculada — então fica fora da estimativa/PostgREST e barra a
         // publicação via validateSegment, sem quebrar o catálogo v2.
-        if (RULE_FIELDS.find((f) => f.value === rule.field)?.comingSoon) {
+        // Ponte Singu (t_124005a8): real_sector/real_uf vivem em
+        // companies.ramo_atividade / company_addresses.estado (is_primary),
+        // nunca em public.contacts — a RPC talkx_resolve_audience rejeita
+        // (invalid_talkx_audience_field) e o PostgREST não tem a coluna.
+        // Ficam no catálogo (RULE_FIELDS) mas fora da execução, como os "em breve".
+        const def = RULE_FIELDS.find((f) => f.value === rule.field);
+        if (def?.comingSoon || def?.value === 'real_sector' || def?.value === 'real_uf') {
           incompleteCount += 1;
           return false;
         }
@@ -202,6 +208,10 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // Ponte Singu (t_124005a8): real_sector/real_uf não são colunas de
+  // public.contacts (vivem em companies/company_addresses). Gerar filtro seria
+  // consultar coluna inexistente — falha fechada, como campo desconhecido.
+  if (def.value === 'real_sector' || def.value === 'real_uf') return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -266,9 +276,13 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
-/** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...] }. */
-function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[] } {
-  return { groups: rules?.groups ?? [] };
+/** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...], join }. */
+function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[]; join: SegmentJoin } {
+  // t_124005a8 ponto 2: nunca repassa o cru (incompleta, "em breve" e real_*
+  // a RPC rejeita com invalid_talkx_audience_*). Passa pela mesma separação do
+  // splitRules e completa com o join do segmento.
+  const { complete } = splitRules(rules);
+  return { groups: complete.groups, join: rulesJoin(rules) };
 }
 
 type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
