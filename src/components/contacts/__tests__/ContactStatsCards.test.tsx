@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ContactStatsCards } from '../ContactStatsCards';
 
 const mockUseContactsKpi = vi.fn();
@@ -14,9 +14,10 @@ function baseKpi(overrides: Partial<ReturnType<typeof mockUseContactsKpi>> = {})
     deltaNovosPct: 25,
     deltaTotalPct: 12,
     empresasDistinct: 30,
-    fornecedoresTotal: 10,
     fornecedores30: 5,
     deltaFornecedoresPct: -20,
+    duplicateCandidates: 2,
+    lgpdPending: null,
     seriesTotalCumulative12w: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     seriesNovosDaily30: [1, 2, 3, 4, 5, 6, 7],
     seriesEmpresasCumulative12w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -125,5 +126,41 @@ describe('ContactStatsCards', () => {
     expect(mockUseContactsKpi).toHaveBeenLastCalledWith(false);
     render(<ContactStatsCards totalAll={2498} fornecedoresAll={7} includeLegacy />);
     expect(mockUseContactsKpi).toHaveBeenLastCalledWith(true);
+  });
+
+  it('exibe o indicador de possíveis duplicados com o valor do hook', () => {
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi({ duplicateCandidates: 7 }), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
+    expect(screen.getByTestId('kpi-duplicates')).toBeInTheDocument();
+    expect(screen.getByText('Possíveis duplicados')).toBeInTheDocument();
+    expect(screen.getByTestId('kpi-duplicates-value')).toHaveTextContent('7');
+  });
+
+  it('sem onDuplicatesClick o indicador não é clicável', () => {
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi(), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
+    expect(screen.getByTestId('kpi-duplicates').tagName).toBe('DIV');
+    expect(screen.queryByRole('button', { name: /duplicados/i })).toBeNull();
+  });
+
+  it('com onDuplicatesClick o clique no indicador filtra a lista', () => {
+    const onDuplicatesClick = vi.fn();
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi({ duplicateCandidates: 3 }), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} onDuplicatesClick={onDuplicatesClick} />);
+    fireEvent.click(screen.getByRole('button', { name: /duplicados/i }));
+    expect(onDuplicatesClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('não mostra o indicador enquanto o agregado carrega', () => {
+    mockUseContactsKpi.mockReturnValue({ data: undefined, isLoading: true });
+    render(<ContactStatsCards totalAll={3124} fornecedoresAll={10} />);
+    expect(screen.queryByTestId('kpi-duplicates')).toBeNull();
+  });
+
+  it('lgpdPending nulo não quebra a renderização dos cards', () => {
+    mockUseContactsKpi.mockReturnValue({ data: baseKpi({ lgpdPending: null }), isLoading: false });
+    render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
+    expect(screen.getAllByTestId('kpi-card')).toHaveLength(4);
+    expect(screen.getByTestId('kpi-duplicates')).toBeInTheDocument();
   });
 });

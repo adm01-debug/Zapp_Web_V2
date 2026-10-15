@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
   rpcError: null as null | { message: string },
   filters: [] as unknown[],
   selectHead: null as null | { count?: string; head?: boolean },
+  queries: 0,
   rangeCalls: 0,
   count: 0,
 }));
@@ -20,6 +21,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: () => ({
       select: (_cols: string, opts: { count?: string; head?: boolean }) => {
         h.selectHead = opts;
+        h.queries++;
         const chain = {
           is: (...a: unknown[]) => { h.filters.push(['is', ...a]); return chain; },
           eq: (...a: unknown[]) => { h.filters.push(['eq', ...a]); return chain; },
@@ -44,13 +46,17 @@ beforeEach(() => {
   h.rpcError = null;
   h.filters = [];
   h.selectHead = null;
+  h.queries = 0;
   h.rangeCalls = 0;
   h.count = 0;
 });
 
 describe('fetchContactsKpi — indicadores vêm das RPCs agregadas, sem paginar a tabela', () => {
-  it('chama contacts_stats e contacts_stats_series uma vez cada', async () => {
+  it('custa 2 RPCs + 3 contagens head e nenhuma linha de contato', async () => {
     await fetchContactsKpi(false);
+    expect(h.rpcCalls).toHaveLength(2);
+    expect(h.queries).toBe(3);
+    expect(h.rangeCalls).toBe(0);
     const fns = h.rpcCalls.map(c => c.fn);
     expect(fns).toContain('contacts_stats');
     expect(fns).toContain('contacts_stats_series');
