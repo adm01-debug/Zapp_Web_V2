@@ -9887,6 +9887,48 @@ export type Database = {
           },
         ]
       }
+      xp_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          profile_id: string
+          reason: string
+          ref_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          profile_id: string
+          reason: string
+          ref_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          profile_id?: string
+          reason?: string
+          ref_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xp_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       catalog_send_stats: {
@@ -11412,6 +11454,15 @@ export type Database = {
           p_profile_id: string
           p_type: string
           p_xp_reward: number
+        }
+        Returns: Json
+      }
+      grant_xp_internal: {
+        Args: {
+          p_amount: number
+          p_profile_id: string
+          p_reason: string
+          p_ref_id: string
         }
         Returns: Json
       }
