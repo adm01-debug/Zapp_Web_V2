@@ -60,3 +60,19 @@ describe('normalizeMediaUrl — barras duplicadas', () => {
     expect(normalizeMediaUrl(url)).toBe(url);
   });
 });
+
+describe('normalizeMediaUrl — URL plana para href/src (S2305)', () => {
+  it('devolve URL plana para uso direto em href/src/action/formaction (sem quoting)', () => {
+    const url = 'https://x.supabase.co/storage/a.png?token=abc&x=1';
+    const saida = normalizeMediaUrl(url);
+    expect(saida).toBe(url);
+    expect(saida).not.toContain('&quot;');
+    expect(saida).not.toContain('&amp;');
+    expect(saida).not.toContain('&#');
+  });
+
+  it('artefato com aspas vira URL plana (nao entidade HTML)', () => {
+    expect(normalizeMediaUrl('https://xyz.supabase.co"/storage/v1/object/a.png'))
+      .toBe('https://xyz.supabase.co/storage/v1/object/a.png');
+  });
+});

@@ -53,22 +53,26 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
 
-      // Aborto intencional (page unload / navegação): nunca repete, nunca é
-      // logado como ERROR. O navegador aborta todos os fetches em voo no
-      // unload; este guard casa por `err.name` e tem precedência sobre
-      // `shouldRetry`.
-      if (isIntentionalAbort(error)) {
-        log.debug(
-          `[${correlationId}] Request aborted (attempt ${attempt + 1}) — not retrying`,
+      // A política do chamador (shouldRetry) tem precedência: é ela que decide
+      // se o erro é retentável (S2226). Erros como Not Found / Transaction
+      // Rolled Back / stack depth só repetem com política explícita — nunca
+      // são silenciados por um guard hit-first.
+      if (!shouldRetry(error, attempt)) {
+        log.warn(
+          `[${correlationId}] Not retryable — aborting after ${attempt + 1} attempt(s)`,
           error
         );
         throw error;
       }
 
-      // Erro real, mas a política de retry diz que não é retentável.
-      if (!shouldRetry(error, attempt)) {
-        log.warn(
-          `[${correlationId}] Not retryable — aborting after ${attempt + 1} attempt(s)`,
+      // Aborto intencional (page unload / navegação): nunca repete, nunca é
+      // logado como ERROR. Vem DEPOIS do shouldRetry para não silenciar a
+      // política do chamador; quando a política autoriza repetir, o aborto
+      // ainda assim não repete (o navegador aborta todos os fetches em voo
+      // no unload e repetir só produz cascata no console).
+      if (isIntentionalAbort(error)) {
+        log.debug(
+          `[${correlationId}] Request aborted (attempt ${attempt + 1}) — not retrying`,
           error
         );
         throw error;
@@ -121,12 +125,14 @@ export async function withNetworkRetry<T>(
         const msg = error.message.toLowerCase();
         const status = (error as unknown as { status?: number }).status;
         if (typeof status === 'number' && status >= 500) return true;
-        // Fronteira de palavra impede '502' casar dentro de '5024' ou de URL
+        // Fronteira de palavra impede '502' casar dentro de '5024' ou de URL.
+        // Cobre 502/503/504 (gateway) + 429 (rate limit) + 408 (timeout) +
+        // 409/425 (conflito/fora de ordem em escrita concorrente).
         return (
           msg.includes('fetch') ||
           msg.includes('network') ||
           msg.includes('timeout') ||
-          /\b(502|503|504)\b/.test(msg)
+          /\b(502|503|504|429|408|409|425)\b/.test(msg)
         );
       }
       return false;

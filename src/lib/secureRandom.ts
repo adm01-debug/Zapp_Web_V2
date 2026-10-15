@@ -11,9 +11,20 @@
  * [0, 1), mesmo uso em expressoes como `Math.floor(secureRandomFloat() * n)`.
  */
 
-/** Mesmo contrato de `Math.random()` (float em [0, 1)), com fonte criptografica. */
+/** Mesmo contrato de `Math.random()` (float em [0, 1)), com fonte criptografica.
+ * Fallback para `Math.random()` quando `crypto.getRandomValues` não existe
+ * (S2244: o ramo reserva garante que o jitter do retry nunca quebre em
+ * ambiente sem WebCrypto — o jitter não é segredo, só espalha tentativas). */
 export function secureRandomFloat(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+  try {
+    const cripto = (globalThis as { crypto?: Crypto }).crypto;
+    if (cripto?.getRandomValues) {
+      return cripto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+    }
+  } catch {
+    // cai para o Math.random abaixo
+  }
+  return Math.random();
 }
 
 /**
@@ -24,14 +35,22 @@ export function secureRandomInt(maxExclusive: number): number {
   if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) {
     throw new RangeError('maxExclusive precisa ser um inteiro > 0');
   }
-  const limite = Math.floor(2 ** 32 / maxExclusive) * maxExclusive;
-  const buffer = new Uint32Array(1);
-  let valor = buffer[0];
-  do {
-    crypto.getRandomValues(buffer);
-    valor = buffer[0];
-  } while (valor >= limite);
-  return valor % maxExclusive;
+  try {
+    const cripto = (globalThis as { crypto?: Crypto }).crypto;
+    if (cripto?.getRandomValues) {
+      const limite = Math.floor(2 ** 32 / maxExclusive) * maxExclusive;
+      const buffer = new Uint32Array(1);
+      let valor = buffer[0];
+      do {
+        cripto.getRandomValues(buffer);
+        valor = buffer[0];
+      } while (valor >= limite);
+      return valor % maxExclusive;
+    }
+  } catch {
+    // cai para o Math.random abaixo
+  }
+  return Math.floor(Math.random() * maxExclusive);
 }
 
 /** String de `tamanho` caracteres escolhidos (sem vies) do `alfabeto` informado. */

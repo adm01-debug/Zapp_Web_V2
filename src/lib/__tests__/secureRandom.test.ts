@@ -27,6 +27,24 @@ describe('secureRandomFloat', () => {
     espiao.mockRestore();
   });
 
+  it('cai para Math.random quando crypto.getRandomValues nao existe (S2244)', () => {
+    const original = globalThis.crypto;
+    vi.stubGlobal('crypto', undefined);
+    try {
+      for (let i = 0; i < 100; i += 1) {
+        const valor = secureRandomFloat();
+        expect(valor).toBeGreaterThanOrEqual(0);
+        expect(valor).toBeLessThan(1);
+      }
+      const reserva = secureRandomInt(10);
+      expect(reserva).toBeGreaterThanOrEqual(0);
+      expect(reserva).toBeLessThan(10);
+    } finally {
+      vi.stubGlobal('crypto', original);
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('nao devolve o mesmo valor em 1000 chamadas seguidas', () => {
     const vistos = new Set<number>();
     for (let i = 0; i < 1000; i += 1) vistos.add(secureRandomFloat());

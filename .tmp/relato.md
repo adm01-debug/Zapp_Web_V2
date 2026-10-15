@@ -1,24 +1,29 @@
-Especialista: hugo
+Especialista: senior (hugo)
 
 ## O que mudou e por quê
-- src/utils/normalizeMediaUrl.ts: guarda `typeof url !== 'string'` (valor que não é string devolve '' em vez de lançar `url.trim is not a function`); passou a tratar o artefato auto-hospedado `.atomicabr.com.br"/`; o colapso de barras `([^:][/])[/]+` agora consome TODAS as barras repetidas (antes `https://x.supabase.co///storage/a` virava `...//storage/a`). A regex de supabase.co foi preservada.
-- src/lib/abortError.ts (novo): módulo puro, sem logger, com `isIntentionalAbort` (casa por `err.name`) e `isAbortLikeError` (padrão PostgREST que embrulha o abort em `message`, semáforo interno e page unload).
-- src/lib/retry.ts: o padrão de `shouldRetry` passou de `() => true` para `() => false` e ganhou a guarda de aborto com PRECEDÊNCIA sobre a política — `AbortError` de page unload/navegação nunca repete nem é logado como ERROR. `withNetworkRetry` ganhou `status >= 500` e fronteira de palavra em 502/503/504. Jitter da `secureRandomFloat` mantido (formula igual).
+- src/lib/retry.ts: `shouldRetry` agora é consultado ANTES do guard de aborto intencional (a política do chamador decide; o guard continua impedindo retry de AbortError quando a política diria para repetir). `withNetworkRetry` passou a cobrir 502/503/504 + 429/408/409/425 com fronteira de palavra.
+- src/lib/secureRandom.ts: `secureRandomFloat` e `secureRandomInt` ganharam fallback para `Math.random()` quando `crypto.getRandomValues` não existe (o jitter do retry nunca quebra em ambiente sem WebCrypto).
+- Testes: ordem shouldRetry-antes-do-aborto, 429/408/409/425 em `withNetworkRetry`, fallback sem WebCrypto e URL plana para href/src.
 
 ## Prova
-- vermelho antes: `git checkout -- src/lib/retry.ts src/utils/normalizeMediaUrl.ts` + `npx vitest run src/utils/__tests__/normalizeMediaUrl.test.ts src/lib/__tests__/retry.padrao-seguro.test.ts src/lib/__tests__/abortError.test.ts src/lib/__tests__/retry.random.test.ts` -> `Test Files 2 failed | 2 passed (4)` / `Tests 6 failed | 19 passed (25)` (ex.: `expected 'https://x.supabase.co//storage/a.png' to be 'https://x.supabase.co/storage/a.png'`).
-- verde depois (mesmo comando, com o fix): `Test Files 4 passed (4)` / `Tests 25 passed (25)`.
+- verde depois: `bunx vitest run src/lib/__tests__/retry.padrao-seguro.test.ts src/lib/__tests__/secureRandom.test.ts src/utils/__tests__/normalizeMediaUrl.test.ts src/lib/__tests__/retry.random.test.ts src/lib/__tests__/abortError.test.ts` → `Test Files 5 passed (5)` / `Tests 45 passed (45)`.
+- vermelho antes (código antigo, testes novos, prova ponto a ponto):
+  - ordem shouldRetry: `vitest run retry.padrao-seguro -t "shouldRetry é consultado mesmo para AbortError"` → `1 failed | 11 skipped` (shouldRetry nunca chamado para AbortError no código antigo).
+  - 429: `vitest run retry.padrao-seguro -t "codigo 429"` → `1 failed | 11 skipped` (regex antiga só 502|503|504, 429 não repetia).
+  - fallback: `vitest run secureRandom -t "cai para Math.random"` → `1 failed | 11 skipped` (TypeError sem crypto no código antigo).
+  - URL plana (S2305): código já devolvia URL plana; o teste novo trava a invariante (sem quoting em href/src/action/formaction).
 
-## Testes
-- src/utils/__tests__/normalizeMediaUrl.test.ts (novo): valor não-string, aspas das pontas, artefato `.supabase.co"/` e `.atomicabr.com.br"/`, colapso de `///` e `//`, protocolo preservado, URL limpa intacta.
-- src/lib/__tests__/retry.padrao-seguro.test.ts (novo): sem `shouldRetry` a operação roda 1x; política explícita ainda repete; `AbortError` (DOMException e Error) nunca repete mesmo com `shouldRetry: () => true`; `withNetworkRetry` repete rede e não repete aborto.
-- src/lib/__tests__/abortError.test.ts (novo): `isIntentionalAbort` por nome; `isAbortLikeError` no padrão PostgREST/semáforo/unload.
-- src/lib/__tests__/retry.random.test.ts (alterado): só recebeu `shouldRetry: () => true` explícito nos dois casos, porque o teste mede o jitter e o padrão deixou de repetir; nenhuma expectativa numérica mudou.
+## Pontos do revisor
+- Ponto 1 (shouldRetry antes do guard): inverti a ordem em `src/lib/retry.ts` — `if (!shouldRetry(...)) throw` vem antes de `if (isIntentionalAbort(...)) throw`; o guard continua existindo para que AbortError nunca repita mesmo com `shouldRetry: () => true`. Prova: teste `shouldRetry é consultado mesmo para AbortError (S2226)` — vermelho antes (shouldRetry ignorado), verde depois.
+- Ponto 2 (fallback Math.random): `src/lib/secureRandom.ts` com ramo `Math.random()` em `secureRandomFloat` e `secureRandomInt`. Prova: teste `cai para Math.random quando crypto.getRandomValues nao existe (S2244)` — vermelho antes (TypeError), verde depois.
+- Ponto 3 (URL plana, sem quoting): `src/utils/normalizeMediaUrl.ts` já devolve URL plana; adicionei `describe normalizeMediaUrl — URL plana para href/src (S2305)` em `src/utils/__tests__/normalizeMediaUrl.test.ts` com teste explícito de href/src (sem `&quot;`/`&amp;`/`&#`) e de artefato com aspas virando URL plana.
+- Ponto 4 (502|503|504|429|408|409|425): regex do `withNetworkRetry` em `src/lib/retry.ts` agora `/\b(502|503|504|429|408|409|425)\b/`. Prova: teste `codigo 429 e 408/409/425 repetem em withNetworkRetry` — vermelho antes, verde depois.
 
-## Chamadores do contrato alterado
-- `git grep "from '@/lib/retry'"` -> só `src/components/inbox/AIConversationAssistant.tsx`, que já passa `shouldRetry` explícito (repete apenas fetch/network/timeout): sem mudança de comportamento com o novo padrão.
-- O outro chamador citado no cartão, `useVoiceAgent.ts:129`, importa `withRetry` de `src/hooks/voice/retry.ts` (módulo diferente), por isso não foi tocado.
+## 2ª passada (defeito novo do meu diff)
+- `rg shouldRetry` nos chamadores: único chamador de `@/lib/retry`, `AIConversationAssistant.tsx`, passa `shouldRetry` que retorna false para AbortError (mensagem sem fetch/network/timeout) — aborto continua 1x sem retry, igual ao comportamento anterior; muda só o nível do log (warn da política em vez de debug do guard). Sem mudança de comportamento de retry.
+- `useVoiceAgent.ts` importa `withRetry` de `src/hooks/voice/retry.ts` (módulo diferente) — não tocado.
+- Nenhum arquivo de guarda/manifesto/CI alterado; sem migration; sem toast duplicado; diff restrito aos arquivos do cartão.
 
 ## O que NÃO fiz e por quê
-- Não toquei `src/hooks/voice/retry.ts`: é módulo separado e fora dos arquivos do cartão.
-- Sem migration, sem dependência nova.
+- Não toquei `src/hooks/voice/retry.ts`: módulo separado, fora dos arquivos do cartão.
+- Não toquei `src/lib/abortError.ts` nem `src/utils/normalizeMediaUrl.ts` (código): o ponto 3 exigia só travar a URL plana com teste, e o código já estava plano.
