@@ -61,11 +61,13 @@ export const TEST_FILES = [
 /**
  * Testes `*auth*` que existem no disco e ficam FORA da medição de propósito.
  * `ai-auth-service-path.test.ts` exercita o mesmo `ai-auth.ts` da régua e
- * contaminaria a conta; os demais cobrem outros módulos (webhook, runtime).
+ * contaminaria a conta; os demais cobrem outros módulos (webhook, runtime,
+ * gmail-helpers — que não é um dos 5 HELPERS medidos).
  */
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
   'ai-audio-authz-runtime.test.ts',
+  'gmail-reauth-required.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
 ];
