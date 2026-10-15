@@ -1,5 +1,33 @@
 Especialista: workertestes
 
+## Refazer 1 (14/10) — ponto único da recusa
+
+Ponto 1 — "a branch da tarefa andou depois do fechar" → resolvido sem código novo: o trabalho
+já entrou na branch do dia. O integrador publicou em `dia/2026-10-14` o commit `ae44454e4c`
+("test(conexoes): fila da conexão, indicador de horário, abas Config/Perfi", Cartão V2:
+2610131403b66b, 14/10 10:10 -0300) com os mesmos 9 arquivos deste cartão, byte a byte —
+`git diff ae44454e4c c04aad676f -- e2e/conexoes.spec.ts e2e/fixtures/conexoes.ts
+src/components/connections/__tests__/ src/hooks/business/__tests__/useBusinessHours.test.tsx
+src/hooks/connections/__tests__/reconexao-automatica.todo.test.ts
+src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts` → saída vazia.
+Tentei o rebase sobre `dia/2026-10-14` e ele conflitou só em add/add nesses arquivos
+(conteúdo igual); abortei o rebase (`git rebase --abort`) para não duplicar o que já
+entrou — o cartão manda provar em vez de refazer ("se algo já estiver feito, prove no
+relato em vez de refazer"). Nenhum arquivo de produção foi tocado nesta rodada; este commit
+altera só `.tmp/relato.md`.
+
+Prova (nesta sessão, 14/10, branch `v2/conexoes-testes-fila-horario-config-perf-2610131403b66b`):
+- `zapp-verify full .` → `VERIFY: VERDE SEM BANCO (616s)` — `OK db_guard`, `OK tipos`,
+  `OK lint`, `OK migrations`, `OK testes (517s)`, `OK build`; "SEM BANCO" porque o cartão
+  não tem migration (só teste), nada a provar no banco.
+- `npx vitest run` nos 7 arquivos do cartão → `Test Files 5 passed | 2 skipped (7)`,
+  `Tests 31 passed | 11 todo (42)`.
+- `npx playwright test e2e/conexoes.spec.ts --list` → `Total: 5 tests in 2 files`.
+
+Arquivos do diff desta rodada (`git diff --name-only dia/2026-10-13...HEAD` para o cartão;
+nesta rodada só o relato mudou):
+- .tmp/relato.md
+
 ## O que mudou e por quê (rodada de 13/10)
 
 Cartão `t_9b483886` — inventário de testes do módulo Conexões. O commit `674a5f8425` já foi
