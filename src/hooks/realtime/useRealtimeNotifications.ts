@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 import type { ConversationContact, RealtimeMessage, NewMessageNotification } from '../chat/useRealtimeMessages';
 
 export function useRealtimeNotifications() {
@@ -41,10 +42,18 @@ export function useRealtimeNotifications() {
       }
 
       if (notifSettings.browserNotifications && !isQuietHours()) {
+        // `tag` por CONVERSA: com a tag fixa ("notification") a mensagem do contato B substituía
+        // o aviso ainda não lido do contato A — e o clique levava ao contato errado. O clique usa
+        // o contrato de navegação do produto (`openContactChat`): evento `open-contact-chat` para
+        // a inbox + troca de view + repetição para a view ainda montando.
         showBrowserNotification(
           `Nova mensagem de ${contact.name}`,
           message.content,
-          { icon: contact.avatar_url || undefined }
+          {
+            icon: contact.avatar_url || undefined,
+            tag: contact.id,
+            onClick: () => { openContactChat(contact.id); },
+          }
         );
       }
 
