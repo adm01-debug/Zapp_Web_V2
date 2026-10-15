@@ -17,7 +17,8 @@
 --   * taxa de falha = 'failed' / amostra de envios com desfecho terminal
 --     ('sent','delivered','read','failed','outcome_unknown');
 --   * quantidade de mensagens PRESAS em envio = as que o varredor de 20261013210005
---     reprova AGORA (status='sending', sem lease vivo e último toque
+--     reprova AGORA (status='sending', external_id nulo, client_message_id preenchido,
+--     sem lease vivo e último toque
 --     coalesce(delivery_claim_expires_at, updated_at) mais antigo que 15 min — o MESMO
 --     critério do sweep_stale_outbound_sending) SOMADAS às que ele já reprovou na última
 --     hora (status='failed', delivery_failure_reason='nao_despachada', updated_at na
@@ -78,13 +79,16 @@ begin
     select candidata.connection_id, count(*) as total
     from (
       -- ainda presas: MESMO critério do varredor sweep_stale_outbound_sending
-      -- (20261013210005) — 'sending', sem lease vivo e último toque
+      -- (20261013210005) — 'sending', external_id nulo, client_message_id preenchido,
+      -- sem lease vivo e último toque
       -- coalesce(delivery_claim_expires_at, updated_at) mais antigo que 15 min.
       select coalesce(message.whatsapp_connection_id, contact.whatsapp_connection_id) as connection_id
       from public.messages as message
       left join public.contacts as contact on contact.id = message.contact_id
       where message.sender = 'agent'
         and message.status = 'sending'
+        and message.external_id is null
+        and message.client_message_id is not null
         and (message.delivery_claim_token is null
           or message.delivery_claim_expires_at <= statement_timestamp())
         and coalesce(message.delivery_claim_expires_at, message.updated_at)
@@ -126,8 +130,8 @@ begin
   insert into public.warroom_alerts (alert_type, title, message, source, dedupe_key)
   select
     'critical',
-    'Falha de envio na conexão ' || incidente.connection_name,
-    'Falha de envio na conexão ' || incidente.connection_name || ': '
+    'Falha de envio na conexão ' || coalesce(incidente.connection_name, incidente.connection_id::text),
+    'Falha de envio na conexão ' || coalesce(incidente.connection_name, incidente.connection_id::text) || ': '
       || case
            when incidente.taxa_estourada
              then incidente.falhas || ' de ' || incidente.amostra
@@ -151,7 +155,7 @@ end;
 $function$;
 
 comment on function public.alert_outbound_failure_rate() is
-  'Monitor de falha de envio por conexao (R2): taxa de falha da ultima hora (>=20% com amostra >=20 envios terminais) ou mais de 10 mensagens presas em envio (as que o sweep_stale_outbound_sending reprova agora — sending sem lease vivo e coalesce(delivery_claim_expires_at, updated_at) > 15 min — somadas as ja reprovadas na ultima hora, delivery_failure_reason=nao_despachada). Conexao resolvida por coalesce(message.whatsapp_connection_id, contact.whatsapp_connection_id). Grava 1 alerta critico por conexao por hora no warroom_alerts (dedupe_key envio-falha:<conexao>:<hora>; som/push existentes reagem ao INSERT). Sem telefone nem texto no alerta. Limiar fixo; so o dono/cron executa.';
+  'Monitor de falha de envio por conexao (R2): taxa de falha da ultima hora (>=20% com amostra >=20 envios terminais) ou mais de 10 mensagens presas em envio (as que o sweep_stale_outbound_sending reprova agora — sending com external_id nulo, client_message_id preenchido, sem lease vivo e coalesce(delivery_claim_expires_at, updated_at) > 15 min — somadas as ja reprovadas na ultima hora, delivery_failure_reason=nao_despachada). Conexao resolvida por coalesce(message.whatsapp_connection_id, contact.whatsapp_connection_id). Grava 1 alerta critico por conexao por hora no warroom_alerts (dedupe_key envio-falha:<conexao>:<hora>; som/push existentes reagem ao INSERT; titulo/mensagem usam coalesce(connection_name, connection_id::text)). Sem telefone nem texto no alerta. Limiar fixo; so o dono/cron executa.';
 
 revoke all on function public.alert_outbound_failure_rate()
   from public, anon, authenticated, service_role;
