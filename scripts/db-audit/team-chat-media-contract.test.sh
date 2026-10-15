@@ -39,6 +39,8 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="$repo_root/supabase/migrations"
 migration_file="20261007010651_team_chat_media_contract_locators.sql"
+# BLOCO C (PK-26): migration dos limites de tipo/tamanho dos buckets de mídia do chat.
+media_limits_migration="20261015192628_chat_media_buckets_limits.sql"
 postgres_image="${TEAM_CHAT_MEDIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-team-chat-media-$$"
 
@@ -313,4 +315,75 @@ expect_error_as 'UPDATE de storage.objects por authenticated segue revogado' \
   'permission denied' "$JWT_P1" \
   "UPDATE storage.objects SET name = name WHERE bucket_id = 'team-chat-files'"
 
+# ── BLOCO C (PK-26): teto de tamanho e allowlist de MIME dos buckets de mídia do chat ─────────
+# O enforcement do Supabase Storage vive na API (fora do Postgres): ela lê
+# storage.buckets.file_size_limit e storage.buckets.allowed_mime_types e recusa o upload.
+# Não há trigger no banco; a função test_upload_gate abaixo (só do teste, nunca da migration)
+# espelha essa checagem para provar o comportamento no banco local.
+docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres >/dev/null <<'SQL'
+CREATE FUNCTION public.test_upload_gate(p_bucket text, p_bytes bigint, p_mime text)
+RETURNS text LANGUAGE sql STABLE AS $fn$
+  SELECT CASE
+    WHEN EXISTS (SELECT 1 FROM storage.buckets b
+                  WHERE b.id = p_bucket AND b.allowed_mime_types IS NOT NULL
+                    AND NOT (p_mime = ANY (b.allowed_mime_types))) THEN 'recusado:tipo'
+    WHEN EXISTS (SELECT 1 FROM storage.buckets b
+                  WHERE b.id = p_bucket AND b.file_size_limit IS NOT NULL
+                    AND p_bytes > b.file_size_limit) THEN 'recusado:tamanho'
+    ELSE 'aceito' END
+$fn$;
+GRANT EXECUTE ON FUNCTION public.test_upload_gate(text, bigint, text) TO authenticated;
+SQL
+
+printf '\n== RED: buckets de mídia do chat sem limite no SERVIDOR ==\n'
+for b in whatsapp-media audio-messages; do
+  got="$(psql_sql "SELECT (file_size_limit IS NULL AND allowed_mime_types IS NULL)::text FROM storage.buckets WHERE id = '$b'")"
+  [[ "$got" == 'true' ]] || fail "RED: $b já tem limite antes da migration (obtido: '$got')"
+done
+pass 'RED: whatsapp-media e audio-messages nascem sem file_size_limit e sem allowed_mime_types (20260511233306)'
+expect_value_as 'RED: 30MB de documento passa no gate sem teto (o furo)' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 31457280, 'application/pdf')"
+expect_value_as 'RED: executável .exe passa no gate sem allowlist (o furo)' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 1048576, 'application/x-msdownload')"
+expect_value_as 'RED: audio-messages aceita imagem sem allowlist (o furo)' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('audio-messages', 1048576, 'image/png')"
+
+printf '\n== GREEN: aplicando %s ==\n' "$media_limits_migration"
+psql_file "$migrations_dir/$media_limits_migration" >/dev/null
+
+printf '\n== GREEN: teto e allowlist no servidor ==\n'
+expect_value_as 'whatsapp-media com teto de 100MB (teto do documento no catálogo do front)' '104857600' "$JWT_P1" \
+  "SELECT file_size_limit::text FROM storage.buckets WHERE id = 'whatsapp-media'"
+expect_value_as 'audio-messages com teto de 25MB' '26214400' "$JWT_P1" \
+  "SELECT file_size_limit::text FROM storage.buckets WHERE id = 'audio-messages'"
+for mime in image/jpeg image/webp video/mp4 video/3gpp audio/ogg audio/opus application/pdf text/csv application/zip application/vnd.rar; do
+  expect_value_as "catálogo do front: whatsapp-media aceita $mime" '1' "$JWT_P1" \
+    "SELECT count(*)::text FROM storage.buckets WHERE id = 'whatsapp-media' AND '$mime' = ANY (allowed_mime_types)"
+done
+expect_value_as 'audio-messages só aceita audio/* (nenhum tipo fora)' '0' "$JWT_P1" \
+  "SELECT count(*)::text FROM storage.buckets, unnest(allowed_mime_types) AS m WHERE id = 'audio-messages' AND m NOT LIKE 'audio/%'"
+expect_value_as 'audio-messages aceita audio/webm (recover-corrupted-audios)' '1' "$JWT_P1" \
+  "SELECT count(*)::text FROM storage.buckets WHERE id = 'audio-messages' AND 'audio/webm' = ANY (allowed_mime_types)"
+expect_value_as 'os dois buckets seguem privados' '2' "$JWT_P1" \
+  "SELECT count(*)::text FROM storage.buckets WHERE id IN ('whatsapp-media','audio-messages') AND public IS FALSE"
+
+printf '\n== GREEN: upload pelo gate (aceita dentro do limite, recusa acima e tipo proibido) ==\n'
+expect_value_as '1MB de imagem (png) em whatsapp-media passa' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 1048576, 'image/png')"
+expect_value_as '100MB de documento em whatsapp-media passa (teto do catálogo)' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 104857600, 'application/pdf')"
+expect_value_as '100MB + 1 byte em whatsapp-media é recusado por TAMANHO' 'recusado:tamanho' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 104857601, 'application/pdf')"
+expect_value_as '1MB de executável (.exe) em whatsapp-media é recusado por TIPO' 'recusado:tipo' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 1048576, 'application/x-msdownload')"
+expect_value_as '1MB de application/octet-stream em whatsapp-media é recusado por TIPO' 'recusado:tipo' "$JWT_P1" \
+  "SELECT public.test_upload_gate('whatsapp-media', 1048576, 'application/octet-stream')"
+expect_value_as '1MB de áudio (ogg) em audio-messages passa' 'aceito' "$JWT_P1" \
+  "SELECT public.test_upload_gate('audio-messages', 1048576, 'audio/ogg')"
+expect_value_as '1MB de imagem em audio-messages é recusado por TIPO' 'recusado:tipo' "$JWT_P1" \
+  "SELECT public.test_upload_gate('audio-messages', 1048576, 'image/png')"
+expect_value_as '25MB + 1 byte de áudio em audio-messages é recusado por TAMANHO' 'recusado:tamanho' "$JWT_P1" \
+  "SELECT public.test_upload_gate('audio-messages', 26214401, 'audio/ogg')"
+
 printf '\nOK: contrato de mídia do Team Chat conferido (RED antes, GREEN depois).\n'
+printf 'OK: limites de tipo e tamanho dos buckets de mídia do chat conferidos (RED antes, GREEN depois).\n'
