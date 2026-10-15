@@ -137,6 +137,8 @@ async function semViolacaoButtonNameNaLinha(page: Page, alvo: Locator, onde: str
     `${onde}: nenhuma violacao SERIOUS ou CRITICAL de button-name\n${JSON.stringify(v, null, 2)}`,
   ).toHaveLength(0);
 }
+
+/** Roda o axe `button-name` e falha se sobrar violacao SERIOUS/CRITICAL. */
 async function semViolacaoButtonName(page: Page, onde: string): Promise<void> {
   const v = await violacoes(page, 'body', ['button-name']);
   expect(
