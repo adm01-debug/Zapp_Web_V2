@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { contactNotesKey } from '@/hooks/crm/useContactNotes';
 import { MentionInput } from './MentionInput';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
@@ -46,6 +47,10 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['internal-notes', contactId] });
+      // A nota também vive na aba Notas do detalhe do contato: invalida a mesma
+      // chave de react-query que `useContactNotes` usa, para o popover e a aba
+      // não divergirem depois de criar uma nota.
+      queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) });
       setNewNote('');
       toast.success('Nota adicionada!');
     },
