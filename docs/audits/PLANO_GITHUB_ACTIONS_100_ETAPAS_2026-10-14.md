@@ -17,8 +17,10 @@ mas todo achado desta versão foi **re-medido hoje**.
 W11+W12: environment `perimetro-leitura` criado, secret `SETTINGS_GUARD_TOKEN` adicionado, `ghAdmin()` wrapper implementado — 0 pontos cegos esperados na próxima execução do `settings-guard`.
 W62: `environment: producao-edge-functions` adicionado ao job `drain` de `crm-sync-worker.yml`; secrets de deploy já existem nesse environment (Joaquim confirma os valores).
 W63: environment `banco-leitura` criado (branch_policy: protected_branches); `environment: banco-leitura` adicionado ao job `live-contract` de `db-live-guard.yml` e ao job `sync` de `types-sync.yml`; `DESTINO_URL` precisa ser criado nesse environment por Joaquim antes de ser removido do nível repo.
-Restam: etapas **D** (W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
-etapas B/C ainda não implementadas (W06/W16).
+Restam: etapas **D** (W20/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana),
+W62/W63 migração de secrets (Joaquim — medido em 15/10 16:00 UTC: os 14 secrets seguem no repo; `producao-edge-functions`
+e `banco-leitura` com 0 secrets) e W16 (plano pago GitHub).
+W06 **em aberto**: o PR #1945 removeu a race condition do `auth.setup.ts`, mas o login real **não** é a causa — ver W06.
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
@@ -287,9 +289,13 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [~] **W05** · B+C · N-02 · **PR #1920 aberta.** `settings-guard` deixa de `exit 1` quando só há pontos cegos: job verde com `::warning::` e
   **uma** issue "ponto cego do perímetro" com dedupe pela assinatura dos campos não verificáveis (comenta só se o conjunto
   mudar ou a cada 7 dias). Verificação: 4 runs seguidos → 1 comentário; run deixa de ser ❌ sem divergência real.
-- [ ] **W06** · A · N-03 · Investigar o `auth.setup` do run 38239077346: usuário E2E no Auth de produção (lockout, senha,
-  MFA, e-mail), app respondendo em `PLAYWRIGHT_BASE_URL`; disparar `e2e-logado` manual até ✅ (#1915 fecha sozinha).
-  Verificação: run manual ✅ com os 10 projetos.
+- [~] **W06** · A · N-03 · **PARCIAL 2026-10-15.** PR #1945 (mergeado) trocou `shell.or(getByRole('alert'))` por
+  `shell.waitFor()` — o alerta de SIP deixava a mensagem de erro enganosa ("credencial recusada"). **A causa real segue
+  aberta:** o snapshot do run 38760211564 mostra o toast "Login realizado com sucesso" e a tela presa em
+  "Carregando página..." (fallback do `Suspense` em `src/routes/AppRoutes.tsx`) por > 30 s — o login funciona, a página
+  `Index` não termina de carregar no CI. Esse run ainda executou o código antigo (`workflow_run` faz checkout do SHA do CI
+  acionador, `4dadbb7`). Próximo passo: analisar o trace do Playwright (rede) do artifact `playwright-report-logado-*`.
+  Verificação: run do `e2e-logado` ✅ na `main` (#1915/#1946 fecham sozinhas).
 - [x] **W07** · B · N-13 · **FEITO 2026-10-14 (PR #1921 mergeado).** `db-live-guard.yml:200`: adicionar `if: steps.credencial.outcome == 'success'` ao passo E85
   (consistência + invariante, não correção de comportamento — ver N-13 retificado).
   Verificação: `workflow-contracts.unit.mjs` ganha o caso "todo passo `continue-on-error` do guarda vivo exige a guarda de
