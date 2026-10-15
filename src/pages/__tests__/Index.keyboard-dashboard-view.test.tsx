@@ -88,7 +88,6 @@ vi.mock('@/components/notifications/SLANotificationProvider', () => ({
 }));
 
 // Painéis secundários do shell (todos lazy no `Index`): fora do escopo.
-vi.mock('@/components/CommandPalette', () => ({ CommandPalette: () => null }));
 vi.mock('@/components/onboarding/WelcomeModal', () => ({ WelcomeModal: () => null }));
 vi.mock('@/components/ui/offline-indicator', () => ({
   OfflineIndicator: () => null,

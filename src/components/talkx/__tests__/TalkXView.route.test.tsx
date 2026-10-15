@@ -44,8 +44,8 @@ vi.mock('@/components/talkx/TalkXOverview', () => ({
   ),
 }));
 vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div data-testid="monitor" /> }));
-vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
-vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div /> }));
+vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div data-testid="talkx-segments-tab" /> }));
+vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div data-testid="talkx-templates-tab" /> }));
 vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div data-testid="suppression" /> }));
 vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div data-testid="analytics" /> }));
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
@@ -449,5 +449,50 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
     const params = new URLSearchParams(window.location.search);
     expect(params.get('campaign')).toBe('cmp_paused');
     expect(params.get('screen')).toBe('running');
+  });
+});
+
+// Paleta única (passo 4 do refazer): ?segment=/?template= gravado pela busca ⌘K
+// seleciona a aba do item na primeira pintura e no voltar do navegador, mesmo
+// que o tab da URL venha ausente ou defasado. O id em si é consumido pelo
+// TalkXSegments (X111) e pelo TalkXTemplates (X094): aqui entram os mocks com
+// testid, e a Visão geral é o botão "Abrir novo wizard" do mock do TalkXOverview
+// (conteúdo inativo desmonta — só a aba ativa tem conteúdo).
+describe('TalkXView item aberto pela paleta seleciona a aba (passo 4)', () => {
+  beforeEach(() => {
+    f.campaigns = [draft];
+    f.isLoading = false;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('?segment= com tab defasado abre segmentos, não a visão geral', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=overview&segment=seg1');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('talkx-segments-tab')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Abrir novo wizard' })).toBeNull();
+  });
+
+  it('?template= com tab defasado abre templates, não a visão geral', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=overview&template=tpl1');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('talkx-templates-tab')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Abrir novo wizard' })).toBeNull();
+  });
+
+  it('voltar no navegador para ?template= troca para templates', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=overview');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&tab=overview&template=tpl1');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(await screen.findByTestId('talkx-templates-tab')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Abrir novo wizard' })).toBeNull();
   });
 });
