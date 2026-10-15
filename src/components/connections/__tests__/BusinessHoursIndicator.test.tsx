@@ -53,7 +53,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-import { BusinessHoursIndicator } from '../BusinessHoursIndicator';
+import {
+  BusinessHoursIndicator,
+  minutosDoHorario,
+  classificarJanela,
+  estaNaJanela,
+  resumoDoDia,
+} from '../BusinessHoursIndicator';
 
 function setup(showLabel = true) {
   const queryClient = new QueryClient({
@@ -134,6 +140,25 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     expect(screen.queryByText('Aberto')).toBeNull();
   });
 
+  it('janela que vira o dia (início > fim) fica aberta e avisa que vira o dia', async () => {
+    // Início 1 h atrás, fim 2 h atrás: início > fim (janela noturna) e o
+    // horário atual cai dentro dela — mesmo quando a hora atual é perto da
+    // meia-noite, porque o cálculo noturno atravessa o dia.
+    const abre = hojeDeslocado(-60);
+    const fecha = hojeDeslocado(-120);
+    h.rows = [{ is_open: true, open_time: `${abre}:00`, close_time: `${fecha}:00` }];
+
+    const { container } = setup();
+    expect(await screen.findByText('Aberto')).toBeTruthy();
+
+    const trigger = container.querySelector('div')!;
+    fireEvent.pointerEnter(trigger);
+    fireEvent.pointerMove(trigger);
+    expect(
+      await screen.findByText(`Horário hoje: ${abre} - ${fecha} (vira o dia)`),
+    ).toBeTruthy();
+  });
+
   it('filtra pela conexão e pelo dia de hoje', async () => {
     setup();
     await waitFor(() => expect(h.filters.some((f) => f[0] === 'eq' && f[1] === 'day_of_week')).toBe(true));
@@ -152,5 +177,64 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     const { container } = setup();
     await waitFor(() => expect(h.logError).toHaveBeenCalled());
     expect(container.firstChild).toBeNull();
+  });
+});
+
+/**
+ * Regra de horário que o selo e o diálogo compartilham. A regra vem de
+ * `BusinessHoursIndicator` e é a mesma dos dois consumidores — por isso os
+ * casos de janela normal, noturna e dia fechado ficam aqui, com minutos fixos.
+ */
+describe('regra de horário comercial (função pura)', () => {
+  it('lê HH:MM e HH:MM:SS e recusa valor inválido', () => {
+    expect(minutosDoHorario('09:30')).toBe(570);
+    expect(minutosDoHorario('22:15:00')).toBe(1335);
+    expect(minutosDoHorario('25:00')).toBeNull();
+    expect(minutosDoHorario('')).toBeNull();
+    expect(minutosDoHorario(null)).toBeNull();
+  });
+
+  it('classifica janela normal, noturna e inválida', () => {
+    expect(classificarJanela('09:00', '18:00')).toBe('normal');
+    expect(classificarJanela('22:00', '06:00')).toBe('noturna');
+    expect(classificarJanela('09:00', '09:00')).toBe('igual');
+    expect(classificarJanela('09:00', '99:00')).toBe('incompleta');
+  });
+
+  it('janela normal: dentro das 09:00 às 18:00 (inclusive nas bordas)', () => {
+    expect(estaNaJanela(12 * 60, '09:00', '18:00')).toBe(true);
+    expect(estaNaJanela(9 * 60, '09:00', '18:00')).toBe(true);
+    expect(estaNaJanela(18 * 60, '09:00', '18:00')).toBe(true);
+    expect(estaNaJanela(8 * 60 + 59, '09:00', '18:00')).toBe(false);
+    expect(estaNaJanela(18 * 60 + 1, '09:00', '18:00')).toBe(false);
+  });
+
+  it('janela noturna 22:00→06:00: aberta de noite E de madrugada, fechada à tarde', () => {
+    expect(estaNaJanela(23 * 60, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(5 * 60, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(22 * 60, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(6 * 60, '22:00', '06:00')).toBe(true);
+    expect(estaNaJanela(12 * 60, '22:00', '06:00')).toBe(false);
+    expect(estaNaJanela(6 * 60 + 1, '22:00', '06:00')).toBe(false);
+  });
+
+  it('início igual ao fim não é janela: fica fechado e marcado como inválido', () => {
+    const resumo = resumoDoDia({ is_open: true, open_time: '09:00', close_time: '09:00' }, 10 * 60);
+    expect(resumo.motivo).toBe('horario-invalido');
+    expect(resumo.isOpen).toBe(false);
+    expect(resumo.intervalo).toBeNull();
+  });
+
+  it('fim de semana fechado: motivo "fechado-hoje"', () => {
+    const domingo = resumoDoDia({ is_open: false, open_time: '09:00', close_time: '18:00' }, 10 * 60);
+    expect(domingo.motivo).toBe('fechado-hoje');
+    expect(domingo.isOpen).toBe(false);
+  });
+
+  it('janela noturna no resumo do dia: aberto, "vira o dia" e intervalo do cadastro', () => {
+    const resumo = resumoDoDia({ is_open: true, open_time: '22:00', close_time: '06:00' }, 23 * 60);
+    expect(resumo.isOpen).toBe(true);
+    expect(resumo.viraODia).toBe(true);
+    expect(resumo.intervalo).toBe('22:00 - 06:00');
   });
 });

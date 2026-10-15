@@ -35,7 +35,10 @@ vi.mock('@/components/ui/tabs', () => ({
 vi.mock('@/components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
-vi.mock('../BusinessHoursIndicator', () => ({ BusinessHoursIndicator: () => null }));
+vi.mock('../BusinessHoursIndicator', async () => ({
+  ...(await vi.importActual<typeof import('../BusinessHoursIndicator')>('../BusinessHoursIndicator')),
+  BusinessHoursIndicator: () => null,
+}));
 vi.mock('@/hooks/business/useBusinessHours', () => ({
   useBusinessHours: () => ({
     businessHours: state.mockHours,
@@ -64,7 +67,7 @@ describe('BusinessHoursDialog — aria-label nos interruptores', () => {
 
   it('o switch da mensagem de ausência tem aria-label descritivo', () => {
     render(<BusinessHoursDialog {...props} />);
-    expect(screen.getByLabelText('Ativar mensagem automática fora do horário')).toBeTruthy();
+    expect(screen.getByLabelText('Enviar mensagem de ausência')).toBeTruthy();
   });
 
   it('dia desconhecido nunca anuncia "undefined" (reserva com day_of_week)', () => {
