@@ -1,4 +1,4 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
 Diff: 4 arquivos, 1 de teste.
 
@@ -31,6 +31,20 @@ Diff: 4 arquivos, 1 de teste.
   escrita/ator/PII, L.1-L.5 isolamento por papel, F.1-F.8 ACL/append-only, R.1-R.6 rollback+reaplicacao)
 - migration aplicada no banco local da tarefa pela ferramenta do modo V2
   (`hermes-db-migrar supabase/migrations/20261013051916_contact_change_log.sql`).
+- reverificacao FRESCA neste refazer (codigo inalterado; container descartavel novo
+  `pg-ccl-refazer1`, migration copiada byte-identica para /tmp/mig porque o `\i` da
+  suite le do disco onde o psql roda):
+  verde `docker exec -i pg-ccl-refazer1 psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -v mig_dir="/tmp/mig" -f - < supabase/tests/contact_change_log.sql` ->
+  exit 0 + `PASS: contact_change_log — 1 linha por edicao com ator certo, SO os nomes dos campos (sem PII), UPDATE irrelevante nao grava, soft-delete/restore proprios, leitura sob a visibilidade do contato, append-only, e rollback provado.`
+  vermelho (mesmo comando + `-v sem_guarda=1`) -> exit 3 +
+  `ERROR: FALHOU [E.12 gatilho e AFTER INSERT OR UPDATE (e nao DELETE/INSTEAD)]: esperado [true], obtido [<NULL>]`.
+  Container removido depois (`docker rm -f pg-ccl-refazer1`).
+
+## Ponto 1 da recusa (primeira linha do relato)
+- Ponto 1: primeira linha agora e EXATAMENTE `Especialista: workersql` (este arquivo,
+  linha 1). Nada mais mudou no codigo: migration, suite .sql e types.ts estao
+  byte-identicos ao commit recusado cb2b7c86e (`git diff cb2b7c86e --` nos 3 arquivos
+  sai vazio); este commit toca SO este relato.
 
 ## Efeitos colaterais revisados (recusas anteriores)
 - Gatilho e AFTER: nao altera NEW nem o curso da escrita em `contacts`.
