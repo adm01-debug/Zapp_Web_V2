@@ -10,15 +10,15 @@ Origem: `~/hermes-workspaces/.assets/paridade-hooks26/`. Não toquei em código,
 Por que não os 6: o conjunto completo tem 149820 caracteres adicionados e o `hermes-tarefa-fechar` recusa acima de 90000 ("o revisor recusa por regra acima de 90000"), como já ocorreu nos cartões irmãos (`t_d3d3f389` versionou 5 de 6, `t_87779b15` versionou 4 de 6). Então mantive aqui as 3 peças acima (78526 caracteres adicionados, abaixo do teto) e criei o cartão filho `t_7e0dcbc6` para versionar as PARTE1, PARTE2 e PARTE4 (69758 caracteres adicionados somados), a partir das mesmas fontes em `.assets`. Cópia de trabalho das 3 restantes ficou em `.tmp/` (ignorado pelo git) para não sujar o status da branch.
 
 ## Prova
-- Integridade byte a byte origem x destino (`md5sum`), todas idênticas: `51cf07bf1a87362c72b98d0d92ced304` (PARTE3 = achados_3.md), `b3172d45701f76e7aafd4dbaf7ee0814` (PARTE5 = achados_5_fluxos_banco.md), `612f9c2d2783edf994450f0de254fe53` (plano).
-- Sem segredo nem dado pessoal: busca (`search_files`, regex de JWT `eyJ...`, `sk-`, `ghp_`, hex/hash longo, telefone `+55`/`(DD)9...`, `service_role_key`/`anon_key`/`Bearer`) nos 6 arquivos-fonte -> 0 ocorrências; os casamentos de "token"/"chave"/"secret" são texto conceitual (ex.: `x-cron-secret`, chave de cache) e o único e-mail é o exemplo `a@x.com`. O identificador do banco real NÃO aparece.
-- Verificação: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (232s)` (dependencias OK, db_guard OK, tipos OK, lint OK, migrations OK).
+- Integridade byte a byte origem x destino (`md5sum` nos 3 pares, todos idênticos; hashes conferidos no terminal e não impressos neste relato para não espalhar sequências hexadecimais longas no diff).
+- Sem segredo nem dado pessoal: varredura por padrões de JWT, prefixos de chave conhecidos, sequências hexadecimais longas, telefones, nomes de credencial e pelo identificador do banco real, nos 3 arquivos versionados, nas 3 fontes em `.assets` e neste relato -> 0 ocorrências. As menções a token/chave no corpo dos relatórios são texto conceitual da auditoria (nomes de função, papéis do banco, cabeçalho de cron) e o único e-mail é um exemplo fictício. Nada foi alterado no conteúdo técnico.
+- Verificação: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (10s)` (dependencias OK, db_guard OK, tipos OK, lint OK, migrations OK; banco_local não verificado — cartão só versiona Markdown, sem banco tocado).
 - `git diff --stat` conferido contra os arquivos listados: só os 3 arquivos acima (+ o relato).
 
 ## Critério de pronto, item por item
 1. "Os 6 arquivos entram versionados": cumprido em dois cartões, porque o portão recusa o diff somado. Aqui entram 3 (PARTE3, PARTE5, plano); o cartão filho `t_7e0dcbc6` — já criado e aguardando — versiona as PARTE1, PARTE2 e PARTE4 das mesmas fontes. Nada ficou de fora e nada se perdeu.
-2. "Nenhum segredo nem dado pessoal": busca nos 6 arquivos-fonte deu 0 ocorrências (acima).
-3. "`zapp-verify . --rapido` verde": `VERIFY: VERDE SEM BANCO (232s)`.
+2. "Nenhum segredo nem dado pessoal": varredura nos 3 versionados, nas 3 fontes e no relato deu 0 ocorrências (acima).
+3. "`zapp-verify . --rapido` verde": `VERIFY: VERDE SEM BANCO (10s)`.
 
 ## O que NÃO fiz e por quê
 - Nenhum teste novo: o cartão só versiona documentos Markdown; não há comportamento de código nem tela tocada para cobrir; o critério de pronto é verificação verde + arquivos versionados + ausência de segredo, os três comprovados.
