@@ -9,7 +9,7 @@
  * (error): sem essa distinção, uma falha de RLS/rede apareceria para o
  * atendente como se o contato não tivesse memória nenhuma.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -80,6 +80,9 @@ export function hasMemoryContent(memory: ConversationMemoryData): boolean {
 export function useConversationMemory(contactId: string) {
   const [memory, setMemory] = useState<ConversationMemoryData | null>(null);
   const [status, setStatus] = useState<ConversationMemoryStatus>('loading');
+  // Sobe a cada gravação manual: o efeito relê o banco e o painel passa a
+  // mostrar o que foi salvo (invalidação da consulta, sem Realtime).
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     if (!contactId) return;
@@ -108,7 +111,9 @@ export function useConversationMemory(contactId: string) {
 
     void load();
     return () => { cancelled = true; };
-  }, [contactId]);
+  }, [contactId, reloadToken]);
 
-  return { memory, status, loading: status === 'loading' };
+  const reload = useCallback(() => setReloadToken((t) => t + 1), []);
+
+  return { memory, status, loading: status === 'loading', reload };
 }
