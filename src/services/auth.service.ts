@@ -20,11 +20,13 @@ export interface SignInResult {
 }
 
 /**
- * Mensagem ao usuario barrado pela politica de rede. Segue generica de proposito:
- * nao revela IP, pais nem a regra aplicada (o corpo do 403 tambem nao revela).
+ * Mensagem ao usuario barrado pela politica de rede (R2-AUTH-022). Neutra de
+ * proposito: nao revela SE o barrado foi o IP ou o pais, nem a regra aplicada (o
+ * corpo do 403 tambem nao revela). Decisao do dono (15/10): o texto anterior
+ * nomeava a categoria que barrou e entregava isso ao usuario.
  */
 export const NETWORK_BLOCKED_MESSAGE =
-  'Acesso bloqueado pela política de rede da empresa (endereço ou país não permitido). Se você deveria ter acesso, fale com o administrador.';
+  'Não foi possível entrar a partir desta rede. Fale com o administrador.';
 
 /** Mensagem quando a politica de rede nao pode ser avaliada agora (retentavel). */
 export const NETWORK_UNAVAILABLE_MESSAGE =

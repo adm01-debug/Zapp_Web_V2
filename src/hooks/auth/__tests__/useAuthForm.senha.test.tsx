@@ -9,14 +9,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
+import { NETWORK_BLOCKED_MESSAGE } from '@/services/auth.service';
+import { toast } from '@/hooks/ui/use-toast';
 
 const EMAIL = 'quem.digitou@promobrindes.com.br';
 const SENHA = 'SenhaForte1!';
 
+/** Retorno de `useAuth().signIn` no que este arquivo observa. */
+type RetornoDoSignIn = {
+  error: { message: string } | null;
+  via: 'edge';
+  lock: null;
+  /** Presente só quando a política de rede barrou o login (R2-AUTH-022). */
+  networkBlocked?: boolean;
+  unavailable?: boolean;
+};
+
 /** 1ª chamada recusa com senha inválida; as seguintes recusam igual (para contar). */
-const signIn = vi.fn(async () => ({
+const signIn = vi.fn<() => Promise<RetornoDoSignIn>>(async () => ({
   error: { message: 'Invalid login credentials' },
-  via: 'edge' as const,
+  via: 'edge',
   lock: null,
 }));
 
@@ -109,5 +121,33 @@ describe('useAuthForm — senha depois de uma recusa', () => {
     await submeter();
 
     expect(signIn).toHaveBeenCalledWith(EMAIL, SENHA);
+  });
+
+  /**
+   * Cartão t_233ac6c3: quando a Edge nega por política de rede (403), a tela tem
+   * de dizer que o acesso não passa DAQUELA rede — e nunca reaproveitar a
+   * mensagem de indisponibilidade, que faz o usuário barrado tentar de novo.
+   */
+  it('403 da política de rede: a tela mostra o texto neutro, não o indisponível', async () => {
+    signIn.mockResolvedValueOnce({
+      error: new Error(NETWORK_BLOCKED_MESSAGE),
+      via: 'edge',
+      lock: null,
+      networkBlocked: true,
+      unavailable: false,
+    });
+    render(<FormularioDeLogin />);
+    fireEvent.change(campo('email'), { target: { value: EMAIL } });
+    fireEvent.change(campo('password'), { target: { value: SENHA } });
+
+    await submeter();
+
+    expect(toast).toHaveBeenCalledWith({
+      title: 'Acesso bloqueado',
+      description: 'Não foi possível entrar a partir desta rede. Fale com o administrador.',
+      variant: 'destructive',
+    });
+    // A mensagem do "não deu para falar com a Edge" não pode ser a do bloqueio.
+    expect(NETWORK_BLOCKED_MESSAGE).not.toContain('indisponível');
   });
 });
