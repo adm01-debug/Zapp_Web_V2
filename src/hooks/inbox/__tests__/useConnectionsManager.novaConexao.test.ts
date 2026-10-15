@@ -138,7 +138,9 @@ describe('useConnectionsManager — nova conexão', () => {
     const payload = m.createConnection.mock.calls[0][0];
     expect(payload).toMatchObject({
       name: 'Loja Centro',
-      phone_number: '5511999999999',
+      // Refazer 1 / ponto 4: `handleAddConnection` normaliza para E.164
+      // antes de criar (antes passava o número cru para a Edge).
+      phone_number: '+5511999999999',
       is_default: true, // única conexão
     });
     // Nome de instância é derivado do nome (slug) + sufixo numérico.

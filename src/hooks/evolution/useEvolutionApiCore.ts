@@ -34,7 +34,9 @@ export function useEvolutionApiCore() {
         if (data && typeof data === 'object' && data.error === true) {
           const apiError = Object.assign(
             new Error(data.message || 'Erro na API Evolution'),
-            { details: data.details, apiStatus: data.status, retries: data.retries }
+            // `code` chega no corpo (ex.: INSTANCE_GONE no delete-instance) e é o
+            // que permite ao chamador separar erro real de estado a reconciliar.
+            { code: data.code, details: data.details, apiStatus: data.status, retries: data.retries }
           );
           throw apiError;
         }
