@@ -199,6 +199,10 @@ test('t_ff817d9f: git cherry sem commits unicos mantem a branch como equivalente
       /feature-equiv/,
       'zero commits unicos e equivalencia valida: a branch tem de continuar na lista de candidatas a poda',
     );
+    // W98: a mesma branch vai para o TSV que o passo "Comando pronto para poda" le,
+    // com o epoch do ultimo commit (o `git log` dublado devolve 0).
+    const tsv = await readFile(join(r.raiz, 'branch-equivalentes.tsv'), 'utf8');
+    assert.equal(tsv, 'feature-equiv\t0\nfeature-quebrada\t0\n');
   } finally {
     await rm(r.raiz, { recursive: true, force: true });
   }
