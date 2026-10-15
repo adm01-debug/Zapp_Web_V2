@@ -27,7 +27,7 @@ on:
   # push — so quando os 6 required checks ja passaram). O run herda o SHA do
   # commit acionador via github.event.workflow_run.head_sha, garantindo que o
   # Playwright teste exatamente o codigo que passou no CI.
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows: ['CI/CD Pipeline']
     branches: [main]
     types: [completed]
@@ -71,8 +71,10 @@ jobs:
         if: >-
           github.event_name == 'workflow_dispatch' &&
           github.ref != 'refs/heads/main'
+        env:
+          GH_REF: ${{ github.ref }}
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: $GH_REF)."
           exit 1
 
       # W71: pular se o CI concluiu com falha (so interessa o success).
@@ -80,8 +82,10 @@ jobs:
         if: >-
           github.event_name == 'workflow_run' &&
           github.event.workflow_run.conclusion != 'success'
+        env:
+          WR_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
         run: |
-          echo "CI/CD Pipeline concluiu com '${{ github.event.workflow_run.conclusion }}' — E2E logado nao roda."
+          echo "CI/CD Pipeline concluiu com '$WR_CONCLUSION' — E2E logado nao roda."
           exit 0
 
       - name: 📥 Checkout confiavel da main
