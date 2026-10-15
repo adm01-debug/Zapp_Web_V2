@@ -1245,9 +1245,10 @@ jobs:
         if: env.SKIP_CONTRACTS != 'true'
         env:
           L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          # E47: SKIP_DOCKER_SHIM=1 — o readiness check usa `docker logs` para aguardar
-          # "PostgreSQL init process complete; ready for start up." — o shim devolve saida
-          # vazia nesse subcomando, fazendo o loop de 90s falhar por timeout.
+          # E47/W51: incompativel com docker-shim — o teste sobe seu proprio container postgres
+          # e usa `docker exec createdb` para 4 bancos (antes, depois, mut_a, mut_b); o shim
+          # nao suporta `exec <cmd>` diferente de psql/pg_isready e encerra com exit 1.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava

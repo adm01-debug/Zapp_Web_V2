@@ -557,7 +557,7 @@ como `services:` + script `scripts/db-audit/docker-shim` (instalado em `$HOME/.l
 
 O shim intercepta os comandos Docker e os roteia para o container compartilhado.
 Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env:` do step
-(isso causa passthrough para o Docker real). Os 9 passos com essa exceção hoje são (W51, 2026-10-15):
+(isso causa passthrough para o Docker real). Os 10 passos com essa exceção hoje são (W51, 2026-10-15):
 
 1. `catalog-manifest.test.sh` — cria dois bancos (db_a, db_b) no mesmo container
 2. `cron-secret-l5-contract.test.sh` — usa `docker exec createdb` e múltiplos bancos
@@ -568,6 +568,7 @@ Passos **incompatíveis** com o shim precisam de `SKIP_DOCKER_SHIM: "1"` no `env
 7. `psql-environment.integration.mjs` — conecta sem `-U` (usuário OS root); "role root does not exist" no serviço compartilhado
 8. `network-policy-rpc.test.sh` — sobe 2 containers simultâneos com `CREATE ROLE` globais conflitantes
 9. `runtime-config.test.sh` — `current_database()` deve devolver `'postgres'`; com o shim o banco isolado chama `shim_zapp-runtime-config-test-<PID>`, quebrando a asserção de identidade
+10. `l11-departments-acl-escrita.test.sh` — sobe seu próprio container postgres e usa `docker exec createdb` para 4 bancos (antes, depois, mut_a, mut_b); o shim encerra com exit 1 em `exec createdb`
 
 Ao adicionar novo passo em `db-guard.yml`, verificar se o script: usa múltiplos bancos num
 container, depende de PostgREST, conecta sem `-U`, ou cria ROLEs globais conflitantes — se sim,
