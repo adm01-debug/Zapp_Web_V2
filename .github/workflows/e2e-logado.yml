@@ -23,8 +23,14 @@
 name: E2E logado
 
 on:
-  push:
+  # W71: dispara apos o CI/CD Pipeline concluir com sucesso na main (nao a cada
+  # push — so quando os 6 required checks ja passaram). O run herda o SHA do
+  # commit acionador via github.event.workflow_run.head_sha, garantindo que o
+  # Playwright teste exatamente o codigo que passou no CI.
+  workflow_run:
+    workflows: ['CI/CD Pipeline']
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 
@@ -34,16 +40,14 @@ defaults:
 permissions:
   contents: read
 
-# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
-# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
-# de push eram canceladas por push seguinte, varias delas a segundos de
-# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
-# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
-# chegarem enquanto a run atual roda, so o mais recente pendente roda em
-# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
-# commit mais novo", sem desperdicar runs quase completas.
+# cancel-in-progress: false enfileira ao inves de matar uma run em andamento.
+# W71: o sha do acionador e' usado como chave de concorrencia para que dois
+# pushes rapidos nao cancelem a run do primeiro antes de ela terminar.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  # W71: chave baseada no SHA do commit acionador (workflow_run) ou no ref
+  # (dispatch). Dois pushes ao mesmo SHA nao competem; dois SHAs diferentes
+  # enfileiram (cancel-in-progress: false).
+  group: e2e-logado-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -58,16 +62,35 @@ jobs:
       contents: read # checkout e leitura do repo
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
+      # W71: com workflow_run o gatilho e' o CI que passou — mas se alguem fizer
+      # um dispatch manual de uma branch que nao e' main, o guard ainda bloqueia.
+      # Para workflow_run, github.event.workflow_run.head_branch == 'main' e
+      # garantido pelo filtro `branches: [main]` no gatilho — aqui so protege
+      # o dispatch manual.
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        if: >-
+          github.event_name == 'workflow_dispatch' &&
+          github.ref != 'refs/heads/main'
         run: |
           echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
           exit 1
+
+      # W71: pular se o CI concluiu com falha (so interessa o success).
+      - name: ✋ Pular se CI falhou (W71)
+        if: >-
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion != 'success'
+        run: |
+          echo "CI/CD Pipeline concluiu com '${{ github.event.workflow_run.conclusion }}' — E2E logado nao roda."
+          exit 0
 
       - name: 📥 Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # W71: usar o SHA exato do commit que acionou o CI, nao o HEAD atual
+          # (pode ter mudado entre o fim do CI e o inicio deste job).
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: 🥖 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
