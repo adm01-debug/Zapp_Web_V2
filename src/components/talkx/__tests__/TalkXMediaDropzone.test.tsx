@@ -20,11 +20,12 @@ const mocks = vi.hoisted(() => ({
   storageFrom: vi.fn(),
   upload: vi.fn(),
   remove: vi.fn(),
+  scanInvoke: vi.fn(),
   profile: { id: '11111111-2222-3333-4444-555555555555' } as { id: string } | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { storage: { from: mocks.storageFrom } },
+  supabase: { storage: { from: mocks.storageFrom }, functions: { invoke: mocks.scanInvoke } },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -69,6 +70,11 @@ beforeEach(() => {
   }));
   mocks.upload.mockResolvedValue({ data: { path: 'x' }, error: null });
   mocks.remove.mockResolvedValue({ data: null, error: null });
+  // A mídia passa pelo `file-security-scanner` antes de gravar no bucket: padrão = passou.
+  mocks.scanInvoke.mockResolvedValue({
+    data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-1', message: 'Arquivo verificado.' },
+    error: null,
+  });
   vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 1920, height: 1080, close: vi.fn() })));
 });
 

@@ -10,6 +10,8 @@ import {
   removeStoredObjectBestEffort,
   sanitizeStorageFileName,
 } from '@/lib/storage_object_upload';
+import { parseScanInvocation, ScanBlockedError, type ScanResult } from '@/lib/scanResponse';
+import { useScanResponseHandler } from '@/hooks/useScanResponseHandler';
 
 interface FileMessageData {
   mediaUrl?: string;
@@ -108,7 +110,13 @@ export function useFileUploadLogic(opts: {
   // linha ja enfileirada referencia (R2-INB-006).
   const pendingUploadsRef = useRef(new Map<string, PendingMediaUpload>());
 
+  // Retry da fila sem auto-referência: o "Tentar novamente" do aviso de varredura
+  // precisa reexecutar o envio, mas o lint de hooks proíbe citar `sendSingleQueueFile`
+  // antes da própria declaração.
+  const sendSingleQueueFileRef = useRef<((file: QueuedFile, index: number) => Promise<boolean>) | null>(null);
+
   const apiLoading = false;
+  const { handleScanResult } = useScanResponseHandler();
 
   // Registro das URLs de prévia criadas por ESTE hook: handleClose/removeFromQueue revogam
   // na hora e o cleanup de desmonte revoga o que ainda estiver vivo (antes, sair do
@@ -157,6 +165,31 @@ export function useFileUploadLogic(opts: {
       return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0 };
     });
     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
+  }, []);
+
+  /**
+   * Varredura de segurança do arquivo ANTES de ele sair do sistema (HZ1-02: o agente
+   * é quem manda arquivo para o cliente). Normaliza QUALQUER resposta do
+   * `file-security-scanner` — sucesso, erro do Supabase e falha de transporte — num
+   * `ScanResult`; nunca lança, o chamador decide pelo `status`.
+   */
+  const scanFile = useCallback(async (file: File): Promise<ScanResult> => {
+    toast.info('Verificando arquivo…', { id: 'file-upload', duration: 30000 });
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    try {
+      const { data, error } = await supabase.functions.invoke('file-security-scanner', {
+        body: formData,
+      });
+      return await parseScanInvocation({
+        data: data as Record<string, unknown> | null | undefined,
+        error,
+      });
+    } catch (err) {
+      // O próprio client pode lançar antes de virar {data,error}: mesma normalização,
+      // cai em NETWORK_ERROR (passageiro, o usuário pode tentar de novo).
+      return await parseScanInvocation({ data: null, error: err });
+    }
   }, []);
 
   const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
@@ -208,6 +241,17 @@ export function useFileUploadLogic(opts: {
     // reenviar o arquivo criaria outro objeto/locator e outra acao (R2-INB-006).
     let pending = pendingUploadsRef.current.get(actionKey);
     if (!pending) {
+      // Varredura ANTES de gravar/enviar. O aviso na tela sai do chamador (que conhece
+      // o id do toast e sabe repetir o envio): aqui só se decide seguir, avisar ou parar.
+      //  - bloqueio (malware/suspeito): lança e NADA é gravado nem enviado;
+      //  - falha passageira (timeout/indisponível/rede): lança e o usuário pode tentar de novo;
+      //  - scanned:false (servidor não varreu): avisa em voz baixa e o envio segue.
+      const scan = await scanFile(file);
+      if (scan.status === 'skipped') {
+        handleScanResult(scan, { fileName: file.name, toastId: 'file-upload' });
+      } else if (scan.status === 'error') {
+        throw new ScanBlockedError(scan);
+      }
       const uploaded = await uploadFileToStorage(file);
       pending = { ...uploaded, clientMessageId: createStorageObjectId() };
       pendingUploadsRef.current.set(actionKey, pending);
@@ -238,7 +282,7 @@ export function useFileUploadLogic(opts: {
       }
       throw error;
     }
-  }, [contactId, connectionId, uploadFileToStorage]);
+  }, [contactId, connectionId, uploadFileToStorage, scanFile, handleScanResult]);
 
   const handleSendFile = useCallback(async () => {
     if (!filePreview || !filePreview.validation.valid) return;
@@ -250,21 +294,38 @@ export function useFileUploadLogic(opts: {
     const file = filePreview.file;
     const category = filePreview.validation.category;
     const currentCaption = caption;
-    toast.info('Enviando arquivo...', { id: 'file-upload', duration: 30000 });
-    try {
-      const sent = await sendFileViaApi(file, category, currentCaption);
-      if (!mountedRef.current) return;
-      toast.success('Arquivo enviado!', { id: 'file-upload' });
-      if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
-      // Fecha SÓ depois do sucesso. Em falha, arquivo, legenda e o cache de upload
-      // continuam na tela: "Enviar" de novo reaproveita o MESMO objeto e id (R2-INB-006).
-      handleClose();
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      log.error('Error sending file:', error);
-      toast.error(error.message || 'Erro ao enviar arquivo', { id: 'file-upload' });
-    }
-  }, [filePreview, contactId, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent]);
+
+    // Envolvido para o "Tentar novamente" do aviso de varredura repetir EXATAMENTE o
+    // mesmo envio (mesmo arquivo, mesma legenda, mesmo cache de upload pendente).
+    const attempt = async () => {
+      toast.info('Enviando arquivo...', { id: 'file-upload', duration: 30000 });
+      try {
+        const sent = await sendFileViaApi(file, category, currentCaption);
+        if (!mountedRef.current) return;
+        toast.success('Arquivo enviado!', { id: 'file-upload' });
+        if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
+        // Fecha SÓ depois do sucesso. Em falha, arquivo, legenda e o cache de upload
+        // continuam na tela: "Enviar" de novo reaproveita o MESMO objeto e id (R2-INB-006).
+        handleClose();
+      } catch (err) {
+        if (err instanceof ScanBlockedError) {
+          handleScanResult(err.result, {
+            fileName: file.name,
+            toastId: 'file-upload',
+            onRetry: () => {
+              void attempt();
+            },
+          });
+          return;
+        }
+        const error = err instanceof Error ? err : new Error('Unknown error');
+        log.error('Error sending file:', error);
+        toast.error(error.message || 'Erro ao enviar arquivo', { id: 'file-upload' });
+      }
+    };
+
+    await attempt();
+  }, [filePreview, contactId, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent, handleScanResult]);
 
   const sendSingleQueueFile = useCallback(async (queuedFile: QueuedFile, index: number): Promise<boolean> => {
     if (!queuedFile.validation.valid || !contactId) return false;
@@ -275,12 +336,29 @@ export function useFileUploadLogic(opts: {
       if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
       return true;
     } catch (err) {
+      if (err instanceof ScanBlockedError) {
+        const scanMessage =
+          err.result.status === 'error' ? err.result.message : 'Falha na verificação do arquivo.';
+        handleScanResult(err.result, {
+          fileName: queuedFile.file.name,
+          toastId: `file-upload-${queuedFile.id}`,
+          onRetry: () => {
+            void sendSingleQueueFileRef.current?.(queuedFile, index);
+          },
+        });
+        setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'error', error: scanMessage } : f));
+        return false;
+      }
       const error = err instanceof Error ? err : new Error('Unknown error');
       log.error('Error sending queued file:', error);
       setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'error', error: error.message } : f));
       return false;
     }
-  }, [contactId, sendFileViaApi, onFileSent]);
+  }, [contactId, sendFileViaApi, onFileSent, handleScanResult]);
+
+  useEffect(() => {
+    sendSingleQueueFileRef.current = sendSingleQueueFile;
+  }, [sendSingleQueueFile]);
 
   const handleSendAllFiles = useCallback(async () => {
     // Reenvia só o que ainda não foi: itens 'done' já estão entregues e reenviá-los
