@@ -11657,6 +11657,7 @@ export type Database = {
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
       notify_searchbox_budget: { Args: never; Returns: number }
+      ops_metrics: { Args: { p_window_hours?: number }; Returns: Json }
       pause_dispatches_for_connection: {
         Args: { p_connection_id: string; p_reason: string }
         Returns: number
