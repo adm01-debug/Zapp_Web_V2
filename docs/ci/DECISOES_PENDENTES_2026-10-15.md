@@ -15,14 +15,25 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 
 ## Atualização de 15/10/2026 (noite) — progresso desta sessão
 
-- **W74 e W84: PR mergeada, faltam os 2 passos pós-merge.** [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953)
-  (`ci: W74 (tira service_role do E2E) + W84 (destrava CodeQL required)`) mergeada em `main` (commit `2e9b808`). O
-  código já está na `main`: `e2e-logado.yml` não usa mais `SUPABASE_SERVICE_ROLE_KEY` e o `paths-ignore` saiu do
-  `codeql.yml`. Para fechar de fato faltam: apagar o secret `SUPABASE_SERVICE_ROLE_KEY` (depois do primeiro
-  `e2e-logado` verde na `main`); e, para o W84, não é só clicar em Settings → Branches — depois de adicionar
-  `CodeQL` aos required checks (6→7), precisa de uma PR atualizando `scripts/ci/github-settings-baseline.json` e a
-  tabela "Perímetro do GitHub" do `CLAUDE.md` no mesmo PR, senão o `settings-guard` acusa o 7º check como
-  regressão (achado do Codex na PR #1954, correto).
+- **W74: migration aplicada em produção e auditada — gap real encontrado e fechado nesta sessão.** [#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953)
+  mergeada em `main` (commit `2e9b808`) tirou `SUPABASE_SERVICE_ROLE_KEY` do `e2e-logado.yml`, mas a migration
+  `20261015200000_e2e_cleanup_security_definer.sql` ficou só no arquivo — **não tinha sido aplicada em produção
+  nem registrada no ledger** (achado confirmado de forma independente pelo Codex na PR #1954, comentário
+  4288837873, e por auditoria de 5 agentes especializados nesta sessão: a função `public.e2e_cleanup` não existia
+  em `pg_proc`, 0 linhas no ledger). Enquanto isso, todo run de `e2e-logado` chamaria a RPC, receberia 404, cairia
+  no `|| echo "teardown falhou"` e passaria verde mesmo assim — fixture acumulando em produção sem alerta de CI.
+  **Corrigido nesta sessão:** DDL + `INSERT` no ledger aplicados na mesma transação via `db_query` (service_role,
+  projeto `tnnnlkbymytvtqngbbqh`), confirmado ao vivo depois: função existe (`prosecdef=true`), ledger tem a
+  version `20261015200000` (3 statements), ACL correta (`EXECUTE` só para `postgres`/`authenticated`/
+  `service_role`, `anon` sem acesso). Auditoria de segurança da função (SECURITY DEFINER, `search_path` fixo,
+  `IS DISTINCT FROM` contra `auth.uid()` NULL, DELETE escopado ao contato de teste fixo) não achou nenhum achado
+  crítico ou alto. Só falta apagar o secret `SUPABASE_SERVICE_ROLE_KEY` depois do próximo `e2e-logado` verde.
+- **W84: PR mergeada, falta o passo pós-merge do dono do repo.** Código na `main` (`e2e-logado.yml` sem
+  `paths-ignore` no `codeql.yml`); teste de mutação confirmou que `codeql-paths.unit.mjs` detecta regressão de
+  verdade (não é tautológico). Não é só clicar em Settings → Branches — depois de adicionar `CodeQL` aos required
+  checks (6→7), precisa de uma PR atualizando `scripts/ci/github-settings-baseline.json` e a tabela "Perímetro do
+  GitHub" do `CLAUDE.md` no mesmo PR, senão o `settings-guard` acusa o 7º check como regressão (achado do Codex
+  na PR #1954, correto).
 - **W89 (parte SonarCloud): causa raiz da nota de SEGURANÇA (E) encontrada — a de CONFIABILIDADE (D) é outra
   coisa.** As **2 issues BLOCKER** (`json:S6418`, "possível segredo hard-coded") em `docs/reconciliation/evidence/
   publication-harness-hardening.json:568` e `docs/reconciliation/evidence/skins-probe-results.json:9` são
@@ -51,7 +62,7 @@ e o passo exato. A ordem vai do maior ganho com menos esforço ao menor.
 | 3 | **W67** | Qual projeto Vercel é o oficial | **`zapp_web_v2`**. Desconectar `zapp-web-v2-main` do Git e apagar os 2 environments dele | ~5 min | **Sim**: painel da Vercel e configurações do repo |
 | 4 | **W84** | Tornar o CodeQL obrigatório | ✅ **PR mergeada** ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), commit `2e9b808`). Faltam o clique (adicionar `CodeQL` aos required checks) **e** uma PR atualizando `scripts/ci/github-settings-baseline.json` (6→7 checks) e a tabela "Perímetro do GitHub" do `CLAUDE.md` no mesmo PR — sem isso o `settings-guard` acusa o 7º check como regressão (achado do Codex na PR #1954, correto) | 1 clique + 1 PR pequena | Sim para a regra |
 | 5 | **W20** | Revisão obrigatória, `prevent_self_review`, conversas resolvidas | **Não ligar nenhum dos três agora.** Registrar o motivo no `CLAUDE.md` | 0 min (só confirmar) | Só confirmar: a recomendação é deixar como está |
-| 6 | **W74** | Tirar a chave `service_role` do CI | ✅ **PR mergeada** ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), commit `2e9b808`). Falta só apagar o secret após 1º `e2e-logado` verde | 1 clique | Só apagar o secret no fim |
+| 6 | **W74** | Tirar a chave `service_role` do CI | ✅ **Feito e verificado em produção**: PR mergeada ([#1953](https://github.com/adm01-debug/Zapp_Web_V2/pull/1953), `2e9b808`) + migration aplicada/registrada no ledger nesta sessão (gap real que o Codex e a auditoria de 5 agentes encontraram — ver atualização acima). Falta só apagar o secret após 1º `e2e-logado` verde | 1 clique | Só apagar o secret no fim |
 | 7 | **W64** | Credencial somente-leitura para os guardas | **Sim, mas depois do W63.** Role própria `ci_readonly`, não a interna do Supabase | ~15 min | **Sim**: senha de role e secret são só seus (seção 0 do `CLAUDE.md`) |
 | 8 | **W79** | Supabase local para a suíte logada | **Não agora.** A suíte não falha por causa do banco: estoura o limite de 15 min e o login oscila. Corrigir isso primeiro, com código | 0 min | **Não**: o próximo passo é código, não política |
 
