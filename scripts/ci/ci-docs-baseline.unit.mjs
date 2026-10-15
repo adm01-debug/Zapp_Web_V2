@@ -447,7 +447,6 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
 });
 
 // W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais
-const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
 
 test('W95 CONTRIBUTING.md: usa bun (nao npm)', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
