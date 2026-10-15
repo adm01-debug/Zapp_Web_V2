@@ -233,10 +233,17 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
           data: erroDeLeitura ? null : violacoes.slice(de, ate + 1).map((id) => ({ id })),
           error: erroDeLeitura,
         });
+        // Ramo com `.range()` depois de `.order()`: é o caminho de hoje (ciclo
+        // atual) — o `.or()` do filtro de janela cai no MESMO ramo; o banco
+        // falso aqui só guarda violações do ciclo.
+        const ramoPaginado = () => ({
+          order: () => ({ range: (de: number, ate: number) => Promise.resolve(pagina(de, ate)) }),
+        });
         return {
           select: () => ({
             eq: () => ({
-              order: () => ({ range: (de: number, ate: number) => Promise.resolve(pagina(de, ate)) }),
+              ...ramoPaginado(),
+              or: () => ramoPaginado(),
               // O monitor antigo esperava a resposta direto no `.eq()` (teto do
               // PostgREST, uma página só). O thenable mantém esse caminho vivo
               // para o vermelho falhar pelo motivo certo: INSERT repetido.

@@ -8,6 +8,7 @@ import { LiveRegion } from "@/components/ui/visually-hidden";
 import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
 import { AppProviders } from "@/providers/AppProviders";
 import { AppRoutes } from "@/routes/AppRoutes";
+import { useGlobalCrisisAlerts } from "@/hooks/business/useGlobalCrisisAlerts";
 
 const log = getLogger('App');
 
@@ -46,6 +47,15 @@ const TeamChatNotificationsListener = lazy(() =>
   import("@/components/team-chat/TeamChatNotificationsListener")
     .then(m => ({ default: m.TeamChatNotificationsListener }))
 );
+// Supervisione o app inteiro: o alerta de crise da Sala de Crise (INSERT em
+// `warroom_alerts`) chega com som/aviso em QUALQUER tela, não só com a War Room
+// aberta. Só supervisão/admin assina; agente não recebe (regra dentro do hook).
+// Fica no shell (e não num `.tsx` só dele) porque `react-refresh` recusa arquivo
+// que exporta hook e componente juntos.
+function GlobalCrisisAlertsListener() {
+  useGlobalCrisisAlerts();
+  return null;
+}
 // O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
 // o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
 // nada se perde na janela de carregamento. Estático, ele colocava a lib (~9 KB
@@ -73,6 +83,7 @@ function DeferredProviders() {
       <IncomingCallAlert />
       <OutboundCallDialog />
       <TeamChatNotificationsListener />
+      <GlobalCrisisAlertsListener />
       {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
       <EasterEggsProvider>{null}</EasterEggsProvider>
       <Sonner />

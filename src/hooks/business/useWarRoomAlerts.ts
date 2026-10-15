@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
+import { announceWarRoomAlert } from './warRoomAlertNotice';
 
 interface WarRoomAlert {
   id: string;
@@ -27,6 +27,18 @@ interface WarRoomAlert {
 // encerrado pelo operador não volta a alertar.
 const SLA_MONITOR_SOURCE = 'sla-monitor';
 const SLA_BREACH_PAGE = 1000; // teto de linhas do PostgREST numa resposta
+
+// Ciclo ATUAL do SLA — a mesma regra do snapshot da Sala de Crise
+// (`crisis_room_snapshot`, PF-01): violação ainda em aberto (sem 1ª resposta) OU
+// estourada nas últimas 24 h. Antes o monitor lia `first_response_breached = true`
+// de TODO o histórico: conversa de ciclo antigo, já respondida, continuava
+// alimentando o alerta para sempre (medido: 198 violações contra 103 do ciclo).
+export const SLA_CYCLE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Início do ciclo atual, em ISO, para o filtro do PostgREST. */
+export function slaCycleStartIso(agora: number = Date.now()): string {
+  return new Date(agora - SLA_CYCLE_WINDOW_MS).toISOString();
+}
 
 function hex32(valor: number): string {
   return (valor >>> 0).toString(16).padStart(8, '0');
@@ -60,11 +72,13 @@ export function slaIncidentKey(breachIds: readonly string[]): string {
  */
 async function fetchBreachedConversationIds(): Promise<string[]> {
   const ids: string[] = [];
+  const inicioDoCiclo = slaCycleStartIso();
   for (let de = 0; ; de += SLA_BREACH_PAGE) {
     const { data, error } = await supabase
       .from('conversation_sla')
       .select('id')
       .eq('first_response_breached', true)
+      .or(`first_response_at.is.null,created_at.gte.${inicioDoCiclo}`)
       .order('id', { ascending: true })
       .range(de, de + SLA_BREACH_PAGE - 1);
     if (error) throw error;
@@ -78,7 +92,6 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { settings, isQuietHours } = useNotificationSettings();
   // Sem valor explícito do chamador, o mudo vem da preferência do usuário (`user_settings`),
@@ -106,6 +119,18 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     }
   }, [soundGate, isQuietHours]);
 
+  // Um aviso POR ALERTA: o mesmo INSERT chega ao ouvinte global (shell) e a esta
+  // tela, e `announceWarRoomAlert` decide quem anuncia — nesta aba e entre abas.
+  // O som continua sendo o desta tela (áudio próprio), agora disparado uma vez.
+  const announce = useCallback((alert: WarRoomAlert) => {
+    void announceWarRoomAlert(alert, {
+      soundEnabled: soundGate,
+      quietHours: isQuietHours(),
+      browserNotifications: settings.browserNotifications,
+      playSound: playAlertSound,
+    });
+  }, [soundGate, isQuietHours, settings.browserNotifications, playAlertSound]);
+
   // Fetch existing alerts (página de APRESENTAÇÃO do painel: 50 mais recentes não lidos).
   const { data: alerts = [] } = useQuery({
     queryKey: ['warroom-alerts'],
@@ -132,30 +157,17 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
         (payload) => {
           const alert = payload.new as WarRoomAlert;
           queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
-
-          // Play sound
-          if (alert.alert_type === 'critical') {
-            playAlertSound();
-            playAlertSound(); // double beep for critical
-          } else {
-            playAlertSound();
-          }
-
-          // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
-              body: alert.message,
-              tag: `warroom-${alert.id}`,
-              requireInteraction: alert.alert_type === 'critical',
-            });
-          }
+          // Antes desta correção o alerta crítico chamava o som DUAS vezes (a
+          // segunda batida reiniciava o áudio) e o aviso de desktop só saía com
+          // Service Worker pronto (`navigator.serviceWorker.ready`). Aqui é uma
+          // passada só, pelo caminho compartilhado.
+          announce(alert);
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, announce]);
 
   // Dismiss alert
   const dismissAlert = async (alertId: string) => {
