@@ -1,4 +1,8 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
+
+## Refazer 1 — pontos da recusa
+- Ponto 1 (espelho do CI no empilhamento — `ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`): `ESTADO.md` (linha do `classify-emoji`): a âncora `src/hooks/integrations/useCustomEmojis.ts:93` ficou desatualizada porque o trabalho anterior deslocou o `invoke('classify-emoji', ...)` para a linha 134; atualizei para `:134`. Prova — vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `âncora desatualizada: src/hooks/integrations/useCustomEmojis.ts:93 não cita 'classify-emoji'`; verde depois: o mesmo comando → `pass 11, fail 0`. A falha única do `zapp-verify full .` (`RuleValueInput.test.tsx`, TalkX) é pré-existente: rodei o arquivo isolado com e sem a minha mudança e falha igual nos dois estados; meu diff (só `ESTADO.md`) não é importado por nenhum teste.
+- O que NÃO fiz e por quê: não removi o lixo `.tmp/base-hook.ts` do commit — ele é gitignorado (`.gitignore: .tmp/`), não faz parte do diff; apenas apaguei o arquivo do workspace porque ele quebrava o passo `lint` local (cópia `.ts` em `.tmp` vira dívida nova no ratchet).
 
 ## O que mudou e por quê
 - `src/hooks/integrations/useCustomEmojis.ts` (`fetchEmojis`/`loadMore`): a leitura passou de
