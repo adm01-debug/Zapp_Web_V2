@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, loadToolchain, main } from "./check-workflow-pins.mjs";
+import { TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, findCurlBinaryViolations, loadToolchain, main } from "./check-workflow-pins.mjs";
 
 // Fonte única de versões do repositório (.github/toolchain.json), lida de verdade
 // pelo teste de integração no fim do arquivo.
@@ -238,4 +238,57 @@ test("os workflows reais do repositório batem com a fonte única", () => {
   const fonte = loadToolchain(RAIZ);
   assert.deepEqual(TOOLCHAIN_KEYS.filter((chave) => !(chave in fonte)), []);
   assert.equal(main(RAIZ), 0);
+});
+
+// W88: binários baixados por curl devem ter versão e sha256 em toolchain.json.
+test("W88: curl binary sem chave em toolchain gera violação", () => {
+  const source = `
+jobs:
+  lint:
+    steps:
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          curl -sSL https://example.com/actionlint
+`;
+  const viols = findCurlBinaryViolations(source, "ci.yml", {});
+  assert.ok(viols.length >= 2, "deve reportar versão e sha256 ausentes");
+  assert.ok(viols.some((v) => v.field === "version"), "deve reportar versão ausente");
+  assert.ok(viols.some((v) => v.field === "sha256"), "deve reportar sha256 ausente");
+});
+
+test("W88: curl binary com versão errada em toolchain gera violação", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+`;
+  const toolchain = { "actionlint-version": "1.7.6", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 1, "apenas a versão deve violar");
+  assert.equal(viols[0].field, "version");
+  assert.equal(viols[0].value, "1.7.7");
+});
+
+test("W88: mutação do sha256 → violação (W88 invariante central)", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+`;
+  const toolchain = { "actionlint-version": "1.7.7", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 1, "sha256 mutado deve gerar violação");
+  assert.equal(viols[0].field, "sha256");
+});
+
+test("W88: versão e sha256 corretos → sem violação", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+`;
+  const toolchain = { "actionlint-version": "1.7.7", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 0, "versão e sha256 corretos → sem violação");
 });

@@ -268,7 +268,10 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
-    const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
+    // Localiza o cache de BROWSERS do Playwright (path ms-playwright), não o bun cache.
+    const cache = blocos.find(
+      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /ms-playwright/.test(p),
+    );
     if (!cache) {
       problemas.push(`${nome}: sem passo actions/cache para os browsers`);
       continue;
@@ -313,4 +316,49 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+// W44: todos os workflows têm `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}`.
+// Sem isso, um `set -e` esquecido ou um passo importado de fora pode silenciar falhas.
+test('W44: todos os workflows declaram defaults.run.shell com bash strict', () => {
+  const SHELL = /defaults:\s*\n\s+run:\s*\n\s+shell:\s*bash\s+--noprofile\s+--norc\s+-euo\s+pipefail\s+\{0\}/s;
+  const faltando = nomes.filter((nome) => !SHELL.test(wf[nome]));
+  assert.deepEqual(faltando, [], `workflows sem defaults.run.shell strict: ${faltando.join(', ')}`);
+});
+
+// W99: todo passo upload-artifact deve declarar retention-days explicitamente.
+// Sem isso o artifact herda o default do repo (90 dias) e acumula storage.
+test('W99: todo upload-artifact tem retention-days explícito', () => {
+  const problemas = [];
+  for (const nome of nomes) {
+    const blocos = passos(wf[nome]);
+    for (const bloco of blocos) {
+      if (!bloco.includes('upload-artifact@')) continue;
+      if (!/retention-days:/u.test(bloco)) {
+        const nomeStep = /name:\s*(.+)/u.exec(bloco)?.[1]?.trim() ?? '(sem nome)';
+        problemas.push(`${nome}: passo '${nomeStep}' sem retention-days`);
+      }
+    }
+  }
+  assert.deepEqual(problemas, [], `upload-artifact sem retention-days:\n${problemas.join('\n')}`);
+});
+
+// W99: todo curl deve usar --proto '=https' e --tlsv1.2 (ou --tlsv1.3).
+// Sem as flags, o curl aceita downgrade para HTTP ou TLS < 1.2.
+test('W99: todo curl usa --proto =https e --tlsv1.2/3', () => {
+  const problemas = [];
+  for (const nome of nomes) {
+    for (const bloco of blocosRun(wf[nome])) {
+      for (const linha of bloco.split('\n')) {
+        if (!/\bcurl\b/.test(linha)) continue;
+        if (linha.trim().startsWith('#')) continue;
+        const temProto = /--proto\s+'?=https'?/.test(linha);
+        const temTls   = /--tlsv1\.[23]/.test(linha);
+        if (!temProto || !temTls) {
+          problemas.push(`${nome}: curl sem TLS obrigatório: ${linha.trim().slice(0, 80)}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(problemas, [], `curl sem flags TLS:\n${problemas.join('\n')}`);
 });

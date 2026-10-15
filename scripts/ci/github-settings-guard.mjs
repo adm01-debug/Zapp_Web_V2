@@ -24,6 +24,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { abrirOuRotacionar, fecharSeAberta } from './issue-rotativa.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -195,45 +196,14 @@ async function restaurar(campo) {
   return null;
 }
 
-// ---------------------------------------------------------------- issue
-
-async function findIssue() {
-  const issues = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/issues?labels=${ISSUE_LABEL}&state=open&per_page=10`);
-  return Array.isArray(issues) ? issues.find((i) => i.title === ISSUE_TITLE) ?? null : null;
-}
+// ---------------------------------------------------------------- issue (delegado a issue-rotativa.mjs — E51/W91)
 
 async function abrirOuAtualizarIssue(body) {
-  const existing = await findIssue();
-  if (existing) {
-    await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, { body });
-    console.log(`Issue #${semQuebra(existing.number)} atualizada com novo comentario.`);
-    return existing.number;
-  }
-  await gh('POST', `/repos/${OWNER}/${REPO_NAME}/labels`, {
-    name: ISSUE_LABEL,
-    color: 'e11d48',
-    description: 'Perimeter regression detected by settings-guard',
-  }).catch(() => {});
-  const issue = await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues`, {
-    title: ISSUE_TITLE,
-    body,
-    labels: [ISSUE_LABEL],
-  });
-  console.log(`Issue #${semQuebra(issue.number)} aberta.`);
-  return issue.number;
+  return abrirOuRotacionar({ gh, owner: OWNER, repo: REPO_NAME, label: ISSUE_LABEL, title: ISSUE_TITLE, body });
 }
 
 async function fecharIssue() {
-  const existing = await findIssue();
-  if (!existing) return;
-  await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}`, {
-    state: 'closed',
-    state_reason: 'completed',
-  });
-  await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, {
-    body: '✅ Perimetro conferido contra o baseline — fechando automaticamente.',
-  });
-  console.log(`Issue #${existing.number} fechada.`);
+  return fecharSeAberta(gh, OWNER, REPO_NAME, ISSUE_LABEL, ISSUE_TITLE);
 }
 
 // ---------------------------------------------------------------- principal
