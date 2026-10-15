@@ -13,10 +13,9 @@ check-runs do HEAD, runs de 07/10 a 14/10, falhas individuais com log) e via API
 Nada foi inferido do texto dos planos anteriores: o plano de 01/10 foi lido para saber o que ficou pendente,
 mas todo achado desta versão foi **re-medido hoje**.
 **Status:** EM EXECUÇÃO desde 14/10 20:50 UTC (aprovado pelo dono). Executado até agora: **W01–W02** (perímetro)
-+ **63 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W17/W19/W21–W27/W29/W31/W33/W35–W38/W40–W46/
-W48–W50/W52–W58/W59/W60/W65/W66/W69–W73/W75–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
-Restam: etapas **D** (W11/W20/W47/W64/W67/W68/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
-etapas B/C ainda não implementadas (W03/W06/W08/W12–W16/W18/W28/W30/W32/W34/W39/W51/W61–W63/W70/W96).
++ **78 etapas concluídas** na branch `claude/charming-mccarthy-jbxy56` (W17/W19/W21–W58/W59/W60/W65–W78/W80–W83/W85–W88/W91/W92/W94/W95/W97/W99/W100).
+Restam: etapas **D** (W11/W20/W47/W64/W67/W74/W79/W84/W89/W90/W93/W98 — aguardam decisão humana) e
+etapas B/C ainda não implementadas (W06/W12/W16/W62/W63).
 
 > Este plano **substitui** `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` como plano vigente de Actions
 > assim que o dono o adotar (etapa W100 registra a troca no plano antigo e no `CLAUDE.md`). Até lá, o de 01/10
@@ -504,9 +503,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   `zapp-web-v2-main` e `zapp-web` do repo (ou arquivá-los), e apagar os environments fantasmas no GitHub. Verificação:
   1 status `Vercel – …` por commit; `GET /environments` → 7 (+ os 2 do projeto canônico, se a Vercel exigir, listados no
   baseline por W13).
-- [ ] **W68** · E · N-09 · `vercel.json` `installCommand: bun install --frozen-lockfile --ignore-scripts` (+ `bun pm
-  trust <pkg>` explícito se algum postinstall for necessário — hoje o CI prova que nenhum é). Verificação: build de
-  produção verde na Vercel.
+- [x] **W68** · E · N-09 · **FEITO 2026-10-15** — `vercel.json` atualizado: `installCommand: "bun install --frozen-lockfile --ignore-scripts"` (removido `rm -rf node_modules`). Verificação: build de produção verde na Vercel.
 - [x] **W69** · C · N-09/N-26 · `docs/DEPLOYMENT.md`: projetos Vercel reais, domínio canônico, environments que a Vercel
   cria, e que o `deploy-functions` é automático desde 07/10 (o PR template ainda diz "disparar `deploy-functions` após o
   merge"). Verificação: doc test; PR template atualizado.
