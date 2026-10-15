@@ -318,10 +318,25 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
 // W44: todos os workflows têm `defaults.run.shell: bash --noprofile --norc -euo pipefail {0}`.
 // Sem isso, um `set -e` esquecido ou um passo importado de fora pode silenciar falhas.
+// Exceção única: scorecard.yml. O scorecard-action v2.4.1 recusa publicar o resultado se o job dele
+// tiver `defaults` ou `env` (README, "Restrictions on the job containing ossf/scorecard-action"), e o
+// workflow não tem passo `run:` — o shell strict não teria o que proteger ali.
+const SEM_DEFAULTS_POR_RESTRICAO_UPSTREAM = ['scorecard.yml'];
+
 test('W44: todos os workflows declaram defaults.run.shell com bash strict', () => {
   const SHELL = /defaults:\s*\n\s+run:\s*\n\s+shell:\s*bash\s+--noprofile\s+--norc\s+-euo\s+pipefail\s+\{0\}/s;
-  const faltando = nomes.filter((nome) => !SHELL.test(wf[nome]));
+  const faltando = nomes.filter((nome) => !SEM_DEFAULTS_POR_RESTRICAO_UPSTREAM.includes(nome) && !SHELL.test(wf[nome]));
   assert.deepEqual(faltando, [], `workflows sem defaults.run.shell strict: ${faltando.join(', ')}`);
+});
+
+test('W44: a exceção do scorecard.yml só vale enquanto ele não tiver passo run, defaults nem env', () => {
+  for (const nome of SEM_DEFAULTS_POR_RESTRICAO_UPSTREAM) {
+    const texto = wf[nome];
+    assert.ok(texto, `${nome} não existe: remova a exceção`);
+    assert.doesNotMatch(texto, /^\s*(?:-\s+)?run:/m, `${nome} ganhou passo run: — sem defaults strict ele roda sem -euo pipefail`);
+    assert.doesNotMatch(texto, /^\s*defaults:/m, `${nome}: o scorecard-action recusa defaults no workflow e no job`);
+    assert.doesNotMatch(texto, /^\s*env:/m, `${nome}: o scorecard-action recusa env no workflow e no job`);
+  }
 });
 
 // W09 (plano de 14/10/2026, achado N-05b): a versão do Playwright tem UMA fonte, o
