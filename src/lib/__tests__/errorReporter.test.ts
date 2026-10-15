@@ -96,5 +96,21 @@ describe('errorReporter', () => {
       const details = mockedLogAudit.mock.calls[0][0].details as Record<string, unknown>;
       expect(details.apikey).toBe('[SEGREDO_REDACTED]');
     });
+
+    it('campos canônicos sobrescrevem message/stack vindos no contexto (ponto 3 da recusa)', () => {
+      const err = new Error('falha real do runtime');
+      err.stack = 'Error: falha real do runtime\n  at real (src/lib/x.ts:2:2)';
+      reportClientError(
+        err,
+        { source: 'edge', message: 'texto do chamador', stack: 'pilha do chamador' },
+        { force: true }
+      );
+      expect(mockedLogAudit).toHaveBeenCalledTimes(1);
+      const details = mockedLogAudit.mock.calls[0][0].details as Record<string, unknown>;
+      expect(details.message).toBe('falha real do runtime');
+      expect(details.stack as string).toContain('src/lib/x.ts:2:2');
+      expect(details.stack as string).not.toContain('pilha do chamador');
+      expect(details.source).toBe('edge');
+    });
   });
 });

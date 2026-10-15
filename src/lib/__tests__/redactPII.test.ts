@@ -50,6 +50,28 @@ describe('redactPII (string)', () => {
   it('não altera texto sem PII', () => {
     expect(redactPII('timeout ao conectar no servidor')).toBe('timeout ao conectar no servidor');
   });
+
+  it('mascara Authorization: Bearer <jwt> inteiro (ponto 1 da recusa)', () => {
+    const out = redactPII(`saiu no log: Authorization: Bearer ${JWT} fim`);
+    expect(out).not.toContain(JWT);
+    expect(out).not.toContain('eyJ');
+    expect(out).toContain('Authorization: [SEGREDO_REDACTED]');
+    expect(out).toContain('saiu no log:');
+    expect(out).toContain('fim');
+  });
+
+  it('mascara bearer=/token=/api-key: preservando a chave', () => {
+    const opaque = 'abcdef1234567890';
+    const b = redactPII(`query ?bearer=${opaque} fim`);
+    expect(b).not.toContain(opaque);
+    expect(b).toContain('bearer=[SEGREDO_REDACTED]');
+    const t = redactPII('falha com token=abc123def456 fim');
+    expect(t).not.toContain('abc123def456');
+    expect(t).toContain('token=[SEGREDO_REDACTED]');
+    const k = redactPII('header api-key: xyz789qrs012 fim');
+    expect(k).not.toContain('xyz789qrs012');
+    expect(k).toContain('api-key: [SEGREDO_REDACTED]');
+  });
 });
 
 describe('redactPIIValue (details aninhados)', () => {
@@ -77,4 +99,25 @@ describe('redactPIIValue (details aninhados)', () => {
     expect(redactPIIValue(null)).toBe(null);
     expect(redactPIIValue(true)).toBe(true);
   });
+
+  it('redige subobjeto { user: { email, password } } (ponto 2 da recusa)', () => {
+    const out = redactPIIValue({
+      user: { email: EMAIL, password: 'trocar123' },
+      ok: true,
+    }) as Record<string, unknown>;
+    const user = out.user as Record<string, unknown>;
+    expect(user.email).toBe('[EMAIL_REDACTED]');
+    expect(user.password).toBe('[SEGREDO_REDACTED]');
+    expect(out.ok).toBe(true);
+    expect(JSON.stringify(out)).not.toContain(EMAIL);
+    expect(JSON.stringify(out)).not.toContain('trocar123');
+  });
+
+  it.each(['password', 'secret', 'token', 'api_key', 'authorization', 'cookie', 'senha'])(
+    'troca o valor inteiro da chave sensível %s (ponto 5 da recusa)',
+    (key) => {
+      const out = redactPIIValue({ [key]: 'valor-qualquer-sem-pii' }) as Record<string, unknown>;
+      expect(out[key]).toBe('[SEGREDO_REDACTED]');
+    }
+  );
 });
