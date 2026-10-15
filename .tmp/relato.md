@@ -1,4 +1,4 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
 - src/hooks/chat/useNewConversation.ts:
@@ -12,6 +12,16 @@ Especialista: Hugo (area-front-hooks)
 ## Prova
 - vermelho antes (`git checkout dia/2026-10-13 -- src/hooks/chat/useNewConversation.ts`): `npx vitest run src/hooks/chat/__tests__/useNewConversation.test.tsx` → `Test Files 1 failed (1); Tests 5 failed (5)` (ex.: `expect(mocks.insertPayloads).toHaveLength(1)` recebeu 0).
 - verde depois (hook novo restaurado com `git checkout HEAD -- ...`): mesmo comando → `Test Files 1 passed (1); Tests 5 passed (5)`.
+
+## Verificação executada (neste refazer, sem mexer no código)
+- `npx vitest run src/hooks/chat/__tests__/useNewConversation.test.tsx` → `Test Files 1 passed (1); Tests 5 passed (5)` (Duration 1.91s).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (13s)` (db_guard OK, tipos OK, lint OK, migrations OK; banco_local NÃO VERIFICADO — sem nome de conjunto, esperado para cartão sem migration).
+- Arquivos de teste deste cartão:
+  - src/hooks/chat/__tests__/useNewConversation.test.tsx
+
+## Pontos da recusa ([refazer 1])
+- Ponto 1: primeira linha agora é exatamente `Especialista: hugo` (antes: `Especialista: Hugo (area-front-hooks)`).
+- Ponto 2: seção "Verificação executada" acima, com comando, linha de resultado e lista explícita dos arquivos de teste; nenhum arquivo de código foi alterado neste refazer.
 
 ## Conclusão
 - Concluí os 3 itens do CRITÉRIO DE PRONTO (variações do 9º dígito, envio sem esperar avatar, teste que prova), com o teste rodado nos dois estados.
