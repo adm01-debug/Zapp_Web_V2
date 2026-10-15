@@ -126,13 +126,23 @@ export async function flushPendingMarkRead(allowRetry = true): Promise<void> {
   } else {
     markReadRetryCount = 0;
   }
+  const retryScheduled =
+    transient && allowRetry && markReadRetryCount <= MARK_READ_MAX_RETRIES;
+  if (!retryScheduled && transient) {
+    // Sem retry agendado (tentativas esgotadas ou saída sem retry): nenhum
+    // timer vai buscar esses ids, então descartá-los é o comportamento real.
+    pendingMarkRead = new Set<string>();
+    markReadRetryCount = 0;
+  }
   log.error(
-    transient
+    retryScheduled
       ? 'Error marking messages as read (batch); ids kept for retry:'
-      : 'Error marking messages as read (batch) is permanent; retry dropped:',
+      : transient
+        ? 'Error marking messages as read (batch) retry exhausted; ids dropped:'
+        : 'Error marking messages as read (batch) is permanent; retry dropped:',
     error
   );
-  if (transient && allowRetry && markReadRetryCount <= MARK_READ_MAX_RETRIES) {
+  if (retryScheduled) {
     scheduleMarkReadFlush(MARK_READ_RETRY_BASE_MS * 2 ** (markReadRetryCount - 1));
   }
 }

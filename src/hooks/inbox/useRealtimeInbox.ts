@@ -145,9 +145,18 @@ export function useRealtimeInbox() {
     if (aberta && aberta.unreadCount > 0) void markAsRead(selectedContactId);
   }, [conversations, selectedContactId, markAsRead]);
 
-  // Fila de leitura: se a Inbox desmonta com um lote pendente (janela de 250 ms),
-  // o PATCH sai agora em vez de morrer junto com o timer.
-  useEffect(() => () => { void flushPendingMarkRead(false); }, []);
+  // Fila de leitura: se a Inbox sai de cena com um lote pendente (janela de
+  // 250 ms), o PATCH sai agora em vez de morrer junto com o timer. Cobre o
+  // desmontar normal E o `pagehide` (fechar/recarregar a aba não desmonta o
+  // React a tempo -- sem o listener o lote morreria com o timer).
+  useEffect(() => {
+    const flushOnPageHide = () => { void flushPendingMarkRead(false); };
+    window.addEventListener('pagehide', flushOnPageHide);
+    return () => {
+      window.removeEventListener('pagehide', flushOnPageHide);
+      void flushPendingMarkRead(false);
+    };
+  }, []);
 
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {

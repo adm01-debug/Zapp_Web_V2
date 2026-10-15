@@ -1,38 +1,36 @@
-Especialista: hugo
+Especialista: semisenior
 
-## O que mudou e por quê
+## O que mudou e por quê (neste refazer; o resto veio da entrega anterior)
 
-- `src/services/realtime.service.ts`: a leitura deixou de ser um UPDATE por seleção. `markMessagesAsRead(contactId)` agora entra numa fila (Set, dedupe) e o PATCH sai em lote (`update({is_read:true}).in('contact_id', ids).eq('sender','contact').eq('is_read',false)`) 250 ms depois, com retry e backoff quando a falha é transitória e descarte quando é permanente. A promise resolve no enfileiramento, então o commit otimista do hook deixa de esperar o banco. `markManyMessagesAsRead(ids)` é a entrada em lote (o próprio `markMessagesAsRead` delega para ela); `flushPendingMarkRead(allowRetry)` existe para a saída da tela. Ids que não são UUID de contato (JID do WhatsApp) são descartados sem PATCH e sem vazar o valor no log.
-- `src/hooks/inbox/useRealtimeInbox.ts`: conversa ABERTA agora se marca sozinha — um efeito observa o unread da conversa selecionada e chama `markAsRead`; como o hook zera o unread no commit otimista, o efeito converge em um passe. Ao desmontar a Inbox o lote pendente é descarregado (`flushPendingMarkRead(false)`), em vez de morrer com o timer. `isOnline` inicial agora vem de `navigator.onLine` (era `useState(true)`, ignorando o estado real da conexão).
-- `src/hooks/crm/useAgentPresence.ts`: `pagehide` publica 'offline' na hora (antes a linha ficava 'online' no banco até o heartbeat expirar, 75 s). Aba oculta pausa heartbeat e recálculo — os timers são limitados pelo navegador em aba oculta e um heartbeat atrasado fazia o agente piscar offline na tela dos outros; ao voltar para `visible` o status é republicado e o heartbeat retomado.
+- `src/hooks/crm/useAgentPresence.ts`: a aba oculta NÃO pausa mais o heartbeat — `pauseForHiddenTab` limpa só o `staleTimer` (recálculo local) e o heartbeat de 25 s continua com a aba oculta, porque parar de mandar heartbeat faria o agente aparecer OFFLINE para os outros depois dos 75 s do STALE_MS, o contrário do "sem piscar" que o cartão pede. `resumeFromVisible` agora sempre republica o status e recalcula ao voltar para `visible` (antes saía cedo quando o heartbeat existia, então não republicava nada), e `join` com a aba já oculta liga o heartbeat e deixa só o recálculo para a volta.
+- `src/hooks/inbox/useRealtimeInbox.ts`: o efeito de saída da Inbox agora registra um listener de `pagehide` que descarrega a fila (`flushPendingMarkRead(false)`), além do flush no desmontar — fechar/recarregar a aba não desmonta o React a tempo, e sem o listener o lote dentro da janela de 250 ms morria com o timer.
+- `src/services/realtime.service.ts`: quando nenhum retry é agendado após falha transitória (tentativas esgotadas acima do máximo, ou saída com `allowRetry=false`), os ids são descartados de verdade (`pendingMarkRead` limpo), o contador é zerado e o log diz `retry exhausted; ids dropped` em vez do antigo `ids kept for retry`, que mentia — nenhum timer iria buscar aqueles ids.
+- Testes: `useAgentPresence.visibilidade.test.ts` (o caso da aba oculta agora prova que o heartbeat continua e que nenhum upsert publica `offline`), `useRealtimeInbox.leituraLote.test.tsx` (caso novo dispara o evento `pagehide` de verdade), `realtime.service.markReadFlush.test.ts` (casos novos 11 de esgotamento e 12 de saída com erro transitório). Nenhum teste existente foi removido, pulado ou afrouxado — o caso 10 (erro de contrato) foi preservado.
 
-## Arquivos que aparecem no diff SEM serem edição minha (cherry-pick do cartão-pai)
+## Pontos do revisor
 
-- `src/hooks/chat/useRealtimeMessages.ts` (18 linhas) e `src/components/inbox/ConversationListSidebar.tsx` (2 linhas) vêm do cherry-pick de `e863a7413` (commit `23108b061` no meu histórico), o cartão-pai "a lista de conversas não pisca mais (esqueleto) a cada refetch/reconexão", que não estava na base do dia. As 18 linhas do hook acrescentam `initialLoading` + `firstFetchSettledRef` e fazem só a PRIMEIRA carga resolvida encerrar o estado de esqueleto; o `return` passa a devolver `initialLoading` e o componente lê esse campo. Eu não abri nem editei esses dois arquivos — o único commit em que eles mudam é o trazido do pai. A minha mudança preservou o contrato que o hook consome (`markMessagesAsRead` continua `Promise<void>`), e é por isso que a fila de leitura entrou sem precisar tocar nele.
+- Ponto 1: resolvido — `src/hooks/crm/useAgentPresence.ts` (pause só do `staleTimer`, heartbeat mantido, republicação no `visible`); prova no teste `aba oculta mantém o heartbeat (sem offline publicado)` em `src/hooks/crm/__tests__/useAgentPresence.visibilidade.test.ts`.
+- Ponto 2: resolvido — `src/hooks/inbox/useRealtimeInbox.ts` (listener `pagehide` + flush no desmontar); prova no teste `descarta o lote pendente no 'pagehide' (fechar/recarregar a aba)` em `src/hooks/inbox/__tests__/useRealtimeInbox.leituraLote.test.tsx`, que dispara `window.dispatchEvent(new Event('pagehide'))`.
+- Ponto 3: resolvido — `src/services/realtime.service.ts` (descarte real + contador zerado + log `retry exhausted; ids dropped` quando não há retry agendado); prova nos testes 11 (`retries esgotados descartam os ids, zeram o contador`) e 12 (`saída com erro transitório descarta sem agendar retry`) em `src/services/__tests__/realtime.service.markReadFlush.test.ts`. O caso 11 ainda prova o zeramento: um lote novo após o esgotamento volta a ter retry agendado.
+- Ponto 4: resolvido — este parágrafo substitui a frase antiga: o aviso de "padrão sensível" do portão não aponta código meu; o padrão verifyHmac|signature casou o texto do próprio relato (a frase que negava a presença dele), não arquivo de código — nenhum `.ts`/`.tsx` do diff contém esses tokens.
 
-## Arquivos de teste que o diff muda (todos citados aqui)
+## FAIXA DO PAI (não é deste cartão)
 
-- `src/services/__tests__/realtime.service.markReadFlush.test.ts` (222 linhas, novo — casos 1-7 e 10-12 no serviço).
-- `src/hooks/inbox/__tests__/useRealtimeInbox.leituraLote.test.tsx` (124 linhas, novo — contador da conversa aberta, flush no desmontar, `isOnline`).
-- `src/hooks/chat/__tests__/useRealtimeMessages.leituraLote.test.tsx` (116 linhas, novo — casos 8 e 9 do contrato no hook, onde mora o commit otimista).
-- `src/hooks/crm/__tests__/useAgentPresence.visibilidade.test.ts` (106 linhas, novo — `pagehide` publica offline, aba oculta pausa, `visible` retoma).
-- `src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx` (102 linhas) — vem do cherry-pick do cartão-pai `e863a7413` e prova que refetch/reconexão não devolvem a lista ao esqueleto.
+- `src/hooks/chat/useRealtimeMessages.ts` (18 linhas), `src/components/inbox/ConversationListSidebar.tsx` (2 linhas) e `src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx` vêm do cherry-pick do cartão-pai (commit `23108b061`, "a lista de conversas não pisca mais"), já reconhecido na recusa como explicado. Eu não abri nem editei esses arquivos.
 
 ## Prova
 
-- vermelho antes (os 4 arquivos de teste novos rodados sobre as fontes da base `dia/2026-10-13`): `npx vitest run <os 4 testes novos>` → `Test Files 3 failed | 1 passed (4); Tests 14 failed | 4 passed (18)` (10 de 10 do lote, 2 de 3 de visibilidade, 2 de 3 da conversa aberta).
-- verde depois (os 5 arquivos de teste do cartão, rodados agora no meu commit): `Test Files 5 passed (5); Tests 19 passed (19)`.
-- sem regressão na vizinhança: `npx vitest run src/hooks/crm/__tests__/useAgentPresence.test.ts src/services/__tests__/realtime.service.inbox-janela-global.test.ts src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx src/hooks/inbox/__tests__/` → `Test Files 24 passed (24); Tests 142 passed | 1 expected fail (143)`.
-- portão local no workspace: `zapp-verify <workspace> --rapido` → `VERIFY: VERDE SEM BANCO (110s)`; passos `db_guard OK`, `tipos OK`, `lint OK`, `migrations OK`. O banco local não foi verificado porque nenhum nome de conjunto foi passado a este passo (aviso do próprio portão).
-- Contrato coberto (12 casos entre serviço e hooks): rajada → 1 PATCH; união sem duplicar; mesma conversa 2x → id único; chamadas espaçadas → PATCHes separados; lote vazio → no-op sem timer; guarda de UUID; flush na saída; otimista imediato; conversa não aberta intacta; erro permanente sem retry; erro transitório com retry/backoff; erro de contrato com log e sem retry. Os casos de banco (1-7, 10-12) ficaram no teste do serviço e os de estado (8 e 9) no teste do hook, porque no V2 o commit otimista mora no hook de mensagens.
+- vermelho antes (fontes revertidas para o HEAD, só com meus testes): `npx vitest run src/services/__tests__/realtime.service.markReadFlush.test.ts src/hooks/crm/__tests__/useAgentPresence.visibilidade.test.ts src/hooks/inbox/__tests__/useRealtimeInbox.leituraLote.test.tsx` → `Test Files 3 failed (3); Tests 4 failed | 15 passed (19)` — os 4 testes novos/pontos falham sem a correção.
+- verde depois (com a correção): `npx vitest run src/services/__tests__/realtime.service.markReadFlush.test.ts src/hooks/crm/__tests__/useAgentPresence.visibilidade.test.ts src/hooks/inbox/__tests__/useRealtimeInbox.leituraLote.test.tsx src/hooks/chat/__tests__/useRealtimeMessages.leituraLote.test.tsx` → `Test Files 4 passed (4); Tests 21 passed (21)`.
+- sem regressão na vizinhança: `npx vitest run src/hooks/crm/__tests__/useAgentPresence.test.ts src/services/__tests__/realtime.service.inbox-janela-global.test.ts src/hooks/chat/__tests__/useRealtimeMessages.primeiraCarga.test.tsx src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx src/hooks/inbox/__tests__/` → `Test Files 24 passed (24); Tests 143 passed | 1 expected fail (144)`.
+- segunda passada anti-defeito-novo: `flushPendingMarkRead` só é chamado pela Inbox (import + efeito); `pauseForHiddenTab`/`resumeFromVisible` são internos ao módulo de presença; o `void flush...` no listener não deixa `loading` preso nem rejeição sem dono (a função nunca rejeita — o erro vira log dentro dela).
 
 ## O que NÃO fiz e por quê
 
-- Não editei `useRealtimeMessages.ts` nem `ConversationListSidebar.tsx`: aparecem no diff apenas pelo cherry-pick do cartão-pai (acima); nenhuma linha de tela é da minha autoria.
-- Não pluguei `markManyMessagesAsRead` em nenhuma tela: hoje nenhuma tela marca várias conversas de uma vez; ela é a entrada em lote usada por `markMessagesAsRead` e pelos casos 2 e 5 do contrato.
-- Não tratei o "flapping" do `selectedContactId` (estabilização da conversa selecionada): é estado de UI em `useInboxUIState`, fora dos arquivos que o cartão autoriza, e o sintoma que o cartão descreve na leitura (contador que não zera) está coberto pelo efeito novo da Inbox.
-- O aviso "padrão sensível: verifyHmac|signature" do portão simulado não aponta código meu: `git diff` não contém `verifyHmac` nem `signature` (conferido por busca no diff); é casamento de texto, não de código.
+- Não editei `useRealtimeMessages.ts` nem `ConversationListSidebar.tsx`: faixa do pai (acima).
+- Não pluguei `markManyMessagesAsRead` em tela: continua sem chamador de lote; fora do pedido.
+- Não renomeei `pauseForHiddenTab` apesar de ela agora pausar só o recálculo: renomear não muda comportamento e o comentário acima dela documenta a semântica nova.
 
 ## Conclusão
 
-Concluí o cartão: a leitura marcada em lote e a presença publicada offline ao fechar a aba estão nos arquivos autorizados, com os testes acima verdes e o portão local verde.
+Concluí o [refazer 1]: os 4 pontos da recusa estão resolvidos nos arquivos do cartão, cada um com teste que falha sem a correção e passa com ela, vizinhança verde e relato coerente com o diff.

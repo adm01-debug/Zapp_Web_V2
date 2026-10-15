@@ -219,4 +219,61 @@ describe('RealtimeService — fila de leitura em lote', () => {
     await advance(60_000);
     expect(h.update).toHaveBeenCalledTimes(1);
   });
+
+  it('11. erro transitório persistente → retries esgotados descartam os ids, zeram o contador e não agendam mais nada', async () => {
+    const mod = await load();
+    h.responder.mockImplementation(() => Promise.reject(new TypeError('Failed to fetch')));
+
+    void mod.RealtimeService.markMessagesAsRead(A);
+    await advance(250);
+    expect(h.update).toHaveBeenCalledTimes(1);
+
+    // Backoff 1s → 2s → 4s: tentativas 2, 3 e 4.
+    await advance(1_000);
+    expect(h.update).toHaveBeenCalledTimes(2);
+    await advance(2_000);
+    expect(h.update).toHaveBeenCalledTimes(3);
+    await advance(4_000);
+    expect(h.update).toHaveBeenCalledTimes(4);
+
+    // 4ª falha > MAX_RETRIES: o log diz a verdade e nada mais é agendado.
+    expect(h.logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('retry exhausted'),
+      expect.anything()
+    );
+    // As 3 primeiras falhas agendaram retry de verdade; só a 4ª (esgotada)
+    // registra o descarte -- nunca o contrário.
+    const mensagens = h.logger.error.mock.calls.map((c) => String(c[0]));
+    expect(mensagens.slice(0, 3).every((m) => m.includes('ids kept for retry'))).toBe(true);
+    expect(mensagens[3]).toContain('retry exhausted');
+    await advance(60_000);
+    expect(h.update).toHaveBeenCalledTimes(4);
+    expect(vi.getTimerCount()).toBe(0);
+
+    // O contador zerou: um lote novo volta a ter retry (contaria 1, não 5).
+    void mod.RealtimeService.markMessagesAsRead(B);
+    await advance(250);
+    expect(h.update).toHaveBeenCalledTimes(5);
+    expect(h.inFn.mock.calls[4][1]).toEqual([B]);
+    expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('12. saída com erro transitório (allowRetry=false) → descarta sem agendar retry', async () => {
+    const mod = await load();
+    h.responder.mockImplementation(() => Promise.reject(new TypeError('Failed to fetch')));
+
+    void mod.RealtimeService.markMessagesAsRead(A);
+    await mod.flushPendingMarkRead(false);
+
+    expect(h.update).toHaveBeenCalledTimes(1);
+    expect(h.logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('retry exhausted'),
+      expect.anything()
+    );
+    expect(vi.getTimerCount()).toBe(0);
+
+    // Nada ficou pendente: avançar o relógio não dispara PATCH novo.
+    await advance(60_000);
+    expect(h.update).toHaveBeenCalledTimes(1);
+  });
 });

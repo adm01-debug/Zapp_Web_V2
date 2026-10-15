@@ -2,11 +2,12 @@
  * R2-INB-058 — presença em aba oculta e ao fechar.
  *
  * O heartbeat de 25s não tinha `pagehide`/`visibilitychange`: ao fechar ou
- * recarregar a aba a linha ficava 'online' no banco até expirar (até 75s), e em
- * aba oculta o navegador limita os timers, então o heartbeat chegava tarde ou
- * nunca — o agente "piscava" offline na tela dos outros. Agora: `pagehide`
- * publica 'offline' na hora; aba oculta pausa heartbeat e recálculo; voltar
- * para `visible` republica o status e retoma o heartbeat.
+ * recarregar a aba a linha ficava 'online' no banco até expirar (até 75s).
+ * Em aba oculta o navegador limita os timers a cerca de 1 por minuto -- ainda
+ * assim abaixo dos 75 s do STALE_MS, então o heartbeat CONTINUA com a aba
+ * oculta (pausá-lo faria o agente aparecer OFFLINE para os outros depois de
+ * 75 s). Só o recálculo local pausa; voltar para `visible` republica o status
+ * e retoma o recálculo. `pagehide` publica 'offline' na hora.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
@@ -75,7 +76,7 @@ describe('useAgentPresence — visibilidade e fechamento', () => {
     expect(ultimoStatus()).toBe('offline');
   });
 
-  it('aba oculta pausa o heartbeat (sem upsert atrasado e sem piscar offline)', async () => {
+  it('aba oculta mantém o heartbeat (sem offline publicado)', async () => {
     const mod = await load();
     renderHook(() => mod.useAgentPresenceJoin('u1'));
     await flush();
@@ -85,7 +86,12 @@ describe('useAgentPresence — visibilidade e fechamento', () => {
 
     await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
 
-    expect(h.query.upsert.mock.calls.length).toBe(callsAfterHide);
+    // O heartbeat de 25 s continua com a aba oculta: 60 s disparam pelo menos
+    // 2 upserts, e nenhum deles publica 'offline'.
+    expect(h.query.upsert.mock.calls.length).toBeGreaterThan(callsAfterHide);
+    for (const call of h.query.upsert.mock.calls.slice(callsAfterHide)) {
+      expect((call[0] as { status?: string } | undefined)?.status).not.toBe('offline');
+    }
   });
 
   it('voltar para visible republica o status e retoma o heartbeat', async () => {

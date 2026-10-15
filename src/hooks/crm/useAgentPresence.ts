@@ -69,21 +69,22 @@ async function upsertSelf(status: PresenceStatus) {
   if (error) console.error('[agent-presence] upsert falhou', error);
 }
 
-// Aba oculta: o navegador limita os timers (um heartbeat de 25s chega tarde ou
-// nunca), e era esse atraso que fazia o agente "piscar" offline na tela dos
-// outros. Pausamos heartbeat e reavaliação periódica enquanto a aba está
-// oculta; ao voltar, republicamos na hora e recalculamos antes de retomar.
+// Aba oculta: o navegador limita os timers a cerca de 1 por minuto -- ainda
+// assim abaixo do STALE_MS de 75 s, então o heartbeat CONTINUA com a aba
+// oculta (parar de mandar heartbeat faria o agente aparecer OFFLINE para os
+// outros depois de 75 s, o contrário do "sem piscar" que o cartão pede).
+// Pausamos só o recálculo local de staleness (staleTimer); ao voltar para
+// `visible`, republicamos o status e recalculamos antes de retomar.
 function pauseForHiddenTab() {
-  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
   if (staleTimer) { clearInterval(staleTimer); staleTimer = null; }
 }
 
 function resumeFromVisible() {
-  if (!activeUserId || heartbeatTimer) return;
+  if (!activeUserId) return;
   void upsertSelf(myStatus);
-  heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
-  staleTimer = setInterval(recompute, HEARTBEAT_MS);
   recompute();
+  if (!heartbeatTimer) heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
+  if (!staleTimer) staleTimer = setInterval(recompute, HEARTBEAT_MS);
 }
 
 function handleVisibilityChange() {
@@ -157,10 +158,11 @@ function join(userId: string) {
   })();
 
   startListening();
-  // Carregar já com a aba oculta não deixa timers pendurados: eles nascem ao
-  // voltar para `visible` (resumeFromVisible).
+  // O heartbeat continua mesmo com a aba oculta (o navegador limita o timer a
+  // cerca de 1 por minuto, abaixo dos 75 s do STALE_MS); só o recálculo local
+  // nasce ao voltar para `visible` (resumeFromVisible).
+  heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
   if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
-    heartbeatTimer = setInterval(() => { void upsertSelf(myStatus); }, HEARTBEAT_MS);
     // Reavalia staleness periodicamente mesmo sem evento novo -- é assim que
     // um colega que fechou a aba sem cleanup vira "offline" na tela dos outros.
     staleTimer = setInterval(recompute, HEARTBEAT_MS);

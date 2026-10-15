@@ -8,7 +8,7 @@
  * com um lote ainda dentro da janela de 250 ms.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 const h = vi.hoisted(() => ({
   state: {
@@ -118,6 +118,15 @@ describe('useRealtimeInbox — conversa aberta', () => {
     expect(h.flushPendingMarkRead).not.toHaveBeenCalled();
 
     unmount();
+
+    expect(h.flushPendingMarkRead).toHaveBeenCalledWith(false);
+  });
+
+  it("descarta o lote pendente no 'pagehide' (fechar/recarregar a aba)", () => {
+    renderHook(() => useRealtimeInbox());
+    expect(h.flushPendingMarkRead).not.toHaveBeenCalled();
+
+    act(() => { window.dispatchEvent(new Event('pagehide')); });
 
     expect(h.flushPendingMarkRead).toHaveBeenCalledWith(false);
   });
