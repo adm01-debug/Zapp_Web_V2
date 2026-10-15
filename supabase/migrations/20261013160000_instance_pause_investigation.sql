@@ -11,9 +11,8 @@
 --
 -- IP2 — investigacao de incidentes de pausa de instancia (filho do IP1, t_8215f5f9,
 -- migration 20261011183812_instance_pauses.sql). ADITIVA: investigacao com ator: 3 colunas na tabela de pausas + RPC mark_pause_investigated,
---      restrita a admin/supervisor, notas <= 1000 sem HTML validadas ANTES do efeito, e UMA
---      linha em public.audit_logs por chamada. A auditoria NAO e reescrita (COALESCE): o
---      primeiro ator/data congela e o texto das notas nao vai para o audit_logs.
+--      restrita a admin/supervisor, notas <= 1000 sem HTML (validadas ANTES do efeito),
+--      1 linha em audit_logs por chamada (COALESCE: 1o ator/data congela, notas nao vao).
 -- Nada toca dado existente: colunas nascem NULL, funcoes sao novas.
 
 -- ============================================================ 1. colunas de investigacao

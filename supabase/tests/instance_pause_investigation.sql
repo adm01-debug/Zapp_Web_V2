@@ -3,10 +3,9 @@
 -- T1 investiga+audita sem copiar notas; T2 negado (3 papeis) sem efeito/auditoria;
 -- T3 validacao funcao+CHECKs; T4 P0002; T5 3 auditorias (1/chamada), 1o ator congela;
 -- T5b supervisor; T6 RLS/ACL; T7 rollback. (Serie 24h/7d separada no cartao-filho t_e75e24e9.)
--- RODAR: zapp-db-local psql . v2-26101315358410 -v ON_ERROR_STOP=1 < supabase/tests/instance_pause_investigation.sql
--- Vermelho sem a migration: quebra em T1 (funcoes/colunas nao existem).
+-- RODAR: zapp-db-local psql . v2-26101315358410 -v ON_ERROR_STOP=1 < este arquivo
 BEGIN;
--- atalho de papel: 1 linha por troca (mesmo efeito das 3 linhas do PostgREST).
+-- atalho de papel (1 linha por troca).
 CREATE TEMPORARY FUNCTION t_auth(p_sub uuid) RETURNS void LANGUAGE sql AS $$
   SELECT set_config('request.jwt.claims', json_build_object('sub', p_sub, 'role', 'authenticated')::text, true);
   SELECT set_config('role', 'authenticated', true);
@@ -74,7 +73,7 @@ BEGIN
   VALUES (v_inst_sup, now() + interval '20 minutes', 'manutencao', v_admin_prof, false)
   RETURNING id INTO v_pause_4;
 
-  -- ================================================================ T1 (admin investiga)
+  -- T1 (admin investiga)
   PERFORM t_auth(v_admin_user);
   v_errcode := NULL;
   BEGIN
@@ -131,7 +130,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T2 (sem permissao = sem efeito)
+  -- T2 (sem permissao = sem efeito)
   PERFORM t_auth(v_agent_user);
   v_errcode := NULL;
   BEGIN
@@ -184,7 +183,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T3 (validacao)
+  -- T3 (validacao)
   PERFORM t_auth(v_admin_user);
   v_errcode := NULL;
   BEGIN
@@ -254,7 +253,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T4 (pausa inexistente)
+  -- T4 (pausa inexistente)
   PERFORM t_auth(v_admin_user);
   v_errcode := NULL;
   BEGIN
@@ -272,7 +271,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T5 (idempotencia + auditoria)
+  -- T5 (idempotencia + auditoria)
   PERFORM t_auth(v_admin_user);
   v_out := public.mark_pause_investigated(v_pause_1, NULL);
   PERFORM set_config('role', 'none', true);
@@ -306,7 +305,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T5b (supervisor)
+  -- T5b (supervisor)
   PERFORM t_auth(v_sup_user);
   v_out := public.mark_pause_investigated(v_pause_4, 'supervisor conferiu');
   PERFORM set_config('role', 'none', true);
@@ -316,7 +315,7 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- ================================================================ T6 (RLS/ACL)
+  -- T6 (RLS/ACL)
   IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.instance_pauses'::regclass) THEN
     RAISE EXCEPTION 'T6 FALHOU: RLS desligada na tabela de pausas';
   END IF;
@@ -362,9 +361,7 @@ BEGIN
 END
 $pause_investigation$;
 
--- ===================================================================== T7 (rollback)
--- Executa o bloco "-- Rollback" da migration (copiado do proprio arquivo) contra o schema
--- REAL, confere que tudo o que a migration criou some e desfaz com ROLLBACK TO SAVEPOINT.
+-- T7 (rollback): executa o -- Rollback: da migration no schema REAL e desfaz com SAVEPOINT.
 SAVEPOINT investigation_rollback;
 
 DROP FUNCTION IF EXISTS public.mark_pause_investigated(uuid, text);
