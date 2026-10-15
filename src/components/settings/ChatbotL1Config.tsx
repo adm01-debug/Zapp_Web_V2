@@ -80,25 +80,27 @@ export function ChatbotL1Config() {
   // (a Edge filtra por `whatsapp_connection_id`) e não existe "configuração geral".
   const [connectionId, setConnectionId] = useState('');
 
-  const { data: connections = [] } = useQuery({
+  const { data: connections = [], isError: erroConexoes } = useQuery({
     queryKey: ['whatsapp-connections-chatbot-l1'],
     queryFn: async () => {
-      const { data } = await supabase.from('whatsapp_connections').select('id, name, status').order('name');
+      const { data, error } = await supabase.from('whatsapp_connections').select('id, name, status').order('name');
+      if (error) throw error;
       return data || [];
     },
   });
 
-  const { data: flow, isFetching: flowFetching } = useQuery({
+  const { data: flow, isFetching: flowFetching, isError: erroFluxo } = useQuery({
     queryKey: ['chatbot-l1-flow', connectionId],
     enabled: !!connectionId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('chatbot_flows')
         .select('*')
         .eq('trigger_type', 'ai_l1')
         .eq('whatsapp_connection_id', connectionId)
         .limit(1)
         .maybeSingle();
+      if (error) throw error;
       return data;
     },
   });
@@ -106,10 +108,11 @@ export function ChatbotL1Config() {
   const { data: kbCount = 0 } = useQuery({
     queryKey: ['kb-article-count'],
     queryFn: async () => {
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from('knowledge_base_articles')
         .select('id', { count: 'exact', head: true })
         .eq('is_published', true);
+      if (error) throw error;
       return count || 0;
     },
   });
@@ -257,12 +260,24 @@ export function ChatbotL1Config() {
             </Select>
           </div>
 
+          {erroConexoes && (
+            <p role="alert" className="text-xs text-destructive">
+              Não foi possível carregar as conexões de WhatsApp. Recarregue a página e tente de novo.
+            </p>
+          )}
+
           {!connectionId && (
             <p className="text-xs text-muted-foreground">
               Nenhuma conexão escolhida: nada é ligado nem gravado até você escolher uma.
             </p>
           )}
-          {connectionId && !flowFetching && !flow && (
+          {erroFluxo && (
+            <p role="alert" className="text-xs text-destructive">
+              Não foi possível carregar a configuração desta conexão. Recarregue a página e tente de
+              novo.
+            </p>
+          )}
+          {connectionId && !flowFetching && !erroFluxo && !flow && (
             <p className="text-xs text-muted-foreground">
               Esta conexão ainda não tem chatbot configurado. Ao salvar, um fluxo novo é criado
               para ela.

@@ -15,6 +15,7 @@ const estado = vi.hoisted(() => ({
   insertPayload: null as Record<string, unknown> | null,
   invoke: null as { name: string; body: Record<string, unknown> } | null,
   invokeResult: { data: null as Record<string, unknown> | null, error: null as unknown },
+  erroConexoes: false,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -49,7 +50,14 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'whatsapp_connections') {
         return {
-          select: () => ({ order: () => Promise.resolve({ data: CONEXOES, error: null }) }),
+          select: () => ({
+            order: () =>
+              Promise.resolve(
+                estado.erroConexoes
+                  ? { data: null, error: new Error('sem rede') }
+                  : { data: CONEXOES, error: null },
+              ),
+          }),
         };
       }
       if (table === 'knowledge_base_articles') {
@@ -167,6 +175,7 @@ describe('ChatbotL1Config — interruptor acessível por nome', () => {
     estado.insertPayload = null;
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
+    estado.erroConexoes = false;
   });
 
   it('o interruptor de ativar chatbot é alcançável pelo nome', async () => {
@@ -205,6 +214,7 @@ describe('ChatbotL1Config — fluxo por conexão', () => {
     estado.insertPayload = null;
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
+    estado.erroConexoes = false;
   });
 
   it('sem conexão escolhida nada é lido e o Salvar fica desabilitado', async () => {
@@ -310,6 +320,15 @@ describe('ChatbotL1Config — simulação da resposta', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Não há fluxo ativo para esta conexão. Salve a configuração com o chatbot ativado.',
+    );
+  });
+
+  it('falha ao carregar as conexões vira aviso na tela, não lista vazia silenciosa', async () => {
+    estado.erroConexoes = true;
+    renderConfig();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar as conexões de WhatsApp. Recarregue a página e tente de novo.',
     );
   });
 });
