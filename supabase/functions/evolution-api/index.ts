@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
-import { goHistoryNotSupported, statusFeedUnavailable } from "../_shared/evolution-sync-actions.ts";
+import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -911,9 +911,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'find-status-messages') {
-      // GO não tem feed de status (GO_GAPS D5/D6): devolve ESTADO
-      // 'unavailable_in_provider' — nunca `[]`, que afirmaria "sem stories".
-      if (isGoFlavor) return statusFeedUnavailable(corsHeaders);
+      // GO não tem feed de status (GO_GAPS D5/D6): goHistoryNotSupported devolve
+      // o ESTADO 'unavailable_in_provider' para find-status-messages — nunca `[]`,
+      // que afirmaria "sem stories".
+      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
       const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
       const data = await response.json();
       if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
