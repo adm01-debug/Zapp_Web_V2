@@ -1,9 +1,10 @@
 -- security_acl_alerts_monitor
--- Rollback: desagenda o cron 'security-acl-score', remove a função public.score_security_acl() e a tabela public.security_acl_alerts (os alertas gravados se perdem).
+-- Rollback: desagenda o cron 'security-acl-score', remove a função public.score_security_acl() e as tabelas public.security_acl_alerts e public.security_acl_allowlist (os alertas gravados se perdem).
 -- Rollback (SQL executável, na ordem):
 --   SELECT cron.unschedule(jobid) FROM cron.job WHERE jobname = 'security-acl-score';
 --   DROP FUNCTION IF EXISTS public.score_security_acl();
 --   DROP TABLE IF EXISTS public.security_acl_alerts;
+--   DROP TABLE IF EXISTS public.security_acl_allowlist;
 --
 -- Cartão t_9dce259e — monitor de regressão de permissão (ACL/RLS), 1x por hora.
 -- A V3 é referência (fn_score_security_acl + zapp.security_acl_alerts); aqui o
@@ -19,11 +20,13 @@
 -- resolvida (resolved_at) e uma reincidência gera alerta NOVO (id novo).
 --
 -- O que a função vigia (tudo em public):
---   1. SECURITY DEFINER com EXECUTE para anon ou PUBLIC (CRITICAL)
+--   1. SECURITY DEFINER com EXECUTE para anon ou PUBLIC, FORA da allowlist
+--      public.security_acl_allowlist (CRITICAL)
 --   2. SECURITY DEFINER sem search_path fixo (HIGH)
---   3. tabela sem ROW LEVEL SECURITY (CRITICAL)
+--   3. tabela comum ou PARTICIONADA sem ROW LEVEL SECURITY (CRITICAL)
 --   4. policy de ESCRITA (INSERT/UPDATE/DELETE/ALL) com USING(true) ou
---      WITH CHECK(true) para authenticated (HIGH)
+--      WITH CHECK(true) para authenticated, anon ou PUBLIC — policy SEM TO
+--      (roles = {public}) vale para todos e também é acusada (HIGH)
 --   5. bucket de storage público (listável por anon) (HIGH)
 --
 -- Sem dado pessoal no details: só nome de objeto, papel e privilégio.
@@ -62,6 +65,26 @@ CREATE POLICY "Admins veem alertas de ACL" ON public.security_acl_alerts
   FOR SELECT TO authenticated
   USING (public.is_admin(auth.uid()));
 
+-- ── Allowlist de SECDEF com EXECUTE p/ anon/PUBLIC ───────────────────────────
+-- Funções listadas aqui NÃO geram alerta SECDEF_ANON_EXECUTE (exceção
+-- consciente, com motivo registrado). function_signature é o
+-- p.oid::regprocedure::text da função (ex.: 'minha_funcao(integer)').
+CREATE TABLE IF NOT EXISTS public.security_acl_allowlist (
+  function_signature text PRIMARY KEY,
+  motivo             text NOT NULL DEFAULT '',
+  adicionada_em      timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.security_acl_allowlist ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.security_acl_allowlist FROM PUBLIC;
+REVOKE ALL ON public.security_acl_allowlist FROM anon, authenticated;
+GRANT SELECT ON public.security_acl_allowlist TO authenticated, service_role;
+
+DROP POLICY IF EXISTS "Admins veem allowlist de ACL" ON public.security_acl_allowlist;
+CREATE POLICY "Admins veem allowlist de ACL" ON public.security_acl_allowlist
+  FOR SELECT TO authenticated
+  USING (public.is_admin(auth.uid()));
+
 -- ── Monitor ──────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.score_security_acl()
 RETURNS jsonb
@@ -88,7 +111,7 @@ BEGIN
     details     jsonb
   ) ON COMMIT DROP;
 
-  -- 1. SECURITY DEFINER em public com EXECUTE para anon/PUBLIC.
+  -- 1. SECURITY DEFINER em public com EXECUTE para anon/PUBLIC, fora da allowlist.
   INSERT INTO _acl_achados
   SELECT 'SECDEF_ANON_EXECUTE',
          p.oid::regprocedure::text,
@@ -103,7 +126,11 @@ BEGIN
     AND p.prosecdef
     AND p.prokind = 'f'
     AND a.privilege_type = 'EXECUTE'
-    AND (a.grantee = 0 OR r.rolname = 'anon');
+    AND (a.grantee = 0 OR r.rolname = 'anon')
+    AND NOT EXISTS (
+      SELECT 1 FROM public.security_acl_allowlist al
+      WHERE al.function_signature = p.oid::regprocedure::text
+    );
 
   -- 2. SECURITY DEFINER sem search_path fixo.
   INSERT INTO _acl_achados
@@ -120,7 +147,7 @@ BEGIN
       WHERE c LIKE 'search_path=%'
     );
 
-  -- 3. Tabela comum (não de extensão) sem RLS.
+  -- 3. Tabela comum ou particionada (não de extensão) sem RLS.
   INSERT INTO _acl_achados
   SELECT 'TABELA_SEM_RLS',
          n.nspname || '.' || c.relname, '-', '-', 'CRITICAL',
@@ -128,15 +155,20 @@ BEGIN
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = 'public'
-    AND c.relkind = 'r'
+    AND c.relkind IN ('r', 'p')
     AND NOT c.relrowsecurity
     AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = c.oid AND d.deptype = 'e');
 
-  -- 4. Policy de ESCRITA permissiva (USING(true) / WITH CHECK(true)) p/ authenticated.
+  -- 4. Policy de ESCRITA permissiva (USING(true) / WITH CHECK(true)) para
+  --    authenticated, anon ou PUBLIC. Policy SEM TO (roles = {public}) vale
+  --    para authenticated E anon, por isso também é acusada.
   INSERT INTO _acl_achados
   SELECT 'POLICY_ESCRITA_LIBERADA',
          pp.schemaname || '.' || pp.tablename || ' [' || pp.cmd || ']',
-         'authenticated', pp.cmd, 'HIGH',
+         CASE WHEN pg_catalog.array_position(pp.roles, 'public') IS NOT NULL THEN 'PUBLIC'
+              WHEN pg_catalog.array_position(pp.roles, 'anon') IS NOT NULL THEN 'anon'
+              ELSE 'authenticated' END,
+         pp.cmd, 'HIGH',
          jsonb_build_object(
            'tipo', 'policy', 'policy', pp.policyname,
            'forma', CASE WHEN coalesce(pp.qual, '') ~* '^\s*true\s*$'
@@ -145,7 +177,9 @@ BEGIN
   FROM pg_policies pp
   WHERE pp.schemaname = 'public'
     AND pp.cmd IN ('INSERT', 'UPDATE', 'DELETE', 'ALL')
-    AND pg_catalog.array_position(pp.roles, 'authenticated') IS NOT NULL
+    AND (pg_catalog.array_position(pp.roles, 'authenticated') IS NOT NULL
+      OR pg_catalog.array_position(pp.roles, 'anon') IS NOT NULL
+      OR pg_catalog.array_position(pp.roles, 'public') IS NOT NULL)
     AND (coalesce(pp.qual, '') ~* '^\s*true\s*$' OR coalesce(pp.with_check, '') ~* '^\s*true\s*$');
 
   -- 5. Bucket de storage público (listável por anon). Dinâmico: o schema

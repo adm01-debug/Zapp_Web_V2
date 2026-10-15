@@ -1,5 +1,8 @@
 -- ============================================================================
 -- t_9dce259e — Monitor de regressao de permissao (ACL/RLS)  [worker (sql)]
+-- t_e252f274 — refazer 1: + allowlist de SECDEF_ANON_EXECUTE (A3/A4),
+--   POLICY_ESCRITA_LIBERADA p/ PUBLIC/anon incl. policy SEM TO (D3/D4),
+--   TABELA_SEM_RLS em particionada (C3/C4), rollback da allowlist (H4).
 --
 -- O QUE PROVA (critério de pronto): public.score_security_acl()
 -- (migration 20261013230008_security_acl_alerts_monitor.sql)
@@ -108,6 +111,10 @@ SELECT pg_temp.espera('T0g job agendado de hora em hora',
   (SELECT schedule FROM cron.job WHERE jobname = 'security-acl-score'), '23 * * * *');
 SELECT pg_temp.espera('T0h job chama a funcao',
   (SELECT (command LIKE '%score_security_acl%')::text FROM cron.job WHERE jobname = 'security-acl-score'), 'true');
+SELECT pg_temp.espera('T0i allowlist existe',
+  to_regclass('public.security_acl_allowlist')::text, 'security_acl_allowlist');
+SELECT pg_temp.espera('T0j RLS ligada na allowlist',
+  (SELECT relrowsecurity::text FROM pg_class WHERE oid = 'public.security_acl_allowlist'::regclass), 'true');
 
 -- baseline: roda o monitor uma vez para o estado inicial ficar gravado
 SELECT public.score_security_acl();
@@ -148,6 +155,27 @@ SELECT public.score_security_acl();
 SELECT pg_temp.espera('A2 funcao correta NAO gera alerta',
   (SELECT count(*)::text FROM public.security_acl_alerts
      WHERE object_name = 'zz_prova_ok(integer)'), '0');
+
+-- A3: função DA ALLOWLIST com EXECUTE p/ anon NÃO alerta (supressão).
+CREATE FUNCTION public.zz_prova_allow(_x integer) RETURNS integer
+LANGUAGE sql SECURITY DEFINER SET search_path = public AS $f$ SELECT _x $f$;
+GRANT EXECUTE ON FUNCTION public.zz_prova_allow(integer) TO anon;
+INSERT INTO public.security_acl_allowlist (function_signature, motivo)
+VALUES ('zz_prova_allow(integer)', 'prova t_e252f274');
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('A3 funcao da allowlist com EXECUTE p/ anon NAO alerta',
+  (SELECT count(*)::text FROM public.security_acl_alerts
+     WHERE object_name = 'zz_prova_allow(integer)'), '0');
+
+-- A4: a MESMA função, fora da allowlist, alerta.
+DELETE FROM public.security_acl_allowlist
+WHERE function_signature = 'zz_prova_allow(integer)';
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('A4 mesma funcao fora da allowlist alerta (anon)',
+  (SELECT severity || '|' || role_name FROM public.security_acl_alerts
+     WHERE object_name = 'zz_prova_allow(integer)'
+       AND alert_type = 'SECDEF_ANON_EXECUTE' AND role_name = 'anon' AND resolved_at IS NULL),
+  'CRITICAL|anon');
 
 \echo
 \echo '── BLOCO B: idempotencia, resolucao automatica e reincidencia ────────────'
@@ -201,6 +229,20 @@ SELECT pg_temp.espera('C2 RLS ligada -> alerta resolvido sozinho',
      WHERE object_name = 'public.zz_prova_sem_rls'
        AND alert_type = 'TABELA_SEM_RLS' AND resolved_at IS NULL), '0');
 
+-- C3: tabela PARTICIONADA sem RLS também alerta (relkind 'p').
+CREATE TABLE public.zz_prova_part (id integer) PARTITION BY RANGE (id);
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('C3 particionada sem RLS alertada CRITICAL',
+  (SELECT severity FROM public.security_acl_alerts
+     WHERE object_name = 'public.zz_prova_part'
+       AND alert_type = 'TABELA_SEM_RLS' AND resolved_at IS NULL), 'CRITICAL');
+ALTER TABLE public.zz_prova_part ENABLE ROW LEVEL SECURITY;
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('C4 RLS ligada na particionada -> alerta resolvido',
+  (SELECT count(*)::text FROM public.security_acl_alerts
+     WHERE object_name = 'public.zz_prova_part'
+       AND alert_type = 'TABELA_SEM_RLS' AND resolved_at IS NULL), '0');
+
 \echo
 \echo '── BLOCO D: policy de ESCRITA liberada p/ authenticated ──────────────────'
 CREATE TABLE public.zz_prova_policy (id integer);
@@ -217,6 +259,21 @@ SELECT public.score_security_acl();
 SELECT pg_temp.espera('D2 policy restrita -> alerta resolvido',
   (SELECT count(*)::text FROM public.security_acl_alerts
      WHERE object_name = 'public.zz_prova_policy [UPDATE]'
+       AND alert_type = 'POLICY_ESCRITA_LIBERADA' AND resolved_at IS NULL), '0');
+
+-- D3: policy SEM TO (vale p/ PUBLIC) com WITH CHECK(true) também alerta.
+CREATE POLICY zz_prova_bad2 ON public.zz_prova_policy
+  FOR INSERT WITH CHECK (true);
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('D3 policy sem TO (PUBLIC) WITH CHECK(true) alertada HIGH',
+  (SELECT severity || '|' || role_name FROM public.security_acl_alerts
+     WHERE object_name = 'public.zz_prova_policy [INSERT]'
+       AND alert_type = 'POLICY_ESCRITA_LIBERADA' AND resolved_at IS NULL), 'HIGH|PUBLIC');
+DROP POLICY zz_prova_bad2 ON public.zz_prova_policy;
+SELECT public.score_security_acl();
+SELECT pg_temp.espera('D4 policy sem TO removida -> alerta resolvido',
+  (SELECT count(*)::text FROM public.security_acl_alerts
+     WHERE object_name = 'public.zz_prova_policy [INSERT]'
        AND alert_type = 'POLICY_ESCRITA_LIBERADA' AND resolved_at IS NULL), '0');
 
 \echo
@@ -269,12 +326,15 @@ SELECT pg_temp.espera('H0 antes do rollback o monitor existe',
 SELECT cron.unschedule(jobid) FROM cron.job WHERE jobname = 'security-acl-score';
 DROP FUNCTION IF EXISTS public.score_security_acl();
 DROP TABLE IF EXISTS public.security_acl_alerts;
+DROP TABLE IF EXISTS public.security_acl_allowlist;
 SELECT pg_temp.espera('H1 tabela removida pelo rollback',
   (to_regclass('public.security_acl_alerts') IS NULL)::text, 'true');
 SELECT pg_temp.espera('H2 funcao removida pelo rollback',
   (SELECT count(*)::text FROM pg_proc WHERE proname = 'score_security_acl'), '0');
 SELECT pg_temp.espera('H3 job removido pelo rollback',
   (SELECT count(*)::text FROM cron.job WHERE jobname = 'security-acl-score'), '0');
+SELECT pg_temp.espera('H4 allowlist removida pelo rollback',
+  (to_regclass('public.security_acl_allowlist') IS NULL)::text, 'true');
 
 ROLLBACK;
 
@@ -292,7 +352,10 @@ BEGIN
   IF (SELECT count(*) FROM cron.job WHERE jobname = 'security-acl-score') <> 1 THEN
     RAISE EXCEPTION 't_9dce259e FALHOU: o job nao voltou apos o ROLLBACK';
   END IF;
-  RAISE NOTICE 'PASS [pos-rollback] tabela, funcao e job de volta';
+  IF to_regclass('public.security_acl_allowlist') IS NULL THEN
+    RAISE EXCEPTION 't_9dce259e FALHOU: a allowlist nao voltou apos o ROLLBACK';
+  END IF;
+  RAISE NOTICE 'PASS [pos-rollback] tabela, funcao, job e allowlist de volta';
 END $d$;
 
 \echo
