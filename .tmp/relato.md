@@ -55,4 +55,5 @@ guards, manifestos, CI.
 - `bash /tmp/n102-rollback-proof.sh` -> exit 0 (rollback extraido aplica, restaura os 2 corpos,
   42846 volta; re-fix verde e replayavel)
 - `git diff <base>...HEAD | wc -c` -> 60658 (teto 90000)
-- `zapp-verify --rapido` -> ver saida em /tmp/n102-verify.log
+- `zapp-verify --rapido` -> VERDE SEM BANCO (exit 0; db_guard, tipos, lint, migrations OK;
+  banco coberto pelos .test.sh acima, saidos 0)
