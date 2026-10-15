@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -37,12 +37,12 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 55 |
 | B | 1 |
 | C | 3 |
 | D | 6 |
 | E | 17 |
-| **total** | **81** |
+| **total** | **82** |
 
 ## Tabela
 
@@ -105,6 +105,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:6` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:397` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
 | `multiplix-voices` | E | — sem chamador no repositório — |
+| `post-login-gate` | A | `src/pages/SSOCallback.tsx:57` |
 | `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:44` |
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
