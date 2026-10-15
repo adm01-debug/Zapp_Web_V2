@@ -30,7 +30,7 @@ consec=0
 for _ in $(seq 1 90); do
   if docker exec "$NAME" pg_isready -U postgres -d teste >/dev/null 2>&1; then
     consec=$((consec + 1))
-    [[ "$consec" -ge 3 ]] && break
+    [[  "$consec" -ge 3 ]] && break
   else
     consec=0
   fi
@@ -89,13 +89,14 @@ CONFERIR=$(q -c "SELECT count(*) FROM cron.job WHERE schedule IN ('1-59/2 * * * 
 for j in talkx-scheduler-1min tasks-notify-due ai-jobs-tick-1min; do
   A=$(printf '%s\n' "$ANTES" | grep -F "$j " | sed "s/^$j //")
   B=$(q -c "SELECT schedule FROM cron.job WHERE jobname='$j'")
-  [[ "$A" = "$B" ]] && ok "B. $j intocado ($B)" || ruim "B. $j mudou indevidamente: '$A' -> '$B'"
+  [[  "$A" = "$B" ]] && ok "B. $j intocado ($B)" || ruim "B. $j mudou indevidamente: '$A' -> '$B'"
 done
 
 # --------------------------------------------------- concorrencia (C)
+TMPDIR_EFETIVO="${TMPDIR:-/tmp}"
 medir() {
-  q -c "SELECT jobname||'|'||schedule FROM cron.job" > "$TMPDIR/jobs-medir.txt"
-  python3 "$(dirname "$0")/pg-cron-concorrencia.py" "$1" "$TMPDIR/jobs-medir.txt"
+  q -c "SELECT jobname||'|'||schedule FROM cron.job" > "$TMPDIR_EFETIVO/jobs-medir.txt"
+  python3 "$(dirname "$0")/pg-cron-concorrencia.py" "$1" "$TMPDIR_EFETIVO/jobs-medir.txt"
 }
 echo "  --- C. concorrencia por minuto (dia inteiro) ---"
 q -c "SELECT public.apply_pg_cron_escalonamento(true)" >/dev/null
