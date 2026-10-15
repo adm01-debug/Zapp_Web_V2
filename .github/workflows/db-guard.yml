@@ -1200,6 +1200,12 @@ jobs:
 
       - name: Simular auditoria somente-leitura de configuracao runtime
         if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
+          # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
+          # Com o shim, current_database() devolve shim_zapp-runtime-config-test-<PID>,
+          # quebrando a asserção. O shim redireciona docker run para uma base shim_xxx no
+          # serviço compartilhado; esse nome não passa na verificação de identidade do banco.
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/runtime-config.test.sh
 
       - name: Provar transporte libpq com cliente e PostgreSQL reais
