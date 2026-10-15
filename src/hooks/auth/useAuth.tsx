@@ -81,14 +81,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        if (!respostaVigente) return;
        if (data) setProfile(data);
        setProfileUnavailable(false);
-       } catch (err) {
+    } catch (err) {
        log.error('[AuthProvider] Failed to fetch profile:', err);
        // Mesma regra da resposta bem-sucedida: um erro atrasado de identidade que
        // ja saiu nao pode marcar o perfil do usuario atual como indisponivel.
        const respostaVigente =
          geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
        if (respostaVigente) setProfileUnavailable(true);
-       } finally {
+    } finally {
        fetchingRef.current = false;
      }
    }, []);

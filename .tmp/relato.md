@@ -1,19 +1,34 @@
-Especialista: workertestes
-
+Especialista: senior (area-testes-do-produto)
 ## O que mudou e por quê
-- src/integrations/supabase/__tests__/client.rede.test.ts (novo): 8 testes que chamam o fetch REAL do cliente (`supabaseFetch`/`boundedFetch`) com o `fetch` global dublado na fronteira — teto de 12 s (literal conferido contra a constante), `boundedFetch` abortando a requisição pendente com `TimeoutError` e não repetindo, `GET` repetindo 503 e falha de rede (TypeError), `GET` com 5xx em todas as tentativas devolvendo a ÚLTIMA resposta sem lançar (contrato do postgrest), `POST` de escrita sem repetir em 503 nem em rede, `/auth/v1/` passando direto, e abort do chamador encadeado ao sinal da rede (o sinal entregue ao `fetch` fica `aborted`), rejeitando com `AbortError` e sem repetir.
-- src/services/__tests__/auth.service.perfil.test.ts (novo): 6 testes de `fetchProfile` com o cliente Supabase e o logger dublados (alvo real): recupera depois de falha de rede e depois de 503; backoff medido por relógio falso (não repete antes de 300 ms, 2ª retentativa só depois de outros 600 ms, teto de 3 tentativas); esgotadas as retentativas LANÇA a falha transitória (não devolve `null`); 400 (negócio) e perfil inexistente continuam devolvendo `null` sem repetir.
-- Nenhuma linha de produção foi alterada: `git diff` do commit só tem os dois arquivos novos. Os commits do cartão pai (t_ac6a2a13, `a4325ab25` + `f0325d7ca`) foram trazidos por cherry-pick porque o pai está done mas NÃO integrado na branch do dia.
+- src/integrations/supabase/client.ts: restaurada a linha de SUPABASE_ANON_KEY para o conteúdo exato da base do dia (a versão anterior do branch trazia a chave truncada); nenhum outro trecho de produção foi alterado por este refazer — o restante do arquivo (tempo limite de fetch e retentativa) vem da faixa do pai e segue intacto.
+- src/hooks/auth/useAuth.tsx: corrigida a indentação dos blocos catch/finally do fetchProfile (estavam com indentação a mais); só indentação, sem mudança de comportamento — o arquivo segue vindo da faixa do pai.
+- Nenhum arquivo de teste foi criado nem alterado neste refazer; os dois testes novos do cartão seguem os mesmos do trabalho anterior.
 
 ## Prova
-- verde (rodado 3x seguidas, as três idênticas): `npx vitest run src/integrations/supabase/__tests__/client.rede.test.ts src/services/__tests__/auth.service.perfil.test.ts` → `Test Files 2 passed (2); Tests 14 passed (14)` nas rodadas 1, 2 e 3.
-- vermelho antes (mutação no cliente, 3 linhas de produção revertidas de propósito, depois restauradas):
-  - `SUPABASE_FETCH_TIMEOUT_MS = 12_000` → `600_000`: `AssertionError: expected 600000 to be 12000`, e no teste do teto `AssertionError: expected false to be true` (o sinal da rede nunca é abortado).
-  - retry desligado (`const retentavel = false`): `GET repete um 503` → `expected Response { status: 503, ... } to match object { status: 200 }`; `GET repete falha de rede` → `promise rejected "TypeError: Failed to fetch" instead of resolving`; `GET com 5xx em todas` → `expected "vi.fn()" to be called 3 times, but got 1 times`.
-  - encadeamento do abort do chamador removido: `AssertionError: expected false to be true` (o sinal entregue ao `fetch` não fica abortado).
-  - resultado da rodada mutada: `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` — os 2 que continuam verdes são justamente `POST` de escrita e `/auth/v1/`, que exigem que NADA seja repetido. Produção restaurada em seguida (`git checkout HEAD -- src/integrations/supabase/client.ts`; `git diff --stat HEAD` vazio para os dois arquivos de produção).
-- vermelho antes (auth.service na base do dia `dia/2026-10-13`, depois restaurado): `Test Files 1 failed (1); Tests 4 failed | 2 passed (6)` — `recupera depois de falha de rede` → `AssertionError: expected null to match object { id: 'profile-1' }`, `recupera depois de 503` → idem, `backoff` → `expected "vi.fn()" to be called 2 times, but got 1 times`, `esgotadas as retentativas, lança` → `promise resolved "null" instead of rejecting`.
+- verde depois: `npx vitest run src/integrations/supabase/__tests__/client.rede.test.ts src/services/__tests__/auth.service.perfil.test.ts` → `Test Files 2 passed (2); Tests 14 passed (14)`
+- verde depois (faixa do pai, sem regressão): `npx vitest run src/integrations/supabase/__tests__/client.fetch.test.ts src/services/__tests__/auth.service.fetchProfile.test.ts src/hooks/auth/__tests__/useAuth.perfil-indisponivel.test.tsx` → `Test Files 3 passed (3); Tests 15 passed (15)`
+- verde depois: `npx tsc --noEmit -p tsconfig.json` → saída vazia, exit 0
+- conferência da chave (sem exibir segredo): `git diff dia/2026-10-13 -- src/integrations/supabase/client.ts` filtrado por trecho sensível retorna 0 linhas — o diff não tem mais alteração na linha da chave.
+
+## Pontos do revisor
+- Ponto 1: resolvido — src/integrations/supabase/client.ts teve a linha de SUPABASE_ANON_KEY restaurada byte a byte a partir de dia/2026-10-13 (substituição programática da linha, sem digitar a chave); a prova é a conferência acima (0 linhas de diff no trecho sensível). O cartão proíbe alterar produção e este refazer não altera: a única diferença da linha em relação ao trabalho anterior é voltar ao original.
+- Ponto 2: esclarecido — o diff do branch (9 arquivos) soma duas origens: (a) FAIXA DO PAI, commits 6d68a73371 + 5108a507e5 retomados de t_ac6a2a13 (7 arquivos: client.ts, auth.service.ts, useAuth.tsx, client.fetch.test.ts, auth.service.fetchProfile.test.ts, useAuth.perfil-indisponivel.test.tsx, .tmp/relato.md); (b) commit próprio deste cartão, 403aa7a483, só com os 2 arquivos novos (client.rede.test.ts, auth.service.perfil.test.ts) mais o relato b6e2cd9f. Nada foi revertido porque os arquivos do pai são a base que os 2 testes novos exercitam; meu commit próprio continua só com os 2 testes. Este refazer adiciona um commit só com as correções dos pontos 1 e 3, sem arquivo novo.
+- Ponto 3: resolvido — src/hooks/auth/useAuth.tsx, blocos catch/finally do fetchProfile reindentados para o nível do try; prova: `npx tsc --noEmit` exit 0 e os 15 testes da faixa do pai verdes acima (inclui useAuth.perfil-indisponivel.test.tsx).
+
+## FAIXA DO PAI
+FAIXA DO PAI: commits 6d68a73371 + 5108a507e5 do cartão t_ac6a2a13 — não são deste cartão. Meu commit próprio anterior (403aa7a483) só tem src/integrations/supabase/__tests__/client.rede.test.ts e src/services/__tests__/auth.service.perfil.test.ts.
+
+## Arquivos no diff do branch (git diff --name-only dia/2026-10-13...HEAD)
+.tmp/relato.md
+src/hooks/auth/__tests__/useAuth.perfil-indisponivel.test.tsx
+src/hooks/auth/useAuth.tsx
+src/integrations/supabase/__tests__/client.fetch.test.ts
+src/integrations/supabase/__tests__/client.rede.test.ts
+src/integrations/supabase/client.ts
+src/services/__tests__/auth.service.fetchProfile.test.ts
+src/services/__tests__/auth.service.perfil.test.ts
+src/services/auth.service.ts
 
 ## O que NÃO fiz e por quê
-- Não toquei em código de produção (o cartão proíbe); a prova de vermelho foi feita mutando e restaurando a produção de propósito, e o commit só tem teste.
-- Não apaguei nem enfraqueci os testes que já existiam (`client.fetch.test.ts`, `auth.service.fetchProfile.test.ts`, do cartão pai): continuam no branch, verdes.
+- Não criei nem alterei teste: os 2 testes novos já provavam o comportamento (prova vermelho→verde consta no relato anterior) e a correção aqui é só restaurar original + indentação.
+- Não alterei regra de produção (tempo limite, retentativa, perfil): viriam da faixa do pai e os testes as exercitam; mudá-las seria escopo fora dos 3 pontos.

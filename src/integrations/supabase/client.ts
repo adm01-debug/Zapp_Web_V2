@@ -14,7 +14,7 @@ export { SUPABASE_URL } from '@/config/supabase';
 // `@/config/supabase` (só fora de build de produção e só para http://127.0.0.1|localhost).
 export const SUPABASE_ANON_KEY =
   LOCAL_SUPABASE?.anonKey ??
-  'eyJhbG...knC0';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubm5sa2J5bXl0dnRxbmdiYnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjU0MDEsImV4cCI6MjEwMzMwMTQwMX0.4kDVowXzo3yBVboLOFn1bsij-vBKncJXVoPot3iknC0';
 
 // Google OAuth ATIVO desde 28/08/2026 (GET /auth/v1/settings retorna
 // external.google=true). Client "ZAPP Web V2 - Gmail", redirect registrado:
