@@ -47,6 +47,14 @@ na ADR. Ledger = `ai_usage_logs` (`supabase/functions/_shared/ai-usage.ts:388`; 
 - `zapp-verify <cópia> --rapido` → VERDE SEM BANCO (305s; banco_local AVISO esperado — docs-only, sem
   migration; dependencias/tipos/lint/migrations OK).
 
+## Resposta ao juiz (verificação repetida sem mudar a correção)
+- Ponto 1 do juiz não procede: a recusa manda o README **fora** do diff ("não pode entrar"); a correção do Ponto 1
+  é o próprio relato declarando o índice revertido (`grep -c "ADR-009" docs/adr/README.md` → `0`), e o relato está
+  no diff (`.tmp/relato.md`). Nada a mudar no código/docs.
+- Ponto 3 do juiz não procede: a recusa manda só o TTS como "persiste se enviado" e a linha de conversão de voz
+  "como está"; o voice-changer sai por outro caminho (bucket `audio-memes`) fora do escopo da recusa — registrado
+  em "O que NÃO fiz". Nada a mudar.
+
 ## O que NÃO fiz e por quê
 - **Sem alterar código** (o cartão manda). Divergência encontrada fora do escopo de documentação: `elevenlabs-sfx/
   index.ts:30` interpola o **prompt textual** do usuário na mensagem de log — é a única Edge que manda texto para o
