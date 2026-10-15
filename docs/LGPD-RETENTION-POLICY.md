@@ -110,7 +110,7 @@ do provedor, transferência internacional e auditoria do webhook) está em
 
 | Fluxo no produto | O que sai para o provedor | Retenção no produto |
 |---|---|---|
-| Síntese de voz (`elevenlabs-tts`, `elevenlabs-tts-stream`, `elevenlabs-dialogue`) | texto do roteiro (pode citar o cliente) | não persiste |
+| Síntese de voz (`elevenlabs-tts`, `elevenlabs-tts-stream`, `elevenlabs-dialogue`) | texto do roteiro (pode citar o cliente) | não persiste na Edge; persiste se enviado como mensagem (§4.5) |
 | Conversão de voz (`elevenlabs-sts`, `voice-changer`) | áudio do atendente | não persiste |
 | Transcrição (`ai-transcribe-audio`) | áudio do cliente (mensagem recebida) | texto em `messages` (§4.1: 2 anos); áudio no bucket (§4.5: 2 anos) |
 | Conversa em tempo real / transcrição ao vivo (`elevenlabs-agent-token`, `elevenlabs-scribe-token`) | áudio do microfone, **direto do navegador** para o provedor (o servidor só emite credencial de uso único) | não persiste no produto |
