@@ -10,8 +10,11 @@
 --      para `anon` (42501 na chamada real).
 --   2) Definição: SECURITY DEFINER com search_path fixo (funcao-segura-no-banco).
 --   3) Guardas: jwt_session_required (service_role sem JWT), admin_required
---      (agente autenticado não-admin), role_already_assigned, role_not_assigned,
---      cannot_remove_own_admin, cannot_demote_last_admin.
+--      (agente autenticado não-admin), role_already_assigned (inclui o handler
+--      de corrida unique_violation), role_not_assigned,
+--      cannot_remove_own_admin, cannot_demote_last_admin (piso CONDICIONAL: só
+--      quando a linha-alvo é o último admin; admin inexistente com 1 admin na
+--      instalação cai em role_not_assigned).
 --   4) Efeito: a linha certa de public.user_roles entra/sai, o retorno tem o
 --      user_id/role, e audit_logs ganha EXATAMENTE 1 evento com a autoria certa
 --      (granted_by/revoked_by = admin chamador).
@@ -40,13 +43,22 @@ BEGIN;
 \endif
 
 -- ─── fixtures (só auth.users + user_roles; sem gatilho: replica) ─────────────
--- O piso de admin é sobre a INSTALAÇÃO INTEIRA, então o teste normaliza a
--- população de user_roles para os 4 usuários-fixura (a semente do banco local
--- não pode mudar o resultado). Tudo é desfeito no ROLLBACK final.
+-- O piso de admin é sobre a INSTALAÇÃO INTEIRA, então o teste NÃO depende do
+-- que a semente deixou: remove admins fora da fixture E apaga/reinsere as 4
+-- linhas-fixtura até o estado exato (2 admins + 2 agentes), com pré-condições
+-- que falham rápido se a normalização não pegou. Tudo é desfeito no ROLLBACK
+-- final.
 SET session_replication_role = replica;
 
 DELETE FROM public.user_roles
  WHERE user_id NOT IN (
+   '11111111-1111-1111-1111-111111111101',
+   '22222222-2222-2222-2222-222222222202',
+   '33333333-3333-3333-3333-333333333303',
+   '44444444-4444-4444-4444-444444444404');
+
+DELETE FROM public.user_roles
+ WHERE user_id IN (
    '11111111-1111-1111-1111-111111111101',
    '22222222-2222-2222-2222-222222222202',
    '33333333-3333-3333-3333-333333333303',
@@ -63,8 +75,7 @@ INSERT INTO public.user_roles (user_id, role) VALUES
   ('11111111-1111-1111-1111-111111111101', 'admin'),
   ('22222222-2222-2222-2222-222222222202', 'admin'),
   ('33333333-3333-3333-3333-333333333303', 'agent'),
-  ('44444444-4444-4444-4444-444444444404', 'agent')
-ON CONFLICT (user_id, role) DO NOTHING;
+  ('44444444-4444-4444-4444-444444444404', 'agent');
 
 SET session_replication_role = origin;
 
@@ -132,6 +143,18 @@ BEGIN
   RAISE NOTICE '[OK] % -> % / %', p_label, r.r_state, r.r_msg;
 END $$;
 
+-- ═══ 0) pré-condições: a normalização pegou (falha rápido) ═════════════════
+SELECT pg_temp.espera('precondicao: instalacao tem 4 linhas de papel',
+  (SELECT count(*)::text FROM public.user_roles), '4');
+SELECT pg_temp.espera('precondicao: instalacao tem 2 admins',
+  (SELECT count(*)::text FROM public.user_roles WHERE role = 'admin'), '2');
+SELECT pg_temp.espera('precondicao: chamador e admin',
+  (SELECT count(*)::text FROM public.user_roles
+    WHERE user_id = '11111111-1111-1111-1111-111111111101' AND role = 'admin'), '1');
+SELECT pg_temp.espera('precondicao: alvo comeca com 1 papel',
+  (SELECT count(*)::text FROM public.user_roles
+    WHERE user_id = '44444444-4444-4444-4444-444444444404'), '1');
+
 -- ═══ 1) ACL e definição das duas RPCs ═══════════════════════════════════════
 SELECT pg_temp.espera('EXECUTE authenticated admin_add_role',
   has_function_privilege('authenticated',
@@ -166,6 +189,15 @@ BEGIN
     PERFORM pg_temp.espera('search_path fixo ' || r.proname, r.sp::text, 'true');
   END LOOP;
 END $$;
+
+-- O handler de corrida do admin_add_role: o corpo converte unique_violation
+-- em role_already_assigned (o EXISTS prévio não cobre duas concessões
+-- simultâneas). Cai sem a correção (corpo antigo não tem o handler).
+SELECT pg_temp.espera('admin_add_role trata corrida unique_violation',
+  (SELECT count(*)::text FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'admin_add_role'
+      AND pg_get_functiondef(p.oid) LIKE '%unique_violation%'
+      AND pg_get_functiondef(p.oid) LIKE '%role_already_assigned%'), '1');
 
 -- ═══ 2) anon não chama (enforcement real, não só a ACL) ═════════════════════
 SELECT pg_temp.espera_erro('anon nao chama admin_add_role', 'anon',
@@ -251,6 +283,21 @@ SELECT pg_temp.espera('recusa nao removeu nada',
   (SELECT count(*)::text FROM public.user_roles
     WHERE user_id = '44444444-4444-4444-4444-444444444404'), '1');
 
+-- ═══ 5b) piso condicional: com 2 admins, remover linha NÃO-admin passa ═════
+-- (o piso só existe para linha de admin; regressão da troca do count total
+-- pelo EXISTS na linha-alvo)
+SELECT pg_temp.espera_ok('admin concede supervisor ao alvo (2 admins)', 'authenticated',
+  '11111111-1111-1111-1111-111111111101',
+  $q$select public.admin_add_role('44444444-4444-4444-4444-444444444404','supervisor')$q$,
+  '"out_role":"supervisor"');
+SELECT pg_temp.espera_ok('piso nao trava remocao de nao-admin (2 admins)', 'authenticated',
+  '11111111-1111-1111-1111-111111111101',
+  $q$select public.admin_remove_role('44444444-4444-4444-4444-444444444404','supervisor')$q$,
+  '"out_role":"supervisor"');
+SELECT pg_temp.espera('alvo voltou a 1 papel',
+  (SELECT count(*)::text FROM public.user_roles
+    WHERE user_id = '44444444-4444-4444-4444-444444444404'), '1');
+
 -- ═══ 6) travas de admin: o próprio e o último ══════════════════════════════
 -- 2 admins: remover o próprio admin é proibido (cannot_remove_own_admin)
 SELECT pg_temp.espera_erro('admin nao remove o proprio admin', 'authenticated',
@@ -282,6 +329,16 @@ SELECT pg_temp.espera('auditoria: 1 role_revoked de admin (a do outro admin)',
       AND details->>'role' = 'admin'
       AND details->>'user_id' = '22222222-2222-2222-2222-222222222202'
       AND details->>'revoked_by' = '11111111-1111-1111-1111-111111111101'), '1');
+
+-- Piso condicional (regressão que faltava): com a instalação em 1 admin,
+-- remover admin de quem NÃO tem linha de admin não é piso — é role_not_assigned
+-- (o DELETE não acha a linha). No código antigo (count total <= 1) caía no piso.
+SELECT pg_temp.espera_erro('alvo sem admin nao aciona o piso', 'authenticated',
+  '11111111-1111-1111-1111-111111111101',
+  $q$select public.admin_remove_role('33333333-3333-3333-3333-333333333303','admin')$q$,
+  'P0001', 'role_not_assigned');
+SELECT pg_temp.espera('instalacao segue com 1 admin',
+  (SELECT count(*)::text FROM public.user_roles WHERE role = 'admin'), '1');
 
 ROLLBACK;
 

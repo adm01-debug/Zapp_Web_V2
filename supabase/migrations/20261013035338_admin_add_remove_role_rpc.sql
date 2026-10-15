@@ -21,7 +21,9 @@
 --   admin_remove_role(_user_id, _role)  revoga um papel (DELETE em user_roles)
 --
 -- Travas de admin_remove_role:
---   * piso de admin — nao deixar a instalacao sem nenhum administrador;
+--   * piso de admin condicional — so bloqueia quando a linha a remover e a
+--     ULTIMA linha de admin (alvo tem a linha e nao ha outro admin); remover
+--     admin inexistente cai em role_not_assigned, nao no piso;
 --   * nao remover o proprio papel de admin — evitar que o admin se tranque para fora.
 -- (O piso e conferido ANTES da trava de proprio admin: quando o alvo e o proprio
 --  chamador e ele e o ultimo admin, a mensagem reportada e a do piso, que e o
@@ -52,7 +54,10 @@ BEGIN
   END IF;
 
   -- Estado invalido explicito: conceder um papel que o usuario ja tem nao e um
-  -- no-op silencioso (evita reexecucao virar sucesso fantasma).
+  -- no-op silencioso (evita reexecucao virar sucesso fantasma). A verificacao
+  -- previa nao cobre corrida (duas concessoes simultaneas passam no EXISTS
+  -- juntas): o bloco EXCEPTION converte a violacao de unicidade na MESMA
+  -- mensagem, sem sucesso fantasma e sem vazar unique_violation cru.
   IF EXISTS (
     SELECT 1 FROM public.user_roles ur
     WHERE ur.user_id = _user_id AND ur.role = _role
@@ -61,7 +66,12 @@ BEGIN
       USING HINT = 'o usuario ja possui esse papel; nada a conceder';
   END IF;
 
-  INSERT INTO public.user_roles (user_id, role) VALUES (_user_id, _role);
+  BEGIN
+    INSERT INTO public.user_roles (user_id, role) VALUES (_user_id, _role);
+  EXCEPTION WHEN unique_violation THEN
+    RAISE EXCEPTION 'role_already_assigned'
+      USING HINT = 'o usuario ja possui esse papel; nada a conceder';
+  END;
 
   -- audit_user_role_changes (role_granted) e sync_profile_role_from_user_roles
   -- disparam sozinhos no INSERT acima, ja com changed_by = auth.uid().
@@ -77,7 +87,6 @@ SET search_path TO 'public'
 AS $fn$
 DECLARE
   v_caller uuid := auth.uid();
-  v_admin_count int;
 BEGIN
   IF v_caller IS NULL THEN
     RAISE EXCEPTION 'jwt_session_required'
@@ -88,14 +97,22 @@ BEGIN
     RAISE EXCEPTION 'admin_required';
   END IF;
 
-  -- Piso de admin: nao zerar o ultimo administrador da instalacao.
-  IF _role = 'admin'::public.app_role THEN
-    SELECT count(*) INTO v_admin_count
-    FROM public.user_roles ur WHERE ur.role = 'admin'::public.app_role;
-    IF v_admin_count <= 1 THEN
-      RAISE EXCEPTION 'cannot_demote_last_admin'
-        USING HINT = 'a instalacao precisa de pelo menos 1 administrador';
-    END IF;
+  -- Piso de admin: bloqueia SOMENTE quando a linha a remover e a ULTIMA linha
+  -- de admin da instalacao (o alvo TEM a linha e NAO existe outro admin).
+  -- Contar o total aqui seria pessimista e erraria o motivo: com a instalacao
+  -- reduzida a 1 admin por sujeira de semente, ate remover admin INEXISTENTE
+  -- de outro usuario cairia no piso, quando o certo e role_not_assigned
+  -- (o DELETE abaixo nao acha a linha). Remover linha NAO-admin nunca passa
+  -- por este IF.
+  IF _role = 'admin'::public.app_role
+     AND EXISTS (SELECT 1 FROM public.user_roles ur
+                  WHERE ur.user_id = _user_id
+                    AND ur.role = 'admin'::public.app_role)
+     AND NOT EXISTS (SELECT 1 FROM public.user_roles ur
+                      WHERE ur.role = 'admin'::public.app_role
+                        AND ur.user_id IS DISTINCT FROM _user_id) THEN
+    RAISE EXCEPTION 'cannot_demote_last_admin'
+      USING HINT = 'a instalacao precisa de pelo menos 1 administrador';
   END IF;
 
   -- Nao permite que o admin remova o proprio admin e trave a instalacao.
