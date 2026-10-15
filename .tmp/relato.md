@@ -1,27 +1,18 @@
-Especialista: workertestes
+Especialista: hugo
 
-# Testes de Vitest dos itens de paridade V3->V2 (doc 06, 2a passada)
-
-## O que já estava coberto (por isso NÃO reescrevi)
-Li PD-95, PH-15 e os PH-38/39/53 antes de escrever:
-- PD-95 (done) pede retry de voz, `markMessagesAsRead`, vídeo SIP, retomada de áudio, RLS, batcher, `useAgentPresence` — nada disso era o meu diff.
-- PH-15 cobre o fallback de contato (`useFallbackContact`, `useRealtimeInbox.ts:94-109`) e transferência.
-- PH-38/39 citam `useMessageSignature`/presença; PH-53 cobre notificações (horário silencioso, som, browser).
-- `classifyMessageType` já tinha `messageTypeClassification.test.ts`. Não dupliquei nenhum deles.
-
-## O que mudou e por quê (só arquivos de teste, conforme ARQUIVOS QUE PODE TOCAR)
-- `src/hooks/realtime/__tests__/realtimeUtils.puros.test.ts` (novo): funções puras de `realtimeUtils` — item "funções puras de realtimeUtils". Prende os defaults de `normalizeMessage` (status/status_updated_at), a ordenação por `created_at` sem mutar a entrada, o `buildConversation` com e sem o agregado do banco (R2-INB-005), a contagem de não lidas só do CONTATO, `buildConversations`, `dedupeContacts`, `getUniqueMessageContactIds` e `chunkArray`.
-- `src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx` (novo): item "batcher". Prova que dois UPDATEs do mesmo id na janela de 100 ms viram UM commit com o estado final, que update de mensagem fora da conversa não muda nada, que contato desconhecido chama a hidratação (sem commit) e que update sem `contact_id` é ignorado.
-- `src/hooks/crm/__tests__/useContactPurchases.test.tsx` (novo): item "compras do contato (erro)". Prova o contrato de ERRO do hook: erro do banco (ex.: RLS negando) REJEITA a query em vez de virar lista vazia; sucesso devolve as linhas na ordem do banco; `contactId` vazio não busca.
-- `src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts` (novo): 10 `it.todo` nomeados com o cartão, para os itens que dependem de código ainda não integrado — PK-01 (arquivadas: mensagem nova, arquivar sem mexer em `assigned_to`, id não-UUID via PD-84/QL2), P2-6 (gate de permissão de canal — decisão do dono, sem cartão), DL1+PD-92 (deep link `?contact=`/`?message=`), C8 (debounce do save — a V2 salva só no botão), PK-16 (feedback de erro no insert de compra), PK-07 (várias linhas de SLA), PK-05 ('lido' do sussurro), PK-15 (RLS de `contact_purchases`).
-- `supabase/tests/rls_message_templates.sql` (novo): item "RLS de `message_templates`", no padrão existente (bloco `DO` read-only, sem EXCEPTION = verde): RLS ligado, as 4 policies só para `authenticated`, SELECT exigindo dono OU global, INSERT/UPDATE/DELETE só do dono. O enforcement com papel real de `contact_purchases` fica no it.todo PK-15 (worker sql / scripts/db-audit).
+## O que mudou e por quê
+- `src/services/mediaRecovery.ts` (novo): cliente da Edge `recover-message-media` (`recoverMessageMedia`, com `AbortSignal`), teto de tentativas por objeto em memória do módulo (`MAX_RECOVERY_ATTEMPTS` = 3 dentro de `RECOVERY_WINDOW_MS` = 10 min, mais `markRecoveryExhausted` para resposta definitiva) e as duas pontas do par (url → id da mensagem) no cache do React Query (`findMessageIdByMediaUrl`, `replaceMediaUrlInCache`). `parseRecoveryBody` recusa status desconhecido em vez de tratar como sucesso. Nenhuma URL nem token é logado.
+- `src/hooks/storage/useResolvedStorageUrl.ts`: `refresh` de URL que NÃO é objeto do Storage passa a chamar `recoverExpiredMedia` — acha o id da mensagem no cache de mídia, chama a Edge, assina o locator permanente que ela devolve (bucket privado) e reescreve o cache; desmontar ou trocar de mídia aborta a chamada com `AbortController`. Passado o teto (ou resposta `negado`), a Edge não é mais chamada: estado final `url: ''` + erro `Mídia indisponível`, sem laço. O caminho de locator do Storage (assinatura, assinatura em lote, cooldown) ficou intacto.
+- `src/hooks/chat/useContactMedia.ts`: `contactMediaKey` passa a usar a raiz `CONTACT_MEDIA_QUERY_ROOT` exportada pelo serviço — uma única fonte da chave que a recuperação lê e escreve.
+- `src/hooks/storage/__tests__/useResolvedStorageUrl.recovery.test.tsx` (novo): 8 testes (recuperação, `ja_permanente`, sem par (url → id), teto de tentativas, erro de rede, `negado`, aborto ao desmontar e locator vivo que não chama a Edge).
 
 ## Prova
-- verde depois: `npx vitest run <os 4 arquivos>` -> `Test Files 3 passed | 1 skipped (4); Tests 18 passed | 10 todo (28)` (o "1 skipped" é o arquivo só de `it.todo`).
-- vermelho ANTES (mutação só na produção, desfeita depois): revertendo `status ?? 'sent'`, a contagem de não lidas por `sender === 'contact'`, o overwrite no batcher e o `throw error` de `useContactPurchases`, a mesma rodada deu `Test Files 3 failed (3); Tests 4 failed | 14 passed (18)` — cada mutação derruba o teste que a prende.
-- SQL: `zapp-db-local psql <cópia> v2-26101312214545 < supabase/tests/rls_message_templates.sql` -> `DO` + `NOTICE: rls_message_templates: 4 policies ok (SELECT dono/global; escrita so o dono)`. Confirmei que a asserção morde: com `is_global = true` trocado por `is_global = false` na expectativa, a suíte vermelha com `ERROR: rls_message_templates T2 FALHOU`.
-- Produção intacta: `git diff --stat` vazio; o commit toca só os 5 arquivos de teste acima.
+- vermelho antes: `npx vitest run src/hooks/storage/__tests__/useResolvedStorageUrl.recovery.test.tsx` com o `refresh` no comportamento anterior (`if (!reference) return source;`) → `Tests 6 failed | 2 passed (8)` (os 2 que passam já são as regressões: URL externa sem par e locator vivo não chamam a Edge).
+- verde depois: `npx vitest run src/hooks/storage/__tests__/useResolvedStorageUrl.recovery.test.tsx` → `Test Files 1 passed (1); Tests 8 passed (8)`.
+- regressão da área: `npx vitest run src/hooks/storage src/hooks/__tests__/useResolvedStorageUrl.test.tsx src/components/inbox/media-gallery src/components/inbox/tabs` → `Test Files 52 passed | 1 failed (53); Tests 526 passed | 1 failed | 1 todo (528)` — a única falha é `FilesTab.period.integration.test.tsx` estourando `Test timed out in 15000ms` sob a carga da suíte; rodando sozinho (`npx vitest run src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx`) → `Test Files 1 passed (1); Tests 9 passed | 1 todo (10)`, ou seja, é teste de tempo, não regressão do diff.
+- lint dos arquivos tocados: `npx eslint src/services/mediaRecovery.ts src/hooks/storage/useResolvedStorageUrl.ts src/hooks/chat/useContactMedia.ts src/hooks/storage/__tests__/useResolvedStorageUrl.recovery.test.tsx` → exit 0, sem aviso.
+- commit local: `8343a82207 feat(midia): recupera no front a midia do WhatsApp com URL de CDN vencida`.
 
 ## O que NÃO fiz e por quê
-- Não executei a suíte de RLS no banco LOCAL da MINHA cópia (stack `v2-261013125300a9` não estava de pé); rodei no conjunto local `v2-26101312214545`, que carrega as mesmas migrations da branch do dia — o arquivo é read-only e não depende do meu branch (as policies vêm de migration de março, presente na base).
-- Os itens de PK-* / P2-6 / DL1 / C8 / PK-16 viraram `it.todo` conforme o cartão mandou (dependem de cartão não integrado); não inventei teste que finge.
+- Não toquei em componentes (fora dos arquivos permitidos pelo cartão): o balão do chat entrega a URL sem o id da mensagem, então lá a recuperação depende de o par (url → id) chegar pelo cache de mídia; o caminho ligado hoje é o das telas que usam esse cache (galeria e arquivos).
+- Não leio o campo `motivo` da resposta da Edge: o contrato lido no base só tem `status`; status diferente de `ok`/`ja_permanente` apenas conta tentativa, e o teto fecha o laço.
