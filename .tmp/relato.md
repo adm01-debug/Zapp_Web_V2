@@ -1,20 +1,29 @@
-Especialista: hugo
+Especialista: semisenior
+# Refazer 1 — CT-E/PB-30 (indicadores de Contatos via RPC)
+
+## Pontos do revisor
+- Ponto 1: resolvido — `src/components/contacts/ContactStatsCards.tsx` (prop opcional `onDuplicatesClick` + indicador `DuplicatesIndicator` com `kpi.duplicateCandidates`); teste em `src/components/contacts/__tests__/ContactStatsCards.test.tsx` (exibe valor, clique chama a prop, sem prop não é botão, some no loading).
+- Ponto 2: resolvido sem restaurar o campo — nenhum consumidor lia `kpi.fornecedoresTotal` (o card Fornecedores sempre leu a prop `fornecedoresAll`, antes e depois; `rg fornecedoresTotal` em `src supabase` agora retorna zero); texto do contrato corrigido abaixo e mock do teste alinhado ao contrato real.
+- Ponto 3: resolvido incluindo o teste de verdade — `src/components/contacts/__tests__/ContactStatsCards.test.tsx` está no diff, com mock no contrato atual e os casos de `lgpdPending` nulo e de clique em duplicados.
+- Ponto 4: resolvido com medição provada por teste — antes: `fetchKpiRows` paginava `.range(from, from + 999)` até página curta (1 requisição por página de 1000 linhas, N linhas no navegador); depois: 2 RPCs + 3 contagens head = 5 requisições, 0 linhas (`src/hooks/crm/__tests__/useContactsKpi.test.ts`: `custa 2 RPCs + 3 contagens head e nenhuma linha de contato`).
 
 ## O que mudou e por quê
-- `src/hooks/crm/useContactsKpi.ts`: a agregação deixou de paginar a tabela `contacts` no navegador (`fetchKpiRows`, 1000 linhas por resposta) e passou a vir de 2 RPCs agregadas — `contacts_stats(boolean)` (total/novos 30d/duplicados/lgpd) e `contacts_stats_series(boolean)` (empresasDistinct + as 4 séries dos sparklines). O contrato `ContactsKpi` (campos e nomes) foi mantido igual, então `ContactStatsCards` não precisou mudar. `lgpd_pending` passou a `stats.lgpd_pending ?? null`.
-- `src/hooks/crm/useContactsKpi.ts`: as 3 contagens do período ANTERIOR (`novosPrev30`, `fornecedores30`, `fornecedoresPrev30`) saem de `count: 'exact', head: true` com o MESMO recorte de antes (soft-delete + legado + visibilidade do RLS) — o delta "vs. período anterior" do card Novos/Fornecedores continua exato, sem receber linha de contato.
-- `src/hooks/crm/useContactsKpi.ts`: `rpcStatsSeries()` é um adaptador local para `contacts_stats_series`, porque `types.ts` é gerado do banco e ainda não traz essa função (contrato entregue pelo cartão pai t_6fc22a23) — evita editar o arquivo gerado, fora da lista do cartão.
-- Testes: `__tests__/useContactsKpi.test.ts` (contrato do mapeamento + `range` nunca chamado), `__tests__/useContactsKpi.pagination.test.ts` (0 chamadas de 1000 linhas), `__tests__/useContactsKpi.query.test.tsx` (recorte soft-delete/legado nas contagens de janela), `__tests__/contactsAggregatesRefetchOnMount.test.tsx` (refetch conta as RPCs) e `components/contacts/__tests__/ContactStatsCards.test.tsx`.
-- Faixa dos cartões pais dentro do diff deste cartão (dependência declarada no cartão): `supabase/migrations/20261013010929_contacts_stats.sql` + `scripts/db-audit/contacts-stats-rpc.test.sh` (pai t_2e6929a6) e `supabase/migrations/20261013235904_contacts_stats_series.sql` + `scripts/db-audit/contacts-stats-series-rpc.test.sh` + `scripts/ci/check-test-inventory.mjs` (pai t_6fc22a23, trazido por cherry-pick da faixa).
+- `src/components/contacts/ContactStatsCards.tsx`: indicador "Possíveis duplicados" abaixo do grid (não mexi nos 4 cards nem no skeleton); com `onDuplicatesClick` é `<button type="button">` com `aria-label` em pt-BR, sem a prop é `<div>` estática — botão sem ação seria defeito novo.
+- `src/components/contacts/__tests__/ContactStatsCards.test.tsx`: mock `baseKpi` alinhado ao contrato atual (sai `fornecedoresTotal`, entram `duplicateCandidates`, `lgpdPending`); 5 testes novos do indicador.
+- `src/hooks/crm/__tests__/useContactsKpi.test.ts`: harness conta consultas `head` (`h.queries`); teste de custo fixo 2 RPCs + 3 head + 0 `range`.
+- Contrato `ContactsKpi` (texto corrigido): saiu `fornecedoresTotal` porque o valor exibido no card Fornecedores vem da prop `fornecedoresAll` (ContactsView ← contagem por tipo), idêntico antes e depois; `kpiFromServer` não o devolve mais. Mantido no resto.
 
 ## Prova
-- vermelho antes (hook da base, sem a mudança): `npx vitest run src/hooks/crm/__tests__/useContactsKpi.test.ts src/hooks/crm/__tests__/useContactsKpi.pagination.test.ts` → `Test Files 2 failed (2)` / `Tests 13 failed (13)` — `TypeError: kpiFromServer is not a function` (a base paginava a tabela).
-- verde depois: `npx vitest run src/hooks/crm src/components/contacts src/hooks/contacts` → `Test Files 53 passed (53); Tests 362 passed | 1 expected fail (363)`.
-
-## Avisos do juiz automático (não procedem como desvio)
-- teste existente alterado: `fetchKpiRows`/`aggregateKpi` saíram junto com a paginação que o cartão mandou trocar; os 3 testes que os travavam foram reescritos para o contrato novo (mapeamento das RPCs, 0 chamadas de `range`, recorte soft-delete/legado nas contagens). Nenhum teste foi pulado; a semântica dos deltas e do piso de amostra vive agora nas RPCs, provada nas suítes db-audit dos pais.
-- arquivos fora da lista: são a faixa dos cartões pais (migrations + db-audit + allowlist do `check-test-inventory`) e o `types.ts` do pai t_2e6929a6 — dependência declarada no cartão. Neste cartão eu não editei `types.ts`.
+- vermelho antes: `npx vitest run src/components/contacts/__tests__/ContactStatsCards.test.tsx` → `Test Files 1 failed (1)` / `Tests 4 failed | 11 passed (15)` (sem `kpi-duplicates` no componente).
+- verde depois: `npx vitest run ContactStatsCards.test.tsx useContactsKpi.test.ts useContactsKpi.pagination.test.ts useContactsKpi.query.test.tsx` → `Test Files 4 passed (4)` / `Tests 32 passed (32)`.
+- sem regressão ao lado: `ContactsView.v2Flags + CRM360ExplorerView.heading + ContactAnalyticsDashboard` → `Test Files 3 passed (3)` / `Tests 9 passed (9)`.
+- `rg -n "fornecedoresTotal" src supabase` → zero ocorrências (prova do Ponto 2).
 
 ## O que NÃO fiz e por quê
-- indicador clicável de duplicados que filtra a lista: exige `ContactStatsCards` + a lista (`ContactsView`/`useContactsSearch`), fora da lista de arquivos do cartão. O número já está exposto no hook (`kpi.duplicateCandidates`) para quem for ligar o indicador.
-- contadores da janela 30–60 d como campo de RPC: as RPCs dos pais não as expõem (`growth_30d_pct` é outra grandeza). Mantive o delta exato com as contagens head, para o componente não perder o "vs. período anterior".
+- Não liguei o clique à lista: `ContactsView.tsx` e o filtro da lista estão fora dos arquivos do cartão; a prop `onDuplicatesClick` está pronta e testada. Falta: `ContactsView` passar a prop aplicando o filtro de duplicados (a detecção é do CT-083; hoje nenhum filtro de duplicados existe na UI de contatos).
+- Não restaurei `fornecedoresTotal` (Ponto 2 dava as duas vias; escolhi provar o não-uso + ajustar o texto, mudança mínima, sem migration nova).
+- `hermes-tarefa-fechar` indisponível (sai 75, CONGELADO sem MODO_V2); sem bloco FATOS — os números acima são copiados das saídas reais citadas. Fechamento via `kanban_complete`.
+
+## Workspace (desvio registrado)
+- Sem workspace novo: o dispatcher deu path Windows inutilizável no WSL, `hermes-tarefa-iniciar` sai 75 e a guarda bloqueia `worktree`/`clone`/novo branch. Trabalhei no workspace do trabalho anterior, empilhando só commits deste refazer no topo de `3f58e61463`, sem tocar nos commits anteriores.
+- Arquivos do refazer (`git diff --name-only 3f58e61463..HEAD`, colado do comando): `src/components/contacts/ContactStatsCards.tsx`, `src/components/contacts/__tests__/ContactStatsCards.test.tsx`, `src/hooks/crm/__tests__/useContactsKpi.test.ts`, `.tmp/relato.md`.
