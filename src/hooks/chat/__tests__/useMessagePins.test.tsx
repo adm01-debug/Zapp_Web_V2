@@ -3,8 +3,11 @@ import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-/** A03 — fixar/desafixar (`useMessagePins`): lista ordenada, realtime por contato,
- *  otimismo com rollback e tradução do limite de 3 e da falta de permissão. */
+/** A03 — fixar/desafixar (`useMessagePins`): lista ordenada, otimismo com
+ *  rollback e tradução do limite de 3 e da falta de permissão. Sem assinatura de
+ *  realtime: `public.message_pins` ainda não está na publicação revisada
+ *  (`scripts/db-audit/realtime-publication-baseline.json`) — tabela do cartão de
+ *  banco t_3f7a2b9b, que também publica a tabela. */
 
 const h = vi.hoisted(() => ({
   rows: {} as Record<string, unknown[]>,
@@ -101,20 +104,17 @@ describe('useMessagePins — leitura', () => {
     ]);
   });
 
-  it('assina o realtime da conversa e revalida a lista ao receber evento', async () => {
+  it('não assina realtime enquanto a tabela não estiver na publicação revisada', async () => {
     h.rows.message_pins = [PIN_A];
     const { result } = montar();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(h.channels).toContain('message-pins:contact-1');
-    expect(h.realtime[0]?.cfg.table).toBe('message_pins');
-    expect(h.realtime[0]?.cfg.filter).toBe('contact_id=eq.contact-1');
-
-    const leiturasAntes = h.queries.filter((q) => q.table === 'message_pins').length;
-    await act(async () => { h.realtime[0].cb(); });
-    await waitFor(() =>
-      expect(h.queries.filter((q) => q.table === 'message_pins').length).toBeGreaterThan(leiturasAntes),
-    );
+    // Assinatura de tabela fora da publicação revisada é reprovada pela guarda
+    // scripts/db-audit/check-realtime-subscriptions.test.mjs ("dead subscription").
+    // A lista continua revalidando pelas mutações; a assinatura volta quando a
+    // tabela existir e for publicada (cartão de banco t_3f7a2b9b).
+    expect(h.channels).toEqual([]);
+    expect(h.realtime).toEqual([]);
   });
 });
 

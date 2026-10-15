@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,13 @@ import { supabase } from '@/integrations/supabase/client';
  *
  *  `message_pins` e as RPCs `pin_message`/`unpin_message` vêm do cartão pai
  *  t_3f7a2b9b e ainda NÃO estão em `src/integrations/supabase/types.ts`
- *  (integração pendente). Cast local deliberado — ver `useMessageFavorites.ts`. */
+ *  (integração pendente). Cast local deliberado — ver `useMessageFavorites.ts`.
+ *
+ *  Sem assinatura de realtime: `public.message_pins` também não está na
+ *  publicação revisada (`scripts/db-audit/realtime-publication-baseline.json`),
+ *  e assinar tabela fora dela é assinatura morta — a guarda
+ *  `scripts/db-audit/check-realtime-subscriptions.test.mjs` reprova. A lista
+ *  revalida pelas mutações; a assinatura volta junto com a tabela publicada. */
 
 type QueryError = { message: string; code?: string } | null;
 
@@ -66,7 +72,7 @@ export interface UseMessagePinsResult {
   refetch: () => Promise<unknown>;
 }
 
-/** Lista as mensagens fixadas da conversa, com assinatura de realtime por contato.
+/** Lista as mensagens fixadas da conversa.
  *
  *  Ordem determinística: `pinned_at` desc com `id` desc como desempate (duas
  *  fixações no mesmo instante não trocam de posição entre releituras). */
@@ -90,25 +96,6 @@ export function useMessagePins(contactId: string | null | undefined): UseMessage
     enabled: !!contactId,
     staleTime: 30_000,
   });
-
-  // Realtime no padrão do app (useMessageStatus/useMessageReactions): qualquer
-  // pin/unpin da conversa revalida a lista, inclusive o fixado por outro agente.
-  useEffect(() => {
-    if (!contactId) return;
-    const channel = supabase
-      .channel(`message-pins:${contactId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'message_pins', filter: `contact_id=eq.${contactId}` },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: messagePinsKey(contactId) });
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [contactId, queryClient]);
 
   const pinMutation = useMutation({
     mutationFn: async (messageId: string): Promise<string> => {
