@@ -14,7 +14,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const h = vi.hoisted(() => ({
-  rows: [] as Array<{ is_open: boolean; open_time?: string; close_time?: string }>,
+  rows: [] as Array<{
+    day_of_week?: number;
+    is_open: boolean;
+    open_time?: string;
+    close_time?: string;
+  }>,
   error: null as { message: string } | null,
   logError: vi.fn(),
   filters: [] as unknown[][],
@@ -44,6 +49,10 @@ vi.mock('@/integrations/supabase/client', () => ({
           h.filters.push(['eq', ...args]);
           return builder;
         },
+        in: (...args: unknown[]) => {
+          h.filters.push(['in', ...args]);
+          return builder;
+        },
         limit: () => builder,
         then: (resolve: (value: unknown) => void) =>
           resolve({ data: h.rows, error: h.error }),
@@ -59,6 +68,7 @@ import {
   classificarJanela,
   estaNaJanela,
   resumoDoDia,
+  resumoDoHorario,
 } from '../BusinessHoursIndicator';
 
 function setup(showLabel = true) {
@@ -83,6 +93,10 @@ function hojeDeslocado(deltaMinutes: number): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Dia da semana de hoje e de ontem, na MESMA referência de fuso do componente. */
+const DIA_HOJE = agoraBrasil().getDay();
+const DIA_ONTEM = (DIA_HOJE + 6) % 7;
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.rows = [];
@@ -102,7 +116,9 @@ describe('BusinessHoursIndicator — estados do selo', () => {
   });
 
   it('dia marcado como fechado mostra “Fechado” e o motivo', async () => {
-    h.rows = [{ is_open: false, open_time: '09:00:00', close_time: '18:00:00' }];
+    h.rows = [
+      { day_of_week: DIA_HOJE, is_open: false, open_time: '09:00:00', close_time: '18:00:00' },
+    ];
     const { container } = setup();
     expect(await screen.findByText('Fechado')).toBeTruthy();
 
@@ -113,7 +129,9 @@ describe('BusinessHoursIndicator — estados do selo', () => {
   });
 
   it('dentro da janela do dia mostra “Aberto” com o horário de hoje', async () => {
-    h.rows = [{ is_open: true, open_time: '00:00:00', close_time: '23:59:00' }];
+    h.rows = [
+      { day_of_week: DIA_HOJE, is_open: true, open_time: '00:00:00', close_time: '23:59:00' },
+    ];
     const { container } = setup();
     expect(await screen.findByText('Aberto')).toBeTruthy();
 
@@ -133,7 +151,14 @@ describe('BusinessHoursIndicator — estados do selo', () => {
       agoraMinutos >= 120
         ? { open: '00:00', close: hojeDeslocado(-120) } // terminou duas horas atrás
         : { open: hojeDeslocado(5), close: '23:59' }; // só começa daqui a cinco minutos
-    h.rows = [{ is_open: true, open_time: `${janela.open}:00`, close_time: `${janela.close}:00` }];
+    h.rows = [
+      {
+        day_of_week: DIA_HOJE,
+        is_open: true,
+        open_time: `${janela.open}:00`,
+        close_time: `${janela.close}:00`,
+      },
+    ];
 
     setup();
     expect(await screen.findByText('Fechado')).toBeTruthy();
@@ -146,7 +171,14 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     // meia-noite, porque o cálculo noturno atravessa o dia.
     const abre = hojeDeslocado(-60);
     const fecha = hojeDeslocado(-120);
-    h.rows = [{ is_open: true, open_time: `${abre}:00`, close_time: `${fecha}:00` }];
+    h.rows = [
+      {
+        day_of_week: DIA_HOJE,
+        is_open: true,
+        open_time: `${abre}:00`,
+        close_time: `${fecha}:00`,
+      },
+    ];
 
     const { container } = setup();
     expect(await screen.findByText('Aberto')).toBeTruthy();
@@ -159,10 +191,36 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     ).toBeTruthy();
   });
 
-  it('filtra pela conexão e pelo dia de hoje', async () => {
+  it('madrugada: sábado 02:00 com a sexta aberta até as 06:00 mostra “Aberto” e a janela de ontem', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.setSystemTime(new Date('2026-10-17T02:00:00-03:00')); // sábado, 02:00 em São Paulo
+      h.rows = [
+        { day_of_week: 5, is_open: true, open_time: '22:00:00', close_time: '06:00:00' },
+        { day_of_week: 6, is_open: false, open_time: '09:00:00', close_time: '18:00:00' },
+      ];
+
+      const { container } = setup();
+      expect(await screen.findByText('Aberto')).toBeTruthy();
+
+      const trigger = container.querySelector('div')!;
+      fireEvent.pointerEnter(trigger);
+      fireEvent.pointerMove(trigger);
+      expect(
+        await screen.findByText('Janela de ontem: 22:00 - 06:00 (vira o dia)'),
+      ).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lê a conexão e os dois dias (hoje e ontem) de uma vez', async () => {
     setup();
-    await waitFor(() => expect(h.filters.some((f) => f[0] === 'eq' && f[1] === 'day_of_week')).toBe(true));
+    await waitFor(() =>
+      expect(h.filters.some((f) => f[0] === 'in' && f[1] === 'day_of_week')).toBe(true),
+    );
     expect(h.filters).toContainEqual(['eq', 'whatsapp_connection_id', 'conn-1']);
+    expect(h.filters.find((f) => f[0] === 'in')?.[2]).toEqual([DIA_ONTEM, DIA_HOJE]);
   });
 
   it('showLabel=false esconde o texto e mantém só o ícone', async () => {
@@ -236,5 +294,45 @@ describe('regra de horário comercial (função pura)', () => {
     expect(resumo.isOpen).toBe(true);
     expect(resumo.viraODia).toBe(true);
     expect(resumo.intervalo).toBe('22:00 - 06:00');
+  });
+
+  it('madrugada pertence ao dia anterior: sábado fechado + sexta 22:00→06:00 abre às 02:00', () => {
+    const sexta = { is_open: true, open_time: '22:00', close_time: '06:00' };
+    const sabado = { is_open: false, open_time: '09:00', close_time: '18:00' };
+
+    const madrugada = resumoDoHorario(sabado, 2 * 60, sexta);
+    expect(madrugada.isOpen).toBe(true);
+    expect(madrugada.motivo).toBe('dentro');
+    expect(madrugada.origem).toBe('ontem');
+    expect(madrugada.intervalo).toBe('22:00 - 06:00');
+  });
+
+  it('passada a madrugada, o sábado fechado volta a fechar e o dia aberto manda', () => {
+    const sexta = { is_open: true, open_time: '22:00', close_time: '06:00' };
+    const sabado = { is_open: false, open_time: '09:00', close_time: '18:00' };
+
+    const fimDaMadrugada = resumoDoHorario(sabado, 7 * 60, sexta);
+    expect(fimDaMadrugada.isOpen).toBe(false);
+    expect(fimDaMadrugada.motivo).toBe('fechado-hoje');
+
+    const sabadoAberto = resumoDoHorario(
+      { is_open: true, open_time: '09:00', close_time: '18:00' },
+      10 * 60,
+      sexta,
+    );
+    expect(sabadoAberto.isOpen).toBe(true);
+    expect(sabadoAberto.origem).toBe('hoje');
+  });
+
+  it('janela normal de hoje não abre a madrugada: às 02:00 quem manda é a janela de ontem', () => {
+    const sexta = { is_open: true, open_time: '22:00', close_time: '06:00' };
+    const sabado = resumoDoHorario(
+      { is_open: true, open_time: '09:00', close_time: '18:00' },
+      2 * 60,
+      sexta,
+    );
+    expect(sabado.isOpen).toBe(true);
+    expect(sabado.origem).toBe('ontem');
+    expect(sabado.intervalo).toBe('22:00 - 06:00');
   });
 });
