@@ -7,9 +7,9 @@
  *
  * Não é um seletor: é um aviso fixo, só leitura, com ícone decorativo. Não tem
  * estado, não emite evento e não muda com o preenchimento do formulário — por
- * isso não recebe prop nenhuma. Só tokens do sistema: o texto herda o par de
- * contraste `text-muted-foreground` (claro `221 10% 40%`, escuro `215 20% 75%`
- * em `src/styles/tokens.css`), o mesmo usado no restante do modal.
+ * isso não recebe prop nenhuma. Só cores do sistema: o texto herda o par de
+ * contraste `text-muted-foreground` (claro `221 10% 40%`, escuro `215 20% 75%`),
+ * o mesmo usado no restante do modal.
  */
 import { Inbox } from 'lucide-react';
 

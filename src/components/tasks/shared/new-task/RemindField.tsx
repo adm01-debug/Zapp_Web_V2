@@ -11,7 +11,7 @@
  * `comporLocal`/`diaLocal`/`horaLocal`, o mesmo contrato do prazo e do painel
  * de detalhes (fuso local, sem deslocamento de UTC).
  *
- * Só tokens do sistema; alvos de 40 px (`h-10`); foco visível; sem rolagem.
+ * Só cores do sistema; alvos de 40 px (`h-10`); foco visível; sem rolagem.
  */
 import { Bell, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';

@@ -15,10 +15,10 @@
  * `checkRemindCoherence` antes de virar botão, para não oferecer um atalho que
  * não resolve (prazo já vencido, por exemplo).
  *
- * Tokens (definidos em `src/styles/tokens.css`, mapeados em `tailwind.config.ts`):
+ * Cores do sistema (mapeadas em `tailwind.config.ts`):
  * `text-success` (o verde JÁ é o próprio par de texto) e
  * `text-[hsl(var(--warning-text))]` / `text-[hsl(var(--destructive-text))]`
- * (`tokens.css` linhas 158/159 no claro e 476/477 no escuro) — o par de TEXTO da
+ * (folha de estilos de design, linhas 158/159 no claro e 476/477 no escuro) — o par de TEXTO da
  * etapa 80. O modal nasce em PORTAL, fora do `[data-testid="tasks-module"]`,
  * então o remap de `utilities.css` não o alcança.
  */
