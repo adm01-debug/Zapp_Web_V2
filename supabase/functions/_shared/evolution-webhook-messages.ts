@@ -293,45 +293,61 @@ async function enrichIncomingLinkPreview(
 // ─────────────────────────────────────────────────────────────────────────────
 // Mensagem de ausência (fora do horário comercial) — pipeline OFICIAL
 //
-// Quando chega uma mensagem NOVA do contato, a conexão está FORA do horário
-// comercial (`is_within_business_hours`), a conexão tem `away_messages` ativa e
-// a conversa NÃO tem atendente atribuído, o webhook envia a mensagem de
-// ausência pela MESMA rota que o app usa:
+// Quando chega uma mensagem NOVA de um CLIENTE, o webhook pergunta ao SERVIDOR
+// se cabe responder com a mensagem de ausência:
+//   `should_send_away_message(contato, conexao)` (PL-04) decide no banco
+//   (contato individual, conversa ativa e sem atendente, `away_messages` ligada,
+//   horário fechado, nenhum envio nas últimas 24 h) e devolve o TEXTO já com as
+//   variáveis resolvidas — ou NULL. `is_within_business_hours` e a leitura de
+//   `away_messages` saem do webhook: a decisão é uma só, no servidor (PL-04).
+// Havendo texto, a mensagem entra na fila canônica de saída e sai pela MESMA
+// rota que o app usa:
 //   INSERT idempotente em `messages` (client_message_id + status 'sending')
 //   → `claim_outbound_message` (service_role) → provedor → `complete_outbound_message`.
-// Nada de fetch solto: o envio usa `evoFetch` e o token da instância
-// (`resolveInstanceToken`), exatamente como a edge `message-delivery`.
+// A entrega é feita aqui, e não pela edge `message-delivery`, porque essa edge é
+// invocada pelo CLIENTE quando ele envia algo: sem app aberto, ninguém
+// entregaria a ausência. O claim/complete são os mesmos, então a linha herda
+// lease, auditoria e reconciliação. Nada de fetch solto: o envio usa `evoFetch`
+// e o token da instância (`resolveInstanceToken`).
 //
-// Idempotência: o `client_message_id` é DETERMINÍSTICO por (contato, janela de
-// cooldown) e quem deduplica é o UNIQUE `ux_messages_contact_client_message_id`
-// — reprocessar o mesmo evento não reenvia. Cooldown: além da janela atual, a
-// janela ANTERIOR também é conferida; assim o intervalo entre duas ausências
-// nunca fica menor que o cooldown (a borda da janela não fura o limite).
+// Por que não `enqueue_outbound_message`: essa RPC exige
+// `auth.role() = 'authenticated'` (resolve o perfil por `auth.uid()` e cobra a
+// permissão de envio). O webhook roda com a service key (`service_role`) e
+// receberia `authentication_required` (42501). O INSERT abaixo grava a MESMA
+// linha que a RPC grava (`status='sending'`, `sender='agent'`, `agent_id`
+// resolvido) — é esse contrato que o claim consome.
 //
-// `agent_id` = dono da conexão (`whatsapp_connections.created_by`): o pipeline
-// exige um perfil ATIVO (igual a `enqueue_outbound_message`) e uma mensagem de
-// sistema não tem atendente humano. Sem dono/perfil ativo a ausência NÃO sai
+// Idempotência: o `client_message_id` é DETERMINÍSTICO por (contato, dia UTC) —
+// semente canônica `away-<contact>-<yyyymmdd>` — e quem deduplica é o UNIQUE
+// `ux_messages_contact_client_message_id`: reprocessar o mesmo evento não
+// reenvia. A segunda trava é o log de 24 h (`record_away_message`), que o PL-04
+// já consulta dentro da decisão.
+//
+// `agent_id` = dono da conexão (`whatsapp_connections.created_by`): o claim
+// exige um perfil ATIVO. Sem dono/perfil ativo a ausência NÃO sai
 // (fail-closed) — nunca se empresta o perfil de outra pessoa.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Intervalo mínimo entre duas mensagens de ausência para o MESMO contato. */
-export const AWAY_MESSAGE_COOLDOWN_HOURS = 12;
-/** `delivery_claimed_by` — identifica o produtor no claim oficial. */
+/** `p_worker` do claim — identifica o produtor no pipeline oficial. */
 export const AWAY_MESSAGE_WORKER = "edge:evolution-webhook:away";
 
-/** Índice da janela de cooldown (tamanho = cooldown) no relógio absoluto. */
-export function awayWindowIndex(nowMs: number): number {
-  return Math.floor(nowMs / (AWAY_MESSAGE_COOLDOWN_HOURS * 3_600_000));
+/** Chave do dia (UTC) do id determinístico: `yyyymmdd`. */
+export function awayDayKey(nowMs: number): string {
+  const d = new Date(nowMs);
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${d.getUTCFullYear()}${mm}${dd}`;
 }
 
 /**
- * `client_message_id` determinístico (UUID) para (contato, janela). FNV-1a de
- * 32 bits em 4 pistas → 128 bits; dois isolates produzem o MESMO id para o
- * mesmo par, então o UNIQUE do banco — e não uma consulta prévia — é quem
+ * `client_message_id` determinístico (UUID) para (contato, dia), derivado da
+ * semente canônica `away-<contact>-<yyyymmdd>`. A coluna é `uuid`, então a
+ * semente vira 128 bits por FNV-1a em 4 pistas; dois isolates produzem o MESMO
+ * id para o mesmo par, e o UNIQUE do banco — e não uma consulta prévia — é quem
  * deduplica o enfileiramento.
  */
-export function awayClientMessageId(contactId: string, windowIndex: number): string {
-  const semente = `${contactId}|away|${windowIndex}`;
+export function awayClientMessageId(contactId: string, dayKey: string): string {
+  const semente = `away-${contactId}-${dayKey}`;
   const hex: string[] = [];
   for (let pista = 0; pista < 4; pista++) {
     let h = (0x811c9dc5 ^ Math.imul(pista + 1, 0x9e3779b1)) >>> 0;
@@ -376,9 +392,11 @@ async function enqueueAwayReconcile(
 }
 
 /**
- * Envia a mensagem de ausência da conexão ao contato, no máximo uma vez por
- * janela de cooldown. NUNCA lança: falha aqui é registrada e o processamento da
- * mensagem recebida segue (a ausência não pode derrubar o webhook).
+ * Pergunta ao SERVIDOR se cabe a mensagem de ausência (PL-04) e, havendo texto,
+ * a enfileira e entrega no mesmo pipeline oficial. No máximo uma vez por 24 h,
+ * garantido pelo log que o PL-04 consulta. NUNCA lança: falha aqui é registrada
+ * e o processamento da mensagem recebida segue (a ausência não pode derrubar o
+ * webhook).
  */
 export async function sendAwayMessageIfNeeded(
   supabase: EvolutionDbClient,
@@ -388,28 +406,27 @@ export async function sendAwayMessageIfNeeded(
   nowMs: number = Date.now(),
 ): Promise<void> {
   try {
-    // Conversa com atendente ativo: a ausência é exatamente o oposto disso.
+    // Conversa com atendente ativo: a decisão do PL-04 também barra, mas evita
+    // a ida ao banco.
     if (assignedTo) return;
 
-    const { data: cfg, error: cfgErr } = await supabase.from("away_messages")
-      .select("content, is_enabled").eq("whatsapp_connection_id", connectionId).maybeSingle();
-    if (cfgErr) { console.warn("[AWAY] away_messages read failed:", cfgErr.message); return; }
-    const content = typeof cfg?.content === "string" ? cfg.content.trim() : "";
-    if (!cfg || cfg.is_enabled !== true || content.length === 0) return;
-
-    const { data: aberto, error: bhErr } = await supabase.rpc("is_within_business_hours", {
-      connection_id: connectionId,
+    // 1) Decisão no SERVIDOR (PL-04): o texto já vem com as variáveis
+    //    resolvidas, ou NULL quando não cabe. Tolerante à migration ausente:
+    //    QUALQUER erro (função inexistente, sem permissão) = NÃO enviar.
+    const { data: decisao, error: decisaoErr } = await supabase.rpc("should_send_away_message", {
+      p_contact_id: contactId,
+      p_connection_id: connectionId,
     });
-    if (bhErr) { console.warn("[AWAY] is_within_business_hours failed (fail-closed):", bhErr.message); return; }
-    if (aberto === true) return; // dentro do horário comercial: não envia
+    if (decisaoErr) {
+      console.warn("[AWAY] decisão indisponível (não envia):", decisaoErr.code ?? "sem código");
+      return;
+    }
+    const content = typeof decisao === "string" ? decisao.trim() : "";
+    if (content.length === 0) return;
 
-    const janela = awayWindowIndex(nowMs);
-    const clientMessageId = awayClientMessageId(contactId, janela);
-    const { data: anteriores, error: priorErr } = await supabase.from("messages")
-      .select("id").eq("contact_id", contactId)
-      .in("client_message_id", [clientMessageId, awayClientMessageId(contactId, janela - 1)]).limit(1);
-    if (priorErr) { console.warn("[AWAY] cooldown read failed (fail-closed):", priorErr.message); return; }
-    if (Array.isArray(anteriores) && anteriores.length > 0) return; // cooldown ativo
+    // `client_message_id` determinístico por (contato, dia UTC): o UNIQUE do
+    // banco deduplica, sem consulta prévia.
+    const clientMessageId = awayClientMessageId(contactId, awayDayKey(nowMs));
 
     // Dono da conexão = agente responsável (o pipeline exige perfil ativo).
     const { data: conexao, error: conexaoErr } = await supabase.from("whatsapp_connections")
@@ -442,6 +459,17 @@ export async function sendAwayMessageIfNeeded(
     }
     const messageId = typeof enfileirada?.id === "string" ? enfileirada.id : null;
     if (!messageId) { console.warn("[AWAY] enqueue returned no id"); return; }
+
+    // Registra o envio SÓ depois de enfileirar: é o log de 24 h que a decisão
+    // do PL-04 consulta no próximo evento. A RPC é idempotente na janela e
+    // falha aqui NÃO impede a entrega (é trava, não caminho crítico).
+    const { error: recordErr } = await supabase.rpc("record_away_message", {
+      p_contact_id: contactId,
+      p_connection_id: connectionId,
+    });
+    if (recordErr) {
+      console.warn("[AWAY] record_away_message falhou:", recordErr.code ?? "sem código");
+    }
 
     // 2) Claim oficial: o webhook roda com a service key (auth.role() = service_role).
     const { data: claimedRows, error: claimErr } = await supabase.rpc("claim_outbound_message", {

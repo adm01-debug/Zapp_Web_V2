@@ -2,16 +2,21 @@
  * Mensagem de ausência no webhook de mensagens (fora do horário comercial).
  *
  * O que fica travado:
- *   1. fora do horário + `away_messages.is_enabled` + conversa SEM atendente →
- *      a ausência sai pelo pipeline OFICIAL: INSERT em `messages`
- *      (client_message_id + status 'sending') → `claim_outbound_message`
- *      (p_agent_id = dono da conexão) → provedor → `complete_outbound_message`;
- *   2. dentro do horário comercial (`is_within_business_hours` = true) NÃO envia;
- *   3. `is_enabled = false`, conexão sem dono/perfil ativo, conversa com
- *      atendente atribuído e cooldown ativo NÃO enviam;
- *   4. o `client_message_id` é DETERMINÍSTICO por (contato, janela) e o cooldown
- *      confere a janela atual E a anterior — a borda da janela não fura o limite;
- *   5. o provedor recusando (4xx) deixa a linha TERMINAL sem reenvio
+ *   1. a DECISÃO é do servidor (PL-04): o webhook chama
+ *      `should_send_away_message(contato, conexao)` e só envia quando ela devolve
+ *      texto. `is_within_business_hours` e `away_messages` não são mais lidos aqui
+ *      — a regra do horário, do atendente e do 24 h vive numa única RPC;
+ *   2. havendo texto, a ausência sai pelo pipeline OFICIAL: INSERT em `messages`
+ *      (client_message_id + status 'sending') → `record_away_message` (log de
+ *      24 h) → `claim_outbound_message` (p_agent_id = dono da conexão) → provedor
+ *      → `complete_outbound_message`;
+ *   3. `record_away_message` é chamado SÓ DEPOIS do enfileiramento;
+ *   4. o `client_message_id` é DETERMINÍSTICO por (contato, dia UTC), derivado da
+ *      semente `away-<contact>-<yyyymmdd>` e materializado como UUID (a coluna é
+ *      `uuid`); o UNIQUE do banco deduplica, sem consulta prévia;
+ *   5. RPC de decisão ausente/com erro, conversa com atendente, conexão sem
+ *      dono/perfil ativo e enfileiramento duplicado (23505) NÃO enviam;
+ *   6. o provedor recusando (4xx) deixa a linha TERMINAL sem reenvio
  *      (`fail_outbound_message`) e NÃO derruba o processamento da mensagem
  *      recebida.
  *
@@ -19,9 +24,9 @@
  */
 import { assertEquals, assertMatch } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  AWAY_MESSAGE_COOLDOWN_HOURS,
+  AWAY_MESSAGE_WORKER,
   awayClientMessageId,
-  awayWindowIndex,
+  awayDayKey,
   handleIncomingMessage,
   resetOptOutKeywordCache,
 } from "./evolution-webhook-messages.ts";
@@ -40,20 +45,22 @@ type Chamada = {
 };
 
 interface FakeConfig {
-  away?: { content: string; is_enabled: boolean } | null;
-  aberto?: boolean;
-  /** `is_within_business_hours` devolve erro quando definido. */
-  bhError?: string | null;
-  cooldownHit?: boolean;
+  /** Texto devolvido pela decisão do PL-04 (null = não envia). */
+  decisao?: string | null;
+  /** `should_send_away_message` devolve erro quando definido (RPC ausente etc.). */
+  decisaoErro?: string | null;
+  /** `record_away_message` devolve erro quando definido. */
+  recordErro?: string | null;
   /** `created_by` da conexão (undefined = dono fixture; null = sem dono). */
   owner?: string | null;
   ownerAtivo?: boolean;
-  /** INSERT em `messages` devolve 23505 (já enfileirada na janela). */
+  /** INSERT em `messages` devolve 23505 (já enfileirada no dia). */
   duplicada?: boolean;
   assignedTo?: string | null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const TEXTO_AUSENCIA = "Estamos fora do horário. Voltamos amanhã!";
 
 let idSeq = 0;
 
@@ -77,8 +84,6 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
           return { data: owner === null ? null : { created_by: owner }, error: null };
         }
         return { data: { id: "conn-1" }, error: null };
-      case "away_messages":
-        return { data: "away" in cfg ? cfg.away : { content: "Estamos fora do horário.", is_enabled: true }, error: null };
       case "profiles":
         return { data: cfg.ownerAtivo === false ? null : { id: "owner-1" }, error: null };
       case "messages":
@@ -87,7 +92,7 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
             ? { data: null, error: { code: "23505", message: "duplicate key value" } }
             : { data: { id: "away-msg-1" }, error: null };
         }
-        return { data: cfg.cooldownHit ? [{ id: "prev-away" }] : [], error: null };
+        return { data: [], error: null };
       case "talkx_optout_keywords":
         return { data: [], error: null };
       default:
@@ -96,7 +101,6 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   };
 
   const chain: Record<string, unknown> = {};
-  const mesmo = () => chain;
   for (const metodo of ["eq", "is", "not", "gte", "order", "limit"]) {
     chain[metodo] = (col: string, val: unknown) => {
       filtros.push([col, val]);
@@ -111,7 +115,6 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
   chain.maybeSingle = () => resolver();
   chain.single = chain.maybeSingle;
   chain.then = (resolve: (value: unknown) => unknown) => resolve(resolver());
-  void mesmo;
 
   return {
     from: (t: string) => {
@@ -138,9 +141,12 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
             }],
             error: null,
           };
-        case "is_within_business_hours":
-          if (cfg.bhError) return { data: null, error: { message: cfg.bhError } };
-          return { data: cfg.aberto ?? false, error: null };
+        case "should_send_away_message":
+          if (cfg.decisaoErro) return { data: null, error: { code: "PGRST202", message: cfg.decisaoErro } };
+          return { data: "decisao" in cfg ? cfg.decisao : TEXTO_AUSENCIA, error: null };
+        case "record_away_message":
+          if (cfg.recordErro) return { data: null, error: { code: "42883", message: cfg.recordErro } };
+          return { data: "log-1", error: null };
         case "claim_outbound_message":
           return {
             data: [{
@@ -148,7 +154,7 @@ function fakeSupabase(chamadas: Chamada[], cfg: FakeConfig) {
               claim_token: "token-claim-1",
               whatsapp_instance_name: "inst-go-away",
               contact_phone: "5511000000000",
-              content: "Estamos fora do horário.",
+              content: TEXTO_AUSENCIA,
             }],
             error: null,
           };
@@ -225,6 +231,8 @@ function prepararAmbiente(): void {
   Deno.env.set("EVOLUTION_API_FLAVOR", "go");
 }
 
+const AGORA = Date.parse("2026-10-03T12:00:00.000Z");
+
 async function rodarRecebida(
   chamadas: Chamada[],
   cfg: FakeConfig,
@@ -248,35 +256,44 @@ function insertAway(chamadas: Chamada[]) {
   return chamadas.find((c) => c.tipo === "insert" && c.tabela === "messages");
 }
 
-Deno.test("AWAY: client_message_id é determinístico, válido e por janela", () => {
-  const a = awayClientMessageId("contact-1", 12345);
-  const b = awayClientMessageId("contact-1", 12345);
-  const c = awayClientMessageId("contact-1", 12346);
-  const d = awayClientMessageId("contact-2", 12345);
-  assertEquals(a, b, "mesmo (contato, janela) → mesmo id");
+function indiceDe(chamadas: Chamada[], pred: (c: Chamada) => boolean): number {
+  return chamadas.findIndex(pred);
+}
+
+Deno.test("AWAY: client_message_id determinístico por (contato, dia), válido e sem colisão", () => {
+  const a = awayClientMessageId("contact-1", "20261003");
+  const b = awayClientMessageId("contact-1", "20261003");
+  const c = awayClientMessageId("contact-1", "20261004");
+  const d = awayClientMessageId("contact-2", "20261003");
+  assertEquals(a, b, "mesmo (contato, dia) → mesmo id");
   assertMatch(a, UUID_RE, "id precisa ser UUID (o UNIQUE do banco é sobre uuid)");
-  assertEquals(a === c, false, "janelas diferentes não podem colidir");
+  assertEquals(a === c, false, "dias diferentes não podem colidir");
   assertEquals(a === d, false, "contatos diferentes não podem colidir");
 });
 
-Deno.test("AWAY: a janela de cooldown cobre a duração cheia entre duas ausências", () => {
-  const janelaMs = AWAY_MESSAGE_COOLDOWN_HOURS * 3_600_000;
-  const w = 1000;
-  const inicioDaJanela = w * janelaMs; // base alinhada à borda da janela
-  assertEquals(awayWindowIndex(inicioDaJanela), w);
-  assertEquals(awayWindowIndex(inicioDaJanela + janelaMs - 1), w, "ainda na janela corrente");
-  assertEquals(awayWindowIndex(inicioDaJanela + janelaMs), w + 1, "virou a janela");
+Deno.test("AWAY: awayDayKey usa o dia UTC no formato yyyymmdd", () => {
+  assertEquals(awayDayKey(Date.parse("2026-10-03T00:00:00.000Z")), "20261003");
+  assertEquals(awayDayKey(Date.parse("2026-10-03T23:59:59.000Z")), "20261003");
+  assertEquals(awayDayKey(Date.parse("2026-10-04T00:00:00.000Z")), "20261004");
 });
 
-Deno.test("AWAY: fora do horário, sem atendente → envia pelo pipeline oficial 1x", async () => {
+Deno.test("AWAY: decisão com texto → enfileira, registra e entrega pelo pipeline 1x", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso(200);
   try {
     prepararAmbiente();
     const chamadas: Chamada[] = [];
-    const { t0, t1 } = await rodarRecebida(chamadas, { away: { content: "Estamos fora do horário.", is_enabled: true } });
+    const { t0 } = await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA });
 
-    assertEquals(rpcs(chamadas, "is_within_business_hours").length, 1, "consulta o horário comercial 1x");
+    const decisao = rpcs(chamadas, "should_send_away_message");
+    assertEquals(decisao.length, 1, "consulta a decisão do PL-04 1x");
+    assertEquals(decisao[0].args?.p_contact_id, "contact-1");
+    assertEquals(decisao[0].args?.p_connection_id, "conn-1");
+    assertEquals(
+      rpcs(chamadas, "is_within_business_hours").length,
+      0,
+      "o horário comercial não é mais decidido no webhook",
+    );
 
     const inserida = insertAway(chamadas);
     assertEquals(!!inserida, true, "enfileira a ausência no contrato oficial");
@@ -284,28 +301,19 @@ Deno.test("AWAY: fora do horário, sem atendente → envia pelo pipeline oficial
     assertEquals(inserida?.values?.sender, "agent");
     assertEquals(inserida?.values?.agent_id, "owner-1", "agent_id = dono da conexão");
     assertEquals(inserida?.values?.whatsapp_connection_id, "conn-1");
-    assertEquals(inserida?.values?.content, "Estamos fora do horário.");
+    assertEquals(inserida?.values?.content, TEXTO_AUSENCIA);
+    assertEquals(String(inserida?.values?.client_message_id), awayClientMessageId("contact-1", awayDayKey(t0)));
 
-    // Cooldown: a leitura confere a janela ATUAL e a ANTERIOR (borda coberta).
-    const leituraCooldown = chamadas.find(
-      (c) => c.tipo === "select" && c.tabela === "messages" && c.filtros?.some(([col]) => col === "client_message_id"),
-    );
-    const idsConferidos = leituraCooldown?.filtros?.find(([col]) => col === "client_message_id")?.[1] as string[] | undefined;
-    assertEquals(Array.isArray(idsConferidos), true);
-    const janelas = [awayWindowIndex(t0), awayWindowIndex(t1)];
-    const idsEsperados = janelas.map((w) => awayClientMessageId("contact-1", w));
-    assertEquals(idsConferidos?.includes(idsEsperados[0]), true, "confere a janela atual");
-    assertEquals(
-      idsConferidos?.includes(awayClientMessageId("contact-1", idsEsperados.length ? janelas[0] - 1 : 0)),
-      true,
-      "confere a janela anterior (cooldown não fura a borda)",
-    );
-    assertEquals(idsConferidos?.includes(String(inserida?.values?.client_message_id)), true, "o id conferido é o mesmo enfileirado");
+    const record = rpcs(chamadas, "record_away_message");
+    assertEquals(record.length, 1, "registra o envio (log de 24 h) 1x");
+    assertEquals(record[0].args?.p_contact_id, "contact-1");
+    assertEquals(record[0].args?.p_connection_id, "conn-1");
 
     const claim = rpcs(chamadas, "claim_outbound_message");
     assertEquals(claim.length, 1, "claim oficial 1x");
     assertEquals(claim[0].args?.p_agent_id, "owner-1");
     assertEquals(claim[0].args?.p_message_id, "away-msg-1");
+    assertEquals(claim[0].args?.p_worker, AWAY_MESSAGE_WORKER);
 
     assertEquals(rpcs(chamadas, "get_instance_token").length, 1, "token da instância resolvido (sender oficial)");
     assertEquals(fetchCalls.length, 1, "1 POST ao provedor");
@@ -313,7 +321,7 @@ Deno.test("AWAY: fora do horário, sem atendente → envia pelo pipeline oficial
     const headers = fetchCalls[0].init.headers as Record<string, string>;
     assertEquals(headers.apikey, "token-inst-away", "sai pelo token da instância");
     const body = JSON.parse(String(fetchCalls[0].init.body)) as { text?: string; number?: string };
-    assertEquals(body.text, "Estamos fora do horário.");
+    assertEquals(body.text, TEXTO_AUSENCIA);
     assertEquals(body.number, "5511000000000");
 
     const completo = rpcs(chamadas, "complete_outbound_message");
@@ -326,14 +334,34 @@ Deno.test("AWAY: fora do horário, sem atendente → envia pelo pipeline oficial
   }
 });
 
-Deno.test("AWAY: dentro do horário comercial não envia nada", async () => {
+Deno.test("AWAY: o registro só acontece DEPOIS do enfileiramento", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso(200);
   try {
     prepararAmbiente();
     const chamadas: Chamada[] = [];
-    await rodarRecebida(chamadas, { aberto: true, away: { content: "Estamos fora do horário.", is_enabled: true } });
-    assertEquals(insertAway(chamadas), undefined, "não enfileira dentro do horário");
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA });
+
+    const iInsert = indiceDe(chamadas, (c) => c.tipo === "insert" && c.tabela === "messages");
+    const iRecord = indiceDe(chamadas, (c) => c.tipo === "rpc" && c.nome === "record_away_message");
+    assertEquals(iInsert >= 0, true, "enfileirou");
+    assertEquals(iRecord >= 0, true, "registrou");
+    assertEquals(iInsert < iRecord, true, "record_away_message vem depois do INSERT");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("AWAY: decisão NULL (dentro do horário / sem direito) não envia nada", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisao: null });
+    assertEquals(insertAway(chamadas), undefined, "não enfileira sem texto");
+    assertEquals(rpcs(chamadas, "record_away_message").length, 0, "não registra");
     assertEquals(rpcs(chamadas, "claim_outbound_message").length, 0);
     assertEquals(fetchCalls.length, 0);
   } finally {
@@ -342,58 +370,33 @@ Deno.test("AWAY: dentro do horário comercial não envia nada", async () => {
   }
 });
 
-Deno.test("AWAY: configuração desabilitada, atendente atribuído e cooldown barram o envio", async () => {
+Deno.test("AWAY: decisão indisponível (RPC ausente) não envia e o webhook segue", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso(200);
   try {
     prepararAmbiente();
-
-    const desabilitada: Chamada[] = [];
-    await rodarRecebida(desabilitada, { away: { content: "Estamos fora do horário.", is_enabled: false } });
-    assertEquals(insertAway(desabilitada), undefined, "is_enabled=false não envia");
-
-    const semConfig: Chamada[] = [];
-    await rodarRecebida(semConfig, { away: null });
-    assertEquals(insertAway(semConfig), undefined, "conexão sem away_messages não envia");
-
-    const comAtendente: Chamada[] = [];
-    await rodarRecebida(comAtendente, {
-      assignedTo: "atendente-1",
-      away: { content: "Estamos fora do horário.", is_enabled: true },
-    });
-    assertEquals(insertAway(comAtendente), undefined, "conversa com atendente ativo não envia");
-    assertEquals(rpcs(comAtendente, "is_within_business_hours").length, 0, "atendente é checado antes do horário");
-
-    const emCooldown: Chamada[] = [];
-    await rodarRecebida(emCooldown, {
-      cooldownHit: true,
-      away: { content: "Estamos fora do horário.", is_enabled: true },
-    });
-    assertEquals(insertAway(emCooldown), undefined, "cooldown ativo não envia");
-    assertEquals(fetchCalls.length === 0, true, "nenhum POST ao provedor nesses casos");
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisaoErro: "function public.should_send_away_message does not exist" });
+    assertEquals(insertAway(chamadas), undefined, "sem decisão, não envia");
+    assertEquals(fetchCalls.length, 0);
+    assertEquals(rpcs(chamadas, "attribute_talkx_reply").length, 1, "a mensagem recebida segue processada");
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();
   }
 });
 
-Deno.test("AWAY: conexão sem dono/perfil ativo não envia (fail-closed)", async () => {
+Deno.test("AWAY: falha no record_away_message não impede a entrega", async () => {
   resetOptOutKeywordCache();
   instalarFetchFalso(200);
   try {
     prepararAmbiente();
-
-    const semDono: Chamada[] = [];
-    await rodarRecebida(semDono, { owner: null, away: { content: "Estamos fora do horário.", is_enabled: true } });
-    assertEquals(insertAway(semDono), undefined, "sem created_by não enfileira");
-
-    const donoInativo: Chamada[] = [];
-    await rodarRecebida(donoInativo, {
-      ownerAtivo: false,
-      away: { content: "Estamos fora do horário.", is_enabled: true },
-    });
-    assertEquals(insertAway(donoInativo), undefined, "dono sem perfil ativo não enfileira");
-    assertEquals(fetchCalls.length, 0);
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA, recordErro: "function does not exist" });
+    assertEquals(rpcs(chamadas, "record_away_message").length, 1, "tentou registrar");
+    assertEquals(rpcs(chamadas, "claim_outbound_message").length, 1, "a entrega continua");
+    assertEquals(fetchCalls.length, 1);
+    assertEquals(rpcs(chamadas, "complete_outbound_message").length, 1);
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();
@@ -406,11 +409,44 @@ Deno.test("AWAY: enfileiramento duplicado (23505) não reenvia (dedupe pelo UNIQ
   try {
     prepararAmbiente();
     const chamadas: Chamada[] = [];
-    await rodarRecebida(chamadas, {
-      duplicada: true,
-      away: { content: "Estamos fora do horário.", is_enabled: true },
-    });
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA, duplicada: true });
+    assertEquals(rpcs(chamadas, "record_away_message").length, 0, "não registra o que não enfileirou");
     assertEquals(rpcs(chamadas, "claim_outbound_message").length, 0, "não clama o que já foi enfileirado");
+    assertEquals(fetchCalls.length, 0);
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("AWAY: conversa com atendente atribuído nem consulta a decisão", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+    const chamadas: Chamada[] = [];
+    await rodarRecebida(chamadas, { assignedTo: "atendente-1", decisao: TEXTO_AUSENCIA });
+    assertEquals(insertAway(chamadas), undefined, "conversa com atendente ativo não envia");
+    assertEquals(rpcs(chamadas, "should_send_away_message").length, 0, "atendente é checado antes da decisão");
+  } finally {
+    restaurarFetch();
+    resetOptOutKeywordCache();
+  }
+});
+
+Deno.test("AWAY: conexão sem dono/perfil ativo não enfileira (fail-closed)", async () => {
+  resetOptOutKeywordCache();
+  instalarFetchFalso(200);
+  try {
+    prepararAmbiente();
+
+    const semDono: Chamada[] = [];
+    await rodarRecebida(semDono, { owner: null, decisao: TEXTO_AUSENCIA });
+    assertEquals(insertAway(semDono), undefined, "sem created_by não enfileira");
+
+    const donoInativo: Chamada[] = [];
+    await rodarRecebida(donoInativo, { ownerAtivo: false, decisao: TEXTO_AUSENCIA });
+    assertEquals(insertAway(donoInativo), undefined, "dono sem perfil ativo não enfileira");
     assertEquals(fetchCalls.length, 0);
   } finally {
     restaurarFetch();
@@ -425,7 +461,7 @@ Deno.test("AWAY: provedor recusando (4xx) deixa a linha terminal e não derruba 
     prepararAmbiente();
     const chamadas: Chamada[] = [];
     // Se a ausência derrubasse o handler, este await lançaria e o teste falharia.
-    await rodarRecebida(chamadas, { away: { content: "Estamos fora do horário.", is_enabled: true } });
+    await rodarRecebida(chamadas, { decisao: TEXTO_AUSENCIA });
 
     assertEquals(fetchCalls.length, 1, "tentou enviar");
     const falha = rpcs(chamadas, "fail_outbound_message");
@@ -433,24 +469,6 @@ Deno.test("AWAY: provedor recusando (4xx) deixa a linha terminal e não derruba 
     assertEquals(falha[0].args?.p_retryable, false, "não é retentável: sem reenvio automático");
     assertEquals(rpcs(chamadas, "complete_outbound_message").length, 0, "não confirma o que foi recusado");
     assertEquals(rpcs(chamadas, "attribute_talkx_reply").length, 1, "a mensagem recebida segue processada");
-  } finally {
-    restaurarFetch();
-    resetOptOutKeywordCache();
-  }
-});
-
-Deno.test("AWAY: erro na leitura do horário comercial não envia (fail-closed)", async () => {
-  resetOptOutKeywordCache();
-  instalarFetchFalso(200);
-  try {
-    prepararAmbiente();
-    const chamadas: Chamada[] = [];
-    await rodarRecebida(chamadas, {
-      bhError: "chamador sem sessao de usuario",
-      away: { content: "Estamos fora do horário.", is_enabled: true },
-    });
-    assertEquals(insertAway(chamadas), undefined, "sem saber o horário, não envia");
-    assertEquals(fetchCalls.length, 0);
   } finally {
     restaurarFetch();
     resetOptOutKeywordCache();
