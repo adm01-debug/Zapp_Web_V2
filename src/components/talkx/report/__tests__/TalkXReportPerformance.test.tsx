@@ -14,11 +14,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
  * O gráfico é trocado por um registro das props de cada série (o jsdom não mede o
  * `ResponsiveContainer`, então o gráfico real não desenharia nada aqui de qualquer jeito).
  */
-const seriesProps = vi.hoisted(() => [] as Array<{ kind: string; dataKey?: string; isAnimationActive?: boolean }>);
+const seriesProps = vi.hoisted(() => [] as Array<{ kind: string; dataKey?: string; isAnimationActive?: boolean; contentStyle?: unknown }>);
 vi.mock('recharts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('recharts')>();
-  const serie = (kind: string) => (props: { dataKey?: string; isAnimationActive?: boolean }) => {
-    seriesProps.push({ kind, dataKey: props.dataKey, isAnimationActive: props.isAnimationActive });
+  const serie = (kind: string) => (props: { dataKey?: string; isAnimationActive?: boolean; contentStyle?: unknown }) => {
+    seriesProps.push({ kind, dataKey: props.dataKey, isAnimationActive: props.isAnimationActive, contentStyle: props.contentStyle });
     return null;
   };
   const vazio = () => null;
@@ -113,7 +113,7 @@ describe('TalkXReportPerformance (X164/TL-080)', () => {
     expect(screen.getByText('31')).toBeTruthy();
   });
 
-  it('as 4 séries e o tooltip desenham sem animação (isAnimationActive={false})', () => {
+  it('as 4 séries e o tooltip desenham sem animação, sem contentStyle próprio', () => {
     seriesProps.length = 0;
     render(<TalkXReportPerformance series={porDia} granularity="day" onGranularityChange={vi.fn()} timeZone={FUSO} hasConversionSource />);
 
@@ -121,6 +121,7 @@ describe('TalkXReportPerformance (X164/TL-080)', () => {
       'Tooltip:-', 'Area:sent', 'Area:delivered', 'Line:replied', 'Line:conversions',
     ]);
     expect(seriesProps.every((p) => p.isAnimationActive === false)).toBe(true);
+    expect(seriesProps.find((p) => p.kind === 'Tooltip')?.contentStyle).toBeUndefined();
   });
 
   it('sem série no período mostra o estado vazio e nenhum gráfico', () => {

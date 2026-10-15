@@ -126,8 +126,8 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
     expect(byField.group_category.options).toEqual(['orcamentos', 'aprovacao', 'os', 'acerto']);
   });
 
-  it('lead_score e risk_score ficam "em breve": nada calcula essas colunas e o filtro seria morto', () => {
-    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_score', 'risk_score']);
+  it('lead_origin, lead_score e risk_score ficam "em breve": nada grava/calcula essas colunas e o filtro seria morto', () => {
+    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);
   });
 
   it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
@@ -228,6 +228,26 @@ describe('isRuleComplete — por tipo de campo', () => {
     const { complete, incompleteCount } = splitRules({
       groups: [{ id: 'g', match: 'and', rules: [
         { id: 'r1', field: 'lead_score', op: 'eq', value: '80' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBeNull();
+  });
+
+  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna (o contato
+  // derivado do WhatsApp carrega a origem só na projeção em memória, não na linha do banco) e o
+  // Zapp não edita contatos em massa. Filtrar por origem devolveria sempre vazio → fica "em breve".
+  it('lead_origin fica "em breve": regra completa mas fora da estimativa/PostgREST (falha fechada)', () => {
+    expect(RULE_FIELDS.find((f) => f.value === 'lead_origin')?.comingSoon).toBe(true);
+    expect(isRuleComplete(regra('lead_origin', 'eq', 'whatsapp'))).toBe(true);
+    expect(() => rulesToPostgrest({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
+      ] }],
+    } as never)).toThrow('Regra de segmento inválida');
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_origin', op: 'eq', value: 'whatsapp' },
       ] }],
     });
     expect(incompleteCount).toBe(1);

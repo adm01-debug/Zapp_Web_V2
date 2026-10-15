@@ -1,0 +1,100 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5399" --strictPort
+
+
+Running 4 tests using 2 workers
+
+[1/4] [chromium-a11y] › e2e/a11y-tarefas-dashboard.spec.ts:83:7 › N-079 — a11y button-name e aria-progressbar-name › ?view=tasks › button-name e aria-progressbar-name zeram em desktop-1280x720
+[2/4] [chromium-a11y] › e2e/a11y-tarefas-dashboard.spec.ts:83:7 › N-079 — a11y button-name e aria-progressbar-name › ?view=tasks › button-name e aria-progressbar-name zeram em mobile-390x844
+[WebServer] 
+
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+
+[WebServer] 10:45:45 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:46 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:46 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:46 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 10:45:46 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:46 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 10:45:47 PM [vite] (client) [console.error] In HTML, <li> cannot be a descendant of <li>.
+[WebServer] This will cause a hydration error.
+[WebServer] 
+[WebServer]   ...
+[WebServer]     <Suspense fallback={<ViewLoadingFallback>}>
+[WebServer]       <TasksModule>
+[WebServer]         <TasksUiProvider>
+[WebServer]           <div data-testid="tasks-module" className="flex flex-...">
+[WebServer]             <div>
+[WebServer]             <PageHeader variant="plain" title="Tarefas" subtitle="0 abertas ..." breadcrumbs={[...]}>
+[WebServer]               <header className="flex flex-...">
+[WebServer]                 <div className="flex items...">
+[WebServer]                   <_c>
+[WebServer]                     <nav ref={null} aria-label="breadcrumb">
+[WebServer]                       <_c3>
+[WebServer]                         <ol ref={null} className="flex flex-...">
+[WebServer]                           <_c5>
+[WebServer]                           <_c5>
+[WebServer] >                           <li ref={null} className="inline-flex items-center gap-1.5">
+[WebServer]                               <BreadcrumbSeparator>
+[WebServer] >                               <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+[WebServer]                               ...
+[WebServer]                 ...
+[WebServer]             ...
+[WebServer] 
+
+[WebServer] 10:45:47 PM [vite] (client) [console.error] <li> cannot contain a nested <li>.
+[WebServer] See this log for the ancestor stack trace.
+
+[WebServer] 10:45:47 PM [vite] (client) [console.warn] [2026-10-14T01:45:47.532Z] [WARN] [App] [sid:ea67ea1a] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 10:45:47 PM [vite] (client) [console.warn] [2026-10-14T01:45:47.534Z] [WARN] [App] [sid:ea67ea1a] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+
+[3/4] [chromium-a11y] › e2e/a11y-tarefas-dashboard.spec.ts:102:7 › N-079 — a11y button-name e aria-progressbar-name › ?view=dashboard › button-name e aria-progressbar-name zeram em mobile-390x844
+[4/4] [chromium-a11y] › e2e/a11y-tarefas-dashboard.spec.ts:102:7 › N-079 — a11y button-name e aria-progressbar-name › ?view=dashboard › button-name e aria-progressbar-name zeram em desktop-1280x720
+[WebServer] 10:45:53 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:53 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:54 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:54 PM [vite] (client) [console.error] [agent-presence] upsert falhou { message: "blocked" }
+
+[WebServer] 10:45:55 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 10:45:56 PM [vite] (client) [console.warn] [sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.
+
+[WebServer] 10:45:56 PM [vite] (client) [console.error] [2026-10-14T01:45:56.083Z] [ERROR] [RealtimeDashboard] [sid:17b87e67] Error fetching initial data: [ { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" } ]
+
+[WebServer] 10:45:56 PM [vite] (client) [console.error] [2026-10-14T01:45:56.084Z] [ERROR] [RealtimeDashboard] [sid:17b87e67] Error fetching initial data: [ { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" } ]
+
+[WebServer] 10:45:56 PM [vite] (client) [console.error] [2026-10-14T01:45:56.812Z] [ERROR] [RealtimeDashboard] [sid:299630d4] Error fetching initial data: [ { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" }, { message: "rede real bloqueada no E2E" } ]
+
+[WebServer] 10:45:56 PM [vite] (client) [console.warn] [2026-10-14T01:45:56.983Z] [WARN] [App] [sid:17b87e67] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 10:45:56 PM [vite] (client) [console.warn] [2026-10-14T01:45:56.984Z] [WARN] [App] [sid:17b87e67] [A11Y] MODERATE: heading-order — Ensure the order of headings is semantically correct (1 element(s))
+
+[WebServer] 10:45:57 PM [vite] (client) [console.error] [2026-10-14T01:45:57.008Z] [ERROR] [RealtimeDashboard] [sid:17b87e67] Error fetching active contacts: { message: "rede real bloqueada no E2E" }
+
+[WebServer] 10:45:57 PM [vite] (client) [console.error] [2026-10-14T01:45:57.009Z] [ERROR] [RealtimeDashboard] [sid:17b87e67] Error fetching active contacts: { message: "rede real bloqueada no E2E" }
+
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.205Z] [WARN] [App] [sid:17b87e67] Realtime temporarily unavailable (queues-changes); native retry active { status: "CHANNEL_ERROR", error: "socket closed: 0", online: true, visibility: "visible" }
+
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.207Z] [WARN] [App] [sid:17b87e67] Realtime temporarily unavailable (queue-members-changes); native retry active { status: "CHANNEL_ERROR", error: "socket closed: 0", online: true, visibility: "visible" }
+
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.467Z] [WARN] [App] [sid:299630d4] [A11Y] 1 accessibility violation(s) detected
+
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.468Z] [WARN] [App] [sid:299630d4] [A11Y] MODERATE: page-has-heading-one — Ensure that the page, or at least one of its frames contains a level-one heading (1 element(s))
+[WebServer] 10:45:57 PM [vite] (client) [console.error] [2026-10-14T01:45:57.472Z] [ERROR] [RealtimeDashboard] [sid:299630d4] Error fetching active contacts: { message: "rede real bloqueada no E2E" }
+
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.987Z] [WARN] [App] [sid:299630d4] Realtime temporarily unavailable (queues-changes); native retry active { status: "CHANNEL_ERROR", error: "socket closed: 0", online: true, visibility: "visible" }
+[WebServer] 10:45:57 PM [vite] (client) [console.warn] [2026-10-14T01:45:57.988Z] [WARN] [App] [sid:299630d4] Realtime temporarily unavailable (queue-members-changes); native retry active { status: "CHANNEL_ERROR", error: "socket closed: 0", online: true, visibility: "visible" }
+
+  4 passed (41.7s)

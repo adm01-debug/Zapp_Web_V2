@@ -245,3 +245,45 @@
 .chip-active.chip-active {
   color: hsl(var(--primary-text));
 }
+
+/* ===== SUPERFÍCIE MOBILE — ÁREA SEGURA E ROLAGEM =====
+   `index.html` já declara `viewport-fit=cover`, ou seja o app ocupa a tela
+   inteira no iPhone — e o cabeçalho (`MobileHeader`, `InAppNotification`,
+   `NotificationsPanel`, `MobileDrawerMenu`) e a barra inferior (`MobileNavigation`,
+   `FloatingActionButtons`, `BottomSheet`, `mobile-components`), mais os campos de
+   envio do chat/team-chat, usavam `safe-area-top`/`safe-area-bottom` SEM nenhuma
+   regra: o conteúdo ia por baixo do notch e do indicador de home. Os 15 usos estão
+   em `src/`; conferido em 13/10/2026 que não havia definição aqui, em `src/index.css`
+   nem no CSS gerado. Referência: V3 `src/index.css:82-96`.
+
+   O seletor é repetido (`.safe-area-bottom.safe-area-bottom`) de propósito, como em
+   `.chip-active.chip-active` acima: `@tailwind utilities` é injetado DEPOIS destes
+   arquivos e vários consumidores trazem `py-2`/`pb-*` junto (ChatInputArea `py-2
+   safe-area-bottom`, TeamChatInputArea idem) — sem a classe a mais, o utilitário do
+   Tailwind venceria por ordem e a área segura nunca apareceria. O `env(..., 0)`
+   deixa 0 fora do iOS (sem notch): no desktop nada muda. */
+.safe-area-top.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@media (max-width: 767px) {
+  /* Rolagem horizontal sem barra (chips, abas, emoji) — só no celular, onde uma
+     barra de 4 px entra no dedo; no desktop a régua continua sendo `scrollbar-thin`. */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* O gesto de "puxar para atualizar" no topo não pode competir com o arrasto do
+     cabeçalho/painel: sem overscroll vertical no body. */
+  body {
+    overscroll-behavior-y: none;
+  }
+}

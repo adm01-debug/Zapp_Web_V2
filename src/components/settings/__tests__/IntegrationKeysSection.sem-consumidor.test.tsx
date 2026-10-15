@@ -82,20 +82,20 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     render(<IntegrationKeysSection />);
 
     const botaoOlho = await screen.findByRole('button', {
-      name: /Mostrar chave ElevenLabs API Key/i,
+      name: /^Mostrar chave ElevenLabs API Key$/i,
     });
     expect(botaoOlho).toBeInTheDocument();
     expect(botaoOlho).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(botaoOlho);
 
-    expect(screen.getByRole('button', { name: /Ocultar chave ElevenLabs API Key/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Ocultar chave ElevenLabs API Key$/i })).toBeInTheDocument();
     expect(botaoOlho).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('axe não aponta violações no botão olho', async () => {
     render(<IntegrationKeysSection />);
-    const botaoOlho = await screen.findByRole('button', { name: /Mostrar chave ElevenLabs API Key/i });
+    const botaoOlho = await screen.findByRole('button', { name: /^Mostrar chave ElevenLabs API Key$/i });
     const results = await axe(botaoOlho);
     expect(results).toHaveNoViolations();
   });

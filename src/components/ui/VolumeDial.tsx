@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { animate, motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +30,15 @@ const RAIO = 42;
 const ESPESSURA = 8;
 /** Duração da contagem do número, em segundos. */
 const DURACAO_CONTAGEM = 0.25;
+/** Tamanho de referência do dial e as medidas correspondentes do knob e do número. */
+const TAMANHO_BASE = 96;
+const KNOB_BASE = 14;
+const FONTE_BASE = 24;
+/**
+ * Fração do raio do anel a partir da qual o ponteiro conta como "no dial". Abaixo
+ * disso (o miolo, onde fica o número) não há ângulo confiável: o arraste é ignorado.
+ */
+const RAIO_MINIMO_ARRASTE = 0.6;
 
 function limitar(valor: number, min: number, max: number) {
   return Math.min(max, Math.max(min, valor));
@@ -47,12 +56,41 @@ function anguloDoPonteiro(cx: number, cy: number, px: number, py: number) {
   return (Math.atan2(py - cy, px - cx) * 180) / Math.PI;
 }
 
+/** Posição `t` (0–360) no arco: 0 no início, `ARCO_GRAUS` na ponta e o vão acima disso. */
+function posicaoNoArco(angulo: number) {
+  return (((angulo - INICIO_GRAUS) % 360) + 360) % 360;
+}
+
+/** Varredura em graus de `de` até `para` pelo caminho mais curto (sinal indica o sentido). */
+function menorVarredura(de: number, para: number) {
+  const avanco = (((para - de) % 360) + 360) % 360;
+  return avanco <= 180 ? avanco : avanco - 360;
+}
+
+/**
+ * O arraste atravessou a abertura inferior? O vão é o trecho `t ∈ (270, 360)` do sistema
+ * de `valorDoAngulo`; atravessá-lo levaria o valor de uma ponta à outra (100 → 0 e o
+ * inverso). O caminho mais curto entre a amostra anterior e a atual é testado contra esse
+ * trecho nos três giros possíveis (por causa do módulo).
+ */
+function cruzaVao(t0: number, t1: number) {
+  const delta = menorVarredura(t0, t1);
+  const inicio = Math.min(t0, t0 + delta);
+  const fim = Math.max(t0, t0 + delta);
+  for (const volta of [-1, 0, 1]) {
+    const vaoInicio = ARCO_GRAUS + volta * 360;
+    const vaoFim = 360 + volta * 360;
+    if (inicio < vaoFim && fim > vaoInicio) return true;
+  }
+  return false;
+}
+
 /**
  * Converte a posição angular em valor. Devolve `null` quando o ponteiro está na
  * abertura inferior: ali o valor NÃO muda, o que evita o salto 100 → 0 ao cruzar o vão.
  */
 function valorDoAngulo(angulo: number, min: number, max: number, step: number) {
-  const t = (((angulo - INICIO_GRAUS) % 360) + 360) % 360;
+  const t = posicaoNoArco(angulo);
   if (t > ARCO_GRAUS) return null;
   const fracao = t / ARCO_GRAUS;
   return quantizar(min + fracao * (max - min), min, max, step);
@@ -63,10 +101,12 @@ function valorDoAngulo(angulo: number, min: number, max: number, step: number) {
  * sem as dependências do original: só framer-motion (já no projeto) e tokens do sistema.
  *
  * O anel é um SVG com varredura de 270° (abertura embaixo): trilho neutro + arco de valor
- * em gradiente de `primary` para a cor clara do próprio primary (`--primary-glow`). O knob
- * acompanha o arco, o valor (%) fica no centro em `tabular-nums` e conta até o novo valor
- * com uma mola curta. Arrastar em qualquer ponto do anel/knob converte o ângulo do ponteiro
- * em valor (`setPointerCapture` + `touch-action: none`); a roda do mouse NÃO muda o valor.
+ * em gradiente do próprio `primary` (cheio na ponta inicial, mais claro na ponta final, pelo
+ * `stop-opacity`) — assim o gradiente acompanha as skins, que redefinem `--primary`.
+ * O knob acompanha o arco, o valor (%) fica no centro em `tabular-nums` e conta até o novo
+ * valor com uma mola curta. Arrastar em qualquer ponto do anel/knob converte o ângulo do
+ * ponteiro em valor (`setPointerCapture` + `touch-action: none`); a roda do mouse NÃO muda o
+ * valor. Knob e número são proporcionais ao `size`.
  */
 export function VolumeDial({
   value,
@@ -86,6 +126,8 @@ export function VolumeDial({
   const [mostrado, setMostrado] = useState(value);
   const mostradoRef = useRef(value);
   const arrastando = useRef(false);
+  // Ângulo da amostra anterior do arraste: detecta a travessia da abertura inferior.
+  const anguloAnterior = useRef<number | null>(null);
 
   useEffect(() => {
     mostradoRef.current = mostrado;
@@ -113,6 +155,14 @@ export function VolumeDial({
   const raioPx = (RAIO / 100) * size;
   const knobX = Math.cos(anguloTela) * raioPx;
   const knobY = Math.sin(anguloTela) * raioPx;
+  // Knob e número crescem junto com o dial (14 px e 24 px no size padrão de 96 px).
+  const tamanhoKnob = (size * KNOB_BASE) / TAMANHO_BASE;
+  const tamanhoFonte = (size * FONTE_BASE) / TAMANHO_BASE;
+  const estiloRaiz = {
+    width: size,
+    height: size,
+    '--volume-dial-fonte': `${tamanhoFonte}px`,
+  } as CSSProperties;
 
   const textoCentro = muted ? 'Mudo' : (valueLabel ?? `${numeroExibido}%`);
   const textoFalado = muted ? 'Mudo' : (valueLabel ?? `${value} por cento`);
@@ -126,8 +176,22 @@ export function VolumeDial({
     const rect = evento.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const v = valorDoAngulo(anguloDoPonteiro(cx, cy, evento.clientX, evento.clientY), min, max, step);
-    if (v !== null && v !== value) onChange(v);
+    const dx = evento.clientX - cx;
+    const dy = evento.clientY - cy;
+    // Perto do centro (o miolo, onde fica o número) o ângulo não é confiável: ignora.
+    if (Math.hypot(dx, dy) < raioPx * RAIO_MINIMO_ARRASTE) return;
+    const angulo = anguloDoPonteiro(cx, cy, evento.clientX, evento.clientY);
+    const anterior = anguloAnterior.current;
+    // Atravessar o vão inferior não pode trocar uma ponta pela outra (100 ↔ 0). A amostra
+    // recusada NÃO vira referência: o ângulo congelado segue comparado com a ponta por onde o
+    // ponteiro saiu do arco, então o valor fica preso nela até o ponteiro voltar ao mesmo lado
+    // (só atualiza `anguloAnterior` quando a amostra é aceita).
+    if (anterior !== null && cruzaVao(posicaoNoArco(anterior), posicaoNoArco(angulo))) return;
+    const v = valorDoAngulo(angulo, min, max, step);
+    // Amostra no vão (valor nulo) também não atualiza a referência: a ponta fica travada.
+    if (v === null) return;
+    anguloAnterior.current = angulo;
+    if (v !== value) onChange(v);
   };
 
   const aoTeclar = (evento: KeyboardEvent<HTMLDivElement>) => {
@@ -162,10 +226,9 @@ export function VolumeDial({
   };
 
   const corKnob = muted ? 'bg-muted-foreground' : 'bg-primary';
-  const knobClasse = cn(
-    'h-3.5 w-3.5 rounded-full shadow-glow-primary transition-transform group-hover:scale-110',
-    corKnob,
-  );
+  // Sem `transition-transform`: o deslocamento é do framer-motion (ou instantâneo, com
+  // movimento reduzido) — uma transição CSS aqui faria o knob deslizar mesmo sem animação.
+  const knobClasse = cn('rounded-full shadow-glow-primary group-hover:scale-110', corKnob);
 
   return (
     <div
@@ -181,6 +244,7 @@ export function VolumeDial({
       onPointerDown={(e) => {
         if (disabled) return;
         arrastando.current = true;
+        anguloAnterior.current = null;
         e.currentTarget.setPointerCapture?.(e.pointerId);
         porPonteiro(e);
       }}
@@ -190,13 +254,15 @@ export function VolumeDial({
       }}
       onPointerUp={(e) => {
         arrastando.current = false;
+        anguloAnterior.current = null;
         e.currentTarget.releasePointerCapture?.(e.pointerId);
       }}
       onPointerCancel={(e) => {
         arrastando.current = false;
+        anguloAnterior.current = null;
         e.currentTarget.releasePointerCapture?.(e.pointerId);
       }}
-      style={{ width: size, height: size }}
+      style={estiloRaiz}
       className={cn(
         'group relative shrink-0 touch-none select-none rounded-full outline-none transition-shadow',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
@@ -207,7 +273,7 @@ export function VolumeDial({
         <defs>
           <linearGradient id={idGradiente} gradientUnits="userSpaceOnUse" x1="16" y1="92" x2="84" y2="8">
             <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(var(--primary-glow))" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
           </linearGradient>
         </defs>
 
@@ -241,10 +307,16 @@ export function VolumeDial({
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         {reduzirMovimento ? (
-          <div className={knobClasse} style={{ transform: `translate(${knobX}px, ${knobY}px)` }} />
+          <div
+            data-testid="volume-dial-knob"
+            className={knobClasse}
+            style={{ width: tamanhoKnob, height: tamanhoKnob, transform: `translate(${knobX}px, ${knobY}px)` }}
+          />
         ) : (
           <motion.div
+            data-testid="volume-dial-knob"
             className={knobClasse}
+            style={{ width: tamanhoKnob, height: tamanhoKnob }}
             animate={{ x: knobX, y: knobY }}
             transition={{ type: 'spring', stiffness: 520, damping: 34 }}
           />
@@ -255,7 +327,7 @@ export function VolumeDial({
         <span
           data-testid="volume-dial-value"
           aria-hidden="true"
-          className="text-2xl font-semibold leading-none tabular-nums text-foreground"
+          className="text-[length:var(--volume-dial-fonte)] font-semibold leading-none tabular-nums text-foreground"
         >
           {textoCentro}
         </span>

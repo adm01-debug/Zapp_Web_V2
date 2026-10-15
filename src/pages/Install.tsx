@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Smartphone, Wifi, WifiOff, Shield, Zap, CheckCircle2, Share } from "lucide-react";
+import { Download, Smartphone, Wifi, Shield, Zap, CheckCircle2, Share, Maximize2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -53,7 +53,11 @@ const Install = () => {
 
   const features = [
     { icon: Zap, title: "Acesso Rápido", desc: "Abra direto da tela inicial" },
-    { icon: WifiOff, title: "Funciona Offline", desc: "Acesse dados mesmo sem internet" },
+    // A tela prometia "Funciona Offline / Acesse dados mesmo sem internet", o que é falso:
+    // o Service Worker está desligado por decisão (src/config/service_worker.ts) e não há
+    // cache de shell. O benefício real de instalar é abrir em tela cheia (display:
+    // standalone do manifesto) — texto honesto no lugar da promessa.
+    { icon: Maximize2, title: "Tela Inteira", desc: "Abre sem a barra do navegador" },
     { icon: Shield, title: "Seguro", desc: "Dados protegidos no dispositivo" },
     { icon: Smartphone, title: "Experiência Nativa", desc: "Interface otimizada para mobile" },
   ];

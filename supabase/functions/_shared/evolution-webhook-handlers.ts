@@ -195,32 +195,73 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
+  if (!jid) return;
+
+  // `status@broadcast` é o recado/status do WhatsApp, não a presença de um chat:
+  // nunca resolve contato. Sai antes de qualquer consulta ao banco.
+  if (jid.endsWith('@broadcast')) return;
+
   const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
+  const isGroup = jid.endsWith('@g.us');
 
-  if (jid && !jid.endsWith('@g.us')) {
-    let isComposing = false;
-    if (presences) {
-      for (const [, pState] of Object.entries(presences)) {
-        if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
-      }
+  // Quem digita: em grupo, o AUTOR é a chave de `presences` (participant) e o JID
+  // do evento é o chat (o próprio grupo). No 1:1 os dois coincidem.
+  let isComposing = false;
+  let typingParticipant: string | null = null;
+  if (presences) {
+    const entradas = Object.entries(presences);
+    if (isGroup) {
+      // Em grupo o AUTOR é a chave de `presences`. Transmitimos também quando o
+      // estado NÃO é 'composing' (paused/available/sem status): o fim da digitação
+      // precisa chegar ao painel como `typing:false`, senão o indicador nunca apaga.
+      const autor = entradas.find(
+        ([, p]) => p?.lastKnownPresence === "composing" || p?.status === "composing",
+      ) ?? entradas[0];
+      typingParticipant = autor ? autor[0] : null;
+      isComposing = !!autor &&
+        (autor[1]?.lastKnownPresence === "composing" || autor[1]?.status === "composing");
     } else {
-      const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-      isComposing = directStatus === 'composing';
+      isComposing = entradas.some(
+        ([, p]) => p?.lastKnownPresence === "composing" || p?.status === "composing",
+      );
     }
-
-    const phone = normalizePhone(jid);
-    if (phone) {
-      const connection = await getConnectionByInstance(supabase, instance);
-      if (connection) {
-        const contact = await getContactByPhone(supabase, phone, connection.id);
-        if (contact) {
-          const channel = supabase.channel(`typing:${contact.id}`);
-          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-          supabase.removeChannel(channel);
-        }
-      }
+  } else {
+    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
+    isComposing = directStatus === "composing";
+    if (isGroup) {
+      typingParticipant = (presenceData.participant as string) || (presenceData.participantJid as string) || null;
     }
   }
+
+  // Grupo sem autor identificável degrada EXPLICITAMENTE: um broadcast anônimo no
+  // canal do grupo diria que "alguém" digita sem provar quem — melhor não avisar.
+  if (isGroup && !typingParticipant) return;
+
+  const phone = normalizePhone(jid);
+  if (!phone) return;
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) return;
+
+  // Canal do CHAT (o próprio grupo é um contato com phone = id sem sufixo), nunca
+  // um canal derivado do participant — o painel escuta `typing:<conversationId>`.
+  const channel = supabase.channel(`typing:${contact.id}`);
+  const payload = isGroup
+    ? {
+      // `typing`/`participant` são o contrato de grupo; `isTyping` segue junto
+      // porque é o campo que `useTypingPresence` já lê em `contact_typing` — sem
+      // ele o indicador não acenderia.
+      typing: isComposing,
+      isTyping: isComposing,
+      participant: typingParticipant,
+      timestamp: new Date().toISOString(),
+    }
+    : { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() };
+  await channel.send({ type: 'broadcast', event: 'contact_typing', payload });
+  supabase.removeChannel(channel);
 }
 
 // deno-lint-ignore no-explicit-any

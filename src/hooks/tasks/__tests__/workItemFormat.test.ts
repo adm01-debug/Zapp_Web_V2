@@ -24,6 +24,20 @@ import {
 /** Domingo, 11/10/2026, 14:00 no relógio local. */
 const AGORA = new Date(2026, 9, 11, 14, 0);
 
+function withTimeZone<T>(timeZone: string, run: () => T): T {
+  const oldTz = process.env.TZ;
+  process.env.TZ = timeZone;
+  try {
+    return run();
+  } finally {
+    if (oldTz === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = oldTz;
+    }
+  }
+}
+
 describe('workItemFormat — regra única de datas (etapa 058 / D21)', () => {
   it('rotula Hoje / Ontem / Amanhã pelo dia LOCAL', () => {
     expect(formatWorkItemDay(new Date(2026, 9, 11, 8, 0), AGORA)).toBe('Hoje');
@@ -69,6 +83,20 @@ describe('workItemFormat — regra única de datas (etapa 058 / D21)', () => {
     expect(formatWorkItemDate(new Date(2026, 9, 10, 23, 55), { now: new Date(2026, 9, 11, 0, 5) })).toBe('Ontem, 23:55');
   });
 
+  it('formatWorkItemDay atravessa horário de verão real em America/Sao_Paulo por calendário local', () => {
+    withTimeZone('America/Sao_Paulo', () => {
+      // 04/11/2018 teve 23h em São Paulo: 00:05 não existiu e o JS normaliza para 01:05.
+      expect(formatWorkItemDate(new Date(2018, 10, 4, 0, 5), { now: new Date(2018, 10, 3, 23, 30) })).toBe('Amanhã, 01:05');
+      expect(formatWorkItemDay(new Date(2018, 10, 4, 0, 5), new Date(2018, 10, 3, 23, 30))).toBe('Amanhã');
+      expect(formatWorkItemDay(new Date(2018, 10, 3, 23, 30), new Date(2018, 10, 4, 1, 5))).toBe('Ontem');
+
+      // 17/02/2019 teve 25h em São Paulo: ainda é só uma troca de dia civil.
+      expect(formatWorkItemDate(new Date(2019, 1, 17, 0, 5), { now: new Date(2019, 1, 16, 23, 30) })).toBe('Amanhã, 00:05');
+      expect(formatWorkItemDay(new Date(2019, 1, 17, 0, 5), new Date(2019, 1, 16, 23, 30))).toBe('Amanhã');
+      expect(formatWorkItemDay(new Date(2019, 1, 16, 23, 30), new Date(2019, 1, 17, 0, 5))).toBe('Ontem');
+    });
+  });
+
   it('campos do painel/modal usam "Hoje, 11/10" e a hora à parte', () => {
     const value = new Date(2026, 9, 11, 14, 0);
     expect(formatWorkItemFieldDate(value, AGORA)).toBe('Hoje, 11/10');
@@ -93,5 +121,12 @@ describe('workItemFormat — regra única de datas (etapa 058 / D21)', () => {
 
   it('aceita o ISO com offset que o banco devolve', () => {
     expect(formatWorkItemDate('2026-10-11T17:00:00-03:00', { now: AGORA })).toBe('Hoje, 17:00');
+  });
+
+  it('ISO em Z que vira outro dia local em UTC-3 é lido no fuso local', () => {
+    withTimeZone('America/Sao_Paulo', () => {
+      // 2026-10-12T02:30:00Z = 11/10 23:30 em UTC-3 → ainda o dia local 11.
+      expect(formatWorkItemDate('2026-10-12T02:30:00Z', { now: new Date(2026, 9, 11, 20, 0) })).toBe('Hoje, 23:30');
+    });
   });
 });

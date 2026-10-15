@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 /**
@@ -84,5 +84,32 @@ describe('ContactKanbanView — agregados após mover de coluna', () => {
     act(() => { done = mocks.onDragEnd!(drag('fornecedor')); });
     await act(async () => { mocks.pending[0].resolve({ error: { message: 'x' } }); await done; });
     expect(mocks.invalidate).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * RD-086: o Pipeline é uma das "visões extras" e precisa do mesmo tratamento de
+ * estado vazio do resto do módulo. Sem contato, a tela mostra o aviso em vez de
+ * seis colunas vazias; com contato, o aviso não existe e as colunas seguem.
+ */
+describe('ContactKanbanView — estado vazio (RD-086)', () => {
+  beforeEach(() => {
+    mocks.onDragEnd = null;
+    mocks.pending = [];
+    mocks.invalidate.mockReset();
+  });
+
+  it('sem contatos mostra "Sem etapa comercial" e não monta as colunas', () => {
+    const { getByTestId, queryByText } = render(<ContactKanbanView contacts={[]} onContactClick={() => {}} />);
+    expect(getByTestId('contact-kanban-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem etapa comercial')).toBeInTheDocument();
+    // Nenhuma coluna do pipeline no estado vazio.
+    expect(queryByText('Clientes')).not.toBeInTheDocument();
+  });
+
+  it('com contato esconde o aviso e mantém o cabeçalho da visão', () => {
+    const { queryByTestId } = render(<ContactKanbanView contacts={[CONTACT]} onContactClick={() => {}} />);
+    expect(queryByTestId('contact-kanban-empty')).not.toBeInTheDocument();
+    expect(screen.getByText('Pipeline')).toBeInTheDocument();
   });
 });

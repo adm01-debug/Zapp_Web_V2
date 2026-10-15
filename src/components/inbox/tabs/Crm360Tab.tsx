@@ -58,6 +58,10 @@ function nextActionTaskKeyFor(signature: string): string {
 export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProps) {
   const contactId = conversation.contact.id;
   const contactName = conversation.contact.name;
+  // t_bbe423a7 — a origem do lead vive em contacts.lead_origin; o inbox lê a linha do banco com
+  // `select('*')`, então o valor chega aqui, mas o tipo `ConversationContact` de `types/chat` ainda
+  // não declara a coluna. Ausente/nulo aparece como "Sem origem" — nunca um valor inventado.
+  const leadOrigin = (conversation.contact as { lead_origin?: string | null }).lead_origin ?? null;
   const [editOpen, setEditOpen] = useState(false);
 
   const { data: crm360 } = useContactCrm360(contactId);
@@ -122,6 +126,10 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                 <p className="text-xs text-muted-foreground truncate">{conversation.contact.job_title}</p>
               )}
             </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3 text-xs">
+            <span className="text-muted-foreground">Origem do lead</span>
+            <span className="font-medium truncate">{leadOrigin ?? 'Sem origem'}</span>
           </div>
           {/* O editor congela os valores ao montar: com cache frio, espera o dado enriquecido
               (em erro, `isLoading` cai e abre com o básico — seguro, só grava campo alterado). */}

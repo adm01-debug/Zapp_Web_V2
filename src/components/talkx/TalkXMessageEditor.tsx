@@ -169,7 +169,7 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
                   className={cn(
                     'rounded px-0.5',
                     knownSet === null || knownSet.has(normalizeVariable(segment))
-                      ? 'text-primary-glow bg-primary/10'
+                      ? 'text-[hsl(var(--primary-text))] bg-primary/10'
                       : 'text-dash-amber bg-dash-amber/10 underline decoration-dotted',
                   )}
                 >

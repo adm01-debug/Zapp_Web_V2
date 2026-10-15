@@ -357,6 +357,21 @@ describe('TelefoniaView — painel', () => {
     fireEvent.keyDown(screen.getAllByTestId('tel-row')[0], { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId('tel-selected-panel')).toBeNull());
   });
+
+  it('T90: "Fazer uma ligação" no histórico vazio foca o discador lateral', () => {
+    const base = mockMyCalls();
+    mockMyCalls.mockReturnValueOnce({ ...base, rows: [], total: 0, pages: 1, page: 1 });
+
+    renderWithProviders(<TelefoniaView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fazer uma ligação' }));
+
+    // O discador lateral (NewCallPanel) e renderizado quando nao ha chamada
+    // selecionada; o botao precisa FOCAR o campo do discador. Antes so chamava
+    // `limpar()`, que num historico ja vazio nao muda nada.
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText('Buscar contato ou digitar número'),
+    );
+  });
 });
 // Fase 4: o historico passou a vir da RPC search_my_calls (useMyCalls). Os testes
 // desta view davam os dados pelo builder do supabase (useCallHistory); agora o hook

@@ -33,13 +33,29 @@ describe('useDashboardUrlFilters', () => {
 
   it('lê period/queue/agent da URL', () => {
     mockSearchParams.set('period', 'week');
-    mockSearchParams.set('queue', 'queue-123');
-    mockSearchParams.set('agent', 'agent-456');
+    mockSearchParams.set('queue', '11111111-1111-4111-8111-111111111111');
+    mockSearchParams.set('agent', '22222222-2222-4222-8222-222222222222');
     const { result } = renderHook(() => useDashboardUrlFilters());
     const [filters] = result.current;
     expect(filters.period).toBe('week');
-    expect(filters.queueId).toBe('queue-123');
-    expect(filters.agentId).toBe('agent-456');
+    expect(filters.queueId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(filters.agentId).toBe('22222222-2222-4222-8222-222222222222');
+  });
+
+  it('?queue e ?agent não-uuid são IGNORADOS (não chegam à leitura uuid do dashboard)', () => {
+    mockSearchParams.set('queue', 'abc');
+    mockSearchParams.set('agent', 'nao-e-uuid');
+    const { result } = renderHook(() => useDashboardUrlFilters());
+    const [filters] = result.current;
+    expect(filters.queueId).toBeNull();
+    expect(filters.agentId).toBeNull();
+  });
+
+  it('UUID malformado (curto demais) também é ignorado', () => {
+    mockSearchParams.set('agent', '11111111-1111-4111-8111-11111111111');
+    const { result } = renderHook(() => useDashboardUrlFilters());
+    const [filters] = result.current;
+    expect(filters.agentId).toBeNull();
   });
 
   it('period=custom com from/to válidos na URL usa esse range exato (dias no fuso do app)', () => {

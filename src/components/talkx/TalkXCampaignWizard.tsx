@@ -18,12 +18,15 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, explainDraftSaveError, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { TalkXLinksManager } from './links/TalkXLinksManager';
+import { buildTalkxLinkPlaceholder, useTalkXLinks } from '@/hooks/integrations/useTalkXLinks';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -127,7 +130,8 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
       const id = await ed.handleSave('draft');
       if (id) onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+      const message = error instanceof Error ? error.message : null;
+      toast.error(explainDraftSaveError(message) ?? message ?? 'Não foi possível salvar o rascunho.');
     }
   };
 
@@ -151,6 +155,9 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     ed.discardPendingChanges();
     onClose();
   };
+
+  // X123: os códigos técnicos da RPC viram frase com ação no aviso de salvamento.
+  const draftSaveError = explainDraftSaveError(ed.autosaveError);
 
   return (
     <div className="w-full min-w-0 space-y-4">
@@ -223,15 +230,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
-                  Não salvo — tentar novamente
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[320px] truncate text-3xs text-dash-red hover:underline" title={draftSaveError ?? ed.autosaveError ?? undefined}>
+                  {draftSaveError ?? 'Não salvo — tentar novamente'}
                 </button>
               )}
               {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
-                <span className="text-3xs text-muted-foreground">
-                  Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
-                </span>
+                <span className="text-3xs text-muted-foreground">{`Rascunho salvo ${fmtAgo(ed.lastAutosave.toISOString())}`}</span>
               )}
             </div>
             {step < 4 && (
@@ -459,7 +464,6 @@ function StepAudience({ ed }: { ed: WizardState }) {
             rules={ed.audienceRules}
             onChange={ed.setAudienceRules}
             options={{
-              tags: ed.tags,
               companies: ed.companies,
               sellers: (ed.owners ?? []).map((p) => ({ id: p.id, name: p.name || p.email || 'Sem nome' })),
             }}
@@ -474,10 +478,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             setContactSearch={ed.setContactSearch}
             companyFilter={ed.companyFilter}
             setCompanyFilter={ed.setCompanyFilter}
-            tagFilter={ed.tagFilter}
-            setTagFilter={ed.setTagFilter}
             companies={ed.companies}
-            tags={ed.tags}
             toggleContact={ed.toggleContact}
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
@@ -498,12 +499,24 @@ function StepMessage({ ed }: { ed: WizardState }) {
   // X128 — os chips de variável inserem NA POSIÇÃO DO CURSOR pelo handle do
   // editor único; antes o chip anexava no fim do texto.
   const editorRef = React.useRef<TalkXMessageEditorHandle>(null);
+  // Só admin/supervisor escreve link (mesmo predicado da RPC `talkx_upsert_link`).
+  // `true` estrito: enquanto a RPC não respondeu o botão não aparece, em vez de
+  // aparecer e falhar com 42501.
+  const canEditLinks = useCRMAdminAccess() === true;
+  // Rótulos cadastrados são "conhecidos" no envio (X022, `loadLinkLabels` no
+  // motor): alimentar o editor com eles evita acusar {{link:rotulo}} como
+  // variável desconhecida logo depois de o usuário inserir o link.
+  const { links } = useTalkXLinks(ed.draftCampaignId);
+  const knownVariables = React.useMemo(
+    () => [...VARIABLE_KEYS, ...links.map((link) => buildTalkxLinkPlaceholder(link.label))],
+    [links],
+  );
   return (
     <>
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
         right={(
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-[hsl(var(--primary-text))] border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
               {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
@@ -539,7 +552,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
             placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
             rows={7}
             limit={MESSAGE_LIMIT}
-            knownVariables={VARIABLE_KEYS}
+            knownVariables={knownVariables}
             footer={(
               <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
                 <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
@@ -552,7 +565,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => editorRef.current?.insertAtCursor(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => editorRef.current?.insertAtCursor(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>
@@ -589,6 +602,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
           </div>
         )}
       </SectionCard>
+
+      {/* X118 — links rastreáveis: cria o link medido e insere {{link:rotulo}} no cursor */}
+      <TalkXLinksManager
+        campaignId={ed.draftCampaignId}
+        campaignName={ed.name}
+        canEdit={canEditLinks}
+        onInsertPlaceholder={(placeholder) => editorRef.current?.insertAtCursor(placeholder)}
+      />
 
       {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
       {(ed.messageTemplate.split('http').length - 1) > 2 && (

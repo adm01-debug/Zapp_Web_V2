@@ -22,6 +22,9 @@ export function AIUsageUsersTab({ userUsage, profileMap }: AIUsageUsersTabProps)
     <Card>
       <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Ranking de Consumo por Usuário</CardTitle></CardHeader>
       <CardContent>
+        <p className="sr-only">
+          {`Ranking de consumo por usuário (10 maiores no gráfico): ${chartData.map((u, i) => `${i + 1}º ${u.name} — ${u.tokens.toLocaleString()} tokens em ${u.calls} chamada(s)`).join('; ')}.`}
+        </p>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -33,14 +36,14 @@ export function AIUsageUsersTab({ userUsage, profileMap }: AIUsageUsersTabProps)
         </ResponsiveContainer>
 
         <div className="mt-4 border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Ranking de consumo por usuário">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Usuário</th>
-                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Chamadas</th>
-                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Tokens</th>
-                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Média/Chamada</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">Usuário</th>
+                <th scope="col" className="text-right px-3 py-2 font-medium text-muted-foreground">Chamadas</th>
+                <th scope="col" className="text-right px-3 py-2 font-medium text-muted-foreground">Tokens</th>
+                <th scope="col" className="text-right px-3 py-2 font-medium text-muted-foreground">Média/Chamada</th>
               </tr>
             </thead>
             <tbody>

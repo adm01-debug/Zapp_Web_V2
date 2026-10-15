@@ -339,3 +339,94 @@ Deno.test("handleDetectNewDevice: exceção do Resend não aborta security_alert
     }
   });
 });
+
+// ─── Corrida de duas abas: 23505 é tratado como "já existe" (idempotente) ───
+// O UNIQUE user_devices_user_id_device_fingerprint_key (migration
+// 20251231123128) deixa nascer só uma linha quando duas abas abrem juntas: a
+// segunda inserção devolve 23505. A Edge tem de tratar isso como dispositivo
+// conhecido — sem 500, sem segunda linha, sem segundo e-mail, sem segundo alerta.
+
+type StubOrdenado = { path: string; method?: string; body: unknown; status?: number };
+
+/** Stub de fetch que consome as respostas NA ORDEM, casando por caminho+método.
+ * Necessário aqui porque o MESMO caminho /rest/v1/user_devices é chamado três
+ * vezes com corpos diferentes (GET vazio, POST 23505, GET já com a linha). */
+function withFetchOrdenado(respostas: StubOrdenado[]) {
+  const original = globalThis.fetch;
+  const seen: string[] = [];
+  const fila = respostas.map((r) => ({ ...r }));
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string"
+      ? input
+      : input instanceof URL
+      ? input.toString()
+      : (input as Request).url;
+    const alvo = new URL(url);
+    const method = (init?.method || "GET").toUpperCase();
+    seen.push(`${method} ${url}`);
+    const idx = fila.findIndex((r) => {
+      if (r.path !== alvo.pathname) return false;
+      if (r.method && r.method.toUpperCase() !== method) return false;
+      return true;
+    });
+    if (idx < 0) {
+      return Promise.resolve(new Response("nao stubado", { status: 599 }));
+    }
+    const [r] = fila.splice(idx, 1);
+    return Promise.resolve(
+      new Response(JSON.stringify(r.body), {
+        status: r.status ?? 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+  }) as typeof fetch;
+  return { seen, restore: () => { globalThis.fetch = original; } };
+}
+
+const pathDe = (s: string) => {
+  try { return new URL(s.split(" ").slice(1).join(" ")).pathname; } catch { return ""; }
+};
+const metodoDe = (s: string) => s.split(" ")[0];
+
+Deno.test("handleDetectNewDevice: corrida de duas abas — insert devolve 23505 e vira dispositivo conhecido (200, is_new_device=false, sem e-mail, sem alerta)", async () => {
+  await withEnvDetect(ENV_OK_DETECT, async () => {
+    const stub = withFetchOrdenado([
+      { path: "/auth/v1/user", body: { id: USER_DETECT, email: "test@promobrindes.com.br", aud: "authenticated" } },
+      { path: "/rest/v1/rpc/consume_rate_limit", body: [{ allowed: true, remaining: 4 }] },
+      { path: "/rest/v1/user_devices", method: "GET", body: [] },
+      {
+        path: "/rest/v1/user_devices",
+        method: "POST",
+        status: 409,
+        body: {
+          code: "23505",
+          message: 'duplicate key value violates unique constraint "user_devices_user_id_device_fingerprint_key"',
+          details: null,
+          hint: null,
+        },
+      },
+      { path: "/rest/v1/user_devices", method: "GET", body: [{ id: "device-race", user_id: USER_DETECT, device_fingerprint: FINGERPRINT }] },
+      { path: "/rest/v1/user_sessions", method: "GET", body: [] },
+      { path: "/rest/v1/user_sessions", method: "POST", body: [{ id: "session-123" }] },
+    ]);
+    try {
+      const res = await handleDetectNewDevice(makeDetectRequest({
+        device_fingerprint: FINGERPRINT,
+        browser: "Safari",
+        os: "iOS",
+        device_name: "iPhone normal",
+      }));
+      const body = await res.json();
+      assert(res.status === 200, `corrida 23505 não pode virar 500; veio ${res.status}. seen: ${stub.seen.join(" | ")}`);
+      assert(body.is_new_device === false, `corrida deveria devolver is_new_device=false, veio ${body.is_new_device}`);
+      assert(body.device_id === "device-race", `corrida deveria reapontar para a linha vencedora, veio ${body.device_id}`);
+      assert(!stub.seen.some((s) => s.includes("api.resend.com")), `corrida não pode enviar segundo e-mail: ${stub.seen.join(" | ")}`);
+      const alertas = stub.seen.filter((s) => pathDe(s) === "/rest/v1/security_alerts");
+      assert(alertas.length === 0, `corrida não pode criar segundo alerta: ${stub.seen.join(" | ")}`);
+      const deviceGets = stub.seen.filter((s) => pathDe(s) === "/rest/v1/user_devices" && metodoDe(s) === "GET");
+      assert(deviceGets.length === 2, `deveria ler o dispositivo antes e depois da corrida, veio ${deviceGets.length}: ${stub.seen.join(" | ")}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});

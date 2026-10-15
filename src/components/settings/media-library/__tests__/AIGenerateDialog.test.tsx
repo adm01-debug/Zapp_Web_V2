@@ -75,7 +75,7 @@ describe('AIGenerateDialog — resposta tardia depois de fechar o diálogo (#409
     await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(1));
 
     // O usuário fecha o diálogo antes de a geração responder.
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    fireEvent.click(screen.getByRole('button', { name: /fechar/i }));
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: /gerar preview/i })).toBeNull(),
     );

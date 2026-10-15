@@ -119,11 +119,6 @@ const CHAVE_EN: readonly Finding[] = [
     what: 'enum do tool call em EN (descreve filtro de sentimento do usuário)',
   },
   {
-    file: 'src/components/inbox/contact-details/Contact360Helpers.tsx',
-    pattern: /sentimentEmoji: Record<string, string> = \{ positive:/,
-    what: 'emoji de sentimento das interações do CRM externo chaveado EN',
-  },
-  {
     file: 'src/components/dashboard/AIStatsWidget.tsx',
     pattern: /type SentimentType = 'positive' \| 'negative' \| 'neutral';/,
     what: 'tipo/dataKey EN (consistente com useAIStats, mas herda o contador morto)',

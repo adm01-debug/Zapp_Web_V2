@@ -17,13 +17,17 @@ import { toast } from 'sonner';
 const CHAVE_TRANSCRICAO = 'auto_transcription_enabled';
 
 export function AutomationSettings() {
-  const { getSetting, updateSetting, isLoading } = useGlobalSettings();
+  const { getSetting, addSetting, isLoading } = useGlobalSettings();
 
   const transcricaoLigada = getSetting(CHAVE_TRANSCRICAO) !== 'false';
 
   const handleTranscricaoChange = async (ligada: boolean) => {
     try {
-      await updateSetting(CHAVE_TRANSCRICAO, ligada ? 'true' : 'false');
+      // upsert (addSetting): a chave pode ainda NAO existir em global_settings
+      // (primeiro uso). Um UPDATE puro casaria zero linhas e a tela anunciaria um
+      // "salvo" que nunca foi gravado. O upsert grava (ou atualiza) pela chave
+      // unica `key`; se a policy barrar, o erro sobe e vira toast de erro.
+      await addSetting(CHAVE_TRANSCRICAO, ligada ? 'true' : 'false');
       toast.success('Transcrição automática atualizada');
     } catch {
       // A escrita falhou: nada muda de estado (o hook so atualiza apos o

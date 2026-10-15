@@ -1,7 +1,6 @@
 /**
  * Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — gate de download nos caminhos fora do
  * catálogo, chamando o HELPER REAL por dentro de cada componente/hook:
- *  - relatórios TXT/PDF de monitoramento (`MonitoringDiagnosticPanel`);
  *  - JSON de performance da equipe (`TeamPerformancePanel`);
  *  - anexo de e-mail (`useGmail.downloadAttachment`);
  *  - exceção declarada: códigos de backup MFA do PRÓPRIO usuário continuam
@@ -13,8 +12,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 
-import { MonitoringDiagnosticPanel } from '../monitoring/MonitoringDiagnosticPanel';
-import type { DiagnosticResult } from '../monitoring/hooks/useEvolutionMonitoring';
 import { TeamPerformancePanel } from '../team-chat/TeamPerformancePanel';
 import { MFABackupCodes } from '../mfa/MFABackupCodes';
 
@@ -53,70 +50,6 @@ vi.mock('@/lib/gmailOAuth', () => ({
 }));
 
 import { useGmail } from '@/hooks/integrations/useGmail';
-
-const diagnostico = {
-  timestamp: new Date(2026, 9, 9, 12, 0, 0).toISOString(),
-  overallHealth: { score: 90, status: 'healthy' },
-  diagnostics: [{
-    instance: 'inst-1',
-    connectionState: 'open',
-    webhookSeverity: 'ok',
-    webhookIssue: null,
-    webhook: { url: 'https://exemplo.test/webhook', eventsCount: 3, missingCritical: [], urlCorrect: true },
-    messageFlow: { lastHour: { incoming: 1, outgoing: 2 }, flowHealth: 'healthy' },
-    autoFix: null,
-  }],
-} as unknown as DiagnosticResult;
-
-describe('Y29 — relatório de diagnóstico (MonitoringDiagnosticPanel)', () => {
-  const createObjectURL = vi.fn(() => 'blob:y29-diag');
-  const click = vi.fn();
-
-  const renderPanel = () => render(
-    <MonitoringDiagnosticPanel
-      diagnostic={diagnostico}
-      diagnosing={false}
-      onRunDiagnostic={vi.fn()}
-      onReconfigureWebhook={vi.fn()}
-      reconfiguring={false}
-    />,
-  );
-
-  beforeEach(() => {
-    createObjectURL.mockClear();
-    click.mockClear();
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = vi.fn();
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { click(); });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.clearAllMocks();
-  });
-
-  it('sem permissão TXT e PDF não gravam nada', async () => {
-    permissao.valor = false;
-    renderPanel();
-
-    fireEvent.click(screen.getByRole('button', { name: /TXT/ }));
-    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
-
-    await waitFor(() => expect(toastMock.error).toHaveBeenCalled());
-    expect(createObjectURL).not.toHaveBeenCalled();
-    expect(click).not.toHaveBeenCalled();
-  });
-
-  it('com permissão o TXT é gravado como antes', async () => {
-    permissao.valor = true;
-    renderPanel();
-
-    fireEvent.click(screen.getByRole('button', { name: /TXT/ }));
-
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalledTimes(1);
-  });
-});
 
 describe('Y29 — JSON de performance da equipe (TeamPerformancePanel)', () => {
   const createObjectURL = vi.fn(() => 'blob:y29-team');

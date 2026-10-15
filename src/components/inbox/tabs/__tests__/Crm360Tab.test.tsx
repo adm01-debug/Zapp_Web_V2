@@ -149,6 +149,21 @@ function renderTab(crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360) {
   return { onTabChange };
 }
 
+function renderTabComContato(patch: Record<string, unknown>) {
+  mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
+  mockUseContactLeadScore.mockReturnValue({ data: null });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={qc}>
+      <Crm360Tab
+        conversation={{ ...conversation, contact: { ...conversation.contact, ...patch } } as unknown as Conversation}
+        messages={[]}
+        onTabChange={vi.fn()}
+      />
+    </QueryClientProvider>
+  );
+}
+
 describe('Crm360Tab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -159,6 +174,19 @@ describe('Crm360Tab', () => {
     renderTab();
     expect(screen.getByTestId('kpi-strip')).toBeInTheDocument();
     expect(screen.getAllByTestId('kpi-cell')).toHaveLength(4);
+  });
+
+  // t_bbe423a7 — a origem do lead do contato aparece no CRM 360°; sem valor a tela diz "Sem origem"
+  // em vez de inventar (a coluna contacts.lead_origin ainda não é gravada em todo contato).
+  it('mostra a origem do lead do contato', () => {
+    renderTabComContato({ lead_origin: 'whatsapp' });
+    expect(screen.getByText('Origem do lead')).toBeInTheDocument();
+    expect(screen.getByText('whatsapp')).toBeInTheDocument();
+  });
+
+  it('sem origem, diz "Sem origem" em vez de inventar', () => {
+    renderTabComContato({ lead_origin: null });
+    expect(screen.getByText('Sem origem')).toBeInTheDocument();
   });
 
   it('mostra empty states honestos quando não há dados comerciais', () => {

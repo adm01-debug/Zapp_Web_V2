@@ -113,6 +113,13 @@ export function useContactSearch(
   const [contactSearch, setContactSearch] = useState('');
   const [contactResults, setContactResults] = useState<ContactResult[]>([]);
   const [searchingContacts, setSearchingContacts] = useState(false);
+  // A consulta pode falhar (rede/RLS). Falha NÃO é lista vazia: sem este
+  // estado a tela anunciava "Nenhum contato encontrado" para quem não
+  // conseguiu perguntar nada, e não havia como tentar de novo.
+  const [contactSearchError, setContactSearchError] = useState(false);
+  // `retryContactSearch` só muda o número da tentativa; o efeito abaixo refaz
+  // a mesma consulta.
+  const [searchAttempt, setSearchAttempt] = useState(0);
   // CT-14/CT-17 — quando o dialog abre a partir de uma conversa (chat, perfil
   // do contato), o contato já vem escolhido e continua trocável.
   const [selectedContact, setSelectedContact] = useState<ContactResult | null>(presetContact ?? null);
@@ -140,30 +147,49 @@ export function useContactSearch(
       if (step !== 'selectContact') {
         setContactResults([]);
         setSearchingContacts(false);
+        setContactSearchError(false);
         return;
       }
 
       setSearchingContacts(true);
-      const data = await fetchCatalogContactResults(query);
-      if (!cancelled) {
-        setContactResults(data);
-        setSearchingContacts(false);
+      try {
+        const data = await fetchCatalogContactResults(query);
+        if (!cancelled) {
+          setContactResults(data);
+          setContactSearchError(false);
+        }
+      } catch {
+        // `fetchCatalogContactResults` já logou a causa; aqui só marcamos o
+        // estado para a tela pedir "Tentar de novo" em vez de dizer que a
+        // busca deu em nada.
+        if (!cancelled) {
+          setContactResults([]);
+          setContactSearchError(true);
+        }
+      } finally {
+        if (!cancelled) setSearchingContacts(false);
       }
     }, hasQuery ? 300 : 0);
     return () => {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [contactSearch, step]);
+  }, [contactSearch, step, searchAttempt]);
+
+  const retryContactSearch = useCallback(() => {
+    setSearchAttempt((n) => n + 1);
+  }, []);
 
   const resetContactSelection = useCallback(() => {
     setSelectedContact(null);
     setContactSearch('');
+    setContactSearchError(false);
   }, []);
 
   return {
     contactSearch, setContactSearch,
-    contactResults, searchingContacts,
+    contactResults, searchingContacts, contactSearchError,
+    retryContactSearch,
     selectedContact, setSelectedContact,
     resetContactSelection,
   };

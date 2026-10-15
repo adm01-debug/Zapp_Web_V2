@@ -276,8 +276,8 @@ describe('OmnichannelInbox', () => {
       await typeSearch('Zeca');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('name.ilike.%Zeca%');
-      expect(filter).toContain('phone.ilike.%Zeca%');
+      expect(filter).toContain('name.ilike."%Zeca%"');
+      expect(filter).toContain('phone.ilike."%Zeca%"');
     });
 
     it('mostra contato que está fora da amostra carregada, com a última mensagem', async () => {
@@ -420,7 +420,7 @@ describe('OmnichannelInbox', () => {
       await typeSearch('Zeca');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('name.ilike.%Zeca%');
+      expect(filter).toContain('name.ilike."%Zeca%"');
       expect(await screen.findByText('Zeca Fora da Amostra')).toBeInTheDocument();
     });
 
@@ -432,7 +432,29 @@ describe('OmnichannelInbox', () => {
       await typeSearch('0009');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('phone.ilike.%0009%');
+      expect(filter).toContain('phone.ilike."%0009%"');
+    });
+
+    it('escapa os curingas % e _ para a busca casar o texto literal', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      await typeSearch('a_b');
+
+      const underscore = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
+      // `_` casaria qualquer caractere sem o escape; vira literal no ilike.
+      expect(underscore).toContain('name.ilike."%a\\\\_b%"');
+      expect(underscore).not.toContain('name.ilike."%a_b%"');
+    });
+
+    it('escapa o % digitado para não casar tudo', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      await typeSearch('50%');
+
+      const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
+      expect(filter).toContain('name.ilike."%50\\\\%%"');
     });
   });
 

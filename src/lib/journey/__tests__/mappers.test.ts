@@ -742,6 +742,41 @@ describe('mapConversationEvents', () => {
     conferirContrato(evento);
   });
 
+  it('transferência com nota escrita expõe o comentário: summary cortado e detalhe completo', () => {
+    const longa = 'a'.repeat(200);
+    const [curta] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'transfer', toAgentId: 'u2', metadata: { note: 'cliente pediu retorno amanhã' } })],
+      { names: NAMES },
+    );
+    expect(curta.summary).toBe('cliente pediu retorno amanhã');
+    expect(detalheDe(curta, 'Comentário')).toBe('cliente pediu retorno amanhã');
+    conferirContrato(curta);
+
+    const [longaEv] = mapConversationEvents(
+      [eventoConversa({ id: 'e2', createdAt: T0, eventType: 'transfer', toAgentId: 'u2', metadata: { note: longa } })],
+      { names: NAMES },
+    );
+    expect(longaEv.summary).toBe(`${'a'.repeat(120)}…`);
+    expect(detalheDe(longaEv, 'Comentário')).toBe(longa);
+    conferirContrato(longaEv);
+  });
+
+  it('transferência sem nota (ausente ou em branco) não inventa comentário', () => {
+    const [semNota] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'transfer', toAgentId: 'u2' })],
+      { names: NAMES },
+    );
+    expect(semNota.summary).toBeUndefined();
+    expect(detalheDe(semNota, 'Comentário')).toBeUndefined();
+
+    const [branca] = mapConversationEvents(
+      [eventoConversa({ id: 'e2', createdAt: T0, eventType: 'transfer', toAgentId: 'u2', metadata: { note: '   ' } })],
+      { names: NAMES },
+    );
+    expect(branca.summary).toBeUndefined();
+    expect(detalheDe(branca, 'Comentário')).toBeUndefined();
+  });
+
   it('transferência sem nome no mapa guarda o id (os nomes vêm depois)', () => {
     const [evento] = mapConversationEvents(
       [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'transfer', fromAgentId: 'agente-x', toAgentId: 'agente-y' })],

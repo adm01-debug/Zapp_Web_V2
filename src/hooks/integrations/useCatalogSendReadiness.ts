@@ -32,6 +32,15 @@ const NO_CONNECTION_REASON =
   'Nenhuma conexão de WhatsApp ativa. Reconecte a instância em Conexões para poder enviar.';
 
 /**
+ * O contato escolhido não tem conexão de WhatsApp definida. Sem
+ * `contact.whatsapp_connection_id` o servidor não resolve conexão nenhuma no
+ * envio (a reivindicação de entrega casa `COALESCE(message.whatsapp_connection_id,
+ * contact.whatsapp_connection_id)`), então o envio para este contato não sai.
+ */
+export const CONTACT_WITHOUT_CONNECTION_REASON =
+  'Este contato não tem uma conexão de WhatsApp definida. Envio bloqueado para este contato.';
+
+/**
  * R2-MOD-008 — a consulta de prontidão falhou: o estado é "indisponível", não
  * "liberado". Enquanto não houver resposta confiável (conexão conectada e
  * supressão conferida) o envio fica bloqueado, com retry explícito.
@@ -42,11 +51,31 @@ export const READINESS_UNAVAILABLE_REASON =
 
 export const normalizeCatalogPhone = (phone: string): string => phone.replace(/\D/g, '');
 
-/** Consulta as duas condições e devolve o motivo do bloqueio (ou nada). */
+/** Consulta as duas condições e devolve o motivo do bloqueio (ou nada).
+ *
+ * A conexão conferida é a DO CONTATO: no envio o servidor reivindica a
+ * mensagem casando `COALESCE(message.whatsapp_connection_id,
+ * contact.whatsapp_connection_id)` com uma `whatsapp_connections` de
+ * `status = 'connected'`. Ter qualquer outra conexão conectada não faz este
+ * envio sair — por isso a checagem antes respondia "pronto" e o envio ficava
+ * preso em `sending`. */
 export async function fetchCatalogSendReadiness(contact: SendReadinessContact): Promise<SendReadiness> {
+  const { data: contactRow, error: contactError } = await supabase
+    .from('contacts')
+    .select('whatsapp_connection_id')
+    .eq('id', contact.id)
+    .maybeSingle();
+
+  if (contactError) throw contactError;
+  const connectionId = contactRow?.whatsapp_connection_id ?? null;
+  if (!connectionId) {
+    return { blocked: true, reason: CONTACT_WITHOUT_CONNECTION_REASON };
+  }
+
   const { data: connections, error: connectionsError } = await supabase
     .from('whatsapp_connections')
     .select('id')
+    .eq('id', connectionId)
     .eq('status', 'connected')
     .limit(1);
 

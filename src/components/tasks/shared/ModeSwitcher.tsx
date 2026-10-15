@@ -31,6 +31,7 @@ export function ModeSwitcher({ mode, onChange }: Props) {
                 'relative flex items-center gap-1.5 h-9 px-3 rounded-[10px] text-sm font-medium transition-colors',
                 active ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
               ].join(' ')}
+              aria-label={label}
               aria-pressed={active}
             >
               {active && (

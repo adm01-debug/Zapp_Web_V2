@@ -69,7 +69,6 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'meta-capi': Views.MetaCAPIView,
   'diagnostics': Views.DiagnosticsView,
   'voip': Views.TelefoniaView,
-  'auto-export': Views.AutoExportManager,
   'google-calendar': Views.GoogleCalendarIntegration,
   'themes': Views.ThemeCustomizer,
   'schedule': Views.ScheduleCalendarView,

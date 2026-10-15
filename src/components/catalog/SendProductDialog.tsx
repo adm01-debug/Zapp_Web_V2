@@ -172,7 +172,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const {
     contactSearch, setContactSearch,
-    contactResults, searchingContacts,
+    contactResults, searchingContacts, contactSearchError,
+    retryContactSearch,
     selectedContact, setSelectedContact,
     resetContactSelection,
   } = useContactSearch(step, presetContact);
@@ -731,6 +732,8 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             onContactSearchChange={setContactSearch}
             contactResults={contactResults}
             searchingContacts={searchingContacts}
+            contactSearchError={contactSearchError}
+            onRetryContactSearch={retryContactSearch}
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSending}

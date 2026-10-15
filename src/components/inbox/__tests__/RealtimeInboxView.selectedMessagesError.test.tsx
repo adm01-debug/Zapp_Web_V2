@@ -48,6 +48,10 @@ vi.mock('@/hooks/chat/useConversationActions', () => ({
 vi.mock('@/hooks/chat/useConversationTabCounts', () => ({ useConversationTabCounts: () => ({ counts: {} }) }));
 vi.mock('@/hooks/crm/useContactCrm360', () => ({ useContactCrm360: () => ({ data: null }) }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
+// Sem este mock o hook de e-mails abre um canal de tempo real de verdade (supabase.channel),
+// o WebSocket do jsdom vive e a suíte fecha com "Unhandled Errors" (exit 1). Mesmo duplo dos
+// vizinhos RealtimeInboxView.pagination.test.tsx / .emailChip.test.tsx.
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({ useContactUnreadEmails: () => ({ count: 0, status: 'ok' }) }));
 vi.mock('@/features/talk-me/useTalkMeQueue', () => ({
   useTalkMeQueue: () => ({ queuesError: false, selectedQueue: null, queuesLoading: false }),
 }));

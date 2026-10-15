@@ -133,24 +133,25 @@ describe('TalkXSuppression · Ações da lista no rail (X182/T06-053)', () => {
     h.insertError = null;
   });
 
-  it('mostra o card "Ações da lista" com as quatro ações do mock', async () => {
+  it('mostra o card "Ações da lista" só com as ações vivas', async () => {
     renderView();
 
     expect(await screen.findByText('Ações da lista')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Adicionar contato/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Gerenciar motivos/ })).toBeTruthy();
-    expect(screen.getByText('Importar contatos')).toBeTruthy();
-    expect(screen.getByText('Exportar lista')).toBeTruthy();
   });
 
-  it('deixa importar e exportar desabilitados (só entram com a etapa seguinte)', async () => {
+  it('não promete importar nem exportar em nenhum ponto do card', async () => {
     renderView();
 
-    const importar = (await screen.findByRole('button', { name: /Importar contatos/ })) as HTMLButtonElement;
-    const exportar = screen.getByRole('button', { name: /Exportar lista/ }) as HTMLButtonElement;
+    await screen.findByText('Ações da lista');
 
-    expect(importar.disabled).toBe(true);
-    expect(exportar.disabled).toBe(true);
+    // O Zapp não importa nem exporta: fora as ações desabilitadas, também sai o
+    // subtítulo e o aviso "ainda não estão disponíveis".
+    expect(screen.queryByRole('button', { name: /Importar/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Exportar/i })).toBeNull();
+    expect(screen.queryByText(/Importar, exportar/i)).toBeNull();
+    expect(screen.queryByText(/ainda não estão disponíveis/i)).toBeNull();
   });
 
   it('tira o "Adicionar contato" da barra de filtros: ele passa a ser a ação do card', async () => {

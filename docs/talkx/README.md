@@ -18,6 +18,7 @@ auditoria e handoff de sessão vivem no [arquivo](./_arquivo/README.md).
 | [PARIDADE.md](./PARIDADE.md) | Checklist de paridade — **substituído e desatualizado**; será regenerado por evidência na etapa X197 |
 | [CHANGELOG_TALKX.md](./CHANGELOG_TALKX.md) | Histórico por fase/etapa (registro datado, não estado atual) |
 | [CONVERSOES.md](./CONVERSOES.md) | Endpoint `talkx-link` (POST): registro de conversão de link rastreável, por assinatura HMAC |
+| [DIAGNOSTICO-rulevalueinput-instavel-2026-10-13.md](./DIAGNOSTICO-rulevalueinput-instavel-2026-10-13.md) | Diagnóstico datado (13/10): a falha do `RuleValueInput.test.tsx` é poluição de estado entre testes (rota em `window.location`), não tempo; conserto é de isolamento |
 | [_arquivo/](./_arquivo/README.md) | **Arquivo** — planos antigos (E01–E100, recuperação, V3), auditoria de 29/09 e handoff de sessão |
 
 ## Estado do módulo

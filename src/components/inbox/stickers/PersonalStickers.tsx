@@ -34,7 +34,7 @@ export function PersonalStickers({ onSend }: PersonalStickersProps) {
             <CardDescription className="text-xs mt-1">Suas figurinhas pessoais — fotos e imagens só suas</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">{stickers.length} fotos</Badge>
+            <Badge variant="secondary" className="text-xs">{stickers.length} figurinhas</Badge>
             <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)} />
             <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="gap-1.5">
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}{uploading ? 'Enviando...' : 'Adicionar'}

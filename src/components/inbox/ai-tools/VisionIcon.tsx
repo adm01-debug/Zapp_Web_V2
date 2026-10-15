@@ -18,6 +18,8 @@ export const VisionIcon = memo(function VisionIcon({ className = 'w-4 h-4' }: Vi
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
     >
       {/* Eye shape */}
       <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />

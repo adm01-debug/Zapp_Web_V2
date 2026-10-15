@@ -2,12 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Stethoscope, CheckCircle2, XCircle, AlertTriangle, Loader2, Wrench, Clock, TrendingUp, Radio, Download, FileText } from 'lucide-react';
+import { Stethoscope, CheckCircle2, XCircle, AlertTriangle, Loader2, Wrench, Clock, TrendingUp, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
-import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import type { DiagnosticResult } from './hooks/useEvolutionMonitoring';
 
 interface Props {
@@ -45,89 +42,9 @@ function ScoreGauge({ score }: { score: number }) {
   );
 }
 
-/** Extrai só o host de uma URL de webhook para não vazar token no relatório. */
-function webhookHost(url: string): string {
-  try { return new URL(url).hostname; } catch { return '(URL inválida)'; }
-}
-
-/** Y29 — o relatório TXT sai pela porta única de gravação, com o gate
- * `profiles.can_download` recebido do componente. Sem permissão nada é
- * gravado (a porta avisa) e o retorno é `false`. */
-function exportReportTxt(d: DiagnosticResult, canDownload: boolean): boolean {
-  const lines = [
-    `=== RELATÓRIO DIAGNÓSTICO EVOLUTION API ===`,
-    `Data: ${new Date(d.timestamp).toLocaleString('pt-BR')}`,
-    `Score: ${d.overallHealth.score}/100 (${d.overallHealth.status})`, '',
-  ];
-  d.diagnostics.forEach(x => {
-    lines.push(`--- ${x.instance} ---`, `  Conexão: ${x.connectionState}`, `  Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`);
-    if (x.webhook) { lines.push(`  URL: ${webhookHost(x.webhook.url)}`, `  Eventos: ${x.webhook.eventsCount}`); if (x.webhook.missingCritical?.length) lines.push(`  Ausentes: ${x.webhook.missingCritical.join(', ')}`); }
-    if (x.messageFlow) lines.push(`  Fluxo: ↓${x.messageFlow.lastHour.incoming} ↑${x.messageFlow.lastHour.outgoing} (${x.messageFlow.flowHealth})`);
-    if (x.autoFix) lines.push(`  Auto-fix: ${x.autoFix.applied ? 'Aplicado' : 'Falhou'}`);
-    lines.push('');
-  });
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-  return downloadFileWithPermission(blob, `diagnostico-${new Date().toISOString().slice(0, 10)}.txt`, { canDownload });
-}
-
-async function exportReportPdf(d: DiagnosticResult, canDownload: boolean) {
-  // Y29 — sem permissão o PDF nem é montado (nada de trabalho nem de arquivo).
-  if (!canDownload) { notifyDownloadBlocked(); return; }
-  try {
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF();
-    const date = new Date(d.timestamp).toLocaleString('pt-BR');
-    let y = 20;
-
-    doc.setFontSize(18);
-    doc.text('Relatório Diagnóstico', 14, y);
-    y += 8;
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Evolution API — ${date}`, 14, y);
-    y += 12;
-
-    // Score
-    doc.setFontSize(14);
-    doc.setTextColor(d.overallHealth.score >= 80 ? 34 : d.overallHealth.score >= 50 ? 180 : 220, d.overallHealth.score >= 80 ? 139 : d.overallHealth.score >= 50 ? 130 : 50, d.overallHealth.score >= 80 ? 34 : d.overallHealth.score >= 50 ? 0 : 50);
-    doc.text(`Score: ${d.overallHealth.score}/100 (${d.overallHealth.status})`, 14, y);
-    y += 12;
-
-    doc.setTextColor(0);
-    d.diagnostics.forEach(x => {
-      if (y > 260) { doc.addPage(); y = 20; }
-      doc.setFontSize(12);
-      doc.text(`${x.instance}`, 14, y);
-      y += 7;
-      doc.setFontSize(10);
-      doc.text(`Conexão: ${x.connectionState}`, 20, y); y += 6;
-      doc.text(`Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`, 20, y); y += 6;
-      if (x.webhook) {
-        doc.text(`URL: ${webhookHost(x.webhook.url)}`, 20, y); y += 6;
-        doc.text(`Eventos configurados: ${x.webhook.eventsCount}`, 20, y); y += 6;
-        if (x.webhook.missingCritical?.length) { doc.text(`Ausentes: ${x.webhook.missingCritical.join(', ')}`, 20, y); y += 6; }
-      }
-      if (x.messageFlow) { doc.text(`Fluxo: Recebidas ${x.messageFlow.lastHour.incoming} | Enviadas ${x.messageFlow.lastHour.outgoing} (${x.messageFlow.flowHealth})`, 20, y); y += 6; }
-      if (x.autoFix) { doc.text(`Auto-fix: ${x.autoFix.applied ? 'Aplicado com sucesso' : 'Falhou'}`, 20, y); y += 6; }
-      y += 6;
-    });
-
-    // Y29 — o PDF também sai pela porta única: `doc.output('blob')` + gate,
-    // em vez de `doc.save()` (que grava no disco por dentro da lib, sem gate).
-    const blob = doc.output('blob') as Blob;
-    downloadFileWithPermission(blob, `diagnostico-evolution-${new Date().toISOString().slice(0, 10)}.pdf`, { canDownload });
-    toast.success('PDF exportado com sucesso!');
-  } catch {
-    toast.error('Erro ao gerar PDF');
-  }
-}
-
 interface CheckItem { label: string; status: 'ok' | 'warning' | 'error'; detail: string; action?: { label: string; onClick: () => void }; }
 
 export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnostic, onReconfigureWebhook, reconfiguring }: Props) {
-  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — os relatórios TXT/PDF (webhook, URL de
-  // instância, fluxo de mensagens) passam pelo gate `profiles.can_download`.
-  const { canDownload } = useDownloadPermission();
   const buildChecklist = (): CheckItem[] => {
     if (!diagnostic) return [];
     const items: CheckItem[] = [];
@@ -160,12 +77,6 @@ export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnos
         </Button>
         {diagnostic && (
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportTxt(diagnostic, canDownload)}>
-              <Download className="w-3.5 h-3.5 mr-1" />TXT
-            </Button>
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportPdf(diagnostic, canDownload)}>
-              <FileText className="w-3.5 h-3.5 mr-1" />PDF
-            </Button>
             <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{new Date(diagnostic.timestamp).toLocaleString('pt-BR')}</span>
           </div>
         )}

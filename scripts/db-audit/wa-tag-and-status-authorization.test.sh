@@ -7,6 +7,10 @@
 #             renomeia/remove etiqueta de TODOS os contatos).
 #   BLOCO B — migration aplicada: prova a correcao, sem quebrar os casos legitimos
 #             (contato proprio, contato da fila, admin, service_role/cron).
+#   BLOCO C — RPCs atomicas de tag (20261011155015_contact_tags_atomic): prova a
+#             ATOMICIDADE sob concorrencia (duas conexoes de verdade), a idempotencia,
+#             a normalizacao, a autorizacao e a auditoria. Inclui um CONTRA-EXEMPLO
+#             que reproduz o lost update da leitura-depois-escrita que as RPCs evitam.
 # Vermelho antes e verde depois saem do mesmo run, no banco de verdade, nao de mock.
 #
 # O estado anterior e fiel ao banco de 30/09: corpos de set_conversation_status
@@ -17,6 +21,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql"
+tags_migration="$repo_root/supabase/migrations/20261011155015_contact_tags_atomic.sql"
 postgres_image="${WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-wa-tag-authz-test-$$"
 
@@ -373,4 +378,179 @@ expect_error 'B13 anon (claims role=anon) -> set_conversation_status negado' \
 expect_value 'Z1 FSM continua valida e o ultimo estado aplicado foi o do chamador autorizado' 'archived' \
   "SELECT conversation_status FROM public.contacts WHERE id='$ALHEIO'"
 
-printf '\n[OK] contrato de autorizacao L1/L2 verificado\n'
+# ── BLOCO C: RPCs atomicas de tag (20261011155015_contact_tags_atomic) ─────────────
+echo
+echo '── Aplicando a migration das RPCs atomicas de tag ────────────────────────────────'
+
+cat > "$tmp_dir/audit_logs.sql" <<'SQL'
+CREATE TABLE public.audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid,
+  action text NOT NULL,
+  entity_type text,
+  entity_id uuid,
+  details jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+SQL
+
+psql_file "$tmp_dir/audit_logs.sql"
+psql_file "$tags_migration"
+psql_file "$tmp_dir/seed.sql"
+
+echo
+echo '── BLOCO C: RPCs atomicas de tag ─────────────────────────────────────────────────'
+
+# Roda um arquivo .sql numa conexao propria (usado nas provas de concorrencia).
+run_sql_file() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres < "$1"; }
+reset_proprio() { psql_sql "UPDATE public.contacts SET tags='{}'::text[] WHERE id='$PROPRIO';" >/dev/null; }
+
+# C0 — CONTRA-EXEMPLO: a leitura-depois-escrita perde a escrita concorrente (o defeito
+#      que as RPCs existem para eliminar). Le a versao antiga, dorme, e sobrescreve.
+reset_proprio
+cat > "$tmp_dir/c0_sess1.sql" <<'SQL'
+DO $$
+DECLARE v text[];
+BEGIN
+  SELECT COALESCE(tags,'{}'::text[]) INTO v FROM public.contacts WHERE id='d0000000-0000-0000-0000-000000000002';
+  PERFORM pg_sleep(4);
+  UPDATE public.contacts SET tags = v || ARRAY['tag_lida'] WHERE id='d0000000-0000-0000-0000-000000000002';
+END $$;
+SQL
+run_sql_file "$tmp_dir/c0_sess1.sql" > "$tmp_dir/c0_sess1.out" 2>&1 &
+c0_job=$!
+sleep 1
+psql_sql "UPDATE public.contacts SET tags = COALESCE(tags,'{}'::text[]) || ARRAY['tag_concorrente'] WHERE id='$PROPRIO';" >/dev/null
+wait "$c0_job" || fail "C0: sessao 1 falhou: $(cat "$tmp_dir/c0_sess1.out")"
+expect_value 'C0 (contra-exemplo) a leitura-depois-escrita PERDEU a tag concorrente' '0' \
+  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['tag_concorrente']"
+expect_value 'C0 (contra-exemplo) so sobrou a versao obsoleta' 'tag_lida' \
+  "SELECT array_to_string(tags,'|') FROM public.contacts WHERE id='$PROPRIO'"
+
+# C3 — CONCORRENCIA: duas conexoes autenticadas adicionam tags DIFERENTES na mesma linha;
+#      a segunda espera o lock da primeira e reavalia sobre a versao nova — as DUAS ficam.
+reset_proprio
+cat > "$tmp_dir/c3_sess1.sql" <<SQL
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+BEGIN;
+SELECT public.add_contact_tag('$PROPRIO','corrida_a');
+SELECT pg_sleep(4);
+COMMIT;
+SQL
+cat > "$tmp_dir/c3_sess2.sql" <<SQL
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+SELECT public.add_contact_tag('$PROPRIO','corrida_b');
+SQL
+run_sql_file "$tmp_dir/c3_sess1.sql" > "$tmp_dir/c3_sess1.out" 2>&1 &
+c3_job=$!
+sleep 2
+run_sql_file "$tmp_dir/c3_sess2.sql" > "$tmp_dir/c3_sess2.out" 2>&1 \
+  || fail "C3: sessao 2 falhou: $(cat "$tmp_dir/c3_sess2.out")"
+wait "$c3_job" || fail "C3: sessao 1 falhou: $(cat "$tmp_dir/c3_sess1.out")"
+expect_value 'C3 concorrencia: as DUAS tags sobrevivem (sem lost update)' '2' \
+  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND t IN ('corrida_a','corrida_b')"
+
+# C4 — CONCORRENCIA + idempotencia: duas conexoes adicionam a MESMA tag em caixas diferentes;
+#      a que espera o lock enxerga a tag recem-gravada e NAO duplica.
+reset_proprio
+cat > "$tmp_dir/c4_sess1.sql" <<SQL
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+BEGIN;
+SELECT public.add_contact_tag('$PROPRIO','Dup_Tag');
+SELECT pg_sleep(4);
+COMMIT;
+SQL
+cat > "$tmp_dir/c4_sess2.sql" <<SQL
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+SELECT public.add_contact_tag('$PROPRIO','dup_tag');
+SQL
+run_sql_file "$tmp_dir/c4_sess1.sql" > "$tmp_dir/c4_sess1.out" 2>&1 &
+c4_job=$!
+sleep 2
+run_sql_file "$tmp_dir/c4_sess2.sql" > "$tmp_dir/c4_sess2.out" 2>&1 \
+  || fail "C4: sessao 2 falhou: $(cat "$tmp_dir/c4_sess2.out")"
+wait "$c4_job" || fail "C4: sessao 1 falhou: $(cat "$tmp_dir/c4_sess1.out")"
+expect_value 'C4 concorrencia: a tag repetida entrou UMA vez' '1' \
+  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND lower(t)='dup_tag'"
+
+# C1/C2 — adicionar e idempotencia (sequencial, agente A no proprio contato).
+reset_proprio
+expect_ok 'C1 agent A adiciona tag no proprio contato' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','cliente_vip');")"
+expect_value 'C1 tag gravada' '1' \
+  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['cliente_vip']"
+psql_sql "UPDATE public.contacts SET updated_at='2020-01-01T00:00:00Z' WHERE id='$PROPRIO';" >/dev/null
+expect_ok 'C2 adiciona a MESMA tag em outra caixa (idempotente)' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','CLIENTE_VIP');")"
+expect_value 'C2 sem duplicata (1 ocorrencia, sem diferenciar caixa)' '1' \
+  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND lower(t)='cliente_vip'"
+expect_value 'C2 no-op preserva updated_at' '2020-01-01 00:00:00+00' \
+  "SELECT updated_at FROM public.contacts WHERE id='$PROPRIO'"
+# C2b — mudança REAL avança updated_at (o UPDATE só toca a linha e só quando a tag muda;
+# a sentença grava updated_at = now() explicitamente, então vale mesmo sem o gatilho real).
+expect_ok 'C2b adiciona tag NOVA' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','nova_tag');")"
+expect_value 'C2b mudanca real avancou updated_at (antes/depois)' '1' \
+  "SELECT (updated_at > '2020-01-01 00:00:00+00'::timestamptz)::int FROM public.contacts WHERE id='$PROPRIO'"
+
+# C5 — remover tira SOMENTE a tag pedida (todas as caixas dela) e preserva o resto.
+psql_sql "UPDATE public.contacts SET tags=ARRAY['keep_a','Remover','keep_b'] WHERE id='$PROPRIO';" >/dev/null
+expect_ok 'C5 remove a tag pedida (caixa diferente)' \
+  "$(agent_a "SELECT public.remove_contact_tag('$PROPRIO','remover');")"
+expect_value 'C5 somente a tag pedida saiu, o resto ficou' 'keep_a|keep_b' \
+  "SELECT array_to_string(tags,'|') FROM public.contacts WHERE id='$PROPRIO'"
+
+# C6 — autorizacao: contato sem visibilidade/carteira do agente e recusado, sem efeito.
+expect_error 'C6 agent sem carteira -> add em contato ALHEIO recusado' 'contact_not_authorized' \
+  "$(agent_a "SELECT public.add_contact_tag('$ALHEIO','invasao');")"
+expect_value 'C6 nenhuma tag do alheio alterada' '0' \
+  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['invasao']"
+expect_error 'C6b remove em contato ALHEIO tambem recusado' 'contact_not_authorized' \
+  "$(agent_a "SELECT public.remove_contact_tag('$ALHEIO','outra');")"
+expect_value 'C6b tag do alheio intacta' '1' \
+  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['outra']"
+
+# C7 — anon: sem EXECUTE (revogado), nao passa nem na porta de entrada.
+expect_error 'C7 anon -> add negado' 'permission denied' \
+  "SET ROLE anon; SELECT set_config('request.jwt.claims','{\"role\":\"anon\"}',false); SELECT public.add_contact_tag('$PROPRIO','x');"
+expect_error 'C7b anon -> remove negado' 'permission denied' \
+  "SET ROLE anon; SELECT set_config('request.jwt.claims','{\"role\":\"anon\"}',false); SELECT public.remove_contact_tag('$PROPRIO','x');"
+
+# C8 — service_role (automacao) segue operando em contato de terceiro.
+expect_ok 'C8 service_role adiciona tag em contato alheio' \
+  "SET ROLE service_role; SELECT set_config('request.jwt.claims','{\"role\":\"service_role\"}',false); SELECT public.add_contact_tag('$ALHEIO','cron_tag');"
+expect_value 'C8 tag do cron gravada' '1' \
+  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['cron_tag']"
+
+# C9 — normalizacao: vazio e >40 recusados; 40 aceito.
+expect_error 'C9 tag vazia (so espacos) recusada' 'contact_tag_empty' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','   ');")"
+expect_error 'C9 tag com 41 caracteres recusada' 'contact_tag_too_long' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','$(printf 'a%.0s' {1..41})');")"
+expect_ok 'C9 tag com 40 caracteres aceita (limite)' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','$(printf 'b%.0s' {1..40})');")"
+expect_value 'C9 tag de 40 sem espacos nas pontas' '1' \
+  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['$(printf 'b%.0s' {1..40})']"
+
+# C10 — auditoria: um evento por mudanca real, sem dado pessoal; no-op nao audita.
+psql_sql "DELETE FROM public.audit_logs;" >/dev/null
+expect_ok 'C10 add gera auditoria' "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','audit_tag');")"
+expect_value 'C10 exatamente 1 evento de add' '1' \
+  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_added' AND entity_id='$PROPRIO'"
+expect_value 'C10 detalhes guardam apenas a tag' 'audit_tag' \
+  "SELECT details->>'tag' FROM public.audit_logs WHERE action='contact_tag_added' LIMIT 1"
+expect_value 'C10 detalhes sem nenhuma outra chave (sem dado pessoal)' '1' \
+  "SELECT count(*) FROM public.audit_logs a, jsonb_object_keys(a.details) k WHERE a.action='contact_tag_added'"
+expect_ok 'C10b repetir a mesma tag em outra caixa (no-op)' \
+  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','AUDIT_TAG');")"
+expect_value 'C10b no-op NAO gera evento novo' '1' \
+  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_added' AND entity_id='$PROPRIO'"
+expect_ok 'C11 remove gera auditoria' "$(agent_a "SELECT public.remove_contact_tag('$PROPRIO','audit_tag');")"
+expect_value 'C11 evento de remove registrado' '1' \
+  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_removed' AND entity_id='$PROPRIO'"
+
+printf '\n[OK] contrato de autorizacao L1/L2 + RPCs atomicas de tag verificados\n'

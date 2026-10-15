@@ -104,7 +104,7 @@ describe('MediaPreviewDialog (etapa 30 — visualizador único e navegável)', (
     }
     render(<CloseHarness />);
     expect(screen.getByRole('dialog', { name: 'Foto A' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

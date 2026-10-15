@@ -184,7 +184,18 @@ export function useAIUsageDashboard() {
 
   // (1) TOTAIS: agregados no servidor, sobre a JANELA INTEIRA. Nenhuma soma e
   // feita no cliente, entao nada depende de qual pagina esta visivel.
-  const { data: resumo, isLoading, refetch: refetchResumo } = useQuery({
+  // R2-UI-*: o estado da consulta é exposto ao consumidor. Antes só `isLoading`
+  // saía daqui — e a tela nem o usava —, então a falha da agregação era exibida
+  // como cartões 0, "Nenhum dado no período" e tendência zerada: indistinguível
+  // de uma janela legitimamente sem chamadas. `isError`/`error` existem para que
+  // a tela possa DIZER que não conseguiu buscar, em vez de afirmar que é zero.
+  const {
+    data: resumo,
+    isLoading,
+    isError,
+    error,
+    refetch: refetchResumo,
+  } = useQuery({
     queryKey: ['ai-usage-summary', timeFilter],
     queryFn: async () => {
       // O tipo gerado ainda nao conhece esta RPC (types.ts e regenerado do banco,
@@ -228,7 +239,15 @@ export function useAIUsageDashboard() {
 
   // (2) LISTA: paginacao REAL. O `range` corta no servidor e o `count: 'exact'`
   // diz quantas linhas existem de verdade — nao quantas vieram na resposta.
-  const { data: pagina, isLoading: isLoadingLogs, refetch: refetchLogs } = useQuery({
+  // A lista também declara a própria falha: sem `logsError` a consulta que falha
+  // devolvia `[]` e o consumidor não teria como separar "nenhum log na janela" de
+  // "não deu para buscar os logs".
+  const {
+    data: pagina,
+    isLoading: isLoadingLogs,
+    isError: logsError,
+    refetch: refetchLogs,
+  } = useQuery({
     queryKey: ['ai-usage-logs', timeFilter, logsPage],
     queryFn: async () => {
       const de = logsPage * LOGS_PER_PAGE;
@@ -319,6 +338,9 @@ export function useAIUsageDashboard() {
 
   return {
     logs, isLoading, isLoadingLogs, refetch, timeFilter, setTimeFilter: trocarFiltro,
+    // Estado das consultas: a tela precisa poder mostrar "carregando" e "não deu
+    // para buscar" — hoje ela trata os dois como "sem dado".
+    isError, error, logsError,
     logsPage, setLogsPage, logsTotal, logsTotalPaginas, pageSize: LOGS_PER_PAGE,
     profileMap, stats,
     // Custo do periodo (IA-055), ja formatado: moeda, quebra interno/reconciliado

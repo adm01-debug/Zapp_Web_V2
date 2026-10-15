@@ -4,6 +4,7 @@ import { Menu, Search, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { NavigationService } from '@/services/navigation.service';
 
 interface MobileHeaderProps {
   onMenuOpen: () => void;
@@ -57,6 +58,17 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
       .join('')
       .slice(0, 2) || 'U';
 
+    // Fonte única: o rótulo oficial vem do NavigationService (o mesmo que rotula
+    // menu e ViewRouter). O dicionário local age só como SOBRESCRITA pontual
+    // (ex.: 'inbox' → 'Conversas'). O fallback de capitalizar o id só existe para
+    // ids legados que não estão (mais) no catálogo de navegação.
+    const navLabel = NavigationService.getViewLabel(currentView);
+    const title =
+      viewLabels[currentView] ??
+      (navLabel !== currentView
+        ? navLabel
+        : currentView.charAt(0).toUpperCase() + currentView.slice(1));
+
     return (
       <motion.header
         ref={ref}
@@ -103,7 +115,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               animate={{ opacity: 1, y: 0 }}
               className="font-display font-semibold text-sm text-foreground truncate max-w-[180px]"
             >
-              {viewLabels[currentView] || currentView.charAt(0).toUpperCase() + currentView.slice(1)}
+              {title}
             </motion.h1>
           </div>
 

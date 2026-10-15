@@ -10,11 +10,18 @@ import { Users, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+/** Resultado de um handoff: a atribuição sempre ocorreu quando o callback
+ * resolve; `noteSaved=false` sinaliza sucesso PARCIAL (a nota interna não
+ * persistiu) e vira aviso, não "transferida com sucesso". */
+export interface HandoffResult {
+  noteSaved: boolean;
+}
+
 interface HandoffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contactId: string;
-  onHandoff: (agentId: string, comment: string) => Promise<void>;
+  onHandoff: (agentId: string, comment: string) => Promise<HandoffResult>;
 }
 
 export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: HandoffDialogProps) {
@@ -36,12 +43,18 @@ export function HandoffDialog({ open, onOpenChange, contactId, onHandoff }: Hand
     if (!selectedAgent) return;
     setIsSubmitting(true);
     try {
-      await onHandoff(selectedAgent, comment);
+      const result = await onHandoff(selectedAgent, comment);
       onOpenChange(false);
       setSelectedAgent(null);
       setComment('');
-      toast.success('Conversa transferida com sucesso!');
+      if (result.noteSaved) {
+        toast.success('Conversa transferida com sucesso!');
+      } else {
+        toast.warning('Conversa transferida, mas a nota não pôde ser salva.');
+      }
     } catch {
+      // Falha real (ID inválido, permissão negada, nada gravado): o diálogo
+      // permanece aberto e o agente pode tentar de novo — nunca "sucesso".
       toast.error('Erro ao transferir conversa');
     } finally {
       setIsSubmitting(false);

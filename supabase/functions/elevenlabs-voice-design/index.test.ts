@@ -95,6 +95,9 @@ function rotasDeAuth(
   const rotas: Route[] = [
     { match: '/auth/v1/user', body: { id: userId, aud: 'authenticated' } },
     { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 4 }] },
+    // IA-009 / SL-010b — o kill switch lê `ai.capability.voice` no servidor, ANTES
+    // do limite e do provedor. Caminho feliz destes casos: capacidade ligada.
+    { match: '/rest/v1/feature_flags', body: { enabled: true } },
   ];
   rotas.push(
     papel.papelErro
@@ -376,5 +379,47 @@ Deno.test('SL-007: preview segue aberto a qualquer autenticado (o gate é só da
     );
   } finally {
     stub.restore();
+  }
+});
+
+// ── IA-009 / SL-010b: kill switch da família de voz (chave ai.capability.voice) ──
+//
+// Caso NEGADO: com a capacidade de voz DESLIGADA no servidor, o laboratório de
+// voz responde 503 e NÃO chama o provedor pago — nem reserva limite. Antes da
+// correção a flag era ignorada: preview/create alcançavam a ElevenLabs com a
+// capacidade desligada.
+
+Deno.test('IA-009/SL-010b: capacidade desligada -> preview e create recusam 503, sem tocar o provedor nem consumir limite', async () => {
+  for (const body of [
+    { action: 'preview', description: 'Tom calmo' },
+    PAYLOAD_CRIAR_VOZ,
+  ]) {
+    const stub = withFetch([
+      // Rota da flag ANTES: o stub casa a primeira rota que casa (flag DESLIGADA).
+      { match: '/rest/v1/feature_flags', body: { enabled: false } },
+      ...rotasDeAuth(`user-cap-off-${String(body.action)}`, { isAdmin: true }),
+      { match: ELEVENLABS_PREVIEW, body: { previews: [] } },
+      { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-que-nao-podia-existir' } },
+      { match: ELEVENLABS_LISTAGEM, body: LISTAGEM_DE_VOZES },
+    ]);
+    try {
+      const res = await handleVoiceDesignRequest(makeRequest(body));
+      assert(res.status === 503, `capacidade desligada deveria ser 503 em ${String(body.action)}, veio ${res.status}`);
+      const payload = await res.json() as { code?: string };
+      assert(
+        payload.code === 'AI_CAPABILITY_DISABLED',
+        `código inesperado: ${JSON.stringify(payload)}`,
+      );
+      assert(
+        !stub.seen().some((u) => u.includes('api.elevenlabs.io')),
+        `capacidade desligada NÃO pode tocar o provedor: ${stub.seen().join(', ')}`,
+      );
+      assert(
+        !stub.seen().some((u) => u.includes('/rest/v1/rpc/consume_rate_limit')),
+        'capacidade desligada NÃO pode consumir rate limit (gate vem antes do limite)',
+      );
+    } finally {
+      stub.restore();
+    }
   }
 });

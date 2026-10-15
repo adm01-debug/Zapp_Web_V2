@@ -362,7 +362,7 @@ export const MessageBubble = memo(function MessageBubble({
                   {message.link_preview && (
                     <LinkPreviewCard preview={message.link_preview} isSent={isSent} />
                   )}
-                  <p className="text-sm whitespace-pre-wrap leading-[1.45]">
+                  <p className="chat-message-text whitespace-pre-wrap leading-[1.45]">
                     {searchQuery && highlightedMessageIds?.has(message.id) ? <HighlightedText text={message.content} query={searchQuery} /> : message.content}
                   </p>
                   </>

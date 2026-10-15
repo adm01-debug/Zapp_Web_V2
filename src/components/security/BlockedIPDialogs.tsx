@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { isValidIpOrCidr, normalizeIpInput } from '@/lib/ipValidation';
 
 interface BlockIPDialogProps {
   open: boolean;
@@ -23,23 +24,32 @@ export function BlockIPDialog({ open, onClose, onSuccess }: BlockIPDialogProps) 
   const [isPermanent, setIsPermanent] = useState(false);
   const [duration, setDuration] = useState('60');
   const [updating, setUpdating] = useState(false);
+  // Bloquear IP corta acesso: o clique abre a confirmação e nada vai para o
+  // banco antes dela (o "Bloquear" do rodapé não insere mais direto).
+  const [confirming, setConfirming] = useState(false);
 
-  const resetForm = () => { setNewIP(''); setReason(''); setIsPermanent(false); setDuration('60'); };
+  const resetForm = () => { setNewIP(''); setReason(''); setIsPermanent(false); setDuration('60'); setConfirming(false); };
 
-  const handleBlockIP = async () => {
+  const handleBlockIP = () => {
     if (!newIP.trim() || !reason.trim()) { toast.error('Preencha todos os campos'); return; }
-    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(newIP)) { toast.error('Formato de IP inválido'); return; }
+    // Antes: /^(\d{1,3}\.){3}\d{1,3}$/ deixava passar 999.999.999.999 e não
+    // conhecia IPv6/CIDR. Agora a família, o octeto e o prefixo são medidos.
+    if (!isValidIpOrCidr(newIP)) { toast.error('Endereço IP inválido'); return; }
+    setConfirming(true);
+  };
 
+  const confirmBlockIP = async () => {
     setUpdating(true);
     const expiresAt = isPermanent ? null : new Date(Date.now() + Number.parseInt(duration) * 60 * 1000).toISOString();
-    const { error } = await supabase.from('blocked_ips').insert({ ip_address: newIP, reason, is_permanent: isPermanent, expires_at: expiresAt, blocked_by: user?.id });
+    const { error } = await supabase.from('blocked_ips').insert({ ip_address: normalizeIpInput(newIP), reason: reason.trim(), is_permanent: isPermanent, expires_at: expiresAt, blocked_by: user?.id });
 
     if (error) { toast.error(error.code === '23505' ? 'Este IP já está bloqueado' : 'Erro ao bloquear IP'); }
-    else { toast.success('IP bloqueado com sucesso'); onClose(); resetForm(); onSuccess(); }
+    else { toast.success('IP bloqueado com sucesso'); setConfirming(false); onClose(); resetForm(); onSuccess(); }
     setUpdating(false);
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent aria-describedby={undefined}>
         <DialogHeader>
@@ -58,6 +68,24 @@ export function BlockIPDialog({ open, onClose, onSuccess }: BlockIPDialogProps) 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={confirming} onOpenChange={(v) => { if (!v) setConfirming(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bloquear este IP?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O IP <code className="font-mono">{normalizeIpInput(newIP)}</code> deixará de acessar o sistema
+              enquanto o bloqueio valer. Bloquear o IP do seu próprio navegador ou da sua rede derruba o seu
+              acesso na hora, sem aviso: confirme que este NÃO é o IP desta rede antes de continuar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBlockIP} disabled={updating}>{updating && <Loader2 className="w-4 h-4 motion-safe:animate-spin mr-2" />}Bloquear mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

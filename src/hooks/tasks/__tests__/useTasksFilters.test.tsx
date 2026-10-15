@@ -27,9 +27,9 @@ describe('etapa 45 — useTasksFilters', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('nasce dos parâmetros da URL', () => {
+  it('nasce dos parâmetros da URL — menos ?q=, que nunca restaura a busca (SEC-FRONTEND-05)', () => {
     const { result } = renderFiltros('?q=liga&prio=high&alarm=1&done=0');
-    expect(result.current.filters).toEqual({ q: 'liga', prio: 'high', contact: null, alarm: true, done: false, due: 'all' });
+    expect(result.current.filters).toEqual({ q: '', prio: 'high', contact: null, alarm: true, done: false, due: 'all' });
     expect(result.current.isActive).toBe(true);
   });
 
@@ -126,7 +126,7 @@ describe('etapa 45 — useTasksFilters', () => {
     expect(new URLSearchParams(window.location.search).get('prio')).toBe('high');
   });
 
-  it('Fase F: deep-link que chega DEPOIS de montar reidrata os filtros (o router manda)', () => {
+  it('SEC-FRONTEND-05: deep-link com ?q= reidrata os filtros estruturados, mas NÃO a busca', () => {
     let ir: (to: string) => void = () => {};
     const Espiao = () => { ir = useNavigate(); return null; };
 
@@ -143,9 +143,10 @@ describe('etapa 45 — useTasksFilters', () => {
 
     act(() => { ir('/?q=liga&prio=high'); });
 
-    expect(result.current.filters.q).toBe('liga');
     expect(result.current.filters.prio).toBe('high');
-    expect(result.current.textoDaBusca).toBe('liga');
+    // o texto livre nunca volta da URL (PII)...
+    expect(result.current.filters.q).toBe('');
+    expect(result.current.textoDaBusca).toBe('');
   });
 
   it('nao desfaz a navegacao por pushState: a base e a URL real, nao o location obsoleto do router', () => {

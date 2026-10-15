@@ -141,6 +141,41 @@ describe('buildTimeline', () => {
     expect(metrics.resolutions).toBe(2);
   });
 
+  it('transferencia com nota (metadata.note) expoe note cortada em 120 e noteFull completa', () => {
+    const longa = 'x'.repeat(200);
+    const rows = emptyRows({
+      events: [
+        { id: 't1', event_type: 'transfer', created_at: '2026-09-08T12:00:00Z', metadata: { note: longa } },
+        { id: 'c1', event_type: 'close', created_at: '2026-09-08T13:00:00Z', metadata: { note: 'encerrando' } },
+      ],
+    });
+    const { days } = buildTimeline(rows);
+    const evs = days.flatMap((d) => d.events);
+    const transferencia = evs.find((e) => e.id === 'event-t1')!;
+    expect(transferencia.note).toBe(`${'x'.repeat(120)}…`);
+    expect(transferencia.noteFull).toBe(longa);
+    // evento de outro tipo expoe a nota do mesmo jeito (o dado e do evento, nao do rotulo)
+    const encerrada = evs.find((e) => e.id === 'event-c1')!;
+    expect(encerrada.note).toBe('encerrando');
+    expect(encerrada.noteFull).toBe('encerrando');
+  });
+
+  it('sem nota (metadata ausente ou note vazia): nao inventa note/noteFull', () => {
+    const { days } = buildTimeline(emptyRows({
+      events: [
+        { id: 't1', event_type: 'transfer', created_at: '2026-09-08T12:00:00Z' },
+        { id: 't2', event_type: 'transfer', created_at: '2026-09-08T12:30:00Z', metadata: { note: '   ' } },
+        { id: 't3', event_type: 'transfer', created_at: '2026-09-08T13:00:00Z', metadata: null },
+      ],
+    }));
+    const evs = days.flatMap((d) => d.events);
+    expect(evs).toHaveLength(3);
+    for (const e of evs) {
+      expect(e.note).toBeUndefined();
+      expect(e.noteFull).toBeUndefined();
+    }
+  });
+
   it('limite de 200 eventos define hasMore', () => {
     const messages = Array.from({ length: 250 }, (_, i) => ({
       id: `m${i}`, sender: i % 2 === 0 ? 'contact' : 'agent', content: `msg ${i}`,

@@ -94,6 +94,13 @@ export function useNPSSurveys() {
     }
   }, [fetchSurveys]);
 
+  // NOTA (código morto conhecido): `createSurvey` não tem chamador — nenhuma tela, Edge
+  // Function ou cron insere em `nps_surveys` na V2 (o envio de pesquisa NPS não existe; a
+  // satisfação automática do atendimento é o CSAT/PD-34). Fica mantido (documentado) em vez
+  // de removido porque apagá-lo desloca a linha da dívida `react-hooks/set-state-in-effect`
+  // já registrada em scripts/ci/eslint-baseline.json, cuja alteração exige aprovação
+  // explícita. Quando o baseline for regerado, a remoção deste trecho é segura.
+
   const metrics: NPSMetrics = useMemo(() => {
     const total = surveys.length;
     if (total === 0) {

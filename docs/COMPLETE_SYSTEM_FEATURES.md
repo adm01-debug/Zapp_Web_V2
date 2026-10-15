@@ -573,7 +573,7 @@
 
 | # | Funcionalidade | Status | Arquivo Principal |
 |---|---------------|--------|-------------------|
-| 27.1 | PWA (manifest.json completo) | ✅ | `public/manifest.json` |
+| 27.1 | PWA (app instalável: `public/manifest.json` + tags no `index.html`) | ✅ | `index.html` |
 | 27.2 | Service Worker | ✅ | `public/sw.js` |
 | 27.3 | Navegação mobile (bottom nav) | ✅ | `src/components/mobile/MobileNavigation.tsx` |
 | 27.4 | Bottom Sheet | ✅ | `src/components/mobile/BottomSheet.tsx` |

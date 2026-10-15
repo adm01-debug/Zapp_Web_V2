@@ -40,6 +40,12 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// O tópico ganha sufixo exclusivo por instância em produção; aqui ele volta ao
+// nome base para o teste seguir olhando só a conversa que assina.
+vi.mock('@/lib/realtimeTopic', () => ({
+  uniqueRealtimeTopic: (base: string) => base,
+}));
+
 vi.mock('@/integrations/supabase/client', () => {
   const criarBuilder = () => {
     const builder: Record<string, unknown> = {};

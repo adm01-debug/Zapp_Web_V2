@@ -20,6 +20,7 @@ const USUARIO = { id: 'u-1', email: 'agente@promobrindes.com.br' };
 let usuarioAtual: unknown = USUARIO;
 const papeis = { value: [] as string[] };
 const permissao = { value: true };
+const falhaPapeis = { value: false };
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: usuarioAtual, loading: false }),
@@ -27,6 +28,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
     loading: false,
+    rolesLoadError: falhaPapeis.value,
     hasRole: (papel: string) => papeis.value.includes(papel),
   }),
 }));
@@ -85,6 +87,7 @@ beforeEach(() => {
   usuarioAtual = USUARIO;
   papeis.value = [];
   permissao.value = true;
+  falhaPapeis.value = false;
   vi.mocked(logAudit).mockClear();
 });
 
@@ -149,6 +152,18 @@ describe('ProtectedRoute — acesso negado explicado e registrado', () => {
       expect(screen.getByText('SEM PERMISSAO')).toBeTruthy();
     });
     expect(screen.queryByText('Acesso negado')).toBeNull();
+    expect(vi.mocked(logAudit)).not.toHaveBeenCalled();
+  });
+
+  it('falha ao carregar papeis não vira acesso negado nem auditoria falsa', async () => {
+    falhaPapeis.value = true;
+    cenario({ roles: ['admin'] });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Erro ao verificar permissões' })).toBeTruthy();
+    });
+    expect(screen.queryByText('Acesso negado')).toBeNull();
+    expect(screen.queryByText('CONTEUDO PROTEGIDO')).toBeNull();
     expect(vi.mocked(logAudit)).not.toHaveBeenCalled();
   });
 });

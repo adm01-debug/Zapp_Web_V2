@@ -17,6 +17,8 @@ interface TimelineEvent {
   type: 'message_sent' | 'message_received' | 'created' | 'updated' | 'tag_added' | 'assigned' | 'note';
   title: string;
   description?: string;
+  /** Texto completo da nota da transferência — o `title` da linha cortada. */
+  notaCompleta?: string;
   timestamp: string;
   metadata?: Record<string, unknown>;
 }
@@ -36,6 +38,24 @@ const EVENT_CONFIG: Record<string, { icon: React.ElementType; color: string; bg:
   assigned: { icon: ArrowRight, color: 'text-info', bg: 'bg-info/10' },
   note: { icon: Edit, color: 'text-muted-foreground', bg: 'bg-muted/30' },
 };
+
+/** Mesmo teto de corte usado na linha do tempo do histórico (`useConversationHistoryTimeline`). */
+const NOTA_MAX = 120;
+
+/**
+ * Nota escrita na transferência (`conversation_events.metadata.note`): devolve o texto cortado em
+ * 120 (a linha) e o texto completo (o detalhe) — ou `undefined`. Nota vazia/ausente não muda nada.
+ */
+function notaDoEvento(
+  metadata: unknown,
+): { curto: string; completo: string } | undefined {
+  const nota = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>).note : undefined;
+  const bruto = typeof nota === 'string' ? nota : '';
+  const completo = bruto.replace(/\s+/g, ' ').trim();
+  if (!completo) return undefined;
+  const curto = completo.length <= NOTA_MAX ? completo : `${completo.slice(0, NOTA_MAX).trimEnd()}…`;
+  return { curto, completo };
+}
 
 export function ContactActivityTimeline({ contactId, contactCreatedAt, className }: ContactActivityTimelineProps) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
@@ -112,11 +132,14 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
 
       if (assignments) {
         assignments.forEach(evt => {
+          const nota = notaDoEvento(evt.metadata);
           timeline.push({
             id: evt.id,
             type: 'assigned',
             title: evt.event_type === 'assign' ? 'Atribuído a agente' :
                    evt.event_type === 'transfer' ? 'Transferido' : 'Evento',
+            description: nota ? `Nota: ${nota.curto}` : undefined,
+            notaCompleta: nota?.completo,
             timestamp: evt.created_at,
           });
         });
@@ -194,7 +217,7 @@ export function ContactActivityTimeline({ contactId, contactCreatedAt, className
                     </span>
                   </div>
                   {event.description && (
-                    <p className="text-2xs text-muted-foreground truncate mt-0.5">{event.description}</p>
+                    <p className="text-2xs text-muted-foreground truncate mt-0.5" title={event.notaCompleta}>{event.description}</p>
                   )}
                 </div>
               </motion.div>

@@ -308,3 +308,120 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     ]);
   });
 });
+
+describe('AutomationEditorDialog — configuração do gatilho (R2-MOD-004)', () => {
+  beforeEach(() => {
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
+  });
+
+  const NOTE_KEYWORDS = 'Ex: oi, preço, orçamento';
+  const NOTE_MINUTES = '30';
+  const NOTE_TAG = 'Ex: lead-quente';
+
+  function fillNameAndSave(name: string) {
+    fireEvent.change(screen.getByPlaceholderText(NOTE_NAME), { target: { value: name } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+  }
+
+  it('edita e salva as palavras-chave do gatilho keyword sem perder os outros campos', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderDialog(
+      buildAutomation({
+        trigger_type: 'keyword',
+        trigger_config: { keywords: ['oi', 'olá'], match: 'any' },
+      }),
+      onSave
+    );
+
+    // O campo do gatilho mostra o que já está gravado.
+    expect((screen.getByPlaceholderText(NOTE_KEYWORDS) as HTMLInputElement).value).toBe('oi, olá');
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_KEYWORDS), { target: { value: 'oi, olá, preço' } });
+    fillNameAndSave('Palavras-chave v2');
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.name).toBe('Palavras-chave v2');
+    // `match` não é editado pela UI (não tem dono declarado) e continua preservado.
+    expect(payload.trigger_config).toEqual({ keywords: ['oi', 'olá', 'preço'], match: 'any' });
+    expect(mockToast.error).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia salvar o gatilho de tempo inativo sem os minutos e libera depois de informá-los', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderDialog(buildAutomation({ trigger_type: 'time_inactive', trigger_config: {} }), onSave);
+
+    fillNameAndSave('Reengajar inativos');
+
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith('Informe os minutos de inatividade'));
+    expect(onSave).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_MINUTES), { target: { value: '45' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+    expect(payload.trigger_config).toEqual({ minutes: 45 });
+    expect(mockToast.error).not.toHaveBeenCalledTimes(2);
+  });
+
+  it('exige a tag do gatilho tag_added (nova automação)', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderDialog(null, onSave);
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_NAME), { target: { value: 'Ao ganhar tag' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tag Adicionada' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith('Informe a tag que dispara a automação'));
+    expect(onSave).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByPlaceholderText(NOTE_TAG), { target: { value: 'lead-quente' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+    expect(payload.trigger_type).toBe('tag_added');
+    expect(payload.trigger_config).toEqual({ tag_id: 'lead-quente' });
+  });
+
+  it('gatilho sem campo próprio não inventa campo e preserva a configuração existente', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderDialog(
+      buildAutomation({ trigger_type: 'business_hours', trigger_config: { channel: 'internal' } }),
+      onSave
+    );
+
+    expect(screen.queryByPlaceholderText(NOTE_KEYWORDS)).toBeNull();
+    expect(screen.queryByPlaceholderText(NOTE_MINUTES)).toBeNull();
+    expect(screen.queryByPlaceholderText(NOTE_TAG)).toBeNull();
+    expect(screen.getByText('Este gatilho não tem configuração adicional.')).toBeTruthy();
+
+    fillNameAndSave('Fora do horário v2');
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+    expect(payload.trigger_config).toEqual({ channel: 'internal' });
+  });
+
+  it('trocar o gatilho descarta a chave exclusiva do gatilho anterior', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    renderDialog(
+      buildAutomation({ trigger_type: 'keyword', trigger_config: { keywords: ['oi'], match: 'any' } }),
+      onSave
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tempo Inativo' }));
+    fireEvent.change(screen.getByPlaceholderText(NOTE_MINUTES), { target: { value: '45' } });
+    fillNameAndSave('Inativos 45min');
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const payload = onSave.mock.calls[0][0] as Partial<AutomationRow>;
+
+    expect(payload.trigger_type).toBe('time_inactive');
+    // `keywords` é exclusiva de `keyword` e sai; `match` não tem dono e fica.
+    expect(payload.trigger_config).toEqual({ match: 'any', minutes: 45 });
+  });
+});

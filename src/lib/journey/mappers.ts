@@ -559,6 +559,23 @@ export function mapEmails(
 /** Mesmo teto de corte do `safeEventText` (`SAFE_EVENT_TEXT_MAX` em `model.ts`). */
 const NOTA_TEXTO_MAX = 120;
 
+/**
+ * Comentário escrito na transferência (`conversation_events.metadata.note`): devolve o texto
+ * completo (para o detalhe do episódio) e o mesmo texto cortado em 120 (para a linha da
+ * timeline). Nota vazia/ausente → `null` — sem nota, o evento sai exatamente como antes.
+ * Mesmo tratamento da nota do contato: JSON de verdade vira rótulo seguro.
+ */
+function comentarioDaTransferencia(
+  metadata: RawEvent['metadata'],
+): { completo: string; curto: string } | null {
+  const bruto = metadata && typeof metadata['note'] === 'string' ? String(metadata['note']).trim() : '';
+  if (!bruto) return null;
+  const completo = ehJson(bruto) ? safeEventText(bruto) : bruto.replace(/\s+/g, ' ');
+  if (!completo) return null;
+  const curto = completo.length <= NOTA_TEXTO_MAX ? completo : `${completo.slice(0, NOTA_TEXTO_MAX).trimEnd()}…`;
+  return { completo, curto };
+}
+
 /** JSON de verdade (com aspas/chaves válidas) — só ele vai para o `safeEventText`. */
 function ehJson(valor: string): boolean {
   if (!valor.startsWith('{') && !valor.startsWith('[')) return false;
@@ -753,17 +770,20 @@ export function mapConversationEvents(
 
     if (TRANSFER_EVENT_TYPES.has(tipo) || REASSIGN_EVENT_TYPES.has(tipo)) {
       const reatribuicao = REASSIGN_EVENT_TYPES.has(tipo);
+      const comentario = comentarioDaTransferencia(evento.metadata);
       mapeados.push({
         id,
         at,
         category: KIND_TO_CATEGORY.transfer,
         kind: 'transfer',
         title: reatribuicao ? 'Reatribuição automática' : 'Transferência',
+        summary: comentario?.curto,
         details: detalhes([
           detalhe('De', de),
           detalhe('Para', para),
           detalhe('Fila de origem', filaDe),
           detalhe('Fila de destino', filaPara),
+          detalhe('Comentário', comentario?.completo),
         ]),
         actor,
         target: { type: 'detail', id },

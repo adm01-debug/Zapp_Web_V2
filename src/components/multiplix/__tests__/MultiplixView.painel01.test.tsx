@@ -131,6 +131,19 @@ beforeEach(() => {
 });
 
 describe('MultiplixView · Painel 01 (F73)', () => {
+  it('antes da primeira busca, orienta o operador em vez de deixar a tela muda', () => {
+    render(<MultiplixView />);
+
+    // Antes do primeiro "Buscar" a tela só tinha o formulário; sem instrução o
+    // operador não sabia que precisava clicar em Buscar.
+    expect(screen.getByTestId('multiplix-empty-hint')).toHaveTextContent(
+      'Escolha os filtros e clique em Buscar para ver o público.',
+    );
+
+    buscar();
+    expect(screen.queryByTestId('multiplix-empty-hint')).toBeNull();
+  });
+
   it('papel: os dois papéis marcados viajam juntos na busca e na contagem', async () => {
     render(<MultiplixView />);
 

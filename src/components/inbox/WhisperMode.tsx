@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { zappMotion, zappTransition, zappPopoverVariants } from '@/lib/motion';
 
 interface WhisperModeProps {
@@ -322,7 +323,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
-      .channel(`whisper-${contactId}`)
+      .channel(uniqueRealtimeTopic(`whisper-${contactId}`))
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',

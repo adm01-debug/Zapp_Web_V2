@@ -94,7 +94,7 @@ export function ContactGroupedList({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-border/20 space-y-1 p-1">
+                  <div className="border-t border-border/20 space-y-2 p-1">
                     {members.map((contact, index) => (
                       <ContactListItem
                         key={contact.id}

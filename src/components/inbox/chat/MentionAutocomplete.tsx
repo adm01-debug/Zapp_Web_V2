@@ -5,8 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface AgentMention {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   avatar_url?: string | null;
 }
 
@@ -60,9 +60,8 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
     setMentionQuery(query);
     setMentionStart(atIndex);
     
-    const results = agents.filter(a => 
-      a.name.toLowerCase().includes(query) || 
-      a.email.toLowerCase().includes(query)
+    const results = agents.filter(a =>
+      mentionHaystack(a)?.includes(query)
     ).slice(0, 5);
     
     setFiltered(results);
@@ -91,7 +90,10 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
           <span className="text-xs text-muted-foreground">Mencionar agente</span>
         </div>
         <div className="max-h-48 overflow-y-auto p-1">
-          {filtered.map((agent, i) => (
+          {filtered.map((agent, i) => {
+            const label = mentionLabel(agent) ?? '';
+            const showEmail = Boolean(agent.name?.trim() && agent.email?.trim());
+            return (
             <button
               key={agent.id}
               onClick={() => handleSelect(agent)}
@@ -104,15 +106,18 @@ export function MentionAutocomplete({ inputValue, cursorPosition, onSelect, onCl
                 <img src={agent.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover"  loading="lazy" decoding="async"/>
               ) : (
                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-                  {agent.name.charAt(0).toUpperCase()}
+                  {label.charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="min-w-0">
-                <span className="font-medium text-foreground block truncate">{agent.name}</span>
-                <span className="text-xs text-muted-foreground truncate block">{agent.email}</span>
+                <span className="font-medium text-foreground block truncate">{label}</span>
+                {showEmail && (
+                  <span className="text-xs text-muted-foreground truncate block">{agent.email}</span>
+                )}
               </div>
             </button>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
     </AnimatePresence>
@@ -137,20 +142,21 @@ export function useMentions(inputRef: React.RefObject<HTMLTextAreaElement | null
     }
   }, []);
 
-  const handleSelect = useCallback((agent: { name: string }, startPos: number) => {
+  const handleSelect = useCallback((agent: AgentMention, startPos: number) => {
     const el = inputRef.current;
-    if (!el) return;
+    const label = mentionLabel(agent);
+    if (!el || !label) return;
     
     const before = el.value.substring(0, startPos);
     const after = el.value.substring(cursorPos);
-    const newValue = `${before}@${agent.name} ${after}`;
+    const newValue = `${before}@${label} ${after}`;
     
     // Update via native setter for React compatibility
     const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
     if (nativeSetter) {
       nativeSetter.call(el, newValue);
       el.dispatchEvent(new Event('input', { bubbles: true }));
-      const newPos = startPos + agent.name.length + 2;
+      const newPos = startPos + label.length + 2;
       setTimeout(() => {
         el.focus();
         el.setSelectionRange(newPos, newPos);
@@ -163,4 +169,23 @@ export function useMentions(inputRef: React.RefObject<HTMLTextAreaElement | null
   const close = useCallback(() => setIsOpen(false), []);
 
   return { isOpen, cursorPos, checkForMention, handleSelect, close };
+}
+
+/**
+ * Rótulo exibido e inserido na menção. O nome manda; sem nome, o e-mail serve de
+ * rótulo (admin). Perfil sem nome E sem e-mail não é mencionável — não há o que
+ * inserir depois do `@`.
+ */
+function mentionLabel(agent: AgentMention): string | null {
+  const name = agent.name?.trim();
+  if (name) return name;
+  const email = agent.email?.trim();
+  return email || null;
+}
+
+/** Texto pesquisável da menção; `null` quando o perfil não tem nome nem e-mail. */
+function mentionHaystack(agent: AgentMention): string | null {
+  const label = mentionLabel(agent);
+  if (!label) return null;
+  return `${label} ${agent.email ?? ''}`.toLowerCase();
 }

@@ -133,6 +133,13 @@
 .message-bubble.sent { @apply bg-[hsl(var(--chat-bubble-sent))] text-[hsl(var(--chat-bubble-sent-foreground))] rounded-br-md; }
 .message-bubble.received { @apply bg-[hsl(var(--chat-bubble-received))] text-[hsl(var(--chat-bubble-received-foreground))] rounded-bl-md; }
 
+/* Tamanho do texto das bolhas do chat. `--chat-font-size` é escrito no <html> pelo
+   controle da aba Aparência (ChatTextSize.tsx); sem a variável vale o mesmo 0.875rem
+   do `text-sm` de antes, então a tela não muda para quem nunca escolheu. O modo
+   "Texto Grande" do alto contraste segue vencendo porque lá a regra usa `!important`
+   (accessibility.css), e esta aqui não. */
+.chat-message-text { font-size: var(--chat-font-size, 0.875rem); }
+
 /* ===== STATUS DOT ===== */
 .status-dot { @apply w-2.5 h-2.5 rounded-full; }
 .status-dot.online { @apply bg-[hsl(var(--online))]; }

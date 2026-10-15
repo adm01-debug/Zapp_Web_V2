@@ -63,6 +63,10 @@ export function SatisfactionMetrics() {
   const hasCsat = (breakdown?.totalResponses ?? 0) > 0;
   const hasQueue = (breakdown?.byQueue?.length ?? 0) > 0;
   const hasTimeline = breakdown?.timeline?.some(t => t.csatPercent !== null) ?? false;
+  // A V2 não envia pesquisa NPS (CSAT automático é o PD-34): sem nenhuma linha na
+  // tabela, o KPI de NPS fica sem número — o rótulo tem de dizer isso, não "sem
+  // respostas no período".
+  const hasNpsSurveys = (npsSurveys?.length ?? 0) > 0;
 
   // `t.date` já vem formatado ('dd/MM') de useSatisfactionBreakdown — não é ISO,
   // reformatar com date-fns aqui lança RangeError (Invalid time value).
@@ -103,9 +107,9 @@ export function SatisfactionMetrics() {
         />
         <DashboardKpiCard index={1} size="hero" label="NPS" value={npsScore != null ? String(npsScore) : '—'}
           valueClassName={npsScore != null ? getNPSColor(npsScore) : 'text-muted-foreground'}
-          delta={npsScore != null ? null : { text: 'sem respostas no período', tone: 'muted' }}
+          delta={npsScore != null ? null : { text: hasNpsSurveys ? 'sem respostas no período' : 'nenhuma pesquisa enviada ainda', tone: 'muted' }}
           tile="blue" icon={Users} bars={null} barsColor="blue" chart="bars"
-          aside={npsScore == null ? <KpiEmptyAside icon={BarChart3} label="Sem avaliações no período" /> : undefined}
+          aside={npsScore == null ? <KpiEmptyAside icon={BarChart3} label={hasNpsSurveys ? 'Sem respostas no período' : 'Sem pesquisas enviadas'} /> : undefined}
         />
         <DashboardKpiCard index={2} size="hero" label="Respostas CSAT" value={isLoading ? '—' : String(breakdown?.totalResponses ?? 0)}
           delta={{ text: `nos últimos ${periodDays} dias`, tone: 'muted' }}

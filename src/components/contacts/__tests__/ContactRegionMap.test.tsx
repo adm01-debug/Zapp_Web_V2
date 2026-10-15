@@ -172,4 +172,16 @@ describe('ContactRegionMap', () => {
     // DDD inexistente não inventa ponto.
     expect(regionCoordinates(getRegionFromPhone('5510999999999'))).toBeNull();
   });
+
+  // RD-086: sem bolha plotável e sem endereço confirmado, o mapa não fica mudo.
+  it('sem regiões plotáveis nem endereço confirmado mostra "Sem coordenadas"', () => {
+    render(<ContactRegionMap regions={[]} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.getByTestId('contact-regiao-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem coordenadas')).toBeInTheDocument();
+  });
+
+  it('com região plotável o aviso de vazio não aparece', () => {
+    render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.queryByTestId('contact-regiao-empty')).not.toBeInTheDocument();
+  });
 });

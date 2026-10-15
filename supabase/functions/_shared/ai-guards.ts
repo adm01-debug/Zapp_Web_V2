@@ -208,7 +208,7 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
   //    rejects bursts this isolate already saw, sparing an RPC round-trip.
   const rl = checkRateLimit(`ai:user:${functionName}:${userId}`, perMin, 60_000);
   if (!rl.allowed) {
-    return errorResponse(`Per-user rate limit exceeded (${perMin}/min)`, 429, req);
+    return errorResponse(`Limite de IA por usuário excedido (${perMin}/min). Tente novamente em instantes.`, 429, req);
   }
 
   // 2) Authoritative shared/atomic limit (edge_rate_limits via ai_rate_limit_hit).
@@ -218,7 +218,7 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
     windowSeconds: opts.sharedWindowSeconds,
   });
   if (!decision.allowed) {
-    return errorResponse(`Per-user rate limit exceeded (${decision.limit}/min)`, 429, req);
+    return errorResponse(`Limite de IA por usuário excedido (${decision.limit}/min). Tente novamente em instantes.`, 429, req);
   }
 
   // 3) Daily quota via ai_usage_logs (service role)
@@ -237,7 +237,7 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
       return null;
     }
     if ((count ?? 0) >= quota) {
-      return errorResponse(`Daily AI quota exceeded (${quota}/day)`, 429, req);
+      return errorResponse(`Cota diária de IA excedida (${quota}/dia). Tente novamente mais tarde.`, 429, req);
     }
   } catch (_e) {
     // Fail open

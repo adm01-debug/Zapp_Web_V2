@@ -11,6 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import {
   EFFECT_MESSAGE_SEND,
   enqueueEffectReconcile,
@@ -259,6 +260,35 @@ export function providerPayload(
   }
 }
 
+/**
+ * E15 / TRA-002 (#18): entrega o outbound à Evolution com a credencial da
+ * PRÓPRIA conexão do claim. O token sai de `get_instance_token` pelo
+ * `whatsapp_instance_name` (Vault, E18/E19) — nunca da key global, que faria a
+ * GO atender pela instância padrão. Sem token resolvido, `evoFetch` falha
+ * fechado (400, antes de qualquer rede) em vez de emprestar a credencial da
+ * padrão. `resolveInstanceToken` não lança: sem credencial segura devolve null.
+ */
+export async function deliverOutbound(
+  service: InstanceTokenClient,
+  evolutionUrl: string,
+  evolutionKey: string,
+  outbound: { path: string; body: Record<string, unknown> },
+  instanceName: string,
+  fetcher?: (url: string, options: RequestInit) => Promise<Response>,
+): Promise<Response> {
+  const instanceToken = await resolveInstanceToken(service, instanceName);
+  return evoFetch(
+    evolutionUrl,
+    evolutionKey,
+    outbound.path,
+    outbound.body,
+    fetcher,
+    undefined,
+    undefined,
+    instanceToken ?? undefined,
+  );
+}
+
 async function failClaim(
   service: ServiceClient,
   claim: Claim,
@@ -392,7 +422,9 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     providerPostAttempted = true;
-    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
+    const providerResponse = await deliverOutbound(
+      service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+    );
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
@@ -434,19 +466,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       return errorResponse('Unable to persist delivery receipt', 502, req);
     }
 
-    // This is intentionally best effort: delivery already has its durable
-    // receipt, so a metric failure must never turn a sent WhatsApp message into
-    // a client-visible send failure.
-    try {
-      const { error: metricError } = await service.rpc('mark_first_response', {
-        p_contact_id: claim.contact_id,
-      });
-      if (metricError) {
-        console.error(JSON.stringify({ event: 'message_delivery_metric_error', code: metricError.code }));
-      }
-    } catch {
-      console.error(JSON.stringify({ event: 'message_delivery_metric_error' }));
-    }
+    // O SLA de 1ª resposta é registrado pelo trigger trg_messages_sla_first_response,
+    // disparado dentro de complete_outbound_message() quando a mensagem vira 'sent'
+    // (20260903225000 + 20261006211248). A RPC mark_first_response aqui era
+    // redundante e falhava sempre com 42501: ela exige auth.uid() e este caminho roda
+    // com service_role. Nada a fazer depois do recibo.
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
     await failClaim(service, claim);

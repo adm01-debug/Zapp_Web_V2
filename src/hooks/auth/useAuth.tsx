@@ -3,6 +3,7 @@
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService, type SignInResult } from '@/services/auth.service';
+ import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
  import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
@@ -100,6 +101,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         if (session?.user) {
           definirIdentidade(session.user.id);
           void fetchProfile(session.user.id);
+          // Aviso de novo dispositivo (uma vez por sessão Auth): o e-mail tem de
+          // sair no login/boot, não só quando a vítima abre a tela de Segurança.
+          void notificarDispositivoNovo(session.access_token);
         } else {
           definirIdentidade(null);
         }
@@ -132,6 +136,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // R2-AUTH-005: zera o perfil da identidade anterior antes de buscar a nova.
         definirIdentidade(session.user.id);
         void fetchProfile(session.user.id);
+        // Aviso de novo dispositivo no login (uma vez por sessão Auth).
+        if (event === 'SIGNED_IN') {
+          void notificarDispositivoNovo(session.access_token);
+        }
       } else {
         definirIdentidade(null);
       }

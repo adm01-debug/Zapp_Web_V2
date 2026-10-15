@@ -72,9 +72,14 @@ describe('ContactHeaderSection', () => {
     expect(screen.queryByText('+5511999999999')).not.toBeInTheDocument();
   });
 
-  it('does not render a sentiment chip (fora do escopo dos chips §5.3: tipo/VIP/alta prioridade)', () => {
+  it('mostra o chip de sentimento com TEXTO (positivo/neutro/negativo) — §5.3 revisto no cartão do painel mobile', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
-    expect(screen.queryByText(/Positivo/)).not.toBeInTheDocument();
+    // ai_sentiment legado em inglês ('positive') passa por normalizeSentiment
+    // e cai no rótulo canônico pt-BR.
+    const chip = screen.getByTestId('contact-sentiment-chip');
+    expect(chip).toHaveTextContent('Positivo');
+    // Texto, não só cor: o rótulo é legível sem depender da tinta.
+    expect(chip.textContent).toBe('Positivo');
   });
 
   it('renders priority badge', () => {
@@ -462,5 +467,45 @@ describe('ContactHeaderSection', () => {
     const badge = screen.getByText('75');
     expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
     expect(badge).not.toHaveStyle('background-color: hsl(160 70% 28%)');
+  });
+
+  // ── linha de presença real (contacts.presence_status / presence_updated_at / last_seen_at) ──
+  // Mesma fonte/limiar do cabeçalho do chat; sem sinal, o painel não desenha linha.
+
+  it('presença online recente no painel: mostra "Online"', () => {
+    const conversation = {
+      contact: {
+        id: 'c1',
+        presence_status: 'online',
+        presence_updated_at: new Date(Date.now() - 30_000).toISOString(),
+      },
+    } as unknown as Conversation;
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} conversation={conversation} />);
+    expect(screen.getByTestId('contact-presence')).toHaveTextContent('Online');
+  });
+
+  it('presença online antiga no painel: nenhuma linha de presença (estado neutro atual)', () => {
+    const conversation = {
+      contact: {
+        id: 'c1',
+        presence_status: 'online',
+        presence_updated_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+      },
+    } as unknown as Conversation;
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} conversation={conversation} />);
+    expect(screen.queryByTestId('contact-presence')).not.toBeInTheDocument();
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+  });
+
+  it('last_seen_at no painel: mostra "Visto por último há X"', () => {
+    const conversation = {
+      contact: {
+        id: 'c1',
+        presence_status: 'offline',
+        last_seen_at: new Date(Date.now() - 15 * 60_000).toISOString(),
+      },
+    } as unknown as Conversation;
+    render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} conversation={conversation} />);
+    expect(screen.getByTestId('contact-presence')).toHaveTextContent(/Visto por último há/);
   });
 });

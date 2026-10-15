@@ -23,6 +23,7 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette').then(m =
 const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.OfflineIndicator })));
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
+const SupabaseConnectivityBanner = lazy(() => import('@/components/ui/supabase-connectivity-banner').then(m => ({ default: m.SupabaseConnectivityBanner })));
 const EvolutionDisconnectBanner = lazy(() => import('@/components/alerts/EvolutionDisconnectBanner').then(m => ({ default: m.EvolutionDisconnectBanner })));
 const MfaAdminNudge = lazy(() => import('@/components/security/MfaAdminNudge').then(m => ({ default: m.MfaAdminNudge })));
 // E35 — pré-carrega em tempo ocioso os chunks das views quentes (Chat/Teams/Email/Dashboard).
@@ -128,6 +129,7 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
         <Suspense fallback={null}>
           <CommandPalette onNavigate={setCurrentView} />
           <OfflineIndicator />
+          <SupabaseConnectivityBanner />
           <ConnectionToast />
           <EvolutionDisconnectBanner />
           <MfaAdminNudge onNavigate={setCurrentView} />

@@ -257,8 +257,10 @@ describe('Team Chat — Exhaustive Audit', () => {
   // ═══════════════════════════════════════════
   describe('Message Search', () => {
     it('should filter messages by search query', () => {
-      expect(panelHookSrc).toMatch(/debouncedSearchQuery\.toLowerCase\(\)/);
-      expect(panelHookSrc).toMatch(/messages\.filter\(m => m\.content\?\.toLowerCase\(\)\.includes\(q\)\)/);
+      // A busca deixou de filtrar só as mensagens carregadas: o termo vai ao
+      // servidor pela RPC `search_team_messages` (varre a conversa inteira).
+      expect(panelHookSrc).toMatch(/supabase\.rpc\('search_team_messages'/);
+      expect(panelHookSrc).toMatch(/p_query: searchTerm/);
     });
 
     it('should show result count', () => {

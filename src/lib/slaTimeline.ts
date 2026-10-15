@@ -48,7 +48,7 @@ export function formatSlaDuration(durationMs: number | null): string {
   return `${Math.round(abs / 86_400_000)}d`;
 }
 
-export type SlaMilestoneKind = 'opened' | 'first_response' | 'resolution' | 'transfer';
+export type SlaMilestoneKind = 'opened' | 'first_response' | 'resolution' | 'transfer' | 'closed_no_response';
 
 export interface SlaMilestone {
   id: string;
@@ -112,8 +112,11 @@ function toMs(iso: string | null): number | null {
  *   resposta. É marcador, não julgamento: a situação dele é `na`.
  * - `first_response`: quando há `first_response_at`, a duração real decide; a violação
  *   gravada (`first_response_breached`) manda sobre o relógio. Sem carimbo mas violada, o
- *   marco fica no instante do prazo e sai `breached`. Pendente, o marco fica na abertura e a
- *   situação é a de AGORA (relógio corrente) — é o que a tela mostra enquanto ninguém respondeu.
+ *   marco fica no instante do prazo e sai `breached`. Encerrada sem resposta (`resolved_at`
+ *   presente), vira `closed_no_response` no instante do fechamento com duração fixa
+ *   (`resolved_at - abertura`) — o relógio não corre mais e o marco não vira `breached` sozinho.
+ *   Só quem segue aberto e sem resposta é pendente: o marco fica na abertura e a situação é a de
+ *   AGORA (relógio corrente).
  * - `resolution`: só quando há `resolved_at`, com o prazo medido a partir da abertura.
  * - `transfer`: um por evento de transferência do TR1, sem prazo e sem situação.
  */
@@ -143,6 +146,7 @@ export function buildSlaMilestones(
     });
 
     const respondedMs = toMs(row.first_response_at);
+    const resolvedMs = toMs(row.resolved_at);
     if (respondedMs !== null) {
       const durationMs = respondedMs - openedMs;
       milestones.push({
@@ -166,6 +170,20 @@ export function buildSlaMilestones(
         status: 'breached',
         limitMinutes: limits.firstResponseMinutes,
       });
+    } else if (resolvedMs !== null) {
+      // Encerrada sem resposta: o prazo para de correr no fechamento. A duração é fixa
+      // (`resolved_at - abertura`) e não olha o relógio — antes, este caso caía no ramo
+      // pendente e virava "Estourado" sozinho conforme o tempo passava.
+      const durationMs = Math.max(0, resolvedMs - openedMs);
+      milestones.push({
+        id: `${row.id}-closed_no_response`,
+        kind: 'closed_no_response',
+        at: new Date(resolvedMs).toISOString(),
+        deadlineAt: new Date(firstResponseDeadlineMs).toISOString(),
+        durationMs,
+        status: slaStatusForDuration(durationMs, limits.firstResponseMinutes),
+        limitMinutes: limits.firstResponseMinutes,
+      });
     } else {
       const elapsedMs = Math.max(0, nowMs - openedMs);
       milestones.push({
@@ -179,7 +197,6 @@ export function buildSlaMilestones(
       });
     }
 
-    const resolvedMs = toMs(row.resolved_at);
     if (resolvedMs !== null) {
       const durationMs = resolvedMs - openedMs;
       milestones.push({

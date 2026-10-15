@@ -169,7 +169,9 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     // ausencia na tela). A coluna e nullable no schema.
     ai_priority: null,
     consent_status: 'opt_in',
-    lead_origin: null,
+    // Canal de entrada do contato derivado é o próprio WhatsApp (a projeção nasce de mensagem
+    // evolution): `null` dizia "origem desconhecida" para um contato que veio do WhatsApp.
+    lead_origin: 'whatsapp',
     lead_score: 0,
     notes: null,
     risk_score: 0,

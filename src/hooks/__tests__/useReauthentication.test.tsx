@@ -27,7 +27,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
+import { toast } from 'sonner';
 import { useReauthentication } from '@/hooks/auth/useReauthentication';
+
+const userOk = () => mockGetUser.mockResolvedValue({ data: { user: { email: 'test@example.com' } } });
 
 describe('useReauthentication', () => {
   beforeEach(() => {
@@ -44,9 +47,7 @@ describe('useReauthentication', () => {
   });
 
   it('reauthenticate succeeds with correct password', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { email: 'test@example.com' } },
-    });
+    userOk();
     mockServerLogin.mockResolvedValue({
       ok: true,
       accessToken: 'access-token',
@@ -68,10 +69,8 @@ describe('useReauthentication', () => {
     });
   });
 
-  it('reauthenticate fails with incorrect password', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { email: 'test@example.com' } },
-    });
+  it('reauthenticate fails with incorrect password and classifies the reason', async () => {
+    userOk();
     mockServerLogin.mockResolvedValue({
       ok: false,
       unavailable: false,
@@ -81,18 +80,20 @@ describe('useReauthentication', () => {
 
     const { result } = renderHook(() => useReauthentication());
 
-    let reauthResult: { success: boolean; error?: string } | undefined;
+    let reauthResult: { success: boolean; error?: string; motivo?: string } | undefined;
     await act(async () => {
       reauthResult = await result.current.reauthenticate('wrongpass');
     });
 
-    expect(reauthResult).toMatchObject({ success: false, error: 'Senha incorreta' });
+    expect(reauthResult).toMatchObject({
+      success: false,
+      error: 'Senha incorreta',
+      motivo: 'senha_incorreta',
+    });
   });
 
   it('reauthenticate preserves an auth-edge outage instead of reporting a wrong password', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { email: 'test@example.com' } },
-    });
+    userOk();
     mockServerLogin.mockResolvedValue({
       ok: false,
       unavailable: true,
@@ -101,7 +102,7 @@ describe('useReauthentication', () => {
 
     const { result } = renderHook(() => useReauthentication());
 
-    let reauthResult: { success: boolean; error?: string } | undefined;
+    let reauthResult: { success: boolean; error?: string; motivo?: string } | undefined;
     await act(async () => {
       reauthResult = await result.current.reauthenticate('correctpass');
     });
@@ -109,13 +110,52 @@ describe('useReauthentication', () => {
     expect(reauthResult).toMatchObject({
       success: false,
       error: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.',
+      motivo: 'indisponivel',
+    });
+  });
+
+  it('reauthenticate classifies a locked account apart from a wrong password', async () => {
+    userOk();
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: false,
+      error: 'Account locked',
+      lock: { isLocked: true, lockedUntil: null, attempts: 5, remainingTime: 60 },
+    });
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let reauthResult: { success: boolean; error?: string; motivo?: string } | undefined;
+    await act(async () => {
+      reauthResult = await result.current.reauthenticate('correctpass');
+    });
+
+    expect(reauthResult).toMatchObject({
+      success: false,
+      error: 'Conta temporariamente bloqueada. Tente novamente mais tarde.',
+      motivo: 'conta_bloqueada',
+    });
+  });
+
+  it('reauthenticate falls back to a network reason when getUser throws', async () => {
+    mockGetUser.mockRejectedValue(new Error('Failed to fetch'));
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let reauthResult: { success: boolean; error?: string; motivo?: string } | undefined;
+    await act(async () => {
+      reauthResult = await result.current.reauthenticate('anypass');
+    });
+
+    expect(reauthResult).toMatchObject({
+      success: false,
+      error: 'Não foi possível verificar agora. Confira sua conexão e tente novamente.',
+      motivo: 'rede',
     });
   });
 
   it('reauthenticate fails when no user found', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-    });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { result } = renderHook(() => useReauthentication());
 
@@ -165,10 +205,8 @@ describe('useReauthentication', () => {
     expect(result.current.getActionLabel('delete_account')).toBe('Excluir Conta');
   });
 
-  it('confirmReauth executes callback on success', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { email: 'test@example.com' } },
-    });
+  it('confirmReauth executes callback and returns ok on success', async () => {
+    userOk();
     mockServerLogin.mockResolvedValue({
       ok: true,
       accessToken: 'access-token',
@@ -182,14 +220,89 @@ describe('useReauthentication', () => {
       result.current.requireReauth('change_password', callback);
     });
 
-    let confirmResult: boolean = false;
+    let outcome: { ok: boolean; motivo?: string; mensagem?: string } | undefined;
     await act(async () => {
-      confirmResult = await result.current.confirmReauth('correctpass');
+      outcome = await result.current.confirmReauth('correctpass');
     });
 
-    expect(confirmResult).toBe(true);
+    expect(outcome).toEqual({ ok: true });
     expect(callback).toHaveBeenCalled();
     expect(result.current.showReauthDialog).toBe(false);
     expect(result.current.pendingAction).toBeNull();
+  });
+
+  it('confirmReauth returns the blocked reason instead of a wrong password', async () => {
+    userOk();
+    mockServerLogin.mockResolvedValue({
+      ok: false,
+      unavailable: false,
+      error: 'Account locked',
+      lock: { isLocked: true, lockedUntil: null, attempts: 5, remainingTime: 60 },
+    });
+
+    const callback = vi.fn();
+    const { result } = renderHook(() => useReauthentication());
+
+    act(() => {
+      result.current.requireReauth('change_password', callback);
+    });
+
+    let outcome: { ok: boolean; motivo?: string; mensagem?: string } | undefined;
+    await act(async () => {
+      outcome = await result.current.confirmReauth('correctpass');
+    });
+
+    expect(outcome).toEqual({
+      ok: false,
+      motivo: 'conta_bloqueada',
+      mensagem: 'Conta temporariamente bloqueada. Tente novamente mais tarde.',
+    });
+    expect(callback).not.toHaveBeenCalled();
+    expect(result.current.showReauthDialog).toBe(true);
+  });
+
+  it('confirmReauth returns the unavailable reason when the edge is down', async () => {
+    userOk();
+    mockServerLogin.mockResolvedValue({ ok: false, unavailable: true, error: 'auth-login: HTTP 503' });
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let outcome: { ok: boolean; motivo?: string; mensagem?: string } | undefined;
+    await act(async () => {
+      outcome = await result.current.confirmReauth('correctpass');
+    });
+
+    expect(outcome).toEqual({
+      ok: false,
+      motivo: 'indisponivel',
+      mensagem: 'Reautenticação temporariamente indisponível. Tente novamente em instantes.',
+    });
+  });
+
+  it('confirmReauth keeps the action failure out of the password field', async () => {
+    userOk();
+    mockServerLogin.mockResolvedValue({
+      ok: true,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+
+    const callback = vi.fn().mockRejectedValue(new Error('Falha ao salvar'));
+    const { result } = renderHook(() => useReauthentication());
+
+    act(() => {
+      result.current.requireReauth('change_password', callback);
+    });
+
+    let outcome: { ok: boolean; motivo?: string; mensagem?: string } | undefined;
+    await act(async () => {
+      outcome = await result.current.confirmReauth('correctpass');
+    });
+
+    // Reautenticou: a falha é da AÇÃO. O diálogo fecha com ok e o erro vira um
+    // toast único — nunca 'Senha incorreta' no campo.
+    expect(outcome).toEqual({ ok: true });
+    expect(result.current.showReauthDialog).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith('Falha ao salvar');
   });
 });

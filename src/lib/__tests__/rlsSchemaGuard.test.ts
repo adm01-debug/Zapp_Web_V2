@@ -25,6 +25,13 @@ import {
 //     policies que ele produz para TODO o schema public bate exatamente
 //     com supabase/schema-manifest.json (dump do banco real), e fixtures
 //     sinteticos provam que CREATE/DROP/ALTER/drop dinamico sao aplicados.
+//
+//  Convencao de nome: o prefixo `rls*.test.ts` em src/lib/__tests__ e reservado
+//  aos testes que leem o schema real (policies). Teste de unidade de outro
+//  assunto (ex.: a mensagem de acesso negado de src/lib/rlsError.ts) NAO usa
+//  esse prefixo: colidir com ele reabre o vermelho do empilhamento (t_9421cdaa),
+//  porque este guarda exigiria o resolvedor de migrations de um teste que nao
+//  toca policy nenhuma.
 
 const TESTS_DIR = join(process.cwd(), 'src', 'lib', '__tests__');
 const ESTADO = resolveEffectivePolicies();

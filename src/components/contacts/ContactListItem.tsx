@@ -39,12 +39,12 @@ export function ContactListItem({
         // trilhas para TODAS as linhas, então as colunas ficam alinhadas (fr/auto resolvem
         // igual em linhas de mesma largura). Antes era flexbox com `min-w-[130px]` etc., o
         // que desalinhava entre linhas porque a largura vinha do conteúdo de cada uma.
-        "group grid items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
+        "group grid items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card card-lift card-glow",
         "grid-cols-[auto_auto_minmax(0,1fr)_auto]",                                          // < md: checkbox, avatar, nome, ações
         "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]",                                  // md: + data
         "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",       // lg: + telefone, tags
         "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]", // xl: + email
-        "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
+        "cursor-pointer",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
       onClick={() => onOpenDetails(contact.id)}

@@ -2,10 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Palette, RefreshCw, GraduationCap, LayoutGrid } from 'lucide-react';
+import { Palette, RefreshCw, GraduationCap, LayoutGrid, Type } from 'lucide-react';
 import { AvatarUpload } from '@/components/settings/AvatarUpload';
 import { motion } from '@/components/ui/motion';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { ChatTextSize } from '@/components/theme/ChatTextSize';
 
 interface AppearanceSettingsProps {
   settings: {
@@ -86,6 +87,17 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
             </Label>
             <p className="text-sm text-muted-foreground">Controle o espaçamento geral da UI</p>
             <DensitySelector />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Type className="w-4 h-4 text-primary" />
+              Tamanho do texto do chat
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Escolha o tamanho das mensagens nas conversas — a preferência fica lembrada
+            </p>
+            <ChatTextSize />
           </div>
 
           <div className="pt-4 border-t border-border">

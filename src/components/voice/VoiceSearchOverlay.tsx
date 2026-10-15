@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
-import type { VoiceAgentPhase } from '@/hooks/voice/types';
+import type { VoiceAgentPhase, VoiceTtsIssue } from '@/hooks/voice/types';
 import { VoiceOrb } from './VoiceOrb';
 import { FloatingParticles } from './FloatingParticles';
 import { AudioFrequencyVisualizer } from './AudioFrequencyVisualizer';
@@ -17,11 +17,29 @@ interface VoiceSearchOverlayProps {
   finalTranscript: string;
   agentResponse: string;
   error: string;
+  /** Fala da resposta que não pôde ser tocada ('' quando está tudo certo). */
+  ttsIssue?: VoiceTtsIssue;
+  onRetrySpeak?: () => void;
   onClose: () => void;
   onStartListening: () => Promise<void>;
   onStopListening: () => void;
   onStopSpeaking: () => void;
 }
+
+/**
+ * Texto e rótulo do aviso de áudio vivem na tela (não no hook): o hook diz O QUE
+ * aconteceu (`VoiceTtsIssue`) e o componente diz como isso aparece em pt-BR.
+ */
+const TTS_ISSUE_META: Record<Exclude<VoiceTtsIssue, ''>, { message: string; action: string }> = {
+  'autoplay-blocked': {
+    message: 'A resposta foi gerada, mas o navegador bloqueou o áudio.',
+    action: 'Tocar resposta',
+  },
+  'playback-failed': {
+    message: 'Não foi possível tocar a resposta em voz.',
+    action: 'Tentar de novo',
+  },
+};
 
 const PHASE_META: Record<VoiceAgentPhase, { title: string; subtitle: string }> = {
   idle: { title: 'Assistente de Voz', subtitle: 'Toque no orbe para começar' },
@@ -34,10 +52,12 @@ const PHASE_META: Record<VoiceAgentPhase, { title: string; subtitle: string }> =
 
 export function VoiceSearchOverlay({
   isOpen, phase, partialTranscript, finalTranscript, agentResponse, error,
+  ttsIssue, onRetrySpeak,
   onClose, onStartListening, onStopListening, onStopSpeaking,
 }: VoiceSearchOverlayProps) {
   const colors = usePhaseColors(phase);
   const meta = PHASE_META[phase];
+  const ttsMeta = ttsIssue ? TTS_ISSUE_META[ttsIssue] : null;
   const prefersReduced = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -127,7 +147,19 @@ export function VoiceSearchOverlay({
             </button>
             <AudioFrequencyVisualizer phase={phase} />
             <VoiceTranscriptArea phase={phase} partialTranscript={partialTranscript} finalTranscript={finalTranscript} agentResponse={agentResponse} error={error} colors={colors} />
-            <VoiceSuggestions visible={showSuggestions && phase === 'idle' && !agentResponse} />
+            {ttsMeta && (
+              <div role="alert" className="w-full rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-center">
+                <p className="text-xs text-warning">{ttsMeta.message}</p>
+                <button
+                  type="button"
+                  onClick={() => { void onRetrySpeak?.(); }}
+                  className="mt-2 px-3 py-1 rounded-full text-xs font-medium text-warning bg-warning/10 hover:bg-warning/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent"
+                >
+                  {ttsMeta.action}
+                </button>
+              </div>
+            )}
+            <VoiceSuggestions visible={showSuggestions && phase === 'idle' && !agentResponse && !ttsMeta} />
             <div className="flex items-center justify-between w-full pt-1">
               <span className="text-3xs text-white/20"><kbd className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/10 text-[9px] font-mono">ESC</kbd>{' '}para fechar</span>
               <button ref={closeButtonRef} onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent border border-white/10" aria-label="Fechar assistente de voz">

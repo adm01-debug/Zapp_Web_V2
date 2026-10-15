@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -14,7 +14,6 @@ export interface NotificationSettings {
   slaBreachSound: boolean;
   newMessageSound: boolean;
   mentionSound: boolean;
-  desktopAlerts: boolean;
   quietHoursEnabled: boolean;
   quietHoursStart: string; // HH:mm
   quietHoursEnd: string; // HH:mm
@@ -39,13 +38,15 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   slaBreachSound: true,
   newMessageSound: true,
   mentionSound: true,
-  desktopAlerts: true,
   quietHoursEnabled: false,
   quietHoursStart: '22:00',
   quietHoursEnd: '08:00',
   sentimentAlertEnabled: true,
   sentimentAlertThreshold: 30,
-  sentimentConsecutiveCount: 3,
+  // Igual ao default da coluna `user_settings.sentiment_consecutive_count`
+  // (migration 20251222172655) e ao fallback da Edge `sentiment-alert`: quem nunca
+  // salvou precisa ver o mesmo numero que o alerta usa.
+  sentimentConsecutiveCount: 2,
   transcriptionNotificationEnabled: true,
   messageSoundType: 'chime',
   mentionSoundType: 'bell',
@@ -112,7 +113,7 @@ export const useNotificationSettings = () => {
   const queryClient = useQueryClient();
   const ultimoAvisoDeErroRef = useRef(0);
 
-  const { data: settings = DEFAULT_SETTINGS, isLoading } = useQuery({
+  const { data: settings = DEFAULT_SETTINGS, isLoading, isError } = useQuery({
     queryKey: [NOTIFICATION_SETTINGS_QUERY_KEY, user?.id],
     queryFn: async () => {
       if (!user) return DEFAULT_SETTINGS;
@@ -124,8 +125,11 @@ export const useNotificationSettings = () => {
         .maybeSingle();
 
       if (error) {
+        // Propaga para o react-query marcar isError: engolir o erro aqui deixava
+        // o painel mostrando os padrões como se fossem a configuração gravada,
+        // sem nenhum sinal de que a leitura falhou.
         log.warn('Failed to load notification settings:', error);
-        return DEFAULT_SETTINGS;
+        throw error;
       }
 
       return data ? mapDbToSettings(data as Record<string, unknown>) : DEFAULT_SETTINGS;
@@ -136,6 +140,20 @@ export const useNotificationSettings = () => {
   });
 
   const isSaving = false; // tracked per-mutation below
+
+  // Aviso de leitura falha: sem ele o painel exibe os padrões como se fossem a
+  // configuração gravada. Mesmo respiro do aviso de gravação — uma rajada de
+  // falhas é UM problema.
+  useEffect(() => {
+    if (!isError) return;
+    if (Date.now() - ultimoAvisoDeErroRef.current < INTERVALO_MINIMO_DE_AVISO_MS) return;
+    ultimoAvisoDeErroRef.current = Date.now();
+    toast({
+      title: 'Não foi possível carregar os alertas',
+      description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
+      variant: 'destructive',
+    });
+  }, [isError]);
 
   const updateSettings = useCallback(async (updates: Partial<NotificationSettings>) => {
     if (!user) return;
@@ -279,6 +297,7 @@ export const useNotificationSettings = () => {
     resetSettings,
     isQuietHours,
     isLoading,
+    isError,
     isSaving,
   };
 };

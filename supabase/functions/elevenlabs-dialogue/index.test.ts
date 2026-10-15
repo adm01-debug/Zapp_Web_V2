@@ -124,7 +124,13 @@ const ROTA_PROFILES: Route = {
   match: "/rest/v1/profiles",
   make: () => jsonResp([{ id: "30000000-0000-0000-0000-00000000000c" }]),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
+// IA-009 / SL-010b — o kill switch lê `ai.capability.voice` no SERVIDOR (via
+// PostgREST do supabase-js) ANTES de reservar limite e de tocar o provedor.
+const ROTA_FLAGS = (enabled: boolean): Route => ({
+  match: "/rest/v1/feature_flags",
+  make: () => jsonResp({ enabled }),
+});
+const ROTAS_OK = [ROTA_AUTH, ROTA_FLAGS(true), ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -373,6 +379,7 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([
       ROTA_AUTH,
+      ROTA_FLAGS(true),
       ROTA_RATE_LIMIT,
       ROTA_PROFILES,
       ROTA_LEDGER,
@@ -390,6 +397,56 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
       const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
       assert(metadata.http_status === 500, `http_status inesperado: ${JSON.stringify(metadata)}`);
       assert(metadata.billing_quantity === 7, `caracteres do roteiro inesperados: ${String(metadata.billing_quantity)}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// ── IA-009 / SL-010b: kill switch da família de voz (chave ai.capability.voice) ──
+//
+// Caso NEGADO: com a capacidade de voz DESLIGADA no servidor, o diálogo responde
+// 503 e NÃO chama o provedor pago — e a recusa acontece ANTES de reservar limite
+// (`consume_rate_limit` não é chamado). Antes da correção o handler ignorava a
+// flag: chamava a ElevenLabs e devolvia 200, mesmo com a capacidade desligada.
+
+Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, zero chamada ao provedor e sem consumir limite", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_FLAGS(false),
+      ROTA_RATE_LIMIT,
+      ROTA_AUDIO,
+      ROTA_LEDGER,
+      ROTA_PROFILES,
+    ]);
+    try {
+      const res = await handleElevenLabsDialogue(
+        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }])),
+      );
+
+      assert(res.status === 503, `capacidade desligada deveria recusar com 503, veio ${res.status}`);
+      const payload = await res.json() as { code?: string };
+      assert(
+        payload.code === "AI_CAPABILITY_DISABLED",
+        `código inesperado no corpo: ${JSON.stringify(payload)}`,
+      );
+      assert(
+        callsTo(stub.calls, "api.elevenlabs.io").length === 0,
+        `capacidade desligada NÃO pode tocar o provedor: ${stub.calls.map((c) => c.url).join(", ")}`,
+      );
+      assert(
+        callsTo(stub.calls, "/rest/v1/rpc/consume_rate_limit").length === 0,
+        "capacidade desligada NÃO pode consumir rate limit (gate vem antes do limite)",
+      );
+      // A chave lida é a ÚNICA da família de voz (decisão SL-010b).
+      const flags = callsTo(stub.calls, "/rest/v1/feature_flags");
+      assert(flags.length === 1, `esperado 1 leitura da flag, veio ${flags.length}`);
+      assert(
+        flags[0].url.includes(encodeURIComponent("ai.capability.voice")) ||
+          flags[0].url.includes("ai.capability.voice"),
+        `a chave de capacidade inesperada: ${flags[0].url}`,
+      );
     } finally {
       stub.restore();
     }

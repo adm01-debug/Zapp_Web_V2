@@ -382,9 +382,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <p className="text-2xs text-muted-foreground">Data e horário no fuso {localTz}.</p>
 
             <div>
-              <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label htmlFor="talkx-timezone" className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
-                <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
+                <SelectTrigger id="talkx-timezone" className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -526,6 +526,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 const day = String(d.getDate()).padStart(2, '0');
                 setLocalDate(`${y}-${m}-${day}`);
               }}
+              classNames={{ day_outside: 'day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground' }}
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
             {/* A11: a linha do tempo lê o ESTADO EM EDIÇÃO (data, hora, fuso e
@@ -577,7 +578,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
               <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
+                <p className="text-xs font-semibold text-[hsl(var(--primary-text))]">Tudo pronto para o envio!</p>
                 <p className="text-2xs text-muted-foreground">Aguardando {scheduledLabel}.</p>
               </div>
             </div>

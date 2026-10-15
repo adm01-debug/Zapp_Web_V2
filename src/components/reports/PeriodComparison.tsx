@@ -1,19 +1,34 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, ArrowRight, BarChart3 } from 'lucide-react';
+import { ReportsIntegrityNotice } from './ReportsIntegrityNotice';
 
 interface PeriodData {
   label: string;
-  total: number;
-  resolved: number;
-  avgResponseTime: number;
+  /** `null` = leitura falhou: o valor NÃO é zero confirmado. */
+  total: number | null;
+  resolved: number | null;
+}
+
+interface ComparisonState {
+  current: PeriodData;
+  previous: PeriodData;
+  error: unknown | null;
+}
+
+const EMPTY = '—';
+
+/** Só considera o número quando a leitura não falhou; erro vira "desconhecido". */
+function readCount(result: { count?: number | null; error?: unknown }): number | null {
+  if (result?.error) return null;
+  return typeof result?.count === 'number' ? result.count : null;
 }
 
 export function PeriodComparison() {
-  const [comparison, setComparison] = useState<{ current: PeriodData; previous: PeriodData } | null>(null);
+  const [comparison, setComparison] = useState<ComparisonState | null>(null);
   const [period, setPeriod] = useState('week');
   const [loading, setLoading] = useState(true);
 
@@ -51,16 +66,15 @@ export function PeriodComparison() {
     setComparison({
       current: {
         label: period === 'week' ? 'Esta semana' : 'Este mês',
-        total: currentRes.count || 0,
-        resolved: currentClosures.count || 0,
-        avgResponseTime: 0,
+        total: readCount(currentRes),
+        resolved: readCount(currentClosures),
       },
       previous: {
         label: period === 'week' ? 'Semana passada' : 'Mês passado',
-        total: previousRes.count || 0,
-        resolved: previousClosures.count || 0,
-        avgResponseTime: 0,
+        total: readCount(previousRes),
+        resolved: readCount(previousClosures),
       },
+      error: currentRes?.error ?? previousRes?.error ?? currentClosures?.error ?? previousClosures?.error ?? null,
     });
     setLoading(false);
   }, [period]);
@@ -70,17 +84,22 @@ export function PeriodComparison() {
     loadComparison();
   }, [loadComparison]);
 
-  const getVariation = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / previous) * 100);
-  };
-
-  const VariationBadge = ({ current, previous, inverted = false }: { current: number; previous: number; inverted?: boolean }) => {
-    const variation = getVariation(current, previous);
-    const isPositive = inverted ? variation < 0 : variation > 0;
+  const VariationBadge = ({ current, previous }: { current: number | null; previous: number | null }) => {
+    // Sem base de comparação: leitura falhou (valor desconhecido) ou período anterior sem registros (0).
+    // Nunca inventa +100% nem 0 falso.
+    if (current === null || previous === null || previous === 0) {
+      return (
+        <span className="text-3xs text-muted-foreground" data-testid="variation-no-base">
+          sem base de comparação
+        </span>
+      );
+    }
+    const variation = Math.round(((current - previous) / previous) * 100);
+    const isPositive = variation > 0;
+    const isNegative = variation < 0;
     return (
-      <Badge variant="outline" className={`text-3xs ${isPositive ? 'text-success border-success/30' : variation < 0 ? 'text-destructive border-destructive/30' : 'text-muted-foreground'}`}>
-        {isPositive ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+      <Badge variant="outline" className={`text-3xs ${isPositive ? 'text-success border-success/30' : isNegative ? 'text-destructive border-destructive/30' : 'text-muted-foreground'}`}>
+        {isPositive ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isNegative ? <TrendingDown className="w-3 h-3 mr-0.5" /> : null}
         {variation > 0 ? '+' : ''}{variation}%
       </Badge>
     );
@@ -116,6 +135,7 @@ export function PeriodComparison() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <ReportsIntegrityNotice error={comparison.error} />
           {metrics.map((m) => (
             <div key={m.label} className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -124,12 +144,12 @@ export function PeriodComparison() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex-1 text-center p-2 rounded-lg bg-muted/20">
-                  <p className="text-lg font-bold">{m.previous}</p>
+                  <p className="text-lg font-bold">{m.previous ?? EMPTY}</p>
                   <p className="text-3xs text-muted-foreground">{comparison.previous.label}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 text-center p-2 rounded-lg bg-primary/10">
-                  <p className="text-lg font-bold text-primary">{m.current}</p>
+                  <p className="text-lg font-bold text-primary">{m.current ?? EMPTY}</p>
                   <p className="text-3xs text-muted-foreground">{comparison.current.label}</p>
                 </div>
               </div>

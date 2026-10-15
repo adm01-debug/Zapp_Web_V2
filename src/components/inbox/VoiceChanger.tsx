@@ -1,14 +1,19 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
-import { useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Wand2, Loader2, Play, Square, Check, Volume2 } from 'lucide-react';
+import { Wand2, Loader2, Play, Square, Check, Volume2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { zappTransition } from '@/lib/motion';
 import { ELEVENLABS_VOICES, type ElevenLabsVoice } from './VoiceSelector';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+
+/** Aviso único quando o navegador recusa a reprodução automática do áudio. */
+const PLAYBACK_BLOCKED = 'O navegador bloqueou a reprodução. Toque no botão de novo.';
 
 interface VoiceChangerProps {
   audioBlob: Blob;
@@ -22,7 +27,29 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
   const [isConverting, setIsConverting] = useState(false);
   const [convertedAudioUrl, setConvertedAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mountedRef = useRef(true);
+  const reduceMotion = useReducedMotion() ?? false;
+
+  // Regra 4 do cartao: nenhum setState depois de desmontar.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // Entrada do aviso inline: mola curta (180–260 ms) quando há movimento; com
+  // movimento reduzido nada se desloca — só a opacidade muda.
+  const entradaErro = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: zappTransition.fast }
+    : {
+        initial: { opacity: 0, y: -6 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -6 },
+        transition: { type: 'spring' as const, duration: 0.22, bounce: 0.2 },
+      };
 
   const stopPlayback = useCallback(() => {
     if (audioRef.current) {
@@ -73,47 +100,96 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
       audioRef.current = audio;
       // E36 — prévia de voz convertida é mídia de conversa: respeita o volume global.
       const detachMediaVolume = attachMediaVolume(audio);
-      audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
+      audio.onended = () => { detachMediaVolume(); if (mountedRef.current) setIsPlaying(false); };
       audio.onerror = () => {
         detachMediaVolume();
-        setIsPlaying(false);
-        toast.error('Erro ao reproduzir áudio convertido');
+        if (mountedRef.current) {
+          setIsPlaying(false);
+          toast.error('Erro ao reproduzir áudio convertido');
+        }
       };
-      await audio.play();
-      setIsPlaying(true);
+      setIsPlayLoading(true);
+      let playbackBlocked = false;
+      try {
+        await audio.play();
+        if (mountedRef.current) setIsPlaying(true);
+      } catch {
+        // Reprodução recusada pelo navegador (autoplay bloqueado): desfaz o
+        // estado "tocando" e avisa o usuário. O áudio NÃO é descartado — o
+        // aviso manda tocar o botão de novo e o botão precisa continuar
+        // funcionando (o volume global segue anexado para a nova tentativa).
+        playbackBlocked = true;
+        if (mountedRef.current) {
+          setIsPlaying(false);
+          toast.error(PLAYBACK_BLOCKED);
+        }
+      } finally {
+        if (mountedRef.current) setIsPlayLoading(false);
+      }
 
-      toast.success(`Voz convertida para ${voice.name}!`);
+      // Só comemora a conversão se a prévia tocou: com a reprodução recusada o
+      // usuário acabou de ver o aviso, e um "sucesso" logo depois seria
+      // contraditório.
+      if (!playbackBlocked) toast.success(`Voz convertida para ${voice.name}!`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro ao converter voz: ${msg}`);
-      setSelectedVoice(null);
+      if (mountedRef.current) {
+        toast.error(`Erro ao converter voz: ${msg}`);
+        setSelectedVoice(null);
+      }
     } finally {
-      setIsConverting(false);
+      if (mountedRef.current) setIsConverting(false);
     }
   };
 
-  const handleConfirm = () => {
-    if (!convertedAudioUrl) return;
+  const handleConfirm = async () => {
+    if (!convertedAudioUrl || isConfirming) return;
+    setIsConfirming(true);
+    setConfirmError(null);
 
-    // Fetch the converted audio as blob and pass it up
-    void fetch(convertedAudioUrl)
-      .then(r => r.blob())
-      .then(blob => {
-        onVoiceChanged(blob);
-        setOpen(false);
-        cleanup();
-        toast.success('Áudio com voz alterada pronto para envio!');
-      });
+    try {
+      // O fetch do blob e a leitura do binário podem falhar; o aviso fica na
+      // própria prévia (com "Tentar de novo") e o popover continua utilizável.
+      const response = await fetch(convertedAudioUrl);
+      if (!response.ok) throw new Error(`Erro ${response.status}`);
+      const blob = await response.blob();
+      if (blob.size === 0) throw new Error('áudio convertido vazio');
+      // Regra 4: depois de desmontar, não entrega o blob nem mexe em estado.
+      if (!mountedRef.current) return;
+      onVoiceChanged(blob);
+      setOpen(false);
+      cleanup();
+      toast.success('Áudio com voz alterada pronto para envio!');
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Erro desconhecido';
+      if (mountedRef.current) {
+        setConfirmError(msg);
+        toast.error(`Erro ao preparar o áudio: ${msg}`);
+      }
+    } finally {
+      if (mountedRef.current) setIsConfirming(false);
+    }
   };
 
-  const togglePlayback = () => {
-    if (!audioRef.current || !convertedAudioUrl) return;
+  const togglePlayback = async () => {
+    if (!audioRef.current || !convertedAudioUrl || isPlayLoading) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
-    } else {
-      audioRef.current.play();
+      return;
+    }
+    setIsPlayLoading(true);
+    try {
+      await audioRef.current.play();
+      if (!mountedRef.current) return;
       setIsPlaying(true);
+    } catch {
+      if (mountedRef.current) {
+        setIsPlaying(false);
+        toast.error(PLAYBACK_BLOCKED);
+      }
+    } finally {
+      if (mountedRef.current) setIsPlayLoading(false);
     }
   };
 
@@ -212,22 +288,63 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 text-foreground"
-                  onClick={togglePlayback}
+                  className="h-10 w-10 text-foreground"
+                  aria-label={isPlayLoading ? 'Carregando prévia' : isPlaying ? 'Pausar prévia' : 'Ouvir prévia'}
+                  onClick={() => void togglePlayback()}
+                  disabled={isPlayLoading}
                 >
-                  {isPlaying ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  {isPlayLoading
+                    ? <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" />
+                    : isPlaying
+                      ? <Square className="w-3.5 h-3.5" />
+                      : <Play className="w-3.5 h-3.5" />}
                 </Button>
                 <span className="text-xs text-muted-foreground flex-1">
                   Voz: <span className="font-medium text-foreground">{selectedVoice.name}</span>
                 </span>
                 <Button
                   size="sm"
-                  className="h-7 text-xs bg-primary hover:bg-primary/90"
-                  onClick={handleConfirm}
+                  className="h-10 text-xs bg-primary hover:bg-primary/90"
+                  onClick={() => void handleConfirm()}
+                  disabled={isConfirming}
+                  isLoading={isConfirming}
+                  loadingText="Preparando"
                 >
                   Usar esta voz
                 </Button>
               </div>
+
+              {/* Erro de preparo inline: aviso curto + motivo detalhado no tooltip */}
+              <AnimatePresence initial={false}>
+                {confirmError && (
+                  <motion.div
+                    key="confirm-error"
+                    data-testid="voz-erro-preparo"
+                    role="alert"
+                    {...entradaErro}
+                    className="flex items-center gap-2 px-3 pb-2.5"
+                  >
+                    <AlertCircle className="w-4 h-4 text-destructive shrink-0" aria-hidden="true" />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-xs text-destructive flex-1 cursor-help truncate">
+                          Falha ao preparar o áudio
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" variant="error">{confirmError}</TooltipContent>
+                    </Tooltip>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => void handleConfirm()}
+                      disabled={isConfirming}
+                    >
+                      Tentar de novo
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>

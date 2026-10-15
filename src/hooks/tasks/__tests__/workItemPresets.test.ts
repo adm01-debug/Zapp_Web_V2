@@ -23,6 +23,20 @@ import { tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 /** Domingo, 11/10/2026, 14:00 no relógio local. */
 const AGORA = new Date(2026, 9, 11, 14, 0);
 
+function withTimeZone<T>(timeZone: string, run: () => T): T {
+  const oldTz = process.env.TZ;
+  process.env.TZ = timeZone;
+  try {
+    return run();
+  } finally {
+    if (oldTz === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = oldTz;
+    }
+  }
+}
+
 describe('workItemPresets — presets de prazo (etapa 161)', () => {
   it('"hoje" termina às 23:59 locais do PRÓPRIO dia', () => {
     const d = duePresetDate('today', AGORA);
@@ -38,6 +52,24 @@ describe('workItemPresets — presets de prazo (etapa 161)', () => {
     expect(d.getDate()).toBe(12);
     expect(d.getHours()).toBe(23);
     expect(d.getMinutes()).toBe(59);
+  });
+
+  it('presets de prazo atravessam horário de verão real em America/Sao_Paulo por dia de calendário', () => {
+    withTimeZone('America/Sao_Paulo', () => {
+      const amanhaNoInicioDoDst = duePresetDate('tomorrow', new Date(2018, 10, 3, 23, 30));
+      expect(amanhaNoInicioDoDst.getFullYear()).toBe(2018);
+      expect(amanhaNoInicioDoDst.getMonth()).toBe(10);
+      expect(amanhaNoInicioDoDst.getDate()).toBe(4);
+      expect(amanhaNoInicioDoDst.getHours()).toBe(23);
+      expect(amanhaNoInicioDoDst.getMinutes()).toBe(59);
+
+      const proximaSemanaNoFimDoDst = duePresetDate('nextWeek', new Date(2019, 1, 10, 23, 30));
+      expect(proximaSemanaNoFimDoDst.getFullYear()).toBe(2019);
+      expect(proximaSemanaNoFimDoDst.getMonth()).toBe(1);
+      expect(proximaSemanaNoFimDoDst.getDate()).toBe(17);
+      expect(proximaSemanaNoFimDoDst.getHours()).toBe(23);
+      expect(proximaSemanaNoFimDoDst.getMinutes()).toBe(59);
+    });
   });
 
   it('"próxima semana" é +7 dias de CALENDÁRIO às 23:59', () => {
@@ -64,6 +96,26 @@ describe('workItemPresets — presets de lembrete (etapa 161)', () => {
     expect(d.getDate()).toBe(12);
     expect(d.getHours()).toBe(9);
     expect(d.getMinutes()).toBe(0);
+  });
+
+  it('"amanhã 9h" e "próxima segunda 9h" atravessam DST real em America/Sao_Paulo mantendo a hora local', () => {
+    withTimeZone('America/Sao_Paulo', () => {
+      const amanha9 = remindPresetDate('tomorrow9', new Date(2018, 10, 3, 23, 30));
+      expect(amanha9.getFullYear()).toBe(2018);
+      expect(amanha9.getMonth()).toBe(10);
+      expect(amanha9.getDate()).toBe(4);
+      expect(amanha9.getHours()).toBe(9);
+      expect(amanha9.getMinutes()).toBe(0);
+      expect(amanha9.getTime()).toBe(tomorrowAtNine(new Date(2018, 10, 3, 23, 30)).getTime());
+
+      const proximaSegunda9 = nextMondayAtNine(new Date(2018, 10, 3, 23, 30));
+      expect(proximaSegunda9.getFullYear()).toBe(2018);
+      expect(proximaSegunda9.getMonth()).toBe(10);
+      expect(proximaSegunda9.getDate()).toBe(5);
+      expect(proximaSegunda9.getHours()).toBe(9);
+      expect(proximaSegunda9.getMinutes()).toBe(0);
+      expect(remindPresetDate('nextMonday9', new Date(2018, 10, 3, 23, 30)).getTime()).toBe(proximaSegunda9.getTime());
+    });
   });
 
   it('"próxima segunda 9h" a partir de um domingo é a segunda seguinte', () => {

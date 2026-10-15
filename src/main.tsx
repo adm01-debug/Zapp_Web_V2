@@ -8,11 +8,17 @@ import { initWebVitals } from "./lib/web-vitals";
 import { AppErrorBoundary } from "./providers/AppProviders";
 import { APP_BUILD_ID, startDeploymentUpdateMonitor } from "./lib/deployment-update";
 import { reportClientError } from "./lib/errorReporter";
+import { aplicarTamanhoDoChatSalvo } from "./components/theme/useChatTextSize";
 
 const log = getLogger('App');
 if (window.performance && typeof window.performance.mark === 'function') {
   performance.mark('main-init');
 }
+
+// Aparência: aplica o tamanho do texto do chat lembrado ANTES do primeiro render, para a
+// escolha do usuário valer no chat sem depender de ele abrir a aba Aparência nesta sessão.
+// Lê de localStorage com try/catch (modo privado/SSR não quebra o boot).
+aplicarTamanhoDoChatSalvo();
 log.info('Initialized', { at: new Date().toISOString(), buildId: APP_BUILD_ID.slice(0, 12) });
 startDeploymentUpdateMonitor();
 

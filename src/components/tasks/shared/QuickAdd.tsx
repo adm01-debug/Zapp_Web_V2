@@ -45,6 +45,11 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   const [abertoLembrar, setAbertoLembrar]   = useState(false);
   const [abertoPrioridade, setAbertoPrior]  = useState(false);
   const [abertoMais, setAbertoMais]         = useState(false);
+  // Etapa 042 (refazer 2): o foco é lido no CONTÊINER da captura, não só no campo.
+  // Ao tabular do campo para um chip o foco continua dentro da linha: se os chips
+  // sumissem nesse instante, o elemento focado perderia o `display` e a tecla
+  // morreria ali (armadilha). Fora da linha (blur para fora), a barra se limpa.
+  const [focoNaCaptura, setFocoNaCaptura]   = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -132,6 +137,8 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
       // mesmo dia nascia sem prazo e sumia da Agenda (o DoD da etapa 57 só valia
       // para o 1º envio).
       limpar();
+      // Etapa 043: depois de criar, a próxima captura já começa no campo.
+      window.setTimeout(() => inputRef.current?.focus(), 0);
     } finally {
       setLoading(false);
     }
@@ -157,11 +164,19 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
     if (e.key === 'Escape') { limpar(); }
   };
 
+  // Etapa 042 — a captura nasce limpa: os chips só aparecem quando o campo é
+  // focado, quando já há texto/escolha ou quando um popover está aberto (senão o
+  // gatilho sumiria por baixo do calendário aberto).
+  const algumPopoverAberto = abertoData || abertoLembrar || abertoPrioridade || abertoMais;
+  const temEscolha =
+    title.trim() !== '' || dueDate !== null || remindAt !== null || priority !== 'medium' || escolhido !== null;
+  const chipsRevelados = focoNaCaptura || algumPopoverAberto || temEscolha;
+
   const chips = (
     <>
-      <button type="button" data-testid="quick-add-chip-today"    onClick={setHoje}           className="chip-btn">Hoje <Calendar className="h-3 w-3" /></button>
-      <button type="button" data-testid="quick-add-chip-tomorrow" onClick={setAmanha}         className="chip-btn">Amanhã <Calendar className="h-3 w-3" /></button>
-      <button type="button" data-testid="quick-add-chip-nextweek" onClick={setProximaSemana}  className="chip-btn">Próx. semana <Calendar className="h-3 w-3" /></button>
+      <button type="button" data-testid="quick-add-chip-today"    onClick={setHoje}           className="chip-btn min-h-10">Hoje <Calendar className="h-3 w-3" /></button>
+      <button type="button" data-testid="quick-add-chip-tomorrow" onClick={setAmanha}         className="chip-btn min-h-10">Amanhã <Calendar className="h-3 w-3" /></button>
+      <button type="button" data-testid="quick-add-chip-nextweek" onClick={setProximaSemana}  className="chip-btn min-h-10">Próx. semana <Calendar className="h-3 w-3" /></button>
 
       {/* Etapa 37 — chip Data: popover com Calendar (ptBR) + hora opcional. */}
       <Popover open={abertoData} onOpenChange={setAbertoData}>
@@ -170,7 +185,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             type="button"
             data-testid="quick-add-chip-date"
             aria-label="Data"
-            className={dueDate ? 'chip-active' : 'chip-btn'}
+            className={dueDate ? 'chip-active min-h-10' : 'chip-btn min-h-10'}
           >
             <Calendar className="h-3 w-3" /> {dueDate ? rotuloDia(dueDate) : 'Data'}
           </button>
@@ -207,10 +222,10 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
           <button
             type="button"
             data-testid="quick-add-chip-remind"
-            aria-label="Lembrar"
-            className={`${remindAt ? 'chip-active' : 'chip-btn'} ${remindInPast ? 'text-destructive' : ''}`}
+            aria-label="Lembrete"
+            className={`${remindAt ? 'chip-active' : 'chip-btn'} min-h-10 ${remindInPast ? 'text-destructive' : ''}`}
           >
-            <Bell className="h-3 w-3" /> {remindAt ? `${format(new Date(remindAt), 'dd/MM', { locale: ptBR })} ${horaLocal(remindAt)}` : 'Lembrar'}
+            <Bell className="h-3 w-3" /> {remindAt ? `${format(new Date(remindAt), 'dd/MM', { locale: ptBR })} ${horaLocal(remindAt)}` : 'Lembrete'}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-2" align="start">
@@ -265,7 +280,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             type="button"
             data-testid="quick-add-chip-priority"
             aria-label="Prioridade"
-            className={priority !== 'medium' ? 'chip-active' : 'chip-btn'}
+            className={priority !== 'medium' ? 'chip-active min-h-10' : 'chip-btn min-h-10'}
           >
             <Flag className="h-3 w-3" /> {PRIORITY_LABELS[priority]}
           </button>
@@ -289,8 +304,16 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
 
   return (
     <div className="flex flex-col gap-1.5" data-testid="quick-add">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
-        <div className={`flex items-center gap-2 h-11 rounded-xl bg-input border px-4 flex-1 ${remindInPast ? 'border-destructive' : 'border-border'}`}>
+      {/* Etapa 042 (refazer 2): o foco é observado na LINHA inteira da captura
+          (o foco do CAMPO, no <input> acima, apenas revela; o do contêiner mantém) —
+          o campo e os chips ficam no mesmo contêiner, então tabular do campo para
+          um chip mantém a barra revelada (nada perde `display` embaixo do foco). */}
+      <div
+        className="flex flex-col gap-2 md:flex-row md:items-center"
+        onFocus={() => setFocoNaCaptura(true)}
+        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocoNaCaptura(false); }}
+      >
+        <div className={`flex items-center gap-2 h-12 rounded-xl bg-input border px-4 flex-1 ${remindInPast ? 'border-destructive' : 'border-border'}`}>
           <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             ref={(el) => {
@@ -303,12 +326,21 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder ?? 'Adicionar tarefa… (Enter para criar)'}
-            title="Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrar · Ctrl+@ Contato"
+            placeholder={placeholder ?? 'Capturar uma tarefa…'}
+            title="Atalhos: Ctrl+1 Hoje · Ctrl+2 Amanhã · Ctrl+3 Próx. semana · Ctrl+L Lembrete · Ctrl+@ Contato"
             aria-label="Adicionar tarefa"
             className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
+            onFocus={() => setFocoNaCaptura(true)}
           />
+          {!title && !loading && (
+            <kbd
+              data-testid="quick-add-hint"
+              className={`hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-3xs font-mono text-muted-foreground sm:inline${focoNaCaptura ? ' invisible' : ''}`}
+            >
+              Enter para criar
+            </kbd>
+          )}
           {title && (
             <button
               type="button"
@@ -333,7 +365,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             </PopoverContent>
           </Popover>
         ) : (
-          <div className="flex items-center gap-1.5 flex-wrap">{chips}</div>
+          <div data-testid="quick-add-chips" hidden={!chipsRevelados} className="flex items-center gap-1.5 flex-wrap">{chips}</div>
         )}
       </div>
 

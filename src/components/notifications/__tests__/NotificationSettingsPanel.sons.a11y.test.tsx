@@ -19,7 +19,6 @@ const h = vi.hoisted(() => ({
     slaBreachSound: true,
     newMessageSound: true,
     mentionSound: true,
-    desktopAlerts: false,
     quietHoursEnabled: false,
     quietHoursStart: '22:00',
     quietHoursEnd: '08:00',

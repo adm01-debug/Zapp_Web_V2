@@ -30,9 +30,8 @@ describe('ReactionBadge', () => {
   it('mostra emoji e contagem no nome acessível (plural)', () => {
     render(<ReactionBadge reaction={reaction('👍', 3, false)} onClick={vi.fn()} />);
 
-    // O nome acessível carrega emoji + contagem; o radical "reaç" é conferido à parte
-    // porque a produção hoje escreve "reaçãoões" no plural (defeito relatado no cartão).
-    const badge = screen.getByRole('button', { name: /^👍 3 reaç/ });
+    // Nome acessível exato: o plural tem de ser "reações", não "reaçãoões".
+    const badge = screen.getByRole('button', { name: '👍 3 reações' });
     expect(within(badge).getByText('👍')).toBeInTheDocument();
     expect(within(badge).getByText('3')).toBeInTheDocument();
   });

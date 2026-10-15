@@ -160,6 +160,84 @@ describe('ChatPanelHeader', () => {
     expect(screen.queryByTestId('contact-presence')).not.toBeInTheDocument();
   });
 
+  // ── Presença REAL (colunas contacts.presence_status/presence_updated_at/last_seen_at) ──
+  // "Online" só com sinal online recente (até 2 min); "Visto por último há X"
+  // quando houver last_seen_at; qualquer outra combinação fica no estado neutro.
+  const withPresence = (fields: Record<string, unknown>) => ({
+    ...mockConversation,
+    contact: { ...mockConversation.contact, ...fields },
+  }) as unknown as Conversation;
+
+  it('presença online recente (<= 2 min): afirma Online com o ponto em success', () => {
+    const { container } = render(
+      <Wrapper>
+        <ChatPanelHeader
+          {...baseProps}
+          conversation={withPresence({
+            presence_status: 'online',
+            presence_updated_at: new Date(Date.now() - 60_000).toISOString(),
+          })}
+        />
+      </Wrapper>
+    );
+    const presence = screen.getByTestId('contact-presence');
+    expect(presence).toHaveTextContent('Online');
+    expect(container.querySelector('.bg-success')).not.toBeNull();
+  });
+
+  it('presença online antiga (> 2 min): não afirma Online e cai no estado neutro', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader
+          {...baseProps}
+          conversation={withPresence({
+            presence_status: 'online',
+            presence_updated_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+          })}
+        />
+      </Wrapper>
+    );
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contact-presence')).toHaveAttribute(
+      'aria-label',
+      'Presença do contato não informada'
+    );
+  });
+
+  it('offline com last_seen_at: mostra "Visto por último há X"', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader
+          {...baseProps}
+          conversation={withPresence({
+            presence_status: 'offline',
+            presence_updated_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+            last_seen_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+          })}
+        />
+      </Wrapper>
+    );
+    expect(screen.getByTestId('contact-presence')).toHaveTextContent(/Visto por último há/);
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+  });
+
+  it('digitando tem prioridade sobre a presença real', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader
+          {...baseProps}
+          isContactTyping={true}
+          conversation={withPresence({
+            presence_status: 'online',
+            presence_updated_at: new Date().toISOString(),
+          })}
+        />
+      </Wrapper>
+    );
+    expect(screen.getByText('digitando')).toBeInTheDocument();
+    expect(screen.queryByTestId('contact-presence')).not.toBeInTheDocument();
+  });
+
   it('renders only the Mais ações button in the header (Ligar/Vídeo/Adicionar participante moved to contact sidebar)', () => {
     render(
       <Wrapper>

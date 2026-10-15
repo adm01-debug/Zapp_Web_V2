@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX } from 'lucide-react';
+import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEvolutionMonitoring } from './hooks/useEvolutionMonitoring';
 import type { TimePeriod } from './hooks/useEvolutionMonitoring';
@@ -18,6 +18,7 @@ import { MonitoringDiagnosticPanel } from './MonitoringDiagnosticPanel';
 import { MonitoringEventTimeline } from './MonitoringEventTimeline';
 import { MonitoringAvailabilityHeatmap } from './MonitoringAvailabilityHeatmap';
 import { MonitoringSLAPanel } from './MonitoringSLAPanel';
+import { MonitoringIncidents } from './MonitoringIncidents';
 import { DashboardSkeleton } from './MonitoringSkeletons';
 
 const PERIODS: { value: TimePeriod; label: string }[] = [
@@ -247,6 +248,9 @@ export function EvolutionMonitoringDashboard() {
               {uptime.percentage === null ? '—' : `${uptime.percentage}%`}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger value="incidents" className="gap-1.5">
+            <AlertTriangle className="w-4 h-4" />Incidentes
+          </TabsTrigger>
           <TabsTrigger value="heatmap" className="gap-1.5">
             <CalendarDays className="w-4 h-4" />Heatmap
           </TabsTrigger>
@@ -319,6 +323,17 @@ export function EvolutionMonitoringDashboard() {
               transition={{ duration: 0.2 }}
             >
               <MonitoringSLAPanel uptime={uptime} instanceUptimes={instanceUptimes} truncated={healthLogsTruncated} />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="incidents" key="incidents">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MonitoringIncidents />
             </motion.div>
           </TabsContent>
 

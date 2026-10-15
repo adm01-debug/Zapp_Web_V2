@@ -51,6 +51,11 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
   const estado = sessao.session.status;
   const recebendo = estado === 'ringing_in';
   const ativa = estado === 'active';
+  // T75: enquanto a chamada ainda nao esta atendida (Tocando/Conectando) o rotulo
+  // pulsa para mostrar que ha progresso. `motion-safe:` deixa o pulso desligado sob
+  // `prefers-reduced-motion` — a duracao do pulso e do CSS, nao do framer-motion, e
+  // por isso depende do gate de movimento do proprio Tailwind.
+  const pulsando = estado === 'ringing_out' || estado === 'connecting';
   const numero = sessao.session.phone || sessao.currentNumber || '';
   const nome = sessao.session.name;
 
@@ -72,7 +77,7 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
           <CardContent className="flex flex-col items-center gap-4 p-4">
             {/* Estado (T62) */}
             <p
-              className="text-sm font-medium text-muted-foreground"
+              className={`text-sm font-medium text-muted-foreground${pulsando ? ' motion-safe:animate-pulse' : ''}`}
               aria-live="polite"
               data-testid="tel-active-status"
             >

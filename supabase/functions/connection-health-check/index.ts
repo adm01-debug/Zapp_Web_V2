@@ -7,6 +7,50 @@ import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
 import { isAuthorizedCronOrUser, timingSafeStringEqual, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
+/** Linha de whatsapp_connections lida pela sonda (o select traz só estes campos). */
+type ConnRow = {
+  id: string;
+  instance_id: string;
+  status: string | null;
+  phone_number: string | null;
+};
+
+/**
+ * Mesma regex do cadastro de conexão (`evolution-api`, ação create-connection):
+ * letras minúsculas, números e "_" (3 a 40 caracteres). O nome vira segmento de
+ * PATH na URL do provedor E parâmetro da RPC `get_instance_token`; um valor fora
+ * do formato (barra, ponto, espaço, `..`) jamais pode chegar lá.
+ */
+const INSTANCE_NAME_RE = /^[a-z0-9_]{3,40}$/;
+
+/** Conexões consultadas ao provedor ao mesmo tempo quando NÃO há alvo único. */
+const HEALTH_CHECK_CONCURRENCY = 3;
+
+/** Teto total da sonda: passado ele, quem ainda não começou não toca a rede. */
+const TOTAL_TIMEOUT_MS = 45_000;
+
+/**
+ * Roda `worker` sobre `items` com no máximo `limit` tarefas em voo. Sem item não
+ * abre runner nenhum; com menos itens que o limite, não cria runner ocioso.
+ */
+async function runWithConcurrency<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const runners = Array.from(
+    { length: Math.min(Math.max(limit, 1), items.length) },
+    async () => {
+      while (next < items.length) {
+        const index = next++;
+        await worker(items[index], index);
+      }
+    },
+  );
+  await Promise.all(runners);
+}
+
 export async function handleConnectionHealthCheck(
   req: Request,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,17 +125,40 @@ export async function handleConnectionHealthCheck(
       }
     }
 
+    // Alvo único opcional (`instanceName`). A V3 (connection-health-check@v1)
+    // aceita `{ instanceName? }` para o "Verificar agora"; com alvo, verifico só
+    // essa conexão em vez de varrer TODAS (até 10 s cada) gastando o limite do
+    // usuário à toa. Corpo ausente/ilegível = `{}` (verificar todas).
+    const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+    const requested = typeof body?.instanceName === 'string' ? body.instanceName.trim() : '';
+
+    // Recusa ANTES de qualquer rede/banco e sem ecoar o valor recebido (evita
+    // refletir entrada do cliente). O nome alimenta o PATH do provedor e a RPC
+    // get_instance_token, então um valor fora do formato nunca passa daqui.
+    if (requested && !INSTANCE_NAME_RE.test(requested)) {
+      return errorResponse('Nome de instância inválido.', 400, req);
+    }
+
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
-    const { data: connections, error: connError } = await supabase
+    let connQuery = supabase
       .from('whatsapp_connections').select('id, instance_id, status, phone_number')
       .neq('instance_id', 'E2E_FIXTURE'); // Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check
+    if (requested) connQuery = connQuery.eq('instance_id', requested);
+
+    const { data: connections, error: connError } = await connQuery;
 
     if (connError || !connections) return errorResponse('Failed to fetch connections', 500, req);
 
-    const results = [];
+    // Alvo único que não casa conexão conhecida: 404 NEUTRO — não lista nem ecoa
+    // nome de instância algum.
+    if (requested && connections.length === 0) {
+      return errorResponse('Not found', 404, req);
+    }
+
+    const results: Array<{ instance_id: string; status: string; response_time_ms: number; error: string | null }> = [];
     const alertsToCreate: Array<{ connection_id: string; instance_id: string; phone: string | null }> = [];
 
     // A rota de SESSÃO desta sonda (e a credencial que ela exige) sai do MESMO
@@ -99,11 +166,34 @@ export async function handleConnectionHealthCheck(
     // de status e de INSTÂNCIA (a instância vem na credencial), no v2 e global.
     const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
 
-    for (const conn of connections) {
+    // Teto TOTAL da sonda. Cada requisição ao provedor já tem 10 s; o teto do
+    // lote evita prender a Edge até o timeout da plataforma quando há muitas
+    // conexões. Passado o teto, quem ainda não começou é registrado como
+    // `timeout` SEM tocar a rede (não gasta credencial nem sobrescreve status).
+    const deadline = Date.now() + TOTAL_TIMEOUT_MS;
+
+    // Uma conexão: lê a credencial dela, consulta o provedor, grava log/estado e,
+    // na queda real com CAS vitorioso, enfileira o alerta. Extraída de dentro do
+    // laço para permitir concorrência limitada sem duplicar a lógica.
+    const checkConnection = async (conn: ConnRow, index: number): Promise<void> => {
       const start = performance.now();
       let healthStatus = 'unknown';
       let errorMessage: string | null = null;
       let responseTime = 0;
+
+      if (Date.now() > deadline) {
+        healthStatus = 'timeout';
+        errorMessage = 'Timeout total do health check antes de consultar a instância.';
+        await supabase.from('connection_health_logs').insert({
+          connection_id: conn.id, instance_id: conn.instance_id, status: healthStatus,
+          response_time_ms: 0, error_message: errorMessage,
+        });
+        await supabase.from('whatsapp_connections').update({
+          last_health_check: new Date().toISOString(), health_status: healthStatus, health_response_ms: 0,
+        }).eq('id', conn.id);
+        results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: 0, error: errorMessage };
+        return;
+      }
 
       // E24 (plano multi-conexão): a consulta de estado é POR INSTÂNCIA. No flavor
       // GO a instância é escolhida pela CREDENCIAL (o nome no path v2 se perde na
@@ -201,8 +291,15 @@ export async function handleConnectionHealthCheck(
         last_health_check: new Date().toISOString(), health_status: healthStatus, health_response_ms: responseTime,
       }).eq('id', conn.id);
 
-      results.push({ instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage });
-    }
+      results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage };
+    };
+
+    // Sem alvo: concorrência LIMITADA (3 por vez) — paraleliza sem abrir uma
+    // dezena de sockets simultâneos ao provedor. Com alvo único, `connections`
+    // tem 1 linha e a mesma função roda uma vez só (não varre as outras).
+    // `results[index]` mantém a ordem da consulta mesmo com conclusões fora de
+    // ordem.
+    await runWithConcurrency(connections, HEALTH_CHECK_CONCURRENCY, checkConnection);
 
     for (const alert of alertsToCreate) {
       // Schema real de warroom_alerts: alert_type/title/message/source

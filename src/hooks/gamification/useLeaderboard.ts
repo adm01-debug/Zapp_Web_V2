@@ -45,6 +45,10 @@ export function useLeaderboard() {
   const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Mensagem da ultima leitura que falhou (null = leitura atual bem-sucedida). Sem este
+  // sinal, quem consome nao distingue "a leitura falhou" de "o ranking esta vazio" -- o
+  // catch antigo so registrava no log e a tela mostrava o vazio nos dois casos.
+  const [error, setError] = useState<string | null>(null);
   // Geração da requisição: só a requisição ATUAL escreve no estado. A resposta de um
   // período que já não é o atual (chegou depois da nova) é descartada, em vez de
   // voltar com a tela para o recorte anterior.
@@ -67,6 +71,9 @@ export function useLeaderboard() {
       // Resposta superada pelo período novo: descarta sem tocar no estado.
       if (requisicao !== requisicaoRef.current) return;
       if (error) throw error;
+      // A leitura ATUAL deu certo: some com o erro da anterior (o descarte por geração
+      // acima já saiu antes, então uma resposta obsoleta nunca limpa o erro da atual).
+      setError(null);
       const rows = (data || []) as unknown as LeaderboardRpcRow[];
       if (rows.length === 0) { setAgents([]); return; }
 
@@ -102,6 +109,11 @@ export function useLeaderboard() {
       })));
     } catch (error) {
       log.error('Error fetching leaderboard:', error);
+      // Só a leitura ATUAL publica o erro: uma resposta antiga que falhou depois da troca
+      // de período não pode marcar erro na tela que já mostra o recorte novo.
+      if (requisicao === requisicaoRef.current) {
+        setError(error instanceof Error ? error.message : 'Falha ao ler o ranking');
+      }
     } finally {
       // Só a requisição atual encerra o carregamento; a obsoleta não mexe na tela.
       if (requisicao === requisicaoRef.current) {
@@ -129,5 +141,5 @@ export function useLeaderboard() {
     fetchLeaderboard(timeRange);
   }, [fetchLeaderboard, timeRange]);
 
-  return { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh };
+  return { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh };
 }

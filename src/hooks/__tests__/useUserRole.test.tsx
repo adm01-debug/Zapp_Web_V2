@@ -113,6 +113,33 @@ describe('useUserRole', () => {
     expect(result.current.isSupervisor).toBe(false);
   });
 
+  it('diferencia falha ao buscar papeis de lista vazia de papeis', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1' },
+      session: {},
+      profile: null,
+      loading: false,
+    });
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'permission denied for table user_roles' },
+        }),
+      }),
+    });
+
+    const { result } = renderHook(() => useUserRole(), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.rolesLoadError).toBe(true);
+    });
+
+    expect(result.current.roles).toEqual([]);
+    expect(result.current.hasRole('admin')).toBe(false);
+  });
+
   it('supervisor role implies isSupervisor=true but not isAdmin', async () => {
     mockUseAuth.mockReturnValue({
       user: { id: 'user-1' },

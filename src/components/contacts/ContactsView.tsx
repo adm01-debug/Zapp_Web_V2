@@ -239,6 +239,7 @@ export function ContactsView() {
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
+        totalCount={totalCount}
       />
       </div>
 

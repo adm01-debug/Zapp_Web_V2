@@ -11,6 +11,12 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * Roda no projeto `chromium-theme` (sem `setup`, sem secrets): a tela deslogada já monta o
  * `ThemeInitializer` e o `HighContrastProvider`, que é onde o defeito vive.
+ *
+ * A TELA DE ABERTURA (`#root-loading`) entra no MESMO arquivo de propósito: o projeto
+ * `chromium-theme` é o único deslogado do job de PR do `ci.yml` cujo `testMatch` é um nome
+ * de arquivo único, e `playwright.config.ts` está fora dos arquivos deste cartão. Aqui a
+ * abertura também é assunto de tema: a prova mede as cores dela CONTRA os tokens do
+ * sistema (`--background`/`--foreground`/`--muted-foreground`) nos dois modos.
  */
 
 /** Paleta de alto contraste no tema claro — `src/styles/accessibility.css:4-25`. */
@@ -104,4 +110,110 @@ test.describe('alto contraste vence o preset (ordem das variáveis)', () => {
     expect(primary, 'sem alto contraste o preset volta a mandar').not.toBe(HC_PRIMARY_CLARO);
     expect(primary, 'e o token não pode ficar vazio').not.toBe('');
   });
+});
+
+/**
+ * Tela de abertura (`#root-loading`, no `index.html`): a V2 não tinha nenhuma, então até o
+ * bundle inicial (~340 KB) baixar e o React montar o usuário via o fundo vazio. A prova é
+ * em navegador real e MEDE as cores renderizadas — nada é conferido por string de CSS.
+ */
+
+/** WCAG 2.x: luminância relativa de uma cor `rgb(r, g, b)`. */
+function luminanciaRelativa(rgb: string): number {
+  const numeros = rgb.match(/\d+(?:\.\d+)?/g);
+  if (!numeros || numeros.length < 3) throw new Error(`cor não reconhecida: ${rgb}`);
+  const [r, g, b] = numeros.slice(0, 3).map((n) => Number(n) / 255);
+  const canal = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b);
+}
+
+function razaoDeContraste(frente: string, fundo: string): number {
+  const a = luminanciaRelativa(frente);
+  const b = luminanciaRelativa(fundo);
+  const [claro, escuro] = a > b ? [a, b] : [b, a];
+  return (claro + 0.05) / (escuro + 0.05);
+}
+
+/**
+ * Segura o JS inicial para que a tela de abertura seja observada no estado de espera.
+ * O atraso é generoso de propósito: o teste mede as cores da abertura antes de o React
+ * montar, então ele precisa continuar na tela durante a medição.
+ */
+async function segurarJsInicial(page: Page): Promise<void> {
+  await page.route('**/src/main.tsx', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await route.continue();
+  });
+}
+
+/** Valor REAL de um token, lido do documento já com o CSS do app carregado. */
+async function tokenRenderizado(page: Page, token: string): Promise<string> {
+  return page.evaluate((nome) => {
+    const sonda = document.createElement('div');
+    sonda.style.backgroundColor = `hsl(var(${nome}))`;
+    document.body.appendChild(sonda);
+    const cor = getComputedStyle(sonda).backgroundColor;
+    sonda.remove();
+    return cor;
+  }, token);
+}
+
+test.describe('tela de abertura (#root-loading)', () => {
+  test('aparece antes do React e sai quando o app monta', async ({ page }) => {
+    await segurarJsInicial(page);
+    // `commit` volta assim que a navegação começa: o JS inicial ainda está preso no
+    // route acima, então a abertura está garantidamente na tela para ser observada.
+    await page.goto('/', { waitUntil: 'commit' });
+
+    const abertura = page.locator('#root-loading');
+    await expect(abertura, 'antes do React a abertura tem de estar na tela').toBeVisible();
+    await expect(abertura.getByRole('status')).toHaveText('Carregando…');
+
+    // O app monta (ou o watchdog de 8 s escreve o erro) e o observador tira a abertura.
+    await expect(abertura).toBeHidden({ timeout: 30_000 });
+    await expect(page.locator('#root')).not.toBeEmpty();
+  });
+
+  for (const tema of ['light', 'dark'] as const) {
+    test(`no modo ${tema} a abertura usa as cores do tema`, async ({ page }) => {
+      await page.addInitScript((modo) => window.localStorage.setItem('theme', modo), tema);
+      await segurarJsInicial(page);
+      await page.goto('/', { waitUntil: 'commit' });
+
+      const abertura = page.locator('#root-loading');
+      await expect(abertura).toBeVisible();
+      if (tema === 'dark') {
+        await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+      } else {
+        await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+      }
+
+      const medido = await page.evaluate(() => {
+        const caixa = document.getElementById('root-loading');
+        const status = caixa?.querySelector('[role="status"]');
+        return {
+          fundo: caixa ? getComputedStyle(caixa).backgroundColor : '',
+          texto: caixa ? getComputedStyle(caixa).color : '',
+          textoStatus: status ? getComputedStyle(status).color : '',
+        };
+      });
+
+      // Com o app montado os tokens do sistema já estão no documento: a comparação é
+      // entre a cor PINTADA na abertura e o valor REAL de cada token.
+      await expect(abertura).toBeHidden({ timeout: 30_000 });
+      const fundoDoTema = await tokenRenderizado(page, '--background');
+      const textoDoTema = await tokenRenderizado(page, '--foreground');
+      const statusDoTema = await tokenRenderizado(page, '--muted-foreground');
+
+      expect(medido.fundo, 'o fundo da abertura tem de ser o token --background').toBe(fundoDoTema);
+      expect(medido.texto, 'o texto da abertura tem de ser o token --foreground').toBe(textoDoTema);
+      expect(medido.textoStatus, 'o "Carregando…" tem de ser o token --muted-foreground').toBe(
+        statusDoTema,
+      );
+      expect(
+        razaoDeContraste(medido.textoStatus, medido.fundo),
+        'o "Carregando…" precisa de contraste WCAG AA (4.5:1) com o fundo',
+      ).toBeGreaterThanOrEqual(4.5);
+    });
+  }
 });

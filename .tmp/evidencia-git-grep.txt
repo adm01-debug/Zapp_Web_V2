@@ -1,0 +1,13 @@
+== git grep -n 'size="icon"\|SelectTrigger' src/components/gmail ==
+
+src/components/gmail/EmailComposer.tsx:395:            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMinimized(!isMinimized)} aria-label={isMinimized ? 'Expandir compositor' : 'Minimizar compositor'}>
+src/components/gmail/EmailComposer.tsx:398:            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Fechar e manter rascunho">
+src/components/gmail/EmailComposer.tsx:475:                    size="icon"
+src/components/gmail/EmailRichTextEditor.tsx:73:    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', active && 'bg-primary/15 text-primary')} aria-label={label} aria-pressed={active} disabled={disabled} onClick={action}>{icon}</Button>
+src/components/gmail/EmailThreadView.tsx:200:        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
+src/components/gmail/EmailThreadView.tsx:230:                  size="icon"
+src/components/gmail/EmailThreadView.tsx:245:                  size="icon"
+src/components/gmail/GmailInboxView.tsx:7:import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+src/components/gmail/GmailInboxView.tsx:98:          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[120px] h-8 text-xs" aria-label="Filtro de status"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="open">Aberto</SelectItem><SelectItem value="pending">Pendente</SelectItem><SelectItem value="resolved">Resolvido</SelectItem><SelectItem value="archived">Arquivado</SelectItem></SelectContent></Select>
+src/components/gmail/__tests__/GmailInboxView.test.tsx:28:  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+src/components/gmail/__tests__/GmailStatusFilter.a11y.test.tsx:13: * status. A correção rotula o `SelectTrigger` com

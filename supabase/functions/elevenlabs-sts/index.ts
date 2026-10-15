@@ -1,5 +1,6 @@
-import { handleCors, errorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
 import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
 
 /**
@@ -103,6 +104,22 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
+    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz lido no
+    // SERVIDOR antes de tocar o provedor pago. A família de voz/áudio inteira
+    // responde à chave única `ai.capability.voice`; desligada (ou leitura não
+    // confiável) NEGA — nenhuma chamada à ElevenLabs. `jsonResponse` (nunca
+    // `errorResponse` em 5xx: acima de 500 o corpo vira "Internal server error" e
+    // o consumidor perderia o código).
+    const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
+    if (voiceEnabled !== true) {
+      log.warn("IA de voz desativada por flag — provedor nao chamado");
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
 
     // Teto no cabeçalho ANTES de `req.formData()`: o corpo abusivo não chega a

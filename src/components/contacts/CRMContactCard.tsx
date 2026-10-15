@@ -30,7 +30,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'group border border-border/30 rounded-xl p-3 hover:border-primary/30 hover:bg-primary/[0.02] transition-all cursor-pointer',
+        'group border border-border/30 rounded-xl p-3 card-lift card-glow cursor-pointer',
         onSelect && 'active:scale-[0.99]'
       )}
       onClick={() => onSelect?.(contact)}

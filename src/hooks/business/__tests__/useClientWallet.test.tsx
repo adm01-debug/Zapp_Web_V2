@@ -9,9 +9,10 @@
  * Fixtures coerentes: todo `agent_id` existe em `profiles` e todo
  * `whatsapp_connection_id` existe em `whatsapp_connections`.
  *
- * Dois defeitos encontrados ficam travados como `it.fails` (não corrigidos
- * aqui): a corrida de duas alternâncias simultâneas (a primeira volta ao estado
- * anterior) e a exclusão negada pelo RLS, que não dá nenhum retorno ao usuário.
+ * Os dois defeitos que antes ficavam travados como `it.fails` estão CORRIGIDOS e
+ * viraram testes normais: a corrida de duas alternâncias simultâneas (escrita
+ * funcional) e as escritas negadas pelo RLS (aviso + `error`/`isError`, com
+ * rollback do estado otimista). A falha de carga também deixou de ser silenciosa.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -217,6 +218,51 @@ describe('useClientWallet — carga das regras', () => {
     expect(result.current.rules).toHaveLength(1);
     expect(result.current.rules[0].id).toBe('r1');
   });
+
+  it('falha de carga expõe error/isError e avisa o usuário', async () => {
+    h.tables.client_wallet_rules = {
+      data: null,
+      error: { message: 'permission denied for table client_wallet_rules', code: '42501' },
+    };
+
+    const { result } = renderHook(() => useClientWallet());
+    await carregado(result);
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error).toBe('permission denied for table client_wallet_rules');
+    expect(result.current.errorSource).toBe('load');
+    expect(result.current.rules).toEqual([]);
+    expect(toastMock).toHaveBeenCalledWith({
+      title: 'Erro ao carregar as regras da carteira',
+      description: 'permission denied for table client_wallet_rules',
+      variant: 'destructive',
+    });
+  });
+
+  it('carga que dá certo limpa error/isError', async () => {
+    h.tables.client_wallet_rules = { data: [regra('r1')], error: null };
+
+    const { result } = renderHook(() => useClientWallet());
+    await carregado(result);
+
+    expect(result.current.isError).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.errorSource).toBeNull();
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it('RLS negando as listas auxiliares também sobe como falha de carga', async () => {
+    h.tables.client_wallet_rules = { data: [regra('r1')], error: null };
+    h.tables.profiles = { data: null, error: { message: 'permission denied', code: '42501' } };
+
+    const { result } = renderHook(() => useClientWallet());
+    await carregado(result);
+
+    expect(result.current.rules).toHaveLength(1);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error).toBe('permission denied');
+    expect(result.current.errorSource).toBe('load');
+  });
 });
 
 describe('useClientWallet — criação de regra', () => {
@@ -342,7 +388,7 @@ describe('useClientWallet — alternar ativa', () => {
     expect(result.current.rules[0].is_active).toBe(false);
   });
 
-  it('alternância negada pelo RLS não muda a lista na tela', async () => {
+  it('alternância negada pelo RLS faz rollback e avisa o usuário', async () => {
     h.tables.client_wallet_rules = { data: [regra('r1')], error: null };
     const { result } = renderHook(() => useClientWallet());
     await carregado(result);
@@ -353,9 +399,17 @@ describe('useClientWallet — alternar ativa', () => {
     });
 
     expect(result.current.rules[0].is_active).toBe(true);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error).toBe('permission denied');
+    expect(result.current.errorSource).toBe('toggle');
+    expect(toastMock).toHaveBeenCalledWith({
+      title: 'Erro ao alterar a regra',
+      description: 'permission denied',
+      variant: 'destructive',
+    });
   });
 
-  it.fails('duas alternâncias simultâneas preservam as DUAS mudanças (hoje a primeira volta atrás)', async () => {
+  it('duas alternâncias simultâneas preservam as DUAS mudanças', async () => {
     h.tables.client_wallet_rules = { data: [regra('r1'), regra('r2')], error: null };
     const { result } = renderHook(() => useClientWallet());
     await carregado(result);
@@ -406,8 +460,8 @@ describe('useClientWallet — exclusão', () => {
     expect(result.current.rules.map((r) => r.id)).toEqual(['r1', 'r2']);
   });
 
-  it.fails('exclusão negada pelo RLS avisa o usuário (hoje falha em silêncio)', async () => {
-    h.tables.client_wallet_rules = { data: [regra('r1')], error: null };
+  it('exclusão negada pelo RLS repõe a regra na posição original e avisa o usuário', async () => {
+    h.tables.client_wallet_rules = { data: [regra('r1'), regra('r2'), regra('r3')], error: null };
     h.writes.delete = { error: { message: 'permission denied', code: '42501' } };
 
     const { result } = renderHook(() => useClientWallet());
@@ -415,9 +469,17 @@ describe('useClientWallet — exclusão', () => {
     vi.clearAllMocks();
 
     await act(async () => {
-      await result.current.handleDeleteRule('r1');
+      await result.current.handleDeleteRule('r2');
     });
 
-    expect(toastMock).toHaveBeenCalled();
+    expect(result.current.rules.map((r) => r.id)).toEqual(['r1', 'r2', 'r3']);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error).toBe('permission denied');
+    expect(result.current.errorSource).toBe('delete');
+    expect(toastMock).toHaveBeenCalledWith({
+      title: 'Erro ao excluir a regra',
+      description: 'permission denied',
+      variant: 'destructive',
+    });
   });
 });

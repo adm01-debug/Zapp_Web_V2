@@ -93,7 +93,13 @@ const ROTA_AUDIO: Route = {
       headers: { "content-type": "audio/mpeg" },
     }),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO];
+/** A flag de voz LIGADA — caminho feliz do kill switch de voz (t_1266b773). */
+const ROTA_FLAG_ON: Route = {
+  match: "/rest/v1/feature_flags",
+  make: () => jsonResp({ enabled: true }),
+};
+
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_FLAG_ON];
 
 const ENV_KEYS = [
   "SUPABASE_URL",
@@ -415,6 +421,37 @@ Deno.test("SL-008 (B4): sem bearer continua 401 e não toca o provedor (caminho 
       assert(
         callsTo(stub.calls, PROVIDER).length === 0,
         "sem autenticação não se chama o provedor",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("IA-009: flag de voz desligada -> 503 AI_DISABLED e ZERO chamada ao provedor pago", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      ROTA_AUDIO,
+      { match: "/rest/v1/feature_flags", make: () => jsonResp({ enabled: false }) },
+    ]);
+    try {
+      const res = await handleElevenLabsSts(makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])));
+
+      assert(res.status === 503, `esperado 503, veio ${res.status}`);
+      const body = await res.json() as { error?: { code?: string; message?: string } };
+      assert(body.error?.code === "AI_DISABLED", `codigo esperado AI_DISABLED, veio ${body.error?.code}`);
+
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "flag de voz desligada não pode gerar POST a api.elevenlabs.io",
+      );
+      const consulta = callsTo(stub.calls, "/rest/v1/feature_flags");
+      assert(consulta.length === 1, `esperada 1 leitura de feature_flags, houve ${consulta.length}`);
+      assert(
+        consulta[0].url.includes("ai.capability.voice"),
+        `a leitura deve pedir a chave ai.capability.voice: ${consulta[0].url}`,
       );
     } finally {
       stub.restore();

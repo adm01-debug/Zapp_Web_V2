@@ -23,7 +23,7 @@ import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNoti
 
 export function SecurityView() {
   const navigate = useNavigate();
-  const { hasRole } = useUserRole();
+  const { hasRole, isSupervisor } = useUserRole();
   const isAdmin = hasRole('admin');
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -50,8 +50,8 @@ export function SecurityView() {
           </div>
         </div>
 
-        {/* Realtime Alerts for Admin */}
-        {isAdmin && <RateLimitRealtimeAlerts />}
+        {/* Realtime Alerts for Admin/Supervisor (mesmo gate do RateLimitDashboard) */}
+        {(isAdmin || isSupervisor) && <RateLimitRealtimeAlerts />}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

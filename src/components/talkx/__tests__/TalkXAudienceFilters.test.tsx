@@ -1,6 +1,9 @@
 /**
- * X126 — a trilha "Filtros de audiência" do passo 1 (mock 08) com os 7 controles
+ * X126 — a trilha "Filtros de audiência" do passo 1 (mock 08) com os controles
  * lendo o catálogo de filtros dos segmentos.
+ *
+ * O controle de Tags saiu da trilha (12/10/2026): a função de tags de contato
+ * não existe mais no sistema, então nenhum filtro de público oferece tag.
  *
  * Antes: só Empresa e Tag, de escolha única, e os dois SUMIAM quando não havia
  * valor na base (`TalkXContactSelector:137-158`); Status, Estágio no funil,
@@ -29,7 +32,6 @@ beforeAll(() => {
 const VENDEDOR_ID = '3f8d2c90-9a5b-4f1e-9b4a-1c2d3e4f5a6b';
 
 const OPCOES: AudienceFilterOptions = {
-  tags: ['VIP', 'Lead'],
   companies: ['Acme Brindes'],
   sellers: [{ id: VENDEDOR_ID, name: 'Ana Souza' }],
 };
@@ -79,25 +81,27 @@ beforeEach(() => {
   limpezasExtras.mockClear();
 });
 
-describe('X126 · os 7 filtros de audiência (mock 08)', () => {
-  it('na ordem do mock: Tags, Status do contato, Empresa, Estágio no funil, Vendedor, RFM, Localização', () => {
+describe('X126 · os filtros de audiência (mock 08)', () => {
+  it('na ordem do mock: Status do contato, Empresa, Estágio no funil, Vendedor, RFM, Localização', () => {
     const { container } = render(<Harness />);
 
     const ordem = Array.from(container.querySelectorAll('[data-talkx-filter]'))
       .map((elemento) => elemento.getAttribute('data-talkx-filter'));
-    expect(ordem).toEqual(['tags', 'contact_status', 'company', 'funnel_stage', 'seller', 'rfm', 'location']);
+    expect(ordem).toEqual(['contact_status', 'company', 'funnel_stage', 'seller', 'rfm', 'location']);
   });
 
-  it('Tags é múltipla: cada tag marcada vira uma regra "tags contém"', () => {
-    render(<Harness />);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'VIP' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Lead' }));
+  it('não oferece mais filtro de Tag: nenhum controle, nenhum checkbox e nenhum texto de tag', () => {
+    // Mesmo um rascunho antigo com regra de tag não a transforma em controle:
+    // a tag não tem mais nenhum controle na trilha de público.
+    const inicial: SegmentRules = {
+      groups: [{ id: 'g1', match: 'and', rules: [regra('tags', 'contains', 'VIP')] }],
+    };
+    render(<Harness inicial={inicial} />);
 
-    expect(textoDaRegra('tags')).toEqual(['tags contains VIP', 'tags contains Lead']);
-
-    // Desmarcar tira só aquela tag (a outra continua no filtro).
-    fireEvent.click(screen.getByRole('checkbox', { name: 'VIP' }));
-    expect(textoDaRegra('tags')).toEqual(['tags contains Lead']);
+    expect(screen.queryByRole('group', { name: 'Tags' })).toBeNull();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Tag/i })).toBeNull();
+    expect(screen.queryByText(/Tags · contém/)).toBeNull();
   });
 
   it('Status do contato usa a entrada do catálogo (`conversation_status`) com as opções canônicas', () => {
@@ -156,16 +160,15 @@ describe('X126 · os 7 filtros de audiência (mock 08)', () => {
   });
 
   it('filtro sem dado na base aparece desabilitado com "sem dados ainda", em vez de sumir', () => {
-    render(<Harness options={{ tags: [], companies: [], sellers: [] }} />);
+    render(<Harness options={{ companies: [], sellers: [] }} />);
 
-    // Os 7 controles continuam na tela...
-    expect(screen.getByRole('group', { name: 'Tags' })).toBeTruthy();
+    // Os 6 controles continuam na tela...
     expect(screen.getByRole('group', { name: 'Empresa' })).toBeTruthy();
     expect(screen.getByRole('group', { name: 'Vendedor' })).toBeTruthy();
 
     // ...e os que dependem de dado da base ficam desabilitados, não somem.
     const desabilitados = screen.getAllByRole('button', { name: 'sem dados ainda' }) as HTMLButtonElement[];
-    expect(desabilitados).toHaveLength(5);
+    expect(desabilitados).toHaveLength(4);
     expect(desabilitados.every((botao) => botao.disabled)).toBe(true);
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
@@ -176,7 +179,7 @@ describe('X126 · os 7 filtros de audiência (mock 08)', () => {
   });
 });
 
-describe('X126 · regras que os 7 controles não mostram (recusa de 09/10)', () => {
+describe('X126 · regras que os controles não mostram (recusa de 09/10)', () => {
   it('rascunho com regra date/number, outro operador e 2º grupo: tudo aparece em "Outras regras" e sai uma a uma', () => {
     const inicial: SegmentRules = {
       groups: [
@@ -192,9 +195,6 @@ describe('X126 · regras que os 7 controles não mostram (recusa de 09/10)', () 
       ],
     };
     render(<Harness inicial={inicial} />);
-
-    // A regra do controle continua no controle...
-    expect((screen.getByRole('checkbox', { name: 'VIP' }) as HTMLButtonElement).getAttribute('data-state')).toBe('checked');
 
     // ...e as que ele não mostra ficam à vista, com o grupo e o E/OU de cada um.
     const outras = within(screen.getByRole('group', { name: 'Outras regras' }));
@@ -259,30 +259,27 @@ describe('X126 · regras que os 7 controles não mostram (recusa de 09/10)', () 
     const inicial: SegmentRules = {
       groups: [
         { id: 'g1', match: 'and', rules: [] },
-        { id: 'g2', match: 'and', rules: [regra('state', 'eq', 'RJ'), regra('tags', 'contains', 'Lead')] },
+        { id: 'g2', match: 'and', rules: [regra('state', 'eq', 'RJ'), regra('lead_score', 'gt', '50')] },
       ],
     };
     render(<Harness inicial={inicial} />);
 
     // O controle mostra só o que ele consegue trocar/limpar (1º grupo)...
     expect((screen.getByRole('textbox', { name: 'UF' }) as HTMLInputElement).value).toBe('');
-    expect(screen.getByRole('checkbox', { name: 'Lead' }).getAttribute('data-state')).toBe('unchecked');
     // ...e o valor do 2º grupo fica em "Outras regras".
     const outras = within(screen.getByRole('group', { name: 'Outras regras' }));
     expect(outras.getByText('UF · é igual a · RJ')).toBeTruthy();
-    expect(outras.getByText('Tags · contém · Lead')).toBeTruthy();
+    expect(outras.getByText('Lead score · maior que · 50')).toBeTruthy();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'UF' }), { target: { value: 'SP' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Lead' }));
     expect(textoPorGrupo()).toEqual([
-      ['state eq SP', 'tags contains Lead'],
-      ['state eq RJ', 'tags contains Lead'],
+      ['state eq SP'],
+      ['state eq RJ', 'lead_score gt 50'],
     ]);
 
     // Limpar o controle tira a regra dele, sem tocar no 2º grupo.
     fireEvent.change(screen.getByRole('textbox', { name: 'UF' }), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Lead' }));
-    expect(textoPorGrupo()).toEqual([[], ['state eq RJ', 'tags contains Lead']]);
+    expect(textoPorGrupo()).toEqual([[], ['state eq RJ', 'lead_score gt 50']]);
   });
 
   it('trocar a Empresa no controle preserva a regra salva com outro operador ("contém")', () => {
@@ -300,7 +297,7 @@ describe('X126 · regras que os 7 controles não mostram (recusa de 09/10)', () 
   });
 
   it('valor gravado que não está nas opções da base continua visível no controle', () => {
-    render(<Harness inicial={{ groups: [{ id: 'g1', match: 'and', rules: [regra('tags', 'contains', 'Antiga')] }] }} />);
-    expect(screen.getByRole('checkbox', { name: 'Antiga' }).getAttribute('data-state')).toBe('checked');
+    render(<Harness inicial={{ groups: [{ id: 'g1', match: 'and', rules: [regra('company', 'eq', 'Antiga Ltda')] }] }} />);
+    expect(screen.getByRole('combobox', { name: 'Empresa' }).textContent).toContain('Antiga Ltda');
   });
 });

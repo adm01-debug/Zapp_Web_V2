@@ -23,9 +23,9 @@ export function PushNotificationCard() {
     setTestSending(true);
     try {
       await showNotification({
-        title: '🔔 Teste de Push',
-        body: 'Esta é uma notificação push de teste.',
-        tag: 'test-push-' + Date.now(),
+        title: '🔔 Teste de Alerta',
+        body: 'Este é um alerta de teste do navegador. Ele só aparece com o Zapp aberto.',
+        tag: 'test-alerta-' + Date.now(),
       });
     } finally {
       setTestSending(false);
@@ -38,7 +38,7 @@ export function PushNotificationCard() {
         <CardContent className="flex items-start gap-4 p-4">
           <BellOff className="w-5 h-5 text-muted-foreground mt-0.5" />
           <div>
-            <h4 className="font-medium">Notificações Push Indisponíveis</h4>
+            <h4 className="font-medium">Alertas do Navegador Indisponíveis</h4>
             <p className="text-sm text-muted-foreground mt-1">
               Este recurso está temporariamente desativado nesta versão.
             </p>
@@ -54,9 +54,9 @@ export function PushNotificationCard() {
         <CardContent className="flex items-start gap-4 p-4">
           <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
           <div>
-            <h4 className="font-medium">Push Não Suportado</h4>
+            <h4 className="font-medium">Alertas do Navegador Não Suportados</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              Seu navegador não suporta notificações push.
+              Seu navegador não suporta alertas do navegador.
             </p>
           </div>
         </CardContent>
@@ -80,9 +80,9 @@ export function PushNotificationCard() {
               )}
             </div>
             <div>
-              <CardTitle id="push-notif-title" className="text-lg">Notificações Push</CardTitle>
+              <CardTitle id="push-notif-title" className="text-lg">Alertas com o navegador aberto</CardTitle>
               <CardDescription>
-                Receba alertas mesmo com o navegador minimizado
+                Avisos do próprio navegador, enquanto o Zapp estiver aberto
               </CardDescription>
             </div>
           </div>
@@ -120,7 +120,7 @@ export function PushNotificationCard() {
             ) : (
               <>
                 <Bell className="w-4 h-4 mr-2" />
-                Testar Notificação Push
+                Testar Alerta do Navegador
               </>
             )}
           </Button>

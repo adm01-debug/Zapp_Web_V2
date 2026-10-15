@@ -47,7 +47,11 @@ export function isFilterActive(f: TasksFilters): boolean {
   );
 }
 
-/** Lê os filtros da query string, ignorando qualquer parâmetro desconhecido. */
+/** Lê os filtros da query string, ignorando qualquer parâmetro desconhecido.
+ * SEC-FRONTEND-05: o texto livre da busca (`q`, telefone/nome) NUNCA é lido da
+ * URL — recarregar a página ou abrir um link antigo não restaura a busca.
+ * `searchWithFilters` já remove `q` herdado ao reescrever, então ele também
+ * some da barra de endereço. */
 export function filtersFromSearch(search: string): TasksFilters {
   const params = new URLSearchParams(search);
   const prio = params.get('prio');
@@ -55,7 +59,7 @@ export function filtersFromSearch(search: string): TasksFilters {
   const due = params.get('due');
 
   return {
-    q: params.get('q') ?? '',
+    q: '',
     prio: prioridadesValidas.includes(prio as Priority) ? (prio as Priority) : 'all',
     contact: contact && contact !== '' ? contact : null,
     alarm: params.get('alarm') === '1',

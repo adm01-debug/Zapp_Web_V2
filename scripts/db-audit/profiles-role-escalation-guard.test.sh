@@ -30,6 +30,7 @@ migrations="$repo_root/supabase/migrations"
 sync_migration="$migrations/20260830070000_fn_effective_role_and_sync_trigger.sql"
 is_admin_migration="$migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql"
 escalation_migration="$migrations/20260830161547_fix_prevent_privilege_escalation_allow_internal_sync.sql"
+scope_migration="$migrations/20261011003025_fecha_get_profile_role_for_check.sql"
 postgres_image="${PROFILES_ESCALATION_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="profiles-escalation-test-$$"
 
@@ -86,7 +87,7 @@ start_postgres() {
   return 1
 }
 
-for f in "$sync_migration" "$is_admin_migration" "$escalation_migration"; do
+for f in "$sync_migration" "$is_admin_migration" "$escalation_migration" "$scope_migration"; do
   [[ -f "$f" ]] || fail "migration ausente: $f"
 done
 
@@ -251,4 +252,66 @@ expect_error '(d) a flag interna nao vaza para a sessao do agente' \
   "$agent_session UPDATE public.profiles SET role = 'admin' WHERE user_id = '$agent_uid';"
 pass '(d) sync interno permitido (com auth.uid() nulo) e a flag nao vaza'
 
-printf 'PASS: N-002 trava de escalada de privilegio em profiles — agente e supervisor recusados, admin permitido, sync interno preservado\n'
+# ---------------------------------------------------------------------------
+# (E) SEC-DEFINER_GRANTS_STORAGE-03: tambem e escalada de privilegio LER o papel
+#     dos outros. A RPC get_profile_role_for_check e SECURITY DEFINER com EXECUTE
+#     para authenticated e nao conferia quem chamava: qualquer usuario lia
+#     role/access_level/permissions de QUALQUER usuario via PostgREST.
+#     Fixture = corpo ANTERIOR da funcao (20260401003034:2-7, verbatim);
+#     depois, a migration nova 20261011003025 aplicada verbatim e duas vezes.
+# ---------------------------------------------------------------------------
+plain_uid='20000000-0000-0000-0000-0000000000e5'
+alvo_uid='20000000-0000-0000-0000-0000000000e6'
+psql_test >/dev/null <<SQL
+INSERT INTO public.profiles (id, user_id, name, role, permissions, access_level) VALUES
+  ('10000000-0000-0000-0000-0000000000e5', '$plain_uid', 'Comum', 'agent', '{}', 'basic'),
+  ('10000000-0000-0000-0000-0000000000e6', '$alvo_uid', 'Alvo', 'supervisor', '{"manage_all":true}', 'full');
+INSERT INTO public.user_roles (user_id, role) VALUES ('$plain_uid', 'agent');
+CREATE OR REPLACE FUNCTION public.get_profile_role_for_check(p_user_id uuid)
+RETURNS TABLE(role text, access_level text, permissions jsonb)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS \$\$
+  SELECT p.role, p.access_level, p.permissions
+  FROM profiles p
+  WHERE p.user_id = p_user_id
+  LIMIT 1;
+\$\$;
+GRANT EXECUTE ON FUNCTION public.get_profile_role_for_check(uuid) TO authenticated, service_role;
+SQL
+pass '(E) fixture: get_profile_role_for_check no estado ANTERIOR (sem checagem de dono)'
+
+plain_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$plain_uid';"
+
+# (E-defeito) um usuario comum le o papel e as permissoes do OUTRO.
+alvo_real="$(psql_q "SELECT role || '|' || permissions::text FROM public.profiles WHERE user_id = '$alvo_uid'")"
+leak="$(psql_q "$plain_session SELECT role || '|' || permissions::text FROM public.get_profile_role_for_check('$alvo_uid');")"
+[[ -n "$alvo_real" && "$leak" == "$alvo_real" ]] \
+  || fail "(E) defeito nao reproduzido: comum leu '$leak' (alvo real '$alvo_real')"
+pass '(E) defeito reproduzido: usuario comum le papel/permissions de OUTRO pela RPC'
+
+psql_test < "$scope_migration" >/dev/null
+psql_test < "$scope_migration" >/dev/null
+pass '(E) migration 20261011003025 aplica e e reaplicavel'
+
+# (E-fix) o dono continua lendo a si proprio (uso interno das policies de profiles).
+own="$(psql_q "$plain_session SELECT role FROM public.get_profile_role_for_check('$plain_uid');")"
+[[ "$own" == 'agent' ]] || fail "(E) o dono nao le mais o proprio papel [obtido: '$own']"
+pass '(E) o dono continua lendo o proprio papel (uso interno das policies preservado)'
+
+# (E-fix) terceiro: 0 linhas — e a MESMA resposta para alvo que existe e que nao existe (sem oraculo).
+other_rows="$(psql_q "$plain_session SELECT count(*) FROM public.get_profile_role_for_check('$alvo_uid');")"
+[[ "$other_rows" == '0' ]] || fail "(E) comum ainda le o outro [obtido: $other_rows]"
+missing_rows="$(psql_q "$plain_session SELECT count(*) FROM public.get_profile_role_for_check('20000000-0000-0000-0000-0000000000ff');")"
+[[ "$missing_rows" == '0' ]] || fail "(E) alvo inexistente devolveu linha [obtido: $missing_rows]"
+pass '(E) comum: 0 linhas para terceiro e para alvo inexistente (sem oraculo)'
+
+# (E-fix) admin/supervisor continua lendo terceiros.
+admin_read="$(psql_q "$admin_session SELECT role FROM public.get_profile_role_for_check('$alvo_uid');")"
+[[ "$admin_read" == 'supervisor' ]] || fail "(E) admin nao le mais terceiro [obtido: '$admin_read']"
+pass '(E) admin continua lendo o papel de terceiros'
+
+# (E-fix) anon (sem JWT) nao le nada.
+anon_rows="$(psql_q "SET ROLE anon; SELECT count(*) FROM public.get_profile_role_for_check('$alvo_uid');")"
+[[ "$anon_rows" == '0' ]] || fail "(E) anon leu terceiro [obtido: $anon_rows]"
+pass '(E) anon nao le nada'
+
+printf 'PASS: N-002 trava de escalada de privilegio em profiles — agente e supervisor recusados, admin permitido, sync interno preservado; SEC-DEFINER_GRANTS_STORAGE-03 RPC so le o proprio papel (ou admin)\n'
