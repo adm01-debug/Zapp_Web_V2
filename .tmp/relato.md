@@ -1,16 +1,15 @@
-Especialista: hugo
-
+Especialista: semisenior (area-testes-do-produto)
 ## O que mudou e por quê
-- src/lib/audit.ts: `logAudit` agora passa por `normalizeEntityId` (nova função exportada). Se o `entityId` não for UUID (rota `/painel`, JID do WhatsApp, e-mail), ele não vai para `p_entity_id`: a chave é omitida (Postgres aplica DEFAULT NULL → coluna uuid fica NULL) e o texto vai para `details.entity_id_text`. Motivo: `audit_logs.entity_id` é uuid e o `log_audit_event` converte o texto — valor inválido vira NULL e a rota tentada se perdia (era o NULL visto nas linhas `unauthorized_access`). Paridade V3 (`audit.ts normalizeEntityId`).
-- src/lib/audit.ts: `isValidUUID` (regex RFC 4122, case-insensitive) local, sem dependência nova.
-- src/lib/__tests__/audit.test.ts: os casos que passavam `u1`/`c1` como entityId agora usam UUID (a coluna é uuid); novos casos cobrem rota não-UUID indo para `details.entity_id_text`, com e sem detalhes, com espaços nas bordas, entityId vazio (não polui detalhes) e os unitários de `normalizeEntityId`.
-- src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx: teste de integração com o `logAudit` REAL (sem mock de `@/lib/audit`) — renderiza o ProtectedRoute, negação de papel, e confere que o RPC recebe `p_entity_id` omitido e `p_details.entity_id_text: '/painel'`.
-
+- src/__tests__/security-and-performance.test.ts: fixture `entityId: 'user-1'` (não-UUID) virou UUID válido `123e4567-e89b-12d3-a456-426614174000`, e a asserção `p_entity_id` acompanha o mesmo UUID — a entrega 1334ce3b2 manda não-UUID para `details.entity_id_text` e omite `p_entity_id` (pedido original do cartão), então o teste antigo, que esperava o texto cru na coluna uuid, codificava o comportamento bugado e quebrava no empilhamento. Força da asserção inalterada (igualdade exata).
 ## Prova
-- vermelho antes: `npx vitest run src/lib/__tests__/audit.test.ts` (antes da mudança em audit.ts) → `Tests  10 failed | 3 passed (13)` (`TypeError: normalizeEntityId is not a function` e as asserções de `p_details.entity_id_text`).
-- verde depois: `npx vitest run src/lib/__tests__/audit.test.ts src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx src/components/auth/__tests__/ProtectedRoute.acesso-negado.test.tsx` → `Test Files 3 passed (3); Tests 20 passed (20)`.
-- verificação do cartão: `zapp-verify . --rapido` → `OK tipos / OK lint / OK migrations / OK db_guard` e `VERIFY: VERDE SEM BANCO (34s)`.
-
+- vermelho antes: `bun run test src/__tests__/security-and-performance.test.ts` → `Test Files 1 failed (1); Tests 1 failed | 7 passed (8)` (esperava `p_entity_id: 'user-1'`, recebeu `undefined` + `details.entity_id_text: 'user-1'`).
+- verde depois: `bun run test src/__tests__/security-and-performance.test.ts src/lib/__tests__/audit.test.ts src/components/auth/__tests__/ProtectedRoute.auditoria-rota.test.tsx src/components/auth/__tests__/ProtectedRoute.acesso-negado.test.tsx` → `Test Files 4 passed (4); Tests 28 passed (28)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (31s)` (OK db_guard, tipos, lint, migrations).
+## Pontos do revisor
+- Ponto 1 (empilhamento quebra em security-and-performance; correção estaria em t_efa9b1c5): conferi o t_efa9b1c5 e ele está bloqueado SEM correção entregue (hugo bloqueou por falta do flag MODO_V2; decisão 20261014-150729-f818-sem-tarefa sem resposta), então fiz a correção aqui. Causa: o teste de empilhamento é idêntico na ponta dia/2026-10-14 e na entrega (`git diff f5885801 HEAD -- src/__tests__/security-and-performance.test.ts` vazio) e passava `entityId: 'user-1'` cru para a coluna uuid; com a normalização da entrega isso vira omitido + `entity_id_text`. Corrigi o teste desalinhado (fixture UUID válido), sem afrouxar asserção. Verifiquei os vizinhos: LGPDComplianceView chama `supabase.rpc` direto (não passa por `logAudit`, 3/3 verde) e ProtectedRoute.acesso-negado testa o chamador com `logAudit` mockado (contrato `entityId: '/painel'` inalterado).
 ## O que NÃO fiz e por quê
-- Não toquei em `ProtectedRoute.tsx`: ele continua mandando `entityId: location.pathname` como antes (o cartão pede a correção em `audit.ts`, que é onde a normalização da V3 vive). O teste existente `ProtectedRoute.acesso-negado.test.tsx` segue verde.
-- Não mexi em migration nem no `log_audit_event`: a normalização é no front, como na V3.
+- Não toquei em `src/lib/audit.ts`: a normalização é o pedido original do cartão (não-UUID fora da coluna uuid).
+- `zapp-verify full` ficou rodando em segundo plano; prova entregue com `--rapido` + 4 suites. `hermes-tarefa-iniciar/fechar` recusam (rc=75, sem MODO_V2), então trabalhei no workspace da entrega (arquivos já em 1334ce3b2, sem cherry-pick) e fecho pelo kanban.
+## Arquivos (commit deste refazer)
+- src/__tests__/security-and-performance.test.ts (2+/2-)
+- .tmp/relato.md (este relato)

@@ -88,14 +88,14 @@ describe('Security - Audit Logging', () => {
     await logAudit({
       action: 'login',
       entityType: 'auth',
-      entityId: 'user-1',
+      entityId: '123e4567-e89b-12d3-a456-426614174000',
       details: { method: 'password' },
     });
 
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
       p_action: 'login',
       p_entity_type: 'auth',
-      p_entity_id: 'user-1',
+      p_entity_id: '123e4567-e89b-12d3-a456-426614174000',
     }));
   });
 
