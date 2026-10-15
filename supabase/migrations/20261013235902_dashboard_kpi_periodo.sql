@@ -29,9 +29,19 @@
 DROP FUNCTION IF EXISTS public.dashboard_kpi(timestamp with time zone, uuid, uuid);
 
 -- (2) RPC nova (SECURITY INVOKER — sem clausula SECURITY DEFINER —, como antes).
+-- NOTA (refazer 1, t_ffad4c0d): os DEFAULTs abaixo usam CURRENT_TIMESTAMP (=
+-- now(), ambos inicio da transacao) e UM so nivel de parenteses de proposito:
+-- o guard scripts/db-audit/supabase-usage-guard.mjs projeta o catalogo varrendo
+-- as migrations com regex de CREATE FUNCTION de um nivel — DEFAULTs com
+-- parenteses aninhados (ex.: (date_trunc('day', now() ...))) tornavam este
+-- CREATE invisivel enquanto o DROP acima era visto, e o nome dashboard_kpi
+-- saia da projecao (front acusado de violacao nova). Semantica identica a
+-- anterior; o bloco E (E5: default sem argumentos = dia atual SP) de
+-- scripts/db-audit/dashboard-rls-authorization.test.sh pinca a equivalencia
+-- no banco real.
 CREATE OR REPLACE FUNCTION public.dashboard_kpi(
-  p_from  timestamp with time zone DEFAULT (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo'),
-  p_until timestamp with time zone DEFAULT ((date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') + interval '1 day') AT TIME ZONE 'America/Sao_Paulo'),
+  p_from  timestamp with time zone DEFAULT date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo',
+  p_until timestamp with time zone DEFAULT date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo' + interval '1 day') AT TIME ZONE 'America/Sao_Paulo',
   p_queue uuid DEFAULT NULL::uuid,
   p_agent uuid DEFAULT NULL::uuid
 )
