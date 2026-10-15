@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -15,6 +16,10 @@ const DIR_WF = join(RAIZ, '.github', 'workflows');
 const DB_MIGRATE = join(DIR_WF, 'db-migrate.yml');
 const BUN_LOCK = join(RAIZ, 'bun.lock');
 const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
+const TOOLCHAIN = join(RAIZ, '.github', 'toolchain.json');
+
+// W39: versões lidas do toolchain, nunca hardcoded
+const { playwright: PW_VERSION } = JSON.parse(readFileSync(TOOLCHAIN, 'utf8'));
 
 const ETAPAS_TRA009 = ['E01', 'E11', 'E55', 'E56', 'E62', 'E76', 'E93', 'E95', 'E96'];
 
@@ -230,14 +235,14 @@ const TAREFA_E76 = { id: 'E76', status: 'IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE',
 const TAREFA_E62 = { id: 'E62', status: 'PARTIAL', documentation: { original_claim: 'UNCHECKED' } };
 
 const PLANO_ANTES = [
-  '- [x] **E76** - `bunx playwright@1.63.0` -> `bunx playwright`.',
+  `- [x] **E76** - \`bunx playwright@${PW_VERSION}\` -> \`bunx playwright\`.`,
   '- [ ] **E62** - Destino do `db-migrate.yml`.',
 ].join('\n');
 
 const PLANO_DEPOIS = [
-  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.63.0 entre lock e workflows).',
+  `- [~] **E76** - AGUARDA RUNTIME (paridade ${PW_VERSION} entre lock e workflows).`,
   '- [~] **E62** - PARCIAL (12 contratos extraidos).',
-  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.63.0) | nao ha mismatch; remover o pin e opcao da E75 |',
+  `| **E76** | \`[~]\` AGUARDA RUNTIME | \`bun.lock\` + os 3 workflows (${PW_VERSION}) | nao ha mismatch; remover o pin e opcao da E75 |`,
   '| **E62** | `[~]` PARCIAL | PR #1778 | guardas de DB preservadas |',
 ].join('\n');
 
@@ -355,20 +360,21 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.ok(e62.linha.includes(`${linhasDb.length} linhas`));
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
+  const pwRe = new RegExp(PW_VERSION.replace(/\./g, '\\.'));
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(new RegExp(`playwright@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
+  assert.ok(new RegExp(`playwright-core@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
+  assert.ok(new RegExp(`@playwright/test@${PW_VERSION.replace(/\./g, '\\.')}`).test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes(`playwright@${PW_VERSION}`));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, pwRe);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -482,6 +488,17 @@ test('W95: CONTRIBUTING.md tem os termos obrigatorios (bun, fluxo lote, 6 requir
   assert.ok(!/\bdevelop\b/.test(conteudo), 'nao deve mencionar branch develop');
   for (const termo of TERMOS_CONTRIBUTING) {
     assert.ok(conteudo.includes(termo), `termo obrigatorio ausente: ${termo}`);
+  }
+});
+
+// W39 — ci-docs-baseline nao pina versoes de toolchain literalmente
+test('W39: ci-docs-baseline nao contem versoes de toolchain hardcoded como literal de string', async () => {
+  const thisFile = await readFile(join(RAIZ, 'scripts/ci/ci-docs-baseline.unit.mjs'), 'utf8');
+  const tc = JSON.parse(await readFile(TOOLCHAIN, 'utf8'));
+  const versoes = [tc.playwright, tc.bun, tc['supabase-cli'], tc.deno].filter(Boolean);
+  for (const v of versoes) {
+    assert.ok(!thisFile.includes(`'${v}'`) && !thisFile.includes(`"${v}"`),
+      `versao ${v} nao deve aparecer como literal de string — leia de toolchain.json`);
   }
 });
 
