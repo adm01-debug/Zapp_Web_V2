@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 
 interface WarRoomAlert {
   id: string;
@@ -78,7 +78,6 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { settings, isQuietHours } = useNotificationSettings();
   // Sem valor explícito do chamador, o mudo vem da preferência do usuário (`user_settings`),
@@ -141,11 +140,14 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
             playAlertSound();
           }
 
-          // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
-              body: alert.message,
+          // Aviso de desktop pela API `Notification` direta (`showBrowserNotification`). O
+          // caminho antigo (`usePushNotifications.showNotification`) exigia Service Worker de
+          // aplicação, que `config/service_worker.ts` mantém DESLIGADO: a chamada devolvia
+          // `false` em silêncio e o operador só ouvia o som. Quem decide é o painel
+          // (`browserNotifications`), o mesmo controle que os avisos do Chat de Equipe
+          // respeitam; o alerta crítico fica na tela até o operador agir.
+          if (settings.browserNotifications) {
+            showBrowserNotification(`⚠️ ${alert.title}`, alert.message, {
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
             });
@@ -155,7 +157,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // Dismiss alert
   const dismissAlert = async (alertId: string) => {

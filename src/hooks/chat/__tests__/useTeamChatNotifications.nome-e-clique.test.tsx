@@ -6,14 +6,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * remetente vinha de `profiles` (leitura barrada pela RLS para o agente, então o
  * título caía para 'Colega') e o clique não tinha tratador. Aqui a fronteira
  * mockada é o cliente Supabase, o service worker e a navegação.
+ *
+ * E também: o aviso de desktop saía por `usePushNotifications.showNotification`, que
+ * exige Service Worker de aplicação — e `config/service_worker.ts` mantém
+ * `SERVICE_WORKER_ENABLED=false`, então o hook devolvia `false` em silêncio e o chat
+ * de equipe só tocava o som. Agora o aviso é a API `Notification` direta
+ * (`showBrowserNotification`), observada aqui por uma classe `Notification` falsa,
+ * com o push (Service Worker) desligado: `navigator.serviceWorker` deste teste não
+ * tem `ready`, e o aviso sai mesmo assim.
  */
+type NotificacaoFalsa = {
+  title: string;
+  options?: NotificationOptions;
+  onclick: (() => void) | null;
+  instancia: { onclick: (() => void) | null };
+};
+
 const h = vi.hoisted(() => ({
   profile: { id: 'eu' } as { id: string } | null,
   handler: null as ((payload: unknown) => unknown) | null,
   membership: [{ id: 'm1', is_muted: false }],
   fromArgs: [] as unknown[][],
   rpc: vi.fn(),
-  show: vi.fn(),
+  notificacoes: [] as unknown[],
   navigate: vi.fn(),
   focus: vi.fn(),
   swListener: null as ((event: { data?: unknown }) => void) | null,
@@ -54,14 +69,6 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: (...args: unknown[]) => h.show(...args),
-    isSubscribed: true,
-    permission: 'granted',
-  }),
-}));
-
 vi.mock('@/hooks/system/useNavigationHistory', () => ({
   navigateToView: (...args: unknown[]) => h.navigate(...args),
 }));
@@ -71,6 +78,26 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
+
+class FakeNotification {
+  static permission: NotificationPermission = 'granted';
+  static requestPermission = vi.fn(async () => 'granted' as NotificationPermission);
+  onclick: (() => void) | null = null;
+  close = vi.fn();
+
+  constructor(public title: string, public options?: NotificationOptions) {
+    const instancia = this;
+    (h.notificacoes as NotificacaoFalsa[]).push({
+      title,
+      options,
+      get onclick() { return instancia.onclick; },
+      set onclick(valor: (() => void) | null) { instancia.onclick = valor; },
+      instancia: this,
+    });
+  }
+}
+
+const emitidas = () => h.notificacoes as NotificacaoFalsa[];
 
 const mensagem = (senderId = 'outro') => ({
   new: {
@@ -88,13 +115,17 @@ beforeEach(() => {
   h.handler = null;
   h.fromArgs = [];
   h.rpc.mockReset();
-  h.show.mockReset();
+  h.notificacoes = [];
   h.navigate.mockReset();
   h.focus.mockReset();
   h.swAdd.mockReset();
   h.swRemove.mockReset();
   h.swListener = null;
 
+  Object.defineProperty(window, 'Notification', {
+    configurable: true,
+    value: FakeNotification,
+  });
   Object.defineProperty(navigator, 'serviceWorker', {
     configurable: true,
     value: {
@@ -123,7 +154,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.rpc).toHaveBeenCalledWith('get_team_profiles');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(emitidas()[0].title).toBe('💬 Teams: Ana');
     // A leitura direta de `profiles` (barrada pela RLS) não é mais usada.
     expect(h.fromArgs.every((args) => args[0] !== 'profiles')).toBe(true);
   });
@@ -134,10 +165,34 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
     renderHook(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Colega' }));
+    expect(emitidas()[0].title).toBe('💬 Teams: Colega');
   });
 
-  it('abre o Chat Interno ao clicar na notificação do chat', () => {
+  it('mostra o aviso de desktop sem Service Worker de aplicação (push desligado)', async () => {
+    h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
+
+    renderHook(() => useTeamChatNotifications(null));
+    await act(async () => { await h.handler!(mensagem()); });
+
+    // `navigator.serviceWorker` aqui não tem `ready`: o aviso não depende dele.
+    expect(emitidas()).toHaveLength(1);
+    expect(emitidas()[0].options?.tag).toBe('team-msg-c1');
+    expect(emitidas()[0].options?.body).toBe('oi');
+  });
+
+  it('o clique na notificação direta abre o Chat Interno', async () => {
+    h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
+
+    renderHook(() => useTeamChatNotifications(null));
+    await act(async () => { await h.handler!(mensagem()); });
+
+    act(() => { emitidas()[0].instancia.onclick?.(); });
+
+    expect(h.focus).toHaveBeenCalled();
+    expect(h.navigate).toHaveBeenCalledWith('team-chat');
+  });
+
+  it('o clique repassado pelo service worker continua abrindo o Chat Interno', () => {
     renderHook(() => useTeamChatNotifications(null));
 
     expect(h.swAdd).toHaveBeenCalledWith('message');
