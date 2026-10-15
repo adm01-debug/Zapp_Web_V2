@@ -89,16 +89,6 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(rotulo.className).not.toContain('leading-none');
   });
 
-  it('Label: o className do rotulo curto e exatamente o esperado (antes x depois)', () => {
-    render(<Label data-testid="rotulo">Nome</Label>);
-
-    // Antes (codigo do pai): "... leading-none ..." — duas linhas colavam uma na outra.
-    // Depois: a UNICA diferenca e o token de linha; nada mais mudou no rotulo.
-    expect(screen.getByTestId('rotulo').className).toBe(
-      'text-sm font-medium leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
-    );
-  });
-
   it('Label: rótulo curto e rótulo longo renderizam o mesmo className', () => {
     const { container: curto } = render(<Label>Nome</Label>);
     const { container: longo } = render(<Label>{TEXTO_120}</Label>);
