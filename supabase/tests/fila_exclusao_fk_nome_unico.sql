@@ -110,6 +110,24 @@ BEGIN
   RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
 END $h$;
 
+-- Devolve o VALOR (texto) da primeira coluna da consulta, nao a contagem de
+-- linhas — e o que prova o retorno da RPC (contagem de conversas).
+CREATE FUNCTION pg_temp.valor(p_papel text, p_uid uuid, p_sql text) RETURNS text
+LANGUAGE plpgsql AS $h$
+DECLARE v_txt text;
+BEGIN
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims',
+    json_build_object('sub', p_uid, 'role', p_papel)::text, true);
+  EXECUTE 'set local role ' || quote_ident(p_papel);
+  EXECUTE p_sql INTO v_txt;
+  RESET ROLE;
+  RETURN coalesce(v_txt, 'NULL');
+EXCEPTION WHEN others THEN
+  RESET ROLE;
+  RETURN 'ERRO ' || SQLSTATE || ' ' || SQLERRM;
+END $h$;
+
 -- Executa p_sql sob o PAPEL REAL (SET LOCAL ROLE) com JWT sintetico do usuario.
 CREATE FUNCTION pg_temp.operacao(p_papel text, p_uid uuid, p_sql text) RETURNS text
 LANGUAGE plpgsql AS $h$
@@ -235,11 +253,10 @@ DECLARE
   v_fila int; v_dest int; v_pos int; v_ev int; v_aud int; v_det text;
   v_from uuid; v_to uuid;
 BEGIN
-  v_ret := pg_temp.operacao('authenticated', '11111111-1111-1111-1111-1111111111a1',
-    $q$select public.delete_queue('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002')$q$);
-  PERFORM pg_temp.espera('T4 retorno = 2 conversas', v_ret, 'OK 1');
-
-  -- (ok 1 = uma linha do SELECT; o numero de conversas vem do proprio RPC)
+  v_ret := pg_temp.valor('authenticated', '11111111-1111-1111-1111-1111111111a1',
+    $q$select public.delete_queue('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002')::text$q$);
+  -- o proprio retorno da RPC e a contagem de conversas reatribuidas
+  PERFORM pg_temp.espera('T4 retorno = 2 conversas', v_ret, '2');
   SELECT count(*) INTO v_fila FROM public.queues WHERE id = 'b0000000-0000-0000-0000-000000000001';
   SELECT count(*) INTO v_dest FROM public.contacts WHERE queue_id = 'b0000000-0000-0000-0000-000000000002';
   SELECT count(*) INTO v_pos  FROM public.queue_positions WHERE queue_id = 'b0000000-0000-0000-0000-000000000002';
@@ -272,9 +289,9 @@ DO $t5$
 DECLARE
   v_ret text; v_fila int; v_ev int; v_from uuid;
 BEGIN
-  v_ret := pg_temp.operacao('authenticated', '11111111-1111-1111-1111-1111111111a1',
-    $q$select public.delete_queue('b0000000-0000-0000-0000-000000000003')$q$);
-  PERFORM pg_temp.espera('T5 exclui sem destino', left(v_ret, 3), 'OK ');
+  v_ret := pg_temp.valor('authenticated', '11111111-1111-1111-1111-1111111111a1',
+    $q$select public.delete_queue('b0000000-0000-0000-0000-000000000003')::text$q$);
+  PERFORM pg_temp.espera('T5 exclui sem destino (retorno 0)', v_ret, '0');
 
   SELECT count(*) INTO v_fila FROM public.queues WHERE id = 'b0000000-0000-0000-0000-000000000003';
   SELECT count(*) INTO v_ev FROM public.conversation_events WHERE id = 'e0000000-0000-0000-0000-000000000002';
