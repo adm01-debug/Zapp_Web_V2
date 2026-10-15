@@ -10459,6 +10459,10 @@ export type Database = {
         Returns: Json
       }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
+      calculate_training_score: {
+        Args: { p_messages: Json }
+        Returns: Json
+      }
       can_delete_contacts: {
         Args: { p_ids: string[] }
         Returns: {
@@ -10797,6 +10801,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      complete_training_session: {
+        Args: { p_session_id: string }
+        Returns: Json
       }
       complete_talkx_campaign_if_drained: {
         Args: { p_campaign_id: string }
