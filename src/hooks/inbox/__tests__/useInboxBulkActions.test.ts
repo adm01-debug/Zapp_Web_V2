@@ -8,10 +8,12 @@
  *
  * Casos cobertos: estado inicial, modo de seleção (intocabilidade dos Sets),
  * `selectAll` com deduplicação e lista vazia, marcar como lido (filtro por
- * `sender='contact'` + contatos, não lidos e erro), transferência via RPC
- * atômica `transfer_conversation` POR contato (agente/fila, nota ignorada,
- * sucesso parcial e total que rejeitam mantendo a seleção, rejeição crua de
- * rede), arquivamento desfazível (retrato da seleção, restauração por contato,
+ * `sender='contact'` + contatos, contagem pelas linhas REALMENTE atualizadas via
+ * `.select('id')` — inclusive o caso 0, que avisa e mantém a seleção — e erro),
+ * transferência via RPC atômica `transfer_conversation` POR contato (agente/fila,
+ * nota do operador em `p_note`, sucesso parcial com `refetch` + desmarque só dos
+ * transferidos, resumo por linha no erro propagado com concordância certa, e
+ * rejeição crua de rede com e sem sucesso prévio), arquivamento desfazível (retrato da seleção, restauração por contato,
  * erro, e o SELECT de RLS em `it.fails`), avatares em lote (contadores, resposta
  * sem números, erro `Error` e rejeição não-`Error`), e o `loading` durante a
  * operação.
@@ -78,6 +80,10 @@ function buildChain(
   result: DbResult,
   opts: { delayUntil?: Promise<void> | null } = {},
 ) {
+  // O portão atrasa TODA resolução (o `then` do await implícito e o SELECT
+  // terminal): sem isso o teste de `bulkLoading` não seguraria a operação.
+  const settle = () =>
+    opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
   const chain = {
     in: (column: string, value: unknown) => {
       call.filters[column] = value;
@@ -87,10 +93,14 @@ function buildChain(
       call.filters[column] = value;
       return chain;
     },
-    select: () => Promise.resolve({ data: result.data ?? null, error: result.error ?? null }),
+    select: (columns?: string) => {
+      // O SELECT terminal (ex.: o `.select('id')` do UPDATE com contagem)
+      // também fica registrado: prova qual coluna o hook pediu de volta.
+      if (columns !== undefined) call.columns = columns;
+      return settle().then((r) => ({ data: r.data ?? null, error: r.error ?? null }));
+    },
     then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => {
-      const base = opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
-      return base.then(onFulfilled, onRejected);
+      return settle().then(onFulfilled, onRejected);
     },
   };
   return chain;
@@ -259,6 +269,8 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
   });
 
   it('marca só as mensagens NÃO lidas RECEBIDAS (sender=contact) dos contatos selecionados e recarrega', async () => {
+    // O banco devolve as linhas que REALMENTE mudaram: o toast conta o banco.
+    updateQueue.push({ data: [{ id: 'm1' }, { id: 'm2' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -272,10 +284,30 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
       op: 'update',
       payload: { is_read: true },
       filters: { contact_id: ['c1', 'c2'], is_read: false, sender: 'contact' },
+      // O UPDATE pede os ids de volta: sem `.select('id')` a contagem seria chute.
+      columns: 'id',
     });
     expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) marcada(s) como lida(s)');
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(result.current.selectedIds.size).toBe(0);
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('zero linhas atualizadas (RLS ou nada novo): avisa 0, mantém a seleção e não recarrega', async () => {
+    updateQueue.push({ data: [], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1']);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0]).toMatchObject({ table: 'messages', op: 'update', columns: 'id' });
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhuma mensagem nova para marcar como lida');
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(refetch).not.toHaveBeenCalled();
+    expect(result.current.selectedIds.has('c1')).toBe(true);
     expect(result.current.bulkLoading).toBe(false);
   });
 
@@ -299,6 +331,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
     updateGate = new Promise<void>((resolve) => {
       release = resolve;
     });
+    updateQueue.push({ data: [{ id: 'm1' }], error: null });
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -367,56 +400,102 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     });
   });
 
-  it('a mensagem opcional NÃO é persistida (p_note vai nulo)', async () => {
+  it('a mensagem do operador CHEGA à RPC como p_note (aparada)', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
 
     await act(async () => {
-      await result.current.bulkTransfer('agent', 'ag-2', 'recado do operador');
+      await result.current.bulkTransfer('agent', 'ag-2', '  recado do operador  ');
     });
 
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: 'c1',
       p_to_agent_id: 'ag-2',
       p_to_queue_id: null,
-      p_note: null,
+      p_note: 'recado do operador',
     });
   });
 
-  it('sucesso parcial: tenta os dois, avisa as contagens, mantém a seleção e rejeita', async () => {
+  it('mensagem vazia ou em branco vira p_note nulo (nunca undefined)', async () => {
+    const { result } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkTransfer('agent', 'ag-2', '   ');
+    });
+    // O sucesso limpa a seleção: seleciona de novo para o segundo envio.
+    selectIds(result, ['c1', 'c2']);
+    await act(async () => {
+      await result.current.bulkTransfer('agent', 'ag-2');
+    });
+
+    expect(rpcCalls.map((c) => c.args.p_note)).toEqual([null, null, null, null]);
+    for (const call of rpcCalls) {
+      expect('p_note' in call.args).toBe(true);
+    }
+  });
+
+  it('sucesso parcial: tenta tudo, recarrega, desmarca só os transferidos e rejeita com o resumo por linha', async () => {
     rpcFailures.c2 = { message: 'contato sem permissao', code: '42501' };
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
     await act(async () => {
       await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toMatchObject({
-        message: 'contato sem permissao',
+        message:
+          'Erro ao transferir contatos: 1 de 2 contato(s) transferido(s); 1 falhou: c2',
+        failedContactIds: ['c2'],
       });
     });
 
     // Não abortou no primeiro erro: tentou o lote inteiro.
     expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual(['c1', 'c2']);
     expect(mocks.toast.error).toHaveBeenCalledWith(
-      'Erro ao transferir contatos: 1 de 2 contato(s) transferido(s); 1 falharam',
+      'Erro ao transferir contatos: 1 de 2 contato(s) transferido(s); 1 falhou: c2',
     );
     expect(mocks.toast.success).not.toHaveBeenCalled();
-    expect(result.current.selectedIds.has('c1')).toBe(true);
-    expect(result.current.selectedIds.has('c2')).toBe(true);
+    // c1 saiu (já transferiu e a lista recarregou); c2 continua marcado.
+    expect(result.current.selectedIds).toEqual(new Set(['c2']));
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('sucesso parcial com 2 falhas: o plural vai para "falharam" e o resumo lista os dois ids', async () => {
+    rpcFailures.c1 = { message: 'rls c1', code: '42501' };
+    rpcFailures.c2 = { message: 'rls c2', code: '42501' };
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await expect(result.current.bulkTransfer('queue', 'q-1')).rejects.toMatchObject({
+        message:
+          'Erro ao transferir contatos: 0 de 2 contato(s) transferido(s); 2 falharam: c1, c2',
+        failedContactIds: ['c1', 'c2'],
+      });
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith(
+      'Erro ao transferir contatos: 0 de 2 contato(s) transferido(s); 2 falharam: c1, c2',
+    );
+    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
     expect(refetch).not.toHaveBeenCalled();
     expect(result.current.bulkLoading).toBe(false);
   });
 
-  it('todos falham: rejeita, avisa 0 de N, mantém a seleção e não recarrega', async () => {
+  it('todos falham: rejeita com o resumo, avisa 0 de N, mantém a seleção e não recarrega', async () => {
     rpcFailures.c1 = { message: 'rls', code: '42501' };
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
     await act(async () => {
-      await expect(result.current.bulkTransfer('queue', 'q-1')).rejects.toMatchObject({ message: 'rls' });
+      await expect(result.current.bulkTransfer('queue', 'q-1')).rejects.toMatchObject({
+        message: 'Erro ao transferir contatos: 0 de 1 contato(s) transferido(s); 1 falhou: c1',
+        failedContactIds: ['c1'],
+      });
     });
 
     expect(mocks.toast.error).toHaveBeenCalledWith(
-      'Erro ao transferir contatos: 0 de 1 contato(s) transferido(s); 1 falharam',
+      'Erro ao transferir contatos: 0 de 1 contato(s) transferido(s); 1 falhou: c1',
     );
     expect(result.current.selectedIds.has('c1')).toBe(true);
     expect(refetch).not.toHaveBeenCalled();
@@ -435,6 +514,30 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao transferir contatos');
     expect(result.current.selectedIds.has('c1')).toBe(true);
     expect(refetch).not.toHaveBeenCalled();
+    expect(result.current.bulkLoading).toBe(false);
+  });
+
+  it('rede cai APÓS um sucesso: recarrega (o sucesso já entrou), desmarca o transferido e propaga', async () => {
+    mocks.rpc.mockImplementationOnce(async (name: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ name, args });
+      return { data: `event-${args.p_contact_id as string}`, error: null };
+    });
+    mocks.rpc.mockImplementationOnce(async (name: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ name, args });
+      throw new Error('network down');
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toThrow('network down');
+    });
+
+    expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual(['c1', 'c2']);
+    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao transferir contatos');
+    // c1 já transferiu (lista recarregada, saiu da seleção); c2 segue marcado.
+    expect(result.current.selectedIds).toEqual(new Set(['c2']));
+    expect(refetch).toHaveBeenCalledTimes(1);
     expect(result.current.bulkLoading).toBe(false);
   });
 });

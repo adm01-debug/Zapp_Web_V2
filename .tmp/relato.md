@@ -1,44 +1,19 @@
-Especialista: hugo
-Área: area-front-hooks (cartão entregue ao worker (geral) como reserva)
-
-Concluí. Um defeito, com prova vermelho→verde sobre os arquivos do cartão.
-
+Especialista: semisenior
 ## O que mudou e por quê
-
-Título: fix(inbox): lote marca so mensagens recebidas e transfere via RPC por contato
-
-- `src/hooks/inbox/useInboxBulkActions.ts`:
-  - `bulkMarkAsRead`: o update em `messages` ganhou `.eq('sender', 'contact')`. Antes o lote
-    fazia `update({ is_read: true }).in('contact_id', ids).eq('is_read', false)`, o que zerava
-    também o `is_read` das mensagens ENVIADAS pelo agente (mesma tabela, mesmo `contact_id`).
-    O caminho individual já filtrava por remetente; o lote não.
-  - `bulkTransfer`: parou de fazer `from('contacts').update({assigned_to|queue_id}).in('id', ids)`
-    e passou a chamar `supabase.rpc('transfer_conversation', { p_contact_id, p_to_agent_id,
-    p_to_queue_id, p_note: null })` uma vez por contato, em laço `for...of` sequencial. A RPC é
-    atômica POR CONVERSA (UPDATE em `contacts` + INSERT do evento na mesma transação), por isso
-    o laço é serial em vez de concorrente.
-  - Falha em qualquer contato: conta quantos transferiram e quantos falharam, emite toast de
-    erro com as contagens, mantém a seleção e propaga a rejeição (a `TransferDialog` usa a
-    rejeição para permanecer aberta). Só quando todos transferem limpa a seleção e recarrega.
-    Exceção crua de rede também emite o toast de erro de sempre e propaga.
-- `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`: mock de `supabase.rpc` (+ estado
-  `rpcFailures`/`rpcCalls`), casos novos de contrato e reescrita dos testes que travavam o
-  comportamento antigo (update em `contacts`) para o novo contrato via RPC.
-
+- `src/hooks/inbox/useInboxBulkActions.ts`: os 4 pontos da recusa — `.select('id')` no UPDATE com contagem real (ponto 2), `message` aparada em `p_note` (ponto 1), `refetch()` + desmarque dos transferidos quando algo entrou (ponto 3), erro-resumo por linha com `failedContactIds` e concordância certa (ponto 4).
+- `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`: prova de cada ponto no hook real (dublê só na rede/toast); o teste que mandava ignorar a nota foi substituído pelo que prova `p_note` (ordem da recusa).
 ## Prova
-
-- vermelho antes (hook original, com os testes novos aplicados) — comando
-  `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`, saída:
-  `Tests 7 failed | 20 passed | 1 expected fail (28)`. As 7 falhas são exatamente os casos
-  novos (filtro sender=contact, RPC por contato agente/fila, p_note nulo, falha em parte dos
-  contatos, todos falham, rejeição crua de rede).
-- verde depois — comando `npx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`,
-  saída: `Test Files 1 passed (1), Tests 27 passed`. Nenhum teste falhou e nenhum ficou
-  pulado; o total de 28 no arquivo vem de 27 passed + 1 `it.fails` que já existia na base.
-- caminho de falha exercitado de verdade no verde: `bulkTransfer` rejeita, a seleção permanece
-  (`result.current.selectedIds` mantém os contatos) e `refetch` NÃO é chamado.
-- verificação do cartão — comando `zapp-verify . --rapido`, saída:
-  `VERIFY: VERDE SEM BANCO (95s)` com `OK tipos`, `OK lint`, `OK migrations`, `OK db_guard`.
-
-Juiz barato: o alerta de risco alto foi reexaminado e não procede — o relato conclui, cita
-o comando e a linha de resultado, e não deixa item aberto.
+- vermelho antes: `bunx vitest run src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` → `Tests 7 failed | 24 passed` (só os 7 dos 4 pontos; os demais passaram).
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 31 passed | 1 expected fail (32)` (o `expected fail` é o `it.fails` de RLS pré-existente, intocado).
+- tipos: `bunx tsc -p tsconfig.app.json --noEmit` → saída 0, zero erros.
+- lint: `bunx eslint` nos dois arquivos → limpo.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos, lint, migrations OK; sem banco porque o diff não tem migration/RPC/policy/trigger e o conjunto local deste workspace não está de pé).
+## Pontos do revisor
+- Ponto 1: resolvido — `useInboxBulkActions.ts:89,97,121` (`message`, aparada, vazio→nulo, `p_note: note`); prova: `a mensagem do operador CHEGA à RPC como p_note (aparada)` e `mensagem vazia ou em branco vira p_note nulo (nunca undefined)`.
+- Ponto 2: resolvido — `useInboxBulkActions.ts:64,74,76-80` (`.select('id')`, conta `data`, `toast.info` no 0 sem limpar nem recarregar); prova: `marca só as mensagens NÃO lidas RECEBIDAS ... e recarrega` (exige `columns: 'id'` e 2 linhas) e `zero linhas atualizadas (RLS ou nada novo): avisa 0, mantém a seleção e não recarrega`.
+- Ponto 3: resolvido — `useInboxBulkActions.ts:103-107,137,149` (`sincronizarParcial`: tira da seleção só os transferidos + `refetch()` quando `transferidos > 0`, inclusive no catch de rede); prova: `sucesso parcial: tenta tudo, recarrega, desmarca só os transferidos e rejeita com o resumo por linha` e `rede cai APÓS um sucesso: recarrega (o sucesso já entrou), desmarca o transferido e propaga`.
+- Ponto 4: resolvido — `useInboxBulkActions.ts:109-110,146-159` (resumo `X de N ...; K falhou/falharam: ids` no toast e no `Error` com `failedContactIds` + `transferFailures`; sem `failures[0]`, sem dado sensível — só ids e contagens); prova: `sucesso parcial com 2 falhas: o plural vai para "falharam" e o resumo lista os dois ids` e `todos falham: rejeita com o resumo, avisa 0 de N, mantém a seleção e não recarrega`.
+## O que NÃO fiz e por quê
+- Não criei workspace/branch novos: `hermes-tarefa-iniciar` está bloqueado nesta sessão (guarda CONGELADO, sem MODO_V2) e `git worktree/checkout -b/clone` também; segui o padrão dos refazeres irmãos de hoje e a ordem do revisor no cartão pai ("Corrija com commit novo"): commitei sobre a branch da entrega anterior, que já estava neste workspace. Sem cherry-pick porque o workspace já estava exatamente na entrega recusada (`94539ff04`, árvore limpa).
+- Não mexi nos chamadores (`ConversationListSidebar`, `TransferDialog`, `BulkActionsToolbar`: outro cartão é dono); conferi que o diálogo só usa a rejeição como sinal e continua aberto na falha, e que nenhum caminho novo de rejeição foi criado.
+- Não verifiquei `banco_local`: o diff não contém migration, RPC, policy nem trigger; o conjunto local deste workspace não está de pé e subir banco para um diff só de hook/teste está fora do escopo.

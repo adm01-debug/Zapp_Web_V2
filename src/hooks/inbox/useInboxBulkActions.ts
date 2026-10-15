@@ -9,6 +9,15 @@ interface UseInboxBulkActionsProps {
   filteredConversations: ConversationWithMessages[];
 }
 
+// Falha de UMA linha do lote de transferência: id do contato + motivo do
+// banco (só mensagem sistêmica, sem PII).
+interface TransferFailure {
+  contactId: string;
+  reason: string;
+}
+
+const rotuloFalha = (n: number) => (n === 1 ? 'falhou' : 'falharam');
+
 export function useInboxBulkActions({ refetch, filteredConversations }: UseInboxBulkActionsProps) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -52,16 +61,24 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     setBulkLoading(true);
     try {
       const contactIds = Array.from(selectedIds);
-      const { error } = await supabase
+      // O `.select('id')` devolve as linhas que o banco REALMENTE atualizou:
+      // sem ele o toast contaria a seleção mesmo quando o RLS barrou tudo.
+      const { data, error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .in('contact_id', contactIds)
         // Só mensagens RECEBIDAS do contato: sem este filtro o lote também
         // zerava o `is_read` das mensagens enviadas pelo agente.
         .eq('sender', 'contact')
-        .eq('is_read', false);
+        .eq('is_read', false)
+        .select('id');
       if (error) throw error;
-      toast.success(`${contactIds.length} conversa(s) marcada(s) como lida(s)`);
+      const marcadas = data?.length ?? 0;
+      if (marcadas === 0) {
+        toast.info('Nenhuma mensagem nova para marcar como lida');
+        return;
+      }
+      toast.success(`${marcadas} conversa(s) marcada(s) como lida(s)`);
       clearSelection();
       refetch();
     } catch {
@@ -71,12 +88,26 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     }
   }, [selectedIds, clearSelection, refetch]);
 
-  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, _message?: string) => {
+  const bulkTransfer = useCallback(async (type: 'agent' | 'queue', targetId: string, message?: string) => {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     const contactIds = Array.from(selectedIds);
-    const failures: unknown[] = [];
-    let transferidos = 0;
+    // A nota do diálogo vai para a RPC (aparada); vazia ou ausente vira nulo
+    // — nunca `undefined`, que sumiria do JSON da chamada.
+    const note = message?.trim() ? message.trim() : null;
+    const failures: TransferFailure[] = [];
+    const transferidos: string[] = [];
+
+    // Sincroniza o que JÁ entrou: tira da seleção só os transferidos e
+    // recarrega a lista. Os que falharam continuam marcados para retry.
+    const sincronizarParcial = () => {
+      const ok = new Set(transferidos);
+      setSelectedIds(prev => new Set([...prev].filter(id => !ok.has(id))));
+      refetch();
+    };
+
+    const resumoTransferencia = () =>
+      `Erro ao transferir contatos: ${transferidos.length} de ${contactIds.length} contato(s) transferido(s); ${failures.length} ${rotuloFalha(failures.length)}: ${failures.map(f => f.contactId).join(', ')}`;
 
     try {
       // Uma RPC por contato, em série: `transfer_conversation` é atômica POR
@@ -87,31 +118,47 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           p_contact_id: contactId,
           p_to_agent_id: type === 'agent' ? targetId : null,
           p_to_queue_id: type === 'queue' ? targetId : null,
-          p_note: null,
+          p_note: note,
         });
-        if (error) failures.push(error);
-        else transferidos += 1;
+        if (error) {
+          const reason =
+            error instanceof Error
+              ? error.message
+              : String(
+                  (error as { message?: unknown }).message ?? 'erro desconhecido',
+                );
+          failures.push({ contactId, reason });
+        } else transferidos.push(contactId);
       }
     } catch (err) {
-      // Rejeição inesperada (rede): o laço acima só devolve `error`, então isto
-      // cobre a exceção crua e preserva o toast de erro.
+      // Rejeição inesperada (rede): o que já transferiu fica valendo, então
+      // recarrega quando houve sucesso antes da queda. O toast genérico e a
+      // propagação continuam iguais.
+      if (transferidos.length > 0) sincronizarParcial();
       toast.error('Erro ao transferir contatos');
       throw err;
     } finally {
       setBulkLoading(false);
     }
 
-    // Sucesso parcial (ou total negativo): avisa quantos foram e mantém a
-    // seleção — quem chamou precisa saber que falhou (a sidebar usa a rejeição
-    // para manter o diálogo/alvo abertos).
+    // Sucesso parcial (ou total negativo): avisa com o resumo por linha,
+    // sincroniza o que já entrou e rejeita com o resumo — quem chamou precisa
+    // saber que falhou (a sidebar usa a rejeição para manter o diálogo/alvo
+    // abertos). Nada de `failures[0]`: só a primeira falha não conta a história.
     if (failures.length > 0) {
-      toast.error(
-        `Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam`,
-      );
-      throw failures[0];
+      if (transferidos.length > 0) sincronizarParcial();
+      const resumo = resumoTransferencia();
+      toast.error(resumo);
+      const erro = new Error(resumo) as Error & {
+        failedContactIds: string[];
+        transferFailures: TransferFailure[];
+      };
+      erro.failedContactIds = failures.map(f => f.contactId);
+      erro.transferFailures = failures;
+      throw erro;
     }
 
-    toast.success(`${contactIds.length} contato(s) transferido(s)`);
+    toast.success(`${transferidos.length} contato(s) transferido(s)`);
     clearSelection();
     refetch();
   }, [selectedIds, clearSelection, refetch]);
