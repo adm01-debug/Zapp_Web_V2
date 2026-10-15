@@ -151,6 +151,27 @@ describe('useReauthentication', () => {
     expect(mockSetSession).not.toHaveBeenCalled();
   });
 
+  it('reauthenticate never leaves the loading stuck (code request and failure paths)', async () => {
+    userOk();
+    totpPendente();
+    let liberar!: (value: { ok: true; mode: 'verify' }) => void;
+    mockServerLogin.mockReturnValue(new Promise((resolve) => { liberar = resolve; }));
+
+    const { result } = renderHook(() => useReauthentication());
+
+    let emCurso: Promise<{ success: boolean }> | undefined;
+    act(() => {
+      emCurso = result.current.reauthenticate('correctpass');
+    });
+    expect(result.current.isReauthenticating).toBe(true);
+
+    await act(async () => {
+      liberar({ ok: true, mode: 'verify' });
+      await emCurso;
+    });
+    expect(result.current.isReauthenticating).toBe(false);
+  });
+
   it('reauthenticate elevates the current session with the right code', async () => {
     userOk();
     totpPendente();
