@@ -138,6 +138,12 @@ jobs:
       - name: 🔐 Verify immutable GitHub Action pins
         run: node scripts/ci/check-workflow-pins.mjs
 
+      - name: 🔐 Verify Action pins resolve to the declared tag
+        # O check acima confere formato; este confere que o SHA e o commit REAL da
+        # tag do comentario (git ls-remote, sem token). Pegou os 2 pins inventados
+        # do scorecard.yml, que falhava no "Set up job" desde o lote #1942.
+        run: node scripts/ci/check-workflow-pins-resolvem.mjs
+
       - name: 🔒 Verify PR workflow secret boundary
         run: node scripts/ci/check-pr-workflow-secrets.mjs
 
