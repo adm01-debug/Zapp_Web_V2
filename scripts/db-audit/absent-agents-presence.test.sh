@@ -11,7 +11,12 @@
 #   BLOCO B (GREEN) — a migration REAL é aplicada; o mesmo agente mantém a carteira;
 #     ausentes (só heartbeat parado) e offline explícito são realocados para quem tem
 #     heartbeat fresco; fila sem candidato fresco não move nada.
-#   Também: guarda de papel, entrada inválida (NULL/negativo) e ACL por papel real.
+#   Também: trigger anti-hijack REAL aplicado dos arquivos do repo (morde
+#     nao-admin em UPDATE direto, libera admin e service_role sob a funcao),
+#     guarda de papel, entrada inválida (NULL/negativo), ACL por papel real,
+#     governanca do parametro (omitido usa default 2; explicito 30 muda o
+#     resultado) e Rollback TOTAL (todas as linhas: default 30 + ACL nos 4
+#     papeis + criterio antigo por comportamento).
 #
 # Uso: bash scripts/db-audit/absent-agents-presence.test.sh
 set -euo pipefail
@@ -46,6 +51,11 @@ as_user() {
   local jwt="$1" sql="$2"
   docker exec "$cname" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
     -c "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '$jwt', false); $sql"
+}
+as_service() {
+  local sql="$1"
+  docker exec "$cname" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET ROLE service_role; SELECT set_config('request.jwt.claims', '{\"role\":\"service_role\"}', false); $sql"
 }
 expect_value() {
   local l="$1" e="$2" s="$3" a
@@ -88,6 +98,14 @@ create table public.user_sessions (id bigserial primary key, user_id uuid, is_ac
 create or replace function public.update_updated_at_column() returns trigger language plpgsql as \$\$ begin new.updated_at = now(); return new; end \$\$;
 create trigger update_contacts_updated_at before update on public.contacts for each row execute function public.update_updated_at_column();
 " >/dev/null
+
+# Trigger anti-hijack REAL (o mesmo que dispara em producao): aplica os arquivos
+# do repo em ordem, nao copia o corpo a mao (20260924203300 cria a trava,
+# 20260929790000 e a versao vigente da funcao do trigger).
+psql_file "$repo_root/supabase/migrations/20260924203300_prevent_contact_assignee_hijack.sql" >/dev/null
+psql_file "$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql" >/dev/null
+# Grants minimos p/ o UPDATE direto como authenticated (prova de que o trigger morde).
+psql_sql "grant usage on schema public to authenticated, anon, service_role; grant select, update on public.contacts to authenticated;" >/dev/null
 
 seed() {
   # Guarda de papel só checa admin/supervisor (is_admin_or_supervisor por user_id).
@@ -253,6 +271,24 @@ expect_value "GREEN: eventos gravados = 4 ('absence_reassign')" \
 expect_value "GREEN: evento aponta origem/destino corretos" \
   "1" "select count(*) from public.conversation_events where from_agent_id='00000000-0000-0000-0000-0000000000b6' and to_agent_id='00000000-0000-0000-0000-0000000000b4'"
 
+# --- trigger anti-hijack REAL: morde quem deve morder, libera quem deve passar --
+# UPDATE direto como authenticated nao-admin desviando contato alheio (c3, de b3
+# para b4): o trigger instalado dos arquivos REAIS barra. Prova que ele esta vivo
+# no harness (sem ele, esse UPDATE passaria e o GREEN acima seria vacuo).
+expect_error_code_as "Trigger vivo: nao-admin nao desvia contato alheio" \
+  "$agent_jwt" "update public.contacts set assigned_to='00000000-0000-0000-0000-0000000000b4' where id='00000000-0000-0000-0000-0000000000c3';" "Sem permissao para atribuir contato a este agente"
+
+# service_role sob a funcao: guard pula (role <> authenticated) e trigger pula;
+# os mesmos 4 contatos sao realocados (passa quando deve passar).
+reset_contacts
+v_svc="$(as_service "select public.reassign_absent_agents(2);" | tail -n1)"
+[[ "$v_svc" == "4" ]] || fail "service_role: retorno esperado 4, obtido '$v_svc'"
+printf '[PASS] %s\n' "service_role: UPDATE sob a funcao passa no trigger (4 realocados)"
+expect_value "service_role: b4 recebeu os 4" \
+  "4" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b4'"
+expect_value "service_role: eventos gravados = 4 ('absence_reassign')" \
+  "4" "select count(*) from public.conversation_events where event_type='absence_reassign'"
+
 # --- guarda de papel: authenticated sem admin/supervisor nao executa -------------
 expect_error_code_as "Authenticated nao-admin e barrado (raise do guard)" \
   "$agent_jwt" "select public.reassign_absent_agents(2);" "requer perfil admin ou supervisor"
@@ -277,9 +313,46 @@ expect_value "ACL: anon NAO executa" "f" \
 expect_value "ACL: PUBLIC NAO executa" "f" \
   "select has_function_privilege('public','public.reassign_absent_agents(integer)','EXECUTE');"
 
-# --- Rollback executavel --------------------------------------------------------
-psql_sql "$(sed -n 's/^--   //p' "$migration" | head -n1)" >/dev/null
+# --- o parametro governa; o default so preenche a omissao (ponto 3) ---------------
+# Chamada sem argumento usa o default 2: mesmo resultado do explicito 2 (4).
+reset_contacts
+v_def="$(as_user "$admin_jwt" "select public.reassign_absent_agents();" | tail -n1)"
+[[ "$v_def" == "4" ]] || fail "default omitido: esperado 4 (igual ao explicito 2), obtido '$v_def'"
+printf '[PASS] %s\n' "Parametro omitido usa o default 2 (4 realocados)"
+# Explicito 30: janela larga torna o heartbeat parado de b6 (10 min) fresco — b6
+# deixa de ser ausente E vira candidato em q2, entao b5 (q2) vai para b6.
+reset_contacts
+v_wide="$(as_user "$admin_jwt" "select public.reassign_absent_agents(30);" | tail -n1)"
+[[ "$v_wide" == "5" ]] || fail "explicito 30: esperado 5 (b2=2, b7=1, b5=2 via b6 fresco), obtido '$v_wide'"
+printf '[PASS] %s\n' "Explicito 30 governa: janela larga inclui b6 como fresco (5 realocados)"
+expect_value "Explicito 30: b4 recebe 3 (e1, e2, f7)" \
+  "3" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b4'"
+expect_value "Explicito 30: b6 mantem f6 e recebe q2 (b6=3)" \
+  "3" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b6'"
+expect_value "Explicito 30: b3 presente mantem os 5" \
+  "5" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b3'"
+
+# --- Rollback executavel: TODAS as linhas (nao so a 1a), ACL + comportamento -----
+psql_sql "$(sed -n 's/^--   //p' "$migration")" >/dev/null
 expect_value "Rollback roda: volta default 30 e o criterio antigo" \
   "30" "select (regexp_match(pg_get_function_arguments('public.reassign_absent_agents(integer)'::regprocedure::oid),'DEFAULT ([0-9]+)'))[1] from pg_proc where oid='public.reassign_absent_agents(integer)'::regprocedure;"
+expect_value "Rollback: authenticated executa" "t" \
+  "select has_function_privilege('authenticated','public.reassign_absent_agents(integer)','EXECUTE');"
+expect_value "Rollback: service_role executa" "t" \
+  "select has_function_privilege('service_role','public.reassign_absent_agents(integer)','EXECUTE');"
+expect_value "Rollback: anon NAO executa" "f" \
+  "select has_function_privilege('anon','public.reassign_absent_agents(integer)','EXECUTE');"
+expect_value "Rollback: PUBLIC NAO executa" "f" \
+  "select has_function_privilege('public','public.reassign_absent_agents(integer)','EXECUTE');"
+# Comportamento pos-rollback: criterio antigo (user_sessions; so b4 tem sessao
+# recente) com default 30 — b3 com heartbeat fresco perde a carteira (9 = 5+2+1+1).
+reset_contacts
+v_rb="$(as_user "$admin_jwt" "select public.reassign_absent_agents();" | tail -n1)"
+[[ "$v_rb" == "9" ]] || fail "pos-rollback (criterio antigo, default 30): esperado 9, obtido '$v_rb'"
+printf '[PASS] %s\n' "pos-rollback: criterio antigo restaurado por comportamento (9 realocados)"
+expect_value "pos-rollback: b3 perde os 5 (criterio user_sessions)" \
+  "0" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b3'"
+expect_value "pos-rollback: b4 concentra os 9" \
+  "9" "select count(*) from public.contacts where assigned_to='00000000-0000-0000-0000-0000000000b4'"
 
 printf '\nTODOS OS BLOCOS PASSARAM\n'
