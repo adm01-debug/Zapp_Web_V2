@@ -21,6 +21,7 @@ const h = vi.hoisted(() => ({
   removeChannel: vi.fn(),
   from: vi.fn(),
   invoke: vi.fn(),
+  avisoConexao: vi.fn(),
   linhasDesconectadas: [] as Array<{ id: string; instance_id: string; phone_number: string | null; status: string }>,
 }));
 
@@ -38,7 +39,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...args: unknown[]) => h.avisoConexao(...args) }));
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
@@ -145,6 +146,18 @@ describe('EvolutionDisconnectBanner — refetch filtrado por conexão', () => {
     });
 
     expect(h.from).toHaveBeenCalledTimes(1);
+  });
+
+  it('não dispara o aviso "conectado" (announce:false — o dono do aviso é o gerente)', async () => {
+    render(<EvolutionDisconnectBanner />);
+    await waitFor(() => expect(h.from).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      onRealtime()({ eventType: 'UPDATE', new: { id: 'c1', status: 'connected' }, old: { id: 'c1', status: 'disconnected' } });
+    });
+
+    await waitFor(() => expect(h.from).toHaveBeenCalledTimes(2));
+    expect(h.avisoConexao).not.toHaveBeenCalled();
   });
 });
 

@@ -40,9 +40,17 @@ export interface ConnectionsChange {
 interface UseConnectionsRealtimeOptions {
   /** Chamado a cada evento da tabela (INSERT/UPDATE/DELETE). */
   onChange?: (payload: ConnectionsChange) => void;
+  /**
+   * Quando `false`, o hook só entrega eventos no `onChange`, sem o aviso
+   * "WhatsApp conectado!". A faixa de desconexão usa `false`: ela só precisa
+   * do refetch filtrado — o dono do aviso é o gerente de conexões. Sem isso,
+   * faixa + gerente montados juntos anunciavam a mesma transição duas vezes
+   * (cada montagem tem seu próprio `conectadasRef`).
+   */
+  announce?: boolean;
 }
 
-export function useConnectionsRealtime({ onChange }: UseConnectionsRealtimeOptions = {}) {
+export function useConnectionsRealtime({ onChange, announce = true }: UseConnectionsRealtimeOptions = {}) {
   // Ref espelhada em useLayoutEffect (não no corpo do render, que pode ser
   // descartado em StrictMode/concurrent). Mantém o efeito com deps estáveis.
   const onChangeRef = useRef(onChange);
@@ -54,11 +62,17 @@ export function useConnectionsRealtime({ onChange }: UseConnectionsRealtimeOptio
   // geram dois avisos.
   const conectadasRef = useRef<Set<string>>(new Set());
 
-  const announceConnected = useCallback((conn: ConnectionRealtimeRow) => {
+  const announceRef = useRef(announce);
+  useLayoutEffect(() => { announceRef.current = announce; }, [announce]);
+
+  const announceConnected = useCallback((conn: ConnectionRealtimeRow, antes?: string | null) => {
     if (conn.status !== 'connected') {
       conectadasRef.current.delete(conn.id);
       return;
     }
+    // UPDATE sem transição (já estava conectada) não é novidade: sem isso,
+    // qualquer UPDATE de linha conectada reanunciava uma vez por montagem.
+    if (antes === 'connected') return;
     if (conectadasRef.current.has(conn.id)) return;
     conectadasRef.current.add(conn.id);
     toast({ title: 'WhatsApp conectado!', description: 'A conexão está ativa e pronta para enviar mensagens.' });
@@ -73,7 +87,12 @@ export function useConnectionsRealtime({ onChange }: UseConnectionsRealtimeOptio
         (payload) => {
           log.debug('Connection update:', payload);
           const evento = payload as unknown as ConnectionsChange;
-          if (evento.eventType !== 'DELETE') announceConnected(evento.new as ConnectionRealtimeRow);
+          if (announceRef.current && evento.eventType !== 'DELETE') {
+            announceConnected(
+              evento.new as ConnectionRealtimeRow,
+              (evento.old as ConnectionRealtimeRow | null)?.status ?? null,
+            );
+          }
           onChangeRef.current?.(evento);
         }
       )
