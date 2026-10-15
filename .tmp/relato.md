@@ -1,36 +1,39 @@
 Especialista: Edgar (area-edge-api)
 
 ## O que mudou e por quê
-`ESTADO.md`: 3 âncoras do arquivo da própria entrega realinhadas ao deslocamento de linhas que ela causou. A entrega
-(#219) somou 241 linhas em `supabase/functions/_shared/evolution-webhook-messages.ts` e deixou a tabela do ESTADO.md
-velha: `ai-transcribe-audio` 734→983, `classify-sticker` 711→960, `fetch-link-preview` 270→275.
+`ESTADO.md` (18 linhas da tabela publicada) foi sincronizado com o que o repositório realmente tem. A entrega de
+ausência (#219) somou 241 linhas em `supabase/functions/_shared/evolution-webhook-messages.ts` e outras entregas
+empilhadas deslocaram linhas de outros arquivos; a tabela do ESTADO.md ficou velha e a guarda
+`scripts/ci/docs-estado-registry-convention.unit.mjs` passou a acusar. Recalculei cada linha com as MESMAS regras da
+guarda (`invoke('edge')` / `/functions/v1/edge` em `src/`; chamada de outra edge; agendador em
+`supabase/migrations/`; entrada em `supabase/config.toml`) e regravei grupo, âncoras, totais e a lista de órfãs.
 
-## Verificação (comando rodado -> linha de resultado)
-- `zapp-verify . --rapido` -> `OK db_guard 0s | OK tipos 233s | OK lint 0s | OK migrations 1s` e `VERIFY: VERDE SEM BANCO (234s)`
-- `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')` -> `ok | 1908 passed (16 steps) | 0 failed | 3 ignored`
-- `./node_modules/.bin/vitest run --config vitest.contracts.config.ts --reporter=dot` -> 0 linha `FAIL`
-- regra das âncoras da guarda (`node .tmp/ancoras.mjs`, mesma semântica do teste 2) -> `26 desatualizadas antes`, `23 depois`, `0 no arquivo da entrega`
-- `grep -n '/functions/v1/fetch-link-preview\|/functions/v1/classify-sticker\|/functions/v1/ai-transcribe-audio' supabase/functions/_shared/evolution-webhook-messages.ts` -> `275:`, `960:`, `983:`
+## Verificação (comando -> linha de resultado)
+- `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` -> `# pass 11 | # fail 0`
+  (antes: `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`)
+- `zapp-verify . --rapido` -> `OK db_guard 0s | OK tipos 33s | OK lint 0s | OK migrations 1s` |
+  `VERIFY: VERDE SEM BANCO (35s)`
+- `node --test` na bateria do espelho (`scripts/ci`, `scripts/edge-deploy`, `scripts/db-audit`, `scripts/talkx`) ->
+  `# pass 1366 | # fail 9`; as 11 falhas do ESTADO.md sumiram
+- `deno test --config scripts/ci/deno.json --frozen` -> `ok | 1908 passed (16 steps) | 0 failed | 3 ignored`
+- commit final do cartão: `a89758e2a7`
 
-## Ponto 1 (cherry-pick de f50ef67ad, sem recomeçar)
-Não procede como cherry-pick: a entrega já está na base deste workspace. Medido por conteúdo — o teste
-`supabase/functions/_shared/away-message-webhook.test.ts` da base é idêntico ao da branch da entrega (`git diff f50ef67ad -- <arquivo>` vazio) e o `git cherry-pick -n 4b6abcb255` não alterou nenhuma linha do código. Portanto nada a trazer.
+## Ponto 1 (partir do commit f50ef67ad com cherry-pick)
+Não procede: a entrega já está na base deste workspace. Conferi por conteúdo que
+`supabase/functions/_shared/away-message-webhook.test.ts` e o trecho de ausência em
+`evolution-webhook-messages.ts` já estão aqui — o cherry-pick seria vazio, não recomecei nada.
 
-## Ponto 2 (reproduzir na ponta de dia/2026-10-14 e corrigir a causa)
-Feito. Reproduzi na ponta (workspace em `dia/2026-10-15` = `dia/2026-10-14` = `e7d156b8a7`) e a guarda acusa
-`not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`. A causa da parte desta entrega é o
-deslocamento de linhas do arquivo dela; as 3 âncoras foram realinhadas em `ESTADO.md` (3 -> 0), sem afrouxar asserção.
+## Ponto 2 (reproduzir e corrigir a causa)
+Feito. Reproduzi (`not ok 2`) e corrijo a causa: as âncoras/grupos velhos do ESTADO.md. Medido 26 âncoras
+desatualizadas -> 0, 2 linhas com grupo errado -> 0, `create-user` sem chamador no repositório publicado como
+órfã (E), `talkx-link` com chamador de front publicado como A, totais `A 54 · B 0 · C 3 · D 6 · E 18 · total 81` e a
+lista de 18 órfãs regravadas.
 
-## Ponto 3 (provar com o comando verde e zapp-verify)
-Feito nesta árvore: ver a seção Verificação (`VERIFY: VERDE SEM BANCO (234s)`, Deno `1908 passed | 0 failed`,
-contratos sem `FAIL`). Commit da correção: `ac6f3f546c`. O item do espelho já é vermelho na BASE (baseline do próprio
-integrador, `~/arquitetura-v2/integrador/.ci-base-e7d156b8a7….txt`, 5 itens); os itens reais desta árvore são
-exatamente esses 5 (delta 0), e a primeira divergência de âncora hoje é `ai-kb-ingest`, de outro cartão.
+## Ponto 3 (provar VERDE e fechar citando o sha)
+Feito: guarda 11/11 verde, `zapp-verify . --rapido` verde e o commit `a89758e2a7` no topo da branch.
 
 ## Achados fora do escopo (não corrigidos)
-- As outras 23 âncoras desatualizadas do `ESTADO.md` pertencem aos cartões que deslocaram o código delas; refazeres
-  irmãos já pendentes: `ai-kb-ingest` (9e031551e5), `create-user` (27f5efc38e), `talkx-link` (867a7e8c27),
-  `useStickerPicker` (c895194ade), `elevenlabs-scribe-token` (9d22e117ec), `batch-fetch-avatars` (d3049c4e9f).
-  `ESTADO.md` é ponto de colisão entre esses cartões (20+ pendentes mexem nele).
-- 6 itens do `node --test` desta sessão são artefato do sandbox: `scripts/ci/lint-ratchet.unit.mjs` faz `git init` e a
-  guarda da sessão bloqueia (`HERMES-GUARD (git): git init é proibido nesta sessão`). Não aparecem no baseline nem no CI.
+- Continuam vermelhos, já na base do integrador (`.ci-base-e7d156b8a7...`): `FLAG_CHANGES.md contem todos os usos
+  de useCRMIntegrationEnabled` e 2 do Talk X (`delivery window in the campaign timezone`, `scheduler resume`).
+- `scripts/ci/lint-ratchet.unit.mjs` (6 itens) faz `git init` num repo temporário e a guarda desta sessão bloqueia
+  `git init`; não falha na base do integrador nem no CI.
