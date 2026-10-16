@@ -21,11 +21,16 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   remove: vi.fn(),
   scanInvoke: vi.fn(),
+  toastInfo: vi.fn(),
   profile: { id: '11111111-2222-3333-4444-555555555555' } as { id: string } | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: mocks.storageFrom }, functions: { invoke: mocks.scanInvoke } },
+}));
+
+vi.mock('sonner', () => ({
+  toast: { info: mocks.toastInfo, error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -289,5 +294,81 @@ describe('TalkXMediaDropzone (X095)', () => {
 
     expect(await screen.findByTestId('talkx-media-error')).toHaveTextContent('Falha ao enviar');
     expect(payload()).toBeNull();
+  });
+
+  it('durante a varredura a tela mostra "Enviando…" em vez de sumir', async () => {
+    let resolveScan!: (value: unknown) => void;
+    mocks.scanInvoke.mockReturnValueOnce(new Promise((resolve) => { resolveScan = resolve; }));
+
+    render(<Harness />);
+    chooseFile(makeFile('manual.pdf', 'application/pdf', 1024));
+
+    // A verificação ainda não respondeu: a zona dá lugar ao estado de envio,
+    // com o nome do arquivo e o botão de cancelar à vista — nada some em silêncio.
+    expect(await screen.findByTestId('talkx-media-status')).toHaveTextContent('manual.pdf');
+    expect(screen.getByTestId('talkx-media-cancel')).toBeInTheDocument();
+    expect(mocks.upload).not.toHaveBeenCalled();
+
+    resolveScan({
+      data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-1', message: 'Arquivo verificado.' },
+      error: null,
+    });
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(payload()?.media_type).toBe('document'));
+  });
+
+  it('varredura bloqueada mostra o alerta em linha, não grava nada e reenviar tenta de novo', async () => {
+    const blockedBody = {
+      error: true,
+      code: 'MALWARE_DETECTED',
+      message: 'Arquivo bloqueado: ameaça detectada.',
+      verdict: 'malicious',
+      scanId: 'scan-eicar',
+    };
+    mocks.scanInvoke
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Edge Function returned a non-2xx status code', context: new Response(JSON.stringify(blockedBody), { status: 422 }) },
+      })
+      .mockResolvedValue({
+        data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-2', message: 'Arquivo verificado.' },
+        error: null,
+      });
+
+    render(<Harness />);
+    chooseFile(makeFile('eicar.pdf', 'application/pdf', 1024));
+
+    expect(await screen.findByTestId('talkx-media-error')).toHaveTextContent('bloqueado');
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(payload()).toBeNull();
+
+    // "Tentar novamente" no Talk X é escolher o arquivo de novo: varre outra vez e grava.
+    chooseFile(makeFile('eicar.pdf', 'application/pdf', 1024));
+    await waitFor(() => expect(mocks.scanInvoke).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(payload()?.media_type).toBe('document'));
+  });
+
+  it('falha-aberto grava e avisa em voz baixa, sem alerta de erro na tela', async () => {
+    mocks.scanInvoke.mockResolvedValue({
+      data: {
+        success: true,
+        scanned: false,
+        verdict: 'unknown',
+        reason: 'too_large',
+        message: 'O arquivo não pôde ser verificado agora e será enviado mesmo assim.',
+        scanId: null,
+      },
+      error: null,
+    });
+
+    render(<Harness />);
+    chooseFile(makeFile('grande.pdf', 'application/pdf', 1024));
+
+    await waitFor(() => expect(payload()?.media_type).toBe('document'));
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('talkx-media-error')).not.toBeInTheDocument();
+    expect(mocks.toastInfo).toHaveBeenCalledTimes(1);
+    expect(mocks.toastInfo.mock.calls[0][1]).toMatchObject({ id: 'talkx-media-scan' });
   });
 });
