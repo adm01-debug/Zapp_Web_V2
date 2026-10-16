@@ -134,7 +134,10 @@ export async function handleAiSuggestReply(
       log.warn("Error fetching knowledge base", { error: e instanceof Error ? e.message : String(e) });
     }
 
-    log.info("Generating reply suggestions", { contactName, kbContext: knowledgeContext.length > 0 });
+    // LGPD (doc 07, mesmo achado do log de voz): o nome do contato é dado pessoal
+    // vindo do corpo do pedido e não pode ficar no log da Edge (retenção fora do
+    // nosso controle de purga). Registro só a PRESENÇA do nome, nunca o texto.
+    log.info("Generating reply suggestions", { hasContactName: !!contactName, kbContext: knowledgeContext.length > 0 });
 
     const firstName = contactName ? contactName.split(' ')[0] : null;
 

@@ -165,3 +165,61 @@ Deno.test("IA-009: flag de voz ligada -> 200 e o provedor é chamado (o gate nã
     }
   });
 });
+
+// LGPD (doc 07 / mesmo achado do log de voz): a geração é PAGA e o prompt pode
+// conter dado pessoal, então NENHUMA linha de log da Edge pode carregar o texto.
+// O `Logger` escreve por `console.log/warn/error` (uma string JSON por linha),
+// então o teste captura as três saídas e varre cada uma.
+const PROMPT_COM_DADO = "som de estalo para a cliente Ana, CPF 123.456.789-00";
+
+Deno.test("LGPD: o prompt do usuário e um CPF sintético não aparecem no log da geração", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([ROTA_AUTH, ROTA_NETWORK_POLICY, ROTA_RATE_LIMIT, ROTA_SFX, ROTA_FLAG_ON]);
+    const linhas: string[] = [];
+    const original = { log: console.log, warn: console.warn, error: console.error };
+    const capturar = (...args: unknown[]) => {
+      linhas.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
+    };
+    console.log = capturar as typeof console.log;
+    console.warn = capturar as typeof console.warn;
+    console.error = capturar as typeof console.error;
+    try {
+      const res = await handleElevenLabsSfx(
+        sfxRequest({ prompt: PROMPT_COM_DADO, duration: 5, mode: "sfx" }),
+      );
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+    } finally {
+      console.log = original.log;
+      console.warn = original.warn;
+      console.error = original.error;
+      stub.restore();
+    }
+
+    const tudo = linhas.join("\n");
+    assert(tudo.length > 0, "o handler precisa ter logado algo");
+    assert(!tudo.includes(PROMPT_COM_DADO), "o log não pode conter o prompt do usuário");
+    assert(!tudo.includes("123.456.789-00"), "o log não pode conter CPF");
+    assert(!tudo.includes("cliente Ana"), "o log não pode conter o nome do cliente");
+
+    const entradas = linhas
+      .map((l) => {
+        try {
+          return JSON.parse(l) as Record<string, unknown>;
+        } catch {
+          return null;
+        }
+      })
+      .filter((e): e is Record<string, unknown> => e !== null);
+    const geracao = entradas.find((e) => e.msg === "Generating audio");
+    assert(geracao, "o log da geração precisa existir");
+    assert(
+      geracao.prompt_length === PROMPT_COM_DADO.length,
+      `o log precisa do TAMANHO do prompt (${PROMPT_COM_DADO.length}), veio ${geracao.prompt_length}`,
+    );
+    assert(
+      typeof geracao.request_id === "string" && geracao.request_id.length > 0,
+      "o log precisa do identificador curto da requisição",
+    );
+    assert(!("prompt" in geracao), "o log NÃO pode ter a chave `prompt`");
+  });
+});
