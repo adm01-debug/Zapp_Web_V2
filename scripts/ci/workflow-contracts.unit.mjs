@@ -373,7 +373,7 @@ test('E86: quem roda a suíte logada declara a limpeza do que grava em produçã
 
 const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
 const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
-const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}/;
 
 /** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
 function blocosDeJob(texto) {

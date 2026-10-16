@@ -101,7 +101,8 @@ function isNearBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_FOLLOW_THRESHOLD_PX;
 }
 
-export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
+export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>((
+{
   messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onInteractiveListItemClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
