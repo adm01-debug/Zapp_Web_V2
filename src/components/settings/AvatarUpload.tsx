@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,19 +11,20 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('AvatarUpload');
 
 /**
- * Extensão de `avatars/<user_id>/avatar.<ext>` a partir da URL pública.
- * Descarta o `?t=` que o upload usa para furar o cache.
+ * Extrai o caminho do objeto no bucket `avatars` a partir da URL pública
+ * salva no perfil (ex.: .../object/public/avatars/<id>/avatar-<ts>.png?t=123).
  */
-function extensaoDaUrlDoAvatar(avatarUrl: string | null | undefined): string | null {
-  if (!avatarUrl) return null;
-  const nome = (avatarUrl.split('?')[0].split('/').pop() ?? '').toLowerCase();
-  const ponto = nome.lastIndexOf('.');
-  return ponto === -1 ? null : nome.slice(ponto + 1) || null;
+function avatarPathFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const marcador = '/object/public/avatars/';
+  const inicio = url.indexOf(marcador);
+  if (inicio === -1) return null;
+  const caminho = url.slice(inicio + marcador.length).split('?')[0].split('#')[0];
+  return caminho ? decodeURIComponent(caminho) : null;
 }
 
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
-  const queryClient = useQueryClient();
   const feedback = useActionFeedback();
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
@@ -40,34 +40,17 @@ export function AvatarUpload() {
     }
 
     setUploading(true);
-    const ext = (file.name.split('.').pop() || '').toLowerCase();
-    const filePath = `${user.id}/avatar.${ext}`;
+    const ext = file.name.split('.').pop();
+    // Caminho único por upload: trocar a foto mais de uma vez não sobrescreve a anterior.
+    const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const previousUrl = avatarUrl ?? profile?.avatar_url ?? null;
 
     await feedback.withFeedback(
       async () => {
-        // A foto vive em `avatars/<user_id>/avatar.<ext>`. Trocar a extensão
-        // (jpg -> webp) grava um arquivo NOVO e deixa o anterior na pasta; como o
-        // bucket é público, o órfão continua servível pela URL antiga. Listamos
-        // antes de subir para apagar só o formato que ficou para trás.
-        const { data: arquivosExistentes, error: erroDeListagem } = await supabase.storage
-          .from('avatars')
-          .list(user.id, { limit: 100 });
-        if (erroDeListagem) {
-          // Não dá para "sem resultados": sem a lista, cai na extensão que a URL
-          // do perfil já aponta — é o único candidato a órfão que conhecemos.
-          log.warn('Falha ao listar avatares antigos:', erroDeListagem);
-        }
-        const extAnterior = extensaoDaUrlDoAvatar(profile?.avatar_url);
-        const orfaos = erroDeListagem
-          ? (extAnterior && extAnterior !== ext ? [`${user.id}/avatar.${extAnterior}`] : [])
-          : (arquivosExistentes ?? [])
-              .filter((arquivo) => arquivo.name.startsWith('avatar.') && arquivo.name !== `avatar.${ext}`)
-              .map((arquivo) => `${user.id}/${arquivo.name}`);
-
-        // Upload to storage
+        // Upload to storage (sem upsert: cada envio grava um objeto novo)
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file, { upsert: true });
+          .upload(filePath, file);
         if (uploadError) throw uploadError;
 
         // Get public URL
@@ -84,20 +67,17 @@ export function AvatarUpload() {
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
-        // Limpeza do formato antigo: falha aqui não derruba a troca já gravada.
-        if (orfaos.length > 0) {
-          const { error: removeError } = await supabase.storage.from('avatars').remove(orfaos);
-          if (removeError) log.warn('Falha ao apagar o avatar antigo:', removeError);
-        }
-
         setAvatarUrl(urlWithCache);
         await refreshProfile();
 
-        // O avatar do perfil também é lido pelo cache do react-query (lista de
-        // membros e perfil do usuário). Sem invalidar, o app inteiro continua
-        // mostrando a foto antiga até o staleTime vencer.
-        queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        // Remove o objeto antigo do bucket para não acumular fotos órfãs.
+        const previousPath = avatarPathFromUrl(previousUrl);
+        if (previousPath && previousPath !== filePath) {
+          const { error: removeError } = await supabase.storage
+            .from('avatars')
+            .remove([previousPath]);
+          if (removeError) log.warn('Falha ao remover avatar antigo do bucket', removeError);
+        }
       },
       {
         loadingMessage: 'Enviando foto...',
