@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { serverLogin, type ServerLoginLock } from '@/lib/serverLogin';
+import { serverLogin, type ServerLoginLock, type ServerLoginResult } from '@/lib/serverLogin';
 import { Session } from '@supabase/supabase-js';
 import { log } from '@/lib/logger';
 import { Profile } from '@/types';
@@ -11,7 +11,24 @@ export interface SignInResult {
   lock: ServerLoginLock | null;
   /** A Edge ou a persistencia local da sessao falhou; nao confundir com senha invalida. */
   unavailable: boolean;
+  /**
+   * Negacao da politica de rede (IP/pais, R2-AUTH-022): nem senha errada nem
+   * lockout. Presente e `true` so nesse caso; nos demais fica ausente para nao
+   * alterar o contrato existente dos chamadores.
+   */
+  networkBlocked?: boolean;
 }
+
+/**
+ * Mensagem ao usuario barrado pela politica de rede. Segue generica de proposito:
+ * nao revela IP, pais nem a regra aplicada (o corpo do 403 tambem nao revela).
+ */
+export const NETWORK_BLOCKED_MESSAGE =
+  'Acesso bloqueado pela política de rede da empresa (endereço ou país não permitido). Se você deveria ter acesso, fale com o administrador.';
+
+/** Mensagem quando a politica de rede nao pode ser avaliada agora (retentavel). */
+export const NETWORK_UNAVAILABLE_MESSAGE =
+  'Não foi possível verificar sua rede agora. Tente novamente em instantes.';
 
 export class AuthService {
   private static sessionPromise: Promise<Session | null> | null = null;
@@ -88,11 +105,57 @@ export class AuthService {
   static async signIn(email: string, password: string): Promise<SignInResult> {
     const result = await serverLogin(email, password);
     if (result.ok) {
+      if (!('accessToken' in result)) {
+        // O login nunca pede o modo `verify`; sem tokens nao ha sessao a instalar
+        // — falha fechada em vez de dar o login por feito.
+        log.warn('[AuthService] auth-login respondeu sem sessao; login bloqueado');
+        return {
+          error: new Error('Login temporariamente indisponível. Tente novamente em instantes.'),
+          via: 'edge',
+          lock: null,
+          unavailable: true,
+        };
+      }
       const { error } = await supabase.auth.setSession({
         access_token: result.accessToken,
         refresh_token: result.refreshToken,
       });
       return { error, via: 'edge', lock: null, unavailable: error !== null };
+    }
+    return AuthService.loginFailure(result);
+  }
+
+  /**
+   * Reautenticacao (R2-AUTH-023): confere a senha NA EDGE, em modo `verify`, e
+   * NAO instala sessao nenhuma. O `setSession` antigo trocava a sessao do usuario
+   * por um token AAL1, rebaixando AAL2 -> AAL1 a cada acao sensivel (o usuario era
+   * jogado de volta para /2fa). A elevacao do 2o fator e feita na sessao CORRENTE
+   * (mfa.challenge + verify), pelo chamador.
+   */
+  static async verifyPassword(email: string, password: string): Promise<SignInResult> {
+    const result = await serverLogin(email, password, 'verify');
+    if (result.ok) return { error: null, via: 'edge', lock: null, unavailable: false };
+    return AuthService.loginFailure(result);
+  }
+
+  /**
+   * Traduz a recusa da Edge para o contrato de `SignInResult`, compartilhado por
+   * login e reautenticacao: senha errada, lockout, negacao de rede e
+   * indisponibilidade precisam continuar distinguiveis pelo chamador.
+   */
+  private static loginFailure(result: Extract<ServerLoginResult, { ok: false }>): SignInResult {
+    if ('networkBlocked' in result) {
+      // Nao e senha errada nem lockout: a politica de rede (IP/pais) barrou o
+      // login antes de qualquer verificacao de senha. Mensagem generica — nunca
+      // IP, pais ou regra na tela.
+      log.warn('[AuthService] Login negado pela politica de rede', { retryable: result.retryable });
+      return {
+        error: new Error(result.retryable ? NETWORK_UNAVAILABLE_MESSAGE : NETWORK_BLOCKED_MESSAGE),
+        via: 'edge',
+        lock: null,
+        unavailable: false,
+        networkBlocked: true,
+      };
     }
     if (!result.unavailable) {
       return { error: new Error(result.error), via: 'edge', lock: result.lock, unavailable: false };

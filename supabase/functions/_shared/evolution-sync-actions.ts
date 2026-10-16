@@ -42,6 +42,24 @@ async function fetchEvolutionContacts(evolutionApiUrl: string, evolutionApiKey: 
   return [];
 }
 
+/**
+ * Resolve a conexão da instância para as ações que EXIGEM conexão existente.
+ * NÃO cria conexão nova: instância desconhecida = 404. Antes, `sync-contacts` e
+ * `full-sync` inseriam uma linha em `whatsapp_connections` com status 'connected'
+ * e telefone vazio para qualquer nome — a conexão fantasma aparecia na lista e
+ * no banner. Criar conexão é função só do fluxo atômico de criação da V2.
+ */
+async function requireConnection(
+  supabase: EvolutionDbClient, instanceName: string, corsHeaders: Record<string, string>
+): Promise<{ id: string } | Response> {
+  const { data: connection } = await supabase.from('whatsapp_connections')
+    .select('id').eq('instance_id', instanceName).maybeSingle();
+  if (!connection) {
+    return jsonRes({ error: 'Conexão não encontrada para a instância informada.', instanceName }, corsHeaders, 404);
+  }
+  return connection as { id: string };
+}
+
 export async function syncContacts(
   supabase: EvolutionDbClient, evolutionApiUrl: string, evolutionApiKey: string,
   instanceName: string, corsHeaders: Record<string, string>, page: number, offset: number
@@ -53,20 +71,14 @@ export async function syncContacts(
     return jsonRes({ success: true, message: 'No more contacts to sync', synced: 0, page }, corsHeaders);
   }
 
-  let { data: connection } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instanceName).maybeSingle();
-  if (!connection) {
-    const { data: newConn } = await supabase.from('whatsapp_connections')
-      .insert({ name: instanceName, instance_id: instanceName, status: 'connected', phone_number: '' })
-      .select('id').single();
-    connection = newConn;
-  }
-  if (!connection) throw new Error('Could not create/find WhatsApp connection');
+  const connection = await requireConnection(supabase, instanceName, corsHeaders);
+  if (connection instanceof Response) return connection;
 
   let synced = 0, skipped = 0;
   for (const contact of contacts) {
     const { remoteJid, name: rawName, avatarUrl } = normalizeEvoContact(contact);
     // só JIDs de usuário; exclui grupos, broadcast e @lid (GO expõe contatos LID)
-    if (!remoteJid.endsWith('@s.whatsapp.net')) { skipped++; continue; }
+    if (!remoteJid.endsWith('@s.whatsapp.net') || contact.isGroup) { skipped++; continue; }
     const phone = remoteJid.replace('@s.whatsapp.net', '');
     if (!phone || phone.length < 6) { skipped++; continue; }
     const name = rawName || phone;
@@ -118,8 +130,8 @@ export async function syncMessages(
   const messagesData = await messagesResponse.json();
   const messages = Array.isArray(messagesData) ? messagesData : messagesData.messages || [];
 
-  const { data: connection2 } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instanceName).maybeSingle();
-  if (!connection2) throw new Error('WhatsApp connection not found');
+  const connection2 = await requireConnection(supabase, instanceName, corsHeaders);
+  if (connection2 instanceof Response) return connection2;
 
   const phone = contactPhone.replace('@s.whatsapp.net', '');
   const { data: contact } = await supabase.from('contacts').select('id')
@@ -156,8 +168,8 @@ export async function syncAllMessages(
   instanceName: string, messagesPerContact: number, corsHeaders: Record<string, string>
 ): Promise<Response> {
   if (isGoFlavor()) return goHistoryNotSupported('sync-all-messages', corsHeaders);
-  const { data: conn } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instanceName).maybeSingle();
-  if (!conn) throw new Error('WhatsApp connection not found for instance ' + instanceName);
+  const conn = await requireConnection(supabase, instanceName, corsHeaders);
+  if (conn instanceof Response) return conn;
 
   const { data: allContacts, error: contactsErr } = await supabase.from('contacts').select('id, phone')
     .eq('whatsapp_connection_id', conn.id).order('updated_at', { ascending: false }).limit(500);
@@ -254,14 +266,10 @@ export async function fullSync(
     results.cleanup = { removed: 0 };
   }
 
-  // Connection
-  let { data: conn } = await supabase.from('whatsapp_connections').select('id').eq('instance_id', instanceName).maybeSingle();
-  if (!conn) {
-    const { data: newConn } = await supabase.from('whatsapp_connections')
-      .insert({ name: instanceName, instance_id: instanceName, status: 'connected', phone_number: '' })
-      .select('id').single();
-    conn = newConn;
-  }
+  // Connection — exige conexão existente; NÃO cria (senão fabrica conexão
+  // fantasma 'connected' com telefone vazio). Criar é só do fluxo atômico.
+  const conn = await requireConnection(supabase, instanceName, corsHeaders);
+  if (conn instanceof Response) return conn;
 
   // Import contacts (v2 e GO — shapes normalizados)
   let totalSynced = 0, totalSkipped = 0;
@@ -273,7 +281,7 @@ export async function fullSync(
       if (!jid.endsWith('@s.whatsapp.net') || c.isGroup) { totalSkipped++; continue; }
       const phone = jid.replace('@s.whatsapp.net', '');
       if (!phone || phone.length < 6) { totalSkipped++; continue; }
-      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn!.id as string });
+      validContacts.push({ phone, name: name.trim() || phone, avatar_url: avatarUrl, whatsapp_connection_id: conn.id });
     }
     const limit = Math.min(validContacts.length, 500);
     for (let i = 0; i < limit; i++) {
@@ -336,6 +344,6 @@ function parseEvolutionMessage(messageObj: unknown): { content: string; messageT
   return { content: '[Mensagem não suportada]', messageType: 'text' };
 }
 
-function jsonRes(data: unknown, corsHeaders: Record<string, string>): Response {
-  return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+function jsonRes(data: unknown, corsHeaders: Record<string, string>, status = 200): Response {
+  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }

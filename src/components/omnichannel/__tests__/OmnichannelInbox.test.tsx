@@ -35,6 +35,26 @@ vi.mock('@/components/catalog/useSendProduct', () => ({
   openContactChat: h.state.openContactChat,
 }));
 
+// Chat embutido: o Omnichannel reaproveita o painel do Inbox. Aqui ele é
+// substituído por um stub para provar que a linha abre o chat NA PRÓPRIA TELA
+// (e não navega para a view `inbox`), sem montar todo o stack do chat real.
+vi.mock('../OmnichannelChatPanel', () => ({
+  OmnichannelChatPanel: ({
+    conversation,
+    onClose,
+  }: {
+    conversation: { contact: { name: string } };
+    onClose: () => void;
+  }) => (
+    <div data-testid="chat-panel-stub">
+      <span>Chat embutido: {conversation.contact.name}</span>
+      <button type="button" onClick={onClose}>
+        Fechar chat
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: { fetchInitialConversations: h.state.fetchInitialConversations },
 }));
@@ -211,15 +231,17 @@ describe('OmnichannelInbox', () => {
     });
   });
 
-  // ===== R2-API-064: ABRIR A CONVERSA =====
+  // ===== R2-API-064 + chat embutido: ABRIR A CONVERSA =====
   describe('Abrir conversa', () => {
-    it('abre a conversa no canal correspondente ao acionar a linha', async () => {
+    it('abre o chat embutido na própria tela, sem navegar para a view inbox', async () => {
       render(<OmnichannelInbox />);
 
       const row = await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ });
       fireEvent.click(row);
 
-      expect(h.state.openContactChat).toHaveBeenCalledWith('c1');
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      expect(within(panel).getByText(/Chat embutido: Maria Silva/)).toBeInTheDocument();
+      expect(h.state.openContactChat).not.toHaveBeenCalled();
     });
 
     it('abre também a conversa de contato sem histórico', async () => {
@@ -228,7 +250,20 @@ describe('OmnichannelInbox', () => {
       const row = await screen.findByRole('button', { name: /Abrir conversa de Ana Costa/ });
       fireEvent.click(row);
 
-      expect(h.state.openContactChat).toHaveBeenCalledWith('c3');
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      expect(within(panel).getByText(/Chat embutido: Ana Costa/)).toBeInTheDocument();
+    });
+
+    it('fecha o chat embutido e volta a mostrar a lista', async () => {
+      render(<OmnichannelInbox />);
+
+      fireEvent.click(await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ }));
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      fireEvent.click(within(panel).getByRole('button', { name: /Fechar chat/ }));
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('omnichannel-inline-chat')).not.toBeInTheDocument(),
+      );
     });
   });
 
@@ -241,8 +276,8 @@ describe('OmnichannelInbox', () => {
       await typeSearch('Zeca');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('name.ilike.%Zeca%');
-      expect(filter).toContain('phone.ilike.%Zeca%');
+      expect(filter).toContain('name.ilike."%Zeca%"');
+      expect(filter).toContain('phone.ilike."%Zeca%"');
     });
 
     it('mostra contato que está fora da amostra carregada, com a última mensagem', async () => {
@@ -385,7 +420,7 @@ describe('OmnichannelInbox', () => {
       await typeSearch('Zeca');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('name.ilike.%Zeca%');
+      expect(filter).toContain('name.ilike."%Zeca%"');
       expect(await screen.findByText('Zeca Fora da Amostra')).toBeInTheDocument();
     });
 
@@ -397,7 +432,29 @@ describe('OmnichannelInbox', () => {
       await typeSearch('0009');
 
       const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
-      expect(filter).toContain('phone.ilike.%0009%');
+      expect(filter).toContain('phone.ilike."%0009%"');
+    });
+
+    it('escapa os curingas % e _ para a busca casar o texto literal', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      await typeSearch('a_b');
+
+      const underscore = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
+      // `_` casaria qualquer caractere sem o escape; vira literal no ilike.
+      expect(underscore).toContain('name.ilike."%a\\\\_b%"');
+      expect(underscore).not.toContain('name.ilike."%a_b%"');
+    });
+
+    it('escapa o % digitado para não casar tudo', async () => {
+      render(<OmnichannelInbox />);
+      await screen.findByText('Maria Silva');
+
+      await typeSearch('50%');
+
+      const filter = h.state.lastContactsQuery?.or.mock.calls[0][0] as string;
+      expect(filter).toContain('name.ilike."%50\\\\%%"');
     });
   });
 

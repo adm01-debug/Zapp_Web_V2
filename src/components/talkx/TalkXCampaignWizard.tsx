@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, ChevronDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,12 +18,15 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, explainDraftSaveError, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { TalkXMessageEditor } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
+import { TalkXLinksManager } from './links/TalkXLinksManager';
+import { buildTalkxLinkPlaceholder, useTalkXLinks } from '@/hooks/integrations/useTalkXLinks';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+import { IconTile, ModuleBreadcrumb, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -42,16 +45,21 @@ interface Props {
   campaign: TalkXCampaign | null;
   onClose: () => void;
   onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
-  initial?: { segmentId?: string; templateId?: string; step?: WizardStep };
+  initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep };
   /** URL state is owned by TalkXView; this component only requests transitions. */
   routeStep?: WizardStep;
-  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  /**
+   * X134 — quando o passo atual foi aberto pelo "Editar" da revisão, a rota
+   * carrega `return=N`; é para esse passo que o botão principal volta.
+   */
+  routeReturnTo?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean, returnTo?: WizardStep) => void;
   onDraftIdentity?: (campaignId: string) => void;
 }
 
 export type WizardState = ReturnType<typeof useCampaignEditor>;
 
-export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, routeReturnTo, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
   const { hasUnsavedChanges } = ed;
 
@@ -80,10 +88,10 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     return 4;
   })() as WizardStep;
 
-  const requestStep = (requestedStep: WizardStep, replace = false) => {
+  const requestStep = (requestedStep: WizardStep, replace = false, returnTo?: WizardStep) => {
     const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
     ed.setStep(safeStep);
-    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep, returnTo);
   };
 
   // TL-138 — o stepper passa a ser navegável por teclado: as setas andam entre os
@@ -102,6 +110,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     stepButtonRefs.current[targetIndex]?.focus();
     requestStep(STEPS[targetIndex].n);
   };
+
+  // X134 — "Editar" da revisão: abre o passo pedido deixando na rota o destino
+  // de volta (`step=N&return=4`), em vez de trocar só o estado local.
+  const openStepFromReview = (target: 1 | 2 | 3, returnTo: 4) => requestStep(target, false, returnTo);
+
+  /** O passo atual foi aberto pela revisão e o botão principal volta para lá. */
+  const returnTo = step < 4 ? routeReturnTo : undefined;
 
   // O estado da URL pode mudar por histórico do navegador ou por um link
   // copiado. Nunca aceita salto acima do último pré-requisito válido.
@@ -127,7 +142,8 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
       const id = await ed.handleSave('draft');
       if (id) onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+      const message = error instanceof Error ? error.message : null;
+      toast.error(explainDraftSaveError(message) ?? message ?? 'Não foi possível salvar o rascunho.');
     }
   };
 
@@ -152,18 +168,19 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     onClose();
   };
 
+  // X123: os códigos técnicos da RPC viram frase com ação no aviso de salvamento.
+  const draftSaveError = explainDraftSaveError(ed.autosaveError);
+
   return (
     <div className="w-full min-w-0 space-y-4">
-      {/* E61: Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-        <span>Talk X</span>
-        <span className="text-border">›</span>
-        <span>Campanhas</span>
-        <span className="text-border">›</span>
-        <span>{campaign ? `Editar ${campaign.name}` : 'Nova campanha'}</span>
-        <span className="text-border">›</span>
-        <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
-      </nav>
+      {/* X053: a trilha saiu daqui para o componente do kit (nav com aria-label). */}
+      <ModuleBreadcrumb
+        items={(() => {
+          const nomeCampanha = campaign ? `Editar ${campaign.name}` : 'Nova campanha';
+          const stepLabel = STEPS.find((s) => s.n === step)?.label;
+          return stepLabel ? ['Talk X', 'Campanhas', nomeCampanha, stepLabel] : ['Talk X', 'Campanhas', nomeCampanha];
+        })()}
+      />
 
             {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
@@ -209,7 +226,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={openStepFromReview} />}
 
           {/* TL-138: rodapé fixo — Voltar / Salvar rascunho / Continuar sempre à vista */}
           <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 flex-wrap rounded-xl border border-border/70 bg-background/95 px-3 py-2.5 backdrop-blur">
@@ -223,21 +240,25 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
-                  Não salvo — tentar novamente
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[320px] truncate text-3xs text-dash-red hover:underline" title={draftSaveError ?? ed.autosaveError ?? undefined}>
+                  {draftSaveError ?? 'Não salvo — tentar novamente'}
                 </button>
               )}
               {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
-                <span className="text-3xs text-muted-foreground">
-                  Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
-                </span>
+                <span className="text-3xs text-muted-foreground">{`Rascunho salvo ${fmtAgo(ed.lastAutosave.toISOString())}`}</span>
               )}
             </div>
             {step < 4 && (
-              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
-                Continuar <ArrowRight className="w-4 h-4" />
-              </PrimaryButton>
+              returnTo ? (
+                <PrimaryButton size="lg" icon={ArrowLeft} onClick={() => requestStep(returnTo)} disabled={ed.saving}>
+                  Voltar à revisão
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
+                  Continuar <ArrowRight className="w-4 h-4" />
+                </PrimaryButton>
+              )
             )}
           </div>
         </div>
@@ -310,25 +331,57 @@ function StepAudience({ ed }: { ed: WizardState }) {
   // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
   // lista vem do hook compartilhado sem alteração.
   const activeSegments = ed.segments.filter((s) => s.status === 'active');
+  const segmentSearchTerm = (ed.segmentSearch ?? '').trim().toLowerCase();
+  const filteredSegments = useMemo(
+    () => activeSegments.filter((s) => !segmentSearchTerm || s.name.toLowerCase().includes(segmentSearchTerm)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSegments deriva de ed.segments (nova ref a cada render do hook)
+    [ed.segments, segmentSearchTerm],
+  );
+  // X124 — o nome tem faixa (3–200): o aviso aparece logo abaixo do campo e o
+  // mesmo limite bloqueia "Continuar" no hook (uma régua só, sem divergir).
+  const nameLength = ed.name.trim().length;
+  const nameTooShort = nameLength > 0 && nameLength < CAMPAIGN_NAME_MIN_LENGTH;
+  const nameTooLong = nameLength > CAMPAIGN_NAME_MAX_LENGTH;
+  const selectedObjective = OBJECTIVES.find((o) => o.value === ed.objective);
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
           <div>
             <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
-            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-            {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
-              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            {nameTooShort && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
+            )}
+            {nameTooLong && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome pode ter no máximo {CAMPAIGN_NAME_MAX_LENGTH} caracteres</p>
             )}
           </div>
           <div>
             <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
-              <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Objetivo" className="mt-1.5 h-10 bg-input/40 border-border/70">
+                {/* O gatilho mostra só ícone + rótulo; a descrição do objetivo
+                    existe nas opções (e na revisão), não na caixa fechada. */}
+                <SelectValue>
+                  {selectedObjective ? (
+                    <span className="flex items-center gap-2">
+                      <selectedObjective.icon className="w-4 h-4 text-muted-foreground" />
+                      {selectedObjective.label}
+                    </span>
+                  ) : ed.objective}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
-                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
+                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon, description }) => (
                   <SelectItem key={value} value={value}>
-                    <span className="flex items-center gap-2"><ObjectiveIcon className="w-4 h-4 text-muted-foreground" />{label}</span>
+                    <span className="flex items-start gap-2">
+                      <ObjectiveIcon className="mt-0.5 w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="flex min-w-0 flex-col">
+                        <span>{label}</span>
+                        <span className="text-3xs text-muted-foreground">{description}</span>
+                      </span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -351,7 +404,16 @@ function StepAudience({ ed }: { ed: WizardState }) {
             <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
               <SelectTrigger aria-label="Responsável" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
-                {(ed.owners ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name || p.email || 'Sem nome'}</SelectItem>)}
+                {(ed.owners ?? []).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {/* X124 — a lista traz o avatar e o nome do perfil; sem nome
+                        cadastrado o e-mail continua sendo a identificação. */}
+                    <span className="flex items-center gap-2">
+                      <InitialsAvatar name={p.name || p.email || '?'} size={24} />
+                      <span className="min-w-0 truncate">{p.name || p.email || 'Sem nome'}</span>
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -370,21 +432,44 @@ function StepAudience({ ed }: { ed: WizardState }) {
           <SourceCard icon={Database} title="CRM 360°" desc="Selecione contatos do seu CRM com base em negócios e estágios." active={ed.audienceSource === 'crm360'} onClick={() => ed.setAudienceSource('crm360')} disabled badge="Vinculação CRM 360° não configurada" />
         </div>
         {ed.audienceSource === 'segment' && (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {activeSegments.map((s) => {
-              const active = ed.segmentId === s.id;
-              return (
-                <button key={s.id} type="button" onClick={() => ed.setSegmentId(s.id)} className={cn('text-left rounded-xl border p-3 transition-all', active ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
-                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
-                  </div>
-                  <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
-                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
-                </button>
-              );
-            })}
-          </div>
+          <>
+            <div className="mt-4 mb-2">
+              <label htmlFor="talkx-seg-search" className="sr-only">Buscar segmentos por nome</label>
+              <input id="talkx-seg-search" type="search" placeholder="Buscar segmento por nome…" aria-label="Buscar segmentos por nome" value={ed.segmentSearch ?? ''} onChange={(e) => ed.setSegmentSearch(e.target.value)} className="w-full rounded-lg border border-input bg-input/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {filteredSegments.map((s) => {
+                const active = ed.segmentIds.includes(s.id);
+                const perSegment = ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? null;
+                return (
+                  <button key={s.id} type="button" onClick={() => ed.toggleSegmentId(s.id)} aria-pressed={active} className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all', active ? 'border-primary bg-primary/10 text-primary' : 'border-border/70 bg-input/30 text-foreground hover:border-primary/40')}>
+                    {s.name}
+                    {perSegment != null && <span className="font-normal opacity-80">({fmtInt(perSegment)})</span>}
+                    {active && <X className="h-3 w-3 text-primary" aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
+            {filteredSegments.length === 0 && (
+              <p className="mt-3 text-xs text-muted-foreground">Nenhum segmento encontrado.</p>
+            )}
+            {ed.selectedSegments.length > 0 && (
+              <div className="mt-3">
+                <p id="talkx-seg-chosen" className="mb-1.5 text-xs font-medium text-foreground-secondary">Segmentos escolhidos:</p>
+                <div role="group" aria-labelledby="talkx-seg-chosen" className="flex flex-wrap gap-1.5">
+                  {ed.selectedSegments.map((s) => (
+                    <span key={s.id} className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      {s.name}
+                      <button type="button" onClick={() => ed.toggleSegmentId(s.id)} className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-primary/20" aria-label={`Remover ${s.name} dos escolhidos`} title="Remover dos escolhidos">
+                        <X className="h-3 w-3" aria-hidden="true" />
+                        <span className="sr-only">Remover dos escolhidos</span>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </SectionCard>
 
@@ -395,7 +480,6 @@ function StepAudience({ ed }: { ed: WizardState }) {
             rules={ed.audienceRules}
             onChange={ed.setAudienceRules}
             options={{
-              tags: ed.tags,
               companies: ed.companies,
               sellers: (ed.owners ?? []).map((p) => ({ id: p.id, name: p.name || p.email || 'Sem nome' })),
             }}
@@ -410,10 +494,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             setContactSearch={ed.setContactSearch}
             companyFilter={ed.companyFilter}
             setCompanyFilter={ed.setCompanyFilter}
-            tagFilter={ed.tagFilter}
-            setTagFilter={ed.setTagFilter}
             companies={ed.companies}
-            tags={ed.tags}
             toggleContact={ed.toggleContact}
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
@@ -431,12 +512,27 @@ function StepAudience({ ed }: { ed: WizardState }) {
 
 function StepMessage({ ed }: { ed: WizardState }) {
   const approved = ed.templates.filter((t) => t.status === 'approved');
+  // X128 — os chips de variável inserem NA POSIÇÃO DO CURSOR pelo handle do
+  // editor único; antes o chip anexava no fim do texto.
+  const editorRef = React.useRef<TalkXMessageEditorHandle>(null);
+  // Só admin/supervisor escreve link (mesmo predicado da RPC `talkx_upsert_link`).
+  // `true` estrito: enquanto a RPC não respondeu o botão não aparece, em vez de
+  // aparecer e falhar com 42501.
+  const canEditLinks = useCRMAdminAccess() === true;
+  // Rótulos cadastrados são "conhecidos" no envio (X022, `loadLinkLabels` no
+  // motor): alimentar o editor com eles evita acusar {{link:rotulo}} como
+  // variável desconhecida logo depois de o usuário inserir o link.
+  const { links } = useTalkXLinks(ed.draftCampaignId);
+  const knownVariables = React.useMemo(
+    () => [...VARIABLE_KEYS, ...links.map((link) => buildTalkxLinkPlaceholder(link.label))],
+    [links],
+  );
   return (
     <>
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
         right={(
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-[hsl(var(--primary-text))] border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
               {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
@@ -466,12 +562,13 @@ function StepMessage({ ed }: { ed: WizardState }) {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
           <TalkXMessageEditor
+            ref={editorRef}
             value={ed.messageTemplate}
             onChange={ed.setMessageTemplate}
             placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
             rows={7}
-            limit={4096}
-            knownVariables={VARIABLE_KEYS}
+            limit={MESSAGE_LIMIT}
+            knownVariables={knownVariables}
             footer={(
               <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
                 <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
@@ -484,11 +581,26 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => editorRef.current?.insertAtCursor(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>
               ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="h-7 px-2 rounded-md text-2xs font-medium border border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50 flex items-center gap-1">
+                    Mais variáveis <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {MORE_VARIABLES.map((v) => (
+                    <DropdownMenuItem key={v.key} onClick={() => editorRef.current?.insertAtCursor(v.key)} className="flex flex-col items-start gap-0.5">
+                      <span className="text-xs font-mono">{v.key}</span>
+                      <span className="text-3xs text-muted-foreground">{v.desc}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -506,6 +618,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
           </div>
         )}
       </SectionCard>
+
+      {/* X118 — links rastreáveis: cria o link medido e insere {{link:rotulo}} no cursor */}
+      <TalkXLinksManager
+        campaignId={ed.draftCampaignId}
+        campaignName={ed.name}
+        canEdit={canEditLinks}
+        onInsertPlaceholder={(placeholder) => editorRef.current?.insertAtCursor(placeholder)}
+      />
 
       {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
       {(ed.messageTemplate.split('http').length - 1) > 2 && (
@@ -611,7 +731,13 @@ function WizardRail({ ed }: { ed: WizardState }) {
       <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
         <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
       </RailCard>
-      {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
+      {ed.selectedSegments.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {ed.selectedSegments.map((s) => (
+            <SegmentPreviewCard key={s.id} segment={s} estimatedCount={ed.segmentEstimates?.[s.id]} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

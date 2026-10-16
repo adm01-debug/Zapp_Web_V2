@@ -45,6 +45,11 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
     }
   })();
 
+  // SEC (PL-09): o `og:image` só chega ao atendente já buscado pelo servidor e
+  // embutido como `data:` URL. Prévia antiga guardada com URL remota não pode ser
+  // buscada pelo navegador (vazaria o IP do atendente): fica sem imagem.
+  const inlineImage = data.image?.startsWith('data:image/') ?? false;
+
   const content = (
     <div
       className={cn(
@@ -54,7 +59,7 @@ export function LinkPreviewCard({ preview, isSent }: LinkPreviewCardProps) {
           : 'bg-muted/40 border-primary/50 hover:bg-muted/60',
       )}
     >
-      {data.image && (
+      {data.image && inlineImage && (
         <div className="w-full aspect-[1.91/1] overflow-hidden bg-muted">
           <img
             src={data.image}

@@ -174,10 +174,14 @@ describe('useUserSettings', () => {
     expect(payload).not.toHaveProperty('quiet_hours_start');
     expect(payload).not.toHaveProperty('quiet_hours_end');
 
+    // `browser_notifications_enabled` é a MESMA coluna que o hook canônico grava
+    // na hora: fora do upsert global, senão o botão "Salvar Alterações" desfaz o
+    // interruptor que o usuário acabou de mexer.
+    expect(payload).not.toHaveProperty('browser_notifications_enabled');
+
     // Os campos próprios deste hook continuam indo, com os valores atuais.
     expect(payload).toMatchObject({
       user_id: 'u1',
-      browser_notifications_enabled: true,
       theme: 'dark',
       language: 'pt-BR',
       compact_mode: true,
@@ -229,6 +233,7 @@ describe('useUserSettings', () => {
     expect(payload.compact_mode).toBe(false);
     expect(payload.tts_voice_id).toBe('EXAVITQu4vr4xnSDxMaL');
     expect(payload.tts_speed).toBe(1.0);
-    expect(payload.browser_notifications_enabled).toBe(true);
+    // A coluna do interruptor de notificações do navegador é do outro hook.
+    expect(payload).not.toHaveProperty('browser_notifications_enabled');
   });
 });

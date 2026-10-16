@@ -80,6 +80,45 @@ function kindForMedia(kind: MediaKind): MessageKind {
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
+/**
+ * F60 (TL-035) — capacidades DECLARADAS da conexao (`whatsapp_connections.capabilities`).
+ *
+ * A coluna existe desde 02/10/2026 (`20261002671230_f60_conexao_capacidades_e_risco.sql`,
+ * default `'{}'`) e nenhum consumidor a lia: um bloco que a instancia nao entrega so
+ * era recusado pelo provedor, DEPOIS do POST — o item virava `outcome_unknown`/
+ * `item_failed` sem que a tela dissesse que a causa era a conexao.
+ *
+ * Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO. A conexao nao afirma
+ * nada, entao o worker nao inventa limite — so o `false` explicito (e um `max_chars`
+ * NUMERICO) recusa. Tratar o vazio como "tudo pode" seria a mesma coisa que nao olhar
+ * a coluna; tratar como "nada pode" pararia o modulo inteiro, porque `{}` e o default
+ * de toda conexao.
+ *
+ * A chave consultada e o kind do que vai sair, com UMA excecao: nota de voz (`voice`)
+ * e `audio` caem em `ptt` — o adaptador envia as duas pelo MESMO kind (`kindForMedia`
+ * mapeia `audio` -> `ptt`). Chave que o operador declarar a mais no jsonb vale pelo
+ * nome do kind (ex.: `video`); chave nao declarada nao limita nada.
+ *
+ * Devolve o motivo NOMEADO da exclusao (o operador le a causa na tela, como em
+ * `missing_variable:`) ou `null` quando nao ha recusa.
+ */
+export function connectionCapabilityDenial(
+  capabilities: unknown,
+  kind: "text" | "image" | "document" | "audio" | "voice" | "video" | "ptt",
+  text: string,
+): string | null {
+  // Coluna ausente/nula/jsonb de outro tipo = nao declarado.
+  if (capabilities === null || typeof capabilities !== "object" || Array.isArray(capabilities)) return null;
+  const caps = capabilities as Record<string, unknown>;
+  const capabilityKey = kind === "audio" || kind === "voice" ? "ptt" : kind;
+  if (caps[capabilityKey] === false) return `connection_capability_unsupported:${capabilityKey}`;
+  const maxChars = caps.max_chars;
+  if (typeof maxChars === "number" && Number.isFinite(maxChars) && text.length > maxChars) {
+    return `connection_capability_max_chars:${maxChars}`;
+  }
+  return null;
+}
+
 // SL-054: o backoff do DLQ é COMPARTILHADO (kernel, `BACKOFF_CEILING_MS`:
 // 30 s, 2 min, 10 min) — a MESMA tabela do `nextBackoff`/`planRetry`. Antes
 // este worker mantinha a própria cópia da política; corrigir um motor deixava o
@@ -87,6 +126,14 @@ type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 // `_shared/messaging/timing.ts`). O primeiro degrau é o piso determinístico
 // quando o planRetry não devolve retryAfter (decisão dead_letter): retry
 // imediato é proibido; quem decide o teto continua sendo a RPC.
+
+/** MX01: a coluna `multiplix_events.correlation_id` e uuid; `newCorrelationId`
+ * pode cair no formato `c-...` quando o runtime nao tem `crypto.randomUUID`.
+ * Nesse caso a trilha vai sem correlacao em vez de derrubar a materializacao. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function uuidOrNull(value: string | null | undefined): string | null {
+  return typeof value === "string" && UUID_RE.test(value) ? value : null;
+}
 
 // F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
 // Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
@@ -251,9 +298,12 @@ export async function handleMultiplixSend(
 
     // Conexao WhatsApp: usa a escolhida no dispatch; sem uma, cai na primeira
     // conexao conectada (composer ainda nao oferece selecao de conexao).
+    // F60: `capabilities` vem junto na MESMA leitura — e ela que o laco consulta
+    // antes do POST (ver `connectionCapabilityDenial`); sem isso a coluna ficaria
+    // sem consumidor e um bloco que a instancia nao entrega so morreria no provedor.
     const connectionQuery = dispatch.whatsapp_connection_id
-      ? supabase.from("whatsapp_connections").select("id, status, instance_id").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
-      : supabase.from("whatsapp_connections").select("id, status, instance_id").eq("status", "connected").limit(1).maybeSingle();
+      ? supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
+      : supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("status", "connected").limit(1).maybeSingle();
     const { data: connection } = await connectionQuery;
     const initialInstanceId = liveTalkXInstanceId(connection);
     if (!initialInstanceId) {
@@ -290,12 +340,37 @@ export async function handleMultiplixSend(
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }
 
+    // MX01: a transicao e soberana. Erro de start — inclusive
+    // `multiplix_dispatch_message_required` de rascunho sem texto — encerra aqui,
+    // ANTES de qualquer materializacao: nao existe caminho que enfileire item de
+    // um rascunho que o banco recusou iniciar.
     const { error: transitionError } = await supabase.rpc("transition_multiplix_dispatch", {
       p_dispatch_id: dispatchId,
       p_action: "start",
     });
     if (transitionError) {
       return new Response(JSON.stringify({ error: transitionError.message }), { status: 409, headers });
+    }
+
+    // MX01: NUNCA disparar antes de materializar a fila por itens. O composer
+    // cria o disparo por `multiplix_create_draft` (SOMENTE dispatches +
+    // recipients) e chama este start em seguida; o worker consome exclusivamente
+    // `multiplix_delivery_items`. Sem a conversao abaixo o disparo entrava em
+    // 'sending' com destinatarios pendentes e ZERO itens processaveis.
+    //
+    // O disparo AGENDADO tambem nasce sem bloco/item. Nesse caminho o cron acabou
+    // de transicionar 'scheduled' -> 'sending' antes de chamar este worker. Os
+    // legados que ja estavam em 'sending' quando a migration entrou foram pausados
+    // uma unica vez com `legacy_queue_unmaterialized`; eles so chegam aqui depois
+    // do clique Retomar.
+    const { error: materializeError } = await supabase.rpc("multiplix_materialize_legacy_queue", {
+      p_dispatch_id: dispatchId,
+      p_correlation_id: uuidOrNull(correlationId),
+    });
+    if (materializeError) {
+      // Fail-closed: sem saber o estado da fila nao se envia nada. O cron
+      // reinvoca em ate 2 min e a proxima passada tenta de novo.
+      throw new Error(`multiplix_legacy_queue_materialize_failed: ${materializeError.message}`);
     }
 
     // F11a: cada passada reivindica no maximo MULTIPLIX_BATCH_SIZE (default 20)
@@ -621,6 +696,31 @@ export async function handleMultiplixSend(
             p_claim_token: claim.claim_token,
             p_status: "skipped",
             p_error_message: unresolvedMotivo,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          skippedCount++;
+          processedCount++;
+          continue;
+        }
+
+        // F60 (TL-035): a conexao DECLARA o que entrega (`capabilities`). Bloco que
+        // ela nao declara entregar — ou texto acima do `max_chars` declarado — nao vai
+        // ao provedor: exclui o item com o motivo NOMEADO, ANTES de baixar a midia e de
+        // congelar o snapshot. Vale no caminho PADRAO (a conexao lida na selecao, sem
+        // precisar de parametro nenhum na requisicao). `{}`/chave ausente = NAO
+        // DECLARADO, e o que nao esta declarado nao recusa — ver o contrato em
+        // `connectionCapabilityDenial`.
+        const capabilityDenial = connectionCapabilityDenial(
+          connection?.capabilities,
+          resolvedBlock.asset?.kind ?? "text",
+          personalizedMsg,
+        );
+        if (capabilityDenial !== null) {
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: capabilityDenial,
           });
           if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
           skippedCount++;

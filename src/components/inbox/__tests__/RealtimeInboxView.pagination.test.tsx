@@ -50,6 +50,8 @@ vi.mock('@/hooks/chat/useConversationActions', () => ({
 }));
 vi.mock('@/hooks/chat/useConversationTabCounts', () => ({ useConversationTabCounts: () => ({ counts: {} }) }));
 vi.mock('@/hooks/crm/useContactCrm360', () => ({ useContactCrm360: () => ({ data: null }) }));
+// U03: o chip de e-mails não lidos (hook próprio) não é o alvo da paginação — sem contagem.
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({ useContactUnreadEmails: () => ({ count: 0, status: 'ok' }) }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
 vi.mock('@/features/talk-me/useTalkMeQueue', () => ({
   useTalkMeQueue: () => ({ queuesError: false, selectedQueue: null, queuesLoading: false }),

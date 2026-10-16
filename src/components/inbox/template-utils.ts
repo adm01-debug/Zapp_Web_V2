@@ -1,5 +1,4 @@
-import { User, Building2, Tag, Sparkles, Calendar, Hash, LucideIcon } from 'lucide-react';
-import { secureRandomFloat } from '@/lib/secureRandom';
+import { User, Building2, Tag, Sparkles, Calendar, LucideIcon } from 'lucide-react';
 
 export interface TemplateVariable {
   key: string;
@@ -8,6 +7,14 @@ export interface TemplateVariable {
   example: string;
 }
 
+/**
+ * Variáveis oferecidas ao usuário no editor de templates.
+ *
+ * `protocolo` saiu da lista (achado L2 da segunda passada de paridade): não
+ * existe número de protocolo real no banco e um protocolo inventado no texto
+ * enviado ao cliente é pior que nenhum. Template antigo com `{{protocolo}}`
+ * fica PENDENTE, como qualquer variável sem valor.
+ */
 export const AVAILABLE_VARIABLES: TemplateVariable[] = [
   { key: 'nome', label: 'Nome do contato', icon: User, example: 'João Silva' },
   { key: 'primeiro_nome', label: 'Primeiro nome', icon: User, example: 'João' },
@@ -15,14 +22,33 @@ export const AVAILABLE_VARIABLES: TemplateVariable[] = [
   { key: 'cargo', label: 'Cargo', icon: Tag, example: 'Gerente Comercial' },
   { key: 'saudacao', label: 'Saudação', icon: Sparkles, example: 'Bom dia' },
   { key: 'data_atual', label: 'Data atual', icon: Calendar, example: '06/01/2026' },
-  { key: 'protocolo', label: 'Protocolo', icon: Hash, example: '#2026010600123' },
   { key: 'atendente', label: 'Nome do atendente', icon: User, example: 'Maria Santos' },
 ];
 
+export interface TemplateContactData {
+  name?: string;
+  company?: string;
+  job_title?: string;
+}
+
+/**
+ * Substitui as variáveis `{{chave}}` do texto do template.
+ *
+ * - `agentName` é o perfil do atendente logado (`profiles.display_name`). Sem
+ *   ele `{{atendente}}` fica PENDENTE no texto — nunca trocado por um nome
+ *   genérico como "Atendente".
+ * - O valor entra por FUNÇÃO (`() => value`), nunca como string de
+ *   substituição: em string, `$&`, `$$` e `$1` presentes no nome/empresa do
+ *   contato seriam interpretados pelo `String.replace` e corromperiam o texto
+ *   (ex.: `A$&B` viraria `A{{nome}}B`).
+ * - Variável sem valor (desconhecida, ou `{{atendente}}` sem `agentName`)
+ *   permanece como estava, para o chamador poder avisar sobre pendências.
+ */
 export function replaceVariables(
   content: string,
-  contactData?: { name?: string; company?: string; job_title?: string },
-  customValues?: Record<string, string>
+  contactData?: TemplateContactData,
+  customValues?: Record<string, string>,
+  agentName?: string
 ): string {
   const now = new Date();
   const hour = now.getHours();
@@ -31,7 +57,6 @@ export function replaceVariables(
   if (hour >= 18 || hour < 6) saudacao = 'Boa noite';
 
   const firstName = contactData?.name?.split(' ')[0] || '';
-  const protocol = `#${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(Math.floor(secureRandomFloat() * 100000)).padStart(5, '0')}`;
 
   const defaultValues: Record<string, string> = {
     nome: contactData?.name || '',
@@ -40,14 +65,15 @@ export function replaceVariables(
     cargo: contactData?.job_title || '',
     saudacao,
     data_atual: now.toLocaleDateString('pt-BR'),
-    protocolo: protocol,
-    atendente: 'Atendente',
   };
+
+  const atendente = agentName?.trim();
+  if (atendente) defaultValues.atendente = atendente;
 
   const values = { ...defaultValues, ...customValues };
   let result = content;
   Object.entries(values).forEach(([key, value]) => {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'gi'), value);
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'gi'), () => value);
   });
   return result;
 }

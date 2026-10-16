@@ -113,11 +113,20 @@ const AudienceFiltersSchema = z.object({
   search: z.string().max(200).optional(),
 });
 
-// "Publico aplicado": ou um conjunto de ids ja materializado (o front manda os
-// ids da selecao salva) ou um conjunto de FILTROS que o servidor materializa
-// aqui mesmo via `multiplix_search_audience` — nos dois casos a expansao e
-// server-side.
-const PublicSchema = IdSetSchema.extend({ filters: AudienceFiltersSchema.optional() });
+// "Publico aplicado": ou um publico SALVO por REFERENCIA (`audience_id` — o
+// servidor carrega de `multiplix_audiences`/`multiplix_audience_members`), ou um
+// conjunto de ids ja materializado, ou um conjunto de FILTROS que o servidor
+// materializa aqui mesmo via `multiplix_search_audience`. Nos tres casos a
+// expansao e server-side: o navegador nunca manda a lista pronta de um publico
+// salvo, so a referencia.
+const PublicSchema = IdSetSchema.extend({
+  filters: AudienceFiltersSchema.optional(),
+  audience_id: UUID.optional(),
+}).refine(
+  (v) => v.audience_id !== undefined || hasAnyFilter(v.filters) ||
+    v.company_ids.length > 0 || v.contact_ids.length > 0,
+  { message: 'publico precisa de audience_id, filtros ou ids' },
+);
 
 const AudienceSelectSchema = z.object({
   manual: IdSetSchema.optional(),
@@ -127,6 +136,61 @@ const AudienceSelectSchema = z.object({
   primary_per_company: z.boolean().optional().default(false),
   select_all: z.boolean().optional().default(false),
 });
+
+// F75 (parte de edge do TL-041) — contrato para SALVAR um publico (`rule` ou
+// `static_list`) e para APLICAR um publico salvo. `.strict()`: chave fora do
+// contrato e RECUSADA com 400, nunca ignorada em silencio (validação frouxa foi
+// motivo de recusa nesta area). O que e aceito e VALIDADO por forma:
+//   - `rule` exige `definition` com ao menos um filtro efetivo e NAO aceita membros;
+//   - `static_list` exige ao menos um membro e NAO aceita `definition`.
+const AudienceSaveSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  kind: z.enum(['rule', 'static_list']),
+  definition: AudienceFiltersSchema.optional(),
+  members: IdSetSchema.optional(),
+}).strict().superRefine((value, ctx) => {
+  const memberCount = (value.members?.company_ids.length ?? 0) + (value.members?.contact_ids.length ?? 0);
+  if (value.kind === 'rule') {
+    if (!hasAnyFilter(value.definition)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['definition'],
+        message: 'kind=rule exige definition com ao menos um filtro',
+      });
+    }
+    if (memberCount > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['members'],
+        message: 'kind=rule nao aceita members (use static_list)',
+      });
+    }
+  } else {
+    if (memberCount === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['members'],
+        message: 'kind=static_list exige ao menos um membro',
+      });
+    }
+    if (hasAnyFilter(value.definition)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['definition'],
+        message: 'kind=static_list nao aceita definition (use rule)',
+      });
+    }
+  }
+});
+
+const AudienceApplySchema = z.object({
+  audience_id: UUID,
+  manual: IdSetSchema.optional(),
+  filters: AudienceFiltersSchema.optional(),
+  exclude: IdSetSchema.optional(),
+  primary_per_company: z.boolean().optional().default(false),
+  select_all: z.boolean().optional().default(false),
+}).strict();
 
 // ---------------------------------------------------------------------------
 // Fonte de publico (a ponte Singu, injetavel).
@@ -152,12 +216,94 @@ export interface AudienceScope {
   vendedorEmail: string | null;
 }
 
-export interface AudienceSelectDeps {
+export interface AudienceHandlerDeps {
   scope?: AudienceScope;
+  /** Persistencia de publicos salvos (F75). Default: `buildAudienceStore(ctx)`. */
+  store?: AudienceStore;
+}
+
+export interface AudienceSelectDeps extends AudienceHandlerDeps {
   source?: AudienceSource;
   /** Teto de politica (teste injeta um menor). Default: RESOLVE_POLICY_MAX_IDS. */
   policyMaxIds?: number;
 }
+
+// ---------------------------------------------------------------------------
+// F75 (parte de edge do TL-041) — publicos SALVOS.
+//
+// A tabela `multiplix_audiences` (+ `multiplix_audience_members`) JA existe
+// (migration 20261001261230_f35_multiplix_audiences.sql): este modulo NAO cria
+// DDL nem migration. `kind` e `rule` (regra dinamica em `definition`) ou
+// `static_list` (membros). O `owner_id` e o `profiles.id` — a MESMA identidade
+// canonica que `multiplix_dispatches.created_by` guarda (MX08).
+//
+// A edge usa SERVICE ROLE, entao o RLS nao e a fronteira: a LEITURA e escopada
+// por dono AQUI (`owner_id = profiles.id` do JWT) e a ESCRITA exige o MESMO que
+// o RLS da tabela exige (staff `is_admin_or_supervisor` E dono). Fail-closed:
+// sem linha visivel a resposta e a mesma para "nao existe" e "nao acessivel",
+// sem revelar existencia. O compartilhamento por `shared_with_roles` NAO e
+// honrado nesta entrega (a coluna fica no default '{}'); registrar na conclusao.
+// ---------------------------------------------------------------------------
+
+export type SavedAudienceKind = 'rule' | 'static_list';
+
+export interface SavedAudience {
+  id: string;
+  name: string;
+  kind: SavedAudienceKind;
+  /** Filtros da regra (`kind='rule'`); `null` na lista estatica. */
+  filters: AudienceFilters | null;
+  company_ids: string[];
+  contact_ids: string[];
+}
+
+export interface SavedAudienceInput {
+  name: string;
+  kind: SavedAudienceKind;
+  filters: AudienceFilters | null;
+  company_ids: string[];
+  contact_ids: string[];
+}
+
+/**
+ * Persistencia de publicos salvos, INJETAVEL no teste. Em producao vem de
+ * `buildAudienceStore(ctx)`, sobre o client autenticado da edge.
+ */
+export interface AudienceStore {
+  /** `profiles.id` do JWT (o `owner_id` da tabela guarda `profiles.id`). */
+  resolveProfileId(userId: string): Promise<string | null>;
+  /** `is_admin_or_supervisor(auth.uid())` — o mesmo que o RLS de escrita exige. */
+  isStaff(userId: string): Promise<boolean>;
+  /**
+   * Carrega o publico SOMENTE quando ele pertence ao `viewerProfileId`. Qualquer
+   * outra linha (de outro dono, ou inexistente) devolve `null` — a resposta nao
+   * distingue os dois casos.
+   */
+  loadSavedAudience(audienceId: string, viewerProfileId: string): Promise<SavedAudience | null>;
+  insertSavedAudience(input: SavedAudienceInput, ownerId: string): Promise<{ id: string }>;
+  insertSavedMembers(audienceId: string, companyIds: string[], contactIds: string[]): Promise<void>;
+  /**
+   * Compensacao do `audience.save`: apaga o publico recem-gravado quando a
+   * gravacao dos membros falha (sem isso fica um `static_list` orfao, sem
+   * membros, e o reenvio cria duplicata). Escopado por `owner_id`.
+   */
+  deleteSavedAudience(audienceId: string, ownerId: string): Promise<void>;
+}
+
+/** Erro nomeado do store: nunca sobe cru como 500 generico. */
+export const MULTIPLIX_AUDIENCE_STORE_FAILED = 'multiplix_audience_store_failed';
+
+/** Codigo do publico salvo inexistente/inalcancavel (mesma resposta nos dois casos). */
+export const MULTIPLIX_AUDIENCE_NOT_FOUND = 'multiplix_audience_not_found';
+
+/** Codigo da falha interna do `audience.save`. */
+export const MULTIPLIX_AUDIENCE_SAVE_FAILED = 'multiplix_audience_save_failed';
+
+/** Codigo (so no log) da compensacao do `audience.save` que tambem falhou. */
+export const MULTIPLIX_AUDIENCE_COMPENSATION_FAILED = 'multiplix_audience_compensation_failed';
+
+/** Codigo da falha interna do `audience.apply`. */
+export const MULTIPLIX_AUDIENCE_APPLY_FAILED = 'multiplix_audience_apply_failed';
 
 export interface AudiencePrimarySignal {
   code: string;
@@ -485,18 +631,48 @@ export async function buildExternalAudienceSource(
 // Handler.
 // ---------------------------------------------------------------------------
 
-export async function handleAudienceSelect(
+/** Dados extras anexados a resposta (ex.: `audience_id` no apply). */
+interface AudienceRunOptions {
+  action: string;
+  fallbackError: string;
+  extraData?: Record<string, unknown>;
+}
+
+/**
+ * Log estruturado UNICO de falha de servidor desta edge. Concentrar a linha num
+ * so lugar mantem a QUANTIDADE de logs de `audience.ts` estavel (o contrato de
+ * nao-leak trava esse numero) e o bloco carrega so campos escolhidos — nunca
+ * payload, segredo ou conteudo de negocio.
+ */
+function logServerFailure(action: string, userId: string, correlationId: string, code: string): void {
+  console.error(JSON.stringify({
+    event: 'multiplix_dispatch', action, user_id: userId, correlation_id: correlationId, code, ok: false,
+  }));
+}
+
+/** Intencao de publico ja validada (saida de `AudienceSelectSchema`). */
+export interface AudienceIntent {
+  manual?: AudienceIdSet;
+  publics: Array<AudienceIdSet & { filters?: AudienceFilters; audience_id?: string }>;
+  filters?: AudienceFilters;
+  exclude?: AudienceIdSet;
+  primary_per_company: boolean;
+  select_all: boolean;
+}
+
+/**
+ * Nucleo UNICO de selecao de publico — usado por `audience.select` e por
+ * `audience.apply` (que so troca a intencao por "aplicar este publico salvo").
+ * Mexer em um caminho e mexer no outro: nao ha duas copias desta regra.
+ */
+async function runAudienceSelection(
   ctx: ActionContext,
-  deps: AudienceSelectDeps = {},
+  intent: AudienceIntent,
+  deps: AudienceSelectDeps,
+  opts: AudienceRunOptions,
 ): Promise<Response> {
   const started = performance.now();
-
-  const parsed = AudienceSelectSchema.safeParse(ctx.payload);
-  if (!parsed.success) {
-    const where = parsed.error.issues[0]?.path.join('.') ?? 'payload';
-    return errorResponse(`audience.select: payload inválido (${where})`, 400, ctx.req);
-  }
-  const p = parsed.data;
+  const p = intent;
 
   try {
     // 1. Escopo do JWT (ou injetado no teste).
@@ -509,6 +685,7 @@ export async function handleAudienceSelect(
 
     const policyMax = deps.policyMaxIds ?? RESOLVE_POLICY_MAX_IDS;
     const source = deps.source ?? await buildExternalAudienceSource(scope.permissions, scope.vendedorEmail);
+    const store = deps.store ?? buildAudienceStore(ctx);
 
     const filters = p.filters;
     const filtersActive = hasAnyFilter(filters);
@@ -526,14 +703,34 @@ export async function handleAudienceSelect(
       filterSet = new Set(expanded.companyIds);
       materialized = [...expanded.companyIds];
     } else if (p.select_all) {
-      return errorResponse('audience.select: select_all exige filtros', 400, ctx.req);
+      return errorResponse(`${opts.action}: select_all exige filtros`, 400, ctx.req);
     }
 
-    // 3. (manual ∪ publicos aplicados). Publicos podem vir por id ou por filtro
-    //    (que este servidor materializa).
+    // 3. (manual ∪ publicos aplicados). Publico pode vir por referencia
+    //    (`audience_id` — F75, carregado aqui), por id ou por filtro (que este
+    //    servidor materializa). Nos tres casos a expansao e server-side.
+    let viewerProfileId: string | null | undefined;
+    const viewerForSaved = async (): Promise<string | null> => {
+      if (viewerProfileId === undefined) viewerProfileId = await store.resolveProfileId(ctx.userId);
+      return viewerProfileId;
+    };
     const unionSets: AudienceIdSet[] = [];
     if (p.manual) unionSets.push({ company_ids: p.manual.company_ids, contact_ids: p.manual.contact_ids });
     for (const pub of p.publics) {
+      if (pub.audience_id) {
+        const owner = await viewerForSaved();
+        const saved = owner ? await store.loadSavedAudience(pub.audience_id, owner) : null;
+        // "nao existe" e "nao acessivel" respondem IGUAL: a RLS (owner) ja
+        // resolveu antes e aqui so vemos `null` nos dois casos.
+        if (!saved) return errorResponse(MULTIPLIX_AUDIENCE_NOT_FOUND, 404, ctx.req);
+        unionSets.push({ company_ids: saved.company_ids, contact_ids: saved.contact_ids });
+        if (hasAnyFilter(saved.filters ?? undefined)) {
+          const expanded = await source.listFilteredCompanyIds(saved.filters!, { max: policyMax });
+          if (expanded.count > policyMax) throw new MultiplixPolicyLimitError(expanded.count, policyMax);
+          unionSets.push({ company_ids: expanded.companyIds, contact_ids: [] });
+        }
+        continue;
+      }
       unionSets.push({ company_ids: pub.company_ids, contact_ids: pub.contact_ids });
       if (hasAnyFilter(pub.filters)) {
         const expanded = await source.listFilteredCompanyIds(pub.filters!, { max: policyMax });
@@ -587,15 +784,20 @@ export async function handleAudienceSelect(
 
     const duration = Math.round(performance.now() - started);
     console.warn(JSON.stringify({
-      event: 'multiplix_dispatch', action: 'audience.select', user_id: ctx.userId,
+      event: 'multiplix_dispatch', action: opts.action, user_id: ctx.userId,
       correlation_id: ctx.correlationId, scope: scope.permissions, count: reportedCount,
       recipients: rows.length, signals: signals.length, duration_ms: duration, ok: true,
     }));
 
     return jsonResponse({
       data: {
+        ...(opts.extraData ?? {}),
         recipients: rows,
         total: rows.length,
+        // `eligible_count` e o numero de destinatarios ELEGIVEIS (apos filtros e
+        // exclusoes); `count` e o N do servidor (antes de resolver). Sao coisas
+        // diferentes de proposito — a tela mostra os dois.
+        eligible_count: rows.length,
         count: reportedCount ?? rows.length,
         policy_limit: policyMax,
         primary_per_company: p.primary_per_company,
@@ -609,7 +811,7 @@ export async function handleAudienceSelect(
   } catch (error) {
     if (error instanceof MultiplixPolicyLimitError) {
       console.warn(JSON.stringify({
-        event: 'multiplix_dispatch', action: 'audience.select', user_id: ctx.userId,
+        event: 'multiplix_dispatch', action: opts.action, user_id: ctx.userId,
         correlation_id: ctx.correlationId, code: MULTIPLIX_OVER_POLICY_LIMIT,
         count: error.count, limit: error.limit, ok: false,
       }));
@@ -631,13 +833,252 @@ export async function handleAudienceSelect(
     }
     // Nunca 500 generico: falha interna vira NOMEADA (com correlation_id no header).
     const code = error instanceof Error ? error.message.split(':')[0] : 'unknown';
-    console.error(JSON.stringify({
-      event: 'multiplix_dispatch', action: 'audience.select', user_id: ctx.userId,
-      correlation_id: ctx.correlationId, code, ok: false,
-    }));
+    logServerFailure(opts.action, ctx.userId, ctx.correlationId, code);
     return jsonResponse({
-      error: MULTIPLIX_AUDIENCE_SELECT_FAILED,
-      message: 'audience.select falhou no servidor',
+      error: opts.fallbackError,
+      message: `${opts.action} falhou no servidor`,
     }, 502, ctx.req);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Acoes publicas.
+// ---------------------------------------------------------------------------
+
+export async function handleAudienceSelect(
+  ctx: ActionContext,
+  deps: AudienceSelectDeps = {},
+): Promise<Response> {
+  const parsed = AudienceSelectSchema.safeParse(ctx.payload);
+  if (!parsed.success) {
+    const where = parsed.error.issues[0]?.path.join('.') ?? 'payload';
+    return errorResponse(`audience.select: payload inválido (${where})`, 400, ctx.req);
+  }
+  return await runAudienceSelection(ctx, parsed.data, deps, {
+    action: 'audience.select',
+    fallbackError: MULTIPLIX_AUDIENCE_SELECT_FAILED,
+  });
+}
+
+/**
+ * F75 — salva um publico como `rule` (regra: so `definition` com filtros) ou
+ * `static_list` (lista: so `members`), reaproveitando `multiplix_audiences`.
+ * Autorizacao IGUAL ao RLS de escrita da tabela: staff E dono. O `owner_id` e o
+ * `profiles.id` do JWT — nunca o `auth.uid` cru (MX08).
+ */
+export async function handleAudienceSave(
+  ctx: ActionContext,
+  deps: AudienceHandlerDeps = {},
+): Promise<Response> {
+  const parsed = AudienceSaveSchema.safeParse(ctx.payload);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue?.path.join('.') || 'payload';
+    return errorResponse(
+      `audience.save: payload inválido (${where}: ${issue?.message ?? 'inválido'})`,
+      400,
+      ctx.req,
+    );
+  }
+  const p = parsed.data;
+
+  try {
+    const store = deps.store ?? buildAudienceStore(ctx);
+    const ownerId = await store.resolveProfileId(ctx.userId);
+    if (!ownerId) return errorResponse('audience.save: perfil não encontrado para o JWT', 403, ctx.req);
+    if (!(await store.isStaff(ctx.userId))) {
+      return errorResponse('audience.save: sem permissão para salvar público', 403, ctx.req);
+    }
+
+    const isRule = p.kind === 'rule';
+    const companyIds = isRule ? [] : (p.members?.company_ids ?? []);
+    const contactIds = isRule ? [] : (p.members?.contact_ids ?? []);
+    const saved = await store.insertSavedAudience({
+      name: p.name,
+      kind: p.kind,
+      filters: isRule ? (p.definition ?? null) : null,
+      company_ids: companyIds,
+      contact_ids: contactIds,
+    }, ownerId);
+    if (!isRule) {
+      try {
+        await store.insertSavedMembers(saved.id, companyIds, contactIds);
+      } catch (membersError) {
+        // Compensa a escrita parcial: sem membros, o publico gravado acima nao
+        // pode ficar no banco (orfao, e o reenvio criaria duplicata).
+        try {
+          await store.deleteSavedAudience(saved.id, ownerId);
+        } catch {
+          logServerFailure('audience.save', ctx.userId, ctx.correlationId, MULTIPLIX_AUDIENCE_COMPENSATION_FAILED);
+        }
+        throw membersError;
+      }
+    }
+
+    return jsonResponse({
+      data: {
+        id: saved.id,
+        name: p.name,
+        kind: p.kind,
+        member_count: companyIds.length + contactIds.length,
+      },
+      meta: { correlation_id: ctx.correlationId },
+    }, 200, ctx.req);
+  } catch (error) {
+    // O `code` (trecho antes do ':' do Error) fica SO no log: pode carregar texto
+    // interno (driver, rede, constraint). A resposta tem mensagem fixa, como no select.
+    const code = error instanceof Error ? error.message.split(':')[0] : 'unknown';
+    logServerFailure('audience.save', ctx.userId, ctx.correlationId, code);
+    return jsonResponse({
+      error: MULTIPLIX_AUDIENCE_SAVE_FAILED,
+      message: 'audience.save falhou no servidor',
+    }, 502, ctx.req);
+  }
+}
+
+/**
+ * F75 — aplica um publico SALVO: a referencia (`audience_id`) vira a intencao de
+ * selecao resolvida pelo MESMO nucleo do `audience.select`. Publico inexistente
+ * ou de outro dono responde IGUAL (`multiplix_audience_not_found`, 404).
+ */
+export async function handleAudienceApply(
+  ctx: ActionContext,
+  deps: AudienceSelectDeps = {},
+): Promise<Response> {
+  const parsed = AudienceApplySchema.safeParse(ctx.payload);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue?.path.join('.') || 'payload';
+    return errorResponse(
+      `audience.apply: payload inválido (${where}: ${issue?.message ?? 'inválido'})`,
+      400,
+      ctx.req,
+    );
+  }
+  const p = parsed.data;
+
+  return await runAudienceSelection(ctx, {
+    manual: p.manual,
+    publics: [{ company_ids: [], contact_ids: [], audience_id: p.audience_id }],
+    filters: p.filters,
+    exclude: p.exclude,
+    primary_per_company: p.primary_per_company,
+    select_all: p.select_all,
+  }, deps, {
+    action: 'audience.apply',
+    fallbackError: MULTIPLIX_AUDIENCE_APPLY_FAILED,
+    extraData: { audience_id: p.audience_id },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Store real (service role) — leitura escopada por dono, escrita so para staff.
+// ---------------------------------------------------------------------------
+
+function toStoredFilters(value: unknown): AudienceFilters | null {
+  const parsed = AudienceFiltersSchema.safeParse(value ?? {});
+  return parsed.success && hasAnyFilter(parsed.data) ? parsed.data : null;
+}
+
+export function buildAudienceStore(ctx: ActionContext): AudienceStore {
+  type Result<T> = { data: T; error: { message?: string; code?: string } | null };
+  return {
+    async resolveProfileId(userId) {
+      // Mesma identidade canonica do `resolveProfileId` de `../index.ts`: o
+      // `owner_id` da tabela guarda `profiles.id`, nao o `auth.uid` (MX08).
+      const { data, error } = await ctx.supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle() as Result<{ id?: string } | null>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: profile lookup failed`);
+      return typeof data?.id === 'string' ? data.id : null;
+    },
+
+    async isStaff(userId) {
+      const { data, error } = await ctx.supabase.rpc('is_admin_or_supervisor', { _user_id: userId }) as Result<unknown>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: staff lookup failed`);
+      return data === true;
+    },
+
+    async loadSavedAudience(audienceId, viewerProfileId) {
+      // `owner_id` no WHERE: o client da edge e service role (bypassa RLS), entao
+      // o escopo de leitura e aplicado AQUI. Sem dono visivel => null (a resposta
+      // nao distingue "nao existe" de "nao acessivel").
+      const { data, error } = await ctx.supabase
+        .from('multiplix_audiences')
+        .select('id,name,kind,definition')
+        .eq('id', audienceId)
+        .eq('owner_id', viewerProfileId)
+        .maybeSingle() as Result<{ id?: string; name?: string; kind?: string; definition?: unknown } | null>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: audience lookup failed`);
+      if (typeof data?.id !== 'string') return null;
+
+      const kind: SavedAudienceKind = data.kind === 'static_list' ? 'static_list' : 'rule';
+      const base = { id: data.id, name: String(data.name ?? ''), kind };
+      if (kind === 'rule') {
+        return { ...base, filters: toStoredFilters(data.definition), company_ids: [], contact_ids: [] };
+      }
+
+      const { data: members, error: memberError } = await ctx.supabase
+        .from('multiplix_audience_members')
+        .select('singu_company_id,singu_contact_id')
+        .eq('audience_id', data.id) as Result<
+          Array<{ singu_company_id?: string | null; singu_contact_id?: string | null }> | null
+        >;
+      if (memberError) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: members lookup failed`);
+
+      const company_ids: string[] = [];
+      const contact_ids: string[] = [];
+      for (const member of members ?? []) {
+        if (typeof member?.singu_company_id === 'string' && member.singu_company_id !== '') {
+          company_ids.push(member.singu_company_id);
+        }
+        if (typeof member?.singu_contact_id === 'string' && member.singu_contact_id !== '') {
+          contact_ids.push(member.singu_contact_id);
+        }
+      }
+      return { ...base, filters: null, company_ids, contact_ids };
+    },
+
+    async insertSavedAudience(input, ownerId) {
+      const { data, error } = await ctx.supabase
+        .from('multiplix_audiences')
+        .insert({
+          name: input.name,
+          kind: input.kind,
+          definition: input.kind === 'rule' ? (input.filters ?? {}) : {},
+          owner_id: ownerId,
+        })
+        .select('id')
+        .maybeSingle() as Result<{ id?: string } | null>;
+      if (error || typeof data?.id !== 'string') {
+        throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: insert failed`);
+      }
+      return { id: data.id };
+    },
+
+    async insertSavedMembers(audienceId, companyIds, contactIds) {
+      const rows = [
+        ...companyIds.map((id) => ({ audience_id: audienceId, singu_company_id: id, singu_contact_id: null })),
+        ...contactIds.map((id) => ({ audience_id: audienceId, singu_company_id: null, singu_contact_id: id })),
+      ];
+      if (rows.length === 0) return;
+      const { error } = await ctx.supabase
+        .from('multiplix_audience_members')
+        .insert(rows) as Result<unknown>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: members insert failed`);
+    },
+
+    async deleteSavedAudience(audienceId, ownerId) {
+      // `owner_id` no WHERE: o client e service role (bypassa RLS), entao o escopo
+      // do dono e aplicado AQUI. Os membros caem junto (FK ON DELETE CASCADE).
+      const { error } = await ctx.supabase
+        .from('multiplix_audiences')
+        .delete()
+        .eq('id', audienceId)
+        .eq('owner_id', ownerId) as Result<unknown>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: audience compensation failed`);
+    },
+  };
 }

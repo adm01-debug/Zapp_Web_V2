@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi } from "./index.ts";
+import { handleEvolutionApi, formatPairingCode, pairingCodeFromResponse, pairingValidity, resolvePairingRoute } from "./index.ts";
 import {
   qrFromV2Connect,
   resolveSessionApiKey,
@@ -8,6 +8,7 @@ import {
   type EvolutionFlavor,
   type SessionAction,
 } from "../_shared/evolution-session-routes.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -76,7 +77,13 @@ function json(body: unknown, status = 200): Response {
 
 /** Registro das escritas no banco (service client) — encadeia e grava no await. */
 type Write = { table: string; patch: Record<string, unknown> };
-function makeServiceClient(writes: Write[]): any {
+function makeServiceClient(
+  writes: Write[],
+  // TRA-002/#18: o handler resolve o token DA conexão no Vault (get_instance_token).
+  // O default devolve um token (estado real de conexão já criada); o caso NEGADO
+  // passa `null` para provar que sem token não se empresta a credencial da padrão.
+  instanceToken: string | null = INSTANCE_TOKEN,
+): any {
   const query = (table: string): any => {
     let patch: Record<string, unknown> | null = null;
     const q: any = {
@@ -99,7 +106,7 @@ function makeServiceClient(writes: Write[]): any {
     };
     return q;
   };
-  return { from: (table: string) => query(table), rpc: () => Promise.resolve({ data: null, error: null }) };
+  return { from: (table: string) => query(table), rpc: (fn: string) => fn === "get_instance_token" ? Promise.resolve({ data: instanceToken, error: null }) : Promise.resolve({ data: null, error: null }) };
 }
 
 function makeCallerClient(): any {
@@ -124,8 +131,9 @@ function sessionRequest(action: string, body: Record<string, unknown> = {}): Req
 /** Roda o handler com flavor/URL controlados e devolve a resposta + o que foi observado. */
 async function runAction(
   flavor: EvolutionFlavor,
-  action: SessionAction,
+  action: SessionAction | "pairing-code",
   route: ProviderRoute,
+  actionBody: Record<string, unknown> = {},
 ): Promise<{ status: number; body: any; calls: ProviderCall[]; writes: Write[] }> {
   const fake = startFakeProvider(route);
   const writes: Write[] = [];
@@ -133,12 +141,19 @@ async function runAction(
   const previousUrl = Deno.env.get("EVOLUTION_API_URL");
   const previousKey = Deno.env.get("EVOLUTION_API_KEY");
   const previousToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+  const previousName = Deno.env.get("EVOLUTION_INSTANCE_NAME");
   Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+  // TRA-002/#18: `EVOLUTION_INSTANCE_TOKEN` é a credencial da instância PADRÃO;
+  // declaramos a fixture como padrão para que o ciclo de sessão GO use o token
+  // de instância (e não a key global). Sem esta declaração a rota GO falha
+  // fechada, como manda o contrato (prova: o caso negativo abaixo).
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", INSTANCE);
+  resetInstanceTokenCache();
   try {
-    const res = await handleEvolutionApi(sessionRequest(action), {
+    const res = await handleEvolutionApi(sessionRequest(action, actionBody), {
       callerClient: makeCallerClient(),
       supabase: makeServiceClient(writes),
     });
@@ -155,6 +170,7 @@ async function runAction(
     restore("EVOLUTION_API_URL", previousUrl);
     restore("EVOLUTION_API_KEY", previousKey);
     restore("EVOLUTION_INSTANCE_TOKEN", previousToken);
+    restore("EVOLUTION_INSTANCE_NAME", previousName);
     await fake.stop();
   }
 }
@@ -361,4 +377,246 @@ Deno.test("R2-API-015 disconnect v2: DELETE /instance/logout/{instância} com a 
   assertEquals(calls[0].apikey, GLOBAL_KEY, "disconnect v2 autentica com a chave global");
   assertEquals(body.error, undefined);
   assertEquals(writes.find((w) => w.table === "whatsapp_connections")?.patch, { status: "disconnected" });
+});
+
+// ─── pairing-code (pareamento por número) ───
+
+Deno.test("R2-API-016: matriz do pareamento por número — go põe o phone no corpo; v2 na query", () => {
+  const go = resolvePairingRoute("go", INSTANCE, "+55 (11) 98888-7777", "https://x/functions/v1/evolution-webhook");
+  assertEquals(go.method, "POST");
+  assertEquals(go.path, "/instance/connect");
+  assertEquals(go.auth, "instance");
+  assertEquals(go.body?.phone, "5511988887777", "número reduzido a dígitos (DDI+DDD+número)");
+  assertEquals(go.body?.subscribe, ["ALL"]);
+  assertEquals(go.body?.immediate, true);
+  assertEquals(go.body?.webhookUrl, "https://x/functions/v1/evolution-webhook");
+  assert(!go.path.includes(INSTANCE), "GO não leva a instância no path");
+
+  const v2 = resolvePairingRoute("v2", INSTANCE, "+55 (11) 98888-7777");
+  assertEquals(v2.method, "GET");
+  assertEquals(v2.path, `/instance/connect/${INSTANCE}?number=5511988887777`);
+  assertEquals(v2.auth, "global");
+  assertEquals(v2.body, undefined, "v2 recebe o número na query, não no corpo");
+});
+
+Deno.test("R2-API-016: normalização e formatação do código por flavor", () => {
+  assertEquals(pairingCodeFromResponse("v2", { pairingCode: "1A2B3C4D" }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("v2", { code: "1A2B3C4D" }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { code: "1A2B3C4D" } }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { pairingCode: "1A2B3C4D" } }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { code: "2@qr-payload" } }), null, "payload de QR ('2@') não é código de pareamento");
+  assertEquals(pairingCodeFromResponse("go", { message: "success" }), null);
+  assertEquals(pairingCodeFromResponse("go", null), null);
+
+  assertEquals(formatPairingCode("12345678"), "1234-5678");
+  assertEquals(formatPairingCode("abcd-efgh"), "ABCD-EFGH");
+  assertEquals(formatPairingCode("ABCD EFGH"), "ABCD-EFGH");
+  assertEquals(formatPairingCode(""), null);
+  assertEquals(formatPairingCode(null), null);
+});
+
+Deno.test("R2-API-016: validade do código (provedor manda, senão 60s preso a 15–300)", () => {
+  const now = 1_700_000_000_000;
+  assertEquals(pairingValidity({ data: { expiresIn: 120 } }, now).expiresInSeconds, 120);
+  assertEquals(pairingValidity({ expires_in: "45" }, now).expiresInSeconds, 45);
+  assertEquals(pairingValidity({ data: { validity: 90_000 } }, now).expiresInSeconds, 90, "ms viram segundos");
+  assertEquals(pairingValidity({}, now).expiresInSeconds, 60, "sem pista do provedor usa 60s");
+  assertEquals(pairingValidity({ expiresIn: 5 }, now).expiresInSeconds, 15, "piso de 15s");
+  assertEquals(pairingValidity({ expiresIn: 900 }, now).expiresInSeconds, 300, "teto de 300s");
+  assertEquals(pairingValidity({}, now).expiresAt, new Date(now + 60_000).toISOString());
+});
+
+Deno.test("R2-API-016 pairing-code GO: POST /instance/connect com phone e token da instância", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", (req, url) => {
+    if (req.method === "POST" && url.pathname === "/instance/connect") {
+      return json({ data: { code: "1A2B3C4D" } });
+    }
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 1, "código veio no corpo do connect: sem poll do QR");
+  assertEquals(calls[0].method, "POST");
+  assertEquals(calls[0].path, "/instance/connect");
+  assertEquals(calls[0].apikey, INSTANCE_TOKEN, "GO autentica com o token DA instância");
+  assertEquals(calls[0].body?.phone, "5511988887777");
+  assertEquals(body.error, undefined);
+  assertEquals(body.status, "qr_pending");
+  assertEquals(body.pairingCode, "1A2B-3C4D");
+  assertEquals(body.code, "1A2B-3C4D", "o front lê raw.pairingCode ?? raw.code");
+  assertEquals(
+    writes.find((w) => w.table === "whatsapp_connections")?.patch,
+    { status: "qr_pending", instance_id: INSTANCE },
+  );
+});
+
+Deno.test("R2-API-016 pairing-code GO: sem código no connect, lê /instance/qr (assíncrono)", async () => {
+  const { body, calls } = await runAction("go", "pairing-code", (_req, url) => {
+    if (url.pathname === "/instance/connect") return json({ message: "success" });
+    if (url.pathname === "/instance/qr") return json({ data: { code: "9Z8Y7X6W" } });
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 2, "connect + leitura do /instance/qr");
+  assertEquals(calls[0].path, "/instance/connect");
+  assertEquals(calls[1].method, "GET");
+  assertEquals(calls[1].path, "/instance/qr");
+  assertEquals(calls[1].apikey, INSTANCE_TOKEN);
+  assertEquals(body.pairingCode, "9Z8Y-7X6W");
+});
+
+Deno.test("R2-API-016 pairing-code v2: GET /instance/connect/{instância}?number= com a chave global", async () => {
+  const { body, calls, writes } = await runAction("v2", "pairing-code", (req, url) => {
+    if (req.method === "GET" && url.pathname === `/instance/connect/${INSTANCE}` && url.searchParams.get("number") === "5511988887777") {
+      return json({ pairingCode: "1A2B3C4D", count: 1, expiresIn: 240 });
+    }
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 1);
+  assertEquals(calls[0].method, "GET");
+  assertEquals(calls[0].path, `/instance/connect/${INSTANCE}`);
+  assertEquals(calls[0].apikey, GLOBAL_KEY, "v2 autentica com a chave global");
+  assertEquals(body.pairingCode, "1A2B-3C4D");
+  assertEquals(body.count, 1, "o corpo do v2 é preservado");
+  assertEquals(body.expiresInSeconds, 240, "validade vinda do provedor é repassada");
+  assert(typeof body.expiresAt === "string" && body.expiresAt.length > 0, "expiresAt em ISO");
+  assertEquals(writes.find((w) => w.table === "whatsapp_connections")?.patch, { status: "qr_pending", instance_id: INSTANCE });
+});
+
+Deno.test("R2-API-016 pairing-code sem número: 422 e nenhuma chamada ao provedor", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", () => json({}));
+  assertEquals(calls.length, 0, "sem número não bate no provedor");
+  assertEquals(writes.length, 0);
+  assertEquals(body.error, true);
+  assertEquals(body.status, 422);
+});
+
+Deno.test("R2-API-016 pairing-code GO sem código (só QR '2@...'): erro explícito, sem gravar", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", (_req, url) => {
+    if (url.pathname === "/instance/connect") return json({ message: "success" });
+    if (url.pathname === "/instance/qr") return json({ data: { code: "2@qr-payload", qrcode: "PNG" } });
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 4, "connect + 3 tentativas de leitura do /instance/qr");
+  assertEquals(body.error, true);
+  assertEquals(body.status, 409);
+  assertEquals(writes.length, 0, "sem código não escreve no banco");
+});
+
+// ─── pairing-code (pareamento por número) ───
+
+Deno.test("R2-API-016: matriz do pareamento por número — go põe o phone no corpo; v2 na query", () => {
+  const go = resolvePairingRoute("go", INSTANCE, "+55 (11) 98888-7777", "https://x/functions/v1/evolution-webhook");
+  assertEquals(go.method, "POST");
+  assertEquals(go.path, "/instance/connect");
+  assertEquals(go.auth, "instance");
+  assertEquals(go.body?.phone, "5511988887777", "número reduzido a dígitos (DDI+DDD+número)");
+  assertEquals(go.body?.subscribe, ["ALL"]);
+  assertEquals(go.body?.immediate, true);
+  assertEquals(go.body?.webhookUrl, "https://x/functions/v1/evolution-webhook");
+  assert(!go.path.includes(INSTANCE), "GO não leva a instância no path");
+
+  const v2 = resolvePairingRoute("v2", INSTANCE, "+55 (11) 98888-7777");
+  assertEquals(v2.method, "GET");
+  assertEquals(v2.path, `/instance/connect/${INSTANCE}?number=5511988887777`);
+  assertEquals(v2.auth, "global");
+  assertEquals(v2.body, undefined, "v2 recebe o número na query, não no corpo");
+});
+
+Deno.test("R2-API-016: normalização e formatação do código por flavor", () => {
+  assertEquals(pairingCodeFromResponse("v2", { pairingCode: "1A2B3C4D" }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("v2", { code: "1A2B3C4D" }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { code: "1A2B3C4D" } }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { pairingCode: "1A2B3C4D" } }), "1A2B3C4D");
+  assertEquals(pairingCodeFromResponse("go", { data: { code: "2@qr-payload" } }), null, "payload de QR ('2@') não é código de pareamento");
+  assertEquals(pairingCodeFromResponse("go", { message: "success" }), null);
+  assertEquals(pairingCodeFromResponse("go", null), null);
+
+  assertEquals(formatPairingCode("12345678"), "1234-5678");
+  assertEquals(formatPairingCode("abcd-efgh"), "ABCD-EFGH");
+  assertEquals(formatPairingCode("ABCD EFGH"), "ABCD-EFGH");
+  assertEquals(formatPairingCode(""), null);
+  assertEquals(formatPairingCode(null), null);
+});
+
+Deno.test("R2-API-016: validade do código (provedor manda, senão 60s preso a 15–300)", () => {
+  const now = 1_700_000_000_000;
+  assertEquals(pairingValidity({ data: { expiresIn: 120 } }, now).expiresInSeconds, 120);
+  assertEquals(pairingValidity({ expires_in: "45" }, now).expiresInSeconds, 45);
+  assertEquals(pairingValidity({ data: { validity: 90_000 } }, now).expiresInSeconds, 90, "ms viram segundos");
+  assertEquals(pairingValidity({}, now).expiresInSeconds, 60, "sem pista do provedor usa 60s");
+  assertEquals(pairingValidity({ expiresIn: 5 }, now).expiresInSeconds, 15, "piso de 15s");
+  assertEquals(pairingValidity({ expiresIn: 900 }, now).expiresInSeconds, 300, "teto de 300s");
+  assertEquals(pairingValidity({}, now).expiresAt, new Date(now + 60_000).toISOString());
+});
+
+Deno.test("R2-API-016 pairing-code GO: POST /instance/connect com phone e token da instância", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", (req, url) => {
+    if (req.method === "POST" && url.pathname === "/instance/connect") {
+      return json({ data: { code: "1A2B3C4D" } });
+    }
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 1, "código veio no corpo do connect: sem poll do QR");
+  assertEquals(calls[0].method, "POST");
+  assertEquals(calls[0].path, "/instance/connect");
+  assertEquals(calls[0].apikey, INSTANCE_TOKEN, "GO autentica com o token DA instância");
+  assertEquals(calls[0].body?.phone, "5511988887777");
+  assertEquals(body.error, undefined);
+  assertEquals(body.status, "qr_pending");
+  assertEquals(body.pairingCode, "1A2B-3C4D");
+  assertEquals(body.code, "1A2B-3C4D", "o front lê raw.pairingCode ?? raw.code");
+  assertEquals(
+    writes.find((w) => w.table === "whatsapp_connections")?.patch,
+    { status: "qr_pending", instance_id: INSTANCE },
+  );
+});
+
+Deno.test("R2-API-016 pairing-code GO: sem código no connect, lê /instance/qr (assíncrono)", async () => {
+  const { body, calls } = await runAction("go", "pairing-code", (_req, url) => {
+    if (url.pathname === "/instance/connect") return json({ message: "success" });
+    if (url.pathname === "/instance/qr") return json({ data: { code: "9Z8Y7X6W" } });
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 2, "connect + leitura do /instance/qr");
+  assertEquals(calls[0].path, "/instance/connect");
+  assertEquals(calls[1].method, "GET");
+  assertEquals(calls[1].path, "/instance/qr");
+  assertEquals(calls[1].apikey, INSTANCE_TOKEN);
+  assertEquals(body.pairingCode, "9Z8Y-7X6W");
+});
+
+Deno.test("R2-API-016 pairing-code v2: GET /instance/connect/{instância}?number= com a chave global", async () => {
+  const { body, calls, writes } = await runAction("v2", "pairing-code", (req, url) => {
+    if (req.method === "GET" && url.pathname === `/instance/connect/${INSTANCE}` && url.searchParams.get("number") === "5511988887777") {
+      return json({ pairingCode: "1A2B3C4D", count: 1, expiresIn: 240 });
+    }
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 1);
+  assertEquals(calls[0].method, "GET");
+  assertEquals(calls[0].path, `/instance/connect/${INSTANCE}`);
+  assertEquals(calls[0].apikey, GLOBAL_KEY, "v2 autentica com a chave global");
+  assertEquals(body.pairingCode, "1A2B-3C4D");
+  assertEquals(body.count, 1, "o corpo do v2 é preservado");
+  assertEquals(body.expiresInSeconds, 240, "validade vinda do provedor é repassada");
+  assert(typeof body.expiresAt === "string" && body.expiresAt.length > 0, "expiresAt em ISO");
+  assertEquals(writes.find((w) => w.table === "whatsapp_connections")?.patch, { status: "qr_pending", instance_id: INSTANCE });
+});
+
+Deno.test("R2-API-016 pairing-code sem número: 422 e nenhuma chamada ao provedor", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", () => json({}));
+  assertEquals(calls.length, 0, "sem número não bate no provedor");
+  assertEquals(writes.length, 0);
+  assertEquals(body.error, true);
+  assertEquals(body.status, 422);
+});
+
+Deno.test("R2-API-016 pairing-code GO sem código (só QR '2@...'): erro explícito, sem gravar", async () => {
+  const { body, calls, writes } = await runAction("go", "pairing-code", (_req, url) => {
+    if (url.pathname === "/instance/connect") return json({ message: "success" });
+    if (url.pathname === "/instance/qr") return json({ data: { code: "2@qr-payload", qrcode: "PNG" } });
+    return null;
+  }, { number: "5511988887777" });
+  assertEquals(calls.length, 4, "connect + 3 tentativas de leitura do /instance/qr");
+  assertEquals(body.error, true);
+  assertEquals(body.status, 409);
+  assertEquals(writes.length, 0, "sem código não escreve no banco");
 });

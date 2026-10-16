@@ -2,11 +2,12 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useScribe, CommitStrategy } from '@elevenlabs/react';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
-import type { VoiceAgentPhase, VoiceAgentAction, UseVoiceAgentOptions, UseVoiceAgentReturn } from '../voice/types';
+import type { VoiceAgentPhase, VoiceAgentAction, UseVoiceAgentOptions, UseVoiceAgentReturn, VoiceTtsIssue } from '../voice/types';
 import { processVoiceTranscript } from '../voice/processTranscript';
 import { playTtsAudio, type TtsPlayback } from '../voice/playTtsAudio';
 import { logVoiceCommand } from '../voice/logVoiceCommand';
 import { withRetry, friendlyErrorMessage } from '../voice/retry';
+import { VOICE_SESSION_LIMITS, voiceSessionEndMessage, type VoiceSessionEndReason } from '../voice/voiceSessionLimits';
 
 const SESSION_START_TIMEOUT_MS = 8000;
 const ERROR_RESET_DELAY_MS = 5000;
@@ -43,6 +44,11 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const [finalTranscript, setFinalTranscript] = useState('');
   const [agentResponse, setAgentResponse] = useState('');
   const [error, setError] = useState('');
+  /**
+   * O áudio da resposta falhou? O operador precisa saber por que ficou sem som —
+   * antes o erro do TTS morria num `log.warn` e a tela não dizia nada.
+   */
+  const [ttsIssue, setTtsIssue] = useState<VoiceTtsIssue>('');
 
   const onActionRef = useRef(options?.onAction);
   const onErrorRef = useRef(options?.onError);
@@ -51,6 +57,9 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
   const bootTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const autoRestartRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const errorResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // #347 — limites da sessão do microfone (Scribe).
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const sessionDurationTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(true);
   const processingAbortRef = useRef<AbortController | null>(null);
   // R2-INB-048: identidade da geração vigente do comando de voz (o mais recente vence).
@@ -98,7 +107,52 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     clearTimeout(bootTimeoutRef.current);
     clearTimeout(autoRestartRef.current);
     clearTimeout(errorResetRef.current);
+    clearTimeout(inactivityTimerRef.current);
+    clearTimeout(sessionDurationTimerRef.current);
   }, []);
+
+  /**
+   * #347 — encerra a sessão do microfone por limite.
+   *
+   * Antes, nada fechava a escuta: o operador saía da frente da tela (ou a aba ia
+   * para o segundo plano) e o Scribe continuava com o microfone aberto captando o
+   * ambiente; o operador também pagava a sessão de transcrição indefinidamente.
+   * Aqui a sessão TERMINA: desconecta, avisa em pt-BR na própria sobreposição
+   * (`error`) e volta a `idle` — sem rearmar nada, então não há laço de reconexão.
+   * A próxima escuta só começa por gesto do operador (`startListening`).
+   */
+  const endVoiceSession = useCallback((reason: VoiceSessionEndReason) => {
+    clearAllTimers();
+    processingAbortRef.current?.abort();
+    scribeRef.current?.disconnect();
+    if (!mountedRef.current) return;
+    setPartialTranscript('');
+    setError(voiceSessionEndMessage(reason));
+    safeSetPhase('idle');
+  }, [clearAllTimers, safeSetPhase]);
+
+  /**
+   * Reinicia só o relógio de inatividade. Fala (parcial ou confirmada) conta como
+   * atividade; e o encerramento é ignorado fora de `listening` para não cortar o
+   * comando em curso — nessa hora quem está trabalhando é o agente, não o operador.
+   */
+  const armInactivityTimer = useCallback(() => {
+    clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      if (phaseRef.current !== 'listening') return;
+      endVoiceSession('inactivity');
+    }, VOICE_SESSION_LIMITS.inactivityMs);
+  }, [endVoiceSession]);
+
+  /** Os dois relógios da sessão: inatividade e o teto duro de duração. */
+  const armSessionLimits = useCallback(() => {
+    clearTimeout(sessionDurationTimerRef.current);
+    armInactivityTimer();
+    sessionDurationTimerRef.current = setTimeout(
+      () => endVoiceSession('duration'),
+      VOICE_SESSION_LIMITS.maxDurationMs,
+    );
+  }, [armInactivityTimer, endVoiceSession]);
 
   const handleTranscript = useCallback(async (text: string) => {
     // R2-INB-048: cada comando recebe uma geração própria. Só a geração vigente aplica ação, registra
@@ -120,7 +174,10 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
 
     const startTime = Date.now();
     safeSetPhase('processing');
-    if (mountedRef.current) setAgentResponse('');
+    if (mountedRef.current) {
+      setAgentResponse('');
+      setTtsIssue('');
+    }
 
     try {
       const authToken = await resolveAuthToken();
@@ -137,11 +194,18 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       safeSetPhase('speaking');
 
       try {
-        const tts = playTtsAudio(result.response, supabaseUrl, authToken);
+        const tts = playTtsAudio(result.response, supabaseUrl, authToken, {
+          // O navegador pode RECUSAR o play() (Safari/iOS): sem este aviso o operador
+          // fica sem som e sem explicação.
+          onAutoplayBlocked: () => {
+            if (isCurrent()) setTtsIssue('autoplay-blocked');
+          },
+        });
         ttsRef.current = tts;
         await waitForPlaybackOrAbort(tts.promise, abortCtrl.signal);
       } catch (ttsErr) {
-        log.warn('TTS playback failed, continuing silently', ttsErr);
+        if (isCurrent()) setTtsIssue('playback-failed');
+        log.warn('TTS playback failed', ttsErr);
       }
 
       if (!isCurrent()) return;
@@ -161,6 +225,9 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       autoRestartRef.current = setTimeout(() => {
         if (mountedRef.current && scribeRef.current?.isConnected) {
           safeSetPhase('listening');
+          // A escuta voltou: o relógio de inatividade recomeça do zero (o teto de
+          // duração NÃO recomeça — ele conta da conexão da sessão).
+          armInactivityTimer();
         }
       }, AUTO_RESTART_DELAY_MS);
     } catch (err) {
@@ -186,16 +253,19 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
         safeSetPhase(scribeRef.current?.isConnected ? 'listening' : 'idle');
       }, ERROR_RESET_DELAY_MS);
     }
-  }, [supabaseUrl, resolveAuthToken, safeSetPhase]);
+  }, [supabaseUrl, resolveAuthToken, safeSetPhase, armInactivityTimer]);
 
   const scribe = useScribe({
     modelId: 'scribe_v2_realtime',
     commitStrategy: CommitStrategy.VAD,
     onPartialTranscript: (data) => {
       if (mountedRef.current) setPartialTranscript(data.text);
+      // Falar é atividade: reinicia o relógio de inatividade.
+      armInactivityTimer();
     },
     onCommittedTranscript: (data) => {
       if (data.text.trim()) {
+        armInactivityTimer();
         if (mountedRef.current) {
           setFinalTranscript(data.text);
           setPartialTranscript('');
@@ -208,6 +278,19 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     scribeRef.current = scribe;
   }, [scribe]);
 
+  // #347 — aba oculta/em segundo plano: o microfone não pode ficar aberto captando o
+  // ambiente (o operador não vê a tela e nada na interface indica que está gravando).
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && scribeRef.current?.isConnected) {
+        endVoiceSession('hidden');
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [endVoiceSession]);
+
   const startListening = useCallback(async () => {
     if (connectingRef.current || scribe.isConnected || phaseRef.current === 'booting' || phaseRef.current === 'processing') return;
     connectingRef.current = true;
@@ -218,6 +301,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     setFinalTranscript('');
     setAgentResponse('');
     setError('');
+    setTtsIssue('');
 
     try {
       const { data, error: tokenError } = await supabase.functions.invoke('elevenlabs-scribe-token');
@@ -263,6 +347,9 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       clearTimeout(bootTimeoutRef.current);
       if (!mountedRef.current) return;
       safeSetPhase('listening');
+      // #347 — a sessão conectou: passam a correr os dois relógios (60 s sem fala e
+      // 5 min de teto).
+      armSessionLimits();
 
       if (navigator.vibrate) navigator.vibrate(50);
     } catch (err) {
@@ -282,20 +369,53 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     } finally {
       connectingRef.current = false;
     }
-  }, [scribe, clearAllTimers, safeSetPhase]);
+  }, [scribe, clearAllTimers, safeSetPhase, armSessionLimits]);
 
   const stopListening = useCallback(() => {
     scribe.disconnect();
     safeSetPhase('idle');
     setPartialTranscript('');
-    clearTimeout(autoRestartRef.current);
-  }, [scribe, safeSetPhase]);
+    clearAllTimers();
+  }, [scribe, safeSetPhase, clearAllTimers]);
 
   const stopSpeaking = useCallback(() => {
     ttsRef.current?.stop();
     ttsRef.current = null;
     safeSetPhase(scribe.isConnected ? 'listening' : 'idle');
   }, [scribe, safeSetPhase]);
+
+  /**
+   * Toca de novo a última resposta em voz. É a ação do aviso de falha: o toque do
+   * operador é um gesto do usuário, então o navegador libera o áudio que antes recusou.
+   */
+  const replayResponse = useCallback(async () => {
+    const text = agentResponse.trim();
+    if (!text || !mountedRef.current) return;
+
+    setTtsIssue('');
+    ttsRef.current?.stop();
+    ttsRef.current = null;
+
+    const authToken = await resolveAuthToken();
+    if (!mountedRef.current) return;
+
+    safeSetPhase('speaking');
+    const tts = playTtsAudio(text, supabaseUrl, authToken, {
+      onAutoplayBlocked: () => {
+        if (mountedRef.current) setTtsIssue('autoplay-blocked');
+      },
+    });
+    ttsRef.current = tts;
+
+    try {
+      await tts.promise;
+    } catch (ttsErr) {
+      if (mountedRef.current) setTtsIssue('playback-failed');
+      log.warn('TTS replay failed', ttsErr);
+    } finally {
+      if (mountedRef.current) safeSetPhase(scribeRef.current?.isConnected ? 'listening' : 'idle');
+    }
+  }, [agentResponse, resolveAuthToken, safeSetPhase, supabaseUrl]);
 
   const reset = useCallback(() => {
     processingAbortRef.current?.abort();
@@ -308,6 +428,7 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     setFinalTranscript('');
     setAgentResponse('');
     setError('');
+    setTtsIssue('');
   }, [scribe, clearAllTimers, safeSetPhase]);
 
   // Cleanup on unmount
@@ -319,6 +440,8 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
       clearTimeout(bootTimeoutRef.current);
       clearTimeout(autoRestartRef.current);
       clearTimeout(errorResetRef.current);
+      clearTimeout(inactivityTimerRef.current);
+      clearTimeout(sessionDurationTimerRef.current);
     };
   }, [clearAllTimers]);
 
@@ -328,9 +451,11 @@ export function useVoiceAgent(options?: UseVoiceAgentOptions): UseVoiceAgentRetu
     finalTranscript,
     agentResponse,
     error,
+    ttsIssue,
     startListening,
     stopListening,
     stopSpeaking,
+    replayResponse,
     reset,
   };
 }

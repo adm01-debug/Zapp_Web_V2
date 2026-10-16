@@ -45,6 +45,23 @@ test.use({
 // os 30s padrão (mesmo ajuste de onboarding-dispensar.spec.ts e talkx-visual).
 test.setTimeout(120_000);
 
+/**
+ * GUARDA DE COLETOR (R1): declarada ANTES de qualquer teste e sem pedir a
+ * fixture `page`, para que o projeto de sessão salva seja recusado antes de o
+ * navegador abrir — um contexto criado ali carregaria o `storageState` do
+ * projeto (leitura que a R1 proíbe). Com sessão salva no projeto coletor o
+ * arquivo inteiro sai "skipped"; num projeto deslogado a guarda não dispara e
+ * os cenários seguem normalmente.
+ */
+test.beforeEach(({ browserName }, testInfo) => {
+  test.skip(
+    Boolean(testInfo.project.use.storageState),
+    `${testInfo.project.name} (${browserName}) carrega uma sessão salva: esta spec usa ` +
+      'sessão falsa (installFakeSession) e não pode ser coletada por projeto autenticado (R1); ' +
+      'rode-a num projeto deslogado, sem `dependencies: ["setup"]',
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Backend fake de `conversation_tasks` (nada de banco real)
 // ---------------------------------------------------------------------------

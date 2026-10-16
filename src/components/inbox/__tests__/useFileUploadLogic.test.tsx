@@ -146,6 +146,49 @@ describe('useFileUploadLogic — storage path', () => {
   });
 });
 
+/**
+ * PK-28 · paridade doc 06 — a citação junto da mídia.
+ *
+ * O servidor cita QUALQUER tipo (`message-delivery` · `providerPayload.quoted`);
+ * o que faltava era o cliente mandar o id: o diálogo de mídia abria com a barra
+ * de resposta ativa e a imagem saía sem a citação que o texto já carregava.
+ */
+describe('useFileUploadLogic — PK-28: citação da resposta na mídia', () => {
+  function renderUploadComResposta(replyToId: string | null) {
+    return renderHook(() => useFileUploadLogic({
+      contactId: CONTACT_ID,
+      connectionId: 'connection-1',
+      replyToId,
+      onFileSent: vi.fn(),
+      fileInputRef: makeFileInputRef(),
+    }));
+  }
+
+  it('a imagem sai citando a mensagem respondida', async () => {
+    const hook = renderUploadComResposta('reply-img-1');
+    act(() => {
+      hook.result.current.handleExternalFile(createFile('foto.png'));
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ replyToId: 'reply-img-1' }),
+    );
+  });
+
+  it('sem resposta pendente o payload fica igual ao contrato antigo (sem o campo)', async () => {
+    const hook = renderUploadComResposta(null);
+    act(() => {
+      hook.result.current.handleExternalFile(createFile('foto.png'));
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage.mock.calls[0][0]).not.toHaveProperty('replyToId');
+  });
+});
+
 describe('useFileUploadLogic — R2-INB-006: falha após enqueue e retry', () => {
   it('remove o objeto órfão quando o envio falha e a fila prova que NÃO há linha', async () => {
     mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('fila cheia'));
@@ -223,5 +266,48 @@ describe('useFileUploadLogic — R2-INB-006: falha após enqueue e retry', () =>
     expect(secondInput.clientMessageId).toBe(firstInput.clientMessageId);
     expect(secondInput.mediaUrl).toBe(firstInput.mediaUrl);
     expect(secondInput.clientMessageId).toBeTruthy();
+  });
+});
+
+describe('useFileUploadLogic — U8: conteúdo confere com o tipo declarado antes de enviar', () => {
+  const bytes = (data: number[]) => new Uint8Array(data);
+  // `.exe` (MZ/PE) com nome e MIME de PDF: o tipo declarado é forjado.
+  const exeAsPdf = () => new File(
+    [bytes([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00])],
+    'contrato.pdf',
+    { type: 'application/pdf' },
+  );
+  // `ftyp` + marca `M4A ` (áudio/mp4 legítimo).
+  const m4a = () => new File(
+    [bytes([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20, 0x00, 0x00, 0x00, 0x00])],
+    'voz.m4a',
+    { type: 'audio/mp4' },
+  );
+
+  it('recusa .exe renomeado .pdf sem gravar nada no Storage', async () => {
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(exeAsPdf());
+    });
+    await send(hook);
+
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining('conteúdo não corresponde'),
+      { id: 'file-upload' },
+    );
+  });
+
+  it('aceita .m4a legítimo e segue o envio', async () => {
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(m4a());
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1);
+    expect(mocks.toastError).not.toHaveBeenCalled();
   });
 });

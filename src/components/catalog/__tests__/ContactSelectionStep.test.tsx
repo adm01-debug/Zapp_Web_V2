@@ -71,6 +71,36 @@ describe('ContactSelectionStep', () => {
     expect(screen.getByText('Tomaz')).toBeInTheDocument();
   });
 
+  it('falha na busca mostra erro com "Tentar de novo" — e não "nenhum contato" (CT-43)', () => {
+    const onRetry = vi.fn();
+    render(
+      <Dialog open>
+        <ContactSelectionStep
+          {...baseProps}
+          contactSearch="xyz"
+          contactSearchError
+          onRetryContactSearch={onRetry}
+        />
+      </Dialog>
+    );
+
+    expect(screen.getByText('Não foi possível buscar contatos. Tente de novo.')).toBeInTheDocument();
+    expect(screen.queryByText('Nenhum contato encontrado')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Tentar de novo'));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('enquanto a busca roda, o erro anterior não aparece (loading vence o erro)', () => {
+    render(
+      <Dialog open>
+        <ContactSelectionStep {...baseProps} contactSearch="xyz" contactSearchError searchingContacts />
+      </Dialog>
+    );
+
+    expect(screen.queryByText('Não foi possível buscar contatos. Tente de novo.')).not.toBeInTheDocument();
+  });
+
   it('durante o envio, mostra "Enviando..." e desabilita o botão', () => {
     render(<Dialog open><ContactSelectionStep {...baseProps} selectedContact={contact} isSending /></Dialog>);
     expect(screen.getByText('Enviando...').closest('button')).toBeDisabled();

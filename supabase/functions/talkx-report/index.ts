@@ -213,8 +213,10 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
 
     if (!emailRes.ok) {
       const body = await emailRes.text();
+      // O corpo cru do provedor fica só no log do servidor; ao cliente vai só o
+      // status, para não expor detalhe interno do Resend na resposta.
       log.error('Resend error', { status: emailRes.status, body });
-      return jsonErr(req, { ok: false, reason: 'resend_error', detail: body }, 502);
+      return jsonErr(req, { ok: false, reason: 'resend_error', code: emailRes.status }, 502);
     }
 
     log.info('Report sent', { campaignId, to: recipientEmail });

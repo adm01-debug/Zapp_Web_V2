@@ -1,8 +1,7 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Star } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { usePrefetchOnHover } from '@/hooks/ui/usePrefetchOnHover';
 
 export interface NavItemConfig {
   id: string;
@@ -32,7 +31,6 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
   const shortcut = item.shortcut;
   const badgeCount = badge ?? item.badge;
   const pill = item.pill;
-  const { prefetch } = usePrefetchOnHover();
 
   // O nome acessivel e do BOTAO (aria-label), entao o selo precisa entrar nele:
   // sem isso o "NOVO" nao chega ao leitor de tela (o texto interno fica mascarado
@@ -43,15 +41,10 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       ? `${item.label} (${pill.toLocaleLowerCase('pt-BR')})`
       : item.label;
 
-  const handleMouseEnter = useCallback(() => {
-    if (!isActive) prefetch(item.id);
-  }, [isActive, item.id, prefetch]);
-
   const button = (
     <button
       data-tour={item.id}
       onClick={() => onViewChange(item.id)}
-      onMouseEnter={handleMouseEnter}
       aria-label={accessibleLabel}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
@@ -60,6 +53,10 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
           ? 'w-[38px] h-[38px] justify-center rounded-full'
           : cn(
               'w-full py-2 px-3 gap-3 rounded-xl text-sm font-medium min-h-[44px] items-center',
+              // SHELL-11 (Y18-4): o favorito virou irmão posicionado SOBRE o item (abaixo).
+              // Reserva-se aqui a largura que ele ocupava dentro do flex — 12px do px-3 +
+              // 20px da estrela + 12px do gap-3 = 44px — para o rótulo truncar no mesmo ponto.
+              onToggleFavorite && 'pr-11',
               "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r-full before:transition-colors before:duration-200 before:content-['']",
               isActive ? 'before:bg-primary' : 'before:bg-transparent'
             ),
@@ -101,18 +98,6 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         >
           {pill}
         </span>
-      )}
-      {!collapsed && onToggleFavorite && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
-          className={cn(
-            'relative z-20 ml-auto w-5 h-5 rounded flex items-center justify-center transition-all opacity-0 group-hover/item:opacity-100',
-            isFavorite ? 'opacity-100 text-warning' : 'text-muted-foreground hover:text-warning'
-          )}
-          aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-        >
-          <Star className={cn('w-3 h-3', isFavorite && 'fill-warning')} />
-        </button>
       )}
       {!collapsed && shortcut && !onToggleFavorite && (
         <kbd
@@ -160,5 +145,26 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
     );
   }
 
-  return button;
+  if (!onToggleFavorite) return button;
+
+  // SHELL-11 (Y18-4): o favorito era um <button> DENTRO do <button> do item — o axe
+  // reprova isso como nested-interactive. Ele passa a ser IRMÃO posicionado sobre o
+  // item: o item deixa de ser o container dele. O `group/item` fica aqui (contêiner)
+  // para o hover do item continuar revelando o favorito, e o focus-visible o revela
+  // no teclado (antes, focado, ele seguia invisível com opacity-0).
+  return (
+    <div className="relative group/item">
+      {button}
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
+        aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+        className={cn(
+          'absolute right-3 top-1/2 -translate-y-1/2 z-20 w-5 h-5 rounded flex items-center justify-center transition-all opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100',
+          isFavorite ? 'opacity-100 text-warning' : 'text-muted-foreground hover:text-warning'
+        )}
+      >
+        <Star className={cn('w-3 h-3', isFavorite && 'fill-warning')} />
+      </button>
+    </div>
+  );
 });

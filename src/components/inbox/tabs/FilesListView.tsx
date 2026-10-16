@@ -2,10 +2,12 @@ import { Eye, Share2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { resolveSenderIdentity, type SenderProfileMap } from '@/lib/fileSenderIdentity';
 import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
+import { SenderAvatar } from './SenderAvatar';
 import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
 
 /**
@@ -13,6 +15,11 @@ import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionBut
  * rounded-xl, card) e a densidade e decidida pelo CONTENINER, nao pela viewport: abaixo de
  * 640 px a meta desce para a segunda linha, o remetente some e sobram "Visualizar" e "Mais
  * acoes". A aba nunca troca a preferencia de modo sozinha.
+ *
+ * R06 (S47): na linha larga o remetente vira foto + nome (`SenderAvatar`), resolvido do lote
+ * de perfis que o `FilesTab` repassa por props (D04) — a Lista nao consulta o banco. A regra
+ * de quem enviou e a mesma do cartao (`resolveSenderIdentity`: voce, contato, atendente,
+ * "Equipe" sem `agent_id`).
  */
 
 interface FilesListViewProps {
@@ -22,6 +29,10 @@ interface FilesListViewProps {
   selectedIds: Set<string>;
   /** Largura medida do contêiner da aba; `null` antes da primeira medida (assume larga). */
   containerWidth: number | null;
+  /** R06/D04: perfis dos atendentes resolvidos em LOTE uma unica vez no `FilesTab`. */
+  senderProfiles?: SenderProfileMap;
+  /** R06/D01: `profiles.id` do usuário logado — decide o rotulo "Voce". */
+  currentUserId?: string | null;
   onSelect: (item: ContactMediaItem) => void;
   onToggleSelection: (id: string) => void;
   onPreview: (item: ContactMediaItem) => void;
@@ -34,6 +45,8 @@ export function FilesListView({
   selectionMode,
   selectedIds,
   containerWidth,
+  senderProfiles,
+  currentUserId = null,
   onSelect,
   onToggleSelection,
   onPreview,
@@ -48,7 +61,12 @@ export function FilesListView({
         const checked = selectedIds.has(item.id);
         const primary = selectionMode ? () => onToggleSelection(item.id) : () => onSelect(item);
         const meta = formatMeta(item);
-        const sender = item.senderLabel ?? contactName;
+        const remetente = resolveSenderIdentity({
+          item,
+          currentUserId,
+          contact: { name: contactName },
+          profiles: senderProfiles,
+        });
 
         return (
           <div
@@ -92,7 +110,7 @@ export function FilesListView({
                   <p className="text-xs text-muted-foreground truncate">{meta}</p>
                 </div>
               ) : (
-                <div className="flex items-baseline gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <button
                     type="button"
                     title={item.filename}
@@ -101,7 +119,16 @@ export function FilesListView({
                   >
                     {item.displayName}
                   </button>
-                  <p className="text-xs text-muted-foreground truncate">{meta} · {sender}</p>
+                  <p className="text-xs text-muted-foreground truncate">{meta}</p>
+                  {/* R06 (S47): quem enviou continua no fim da linha — agora com a foto. */}
+                  <span className="ml-auto shrink-0">
+                    <SenderAvatar
+                      name={remetente.name}
+                      avatarUrl={remetente.avatarUrl}
+                      colorKey={item.agentId ?? undefined}
+                      showName
+                    />
+                  </span>
                 </div>
               )}
             </div>

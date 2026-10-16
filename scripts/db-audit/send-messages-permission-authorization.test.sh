@@ -15,6 +15,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930190000_enforce_send_messages_permission_on_enqueue.sql"
+sender_origin_migration="$(ls "$repo_root"/supabase/migrations/*_messages_insert_update_sender_origin.sql 2>/dev/null | head -1)"
 postgres_image="${SEND_MESSAGES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-send-msg-test-$$"
 
@@ -332,4 +333,138 @@ expect_value 'B6 service_role nao tem EXECUTE (ACL preservada)' 'f' \
 expect_value 'B7 authenticated tem EXECUTE (ACL preservada)' 't' \
   "SELECT has_function_privilege('authenticated','public.enqueue_outbound_message(uuid,uuid,text,text,text,uuid,uuid,text)','EXECUTE')"
 
+# ---------------------------------------------------------------------------
+# SEC-RLS_CONTATOS_MENSAGENS-01 (docs/audits/SEGURANCA_RLS_CONTATOS_MENSAGENS_2026-10-07.md):
+# a ORIGEM da mensagem (sender) passa a ser decidida pelo banco.
+# O estado ANTERIOR e montado com os arquivos REAIS que criaram as policies de
+# `messages` (20260329175910 -> SELECT/UPDATE, 20260902023200 -> SELECT
+# consolidada, 20260925120000 -> INSERT, 20260925223000 -> USING final do
+# UPDATE); a correcao vem do arquivo REAL da migration nova. Vermelho antes e
+# verde depois saem do mesmo container, com papel real (authenticated,
+# service_role e a ACL de anon).
+# ---------------------------------------------------------------------------
+echo
+echo '-- SEC-RLS_CONTATOS_MENSAGENS-01: origem da mensagem (sender) -----------------------'
+[[ -n "$sender_origin_migration" && -f "$sender_origin_migration" ]] \
+  || fail 'migration da origem da mensagem (messages.*sender_origin) nao encontrada'
+
+cat > "$tmp_dir/sec01-scaffold.sql" <<'SQL'
+-- Colunas, tabelas e helpers que as migrations REAIS de `messages` referenciam.
+-- Unico helper transcrito a mao: is_privileged_contact_caller (mesmo corpo de
+-- 20260930090000; a migration que o cria arrasta outras RPCs de contato).
+CREATE TABLE public.queues (id uuid PRIMARY KEY);
+CREATE TABLE public.queue_members (
+  queue_id uuid NOT NULL REFERENCES public.queues(id),
+  profile_id uuid NOT NULL REFERENCES public.profiles(id),
+  is_active boolean NOT NULL,
+  PRIMARY KEY (queue_id, profile_id)
+);
+ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES public.profiles(id);
+ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS queue_id uuid REFERENCES public.queues(id);
+CREATE FUNCTION public.get_profile_id_for_user(_user_id uuid) RETURNS uuid
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp
+  AS $$ SELECT profile.id FROM public.profiles AS profile
+        WHERE _user_id = auth.uid() AND profile.user_id = _user_id LIMIT 1 $$;
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
+  AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles
+                       WHERE user_id = _user_id AND role IN ('admin','supervisor')) $$;
+CREATE FUNCTION public.is_privileged_contact_caller() RETURNS boolean
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp
+  AS $$ SELECT coalesce(auth.role(), session_user) = ANY (ARRAY['service_role','postgres','supabase_admin']) $$;
+REVOKE ALL ON FUNCTION public.is_privileged_contact_caller() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_privileged_contact_caller() TO authenticated, service_role;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+-- ACL de producao de `messages`: authenticated escreve; anon nao tem grant nenhum.
+GRANT SELECT, INSERT, UPDATE ON public.messages TO authenticated, service_role;
+GRANT SELECT ON public.contacts, public.queue_members, public.profiles TO authenticated;
+SQL
+psql_file "$tmp_dir/sec01-scaffold.sql"
+
+for policies_state in \
+  20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql \
+  20260902023200_consolidate_rls_select_messages_contacts.sql \
+  20260925120000_fix_messages_insert_rls_contact_visibility.sql \
+  20260925223000_messages_update_policy_queue_parity.sql; do
+  psql_file "$repo_root/supabase/migrations/$policies_state"
+done
+
+cat > "$tmp_dir/sec01-seed.sql" <<'SQL'
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('11111111-1111-1111-1111-111111111111','admin')
+  ON CONFLICT DO NOTHING;
+DELETE FROM public.messages WHERE id IN
+  ('a2000000-0000-0000-0000-000000000001','a2000000-0000-0000-0000-000000000002');
+INSERT INTO public.contacts (id, whatsapp_connection_id, assigned_to) VALUES
+  ('a1000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001'),
+  ('a1000000-0000-0000-0000-000000000002','e0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000001')
+  ON CONFLICT (id) DO UPDATE
+    SET assigned_to = EXCLUDED.assigned_to,
+        whatsapp_connection_id = EXCLUDED.whatsapp_connection_id;
+INSERT INTO public.messages (id, contact_id, sender, content, message_type, is_read, agent_id) VALUES
+  ('a2000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000001','contact','entrada do cliente','text',false,NULL),
+  ('a2000000-0000-0000-0000-000000000002','a1000000-0000-0000-0000-000000000001','agent','resposta do agente','text',false,'b0000000-0000-0000-0000-000000000001');
+SQL
+psql_file "$tmp_dir/sec01-seed.sql"
+
+sc01_visivel='a1000000-0000-0000-0000-000000000001'
+sc01_invisivel='a1000000-0000-0000-0000-000000000002'
+sc01_entrada='a2000000-0000-0000-0000-000000000001'
+sc01_propria='a2000000-0000-0000-0000-000000000002'
+sc01_perfil_bob='b0000000-0000-0000-0000-000000000001'
+sec01_bob_claims='{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}'
+sec01_alice_claims='{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}'
+sec01_bob() { printf "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '%s', false); %s" "$sec01_bob_claims" "$1"; }
+sec01_alice() { printf "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '%s', false); %s" "$sec01_alice_claims" "$1"; }
+sec01_service() { printf "SET ROLE service_role; SELECT set_config('request.jwt.claims', '%s', false); %s" '{"role":"service_role"}' "$1"; }
+
+echo
+echo '-- ANTES da migration: o defeito, com os arquivos REAIS das policies ---------------'
+expect_value 'R1 agente insere mensagem de cliente (sender=contact aceito: defeito)' '1' \
+  "$(sec01_bob "INSERT INTO public.messages (contact_id, sender, content, message_type) VALUES ('$sc01_visivel','contact','forjada antes da migration','text'); SELECT count(*) FROM public.messages WHERE content='forjada antes da migration';")"
+expect_value 'R2 agente converte mensagem de ENTRADA em resposta do atendente (defeito)' '1' \
+  "$(sec01_bob "UPDATE public.messages SET sender='agent', status='sent' WHERE id='$sc01_entrada'; SELECT count(*) FROM public.messages WHERE id='$sc01_entrada' AND sender='agent';")"
+
+echo
+echo '-- Aplicando a migration da origem da mensagem ------------------------------------'
+psql_file "$sender_origin_migration"
+psql_sql "DELETE FROM public.messages WHERE content = 'forjada antes da migration'" >/dev/null
+psql_file "$tmp_dir/sec01-seed.sql"
+
+echo
+echo '-- DEPOIS da migration ------------------------------------------------------------'
+expect_error 'G1 INSERT com sender=contact e recusado (a mensagem de entrada e do canal)' \
+  'new row violates row-level security policy' \
+  "$(sec01_bob "INSERT INTO public.messages (contact_id, sender, content, message_type) VALUES ('$sc01_visivel','contact','forjada depois da migration','text');")"
+expect_value 'G2 nada foi gravado na tentativa de forja' '0' \
+  "SELECT count(*) FROM public.messages WHERE content = 'forjada depois da migration'"
+expect_value 'G3 INSERT com sender=agent no contato proprio segue valendo' '1' \
+  "$(sec01_bob "INSERT INTO public.messages (contact_id, sender, content, message_type, agent_id) VALUES ('$sc01_visivel','agent','envio legitimo','text','$sc01_perfil_bob'); SELECT count(*) FROM public.messages WHERE content='envio legitimo';")"
+expect_value 'G4 UPDATE da mensagem propria (is_read) segue valendo' '1' \
+  "$(sec01_bob "UPDATE public.messages SET is_read=true WHERE id='$sc01_propria'; SELECT count(*) FROM public.messages WHERE id='$sc01_propria' AND is_read")"
+expect_value 'G5 marcar como LIDA a mensagem de ENTRADA segue valendo (fluxo do inbox)' '1' \
+  "$(sec01_bob "UPDATE public.messages SET is_read=true WHERE id='$sc01_entrada'; SELECT count(*) FROM public.messages WHERE id='$sc01_entrada' AND is_read")"
+expect_error 'G6 converter a mensagem de ENTRADA em resposta do atendente e recusado' \
+  'new row violates row-level security policy' \
+  "$(sec01_bob "UPDATE public.messages SET sender='agent', status='sent' WHERE id='$sc01_entrada';")"
+expect_error 'G7 converter a mensagem PROPRIA em mensagem de cliente e recusado' \
+  'new row violates row-level security policy' \
+  "$(sec01_bob "UPDATE public.messages SET sender='contact' WHERE id='$sc01_propria';")"
+expect_error 'G8 mover a mensagem para contato fora da carteira e recusado (visibilidade no WITH CHECK)' \
+  'new row violates row-level security policy' \
+  "$(sec01_bob "UPDATE public.messages SET contact_id='$sc01_invisivel' WHERE id='$sc01_propria';")"
+expect_error 'G9 INSERT sender=agent em contato de OUTRO agente e recusado (visibilidade preservada)' \
+  'new row violates row-level security policy' \
+  "$(sec01_bob "INSERT INTO public.messages (contact_id, sender, content, message_type, agent_id) VALUES ('$sc01_invisivel','agent','envio em carteira alheia','text','$sc01_perfil_bob');")"
+expect_error 'G10 admin tambem nao forja mensagem de cliente (sender=contact)' \
+  'new row violates row-level security policy' \
+  "$(sec01_alice "INSERT INTO public.messages (contact_id, sender, content, message_type) VALUES ('$sc01_invisivel','contact','forja do admin','text');")"
+expect_value 'G11 admin segue inserindo sender=agent em contato de outro agente (preservado)' '1' \
+  "$(sec01_alice "INSERT INTO public.messages (contact_id, sender, content, message_type) VALUES ('$sc01_invisivel','agent','envio do admin','text'); SELECT count(*) FROM public.messages WHERE content='envio do admin';")"
+expect_value 'G12 service_role segue ingerindo inbound (sender=contact)' '1' \
+  "$(sec01_service "INSERT INTO public.messages (contact_id, sender, content, message_type) VALUES ('$sc01_visivel','contact','inbound do webhook','text'); SELECT count(*) FROM public.messages WHERE content='inbound do webhook';")"
+expect_value 'G13 anon nao tem INSERT em messages (ACL de producao)' 'f' \
+  "SELECT has_table_privilege('anon','public.messages','INSERT')"
+
 printf '\n[OK] contrato de autorizacao do send_messages na RPC de enfileiramento verificado\n'
+printf '[OK] origem da mensagem fixada pelo banco (SEC-RLS_CONTATOS_MENSAGENS-01): forja de inbound e conversao de origem recusadas; inbox, admin e service_role preservados\n'

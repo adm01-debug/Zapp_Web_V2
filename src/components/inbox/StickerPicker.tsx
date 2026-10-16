@@ -20,7 +20,7 @@ interface StickerPickerProps {
 export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
   const {
     open, setOpen, stickers, filtered, loading, search, setSearch, uploading,
-    activeCategory, setActiveCategory, showFavorites, setShowFavorites, showRecent, setShowRecent,
+    activeCategory, setActiveCategory, showFavorites, setShowFavorites, showRecent, setShowRecent, showMostUsed, setShowMostUsed,
     pendingUpload, setPendingUpload, gridSize, isDragOver, fileInputRef, searchInputRef,
     handleDragOver, handleDragLeave, handleDrop, handleFileSelect,
     handleConfirmUpload, handleCancelUpload, handleSend, toggleFavorite, handleCategoryChange, handleDelete, cycleGridSize,
@@ -78,10 +78,11 @@ export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
               </div>
             </div>
 
-            <StickerCategoryBar stickers={stickers} activeCategory={activeCategory} showFavorites={showFavorites} showRecent={showRecent}
-              onCategoryChange={(cat) => { setActiveCategory(cat); setShowFavorites(false); setShowRecent(false); }}
-              onToggleFavorites={() => { setShowFavorites(!showFavorites); setActiveCategory(null); setShowRecent(false); }}
-              onToggleRecent={() => { setShowRecent(!showRecent); setActiveCategory(null); setShowFavorites(false); }}
+            <StickerCategoryBar stickers={stickers} activeCategory={activeCategory} showFavorites={showFavorites} showRecent={showRecent} showMostUsed={showMostUsed}
+              onCategoryChange={(cat) => { setActiveCategory(cat); setShowFavorites(false); setShowRecent(false); setShowMostUsed(false); }}
+              onToggleFavorites={() => { setShowFavorites(!showFavorites); setActiveCategory(null); setShowRecent(false); setShowMostUsed(false); }}
+              onToggleRecent={() => { setShowRecent(!showRecent); setActiveCategory(null); setShowFavorites(false); setShowMostUsed(false); }}
+              onToggleMostUsed={() => { setShowMostUsed(!showMostUsed); setActiveCategory(null); setShowFavorites(false); setShowRecent(false); }}
             />
 
             <StickerGrid stickers={filtered} loading={loading} search={search} gridSize={gridSize}
@@ -91,7 +92,7 @@ export function StickerPicker({ onSendSticker, disabled }: StickerPickerProps) {
             <div className="px-3 py-2 border-t border-border/30 flex items-center justify-between">
               <span className="text-3xs text-muted-foreground">
                 {filtered.length}/{stickers.length} figurinhas
-                {showRecent && ' · Mais usadas'}{showFavorites && ' · Favoritas'}{activeCategory && ` · ${CATEGORY_LABELS[activeCategory]?.label}`}
+                {showRecent && ' · Recentes'}{showMostUsed && ' · Mais usadas'}{showFavorites && ' · Favoritas'}{activeCategory && ` · ${CATEGORY_LABELS[activeCategory]?.label}`}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] text-muted-foreground">Arraste uma imagem ou</span>

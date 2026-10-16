@@ -46,7 +46,7 @@ const MODULO = resolve(RAIZ, 'scripts/ia/ensaio-provisionamento.mjs');
 const MANIFESTO = resolve(RAIZ, 'supabase/schema-manifest.json');
 const DOC_IA010 = resolve(RAIZ, 'docs/ia/IA-010-ambiente-de-ensaio.md');
 const README_IA = resolve(RAIZ, 'docs/ia/README.md');
-const CRIAR_FILA = resolve(RAIZ, 'src/components/queues/CreateQueueDialog.tsx');
+const PALETA_REAL_FILAS = resolve(RAIZ, 'src/components/queues/queueColors.ts');
 
 const plano = planoDeEnsaio();
 const SQL = sqlDeProvisionamento(plano);
@@ -216,7 +216,7 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
   });
 
   it('as filas usam só cores que o sistema já tem', () => {
-    const paleta = readFileSync(CRIAR_FILA, 'utf8');
+    const paleta = readFileSync(PALETA_REAL_FILAS, 'utf8');
     for (const cor of PALETA_FILAS) {
       expect(paleta).toContain(cor);
     }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // R2-AUTH-024: o overview exibia estado e pontuação SEM medição válida —
@@ -30,6 +30,8 @@ const devicesState: {
 } = { devices: [], sessions: [], loading: false };
 const authState: { user: { id: string } | null } = { user: { id: 'u-1' } };
 const alertsState: { data: unknown[] | null; error: unknown } = { data: [], error: null };
+// O contador agora vem do servidor (count/head): o mock precisa responder as duas formas.
+const contagemState: { count: number | null; error: unknown } = { count: 0, error: null };
 
 vi.mock('@/hooks/auth/useMFA', () => ({
   useMfaFactors: () => mfaState.current,
@@ -44,11 +46,13 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
       select: () => ({
-        eq: () => ({
-          order: () => ({
-            limit: () => Promise.resolve(alertsState),
+        eq: () =>
+          Object.assign(Promise.resolve(contagemState), {
+            order: () => ({
+              limit: () => Promise.resolve(alertsState),
+            }),
+            eq: () => Promise.resolve(contagemState),
           }),
-        }),
       }),
     }),
   },
@@ -67,6 +71,8 @@ describe('SecurityOverview — medição válida (R2-AUTH-024)', () => {
     authState.user = { id: 'u-1' };
     alertsState.data = [];
     alertsState.error = null;
+    contagemState.count = 0;
+    contagemState.error = null;
   });
 
   it('conta o fator verificado da fonte compartilhada e pontua por ele', async () => {
@@ -174,5 +180,33 @@ describe('SecurityOverview — medição válida (R2-AUTH-024)', () => {
 
     expect(await screen.findByText('Nenhum alerta recente')).toBeInTheDocument();
     expect(screen.queryByText('Não foi possível carregar os alertas')).toBeNull();
+  });
+
+  it('contador de alertas vem do servidor e conta além dos 5 carregados', async () => {
+    alertsState.data = Array.from({ length: 5 }, (_, i) => ({
+      id: `a${i}`,
+      alert_type: 'rate_limit',
+      severity: 'medium',
+      title: `Alerta ${i}`,
+      description: null,
+      created_at: new Date().toISOString(),
+      is_resolved: false,
+    }));
+    contagemState.count = 8;
+
+    render(<SecurityOverview />);
+
+    const rotulo = await screen.findByText('Alertas');
+    // Se contasse a lista carregada (5), o alerta antigo sumiria do contador.
+    await waitFor(() => expect(rotulo.previousElementSibling).toHaveTextContent('8'));
+  });
+
+  it('falha na contagem mostra indisponível, nunca zero alertas', async () => {
+    contagemState.error = { message: 'permission denied' };
+
+    render(<SecurityOverview />);
+
+    const rotulo = await screen.findByText('Alertas');
+    await waitFor(() => expect(rotulo.previousElementSibling).toHaveTextContent('—'));
   });
 });

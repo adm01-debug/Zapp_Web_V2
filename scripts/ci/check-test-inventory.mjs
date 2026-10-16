@@ -13,7 +13,7 @@
 // conta: passo desligado por comentário não executa), e o que não aparece em nenhum bloco
 // `run:` precisa estar na ALLOWLIST_NODE com justificativa.
 
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, statSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
 import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
@@ -27,68 +27,208 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-// ── Allowlist com prazo (W54) ─────────────────────────────────────────────────
-// Cada entrada tem `desde` (AAAA-MM-DD) e `motivo`. Falha se (hoje - desde) > 30 dias.
-// Regra idêntica à quarentena E87: allowlist sem prazo é um `skip` com outro nome.
-// W53: todos os itens anteriores promovidos; ambas as Metas vazias.
-
-const FORMATO_DATA = /^\d{4}-\d{2}-\d{2}$/u;
-export const PRAZO_ALLOWLIST_DIAS = 30;
-
-/** Data de hoje em ISO (AAAA-MM-DD), sem depender de fuso do ambiente. */
-export function hojeISO(agora = new Date()) {
-  return agora.toISOString().slice(0, 10);
-}
-
-// .test.sh fora de db-guard.yml — Map<caminho, {desde, motivo}>.
-const ALLOWLIST_META = new Map([
-  // Exemplo: ['scripts/db-audit/foo.test.sh', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
-]);
-
-// Suites Node fora de qualquer bloco run: — Map<caminho, {desde, motivo}>.
-const ALLOWLIST_NODE_META = new Map([
-  ['scripts/catalog/validate-plan.test.mjs', { desde: '2026-10-16', motivo: 'teste de plano editorial, sem CI runner adequado; revisão em 30 dias' }],
-  ['scripts/db-tests/run-all.unit.mjs', { desde: '2026-10-16', motivo: 'suite de DB removida do CI mínimo 16/10/2026; workflows db-guard e branch-hygiene deletados; revisão em 30 dias' }],
-  ['scripts/lib/seguranca-processo.test.mjs', { desde: '2026-10-16', motivo: 'utilitário de lib sem runner dedicado no CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/qa/prova-visao-classificadores.unit.mjs', { desde: '2026-10-16', motivo: 'suite QA visual removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/talkx/lado-a-lado.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/talkx/v4-status.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/team-chat-db-validate.unit.mjs', { desde: '2026-10-16', motivo: 'validação team-chat removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/contacts-navy-header.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/layout-guard.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/view-container-padding.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-]);
-
-// Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
-const ALLOWLIST = new Set(ALLOWLIST_META.keys());
-export const ALLOWLIST_NODE = new Set(ALLOWLIST_NODE_META.keys());
-
-/**
- * Verifica se alguma entrada da allowlist passou do prazo de 30 dias.
- * Devolve lista de problemas (vazia = tudo dentro do prazo).
- */
-export function verificarPrazosAllowlist(hoje = hojeISO()) {
-  const problemas = [];
-  for (const [arquivo, { desde, motivo }] of [...ALLOWLIST_META, ...ALLOWLIST_NODE_META]) {
-    if (!FORMATO_DATA.test(String(desde))) {
-      problemas.push(`${arquivo}: 'desde' "${desde}" não está em AAAA-MM-DD`);
-      continue;
-    }
-    const dias = (Date.parse(hoje) - Date.parse(desde)) / 86_400_000;
-    if (dias > PRAZO_ALLOWLIST_DIAS) {
-      problemas.push(
-        `${arquivo}: na allowlist desde ${desde} (${Math.floor(dias)} dias > ${PRAZO_ALLOWLIST_DIAS}) — promover para o CI ou remover (motivo: ${motivo})`,
-      );
+function listarArquivosNoDisco(relDir) {
+  const base = join(root, relDir);
+  const out = [];
+  function visitar(abs, rel) {
+    for (const nome of readdirSync(abs).sort()) {
+      const filhoAbs = join(abs, nome);
+      const filhoRel = rel ? `${rel}/${nome}` : nome;
+      const st = statSync(filhoAbs);
+      if (st.isDirectory()) visitar(filhoAbs, filhoRel);
+      else if (st.isFile()) out.push(filhoRel);
     }
   }
-  return problemas;
+  visitar(base, relDir);
+  return out;
 }
+
+function gitLsFilesOuDisco(relDir) {
+  try {
+    const resultado = spawnSync(resolverExecutavel('git'), ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
+    if (typeof resultado.stdout === 'string') return resultado.stdout.split('\n').filter(Boolean);
+  } catch {
+    // O CI também executa este arquivo via `deno test` sem --allow-sys/--allow-run.
+    // Nesse modo o shim Node de Deno não deixa `fs.access(X_OK)`/child_process
+    // observar o git; o checkout do runner é limpo, então a varredura do disco é
+    // equivalente para este inventário.
+  }
+  return listarArquivosNoDisco(relDir);
+}
+
+// Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
+const ALLOWLIST = new Set([
+  // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
+  // X034: harness de integração do motor com o provedor falso (Postgres descartável + PostgREST +
+  // fake-evolution). Roda no passo Deno/harness da Fase 3; promover em db-guard.yml quando maduro.
+  'scripts/db-audit/talkx-engine-provider.test.sh',
+  'scripts/db-audit/talk-me-client-privileges.test.sh',
+  'scripts/db-audit/talkx-current-template-version.test.sh',
+  'scripts/db-audit/talkx-v23-draft-step.test.sh',
+  'scripts/db-audit/talkx-v25-owner.test.sh',
+  'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // X140: painel do monitor TalkX (kpis, comparativo com ontem, serie com zeros,
+  // saude do worker, autorizacao dono/admin). Migration real em PostgreSQL 17
+  // descartavel; passo de YAML fica para o dono do workflow.
+  'scripts/db-audit/talkx-monitor-panel.test.sh',
+  // #126 (R3-DELTA-009): prova em container descartável que a purga LGPD (que grava
+  // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
+  // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
+  // do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML,
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
+  // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
+  // docker descartável estiver disponível no runner do db-guard.yml.
+  'scripts/db-audit/reminders-migracao-identidade.test.sh',
+  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
+  'scripts/db-audit/login_gate_rpc.test.sh',
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',
+  'scripts/db-audit/pg-cron-escalonamento.test.sh',  'scripts/db-audit/talkx-optout.test.sh',
+
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',
+  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',  'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // X057b: prova em Postgres descartavel o contrato multi-segmentos da campanha Talk X (ordenacao, teto, dedupe e ACL);
+  // promover para db-guard.yml pelo dono do workflow quando o runner suportar o harness.
+  'scripts/db-audit/talkx-campaign-segments-rpc.test.sh',
+  // N-118 (item t_f0720c47): versiona a prova SQL de talkx_campaign_window_open em PG 17
+  // descartável (docker local) contra a migration 20261011000003 — fuso da campanha,
+  // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-window-open.test.sh',
+  // X103 (Fase 9, telas 02/03): estatisticas da biblioteca de segmentos —
+  // RPC talkx_segment_library_stats, retrato diario (talkx_segment_library_history)
+  // e rotina idempotente talkx_refresh_segment_library_history. PG 17 descartavel
+  // com papeis reais (anon/authenticated/service_role); passo de YAML a promover
+  // em db-guard.yml pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-segment-library-stats.test.sh',
+  // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
+  // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/talkx-contact-attributes.test.sh',  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos,
+  // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
+  // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/talkx-contact-attributes.test.sh',
+  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
+  'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
+  // IA-131 (item 133): cadeia real ia033→ia131 em PG 17 descartável (docker local) — prova que a
+  // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
+  // db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  // MX03 / item 47: prova, em Postgres descartavel, que a conclusao do dispatch Multiplix
+  // decide pela fila por item (multiplix_delivery_items) quando ela existe. O passo no
+  // db-guard.yml e uma linha (`bash scripts/db-audit/multiplix-completion-item-queue.test.sh`)
+  // e fica para o dono do workflow.
+  'scripts/db-audit/multiplix-completion-item-queue.test.sh',
+  // R2-DB-021 / item 303 (P2): prova do modelo de autoria de message_reactions em
+  // container descartavel (docker); passo de YAML a promover em db-guard.yml pelo
+  // dono do workflow (agente não edita workflow).
+  'scripts/db-audit/message-reactions-author-model.test.sh',
+  // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no,
+  // SEC-DEFINER_GRANTS_STORAGE-02 (item do audit de 07/10): prova em PG 17 descartavel que o
+  // nome do objeto nao vira padrao LIKE nas policies de midia do WhatsApp (RED com
+  // 20260930700000, GREEN com 20261011003024, rodando como authenticated/anon). Passo de uma
+  // linha em db-guard.yml — promover pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh',
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe,
+  // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe  // junto de gen-types.test.sh; promover pelo dono do workflow.,
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
+  // junto de gen-types.test.sh; promover pelo dono do workflow.  'scripts/db-audit/replay-classify.test.sh',
+  // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
+  // encerrar→reabrir→encerrar no mesmo dia. Depende de docker (como os demais deste bloco);
+  // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
+  // e cabe junto dos outros testes de container — promover pelo dono do workflow.
+  'scripts/db-audit/conversation-closures-reopen-same-day.test.sh',
+  // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
+  // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
+  // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/replay-local-harness.test.sh',
+  // E44 (F6): prova que o REVOKE de grants de `whatsapp_connections` (anon na tabela
+  // e nas 3 views; authenticated em TRUNCATE/TRIGGER/REFERENCES) vale como o PAPEL
+  // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
+  // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // #471 (DELTA-CRON-ANUAL): prova em Postgres 17 descartavel (docker, container proprio)
+  // que a migration 20261006202215 tira da agenda o job residual `vacuum-messages-post-expurgo`,
+  // deixa os outros 11 jobs intactos, reescreve apply_pg_cron_escalonamento() sem a linha dele e
+  // executa o proprio `-- Rollback:` da migration. Inicia container proprio (imagem padrao
+  // `postgres:17-alpine`, a mesma de POSTGRES_TEST_IMAGE) e conversa com ele por `docker exec`;
+  // o passo de uma linha no db-guard.yml pede SKIP_DOCKER_SHIM="1", como os passos do bloco E50
+  // deste repositorio, e e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/cron-remocao-vacuum-messages.test.sh',
+  // CT-E / PB-30 (paridade V3->V2): prova em Postgres 17 descartavel (docker) que
+  // public.contacts_stats_series(boolean) devolve empresas_distinct e as 4 series do
+  // useContactsKpi (novos 30d em buckets de 4/6 dias, total cumulativo 12s, empresas
+  // cumulativas 12s, fornecedores por semana) com o MESMO escopo de
+  // contacts_stats/search_contacts (admin tudo, agente so o seu, anon/PUBLIC sem
+  // EXECUTE, service_role tudo) e que o Rollback remove a funcao. Passo de uma linha
+  // em db-guard.yml a promover pelo dono do workflow.
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',
+  // #122 (R3-DELTA-003, cartão t_c7543cc1): prova em Postgres 17 descartável (docker) que o cursor
+  // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
+  // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
+  // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',
+  // R2-DB (11/10/2026): prova o log de tentativas de envio (public.message_attempts) em PG 17
+  // descartavel com papel real (authenticated/anon/service_role) e rollback executado. Passo de
+  // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
+  // pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/message-attempts-log.test.sh',
+  // R2-AUTH-036 (Sala de Crise): prova em Postgres 17 descartavel (docker) que a
+  // RPC crisis_room_snapshot() mede as 4 metricas num agregado unico (sem o corte
+  // de 1.000 linhas do PostgREST) e nega agente comum/anon/service_role com
+  // excecao, nunca com zeros. Passo de YAML a promover em db-guard.yml pelo dono
+  // do workflow (REGISTRO PENDENTE).
+  'scripts/db-audit/crisis-room-snapshot.test.sh',
+  // #174 (t_ae0a55a6): prova em Postgres 17 descartavel (docker, container proprio) que a RPC
+  // set_default_whatsapp_connection (migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql)
+  // troca a conexao padrao do WhatsApp numa transacao, serializada por advisory lock, autorizada por
+  // is_admin_or_supervisor(auth.uid()) e valida o pos-estado (exatamente uma padrao); o bloco A mostra o
+  // defeito no caminho antigo (dois UPDATE) e o bloco B prova a RPC, o fail-closed e o gatilho de
+  // updated_at. O passo de uma linha no db-guard.yml e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-default-connection-atomicity.test.sh',
+
+]);
+// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
+// ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
+// primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
+// ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
+export const ALLOWLIST_NODE = new Set([
+  // Valida um plano de catálogo sintético contra o repositório (offline).
+  'scripts/catalog/validate-plan.test.mjs',
+  // Prova o resolvedor de executáveis usado por várias guardas (offline).
+  'scripts/lib/seguranca-processo.test.mjs',
+  // Prova os provadores de visão com `fetch` stubbed (offline).
+  'scripts/qa/prova-visao-classificadores.unit.mjs',
+  // Prova o log do validador de banco do team chat com `fetch` stubbed (offline).
+  'scripts/team-chat-db-validate.unit.mjs',
+  // Auditorias de layout/UI lidas do próprio repositório (offline).
+  'scripts/ui-audit/contacts-navy-header.unit.mjs',
+  'scripts/ui-audit/layout-guard.unit.mjs',
+  'scripts/ui-audit/view-container-padding.unit.mjs',
+  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
+  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
+  // `run:` de ci.yml é do dono do workflow.
+  'scripts/db-tests/run-all.unit.mjs',
+]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testTsOnDisk = gitLsFilesOuDisco('supabase/functions')
   .filter(f => f.endsWith('.test.ts'));
 
 const ciYaml = read('.github/workflows/ci.yml');
@@ -99,9 +239,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testShOnDisk = gitLsFilesOuDisco('scripts/db-audit')
   .filter(f => f.endsWith('.test.sh'));
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
@@ -156,9 +294,7 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
 
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
-    .stdout
-    .split('\n')
+  return gitLsFilesOuDisco('scripts')
     .filter(f => SUFIXO_SUITE_NODE.test(f));
 }
 
@@ -211,10 +347,9 @@ export function orfaosDoInventario() {
 // ── 5. Reportar ───────────────────────────────────────────────────────────────
 
 function principal() {
-  const prazos = verificarPrazosAllowlist();
   const orphans = orfaosDoInventario();
 
-  if (prazos.length === 0 && orphans.length === 0) {
+  if (orphans.length === 0) {
     const nodeMsg = `${suitesNodeNoDisco().length} suite(s) Node cobertas por bloco run: (${ALLOWLIST_NODE.size} na allowlist)`;
     if (ciUsesGlob) {
       console.log(`check-test-inventory: OK — ci.yml usa glob (${CI_TS_GLOB}); ${nodeMsg}; .test.sh verificados individualmente`);
@@ -224,18 +359,12 @@ function principal() {
     return 0;
   }
 
-  if (prazos.length > 0) {
-    console.error('check-test-inventory: FALHOU — entrada(s) vencida(s) na allowlist:');
-    for (const p of prazos) console.error(`  ${p}`);
+  console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
+  for (const { file, yaml } of orphans) {
+    console.error(`  ${file}  (não encontrado em ${yaml})`);
   }
-  if (orphans.length > 0) {
-    console.error('check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML:');
-    for (const { file, yaml } of orphans) {
-      console.error(`  ${file}  (não encontrado em ${yaml})`);
-    }
-    console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
-    console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
-  }
+  console.error(`\nTotal: ${orphans.length} teste(s) órfão(s).`);
+  console.error('Adicione ao YAML correspondente ou inclua na ALLOWLIST (test.sh) / ALLOWLIST_NODE (suite Node) com justificativa.');
   return 1;
 }
 

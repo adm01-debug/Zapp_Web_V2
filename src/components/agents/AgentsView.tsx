@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AgentsEmptyState } from '@/components/ui/contextual-empty-states';
 import { InviteAgentDialog } from '@/components/agents/InviteAgentDialog';
 import { ConfigurePermissionsDialog } from '@/components/agents/ConfigurePermissionsDialog';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useAgents } from '@/hooks/crm/useAgents';
+import { useAgentPendingCounts } from '@/hooks/agents/useAgentPendingCounts';
+import { useAgentRecentSends } from '@/hooks/agents/useAgentRecentSends';
+import { useConnectionsHealth } from '@/hooks/connections/useConnectionsHealth';
+import { ConnectionsHeader } from '@/components/agents/ConnectionsHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,43 +22,60 @@ import { Progress } from '@/components/ui/progress';
 import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Search,
   Plus,
-  MoreVertical,
   MessageSquare,
-  Settings,
-  UserX,
-  Edit,
-  Filter,
   RefreshCw,
+  Clock,
+  SendHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 
 export function AgentsView() {
   const { agents, stats, isLoading, refetch } = useAgents();
+  // Carga de cada atendente (pendentes + último envio) numa consulta agregada para TODA a
+  // equipe — nunca uma consulta por atendente. O supervisor vê a sobrecarga sem procurar.
+  const { pendingCounts, isLoading: pendingLoading, error: pendingError, refetch: refetchPending } = useAgentPendingCounts();
+  const { recentSends, isLoading: sendsLoading, error: sendsError, refetch: refetchSends } = useAgentRecentSends();
+  // Saúde das conexões do WhatsApp: mesma fonte da tela de Conexões (store global,
+  // uma única inscrição de realtime compartilhada), para o supervisor ver de relance
+  // se alguma instância caiu.
+  const { connections, loading: connectionsLoading, error: connectionsError, refresh: refreshConnections } = useConnectionsHealth();
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [permissionsOpen, setPermissionsOpen] = useState(false);
-  const filteredAgents = agents.filter((agent) =>
-    agent.name.toLowerCase().includes(search.toLowerCase()) ||
-    (agent.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
+
+  // Ordenação por pendências: quem tem mais conversas aguardando aparece primeiro.
+  // Empate desempata por nome para a ordem não oscilar entre renders.
+  const filteredAgents = useMemo(
+    () => agents
+      .filter((agent) =>
+        agent.name.toLowerCase().includes(search.toLowerCase()) ||
+        (agent.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
+      )
+      .sort((a, b) =>
+        (pendingCounts[b.id] ?? 0) - (pendingCounts[a.id] ?? 0) ||
+        a.name.localeCompare(b.name, 'pt-BR')
+      ),
+    [agents, pendingCounts, search]
   );
+
+  const handleRefresh = () => {
+    refetch();
+    refetchPending();
+    refetchSends();
+    refreshConnections();
+  };
 
   const statsData = [
     { label: 'Online', value: stats.onlineCount, color: 'bg-status-online', icon: undefined as React.ElementType | undefined },
     { label: 'Ausente', value: stats.awayCount, color: 'bg-status-away', icon: undefined as React.ElementType | undefined },
     { label: 'Offline', value: stats.offlineCount, color: 'bg-status-offline', icon: undefined as React.ElementType | undefined },
-    { label: 'Chats Ativos', value: stats.totalActiveChats, color: undefined as string | undefined, icon: MessageSquare as React.ElementType },
+    { label: 'Chats Ativos', value: stats.totalActiveChats ?? '—', color: undefined as string | undefined, icon: MessageSquare as React.ElementType },
   ];
 
-  if (isLoading) {
+  if (isLoading || pendingLoading || sendsLoading) {
     return (
       <div className="space-y-6 relative bg-background w-full min-w-0">
         <AuroraBorealis />
@@ -88,7 +111,7 @@ export function AgentsView() {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => refetch()} className="border-secondary/30">
+            <Button variant="outline" onClick={handleRefresh} className="border-secondary/30">
               <RefreshCw className="w-4 h-4 mr-2" />
               Atualizar
             </Button>
@@ -98,6 +121,13 @@ export function AgentsView() {
             </Button>
           </div>
         }
+      />
+
+      {/* Saúde das conexões do WhatsApp — visão rápida, sem abrir a tela de Conexões. */}
+      <ConnectionsHeader
+        connections={connections}
+        loading={connectionsLoading}
+        error={connectionsError}
       />
 
       {/* Stats */}
@@ -143,26 +173,16 @@ export function AgentsView() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
+            aria-label="Buscar atendentes"
             placeholder="Buscar atendentes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-muted/20 border-border/30 focus:border-primary/50"
           />
         </div>
-        {/* t_f2a68e4c: o filtro por status não tem integração canônica nesta tela.
-            Em vez de um botão que parece filtrar e não filtra, ele fica desabilitado
-            e diz o motivo na própria face (mesmo padrão de FileActionsMenu /
-            FileDetailPanel: `disabled` + motivo visível + `title`). */}
-        <Button
-          variant="outline"
-          disabled
-          aria-disabled="true"
-          title="Filtrar por status: ainda não disponível nesta tela"
-          className="border-secondary/30"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filtrar · indisponível
-        </Button>
+        {/* t_638c8a1a: o filtro por status não tem integração canônica nesta tela e
+            o botão "Filtrar" (sempre desabilitado) foi removido para não oferecer
+            um afordance que nunca funciona. Volta quando o fluxo existir. */}
       </motion.div>
 
       {/* Agents Grid */}
@@ -175,7 +195,10 @@ export function AgentsView() {
         <StaggeredList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredAgents.map((agent) => {
             const maxChats = agent.max_chats || 5;
-            const capacityPercent = (agent.activeChats / maxChats) * 100;
+            // Capacidade indisponível (leitura falhou) não vira "0/5": mostra '—'.
+            const capacityPercent = agent.activeChats === null ? null : (agent.activeChats / maxChats) * 100;
+            const pending = pendingCounts[agent.id] ?? 0;
+            const lastSend = recentSends[agent.id] ?? null;
 
             return (
               <StaggeredItem key={agent.id}>
@@ -212,47 +235,6 @@ export function AgentsView() {
                           </p>
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Ações de ${agent.name}`}
-                            className="w-8 h-8 hover:bg-muted/30"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        {/* t_f2a68e4c: sem fluxo canônico nesta tela, os três itens
-                            ficam `disabled` (Radix emite `aria-disabled=true`, tira do
-                            teclado e não fecha o menu ao clicar) e dizem o motivo. */}
-                        <DropdownMenuContent align="end" className="bg-card border-border/30">
-                          <DropdownMenuItem
-                            disabled
-                            title="Editar atendente: ainda não disponível nesta tela"
-                            className="hover:bg-primary/10"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Editar · indisponível
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled
-                            title="Configurações do atendente: ainda não disponível nesta tela"
-                            className="hover:bg-primary/10"
-                          >
-                            <Settings className="w-4 h-4 mr-2" />
-                            Configurações · indisponível
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled
-                            title="Desativar atendente: ainda não disponível nesta tela"
-                            className="text-destructive hover:bg-destructive/10"
-                          >
-                            <UserX className="w-4 h-4 mr-2" />
-                            Desativar · indisponível
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
 
                     {/* Capacity */}
@@ -260,19 +242,61 @@ export function AgentsView() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Capacidade</span>
                         <span className="font-medium text-foreground">
-                          {agent.activeChats}/{maxChats} chats
+                          {agent.activeChats === null ? 'Indisponível' : `${agent.activeChats}/${maxChats} chats`}
                         </span>
                       </div>
-                      <Progress
-                        value={capacityPercent}
-                        aria-label={`Capacidade: ${capacityPercent}% — ${agent.activeChats} de ${maxChats} chats`}
-                        className={cn(
-                          'h-2',
-                          capacityPercent <= 50 && '[&>div]:bg-success',
-                          capacityPercent > 50 && capacityPercent <= 80 && '[&>div]:bg-warning',
-                          capacityPercent > 80 && '[&>div]:bg-destructive'
-                        )}
-                      />
+                      {capacityPercent === null ? (
+                        <p className="text-xs text-muted-foreground">Capacidade indisponível</p>
+                      ) : (
+                        <Progress
+                          value={capacityPercent}
+                          aria-label={`Capacidade: ${capacityPercent}% — ${agent.activeChats} de ${maxChats} chats`}
+                          className={cn(
+                            'h-2',
+                            capacityPercent <= 50 && '[&>div]:bg-success',
+                            capacityPercent > 50 && capacityPercent <= 80 && '[&>div]:bg-warning',
+                            capacityPercent > 80 && '[&>div]:bg-destructive'
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    {/* Carga: pendentes e último envio (o supervisor vê a sobrecarga de cada atendente) */}
+                    <div className="space-y-1.5 mb-4 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                          Pendentes
+                        </span>
+                        <span
+                          className={cn('font-medium', pending > 0 && !pendingError ? 'text-warning' : 'text-muted-foreground')}
+                          title={pendingError ? 'Não foi possível carregar as pendências' : undefined}
+                        >
+                          {pendingError ? '—' : `${pending} ${pending === 1 ? 'conversa' : 'conversas'}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <SendHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                          Último envio
+                        </span>
+                        <span
+                          className="font-medium text-foreground"
+                          title={
+                            sendsError
+                              ? 'Não foi possível carregar os envios'
+                              : lastSend
+                                ? new Date(lastSend).toLocaleString('pt-BR')
+                                : undefined
+                          }
+                        >
+                          {sendsError
+                            ? '—'
+                            : lastSend
+                              ? formatDistanceToNow(new Date(lastSend), { addSuffix: true, locale: ptBR })
+                              : 'Sem envio recente'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Queues */}
@@ -288,7 +312,7 @@ export function AgentsView() {
                               style={{ 
                                 borderColor: queue.color, 
                                 color: queue.color,
-                                backgroundColor: `${queue.color}15`
+                                backgroundColor: `color-mix(in srgb, ${queue.color} 15%, transparent)`
                               }}
                             >
                               {queue.name}

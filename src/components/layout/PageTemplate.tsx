@@ -88,11 +88,11 @@ export function PageTemplate({
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-fluid-lg sm:text-fluid-xl font-bold text-foreground tracking-tight truncate leading-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight truncate leading-tight">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-fluid-xs sm:text-fluid-sm text-muted-foreground truncate mt-0.5 leading-normal">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5 leading-normal">
                   {subtitle}
                 </p>
               )}

@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import type { SenderProfileMap } from '@/lib/fileSenderIdentity';
 import type { FilesSort, FilesTypeFilter, FilesViewMode } from '@/hooks/chat/useFilesViewState';
 import { FileCard } from './FileCard';
 import { FilesListView } from './FilesListView';
@@ -40,6 +41,11 @@ export interface FilesActions {
   onForward: (item: ContactMediaItem) => void;
   /** Etapa 35: pede a exclusao — quem abre o AlertDialog e chama o useFilesActions e o FilesTab. */
   onRequestDelete: (item: ContactMediaItem) => void;
+  /**
+   * "Ver na conversa": leva o operador para a mensagem do arquivo na aba Chat. Opcional —
+   * sem ela a ação não é oferecida (nenhum botão morto no cartão).
+   */
+  onOpenInChat?: (item: ContactMediaItem) => void;
 }
 
 export interface FilesContentSelection {
@@ -55,6 +61,16 @@ interface FilesContentProps {
   /** Largura medida do contêiner; `null` antes da primeira medida. */
   containerWidth: number | null;
   contactName: string;
+  /**
+   * R04: quem enviou o arquivo. Os perfis dos atendentes sao resolvidos em LOTE uma unica vez
+   * no `FilesTab` (D04) e so atravessam este renderer ate o cartao — a lista e a tabela cuidam
+   * do proprio remetente (R06).
+   */
+  senderProfiles?: SenderProfileMap;
+  /** R04 / D01: `profiles.id` do usuario logado (decide "Voce" no cartao). */
+  currentUserId?: string | null;
+  /** R04 / D06: `useDownloadPermission` resolvido uma vez no `FilesTab`. */
+  downloadAllowed?: boolean;
   loading: boolean;
   selection: FilesContentSelection;
   actions: FilesActions;
@@ -182,6 +198,9 @@ export function FilesContent({
   effectiveColumns,
   containerWidth,
   contactName,
+  senderProfiles,
+  currentUserId = null,
+  downloadAllowed = false,
   loading,
   selection,
   actions,
@@ -253,6 +272,8 @@ export function FilesContent({
       selectionMode={selection.mode}
       selectedIds={selection.selectedIds}
       containerWidth={containerWidth}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
@@ -266,6 +287,8 @@ export function FilesContent({
       selectedIds={selection.selectedIds}
       containerWidth={containerWidth}
       sort={sort}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSortChange={onSortChange}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
@@ -283,10 +306,14 @@ export function FilesContent({
           selectionMode={selection.mode}
           selectionChecked={selection.selectedIds.has(item.id)}
           effectiveColumns={effectiveColumns}
+          senderProfiles={senderProfiles}
+          currentUserId={currentUserId}
+          downloadAllowed={downloadAllowed}
           onSelect={() => actions.onOpenDetails(item)}
           onToggleSelection={() => selection.toggle(item.id)}
           onPreview={() => actions.onPreview(item)}
           onForward={() => actions.onForward(item)}
+          onOpenInChat={actions.onOpenInChat ? () => actions.onOpenInChat?.(item) : undefined}
           onRequestDelete={actions.onRequestDelete}
         />
       ))}

@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useRealSentimentData } from './SentimentHelpers';
+import { useSentimentTrend } from '@/hooks/dashboard/useSentimentTrend';
 import { useRecentSentimentAlerts } from '@/hooks/analytics/useRecentSentimentAlerts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, CardSelect, Pill, InitialsAvatar, ProgressBar } from './overview/DashboardCard';
@@ -31,7 +31,7 @@ function sentimentLabel(score: number): { label: string; tone: 'success' | 'warn
 
 export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const [days, setDays] = useState<'7' | '14' | '30'>('14');
-  const data = useRealSentimentData(Number.parseInt(days));
+  const { data, error } = useSentimentTrend(Number.parseInt(days));
   const { data: recent } = useRecentSentimentAlerts(Number.parseInt(days));
 
   const stats = useMemo(() => {
@@ -146,12 +146,18 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
             right={(
               <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[13px] text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <CardSelect value={days} onValueChange={(v) => setDays(v as typeof days)} options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                <CardSelect value={days} onValueChange={(v) => setDays(v as typeof days)} options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} name="Período da tendência de sentimento" />
               </div>
             )}
           />
           <div className="h-[260px]">
-            {!data || data.length === 0 ? (
+            {error ? (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <AlertTriangle className="w-10 h-10 opacity-40 text-destructive" />
+                <p className="text-sm font-medium text-foreground">Não foi possível carregar a tendência de sentimento</p>
+                <p className="text-xs">Tente de novo em instantes</p>
+              </div>
+            ) : !data || data.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <Smile className="w-10 h-10 opacity-30" />
                 <p className="text-sm font-medium text-foreground">Sem dados de sentimento no período</p>

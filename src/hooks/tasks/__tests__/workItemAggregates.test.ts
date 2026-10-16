@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle, memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '../workItemAggregates';
+import { localDayKey } from '@/lib/localDay';
 import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
@@ -501,5 +502,212 @@ describe('R2-MOD-058 — regra única de prazo vencido (badge, KPI, grupos e chi
     const virou = bucketByDue([hojeFimDoDia, amanhaAs00], meiaHoraDepois);
     expect(virou.overdue.map(i => i.id)).toEqual(['fim']);
     expect(virou.today.map(i => i.id)).toEqual(['a00']);
+  });
+});
+
+/**
+ * Etapa 21 / D13 — o tempo médio que a tela rotula "Da criação à conclusão" tem
+ * de medir `created_at` → `completed_at` (não o tempo de ciclo). Estes casos
+ * FALHAM na regra antiga: a primeira concluída nasceu 7 dias antes de terminar
+ * e só passou por "Fazendo" no último dia — o ciclo dá 1 e o lead time dá 4.
+ */
+describe('etapa 21 (D13) — tempo médio da criação à conclusão', () => {
+  const feita = (
+    id: string,
+    created_at: string,
+    completed_at: string,
+    started_at: string | null = null,
+  ) => makeItem({ id, status: 'done', created_at, completed_at, started_at });
+
+  it('kpis mede (completed_at − created_at) e mantém o tempo de ciclo para quem já lê', () => {
+    const itens = [
+      feita('longa', '2026-09-25T12:00:00Z', '2026-10-02T12:00:00Z', '2026-10-01T12:00:00Z'),
+      feita('curta', '2026-10-01T12:00:00Z', '2026-10-02T12:00:00Z'), // nasceu já sem passar por Fazendo
+    ];
+
+    const k = kpis(itens, now);
+
+    expect(k.done7d).toBe(2);
+    expect(k.avgLeadTimeDays).toBe(4);   // (7 + 1) / 2 dias
+    expect(k.avgCycleTimeDays).toBe(1);  // só a 'longa' tem ciclo — o campo antigo segue vivo
+  });
+
+  it('concluída sem carimbo não entra em nenhum dos dois tempos médios', () => {
+    const k = kpis(
+      [makeItem({ id: 'semCarimbo', status: 'done', created_at: '2026-09-01T12:00:00Z', completed_at: null })],
+      now,
+    );
+
+    expect(k.done7d).toBe(1);            // continua na janela recente (não se esconde)
+    expect(k.avgLeadTimeDays).toBeNull(); // mas não há intervalo a medir
+    expect(k.avgCycleTimeDays).toBeNull();
+  });
+
+  it('concluída fora dos 7 dias não puxa a média', () => {
+    const k = kpis([feita('antiga', '2026-08-01T12:00:00Z', '2026-09-01T12:00:00Z')], now);
+
+    expect(k.avgLeadTimeDays).toBeNull();
+  });
+
+  it('formata em pt-BR: uma casa decimal com vírgula, singular em 1 dia e "—" sem dados', () => {
+    expect(formatLeadTime(1.4)).toBe('1,4 dias');
+    expect(formatLeadTime(1)).toBe('1 dia');
+    expect(formatLeadTime(0.96)).toBe('1 dia');   // arredonda para 1,0 → singular
+    expect(formatLeadTime(2)).toBe('2 dias');
+    expect(formatLeadTime(0.25)).toBe('0,3 dias');
+    expect(formatLeadTime(null)).toBe('—');
+    expect(formatLeadTime(undefined)).toBe('—');
+  });
+});
+
+/** Etapa 52 — o subtítulo de data dos grupos ("Domingo, 11 de outubro"). */
+describe('etapa 52 — subtítulo de data pt-BR dos grupos', () => {
+  it('daySubtitle devolve o dia por extenso em hora LOCAL', () => {
+    expect(daySubtitle(new Date(2026, 9, 11, 12, 0))).toBe('Domingo, 11 de outubro');
+    expect(daySubtitle(new Date(2026, 9, 12, 0, 0))).toBe('Segunda-feira, 12 de outubro');
+  });
+
+  it('data inválida não derruba a tela: devolve string vazia', () => {
+    expect(daySubtitle('nao-e-data')).toBe('');
+  });
+
+  it('groupUpcomingByDay leva subtitle e dateKey de cada dia', () => {
+    const grupos = groupUpcomingByDay([
+      makeItem({ id: 'a', due_date: '2026-10-05T09:00:00Z' }),
+      makeItem({ id: 'b', due_date: '2026-10-12T09:00:00Z' }),
+    ], now);
+
+    expect(grupos.map(g => g.label)).toEqual(['Seg 05/10', 'Semana que vem']);
+    expect(grupos[0].subtitle).toBe('Segunda-feira, 5 de outubro');
+    expect(grupos[1].subtitle).toBe('Segunda-feira, 12 de outubro');
+    expect(grupos[0].dateKey).toBe(localDayKey('2026-10-05T09:00:00Z'));
+    expect(grupos[1].dateKey).toBe(localDayKey('2026-10-12T09:00:00Z'));
+  });
+});
+
+/**
+ * Etapas 112 e 117 — a faixa desenha até 3 pontos, mas o `aria-label` e o resumo
+ * do dia ("N tarefas com prazo · M lembretes") precisam das contagens reais, por
+ * tipo. A tarefa com prazo E alarme conta UMA vez no total (aparece nas duas
+ * seções, como manda a etapa 117).
+ */
+describe('etapas 112/117 — contagens por tipo no dia da Agenda', () => {
+  const hora = (h: number, m = 0) => new Date(2026, 9, 3, h, m).toISOString();
+
+  it('agendaDayCounts conta prazos, lembretes, sem hora e não repete quem é os dois', () => {
+    const dois       = makeItem({ id: 'dois', remind_at: hora(9), due_date: hora(18) });
+    const soPrazo    = makeItem({ id: 'prazo', due_date: hora(15) });
+    const diaInteiro = makeItem({ id: 'dia', due_date: new Date(2026, 9, 3, 0, 0).toISOString() });
+    const soAlarme   = makeItem({ id: 'alarme', remind_at: hora(8) });
+
+    const c = agendaDayCounts({ reminders: [soAlarme, dois], dueTasks: [dois, soPrazo, diaInteiro] }, 2);
+
+    expect(c).toEqual({ prazos: 3, lembretes: 2, atrasadas: 2, semHora: 1, total: 4 });
+  });
+
+  it('o aria-label usa a contagem real, não o número de pontos (máx. 3)', () => {
+    const prazos    = Array.from({ length: 5 }, (_, i) => makeItem({ id: `p${i}`, due_date: hora(9 + i) }));
+    const lembretes = Array.from({ length: 3 }, (_, i) => makeItem({ id: `l${i}`, remind_at: hora(8 + i) }));
+    const dia = { reminders: lembretes, dueTasks: prazos };
+
+    expect(agendaDayDots(dia, 1)).toHaveLength(3);          // a faixa desenha no máximo 3 pontos
+    expect(agendaDayCounts(dia, 1).prazos).toBe(5);         // mas o texto diz o número certo
+    expect(agendaDayAriaLabel(dia, 1)).toBe('1 atrasada, 3 lembretes, 5 prazos');
+  });
+
+  it('aria-label no singular e no dia vazio', () => {
+    expect(agendaDayAriaLabel({
+      reminders: [makeItem({ id: 'l', remind_at: hora(8) })],
+      dueTasks:  [makeItem({ id: 'p', due_date: hora(9) })],
+    })).toBe('1 lembrete, 1 prazo');
+
+    expect(agendaDayAriaLabel({ reminders: [], dueTasks: [] })).toBe('Nenhum compromisso');
+  });
+});
+
+/** Etapa 126 — a Agenda só usa os itens já carregados (B13) e cobre 7 dias. */
+describe('etapa 126 — Agenda só com os dados carregados, 7 dias a partir de hoje', () => {
+  it('a faixa tem sempre 7 dias (hoje + 6) e ignora o que cai fora da janela', () => {
+    const dentro = makeItem({ id: 'd6', due_date: new Date(2026, 9, 9, 9, 0).toISOString() });  // hoje + 6
+    const fora   = makeItem({ id: 'd7', due_date: new Date(2026, 9, 10, 9, 0).toISOString() }); // hoje + 7
+
+    const wb = weekBuckets([dentro, fora], startOfDay(new Date(2026, 9, 3, 12, 0)));
+
+    expect(wb).toHaveLength(7);
+    expect(wb[6].dueTasks.map(i => i.id)).toEqual(['d6']);
+    expect(wb.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['d6']); // 'fora' não aparece em nenhum dia
+  });
+
+  it('borda da virada do dia: 23:59 é do dia; depois da meia-noite a faixa recomeça', () => {
+    const fimDoDia  = makeItem({ id: 'fim',  due_date: new Date(2026, 9, 3, 23, 59).toISOString() });
+    const meiaNoite = makeItem({ id: 'meia', due_date: new Date(2026, 9, 4, 0, 0).toISOString() });
+
+    const antes = weekBuckets([fimDoDia, meiaNoite], startOfDay(new Date(2026, 9, 3, 23, 59)));
+    expect(antes[0].dueTasks.map(i => i.id)).toEqual(['fim']);
+    expect(antes[1].dueTasks.map(i => i.id)).toEqual(['meia']);
+
+    // Virou o dia: a faixa recomeça em hoje (04/10) e o prazo de ontem sai da agenda.
+    const depois = weekBuckets([fimDoDia, meiaNoite], startOfDay(new Date(2026, 9, 4, 0, 30)));
+    expect(depois[0].dueTasks.map(i => i.id)).toEqual(['meia']);
+    expect(depois.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['meia']);
+  });
+});
+
+/**
+ * Etapa 185 — a tela chama os selectors a cada render; sem memo, cada chamada
+ * devolvia arrays/objetos NOVOS e invalidava o `useMemo` dos filhos. Aqui ficam
+ * as testemunhas: a mesma entrada devolve a MESMA referência e a segunda
+ * chamada NÃO relê os itens.
+ */
+describe('etapa 185 — memoização dos selectors (referências estáveis)', () => {
+  it('mesma lista devolve a MESMA referência para o recorte, os baldes e os KPIs', () => {
+    const lista = [makeItem({ id: 'a', status: 'todo' }), makeItem({ id: 'b', status: 'doing' })];
+
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(memoizedApplyFilters(lista, DEFAULT_FILTERS));
+    expect(memoizedBucketByDue(lista)).toBe(memoizedBucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toBe(memoizedBucketByStatus(lista));
+    expect(memoizedKpis(lista)).toBe(memoizedKpis(lista));
+  });
+
+  it('a segunda chamada com a MESMA lista não relê os itens (não recalcula)', () => {
+    let leituras = 0;
+    const espiao = new Proxy(makeItem({ id: 'a', status: 'todo' }) as WorkItem, {
+      get(alvo, prop, recv) { leituras += 1; return Reflect.get(alvo, prop, recv); },
+    });
+    const lista = [espiao];
+
+    memoizedBucketByDue(lista);
+    const aposPrimeira = leituras;
+    expect(aposPrimeira).toBeGreaterThan(0);   // o 1º cálculo leu de fato os itens
+
+    memoizedBucketByDue(lista);
+    expect(leituras).toBe(aposPrimeira);       // o 2º veio do cache: zero leitura
+  });
+
+  it('lista nova recalcula e devolve referência nova (o cache não devolve constante)', () => {
+    const a = [makeItem({ id: 'a' })];
+    const b = [makeItem({ id: 'a' })];
+
+    expect(memoizedKpis(a)).not.toBe(memoizedKpis(b));
+  });
+
+  it('trocar o filtro troca o recorte (a chave inclui os filtros)', () => {
+    const lista = [makeItem({ id: 'a', priority: 'high' }), makeItem({ id: 'b', priority: 'low' })];
+
+    const semFiltro = memoizedApplyFilters(lista, DEFAULT_FILTERS);
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(semFiltro); // hit com os mesmos filtros
+
+    const comPrio = memoizedApplyFilters(lista, { ...DEFAULT_FILTERS, prio: 'high' });
+    expect(comPrio).not.toBe(semFiltro);
+    expect(comPrio.map(i => i.id)).toEqual(['a']);
+  });
+
+  it('o valor memoizado é idêntico ao do selector puro', () => {
+    const lista = [makeItem({ id: 'a', status: 'done', completed_at: now.toISOString() })];
+
+    expect(memoizedBucketByDue(lista)).toEqual(bucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toEqual(bucketByStatus(lista));
+    expect(memoizedKpis(lista)).toEqual(kpis(lista));
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toEqual(applyFilters(lista, DEFAULT_FILTERS));
   });
 });

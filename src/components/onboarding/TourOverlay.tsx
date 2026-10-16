@@ -1,20 +1,94 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTour } from './OnboardingTour';
+import { alvoDeTourNoDom } from './defaultTourSteps';
+
+/** Focáveis de dentro do cartão — usados para prender o foco (SHELL-06). */
+const FOCO_NO_CARTAO =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function TourOverlay() {
   const { isActive, currentStep, steps, nextStep, prevStep, endTour, goToStep } = useTour();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const focoAnteriorRef = useRef<HTMLElement | null>(null);
 
+  // SHELL-05: só valem os passos cujo alvo existe no DOM agora — o casco do celular
+  // não monta o Sidebar do desktop, não tem `[data-tour]` nenhum, e o tour não pode
+  // parar num passo vazio (antes eram 10 tentativas de 200 ms por passo e o overlay
+  // terminava o tour sem mostrar um cartão sequer).
+  const indicesDisponiveis = useMemo(
+    () =>
+      isActive
+        ? steps.map((_, indice) => indice).filter((indice) => alvoDeTourNoDom(steps[indice].target))
+        : [],
+    [isActive, steps],
+  );
+  const passoAtualDisponivel = indicesDisponiveis.includes(currentStep);
   const currentStepData = steps[currentStep];
+  const temProximo = indicesDisponiveis.some((indice) => indice > currentStep);
+  const temAnterior = indicesDisponiveis.some((indice) => indice < currentStep);
+  const cartaoVisivel = isActive && passoAtualDisponivel && targetRect !== null;
+
+  const irParaProximo = useCallback(() => {
+    // Sem passo com alvo o cartão não existe; preserva a navegação do provider.
+    if (indicesDisponiveis.length === 0) {
+      nextStep();
+      return;
+    }
+    const proximo = indicesDisponiveis.find((indice) => indice > currentStep);
+    if (proximo === undefined) endTour();
+    else goToStep(proximo);
+  }, [indicesDisponiveis, currentStep, nextStep, endTour, goToStep]);
+
+  const irParaAnterior = useCallback(() => {
+    if (indicesDisponiveis.length === 0) {
+      prevStep();
+      return;
+    }
+    const anterior = [...indicesDisponiveis].reverse().find((indice) => indice < currentStep);
+    if (anterior !== undefined) goToStep(anterior);
+  }, [indicesDisponiveis, currentStep, prevStep, goToStep]);
+
+  // SHELL-06: o foco não escapa para o menu atrás do overlay.
+  const prenderFocoNoCartao = useCallback((evento: KeyboardEvent) => {
+    const cartao = cardRef.current;
+    if (!cartao) return;
+    const focaveis = Array.from(cartao.querySelectorAll<HTMLElement>(FOCO_NO_CARTAO));
+    if (focaveis.length === 0) {
+      evento.preventDefault();
+      cartao.focus();
+      return;
+    }
+    const primeiro = focaveis[0];
+    const ultimo = focaveis[focaveis.length - 1];
+    const atual = document.activeElement;
+    const foraDoCartao = !(atual instanceof Node) || !cartao.contains(atual);
+    if (evento.shiftKey) {
+      if (foraDoCartao || atual === primeiro) {
+        evento.preventDefault();
+        ultimo.focus();
+      }
+    } else if (foraDoCartao || atual === ultimo) {
+      evento.preventDefault();
+      primeiro.focus();
+    }
+  }, []);
+
+  // Passo do contexto sem alvo (item escondido por papel/hierarquia): usa o primeiro que tem.
+  useEffect(() => {
+    if (!isActive || indicesDisponiveis.length === 0) return;
+    if (indicesDisponiveis.includes(currentStep)) return;
+    goToStep(indicesDisponiveis[0]);
+  }, [isActive, indicesDisponiveis, currentStep, goToStep]);
 
   useEffect(() => {
-    if (!isActive || !currentStepData) return;
+    if (!isActive || !currentStepData || !passoAtualDisponivel) return;
 
     let retries = 0;
     const maxRetries = 10;
@@ -28,14 +102,14 @@ export function TourOverlay() {
         if (retries < maxRetries) {
           retryTimeout = setTimeout(updatePosition, 200);
         } else {
-          nextStep();
+          irParaProximo();
         }
         return;
       }
 
       const rect = element.getBoundingClientRect();
       if (rect.width === 0 && rect.height === 0) {
-        nextStep();
+        irParaProximo();
         return;
       }
       setTargetRect(rect);
@@ -81,7 +155,7 @@ export function TourOverlay() {
       clearTimeout(retryTimeout);
       cancelAnimationFrame(rafId);
     };
-  }, [isActive, currentStep, currentStepData, nextStep]);
+  }, [isActive, currentStep, currentStepData, passoAtualDisponivel, irParaProximo]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -90,16 +164,31 @@ export function TourOverlay() {
       switch (e.key) {
         case 'Escape': endTour(); break;
         case 'ArrowRight':
-        case 'Enter': nextStep(); break;
-        case 'ArrowLeft': prevStep(); break;
+        case 'Enter': irParaProximo(); break;
+        case 'ArrowLeft': irParaAnterior(); break;
+        case 'Tab': prenderFocoNoCartao(e); break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, nextStep, prevStep, endTour]);
+  }, [isActive, irParaProximo, irParaAnterior, endTour, prenderFocoNoCartao]);
 
-  if (!isActive || !currentStepData || !targetRect) return null;
+  // SHELL-06: guarda de onde o foco veio e devolve ao fechar; com o cartão na tela o
+  // foco entra nele em cada passo.
+  useEffect(() => {
+    if (!isActive) return;
+    const atual = document.activeElement;
+    focoAnteriorRef.current = atual instanceof HTMLElement && atual !== document.body ? atual : null;
+    return () => focoAnteriorRef.current?.focus();
+  }, [isActive]);
+
+  useEffect(() => {
+    if (!cartaoVisivel) return;
+    cardRef.current?.focus();
+  }, [cartaoVisivel, currentStep]);
+
+  if (!isActive || !passoAtualDisponivel || !targetRect) return null;
 
   const padding = currentStepData.spotlightPadding || 8;
 
@@ -160,9 +249,14 @@ export function TourOverlay() {
 
         {/* Tooltip */}
         <motion.div
+          ref={cardRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tour-passo-titulo"
+          tabIndex={-1}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+          className="absolute w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden focus:outline-none"
           style={{ left: tooltipPosition.x, top: tooltipPosition.y, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
         >
           <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border/50">
@@ -175,38 +269,41 @@ export function TourOverlay() {
                   Passo {currentStep + 1} de {steps.length}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 -mr-1" onClick={endTour}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 -mr-1" onClick={endTour} aria-label="Fechar tour">
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
           <div className="p-4">
-            <h3 className="font-display font-semibold text-lg text-foreground mb-2">{currentStepData.title}</h3>
+            <h3 id="tour-passo-titulo" className="font-display font-semibold text-lg text-foreground mb-2">{currentStepData.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{currentStepData.description}</p>
           </div>
 
           <div className="flex justify-center gap-1.5 pb-3">
-            {steps.map((_, index) => (
-              <motion.div
-                key={index}
+            {indicesDisponiveis.map((indice) => (
+              <motion.button
+                key={indice}
+                type="button"
+                aria-label={`Ir ao passo ${indice + 1}`}
+                aria-current={indice === currentStep ? 'step' : undefined}
                 className={cn(
-                  'w-2 h-2 rounded-full transition-all cursor-pointer',
-                  index === currentStep ? 'bg-primary w-4' : index < currentStep ? 'bg-primary/50' : 'bg-muted-foreground/30'
+                  'w-2 h-2 rounded-full transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',
+                  indice === currentStep ? 'bg-primary w-4' : indice < currentStep ? 'bg-primary/50' : 'bg-muted-foreground/30'
                 )}
                 whileHover={{ scale: 1.2 }}
-                onClick={() => goToStep(index)}
+                onClick={() => goToStep(indice)}
               />
             ))}
           </div>
 
           <div className="flex items-center justify-between p-4 pt-2 border-t border-border/50">
-            <Button variant="ghost" size="sm" onClick={prevStep} disabled={currentStep === 0} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={irParaAnterior} disabled={!temAnterior} className="gap-1">
               <ChevronLeft className="w-4 h-4" /> Anterior
             </Button>
-            <Button size="sm" onClick={nextStep} className="gap-1">
-              {currentStep === steps.length - 1 ? 'Concluir' : 'Próximo'}
-              {currentStep < steps.length - 1 && <ChevronRight className="w-4 h-4" />}
+            <Button size="sm" onClick={irParaProximo} className="gap-1">
+              {temProximo ? 'Próximo' : 'Concluir'}
+              {temProximo && <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>
         </motion.div>

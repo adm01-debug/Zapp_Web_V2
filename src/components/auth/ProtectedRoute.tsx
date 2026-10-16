@@ -1,4 +1,4 @@
- import { type ComponentType, ReactNode, useEffect, useState } from 'react';
+ import { type ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
  import { Navigate, useLocation } from 'react-router-dom';
  import { Loader2 } from 'lucide-react';
  import { useAuth } from '@/hooks/auth/useAuth';
@@ -6,7 +6,7 @@
  import { RoleService } from '@/services/role.service';
  import { AuthService } from '@/services/auth.service';
  import { log } from '@/lib/logger';
-
+ import { logAudit } from '@/lib/audit';
  interface ProtectedRouteProps {
    children: ReactNode;
    requiredRoles?: ('admin' | 'supervisor' | 'agent')[];
@@ -21,44 +21,58 @@
    fallback
  }: ProtectedRouteProps) {
    const { user, loading: authLoading } = useAuth();
-   const { loading: rolesLoading, hasRole } = useUserRole();
+   const { loading: rolesLoading, hasRole, rolesLoadError } = useUserRole();
    const location = useLocation();
    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
    const [mfaGate, setMfaGate] = useState<{ userId: string; status: 'required' | 'ok' | 'error' } | null>(null);
 
     const [safetyForced, setSafetyForced] = useState(false);
+    // Paridade V3: o primeiro instante da tela é da verificação. Os atalhos de
+    // saída só aparecem depois de alguns segundos, para não empurrar o usuário
+    // para fora antes de a sessão ter chance de resolver.
+    const [saidaLiberada, setSaidaLiberada] = useState(false);
     const loading = (authLoading || rolesLoading) && !safetyForced;
     // O gate vale só para o usuário que o gerou — sessão trocada cai em 'checking'
     // até a decisão nova sair, sem depender de reset em effect.
     const gate = user && mfaGate?.userId === user.id ? mfaGate.status : 'checking';
 
+    // Passo visível da verificação: diz o que ainda está pendente em vez de um
+    // "Verificando acesso" genérico (paridade V3).
+    const passoVerificacao = authLoading
+      ? 'Carregando sessão...'
+      : rolesLoading
+        ? 'Verificando permissões...'
+        : 'Preparando aplicação...';
+
     const verificandoAcesso = (
-      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-busy="true" aria-label="Verificando acesso">
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-busy="true" aria-live="polite" aria-label="Verificando acesso">
         <div className="flex flex-col items-center gap-4 max-w-xs text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden="true" />
-          <p className="text-foreground font-medium">Verificando acesso...</p>
+          <p className="text-foreground font-medium">{passoVerificacao}</p>
 
-          {/* Escape hatch for infinite loading */}
-          <div className="mt-8 pt-8 border-t border-border w-full">
-            <p className="text-xs text-muted-foreground mb-4 italic">Se o carregamento demorar muito, tente:</p>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"
-              >
-                Recarregar Página
-              </button>
-              <button
-                onClick={() => {
-                  void AuthService.signOut();
-                  window.location.href = '/auth';
-                }}
-                className="text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-              >
-                Sair e Entrar Novamente
-              </button>
+          {/* Escape hatch for infinite loading — só depois dos primeiros segundos */}
+          {saidaLiberada && (
+            <div className="mt-8 pt-8 border-t border-border w-full">
+              <p className="text-xs text-muted-foreground mb-4 italic">Se o carregamento demorar muito, tente:</p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"
+                >
+                  Recarregar Página
+                </button>
+                <button
+                  onClick={() => {
+                    void AuthService.signOut();
+                    window.location.href = '/auth';
+                  }}
+                  className="text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                >
+                  Sair e Entrar Novamente
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -73,6 +87,13 @@
       }, 7000);
       return () => clearTimeout(timer);
     }, [authLoading, rolesLoading]);
+
+    // Libera os atalhos de saída depois de 5 s de verificação (uma vez por
+    // montagem da rota).
+    useEffect(() => {
+      const timer = setTimeout(() => setSaidaLiberada(true), 5000);
+      return () => clearTimeout(timer);
+    }, []);
 
    /**
     * BUG-8 FIX: reset hasPermission whenever the user identity or the required
@@ -117,6 +138,39 @@
         clearTimeout(timeout);
       };
     }, [loading, user]);
+
+    const falhaCarregamentoPapeis = Boolean(requiredRoles?.length && rolesLoadError);
+    const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
+    const isPermissioned = !requiredPermission || hasPermission;
+    // Só decide acesso quando saiu da verificação: sem isso o registro dispararia
+    // enquanto ainda estamos buscando permissão/MFA (o conteúdo segue fail closed).
+    const podeDecidirAcesso =
+      Boolean(user) && !loading && gate === 'ok' && !falhaCarregamentoPapeis && !(requiredPermission && hasPermission === null);
+    const semAcesso = podeDecidirAcesso && (!isAuthorized || !isPermissioned);
+    // Com `fallback` o ramo é do chamador: não redireciona e não registra.
+    const deveRegistrarNegado = semAcesso && !fallback;
+    const rotaNegada = `${location.pathname}|${requiredPermission ?? ''}|${(requiredRoles ?? []).join(',')}`;
+    const registroNegado = useRef<string | null>(null);
+
+    /**
+     * R2: acesso negado registrado UMA vez por navegação, sem dado pessoal —
+     * só a rota tentada e o papel/permissão exigidos. `rotaNegada` muda quando a
+     * rota ou a exigência muda, então cada negação nova é registrada.
+     */
+    useEffect(() => {
+      if (!deveRegistrarNegado || !user) return;
+      if (registroNegado.current === rotaNegada) return;
+      registroNegado.current = rotaNegada;
+      void logAudit({
+        action: 'unauthorized_access',
+        entityType: 'route',
+        entityId: location.pathname,
+        details: {
+          required: requiredPermission ? [requiredPermission] : (requiredRoles ?? []),
+          method: 'NAVIGATE',
+        },
+      });
+    }, [deveRegistrarNegado, user, rotaNegada, location.pathname, requiredPermission, requiredRoles]);
 
     useEffect(() => {
       if (!loading && user && requiredPermission) {
@@ -194,28 +248,30 @@
       );
     }
 
-    const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
-    const isPermissioned = !requiredPermission || hasPermission;
-
-    if (!isAuthorized || !isPermissioned) {
-      if (fallback) return <>{fallback}</>;
-      if (location.pathname !== "/") {
-        return <Navigate to="/" replace />;
-      }
+    if (falhaCarregamentoPapeis) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">
+        <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center" role="alert">
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-            <p className="text-muted-foreground">Você não tem permissão para acessar esta área.</p>
+            <h1 className="text-2xl font-bold text-destructive">Erro ao verificar permissões</h1>
+            <p className="text-muted-foreground">Não foi possível confirmar seu papel de acesso. Tente novamente.</p>
             <button
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
             >
-              Voltar para Login
+              Tentar Novamente
             </button>
           </div>
         </div>
       );
+    }
+
+    const isAuthorizedRoute = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
+    const isPermissionedRoute = !requiredPermission || hasPermission;
+
+    if (!isAuthorizedRoute || !isPermissionedRoute) {
+      if (fallback) return <>{fallback}</>;
+      // Explica e registra (efeito acima) em vez de devolver a '/' em silêncio.
+      return <Navigate to="/access-denied" state={{ from: location }} replace />;
     }
 
    return <>{children}</>;

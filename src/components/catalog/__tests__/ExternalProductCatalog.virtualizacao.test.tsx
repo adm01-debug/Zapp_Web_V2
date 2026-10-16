@@ -62,6 +62,13 @@ if (!Element.prototype.scrollIntoView) {
 }
 
 const toastError = vi.hoisted(() => vi.fn());
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
 }));

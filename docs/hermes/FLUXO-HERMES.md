@@ -35,6 +35,31 @@
 - Ordem para DDL que muda contrato: arquivo → PR → merge → deploy → apply (executada pelo
   `hermes-tarefa-mergear`, não à mão).
 
+## Contrato de conclusão do cartão (completion_contract)
+
+Cada cartão carrega um `completion_contract` que define o que o Hermes exige para aceitar o fechamento.
+
+Valores aceitos:
+- `local-only` (padrão): nenhuma verificação de PR.
+- `OWNER/REPO`: o PR é descoberto pelo `metadata.published_pr` informado ao concluir.
+- URL exata de um PR (`https://github.com/OWNER/REPO/pull/N`).
+
+Como o Hermes decide:
+1. Com contrato de repositório ou de PR, o agente só conclui o cartão informando
+   `metadata.published_pr` = URL do PR no `kanban_complete`. Sem isso o Hermes recusa o fechamento
+   ("Supply metadata.published_pr matching the persisted completion contract").
+2. O Hermes consulta o GitHub (`gh api`): o PR precisa estar `OPEN` ou `MERGED`, e CADA check
+   obrigatório da branch base precisa estar `success` NO COMMIT EXATO do head do PR. Sucesso em
+   commit antigo não vale (classificação `stale`); checks `pending` ou `failure` impedem o fechamento.
+3. Se o repositório NÃO tiver check obrigatório configurado, o contrato de repositório falha com a
+   orientação de usar `local-only`. Em `adm01-debug/Zapp_Web_V2`, a branch `main` exige hoje 6 checks:
+   Lint & TypeCheck, Unit Tests, Build, Security Audit, Contrato DB offline e E2E Tests (Playwright).
+4. Falha de infraestrutura (gh sem autenticação, API fora) aparece como `infra` e pede nova tentativa;
+   não é culpa do cartão. Os recibos ficam no log de eventos do cartão.
+
+Quando usar: cartões que mudam código e terminam em PR. Cartões de leitura, análise ou docs sem PR
+seguem `local-only`.
+
 ## Relatório da tarefa
 
 Primeira linha diz o que ficou pronto (ou não). Depois: branch, PR, sha do merge, CI, deploy, banco,
