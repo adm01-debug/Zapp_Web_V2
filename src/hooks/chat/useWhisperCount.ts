@@ -3,21 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { assinarSussurroEnviado } from './whisperBus';
 
-type Ouvinte = (contactId: string) => void;
-
-/**
- * Aviso local (mesma origem, sem rede) de que um sussurro foi gravado. Serve à
- * reconsulta na MESMA aba — quem está em OUTRA sessão é avisado pela assinatura
- * de realtime abaixo. Como o contador exclui as notas do próprio usuário, gravar
- * pelo compositor normalmente NÃO muda o número dele; o aviso só garante que o
- * valor exibido seja reconsultado em vez de esperar o `staleTime`.
- */
-const ouvintes = new Set<Ouvinte>();
-
-export function notificarSussurroEnviado(contactId: string): void {
-  ouvintes.forEach((ouvinte) => ouvinte(contactId));
-}
+export { notificarSussurroEnviado } from './whisperBus';
 
 /** Chave da consulta do contador — o marcar-como-lido invalida exatamente esta chave. */
 export const whisperCountKey = (
@@ -90,14 +78,10 @@ export function useWhisperCount(contactId: string | null | undefined) {
 
   useEffect(() => {
     if (!contactId || !profileId) return;
-    const ouvinte: Ouvinte = (id) => {
+    return assinarSussurroEnviado((id) => {
       if (id !== contactId) return;
       void queryClient.invalidateQueries({ queryKey: whisperCountKey(contactId, profileId) });
-    };
-    ouvintes.add(ouvinte);
-    return () => {
-      ouvintes.delete(ouvinte);
-    };
+    });
   }, [contactId, profileId, queryClient]);
 
   return typeof query.data === 'number' ? query.data : 0;

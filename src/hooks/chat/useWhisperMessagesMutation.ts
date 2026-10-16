@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
-import { notificarSussurroEnviado } from './useWhisperCount';
+import { notificarSussurroEnviado } from './whisperBus';
 
 /**
  * Motivo da recusa do sussurro — o compositor avisa a causa certa em vez de um
