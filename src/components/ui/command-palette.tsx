@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from './dialog';
 import { Badge } from './badge';
 import { ScrollArea } from './scroll-area';
 import { useDebounce } from '@/hooks/system/useDebounce';
+import { getRecentModuleIds } from '@/hooks/integrations/useModuleCommandItems';
 import { log } from '@/lib/logger';
 import {
   CommandItem, CommandGroup, CommandCategory,
@@ -23,13 +24,15 @@ interface CommandPaletteProps {
   onRecentSearchSelect?: (query: string) => void;
   onClearRecent?: () => void;
   customCommands?: CommandItem[];
+  /** Substitui a lista fixa de navegação (ex.: módulos já filtrados pelo papel do usuário). */
+  navigationCommands?: CommandItem[];
 }
 
 export function CommandPalette({
   open, onOpenChange, onNavigate, onSearch,
   placeholder = 'Buscar ou digitar comando...',
   recentSearches = [], onRecentSearchSelect, onClearRecent,
-  customCommands = [],
+  customCommands = [], navigationCommands = defaultNavigationCommands,
 }: CommandPaletteProps) {
   const [query, setQuery] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
@@ -37,7 +40,19 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const allCommands = React.useMemo(() => [...defaultNavigationCommands, ...defaultActionCommands, ...customCommands], [customCommands]);
+  const allCommands = React.useMemo(() => [...navigationCommands, ...defaultActionCommands, ...customCommands], [navigationCommands, customCommands]);
+
+  // Recentes de módulos (zapp-recent-modules): lidos na renderização com a paleta
+  // aberta (leitura pura do localStorage, sempre fresca) e resolvidos contra a
+  // lista viva — id morto (ex.: módulo removido) não tem comando e cai no
+  // filter, sem estourar (E17).
+  const recentCommands = React.useMemo((): CommandItem[] => {
+    if (!open) return [];
+    return getRecentModuleIds()
+      .map((id) => navigationCommands.find((cmd) => cmd.id === `module-${id}` || cmd.keywords?.includes(id)))
+      .filter((cmd): cmd is CommandItem => Boolean(cmd))
+      .slice(0, 5);
+  }, [open, navigationCommands]);
 
   const filteredCommands = React.useMemo(() => {
     if (!query) return [];
@@ -63,13 +78,13 @@ export function CommandPalette({
   // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
   // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
   const quickAccessItems = React.useMemo(
-    () => (query ? [] : defaultNavigationCommands.slice(0, 5)),
-    [query]
+    () => (query ? [] : navigationCommands.slice(0, 5)),
+    [query, navigationCommands]
   );
 
   const allItems = React.useMemo(
-    () => (query ? groupedCommands.flatMap(g => g.items) : quickAccessItems),
-    [query, groupedCommands, quickAccessItems]
+    () => (query ? groupedCommands.flatMap(g => g.items) : [...recentCommands, ...quickAccessItems]),
+    [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
@@ -190,11 +205,27 @@ export function CommandPalette({
                 </div>
               )}
               <div>
+                {recentCommands.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />Recentes</span></div>
+                    <div className="space-y-0.5">
+                      {recentCommands.map((cmd, idx) => (
+                        <button key={`recent-${cmd.id}`} onClick={() => executeCommand(cmd)}
+                          className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
+                            <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
                   {quickAccessItems.map((cmd, idx) => (
                     <button key={cmd.id} onClick={() => executeCommand(cmd)}
-                      className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
+                      className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', recentCommands.length + idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
                         <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>

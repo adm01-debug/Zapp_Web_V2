@@ -66,7 +66,16 @@ export default function TalkXView() {
     if (wizard) return 'wizard';
     return 'tabs';
   });
-  const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
+  // Passo 4 do refazer (paleta única): o item aberto manda na aba — ?segment=
+  // cai em segments e ?template= em templates, mesmo que o tab da URL venha
+  // ausente ou defasado. O id em si é consumido pelo TalkXSegments (X111,
+  // ?segment=&mode=) e pelo TalkXTemplates (X094, ?template=&ttab=).
+  const [activeTab, setActiveTab] = useState<TalkXTab>(() => {
+    const parsed = parseTalkXRoute(window.location.search);
+    if (parsed.segment) return 'segments';
+    if (parsed.template) return 'templates';
+    return parsed.tab;
+  });
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
@@ -185,12 +194,14 @@ export default function TalkXView() {
     const syncTab = () => {
       const parsed = parseTalkXRoute(window.location.search);
       if (parsed.needsNormalization) replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
-      setActiveTab(parsed.tab);
+      // O item aberto manda na aba (mesma regra do estado inicial acima).
+      const aba: TalkXTab = parsed.segment ? 'segments' : parsed.template ? 'templates' : parsed.tab;
+      setActiveTab(aba);
       setActiveSub(parsed.sub);
       setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
       // R2-MOD-039: o pedido de "novo template" não sobrevive à saída da aba de templates;
       // voltar pela Biblioteca mostra a lista, não o editor que ficou aberto.
-      if (parsed.tab !== 'templates') setTemplateStartNew(false);
+      if (aba !== 'templates') setTemplateStartNew(false);
     };
     window.addEventListener('popstate', syncTab);
     return () => window.removeEventListener('popstate', syncTab);
