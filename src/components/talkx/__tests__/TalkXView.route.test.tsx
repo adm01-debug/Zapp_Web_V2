@@ -51,7 +51,6 @@ vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div data-testid="scheduled" /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div data-testid="running" /> }));
-vi.mock('@/components/talkx/TalkXCampaignPaused', () => ({ TalkXCampaignPaused: () => <div data-testid="paused" /> }));
 
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
@@ -152,28 +151,6 @@ describe('TalkXView tab deep links (X007)', () => {
     expect(back).toHaveClass('hover:bg-muted/50');
   });
 
-  // X053 — a trilha do cabeçalho é preenchida pela ROTA: mesma aba na URL, mesma
-  // trilha na tela; trocar a aba pela rota troca a trilha.
-  it('a trilha do cabeçalho segue a aba da rota', async () => {
-    window.history.replaceState(null, '', '/?view=talkx&tab=suppression');
-    render(<TalkXView />);
-    await waitFor(() => expect(screen.getByTestId('suppression')).toBeInTheDocument());
-
-    const trilha = () => screen.getByRole('navigation', { name: 'Trilha de navegação' }).textContent ?? '';
-    expect(trilha()).toContain('Talk X');
-    expect(trilha()).toContain('Campanhas');
-    expect(trilha()).toContain('Lista de supressão');
-
-    await act(async () => {
-      window.history.pushState(null, '', '/?view=talkx&tab=analytics');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    });
-    await waitFor(() => expect(screen.getByTestId('analytics')).toBeInTheDocument());
-
-    expect(trilha()).toContain('Comparativo');
-    expect(trilha()).not.toContain('Lista de supressão');
-  });
-
   it('Analytics ▾ → Configurações grava tab=analytics&sub=configuracoes', async () => {
     window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);
@@ -189,9 +166,7 @@ describe('TalkXView tab deep links (X007)', () => {
       expect(new URLSearchParams(window.location.search).get('tab')).toBe('analytics');
       expect(new URLSearchParams(window.location.search).get('sub')).toBe('configuracoes');
     });
-    // X194: a tela chega por chunk (React.lazy) — a espera é a mesma verificação, só
-    // depois de o chunk resolver; antes era síncrono porque a tela vinha no import.
-    expect(await screen.findByTestId('settings')).toBeInTheDocument();
+    expect(screen.getByTestId('settings')).toBeInTheDocument();
   });
 
   it('?tab=campaigns é o alias da Visão geral: mostra a lista em vez de área vazia', async () => {
@@ -329,14 +304,12 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
     expect(screen.getByText('Gerar mais vendas e conversões · Turma de outubro')).toBeInTheDocument();
   });
 
-  it('Segmentos selecionados mostra os nomes, a união e a contagem por segmento', async () => {
+  it('Segmentos selecionados mostra os nomes e "N segmentos | X contatos"', async () => {
     render(
       <TalkXWizardReview
         ed={reviewEd({
           audienceSource: 'segment',
           selectedSegments: [{ id: 'seg_1', name: 'VIP', estimated_count: 1250 }],
-          segmentEstimates: { seg_1: 1250 },
-          audienceTotal: 1200,
           eligibleCount: 1200,
         })}
         campaign={draft as never}
@@ -346,8 +319,7 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
 
     expect(screen.getByText('Segmentos selecionados')).toBeInTheDocument();
     expect(screen.getByText('VIP')).toBeInTheDocument();
-    expect(screen.getByText(/1\.200 contatos na união/)).toBeInTheDocument();
-    expect(screen.getByText(/VIP \(1\.250\)/)).toBeInTheDocument();
+    expect(screen.getByText('1 segmento | 1.200 contatos')).toBeInTheDocument();
   });
 
   it('Agendamento mostra o dia relativo e quanto falta ("Hoje, 16:12 · Em 5 minutos")', async () => {
@@ -539,7 +511,7 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
     expect(params.get('wizard')).toBeNull();
   });
 
-  it('onView de pausada abre a tela propria e grava a rota (X156/T13)', async () => {
+  it('onView de pausada abre a running e grava a rota (sem tela pausada no contêiner)', async () => {
     f.campaigns = [{ ...sched, id: 'cmp_paused', name: 'Pausada', status: 'paused' }];
     window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);
@@ -547,9 +519,9 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
 
     fireEvent.click(screen.getByText('Ver primeira campanha'));
 
-    expect(await screen.findByTestId('paused')).toBeInTheDocument();
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
     const params = new URLSearchParams(window.location.search);
     expect(params.get('campaign')).toBe('cmp_paused');
-    expect(params.get('screen')).toBe('paused');
+    expect(params.get('screen')).toBe('running');
   });
 });
