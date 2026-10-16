@@ -1,69 +1,30 @@
 Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-
-- supabase/migrations/20261012134000_auto_reconnect_logs.sql (nova): paridade V3→V2 da
-  auto-reconexão de conexões WhatsApp. Em public.whatsapp_connections entram 4 colunas
-  aditivas — auto_reconnect_enabled (default true), reconnect_interval_seconds (default 60,
-  CHECK 60..3600), reconnect_max_attempts (default 3, CHECK 1..20) e health_reason (texto
-  curto, ≤200 caracteres) — mais a tabela public.reconnection_logs (conexão, tentativa,
-  resultado, motivo, data). `health_reason` também passa a ser exposta em
-  public.whatsapp_connections_safe (CREATE OR REPLACE VIEW, coluna NOVA no fim; o
-  mascaramento de qr_code/instance_id para não-admin continua igual), porque é a view que a
-  tela de conexões lê. RLS ligada em reconnection_logs com leitura só para staff
-  (is_admin_or_supervisor(auth.uid())) e ACL explícita: authenticated só com SELECT
-  (histórico de auditoria não se forja de dentro do app — a Edge escreve com service_role),
-  anon/PUBLIC sem grant. Retenção de 30 dias por job pg_cron diário (padrão do repo), com o
-  agendamento guardado por pg_namespace para a migration rodar também em Postgres sem pg_cron.
-  A migration é aditiva (nenhuma linha existente muda; nenhum GRANT/papel preexistente é
-  alterado) e o rollback é o inverso executável, extraído do próprio arquivo pelo teste.
-- scripts/db-audit/auto-reconnect-logs.test.sh (novo): prova o contrato em Postgres
-  descartável (postgres:17-alpine), nos papéis reais (authenticated/anon/service_role), nunca
-  como postgres: RLS, defaults e CHECKs, mascaramento da view, quem lê e quem não lê o
-  histórico, quem não consegue escrever, sintaxe de ACL, cascade, retenção (o comando
-  AGENDADO extraído do arquivo apaga a linha de 31 dias e preserva a de 1 dia), guarda do
-  cron e REAPLICAÇÃO da migration sem pg_cron.
-- .github/workflows/db-guard.yml: registra o teste novo no job do contrato DB offline
-  (exigência do check-test-inventory, senão ele vira órfão).
-- src/integrations/supabase/types.ts: tipos do Database alinhados à forma que o gerador
-  emite — as 4 colunas novas em whatsapp_connections, health_reason na view
-  whatsapp_connections_safe e o bloco da tabela reconnection_logs (com as 4 relações de FK
-  como connection_health_logs declara).
+- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.my_active_sessions() (SECURITY DEFINER, search_path fixo em 'public') que devolve SO as linhas de public.user_sessions do proprio chamador (us.user_id = auth.uid()) que tem sessao Auth VIVA — INNER JOIN auth.sessions por id E user_id, com (not_after IS NULL OR not_after > now()). Assim a linha orfa (sem auth.sessions, as 13 medidas) e a sessao Auth ja expirada somem da lista, sem apagar a tabela de inventario. Cada linha leva is_current vindo do JWT do chamador: session_id == us.auth_session_id (le request.jwt.claim.session_id e, se vazio, request.jwt.claims->>'session_id'). EXECUTE so para authenticated; PUBLIC e anon revogados (anon recebe 42501).
+- supabase/migrations/20261013230007_my_active_sessions.sql (novo): cria public.expire_orphan_user_sessions(), idempotente, que MARCA is_active=false + ended_at para as linhas sem auth.sessions viva (nada e' apagado). Agendado no pg_cron 1x/dia ('23 3 * * *', nome expire-orphan-user-sessions) e roda uma vez no proprio migration para sanear as orfas ja existentes. ACL: sem EXECUTE para authenticated/anon.
+- supabase/tests/my_active_sessions.sql (novo): prova por papel real (set_config('role',...)) — T1 so as vivas do chamador (orfa e expirada nao aparecem, B nao vaza), T2 is_current pelo claim session_id (A e B), T3 anon barrado (42501), T4 sem identidade (auth.uid() nulo) devolve 0 linhas, T5 limpeza idempotente (1a vez marca, 2a vez = 0; sessao Auth apagada sai da lista), T6 ACL das duas funcoes. Tudo numa transacao que termina em ROLLBACK.
+- src/integrations/supabase/types.ts: entram os tipos da RPC my_active_sessions (ciência do postgrest/child t_b4c0ae4e).
+- scripts/db-audit/pg-cron-jobs-baseline.json (INDISPENSAVEL, apesar de o cartao citar so supabase/tests): o item 2 do cartao manda agendar um job novo no pg_cron, e o baseline versionado de jobs (scripts/db-audit/pg-cron-jobs-baseline.json, lido por pg-cron-jobs-baseline.test.mjs) REPROVA qualquer "job novo" que nao esteja nele — sem esta linha o merge deixaria a suite db_guard vermelha antes mesmo de o job rodar. E' arquivo da minha area (scripts/db-audit/**), foi so' uma entrada de dados (jobname+schedules, sem codigo) e nao afrouxa guarda nenhuma: so' declara o job que a migration cria. Nao era possivel cumprir o item 2 sem isto.
 
 ## Prova
+- vermelho antes (funcionalidade ausente): `zapp-db-local psql <workspace> v2-2610130558f3a3 -v ON_ERROR_STOP=1 < supabase/tests/my_active_sessions.sql` → `ERROR: function public.my_active_sessions() does not exist` / EXIT_RED=3
+- verde depois: mesmo comando → `NOTICE: my_active_sessions: suite OK (T1 so as vivas do chamador, T2 is_current pelo JWT, T3 anon barrado, T4 sem identidade 0 linhas, T5 limpeza idempotente, T6 ACL) — 6 grupo(s)` / EXIT_GREEN=0
+- guarda de SECURITY DEFINER: `zapp-db-local psql <workspace> v2-2610130558f3a3 < scripts/db-audit/check-secdef-public-execute.sql` → `NOTICE: check-secdef-public-execute: OK (285 funcoes SECURITY DEFINER em public, nenhuma com PUBLIC/anon)`
+- baseline do cron: `node --test scripts/db-audit/pg-cron-jobs-baseline.test.mjs` → `pass 12 / fail 0`
+- rollback de verdade (3 comandos do cabecalho, em transacao que volta atras): `BEGIN; select cron.unschedule(jobid) from cron.job where jobname='expire-orphan-user-sessions'; drop function if exists public.expire_orphan_user_sessions(); drop function if exists public.my_active_sessions(); ROLLBACK;` → `unschedule t / DROP FUNCTION / DROP FUNCTION / ROLLBACK`; estado depois = 2 funcoes e 1 job (nada foi perdido).
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (105s)` e `zapp-db-local travas <workspace> v2-2610130558f3a3` → `TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)`.
 
-- vermelho antes (mesmo arquivo, no Postgres descartável, sem a migration):
-  `bash scripts/db-audit/auto-reconnect-logs.test.sh` → `[PASS] A1 sem a migration nao existe a tabela reconnection_logs`
-  / `[PASS] A2 sem a migration nao existe auto_reconnect_enabled`
-  / `[PASS] A3 sem a migration nao existe health_reason` (bloco A roda antes de aplicar o SQL)
-- verde depois: `bash scripts/db-audit/auto-reconnect-logs.test.sh` → `== TODOS OS PASSOS PASSARAM ==` RC=0
-  (46 passos: A1–A4 e B1–B42, incluindo rollback e reaplicação)
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (118s)` RC=0
-  (dependencias OK, db_guard OK, tipos OK, lint OK, migrations OK;
-  `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto` — é assim que o fechar chama)
+## Efeitos colaterais conferidos
+- O UPDATE da limpeza mexe so em is_active/ended_at; o unico gatilho de user_sessions (trg_user_sessions_auth_session_guard) dispara apenas em INSERT/UPDATE OF auth_session_id, entao nao ha reescrita de data nem efeito em coluna alheia. user_sessions nao tem updated_at.
+- Nada e' apagado (so' is_active=false); sem TRUNCATE/DROP/DELETE em massa; nenhum GRANT em objeto existente; nenhuma funcao overload criada. my_active_sessions devolve somente a linha do proprio auth.uid() — nao ha oraculo de enumeracao (resposta igual para usuario existente ou nao).
+- Sem identificador/URL do banco real no diff nem no relato.
 
-## O que NÃO fiz e por quê
+## O que NAO fiz e por que
+- Nao troquei o front (useDeviceDetection/DevicesPanel/SecurityOverview) para chamar a RPC: e' o cartao filho t_b4c0ae4e (worker de telas/hooks). Esta entrega so o contrato do banco; o hook precisa passar a chamar my_active_sessions() e usar is_current no lugar de device_id === currentDeviceId.
 
-- scripts/db-audit/auto-reconnect-logs.test.sh e o registro em .github/workflows/db-guard.yml
-  são o caminho obrigatório do teste de banco DESTE repositório, citado pelo próprio cartão
-  ("Siga o fluxo de banco do repositório ... scripts/db-audit, db:guard"): o harness executa o
-  SQL real em Postgres descartável como os papéis reais. As suítes supabase/tests/*.sql rodam
-  por um harness em scripts/db-audit (é o caso de dashboard-rls-authorization.test.sh), e o
-  passo no db-guard.yml é exigido pelo scripts/ci/check-test-inventory.mjs — sem ele o teste
-  novo vira "órfão" e o check reprova. Por isso os dois arquivos entraram.
-- O fechar apontou "há código alterado sem nenhum teste novo" por causa de
-  src/integrations/supabase/types.ts: é arquivo GERADO (só declarações de tipo, sem
-  comportamento para exercitar). O filtro do fechar só considera teste em src/ ou tests/,
-  então o teste de banco em scripts/db-audit/auto-reconnect-logs.test.sh não entra na conta.
-  A prova deste cartão é o teste de banco (vermelho→verde no bloco A/B) acima.
-- Não rodei `hermes-db-migrar`: este cartão não tem banco local de tarefa (nenhum
-  `v2-26101209546aae` na pasta de stacks) e subir/replayar a stack custa ~14 min. A prova de
-  banco é o teste descartável acima, que aplica o arquivo REAL em postgres:17 com os papéis
-  reais — mesma decisão dos cartões de banco vizinhos de hoje.
-- Não rodei `supabase gen types` (o gerador aponta para o banco de produção, proibido pelo
-  protocolo). types.ts foi editado à mão na forma exata do gerador (ordem alfabética, mesmas
-  relações). Se o time exigir regeneração, é um comando só, no merge.
-- Não toquei a Edge function connection-health-check (área do worker de Edge): o banco agora
-  oferece auto_reconnect_enabled/reconnect_interval_seconds/reconnect_max_attempts/health_reason
-  e a tabela reconnection_logs; quem grava o log de tentativa e o motivo é ela.
-- Não mexi nas policies de escrita de whatsapp_connections nem na contagem do OmnichannelManager.
+NÃO CONCLUÍ: nada — cartao concluido.
+
+## Sobre o aviso do fechar ("codigo alterado sem teste neste commit")
+- Falso positivo conhecido de cartao de banco: o fechar olhou src/integrations/supabase/types.ts (src/**, unico arquivo "de aplicacao" no diff) e nao contou a suite de banco nova em supabase/tests/my_active_sessions.sql. O teste do defeito ESTA no commit 7a03b74be2 (supabase/tests/my_active_sessions.sql) e prova vermelho->verde por papel real; types.ts e apenas o espelho gerado da RPC (ciência do postgrest). Nao ha mudanca de comportamento em src/**. Repetindo o MESMO comando de fechar.
+
