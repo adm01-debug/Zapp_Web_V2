@@ -148,9 +148,18 @@ export class ErrorBoundary extends Component<Props, State> {
       const recarregou = triggerChunkReload();
       if (recarregou) {
         log.warn('ChunkLoadError detectado -- recarregando para pegar os assets do deploy novo');
-      } else {
+      } else if (hasExhaustedChunkReloads()) {
+        // Orcamento da sessao esgotado (ou sessionStorage indisponivel, que
+        // bloqueia a recarga automatica): o render cai no StaleBundleNotice,
+        // a tela 'Nova versao disponivel'.
         log.warn(
-          'ChunkLoadError sem recarga automatica disponivel (orcamento esgotado ou cooldown) -- mostrando a tela de nova versao'
+          'ChunkLoadError com o orcamento de recargas esgotado (ou sessionStorage indisponivel) -- mostrando a tela de nova versao disponivel'
+        );
+      } else {
+        // Cooldown de 30 s ativo ou recarga ja disparada (lazyWithRetry): o
+        // render mostra 'Atualizacao disponivel', que recarrega na mao.
+        log.warn(
+          'ChunkLoadError dentro do cooldown de recarga (ou com a recarga ja disparada) -- mostrando a tela de atualizacao disponivel'
         );
       }
     }
