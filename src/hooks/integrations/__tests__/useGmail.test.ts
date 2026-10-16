@@ -34,6 +34,7 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 }));
 
 import { useGmail } from '../useGmail';
+import { formatLastSyncLabel } from '../useGmail';
 import { toast } from 'sonner';
 
 const MOCK_ACCOUNT = {
@@ -41,7 +42,7 @@ const MOCK_ACCOUNT = {
   email_address: 'user@example.com',
   is_active: true,
   sync_status: 'synced' as const,
-  last_sync_at: null,
+  last_sync_at: null as string | null,
   last_error: null,
   created_at: '2024-01-01T00:00:00Z',
 };
@@ -411,6 +412,109 @@ describe('useGmail', () => {
       expect(String(options.description)).toContain('permissão');
       expect(String(options.description)).not.toContain('undefined');
       unmount();
+    });
+  });
+
+  describe('faixa de reconexão aparece sozinha e o cabeçalho mostra a última sincronização', () => {
+    // O queryClient de produção (src/lib/queryClient.ts) roda com staleTime de
+    // 5 min, refetchOnWindowFocus:false e refetchOnMount:false — os mesmos
+    // padrões aqui, para o intervalo de 60 s ser provado contra a config real.
+    function createProductionLikeWrapper() {
+      const qc = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            staleTime: 1000 * 60 * 5,
+            refetchOnWindowFocus: false,
+            refetchOnMount: false,
+          },
+          mutations: { retry: false },
+        },
+      });
+      return ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client: qc }, children);
+    }
+
+    const REAUTH_ACCOUNT = {
+      ...MOCK_ACCOUNT,
+      sync_status: 'reauth_required' as const,
+      last_sync_at: '2026-10-15T12:00:00Z',
+      last_error: 'Token expirado',
+    };
+
+    it('a faixa aparece sem ação do usuário: a consulta se repete e traz reauth_required', async () => {
+      vi.useFakeTimers();
+      try {
+        let chamadas = 0;
+        vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
+          if (fn === 'gmail-oauth' && opts.action === 'list-accounts') {
+            chamadas += 1;
+            // 1ª carga: conta saudável. Depois: o cron marcou reauth_required.
+            return { accounts: [chamadas === 1 ? MOCK_ACCOUNT : REAUTH_ACCOUNT] };
+          }
+          if (fn === 'gmail-sync') return { synced: 0 };
+          return {};
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        vi.mocked(supabase.from).mockImplementation(() => makeFromChain([]) as any);
+
+        const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+        expect(result.current.accountsLoading).toBe(false);
+        expect(result.current.needsReconnect).toBe(false);
+        expect(chamadas).toBe(1);
+
+        // Nenhuma ação do usuário: só o intervalo de 60 s.
+        await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+
+        expect(chamadas).toBe(2);
+        expect(result.current.syncStatus).toBe('reauth_required');
+        expect(result.current.needsReconnect).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('lastSyncLabel diz há quanto tempo sincronizou e envelhece sozinho, sem consulta nova', async () => {
+      vi.useFakeTimers();
+      try {
+        const sincronizada = { ...MOCK_ACCOUNT, last_sync_at: new Date(Date.now() - 2 * 60_000 - 30_000).toISOString() };
+        setupDefaultMocks([sincronizada], []);
+        const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+        expect(result.current.lastSyncedAt).toBe(sincronizada.last_sync_at);
+        expect(result.current.lastSyncLabel).toBe('sincronizado há 2 min');
+
+        const consultasAteAqui = vi.mocked(callGmailFunction).mock.calls.length;
+        await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+        expect(result.current.lastSyncLabel).toBe('sincronizado há 3 min');
+        // O relógio é local: o rótulo não pediu nenhuma consulta além das do setup.
+        expect(vi.mocked(callGmailFunction).mock.calls.length).toBe(consultasAteAqui);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('lastSyncLabel devolve null quando a conta nunca sincronizou', async () => {
+      setupDefaultMocks([MOCK_ACCOUNT], []);
+      const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
+      await waitFor(() => expect(result.current.accountsLoading).toBe(false));
+      expect(result.current.lastSyncedAt).toBeNull();
+      expect(result.current.lastSyncLabel).toBeNull();
+    });
+
+    it('formatLastSyncLabel cobre agora/minutos/horas/dias e não inventa texto', () => {
+      const base = Date.parse('2026-10-15T12:00:00Z');
+      expect(formatLastSyncLabel(null, base)).toBeNull();
+      expect(formatLastSyncLabel('', base)).toBeNull();
+      expect(formatLastSyncLabel('nao-e-data', base)).toBeNull();
+      expect(formatLastSyncLabel('2026-10-15T12:05:00Z', base)).toBe('sincronizado agora');
+      expect(formatLastSyncLabel('2026-10-15T11:57:00Z', base)).toBe('sincronizado há 3 min');
+      expect(formatLastSyncLabel('2026-10-15T09:00:00Z', base)).toBe('sincronizado há 3 h');
+      expect(formatLastSyncLabel('2026-10-12T12:00:00Z', base)).toBe('sincronizado há 3 d');
     });
   });
 });
