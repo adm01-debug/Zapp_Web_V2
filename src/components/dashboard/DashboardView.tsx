@@ -31,6 +31,7 @@ import { GreetingBanner } from './overview/GreetingBanner';
 import { DashboardTopBar } from './overview/DashboardTopBar';
 import { DashboardHeader } from './overview/DashboardHeader';
 import { DashboardKpiRow } from './overview/DashboardKpiRow';
+import { DailyMetricsKpis } from './overview/DailyMetricsKpis';
 import { VolumeChart } from './overview/VolumeChart';
 import { NowPanel } from './overview/NowPanel';
 import { DailyGoalsCard } from './overview/DailyGoalsCard';
@@ -228,6 +229,13 @@ export function DashboardView() {
             </SectionErrorBoundary>
           </div>
           </DashboardZone>
+          {isStaff && (
+            <DashboardZone id="evolucao" title="Últimos 7 dias">
+              <SectionErrorBoundary sectionName="KPIs dos últimos 7 dias">
+                <DailyMetricsKpis />
+              </SectionErrorBoundary>
+            </DashboardZone>
+          )}
           <DashboardZone id="operacao" title="Operação em tempo real">
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
             <SectionErrorBoundary sectionName="Gráfico de volume">
