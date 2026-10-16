@@ -1,9 +1,13 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { playTtsAudio, type TtsPlayback, type PlayTtsOptions } from '@/hooks/voice/playTtsAudio';
+import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { toast } from 'sonner';
 
 export function useSummaryTts(contactId?: string) {
+  // 'Ouvir resumo' fala com a voz e a velocidade escolhidas no cabeçalho: mesma fonte de
+  // verdade do seletor (`tts_voice_id` / `tts_speed`).
+  const { settings } = useUserSettings();
   const ttsRef = useRef<TtsPlayback | null>(null);
   const [isTtsPlaying, setIsTtsPlaying] = useState(false);
   const [isTtsLoading, setIsTtsLoading] = useState(false);
@@ -31,6 +35,8 @@ export function useSummaryTts(contactId?: string) {
     setLastTtsText(text);
 
     const ttsOptions: PlayTtsOptions = {
+      voiceId: settings.tts_voice_id,
+      speed: settings.tts_speed,
       onLoadingChange: setIsTtsLoading,
       onError: (err) => {
         if (err.message === 'AUTOPLAY_BLOCKED') return;
@@ -45,7 +51,7 @@ export function useSummaryTts(contactId?: string) {
     ttsRef.current = playback;
     setIsTtsPlaying(true);
     playback.promise.then(() => setIsTtsPlaying(false)).catch(() => setIsTtsPlaying(false));
-  }, [isTtsPlaying]);
+  }, [isTtsPlaying, settings.tts_voice_id, settings.tts_speed]);
 
   const handleRetryAutoplay = useCallback(() => {
     if (lastTtsText) { setAutoplayBlocked(false); startTtsPlayback(lastTtsText); }

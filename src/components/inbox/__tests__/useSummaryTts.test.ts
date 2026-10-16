@@ -3,7 +3,12 @@ import { renderHook, act } from '@testing-library/react';
 
 const tts = vi.hoisted(() => ({
   stop: vi.fn(),
-  lastOptions: null as null | Record<string, (arg?: unknown) => void>,
+  lastOptions: null as null | {
+    voiceId?: string;
+    speed?: number;
+    onError?: (err: Error) => void;
+    onAutoplayBlocked?: () => void;
+  },
   lastArgs: null as null | { text: string; url: string; key: string },
   resolvers: [] as Array<() => void>,
   play: vi.fn(),
@@ -17,7 +22,12 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/hooks/voice/playTtsAudio', () => ({
-  playTtsAudio: (text: string, url: string, key: string, options: Record<string, (arg?: unknown) => void>) => {
+  playTtsAudio: (
+    text: string,
+    url: string,
+    key: string,
+    options: NonNullable<typeof tts.lastOptions>,
+  ) => {
     tts.play(text, url, key, options);
     tts.lastOptions = options;
     tts.lastArgs = { text, url, key };
@@ -29,6 +39,14 @@ vi.mock('@/hooks/voice/playTtsAudio', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }));
+
+// A voz e a velocidade do 'Ouvir resumo' vêm da mesma fonte do seletor do cabeçalho.
+vi.mock('@/hooks/system/useUserSettings', () => ({
+  useUserSettings: () => ({
+    settings: { tts_voice_id: 'CwhRBWXzGAHq8TQ4Fs17', tts_speed: 1.5 },
+    isLoading: false,
+  }),
+}));
 
 import { useSummaryTts } from '../summary/useSummaryTts';
 
@@ -49,6 +67,14 @@ describe('useSummaryTts — iniciar e parar', () => {
     expect(tts.lastArgs).toEqual({ text: 'Olá mundo', url: 'https://local.test', key: 'anon-key' });
     expect(result.current.isTtsPlaying).toBe(true);
     expect(result.current.lastTtsText).toBe('Olá mundo');
+  });
+
+  it('manda para o player a voz e a velocidade escolhidas no cabeçalho', () => {
+    const { result } = renderHook(() => useSummaryTts('c1'));
+    act(() => result.current.startTtsPlayback('Olá mundo'));
+
+    expect(tts.lastOptions?.voiceId).toBe('CwhRBWXzGAHq8TQ4Fs17');
+    expect(tts.lastOptions?.speed).toBe(1.5);
   });
 
   it('não chama o player para texto vazio ou só espaços', () => {

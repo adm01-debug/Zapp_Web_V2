@@ -12,6 +12,15 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+// O hook real de TTS lê a voz/velocidade escolhidas em `user_settings`; aqui o painel é
+// renderizado fora do AuthProvider, então a leitura é substituída.
+vi.mock('@/hooks/system/useUserSettings', () => ({
+  useUserSettings: () => ({
+    settings: { tts_voice_id: 'TY3h8ANhQUsJaa0Bga5F', tts_speed: 1 },
+    isLoading: false,
+  }),
+}));
+
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
