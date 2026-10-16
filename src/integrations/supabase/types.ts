@@ -11559,6 +11559,14 @@ export type Database = {
           last_message_type: string
         }[]
       }
+      get_team_birthdays: {
+        Args: never
+        Returns: {
+          birthday_day: number
+          birthday_month: number
+          id: string
+        }[]
+      }
       get_team_inbox: {
         Args: never
         Returns: {

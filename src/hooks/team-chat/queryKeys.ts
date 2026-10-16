@@ -31,6 +31,12 @@ export const queryKeys = {
     memberIds.join(','),
   ],
   memberProfile: (profileId: string): QueryKey => ['team-member-profile', profileId],
+  /**
+   * HZ-28: aniversarios da equipe (RPC `get_team_birthdays`). Sem id de conversa de
+   * proposito — a RPC devolve a lista inteira de perfis ativos com aniversario, entao
+   * o cache e um so e a conversa (direta ou grupo) so filtra o que ja veio.
+   */
+  teamBirthdays: (): QueryKey => ['team-birthdays-rpc'],
   performance: (conversationId: string): QueryKey => [
     'departmentChat',
     'performance',
