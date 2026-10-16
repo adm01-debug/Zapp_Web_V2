@@ -1,38 +1,26 @@
-Especialista: senior (area-sql-banco)
-
-## Pontos da recusa
-- Ponto 1: a entrega anterior estava aprovada, mas não integrava por conflito com a ponta da `dia`. Refiz em workspace novo sobre `dia/2026-10-13`, trouxe apenas o commit funcional `ef625b98b` e deixei de fora o relato `.tmp` conflitante da cherry-pick. O diff de código tem o commit `08a206383`; o segundo commit contém somente este relato exigido pelo fechamento.
-- Ponto 2: preservei o comportamento da entrega aprovada e acrescentei prova de rollback executável. A migration `supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql` recria as policies de INSERT/UPDATE de `scheduled_messages` com contato visível + `send_messages` e a policy de INSERT de `whisper_messages` com contato visível, mantendo o bypass de admin/supervisor e sem DML em linhas existentes.
+Especialista: workersql
 
 ## O que mudou e por quê
-- `supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql`: aplica a troca transacional das três policies citadas e deixa rollback SQL no cabeçalho para recriar as policies anteriores.
-- `scripts/db-audit/scheduled-whisper-visibility-rls.test.sh`: sobe PostgreSQL descartável, cria o estado antigo das policies, prova o RED das brechas antes da migration, aplica a migration real, prova as recusas GREEN por RLS, prova que supervisor continua passando, que anônimo não enxerga/insere, que linhas existentes permanecem intactas e que o rollback do cabeçalho executa/restaura as policies antigas antes de reaplicar a migration.
-- `.github/workflows/db-guard.yml`: mantém o passo do `db-guard` da entrega original, agora rebaseado no final do workflow atual, para executar o teste novo via `retry-disposable-postgres-test.sh` com `SKIP_DOCKER_SHIM=1`.
+- `supabase/migrations/20261013044344_user_settings_onboarding_completed.sql` (NOVO): coluna `public.user_settings.onboarding_completed boolean NOT NULL DEFAULT false` + `COMMENT`. Fecha o lado do banco do PD-32 (a V2 não tinha a coluna; `useOnboarding.ts:55-65` infere "tour concluído" da existência de qualquer linha). Não cria policy/GRANT/ACL: a coluna herda os grants de tabela e as 3 policies de linha própria que já existem (`auth.uid() = user_id`) — mesmo padrão aditivo da `20261006155916_user_settings_controles_evento_notificacao.sql`.
+- `supabase/tests/user_settings_onboarding_completed.sql` (NOVO): prova na mesma linha de `user_roles_troca_de_papel_autorizacao_e_auditoria.sql` — PostgreSQL 17 descartável, contrato vindo das migrations REAIS por `\i`, papéis reais por `SET LOCAL ROLE` + JWT sintético.
+- `src/integrations/supabase/types.ts`: `onboarding_completed: boolean` em `Row`, `onboarding_completed?: boolean` em `Insert` e `Update` do tipo `user_settings` (coluna NOT NULL com default ⇒ Row não-nulo).
+
+## Backfill — critério (pedido no cartão)
+Toda linha de `user_settings` que JÁ EXISTE quando a migration roda recebe `onboarding_completed = true`. É o único sinal confiável da V2: a linha só é criada (a) ao concluir o tour (`useOnboarding.ts:17-25`, upsert só com `user_id`) ou (b) ao salvar preferência (`useUserSettings`, `useNotificationSettings`, `useTeamChatPanel`, checklist); não há trigger/seed/INSERT em SQL de migration que crie linha. Os dois casos são "já usou o produto" e a existência da linha é exatamente o que o código atual já lê como concluído (`useOnboarding.ts:63-66`) — ou seja, marcar `true` PRESERVA o comportamento atual: ninguém que hoje não vê o tour passa a vê-lo. Usuário SEM linha fica com o default `false` (nunca mexeu em preferências nem concluiu o tour) e o tour continua aparecendo, também sem mudança. O rollback descarta a coluna junto com o dado (antes da migration a coluna não existia, não há valor antigo a devolver).
+Efeito colateral tratado: o UPDATE do backfill toca todas as linhas e dispararia o gatilho `update_user_settings_updated_at` (reescrevendo `updated_at` de toda a tabela). O gatilho é DESLIGADO durante o backfill e RELIGADO em seguida, na mesma transação; o teste prova que `updated_at` não mudou e que o gatilho voltou ligado.
 
 ## Prova
-- Vermelho antes da correção (dentro do teste): `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` imprime `[PASS] RED: agente agenda para contato INVISÍVEL (a policy antiga aceita)`, `[PASS] RED: usuário SEM send_messages agenda (a policy antiga aceita)` e `[PASS] RED: sussurro em contato INVISÍVEL (a policy antiga aceita)` antes de aplicar a migration.
-- Verde depois: o mesmo comando termina com `OK: agendar exige contato visível e permissão; sussurrar exige contato visível; supervisor passa; anônimo não vê nada; linhas existentes intactas; rollback executável`.
-- Verificação rápida: `zapp-verify . --rapido` terminou com `VERIFY: VERDE SEM BANCO (22s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/dbea58e6ff85`.
-- `zapp-verify full .` foi tentado, mas não consegui obter verde completo com banco local neste workspace: sem nome de conjunto ele passou por `db_guard`, `tipos`, `lint` e `migrations` e saiu sem verificar banco; com conjunto `t-8ed401d9` falhou porque o nome tinha `_`; com `t-8ed401d9` falhou em `travas` dizendo `conjunto t-8ed401d9 não está de pé`. Tentei `zapp-db-local up . t-8ed401d9`, mas ficou sem saída por mais de 12 minutos e matei o processo para não deixar job preso. A prova SQL do cartão usa PostgreSQL descartável próprio e passou.
+- verde depois (docker, PG17 descartável): `docker exec -i <pg> psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v repo=/repo -v mig_dir=/repo/supabase/migrations < supabase/tests/user_settings_onboarding_completed.sql` → `EXIT=0`, 35 asserções `PASS` (T0a–T20) e a linha final `PD-32 OK: coluna boolean NOT NULL DEFAULT false; backfill true ... rollback desfaz e a migration reaplica`. (O disco do docker estava cheio — `could not write to file "base/5/2675": No space left on device` — então rodei o container com `--tmpfs /var/lib/postgresql/data:rw,size=1g`; o conteúdo do teste não mudou.)
+- vermelho antes (mesma suíte, `-v sem_guarda=1` = coluna criada SEM o backfill): `ERROR: PD-32 FALHOU [T2a usuário que mexeu em preferência (A) -> true]: esperado true, obtido false` → `EXIT=3` (8 PASS até ali). Prova que o teste protege o backfill, não a coluna.
+- banco LOCAL da tarefa (`hermes-db-migrar`): `APLICADA no banco LOCAL 'v2-26101301381314' (produção não foi tocada)`. O replay da stack aplica as migrations ANTES de carregar o dump, então a prova de backfill com linhas pré-existentes sai do teste descartável; para fechar a lacuna rodei a migration REAL sobre a stack local, com o rollback antes (DROP COLUMN) para recriar o "antes": `UPDATE 4` e `onboarding_completed t | 4`, `gatilho_ligado O`, `policies 3`.
+- papel real no banco LOCAL: o V2 não tem role `agent` (`pg_roles` devolve só `anon`, `authenticated`, `service_role`); o usuário logado roda como `authenticated`. Enforço então `authenticated`/`anon`/`service_role`: no teste, dono lê e edita a própria linha (`OK 1`) e vê o próprio flag (`true`); NÃO vê a linha de outro (`0`), NÃO atualiza (`OK 0`) e NÃO insere para outro (`ERRO 42501 new row violates row-level security policy`); `anon` vê `0`, não insere (`42501`) e não atualiza (`OK 0`); `service_role` (BYPASSRLS) vê as 3. No banco local: `anon_ve 0`, `service_role_ve 4`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (103s)` (a etapa `banco_local` é pulada sem nome de conjunto — é assim que o fechar chama). `migrations` = OK (a migration nova não criou drift de arquivo).
+- rollback: o topo da migration tem `-- Rollback:` (prosa) + `-- Rollback (SQL executável, na ordem):` com as duas sentenças (`drop column if exists onboarding_completed;` / `enable trigger update_user_settings_updated_at;`), no formato de `20261006141643_ai_jobs_efeito_externo_lease.sql`. O BLOCO R do teste executa exatamente essas sentenças, prova que a coluna some e as 3 policies ficam, e reaplica a migration (T19/T20).
+- o juiz barato do fechar pediu o bloco de rollback executável (recomendação "ANTES DE ENTREGAR"); atendido em `chore`/`fix` posterior — nenhuma mudança de SQL, só o cabeçalho e o comentário do teste.
 
-## Arquivos do diff
-.github/workflows/db-guard.yml
-.tmp/relato.md
-scripts/db-audit/scheduled-whisper-visibility-rls.test.sh
-supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql
-
-## Escopo dos arquivos tocados fora da migration
-- `scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` é o teste de banco pedido pelo cartão; ele executa a migration real e prova RED/GREEN/rollback.
-- `.github/workflows/db-guard.yml` é indispensável para o `db:guard` executar esse teste novo no CI. A alteração só adiciona um step que chama o teste; não afrouxa guarda nem remove validação.
-- `.tmp/relato.md` foi versionado porque `hermes-tarefa-fechar` exige árvore limpa antes de entregar.
-
-## Comandos rodados
-- `git cherry-pick -n ef625b98b4bf5f36210c573c42e8866ad31b2e61` e restauração de `.tmp/relato.md` para evitar diff alheio.
-- `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` → verde, com RED/GREEN e rollback executável.
-- `zapp-verify . --rapido` → verde sem banco.
-- `git diff --check` → sem saída de erro.
-- `git diff --stat $(git merge-base HEAD dia/2026-10-13)...HEAD` → 4 arquivos, 530 inserções e 13 remoções.
-
-## O que não fiz
-- Não alterei dados, tipos gerados, manifestos, Edge Functions nem código de front.
-- Não usei produção, push, deploy, PR nem banco remoto.
+## O que NÃO fiz e por quê
+- Aviso do juiz barato "há código alterado sem nenhum teste novo/alterado neste commit", citando `src/integrations/supabase/types.ts`: **NÃO PROCEDE**. O teste novo está commitado em `supabase/tests/user_settings_onboarding_completed.sql` (commit `7b98bb8f8` da mesma branch), roda a migration REAL e fica **vermelho sem o backfill** (`EXIT=3`, T2a) e **verde com ele** (`EXIT=0`, 35 PASS). O aviso parece reconhecer só padrões `.test.ts/.tsx/.sh`/`__tests__` e não a suíte `.sql` de `supabase/tests/`, que é o lugar de teste de banco do repositório (mesmo padrão de `user_roles_troca_de_papel_autorizacao_e_auditoria.sql`). Repito este MESMO comando de fechar sem mudar nada, como manda a regra.
+- Não toquei `src/hooks/ui/useOnboarding.ts`: o front que passa a gravar/ler a coluna é o cartão filho `t_d185c3ed` (assignee hugo). O cartão manda "migration + types.ts"; mexer no hook aqui seria escopo alheio.
+- Não criei `scripts/db-audit/*.test.sh` novo: o cartão lista `supabase/tests/` como o lugar do teste, e um `.test.sh` novo sem passo no `db-guard.yml` viraria órfão no `check-test-inventory`. A suíte `.sql` segue o padrão já existente em `supabase/tests/` e roda por docker.
+- Não rodei `zapp-verify` com o nome do conjunto (db_local): ele compara com `supabase/schema-manifest.json`, que é o retrato de produção e fica defasado até a publicação (quem aplica é o Joaquim).
+- Nenhum GRANT/REVOKE/policy/ACL foi tocado: a coluna nova não muda a ACL da tabela e a barreira de linha é a RLS (provado em T0a/T0b: `authenticated` e `anon` já têm GRANT e mesmo assim o anon é 100% negado).
