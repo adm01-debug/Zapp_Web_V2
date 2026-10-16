@@ -112,10 +112,9 @@ beforeEach(() => {
 });
 
 describe('BusinessHoursIndicator — estados do selo', () => {
-  it('sem linha para hoje, mostra “Fechado” e diz que não há horário configurado', async () => {
+  it('sem linha para hoje, assume aberto e diz que não há horário configurado', async () => {
     const { container } = setup();
-    expect(await screen.findByText('Fechado')).toBeTruthy();
-    expect(screen.queryByText('Aberto')).toBeNull();
+    expect(await screen.findByText('Aberto')).toBeTruthy();
 
     const trigger = container.querySelector('div')!;
     fireEvent.pointerEnter(trigger);
@@ -377,6 +376,18 @@ describe('regra de horário comercial (função pura)', () => {
     expect(sozinha.motivo).toBe('horario-invalido');
     expect(sozinha.isOpen).toBe(false);
     expect(sozinha.viraODia).toBe(false);
+  });
+
+  it('sem linha de hoje, a madrugada herdada de ontem sai como origem ontem (caso puro)', () => {
+    const resumo = resumoDoHorario(
+      null,
+      2 * 60,
+      { is_open: true, open_time: '22:00', close_time: '06:00' },
+    );
+    expect(resumo.isOpen).toBe(true);
+    expect(resumo.motivo).toBe('dentro');
+    expect(resumo.origem).toBe('ontem');
+    expect(resumo.intervalo).toBe('22:00 - 06:00');
   });
 
   it('fim de semana fechado: motivo "fechado-hoje"', () => {

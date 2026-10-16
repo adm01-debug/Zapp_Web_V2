@@ -98,9 +98,10 @@ export interface LinhaDeHorario {
 
 /**
  * Traduz a linha de `business_hours` do dia em estado do selo. Sem linha para
- * hoje não há expediente: a conexão é tratada como FECHADA (o pedido manda o
- * selo "Fechado" com "Sem horário configurado"). Início igual ao fim é
- * cadastro inválido — o selo não inventa "aberto".
+ * hoje não há configuração: a conexão segue tratada como aberta
+ * (comportamento existente da V2, fora do escopo desta correcao — a avaliacao
+ * da madrugada herdada de ontem acontece em `resumoDoHorario`, antes de
+ * devolver este resultado). Início igual ao fim é cadastro inválido.
  */
 export function resumoDoDia(
   dia: LinhaDeHorario | null | undefined,
@@ -108,7 +109,7 @@ export function resumoDoDia(
 ): ResumoDoDia {
   if (!dia) {
     return {
-      isOpen: false,
+      isOpen: true,
       motivo: 'sem-configuracao',
       viraODia: false,
       intervalo: null,
@@ -161,9 +162,8 @@ export function resumoDoDia(
 /**
  * A madrugada pertence ao dia anterior: uma janela noturna da véspera
  * (22:00→06:00 de sexta) mantém a conexão aberta no sábado cedo. A linha de
- * hoje decide primeiro; ontem só entra quando hoje não abre agora — inclusive
- * quando hoje nem tem linha (sem expediente próprio, a madrugada herdada
- * ainda vale).
+ * hoje decide primeiro; ontem é avaliada antes de devolver 'fechado' — ou
+ * 'sem-configuracao' com hoje ausente — para a madrugada herdada valer.
  */
 export function resumoDoHorario(
   hoje: LinhaDeHorario | null | undefined,
@@ -171,7 +171,9 @@ export function resumoDoHorario(
   ontem: LinhaDeHorario | null | undefined = null,
 ): ResumoDoDia {
   const resultadoDeHoje = resumoDoDia(hoje, agoraMinutos);
-  if (resultadoDeHoje.isOpen) return resultadoDeHoje;
+  if (resultadoDeHoje.isOpen && resultadoDeHoje.motivo !== 'sem-configuracao') {
+    return resultadoDeHoje;
+  }
 
   const fimDeOntem = minutosDoHorario(ontem?.close_time);
   const madrugadaDeOntem =
