@@ -24,7 +24,6 @@ import {
   CheckSquare,
   Heart,
   Send,
-  Download,
   HelpCircle,
 } from 'lucide-react';
 import {
@@ -58,18 +57,11 @@ import { CatalogBulkBar } from './CatalogBulkBar';
 const CatalogBulkSendDialog = lazy(() =>
   import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
 );
-// Y29 — a única gravação de CSV desta tela (histórico de envios) passa pela
-// porta com o gate de `profiles.can_download` (`triggerCsvDownload`).
-import { triggerCsvDownload } from './catalogExport';
-import { notifyDownloadBlocked } from '@/lib/downloadFile';
-import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   useCatalogSendHistory,
-  buildSendHistoryCsv,
-  sendHistoryFilename,
   type CatalogSendHistoryRow,
 } from '@/hooks/integrations/useCatalogSendHistory';
 import { fetchCatalogContactPreset } from '@/hooks/integrations/useCatalogContactPreset';
@@ -289,10 +281,6 @@ export const ExternalProductManagement: React.FC = () => {
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
   const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
 
-  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o CSV do histórico de envios passa
-  // pelo gate `profiles.can_download`.
-  const { canDownload } = useDownloadPermission();
-
   // E56 — recentes/mais enviados do rail (catalog_send_events).
   const { recent: recentSends, topSent } = useCatalogRecentSends();
 
@@ -382,19 +370,6 @@ export const ExternalProductManagement: React.FC = () => {
     () => filteredSendRows.slice((sentPage - 1) * sentPageSize, sentPage * sentPageSize),
     [filteredSendRows, sentPage, sentPageSize],
   );
-
-  /** CT-57 — CSV do que está na tela (filtro aplicado), como o CT-28 faz com a
-   * seleção. O builder é novo: o do CT-20 monta linha de PRODUTO do PromoGifts
-   * e não tem contato/agente/status. */
-  const handleExportSentHistory = useCallback(() => {
-    if (filteredSendRows.length === 0) return;
-    // Y29 / SEC-SAIDAS_DE_INFORMACAO-02 — sem `can_download` NADA é gerado:
-    // o builder nem roda (o CSV leva nome de contato e de agente).
-    if (!canDownload) { notifyDownloadBlocked(); return; }
-    const wrote = triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), sendHistoryFilename(new Date()), canDownload);
-    if (wrote === false) return;
-    toast.success(`${filteredSendRows.length} envio(s) exportado(s) em CSV`);
-  }, [filteredSendRows, canDownload]);
 
   // E47: seleção em massa
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -494,9 +469,8 @@ export const ExternalProductManagement: React.FC = () => {
   const getSubcategories = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
   /** R2-MOD-041 — filtros ATIVOS da listagem, sem paginação nem ordenação:
-   * a única lista que a grade usa para consultar a edge e que o "Exportar
-   * catálogo" tem de respeitar. Manter uma fonte só evita o defeito voltar
-   * quando um filtro novo entrar na grade e o CSV continuar sem ele. */
+   * a única lista que a grade usa para consultar a edge. Manter uma fonte só
+   * evita o defeito voltar quando um filtro novo entrar na grade. */
   const listingFilterParams = useCallback((): Record<string, unknown> => {
     const params: Record<string, unknown> = {};
     if (search) params.search = search;
@@ -1217,11 +1191,6 @@ export const ExternalProductManagement: React.FC = () => {
                 <SelectItem value="failed">Falhou</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportSentHistory} disabled={filteredSendRows.length === 0}>
-              <Download className="w-4 h-4" />
-              Exportar CSV
-            </Button>
           </div>
 
           {sendHistoryError ? (

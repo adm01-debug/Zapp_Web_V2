@@ -1,26 +1,21 @@
 /**
- * Y29 / SEC-SAIDAS_DE_INFORMACAO-02 (P0) — o CSV de histórico de envios leva
- * nome de cliente e de agente; ele só sai com `profiles.can_download`.
+ * Y29 / SEC-SAIDAS_DE_INFORMACAO-02 (P0) — a tela de gestão do catálogo (aba
+ * "Enviados") mostra o histórico de envios, que leva nome de cliente e de
+ * agente, mas NÃO oferece exportação: nada desse recorte sai do sistema.
  *
  * Aqui a TELA REAL (`ExternalProductManagement`, aba "Enviados") roda com o
- * `catalogExport` REAL (nada de mock no download): o clique no botão cai na
- * porta única de gravação. Sem permissão, nenhum `createObjectURL` e nenhum
- * clique de anchor acontecem; com permissão, o arquivo sai como antes.
+ * hook REAL servindo dois envios com contato e agente. A prova é a ausência do
+ * botão de exportação com a tabela ainda no ar (regra do dono: nenhuma
+ * informação sai do sistema).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
 const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn(), loading: vi.fn(() => 't1'), dismiss: vi.fn() }));
 vi.mock('sonner', () => ({ toast: toastMock }));
-
-// Y29 — a permissão vem de `useDownloadPermission` (`profiles.can_download`).
-const permissao = vi.hoisted(() => ({ valor: false }));
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: permissao.valor, isLoading: false }),
-}));
 
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: (...args: unknown[]) => mockUseAuth(...args) }));
@@ -49,24 +44,11 @@ vi.mock('@/hooks/integrations/useCatalogRecentSends', async (importOriginal) => 
   return { ...actual, useCatalogRecentSends: () => mockRecentSends() };
 });
 
-// Y29 — o builder do CSV de envios é espiado SOBRE a implementação real: sem
-// permissão ele não pode nem rodar (o CSV leva nome de contato e de agente).
-// O hook `useCatalogSendHistory` do mesmo módulo continua REAL.
-const buildSendHistoryCsvSpy = vi.hoisted(() => vi.fn());
-vi.mock('@/hooks/integrations/useCatalogSendHistory', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/hooks/integrations/useCatalogSendHistory')>();
-  buildSendHistoryCsvSpy.mockImplementation(actual.buildSendHistoryCsv);
-  return {
-    ...actual,
-    buildSendHistoryCsv: (rows: Parameters<typeof actual.buildSendHistoryCsv>[0]) => buildSendHistoryCsvSpy(rows),
-  };
-});
-
 vi.mock('@/hooks/integrations/useCatalogContactPreset', () => ({ fetchCatalogContactPreset: vi.fn().mockResolvedValue(null) }));
 vi.mock('../SendProductDialog', () => ({ SendProductDialog: () => <div data-testid="send-dialog" /> }));
 vi.mock('../ExternalProductCard', () => ({ ExternalProductCard: () => <div data-testid="product-card" /> }));
 
-// `catalog_send_events` com dois envios (contato + agente) — o CSV do achado -02.
+// `catalog_send_events` com dois envios (contato + agente) — o dado sensível.
 const tabela = [
   {
     id: 'evt-1', product_id: 'prod-1', product_name: 'Caneta Azul', product_sku: 'CAN-1',
@@ -117,21 +99,8 @@ const renderManagement = () => {
   );
 };
 
-describe('Y29 — CSV de envios do catálogo passa pelo gate can_download', () => {
-  const createObjectURL = vi.fn(() => 'blob:y29-envios');
-  const revokeObjectURL = vi.fn();
-  const click = vi.fn();
-
+describe('Y29 — a tela de gestão do catálogo não exporta o histórico de envios', () => {
   beforeEach(() => {
-    createObjectURL.mockClear();
-    revokeObjectURL.mockClear();
-    click.mockClear();
-    toastMock.success.mockClear();
-    toastMock.error.mockClear();
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = revokeObjectURL;
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { click(); });
-
     window.history.replaceState(null, '', '/?tab=enviados');
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
@@ -148,7 +117,6 @@ describe('Y29 — CSV de envios do catálogo passa pelo gate can_download', () =
     mockFavorites.mockReturnValue({ favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false, isLoading: false, toggle: vi.fn() });
     mockRecentSends.mockReset();
     mockRecentSends.mockReturnValue({ recent: [], topSent: [] });
-    buildSendHistoryCsvSpy.mockClear();
   });
 
   afterEach(() => {
@@ -156,36 +124,15 @@ describe('Y29 — CSV de envios do catálogo passa pelo gate can_download', () =
     window.history.replaceState(null, '', '/');
   });
 
-  it('sem permissão o CSV com nome de contato/agente não é gerado', async () => {
-    permissao.valor = false;
+  it('sem botão de exportação e com a tabela (contato/agente) ainda na tela', async () => {
     renderManagement();
 
     await waitFor(() => expect(screen.getByText(/de 2 envio/)).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }));
-
-    await waitFor(() => expect(toastMock.error).toHaveBeenCalled());
-    expect(buildSendHistoryCsvSpy).not.toHaveBeenCalled();
-    expect(createObjectURL).not.toHaveBeenCalled();
-    expect(click).not.toHaveBeenCalled();
-    expect(toastMock.success).not.toHaveBeenCalled();
-  });
-
-  it('com permissão o CSV é gerado como antes', async () => {
-    permissao.valor = true;
-    renderManagement();
-
-    await waitFor(() => expect(screen.getByText(/de 2 envio/)).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }));
-
-    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
-    expect(buildSendHistoryCsvSpy).toHaveBeenCalledTimes(1);
-    // O CSV que o builder REAL devolveu leva os nomes sintéticos da tabela de
-    // teste — prova de que o caminho com permissão continua inteiro.
-    const csvGerado = String(buildSendHistoryCsvSpy.mock.results[0]?.value);
-    expect(csvGerado).toContain('Maria Silva');
-    expect(csvGerado).toContain('Ana Souza');
-    expect(click).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:y29-envios');
-    expect(toastMock.success).toHaveBeenCalledTimes(1);
+    // Nada de exportar: nem o botão antigo nem qualquer outro caminho.
+    expect(screen.queryByRole('button', { name: /Exportar/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Download|Baixar/ })).toBeNull();
+    // A tabela segue mostrando o recorte, com contato e agente.
+    expect(screen.getByText('Caneta Azul')).toBeInTheDocument();
+    expect(screen.getByText('Maria Silva')).toBeInTheDocument();
   });
 });

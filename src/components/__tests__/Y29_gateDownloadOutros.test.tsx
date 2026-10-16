@@ -1,10 +1,13 @@
 /**
  * Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — gate de download nos caminhos fora do
  * catálogo, chamando o HELPER REAL por dentro de cada componente/hook:
- *  - JSON de performance da equipe (`TeamPerformancePanel`);
  *  - anexo de e-mail (`useGmail.downloadAttachment`);
  *  - exceção declarada: códigos de backup MFA do PRÓPRIO usuário continuam
  *    baixando (`MFABackupCodes`).
+ *
+ * O `TeamPerformancePanel` saiu daqui: ele não oferece mais exportação (regra
+ * do dono: nenhuma informação sai do sistema). O bloco abaixo prova a ausência
+ * do botão e que as métricas seguem na tela.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
@@ -51,10 +54,7 @@ vi.mock('@/lib/gmailOAuth', () => ({
 
 import { useGmail } from '@/hooks/integrations/useGmail';
 
-describe('Y29 — JSON de performance da equipe (TeamPerformancePanel)', () => {
-  const createObjectURL = vi.fn(() => 'blob:y29-team');
-  const click = vi.fn();
-
+describe('Y29 — performance da equipe não oferece exportação', () => {
   const renderPanel = () => render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <TeamPerformancePanel conversationId="conv-12345678" />
@@ -64,37 +64,21 @@ describe('Y29 — JSON de performance da equipe (TeamPerformancePanel)', () => {
   beforeEach(() => {
     performanceMock.mockReset();
     performanceMock.mockReturnValue({ data: { messageCount: 5, activeParticipants: 2, avgResponseTimeMs: 1200 }, isLoading: false });
-    createObjectURL.mockClear();
-    click.mockClear();
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = vi.fn();
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { click(); });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.clearAllMocks();
-  });
-
-  it('sem permissão o exportar não grava nada', async () => {
-    permissao.valor = false;
+  it('não há botão de exportar e as métricas seguem na tela', () => {
     renderPanel();
 
-    fireEvent.click(screen.getByTitle('Exportar JSON'));
-
-    await waitFor(() => expect(toastMock.error).toHaveBeenCalled());
-    expect(createObjectURL).not.toHaveBeenCalled();
-    expect(click).not.toHaveBeenCalled();
-  });
-
-  it('com permissão grava o JSON como antes', () => {
-    permissao.valor = true;
-    renderPanel();
-
-    fireEvent.click(screen.getByTitle('Exportar JSON'));
-
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalledTimes(1);
+    // Nenhum caminho de exportação (regra do dono: nenhuma informação sai).
+    expect(screen.queryByTitle('Exportar JSON')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Exportar|Download|Baixar/ })).toBeNull();
+    // O painel continua mostrando o que sempre mostrou.
+    expect(screen.getByText('Performance (últimos 30 min)')).toBeInTheDocument();
+    expect(screen.getByText('Mensagens')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText('Ativos')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Resp. Média')).toBeInTheDocument();
   });
 });
 

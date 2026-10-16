@@ -8,17 +8,18 @@
  * arquivo sai como antes.
  *
  * Cobre:
- *  1. `triggerCsvDownload` (CSV do histórico de envios — a exportação de
- *     catálogo/seleção saiu do produto);
- *  2. `downloadImageAsBlob` (fotos do produto — `SendProductDialog`);
- *  3. o disparo do CSV de histórico de envios (`ExternalProductManagement`).
+ *  1. `downloadImageAsBlob` (fotos do produto — `SendProductDialog`);
+ *  2. o botão "Download (N fotos)" do `SendProductDialog`.
+ *
+ * A exportação CSV do catálogo e do histórico de envios saiu do produto (regra
+ * do dono: nenhuma informação sai do sistema); o gate ficou nos caminhos de
+ * mídia/anexo, que continuam existindo.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-import { triggerCsvDownload } from '../catalogExport';
 import { downloadImageAsBlob } from '../sendProductUtils';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -77,47 +78,6 @@ const mockProduct = (o: Partial<ExternalProduct> = {}): ExternalProduct => ({
     mockVariant({ id: 'v2', sku: 'CB-001-B', color_name: 'Verde', selected_thumbnail: 'https://x/b.jpg' }),
   ],
   ...o,
-});
-
-describe('Y29 — CSV do histórico de envios (triggerCsvDownload)', () => {
-  const createObjectURL = vi.fn(() => 'blob:y29-csv');
-  const revokeObjectURL = vi.fn();
-  const click = vi.fn();
-
-  beforeEach(() => {
-    createObjectURL.mockClear();
-    revokeObjectURL.mockClear();
-    click.mockClear();
-    toastMock.success.mockClear();
-    toastMock.error.mockClear();
-    toastMock.dismiss.mockClear();
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = revokeObjectURL;
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { click(); });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.clearAllMocks();
-  });
-
-  it('sem permissão o CSV do histórico não é gravado e o sucesso não é anunciado', () => {
-    const entregou = triggerCsvDownload('\uFEFFA,B\n1,2', 'catalogo_enviados_20261009.csv', false);
-
-    expect(entregou).toBe(false);
-    expect(createObjectURL).not.toHaveBeenCalled();
-    expect(click).not.toHaveBeenCalled();
-    expect(toastMock.error).toHaveBeenCalledTimes(1);
-  });
-
-  it('com permissão o CSV é gravado e a URL é revogada', () => {
-    const entregou = triggerCsvDownload('\uFEFFA,B\n1,2', 'catalogo_selecao_20261009.csv', true);
-
-    expect(entregou).toBe(true);
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:y29-csv');
-    expect(document.querySelector('a[download="catalogo_selecao_20261009.csv"]')).toBeNull();
-  });
 });
 
 describe('Y29 — fotos do produto (downloadImageAsBlob, usado pelo SendProductDialog)', () => {
