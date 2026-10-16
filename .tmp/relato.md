@@ -1,120 +1,38 @@
 Especialista: workersql
-Especialista: worker (sql) (area-sql-banco)
 
-# fix(db-auth): update_own_profile nao aceita mais e-mail e volta a funcionar no schema real
+## O que mudou e por quê
+- supabase/migrations/20261011150527_feature_flags_rollout.sql: migration ADITIVA que (1) acrescenta rollout_percentage int not null default 100 check (0..100), allowed_roles text[] not null default '{}', allowed_user_ids uuid[] not null default '{}', blocked_user_ids uuid[] not null default '{}', expires_at timestamptz null e metadata jsonb not null default '{}' em public.feature_flags (linha existente continua 100%/sem restrição); (2) cria public.evaluate_feature_flags() SECURITY DEFINER, SET search_path = pg_catalog, public, que exige auth.uid() (RAISE 42501 sem JWT) e devolve text[] só com as chaves LIGADAS para o usuário, nesta ordem: enabled → não expirada → não bloqueado → (allowed_user_ids OU ((allowed_roles vazio OU papel) E (100% OU hash estável de user||key mod 100 < percentual))); (3) troca a RLS: SELECT só is_admin_or_supervisor(), INSERT/UPDATE/DELETE só is_admin() (some o USING (true) da policy original), RPC revogada do PUBLIC/anon e concedida só a authenticated; (4) semeia idempotente as 11 flags do cartão DESLIGADAS (enabled=false, rollout 0) sem tocar as existentes. Sem 'chat_scheduled_dispatch', como o cartão pede.
+- scripts/db-audit/feature-flags-rollout.test.sh: prova em PostgreSQL 17 descartável que aplica o SQL REAL da migration, roda como anon/authenticated/service roles próprios e cobre percentual (0/50/100), papel, bloqueado vence permitido, expiração, listas que não vazam, agente não lê a tabela e admin escreve. Tem 2 mutações (tira a linha do bloqueio; reabre USING (true)) que comprovam que o contrato não é tautológico.
+- src/integrations/supabase/types.ts: tipos gerados atualizados com as 6 colunas e a função (o passo "tipos" do zapp-verify revalida isto).
+- .github/workflows/db-guard.yml: passo do teste novo (sem ele o check-test-inventory reprova o .test.sh como órfão, como manda o fluxo de banco do repositório).
 
-## O que estava errado
-`public.update_own_profile(...)` (criada em `20260404170153`) expunha o parametro
-`p_email` e gravava `profiles.email` direto — o e-mail de LOGIN (usado pelo Auth para
-redefinir senha) podia ser trocado por qualquer usuario autenticado, sem confirmacao.
-Ao subir o schema REAL no banco local descobri que a funcao estava pior do que
-parecia: o corpo referenciava `profiles.display_name`, coluna que NAO existe neste
-projeto (o catalogo oficial confirma: `profiles.name`), e passava `p_birthday TEXT`
-para a coluna `profiles.birthday DATE`. Ou seja: qualquer chamada estourava com
-`42703 column "display_name" does not exist`. A funcao estava morta e, junto com ela,
-o hook `useSecureProfileUpdate` (exportado, sem uso em tela).
+## Prova
+- vermelho antes (o defeito da V2, no mesmo teste antes de aplicar a migration):
+  - `[FAIL] ANTES ... o usuario autenticado comum LE a tabela inteira (policy USING true)` — o teste reproduz e exige o defeito ANTES.
+  - `[OK] ANTES: a RPC de avaliacao nao existe = t` / `[OK] ANTES: nao ha coluna rollout_percentage = 0`.
+- verde depois: `bash scripts/db-audit/feature-flags-rollout.test.sh` → exit 0, 37 linhas [OK], fechando em `[OK] contrato da etapa 5 (rollout de feature_flags) verificado: 9 assercoes (postgres:17-alpine)`.
+  - `[OK] rollout 50: 523/1000 ids receberam (perto da metade, hash distribuido)`
+  - `[OK] DEPOIS: agente comum NAO le a tabela = f` / `[OK] DEPOIS: admin le a tabela = t` / `[OK] DEPOIS: supervisor le a tabela = t` / `[OK] DEPOIS: has_table_privilege(anon, feature_flags, SELECT) = f`
+  - `[OK] DEPOIS: anon e barrado (42501)` / `[OK] DEPOIS: sem JWT e barrado (42501, exige auth.uid())` / `[OK] DEPOIS: has_function_privilege(authenticated, evaluate_feature_flags, EXECUTE) = t`
+  - `[OK] DEPOIS: a resposta nao contem o uuid do usuario = 0` (as listas não saem)
+  - `[OK] MUTACAO A: sem o bloqueio o contrato FALHA como esperado` / `[OK] MUTACAO B: com a leitura aberta o contrato FALHA como esperado`
+- `bun run db:guard` → `OK: nenhuma violacao nova.` + `arquivos validos em supabase/migrations: 817`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (73s)` com `OK dependencias / db_guard / tipos / lint / migrations` (o passo `tipos` revalida o types.ts contra o schema).
+- `hermes-db-migrar supabase/migrations/20261011150527_feature_flags_rollout.sql` → `APLICADA no banco LOCAL 'v2-26101112023c21' (produção não foi tocada)`; o `up` aplicou a migration do zero no banco local, sem falha.
+- Rollback: linha `-- Rollback:` no cabeçalho derruba a RPC, as 4 policies, apaga as 11 flags semeadas e as colunas, e recria as policies originais (SELECT authenticated + escrita admin FOR ALL) — inverso executável na ordem.
 
-## O que fiz
-- Migration nova `20261014023945_update_own_profile_sem_email.sql`:
-  derruba a assinatura de 6 parametros e recria `update_own_profile` com 5
-  (`p_display_name, p_avatar_url, p_phone, p_signature, p_birthday`) — o caminho do
-  e-mail deixa de existir (42883 para quem tentar). De proposito NAO "conserto" o
-  e-mail por outro caminho: e-mail de login so muda pelo fluxo do Auth.
-- No mesmo corpo, alinho a funcao ao schema real: `p_display_name -> profiles.name`
-  (mesmo mapeamento que `get_identity_matrix` ja usa: `p.name AS display_name`) e
-  `p_birthday` convertido para DATE (`NULLIF(...,'')::date`). Sem isso eu nao teria
-  como PROVAR nada num schema real — a funcao continuaria morta.
-- Grants explicitos: `REVOKE ALL ... FROM PUBLIC, anon` + `GRANT EXECUTE` para
-  `authenticated` e `service_role`. Antes o EXECUTE herdado de PUBLIC deixava o
-  `anon` chamar o RPC.
-- Front ja estava ajustado no rascunho do cartao: `useSecureProfile.ts` parou de
-  mandar `p_email`, e `types.ts` reflete a assinatura nova.
-- Prova nova `supabase/tests/update_own_profile_sem_email.sql` (banco descartavel,
-  migrations REAIS aplicadas por `\i`, sempre como papel real `SET LOCAL ROLE`):
-  BLOCO A mostra o estado anterior (assinatura com `p_email` + corpo quebrado);
-  BLOCO B mostra a correcao (assinatura morta, `anon` 42501, e-mail intacto apos
-  update legitimo, birthday invalido estoura 22007 sem efeito parcial, guarda de
-  privilegio de `profiles` continua armada, `role/access_level` intactos).
-- `-- Rollback:` com o inverso executavel (recria a versao de 6 parametros com o
-  corpo anterior e devolve os grants). Rodei os statements do rollback num Postgres
-  descartavel: volta a assinatura de 6 e o EXECUTE de `authenticated`.
+## Arquivos do commit (5) e escopo
+- supabase/migrations/20261011150527_feature_flags_rollout.sql — listado no cartão.
+- scripts/db-audit/feature-flags-rollout.test.sh — "testes de banco", listado no cartão.
+- src/integrations/supabase/types.ts — "gerado", listado no cartão.
+- .github/workflows/db-guard.yml — indispensável: o check-test-inventory reprova como ÓRFÃO todo .test.sh sem passo no CI, e o próprio fluxo de banco do cartão é que manda registrar o teste ali (mesmo padrão dos vizinhos). Sem o passo, o teste não roda no CI.
+- .tmp/relato.md — este relato; o repo rastreia esse caminho (já vinha versionado), então ele entra no commit (o fechar exige árvore limpa).
 
-## Efeitos colaterais verificados (passada obrigatoria)
-- A migration e so DDL: nao escreve dado, nao dispara gatilho de `updated_at`.
-- O UPDATE do RPC continua sendo UMA instrucao (falha = nada aplicado) e nao toca
-  `role`, `permissions` nem `access_level` (a guarda de privilegio nao bloqueia).
-- A resposta/erro nao diferencia quem existe de quem nao existe (nao ha lookup de
-  e-mail; a assinatura simplesmente nao aceita o parametro).
-- Nenhum GRANT/papel/ACL alem dos grants do proprio RPC.
+## Pontos do juiz barato
+- "código alterado sem teste: src/integrations/supabase/types.ts" não procede: types.ts é artefato GERADO do mesmo schema da migration; a prova do defeito (vermelho→verde) está em scripts/db-audit/feature-flags-rollout.test.sh, que é novo e está neste commit, e o passo `tipos` do `zapp-verify . --rapido` revalida o types.ts contra o banco aplicado. Não existe teste de unidade cabível para um arquivo gerado.
 
-## Fora do escopo (registro)
-- `supabase/schema-manifest.json` e `schema-catalog.json` ainda mostram a assinatura
-  antiga: sao gerados a partir da base oficial pelo fluxo `types-sync`, nao editados
-  a mao aqui (o cartao pede para nao mexer).
-- O hook `useSecureProfileUpdate` nao e usado em nenhuma tela; deixei funcionando,
-  mas nao inventei consumidor.
-
-## Prova (saida real)
-
-banco descartavel (migrations reais, como papel real):
-```
-PASS [A1 a assinatura de 6 parametros (com p_email) existe no estado anterior] -> true
-PASS [A2 o RPC herdado estoura em qualquer chamada (coluna display_name inexistente)] -> ERRO 42703 column "display_name" does not exist
-PASS [B1 a assinatura de 6 parametros (com p_email) NAO existe mais] -> false
-PASS [B2 a assinatura viva tem 5 parametros e nenhum p_email] -> true
-PASS [T1 authenticated nao consegue mais passar e-mail ao RPC] -> ERRO 42883 function public.update_own_profile(unknown, unknown, unknown, unknown, unknown, unknown) does not exist
-PASS [T2 authenticated atualiza os campos nao sensiveis (true)] -> OK true
-PASS [T2b profiles.name mudou] -> Nome Legitimo
-PASS [T2e o e-mail continua o mesmo depois do update legitimo] -> original@example.com
-PASS [T3 birthday invalido estoura 22007] -> ERRO 22007 invalid input syntax for type date: "ontem"
-PASS [T5 anon nao executa o RPC (42501)] -> ERRO 42501 permission denied for function update_own_profile
-PASS [T5c anon NAO tem EXECUTE] -> false
-PASS [T6 o UPDATE do RPC nao escalou papel/permissao/access_level] -> agent|{}|basic
-R2-DB-030 OK
-EXIT=0
-```
-sem a correcao (`-v sem_correcao=1`), o teste FALHA:
-```
-ERROR: R2-DB-030 FALHOU [B1 a assinatura de 6 parametros (com p_email) NAO existe mais]: esperado false, obtido true
-EXIT=3
-```
-banco LOCAL da tarefa (schema real, migration aplicada por `hermes-db-migrar`):
-```
-PASS [L2 authenticated nao passa mais e-mail ao RPC] -> ERRO 42883 ...
-PASS [L3 authenticated atualiza campos nao sensiveis (true)] -> OK true
-PASS [L3b name/phone/birthday mudaram no schema real] -> Nome Legitimo|11988887777|2026-10-14
-PASS [L4 anon nao executa o RPC (42501)] -> ERRO 42501 permission denied for function update_own_profile
-PASS [L6 o UPDATE do RPC nao escalou papel/access_level] -> agent|basic
-R2-DB-030-LOCAL OK
-EXIT=0
-```
-rollback do migration (statements `-- Rollback:` executados de verdade):
-```
-apos_migration assinatura_6=false
-apos_rollback assinatura_6=true
-apos_rollback assinatura_5=false
-apos_rollback authenticated_exec=true
-ROLLBACK_TEST_OK
-EXIT=0
-```
-
-commit: 767a80dd01
-
-## Sobre o alarme "arquivo fora do escopo: src/integrations/supabase/types.ts"
-Foi indispensável e é um par da MESMA mudança: `types.ts` é a tipagem do cliente
-Supabase que descreve os argumentos de `update_own_profile`. Se eu tirasse `p_email`
-do RPC e do hook mas deixasse o tipo, o TypeScript continuaria oferecendo `p_email`
-como argumento válido — exatamente o caminho que este cartão fecha — e o erro só
-apareceria em produção (42883). A edição é de uma linha (remove `p_email?: string`
-dos Args) e é o que uma regeração `gen-types` produziria depois do merge; não mexi
-em `schema-manifest.json`/`schema-catalog.json` de propósito (gerados do banco
-oficial pelo fluxo `types-sync`). Rodando o MESMO comando de fechar de novo.
-
-## Sobre o alarme "código alterado sem teste"
-O teste NASCEU neste cartão e está no commit 767a80dd01:
-`supabase/tests/update_own_profile_sem_email.sql` (banco descartável, migrations
-reais, papel real; vermelho com `-v sem_correcao=1`, verde sem ele), mais a prova
-no banco LOCAL da tarefa em `.tmp/db_local_update_own_profile.sql`. As duas mudanças
-em `src/**` são a ponta de cliente do MESMO contrato (tirar `p_email` do hook e da
-tipagem gerada) — não há lógica de app a testar ali; o que prova o defeito é a suíte
-de banco. Rodando o MESMO comando de fechar de novo.
+## O que NÃO fiz e por quê
+- Ledger de migrations: no MODO_V2 o `hermes-db-migrar` só aplica no banco LOCAL e não grava em `supabase_migrations.schema_migrations` (registro no ledger é do apply pós-merge, pela trilha de banco; docs/MIGRATIONS.md). Não toquei produção.
+- A leitura da tabela passa a ser restrita a admin/supervisor: o app comum deve consumir `evaluate_feature_flags()`. O hook `src/hooks/system/useFeatureFlag.ts` (área hooks/telas) ainda lê `feature_flags` direto e vai receber 0 linhas para agente — deixei comentário no cartão para o especialista de hooks trocar pela RPC. Fora da minha área, não editei.
+- Não alterei `supabase/schema-manifest.json`/`schema-catalog.json`: são retrato do banco canônico, sincronizados por job próprio.
+- Sem push/PR/deploy (só o Joaquim autoriza).
