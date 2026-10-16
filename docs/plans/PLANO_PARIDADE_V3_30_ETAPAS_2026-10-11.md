@@ -160,3 +160,65 @@ Total acompanhado: **140 cartões**. Reconciliação com 124 achados: 97 com car
 - 7 entregas integradas na branch do dia e validadas por mim, mecânica e semanticamente: `SL1`, `PH1`, `CP1`, `TF1`, `C5`+refazer, `C8a`+refazer e `D0`+refazer.
 - 21 entregas foram recusadas pelo revisor. Cada uma já tem o refazer criado (máximo de 2 rodadas, roteado para `senior` ou `designer`).
 - Lição operacional: o integrador ficou desligado das 11:46 às 13:33 por um laço manual de lote grande de outra sessão. Os documentos do checkout principal foram "resgatados" para a branch `resgate/checkout-principal-20261011` e restaurados. Cópia durável em `~/arquitetura-v2/paridade-v3/docs/`.
+
+## 10. Documento 01-frontend (11/10/2026, noite): faixa M, 48 cartões
+
+A auditoria do `01-frontend.md` da V3 (relatório da parte 6) cobre o shell, as rotas e os guardas, a autenticação e as 28 páginas de administração. Ela abriu uma frente além do chat. Os cartões entram como etapas complementares, na mesma governança de portões, acompanhamento e validação:
+
+| Etapa complementar | Cartões |
+|---|---|
+| 31 Acesso, rotas e recuperação de erro | `SH1`..`SH7` |
+| 32 Autenticação (esqueci a senha, cadastro público, polimento) | `PW1`, `PW2`, `SG1`, `AU2`, `QD1` |
+| 33 Alertas de SLA (histórico, preferências, entregas e leituras) | `SA1`..`SA4` |
+| 34 Mensagens com falha operáveis | `FQ1`..`FQ3` |
+| 35 Sala de crise, transferências e pausa de instância | `WR1`, `WR2`, `TV1`, `IP1`..`IP3` |
+| 36 Observabilidade (Evolution, webhook, HMAC, navegador) | `OB1`..`OB3`, `HM1`, `HM2`, `TE1` |
+| 37 Automações que executam de verdade | `AT1`..`AT3` |
+| 38 Administração (departamentos, login, segredos, e-mail, filas, cron, atendentes) | `DP1`, `DP2`, `LA1`, `LA2`, `GS1`, `GS2`, `EH1`, `EH2`, `QA1`, `QA2`, `CR1`, `CR2`, `AO1` |
+| 39 Regra do dono | `EX1` (remover "Export Auto") |
+
+Total acompanhado: **188 cartões**. Reconciliação: 148 achados, sendo 111 com cartão e 37 descartados com motivo.
+
+Estado às 19h45:
+- 22 dos 48 cartões novos já foram concluídos pelos agentes.
+- As entregas desta frente na fila do integrador estão assim: 26 prontas, 7 integradas e 35 recusadas, todas estas com refazer.
+- O integrador trabalha em lotes com bissecção. A fila geral tem cerca de 400 entregas prontas.
+
+## 11. 12/10/2026: urgentes de segurança, faixas N e O e destravamento das linhagens
+
+### Urgentes (prioridade 10)
+
+| Cartões | Falha |
+|---|---|
+| `PR0` (edgar), `PR0b` (iris) | Um supervisor aprova a redefinição de senha de qualquer conta e recebe o link de recuperação na resposta da função: é tomada da conta do admin. Além disso, o e-mail nunca é enviado, embora a tela anuncie que foi. |
+| `CX0` (iris), `CX0b` (workersql) | "Excluir conexão" não pede confirmação e está liberado a supervisor no menu, no banco e na Edge. |
+| `NP1` (hugo) | Quem é barrado pela política de rede (IP/país) vê só "Access denied", em inglês. |
+
+### Faixa N: documento 02-features-batch1 (etapa complementar 40)
+
+- `ET1`..`ET3`: modelos de e-mail.
+- `RR1`, `RR2`: regras de roteamento que de fato roteiam.
+
+### Faixa O: segunda passada do 01-frontend (etapas complementares 41 a 47)
+
+| Etapa | Cartões |
+|---|---|
+| 41 SLA por fila, resolução, base de conhecimento na conversa, previsão real | `SQ1`..`SQ3`, `SR1`, `KB1`, `DF1`, `DF2` |
+| 42 E-mail: assinatura, SLA, Cc/Cco e histórico citado | `EA1`, `EA2`, `EF1`, `EF2`, `EC1` |
+| 43 Follow-up que executa | `FU1`..`FU3` |
+| 44 Conexões: reconexão, código, QR, Cloud API, auditoria, busca, n8n | `RC1`..`RC3`, `PC1`, `PC2`, `QH1`..`QH3`, `CA1`, `CA2`, `CN1`, `NX1` |
+| 45 LGPD: fila de exclusão, tela aberta, consentimento por contato | `LG1`, `LG2`, `CS1`, `CS2` |
+| 46 Moldura: alertas globais e saúde | `GL1`..`GL5`, `HS1` |
+| 47 Administração: fila do supervisor, sessões, convite, alertas de limite, exportação | `SV1`, `SV2`, `SS1`, `SS2`, `IV1`, `IV2`, `RA1`, `RA2`, `EX2` |
+
+### Destravamento (governança)
+
+- **Linhagens esgotadas.** Na terceira recusa, a entrega vai para a caixa de decisões e ninguém a retoma. Fiz uma rodada final com o parecer do revisor e a correção exata para:
+  - A1, F1, T1r, ED1, AG2r, MP1 e SH3;
+  - depois, T1, A1, F1 e C2 de novo.
+- **Conflitos com a branch do dia.** 31 retomadas por rebase, criadas com a mesma chave de idempotência do `devolver.py`, que estava atrasado com cerca de 205 conflitos na fila geral.
+- **Refazer sem responsável.** RL1, GP1, FL1, TG1 e VZ1 foram atribuídos ao `senior`.
+- **Detecção automática.** `linhagens.py` passou a rodar no ciclo de 10 minutos e acusa linhagem sem saída e cartão sem responsável.
+- **Títulos cortados.** O portão, o validador e a checagem comparam a linhagem pelos 90 primeiros caracteres do título.
+
+**Total acompanhado:** 244 cartões. **Reconciliação:** 193 achados, 138 com cartão e 55 descartados com motivo, sem erros.
