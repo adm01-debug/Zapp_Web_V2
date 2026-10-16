@@ -25,7 +25,7 @@ const estado = vi.hoisted(() => ({
   onOpenChange: undefined as ((v: boolean) => void) | undefined,
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
-  getPublicUrl: vi.fn(),
+  createSignedUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -122,8 +122,11 @@ vi.mock('@/integrations/supabase/client', () => {
         estado.rpcs.push(nome);
         return { data: null, error: null };
       },
-      auth: { getSession: async () => ({ data: { session: null } }) },
-      storage: { from: () => ({ upload: estado.upload, getPublicUrl: estado.getPublicUrl }) },
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        getUser: async () => ({ data: { user: { id: 'u1' } } }),
+      },
+      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -214,7 +217,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     rejeicoesNaoTratadas.length = 0;
     process.on('unhandledRejection', guardarRejeicaoNaoTratada);
     estado.upload.mockReset().mockResolvedValue({ error: null });
-    estado.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+    estado.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
 
