@@ -7,8 +7,11 @@ export interface ServerLoginLock {
   remainingTime: number;
 }
 
+export type ServerLoginMode = 'login' | 'verify';
+
 export type ServerLoginResult =
   | { ok: true; accessToken: string; refreshToken: string }
+  | { ok: true; mode: 'verify' }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: true; error: string };
@@ -77,8 +80,17 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
  * corpo invalido) vira `unavailable`.
  * O chamador deve falhar fechado e nunca recorrer ao GoTrue diretamente, para que
  * o lockout continue sendo aplicado pela Edge.
+ *
+ * `mode: 'verify'` (R2-AUTH-023) confere a senha SEM emitir sessao: a edge valida
+ * as credenciais e revoga a sessao temporaria antes de responder `{ok:true}`. E o
+ * caminho da reautenticacao — `setSession` com um token novo rebaixava a sessao
+ * do usuario de AAL2 para AAL1 a cada acao sensivel.
  */
-export async function serverLogin(email: string, password: string): Promise<ServerLoginResult> {
+export async function serverLogin(
+  email: string,
+  password: string,
+  mode: ServerLoginMode = 'login',
+): Promise<ServerLoginResult> {
   let response: Response;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AUTH_LOGIN_TIMEOUT_MS);
@@ -92,7 +104,12 @@ export async function serverLogin(email: string, password: string): Promise<Serv
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ email, password, userAgent: navigator.userAgent }),
+      body: JSON.stringify({
+        email,
+        password,
+        userAgent: navigator.userAgent,
+        ...(mode === 'verify' ? { mode } : {}),
+      }),
       signal: controller.signal,
 
     });
@@ -117,6 +134,12 @@ export async function serverLogin(email: string, password: string): Promise<Serv
   }
 
   if (response.ok) {
+    if (mode === 'verify') {
+      // A edge em modo verify NAO emite sessao: o 200 e exatamente `{ok:true}`.
+      // Corpo diferente disso e falha fechada (nao ha o que confirmar).
+      if (body?.ok === true) return { ok: true, mode: 'verify' };
+      return { ok: false, unavailable: true, error: 'auth-login: verify sem confirmacao' };
+    }
     if (body && typeof body.access_token === 'string' && typeof body.refresh_token === 'string') {
       return { ok: true, accessToken: body.access_token, refreshToken: body.refresh_token };
     }
