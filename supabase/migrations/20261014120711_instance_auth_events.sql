@@ -255,19 +255,35 @@ REVOKE ALL ON FUNCTION public.purge_instance_auth_events(integer)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.purge_instance_auth_events(integer) TO service_role;
 
--- Agendamento: 1x/dia as 03:45 UTC retendo 30 dias. Idempotente e tolerante a
--- ambiente sem pg_cron (o banco local da tarefa desliga o agendador).
+-- Agendamento: 1x/dia as 03:45 UTC retendo 30 dias. Tolerante a base SEM pg_cron
+-- (extensao ausente, instalada sob outro schema ou com o schema cron removido):
+-- a guarda e' a EXISTENCIA de cron.job (to_regclass), nao a linha em pg_extension,
+-- e o EXCEPTION cobre a remocao no meio do caminho. Sem agenda, o expurgo segue
+-- disponivel via SELECT public.purge_instance_auth_events(30) como service_role.
 DO $agenda_purge$
+DECLARE
+  v_tem_agenda boolean;
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
-    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'purge-instance-auth-events') THEN
-      PERFORM cron.unschedule('purge-instance-auth-events');
-    END IF;
-    PERFORM cron.schedule(
-      'purge-instance-auth-events',
-      '45 3 * * *',
-      'SELECT public.purge_instance_auth_events(30)'
-    );
+  SELECT to_regclass('cron.job') IS NOT NULL INTO v_tem_agenda;
+  IF NOT v_tem_agenda THEN
+    RAISE NOTICE 'pg_cron ausente: agendamento do expurgo ignorado (purge_instance_auth_events segue disponivel)';
+    RETURN;
   END IF;
+
+  BEGIN
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'purge-instance-auth-events') THEN
+      PERFORM cron.unschedule(job_name := 'purge-instance-auth-events');
+    END IF;
+    -- Notacao NOMEADA (job_name/schedule/command, como na assinatura real
+    -- schedule(job_name text, schedule text, command text)): a ligacao nao
+    -- depende da ordem posicional dos argumentos.
+    PERFORM cron.schedule(
+      job_name := 'purge-instance-auth-events',
+      schedule := '45 3 * * *',
+      command  := 'SELECT public.purge_instance_auth_events(30)'
+    );
+  EXCEPTION WHEN undefined_table THEN
+    RAISE NOTICE 'pg_cron removido durante o agendamento: expurgo nao agendado (purge_instance_auth_events segue disponivel)';
+  END;
 END
 $agenda_purge$;
