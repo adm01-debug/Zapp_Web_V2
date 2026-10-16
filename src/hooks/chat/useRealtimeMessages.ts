@@ -263,7 +263,14 @@ export function useRealtimeMessages() {
         )
       );
     } catch (err) {
+      // Falha silenciosa é mentira: o contador local continuava marcando não lidas
+      // e o operador não sabia que a leitura não foi registrada no banco. O estado
+      // só é comitado no sucesso (linha acima), então nada aqui precisa reverter —
+      // o contador segue com o valor REAL da conversa.
       log.error('Error in markAsRead hook:', err);
+      void import('sonner').then(({ toast }) => {
+        toast.error('Não foi possível marcar a conversa como lida');
+      });
     }
   };
 

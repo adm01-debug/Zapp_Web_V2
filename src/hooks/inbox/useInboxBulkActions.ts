@@ -3,6 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUndoableAction } from '@/hooks/system/useUndoableAction';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+// `contacts.id`/`messages.contact_id` são uuid: id que não é uuid (link direto,
+// JID) faria o PostgREST responder 400 e o lote inteiro falharia. Mesma guarda
+// usada em `useCalls` — uma fonte só para o formato de uuid.
+import { isValidUUID } from '@/hooks/communication/useCalls';
 
 interface UseInboxBulkActionsProps {
   refetch: () => void;
@@ -80,19 +84,39 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
   const bulkMarkAsRead = useCallback(async () => {
     if (selectedIds.size === 0) return;
+    // Id que não é uuid nunca chega ao banco (400 do PostgREST derrubaria o lote
+    // inteiro). Sobrando zero id válido, não há o que gravar: avisa e sai.
+    const contactIds = Array.from(selectedIds).filter(isValidUUID);
+    if (contactIds.length === 0) {
+      toast.info('Nenhuma conversa válida na seleção');
+      return;
+    }
     setBulkLoading(true);
     try {
-      const contactIds = Array.from(selectedIds);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .in('contact_id', contactIds)
         // Só mensagens RECEBIDAS do contato: sem este filtro o lote também
         // zerava o `is_read` das mensagens enviadas pelo agente.
         .eq('sender', 'contact')
-        .eq('is_read', false);
+        .eq('is_read', false)
+        // O retorno é o que PROVA quantas conversas mudaram de estado: o toast
+        // antigo contava a seleção, não o efeito no banco (sucesso falso).
+        .select('contact_id');
       if (error) throw error;
-      toast.success(`${contactIds.length} conversa(s) marcada(s) como lida(s)`);
+      const contatosAfetados = new Set<string>();
+      for (const linha of data ?? []) {
+        if (linha.contact_id) contatosAfetados.add(linha.contact_id);
+      }
+      const marcadas = contatosAfetados.size;
+      // 0 linhas é aviso neutro, não sucesso: nada foi marcado (RLS filtrando ou
+      // nenhuma não lida entre os selecionados).
+      if (marcadas === 0) {
+        toast.info('Nenhuma mensagem não lida nessas conversas');
+      } else {
+        toast.success(`${marcadas} conversa(s) marcada(s) como lida(s)`);
+      }
       clearSelection();
       refetch();
     } catch {

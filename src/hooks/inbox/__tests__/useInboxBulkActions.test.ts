@@ -87,7 +87,9 @@ function buildChain(
       call.filters[column] = value;
       return chain;
     },
-    select: () => Promise.resolve({ data: result.data ?? null, error: result.error ?? null }),
+    // `.select()` devolve a MESMA cadeia promissória: o `delayUntil` (voo
+    // controlado) também vale quando o UPDATE pede as linhas de volta.
+    select: () => chain,
     then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => {
       const base = opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
       return base.then(onFulfilled, onRejected);
@@ -95,6 +97,14 @@ function buildChain(
   };
   return chain;
 }
+
+// `contacts.id` é uuid, e o lote agora corta id que não é uuid antes de gravar
+// (um JID/link direto faria o PostgREST responder 400). Cada rótulo curto do
+// teste é, portanto, um uuid estável — os nomes `c1`/`c2`/`c3` seguem os mesmos
+// cenários de antes.
+const c1 = '11111111-1111-4111-8111-111111111111';
+const c2 = '22222222-2222-4222-8222-222222222222';
+const c3 = '33333333-3333-4333-8333-333333333333';
 
 function conversation(contactId: string, name = `Contato ${contactId}`): ConversationWithMessages {
   return {
@@ -188,8 +198,8 @@ describe('useInboxBulkActions — seleção', () => {
     act(() => result.current.toggleSelectionMode());
     expect(result.current.selectionMode).toBe(true);
 
-    act(() => result.current.toggleSelection('c1'));
-    expect(result.current.selectedIds.has('c1')).toBe(true);
+    act(() => result.current.toggleSelection(c1));
+    expect(result.current.selectedIds.has(c1)).toBe(true);
 
     act(() => result.current.toggleSelectionMode());
     expect(result.current.selectionMode).toBe(false);
@@ -199,28 +209,28 @@ describe('useInboxBulkActions — seleção', () => {
   it('toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior)', () => {
     const { result } = renderInbox();
 
-    act(() => result.current.toggleSelection('c1'));
+    act(() => result.current.toggleSelection(c1));
     const antes = result.current.selectedIds;
 
-    act(() => result.current.toggleSelection('c2'));
-    expect(antes.has('c2')).toBe(false);
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    act(() => result.current.toggleSelection(c2));
+    expect(antes.has(c2)).toBe(false);
+    expect(result.current.selectedIds).toEqual(new Set([c1, c2]));
 
-    act(() => result.current.toggleSelection('c2'));
-    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+    act(() => result.current.toggleSelection(c2));
+    expect(result.current.selectedIds).toEqual(new Set([c1]));
   });
 
   it('selectAll entra no modo de seleção, pega todos os contatos e DEDUPLICA', () => {
     const { result } = renderInbox([
-      conversation('c1'),
-      conversation('c2'),
-      conversation('c1'),
+      conversation(c1),
+      conversation(c2),
+      conversation(c1),
     ]);
 
     act(() => result.current.selectAll());
 
     expect(result.current.selectionMode).toBe(true);
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(result.current.selectedIds).toEqual(new Set([c1, c2]));
     expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) selecionada(s)');
   });
 
@@ -234,21 +244,21 @@ describe('useInboxBulkActions — seleção', () => {
   });
 
   it('selectAll já dentro do modo de seleção re-seleciona tudo sem sair do modo', () => {
-    const { result } = renderInbox([conversation('c1'), conversation('c2')]);
+    const { result } = renderInbox([conversation(c1), conversation(c2)]);
 
     act(() => result.current.selectAll());
-    act(() => result.current.toggleSelection('c1'));
-    expect(result.current.selectedIds).toEqual(new Set(['c2']));
+    act(() => result.current.toggleSelection(c1));
+    expect(result.current.selectedIds).toEqual(new Set([c2]));
 
     // Já está em selectionMode: cai no ramo "não precisa ligar de novo".
     act(() => result.current.selectAll());
 
     expect(result.current.selectionMode).toBe(true);
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(result.current.selectedIds).toEqual(new Set([c1, c2]));
   });
 
   it('clearSelection limpa os ids e sai do modo de seleção', () => {
-    const { result } = renderInbox([conversation('c1')]);
+    const { result } = renderInbox([conversation(c1)]);
     act(() => result.current.selectAll());
 
     act(() => result.current.clearSelection());
@@ -271,8 +281,9 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
   });
 
   it('marca só as mensagens NÃO lidas RECEBIDAS (sender=contact) dos contatos selecionados e recarrega', async () => {
+    updateQueue.push({ data: [{ id: 'm1', contact_id: c1 }, { id: 'm2', contact_id: c2 }] });
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1', 'c2']);
+    selectIds(result, [c1, c2]);
 
     await act(async () => {
       await result.current.bulkMarkAsRead();
@@ -283,7 +294,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
       table: 'messages',
       op: 'update',
       payload: { is_read: true },
-      filters: { contact_id: ['c1', 'c2'], is_read: false, sender: 'contact' },
+      filters: { contact_id: [c1, c2], is_read: false, sender: 'contact' },
     });
     expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) marcada(s) como lida(s)');
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -291,10 +302,75 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
     expect(result.current.bulkLoading).toBe(false);
   });
 
+  it('id que não é uuid é descartado antes de gravar; só os válidos vão ao banco', async () => {
+    // Id não-uuid faria o PostgREST responder 400 e derrubaria o lote inteiro.
+    updateQueue.push({ data: [{ id: 'm1', contact_id: c1 }] });
+    const { result } = renderInbox();
+    selectIds(result, [c1, 'jid-5511999999999@s.whatsapp.net']);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0].filters.contact_id).toEqual([c1]);
+    expect(mocks.toast.success).toHaveBeenCalledWith('1 conversa(s) marcada(s) como lida(s)');
+  });
+
+  it('seleção só com id inválido: avisa e não toca o banco', async () => {
+    const { result } = renderInbox();
+    selectIds(result, ['contact-1']);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(recorded).toEqual([]);
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhuma conversa válida na seleção');
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    expect(result.current.bulkLoading).toBe(false);
+    expect(result.current.selectedIds.has('contact-1')).toBe(true);
+  });
+
+  it('UPDATE que afeta 0 linhas vira aviso neutro, nunca sucesso falso', async () => {
+    updateQueue.push({ data: [] });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(mocks.toast.info).toHaveBeenCalledWith('Nenhuma mensagem não lida nessas conversas');
+    expect(mocks.toast.success).not.toHaveBeenCalled();
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('parte da seleção afetada: o toast conta as conversas REALMENTE marcadas', async () => {
+    // c2 não tinha mensagem não lida: o banco devolve linhas só de c1 e c3.
+    updateQueue.push({
+      data: [
+        { id: 'm1', contact_id: c1 },
+        { id: 'm2', contact_id: c1 },
+        { id: 'm3', contact_id: c3 },
+      ],
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2, c3]);
+
+    await act(async () => {
+      await result.current.bulkMarkAsRead();
+    });
+
+    expect(mocks.toast.success).toHaveBeenCalledWith('2 conversa(s) marcada(s) como lida(s)');
+  });
+
   it('erro do banco (RLS): avisa, mantém a seleção e não recarrega', async () => {
     updateQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await result.current.bulkMarkAsRead();
@@ -302,7 +378,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
 
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao marcar como lido');
     expect(refetch).not.toHaveBeenCalled();
-    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(result.current.selectedIds.has(c1)).toBe(true);
     expect(result.current.bulkLoading).toBe(false);
   });
 
@@ -312,7 +388,7 @@ describe('useInboxBulkActions — bulkMarkAsRead', () => {
       release = resolve;
     });
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     let pending: Promise<void> | undefined;
     await act(async () => {
@@ -344,7 +420,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
   it('agente: uma RPC por contato, destino só em p_to_agent_id, limpa a seleção e recarrega', async () => {
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1', 'c2']);
+    selectIds(result, [c1, c2]);
 
     await act(async () => {
       await result.current.bulkTransfer('agent', 'ag-2');
@@ -352,8 +428,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
     expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
     expect(rpcCalls.map((c) => c.args)).toEqual([
-      { p_contact_id: 'c1', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
-      { p_contact_id: 'c2', p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
     ]);
     // Nada de UPDATE solto em contacts: o único caminho é a RPC atômica.
     expect(recorded).toEqual([]);
@@ -364,7 +440,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
   it('fila: manda p_to_queue_id e deixa p_to_agent_id nulo', async () => {
     const { result } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await result.current.bulkTransfer('queue', 'q-7');
@@ -372,7 +448,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
     expect(rpcCalls).toHaveLength(1);
     expect(rpcCalls[0].args).toEqual({
-      p_contact_id: 'c1',
+      p_contact_id: c1,
       p_to_agent_id: null,
       p_to_queue_id: 'q-7',
       p_note: null,
@@ -381,14 +457,14 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
   it('a mensagem opcional NÃO é persistida (p_note vai nulo)', async () => {
     const { result } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await result.current.bulkTransfer('agent', 'ag-2', 'recado do operador');
     });
 
     expect(rpcCalls[0].args).toEqual({
-      p_contact_id: 'c1',
+      p_contact_id: c1,
       p_to_agent_id: 'ag-2',
       p_to_queue_id: null,
       p_note: null,
@@ -396,9 +472,9 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
   });
 
   it('sucesso parcial: tenta os dois, avisa as contagens, mantém a seleção e rejeita', async () => {
-    rpcFailures.c2 = { message: 'contato sem permissao', code: '42501' };
+    rpcFailures[c2] = { message: 'contato sem permissao', code: '42501' };
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1', 'c2']);
+    selectIds(result, [c1, c2]);
 
     await act(async () => {
       await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toMatchObject({
@@ -407,21 +483,21 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     });
 
     // Não abortou no primeiro erro: tentou o lote inteiro.
-    expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual(['c1', 'c2']);
+    expect(rpcCalls.map((c) => c.args.p_contact_id)).toEqual([c1, c2]);
     expect(mocks.toast.error).toHaveBeenCalledWith(
       'Erro ao transferir contatos: 1 de 2 contato(s) transferido(s); 1 falharam',
     );
     expect(mocks.toast.success).not.toHaveBeenCalled();
-    expect(result.current.selectedIds.has('c1')).toBe(true);
-    expect(result.current.selectedIds.has('c2')).toBe(true);
+    expect(result.current.selectedIds.has(c1)).toBe(true);
+    expect(result.current.selectedIds.has(c2)).toBe(true);
     expect(refetch).not.toHaveBeenCalled();
     expect(result.current.bulkLoading).toBe(false);
   });
 
   it('todos falham: rejeita, avisa 0 de N, mantém a seleção e não recarrega', async () => {
-    rpcFailures.c1 = { message: 'rls', code: '42501' };
+    rpcFailures[c1] = { message: 'rls', code: '42501' };
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await expect(result.current.bulkTransfer('queue', 'q-1')).rejects.toMatchObject({ message: 'rls' });
@@ -430,7 +506,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(mocks.toast.error).toHaveBeenCalledWith(
       'Erro ao transferir contatos: 0 de 1 contato(s) transferido(s); 1 falharam',
     );
-    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(result.current.selectedIds.has(c1)).toBe(true);
     expect(refetch).not.toHaveBeenCalled();
     expect(result.current.bulkLoading).toBe(false);
   });
@@ -438,14 +514,14 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
   it('rejeição crua da RPC (rede): preserva o toast de erro, mantém a seleção e propaga', async () => {
     mocks.rpc.mockRejectedValue(new Error('network down'));
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await expect(result.current.bulkTransfer('agent', 'ag-2')).rejects.toThrow('network down');
     });
 
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao transferir contatos');
-    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(result.current.selectedIds.has(c1)).toBe(true);
     expect(refetch).not.toHaveBeenCalled();
     expect(result.current.bulkLoading).toBe(false);
   });
@@ -455,13 +531,13 @@ describe('useInboxBulkActions — bulkArchive', () => {
   it('lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato', async () => {
     selectQueue.push({
       data: [
-        { id: 'c1', assigned_to: 'ag-1' },
-        { id: 'c2', assigned_to: null },
+        { id: c1, assigned_to: 'ag-1' },
+        { id: c2, assigned_to: null },
       ],
       error: null,
     });
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1', 'c2']);
+    selectIds(result, [c1, c2]);
 
     await act(async () => {
       await result.current.bulkArchive();
@@ -471,14 +547,14 @@ describe('useInboxBulkActions — bulkArchive', () => {
       table: 'contacts',
       op: 'select',
       columns: 'id, assigned_to',
-      filters: { id: ['c1', 'c2'] },
+      filters: { id: [c1, c2] },
     });
     expect(mocks.execute).toHaveBeenCalledTimes(1);
     expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
     expect(contactUpdates()[0]).toMatchObject({
       payload: { assigned_to: null },
-      filters: { id: ['c1', 'c2'] },
+      filters: { id: [c1, c2] },
     });
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -489,8 +565,8 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     const restores = contactUpdates().slice(1);
     expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: 'c1' } });
-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: 'c2' } });
+    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: c1 } });
+    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: c2 } });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
@@ -506,10 +582,10 @@ describe('useInboxBulkActions — bulkArchive', () => {
   });
 
   it('erro no UPDATE do arquivamento: avisa, não recarrega e mantém a seleção', async () => {
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
+    selectQueue.push({ data: [{ id: c1, assigned_to: 'ag-1' }], error: null });
     updateQueue.push({ error: { message: 'rls update' } });
     const { result, refetch } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await result.current.bulkArchive();
@@ -517,7 +593,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
     expect(refetch).not.toHaveBeenCalled();
-    expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(result.current.selectedIds.has(c1)).toBe(true);
     expect(result.current.bulkLoading).toBe(false);
   });
 
@@ -526,18 +602,18 @@ describe('useInboxBulkActions — bulkArchive', () => {
     mocks.execute.mockImplementation(async (options: UndoOptions) => {
       lastUndo = options;
     });
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
+    selectQueue.push({ data: [{ id: c1, assigned_to: 'ag-1' }], error: null });
 
     const { result } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
     await act(async () => {
       await result.current.bulkArchive();
     });
-    expect(recorded[0].filters.id).toEqual(['c1']);
+    expect(recorded[0].filters.id).toEqual([c1]);
 
     // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
-    act(() => result.current.toggleSelection('c2'));
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    act(() => result.current.toggleSelection(c2));
+    expect(result.current.selectedIds).toEqual(new Set([c1, c2]));
 
     await act(async () => {
       await lastUndo?.action();
@@ -546,7 +622,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const archiveUpdate = contactUpdates().find(
       (call) => (call.payload as { assigned_to?: unknown })?.assigned_to === null,
     );
-    expect(archiveUpdate?.filters.id).toEqual(['c1']);
+    expect(archiveUpdate?.filters.id).toEqual([c1]);
   });
 
   // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
@@ -557,7 +633,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
   it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
     selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
     const { result } = renderInbox();
-    selectIds(result, ['c1']);
+    selectIds(result, [c1]);
 
     await act(async () => {
       await result.current.bulkArchive();
@@ -652,42 +728,43 @@ describe('useInboxBulkActions — handleBatchFetchAvatars', () => {
 
 describe('useInboxBulkActions — a seleção acompanha o filtro visível', () => {
   it('poda a seleção por interseção: o id que sai da lista filtrada não fica selecionado', () => {
-    const { result, rerender } = renderInboxComFiltro([conversation('c1'), conversation('c2')]);
+    const { result, rerender } = renderInboxComFiltro([conversation(c1), conversation(c2)]);
 
     act(() => result.current.selectAll());
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(result.current.selectedIds).toEqual(new Set([c1, c2]));
 
-    // Troca de chip/fila/busca: 'c2' deixa de aparecer.
-    rerender({ convs: [conversation('c1')] });
+    // Troca de chip/fila/busca: c2 deixa de aparecer.
+    rerender({ convs: [conversation(c1)] });
 
-    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+    expect(result.current.selectedIds).toEqual(new Set([c1]));
   });
 
   it('a ação em lote só atinge o que está visível: o contato escondido pelo filtro não vai para o banco', async () => {
+    updateQueue.push({ data: [{ id: 'm1', contact_id: c1 }] });
     const { result, rerender, refetch } = renderInboxComFiltro([
-      conversation('c1'),
-      conversation('c2'),
+      conversation(c1),
+      conversation(c2),
     ]);
     act(() => result.current.selectAll());
 
-    rerender({ convs: [conversation('c1')] });
+    rerender({ convs: [conversation(c1)] });
 
     await act(async () => {
       await result.current.bulkMarkAsRead();
     });
 
     expect(recorded).toHaveLength(1);
-    expect(recorded[0].filters).toEqual({ contact_id: ['c1'], is_read: false, sender: 'contact' });
+    expect(recorded[0].filters).toEqual({ contact_id: [c1], is_read: false, sender: 'contact' });
     expect(mocks.toast.success).toHaveBeenCalledWith('1 conversa(s) marcada(s) como lida(s)');
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('filtro que esvazia a lista limpa a seleção e nenhuma ação encontra alvo', async () => {
-    const { result, rerender } = renderInboxComFiltro([conversation('c1')]);
+    const { result, rerender } = renderInboxComFiltro([conversation(c1)]);
     act(() => result.current.toggleSelectionMode());
-    act(() => result.current.toggleSelection('c1'));
-    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+    act(() => result.current.toggleSelection(c1));
+    expect(result.current.selectedIds).toEqual(new Set([c1]));
 
     rerender({ convs: [] });
 
@@ -699,12 +776,12 @@ describe('useInboxBulkActions — a seleção acompanha o filtro visível', () =
   });
 
   it('lista filtrada que só troca a identidade do array, sem tirar ninguém, mantém a seleção', () => {
-    const { result, rerender } = renderInboxComFiltro([conversation('c1')]);
+    const { result, rerender } = renderInboxComFiltro([conversation(c1)]);
     act(() => result.current.selectAll());
 
     // Mesmos ids, array novo (o pai recalcula o filtro a cada render).
-    rerender({ convs: [conversation('c1')] });
+    rerender({ convs: [conversation(c1)] });
 
-    expect(result.current.selectedIds).toEqual(new Set(['c1']));
+    expect(result.current.selectedIds).toEqual(new Set([c1]));
   });
 });
