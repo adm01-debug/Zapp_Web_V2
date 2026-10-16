@@ -12,7 +12,7 @@ import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PushNotificationCard } from './PushNotificationCard';
-import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard } from './NotificationTypeCards';
+import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard, ConnectionAlertPreferencesCard } from './NotificationTypeCards';
 
 export function NotificationSettingsPanel() {
   const { settings, updateSettings, resetSettings, isQuietHours } = useNotificationSettings();
@@ -112,6 +112,7 @@ export function NotificationSettingsPanel() {
       </Card>
 
       <SentimentAlertCard settings={settings} updateSettings={updateSettings} />
+      <ConnectionAlertPreferencesCard />
       <PushNotificationCard />
       <QuietHoursCard settings={settings} updateSettings={updateSettings} isQuietHours={isQuietHours} />
 

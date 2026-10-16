@@ -50,6 +50,20 @@ vi.mock('@/utils/notificationSounds', () => ({
   requestNotificationPermission: vi.fn().mockResolvedValue('granted'),
 }));
 
+// O cartão "Alertas de Conexão" (PD-38) lê as preferências do usuário pelo hook,
+// que depende do AuthProvider — a tela é renderizada aqui sem provider, então o
+// hook entra falso (mesmo padrão do usePushNotifications acima).
+vi.mock('@/hooks/system/useConnectionAlertPreferences', () => ({
+  useConnectionAlertPreferences: () => ({
+    preferences: { push_enabled: true, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: true },
+    isLoading: false,
+    isSaving: false,
+    updatePreference: vi.fn(),
+    updatePreferenceAsync: vi.fn(),
+    shouldNotify: () => true,
+  }),
+}));
+
 vi.mock('@/hooks/ui/use-toast', () => ({
   toast: vi.fn(),
 }));
