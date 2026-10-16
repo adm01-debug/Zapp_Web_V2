@@ -737,20 +737,6 @@
       "sql-sha256": "1764f120e37b6bd8961741b1b7802412604f9b965886686c8ba145053083b9b4"
     },
     {
-      "version": "20260927600000",
-      "filename": "20260927600000_fix_multiplix_dispatch_start_sending.sql",
-      "file_sha256": "06de3c6909f9a89fbbe823df3922d477e3cce395845ccc71df7ce45ea780832e",
-      "file_sql_sha256": "9e4521edc6488ac691781acc3ddbf59570f74682c429d4daab813d372f5476a8",
-      "kind": "ledger-divergence/pinned-replay",
-      "ledger_name": "fix_multiplix_dispatch_start_sending",
-      "ledger_statements_sha256": "da7de148f88ed96984a42af7996182d2cbc7b537b78e5c54c2a80ec83caa912a",
-      "ledger_sql_sha256": "9e45354cc558b85daa026d5ecf0228322d87f214a4346ca276809a1d985e43af",
-      "reason": "ledger-summary",
-      "related_migration": null,
-      "justification": "O arquivo em main e uma versao resumida ou anterior ao SQL efetivamente aplicado em producao por sessoes paralelas. O banco ja tem o SQL correto do ledger; nenhum DDL adicional necessario.",
-      "sql-sha256": "da7de148f88ed96984a42af7996182d2cbc7b537b78e5c54c2a80ec83caa912a"
-    },
-    {
       "version": "20260927610000",
       "filename": "20260927610000_security_gamification_add_pg_temp_to_search_path.sql",
       "file_sha256": "7a997871b06808a61909c130cc55130bc2c6faff0f6ecf2e1d0b4e5077e97cd6",
@@ -819,6 +805,20 @@
       "related_migration": null,
       "justification": "O arquivo declara a funcao com CREATE FUNCTION sem OR REPLACE e aborta com 42723 onde ela ja existe (desde a 20261001351230_f51a). Na aplicacao pos-merge de 02/10/2026 rodou a versao equivalente COM OR REPLACE — unica diferenca de conteudo —, e e essa que o ledger preserva. O arquivo nao pode ser reescrito (migration registrada e imutavel, regra 7 do CLAUDE.md). A substituta canonica e a 20261002461230_f51c, que repete CHECK, ACL e triggers; a f51a cobre funcao, colunas e indice, entao o arquivo nao carrega objeto exclusivo. Ele fica no lugar com o replay fixado por hash proprio; mover para _superseded criaria 'registro no banco sem arquivo no repo'. Medido em 02/10/2026: sha256 dos bytes (edeb3b2d) e do SQL canonico (7cec99db) do arquivo; os hashes do ledger (0339f3bb, ba9faefd) calculados com o lexer do guard e o splitStatements do register-migration.mjs, conferidos contra o Postgres.",
       "sql-sha256": "0339f3bb6985b34476b06fc1f05c32e00c1867e7ce4e07de8ea916987d5f1641"
+    },
+    {
+      "version": "20261015220000",
+      "filename": "20261015220000_talkx_campaign_mutability_fail_closed_regressao.sql",
+      "file_sha256": "72f3a61a8dfde91667c480a3c5d4f2c5517aec4782d38583e1c1ddb5ef681748",
+      "file_sql_sha256": "146cb88a575912c2d03a2a913b8114c99813b90bea8cbc1688616b8724211c09",
+      "ledger_name": "talkx_campaign_mutability_fail_closed_regressao",
+      "ledger_statements_sha256": "e9558370fcd544bb24cec275ba64c715b8ead85d4ed34d26ba42632fa295eb34",
+      "ledger_sql_sha256": "65a31f8e69bdb26deadd7e2f7a4678583e5471b3c9e27530866cb6ce1c0999bc",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "format-only",
+      "related_migration": null,
+      "justification": "Coleta SELECT no projeto canonico tnnnlkbymytvtqngbbqh em 16/10/2026: arquivo e ledger possuem os mesmos tokens SQL externos e os mesmos tokens PL/pgSQL do unico corpo dollar-quoted, preservando strings e identificadores quoted. Diferem apenas em comentarios/whitespace do corpo. O lexer conserva esse corpo opaco por seguranca; os quatro hashes fixam as duas representacoes sem alterar migration ou ledger.",
+      "sql-sha256": "e9558370fcd544bb24cec275ba64c715b8ead85d4ed34d26ba42632fa295eb34"
     }
   ]
 }

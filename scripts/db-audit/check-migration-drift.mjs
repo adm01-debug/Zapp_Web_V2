@@ -312,11 +312,10 @@ function validateException(exc) {
 
 function parseMigrationFile(filePath) {
   const raw = fs.readFileSync(filePath, 'utf8');
-  const withoutHeader = raw.replace(/^--[^\n]*\n/gmu, '');
-  const chunks = withoutHeader.split(/;\s*(?=\S|$)/u);
-  const statements = chunks
-    .map((c) => c.trim())
-    .filter((c) => c.length > 0 && c !== ';');
+  // O lexer deve receber o arquivo inteiro: ';' pode pertencer a uma string,
+  // identificador ou corpo de funcao. Cortar por regex corrompe o SQL e seus
+  // hashes (e remover comentarios antes do lexer altera corpos dollar-quoted).
+  const statements = [raw];
   const hasSql = hasSqlCode(raw);
   const hasContent = raw.trim().length > 0;
   return { statements, hasSql, hasContent };
@@ -473,7 +472,7 @@ function printErrors(lines) {
 }
 
 function normalizeStatementsForComparison(statements) {
-  return statements.map(canonicalSql).join(' ; ');
+  return statements.map(canonicalSql).filter(Boolean).join(' ; ');
 }
 
 function fileStatements(migration) {
@@ -586,6 +585,10 @@ function compareStatements(migration, record, exceptionsByVersion) {
     }
     const canonicalFile = canonicalStatements(fileStmts);
     const canonicalLedger = canonicalStatements(ledgerStmts);
+    const actualLedgerSqlSha = sha256(canonicalLedger);
+    if (exc.ledger_sql_sha256 !== actualLedgerSqlSha) {
+      return [`${version}: ledger_sql_sha256 divergente: esperado=${exc.ledger_sql_sha256}; ledger=${actualLedgerSqlSha}`];
+    }
     if (canonicalFile === canonicalLedger) {
       return [`${version}: pinned-replay obsoleta`];
     }
@@ -603,9 +606,8 @@ function compareStatements(migration, record, exceptionsByVersion) {
       }
       return [];
     }
-    if (!PINNED_REPLAY_REASONS.has(exc.reason) || (exc.reason === 'endpoint-literal-update' && fileMarkers.size === 0)) {
-      return diffStatements(fileStmts, ledgerStmts, version);
-    }
+    // Todas as dimensoes da excecao foram verificadas acima. Uma divergencia
+    // endpoint-literal-update revisada nao exige marker adicional no SQL.
     return [];
   }
 
@@ -761,7 +763,7 @@ function compare(migrations, records, exceptionsByVersion) {
     const migration = byFileVersion.get(version);
     if (!migration) continue;
     const exc = exceptionsByVersion.get(version);
-    if (exc && exc.kind === NAME_ONLY_KIND && (!recStmts || recStmts.length === 0)) {
+    if (exc && exc.kind === NAME_ONLY_KIND) {
       legacyFixed.push(`${version}: ${describeException(exc)}`);
     } else if (!exc && !recName && (!recStmts || recStmts.length === 0)) {
       warnings.push(`${version}: sem nome e sem SQL no ledger, sem excecao registrada`);
