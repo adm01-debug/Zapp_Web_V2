@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 // Bottom Navigation for mobile
@@ -84,86 +84,5 @@ export function BottomNavigation({
         })}
       </div>
     </nav>
-  );
-}
-
-// Pull to Refresh
-interface PullToRefreshProps {
-  onRefresh: () => Promise<void>;
-  children: React.ReactNode;
-}
-
-export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
-  const [isPulling, setIsPulling] = React.useState(false);
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const pullY = useMotionValue(0);
-  const pullProgress = useTransform(pullY, [0, 80], [0, 1]);
-  const pullRotate = useTransform(pullProgress, [0, 1], [0, 180]);
-
-  const handleDragEnd = async () => {
-    if (pullY.get() > 80) {
-      setIsRefreshing(true);
-      await onRefresh();
-      setIsRefreshing(false);
-    }
-    setIsPulling(false);
-  };
-
-  return (
-    <motion.div
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0.5, bottom: 0 }}
-      onDragStart={() => setIsPulling(true)}
-      onDragEnd={handleDragEnd}
-      style={{ y: isPulling ? pullY : 0 }}
-    >
-      <AnimatePresence>
-        {(isPulling || isRefreshing) && (
-          <motion.div
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            className="absolute top-0 left-1/2 -translate-x-1/2 p-3"
-          >
-            {isRefreshing ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full"
-              />
-            ) : (
-              <motion.div
-                style={{ rotate: pullRotate }}
-                className="w-6 h-6"
-              >
-                ↓
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {children}
-    </motion.div>
-  );
-}
-
-// Touch Feedback Wrapper
-interface TouchFeedbackProps {
-  children: React.ReactNode;
-  className?: string;
-  onPress?: () => void;
-}
-
-export function TouchFeedback({ children, className, onPress }: TouchFeedbackProps) {
-  return (
-    <motion.div
-      whileTap={{ scale: 0.97, opacity: 0.8 }}
-      transition={{ duration: 0.1 }}
-      onClick={onPress}
-      className={cn('cursor-pointer touch-manipulation', className)}
-    >
-      {children}
-    </motion.div>
   );
 }
