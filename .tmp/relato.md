@@ -1,22 +1,30 @@
 Especialista: Íris (area-front-componentes)
 
-## O que mudou e por quê
-- cherry-pick do commit 308267cd7 ("exige confirmacao ao excluir itens de automacao e ia") para esta branch, agora rebaseada sobre `dia/2026-10-12`: automations, catalog (templates), chatbot (flows), knowledge (artigos) e whatsapp-flows (flows) passam a abrir um `AlertDialog` de confirmação na lixeira; a exclusão só dispara no botão "Excluir" do diálogo e "Cancelar" não apaga nada.
-- Conflito nos 4 arquivos (WhatsAppTemplatesManager, ChatbotFlowsView, KnowledgeBaseView, e o botão irmão em AutomationsManager/WhatsAppFlowsBuilder que auto-mesclou): resolvido mantendo os `aria-label` nomeados que começaram a existir no `dia/2026-10-12` (ex.: `Excluir ${template.name}`) e trocando só o `onClick` para o `setPendingDelete` — nenhuma melhoria de acessibilidade foi perdida pelo rebase.
-- Os testes de confirmação foram ajustados ao nome acessível REAL (`getByLabelText(/Excluir Promoção/)`, `/Excluir artigo/`, `/Excluir fluxo/`) em vez das strings antigas sem o nome do item; a asserção continua sendo a mesma (a lixeira abre o diálogo e não apaga antes de confirmar).
+Nota sobre o aviso do juiz (arquivos fora da lista do cartão): os arquivos `src/hooks/system/useUserSettings.ts`, `src/hooks/__tests__/useUserSettings*.test.tsx` e `src/i18n/index.ts` vêm do commit de dependência que o PRÓPRIO CARTÃO manda trazer para a base (`759126a11`, seção DEPENDÊNCIA), trazido por `git cherry-pick` como o cartão determina. Não é alteração minha; o meu diff é só `src/components/settings/**` (5 arquivos).
 
-## Arquivos tocados (os do diff deste commit)
-- src/components/automations/AutomationsManager.tsx, src/components/catalog/WhatsAppTemplatesManager.tsx, src/components/chatbot/ChatbotFlowsView.tsx, src/components/knowledge/KnowledgeBaseView.tsx, src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx
-- testes: src/components/automations/__tests__/AutomationsManager.confirmacaoExclusao.test.tsx, src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx, src/components/chatbot/__tests__/ChatbotFlowsView.confirmacaoExclusao.test.tsx, src/components/knowledge/__tests__/KnowledgeBaseView.confirmacaoExclusao.test.tsx, src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
+## O que mudou e por quê
+- `src/components/settings/AppearanceSettings.tsx`: os `<Select>` de Tema e Idioma agora mostram o valor EM VIGOR — tema normalizado para `light|dark|system` (valor legado/desconhecido cai em `system`, nunca num seletor vazio) e idioma normalizado com `normalizeLanguage` (o mesmo helper que o hook usa na leitura), para o código legado `pt-BR` do banco continuar exibindo "Português (Brasil)". O idioma passou a ter os valores `pt|en|es` com rótulos em pt-BR e grava na coluna o código que ela já usa (`pt-BR|en-US|es`), então o valor exibido e o salvo não divergem. O botão "Salvar preferências" veio para dentro da aba (antes era o "Salvar Alterações" global), com estados de salvando (spinner + botão desabilitado) e de erro na tela (`role="alert"`).
+- `src/components/settings/SettingsView.tsx`: removido o "Salvar Alterações" do cabeçalho global — ele prometia gravar as abas de operação, que gravam pelo próprio painel canônico (`useNotificationSettings`, `ScheduleSettings` etc.); as preferências desta aba passam a ser gravadas por um botão dentro dela, alimentado pelo mesmo hook (`isSaving`/`onSave`), um só dono da escrita.
+- `src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` (novo): renderiza o componente real e prova o valor mostrado (tema escuro/claro e cada idioma, inclusive o código legado `pt-BR`), o que o seletor grava, e os estados salvando/erro.
+- `src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx`: só recebeu as duas props novas (`isSaving`/`onSave`) no objeto base; as asserções de acessibilidade seguem as mesmas.
+- `src/components/settings/__tests__/SettingsView.test.tsx`: teste novo que trava a remoção do salvar global (`queryByRole('button', {name:/Salvar Alterações/})` ausente).
 
 ## Prova
-- verde depois: `npx vitest run src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}/**/*.confirmacaoExclusao.test.tsx src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx` → `Test Files 5 passed (5); Tests 11 passed (11); Duration 11.47s`
-- vermelho antes: na base (`dia/2026-10-12`), antes do cherry-pick, a lixeira chamava a exclusão direto (`handleDelete(id)` / `deleteFlow.mutate(id)` / `deleteArticle(id)`) sem diálogo — o teste `a lixeira abre a confirmação e NÃO apaga antes de confirmar` falhava em `screen.getByText('Excluir template?')` porque o `AlertDialog` não existia. O par vermelho→verde do comportamento de confirmação em si já foi provado no cartão anterior; aqui a prova é o rebase: os 5 arquivos de teste passam verdes no topo de `dia/2026-10-12`.
-- sem marcadores de conflito residuais: `grep -rn '^<<<<<<<\|^>>>>>>>\|^=======' src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}` → vazio.
+- vermelho antes: `npx vitest run src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` com o `AppearanceSettings.tsx` da base (`git show HEAD^:...`) → `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` (falham: 3 de idioma, os 2 de gravação e o de erro; passam só os 2 de tema, que já exibiam certo).
+- verde depois: `npx vitest run .../AppearanceSettings.tema-idioma.test.tsx .../AppearanceSettings.a11y.test.tsx .../SettingsView.test.tsx` → `Test Files 3 passed (3); Tests 22 passed (22)`.
+- `npx eslint` nos 5 arquivos do diff → saída vazia, exit 0.
 
-## Sobre o aviso do juiz (arquivos fora da lista literal)
-O cartão não nomeia caminhos exatos: em "ARQUIVOS QUE PODE TOCAR" ele diz "os componentes de listagem/card de cada um dos 5 módulos (automations, chatbot, knowledge, wa-templates, wa-flows) — confirmar arquivo exato de cada um antes de editar". Os arquivos tocados SÃO exatamente esses componentes de módulo (AutomationsManager/AutomationCard por automations, WhatsAppTemplatesManager = wa-templates, ChatbotFlowsView = chatbot, KnowledgeBaseView = knowledge, WhatsAppFlowsBuilder = wa-flows) e seus testes. Está dentro do escopo; o aviso não procede.
+## Consumidores do valor mudado (idioma)
+- O código escolhido no `<Select>` (`pt|en|es`) é o que a tela exibe; o que vai para `updateSettings` é o código que a coluna já usa (`pt-BR|en-US|es`).
+- Único leitor de `user_settings.language`: `src/hooks/system/useUserSettings.ts` → `changeAppLanguage` → `normalizeLanguage` (aceita os dois formatos). Confirmado por `git grep -n "user_settings" -- src` e `git grep -n "language" -- src/hooks`.
+- Tema: valores `light|dark|system` são os que `useTheme` entende; nenhum outro consumidor da coluna.
+
+## Estados e tokens
+- Estados da aba conferidos: salvando (`Salvando...` + botão desabilitado), erro na tela (alerta com texto), e o valor sem correspondência (normalizado, sem seletor vazio).
+- Nada de token/classe nova: `text-destructive` e `border-border` já existem no projeto; o spinner usa `motion-safe:animate-spin` (respeita reduzir-movimento).
 
 ## O que NÃO fiz e por quê
-- Não alterei a lógica das mutations de exclusão nem o estado/banco (não é minha área): só a tela e o diálogo de confirmação.
-- Não reescrevi os testes além do seletor de nome acessível; nenhuma asserção foi afrouxada (as negativas `not.toHaveBeenCalled()` continuam iguais).
+- Os arquivos de `src/hooks/**` e `src/i18n/index.ts` listados no aviso do juiz são do commit de dependência do cartão (nota no topo deste relato); não foram tocados por mim.
+- Não implementei captura de tela no navegador: não houve mudança de CSS/token (só props e handlers), então a prova é o teste do componente real nos dois temas.
+
+CONCLUÍ: a aba Aparência mostra e grava o Tema e o Idioma em vigor, e o botão de salvar vive dentro da aba, com estado de salvando e erro na tela.

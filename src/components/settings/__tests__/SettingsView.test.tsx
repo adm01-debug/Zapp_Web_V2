@@ -93,6 +93,11 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
     expect(tabs).toEqual(['Notificações', 'Aparência', 'Atalhos', 'Sons']);
   });
 
+  it('não existe mais o salvar global no cabeçalho (a aba Aparência é dona do salvar)', () => {
+    render(<SettingsView />);
+    expect(screen.queryByRole('button', { name: /Salvar Alterações/ })).not.toBeInTheDocument();
+  });
+
   it('staff (admin): todos os 12 paineis staff-only montam no DOM', () => {
     roleState.isAdmin = true;
     render(<SettingsView />);

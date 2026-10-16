@@ -3,11 +3,10 @@ import { NPSDashboard } from '@/components/nps/NPSDashboard';
 import { FollowUpSequences } from '@/components/settings/FollowUpSequences';
 import { QuickRepliesManager } from '@/components/inbox/QuickRepliesManager';
 import { StickerManager } from '@/components/inbox/stickers/StickerManager';
-import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Clock, MessageSquare, Bell, Palette, Save, RefreshCw, Loader2,
+  Clock, MessageSquare, Bell, Palette, RefreshCw,
   Keyboard, Volume2, ArrowRight, Package, Globe, TrendingUp, Settings,
   Tags, MessageSquareHeart, Bot, Brain, Users,
 } from 'lucide-react';
@@ -108,15 +107,9 @@ export function SettingsView() {
       title="Configurações"
       subtitle="Configure o comportamento da plataforma"
       icon={<Settings className="w-5 h-5" />}
-      actions={
-        <Button onClick={saveSettings} disabled={isSaving || isLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Salvar Alterações
-        </Button>
-      }
     >
       {isLoading ? (
-        <SkeletonRegion className="space-y-4" label="Carregando configurações">
+        <div className="space-y-4">
           {/* Skeleton tabs bar */}
           <div className="flex gap-2 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -150,7 +143,7 @@ export function SettingsView() {
               ))}
             </div>
           </div>
-        </SkeletonRegion>
+        </div>
       ) : (
       <Tabs value={activeTab} onValueChange={setSelectedTab} className="space-y-4">
         {/* Nivel 1 — grupos logicos. Substitui a barra horizontal unica de 16
@@ -231,7 +224,13 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} />
+          <AppearanceSettings
+            settings={settings}
+            updateSettings={updateSettings}
+            onResetOnboarding={handleResetOnboarding}
+            isSaving={isSaving}
+            onSave={saveSettings}
+          />
         </TabsContent>
 
         <TabsContent value="shortcuts">
