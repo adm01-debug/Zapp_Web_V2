@@ -36,8 +36,6 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     MESSAGE_TEMPLATES: [],
     MEDIA_TYPES: [],
     DEFAULT_SCHEDULE_TIMEZONE: 'America/Sao_Paulo',
-    // X124 — limite do nome usado pelo passo 1 (`StepAudience`): o mock do
-    // módulo precisa dos mesmos valores que o hook real exporta.
     CAMPAIGN_NAME_MIN_LENGTH: 3,
     CAMPAIGN_NAME_MAX_LENGTH: 200,
     MESSAGE_LIMIT: 4096,
@@ -45,6 +43,9 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     // X123 — a tela traduz o código da RPC pelo helper do hook; no dublê, sem
     // código reconhecível, o aviso continua sendo o texto cru.
     explainDraftSaveError: (message: string | null | undefined) => message ?? null,
+    // X131 — o wizard agora lê `completedRules` do hook para decidir se o
+    // resumo está habilitado; o mock do layout precisa exportar a função.
+    completedRules: (rules: { groups: unknown[] }) => rules,
   };
 });
 
@@ -61,6 +62,15 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   useAudienceEstimate: () => ({ data: undefined, isFetching: false }),
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
+}));
+// X131 (TL-143) — o rail do wizard passou a ler o resumo pelo servidor
+// (react-query). Sem este dublê, qualquer teste que monte o wizard de verdade
+// precisaria de um QueryClientProvider só por causa do rail (sempre visível,
+// em qualquer passo) — o teste aqui prova a navegação/pendência, não o resumo.
+vi.mock('@/hooks/integrations/useTalkXCampaignSummary', () => ({
+  useTalkXCampaignSummary: () => ({
+    total: 0, eligible: 0, suppressed: 0, isLoading: false, isError: false, error: null, refetch: vi.fn(),
+  }),
 }));
 
 // X118 (TL-072) — o passo "Mensagem" passou a montar o gerenciador de links
