@@ -186,7 +186,11 @@ export function useSecurityPushNotifications() {
   // (reiniciar perderia o cursor) e o laço continua válido depois que o ponto
   // de montagem que o criou sair.
   const senderRef = useRef(sendSecurityNotification);
-  senderRef.current = sendSecurityNotification;
+  // A troca do enviador passa por EFEITO: escrever ref durante a renderização é
+  // o que o lint `react-hooks/refs` recusa (e o efeito roda antes do laço).
+  useEffect(() => {
+    senderRef.current = sendSecurityNotification;
+  }, [sendSecurityNotification]);
 
   // E62: security_alerts removida da publicação realtime (migration 20260905).
   // Polling de 20s com filtro por user_id e cursor pelo último alerta recebido.
