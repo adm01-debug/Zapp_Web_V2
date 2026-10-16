@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime, agendaDayCounts, agendaDayAriaLabel, daySubtitle, memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '../workItemAggregates';
 import { localDayKey } from '@/lib/localDay';
 import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
@@ -650,5 +650,64 @@ describe('etapa 126 — Agenda só com os dados carregados, 7 dias a partir de h
     const depois = weekBuckets([fimDoDia, meiaNoite], startOfDay(new Date(2026, 9, 4, 0, 30)));
     expect(depois[0].dueTasks.map(i => i.id)).toEqual(['meia']);
     expect(depois.flatMap(w => w.dueTasks).map(i => i.id)).toEqual(['meia']);
+  });
+});
+
+/**
+ * Etapa 185 — a tela chama os selectors a cada render; sem memo, cada chamada
+ * devolvia arrays/objetos NOVOS e invalidava o `useMemo` dos filhos. Aqui ficam
+ * as testemunhas: a mesma entrada devolve a MESMA referência e a segunda
+ * chamada NÃO relê os itens.
+ */
+describe('etapa 185 — memoização dos selectors (referências estáveis)', () => {
+  it('mesma lista devolve a MESMA referência para o recorte, os baldes e os KPIs', () => {
+    const lista = [makeItem({ id: 'a', status: 'todo' }), makeItem({ id: 'b', status: 'doing' })];
+
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(memoizedApplyFilters(lista, DEFAULT_FILTERS));
+    expect(memoizedBucketByDue(lista)).toBe(memoizedBucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toBe(memoizedBucketByStatus(lista));
+    expect(memoizedKpis(lista)).toBe(memoizedKpis(lista));
+  });
+
+  it('a segunda chamada com a MESMA lista não relê os itens (não recalcula)', () => {
+    let leituras = 0;
+    const espiao = new Proxy(makeItem({ id: 'a', status: 'todo' }) as WorkItem, {
+      get(alvo, prop, recv) { leituras += 1; return Reflect.get(alvo, prop, recv); },
+    });
+    const lista = [espiao];
+
+    memoizedBucketByDue(lista);
+    const aposPrimeira = leituras;
+    expect(aposPrimeira).toBeGreaterThan(0);   // o 1º cálculo leu de fato os itens
+
+    memoizedBucketByDue(lista);
+    expect(leituras).toBe(aposPrimeira);       // o 2º veio do cache: zero leitura
+  });
+
+  it('lista nova recalcula e devolve referência nova (o cache não devolve constante)', () => {
+    const a = [makeItem({ id: 'a' })];
+    const b = [makeItem({ id: 'a' })];
+
+    expect(memoizedKpis(a)).not.toBe(memoizedKpis(b));
+  });
+
+  it('trocar o filtro troca o recorte (a chave inclui os filtros)', () => {
+    const lista = [makeItem({ id: 'a', priority: 'high' }), makeItem({ id: 'b', priority: 'low' })];
+
+    const semFiltro = memoizedApplyFilters(lista, DEFAULT_FILTERS);
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toBe(semFiltro); // hit com os mesmos filtros
+
+    const comPrio = memoizedApplyFilters(lista, { ...DEFAULT_FILTERS, prio: 'high' });
+    expect(comPrio).not.toBe(semFiltro);
+    expect(comPrio.map(i => i.id)).toEqual(['a']);
+  });
+
+  it('o valor memoizado é idêntico ao do selector puro', () => {
+    const lista = [makeItem({ id: 'a', status: 'done', completed_at: now.toISOString() })];
+
+    expect(memoizedBucketByDue(lista)).toEqual(bucketByDue(lista));
+    expect(memoizedBucketByStatus(lista)).toEqual(bucketByStatus(lista));
+    expect(memoizedKpis(lista)).toEqual(kpis(lista));
+    expect(memoizedApplyFilters(lista, DEFAULT_FILTERS)).toEqual(applyFilters(lista, DEFAULT_FILTERS));
   });
 });

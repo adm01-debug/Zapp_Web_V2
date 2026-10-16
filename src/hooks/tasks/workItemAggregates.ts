@@ -450,3 +450,58 @@ export function splitDoneByRecency(
   const desc = (a: WorkItem, b: WorkItem) => (stamp(b) ?? 0) - (stamp(a) ?? 0);
   return { recent: recent.sort(desc), older: older.sort(desc) };
 }
+
+// ---------------------------------------------------------------------------
+// Etapa 185 — memoização dos selectors (referências estáveis)
+// ---------------------------------------------------------------------------
+// Os selectors são puros, mas a tela os chama a CADA render e cada chamada
+// devolvia arrays/objetos NOVOS — mesmo sem nada ter mudado. Isso invalidava o
+// `useMemo` dos filhos e refazia o recorte + os baldes na troca de modo. O
+// `useMyWorkItems` já protege os derivados dele com `useMemo(…, [items])`
+// (`byDue`/`byStatus`/`kpis`); abaixo a MESMA garantia vale para quem chama o
+// selector fora de um componente (o `TasksModule` recorta a lista uma vez e
+// reusa o resultado nos três modos).
+//
+// A chave é a IDENTIDADE da entrada (a lista de itens — e, no recorte, também o
+// objeto de filtros): a query só troca a referência quando há dado novo e os
+// filtros só trocam quando mudam, então o memo acerta exatamente quando deve.
+// Entrada nova recalcula e troca a entrada.
+
+/**
+ * Guarda o ÚLTIMO resultado com a chave que o produziu, comparada por
+ * identidade (elemento a elemento). Uma entrada só: memória constante, nada de
+ * segurar listas antigas. `now` continua opcional como no selector puro; como a
+ * tela não o passa, o primeiro cálculo é reaproveitado — o mesmo contrato do
+ * `useMemo(…, [items])`.
+ */
+function memoLast<A extends readonly unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
+  let cache: { args: A; result: R } | null = null;
+  return (...args: A): R => {
+    if (cache && cache.args.length === args.length && cache.args.every((a, i) => Object.is(a, args[i]))) {
+      return cache.result;
+    }
+    const result = fn(...args);
+    cache = { args, result };
+    return result;
+  };
+}
+
+/** Etapa 185: `applyFilters` estável — mesma lista + mesmos filtros = mesmo recorte. */
+export const memoizedApplyFilters = memoLast(
+  (items: WorkItem[], f: TasksFilters): WorkItem[] => applyFilters(items, f),
+);
+
+/** Etapa 185: `bucketByDue` estável — a Lista reusa os baldes entre renders. */
+export const memoizedBucketByDue = memoLast(
+  (items: WorkItem[], now?: Date): BucketsByDue => bucketByDue(items, now),
+);
+
+/** Etapa 185: `bucketByStatus` estável — as colunas do Quadro não são recriadas à toa. */
+export const memoizedBucketByStatus = memoLast(
+  (items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> => bucketByStatus(items),
+);
+
+/** Etapa 185: `kpis` estável — a faixa de KPIs não recalcula na troca de modo. */
+export const memoizedKpis = memoLast(
+  (items: WorkItem[], now?: Date): KpiSnapshot => kpis(items, now),
+);
