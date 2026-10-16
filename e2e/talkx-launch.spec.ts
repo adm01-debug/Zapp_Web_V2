@@ -208,7 +208,9 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     await page.getByRole('button', { name: 'Cancelar campanha', exact: true }).click();
     const dialogoCancelar = page.getByRole('alertdialog');
     await expect(dialogoCancelar).toBeVisible();
-    await dialogoCancelar.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    // Este diálogo é o LOCAL do monitor (TalkXCampaignRunning), não o do hook —
+    // o rótulo do confirmar segue o de sempre.
+    await dialogoCancelar.getByRole('button', { name: 'Confirmar cancelamento', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(4);
     expect(harness.envios[3]).toMatchObject({ campaignId: CAMPAIGN_ID, action: 'cancel' });

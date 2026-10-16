@@ -49,6 +49,20 @@ vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
   },
 }));
 
+// X051 — a Visão geral deixou de ter handler próprio de ciclo de vida e monta o
+// controlador único (`useTalkXLifecycle`), que lê as operações em `useTalkX`.
+// Esta prova é da barra de filtros: o hook de dados entra falso, como os dois
+// acima — sem `QueryClientProvider` o hook de verdade não tem cliente de
+// consulta para montar, e nada do que este arquivo prova passa por ele.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(),
+    pauseCampaign: vi.fn(),
+    cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
+
 import { TalkXOverview } from '../TalkXOverview';
 import { TALKX_CHANNELS } from '../kit/constants';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
