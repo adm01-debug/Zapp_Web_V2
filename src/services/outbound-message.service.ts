@@ -202,8 +202,6 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
       caption: message.caption,
       replyToId: message.replyToId,
       whatsappConnectionId: message.whatsappConnectionId,
-      // PK-24: a guarda da prévia atravessa a fila offline junto.
-      linkPreview: message.linkPreview ?? null,
     },
     message.clientMessageId,
   );
@@ -240,9 +238,6 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
-    // PK-24: a guarda da prévia atravessa a fila offline; ausente não muda
-    // nada no que já está gravado.
-    ...(input.linkPreview != null ? { linkPreview: input.linkPreview } : {}),
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
