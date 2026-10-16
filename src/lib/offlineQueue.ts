@@ -30,6 +30,8 @@ export interface OfflineQueuedMessage {
   caption: string | null;
   replyToId: string | null;
   whatsappConnectionId: string | null;
+  /** Atendente dono do item: a drenagem só processa mensagens do usuário atual. */
+  userId?: string;
   /** Ordem de drenagem. Sempre único e crescente (a fila respeita a ordem de composição). */
   enqueuedAt: number;
   /** Tentativas de drenagem já feitas — observabilidade, não decide nada. */
