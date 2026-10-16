@@ -2,6 +2,8 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PRODUCT_NAME } from '../src/lib/productName';
+
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
@@ -152,7 +154,14 @@ const SECOES: SecaoNav[] = [
   },
 ];
 
-const TITULO_BASE = 'WhatsApp Omnichannel';
+/**
+ * Sufixo do título da aba em cada módulo (`<Módulo> | <produto>`).
+ * Vem da MESMA constante do app (`src/lib/productName.ts`) usado por
+ * `useDocumentTitle`: o nome do produto tem uma fonte só — era no literal solto
+ * daqui que a varredura continuaria exigindo "WhatsApp Omnichannel" enquanto a
+ * aba já dizia outra coisa.
+ */
+const TITULO_BASE = PRODUCT_NAME;
 const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
 const MENU_DESKTOP = 'Menu de navegação principal';
 const MENU_CELULAR = 'Menu de navegação';
