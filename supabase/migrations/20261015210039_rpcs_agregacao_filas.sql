@@ -54,6 +54,9 @@
 -- queue_analytics_series(p_queue_id, p_from, p_to):
 --   * serie DIARIA com todos os dias do periodo preenchidos com zero (generate_series),
 --     dia a dia no fuso America/Sao_Paulo (mesmo fuso dos KPIs do Dashboard);
+--   * os CTEs novos/mensagens/resolvidos sao pre-filtrados para [dia_inicio, dia_fim+1)
+--     no fuso America/Sao_Paulo (predicado direto em created_at): a agregacao nunca
+--     varre o historico inteiro da fila, so' a janela pedida;
 --   * `from`/`to` no retorno sao o periodo EFETIVO: p_from/p_to nulos = ultimos 30 dias,
 --     e a janela e' limitada a 366 dias (a serie nunca e' truncada em silencio).
 --
@@ -220,12 +223,18 @@ AS $function$
   novos AS (
     SELECT (e.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS dia, count(*) AS total
     FROM escopo e
+    CROSS JOIN janela j
+    WHERE e.created_at >= ((j.dia_inicio::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
+      AND e.created_at < (((j.dia_fim + 1)::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
     GROUP BY 1
   ),
   mensagens AS (
     SELECT (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS dia, count(*) AS total
     FROM public.messages m
     JOIN escopo e ON e.id = m.contact_id
+    CROSS JOIN janela j
+    WHERE m.created_at >= ((j.dia_inicio::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
+      AND m.created_at < (((j.dia_fim + 1)::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
     GROUP BY 1
   ),
   resolvidos AS (
@@ -233,8 +242,11 @@ AS $function$
       (e.conversation_status_changed_at AT TIME ZONE 'America/Sao_Paulo')::date AS dia,
       count(*) AS total
     FROM escopo e
+    CROSS JOIN janela j
     WHERE e.conversation_status = 'resolved'
       AND e.conversation_status_changed_at IS NOT NULL
+      AND e.conversation_status_changed_at >= ((j.dia_inicio::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
+      AND e.conversation_status_changed_at < (((j.dia_fim + 1)::text || ' 00:00:00')::timestamp AT TIME ZONE 'America/Sao_Paulo')
     GROUP BY 1
   )
   SELECT jsonb_build_object(

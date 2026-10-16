@@ -222,8 +222,8 @@ BEGIN
   IF v_valor <> 1 THEN
     RAISE EXCEPTION 'T6 FALHOU: agentsCount da fila A = %, esperado 1', v_valor;
   END IF;
-  -- contato soft-deletado nao entra em nenhuma metrica: a fila A tem 6 contatos vivos
-  -- (2 aguardando + 1 atribuido + 1 resolvido + 1 fora do periodo + 1200 do lote).
+  -- contato soft-deletado nao entra em nenhuma metrica: a fila A tem 1205 contatos
+  -- vivos = v_total_a + 1 (2 aguardando + 1 atribuido + 1 resolvido + 1 fora do periodo + 1200 do lote).
   SELECT count(*)::bigint INTO v_valor FROM public.contacts
    WHERE queue_id = v_queue_a AND deleted_at IS NULL;
   IF v_valor <> v_total_a + 1 THEN  -- +1 = o contato criado fora do periodo
@@ -285,11 +285,14 @@ BEGIN
      OR (v_dias->2->>'resolvidos')::bigint <> v_bulk + 1 THEN
     RAISE EXCEPTION 'T7 FALHOU: dia com dado veio %', v_dias->2;
   END IF;
-  -- periodo nulo = 30 dias terminando hoje (fuso America/Sao_Paulo)
+  -- periodo nulo = 30 dias terminando hoje (fuso America/Sao_Paulo; a data de hoje e'
+  -- calculada, nunca fixa, para a suite nao quebrar amanha)
   v_serie := public.queue_analytics_series(v_queue_a, NULL, NULL);
-  IF jsonb_array_length(v_serie->'days') <> 30 OR v_serie->>'to' <> '2026-10-15' THEN
-    RAISE EXCEPTION 'T7 FALHOU: periodo nulo = % dias ate % (esperado 30 ate 2026-10-15)',
-      jsonb_array_length(v_serie->'days'), v_serie->>'to';
+  IF jsonb_array_length(v_serie->'days') <> 30
+     OR v_serie->>'to' <> to_char((now() AT TIME ZONE 'America/Sao_Paulo')::date, 'YYYY-MM-DD') THEN
+    RAISE EXCEPTION 'T7 FALHOU: periodo nulo = % dias ate % (esperado 30 ate hoje %)',
+      jsonb_array_length(v_serie->'days'), v_serie->>'to',
+      to_char((now() AT TIME ZONE 'America/Sao_Paulo')::date, 'YYYY-MM-DD');
   END IF;
   -- janela limitada a 366 dias, com o periodo efetivo declarado (nunca silencioso)
   v_serie := public.queue_analytics_series(v_queue_a, '2020-01-01T00:00:00Z', '2026-10-15T23:59:59-03:00');
@@ -452,6 +455,11 @@ BEGIN
   END IF;
   IF public.queue_analytics_series(v_queue_a, NULL, NULL)->'days' <> '[]'::jsonb THEN
     RAISE EXCEPTION 'T4 FALHOU: sem sessao, queue_analytics_series devolveu dias';
+  END IF;
+  SELECT count(*) INTO v_linhas
+    FROM public.queue_contact_message_stats(ARRAY[v_c_assigned, v_c_wait_1]);
+  IF v_linhas <> 0 THEN
+    RAISE EXCEPTION 'T4 FALHOU: sem sessao, queue_contact_message_stats devolveu % linha(s)', v_linhas;
   END IF;
   PERFORM set_config('role', 'none', true);
   v_ok := v_ok + 1;
