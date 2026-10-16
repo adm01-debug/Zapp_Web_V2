@@ -660,6 +660,16 @@ jobs:
         env:
           MULTIPLIX_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-drain-enum-cast.test.sh
+      # N-144: prova que a migration 20261010101613 revoga EXECUTE de PUBLIC,
+      # anon e authenticated na função de gatilho
+      # multiplix_audiences_validate_shared_roles (só postgres/service_role
+      # conservam), que a chamada direta recebe `permission denied`, que o
+      # INSERT como authenticated continua funcionando e que o rollback
+      # restaura o estado anterior.
+      - name: Simular revogação de EXECUTE público do gatilho Multiplix (N-144)
+        env:
+          MULTIPLIX_REVOKE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-revoke-execute-public.test.sh
 
       # F24 do plano do Multiplix: prova que a edge multiplix-audience deriva o
       # escopo do JWT (matriz F25) e IGNORA escopo forjado no corpo. O bloco
