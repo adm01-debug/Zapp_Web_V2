@@ -123,10 +123,11 @@ export function ClientWalletView() {
       <Card>
         <CardHeader><CardTitle className="text-lg">Como funciona?</CardTitle></CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>• Quando um novo contato chega, o sistema verifica as regras na ordem de prioridade.</p>
-          <p>• Se uma regra corresponde à conexão WhatsApp do contato, ele é atribuído ao vendedor.</p>
-          <p>• Regras com "Todas as conexões" funcionam como fallback.</p>
-          <p>• Contatos já atribuídos não são reatribuídos automaticamente.</p>
+          <p>• A atribuição acontece na criação do contato: o sistema procura a regra ativa de maior prioridade que sirva para a conexão WhatsApp em que o contato chegou.</p>
+          <p>• Regra sem conexão definida vale para qualquer conexão e disputa pela prioridade — não é um fallback que só entra quando nenhuma outra serve.</p>
+          <p>• Contato que já chega com vendedor definido não passa pela regra, e um contato já atribuído não é trocado depois.</p>
+          <p>• Sem regra que sirva, a atribuição pode vir da fila do contato, que tem regra própria.</p>
+          <p>• Esta tela só gerencia as regras: ela não registra qual regra atribuiu cada contato.</p>
         </CardContent>
       </Card>
     </div>

@@ -96,3 +96,45 @@ describe('ClientWalletView — acessibilidade: aria-label nos seletores, interru
     expect(results.violations).toEqual([]);
   });
 });
+
+describe('ClientWalletView — o texto "Como funciona?" diz o que o gatilho faz', () => {
+  const base = () => ({
+    rules: [],
+    agents: [],
+    connections: [],
+    loading: false,
+    isAddDialogOpen: false,
+    newRule: { name: '', agent_id: '', whatsapp_connection_id: '', priority: 0 },
+    setIsAddDialogOpen: vi.fn(),
+    setNewRule: vi.fn(),
+    handleToggleActive: vi.fn(),
+    handleDeleteRule: vi.fn(),
+    handleAddRule: vi.fn(),
+  });
+
+  it('não afirma que "Todas as conexões" é fallback', () => {
+    mockUseClientWallet.mockReturnValue(base());
+    render(<ClientWalletView />, { wrapper: Wrapper });
+    expect(screen.queryByText(/funcionam como fallback/i)).toBeNull();
+    expect(
+      screen.getByText(/não é um fallback que só entra quando nenhuma outra serve/i),
+    ).toBeInTheDocument();
+  });
+
+  it('diz que a atribuição acontece na criação do contato e não troca quem já tem vendedor', () => {
+    mockUseClientWallet.mockReturnValue(base());
+    render(<ClientWalletView />, { wrapper: Wrapper });
+    expect(screen.getByText(/A atribuição acontece na criação do contato/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/um contato já atribuído não é trocado depois/i),
+    ).toBeInTheDocument();
+  });
+
+  it('avisa que a tela não registra qual regra atribuiu cada contato', () => {
+    mockUseClientWallet.mockReturnValue(base());
+    render(<ClientWalletView />, { wrapper: Wrapper });
+    expect(
+      screen.getByText(/não registra qual regra atribuiu cada contato/i),
+    ).toBeInTheDocument();
+  });
+});

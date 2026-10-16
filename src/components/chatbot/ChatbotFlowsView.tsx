@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChatbotFlowEditor } from './ChatbotFlowEditor';
+import { ChatbotHonestNotice } from './ChatbotHonestNotice';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 const ChatbotExecutionsDashboard = lazy(() => import('./ChatbotExecutionsDashboard').then(m => ({ default: m.ChatbotExecutionsDashboard })));
 
@@ -113,6 +114,7 @@ export function ChatbotFlowsView() {
       </div>
 
       <Tabs defaultValue="flows" className="flex-1 flex flex-col min-h-0">
+        <ChatbotHonestNotice />
         <TabsList className="bg-muted/50 w-fit">
           <TabsTrigger value="flows" className="gap-2"><Bot className="w-4 h-4" />Fluxos</TabsTrigger>
           <TabsTrigger value="executions" className="gap-2"><Activity className="w-4 h-4" />Execuções</TabsTrigger>
