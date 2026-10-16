@@ -93,6 +93,18 @@ c11='30000000-0000-0000-0000-000000000011'
 c12='30000000-0000-0000-0000-000000000012'
 seg_acme='40000000-0000-0000-0000-0000000000c1'
 seg_beta='40000000-0000-0000-0000-0000000000c2'
+seg_texto='40000000-0000-0000-0000-0000000000c3'
+# Ponte Singu (fixture): empresas com setor/UF REAIS e os contatos que sobraram
+# do fixture de 12 contatos (c07/c09/c10/c11/c12 existem na tabela, sem variavel).
+e01='50000000-0000-0000-0000-000000000001'
+e02='50000000-0000-0000-0000-000000000002'
+e03='50000000-0000-0000-0000-000000000003'
+e04='50000000-0000-0000-0000-000000000004'
+e05='50000000-0000-0000-0000-000000000005'
+e06='50000000-0000-0000-0000-000000000006'
+c07='30000000-0000-0000-0000-000000000007'
+c09='30000000-0000-0000-0000-000000000009'
+c10='30000000-0000-0000-0000-000000000010'
 
 psql_test >/dev/null <<'SQL'
 CREATE SCHEMA auth;
@@ -131,6 +143,7 @@ CREATE TABLE public.contacts (
   nickname text,
   phone text NOT NULL,
   company text,
+  company_id uuid,
   city text,
   state text,
   email text,
@@ -263,6 +276,97 @@ INSERT INTO public.talkx_segments (id, name, rules, created_by) VALUES
    '10000000-0000-0000-0000-000000000001'),
   ('40000000-0000-0000-0000-0000000000c2', 'Beta',
    '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Beta"}]}]}'::jsonb,
+   '10000000-0000-0000-0000-000000000001');
+
+-- ---------------------------------------------------------------------------
+-- (i) PONTE SINGU — mock do CONTRATO da ponte (o real vive no banco do Singu,
+-- em multiplix_search_audience): setor de atividade REAL em
+-- companies.ramo_atividade e UF REAL em company_addresses.estado com
+-- is_primary = true. O vinculo contato -> empresa (contacts.company_id) tambem
+-- e do Singu; aqui ele entra no fixture para a resolucao poder ser provada.
+-- A regra de ramo/UF reproduzida e a real: igualdade exata no ramo
+-- ('Não informado' cobre nulo/vazio), LEFT JOIN no endereco e filtro de UF
+-- SOMENTE pelo endereco primario. As duas funcoes abaixo sao SECURITY DEFINER
+-- porque rodam com a credencial da ponte (o papel authenticated nao enxerga as
+-- tabelas do Singu) e devolvem SEMPRE um
+-- array (vazio quando nada casa) — a ponte nunca devolve NULL, que para a RPC
+-- significaria "sem restricao".
+-- ---------------------------------------------------------------------------
+CREATE TABLE public.companies (
+  id uuid PRIMARY KEY,
+  name text,
+  nome_crm text,
+  ramo_atividade text
+);
+CREATE TABLE public.company_addresses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL,
+  estado text,
+  is_primary boolean NOT NULL DEFAULT false
+);
+
+CREATE FUNCTION public.talkx_bridge_company_ids(p_ramo text, p_uf text) RETURNS uuid[]
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(co.id ORDER BY co.id), ARRAY[]::uuid[])
+  FROM public.companies co
+  LEFT JOIN public.company_addresses ad ON ad.company_id = co.id AND ad.is_primary = true
+  WHERE (p_ramo IS NULL
+         OR co.ramo_atividade = p_ramo
+         OR (p_ramo = 'Não informado' AND (co.ramo_atividade IS NULL OR btrim(co.ramo_atividade) = '')))
+    AND (p_uf IS NULL OR ad.estado = p_uf)
+$$;
+
+CREATE FUNCTION public.talkx_bridge_contact_ids(p_ramo text, p_uf text) RETURNS uuid[]
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(ct.id ORDER BY ct.id), ARRAY[]::uuid[])
+  FROM public.companies co
+  LEFT JOIN public.company_addresses ad ON ad.company_id = co.id AND ad.is_primary = true
+  JOIN public.contacts ct ON ct.company_id = co.id
+  WHERE (p_ramo IS NULL
+         OR co.ramo_atividade = p_ramo
+         OR (p_ramo = 'Não informado' AND (co.ramo_atividade IS NULL OR btrim(co.ramo_atividade) = '')))
+    AND (p_uf IS NULL OR ad.estado = p_uf)
+$$;
+
+-- Acme: Metalurgia/SP (as empresas de fora: Beta Varejo/RJ, Gamma Metalurgia/BA,
+-- Delta Varejo/SP, Omega Metalurgia com RJ primario e SP apenas secundario, e
+-- Epsilon sem ramo e sem endereco primario).
+INSERT INTO public.companies (id, name, nome_crm, ramo_atividade) VALUES
+  ('50000000-0000-0000-0000-000000000001', 'Acme',    'Acme',    'Metalurgia'),
+  ('50000000-0000-0000-0000-000000000002', 'Beta',    'Beta',    'Varejo'),
+  ('50000000-0000-0000-0000-000000000003', 'Gamma',   'Gamma',   'Metalurgia'),
+  ('50000000-0000-0000-0000-000000000004', 'Delta',   'Delta',   'Varejo'),
+  ('50000000-0000-0000-0000-000000000005', 'Epsilon', 'Epsilon', NULL),
+  ('50000000-0000-0000-0000-000000000006', 'Omega',   'Omega',   'Metalurgia');
+
+INSERT INTO public.company_addresses (company_id, estado, is_primary) VALUES
+  ('50000000-0000-0000-0000-000000000001', 'SP', true),
+  ('50000000-0000-0000-0000-000000000002', 'RJ', true),
+  ('50000000-0000-0000-0000-000000000003', 'BA', true),
+  ('50000000-0000-0000-0000-000000000004', 'SP', true),
+  -- Epsilon nao tem endereco nenhum: setor e UF reais nunca foram informados.
+  ('50000000-0000-0000-0000-000000000006', 'RJ', true),
+  ('50000000-0000-0000-0000-000000000006', 'SP', false);
+
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000001'
+  WHERE id IN ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003',
+               '30000000-0000-0000-0000-000000000007', '30000000-0000-0000-0000-000000000009',
+               '30000000-0000-0000-0000-000000000010', '30000000-0000-0000-0000-000000000011',
+               '30000000-0000-0000-0000-000000000012');
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000002'
+  WHERE id IN ('30000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000008');
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000003'
+  WHERE id = '30000000-0000-0000-0000-000000000004';
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000004'
+  WHERE id = '30000000-0000-0000-0000-000000000005';
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000005'
+  WHERE id = '30000000-0000-0000-0000-000000000006';
+
+-- Segmento ANTIGO (campos de texto livre company/city/state), salvo antes desta
+-- tarefa: serve de regressao — tem de resolver exatamente como resolvia.
+INSERT INTO public.talkx_segments (id, name, rules, created_by) VALUES
+  ('40000000-0000-0000-0000-0000000000c3', 'Antigo Acme SP',
+   '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Acme"},{"field":"city","op":"contains","value":"Paulo"},{"field":"state","op":"eq","value":"SP"}]}]}'::jsonb,
    '10000000-0000-0000-0000-000000000001');
 
 GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
@@ -461,6 +565,81 @@ pass '(g) p_contact_ids vazio zera a audiencia (fail-closed)'
 intersect="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"company\",\"op\":\"eq\",\"value\":\"Acme\"}]}]}'::jsonb, NULL, 'page', 100, NULL, ARRAY['$c01'::uuid, '$c02'::uuid]) -> 'rows') AS r) x;")"
 [[ "$intersect" == "$c01" ]] || fail "(g) p_contact_ids deve intersectar as regras [obtido: $intersect | esperado: $c01]"
 pass '(g) p_contact_ids intersecta as regras (company eq Acme ∩ {c01,c02} = c01)'
+
+# ---------------------------------------------------------------------------
+# (i) Ponte Singu: setor/UF REAIS resolvem as empresas (e seus contatos) FORA do
+#     banco; a RPC recebe so os contact_ids (p_contact_ids). Prova o item 1 do
+#     cartao: a resolucao inclui so as empresas do ramo/UF pedidos.
+# ---------------------------------------------------------------------------
+bridge_companies() { psql_q "SELECT COALESCE(string_agg(x::text, ',' ORDER BY x::text), '') FROM unnest(public.talkx_bridge_company_ids($1, $2)) AS x;"; }
+bridge_contacts() { psql_q "SELECT COALESCE(string_agg(x::text, ',' ORDER BY x::text), '') FROM unnest(public.talkx_bridge_contact_ids($1, $2)) AS x;"; }
+bridge_page() {
+  psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, public.talkx_bridge_contact_ids($1, $2)) -> 'rows') AS r) x;"
+}
+
+metal_sp_companies="$(bridge_companies "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_companies" == "$e01" ]] || fail "(i) ramo Metalurgia + UF SP deveria resolver so o Acme [$e01 | obtido: $metal_sp_companies]"
+pass '(i) ponte Singu: ramo Metalurgia + UF SP -> so a empresa do ramo/UF pedidos (Beta Varejo/RJ, Gamma Metalurgia/BA, Delta Varejo/SP, Omega Metalurgia/RJ-com-SP-secundario e Epsilon sem setor/UF ficam fora)'
+
+metal_sp_contacts="$(bridge_contacts "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_contacts" == "$c01,$c03,$c07,$c09,$c10,$c11,$c12" ]] || fail "(i) contatos do ramo/UF inesperados [obtido: $metal_sp_contacts]"
+pass '(i) ponte Singu: os contatos do ramo/UF pedidos sao os 7 da empresa (deleted/LID/telefone invalido/suprimidos entram aqui e o motor decide)'
+
+metal_sp_page="$(bridge_page "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_page" == "$c01,$c03" ]] || fail "(i) audiencia do ramo/UF inesperada [obtido: $metal_sp_page | esperado: $c01,$c03]"
+pass '(i) audiencia real (ramo Metalurgia + UF SP): c01,c03 — so os contatos elegiveis das empresas pedidas'
+
+real_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP'))::text;")"
+for pair in 'matched=7' 'eligible=2' 'suppressed=2' 'invalid_phone=1' 'legacy_or_deleted=2'; do
+  key="${pair%%=*}"; want="${pair##*=}"
+  got="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP')) ->> '$key';")"
+  [[ "$got" == "$want" ]] || fail "(i) count.$key deveria ser $want [obtido: $got | $real_count]"
+done
+pass '(i) count real: matched=7, eligible=2 (elegibilidade/supressao continuam valendo dentro do ramo/UF)'
+
+varejo_sp_page="$(bridge_page "'Varejo'" "'SP'")"
+[[ "$varejo_sp_page" == "$c05" ]] || fail "(i) Varejo + SP deveria ser so o c05 [obtido: $varejo_sp_page]"
+pass '(i) outra combinacao (ramo Varejo + UF SP): c05 — o filtro e ramo E UF, nao so um deles'
+
+# ---------------------------------------------------------------------------
+# (j) Empresa sem setor/UF reais: fica fora das regras de setor/UF pedidos e so
+#     aparece quando o operador pede exatamente "setor nao informado"; e a ponte
+#     devolve lista VAZIA (nunca NULL) quando nada casa, o que zera a audiencia
+#     em vez de liberar a base inteira. Prova o item 3 do cartao.
+# ---------------------------------------------------------------------------
+nao_informado="$(bridge_companies "'Não informado'" "NULL")"
+[[ "$nao_informado" == "$e05" ]] || fail "(j) 'setor nao informado' deveria trazer so a Epsilon [obtido: $nao_informado]"
+nao_informado_page="$(bridge_page "'Não informado'" "NULL")"
+[[ "$nao_informado_page" == "$c06" ]] || fail "(j) contato da empresa sem setor inesperado [obtido: $nao_informado_page | esperado: $c06]"
+pass '(j) empresa sem setor/UF reais: fora das regras de setor/UF; entra so em "setor nao informado" (c06)'
+
+sem_uf="$(bridge_companies "'Não informado'" "'SP'")"
+[[ "$sem_uf" == '' ]] || fail "(j) empresa sem endereco primario nao pode entrar por UF [obtido: $sem_uf]"
+sem_setor_sp="$(bridge_companies "'Metalurgia'" "'SP'")"
+[[ "$sem_setor_sp" != *"$e05"* ]] || fail '(j) empresa sem setor real entrou na regra de setor pedido'
+pass '(j) empresa sem setor/UF reais nao entra por igualdade de setor nem por UF primaria'
+
+nada="$(bridge_contacts "'Inexistente'" "NULL")"
+[[ "$nada" == '' ]] || fail "(j) nenhuma empresa casando deveria dar lista vazia [obtido: $nada]"
+nada_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Inexistente', NULL)) ->> 'eligible';")"
+[[ "$nada_count" == '0' ]] || fail "(j) lista vazia da ponte deveria zerar a audiencia [obtido: $nada_count]"
+base_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL) ->> 'eligible';")"
+[[ "$base_count" == '6' ]] || fail "(j) controle: sem p_contact_ids a audiencia continua a base inteira [obtido: $base_count]"
+pass '(j) ponte sem resultado -> lista vazia -> audiencia 0 (nunca a base inteira de 6)'
+
+# ---------------------------------------------------------------------------
+# (k) Regressao (item 2 do cartao): segmento salvo com os campos ANTIGOS de texto
+#     livre (company/city/state) resolve exatamente como antes.
+# ---------------------------------------------------------------------------
+antigo_ids="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, ARRAY['$seg_texto'::uuid], 'page', 100, NULL) -> 'rows') AS r) x;")"
+[[ "$antigo_ids" == "$c01,$c03" ]] || fail "(k) segmento antigo mudou [obtido: $antigo_ids | esperado: $c01,$c03]"
+inline_ids="$(page_ids '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Acme"},{"field":"city","op":"contains","value":"Paulo"},{"field":"state","op":"eq","value":"SP"}]}]}')"
+[[ "$inline_ids" == "$c01,$c03" ]] || fail "(k) mesma regra inline inesperada [obtido: $inline_ids]"
+pass '(k) regressao: segmento antigo (company/city/state) resolve igual (c01,c03) e igual a mesma regra inline'
+
+antigo_real="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, ARRAY['$seg_texto'::uuid], 'page', 100, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP')) -> 'rows') AS r) x;")"
+[[ "$antigo_real" == "$c01,$c03" ]] || fail "(k) segmento antigo com o setor/UF reais mudou [obtido: $antigo_real]"
+pass '(k) segmento antigo continua intersectando a resolucao real do ramo/UF'
 
 # ---------------------------------------------------------------------------
 # (h) rollback de verdade: as linhas executaveis do cabecalho da migration, rodadas na

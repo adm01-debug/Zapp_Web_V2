@@ -328,3 +328,118 @@ describe('X017 — audiência resolvida pela RPC do motor (não mais no navegado
     expect(supabase.from).not.toHaveBeenCalledWith('contacts');
   });
 });
+
+// t_124005a8 (refazer 2) — real_sector e real_uf vivem na ponte Singu
+// (companies.ramo_atividade e company_addresses.estado com is_primary = true) e
+// chegam ao motor como contact_ids pré-resolvidos (p_contact_ids). Enquanto o
+// front não faz essa pré-resolução, a resolução FALHA FECHADA: erro explícito,
+// nunca um payload sem a regra — que devolveria mais contatos do que a
+// audiência pedida.
+describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
+  const rpcMock = () => supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+
+  it('rulesToPostgrest falha fechado para real_sector e real_uf', () => {
+    for (const field of ['real_sector', 'real_uf']) {
+      expect(() => rulesToPostgrest({
+        groups: [{ id: 'g', match: 'and', rules: [
+          { id: 'r1', field, op: 'eq', value: 'x' },
+        ] }],
+      } as never)).toThrow('Regra de segmento inválida');
+    }
+  });
+
+  it('real_* continua regra completa na estimativa (splitRules não a descarta)', () => {
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'real_sector', op: 'eq', value: 'Varejo' },
+        { id: 'r2', field: 'real_uf', op: 'eq', value: 'SP' },
+        { id: 'r3', field: 'city', op: 'eq', value: '' },
+      ] }],
+    } as never);
+    expect(incompleteCount).toBe(1);
+    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);
+  });
+
+  it('countAudience rejeita real_sector e não manda regra nenhuma ao motor', async () => {
+    const rpc = rpcMock();
+    rpc.mockClear();
+    await expect(countAudience({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'real_sector', op: 'eq', value: 'Varejo' },
+      ] }],
+    } as never)).rejects.toThrow(/real_sector.*p_contact_ids/);
+    // Nada foi enviado: sem a regra, "company eq Acme" sozinha traria MAIS gente.
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('resolveAudience rejeita real_uf e não manda regra nenhuma ao motor', async () => {
+    const rpc = rpcMock();
+    rpc.mockClear();
+    await expect(resolveAudience({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'real_uf', op: 'eq', value: 'SP' },
+      ] }],
+    } as never, 5)).rejects.toThrow(/real_uf.*p_contact_ids/);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  // O defeito da rodada anterior: o grupo ficava vazio e o payload saía como
+  // groups: [] — que o motor lê como "sem filtro" (base inteira), não como zero.
+  it('grupo só com real_* não vira groups: [] (o motor leria base inteira)', async () => {
+    const rpc = rpcMock();
+    rpc.mockClear();
+    await expect(countAudience({
+      groups: [{ id: 'g', match: 'or', rules: [
+        { id: 'r1', field: 'real_uf', op: 'eq', value: 'SP' },
+      ] }],
+      join: 'or',
+    } as never)).rejects.toThrow(/real_uf/);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('nao descarta em silencio regra em branco nem campo desconhecido (a RPC rejeita)', async () => {
+    const rpc = rpcMock();
+    rpc.mockClear();
+    await countAudience({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'city', op: 'eq', value: '' },
+        { id: 'r2', field: 'campo_inexistente', op: 'eq', value: 'x' },
+      ] }],
+    } as never);
+    const payload = (rpc.mock.calls[0] as unknown[])[1] as { p_rules: { groups: { rules: unknown[] }[] } };
+    expect(payload.p_rules.groups[0].rules).toHaveLength(2);
+  });
+});
+
+// t_124005a8 item 2 do cartao — o segmento salvo com os campos ANTIGOS (texto
+// livre company/city/state) tem de resolver exatamente como resolvia antes.
+describe('regressão: segmento antigo (company/city/state) resolve como antes', () => {
+  const antigas = {
+    groups: [{ id: 'g', match: 'and', rules: [
+      { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+      { id: 'r2', field: 'city', op: 'contains', value: 'Paulo' },
+      { id: 'r3', field: 'state', op: 'eq', value: 'SP' },
+    ] }],
+  } as never;
+
+  it('o payload da RPC é o mesmo de antes: só groups, sem join e sem regra perdida', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    await countAudience(antigas);
+    const payload = (rpc.mock.calls[0] as unknown[])[1] as { p_rules: unknown };
+    expect(payload.p_rules).toEqual({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'city', op: 'contains', value: 'Paulo' },
+        { id: 'r3', field: 'state', op: 'eq', value: 'SP' },
+      ] }],
+    });
+    expect(Object.keys(payload.p_rules as object)).toEqual(['groups']);
+  });
+
+  it('e o filtro PostgREST do mesmo segmento continua igual ao de antes', () => {
+    expect(rulesToPostgrest(antigas)).toBe('and(company.eq."Acme",city.ilike."*Paulo*",state.eq."SP")');
+  });
+});
