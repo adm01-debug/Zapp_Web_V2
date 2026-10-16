@@ -393,6 +393,17 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      # SEC-DEFINER_GRANTS_STORAGE-01/02 (docs/audits/SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07.md):
+      # o atendente enfileirava no proprio contato uma mensagem com p_media_url apontando para o
+      # objeto de OUTRA conversa nos buckets internos; a policy de SELECT de storage.objects
+      # liberava a leitura por qualquer mensagem visivel com aquela URL. O passo roda em PostgreSQL
+      # 17 descartavel, prova o vinculo pasta<->contato da midia (caminho legado <tipo>/... preservado),
+      # recusa a URL fora de escopo na RPC (42501) e a negacao na propria policy com linha forjada.
+      - name: Simular escopo de posse da midia privada do Storage (SEC-DEFINER_GRANTS_STORAGE-01/02)
+        env:
+          WHATSAPP_MEDIA_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/whatsapp-media-select-scope.test.sh
+
       # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
       # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
       # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
