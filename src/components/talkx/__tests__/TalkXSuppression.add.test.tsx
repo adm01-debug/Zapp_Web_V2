@@ -154,6 +154,20 @@ describe('TalkXSuppression · Ações da lista no rail (X182/T06-053)', () => {
     expect(screen.queryByText(/ainda não estão disponíveis/i)).toBeNull();
   });
 
+  it('não oferece nenhuma ação de arquivo no card, nem desabilitada (regra: nada entra nem sai por arquivo)', async () => {
+    renderView();
+
+    const card = (await screen.findByText('Ações da lista')).closest('section');
+    expect(card).toBeTruthy();
+
+    // O card fica só com as duas ações vivas: nenhum botão e nenhum texto do
+    // card pode prometer importar/exportar/baixar arquivo (CSV, XLSX, TXT).
+    const botoes = Array.from(card!.querySelectorAll('button')).map((b) => b.textContent ?? '');
+    expect(botoes).toHaveLength(2);
+    expect(botoes.join(' ')).not.toMatch(/importar|exportar|csv|xlsx|txt|arquivo|baixar|planilha/i);
+    expect(card!.textContent ?? '').not.toMatch(/importar|exportar|csv|xlsx|txt|arquivo|baixar|planilha/i);
+  });
+
   it('tira o "Adicionar contato" da barra de filtros: ele passa a ser a ação do card', async () => {
     renderView();
 
