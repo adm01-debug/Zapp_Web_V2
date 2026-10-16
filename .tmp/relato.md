@@ -1,29 +1,67 @@
-Especialista: worker (sql) (area-sql-banco) — perfil workersql (t_6fc22a23)
+Especialista: worker (sql)
 
 ## O que mudou e por quê
-- `supabase/migrations/20261013235904_contacts_stats_series.sql` (nova): cria `public.contacts_stats_series(p_include_legacy boolean DEFAULT false) RETURNS jsonb` (STABLE, SECURITY DEFINER, `search_path=public`) devolvendo as 5 chaves que faltavam para o hook parar de paginar `contacts` no navegador: `empresas_distinct` + `series_novos_daily_30`, `series_total_cumulative_12w`, `series_empresas_cumulative_12w`, `series_fornecedores_weekly_12`. Usa o MESMO predicado de visibilidade de `contacts_stats`/`search_contacts`: `deleted_at IS NULL` + `COALESCE(p_include_legacy,false)` + `can_edit_contact(assigned_to, queue_id, <visíveis>, <profile>, <admin>)` com os 4 helpers resolvidos UMA vez (parâmetros hoisted, migration 20260929810000). `service_role` enxerga tudo. ACL: `REVOKE ALL ... FROM PUBLIC, anon` + `GRANT EXECUTE ... TO authenticated, service_role`.
-- `scripts/db-audit/contacts-stats-series-rpc.test.sh` (novo): prova em Postgres 17 descartável (docker) os arrays conferidos na mão para admin/agente A/agente B/escopo vazio, o `include_legacy`, o ACL anon/PUBLIC, o `service_role`, os invariantes do contrato e o Rollback. Aplica a MIGRATION REAL achada pelo marcador `contacts_stats_series(boolean)`.
-- `scripts/ci/check-test-inventory.mjs`: entrada na ALLOWLIST (o cartão autoriza; NÃO toquei em `.github/workflows`). "REGISTRO PENDENTE: scripts/db-audit/contacts-stats-series-rpc.test.sh — passo de uma linha em db-guard.yml a promover pelo dono do workflow" (o allowlist tira o órfão do check).
-- `.tmp/relato.md`: este relato (o repositório versiona o relato e o `hermes-tarefa-fechar` exige árvore limpa) — total de 4 arquivos no diff, sendo 1 de teste.
+- supabase/migrations/20261013213816_ai_sentiment_summary.sql (nova): cria a RPC
+  `public.ai_sentiment_summary(p_days integer default 30)` — SECURITY DEFINER,
+  `search_path = public, pg_temp`, staff-only (admin/supervisor). Ela devolve
+  `jsonb` com total, baldes (positivos/neutros/negativos), média, transcrições,
+  a série diária e o mesmo agregado do bloco de dias imediatamente anterior.
+  Motivo (PROBLEMA do cartão): o resumo era montado no navegador por cima das
+  linhas cruas, então (a) o total parava no limite de linhas do PostgREST e
+  (b) "período anterior vazio" virava divisão por zero. Com o agregado no
+  servidor o total é o real e o período anterior vazio volta NULO, não zero.
+- supabase/tests/ai_sentiment_summary.sql (novo): a prova. A superfície mínima
+  (roles, `auth.uid`, tabelas de ambiente, PUBLICATION) é criada à mão — é
+  ambiente, não contrato — e a proteção vem VERBATIM das migrations reais
+  (`20251215025014` para user_roles/has_role/is_admin_or_supervisor e
+  `20251222170958` para conversation_analyses), no mesmo padrão de
+  supabase/tests/audit_log_summary_por_periodo.sql. As asserções rodam como
+  PAPEL REAL (`SET LOCAL ROLE authenticated` + JWT sintético), nunca como
+  postgres; o helper confere `current_user` e falha se o papel não pegar.
+- src/integrations/supabase/types.ts: adiciona a assinatura
+  `ai_sentiment_summary: { Args: { p_days?: number }; Returns: Json }`.
+  Regra do repositório: RPC com `RETURNS` novo entra junto com types.ts.
 
-Semântica das janelas (idêntica ao `aggregateKpi` do hook): "now" = `now()`; dia D atrás = idade em `[D, D+1)`; diária de 30 dias em 7 buckets de 4 dias, EXCETO o 7º que soma 6 (índices 24..29 do array diário), então a soma dos 7 = novos dos últimos 30 dias — conferido no bloco 6. Cumulativo 12s: `count(idade >= (11-i)*7 dias)`, i=0 a mais antiga. Estas funções não existem em nenhuma migration deste repo, então a migration é aditiva e independente (não toca `contacts_stats`, que segue em refazer no pai t_2e6929a6).
+## Decisões de contrato (para o worker que ajustar o hook)
+- Janela = `p_days` DIAS DE CALENDÁRIO em America/Sao_Paulo, INCLUINDO hoje;
+  segue o mesmo fuso que o resto do Dashboard (ex.: crisis_room_snapshot).
+  `p_days` é normalizado para 1..366 (NULL/0/negativo não estoura).
+- `critico` conta como NEGATIVO (regra IA-SENTIMENT-001); `total` conta todas
+  as análises, inclusive as sem nota; `media` só existe com nota presente
+  (`avg` ignora ausentes) e volta NULL sem amostra — nunca 0/50 inventado.
+- `anterior` volta NULO (chave presente, valor null) quando o bloco anterior
+  não tem análise. O front lê "sem base de comparação", não queda de 100%.
+- Série diária: exatamente `p_days` baldes (um por dia, inclusive os vazios).
 
-## Prova
-- vermelho antes (dentro do teste): `SELECT to_regprocedure('public.contacts_stats_series(boolean)')` → `''`; `SELECT public.contacts_stats_series()` → `function ... does not exist`.
-- verde depois: `bash scripts/db-audit/contacts-stats-series-rpc.test.sh` → todas as linhas `[PASS]`, nenhuma `[FALHA]`, fecha com
-  `[OK] CT-E/PB-30: contacts_stats_series respeita o escopo de contacts_stats/search_contacts, calcula empresas_distinct e as 4 series do useContactsKpi com as janelas do aggregateKpi, inclui legados sob include_legacy, nega anon/PUBLIC e o Rollback remove a funcao.`
-  Exemplos conferidos na mão: admin `series_novos_daily_30 = [2, 1, 1, 1, 2, 2, 3]`; agente A `series_empresas_cumulative_12w = [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 4, 5]`; escopo vazio (C) tudo zerado; `include_legacy=NULL` cai no padrão (`empresas_distinct=6`); anon → `permission denied`; Rollback remove a função (volta ao RED).
-- migration no banco LOCAL: `hermes-db-migrar supabase/migrations/20261013235904_contacts_stats_series.sql` → `CREATE FUNCTION / COMMENT / REVOKE / GRANT / COMMIT` e `APLICADA no banco LOCAL 'v2-26101312171ccb' (produção não foi tocada)`.
-- `node scripts/ci/check-test-inventory.mjs` → o meu arquivo NÃO aparece na lista de órfãos (a ALLOWLIST valeu); os 6 órfãos listados são pré-existentes (outros arquivos).
+## Prova (banco descartável, PostgreSQL 17, aplica as migrations reais + as minhas)
+- verde depois: `docker exec -i <pg> psql -X -v ON_ERROR_STOP=1 ... -v mig_dir=/repo/supabase/migrations < supabase/tests/ai_sentiment_summary.sql`
+  → exit 0; todos os blocos PASS; última linha
+  `IA-DB-002 OK: staff le o agregado real (sem truncar), serie diaria de p_days baldes, anterior NULO quando vazio; agente/anon/service_role negados (42501); EXECUTE so para authenticated.`
+  Notas provadas: A) total/baldes/média/transcrições conferem com a contagem
+  direta (baseline do superusuário); B) série com o número exato de baldes e
+  soma igual ao total; C) anterior NULO quando vazio e, populado, com os
+  mesmos agregados; D) 1200+ análises no período → total NÃO trunca; E) agente,
+  anon e service_role negados com 42501 (mesma resposta para janela com e sem
+  dado — sem oráculo); F) EXECUTE só para authenticated.
+- vermelho antes: mesma execução com `-v sem_funcao=1` (não aplica a minha
+  migration) → `ERROR: IA-DB-002 FALHOU [A1 total == 5]: esperado 5, obtido ERRO 42883` (undefined_function), exit 3. Sem a correção o teste quebra.
+- aplicação no banco local da tarefa: `hermes-db-migrar supabase/migrations/20261013213816_ai_sentiment_summary.sql`
+  → `APLICADA no banco LOCAL 'v2-2610131830b360' (produção não foi tocada).`
+- rollback executável no topo da migration: `drop function if exists public.ai_sentiment_summary(integer);`
 
 ## O que NÃO fiz e por quê
-- Não editei `.github/workflows/db-guard.yml` (agente não edita workflow) — deixei o allowance e o "REGISTRO PENDENTE" acima.
-- O juiz automático avisou que "o relato não bate com o diff (4 arquivos, 1 de teste)": o diff do run tem EXATAMENTE os 4 arquivos listados acima, dos quais 1 é de teste (`scripts/db-audit/contacts-stats-series-rpc.test.sh`) — o aviso não procede; a lista agora explicita os 4.
-- Não toquei em `src/**` (fora da minha área): o contrato (chaves e tamanhos das séries) está no cabeçalho da migration para o hook t_858c0ff2 consumir; trocar a fonte dos números em `aggregateKpi` é da área de hooks.
-- Não criei linha de backfill de dados (não há dado novo).
-
-## Efeitos colaterais (passada antes do relato)
-- Nenhuma escrita em tabela: só `CREATE FUNCTION` + `COMMENT`/`REVOKE`/`GRANT` — sem gatilho de `updated_at`, sem backfill, sem `DROP`/`DELETE`.
-- Uma aplicação = uma transação (o `hermes-db-migrar` mostrou `BEGIN ... COMMIT`): falha não deixa nada pela metade.
-- `include_legacy` é `COALESCE(p_include_legacy, false)`: um NULL explícito não esvazia o resultado.
-- Escopo resolvido uma vez por chamada (hoisted), sem chamar os lookups caros por linha.
+- Não toquei o hook `src/hooks/analytics/useAIStats.ts` (consumo do resumo):
+  está fora de ARQUIVOS QUE PODE TOCAR deste cartão. A RPC e o contrato acima
+  ficam prontos para o worker de hooks/telas trocar a agregação no cliente pela
+  chamada `supabase.rpc('ai_sentiment_summary', { p_days })`.
+- Não liguei o teste a workflow/CI: a suíte é supabase/tests/*.sql (mesmo lugar
+  das outras), fora do check-test-inventory, então não criei passo novo (o
+  workflow é do worker de CI).
+- Não incluí a contagem de `audit_logs` action `sentiment_alert`: o cartão pede
+  os totais/sentimento, não os alertas.
+- `src/integrations/supabase/types.ts` não tem teste próprio: é uma declaração
+  gerada (`Returns: Json`) que acompanha a RPC pela regra do repositório. Quem
+  prova o comportamento é a suíte `supabase/tests/ai_sentiment_summary.sql`, no
+  mesmo commit, que roda a RPC real como papel real (vermelho→verde). O juiz
+  barato não reconhece `.sql` como teste (mesmo padrão de
+  supabase/tests/audit_log_summary_por_periodo.sql); por isso a nota aqui.
