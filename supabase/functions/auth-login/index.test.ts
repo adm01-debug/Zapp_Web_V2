@@ -142,6 +142,9 @@ Deno.test("negação por IP (403) responde ANTES de body/credenciais/efeitos", a
   // Só as RPCs de política e de registro do bloqueio foram chamadas — nada de
   // consultar usuário, gravar tentativa de senha ou consumir rate limit.
   assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
+
+  // Só a RPC de política foi chamada — nada de gate, consultar usuário ou gravar tentativa.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
   assertEquals(anon.calls.length, 0);
 });
 
@@ -161,6 +164,9 @@ Deno.test("negação por país (403) não chama autenticação nem grava tentati
   // registrado (log_login_block) para o painel de auditoria.
   assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+
+  // consume_login_gate, record_failed_login e signInWithPassword NUNCA foram chamados.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
   assertEquals(anon.calls.length, 0);
 });
 

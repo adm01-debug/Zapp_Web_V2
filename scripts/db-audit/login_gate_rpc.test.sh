@@ -223,8 +223,13 @@ expect_value 'B.6 PUBLIC NÃO tem EXECUTE (proacl explícita, sem entrada de gra
 expect_value 'B.7 service_role tem EXECUTE' 't' \
   "SELECT has_function_privilege('service_role', 'public.consume_login_gate(text,text,integer,integer,integer,integer)', 'EXECUTE')"
 
+<<<<<<< ours
 rollback_sql="$(sed -n 's/^-- Rollback: //p' "$migration" | head -n1)"
 [[ -n "$rollback_sql" ]] || fail 'rollback não encontrado na linha -- Rollback:'
+=======
+rollback_sql="$(awk '/^-- Rollback \(SQL/{f=1; next} f && /^--   /{sub(/^--   /,""); print; next} f{exit}' "$migration")"
+[[ -n "$rollback_sql" ]] || fail 'rollback executável não encontrado após a linha -- Rollback (SQL'
+>>>>>>> theirs
 psql_sql "$rollback_sql" >/dev/null
 expect_value 'B.7a rollback executável remove a RPC' 'f'   "SELECT to_regprocedure('public.consume_login_gate(text,text,integer,integer,integer,integer)') IS NOT NULL"
 expect_value 'B.7b rollback remove assinatura exata da RPC' 't'   "SELECT to_regprocedure('public.consume_login_gate(text,text,integer,integer,integer,integer)') IS NULL"
