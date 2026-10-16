@@ -191,51 +191,42 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
   }
 }
 
+// Presença ("digitando") do CONTATO — PD-68.
+//
+// Segurança em duas camadas:
+// 1. EMISSOR AUTENTICADO: este handler só é alcançado pelo caminho já validado
+//    do evolution-webhook (gate R2-API-021 — assinatura HMAC/EVOLUTION_WEBHOOK_SECRET
+//    ou instanceToken por instância — roda ANTES de qualquer handler; ver
+//    evolution-webhook/index.ts). Aqui dentro o guard residual é fail-closed:
+//    sem instância registrada (getConnectionByInstance) ou sem contato
+//    correspondente, NADA é publicado.
+// 2. CANAL PRIVADO: o broadcast vai no canal `typing:<id>` com
+//    `{ config: { private: true } }`, então a Realtime aplica a RLS de
+//    `realtime.messages` (migration 20261013210002_realtime_canais_privados.sql) —
+//    quem pode assinar e quem pode enviar passa a ser decidido pelo banco, e um
+//    cliente anônimo/estranho não lê nem forja "digitando" alheio.
+//
+// Diferente de grupo (`@g.us`), o JID de difusão (`@broadcast`, inclui
+// `status@broadcast`) NÃO é contato: era a brecha por onde o broadcast público
+// vazava; agora é descartado antes de qualquer acesso ao banco.
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
-  const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
-  if (!jid) return;
+  const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
 
-  // `status@broadcast` é o recado/status do WhatsApp, não a presença de um chat:
-  // nunca resolve contato. Sai antes de qualquer consulta ao banco.
-  if (jid.endsWith('@broadcast')) return;
+  // Grupo e difusão não são contatos: não disparam "digitando".
+  if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) return;
 
   const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
-  const isGroup = jid.endsWith('@g.us');
-
-  // Quem digita: em grupo, o AUTOR é a chave de `presences` (participant) e o JID
-  // do evento é o chat (o próprio grupo). No 1:1 os dois coincidem.
   let isComposing = false;
-  let typingParticipant: string | null = null;
   if (presences) {
-    const entradas = Object.entries(presences);
-    if (isGroup) {
-      // Em grupo o AUTOR é a chave de `presences`. Transmitimos também quando o
-      // estado NÃO é 'composing' (paused/available/sem status): o fim da digitação
-      // precisa chegar ao painel como `typing:false`, senão o indicador nunca apaga.
-      const autor = entradas.find(
-        ([, p]) => p?.lastKnownPresence === "composing" || p?.status === "composing",
-      ) ?? entradas[0];
-      typingParticipant = autor ? autor[0] : null;
-      isComposing = !!autor &&
-        (autor[1]?.lastKnownPresence === "composing" || autor[1]?.status === "composing");
-    } else {
-      isComposing = entradas.some(
-        ([, p]) => p?.lastKnownPresence === "composing" || p?.status === "composing",
-      );
+    for (const [, pState] of Object.entries(presences)) {
+      if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
     }
   } else {
     const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-    isComposing = directStatus === "composing";
-    if (isGroup) {
-      typingParticipant = (presenceData.participant as string) || (presenceData.participantJid as string) || null;
-    }
+    isComposing = directStatus === 'composing';
   }
-
-  // Grupo sem autor identificável degrada EXPLICITAMENTE: um broadcast anônimo no
-  // canal do grupo diria que "alguém" digita sem provar quem — melhor não avisar.
-  if (isGroup && !typingParticipant) return;
 
   const phone = normalizePhone(jid);
   if (!phone) return;
@@ -246,21 +237,8 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
   const contact = await getContactByPhone(supabase, phone, connection.id);
   if (!contact) return;
 
-  // Canal do CHAT (o próprio grupo é um contato com phone = id sem sufixo), nunca
-  // um canal derivado do participant — o painel escuta `typing:<conversationId>`.
-  const channel = supabase.channel(`typing:${contact.id}`);
-  const payload = isGroup
-    ? {
-      // `typing`/`participant` são o contrato de grupo; `isTyping` segue junto
-      // porque é o campo que `useTypingPresence` já lê em `contact_typing` — sem
-      // ele o indicador não acenderia.
-      typing: isComposing,
-      isTyping: isComposing,
-      participant: typingParticipant,
-      timestamp: new Date().toISOString(),
-    }
-    : { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() };
-  await channel.send({ type: 'broadcast', event: 'contact_typing', payload });
+  const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
+  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
   supabase.removeChannel(channel);
 }
 
