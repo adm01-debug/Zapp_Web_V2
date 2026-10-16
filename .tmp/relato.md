@@ -1,53 +1,36 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## O que mudou e por quê
-Restaurei na ponta de dia/2026-10-12 o trabalho já aprovado do cartão anterior (branch
-v2/refazer-reactions-emoji-contato-t-f23448-26100907574162, commit 01d6a22d9), que tinha
-ficado de fora por conflito com a base. Cherry-pickei os DOIS commits da branch:
-- 07c58c990 "fix(migrações): torna rollback de reactions resiliente a conflito" →
-  - supabase/migrations/20261007001008_message_reactions_agente_sem_chave_de_contato.sql (nova): gatilho
-    message_reactions_normalize_author que zera contact_id quando há user_id (autoria agente x cliente),
-    tabela de apoio do rollback e backfill das reações de agente legadas.
-  - scripts/db-audit/message-reactions-author-model.test.sh (nova): prova em Postgres 17 descartável
-    (docker) do defeito (2ª reação de agente ao mesmo emoji colide em 23505 na chave do contato),
-    migration, rollback executável extraído do próprio arquivo, idempotência e RLS como authenticated.
-  - scripts/ci/check-test-inventory.mjs: entrada na ALLOWLIST para o novo .test.sh.
-- 01d6a22d9 "fix(db): explicita rollback de reações" → move o rollback da migration para o formato
-  executável (prosa + bloco `-- Rollback (SQL executável, na ordem):`) e ajusta a extração no teste.
+## O que este cartão pediu e como resolvi o motivo (conflito)
+Cartão [retomar]: a entrega anterior (`v2/sec-y25-01-insert-alvo-2610090601f8e4`, commit `b7f32d7ee`) foi aprovada mas CONFLITAVA com a ponta de `dia/2026-10-12`. Trouxe os commits por `git cherry-pick b7f32d7ee` para o workspace novo (cuja base JÁ é a ponta atual `dia/2026-10-12`).
 
-Único conflito do cherry-pick: scripts/ci/check-test-inventory.mjs (a base já tinha duas entradas
-novas na ALLOWLIST de outro cartão: ia131-audio-stt-cadeia e multiplix-completion-item-queue).
-Resolvi MANTENDO as duas entradas da base E a entrada nova (message-reactions-author-model), sem
-remover nada — não reescrevi trabalho de outro cartão.
+Conflito único: `.github/workflows/db-guard.yml`, porque os DOIS lados acrescentaram passos no fim do job. Resolvi PRESERVANDO os dois lados: os passos da ponta (N-002 trava de escalada em profiles, N-136 runbook de recriação) e o passo desta entrega (SEC-Y25-01). Nada foi perdido nem sobrescrito. Os outros dois arquivos (a migration e o teste) entraram sem conflito.
 
-Confirmei que o defeito ainda existia na base antes de mexer: nenhuma migration em
-supabase/migrations/ citava message_reactions_normalize_author na ponta de dia/2026-10-12.
+## Confirmei no código ATUAL que o defeito ainda existe
+Antes de mexer, `git grep` na ponta atual (`15929a99c`, antes do cherry-pick): não há nenhuma migration `sec_y25_01` na base, e as policies de INSERT correntes ainda validam SÓ o autor, nunca o alvo — exatamente o defeito do achado SEC-RLS_TAREFAS_EMAIL_LIGACOES-01:
+- `deal_activities`: "Authenticated can insert deal activities" em `20260317222442_f3acf46c-...:125` (checa só `performed_by`, não o `deal_id`).
+- `calls`: "Users can insert calls" em `20260317222534_cc94813a-...:94` (checa só `agent_id`, não o `contact_id`); o alvo também muda por UPDATE em `upsert_my_call` (`20260926800000_calls_telefonia_v2.sql`).
+- `conversation_tasks`: `tasks_insert_own` em `20260928140000_tasks_unify_reminders_kanban.sql:139` (checa só `created_by`).
+Como o defeito segue vivo, a entrega de código é necessária (não é caso de "já corrigido, fechar sem commit").
+
+## O que a correção faz (migration trazida)
+`supabase/migrations/20261009090603_sec_y25_01_insert_alvo.sql` (nome com data futura em relação à última da dia, `20261009000118`):
+- `deal_activities`: só aceita `deal_id` de negócio do próprio agente (`sales_deals.assigned_to` = perfil do chamador) ou admin/supervisor.
+- `calls` e `conversation_tasks`: exigem `contact_id` visível ao chamador por `is_contact_visible_to_user` (o mesmo predicado de `contact_notes`), com contato nulo ainda permitido (número desconhecido / tarefa pessoal).
+- `calls` ganha gatilho BEFORE UPDATE que barra a troca de `contact_id` para contato fora do alcance (fecha o caminho do `ON CONFLICT DO UPDATE` da RPC `upsert_my_call`); o caminho de sistema (`postgres`/`service_role`) é preservado.
+- Cabeçalho com ROLLBACK documentado e executável (formato do repo).
+Também entrou `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` e o passo correspondente em `.github/workflows/db-guard.yml`.
 
 ## Prova
-- verde: `bash scripts/db-audit/message-reactions-author-model.test.sh` →
-  `[OK] R2-DB-021: modelo de autoria de reacao provado (defeito vermelho -> verde -> rollback -> idempotente)`
-  (todos os [PASS] dos blocos A/B/ROLLBACK/C; EXIT=0)
-- vermelho dentro do próprio roteiro (bloco A, estado anterior): `[PASS] A: 2o agente no mesmo emoji
-  colide na chave do contato` e `[PASS] A: reacao de cliente colide com a de agente` — o defeito 23505
-  é reproduzido antes da migration e o mesmo INSERT passa depois (bloco C).
-- banco local: `hermes-db-migrar supabase/migrations/20261007001008_...sql` →
-  `APLICADA no banco LOCAL 'v2-2610121722c913' (produção não foi tocada).`
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (97s)` (dependencias/db_guard/tipos/
-  lint/migrations OK); o conjunto de banco nomeado não foi passado, então banco_local fica NÃO VERIFICADO.
+- vermelho antes: bloco A do teste roda as policies correntes e o ataque PASSA — `[PASS] A1 agente B grava atividade na trilha do negócio do agente A`, idem A2/A3 (calls e conversation_tasks).
+- verde depois: com a migration aplicada, os mesmos ataques falham e os fluxos legítimos seguem — `[PASS] B1..B3` (negados), `B5..B11` (legítimos passam), `B12` anon negado pelo RLS, `B13` service_role liberado, `B16/B17` (upsert/UPDATE do alvo negados), `B18..B21` (troca para contato próprio, status, caminho de sistema passam).
+- rollback do cabeçalho extraído do próprio arquivo e executado (bloco C): após o rollback o ataque volta a passar (`C1`) e reaplicar a correção volta a barrar (`C2`, idempotente).
+- conjunto: `bash scripts/db-audit/sec-y25-01-insert-alvo.test.sh` → `[OK] SEC-Y25-01: INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo` (exit 0).
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (93s)`.
 
-## Sobre o aviso do fechar ("SEM DDL/migration")
-Falso positivo. O pedido original DESTE cartão é uma migration (Item 303 do BACKLOG_VERIFICADO,
-R2-DB-021, "área migrations"). O próprio rodapé do cartão ressalva "sem DDL/Edge/dependência nova
-salvo se o pedido original exigia" — e ele exigia. A migration nova é a entrega pedida, não escopo
-extra: as duas unicidades independentes de message_reactions continuavam na ponta de dia/2026-10-12
-até este cartão. Repito o MESMO `hermes-tarefa-fechar` sem mudar nada.
+## Ressalva ao aviso automático "SEM DDL/migration" do fechar
+Não procede. O cartão termina com a linha de regras permanentes ("sem DDL/Edge/dependência nova salvo se o pedido original exigia"), e o PEDIDO ORIGINAL deste cartão é exatamente uma migration de banco: "Uma migration nova (com ROLLBACK documentado conforme o padrão do repo)" que corrige as policies de INSERT. A migration está no escopo declarado em ARQUIVOS QUE PODE TOCAR ("uma migration nova em supabase/migrations/"). Repito o MESMO comando de fechar sem alterar o diff.
 
 ## O que NÃO fiz e por quê
-- Não editei `.github/workflows/db-guard.yml`: agente não edita workflow (a entrada ficou na ALLOWLIST
-  do check-test-inventory.mjs, com a nota "promover pelo dono do workflow" — igual ao padrão dos demais
-  .test.sh de container). Registro em uma linha: passo pendente `bash scripts/db-audit/message-reactions-author-model.test.sh`.
-- Não mexi no edge (supabase/functions/**) nem no src/**: fora da minha área.
-- `check-test-inventory.mjs` reprova 6 órfãos (department-invite-contract-audit-vocabulary, ia-usage-outbox-duravel,
-  talkx-conversion-defaults, team-chat-department-transfer-guards, team-chat-media-contract,
-  team-direct-conversation-race) — todos já existem na ponta de dia/2026-10-12 e não estão na ALLOWLIST de base:
-  falha PRÉ-EXISTENTE, não introduzida por este cartão (o arquivo novo NÃO aparece como órfão).
+- Não apliquei nada em produção (regra permanente: migration só no repositório).
+- Não editei as migrations antigas das policies (correção = migration nova).
+- Não mexi em `schema-manifest.json`: nenhuma coluna/tipo mudou (só policy e função/trigger), então o manifesto não é afetado; o portão de migrations da verificação ficou verde.

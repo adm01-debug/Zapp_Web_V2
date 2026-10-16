@@ -1545,3 +1545,14 @@ jobs:
         env:
           SEARCHBOX_ALERT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh
+      # SEC-Y25-01 (P0, SEC-RLS_TAREFAS_EMAIL_LIGACOES-01): o INSERT de deal_activities,
+      # calls e conversation_tasks validava só o AUTOR, nunca o ALVO. O teste sobe um
+      # PostgreSQL descartável, aplica o helper real de visibilidade de contato, reproduz
+      # o ataque como papel real (agent) antes da correção, e prova o bloqueio depois —
+      # mais anon negado pelo RLS e service_role liberado. SKIP_DOCKER_SHIM=1: o teste cria
+      # os papéis anon/authenticated/service_role, que são globais ao cluster.
+      - name: Simular amarração do alvo no INSERT de atividades, chamadas e tarefas (SEC-Y25-01)
+        env:
+          SEC_Y25_INSERT_ALVO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/sec-y25-01-insert-alvo.test.sh
