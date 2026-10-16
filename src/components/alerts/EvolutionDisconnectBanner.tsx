@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface DisconnectedInstance {
   id: string;
@@ -17,6 +18,12 @@ export function EvolutionDisconnectBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [reconnecting, setReconnecting] = useState<string | null>(null);
   const reduceMotion = useReducedMotion() ?? false;
+
+  // PM-37: a ação `connect` da edge `evolution-api` é de CONTROLE — só
+  // admin/supervisor passam. O botão era oferecido a qualquer usuário e o
+  // agente só descobria a recusa depois do clique.
+  const { isAdmin, isSupervisor } = useUserRole();
+  const canReconnect = isAdmin || isSupervisor;
 
   const fetchStatus = async () => {
     const { data } = await supabase
@@ -113,7 +120,7 @@ export function EvolutionDisconnectBanner() {
             </span>{' '}
             <span className="text-xs">Mensagens não serão enviadas/recebidas.</span>
           </div>
-          {disconnected.length === 1 && (
+          {canReconnect && disconnected.length === 1 && (
             <button
               onClick={() => handleReconnect(disconnected[0])}
               disabled={reconnecting === disconnected[0].instance_id}

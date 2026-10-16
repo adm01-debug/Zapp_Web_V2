@@ -22,6 +22,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
+}));
+
 const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
 
 describe('a11y: faixa de conexões desconectadas (landmark)', () => {

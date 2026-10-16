@@ -28,6 +28,12 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: h.toastSuccess, error: h.toastError } }));
 
+// PM-37: o botão 'Reconectar' passou a exigir permissão (a ação `connect` da
+// edge é de controle, só admin/supervisor) — os testes do banner rodam como admin.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
+}));
+
 const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
 
 async function clicarReconectar() {
