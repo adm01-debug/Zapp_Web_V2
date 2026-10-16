@@ -166,12 +166,14 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     }
     const rec = (body ?? {}) as Record<string, unknown>;
 
-    // `mode` inválido é recusa fechada antes de qualquer efeito (não há como
-    // decidir o fluxo); o resto do corpo inválido segue o padrão deste handler:
-    // acumula em `invalidBody` e só responde 400 DEPOIS do gate, para que o
-    // corpo inválido conte apenas o teto por IP (p_email=null).
     const mode = parseLoginMode(rec.mode);
     if (mode === null) return errorResponse("invalid mode", 400, req);
+
+    const email = sanitizeString(rec.email, 254)?.toLowerCase();
+    if (!email || !EMAIL_RE.test(email)) return errorResponse("invalid email", 400, req);
+    const password = typeof rec.password === "string" ? rec.password : "";
+    if (!password || password.length > 256) return errorResponse("invalid password", 400, req);
+    const userAgent = sanitizeString(rec.userAgent ?? req.headers.get("user-agent"), 512) ?? null;
 
     let email: string | null = null;
     if (!invalidBody) {
