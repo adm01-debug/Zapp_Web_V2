@@ -1,6 +1,8 @@
 import { useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
+// CV-061 — ghost text overlay (texto fantasma)
+import { GhostTextOverlay, GhostTextHint } from '@/components/copilot/GhostTextOverlay';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -77,6 +79,9 @@ interface ChatInputAreaProps {
   fileUploaderRef: React.RefObject<FileUploaderRef | null>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   onOpenTransfer?: () => void;
+  // CV-061 / CV-062 — ghost text (texto fantasma)
+  ghostSuffix?: string;
+  onGhostKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;
 }
 
 export function ChatInputArea(props: ChatInputAreaProps) {
@@ -91,6 +96,8 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
     fileUploaderRef, inputRef, onOpenTransfer,
+    // CV-061 / CV-062
+    ghostSuffix = '', onGhostKeyDown,
   } = props;
 
   const logic = useChatInputLogic({
@@ -189,16 +196,27 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 )}
               </AnimatePresence>
 
+              {/* CV-061 — ghost text overlay posicionado atrás do textarea */}
+              <GhostTextOverlay
+                inputValue={inputValue}
+                ghostSuffix={ghostSuffix}
+                hidden={!ghostSuffix}
+              />
               <textarea ref={inputRef} value={inputValue}
                 onChange={(e) => { onInputChange(e); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
-                onKeyDown={onKeyDown} onBlur={onBlur} onPaste={logic.handlePaste}
+                onKeyDown={(e) => {
+                  // CV-061 — intercepta Tab/Esc para o ghost text antes de repassar
+                  if (onGhostKeyDown?.(e as React.KeyboardEvent<HTMLTextAreaElement>)) return;
+                  onKeyDown(e);
+                }}
+                onBlur={onBlur} onPaste={logic.handlePaste}
                 onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
                 placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
                 rows={1}
                 className={cn(
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",
                   "placeholder:text-muted-foreground resize-none transition-all",
-                  "focus:ring-0",
+                  "focus:ring-0 relative z-10",
                   logic.isMobile ? "px-1 py-2.5 text-base min-h-[42px] max-h-[200px]" : "py-3.5 min-h-[52px] max-h-[200px]",
                 )}
                 aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
@@ -210,6 +228,11 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                   {logic.charCount}/{logic.CHAR_LIMIT}
                 </span>
               )}
+              {/* CV-061 — dica de atalho do ghost text */}
+              <GhostTextHint
+                visible={!!ghostSuffix}
+                className="absolute bottom-1 left-0 pointer-events-none"
+              />
             </div>
 
             <div className="flex items-center gap-0.5 shrink-0 pb-1.5">
