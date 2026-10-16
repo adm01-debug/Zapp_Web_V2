@@ -15,6 +15,7 @@ import { Volume2, Check, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { lerPreviaDeVoz, guardarPreviaDeVoz } from '@/lib/voicePreviewCache';
 
 export interface ElevenLabsVoice {
   id: string;
@@ -44,18 +45,6 @@ interface VoiceSelectorProps {
   selectedVoiceId: string;
   onVoiceChange: (voiceId: string) => void;
   className?: string;
-}
-
-/**
- * G6 — a prévia é gerada por TTS (custo por chamada) e o texto de amostra é
- * fixo: o mesmo blob vale para a sessão inteira. Sem este cache, cada clique em
- * ▶ pagava de novo pela mesma voz.
- */
-const previewCache = new Map<string, Blob>();
-
-/** Apenas para teste: uma sessão nova começa com o cache vazio. */
-export function limparCacheDePreviaDeVoz(): void {
-  previewCache.clear();
 }
 
 export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: VoiceSelectorProps) {
@@ -107,7 +96,7 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
     try {
       // Cache de sessão: o mesmo texto de amostra não é pago duas vezes.
-      let audioBlob = previewCache.get(voice.id);
+      let audioBlob = lerPreviaDeVoz(voice.id);
 
       if (!audioBlob) {
         const response = await fetch(
@@ -135,7 +124,7 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
         audioBlob = await response.blob();
         // Resposta que chegou tarde (troca de voz / menu fechado): não toca.
         if (controller.signal.aborted) return;
-        previewCache.set(voice.id, audioBlob);
+        guardarPreviaDeVoz(voice.id, audioBlob);
       }
 
       const audioUrl = URL.createObjectURL(audioBlob);

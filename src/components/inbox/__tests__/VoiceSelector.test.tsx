@@ -22,7 +22,8 @@ vi.mock('@/lib/edgeAuthHeaders', () => ({
 }));
 vi.mock('@/lib/mediaVolumeElement', () => ({ attachMediaVolume: vi.fn(() => () => {}) }));
 
-import { VoiceSelector, ELEVENLABS_VOICES, limparCacheDePreviaDeVoz } from '../VoiceSelector';
+import { VoiceSelector, ELEVENLABS_VOICES } from '../VoiceSelector';
+import { limparCacheDePreviaDeVoz } from '@/lib/voicePreviewCache';
 
 const VOZ = ELEVENLABS_VOICES[0];
 const BLOB_DA_PREVIA = new Blob(['previa-tts'], { type: 'audio/mpeg' });
