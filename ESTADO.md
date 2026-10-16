@@ -121,7 +121,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `talkx-link` | B | `supabase/functions/talkx-send/index.ts:455` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
-| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:450` · `src/hooks/integrations/useTalkX.ts:466` · `src/hooks/integrations/useTalkX.ts:475` · `src/hooks/integrations/useTalkXTemplates.ts:182` · `supabase/functions/talkx-scheduler/index.ts:294` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
+| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:450` · `src/hooks/integrations/useTalkX.ts:466` · `src/hooks/integrations/useTalkX.ts:475` · `src/hooks/integrations/useTalkXTemplates.ts:196` · `supabase/functions/talkx-scheduler/index.ts:294` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
 | `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:158` |
