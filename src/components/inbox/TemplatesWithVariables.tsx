@@ -37,7 +37,7 @@ interface TemplateWithVariablesProps {
 
 export function TemplatesWithVariables({ templates, onUseTemplate, contactData }: TemplateWithVariablesProps) {
   const { profile } = useAuth();
-  const agentName = profile?.display_name?.trim() || undefined;
+  const agentName = profile?.name?.trim() || undefined;
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);

@@ -66,7 +66,7 @@ interface TemplateEditorDialogProps {
   onOpenChange: (open: boolean) => void;
   template?: Template | null;
   onSave: (data: Partial<Template>) => Promise<void>;
-  /** Nome do atendente logado (profiles.display_name): preenche `{{atendente}}` no preview. */
+  /** Nome do atendente logado (profiles.name): preenche `{{atendente}}` no preview. */
   agentName?: string;
 }
 
