@@ -89,6 +89,8 @@ function startFakeWebhook() {
   let ready!: (v: { url: string }) => void;
   const whenReady = new Promise<{ url: string }>((resolve) => { ready = resolve; });
   const server = Deno.serve(
+    // hostname explícito: o CI roda `deno test --allow-net=127.0.0.1` (ci.yml:96) e
+    // Deno.serve sem hostname sobe em 0.0.0.0 -> NotCapable na porta 0.
     { hostname: "127.0.0.1", port: 0, onListen: ({ hostname, port }) => ready({ url: `http://${hostname}:${port}` }) },
     async (req) => {
       const body = await req.json().catch(() => null);
