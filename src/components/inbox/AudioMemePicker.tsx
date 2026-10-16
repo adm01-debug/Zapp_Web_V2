@@ -8,30 +8,18 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Search, Plus, Star, Trash2, Loader2, Upload, X, Play, Pause, Volume2, Tag, Check, ChevronDown } from 'lucide-react';
 import { useAudioMemes, formatDuration, type AudioMemeItem, type PendingUpload } from '@/hooks/communication/useAudioMemes';
+import { AUDIO_MEME_CATEGORY_IDS, audioMemeCategory } from '@/lib/audioMemeCategories';
 
 interface AudioMemePickerProps {
   onSendAudio: (audioUrl: string) => void;
   disabled?: boolean;
 }
 
-const CATEGORY_LABELS: Record<string, { emoji: string; label: string }> = {
-  'risada': { emoji: '😂', label: 'Risada' }, 'aplausos': { emoji: '👏', label: 'Aplausos' },
-  'suspense': { emoji: '🎭', label: 'Suspense' }, 'vitória': { emoji: '🏆', label: 'Vitória' },
-  'falha': { emoji: '💥', label: 'Falha' }, 'surpresa': { emoji: '😱', label: 'Surpresa' },
-  'triste': { emoji: '😢', label: 'Triste' }, 'raiva': { emoji: '😡', label: 'Raiva' },
-  'romântico': { emoji: '💕', label: 'Romântico' }, 'medo': { emoji: '👻', label: 'Medo' },
-  'deboche': { emoji: '😏', label: 'Deboche' }, 'narração': { emoji: '🎙️', label: 'Narração' },
-  'bordão': { emoji: '💬', label: 'Bordão' }, 'efeito sonoro': { emoji: '🔊', label: 'Efeito Sonoro' },
-  'viral': { emoji: '🔥', label: 'Viral' }, 'cumprimento': { emoji: '👋', label: 'Cumprimento' },
-  'despedida': { emoji: '👋', label: 'Despedida' }, 'animação': { emoji: '🤩', label: 'Animação' },
-  'drama': { emoji: '🎬', label: 'Drama' }, 'gospel': { emoji: '⛪', label: 'Gospel' },
-  'outros': { emoji: '📦', label: 'Outros' },
-};
-const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS);
+const ALL_CATEGORIES: readonly string[] = AUDIO_MEME_CATEGORY_IDS;
 
 function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onChange: (cat: string) => void; size?: 'sm' | 'xs' }) {
   const [open, setOpen] = useState(false);
-  const info = CATEGORY_LABELS[value] || { emoji: '📦', label: value };
+  const info = audioMemeCategory(value);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -43,7 +31,7 @@ function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onC
       <PopoverContent className="w-[200px] p-1.5 max-h-[240px] overflow-y-auto" align="start" side="bottom" sideOffset={4} onClick={(e) => e.stopPropagation()}>
         <div className="space-y-0.5">
           {ALL_CATEGORIES.map(cat => {
-            const catInfo = CATEGORY_LABELS[cat];
+            const catInfo = audioMemeCategory(cat);
             const isActive = cat === value;
             return (
               <button key={cat} onClick={(e) => { e.stopPropagation(); onChange(cat); setOpen(false); }}
@@ -72,7 +60,7 @@ function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingUploa
         <Tag className="w-3 h-3 text-muted-foreground shrink-0" /><span className="text-3xs text-muted-foreground shrink-0">Categoria:</span>
         <CategorySelector value={category} onChange={setCategory} size="sm" />
         {pending.aiCategory !== 'outros' && category !== pending.aiCategory && (
-          <button onClick={() => setCategory(pending.aiCategory)} className="text-[9px] text-primary hover:underline shrink-0">IA sugere: {CATEGORY_LABELS[pending.aiCategory]?.label}</button>
+          <button onClick={() => setCategory(pending.aiCategory)} className="text-[9px] text-primary hover:underline shrink-0">IA sugere: {audioMemeCategory(pending.aiCategory).label}</button>
         )}
       </div>
       <div className="flex items-center gap-2 justify-end">
@@ -152,8 +140,8 @@ export function AudioMemePicker({ onSendAudio, disabled }: AudioMemePickerProps)
             <div className="flex gap-1.5 flex-wrap">
               <button onClick={() => { setActiveCategory(null); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap', !activeCategory && !showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>Todos ({memes.length})</button>
               <button onClick={() => { setShowFavorites(!showFavorites); setActiveCategory(null); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap flex items-center gap-1', showFavorites ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}><Star className="w-3 h-3" /> Favoritos</button>
-              {categories.map(cat => { const info = CATEGORY_LABELS[cat]; const count = memes.filter(m => m.category === cat).length; return (
-                <button key={cat} onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap', activeCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>{info?.emoji || '📦'} {info?.label || cat} ({count})</button>
+              {categories.map(cat => { const info = audioMemeCategory(cat); const count = memes.filter(m => m.category === cat).length; return (
+                <button key={cat} onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setShowFavorites(false); }} className={cn('px-2.5 py-1 rounded-full text-2xs font-medium transition-colors whitespace-nowrap', activeCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>{info.emoji} {info.label} ({count})</button>
               ); })}
             </div>
           </ScrollArea>

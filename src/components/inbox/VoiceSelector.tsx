@@ -1,6 +1,6 @@
 import { SUPABASE_URL } from '@/integrations/supabase/client';
 import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { log } from '@/lib/logger';
 import {
@@ -46,14 +46,38 @@ interface VoiceSelectorProps {
   className?: string;
 }
 
+/**
+ * G6 — a prévia é gerada por TTS (custo por chamada) e o texto de amostra é
+ * fixo: o mesmo blob vale para a sessão inteira. Sem este cache, cada clique em
+ * ▶ pagava de novo pela mesma voz.
+ */
+const previewCache = new Map<string, Blob>();
+
+/** Apenas para teste: uma sessão nova começa com o cache vazio. */
+export function limparCacheDePreviaDeVoz(): void {
+  previewCache.clear();
+}
+
 export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: VoiceSelectorProps) {
   const selectedVoice = ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId) || ELEVENLABS_VOICES[0];
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  // G6 — trocar de voz/fechar o menu tem de MATAR o fetch em voo; senão a prévia
+  // antiga começa a tocar por baixo da nova.
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Desmontar o seletor cancela a prévia em voo.
+  useEffect(() => () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
 
   const stopPreview = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoadingVoiceId(null);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -76,30 +100,44 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
     // Stop any current preview
     stopPreview();
-    
+
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoadingVoiceId(voice.id);
 
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(await edgeAuthHeaders()),
-          },
-          body: JSON.stringify({ 
-            text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
-            voiceId: voice.id
-          }),
-        }
-      );
+      // Cache de sessão: o mesmo texto de amostra não é pago duas vezes.
+      let audioBlob = previewCache.get(voice.id);
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar preview');
+      if (!audioBlob) {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(await edgeAuthHeaders()),
+            },
+            body: JSON.stringify({
+              text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
+              voiceId: voice.id
+            }),
+            signal: controller.signal,
+          }
+        );
+
+        if (controller.signal.aborted) return;
+
+        if (!response.ok) {
+          throw new Error('Erro ao gerar preview');
+        }
+
+        audioBlob = await response.blob();
+        // Resposta que chegou tarde (troca de voz / menu fechado): não toca.
+        if (controller.signal.aborted) return;
+        previewCache.set(voice.id, audioBlob);
       }
 
-      const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -125,10 +163,14 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
       await audio.play();
     } catch (error) {
+      // Cancelamento (troca de voz / menu fechado) não é falha: silêncio.
+      if (controller.signal.aborted) return;
       log.error('Preview error:', error);
       toast.error('Erro ao carregar preview da voz');
     } finally {
-      setLoadingVoiceId(null);
+      const aindaAtual = abortRef.current === controller;
+      if (aindaAtual) abortRef.current = null;
+      if (aindaAtual || abortRef.current === null) setLoadingVoiceId(null);
     }
   };
 
@@ -164,6 +206,8 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Preview button */}
                   <button
+                    type="button"
+                    aria-label={isPlaying ? `Parar prévia da voz ${voice.name}` : `Ouvir prévia da voz ${voice.name}`}
                     onClick={(e) => playPreview(voice, e)}
                     className={cn(
                       "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors",
