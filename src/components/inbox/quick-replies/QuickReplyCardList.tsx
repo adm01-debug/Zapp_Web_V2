@@ -72,7 +72,7 @@ export function QuickReplyCardList({
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                     className={cn(
                       "p-3 rounded-xl border border-border/50 bg-card hover:border-primary/30 transition-all group cursor-pointer",
-                      isFavorite(template.id) && "border-yellow-400/30 bg-warning/5"
+                      isFavorite(template.id) && "border-warning/30 bg-warning/5"
                     )}
                     onClick={() => onSelect(template)}
                   >
@@ -90,7 +90,7 @@ export function QuickReplyCardList({
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onToggleFavorite(template.id); }}>
-                          <Star className={cn("w-4 h-4", isFavorite(template.id) && "fill-yellow-400 text-warning")} />
+                          <Star className={cn("w-4 h-4", isFavorite(template.id) && "fill-warning text-warning")} />
                         </Button>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onCopy(template.content); }}>
                           <Copy className="w-4 h-4" />
