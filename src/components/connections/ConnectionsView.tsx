@@ -263,7 +263,7 @@ export function ConnectionsView() {
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleCheckOrphans} disabled={checkingOrphans}>
-                {checkingOrphans ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                {checkingOrphans ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Verificar agora
               </Button>
             </div>
