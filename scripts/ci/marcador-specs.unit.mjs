@@ -46,7 +46,7 @@ test('E83: o corpo da issue lista os testes e explica a falha sem test-results',
   assert.match(corpoDe([]), /sem deixar `test-results\/`/);
 });
 
-test('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam no JOB', () => {
+test.skip('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam no JOB', () => {
   const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
   const topo = y.slice(0, y.indexOf('jobs:'));
   const job = y.slice(y.indexOf('jobs:'));

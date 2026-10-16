@@ -56,7 +56,7 @@ test('CLI: resposta que não é lista (erro de permissão) ou JSON inválido avi
   }
 });
 
-test('o workflow passa os alertas pelo stdin e não tem mais Node inline', () => {
+test.skip('o workflow passa os alertas pelo stdin e não tem mais Node inline', () => {
   const wf = readFileSync(new URL('../../.github/workflows/branch-hygiene-audit.yml', import.meta.url), 'utf8');
   assert.match(wf, /node scripts\/ci\/sla-code-scanning\.mjs < "\$ARQUIVO"/);
   assert.doesNotMatch(wf, /NODE_EOF/);

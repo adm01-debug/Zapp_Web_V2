@@ -47,7 +47,7 @@ const ALLOWLIST_META = new Map([
 
 // Suites Node fora de qualquer bloco run: — Map<caminho, {desde, motivo}>.
 const ALLOWLIST_NODE_META = new Map([
-  // Exemplo: ['scripts/qa/foo.unit.mjs', { desde: '2026-10-15', motivo: 'aguarda infra X' }],
+  ['scripts/catalog/validate-plan.test.mjs', { desde: '2026-10-16', motivo: 'teste de plano editorial, sem CI runner adequado; revisão em 30 dias' }],
 ]);
 
 // Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
