@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { forwardRef, type ReactNode } from 'react';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -277,6 +277,74 @@ describe('EmailChatThread', () => {
         remove_labels: ['TRASH'],
       });
       await waitFor(() => expect(onBack).toHaveBeenCalled());
+    });
+  });
+
+  // A mensagem de erro da ação é do `onError` do hook (trilha do pai t_7f5d100e,
+  // provada em src/hooks/integrations/__tests__/useGmail.test.ts). A tela não repete
+  // o aviso — o que ela garante é não navegar, não deixar rejeição sem tratamento e
+  // soltar o botão. Uma rejeição sem `catch` aparece aqui como 'Unhandled Rejection'
+  // e derruba o arquivo, então o teste abaixo é a própria prova do defeito.
+  const flush = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+
+  describe('falha das ações de header não pendura a tela', () => {
+    it('mover para lixeira: falha não volta e mantém a conversa na tela', async () => {
+      mocks.threadMessages = [MOCK_MSG];
+      mocks.trashThreadMutateAsync.mockRejectedValueOnce(new Error('Failed to send a request to the Edge Function'));
+      const onBack = vi.fn();
+      render(<EmailChatThread thread={MOCK_THREAD} onBack={onBack} />);
+      fireEvent.click(screen.getByLabelText('Mover para lixeira'));
+      await waitFor(() => expect(mocks.trashThreadMutateAsync).toHaveBeenCalledWith('gmail-t1'));
+      await flush();
+
+      expect(onBack).not.toHaveBeenCalled();
+      expect(screen.getByText('Test Subject')).toBeVisible();
+      expect(screen.getByTestId('bubble-msg1')).toBeVisible();
+      expect(screen.getByLabelText('Mover para lixeira')).toBeEnabled();
+    });
+
+    it('arquivar: falha não volta e libera o botão', async () => {
+      mocks.threadMessages = [MOCK_MSG];
+      mocks.modifyThreadLabelsMutateAsync.mockRejectedValueOnce(new Error('JWT expired'));
+      const onBack = vi.fn();
+      render(<EmailChatThread thread={MOCK_THREAD} onBack={onBack} />);
+      fireEvent.click(screen.getByLabelText('Arquivar'));
+      await waitFor(() => expect(mocks.modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({ thread_id: 'gmail-t1', remove_labels: ['INBOX'] }));
+      await flush();
+
+      expect(onBack).not.toHaveBeenCalled();
+      expect(screen.getByText('Test Subject')).toBeVisible();
+      expect(screen.getByLabelText('Arquivar')).toBeEnabled();
+    });
+
+    it('restaurar da lixeira: falha não volta e libera o botão', async () => {
+      mocks.threadMessages = [MOCK_MSG];
+      mocks.modifyThreadLabelsMutateAsync.mockRejectedValueOnce(new Error('Failed to fetch'));
+      const onBack = vi.fn();
+      render(<EmailChatThread thread={{ ...MOCK_THREAD, label_ids: ['TRASH'] }} onBack={onBack} />);
+      fireEvent.click(screen.getByLabelText('Restaurar da lixeira'));
+      await waitFor(() => expect(mocks.modifyThreadLabelsMutateAsync).toHaveBeenCalledWith({ thread_id: 'gmail-t1', add_labels: ['INBOX'], remove_labels: ['TRASH'] }));
+      await flush();
+
+      expect(onBack).not.toHaveBeenCalled();
+      expect(screen.getByText('Test Subject')).toBeVisible();
+      expect(screen.getByLabelText('Restaurar da lixeira')).toBeEnabled();
+    });
+
+    it('não dispara a ação duas vezes enquanto a primeira corre', async () => {
+      mocks.threadMessages = [MOCK_MSG];
+      let concluir: (value: unknown) => void = () => {};
+      mocks.trashThreadMutateAsync.mockImplementationOnce(() => new Promise(resolve => { concluir = resolve; }));
+      const onBack = vi.fn();
+      render(<EmailChatThread thread={MOCK_THREAD} onBack={onBack} />);
+      const botao = screen.getByLabelText('Mover para lixeira');
+      fireEvent.click(botao);
+      expect(botao).toBeDisabled();
+      fireEvent.click(botao);
+
+      expect(mocks.trashThreadMutateAsync).toHaveBeenCalledTimes(1);
+      concluir({});
+      await waitFor(() => expect(onBack).toHaveBeenCalledTimes(1));
     });
   });
 
