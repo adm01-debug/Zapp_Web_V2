@@ -73,8 +73,6 @@ const ALLOWLIST = new Set([
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
-  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
-  'scripts/db-audit/login_gate_rpc.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
@@ -84,9 +82,9 @@ const ALLOWLIST = new Set([
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
-  // X057b: comportamento das RPCs (segment_ids ordenados + snapshot com dedupe). Roda em
-  // PostgreSQL descartavel; promover em db-guard.yml quando o modulo Talk X fechar a fase.
-  'scripts/db-audit/talkx-campaign-segments-rpc.test.sh',
+  // N-110: prova SQL da RPC save_talkx_template_variants em PG 17 descartável — cria/atualiza
+  // variantes do template sob as roles reais (authenticated/anon), isolamento por dono e rollback.
+  'scripts/db-audit/talkx-save-template-variants.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
@@ -118,14 +116,6 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
-  // N-102 (refazer t_b7ce25ec sobre a entrega 26101319059cbc): prova, em PG 17 descartavel, que a
-  // migration 20261013085500 APLICA sem a base que cria public.talkx_campaign_window_open (o defeito
-  // que derrubou a pilha de 14/10: 'function public.talkx_campaign_window_open(uuid, timestamp with
-  // time zone) does not exist'), que o REVOKE/GRANT segue tirando o EXECUTE de PUBLIC/anon/authenticated
-  // quando a funcao existe (e deixando so service_role), que o replay e a linha `-- Rollback:` fecham
-  // e que check-secdef-public-execute segue verde. Passo de uma linha em db-guard.yml — promover pelo
-  // dono do workflow.
-  'scripts/db-audit/talkx-n102-window-acl.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
