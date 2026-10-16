@@ -263,7 +263,7 @@ GitHub medida em 15/10/2026 (W14/W15/W18 do plano 2026-10-14).
 | Security — `secret_scanning_push_protection` | `enabled` | `settings-guard` |
 | Security — `secret_scanning_validity_checks` | `disabled` (W16 bloqueado: requer plano pago, API ignora PATCH) | — |
 | Security — `secret_scanning_non_provider_patterns` | `disabled` (deliberado: requer plano pago — ver CLAUDE.md) | — |
-| GitHub Apps | **não auditado** — o token da sessão não lista instalações (E89 decide) | — |
+| GitHub Apps | **inventariado W90 (2026-10-16):** `CodeQL` (Advanced Security, required) · `SonarCloud` (code analysis) · `Vercel` (deploy + review) · `cubic.dev` (PR diff badge — candidato a remoção) · `Supabase for GitHub` (check `skipped` desde 25/09 — remover junto ao W89). **Pendente Joaquim:** desinstalar `cubic.dev` e `Supabase for GitHub` em Settings → Installed GitHub Apps. | — |
 
 ⚠ Os campos de branch protection são lidos com o `GITHUB_TOKEN` de workflow, que **não** tem o escopo
 `administration`: a API responde **403** e o guard marca o campo como **"NÃO VERIFICÁVEL"** — não como regressão.

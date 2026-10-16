@@ -11047,6 +11047,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      e2e_cleanup: { Args: never; Returns: undefined }
       effective_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

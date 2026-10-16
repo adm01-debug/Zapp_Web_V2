@@ -44,15 +44,22 @@ permissions:
 # W71: o sha do acionador e' usado como chave de concorrencia para que dois
 # pushes rapidos nao cancelem a run do primeiro antes de ela terminar.
 concurrency:
-  # W71: chave baseada no SHA do commit acionador (workflow_run) ou no ref
-  # (dispatch). Dois pushes ao mesmo SHA nao competem; dois SHAs diferentes
-  # enfileiram (cancel-in-progress: false).
-  group: e2e-logado-${{ github.event.workflow_run.head_sha || github.sha }}
+  # GA09: chave fixa — garante que so uma run de E2E logado ocorra por vez,
+  # independente do SHA. Evita parallelismo acidental de runs contra o mesmo
+  # banco de producao (que nao suporta sessoes E2E concorrentes).
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
+    # GA08: rejeita PRs de forks — workflow_run dispara para qualquer fork que abra PR.
+    # Sem esse guard, um fork malicioso aciona o job com acesso aos secrets do repositorio.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     # W06: o orcamento do JOB tem de caber setup (~1 min; ~3 min sem cache de browsers) +
     # o --global-timeout do Playwright (13 min, no passo do Playwright) + os passos de
