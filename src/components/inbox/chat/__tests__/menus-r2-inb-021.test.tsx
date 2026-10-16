@@ -59,9 +59,6 @@ vi.mock('@/components/inbox/SLAIndicator', () => ({
 vi.mock('@/components/inbox/VoiceSelector', () => ({ VoiceSelector: () => null }));
 vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }));
 vi.mock('@/components/inbox/RealtimeCollaboration', () => ({ RealtimeCollaboration: () => null }));
-vi.mock('@/components/inbox/contact-details/AnalysisBadges', () => ({ AnalysisBadges: () => null }));
-vi.mock('@/components/inbox/contact-details/BusinessHoursBadge', () => ({ BusinessHoursBadge: () => null }));
-vi.mock('@/components/inbox/contact-details/QueuePositionNotifier', () => ({ QueuePositionNotifier: () => null }));
 
 // Radix DropdownMenu não abre de forma confiável sob jsdom+fireEvent — mock
 // simples que renderiza o conteúdo sempre "aberto" (mesmo padrão de
