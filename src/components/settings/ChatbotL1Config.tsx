@@ -411,13 +411,14 @@ export function ChatbotL1Config() {
           </div>
 
           {/* Travado sem conexão, durante o salvamento e logo após criar o
-              fluxo novo (até a leitura trazer o fluxo e evitar duplicata). */}
+              fluxo novo (até a leitura trazer o fluxo e evitar duplicata).
+              Erro na leitura não libera: a tela manda recarregar a página. */}
           <Button
             onClick={() => saveMutation.mutate()}
             disabled={
               saveMutation.isPending ||
               !connectionId ||
-              (fluxoCriadoEm !== '' && fluxoCriadoEm === connectionId && !flow?.id && !erroFluxo)
+              (fluxoCriadoEm !== '' && fluxoCriadoEm === connectionId && !flow?.id)
             }
             className="w-full"
           >

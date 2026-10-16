@@ -16,6 +16,7 @@ const estado = vi.hoisted(() => ({
   invoke: null as { name: string; body: Record<string, unknown> } | null,
   invokeResult: { data: null as Record<string, unknown> | null, error: null as unknown },
   erroConexoes: false,
+  erroFluxo: false,
   kbCount: 42,
 }));
 
@@ -32,7 +33,10 @@ vi.mock('@/integrations/supabase/client', () => ({
                   estado.eqsDeFluxo.push([coluna2, valor2]);
                   return {
                     limit: () => ({
-                      maybeSingle: () => Promise.resolve({ data: estado.flow, error: null }),
+                      maybeSingle: () =>
+                        estado.erroFluxo
+                          ? Promise.resolve({ data: null, error: new Error('falha na leitura') })
+                          : Promise.resolve({ data: estado.flow, error: null }),
                     }),
                   };
                 },
@@ -178,6 +182,7 @@ describe('ChatbotL1Config — interruptor acessível por nome', () => {
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
     estado.erroConexoes = false;
+    estado.erroFluxo = false;
     estado.kbCount = 42;
   });
 
@@ -218,6 +223,7 @@ describe('ChatbotL1Config — fluxo por conexão', () => {
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
     estado.erroConexoes = false;
+    estado.erroFluxo = false;
     estado.kbCount = 42;
   });
 
@@ -278,6 +284,9 @@ describe('ChatbotL1Config — simulação da resposta', () => {
     estado.insertPayload = null;
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
+    estado.erroConexoes = false;
+    estado.erroFluxo = false;
+    estado.kbCount = 42;
   });
 
   it('simular chama a Edge com a conexão e o contato e mostra a resposta do robô', async () => {
@@ -347,6 +356,7 @@ describe('ChatbotL1Config — refazer 1 (recusa de 15/10)', () => {
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
     estado.erroConexoes = false;
+    estado.erroFluxo = false;
     estado.kbCount = 42;
   });
 
@@ -410,6 +420,29 @@ describe('ChatbotL1Config — refazer 1 (recusa de 15/10)', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Salvar Configuração' })).toBeDisabled();
     });
+  });
+
+  it('ponto 2 (erro de leitura): falha ao reler após criar mantém o Salvar bloqueado, sem duplicata', async () => {
+    estado.erroFluxo = true;
+    renderConfig();
+    await escolherConexao('Suporte', 'conn-2');
+
+    const salvar = await screen.findByRole('button', { name: 'Salvar Configuração' });
+    expect(salvar).toBeEnabled();
+    fireEvent.click(salvar);
+
+    await waitFor(() => {
+      expect(estado.insertPayload).not.toBeNull();
+    });
+    // A releitura falhou e o fluxo não voltou: o botão segue bloqueado (a
+    // tela manda recarregar) em vez de liberar um segundo insert duplicado.
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Não foi possível carregar a configuração desta conexão.',
+      );
+    });
+    expect(screen.getByRole('button', { name: 'Salvar Configuração' })).toBeDisabled();
+    expect(estado.insertPayload).not.toBeNull();
   });
 
   it('ponto 3: sem artigo na KB a tela recomenda publicar ao menos 1, sem mexer no contador', async () => {
