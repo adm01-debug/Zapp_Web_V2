@@ -48,6 +48,15 @@ const ALLOWLIST_META = new Map([
 // Suites Node fora de qualquer bloco run: — Map<caminho, {desde, motivo}>.
 const ALLOWLIST_NODE_META = new Map([
   ['scripts/catalog/validate-plan.test.mjs', { desde: '2026-10-16', motivo: 'teste de plano editorial, sem CI runner adequado; revisão em 30 dias' }],
+  ['scripts/db-tests/run-all.unit.mjs', { desde: '2026-10-16', motivo: 'suite de DB removida do CI mínimo 16/10/2026; workflows db-guard e branch-hygiene deletados; revisão em 30 dias' }],
+  ['scripts/lib/seguranca-processo.test.mjs', { desde: '2026-10-16', motivo: 'utilitário de lib sem runner dedicado no CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/qa/prova-visao-classificadores.unit.mjs', { desde: '2026-10-16', motivo: 'suite QA visual removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/talkx/lado-a-lado.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/talkx/v4-status.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/team-chat-db-validate.unit.mjs', { desde: '2026-10-16', motivo: 'validação team-chat removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/ui-audit/contacts-navy-header.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/ui-audit/layout-guard.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
+  ['scripts/ui-audit/view-container-padding.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
 ]);
 
 // Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
