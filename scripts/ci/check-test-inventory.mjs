@@ -162,7 +162,14 @@ const ALLOWLIST = new Set([
   // o passo de uma linha no db-guard.yml pede SKIP_DOCKER_SHIM="1", como os passos do bloco E50
   // deste repositorio, e e do dono do workflow (agente nao edita workflow).
   'scripts/db-audit/cron-remocao-vacuum-messages.test.sh',
-]);
+  // CT-E / PB-30 (paridade V3->V2): prova em Postgres 17 descartavel (docker) que
+  // public.contacts_stats_series(boolean) devolve empresas_distinct e as 4 series do
+  // useContactsKpi (novos 30d em buckets de 4/6 dias, total cumulativo 12s, empresas
+  // cumulativas 12s, fornecedores por semana) com o MESMO escopo de
+  // contacts_stats/search_contacts (admin tudo, agente so o seu, anon/PUBLIC sem
+  // EXECUTE, service_role tudo) e que o Rollback remove a funcao. Passo de uma linha
+  // em db-guard.yml a promover pelo dono do workflow.
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
 // workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
