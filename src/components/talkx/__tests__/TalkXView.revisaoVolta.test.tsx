@@ -16,12 +16,8 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({ useTalkXInsights: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
-// T09 — a revisão consome `useTalkXInsights`; sem QueryClient no teste, o mock
-// devolve "sem dados" (mesma forma usada em TalkXView.route.test.tsx).
-vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
-  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
-}));
 vi.mock('@/components/talkx/TalkXOverview', () => ({ TalkXOverview: () => <div /> }));
 vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
@@ -49,7 +45,7 @@ vi.mock('@/components/talkx/useCampaignEditor', async (importOriginal) => {
         canProceed: { 1: true, 2: true, 3: true, 4: true },
         saving: false, draftCampaignId: 'draft_1', draftRevision: 1,
         name: 'Campanha X134', description: '', objective: 'vendas',
-        audienceSource: 'contacts', segmentId: null, segments: [], selectedSegments: [], selectedSegment: null,
+        audienceSource: 'contacts', segmentIds: [], segments: [], selectedSegments: [], segmentEstimates: {},
         templateId: null, templates: [], selectedTemplate: null, templateVersionId: null,
         messageTemplate: 'Oi {{nome}}', setMessageTemplate: vi.fn(),
         typingDelay: [1, 3], setTypingDelay: vi.fn(), sendInterval: [8, 20], setSendInterval: vi.fn(),
