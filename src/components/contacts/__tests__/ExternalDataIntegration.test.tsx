@@ -130,6 +130,17 @@ describe('useExternalCargos', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([]);
   });
+
+  it('cache de 30 min: remontar o hook não refaz a chamada', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = createWrapper(qc);
+    const first = renderHook(() => useExternalCargos(), { wrapper });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+    const second = renderHook(() => useExternalCargos(), { wrapper });
+    await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
+    expect(mockNarrow).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ─── ContactForm — Empresa autocomplete logic ─────────────────────
