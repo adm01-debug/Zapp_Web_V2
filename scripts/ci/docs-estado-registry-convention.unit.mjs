@@ -57,7 +57,10 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
   .filter((n) => fs.existsSync(path.join(dirFuncoes, n, 'index.ts')))
   .sort();
 
-const invoca = (n) => new RegExp(`invoke\\(\\s*['"\`]${n}['"\`]`);
+// 15/10: a camada padrão do front é `invokeEdge` (src/lib/supabaseHelpers.ts:24) e o
+// commit 66713e9510 passou `create-user` por ela — sem ler `invokeEdge(` a guarda lia a
+// edge como órfã mesmo com o chamador na tela.
+const invoca = (n) => new RegExp(`(?:invoke|invokeEdge)\\(\\s*['"\`]${n}['"\`]`);
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 
