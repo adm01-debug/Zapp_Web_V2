@@ -7,10 +7,6 @@
 #             renomeia/remove etiqueta de TODOS os contatos).
 #   BLOCO B — migration aplicada: prova a correcao, sem quebrar os casos legitimos
 #             (contato proprio, contato da fila, admin, service_role/cron).
-#   BLOCO C — RPCs atomicas de tag (20261011155015_contact_tags_atomic): prova a
-#             ATOMICIDADE sob concorrencia (duas conexoes de verdade), a idempotencia,
-#             a normalizacao, a autorizacao e a auditoria. Inclui um CONTRA-EXEMPLO
-#             que reproduz o lost update da leitura-depois-escrita que as RPCs evitam.
 # Vermelho antes e verde depois saem do mesmo run, no banco de verdade, nao de mock.
 #
 # O estado anterior e fiel ao banco de 30/09: corpos de set_conversation_status
@@ -21,7 +17,9 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql"
-tags_migration="$repo_root/supabase/migrations/20261011155015_contact_tags_atomic.sql"
+# SEC-RLS_CONTATOS_MENSAGENS-02/03: fecha o oraculo de UUID (require_contact_edit_permission,
+# set_conversation_status e can_delete_contacts). Aplicada ao final do roteiro (BLOCO D).
+migration_oraculo_uuid="$repo_root/supabase/migrations/20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql"
 postgres_image="${WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-wa-tag-authz-test-$$"
 
@@ -76,6 +74,68 @@ expect_value() {
 expect_ok() {
   local label="$1" sql="$2"
   psql_sql "$sql" >/dev/null || fail "$label: deveria ter sucesso"
+  printf '[PASS] %s\n' "$label"
+}
+
+# Saida VERBOSA do erro de uma chamada (mensagem + SQLSTATE + contexto), como o PostgREST/cliente
+# enxergam. E a "resposta" que o oraculo de UUID usa -- comparar o TEXTO COMPLETO das duas chamadas
+# e mais forte do que comparar so o status: pega mensagem, SQLSTATE e o ponto do codigo.
+# Filtra as linhas de diagnostico: o `SET ROLE`/`set_config` antes da chamada imprime o proprio
+# json de claims no stdout e a ordem stdout/stderr varia entre execucoes (ruido do harness, nao
+# da resposta). As linhas ERROR/CONTEXT/LOCATION sao o que o atacante le.
+psql_err() {
+  docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c '\set VERBOSITY verbose' -c "$1" 2>&1 \
+    | grep -E '^(ERROR|DETAIL|HINT|CONTEXT|LOCATION):' || true
+}
+
+# Duas chamadas do MESMO chamador nao podem produzir respostas distinguiveis.
+expect_resposta_identica() {
+  local label="$1" sql_a="$2" sql_b="$3" a b
+  a="$(psql_err "$sql_a")"
+  b="$(psql_err "$sql_b")"
+  if [[ -z "$a" ]]; then
+    fail "$label: a chamada com uuid inexistente NAO deu erro (as duas deveriam recusar IGUAL)"
+  fi
+  if [[ "$a" != "$b" ]]; then
+    printf 'A (uuid inexistente):\n%s\nB (uuid fora do alcance):\n%s\n' "$a" "$b" >&2
+    fail "$label: respostas DIFERENTES -- oraculo de UUID aberto"
+  fi
+  printf '[PASS] %s\n' "$label"
+}
+
+# O defeito (SEC-RLS-02): as duas respostas TEM de diferir antes da correcao.
+expect_resposta_diferente() {
+  local label="$1" sql_a="$2" sql_b="$3" a b
+  a="$(psql_err "$sql_a")"
+  b="$(psql_err "$sql_b")"
+  if [[ "$a" == "$b" ]]; then
+    printf 'A:\n%s\nB:\n%s\n' "$a" "$b" >&2
+    fail "$label: as duas respostas sao IGUAIS (o defeito esperado nao esta la)"
+  fi
+  printf '[PASS] %s\n' "$label"
+}
+
+# expect_error + proibicao de ecoar um trecho (o uuid do alvo nao pode aparecer no erro).
+expect_error_sem_eco() {
+  local label="$1" needle="$2" proibido="$3" sql="$4" output status
+  set +e
+  output="$(docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"
+  status=$?
+  set -e
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "$label: deveria falhar, mas passou"
+  fi
+  if [[ "$output" != *"$needle"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "$label: esperava '$needle' no erro"
+  fi
+  if [[ "$output" == *"$proibido"* ]]; then
+    printf '%s\n' "$output" >&2
+    fail "$label: o erro ECOOU o alvo ('$proibido') -- oraculo"
+  fi
   printf '[PASS] %s\n' "$label"
 }
 
@@ -146,7 +206,12 @@ CREATE TABLE public.contacts (
   conversation_status text DEFAULT 'open',
   conversation_status_changed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- Coluna real de producao desde a migration de soft-delete (20260929370000). Este harness
+  -- nasceu antes dela; a migration REAL da correcao do oraculo de UUID (SEC-RLS-02/03) faz
+  -- CREATE OR REPLACE de can_delete_contacts, cujo corpo filtra por deleted_at -- sem a coluna
+  -- aqui o arquivo real nao pode ser aplicado.
+  deleted_at timestamptz
 );
 CREATE TABLE public.conversation_closures (
   contact_id uuid PRIMARY KEY REFERENCES public.contacts(id),
@@ -378,179 +443,71 @@ expect_error 'B13 anon (claims role=anon) -> set_conversation_status negado' \
 expect_value 'Z1 FSM continua valida e o ultimo estado aplicado foi o do chamador autorizado' 'archived' \
   "SELECT conversation_status FROM public.contacts WHERE id='$ALHEIO'"
 
-# ── BLOCO C: RPCs atomicas de tag (20261011155015_contact_tags_atomic) ─────────────
-echo
-echo '── Aplicando a migration das RPCs atomicas de tag ────────────────────────────────'
-
-cat > "$tmp_dir/audit_logs.sql" <<'SQL'
-CREATE TABLE public.audit_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid,
-  action text NOT NULL,
-  entity_type text,
-  entity_id uuid,
-  details jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-SQL
-
-psql_file "$tmp_dir/audit_logs.sql"
-psql_file "$tags_migration"
-psql_file "$tmp_dir/seed.sql"
+# ════════════════════════════════════════════════════════════════════════════════════════════
+# SEC-RLS_CONTATOS_MENSAGENS-02 (oraculo de UUID): ANTES da correcao (BLOCO C) e DEPOIS (BLOCO D).
+# Alvo: uuid INEXISTENTE x uuid EXISTENTE e FORA do alcance do MESMO chamador. A resposta que o
+# atacante le e a excecao da RPC (mensagem + SQLSTATE + contexto). Se as duas diferirem, o uuid
+# existente foi revelado -- o defeito do relatorio de 07/10.
+# ════════════════════════════════════════════════════════════════════════════════════════════
+INEXISTENTE='d0000000-0000-0000-0000-0000000000ff'
 
 echo
-echo '── BLOCO C: RPCs atomicas de tag ─────────────────────────────────────────────────'
+echo '── BLOCO C: oraculo de UUID ANTES da correcao (o defeito) ────────────────────────'
+expect_error 'C1 (RED) uuid INEXISTENTE: o erro DIZ que nao existe e ecoa o id' \
+  "contact not found: $INEXISTENTE" \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$INEXISTENTE');")"
+expect_error 'C2 (RED) uuid EXISTENTE e fora do alcance: outro texto (contato revelado)' \
+  'contact_not_authorized' \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$ALHEIO');")"
+expect_resposta_diferente 'C3 (RED) as duas respostas do mesmo chamador DIFEREM (oraculo aberto)' \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$INEXISTENTE');")" \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$ALHEIO');")"
+expect_error 'C4 (RED) mesmo oraculo por set_conversation_status (inexistente ecoa o id)' \
+  "contact not found: $INEXISTENTE" \
+  "$(agent_a "SELECT public.set_conversation_status('$INEXISTENTE','resolved');")"
+expect_resposta_diferente 'C5 (RED) set_conversation_status: respostas DIFEREM (oraculo aberto)' \
+  "$(agent_a "SELECT public.set_conversation_status('$INEXISTENTE','resolved');")" \
+  "$(agent_a "SELECT public.set_conversation_status('$ALHEIO','resolved');")"
 
-# Roda um arquivo .sql numa conexao propria (usado nas provas de concorrencia).
-run_sql_file() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres < "$1"; }
-reset_proprio() { psql_sql "UPDATE public.contacts SET tags='{}'::text[] WHERE id='$PROPRIO';" >/dev/null; }
+echo
+echo '── Aplicando a migration da correcao (SEC-RLS-02/03) ─────────────────────────────'
+psql_file "$migration_oraculo_uuid"
 
-# C0 — CONTRA-EXEMPLO: a leitura-depois-escrita perde a escrita concorrente (o defeito
-#      que as RPCs existem para eliminar). Le a versao antiga, dorme, e sobrescreve.
-reset_proprio
-cat > "$tmp_dir/c0_sess1.sql" <<'SQL'
-DO $$
-DECLARE v text[];
-BEGIN
-  SELECT COALESCE(tags,'{}'::text[]) INTO v FROM public.contacts WHERE id='d0000000-0000-0000-0000-000000000002';
-  PERFORM pg_sleep(4);
-  UPDATE public.contacts SET tags = v || ARRAY['tag_lida'] WHERE id='d0000000-0000-0000-0000-000000000002';
-END $$;
-SQL
-run_sql_file "$tmp_dir/c0_sess1.sql" > "$tmp_dir/c0_sess1.out" 2>&1 &
-c0_job=$!
-sleep 1
-psql_sql "UPDATE public.contacts SET tags = COALESCE(tags,'{}'::text[]) || ARRAY['tag_concorrente'] WHERE id='$PROPRIO';" >/dev/null
-wait "$c0_job" || fail "C0: sessao 1 falhou: $(cat "$tmp_dir/c0_sess1.out")"
-expect_value 'C0 (contra-exemplo) a leitura-depois-escrita PERDEU a tag concorrente' '0' \
-  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['tag_concorrente']"
-expect_value 'C0 (contra-exemplo) so sobrou a versao obsoleta' 'tag_lida' \
-  "SELECT array_to_string(tags,'|') FROM public.contacts WHERE id='$PROPRIO'"
+echo
+echo '── BLOCO D: oraculo fechado e uso legitimo preservado ───────────────────────────'
+expect_error_sem_eco 'D1 uuid INEXISTENTE -> 42501 contact_not_authorized, sem ecoar o id' \
+  '42501: contact_not_authorized' "$INEXISTENTE" \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$INEXISTENTE');")"
+expect_error_sem_eco 'D2 uuid EXISTENTE e fora do alcance -> MESMA excecao, sem ecoar o id' \
+  '42501: contact_not_authorized' "$ALHEIO" \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$ALHEIO');")"
+expect_resposta_identica 'D3 as duas respostas do MESMO chamador sao IDENTICAS (sem oraculo)' \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$INEXISTENTE');")" \
+  "$(agent_a "SELECT public.require_contact_edit_permission('$ALHEIO');")"
+expect_resposta_identica 'D4 set_conversation_status: as duas respostas IDENTICAS' \
+  "$(agent_a "SELECT public.set_conversation_status('$INEXISTENTE','resolved');")" \
+  "$(agent_a "SELECT public.set_conversation_status('$ALHEIO','resolved');")"
 
-# C3 — CONCORRENCIA: duas conexoes autenticadas adicionam tags DIFERENTES na mesma linha;
-#      a segunda espera o lock da primeira e reavalia sobre a versao nova — as DUAS ficam.
-reset_proprio
-cat > "$tmp_dir/c3_sess1.sql" <<SQL
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
-BEGIN;
-SELECT public.add_contact_tag('$PROPRIO','corrida_a');
-SELECT pg_sleep(4);
-COMMIT;
-SQL
-cat > "$tmp_dir/c3_sess2.sql" <<SQL
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
-SELECT public.add_contact_tag('$PROPRIO','corrida_b');
-SQL
-run_sql_file "$tmp_dir/c3_sess1.sql" > "$tmp_dir/c3_sess1.out" 2>&1 &
-c3_job=$!
-sleep 2
-run_sql_file "$tmp_dir/c3_sess2.sql" > "$tmp_dir/c3_sess2.out" 2>&1 \
-  || fail "C3: sessao 2 falhou: $(cat "$tmp_dir/c3_sess2.out")"
-wait "$c3_job" || fail "C3: sessao 1 falhou: $(cat "$tmp_dir/c3_sess1.out")"
-expect_value 'C3 concorrencia: as DUAS tags sobrevivem (sem lost update)' '2' \
-  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND t IN ('corrida_a','corrida_b')"
+# Prova positiva: quem PODE continua podendo, e nada foi alterado pelos casos recusados.
+expect_ok 'D5 contato PROPRIO do agente continua transicionando (uso legitimo)' \
+  "$(agent_a "SELECT public.set_conversation_status('$PROPRIO','open');")"
+expect_value 'D5 status do proprio mudou' 'open' \
+  "SELECT conversation_status FROM public.contacts WHERE id='$PROPRIO'"
+expect_ok 'D6 contato da FILA do agente continua transicionando' \
+  "$(agent_a "SELECT public.set_conversation_status('$FILA','open');")"
+expect_ok 'D7 ADMIN continua transicionando contato alheio' \
+  "$(admin "SELECT public.set_conversation_status('$ALHEIO','open');")"
+expect_value 'D8 os casos recusados nao alteraram o contato alheio' 'open' \
+  "SELECT conversation_status FROM public.contacts WHERE id='$ALHEIO'"
+expect_ok 'D9 service_role (cron/automacao) segue operando em contato alheio' \
+  "SET ROLE service_role; SELECT set_config('request.jwt.claims','{\"role\":\"service_role\"}',false); SELECT public.set_conversation_status('$ALHEIO','archived');"
+expect_error 'D10 anon segue SEM EXECUTE em require_contact_edit_permission (permission denied, nao "not found")' \
+  'permission denied for function require_contact_edit_permission' \
+  "SET ROLE anon; SELECT set_config('request.jwt.claims','{\"role\":\"anon\"}',false); SELECT public.require_contact_edit_permission('$ALHEIO');"
+expect_value 'D11 ACL de require_contact_edit_permission inalterada (authenticated=true, anon=false, PUBLIC=false)' \
+  'true|false|false' \
+  "SELECT has_function_privilege('authenticated','public.require_contact_edit_permission(uuid)','EXECUTE')::text || '|' || has_function_privilege('anon','public.require_contact_edit_permission(uuid)','EXECUTE')::text || '|' || (SELECT (p.proacl IS NULL OR EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE'))::text FROM pg_proc p WHERE p.oid = 'public.require_contact_edit_permission(uuid)'::regprocedure)"
+expect_value 'D12 a migration nao criou assinatura nova (uma so require_contact_edit_permission)' '1' \
+  "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='require_contact_edit_permission'"
 
-# C4 — CONCORRENCIA + idempotencia: duas conexoes adicionam a MESMA tag em caixas diferentes;
-#      a que espera o lock enxerga a tag recem-gravada e NAO duplica.
-reset_proprio
-cat > "$tmp_dir/c4_sess1.sql" <<SQL
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
-BEGIN;
-SELECT public.add_contact_tag('$PROPRIO','Dup_Tag');
-SELECT pg_sleep(4);
-COMMIT;
-SQL
-cat > "$tmp_dir/c4_sess2.sql" <<SQL
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
-SELECT public.add_contact_tag('$PROPRIO','dup_tag');
-SQL
-run_sql_file "$tmp_dir/c4_sess1.sql" > "$tmp_dir/c4_sess1.out" 2>&1 &
-c4_job=$!
-sleep 2
-run_sql_file "$tmp_dir/c4_sess2.sql" > "$tmp_dir/c4_sess2.out" 2>&1 \
-  || fail "C4: sessao 2 falhou: $(cat "$tmp_dir/c4_sess2.out")"
-wait "$c4_job" || fail "C4: sessao 1 falhou: $(cat "$tmp_dir/c4_sess1.out")"
-expect_value 'C4 concorrencia: a tag repetida entrou UMA vez' '1' \
-  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND lower(t)='dup_tag'"
-
-# C1/C2 — adicionar e idempotencia (sequencial, agente A no proprio contato).
-reset_proprio
-expect_ok 'C1 agent A adiciona tag no proprio contato' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','cliente_vip');")"
-expect_value 'C1 tag gravada' '1' \
-  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['cliente_vip']"
-psql_sql "UPDATE public.contacts SET updated_at='2020-01-01T00:00:00Z' WHERE id='$PROPRIO';" >/dev/null
-expect_ok 'C2 adiciona a MESMA tag em outra caixa (idempotente)' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','CLIENTE_VIP');")"
-expect_value 'C2 sem duplicata (1 ocorrencia, sem diferenciar caixa)' '1' \
-  "SELECT count(*) FROM public.contacts c, unnest(c.tags) t WHERE c.id='$PROPRIO' AND lower(t)='cliente_vip'"
-expect_value 'C2 no-op preserva updated_at' '2020-01-01 00:00:00+00' \
-  "SELECT updated_at FROM public.contacts WHERE id='$PROPRIO'"
-# C2b — mudança REAL avança updated_at (o UPDATE só toca a linha e só quando a tag muda;
-# a sentença grava updated_at = now() explicitamente, então vale mesmo sem o gatilho real).
-expect_ok 'C2b adiciona tag NOVA' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','nova_tag');")"
-expect_value 'C2b mudanca real avancou updated_at (antes/depois)' '1' \
-  "SELECT (updated_at > '2020-01-01 00:00:00+00'::timestamptz)::int FROM public.contacts WHERE id='$PROPRIO'"
-
-# C5 — remover tira SOMENTE a tag pedida (todas as caixas dela) e preserva o resto.
-psql_sql "UPDATE public.contacts SET tags=ARRAY['keep_a','Remover','keep_b'] WHERE id='$PROPRIO';" >/dev/null
-expect_ok 'C5 remove a tag pedida (caixa diferente)' \
-  "$(agent_a "SELECT public.remove_contact_tag('$PROPRIO','remover');")"
-expect_value 'C5 somente a tag pedida saiu, o resto ficou' 'keep_a|keep_b' \
-  "SELECT array_to_string(tags,'|') FROM public.contacts WHERE id='$PROPRIO'"
-
-# C6 — autorizacao: contato sem visibilidade/carteira do agente e recusado, sem efeito.
-expect_error 'C6 agent sem carteira -> add em contato ALHEIO recusado' 'contact_not_authorized' \
-  "$(agent_a "SELECT public.add_contact_tag('$ALHEIO','invasao');")"
-expect_value 'C6 nenhuma tag do alheio alterada' '0' \
-  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['invasao']"
-expect_error 'C6b remove em contato ALHEIO tambem recusado' 'contact_not_authorized' \
-  "$(agent_a "SELECT public.remove_contact_tag('$ALHEIO','outra');")"
-expect_value 'C6b tag do alheio intacta' '1' \
-  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['outra']"
-
-# C7 — anon: sem EXECUTE (revogado), nao passa nem na porta de entrada.
-expect_error 'C7 anon -> add negado' 'permission denied' \
-  "SET ROLE anon; SELECT set_config('request.jwt.claims','{\"role\":\"anon\"}',false); SELECT public.add_contact_tag('$PROPRIO','x');"
-expect_error 'C7b anon -> remove negado' 'permission denied' \
-  "SET ROLE anon; SELECT set_config('request.jwt.claims','{\"role\":\"anon\"}',false); SELECT public.remove_contact_tag('$PROPRIO','x');"
-
-# C8 — service_role (automacao) segue operando em contato de terceiro.
-expect_ok 'C8 service_role adiciona tag em contato alheio' \
-  "SET ROLE service_role; SELECT set_config('request.jwt.claims','{\"role\":\"service_role\"}',false); SELECT public.add_contact_tag('$ALHEIO','cron_tag');"
-expect_value 'C8 tag do cron gravada' '1' \
-  "SELECT count(*) FROM public.contacts WHERE id='$ALHEIO' AND tags @> ARRAY['cron_tag']"
-
-# C9 — normalizacao: vazio e >40 recusados; 40 aceito.
-expect_error 'C9 tag vazia (so espacos) recusada' 'contact_tag_empty' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','   ');")"
-expect_error 'C9 tag com 41 caracteres recusada' 'contact_tag_too_long' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','$(printf 'a%.0s' {1..41})');")"
-expect_ok 'C9 tag com 40 caracteres aceita (limite)' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','$(printf 'b%.0s' {1..40})');")"
-expect_value 'C9 tag de 40 sem espacos nas pontas' '1' \
-  "SELECT count(*) FROM public.contacts WHERE id='$PROPRIO' AND tags @> ARRAY['$(printf 'b%.0s' {1..40})']"
-
-# C10 — auditoria: um evento por mudanca real, sem dado pessoal; no-op nao audita.
-psql_sql "DELETE FROM public.audit_logs;" >/dev/null
-expect_ok 'C10 add gera auditoria' "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','audit_tag');")"
-expect_value 'C10 exatamente 1 evento de add' '1' \
-  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_added' AND entity_id='$PROPRIO'"
-expect_value 'C10 detalhes guardam apenas a tag' 'audit_tag' \
-  "SELECT details->>'tag' FROM public.audit_logs WHERE action='contact_tag_added' LIMIT 1"
-expect_value 'C10 detalhes sem nenhuma outra chave (sem dado pessoal)' '1' \
-  "SELECT count(*) FROM public.audit_logs a, jsonb_object_keys(a.details) k WHERE a.action='contact_tag_added'"
-expect_ok 'C10b repetir a mesma tag em outra caixa (no-op)' \
-  "$(agent_a "SELECT public.add_contact_tag('$PROPRIO','AUDIT_TAG');")"
-expect_value 'C10b no-op NAO gera evento novo' '1' \
-  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_added' AND entity_id='$PROPRIO'"
-expect_ok 'C11 remove gera auditoria' "$(agent_a "SELECT public.remove_contact_tag('$PROPRIO','audit_tag');")"
-expect_value 'C11 evento de remove registrado' '1' \
-  "SELECT count(*) FROM public.audit_logs WHERE action='contact_tag_removed' AND entity_id='$PROPRIO'"
-
-printf '\n[OK] contrato de autorizacao L1/L2 + RPCs atomicas de tag verificados\n'
+printf '\n[OK] contrato de autorizacao L1/L2 + oraculo de UUID (SEC-RLS-02) verificado\n'

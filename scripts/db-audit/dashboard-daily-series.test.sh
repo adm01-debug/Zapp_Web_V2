@@ -15,10 +15,11 @@
 #     6. reaplicar a migration nao quebra (idempotencia);
 #     7. o Rollback do cabecalho roda e remove a funcao (volta ao RED).
 #
-# A migration REAL e encontrada pelo marcador interno
-# 'dashboard_daily_series_requires_staff' (sobrevive ao rename do hermes-db-migrar
-# --nova). O objeto sob teste e aplicado do arquivo real de supabase/migrations,
-# nunca recriado aqui.
+# A migration REAL e referenciada pelo NOME DO ARQUIVO (pinado), nunca por busca
+# por marcador: a busca por marcador (`grep -rlF ... | tail -1`) passaria a
+# devolver uma migration futura (ex.: _v2) depois que ela existir, e o passo 7
+# (Rollback) reaplicaria a migration errada. O objeto sob teste e aplicado do
+# arquivo real de supabase/migrations, nunca recriado aqui.
 #
 # Fixtures: apenas o ambiente minimo (schema auth, roles, IS_ADMIN_OR_SUPERVISOR e
 # as 4 tabelas que a RPC le) que a migration real toca. As tabelas sao stubs com
@@ -28,13 +29,8 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-find_migration() {
-  local marker="$1"
-  grep -rlF "$marker" "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true
-}
-
-migration="$(find_migration 'dashboard_daily_series_requires_staff')"
-[[ -n "$migration" && -f "$migration" ]] || { printf '[FALHA] migration de dashboard_daily_series nao encontrada (marcador dashboard_daily_series_requires_staff)\n' >&2; exit 1; }
+migration="$repo_root/supabase/migrations/20261012235745_dashboard_daily_series.sql"
+[[ -f "$migration" ]] || { printf '[FALHA] migration 20261012235745_dashboard_daily_series.sql nao encontrada\n' >&2; exit 1; }
 
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
@@ -257,7 +253,11 @@ admin_again="$(psql_val "$admin_session $(series_line_sql 3)")"
 assert_eq '6. serie identica apos reaplicar' "$expected_3" "$admin_again"
 
 # ── 7) o Rollback do cabecalho roda e remove a funcao ────────────────────────
-rollback_sql="$(awk '/^-- Rollback \(SQL executável, na ordem\):/{f=1;next} f&&/^--   /{sub(/^--   /,"");print} f&&!/^--/{exit}' "$migration")"
+# Extracao estrita: ancora na linha-marcador exata e captura SOMENTE as linhas
+# de instrucao SQL (`--   `, tres espacos) IMEDIATAMENTE apos ela; a primeira
+# linha fora desse marcador encerra (prosa de cabecalho, mesmo iniciada por
+# `-- `, nunca chega ao psql). Se nenhuma linha de instrucao existir, falha.
+rollback_sql="$(awk '/^-- Rollback \(SQL executável, na ordem\):$/{f=1;next} f&&/^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration")"
 [[ -n "$rollback_sql" ]] || fail 'Rollback executavel nao encontrado no cabecalho da migration'
 printf '%s\n' "$rollback_sql" | psql_exec >/dev/null || fail 'Rollback do cabecalho nao executou'
 pass 'Rollback do cabecalho executou'

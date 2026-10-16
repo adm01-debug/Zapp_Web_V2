@@ -66,7 +66,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/__tests__/AchievementsSystem.test.tsx` … |
 | `agent_visibility_grants` | Concessões de visibilidade de um agente sobre outro | ativo | `src/components/admin/VisibilityGrantsManager.tsx`, `scripts/db-audit/crm-sync-outbox-behavior.test.sh`, `scripts/db-audit/dashboard-rls-authorization.test.sh` … |
 | `ai_budget_reservations` | Reserva de tokens/orçamento por execução de função de IA | parcial | `scripts/qa/prova-orcamento-rate-limit.sh` |
-| `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/settings/AIAutoTagsConfig.tsx`, `src/components/settings/__tests__/AIAutoTagsConfig.recentesErro.test.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx` … |
+| `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/ai/AutoTicketClassifier.tsx`, `src/components/settings/AIAutoTagsConfig.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx` … |
 | `ai_jobs` | Fila de jobs de IA (payload, idempotência, tentativas e estado) | ativo | `src/lib/aiJobs/status.ts`, `supabase/functions/_shared/__tests__/effect-reconcile.test.ts`, `supabase/functions/_shared/ai-jobs.ts` … |
 | `ai_model_prices` | Preço por fornecedor/modelo e unidade de cobrança de IA | ativo | `supabase/functions/_shared/ai-usage.ts`, `scripts/db-audit/ai-usage-cost-window-open.test.sh`, `tests/contracts/ia055-custo-no-relatorio.test.ts` |
 | `ai_providers` | Fornecedores de IA cadastrados (endpoint, modelo e referência do segredo) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/settings/ai-providers/__tests__/remocao-provedor-fallback.test.tsx`, `src/components/settings/ai-providers/useAIProviders.ts` … |
@@ -124,7 +124,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `email_labels` | Etiquetas das contas de e-mail conectadas | ativo | `src/hooks/integrations/useGmail.ts`, `supabase/functions/_shared/gmail-helpers.ts`, `e2e/fixtures/email-navy.ts` |
 | `email_messages` | Mensagens de e-mail (remetente, destinatários, corpo e estado) | ativo | `src/components/email/__tests__/EmailVolumeMedicao.test.tsx`, `src/components/gmail/__tests__/EmailThreadView.test.tsx`, `src/hooks/gmail/__tests__/useContactUnreadEmails.test.tsx` … |
 | `email_threads` | Conversas de e-mail, vinculadas ao contato quando identificado | ativo | `src/components/admin/GmailWebhookMonitor.tsx`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `src/components/email/__tests__/EmailVolumeMedicao.test.tsx` … |
-| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | roadmap | — |
+| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | ativo | `src/hooks/system/useVersions.ts` |
 | `favorite_contacts` | Contatos favoritados por usuário | ativo | `src/components/inbox/chat/useChatPanelHandlers.ts`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts` … |
 | `feature_flags` | Chaves de funcionalidade ligadas/desligadas | ativo | `src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx`, `src/hooks/contacts/__tests__/useContactsV2Flags.test.tsx`, `src/hooks/contacts/useContactsV2Flags.ts` … |
 | `followup_executions` | Execuções de sequência de follow-up, com passo atual e estado | ativo | `src/components/settings/FollowUpExecutionsHistory.tsx` |
@@ -169,7 +169,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `query_telemetry` | Telemetria das operações de banco feitas pelo app (operação, tabela e duração) | ativo | `src/pages/AdminTelemetriaPage.tsx`, `src/pages/admin-telemetria/__tests__/AdminTelemetriaPage.leitura-falha.test.tsx`, `supabase/functions/external-db-bridge/index.ts` |
 | `queue_goals` | Metas por fila (espera máxima, média de espera e taxa de atribuição) | ativo | `src/components/queues/__tests__/QueueGoalsDialog.salvarMetas.test.tsx`, `src/components/queues/__tests__/QueuesView.editar.test.tsx`, `src/components/queues/__tests__/QueuesView.test.tsx` … |
 | `queue_members` | Agentes vinculados a cada fila | ativo | `src/components/agents/__tests__/AgentsView.capacidade.test.tsx`, `src/components/queues/__tests__/QueuesView.editar.test.tsx`, `src/components/queues/__tests__/QueuesView.test.tsx` … |
-| `queue_positions` | Posição do contato na fila, com espera estimada | roadmap | — |
+| `queue_positions` | Posição do contato na fila, com espera estimada | ativo | `src/components/inbox/QueuePositionNotifier.tsx` |
 | `queue_skill_requirements` | Habilidade mínima exigida por fila | ativo | `src/components/settings/SkillBasedRoutingSettings.tsx`, `src/components/settings/__tests__/SkillBasedRoutingSettings.test.tsx` |
 | `queues` | Filas de atendimento (cor, tempo máximo de espera e estado) | ativo | `src/components/admin/SupervisorCopilot.tsx`, `src/components/agents/AgentsView.tsx`, `src/components/agents/__tests__/AgentsView.actions.test.tsx` … |
 | `rate_limit_configs` | Configurações de limite de requisições por padrão de endpoint | ativo | `src/components/security/RateLimitConfigPanel.tsx`, `src/components/security/__tests__/RateLimitConfigPanel.test.tsx`, `scripts/db-audit/network-policy-rpc.test.sh` |
@@ -198,7 +198,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `talkx_links` | Links com slug usados nas campanhas TalkX | ativo | `src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.engajamento.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.test.ts` … |
 | `talkx_optout_keywords` | Palavras de descadastro reconhecidas pelo TalkX | ativo | `supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts`, `supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts`, `supabase/functions/_shared/evolution-webhook-messages.ts` … |
 | `talkx_recipients` | Destinatários da campanha TalkX (mensagem personalizada e estado) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/TalkXLiveMonitor.tsx` … |
-| `talkx_segment_fields` | Whitelist dos campos de segmento do TalkX (categoria, expressão e operadores) | parcial | `.github/workflows/db-guard.yml`, `scripts/db-audit/talkx-segment-fields.test.sh` |
+| `talkx_segment_fields` | Whitelist de campos e operadores permitidos para compilar segmentos do TalkX | parcial | `.github/workflows/db-guard.yml`, `scripts/db-audit/talkx-segment-fields.test.sh` |
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx`, `src/components/talkx/useCampaignEditor.ts`, `src/hooks/integrations/useTalkXSegments.ts` … |
 | `talkx_settings` | Configurações chave-valor do TalkX | ativo | `src/hooks/integrations/useTalkXSettings.ts`, `supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts`, `supabase/functions/_shared/__tests__/talkx-v20-window-business-hours.test.ts` … |
 | `talkx_template_variants` | Variantes de template do TalkX (rótulo, conteúdo e mídia) | ativo | `src/hooks/integrations/useTalkXTemplates.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/process-recipient.ts` … |
@@ -247,4 +247,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 167.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 166.

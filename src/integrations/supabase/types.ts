@@ -3774,6 +3774,36 @@ export type Database = {
           },
         ]
       }
+      email_signatures: {
+        Row: {
+          created_at: string
+          html: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          html?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          html?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_threads: {
         Row: {
           assigned_to: string | null
@@ -3929,23 +3959,41 @@ export type Database = {
       }
       feature_flags: {
         Row: {
+          allowed_roles: string[]
+          allowed_user_ids: string[]
+          blocked_user_ids: string[]
           description: string | null
           enabled: boolean
+          expires_at: string | null
           key: string
+          metadata: Json
+          rollout_percentage: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          allowed_roles?: string[]
+          allowed_user_ids?: string[]
+          blocked_user_ids?: string[]
           description?: string | null
           enabled?: boolean
+          expires_at?: string | null
           key: string
+          metadata?: Json
+          rollout_percentage?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          allowed_roles?: string[]
+          allowed_user_ids?: string[]
+          blocked_user_ids?: string[]
           description?: string | null
           enabled?: boolean
+          expires_at?: string | null
           key?: string
+          metadata?: Json
+          rollout_percentage?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -4285,6 +4333,71 @@ export type Database = {
           },
         ]
       }
+      instance_pauses: {
+        Row: {
+          auto: boolean
+          created_at: string
+          id: string
+          instance: string
+          paused_by: string | null
+          paused_until: string
+          reason: string
+          resumed_at: string | null
+          resumed_by: string | null
+        }
+        Insert: {
+          auto?: boolean
+          created_at?: string
+          id?: string
+          instance: string
+          paused_by?: string | null
+          paused_until: string
+          reason: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+        }
+        Update: {
+          auto?: boolean
+          created_at?: string
+          id?: string
+          instance?: string
+          paused_by?: string | null
+          paused_until?: string
+          reason?: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instance_pauses_paused_by_fkey"
+            columns: ["paused_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_paused_by_fkey"
+            columns: ["paused_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_resumed_by_fkey"
+            columns: ["resumed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instance_pauses_resumed_by_fkey"
+            columns: ["resumed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ip_whitelist: {
         Row: {
           added_by: string | null
@@ -4500,6 +4613,53 @@ export type Database = {
         }
         Relationships: []
       }
+      message_attempts: {
+        Row: {
+          attempt_no: number
+          created_at: string
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          message_id: string
+          outcome: string
+          provider_response: Json | null
+          provider_status: number | null
+        }
+        Insert: {
+          attempt_no: number
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_id: string
+          outcome: string
+          provider_response?: Json | null
+          provider_status?: number | null
+        }
+        Update: {
+          attempt_no?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string
+          outcome?: string
+          provider_response?: Json | null
+          provider_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attempts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           contact_id: string | null
@@ -4628,6 +4788,8 @@ export type Database = {
           ptt: boolean | null
           reply_to_id: string | null
           sender: string
+          sender_display_name: string | null
+          sender_participant_jid: string | null
           status: string | null
           status_updated_at: string | null
           transcription: string | null
@@ -4667,6 +4829,8 @@ export type Database = {
           ptt?: boolean | null
           reply_to_id?: string | null
           sender: string
+          sender_display_name?: string | null
+          sender_participant_jid?: string | null
           status?: string | null
           status_updated_at?: string | null
           transcription?: string | null
@@ -4706,6 +4870,8 @@ export type Database = {
           ptt?: boolean | null
           reply_to_id?: string | null
           sender?: string
+          sender_display_name?: string | null
+          sender_participant_jid?: string | null
           status?: string | null
           status_updated_at?: string | null
           transcription?: string | null
@@ -6397,36 +6563,59 @@ export type Database = {
           color: string
           created_at: string
           description: string | null
+          distribution: string
           id: string
           is_active: boolean | null
+          max_per_agent: number | null
           max_wait_time_minutes: number | null
           name: string
+          overflow_queue_id: string | null
+          paused: boolean
           priority: number | null
+          sticky_enabled: boolean
           updated_at: string
         }
         Insert: {
           color?: string
           created_at?: string
           description?: string | null
+          distribution?: string
           id?: string
           is_active?: boolean | null
+          max_per_agent?: number | null
           max_wait_time_minutes?: number | null
           name: string
+          overflow_queue_id?: string | null
+          paused?: boolean
           priority?: number | null
+          sticky_enabled?: boolean
           updated_at?: string
         }
         Update: {
           color?: string
           created_at?: string
           description?: string | null
+          distribution?: string
           id?: string
           is_active?: boolean | null
+          max_per_agent?: number | null
           max_wait_time_minutes?: number | null
           name?: string
+          overflow_queue_id?: string | null
+          paused?: boolean
           priority?: number | null
+          sticky_enabled?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "queues_overflow_queue_id_fkey"
+            columns: ["overflow_queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limit_configs: {
         Row: {
@@ -6502,6 +6691,62 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      reconnection_logs: {
+        Row: {
+          attempt: number
+          connection_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          result: string
+        }
+        Insert: {
+          attempt: number
+          connection_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          result: string
+        }
+        Update: {
+          attempt?: number
+          connection_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_agent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reminders: {
         Row: {
@@ -6764,6 +7009,7 @@ export type Database = {
           error_message: string | null
           id: string
           media_url: string | null
+          message_id: string | null
           message_type: string
           scheduled_at: string
           sent_at: string | null
@@ -6779,6 +7025,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           media_url?: string | null
+          message_id?: string | null
           message_type?: string
           scheduled_at: string
           sent_at?: string | null
@@ -6794,6 +7041,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           media_url?: string | null
+          message_id?: string | null
           message_type?: string
           scheduled_at?: string
           sent_at?: string | null
@@ -7054,6 +7302,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sla_alert_events: {
+        Row: {
+          alert_type: string
+          contact_id: string
+          created_at: string
+          id: string
+          queue_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          queue_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+        }
+        Update: {
+          alert_type?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          queue_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_alert_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_alert_events_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_alert_preferences: {
+        Row: {
+          alert_first_response: boolean
+          alert_resolution: boolean
+          enabled: boolean
+          severity_breached: boolean
+          severity_warning: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_first_response?: boolean
+          alert_resolution?: boolean
+          enabled?: boolean
+          severity_breached?: boolean
+          severity_warning?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_first_response?: boolean
+          alert_resolution?: boolean
+          enabled?: boolean
+          severity_breached?: boolean
+          severity_warning?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       sla_configurations: {
         Row: {
@@ -9530,12 +9870,14 @@ export type Database = {
       }
       whatsapp_connections: {
         Row: {
+          auto_reconnect_enabled: boolean
           battery_level: number | null
           capabilities: Json
           created_at: string
           created_by: string | null
           farewell_enabled: boolean | null
           farewell_message: string | null
+          health_reason: string | null
           health_response_ms: number | null
           health_status: string | null
           id: string
@@ -9548,17 +9890,21 @@ export type Database = {
           name: string
           phone_number: string
           qr_code: string | null
+          reconnect_interval_seconds: number
+          reconnect_max_attempts: number
           retry_count: number | null
           status: string | null
           updated_at: string
         }
         Insert: {
+          auto_reconnect_enabled?: boolean
           battery_level?: number | null
           capabilities?: Json
           created_at?: string
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string
@@ -9571,17 +9917,21 @@ export type Database = {
           name: string
           phone_number: string
           qr_code?: string | null
+          reconnect_interval_seconds?: number
+          reconnect_max_attempts?: number
           retry_count?: number | null
           status?: string | null
           updated_at?: string
         }
         Update: {
+          auto_reconnect_enabled?: boolean
           battery_level?: number | null
           capabilities?: Json
           created_at?: string
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string
@@ -9594,6 +9944,8 @@ export type Database = {
           name?: string
           phone_number?: string
           qr_code?: string | null
+          reconnect_interval_seconds?: number
+          reconnect_max_attempts?: number
           retry_count?: number | null
           status?: string | null
           updated_at?: string
@@ -10322,6 +10674,7 @@ export type Database = {
           created_by: string | null
           farewell_enabled: boolean | null
           farewell_message: string | null
+          health_reason: string | null
           health_response_ms: number | null
           health_status: string | null
           id: string | null
@@ -10343,6 +10696,7 @@ export type Database = {
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string | null
@@ -10364,6 +10718,7 @@ export type Database = {
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string | null
@@ -10410,6 +10765,22 @@ export type Database = {
       add_wa_tag_if_not_exists: {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
+      }
+      admin_inbox_silence: {
+        Args: never
+        Returns: {
+          connection_id: string
+          connection_name: string
+          connection_status: string
+          is_silent: boolean
+          last_inbound_at: string
+          last_outbound_at: string
+          received_24h: number
+          received_1h: number
+          received_5m: number
+          silence_minutes: number
+          top_conversations: Json
+        }[]
       }
       admin_set_role: {
         Args: {
@@ -10459,6 +10830,7 @@ export type Database = {
         Returns: number
       }
       ai_rate_limit_purge: { Args: { p_older_than: string }; Returns: number }
+      ai_sentiment_summary: { Args: { p_days?: number }; Returns: Json }
       ai_text_array: { Args: { p_value: Json }; Returns: string[] }
       ai_usage_cost_summary: {
         Args: { p_since: string; p_top_functions?: number; p_until: string }
@@ -10480,6 +10852,10 @@ export type Database = {
         Returns: number
       }
       apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
+      assume_conversation: {
+        Args: { p_contact_id: string }
+        Returns: Json
+      }
       attribute_multiplix_item_reply: {
         Args: {
           p_message_id: string
@@ -10490,6 +10866,10 @@ export type Database = {
       }
       attribute_talkx_reply: {
         Args: { p_contact_id: string; p_message_id: string; p_phone: string }
+        Returns: Json
+      }
+      auto_pause_instance: {
+        Args: { p_instance: string; p_minutes: number; p_reason: string }
         Returns: Json
       }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
@@ -10884,7 +11264,12 @@ export type Database = {
         }
         Returns: string
       }
+      credit_agent_mini_game_xp: {
+        Args: { p_game_id: string; p_profile_id: string; p_xp: number }
+        Returns: Json
+      }
       current_profile_id: { Args: never; Returns: string }
+      crisis_room_snapshot: { Args: never; Returns: Json }
       dashboard_contact_counts: {
         Args: {
           p_agent?: string
@@ -10993,6 +11378,54 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "talkx_campaigns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      edit_message: {
+        Args: { p_message_id: string; p_new_content: string }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -11129,6 +11562,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      evaluate_feature_flags: { Args: never; Returns: string[] }
       expire_stale_agent_presence: { Args: never; Returns: undefined }
       fail_crm_sync_outbox: {
         Args: { p_error_code: string; p_id: string; p_lease_token: string }
@@ -11361,6 +11795,10 @@ export type Database = {
           role: string
         }[]
       }
+      get_send_metrics: {
+        Args: { p_connection_id?: string; p_since?: string }
+        Returns: Json
+      }
       get_talkx_cron_secret: { Args: never; Returns: string }
       get_talkx_send_url: { Args: never; Returns: string }
       get_team_conversation_previews: {
@@ -11519,6 +11957,7 @@ export type Database = {
         Args: { check_country_code: string }
         Returns: boolean
       }
+      is_instance_paused: { Args: { p_instance: string }; Returns: boolean }
       is_ip_blocked: { Args: { check_ip: string }; Returns: boolean }
       is_ip_whitelisted: { Args: { check_ip: string }; Returns: boolean }
       is_privileged_contact_caller: { Args: never; Returns: boolean }
@@ -11548,6 +11987,27 @@ export type Database = {
           p_zapp_contact_id: string
         }
         Returns: undefined
+      }
+      list_message_attempts: {
+        Args: { p_message_id: string }
+        Returns: {
+          attempt_no: number
+          created_at: string
+          error_code: string
+          error_message: string
+          outcome: string
+        }[]
+      }
+      list_message_attempts_admin: {
+        Args: { p_message_id: string }
+        Returns: {
+          attempt_no: number
+          created_at: string
+          error_code: string
+          error_message: string
+          outcome: string
+          provider_response: Json
+        }[]
       }
       list_multiplix_claimable_items: {
         Args: { p_dispatch_id: string; p_limit?: number }
@@ -11588,9 +12048,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_message_attempt: {
+        Args: {
+          p_attempt_no: number
+          p_duration_ms?: number
+          p_error_code?: string
+          p_error_message?: string
+          p_message_id: string
+          p_outcome: string
+          p_provider_response?: Json
+          p_provider_status?: number
+        }
+        Returns: boolean
+      }
       log_talkx_campaign_checklist: {
         Args: { p_campaign_id: string; p_items: Json }
         Returns: string
+      }
+      log_unauthorized_inbox_scope: {
+        Args: { p_scope: string }
+        Returns: undefined
       }
       mark_first_response: {
         Args: { p_contact_id: string }
@@ -11672,6 +12149,19 @@ export type Database = {
         Args: { p_dispatch_id: string }
         Returns: boolean
       }
+      my_active_sessions: {
+        Args: never
+        Returns: {
+          auth_session_id: string
+          device_id: string
+          id: string
+          ip_address: string
+          is_current: boolean
+          last_activity_at: string
+          started_at: string
+          user_agent: string
+        }[]
+      }
       my_calls_kpi: {
         Args: {
           p_channel?: string
@@ -11694,6 +12184,10 @@ export type Database = {
       pause_dispatches_for_connection: {
         Args: { p_connection_id: string; p_reason: string }
         Returns: number
+      }
+      pause_instance: {
+        Args: { p_instance: string; p_minutes: number; p_reason: string }
+        Returns: Json
       }
       persist_conversation_analysis: {
         Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
@@ -11823,6 +12317,10 @@ export type Database = {
           p_recipient_id: string
         }
         Returns: undefined
+      }
+      record_sla_alert: {
+        Args: { p_alert_type: string; p_contact_id: string; p_severity: string }
+        Returns: string
       }
       record_talkx_conversion: {
         Args: {
@@ -11971,6 +12469,10 @@ export type Database = {
         Returns: Json
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
+      resolve_sla_alert: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       resolve_talkx_outcome_unknown: {
         Args: {
           p_confirm_duplicate_risk?: boolean
@@ -11980,12 +12482,17 @@ export type Database = {
         }
         Returns: Json
       }
+      resume_instance: { Args: { p_instance: string }; Returns: number }
       retry_talkx_recipient: {
         Args: { p_recipient_id: string }
         Returns: boolean
       }
       retry_talkx_recipients: {
         Args: { p_campaign_id: string; p_recipient_ids: string[] }
+        Returns: Json
+      }
+      return_conversation_to_queue: {
+        Args: { p_contact_id: string; p_reason?: string }
         Returns: Json
       }
       save_talkx_campaign_draft: {
@@ -12295,6 +12802,7 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      talkx_insights: { Args: { p_from: string; p_to: string }; Returns: Json }
       talkx_match_optout: { Args: { p_text: string }; Returns: string }
       talkx_next_recipients: {
         Args: { p_campaign_id: string; p_limit?: number }
@@ -12442,7 +12950,6 @@ export type Database = {
           p_avatar_url?: string
           p_birthday?: string
           p_display_name?: string
-          p_email?: string
           p_phone?: string
           p_signature?: string
         }

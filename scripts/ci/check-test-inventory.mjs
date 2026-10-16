@@ -67,26 +67,58 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
-  // --- .test.sh — prova em container descartável (docker); passo de YAML
-  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // X140: painel do monitor TalkX (kpis, comparativo com ontem, serie com zeros,
+  // saude do worker, autorizacao dono/admin). Migration real em PostgreSQL 17
+  // descartavel; passo de YAML fica para o dono do workflow.
+  'scripts/db-audit/talkx-monitor-panel.test.sh',
+  // #126 (R3-DELTA-009): prova em container descartável que a purga LGPD (que grava
+  // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
+  // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
+  // do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML,
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
+  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
+  'scripts/db-audit/login_gate_rpc.test.sh',
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',
+  'scripts/db-audit/pg-cron-escalonamento.test.sh',  'scripts/db-audit/talkx-optout.test.sh',
+
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
-  'scripts/db-audit/talkx-optout.test.sh',
-  'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',  'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // X057b: prova em Postgres descartavel o contrato multi-segmentos da campanha Talk X (ordenacao, teto, dedupe e ACL);
+  // promover para db-guard.yml pelo dono do workflow quando o runner suportar o harness.
+  'scripts/db-audit/talkx-campaign-segments-rpc.test.sh',
   // N-118 (item t_f0720c47): versiona a prova SQL de talkx_campaign_window_open em PG 17
   // descartável (docker local) contra a migration 20261011000003 — fuso da campanha,
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
-  // N-110: prova SQL da RPC save_talkx_template_variants em PG 17 descartável — cria/atualiza
-  // variantes do template sob as roles reais (authenticated/anon), isolamento por dono e rollback.
-  'scripts/db-audit/talkx-save-template-variants.test.sh',
-  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
-  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
+  // X103 (Fase 9, telas 02/03): estatisticas da biblioteca de segmentos —
+  // RPC talkx_segment_library_stats, retrato diario (talkx_segment_library_history)
+  // e rotina idempotente talkx_refresh_segment_library_history. PG 17 descartavel
+  // com papeis reais (anon/authenticated/service_role); passo de YAML a promover
+  // em db-guard.yml pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-segment-library-stats.test.sh',
+  // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
+  // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/talkx-contact-attributes.test.sh',  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos,
+  // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
+  // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/talkx-contact-attributes.test.sh',
+  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
   // IA-131 (item 133): cadeia real ia033→ia131 em PG 17 descartável (docker local) — prova que a
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
@@ -97,10 +129,24 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha (`bash scripts/db-audit/multiplix-completion-item-queue.test.sh`)
   // e fica para o dono do workflow.
   'scripts/db-audit/multiplix-completion-item-queue.test.sh',
+  // R2-DB-021 / item 303 (P2): prova do modelo de autoria de message_reactions em
+  // container descartavel (docker); passo de YAML a promover em db-guard.yml pelo
+  // dono do workflow (agente não edita workflow).
+  'scripts/db-audit/message-reactions-author-model.test.sh',
+  // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no,
+  // SEC-DEFINER_GRANTS_STORAGE-02 (item do audit de 07/10): prova em PG 17 descartavel que o
+  // nome do objeto nao vira padrao LIKE nas policies de midia do WhatsApp (RED com
+  // 20260930700000, GREEN com 20261011003024, rodando como authenticated/anon). Passo de uma
+  // linha em db-guard.yml — promover pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh',
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe,
+  // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe  // junto de gen-types.test.sh; promover pelo dono do workflow.,
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
-  // junto de gen-types.test.sh; promover pelo dono do workflow.
-  'scripts/db-audit/replay-classify.test.sh',
+  // junto de gen-types.test.sh; promover pelo dono do workflow.  'scripts/db-audit/replay-classify.test.sh',
   // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
   // encerrar→reabrir→encerrar no mesmo dia. Depende de docker (como os demais deste bloco);
   // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
@@ -116,10 +162,50 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
-]);
+  // #471 (DELTA-CRON-ANUAL): prova em Postgres 17 descartavel (docker, container proprio)
+  // que a migration 20261006202215 tira da agenda o job residual `vacuum-messages-post-expurgo`,
+  // deixa os outros 11 jobs intactos, reescreve apply_pg_cron_escalonamento() sem a linha dele e
+  // executa o proprio `-- Rollback:` da migration. Inicia container proprio (imagem padrao
+  // `postgres:17-alpine`, a mesma de POSTGRES_TEST_IMAGE) e conversa com ele por `docker exec`;
+  // o passo de uma linha no db-guard.yml pede SKIP_DOCKER_SHIM="1", como os passos do bloco E50
+  // deste repositorio, e e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/cron-remocao-vacuum-messages.test.sh',
+  // CT-E / PB-30 (paridade V3->V2): prova em Postgres 17 descartavel (docker) que
+  // public.contacts_stats_series(boolean) devolve empresas_distinct e as 4 series do
+  // useContactsKpi (novos 30d em buckets de 4/6 dias, total cumulativo 12s, empresas
+  // cumulativas 12s, fornecedores por semana) com o MESMO escopo de
+  // contacts_stats/search_contacts (admin tudo, agente so o seu, anon/PUBLIC sem
+  // EXECUTE, service_role tudo) e que o Rollback remove a funcao. Passo de uma linha
+  // em db-guard.yml a promover pelo dono do workflow.
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);,
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',
+  // #122 (R3-DELTA-003, cartão t_c7543cc1): prova em Postgres 17 descartável (docker) que o cursor
+  // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
+  // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
+  // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',]);,
+  // R2-DB (11/10/2026): prova o log de tentativas de envio (public.message_attempts) em PG 17
+  // descartavel com papel real (authenticated/anon/service_role) e rollback executado. Passo de
+  // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
+  // pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/message-attempts-log.test.sh',
+]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em,
+  // R2-AUTH-036 (Sala de Crise): prova em Postgres 17 descartavel (docker) que a
+  // RPC crisis_room_snapshot() mede as 4 metricas num agregado unico (sem o corte
+  // de 1.000 linhas do PostgREST) e nega agente comum/anon/service_role com
+  // excecao, nunca com zeros. Passo de YAML a promover em db-guard.yml pelo dono
+  // do workflow (REGISTRO PENDENTE).
+  'scripts/db-audit/crisis-room-snapshot.test.sh',]);,
+  // #174 (t_ae0a55a6): prova em Postgres 17 descartavel (docker, container proprio) que a RPC
+  // set_default_whatsapp_connection (migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql)
+  // troca a conexao padrao do WhatsApp numa transacao, serializada por advisory lock, autorizada por
+  // is_admin_or_supervisor(auth.uid()) e valida o pos-estado (exatamente uma padrao); o bloco A mostra o
+  // defeito no caminho antigo (dois UPDATE) e o bloco B prova a RPC, o fail-closed e o gatilho de
+  // updated_at. O passo de uma linha no db-guard.yml e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-default-connection-atomicity.test.sh',
 
-// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
-// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
+]);
+// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
 // primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
 // ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
