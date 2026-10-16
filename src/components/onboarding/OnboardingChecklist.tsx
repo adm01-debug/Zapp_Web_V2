@@ -71,8 +71,8 @@ export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: 
             <div><p className="font-medium text-sm">Configure sua conta</p><p className="text-xs text-muted-foreground">{completedSteps.length}/{CHECKLIST_STEPS.length} passos concluídos</p></div>
           </div>
           <div className="flex items-center gap-2">
-            <Progress value={progress} className="w-24 h-2" />
-            <Button size="sm" variant="ghost" onClick={handleDismiss}><X className="w-4 h-4" /></Button>
+            <Progress value={progress} className="w-24 h-2" aria-label="Progresso do onboarding" />
+            <Button size="sm" variant="ghost" onClick={handleDismiss} aria-label="Dispensar checklist"><X className="w-4 h-4" /></Button>
           </div>
         </div>
       </motion.div>
