@@ -8,6 +8,7 @@ import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { toast } from '@/hooks/ui/use-toast';
+import { formatDocumentTitle } from '@/lib/productName';
 
 type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +116,9 @@ export default function ChatPopup() {
         .single();
       if (data) {
         setContact(data);
-        document.title = `Chat — ${data.name}`;
+        // Mesmo nome de produto do resto da aplicação (não repita o literal):
+        // antes a janela destoava do `index.html`, que já dizia "ZAPP WEB".
+        document.title = formatDocumentTitle(`Chat — ${data.name}`);
       }
       setLoading(false);
     })();
