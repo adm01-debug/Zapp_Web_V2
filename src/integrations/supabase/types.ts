@@ -10389,6 +10389,15 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      agent_workload: {
+        Args: never
+        Returns: {
+          last_send_at: string
+          open_chats: number
+          profile_id: string
+          waiting_chats: number
+        }[]
+      }
       ai_budget_reconcile: { Args: never; Returns: number }
       ai_budget_release: {
         Args: { p_id: string; p_reason: string }
