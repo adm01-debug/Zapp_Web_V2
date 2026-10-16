@@ -49,6 +49,61 @@ export const CLOCK_SKEW_TOLERANCE_MS = 60_000;
 let recargaAutomaticaBloqueadaPorStorage = false;
 
 /**
+ * Janela em que um `beforeunload` cancelado ainda conta como navegacao em
+ * curso. Um `import()` abortado pelo descarregamento chega ao tratador de erro
+ * DEPOIS do `beforeunload`; liberar a marca no proximo tick (setTimeout 0)
+ * reabriria a corrida que esta guarda fecha. Dez segundos cobrem o atraso entre
+ * o evento e o erro, sem prender a recarga para sempre se o usuario cancelar.
+ */
+export const NAVEGACAO_DOCUMENTO_JANELA_MS = 10_000;
+
+/**
+ * Marca de navegacao de documento em curso.
+ *
+ * O WebKit pode rejeitar um `import()` em voo com a mesma mensagem generica de
+ * chunk velho enquanto uma navegacao legitima ja esta deixando a pagina
+ * (link clicado, formulario enviado, recarregamento pedido pelo usuario).
+ * Recarregar nesse instante cancela a URL pedida e devolve o documento anterior.
+ *
+ * A marca sobe em `beforeunload` e em `pagehide` (a navegacao comecou) e desce:
+ * - no `pageshow`, inclusive na volta do bfcache, que restaura a pagina sem
+ *   recarregar o modulo — e portanto sem zerar esta variavel;
+ * - ao fim da janela apos o `beforeunload`, que cobre a navegacao cancelada (o
+ *   documento nunca descarrega, entao a marca nao pode ficar presa e desligar
+ *   para sempre a recarga automatica). Cada novo `beforeunload` reinicia a
+ *   janela; `pagehide` (descarregamento confirmado) e `pageshow` cancelam o
+ *   temporizador pendente.
+ */
+let navegacaoDeDocumentoEmCurso = false;
+let temporizadorLiberacaoNavegacao: ReturnType<typeof setTimeout> | undefined;
+
+function cancelarLiberacaoNavegacaoAgendada(): void {
+  if (temporizadorLiberacaoNavegacao !== undefined) {
+    clearTimeout(temporizadorLiberacaoNavegacao);
+    temporizadorLiberacaoNavegacao = undefined;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    navegacaoDeDocumentoEmCurso = true;
+    cancelarLiberacaoNavegacaoAgendada();
+    temporizadorLiberacaoNavegacao = setTimeout(() => {
+      temporizadorLiberacaoNavegacao = undefined;
+      navegacaoDeDocumentoEmCurso = false;
+    }, NAVEGACAO_DOCUMENTO_JANELA_MS);
+  });
+  window.addEventListener('pagehide', () => {
+    cancelarLiberacaoNavegacaoAgendada();
+    navegacaoDeDocumentoEmCurso = true;
+  });
+  window.addEventListener('pageshow', () => {
+    cancelarLiberacaoNavegacaoAgendada();
+    navegacaoDeDocumentoEmCurso = false;
+  });
+}
+
+/**
  * Mensagens que o navegador usa quando o chunk nao veio (deploy novo ou rede).
  * Comparadas em minusculas: as 5 da V3 mais 'loading css chunk', que a V2 ja
  * reconhecia — removê-la seria regressao.
@@ -132,6 +187,10 @@ export function resetChunkReloadGuard(): void {
  *          silencio e o que produzia o laco invisivel antes desta guarda.
  */
 export function triggerChunkReload(): boolean {
+  // Um import dinamico abortado pelo descarregamento do documento nao e deploy
+  // novo: recarregar aqui competiria com a navegacao que o usuario ja pediu.
+  if (navegacaoDeDocumentoEmCurso) return false;
+
   try {
     const contador = lerContador();
     if (contador >= MAX_CHUNK_RELOADS) return false;

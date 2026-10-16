@@ -15,6 +15,7 @@ const {
   CHUNK_RELOAD_COOLDOWN_MS,
   LEGACY_CHUNK_RELOAD_KEY,
   MAX_CHUNK_RELOADS,
+  NAVEGACAO_DOCUMENTO_JANELA_MS,
 } = await import('@/lib/chunkReload');
 
 const reload = vi.fn();
@@ -144,5 +145,92 @@ describe('chunkReload — orcamento e cooldown', () => {
     expect(triggerChunkReload()).toBe(false);
     expect(hasExhaustedChunkReloads()).toBe(true);
     expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('chunkReload — guarda de navegacao de documento', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    resetChunkReloadGuard();
+    reload.mockClear();
+    // jsdom nao navega: troca o location por um duble observavel.
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { reload },
+    });
+    // estado conhecido de partida: nenhuma navegacao em curso
+    window.dispatchEvent(new Event('pageshow'));
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    window.dispatchEvent(new Event('pageshow'));
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('nao recarrega enquanto uma navegacao de documento esta em curso (beforeunload)', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('nao recarrega enquanto uma navegacao de documento esta em curso (pagehide)', () => {
+    window.dispatchEvent(new Event('pagehide'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('pageshow (volta do bfcache) libera a guarda e a recarga volta a acontecer', () => {
+    window.dispatchEvent(new Event('pagehide'));
+    expect(triggerChunkReload()).toBe(false);
+    // bfcache: a pagina volta pelo pageshow, sem recarregar o modulo
+    window.dispatchEvent(new Event('pageshow'));
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('beforeunload cancelado mantem a guarda durante a janela e libera depois', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    // o erro do import abortado chega DEPOIS do beforeunload: ainda em curso
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1_000);
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    // fim da janela: navegacao cancelada, a recarga volta a acontecer uma vez
+    vi.advanceTimersByTime(NAVEGACAO_DOCUMENTO_JANELA_MS - 1_000);
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('segundo beforeunload reinicia a janela (cancela o temporizador anterior)', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    vi.advanceTimersByTime(9_000);
+    window.dispatchEvent(new Event('beforeunload'));
+    // 9 s depois do SEGUNDO evento a guarda ainda vale (o primeiro nao liberou)
+    vi.advanceTimersByTime(9_000);
+    expect(triggerChunkReload()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1_000);
+    expect(triggerChunkReload()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('com navegacao em curso o orcamento nao e gasto e, terminada, teto e cooldown valem', () => {
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(triggerChunkReload()).toBe(false);
+    expect(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY)).toBeNull();
+
+    vi.advanceTimersByTime(NAVEGACAO_DOCUMENTO_JANELA_MS);
+    expect(triggerChunkReload()).toBe(true);
+    sessionStorage.setItem(CHUNK_RELOAD_AT_KEY, '0');
+    expect(triggerChunkReload()).toBe(true);
+    sessionStorage.setItem(CHUNK_RELOAD_AT_KEY, '0');
+    expect(triggerChunkReload()).toBe(false);
+
+    expect(reload).toHaveBeenCalledTimes(MAX_CHUNK_RELOADS);
+    expect(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY)).toBe(String(MAX_CHUNK_RELOADS));
   });
 });
