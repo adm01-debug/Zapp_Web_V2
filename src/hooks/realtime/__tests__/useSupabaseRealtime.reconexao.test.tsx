@@ -33,9 +33,11 @@ vi.mock('@/lib/logger', () => ({
 import { useSupabaseRealtime, PERSISTED_CHANNEL_ERRORS, TRANSIENT_CHANNEL_WINDOW_MS } from '@/hooks/realtime/useSupabaseRealtime';
 import { log } from '@/lib/logger';
 
-// `navigator.onLine` é somente-leitura no jsdom: o teste de offline redefine
-// a propriedade e o afterEach restaura o valor original para não vazar
-// `onLine === false` para os testes seguintes do arquivo.
+// `navigator.onLine` é somente-leitura no jsdom e mora no PROTÓTIPO
+// (`Navigator.prototype`): não há descritor próprio na instância. O teste de
+// offline cria uma propriedade própria e o afterEach a remove (ou restaura o
+// descritor, se um dia existir), para o `onLine === false` não vazar para os
+// testes seguintes do arquivo.
 const originalOnLineDescriptor = Object.getOwnPropertyDescriptor(window.navigator, 'onLine');
 
 function mount(channelName: string) {
@@ -77,6 +79,10 @@ afterEach(() => {
   vi.useRealTimers();
   if (originalOnLineDescriptor) {
     Object.defineProperty(window.navigator, 'onLine', originalOnLineDescriptor);
+  } else {
+    // Sem descritor próprio, o `onLine` veio do protótipo: apagar a
+    // propriedade própria criada pelo teste devolve o original.
+    delete (window.navigator as unknown as Record<string, unknown>).onLine;
   }
 });
 
@@ -242,5 +248,12 @@ describe('useSupabaseRealtime — nível do log de queda de canal', () => {
     expect(logDeQueda('info')).toBe(true);
     expect(logDeQueda('warn')).toBe(false);
     view.unmount();
+  });
+
+  it('afterEach remove o onLine falso: não vaza para os testes seguintes', () => {
+    // Roda depois do teste offline (ordem do arquivo): se o afterEach não
+    // apagasse a propriedade própria, onLine ainda seria false aqui.
+    expect(window.navigator.onLine).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(window.navigator, 'onLine')).toBe(false);
   });
 });
