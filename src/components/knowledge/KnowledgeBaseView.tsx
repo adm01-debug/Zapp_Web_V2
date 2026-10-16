@@ -30,7 +30,7 @@ const MOTIVO_FALHA = 'Falha no processamento: não foi possível extrair o texto
 export function KnowledgeBaseView() {
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
   const prefersReducedMotion = useReducedMotion();
-  const { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
+  const { articles, files, loading, error, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
   // Trava por arquivo: o `ref` barra o segundo clique no MESMO botão antes do
   // re-render (dois cliques no mesmo tick); o estado só pinta o `aria-busy`.
   // Linhas diferentes seguem livres — a ação é por arquivo.
@@ -103,6 +103,25 @@ export function KnowledgeBaseView() {
     return matchesSearch && (selectedCategory === 'all' || a.category === selectedCategory);
   });
 
+  // Falha de leitura nao e "base vazia": sem este bloco os contadores iam a zero e a
+  // aba de arquivos anunciava "Nenhum arquivo enviado" com a leitura quebrada.
+  const kbErrorBlock = (
+    <div
+      role="alert"
+      data-testid="kb-error"
+      className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4 flex flex-col items-start gap-2"
+    >
+      <div className="flex items-center gap-2 text-destructive">
+        <AlertCircle className="w-4 h-4" />
+        <p className="text-sm font-semibold">Não foi possível carregar a base de conhecimento</p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        A leitura dos artigos e dos arquivos falhou, então nenhuma contagem é exibida — zero aqui seria dado inventado.
+      </p>
+      <Button variant="outline" size="sm" onClick={() => fetchData()}>Tentar novamente</Button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full w-full min-w-0">
       <PageHeader title="Base de Conhecimento" subtitle="Treine a IA com documentos e artigos da sua empresa"
@@ -112,6 +131,9 @@ export function KnowledgeBaseView() {
           <Button onClick={openNew} className="gap-2"><Plus className="w-4 h-4" /> Novo Artigo</Button>
         </div>} />
 
+      {error ? (
+        <div className="px-6 pb-6">{kbErrorBlock}</div>
+      ) : (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 pb-4">
         {[
           { icon: BookOpen, color: 'bg-primary/20', textColor: 'text-primary', label: 'Artigos', value: articles.length },
@@ -199,6 +221,7 @@ export function KnowledgeBaseView() {
           </div>
         </TabsContent>
       </Tabs>
+      </>)}
 
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent aria-describedby={undefined} size="xl">

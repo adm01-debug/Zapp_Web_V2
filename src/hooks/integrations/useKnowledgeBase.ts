@@ -36,6 +36,16 @@ export const CATEGORY_LABELS: Record<string, string> = {
 /** Bucket dos arquivos da Base de Conhecimento. */
 export const KB_STORAGE_BUCKET = 'whatsapp-media';
 
+/** PostgrestError não é `instanceof Error`: o `message` dele precisa ser lido à parte. */
+function mensagemDoErro(err: unknown, padrao: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg) return msg;
+  }
+  return padrao;
+}
+
 /** Validade da URL assinada gravada no upload (1 dia). */
 const KB_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24;
 
@@ -55,16 +65,27 @@ export function useKnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [articlesRes, filesRes] = await Promise.all([
-      supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
-      supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
-    ]);
-    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
-    if (filesRes.data) setFiles(filesRes.data as KBFile[]);
-    setLoading(false);
+    setError(null);
+    try {
+      const [articlesRes, filesRes] = await Promise.all([
+        supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
+        supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
+      ]);
+      // Falha de leitura NÃO é "base vazia": sem verificar `error`, um problema de
+      // rede/RLS deixava as listas vazias e a tela anunciava "Nenhum arquivo enviado".
+      if (articlesRes.error) throw articlesRes.error;
+      if (filesRes.error) throw filesRes.error;
+      setArticles((articlesRes.data ?? []).map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
+      setFiles((filesRes.data ?? []) as KBFile[]);
+    } catch (err) {
+      setError(mensagemDoErro(err, 'Falha ao carregar a base de conhecimento'));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const saveArticle = useCallback(async (payload: { title: string; content: string; category: string; tags: string[]; is_published: boolean }, editingId?: string) => {
@@ -223,5 +244,5 @@ export function useKnowledgeBase() {
     return false;
   }, [fetchData]);
 
-  return { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile };
+  return { articles, files, loading, error, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile };
 }

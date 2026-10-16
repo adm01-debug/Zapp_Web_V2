@@ -24,9 +24,30 @@ interface NPSMetrics {
   avgScore: number;
 }
 
+/**
+ * Teto de linhas lidas do PostgREST (`.limit`). A agregação deste hook é feita no
+ * cliente, então ela só enxerga as respostas mais recentes até este teto — o
+ * consumidor precisa avisar o usuário quando o teto é atingido (o painel mostra
+ * "baseado nas últimas N respostas"), em vez de apresentar o número como se fosse
+ * o total da base.
+ */
+export const NPS_SURVEY_LIMIT = 500;
+
+/** PostgrestError não é `instanceof Error`: o `message` dele precisa ser lido à parte. */
+function mensagemDoErro(err: unknown, padrao: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg) return msg;
+  }
+  return padrao;
+}
+
 export function useNPSSurveys() {
   const [surveys, setSurveys] = useState<NPSSurvey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -38,19 +59,28 @@ export function useNPSSurveys() {
 
   const fetchSurveys = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('nps_surveys')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(NPS_SURVEY_LIMIT);
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       if (isMountedRef.current) {
-        setSurveys((data as NPSSurvey[]) || []);
+        const rows = (data as NPSSurvey[]) || [];
+        setSurveys(rows);
+        setIsTruncated(rows.length >= NPS_SURVEY_LIMIT);
       }
     } catch (err) {
       log.error('Error fetching NPS surveys:', err);
+      if (isMountedRef.current) {
+        // Falha de leitura NÃO é "nenhuma pesquisa respondida": sem este estado o
+        // painel exibia NPS 0 e contadores zerados como se fossem dado real.
+        setError(mensagemDoErro(err, 'Falha ao carregar as pesquisas NPS'));
+        setIsTruncated(false);
+      }
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -116,5 +146,5 @@ export function useNPSSurveys() {
     return { totalResponses: total, promoters, passives, detractors, npsScore, avgScore };
   }, [surveys]);
 
-  return { surveys, isLoading, metrics, createSurvey, refetch: fetchSurveys };
+  return { surveys, isLoading, error, isTruncated, metrics, createSurvey, refetch: fetchSurveys };
 }
