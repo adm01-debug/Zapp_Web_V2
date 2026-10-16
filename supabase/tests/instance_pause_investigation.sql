@@ -1,9 +1,11 @@
 -- instance_pause_investigation (IP2, filho do IP1): suite no banco LOCAL, papel real via
 -- request.jwt.claims + set_config('role') (caminho do PostgREST); tudo desfeito no ROLLBACK final.
 -- T1 investiga+audita sem copiar notas; T2 negado (3 papeis) sem efeito/auditoria;
--- T3 validacao funcao+CHECKs; T4 P0002; T5 3 auditorias (1/chamada), 1o ator congela;
+-- T3 validacao funcao+CHECKs; T3b FK x CHECK (savepoint do plpgsql = sub-bloco BEGIN/EXCEPTION: excluir o perfil do
+-- investigador preserva a investigacao, e ator sem data segue negado);
+-- T4 P0002; T5 3 auditorias (1/chamada), 1o ator congela;
 -- T5b supervisor; T6 RLS/ACL; T7 rollback. (Serie 24h/7d separada no cartao-filho t_e75e24e9.)
--- RODAR: zapp-db-local psql . v2-26101315358410 -v ON_ERROR_STOP=1 < este arquivo
+-- RODAR: zapp-db-local psql . v2-2610161333f0ad -v ON_ERROR_STOP=1 < este arquivo
 BEGIN;
 -- atalho de papel (1 linha por troca).
 CREATE FUNCTION pg_temp.t_auth(p_sub uuid) RETURNS void LANGUAGE sql AS $$
@@ -16,16 +18,20 @@ DECLARE
   v_admin_user uuid := '44444444-4444-4444-4444-4444444444a1';
   v_sup_user   uuid := '44444444-4444-4444-4444-4444444444a2';
   v_agent_user uuid := '44444444-4444-4444-4444-4444444444b1';
+  v_tmp_user   uuid := '44444444-4444-4444-4444-4444444444c1';  -- investigador excluido em T3b
   v_admin_prof uuid;
   v_sup_prof   uuid;
   v_agent_prof uuid;
+  v_tmp_prof   uuid;
   v_inst_a     text := 'inst-invest-teste-a';
   v_inst_b     text := 'inst-invest-teste-b';
   v_inst_sup   text := 'inst-invest-teste-supervisor';
+  v_inst_perf  text := 'inst-invest-teste-perfil-excluido';
   v_pause_1    uuid;
   v_pause_2    uuid;
   v_pause_3    uuid;
   v_pause_4    uuid;
+  v_pause_5    uuid;
   v_out        jsonb;
   v_at1        timestamptz;
   v_by1        uuid;
@@ -38,29 +44,31 @@ BEGIN
   INSERT INTO auth.users (id, email) VALUES
     (v_admin_user, 'invest-admin@local.test'),
     (v_sup_user,   'invest-supervisor@local.test'),
-    (v_agent_user, 'invest-agent@local.test');
+    (v_agent_user, 'invest-agent@local.test'),
+    (v_tmp_user,   'invest-temporario@local.test');
 
   INSERT INTO public.profiles (user_id, name)
   VALUES (v_admin_user, 'Admin investigacao (sintetico)'),
          (v_sup_user,   'Supervisor investigacao (sintetico)'),
-         (v_agent_user, 'Agente investigacao (sintetico)')
+         (v_agent_user, 'Agente investigacao (sintetico)'),
+         (v_tmp_user,   'Investigador temporario (sintetico)')
   ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name;
 
   INSERT INTO public.user_roles (user_id, role) VALUES
     (v_admin_user, 'admin'),
     (v_sup_user,   'supervisor'),
-    (v_agent_user, 'agent')
+    (v_agent_user, 'agent'),
+    (v_tmp_user,   'admin')
   ON CONFLICT (user_id, role) DO NOTHING;
 
-  -- Ambiente da suite (desfeito no ROLLBACK): leitura de auditoria para o papel
-  -- de cliente nas contagens feitas SOB o papel (T1/T3); a policy da base segue
-  -- decidindo QUAIS linhas cada jwt enxerga (admin/supervisor: as dele; demais: 0).
-  GRANT SELECT ON public.audit_logs TO authenticated;
+  -- (Sem grant nenhum: as contagens de auditoria da suite rodam como postgres,
+  -- depois de devolver o papel. A suite NAO concede SELECT em audit_logs.)
 
   SELECT id INTO v_admin_prof FROM public.profiles WHERE user_id = v_admin_user;
   SELECT id INTO v_sup_prof   FROM public.profiles WHERE user_id = v_sup_user;
   SELECT id INTO v_agent_prof FROM public.profiles WHERE user_id = v_agent_user;
-  IF v_admin_prof IS NULL OR v_sup_prof IS NULL OR v_agent_prof IS NULL THEN
+  SELECT id INTO v_tmp_prof   FROM public.profiles WHERE user_id = v_tmp_user;
+  IF v_admin_prof IS NULL OR v_sup_prof IS NULL OR v_agent_prof IS NULL OR v_tmp_prof IS NULL THEN
     RAISE EXCEPTION 'fixture invalida: perfil sintetico nao encontrado';
   END IF;
 
@@ -157,17 +165,27 @@ BEGIN
     RAISE EXCEPTION 'T2 FALHOU: nasceu auditoria para uma tentativa negada';
   END IF;
 
-  -- anon: sem EXECUTE
+  -- anon: sem EXECUTE — para no ACL, antes de entrar no corpo da funcao
   PERFORM set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
   PERFORM set_config('role', 'anon', true);
   v_errcode := NULL;
+  v_errmsg  := NULL;
   BEGIN
     v_out := public.mark_pause_investigated(v_pause_2, 'anon');
   EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE;
+    GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE, v_errmsg = MESSAGE_TEXT;
   END;
+  PERFORM set_config('role', 'none', true);
   IF v_errcode IS DISTINCT FROM '42501' THEN
     RAISE EXCEPTION 'T2 FALHOU: anon deveria dar 42501 (deu %)', coalesce(v_errcode, 'sem erro');
+  END IF;
+  -- erro de ACL: a mensagem e' a do proprio Postgres e cita a funcao (grafia do
+  -- locale: 'permission denied for function ...' | 'permissao negada para funcao ...')
+  IF v_errmsg IS NULL
+     OR v_errmsg = 'sem_permissao_para_investigar_pausa'
+     OR v_errmsg !~ '(function|fun[uç][ãa]o) mark_pause_investigated' THEN
+    RAISE EXCEPTION 'T2 FALHOU: anon deveria parar no ACL do EXECUTE (mensagem=%)',
+      coalesce(v_errmsg, 'sem erro');
   END IF;
 
   -- service_role: sem usuario humano, nao substitui o ator
@@ -181,6 +199,10 @@ BEGIN
   PERFORM set_config('role', 'none', true);
   IF v_errcode IS DISTINCT FROM '42501' THEN
     RAISE EXCEPTION 'T2 FALHOU: service_role sem ator deveria dar 42501 (deu %)', coalesce(v_errcode, 'sem erro');
+  END IF;
+  IF v_errmsg IS DISTINCT FROM 'sem_permissao_para_investigar_pausa' THEN
+    RAISE EXCEPTION 'T2 FALHOU: service_role sem ator deveria receber sem_permissao_para_investigar_pausa (deu %)',
+      coalesce(v_errmsg, 'sem erro');
   END IF;
   SELECT count(*) INTO v_n FROM public.audit_logs WHERE entity_id = v_pause_2;
   IF v_n <> 0 THEN
@@ -210,6 +232,10 @@ BEGIN
     RAISE EXCEPTION 'T3 FALHOU: notas com HTML deveriam dar 22023 (deu %)', coalesce(v_errcode, 'sem erro');
   END IF;
 
+  -- as contagens abaixo rodam como postgres (padrao da suite: conferir estado
+  -- depois de devolver o papel; a suite nao concede SELECT em audit_logs)
+  PERFORM set_config('role', 'none', true);
+
   -- nada aplicado pelas tentativas invalidas
   SELECT count(*) INTO v_n FROM public.instance_pauses
    WHERE id = v_pause_3 AND investigated_at IS NULL AND investigation_notes IS NULL;
@@ -221,7 +247,8 @@ BEGIN
     RAISE EXCEPTION 'T3 FALHOU: entrada invalida gerou auditoria';
   END IF;
 
-  -- notas em branco viram NULL e ainda marcam
+  -- notas em branco viram NULL e ainda marcam (de novo sob o papel de cliente)
+  PERFORM pg_temp.t_auth(v_admin_user);
   v_out := public.mark_pause_investigated(v_pause_3, '    ');
   PERFORM set_config('role', 'none', true);
   IF (v_out ->> 'investigation_notes') IS NOT NULL THEN
@@ -248,13 +275,69 @@ BEGIN
     RAISE EXCEPTION 'T3 FALHOU: CHECK sem HTML deveria dar 23514 (deu %)', coalesce(v_errcode, 'sem erro');
   END IF;
 
+  -- (a relacao ator x data agora e provada pelo comportamento em T3b: orfao aceito,
+  -- ator sem data negado)
+  v_ok := v_ok + 1;
+
+  -- T3b (FK x CHECK, em savepoint): a FK ON DELETE SET NULL pressupoe que o orfao
+  -- seja aceitavel — apagar o perfil do investigador zera o ator e a data fica.
+  -- plpgsql nao aceita SAVEPOINT/ROLLBACK TO SAVEPOINT (SQL de transacao, fora do
+  -- bloco): o savepoint aqui e' o sub-bloco BEGIN/EXCEPTION abaixo. Se o DELETE for
+  -- recusado, so ele volta atras e a suite segue para dizer o motivo com o codigo.
+  INSERT INTO public.instance_pauses (instance, paused_until, reason, paused_by, auto)
+  VALUES (v_inst_perf, now() + interval '20 minutes', 'limite de envio', NULL, true)
+  RETURNING id INTO v_pause_5;
+
+  PERFORM pg_temp.t_auth(v_tmp_user);
+  v_errcode := NULL;
+  v_errmsg  := NULL;
+  BEGIN
+    v_out := public.mark_pause_investigated(v_pause_5, 'investigado antes de o perfil sair');
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE, v_errmsg = MESSAGE_TEXT;
+  END;
+  PERFORM set_config('role', 'none', true);
+  IF v_errcode IS NOT NULL THEN
+    RAISE EXCEPTION 'T3b FALHOU: investigador temporario deveria investigar (deu % / %)',
+      v_errcode, coalesce(v_errmsg, '-');
+  END IF;
+  IF (v_out ->> 'investigated_by')::uuid IS DISTINCT FROM v_tmp_prof THEN
+    RAISE EXCEPTION 'T3b FALHOU: fixture invalida, ator=% esperado=%',
+      v_out ->> 'investigated_by', v_tmp_prof;
+  END IF;
+
+  v_errcode := NULL;
+  v_errmsg  := NULL;
+  BEGIN
+    DELETE FROM public.profiles WHERE id = v_tmp_prof;
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE, v_errmsg = MESSAGE_TEXT;
+  END;
+  IF v_errcode IS NOT NULL THEN
+    RAISE EXCEPTION 'T3b FALHOU: excluir o perfil do investigador foi recusado (% / %): a FK zera o ator e a data tem de sobreviver',
+      v_errcode, coalesce(v_errmsg, 'sem mensagem');
+  END IF;
+  SELECT count(*) INTO v_n FROM public.instance_pauses
+   WHERE id = v_pause_5 AND investigated_at IS NOT NULL AND investigated_by IS NULL;
+  IF v_n <> 1 THEN
+    RAISE EXCEPTION 'T3b FALHOU: excluir o perfil do investigador derrubou a investigacao da pausa';
+  END IF;
+
+  -- devolve o perfil: o resto da suite segue com a fixture como estava
+  INSERT INTO public.profiles (id, user_id, name)
+  VALUES (v_tmp_prof, v_tmp_user, 'Investigador temporario (sintetico)')
+  ON CONFLICT (id) DO NOTHING;
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = v_tmp_prof) THEN
+    RAISE EXCEPTION 'T3b FALHOU: a fixture nao voltou ao normal depois da exclusao';
+  END IF;
+
+  -- e o outro lado segue proibido: ator sem data
   v_errcode := NULL;
   BEGIN
-    UPDATE public.instance_pauses SET investigated_at = now(), investigated_by = NULL WHERE id = v_pause_3;
+    UPDATE public.instance_pauses SET investigated_by = v_admin_prof WHERE id = v_pause_2;
   EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE; END;
   IF v_errcode IS DISTINCT FROM '23514' THEN
-    RAISE EXCEPTION 'T3 FALHOU: CHECK de consistencia ator+data deveria dar 23514 (deu %)',
-      coalesce(v_errcode, 'sem erro');
+    RAISE EXCEPTION 'T3b FALHOU: ator sem data deveria dar 23514 (deu %)', coalesce(v_errcode, 'sem erro');
   END IF;
   v_ok := v_ok + 1;
 

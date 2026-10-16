@@ -21,12 +21,15 @@ ALTER TABLE public.instance_pauses
   ADD COLUMN IF NOT EXISTS investigated_by     uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS investigation_notes text;
 
--- a investigacao e um ato completo: ou tem autor e data, ou nao aconteceu
+-- a investigacao tem ator; a data e o que a torna historica. Apagar o perfil do
+-- investigador (FK ON DELETE SET NULL, acima) zera o ator e a data SOBREVIVE,
+-- entao o CHECK olha um lado so: ator sem data e proibido; data sem ator nao e
+-- (a FK do pai pressupoe que o orfao seja aceitavel).
 ALTER TABLE public.instance_pauses
   DROP CONSTRAINT IF EXISTS instance_pauses_investigacao_completa;
 ALTER TABLE public.instance_pauses
   ADD CONSTRAINT instance_pauses_investigacao_completa
-  CHECK ((investigated_at IS NULL) = (investigated_by IS NULL));
+  CHECK (investigated_by IS NULL OR investigated_at IS NOT NULL);
 
 -- limite de tamanho e ausencia de HTML tambem no BANCO (nao so na funcao)
 ALTER TABLE public.instance_pauses
