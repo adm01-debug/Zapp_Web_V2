@@ -180,6 +180,126 @@ export type AutoTagOutput = z.infer<typeof AutoTagOutput>;
 export type ChatbotL1Output = z.infer<typeof ChatbotL1Output>;
 export type AgentPerformance = z.infer<typeof AgentPerformanceSchema>;
 
+// ─── Capacidade: copilot-live (CV-023) ───────────────────────
+/**
+ * Estado B·R·I·N·D·E parcial do vendedor.
+ * Cada campo é opcional (não extraído = ausente, nunca null por default).
+ */
+export const BrindeStateSchema = z.object({
+  B: z.string().nullable().optional(), // Budget/Orçamento
+  R: z.string().nullable().optional(), // Responsável pelo OK
+  I: z.string().nullable().optional(), // Intenção de compra
+  N: z.string().nullable().optional(), // Número/quantidade
+  D: z.string().nullable().optional(), // Data de necessidade
+  E: z.string().nullable().optional(), // Entrega/local
+});
+
+/** Momento-chave detectado pelo copilot. */
+export const KEY_MOMENT_TYPES = [
+  "price_request",
+  "objection",
+  "buy_signal",
+  "competitor_mention",
+  "unanswered_question",
+  "sentiment_shift",
+  "deadline_request",
+  "logo_sent",
+] as const;
+type KeyMomentTuple = typeof KEY_MOMENT_TYPES;
+const keyMomentSchema = z.enum(KEY_MOMENT_TYPES as unknown as [string, ...string[]]);
+
+/** Risco identificado na conversa. */
+export const RISK_TYPES = ["price_gap", "competitor", "urgency", "authority", "no_decision"] as const;
+const riskSchema = z.enum(RISK_TYPES as unknown as [string, ...string[]]);
+
+/**
+ * Saída do modelo para um tick do copilot-live.
+ * Campos ausentes = não detectados/alterados neste tick.
+ * Regra do contrato: valor fora de tipo/faixa é REJEITADO, nunca coagido.
+ */
+export const CopilotLiveOutputSchema = z.object({
+  /** Etapa da metodologia BRINDE em que a conversa está. */
+  stage: z.enum(["E1", "E2", "E3", "E4", "E5", "E6"]).optional(),
+  /** Delta do estado B·R·I·N·D·E — só campos que mudaram neste tick. */
+  brinde_delta: BrindeStateSchema.optional(),
+  /** Temperatura de compra 0–10 (0 = frio, 10 = pronto para fechar). */
+  temperature: z.number().int().min(0).max(10).optional(),
+  /** Intenção principal detectada neste tick. */
+  intent: z.enum([
+    "browsing", "comparing", "negotiating", "deciding", "closing", "post_sale",
+  ]).optional(),
+  /** Sentimento do contato neste tick. */
+  sentiment: z.enum(asEnumValues(SENTIMENT_VALUES)).optional(),
+  /** Momentos-chave detectados neste tick (pode ser vazio). */
+  key_moments: z.array(keyMomentSchema).optional(),
+  /** Riscos de perda detectados. */
+  risks: z.array(riskSchema).optional(),
+  /** Sugestão de próximo passo para o vendedor (≤ 120 chars). */
+  next_action: z.string().max(120).optional(),
+  /** Confiança do modelo nesta análise (0–1). */
+  confidence: z.number().min(0).max(1).optional(),
+  // ── Fase 4 (CV-031–040): inteligência B·R·I·N·D·E ───────────
+  /** ID da mensagem que originou cada letra B·R·I·N·D·E (rastreabilidade CV-031). */
+  brinde_evidence: z.object({
+    B: z.string().nullable().optional(),
+    R: z.string().nullable().optional(),
+    I: z.string().nullable().optional(),
+    N: z.string().nullable().optional(),
+    D: z.string().nullable().optional(),
+    E: z.string().nullable().optional(),
+  }).optional(),
+  /** Estilos de comunicação detectados (ex.: "tecnico", "emocional"). */
+  comm_style: z.array(z.string()).optional(),
+  /** Papel do contato na decisão de compra (CV-038). */
+  decision_role: z.enum(["buyer", "user", "approver", "intermediary", "unknown"]).optional(),
+  /** Chave de ocasião comercial detectada (CV-035/036). */
+  occasion: z.string().optional(),
+  /** Mapa de stakeholders mencionados (CV-039). */
+  stakeholders: z.array(z.object({
+    name: z.string(),
+    role: z.string(),
+    first_mention_msg_id: z.string().optional(),
+  })).optional(),
+});
+
+export type CopilotLiveOutput = z.infer<typeof CopilotLiveOutputSchema>;
+export type BrindeState = z.infer<typeof BrindeStateSchema>;
+
+// ─── Capacidade: sugestões ao vivo — tier-2 (CV-041) ─────────
+/** Caminhos estratégicos de resposta do vendedor. */
+export const SUGGESTION_PATH_VALUES = ["avancar", "descobrir", "relacionar"] as const;
+
+/**
+ * Sugestão ao vivo gerada pelo tier-2.
+ * `path` identifica o caminho estratégico; `text` é o texto sugerido (≤120 chars).
+ * `sources` explica a evidência que motivou a sugestão (CV-040 explicabilidade).
+ * `split_messages` parte o texto em 2-3 balões WhatsApp (CV-047).
+ */
+export const LiveSuggestionItemSchema = z.object({
+  path: z.enum(SUGGESTION_PATH_VALUES as unknown as [string, ...string[]]),
+  text: z.string().min(1).max(120),
+  play_name: z.string().optional(),
+  sources: z.array(z.object({
+    text: z.string(),
+    letter: z.enum(["B", "R", "I", "N", "D", "E"]).optional(),
+    msg_id: z.string().optional(),
+  })).optional(),
+  split_messages: z.array(z.string()).optional(),
+});
+
+export type LiveSuggestionItem = z.infer<typeof LiveSuggestionItemSchema>;
+
+/**
+ * Schema do tier-2 estendido com 3 sugestões ao vivo (CV-041).
+ * Herda todos os campos de CopilotLiveOutputSchema. O campo `suggestions`
+ * é opcional (tier-2 pode não gerar sugestões se o contexto for insuficiente).
+ */
+export const CopilotLiveTier2Schema = CopilotLiveOutputSchema.extend({
+  suggestions: z.array(LiveSuggestionItemSchema).max(3).optional(),
+});
+
+export type CopilotLiveTier2Output = z.infer<typeof CopilotLiveTier2Schema>;
+
 // ─── Parser com erros achatados ──────────────────────────────
 /** Erro de contrato com o caminho achatado (ex.: `keyPoints.5`). */
 export interface ContractIssue {
@@ -195,7 +315,7 @@ export type ParseModelOutputResult<T> =
  * Valida a saída crua do modelo contra um schema, sem coagir nada:
  * - sucesso  → `{ ok: true, data }` com o valor já tipado;
  * - falha    → `{ ok: false, errors }`, cada erro com `path` achatado
- *   (`resultado.error.issues[i].path.join('.')`).
+ *   (`resultado.error.issues[i].path.join('.')`)..
  *
  * O `path` achatado é o que permite apontar o índice exato de um array
  * (`keyPoints.5`) em vez do genérico `keyPoints`.
