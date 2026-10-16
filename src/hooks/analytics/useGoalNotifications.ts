@@ -5,8 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
-import { localDayKey } from '@/lib/localDay';
-import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
+import { goalPeriodRange, localDayKey } from '@/lib/localDay';
 import type { Json } from '@/integrations/supabase/types';
 
 interface GoalConfiguration {
@@ -21,6 +20,14 @@ interface GoalConfiguration {
 }
 
 type Period = 'daily' | 'weekly' | 'monthly';
+
+// A janela de cada período vem da MESMA função do painel (`goalPeriodRange`), para o aviso
+// de conquista e a tela contarem o mesmo recorte — inclusive a semana de segunda a domingo.
+const PERIOD_TO_WINDOW: Record<Period, 'today' | 'week' | 'month'> = {
+  daily: 'today',
+  weekly: 'week',
+  monthly: 'month',
+};
 
 export function useGoalNotifications() {
   const { user } = useAuth();
@@ -75,18 +82,6 @@ export function useGoalNotifications() {
     }
   }, [user]);
 
-  const getDateRange = (period: Period) => {
-    const now = new Date();
-    switch (period) {
-      case 'daily':
-        return { start: startOfDay(now), end: endOfDay(now) };
-      case 'weekly':
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
-      case 'monthly':
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-    }
-  };
-
   const checkGoalProgress = useCallback(async () => {
     if (!user) return;
 
@@ -126,7 +121,7 @@ export function useGoalNotifications() {
           
           if (!target || target === 0) continue;
 
-          const { start, end } = getDateRange(period);
+          const { from: start, to: end } = goalPeriodRange(PERIOD_TO_WINDOW[period]);
           let current = 0;
           // Metas percentuais sem denominador no período (Taxa de Resolução sem
           // atendimento) não têm o que comparar com o alvo: `hasData` fica false
@@ -147,9 +142,13 @@ export function useGoalNotifications() {
               break;
             }
             case 'conversations_resolved': {
+              // `conversation_sla` não tem coluna de atendente: o escopo vem do contato
+              // (`contacts.assigned_to`). Sem o `!inner` o PostgREST contava as conversas
+              // resolvidas da ORGANIZAÇÃO inteira e a meta pessoal fechava sozinha.
               const { count } = await supabase
                 .from('conversation_sla')
-                .select('*', { count: 'exact', head: true })
+                .select('id, contacts!inner(assigned_to)', { count: 'exact', head: true })
+                .eq('contacts.assigned_to', profile.id)
                 .not('resolved_at', 'is', null)
                 .gte('resolved_at', start.toISOString())
                 .lte('resolved_at', end.toISOString());
