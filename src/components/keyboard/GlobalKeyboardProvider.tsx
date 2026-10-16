@@ -54,6 +54,24 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [paletteMounted, setPaletteMounted] = useState(false);
   const navigationHandlerRef = useRef<((view: string) => void) | null>(null);
+  // Origem do foco: guardada na ABERTURA e devolvida no fechamento (R2-INF-035).
+  const origemRef = useRef<HTMLElement | null>(null);
+  const jaAbriuRef = useRef(false);
+
+  const registrarOrigem = useCallback(() => {
+    const ativo = document.activeElement as HTMLElement | null;
+    origemRef.current = ativo && ativo !== document.body ? ativo : null;
+  }, []);
+
+  const abrirPaleta = useCallback(() => {
+    registrarOrigem();
+    setShowCommandPalette(true);
+  }, [registrarOrigem]);
+
+  const alternarPaleta = useCallback(() => {
+    if (!showCommandPalette) registrarOrigem();
+    setShowCommandPalette(!showCommandPalette);
+  }, [registrarOrigem, showCommandPalette]);
 
   // Monta o palette lazy só na primeira abertura do ⌘K (depois fica montado para
   // preservar a animação de saída do Dialog).
@@ -62,31 +80,57 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     if (showCommandPalette) setPaletteMounted(true);
   }, [showCommandPalette]);
 
-  // Initialize global shortcuts
+  // R2-INF-035: este provider é o ÚNICO dono do estado da paleta. O registry de teclado
+  // captura Ctrl/Cmd+K na fase de captura e PARA a propagação, então a ação
+  // `global-search` é sobrescrita aqui para ALTERNAR (abre/fecha) a MESMA paleta — antes o
+  // registry só despachava `open-global-search`, que a paleta de módulos escutava, e o
+  // listener próprio deste arquivo abria uma segunda paleta (as duas nunca coincidiam).
   useGlobalKeyboardShortcuts([
     ...(customActions || []),
+    {
+      id: 'global-search',
+      action: alternarPaleta,
+    },
     {
       id: 'show-shortcuts-help',
       action: () => setShowHelp(true),
     },
     {
       id: 'open-command-palette',
-      action: () => setShowCommandPalette(true),
+      action: abrirPaleta,
     },
   ]);
 
-  // Listen for custom events
+  // Listen for custom events.
+  // `open-global-search` é o pedido dos botões de busca (Sidebar/MobileShell): abre a
+  // mesma paleta do ⌘K, sem alternar — quem clica no botão quer abrir, não fechar.
   useEffect(() => {
     const handleShowHelp = () => setShowHelp(true);
-    const handleOpenPalette = () => setShowCommandPalette(true);
+    const handleOpenPalette = () => abrirPaleta();
     
     document.addEventListener('show-shortcuts-help', handleShowHelp);
     document.addEventListener('open-command-palette', handleOpenPalette);
+    document.addEventListener('open-global-search', handleOpenPalette);
     return () => {
       document.removeEventListener('show-shortcuts-help', handleShowHelp);
       document.removeEventListener('open-command-palette', handleOpenPalette);
+      document.removeEventListener('open-global-search', handleOpenPalette);
     };
-  }, []);
+  }, [abrirPaleta]);
+
+  // Fechou? devolve o foco a quem abriu (o Dialog do Radix não tem gatilho: sem isto o
+  // foco cai no <body>). Roda DEPOIS do cleanup do Dialog, que é quem tira o foco.
+  useEffect(() => {
+    if (showCommandPalette) {
+      jaAbriuRef.current = true;
+      return;
+    }
+    if (!jaAbriuRef.current) return;
+    jaAbriuRef.current = false;
+    const origem = origemRef.current;
+    origemRef.current = null;
+    origem?.focus?.();
+  }, [showCommandPalette]);
 
   // Add keyboard shortcuts: ? for help, Cmd+K for command palette
   useEffect(() => {
@@ -101,17 +145,18 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
         return;
       }
 
-      // Cmd/Ctrl + K for command palette (works everywhere)
+      // Cmd+K em plataforma sem o mapeamento do registry (macOS manda metaKey); o
+      // Ctrl+K já chega aqui da ação `global-search` do registry.
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setShowCommandPalette((prev) => !prev);
+        alternarPaleta();
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [alternarPaleta]);
 
   const handleNavigate = useCallback((view: string) => {
     if (navigationHandlerRef.current) {
@@ -129,7 +174,7 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
   }, []);
 
   const contextValue: GlobalKeyboardContextType = {
-    openCommandPalette: () => setShowCommandPalette(true),
+    openCommandPalette: abrirPaleta,
     closeCommandPalette: () => setShowCommandPalette(false),
     registerNavigationHandler,
     unregisterNavigationHandler,

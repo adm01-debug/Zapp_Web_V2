@@ -7,7 +7,6 @@ import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { ConversationListSidebar } from './ConversationListSidebar';
-import { useGlobalSearchShortcut } from '@/hooks/ui/useGlobalSearchShortcut';
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
@@ -166,7 +165,10 @@ export function RealtimeInboxView() {
     setActiveTab('chat');
   }, [setActiveTab]);
 
-  useGlobalSearchShortcut({ onOpen: () => inbox.setGlobalSearchOpen(true) });
+  // R2-INF-035: o Ctrl/Cmd+K é do GlobalKeyboardProvider (dono único) e abre a
+  // paleta de comandos — a busca global continua no painel da inbox, aberto pelo
+  // próprio gatilho da tela (o atalho aqui abria uma SEGUNDA superfície com a mesma
+  // tecla, que só não acontecia porque o registry para a propagação).
 
   useEffect(() => {
     if (!inbox.pendingContactId || inbox.loading) return;
