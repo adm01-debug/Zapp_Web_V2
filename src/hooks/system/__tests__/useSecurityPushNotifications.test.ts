@@ -339,7 +339,9 @@ describe('useSecurityPushNotifications — envio do alerta', () => {
 });
 
 describe('useSecurityPushNotifications — cursor do polling (relógio do servidor)', () => {
-  it('a primeira consulta é a linha de base do servidor e não avisa o histórico', async () => {
+  it('alerta anterior ao início do monitoramento não é notificado', async () => {
+    // A linha de base é o alerta mais recente QUE JÁ EXISTE, lida no relógio do
+    // servidor — é ela que impede o histórico de virar aviso na montagem.
     mocks.alertas = [
       alerta({ id: 'al-antigo', created_at: '2026-10-07T11:00:00.000Z' }),
       alerta({ id: 'al-recente', created_at: '2026-10-07T11:59:00.000Z' }),
@@ -363,6 +365,30 @@ describe('useSecurityPushNotifications — cursor do polling (relógio do servid
     // O histórico do usuário NÃO vira aviso: nada é notificado na montagem.
     expect(mocks.showNotification).not.toHaveBeenCalled();
     expect(mocks.toastInfo).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('consulta a cada 20 s filtrando o próprio usuário e os não resolvidos', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-novo', created_at: '2026-10-07T12:00:10.000Z' }),
+    ];
+    await ciclo(20_000);
+
+    // O escopo (dono + não resolvido) vale em TODAS as consultas do laço: na
+    // linha de base e em cada ciclo. O que mudou foi o cursor, não o filtro.
+    expect(mocks.consultas).toHaveLength(2);
+    for (const consulta of mocks.consultas) {
+      expect(consulta.table).toBe('security_alerts');
+      expect(consulta.filters).toEqual([
+        ['eq', 'user_id', 'user-1'],
+        ['eq', 'is_resolved', false],
+      ]);
+    }
     unmount();
   });
 
@@ -472,7 +498,8 @@ describe('useSecurityPushNotifications — cursor do polling (relógio do servid
     unmount();
   });
 
-  it('erro no polling não notifica e NÃO avança o cursor (nada é pulado)', async () => {
+  it('erro no polling não notifica e NÃO avança a janela (nada é pulado)', async () => {
+    // A "janela" agora é o cursor do servidor: o erro não a move.
     mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
     const { unmount } = renderHook(() => useSecurityPushNotifications());
     await ciclo();
@@ -583,6 +610,16 @@ describe('useSecurityPushNotifications — mensagens do service worker', () => {
     } as MessageEvent);
     expect(mocks.toastInfo).not.toHaveBeenCalled();
     unmount();
+  });
+
+  it('desmontar remove o listener do service worker', async () => {
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    expect(swHandlers).toHaveLength(1);
+
+    unmount();
+
+    expect(swHandlers).toHaveLength(0);
+    expect(fakeServiceWorker.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
   });
 
   it('com dois pontos de montagem o listener do service worker é registrado UMA vez', async () => {
