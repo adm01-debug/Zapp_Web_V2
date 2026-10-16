@@ -33,11 +33,15 @@ interface TemplateWithVariablesProps {
   templates: Template[];
   onUseTemplate: (content: string, variables: Record<string, string>) => void;
   contactData?: { name?: string; company?: string; job_title?: string };
+  /**
+   * Nome do atendente logado (profiles.name). Chega por prop, como `contactData`:
+   * este painel é apresentacional e NÃO lê o AuthProvider, então renderiza sem
+   * provider (é o que o teste de a11y do inbox faz, t_6b581677).
+   */
+  agentName?: string;
 }
 
-export function TemplatesWithVariables({ templates, onUseTemplate, contactData }: TemplateWithVariablesProps) {
-  const { profile } = useAuth();
-  const agentName = profile?.name?.trim() || undefined;
+export function TemplatesWithVariables({ templates, onUseTemplate, contactData, agentName }: TemplateWithVariablesProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -118,6 +122,18 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
       <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} agentName={agentName} />
     </Card>
   );
+}
+
+/**
+ * Mesmo painel, mas com o nome do atendente logado (`profiles.name`) lido do
+ * AuthProvider — é esta a forma de quem monta dentro do provider. O painel
+ * `TemplatesWithVariables` continua apresentacional (recebe `agentName` por prop)
+ * para poder ser renderizado sem provider nos testes de tela.
+ */
+export function TemplatesWithVariablesComAtendente({ agentName, ...props }: TemplateWithVariablesProps) {
+  const { profile } = useAuth();
+  const nomeDoAtendente = agentName?.trim() || profile?.name?.trim() || undefined;
+  return <TemplatesWithVariables {...props} agentName={nomeDoAtendente} />;
 }
 
 export { VariableHighlighter, TemplatePreview, VariableInserter, replaceVariables, AVAILABLE_VARIABLES };
