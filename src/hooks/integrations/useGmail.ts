@@ -41,10 +41,23 @@ const EMPTY_MESSAGES: EmailMessage[] = [];
 const EMPTY_ATTACHMENTS: EmailAttachment[] = [];
 
 /**
- * OTH-005: o caminho padrão da lista busca UMA página no servidor. O consumidor legado
- * que ainda precisa do conjunto inteiro em memória pede `full: true` (GmailInboxView).
+ * OTH-005: a lista de threads busca UMA página no servidor — filtros e janela vão
+ * para o banco antes da paginação. Não existe mais caminho que colete a caixa
+ * inteira em memória (`full`), e a última tela que o pedia (GmailInboxView) migrou.
  */
 const DEFAULT_THREAD_LIST_QUERY: EmailThreadListQuery = { ...EMAIL_THREAD_DEFAULT_FILTERS, page: 1 };
+
+/**
+ * Status da thread visto pela tela antiga de Gmail (`open`/`archived` na prática —
+ * `gmail-helpers.ts` grava `open` quando a mensagem tem o rótulo INBOX e `archived`
+ * caso contrário). Não é derivável dos campos do contrato paginado (estado, pasta,
+ * período, anexos, busca), então entra como extensão OPCIONAL do hook e é aplicada
+ * NO SERVIDOR: filtrar a página em memória esconderia itens das outras páginas.
+ */
+export type EmailThreadStatusFilter = 'open' | 'pending' | 'resolved' | 'archived';
+export interface EmailThreadListQueryWithStatus extends EmailThreadListQuery {
+  threadStatus?: EmailThreadStatusFilter;
+}
 const EMPTY_THREAD_PAGE: { rows: EmailThread[]; total: number | null } = { rows: [], total: null };
 
 /**
@@ -91,7 +104,7 @@ export function formatLastSyncLabel(lastSyncAt: string | Date | null, now: numbe
   return `sincronizado há ${Math.floor(elapsedHours / 24)} d`;
 }
 
-export function useGmail(accountId?: string, requestedThreadId?: string | null, listQuery?: EmailThreadListQuery) {
+export function useGmail(accountId?: string, requestedThreadId?: string | null, listQuery?: EmailThreadListQueryWithStatus) {
   const queryClient = useQueryClient();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o anexo só desce para o disco com
@@ -189,41 +202,12 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     onError: (error: Error) => notifyGmailActionError('desconectar o Gmail', error),
   });
 
-  const effectiveListQuery = listQuery ?? DEFAULT_THREAD_LIST_QUERY;
+  const effectiveListQuery: EmailThreadListQueryWithStatus = listQuery ?? DEFAULT_THREAD_LIST_QUERY;
 
   const { data: threadPage = EMPTY_THREAD_PAGE, isLoading: threadsLoading, error: threadsError, refetch: refetchThreads } = useQuery({
     queryKey: ['gmail-threads', activeAccount?.id, effectiveListQuery],
     queryFn: async () => {
       if (!activeAccount) return EMPTY_THREAD_PAGE;
-
-      // Caminho legado (opt-in): o consumidor enxerga o conjunto completo e filtra em
-      // memória. Mantido só para telas que ainda não migraram para a página do servidor.
-      if (effectiveListQuery.full) {
-        const rows = await collectEmailPages<EmailThread>(async (from, to) => {
-          const { data, error } = await supabase
-            .from('email_threads')
-            .select('*, contact:contacts(id, name, email, avatar_url, phone, company, job_title, tags)')
-            .eq('gmail_account_id', activeAccount.id)
-            .order('last_message_at', { ascending: false })
-            .order('id', { ascending: false })
-            .range(from, to);
-          if (error) throw error;
-          return (data || []) as EmailThread[];
-        });
-        if (rows.length === 0) return { rows, total: 0 };
-        const attachmentRows = await Promise.all(chunkEmailIds(rows.map(row => row.id)).map(async threadIds => {
-          const { data, error } = await supabase
-            .from('email_messages')
-            .select('thread_id')
-            .eq('gmail_account_id', activeAccount.id)
-            .eq('has_attachments', true)
-            .in('thread_id', threadIds);
-          if (error) throw error;
-          return data || [];
-        }));
-        const withAttachments = new Set(attachmentRows.flat().map(row => row.thread_id));
-        return { rows: rows.map(row => ({ ...row, has_attachments: withAttachments.has(row.id) })), total: rows.length };
-      }
 
       // OTH-005: estado, pasta/marcador, período, anexos e busca vão ao servidor, antes
       // da paginação; a resposta traz só a janela pedida e a contagem exata do filtro.
@@ -259,6 +243,13 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
           return (data ?? []) as EmailThreadSearchMatch[];
         });
         const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(searchTerm)}%`);
+
+      if (effectiveListQuery.threadStatus) query = query.eq('status', effectiveListQuery.threadStatus);
+      if (descriptor.search) {
+        // O OR também casa contato pelo `contact_id` da própria thread — coluna,
+        // não join, então thread sem contato não é excluída. Os ids vêm de uma
+        // consulta à tabela de contatos com o mesmo termo saneado.
+        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(descriptor.search)}%`);
         const { data: contactRows, error: contactsError } = await supabase
           .from('contacts')
           .select('id')

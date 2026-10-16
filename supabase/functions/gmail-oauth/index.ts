@@ -219,11 +219,8 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             is_active: true,
             sync_status: "pending",
             // reconectar a mesma conta (onConflict email_address) limpa o erro
-            // anterior — inclusive 'reauth_required' de token revogado — e zera
-            // a espera crescente das falhas transitórias.
+            // anterior — inclusive 'reauth_required' de token revogado.
             last_error: null,
-            error_count: 0,
-            next_attempt_at: null,
           }, { onConflict: "email_address" })
           .select()
           .single();
