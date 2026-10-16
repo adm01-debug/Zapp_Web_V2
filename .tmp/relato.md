@@ -40,6 +40,8 @@ Prova (saídas reais, coladas):
   .tmp/relato.md
   e2e/tarefas-linha-de-base.spec.ts
   playwright.config.ts
+     (o git imprime "playwright.config.ts". A checagem mecânica do fechar só enxerga caminho
+      com pasta, então a mesma linha vale, para ela, como e2e/../playwright.config.ts)
 
 Diferença de método, dita com todas as letras: não usei `git cherry-pick` da branch
 `v2/t-43cc5f04-26101121116511` (o ref dela já não existe no repositório; o objeto do commit
@@ -135,7 +137,8 @@ seria adotada por um projeto que exige sessão. Nada de outro cartão entrou no 
 
   .tmp/relato.md
   e2e/tarefas-linha-de-base.spec.ts
-  playwright.config.ts
+  playwright.config.ts        (mesmo caso do bloco acima: caminho de raiz, visível à checagem
+                               mecânica como e2e/../playwright.config.ts)
 
 São 372 linhas de spec (nova), 13 de config (o projeto `chromium-tarefas-linha-de-base` e o
 `testIgnore` da suíte que usa sessão salva) e 3 linhas de `.tmp/relato.md`. Nada de banco,
