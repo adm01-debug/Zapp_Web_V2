@@ -23,7 +23,7 @@ Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
 
 | Grupo | Significado |
 |---|---|
-| A | front (`invoke`/rota em `src/`) |
+| A | front (`invoke`/`invokeEdge`/rota em `src/`) |
 | B | outra edge (`supabase/functions/`) |
 | C | agendador `pg_cron`/`pg_net` (migration) |
 | D | entrada externa (declarada em `supabase/config.toml`) |
@@ -98,7 +98,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `gmail-sync` | E | — sem chamador no repositório — |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
-| `message-delivery` | A | `src/services/outbound-message.service.ts:223` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/services/outbound-message.service.ts:224` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:8` |
