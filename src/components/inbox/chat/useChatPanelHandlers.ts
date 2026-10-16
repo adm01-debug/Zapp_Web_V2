@@ -645,6 +645,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
   }, []);
 
+  // Espelha o clique em botão (IB1): o item da lista registra a resposta uma vez.
+  const handleInteractiveListItemClick = useCallback((sectionTitle: string, _rowId: string, rowTitle: string) => {
+    toast({ title: 'Item da lista clicado', description: `${sectionTitle}: ${rowTitle}` });
+  }, []);
+
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {
       await sendOutboundMessage({
@@ -703,6 +708,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     handleInputChange, handleKeyDown, handleSlashCommand,
     handleSendInteractiveMessage,
     handleInteractiveButtonClick,
+    handleInteractiveListItemClick,
     handleSendLocation, handleAudioSend,
   };
 }

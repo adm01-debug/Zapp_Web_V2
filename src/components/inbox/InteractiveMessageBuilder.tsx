@@ -151,7 +151,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                         </Button>
                         <Badge variant="secondary" className="gap-1">{getButtonTypeIcon(button.type)}{getButtonTypeLabel(button.type)}</Badge>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeButton(index)}>
+                      <Button type="button" variant="ghost" size="icon" aria-label="Excluir botão" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeButton(index)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -197,17 +197,17 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                   return (
                     <motion.div key={sectionIndex} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
                       <Collapsible open={isExpanded} onOpenChange={() => toggleSection(sectionId)}>
-                        <CollapsibleTrigger className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+                        <div className="flex items-center justify-between hover:bg-muted/50 transition-colors pr-2">
+                          <CollapsibleTrigger className="flex-1 p-3 flex items-center gap-2 text-left min-w-0">
+                            <ChevronDown className={cn("w-4 h-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
                             <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
                             {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
                             <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
-                          </div>
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(sectionIndex); }}>
+                          </CollapsibleTrigger>
+                          <Button type="button" variant="ghost" size="icon" aria-label="Excluir seção" className="h-7 w-7 shrink-0 text-destructive hover:text-destructive" onClick={() => removeSection(sectionIndex)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </CollapsibleTrigger>
+                        </div>
                         <CollapsibleContent>
                           <div className="p-3 pt-0 space-y-3 border-t border-border/50">
                             <div className="space-y-1">
@@ -239,7 +239,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                                             <ArrowDown className="w-3 h-3" />
                                           </Button>
                                         </div>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => removeRow(sectionIndex, rowIndex)}>
+                                        <Button type="button" variant="ghost" size="icon" aria-label="Excluir item" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => removeRow(sectionIndex, rowIndex)}>
                                           <X className="w-3 h-3" />
                                         </Button>
                                       </div>

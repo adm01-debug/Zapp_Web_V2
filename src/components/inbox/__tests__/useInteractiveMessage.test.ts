@@ -123,6 +123,43 @@ describe('useInteractiveMessage — validação (botões)', () => {
     expect(ok).toBe(true);
   });
 
+  it('recusa URL que não seja https:// válido', () => {
+    const { result } = renderHook(() => useInteractiveMessage());
+    act(() => { result.current.setBody('Site'); result.current.addButton('url'); });
+    act(() => result.current.updateButton(0, { title: 'Abrir site' }));
+
+    for (const ruim of ['http://promobrindes.com.br', 'javascript:alert(1)', '/ofertas', 'promobrindes.com.br', '   ']) {
+      act(() => result.current.updateButton(0, { url: ruim }));
+      let ok = true;
+      act(() => { ok = result.current.validate(); });
+      expect(ok, `deveria recusar ${ruim}`).toBe(false);
+      expect(ultimoTitulo()).toBe('URL inválida');
+    }
+
+    act(() => result.current.updateButton(0, { url: '  https://promobrindes.com.br/ofertas  ' }));
+    let ok = true;
+    act(() => { ok = result.current.validate(); });
+    expect(ok).toBe(true);
+  });
+
+  it('sobe o botão para a primeira posição', () => {
+    const { result } = renderHook(() => useInteractiveMessage());
+    act(() => { for (let i = 0; i < 3; i++) result.current.addButton('reply'); });
+    act(() => {
+      result.current.updateButton(0, { title: 'Primeiro' });
+      result.current.updateButton(1, { title: 'Segundo' });
+      result.current.updateButton(2, { title: 'Terceiro' });
+    });
+
+    act(() => result.current.moveButtonToFirst(2));
+    expect(result.current.buttons.map(b => b.title)).toEqual(['Terceiro', 'Primeiro', 'Segundo']);
+
+    // No primeiro botão não há para onde subir: a lista fica igual.
+    const antes = result.current.buttons;
+    act(() => result.current.moveButtonToFirst(0));
+    expect(result.current.buttons).toBe(antes);
+  });
+
   it('recusa telefone inválido e aceita número com 8 a 15 dígitos', () => {
     const { result } = renderHook(() => useInteractiveMessage());
     act(() => { result.current.setBody('Ligar'); result.current.addButton('call'); });
@@ -204,6 +241,33 @@ describe('useInteractiveMessage — validação (lista)', () => {
     act(() => { ok = result.current.validate(); });
     expect(ok).toBe(false);
     expect(ultimoTitulo()).toBe('Texto do botão obrigatório');
+  });
+
+  it('sobe e desce a linha uma posição por vez, preservando id e descrição', () => {
+    const result = prepararLista();
+    act(() => result.current.addSection());
+    act(() => result.current.updateSection(0, { title: 'Produtos' }));
+    act(() => { result.current.addRowToSection(0); result.current.addRowToSection(0); });
+
+    const ids = result.current.sections[0].rows.map(r => r.id);
+    act(() => {
+      result.current.updateRow(0, 0, { title: 'Caneca', description: 'cerâmica' });
+      result.current.updateRow(0, 1, { title: 'Camiseta' });
+    });
+
+    act(() => result.current.moveRow(0, 1, 'up'));
+    expect(result.current.sections[0].rows.map(r => r.title)).toEqual(['Camiseta', 'Caneca']);
+    expect(result.current.sections[0].rows.map(r => r.id)).toEqual([ids[1], ids[0]]);
+    expect(result.current.sections[0].rows[1].description).toBe('cerâmica');
+
+    act(() => result.current.moveRow(0, 0, 'down'));
+    expect(result.current.sections[0].rows.map(r => r.title)).toEqual(['Caneca', 'Camiseta']);
+
+    // Nos extremos a seção fica intacta (os botões aparecem desabilitados).
+    const antes = result.current.sections[0].rows;
+    act(() => result.current.moveRow(0, 0, 'up'));
+    act(() => result.current.moveRow(0, 1, 'down'));
+    expect(result.current.sections[0].rows).toEqual(antes);
   });
 });
 

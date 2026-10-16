@@ -139,6 +139,7 @@ interface MessageBubbleProps {
   onCopy: (content: string) => void;
   onScrollToMessage: (messageId: string) => void;
   onInteractiveButtonClick: (button: InteractiveButton) => void;
+  onInteractiveListItemClick?: (sectionTitle: string, rowId: string, rowTitle: string) => void;
   onEditStart?: (message: Message) => void;
   onMessageDeleted: (messageId: string) => void;
   registerRef: (el: HTMLDivElement | null) => void;
@@ -149,7 +150,7 @@ import { memo } from 'react';
 export const MessageBubble = memo(function MessageBubble({
   message, isFirstInGroup, isLastInGroup, contactAvatar, instanceName, contactJid,
   ttsLoading, ttsPlaying, ttsMessageId, highlightedMessageIds, activeHighlightId, searchQuery,
-  onSpeak, onStop, onReply, onForward, onCopy, onScrollToMessage, onInteractiveButtonClick,
+  onSpeak, onStop, onReply, onForward, onCopy, onScrollToMessage, onInteractiveButtonClick, onInteractiveListItemClick,
   onEditStart, onMessageDeleted, registerRef,
 }: MessageBubbleProps) {
   const { toast } = useToast();
@@ -250,7 +251,7 @@ export const MessageBubble = memo(function MessageBubble({
               >
                 {message.replyTo && <QuotedMessage replyTo={message.replyTo} isSent={isSent} onClick={() => onScrollToMessage(message.replyTo!.messageId)} />}
                 {message.buttonResponse && <ButtonResponseBadge buttonTitle={message.buttonResponse.buttonTitle} isSent={isSent} />}
-                {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} />}
+                {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} onListItemClick={onInteractiveListItemClick} />}
 
                 {message.type === 'image' && message.mediaUrl && (
                   <div className={cn("overflow-hidden relative", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>

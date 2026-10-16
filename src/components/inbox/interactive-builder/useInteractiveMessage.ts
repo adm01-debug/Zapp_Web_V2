@@ -2,6 +2,20 @@ import { useState, useCallback } from 'react';
 import { InteractiveMessage, InteractiveButton, InteractiveListSection } from '@/types/chat';
 import { toast } from '@/hooks/ui/use-toast';
 
+/**
+ * Só aceita link absoluto com esquema `https://` e host parseável. Sem isso o
+ * renderizador (InteractiveMessage.tsx) abre o que vier em `window.open`, o que
+ * aceitaria link relativo, `javascript:` ou outro esquema.
+ */
+export function isHttpsUrl(value?: string): boolean {
+  if (!value || !value.trim()) return false;
+  try {
+    return new URL(value.trim()).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function useInteractiveMessage() {
   const [messageType, setMessageType] = useState<'buttons' | 'list'>('buttons');
   const [body, setBody] = useState('');
@@ -158,9 +172,15 @@ export function useInteractiveMessage() {
           toast({ title: 'ID obrigatório', description: 'Botões de resposta precisam ter um identificador', variant: 'destructive' });
           return false;
         }
-        if (button.type === 'url' && !button.url) {
-          toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
-          return false;
+        if (button.type === 'url') {
+          if (!button.url) {
+            toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
+            return false;
+          }
+          if (!isHttpsUrl(button.url)) {
+            toast({ title: 'URL inválida', description: 'Use um endereço https:// válido (ex.: https://promobrindes.com.br)', variant: 'destructive' });
+            return false;
+          }
         }
         if (button.type === 'call' && !/^\d{8,15}$/.test((button.phoneNumber ?? '').replace(/\D/g, ''))) {
           toast({ title: 'Telefone obrigatório', description: 'Botões de ligação precisam ter um número com 8 a 15 dígitos', variant: 'destructive' });
