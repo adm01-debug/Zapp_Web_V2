@@ -135,6 +135,139 @@ function clearPendingAction(key: string | null, id: string) {
   if (key && pendingActionIds.get(key)?.id === id) pendingActionIds.delete(key);
 }
 
+type EnqueueResult = { data: QueuedMessage | null; error: Error | null };
+
+/** Entrega em voo de um reenvio após falha definitiva, por chave de ação. */
+interface VooReenvio {
+  promise: Promise<OutboundMessageDeliveryResult>;
+  concluir: (entrega: OutboundMessageDeliveryResult) => void;
+  falhar: (erro: unknown) => void;
+}
+
+/**
+ * Reenvios após falha definitiva em voo, por chave de ação. O duplo clique
+ * concorrente depois de uma falha definitiva adota o voo do dono em vez de
+ * criar outra linha: um id novo só e um dispatch só.
+ */
+const reenviosEmVoo = new Map<string, VooReenvio>();
+
+function publicarVooReenvio(key: string): VooReenvio {
+  let concluir!: (entrega: OutboundMessageDeliveryResult) => void;
+  let falhar!: (erro: unknown) => void;
+  const promise = new Promise<OutboundMessageDeliveryResult>((resolver, rejeitar) => {
+    concluir = resolver;
+    falhar = rejeitar;
+  });
+  // Sem adotante, um voo rejeitado seria "unhandled": este catch só marca como
+  // tratado; cada adotante continua recebendo a rejeição no próprio await.
+  promise.catch(() => {});
+  const voo: VooReenvio = { promise, concluir, falhar };
+  reenviosEmVoo.set(key, voo);
+  return voo;
+}
+
+type ResultadoEnqueue =
+  | { tipo: 'adotado'; voo: Promise<OutboundMessageDeliveryResult>; usedId: string }
+  | { tipo: 'enfileirado'; queued: EnqueueResult; usedId: string; voo: VooReenvio | null };
+
+/**
+ * Falha definitiva não volta para a fila: o `claim` do dispatch só aceita
+ * `sending`, então reenfileirar a MESMA ação com o MESMO id devolve a linha
+ * `failed` e o envio morre em 409. Aqui o reenvio ganha um id novo (linha nova,
+ * falha anterior intacta no histórico) e a chave em memória passa a apontar
+ * para ele — uma resposta perdida do reenvio continua idempotente.
+ *
+ * Concorrência (duplo clique): a checagem e a troca abaixo são síncronas, sem
+ * `await` no meio — quem chega segundo vê a chave já apontando para o id novo
+ * e ADOTA o voo do dono em vez de gerar outro id. Reutilizar o id sem adotar o
+ * voo não bastaria: cada chamada despacharia e seriam 2 WhatsApps.
+ *
+ * Sem chave (`key` nulo) ou no caminho offline não há rotação: a drenagem da
+ * fila e os ids explícitos mantêm o comportamento antigo.
+ */
+async function enqueueOrResendAfterDefinitiveFailure(
+  enqueue: (clientMessageId: string) => Promise<EnqueueResult>,
+  clientMessageId: string,
+  key: string | null,
+  offline: boolean,
+): Promise<ResultadoEnqueue> {
+  // Adotante espaçado pelo throttle: o dono já concluiu e aposentou este id
+  // antes do nosso enqueue — nem enqueue fazemos, adotamos a entrega.
+  if (!offline && key) {
+    const previa = entregaDeIdAposentado(clientMessageId);
+    if (previa) return { tipo: 'adotado', voo: Promise.resolve(previa), usedId: previa.id };
+  }
+  const first = await enqueue(clientMessageId);
+  if (offline || !key || first.error || !first.data?.id || first.data.status !== 'failed') {
+    return { tipo: 'enfileirado', queued: first, usedId: clientMessageId, voo: null };
+  }
+  const agora = Date.now();
+  // O dono pode ter concluído (e aposentado este id) enquanto o nosso enqueue
+  // estava em voo: adotar a entrega em vez de girar outro id.
+  const aposentada = entregaDeIdAposentado(clientMessageId);
+  if (aposentada) {
+    return { tipo: 'adotado', voo: Promise.resolve(aposentada), usedId: aposentada.id };
+  }
+  const atual = pendingActionIds.get(key);
+  if (atual && atual.expiresAt > agora && atual.id !== clientMessageId) {
+    const voo = reenviosEmVoo.get(key);
+    if (voo) return { tipo: 'adotado', voo: voo.promise, usedId: atual.id };
+    return { tipo: 'enfileirado', queued: await enqueue(atual.id), usedId: atual.id, voo: null };
+  }
+  const retryId = createClientMessageId();
+  pendingActionIds.set(key, { id: retryId, expiresAt: agora + PENDING_ACTION_TTL_MS });
+  const voo = publicarVooReenvio(key);
+  return { tipo: 'enfileirado', queued: await enqueue(retryId), usedId: retryId, voo };
+}
+
+/** Conclui o voo do reenvio para os adotantes e o tira do mapa. */
+function concluirVooReenvio(key: string | null, voo: VooReenvio, entrega: OutboundMessageDeliveryResult): void {
+  try {
+    voo.concluir(entrega);
+  } finally {
+    if (key) reenviosEmVoo.delete(key);
+  }
+}
+
+/** Rejeita o voo do reenvio para os adotantes e o tira do mapa. */
+function falharVooReenvio(key: string | null, voo: VooReenvio, erro: unknown): void {
+  try {
+    voo.falhar(erro);
+  } finally {
+    if (key) reenviosEmVoo.delete(key);
+  }
+}
+
+/**
+ * Entrega de reenvio após falha definitiva, guardada pelo id ANTIGO aposentado.
+ * Cobre o duplo clique ESPAÇADO pelo throttle (~500 ms): o primeiro envio já
+ * terminou e limpou a chave quando o segundo chega segurando o id velho. Sem
+ * este mapa, o segundo giraria OUTRO id novo e sairiam 2 WhatsApps.
+ */
+interface ReenvioConcluido {
+  entrega: OutboundMessageDeliveryResult;
+  expiraEm: number;
+}
+
+const reenviosConcluidos = new Map<string, ReenvioConcluido>();
+
+/** Guarda a entrega do reenvio para adotantes espaçados que ainda seguram o id antigo. */
+function aposentarIdDeReenvio(antigo: string, entrega: OutboundMessageDeliveryResult): void {
+  reenviosConcluidos.set(antigo, { entrega, expiraEm: Date.now() + PENDING_ACTION_TTL_MS });
+}
+
+/** Devolve a entrega guardada quando o id já foi aposentado por um reenvio (ou null). */
+function entregaDeIdAposentado(id: string): OutboundMessageDeliveryResult | null {
+  const concluido = reenviosConcluidos.get(id);
+  if (!concluido) return null;
+  if (concluido.expiraEm <= Date.now()) {
+    reenviosConcluidos.delete(id);
+    return null;
+  }
+  // Adotante espaçado: não enviou de novo, adotou o envio do dono.
+  return { ...concluido.entrega, idempotent: true };
+}
+
 /** Sem rede não há como enfileirar no servidor: a mensagem espera na fila local (item 025). */
 function semRede(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -143,27 +276,52 @@ function semRede(): boolean {
 async function enqueueAndDispatch(
   input: SendOutboundMessageInput,
   clientMessageId: string,
+  key: string | null,
+  offline = false,
 ): Promise<OutboundMessageDeliveryResult> {
   // Generated database types intentionally stay bound to the canonical
   // database until the controlled migration is applied. This narrow transport
   // shape is removed by the post-deploy type-sync workflow.
   const rpcClient = supabase as unknown as AtomicQueueRpc;
-  const { data: queued, error: enqueueError } = await rpcClient.rpc('enqueue_outbound_message', {
-    p_contact_id: input.contactId,
-    p_client_message_id: clientMessageId,
-    p_content: input.content,
-    p_message_type: input.messageType ?? 'text',
-    p_media_url: input.mediaUrl ?? undefined,
-    p_reply_to_id: input.replyToId ?? undefined,
-    p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-    p_caption: input.caption ?? undefined,
-  });
-
-  if (enqueueError || !queued?.id) {
-    throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem.');
+  const resultado = await enqueueOrResendAfterDefinitiveFailure(
+    (id) => rpcClient.rpc('enqueue_outbound_message', {
+      p_contact_id: input.contactId,
+      p_client_message_id: id,
+      p_content: input.content,
+      p_message_type: input.messageType ?? 'text',
+      p_media_url: input.mediaUrl ?? undefined,
+      p_reply_to_id: input.replyToId ?? undefined,
+      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+      p_caption: input.caption ?? undefined,
+    }),
+    clientMessageId,
+    key,
+    offline,
+  );
+  // Adotante do duplo clique concorrente: o dono despacha, aqui só se aguarda
+  // o mesmo voo — um dispatch só para a ação.
+  if (resultado.tipo === 'adotado') return resultado.voo;
+  const { queued, usedId, voo } = resultado;
+  const queuedId = queued.data?.id;
+  if (queued.error || !queuedId) {
+    const erro = queued.error ?? new Error('Não foi possível enfileirar a mensagem.');
+    if (voo) falharVooReenvio(key, voo, erro);
+    throw erro;
   }
-
-  return dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+  try {
+    const entrega = await dispatchQueuedMessage(queuedId, queued.data?.status ?? null, queued.data?.external_id ?? null);
+    // Limpa com o id efetivamente usado (novo após falha definitiva): a guarda
+    // impede uma chamada antiga de apagar a chave de uma ação mais nova.
+    clearPendingAction(key, usedId);
+    if (voo) {
+      aposentarIdDeReenvio(clientMessageId, entrega);
+      concluirVooReenvio(key, voo, entrega);
+    }
+    return entrega;
+  } catch (erroDispatch) {
+    if (voo) falharVooReenvio(key, voo, erroDispatch);
+    throw erroDispatch;
+  }
 }
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
@@ -182,6 +340,8 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
       whatsappConnectionId: message.whatsappConnectionId,
     },
     message.clientMessageId,
+    null,
+    true,
   );
   // Entrega concluída: a chave da ação morre junto. Sem isso, o mesmo texto
   // enviado depois pela aba reaproveitaria o id já entregue e a Edge o
@@ -257,7 +417,7 @@ export async function sendOutboundMessage(
 
   try {
     await sendThrottle.wait();
-    const result = await enqueueAndDispatch(input, clientMessageId);
+    const result = await enqueueAndDispatch(input, clientMessageId, key);
     clearPendingAction(key, clientMessageId);
     return result;
   } finally {
@@ -299,19 +459,38 @@ export async function sendRichOutboundMessage(
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);
   const rpcClient = supabase as unknown as AtomicQueueRpc;
-  const { data: queued, error: enqueueError } = await rpcClient.rpc('enqueue_rich_outbound_message', {
-    p_contact_id: input.contactId,
-    p_client_message_id: clientMessageId,
-    p_display_content: input.displayContent,
-    p_message_type: input.messageType,
-    p_delivery_payload: input.deliveryPayload,
-    p_reply_to_id: input.replyToId ?? undefined,
-    p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-  });
-  if (enqueueError || !queued?.id) {
-    throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem estruturada.');
+  const resultado = await enqueueOrResendAfterDefinitiveFailure(
+    (id) => rpcClient.rpc('enqueue_rich_outbound_message', {
+      p_contact_id: input.contactId,
+      p_client_message_id: id,
+      p_display_content: input.displayContent,
+      p_message_type: input.messageType,
+      p_delivery_payload: input.deliveryPayload,
+      p_reply_to_id: input.replyToId ?? undefined,
+      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+    }),
+    clientMessageId,
+    key,
+    false,
+  );
+  if (resultado.tipo === 'adotado') return resultado.voo;
+  const { queued, usedId, voo } = resultado;
+  const queuedId = queued.data?.id;
+  if (queued.error || !queuedId) {
+    const erro = queued.error ?? new Error('Não foi possível enfileirar a mensagem estruturada.');
+    if (voo) falharVooReenvio(key, voo, erro);
+    throw erro;
   }
-  const result = await dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
-  clearPendingAction(key, clientMessageId);
-  return result;
+  try {
+    const result = await dispatchQueuedMessage(queuedId, queued.data?.status ?? null, queued.data?.external_id ?? null);
+    clearPendingAction(key, usedId);
+    if (voo) {
+      aposentarIdDeReenvio(clientMessageId, result);
+      concluirVooReenvio(key, voo, result);
+    }
+    return result;
+  } catch (erroDispatch) {
+    if (voo) falharVooReenvio(key, voo, erroDispatch);
+    throw erroDispatch;
+  }
 }
