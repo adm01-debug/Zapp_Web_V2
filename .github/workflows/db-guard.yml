@@ -774,6 +774,10 @@ jobs:
         env:
           TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-ab-weights.test.sh
+      - name: Saude de segmento (N-116)
+        env:
+          TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-health.test.sh
 
       # Auditoria: correção de DUAS regressões vivas por recriação de função —
       # save_talkx_campaign_draft perdeu template_version_id (V26) e
