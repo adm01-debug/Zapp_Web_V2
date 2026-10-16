@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { motion } from '@/components/ui/motion';
 import { NPS_SURVEY_LIMIT, useNPSSurveys } from '@/hooks/business/useNPSSurveys';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, Users, ThumbsUp, ThumbsDown, Meh, BarChart3 } from 'lucide-react';
@@ -49,12 +49,12 @@ export function NPSDashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <SkeletonRegion className="space-y-4" label="Carregando pesquisas NPS">
         <Skeleton className="h-40 w-full" />
         <div className="grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
-      </div>
+      </SkeletonRegion>
     );
   }
 

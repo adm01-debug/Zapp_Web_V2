@@ -3,7 +3,7 @@ import { NPSDashboard } from '@/components/nps/NPSDashboard';
 import { FollowUpSequences } from '@/components/settings/FollowUpSequences';
 import { QuickRepliesManager } from '@/components/inbox/QuickRepliesManager';
 import { StickerManager } from '@/components/inbox/stickers/StickerManager';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -116,7 +116,7 @@ export function SettingsView() {
       }
     >
       {isLoading ? (
-        <div className="space-y-4">
+        <SkeletonRegion className="space-y-4" label="Carregando configurações">
           {/* Skeleton tabs bar */}
           <div className="flex gap-2 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -150,7 +150,7 @@ export function SettingsView() {
               ))}
             </div>
           </div>
-        </div>
+        </SkeletonRegion>
       ) : (
       <Tabs value={activeTab} onValueChange={setSelectedTab} className="space-y-4">
         {/* Nivel 1 — grupos logicos. Substitui a barra horizontal unica de 16

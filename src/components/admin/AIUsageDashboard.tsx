@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, Users, Zap, Clock, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAIUsageDashboard, FUNCTION_COLORS, FUNCTION_LABELS } from '@/hooks/analytics/useAIUsageDashboard';
@@ -59,7 +59,7 @@ export function AIUsageDashboard() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4" aria-busy="true">
+        <SkeletonRegion className="grid grid-cols-2 md:grid-cols-5 gap-4" label="Carregando consumo de IA…">
           {[0, 1, 2, 3, 4].map(i => (
             <Card key={i}>
               <CardContent className="pt-4 pb-3 space-y-2">
@@ -68,8 +68,7 @@ export function AIUsageDashboard() {
               </CardContent>
             </Card>
           ))}
-          <span className="sr-only">Carregando consumo de IA…</span>
-        </div>
+        </SkeletonRegion>
       ) : !isError && (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
@@ -93,10 +92,10 @@ export function AIUsageDashboard() {
 
         <TabsContent value="overview" className="space-y-4">
           {isLoading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" aria-busy="true">
+            <SkeletonRegion className="grid grid-cols-1 lg:grid-cols-3 gap-4" label="Carregando gráficos de consumo de IA">
               <Card className="lg:col-span-2"><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
               <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
-            </div>
+            </SkeletonRegion>
           ) : isError ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">Os números e gráficos do período não puderam ser carregados.</CardContent></Card>
           ) : (

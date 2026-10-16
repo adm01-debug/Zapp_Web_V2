@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -71,7 +71,11 @@ export function ComparisonSummaryChart({ data, isLoading }: { data: Array<Record
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[250px] w-full" /> : (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[250px] w-full" />
+            </SkeletonRegion>
+          ) : (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={data} layout="vertical" aria-label={aria} title="Gráfico de comparação de métricas" desc="Barras horizontais comparando o período atual com o período anterior por métrica.">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -109,7 +113,11 @@ export function PeriodAreaChart({ data, label, dateLabel, gradientId, color, tot
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? <Skeleton className="h-[250px] w-full" /> : (
+        {isLoading ? (
+          <SkeletonRegion label="Carregando gráfico">
+            <Skeleton className="h-[250px] w-full" />
+          </SkeletonRegion>
+        ) : (
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={data} aria-label={aria} title={label} desc={`Evolução de ${label} ao longo do período ${dateLabel}.`}>
               <defs>
@@ -152,7 +160,11 @@ export function DistributionPieChart({ data, label, isLoading, colors, variant =
     <Card className={variant === 'primary' ? 'border-primary/30' : 'border-muted-foreground/30'}>
       <CardHeader className="pb-2"><CardTitle className="text-base">{label}</CardTitle></CardHeader>
       <CardContent>
-        {isLoading ? <Skeleton className="h-[200px] w-full" /> : (
+        {isLoading ? (
+          <SkeletonRegion label="Carregando gráfico">
+            <Skeleton className="h-[200px] w-full" />
+          </SkeletonRegion>
+        ) : (
           <ResponsiveContainer width="100%" height={200}>
             <PieChart aria-label={aria} title={label} desc={`Distribuição proporcional de ${label} por categoria.`}>
               <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value">
@@ -182,7 +194,11 @@ export function DailyMessagesChart({ data, isLoading }: { data: ChartData; isLoa
       <Card className="lg:col-span-2">
         <CardHeader><CardTitle className="text-base">Mensagens por Dia</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[300px] w-full" />
+            </SkeletonRegion>
+          ) : (
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={data.daily} aria-label={ariaArea} title="Mensagens por dia" desc="Evolução diária de mensagens enviadas e recebidas.">
                 <defs>
@@ -211,7 +227,11 @@ export function DailyMessagesChart({ data, isLoading }: { data: ChartData; isLoa
       <Card>
         <CardHeader><CardTitle className="text-base">Distribuição</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[300px] w-full" />
+            </SkeletonRegion>
+          ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart aria-label={ariaPie} title="Distribuição por remetente" desc="Distribuição proporcional de mensagens por remetente.">
                 <Pie data={data.bySender} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -238,7 +258,11 @@ export function AgentsChart({ data, isLoading }: { data: Array<{ name: string; m
     <Card>
       <CardHeader><CardTitle className="text-base">Mensagens por Agente</CardTitle></CardHeader>
       <CardContent>
-        {isLoading ? <Skeleton className="h-[400px] w-full" /> : data.length > 0 ? (
+        {isLoading ? (
+          <SkeletonRegion label="Carregando gráfico">
+            <Skeleton className="h-[400px] w-full" />
+          </SkeletonRegion>
+        ) : data.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={data} layout="vertical" aria-label={aria} title="Mensagens por agente" desc="Total de mensagens por agente em barras horizontais.">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -273,7 +297,11 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
       <Card>
         <CardHeader><CardTitle className="text-base">Novos Contatos por Dia</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[300px] w-full" />
+            </SkeletonRegion>
+          ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={data.daily} aria-label={ariaLine} title="Novos contatos por dia" desc="Evolução diária de novos contatos.">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -290,7 +318,11 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
       <Card>
         <CardHeader><CardTitle className="text-base">Contatos por Tipo</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.byType.length > 0 ? (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[300px] w-full" />
+            </SkeletonRegion>
+          ) : data.byType.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart aria-label={ariaPie} title="Contatos por tipo" desc="Distribuição proporcional de contatos por tipo.">
                 <Pie data={data.byType} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
@@ -308,7 +340,11 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
       <Card className="lg:col-span-2">
         <CardHeader><CardTitle className="text-base">Contatos por Tag</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.byTag.length > 0 ? (
+          {isLoading ? (
+            <SkeletonRegion label="Carregando gráfico">
+              <Skeleton className="h-[300px] w-full" />
+            </SkeletonRegion>
+          ) : data.byTag.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data.byTag} aria-label={ariaBar} title="Contatos por tag" desc="Total de contatos por etiqueta em barras verticais.">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
