@@ -3,17 +3,12 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts",
-    "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
-    "rpc:log_search_event:src/components/inbox/useGlobalSearchData.ts",
-    "rpc:talkx_campaign_resume_precheck:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
-    "rpc:should_send_away_message:supabase/functions/_shared/evolution-webhook-messages.ts"
+    "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts"
   ],
   "_resolvido": {
-    "rpc:talkx_campaign_window_open (N-102c)": "Removida em 2026-10-11: a migration forward-only 20261011003008_talkx_n102c_window_open.sql cria public.talkx_campaign_window_open(uuid, timestamptz), entao o alvo passou a existir na projecao do supabase-usage-guard e a entrada rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts ficou obsoleta.",
     "from:department_whatsapp_configs (SL-144)": "A tabela department_whatsapp_configs nao existe no schema (ela nao esta em schema-catalog.json nem em nenhuma migration) e useSaveDepartmentWhatsApp era o unico consumidor. O acesso direto saiu em 2026-10-08: a gravacao passou para public.set_department_whatsapp_config (migration 20261006213734), que esta no catalogo — o guard nao acusa violacao e a entrada do baseline ficou obsoleta.",
     "talkx-rpcs-parcial (X010/X012)": "RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do baseline — já estão no schema-catalog.json. kick_talkx_campaign (PR #1535/X012) removido no types-sync de 2026-10-02 (run 37001256206), quando o catálogo passou a incluí-la.",
     "multiplix_confirm_dispatch": "RPC criado no banco (grant anon_execute em grants-baseline.json PR #1513). Entrada obsoleta removida em 2026-10-02.",
-    "talkx_campaign_window_open (N-118)": "Removida em 2026-10-11: a migration 20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql agora entra nesta mesma pilha e a projeção forward-only do supabase-usage-guard enxerga public.talkx_campaign_window_open."
+    "rpc:talkx_campaign_window_open": "RPC public.talkx_campaign_window_open passou a existir na projecao forward-only com a migration 20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql (cartao N-118, t_74b04330, entrega em dia/2026-10-11). O chamador supabase/functions/talkx-scheduler/index.ts deixou de ser violacao e a entrada do baseline ficou obsoleta. Chave removida de 'known' em 2026-10-11 (t_e66760f6)."
   }
 }
